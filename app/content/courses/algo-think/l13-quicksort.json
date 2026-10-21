@@ -1,0 +1,1575 @@
+{
+  "id": "l13-quicksort",
+  "course": "algo-think",
+  "title": "Quicksort and pivots",
+  "minutes": 15,
+  "objectives": [
+    "Implement quicksort and explain its worst case.",
+    "Partition in place with the Lomuto scheme, and use quickselect for one order statistic."
+  ],
+  "skills": [
+    "at-sort"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Pick a pivot",
+      "prose": "Choose one value, the **pivot**: here the last one, 5. We want every value at most 5 on its left and every bigger value on its right.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            7,
+            2,
+            9,
+            4,
+            1,
+            8,
+            5
+          ]
+        },
+        "state": {
+          "highlight": [
+            "c6"
+          ],
+          "caption": "Pivot: 5, at index 6"
+        }
+      },
+      "question": "Tap every value that must end up left of the pivot.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c1",
+          "c3",
+          "c4"
+        ],
+        "only": [
+          "c0",
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "sorted",
+            "set": [
+              "c1",
+              "c4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which values are at most 5?"
+        },
+        {
+          "rung": "point",
+          "text": "2 is one of them.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "2, 4 and 1 are at most 5. 7, 9 and 8 are bigger."
+        }
+      ],
+      "feedback": {
+        "correct": "2, 4 and 1 go left; 7, 9 and 8 go right.",
+        "generic": "Not quite right. Pick every value at most 5, and only those.",
+        "byKey": {
+          "sorted": "You left out 4. It is at most 5, so it goes left too.",
+          "c0": "You picked 7, which is bigger than 5.",
+          "c2": "You picked 9, which is bigger than 5.",
+          "c5": "You picked 8, which is bigger than 5."
+        }
+      },
+      "explain": {
+        "text": "Three values belong left, so the pivot ends at index 3. The two sides need not be sorted yet: only on the right side of 5.",
+        "canvas": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            9,
+            8,
+            7
+          ],
+          "done": [
+            3
+          ],
+          "highlight": []
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Partition in place",
+      "prose": "The **Lomuto** scheme: `i` marks the end of the small part. Walk `j` from `lo` to `hi - 1`. If `xs[j] <= pivot`, swap `xs[i]` and `xs[j]` and add 1 to `i`. Finally swap the pivot into `xs[i]`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            7,
+            2,
+            9,
+            4,
+            1,
+            8,
+            5
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 0,
+              "label": "i"
+            },
+            {
+              "id": "j",
+              "at": 0,
+              "label": "j"
+            }
+          ]
+        }
+      },
+      "question": "Step the partition to the end.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "done",
+        "states": {
+          "s0": {
+            "tex": "i = 0,\\ j = 0:\\ \\texttt{xs[j]} = 7",
+            "canvas": {
+              "cells": [
+                7,
+                2,
+                9,
+                4,
+                1,
+                8,
+                5
+              ],
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 0,
+                  "label": "i"
+                },
+                {
+                  "id": "j",
+                  "at": 0,
+                  "label": "j"
+                }
+              ],
+              "highlight": []
+            },
+            "ops": [
+              {
+                "label": "7 ≤ 5: swap `xs[i]` and `xs[j]`, then `i += 1`",
+                "to": "wswap",
+                "why": "You moved 7 into the small part, but 7 is bigger than the pivot 5."
+              },
+              {
+                "label": "7 > 5: leave it",
+                "to": "s1"
+              }
+            ]
+          },
+          "s1": {
+            "tex": "i = 0,\\ j = 1:\\ \\texttt{xs[j]} = 2",
+            "canvas": {
+              "cells": [
+                7,
+                2,
+                9,
+                4,
+                1,
+                8,
+                5
+              ],
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 0,
+                  "label": "i"
+                },
+                {
+                  "id": "j",
+                  "at": 1,
+                  "label": "j"
+                }
+              ],
+              "highlight": []
+            },
+            "ops": [
+              {
+                "label": "2 > 5: leave it",
+                "to": "wskip",
+                "why": "You left 2 behind, but 2 is at most 5, so it belongs in the small part."
+              },
+              {
+                "label": "2 ≤ 5: swap `xs[i]` and `xs[j]`, then `i += 1`",
+                "to": "s2"
+              }
+            ]
+          },
+          "s2": {
+            "tex": "i = 1,\\ j = 2:\\ \\texttt{xs[j]} = 9",
+            "canvas": {
+              "cells": [
+                2,
+                7,
+                9,
+                4,
+                1,
+                8,
+                5
+              ],
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 1,
+                  "label": "i"
+                },
+                {
+                  "id": "j",
+                  "at": 2,
+                  "label": "j"
+                }
+              ],
+              "highlight": {
+                "range": [
+                  0,
+                  0
+                ],
+                "label": "≤ 5"
+              }
+            },
+            "ops": [
+              {
+                "label": "9 ≤ 5: swap `xs[i]` and `xs[j]`, then `i += 1`",
+                "to": "wswap",
+                "why": "You moved 9 into the small part, but 9 is bigger than the pivot 5."
+              },
+              {
+                "label": "9 > 5: leave it",
+                "to": "s3"
+              }
+            ]
+          },
+          "s3": {
+            "tex": "i = 1,\\ j = 3:\\ \\texttt{xs[j]} = 4",
+            "canvas": {
+              "cells": [
+                2,
+                7,
+                9,
+                4,
+                1,
+                8,
+                5
+              ],
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 1,
+                  "label": "i"
+                },
+                {
+                  "id": "j",
+                  "at": 3,
+                  "label": "j"
+                }
+              ],
+              "highlight": {
+                "range": [
+                  0,
+                  0
+                ],
+                "label": "≤ 5"
+              }
+            },
+            "ops": [
+              {
+                "label": "4 > 5: leave it",
+                "to": "wskip",
+                "why": "You left 4 behind, but 4 is at most 5, so it belongs in the small part."
+              },
+              {
+                "label": "4 ≤ 5: swap `xs[i]` and `xs[j]`, then `i += 1`",
+                "to": "s4"
+              }
+            ]
+          },
+          "s4": {
+            "tex": "i = 2,\\ j = 4:\\ \\texttt{xs[j]} = 1",
+            "canvas": {
+              "cells": [
+                2,
+                4,
+                9,
+                7,
+                1,
+                8,
+                5
+              ],
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 2,
+                  "label": "i"
+                },
+                {
+                  "id": "j",
+                  "at": 4,
+                  "label": "j"
+                }
+              ],
+              "highlight": {
+                "range": [
+                  0,
+                  1
+                ],
+                "label": "≤ 5"
+              }
+            },
+            "ops": [
+              {
+                "label": "1 ≤ 5: swap `xs[i]` and `xs[j]`, then `i += 1`",
+                "to": "s5"
+              },
+              {
+                "label": "1 > 5: leave it",
+                "to": "wskip",
+                "why": "You left 1 behind, but 1 is at most 5, so it belongs in the small part."
+              }
+            ]
+          },
+          "s5": {
+            "tex": "i = 3,\\ j = 5:\\ \\texttt{xs[j]} = 8",
+            "canvas": {
+              "cells": [
+                2,
+                4,
+                1,
+                7,
+                9,
+                8,
+                5
+              ],
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 3,
+                  "label": "i"
+                },
+                {
+                  "id": "j",
+                  "at": 5,
+                  "label": "j"
+                }
+              ],
+              "highlight": {
+                "range": [
+                  0,
+                  2
+                ],
+                "label": "≤ 5"
+              }
+            },
+            "ops": [
+              {
+                "label": "8 > 5: leave it",
+                "to": "s6"
+              },
+              {
+                "label": "8 ≤ 5: swap `xs[i]` and `xs[j]`, then `i += 1`",
+                "to": "wswap",
+                "why": "You moved 8 into the small part, but 8 is bigger than the pivot 5."
+              }
+            ]
+          },
+          "s6": {
+            "tex": "i = 3:\\ \\text{every value has been compared}",
+            "canvas": {
+              "cells": [
+                2,
+                4,
+                1,
+                7,
+                9,
+                8,
+                5
+              ],
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 3,
+                  "label": "i"
+                }
+              ],
+              "highlight": {
+                "range": [
+                  0,
+                  2
+                ],
+                "label": "≤ 5"
+              }
+            },
+            "ops": [
+              {
+                "label": "Leave the pivot at the end",
+                "to": "wend",
+                "why": "You left 5 at the end, right of bigger values. It belongs between the two parts, at index `i`."
+              },
+              {
+                "label": "Swap the pivot into `xs[i]`",
+                "to": "done"
+              }
+            ]
+          },
+          "done": {
+            "tex": "[2, 4, 1, \\mathbf{5}, 9, 8, 7]:\\ \\text{return } 3",
+            "canvas": {
+              "cells": [
+                2,
+                4,
+                1,
+                5,
+                9,
+                8,
+                7
+              ],
+              "pointers": [
+                {
+                  "id": "p",
+                  "at": 3,
+                  "label": "pivot"
+                }
+              ],
+              "done": [
+                3
+              ],
+              "highlight": []
+            }
+          },
+          "wswap": {
+            "tex": "\\text{a value above 5 went into the small part}"
+          },
+          "wskip": {
+            "tex": "\\text{a value up to 5 was left in the big part}"
+          },
+          "wend": {
+            "tex": "[2, 4, 1, 7, 9, 8, \\mathbf{5}]:\\ \\text{the pivot is out of place}"
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare `xs[j]` with 5 at every step."
+        },
+        {
+          "rung": "point",
+          "text": "The pivot stays at index 6 until the very end.",
+          "highlight": [
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "7 stays; 2 swaps to index 0; 9 stays; 4 swaps to index 1; 1 swaps to index 2; 8 stays. Then swap 5 into index 3."
+        }
+      ],
+      "feedback": {
+        "correct": "Six comparisons, three swaps and a final swap: the pivot lands at index 3.",
+        "generic": "Not quite right. Swap only values at most 5, then put the pivot at `i`.",
+        "byKey": {
+          "wswap": "You moved a value bigger than 5 into the small part.",
+          "wskip": "You left a value at most 5 in the big part. Swap it to `i`.",
+          "wend": "You left the pivot at the end. Swap it into `xs[i]`, between the two parts."
+        }
+      },
+      "explain": {
+        "text": "Everything left of `i` is at most 5, and everything from `i` to `j` is bigger. The last swap puts the pivot between them. It is now in its final sorted place, and no extra list was used.",
+        "canvas": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            9,
+            8,
+            7
+          ],
+          "pointers": [],
+          "done": [
+            3
+          ],
+          "highlight": []
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Then recurse",
+      "prose": "**Quicksort**: partition around a pivot, then sort each side the same way. `partition` returned 3.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            9,
+            8,
+            7
+          ]
+        },
+        "state": {
+          "done": [
+            3
+          ],
+          "caption": "After the partition"
+        }
+      },
+      "question": "What does quicksort do next?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Sort indices 0 to 2 and indices 4 to 6; the pivot stays put",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Sort indices 0 to 3 and indices 4 to 6",
+            "why": "You included the pivot in the left side. It is already in place, and keeping it can make a call that never shrinks."
+          },
+          {
+            "id": "c",
+            "text": "Merge the two sides",
+            "why": "No merge is needed. Every left value is already below every right value."
+          },
+          {
+            "id": "d",
+            "text": "Partition the whole list again",
+            "why": "The pivot is final, so only the two sides are left to sort."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the pivot in its final place?"
+        },
+        {
+          "rung": "point",
+          "text": "Index 3 holds 5, which is in its sorted place.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Recurse on `lo` to `p - 1` and `p + 1` to `hi`, leaving the pivot out."
+        }
+      ],
+      "feedback": {
+        "correct": "Two smaller sorts, and no merge.",
+        "generic": "Not quite right. Where is the pivot now?"
+      },
+      "explain": {
+        "text": "Partition does the combining in advance: left values are all smaller than right values. So the sides are sorted on their own and the whole list is sorted. Each call leaves out the pivot, so it always shrinks.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              0,
+              2
+            ],
+            "label": "sort these"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write the partition",
+      "prose": "Write the Lomuto scheme exactly: pivot `xs[hi]`, walk `j` from `lo` to `hi - 1`, move values `<= pivot` to `i`. Work in place on `xs[lo:hi + 1]` only.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            7,
+            2,
+            9,
+            4,
+            1,
+            8,
+            5
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 0,
+              "label": "i"
+            },
+            {
+              "id": "j",
+              "at": 0,
+              "label": "j"
+            }
+          ]
+        }
+      },
+      "question": "Write `partition(xs, lo, hi)`: return the pivot's final index.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def partition(xs, lo, hi):\n    ...\n",
+        "solution": "def partition(xs, lo, hi):\n    pivot = xs[hi]\n    i = lo\n    for j in range(lo, hi):\n        if xs[j] <= pivot:\n            xs[i], xs[j] = xs[j], xs[i]\n            i += 1\n    xs[i], xs[hi] = xs[hi], xs[i]\n    return i\n",
+        "examples": [
+          {
+            "setup": "xs = [7, 2, 9, 4, 1, 8, 5]; r = partition(xs, 0, 6)",
+            "call": "(r, xs)",
+            "expect": "(3, [2, 4, 1, 5, 9, 8, 7])",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "xs = [7, 2, 9, 4, 1, 8, 5]; r = partition(xs, 0, 6)",
+            "call": "(r, xs)",
+            "expect": "(3, [2, 4, 1, 5, 9, 8, 7])",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [9, 3, 7, 1, 8, 2, 6, 5]; r = partition(xs, 2, 5)",
+            "call": "(r, xs)",
+            "expect": "(3, [9, 3, 1, 2, 8, 7, 6, 5])",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [2, 1]; r = partition(xs, 0, 1)",
+            "call": "(r, xs)",
+            "expect": "(0, [1, 2])",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [1, 2]; r = partition(xs, 0, 1)",
+            "call": "(r, xs)",
+            "expect": "(1, [1, 2])",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [4]; r = partition(xs, 0, 0)",
+            "call": "(r, xs)",
+            "expect": "(0, [4])",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [4, 4, 4, 4]; r = partition(xs, 0, 3)",
+            "call": "(r, xs)",
+            "expect": "(3, [4, 4, 4, 4])",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [3, 5, 4, 1]; r = partition(xs, 0, 3)",
+            "call": "(r, xs)",
+            "expect": "(0, [1, 5, 4, 3])",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [3, 1, 2, 9]; r = partition(xs, 0, 3)",
+            "call": "(r, xs)",
+            "expect": "(3, [3, 1, 2, 9])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: the example, a range inside a longer list, two values each way, one value, all equal values, and the pivot as the smallest and the largest value."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep `i = lo`. For each `j` in `range(lo, hi)`, test `xs[j] <= pivot`."
+        },
+        {
+          "rung": "point",
+          "text": "The pivot is the value at `hi`, here 5.",
+          "highlight": [
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pivot = xs[hi]`, `i = lo`. In the loop, on `xs[j] <= pivot` swap `xs[i]`, `xs[j]` and add 1 to `i`. After it, swap `xs[i]` and `xs[hi]`; return `i`."
+        }
+      ],
+      "feedback": {
+        "correct": "Exactly the Lomuto scheme, in place.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 works on indices 2 to 5 only. Start `i` at `lo`, not 0, and walk `j` from `lo`.",
+          "test-3": "Test 3 expects the pivot at index 0 with `[1, 2]`. If the 2 stayed put, the final swap is missing: the pivot was lost at the end.",
+          "test-1": "Test 1 expects `[2, 4, 1, 5, 9, 8, 7]`. If your values differ, walk `j` only to `hi - 1`, so the pivot is not swapped mid-loop."
+        }
+      },
+      "explain": {
+        "text": "`range(lo, hi)` stops before the pivot, so the pivot stays at `hi` until the final swap. Forgetting that swap, or walking `j` up to `hi`, loses the pivot's place.",
+        "canvas": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            9,
+            8,
+            7
+          ],
+          "pointers": [
+            {
+              "id": "i",
+              "at": 3,
+              "label": "i"
+            }
+          ],
+          "done": [
+            3
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write quicksort",
+      "prose": "`partition` is in the starter. Sort `xs` in place and return nothing. Choose the pivot at random: swap a random index into `hi` before partitioning. Test 7 sorts 3,000 values that are already sorted.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            9,
+            8,
+            7
+          ]
+        },
+        "state": {
+          "done": [
+            3
+          ],
+          "highlight": {
+            "range": [
+              0,
+              2
+            ],
+            "label": "recurse"
+          }
+        }
+      },
+      "question": "Write `quicksort(xs)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\n\ndef partition(xs, lo, hi):\n    pivot = xs[hi]\n    i = lo\n    for j in range(lo, hi):\n        if xs[j] <= pivot:\n            xs[i], xs[j] = xs[j], xs[i]\n            i += 1\n    xs[i], xs[hi] = xs[hi], xs[i]\n    return i\n\n\ndef quicksort(xs):\n    ...\n",
+        "solution": "import random\n\n\ndef partition(xs, lo, hi):\n    pivot = xs[hi]\n    i = lo\n    for j in range(lo, hi):\n        if xs[j] <= pivot:\n            xs[i], xs[j] = xs[j], xs[i]\n            i += 1\n    xs[i], xs[hi] = xs[hi], xs[i]\n    return i\n\n\ndef quicksort(xs):\n    def sort(lo, hi):\n        if lo >= hi:\n            return\n        r = random.randint(lo, hi)\n        xs[r], xs[hi] = xs[hi], xs[r]\n        p = partition(xs, lo, hi)\n        sort(lo, p - 1)\n        sort(p + 1, hi)\n    sort(0, len(xs) - 1)\n",
+        "examples": [
+          {
+            "setup": "xs = [7, 2, 9, 4, 1, 8, 5]; quicksort(xs)",
+            "call": "xs",
+            "expect": "[1, 2, 4, 5, 7, 8, 9]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "xs = [7, 2, 9, 4, 1, 8, 5]; quicksort(xs)",
+            "call": "xs",
+            "expect": "[1, 2, 4, 5, 7, 8, 9]",
+            "compare": "equal"
+          },
+          {
+            "call": "quicksort([3, 1, 2])",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = []; quicksort(xs)",
+            "call": "xs",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [42]; quicksort(xs)",
+            "call": "xs",
+            "expect": "[42]",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [2, 1]; quicksort(xs)",
+            "call": "xs",
+            "expect": "[1, 2]",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [3, 1, 3, 1, 3]; quicksort(xs)",
+            "call": "xs",
+            "expect": "[1, 1, 3, 3, 3]",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = list(range(3000)); quicksort(xs)",
+            "call": "xs == list(range(3000))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "ys = [(i * 7919) % 10007 for i in range(20000)]; xs = list(ys); quicksort(xs)",
+            "call": "xs == sorted(ys)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: the example, the return value (`None`), empty, one and two values, duplicates, 3,000 values already sorted, and 20,000 shuffled values."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write a helper `sort(lo, hi)` that stops when `lo >= hi`."
+        },
+        {
+          "rung": "point",
+          "text": "After the partition, recurse on each side of the pivot.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In `sort(lo, hi)`: return if `lo >= hi`. Swap `xs[random.randint(lo, hi)]` with `xs[hi]`. `p = partition(xs, lo, hi)`. Then `sort(lo, p - 1)` and `sort(p + 1, hi)`. Call `sort(0, len(xs) - 1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "In place, and fast even on sorted input.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-7": "Test 7 is already sorted. With the last value as pivot, every call peels off one value: 3,000 calls deep. Pick the pivot at random.",
+          "test-2": "Test 2 expects `None`. Sort the list in place and return nothing."
+        }
+      },
+      "explain": {
+        "text": "A random pivot splits the range unevenly sometimes, but the expected cost is $O(n \\log n)$ on every input. No extra list is built: quicksort works **in place**, using only the recursion's stack.",
+        "canvas": {
+          "cells": [
+            1,
+            2,
+            4,
+            5,
+            7,
+            8,
+            9
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "highlight": []
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Sorted input",
+      "prose": "Now quicksort `[1, 2, 3, 4, 5, 6, 7]` with the last value as pivot every time. Partitioning a range of $m$ values makes $m - 1$ comparisons.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "n",
+              "label": "1 2 3 4 5 6 7",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "1 2 3 4 5 6",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "1 2 3 4 5",
+                      "children": [
+                        {
+                          "id": "n",
+                          "label": "1 2 3 4",
+                          "children": [
+                            {
+                              "id": "n",
+                              "label": "1 2 3",
+                              "children": [
+                                {
+                                  "id": "n",
+                                  "label": "1 2",
+                                  "children": [
+                                    {
+                                      "id": "n",
+                                      "label": "1"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Pivot = last value: each call peels off one value"
+        }
+      },
+      "question": "How many comparisons in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "nlogn",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "shuffled",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "square",
+            "value": 49,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the partition of `[1, ..., 7]` around 7 leave?"
+        },
+        {
+          "rung": "point",
+          "text": "Each level is one value shorter than the one above.",
+          "highlight": [
+            "n"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The calls have 7, 6, 5, 4, 3, 2 values: $6 + 5 + 4 + 3 + 2 + 1 = 21$."
+        }
+      ],
+      "feedback": {
+        "correct": "21 comparisons, the most possible for 7 values.",
+        "generic": "Not quite right. Add $m - 1$ for every call.",
+        "byKey": {
+          "nlogn": "You assumed even splits. Sorted input with the last pivot gives the worst splits: nothing on one side.",
+          "shuffled": "12 is what `[7, 2, 9, 4, 1, 8, 5]` costs. Sorted input splits far worse.",
+          "square": "You used $n^2$. The sum is $n(n-1)/2$."
+        }
+      },
+      "explain": {
+        "text": "Each partition puts every value on one side, so the next call is only one shorter. The total is $n(n - 1)/2$, which is $O(n^2)$, and the recursion is $n$ deep.",
+        "canvas": {
+          "caption": "6 + 5 + 4 + 3 + 2 + 1 = 21"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "It crashed on sorted data",
+      "prose": "A colleague's quicksort takes the first value as pivot. It sorts 2,000 shuffled prices instantly. On the same prices, already sorted, it fails.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> quicksort(shuffled)   # fine",
+            ">>> quicksort(sorted(shuffled))",
+            "RecursionError: maximum recursion depth exceeded"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      },
+      "question": "Why does sorted input break it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "worst",
+            "text": "Each partition peels off only the pivot, so the calls go 2,000 deep and make about 2 million comparisons",
+            "correct": true
+          },
+          {
+            "id": "dups",
+            "text": "Sorted data has more duplicates",
+            "why": "Sorting does not change the values, only their order. The pivot choice is what hurts."
+          },
+          {
+            "id": "wrong",
+            "text": "Lomuto gives a wrong order on sorted input",
+            "why": "The output would be correct with enough stack. The problem is depth and time."
+          },
+          {
+            "id": "inplace",
+            "text": "Lists cannot be sorted in place recursively",
+            "why": "The same code sorted the shuffled list in place without trouble."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On sorted input, where does the first value sit after partitioning?"
+        },
+        {
+          "rung": "point",
+          "text": "Python stops recursion at about 1,000 calls deep.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first value is the smallest, so one side is empty and the other has $n - 1$ values. That repeats 2,000 times: $1{,}999{,}000$ comparisons."
+        }
+      ],
+      "feedback": {
+        "correct": "A fixed end pivot on sorted data gives the worst case.",
+        "generic": "Not quite right. Trace one partition of sorted data with the first value as pivot.",
+        "byKey": {
+          "dups": "You blamed duplicates. Sorting changes the order only; the first value is now always the smallest.",
+          "wrong": "You blamed correctness. The order would be right; the calls just go too deep.",
+          "inplace": "You blamed in-place sorting. The shuffled case shows the method works."
+        }
+      },
+      "explain": {
+        "text": "Real data often arrives sorted or nearly sorted, so a fixed first or last pivot is risky. A random pivot, or the median of the first, middle and last values, makes even splits likely.",
+        "canvas": {
+          "lines": [
+            ">>> quicksort(sorted(shuffled))   # random pivot",
+            "done"
+          ],
+          "tone": {
+            "l2": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "```python\ndef sort(lo, hi):\n    if lo >= hi:\n        return\n    p = partition(xs, lo, hi)   # pivot now final\n    sort(lo, p - 1)\n    sort(p + 1, hi)\n```\n\nAverage $O(n \\log n)$; worst $O(n^2)$, when every split is lopsided. In place. Not stable: a swap can jump a value past an equal one.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            9,
+            8,
+            7
+          ]
+        },
+        "state": {
+          "done": [
+            3
+          ]
+        }
+      },
+      "question": "With a random pivot, which input is the worst case?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "None in particular: every input has expected cost $O(n \\log n)$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Sorted input",
+            "why": "That is the worst case for a fixed first or last pivot. A random pivot does not care about the order."
+          },
+          {
+            "id": "c",
+            "text": "Reverse-sorted input",
+            "why": "That hurts a fixed end pivot too. A random pivot splits it as well as any other order."
+          },
+          {
+            "id": "d",
+            "text": "Input with no duplicates",
+            "why": "Distinct values are the easy case for Lomuto. Many equal values are the hard one."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The randomness is in the pivot, not the input.",
+        "generic": "Not quite right. Can an input force a bad random pivot?"
+      },
+      "explain": {
+        "text": "Bad splits now come from unlucky draws, not from the data. The chance of $O(n^2)$ work is tiny for large $n$. Many equal values are still a problem for Lomuto; a three-way partition fixes that."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The median trade size",
+      "prose": "We want the median of a million trade sizes. Sorting costs $O(n \\log n)$. Instead, partition, then keep only the side that holds index `k`. `partition` is in the starter.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            9,
+            8,
+            7
+          ]
+        },
+        "state": {
+          "done": [
+            3
+          ],
+          "highlight": {
+            "range": [
+              4,
+              6
+            ],
+            "label": "k = 5 is here"
+          }
+        }
+      },
+      "question": "Write `quickselect(xs, k)`: the value at index `k` of the sorted list, without sorting. It may reorder `xs`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\n\ndef partition(xs, lo, hi):\n    pivot = xs[hi]\n    i = lo\n    for j in range(lo, hi):\n        if xs[j] <= pivot:\n            xs[i], xs[j] = xs[j], xs[i]\n            i += 1\n    xs[i], xs[hi] = xs[hi], xs[i]\n    return i\n\n\ndef quickselect(xs, k):\n    ...\n",
+        "solution": "import random\n\n\ndef partition(xs, lo, hi):\n    pivot = xs[hi]\n    i = lo\n    for j in range(lo, hi):\n        if xs[j] <= pivot:\n            xs[i], xs[j] = xs[j], xs[i]\n            i += 1\n    xs[i], xs[hi] = xs[hi], xs[i]\n    return i\n\n\ndef quickselect(xs, k):\n    lo, hi = 0, len(xs) - 1\n    while lo < hi:\n        r = random.randint(lo, hi)\n        xs[r], xs[hi] = xs[hi], xs[r]\n        p = partition(xs, lo, hi)\n        if k == p:\n            return xs[p]\n        if k < p:\n            hi = p - 1\n        else:\n            lo = p + 1\n    return xs[lo]\n",
+        "examples": [
+          {
+            "call": "quickselect([7, 2, 9, 4, 1, 8, 5], 3)",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "quickselect([7, 2, 9, 4, 1, 8, 5], 3)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "quickselect([7, 2, 9, 4, 1, 8, 5], 0)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "quickselect([7, 2, 9, 4, 1, 8, 5], 6)",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "quickselect([5], 0)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "quickselect([3, 1, 3, 2, 3], 2)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "quickselect([3, 1, 3, 2, 3], 1)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "quickselect(list(range(3000)), 1500)",
+            "expect": "1500",
+            "compare": "equal"
+          },
+          {
+            "setup": "sizes = [(i * 7919) % 10007 for i in range(100001)]",
+            "call": "quickselect(sizes, 50000)",
+            "expect": "5003",
+            "compare": "equal"
+          },
+          {
+            "call": "NO_FULL_SORT",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: the example at three `k`, one value, duplicates, 3,000 sorted values, the median of 100,001 sizes, and a check that your code does not call `sorted` or `.sort`.",
+        "postlude": "NO_FULL_SORT = 'sorted(' not in __learner_source__ and '.sort(' not in __learner_source__\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After `p = partition(...)`, which side can hold index `k`?"
+        },
+        {
+          "rung": "point",
+          "text": "The answer is to the right of the pivot when `k > 3`.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Loop: random pivot into `hi`, `p = partition(xs, lo, hi)`. If `k == p` return `xs[p]`; if `k < p` set `hi = p - 1`, else `lo = p + 1`. When `lo == hi`, return `xs[lo]`."
+        }
+      ],
+      "feedback": {
+        "correct": "One side per step, so about $2n$ comparisons on average: $O(n)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-7": "Test 7 is sorted input. A fixed end pivot makes this $O(n^2)$; pick the pivot at random.",
+          "test-9": "Test 9 found `sorted` or `.sort` in your code. The point is to avoid the full sort."
+        }
+      },
+      "explain": {
+        "text": "Quicksort recurses on both sides; quickselect keeps one. The ranges shrink like $n + n/2 + n/4 + \\dots \\approx 2n$, so the average is $O(n)$. For a million trades that is about 2 million steps, not 20 million.",
+        "canvas": {
+          "cells": [
+            2,
+            4,
+            1,
+            5,
+            7,
+            8,
+            9
+          ],
+          "done": [
+            5
+          ],
+          "highlight": []
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Value at risk",
+      "prose": "A risk system simulates 10 million daily P&L outcomes. The 95% value at risk is the loss at the 5th percentile: one order statistic. The engine also uses a library sort elsewhere.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "method",
+            "comparisons, about"
+          ],
+          "rows": [
+            [
+              "full sort",
+              "$n \\log_2 n \\approx 230$ million"
+            ],
+            [
+              "quickselect",
+              "$2n$ to $4n$: 20 to 40 million"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Quickselect finds the one percentile in $O(n)$ average time; sorting all 10 million is wasted work",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Quickselect is always faster than sorting, even for every percentile at once",
+            "why": "For many percentiles at once, one sort and then lookups can win. Quickselect is for a few order statistics."
+          },
+          {
+            "id": "c",
+            "text": "Quickselect returns an approximate percentile",
+            "why": "Quickselect is exact: it returns the value a full sort would put at index `k`."
+          },
+          {
+            "id": "d",
+            "text": "Library sorts use plain quicksort, so they are $O(n^2)$ in the worst case",
+            "why": "Libraries guard the worst case. Introsort switches to heapsort when recursion gets too deep, keeping $O(n \\log n)$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many values does the risk report actually need?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the two costs in the table.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "VaR needs one value at one index. Quickselect finds it exactly in about $2n$ to $4n$ comparisons."
+        }
+      ],
+      "feedback": {
+        "correct": "One exact percentile, in linear time on average.",
+        "generic": "Not quite right. What does the report need, and what does each method cost?"
+      },
+      "explain": {
+        "text": "Quickselect gives the exact 5th-percentile loss without ordering the rest. C++'s `std::sort` and .NET use **introsort**: quicksort, switching to heapsort when recursion grows too deep. That caps the worst case at $O(n \\log n)$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Partition puts the pivot in its final place, with smaller values left and larger right, in place.",
+      "Quicksort averages $O(n \\log n)$, but a fixed end pivot on sorted data gives $O(n^2)$; choose the pivot at random.",
+      "Quickselect keeps only the side that holds index `k`, so one order statistic costs $O(n)$ on average."
+    ],
+    "formula": {
+      "name": "Worst-case comparisons",
+      "tex": "(n-1) + (n-2) + \\dots + 1 = \\dfrac{n(n-1)}{2}",
+      "note": "Every split lopsided. Average splits give about $1.39\\, n \\log_2 n$."
+    },
+    "trap": "A first or last pivot on already sorted data peels off one value per call: quadratic time and a recursion $n$ deep."
+  },
+  "quiz": [
+    {
+      "id": "q-two",
+      "difficulty": 2,
+      "prose": "```python\nxs = [2, 1]\np = partition(xs, 0, 1)   # Lomuto, pivot xs[1]\n```",
+      "question": "What are `p` and `xs` afterwards?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`p = 0`, `xs = [1, 2]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`p = 1`, `xs = [2, 1]`",
+            "why": "You left the pivot at the end. 2 is bigger than 1, so `i` stays at 0 and the pivot swaps there."
+          },
+          {
+            "id": "c",
+            "text": "`p = 1`, `xs = [1, 2]`",
+            "why": "The list is right, but the pivot, 1, ends at index 0."
+          },
+          {
+            "id": "d",
+            "text": "`p = 0`, `xs = [2, 1]`",
+            "why": "The final swap moves the pivot to index 0, so the list changes."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Nothing is at most 1, so the pivot swaps to index 0.",
+        "generic": "Not quite right. Run the loop once, then the final swap."
+      },
+      "explain": {
+        "text": "The pivot is 1. The loop tests 2 against 1: bigger, so `i` stays 0. The final swap puts 1 at index 0 and 2 at index 1."
+      }
+    },
+    {
+      "id": "q-worst",
+      "difficulty": 2,
+      "prose": "Quicksort with the last value as pivot runs on 1,000 values that are already sorted.",
+      "question": "How many comparisons does it make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 499500,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "nlogn",
+            "value": 10000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "square",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "499,500.",
+        "generic": "Not quite right. Add $999 + 998 + \\dots + 1$.",
+        "byKey": {
+          "nlogn": "You used the average case. Sorted input with an end pivot is the worst case.",
+          "square": "You used $n^2$. The sum is $n(n - 1)/2$."
+        }
+      },
+      "explain": {
+        "text": "Every call peels off one value, so the costs are $999 + 998 + \\dots + 1 = 1000 \\times 999 / 2 = 499{,}500$."
+      }
+    },
+    {
+      "id": "q-stable",
+      "difficulty": 3,
+      "prose": "Quicksort with Lomuto, comparing prices only, sorts three trades: `[(5, 'a'), (5, 'b'), (1, 'c')]`.",
+      "question": "What comes out?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[(1, 'c'), (5, 'b'), (5, 'a')]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[(1, 'c'), (5, 'a'), (5, 'b')]`",
+            "why": "You assumed equal prices keep their order. The final swap jumps the pivot over a and b."
+          },
+          {
+            "id": "c",
+            "text": "`[(5, 'a'), (5, 'b'), (1, 'c')]`",
+            "why": "The pivot, 1, is the smallest price, so it moves to the front."
+          },
+          {
+            "id": "d",
+            "text": "It depends on Python's `sorted`",
+            "why": "This is our quicksort, not `sorted`. Its swaps decide the order."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "b ends ahead of a: quicksort is not stable.",
+        "generic": "Not quite right. Trace the final swap of the first partition."
+      },
+      "explain": {
+        "text": "The pivot is c. Neither 5 is at most 1, so the final swap exchanges a and c: `[c, b, a]`. The right side `[b, a]` is already in order, so b stays ahead of a."
+      }
+    },
+    {
+      "id": "q-equal",
+      "difficulty": 3,
+      "prose": "A list of a million prices holds only three distinct values.",
+      "question": "What helps quicksort most here?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A three-way partition: less than, equal to and greater than the pivot",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Choosing the first value as pivot",
+            "why": "A fixed pivot does nothing about the equal values piling onto one side."
+          },
+          {
+            "id": "c",
+            "text": "Using `<` instead of `<=` in Lomuto",
+            "why": "Then the equal values pile onto the other side. Each call still peels off one value."
+          },
+          {
+            "id": "d",
+            "text": "Nothing: duplicates make quicksort faster",
+            "why": "With two-way Lomuto, every equal value lands on one side, so the splits are lopsided."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Grouping the equal values ends their recursion at once.",
+        "generic": "Not quite right. Where do values equal to the pivot go?"
+      },
+      "explain": {
+        "text": "Lomuto puts every equal value on one side, so a run of equal values gives $O(n^2)$. A three-way partition gathers them in the middle, where they are already in place. With three values, two or three levels finish the job."
+      }
+    }
+  ]
+}

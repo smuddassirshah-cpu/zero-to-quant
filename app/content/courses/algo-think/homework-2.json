@@ -1,0 +1,484 @@
+{
+  "id": "homework-2",
+  "course": "algo-think",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-flatten",
+      "difficulty": 3,
+      "skills": [
+        "at-recursion"
+      ],
+      "prose": "A risk report arrives as nested lists of position sizes, nested to any depth: `[100, [250, [-40, 75]], [], 30]`.",
+      "question": "Write `flatten(xs)` recursively: return every number in order, as one flat list.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def flatten(xs):\n    ...\n",
+        "solution": "def flatten(xs):\n    out = []\n    for x in xs:\n        if isinstance(x, list):\n            out += flatten(x)\n        else:\n            out.append(x)\n    return out\n",
+        "tests": [
+          {
+            "call": "flatten([100, [250, [-40, 75]], [], 30])",
+            "expect": "[100, 250, -40, 75, 30]",
+            "compare": "equal"
+          },
+          {
+            "call": "flatten([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "flatten([[[]]])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "flatten([1.5])",
+            "expect": "[1.5]",
+            "compare": "equal"
+          },
+          {
+            "call": "flatten([[1, [2]], [[3]], 4])",
+            "expect": "[1, 2, 3, 4]",
+            "compare": "equal"
+          },
+          {
+            "call": "flatten(deep)",
+            "expect": "[7]",
+            "compare": "equal",
+            "setup": "from functools import reduce; deep = reduce(lambda acc, i: [acc], range(300), [7])"
+          }
+        ],
+        "examples": [
+          {
+            "call": "flatten([100, [250, [-40, 75]], [], 30])",
+            "expect": "[100, 250, -40, 75, 30]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, including empty lists and a number nested 300 lists deep."
+      },
+      "feedback": {
+        "correct": "Numbers are base cases; lists recurse, at any depth.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `[100, 250, -40, 75, 30]`. Extend with the flattened sublist rather than appending the list itself.",
+          "test-3": "Test 3 expects `[]` for `[[[]]]`. Empty lists add nothing."
+        }
+      },
+      "explain": {
+        "text": "Each item is either a number, appended as it is, or a list, flattened by the same function. An empty list runs no loop and returns `[]`."
+      }
+    },
+    {
+      "id": "h-local-count",
+      "difficulty": 3,
+      "skills": [
+        "at-recursion"
+      ],
+      "prose": "```python\ndef count_calls(n):\n    calls = 0\n    calls += 1\n    if n > 0:\n        count_calls(n - 1)\n    return calls\n```",
+      "question": "What does `count_calls(5)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "one",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "6",
+            "why": "You expected one shared `calls`. Each frame has its own, set to 0 then 1, and the results are ignored."
+          },
+          {
+            "id": "five",
+            "text": "5",
+            "why": "Each frame counts only itself, and the top frame returns its own 1."
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "`calls += 1` runs in every frame before it returns."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Every frame has its own `calls`, and the top frame's is 1.",
+        "generic": "Not quite right. Follow only the top frame's `calls`."
+      },
+      "explain": {
+        "text": "Six frames each make a fresh `calls`, add 1 and return it, but nobody adds the returns. The top frame returns its own 1. Use `return 1 + count_calls(n - 1)`, with `return 1` at `n == 0`."
+      }
+    },
+    {
+      "id": "h-cross-pairs",
+      "difficulty": 4,
+      "skills": [
+        "at-recursion"
+      ],
+      "prose": "Daily ranks `[5, 3, 8, 1, 4, 7, 2, 6]` split into `[5, 3, 8, 1]`, with 4 inversions, and `[4, 7, 2, 6]`, with 3.",
+      "question": "How many inversions cross the split, with the earlier number in the left half and bigger?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "pairs",
+        "accept": "7, for a total of 14",
+        "wrong": [
+          {
+            "id": "total",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "inside",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "7 crossing pairs, and $4 + 3 + 7 = 14$ in all.",
+        "generic": "Not quite right. Compare each left number with each right number.",
+        "byKey": {
+          "total": "14 is the whole count. Subtract the 7 inside the halves.",
+          "inside": "You counted pairs inside one half. Count pairs with one number on each side."
+        }
+      },
+      "explain": {
+        "text": "5 beats 4 and 2; 3 beats 2; 8 beats 4, 7, 2 and 6; 1 beats nothing. That is $2 + 1 + 4 = 7$ crossing pairs, so the list has $4 + 3 + 7 = 14$ inversions."
+      }
+    },
+    {
+      "id": "h-exp-derive",
+      "difficulty": 4,
+      "skills": [
+        "at-recursion",
+        "at-complexity"
+      ],
+      "prose": "We derive the cost of $T(n) = 2T(n-1) + 1$, with $T(1) = 1$.",
+      "question": "Put the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "Level $k$ has $2^k$ calls of 1 unit each: every call makes two calls"
+          },
+          {
+            "id": "b",
+            "text": "The sizes run $n, n - 1, \\ldots, 1$: there are $n$ levels, $k = 0$ to $n - 1$"
+          },
+          {
+            "id": "c",
+            "text": "$T(n) = 1 + 2 + \\cdots + 2^{n-1}$: add the levels"
+          },
+          {
+            "id": "d",
+            "text": "$T(n) = 2^n - 1$: a geometric sum with ratio 2"
+          },
+          {
+            "id": "e",
+            "text": "$T(n) = O(2^n)$: drop the constant"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ],
+        "same": [
+          [
+            "a",
+            "b"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "$2^n - 1$ units: exponential.",
+        "generic": "Not quite right. Describe the levels, add them, then sum the series."
+      },
+      "explain": {
+        "text": "The calls double on each of $n$ levels, so the total is $1 + 2 + \\cdots + 2^{n-1} = 2^n - 1$. Check: $T(3) = 2T(2) + 1 = 2 \\times 3 + 1 = 7 = 2^3 - 1$."
+      }
+    },
+    {
+      "id": "h-n-squared",
+      "difficulty": 4,
+      "skills": [
+        "at-recursion",
+        "at-complexity"
+      ],
+      "prose": "A pairwise-correlation step costs $n^2$ on $n$ assets, then recurses on two halves: $T(n) = 2T(n/2) + n^2$.",
+      "question": "What is its running time?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sq",
+            "text": "$O(n^2)$",
+            "correct": true
+          },
+          {
+            "id": "sqlog",
+            "text": "$O(n^2 \\log n)$",
+            "why": "You charged $n^2$ to every level. Level $k$ has $2^k$ calls of $(n/2^k)^2$: only $n^2/2^k$."
+          },
+          {
+            "id": "nlogn",
+            "text": "$O(n \\log n)$",
+            "why": "That needs $n$ work per level. The top level alone costs $n^2$."
+          },
+          {
+            "id": "exp",
+            "text": "$O(2^n)$",
+            "why": "The halving keeps the tree $\\log_2 n + 1$ levels deep, so nothing doubles $n$ times."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$n^2(1 + \\tfrac12 + \\tfrac14 + \\cdots) < 2n^2$.",
+        "generic": "Not quite right. Work out the cost of level $k$ and add the levels."
+      },
+      "explain": {
+        "text": "Level $k$ has $2^k$ calls costing $(n/2^k)^2$ each, so $n^2/2^k$ in all. The levels add to $n^2(1 + \\tfrac12 + \\tfrac14 + \\cdots) < 2n^2$. The top level dominates: $O(n^2)$."
+      }
+    },
+    {
+      "id": "h-sort-count",
+      "difficulty": 5,
+      "skills": [
+        "at-recursion",
+        "at-complexity"
+      ],
+      "prose": "Counting inversions pair by pair is $O(n^2)$: about 200 million comparisons for 20,000 trades. Divide and conquer does it in $O(n \\log n)$. Sort and count each half, then merge them. Whenever you take an item from the right half, every item still waiting in the left half is bigger: add how many remain.",
+      "question": "Write `sort_count(xs)`: return `(sorted_list, inversions)`, where equal items are not inversions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def sort_count(xs):\n    ...\n",
+        "solution": "def sort_count(xs):\n    if len(xs) <= 1:\n        return list(xs), 0\n    mid = len(xs) // 2\n    a, x = sort_count(xs[:mid])\n    b, y = sort_count(xs[mid:])\n    out, i, j, c = [], 0, 0, x + y\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n            c += len(a) - i\n    out += a[i:] + b[j:]\n    return out, c\n",
+        "tests": [
+          {
+            "call": "sort_count([3, 1, 4, 2])",
+            "expect": "([1, 2, 3, 4], 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_count([])",
+            "expect": "([], 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_count([9])",
+            "expect": "([9], 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_count([5, 3, 8, 1, 4, 7, 2, 6])",
+            "expect": "([1, 2, 3, 4, 5, 6, 7, 8], 14)",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_count([2, 2, 1])",
+            "expect": "([1, 2, 2], 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_count(list(range(3000, 0, -1)))[1]",
+            "expect": "4498500",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_count(xs)[1]",
+            "expect": "99930366",
+            "compare": "equal",
+            "setup": "xs = [(i * 7919) % 20011 for i in range(20000)]"
+          },
+          {
+            "call": "sort_count(xs)[0] == sorted(xs)",
+            "expect": "True",
+            "compare": "equal",
+            "setup": "xs = [(i * 7919) % 20011 for i in range(20000)]"
+          }
+        ],
+        "examples": [
+          {
+            "call": "sort_count([3, 1, 4, 2])",
+            "expect": "([1, 2, 3, 4], 3)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Tests 7 and 8 use 20,000 items: pair by pair would take far longer than the 5-second limit."
+      },
+      "feedback": {
+        "correct": "Halves sorted and counted, crossing pairs counted during the merge.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-5": "Test 5 expects 2 for `[2, 2, 1]`. Equal items are not inversions: take from the left half when `a[i] <= b[j]`.",
+          "test-7": "Test 7 expects 99930366 on 20,000 items. Pair-by-pair counting runs out of time; count during the merge.",
+          "test-1": "Test 1 expects `([1, 2, 3, 4], 3)`. When you take `b[j]`, add `len(a) - i`, the left items still waiting."
+        }
+      },
+      "explain": {
+        "text": "Each level of the tree merges $n$ items in total, and there are about $\\log_2 n$ levels: $T(n) = 2T(n/2) + n$, so $O(n \\log n)$. The crossing count costs nothing extra, because the merge already compares each pair that matters. This is merge sort, which the next level builds properly."
+      }
+    },
+    {
+      "id": "h-walk-loop",
+      "difficulty": 4,
+      "skills": [
+        "at-recursion"
+      ],
+      "prose": "A fund tree can be thousands of levels deep, for example a chain of feeder funds. Each node is `{\"value\": ..., \"children\": [...]}`, values in £.",
+      "question": "Write `total_value(fund)` without recursion: use a list as an explicit stack, and return the sum of every node's value.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def total_value(fund):\n    ...\n",
+        "solution": "def total_value(fund):\n    total = 0.0\n    stack = [fund]\n    while stack:\n        node = stack.pop()\n        total += node[\"value\"]\n        stack.extend(node[\"children\"])\n    return total\n",
+        "tests": [
+          {
+            "call": "total_value(fund)",
+            "expect": "340.25",
+            "compare": "isclose",
+            "setup": "fund = {\"value\": 0.0, \"children\": [{\"value\": 250.0, \"children\": []}, {\"value\": 0.0, \"children\": [{\"value\": 120.5, \"children\": []}, {\"value\": -30.25, \"children\": []}]}]}"
+          },
+          {
+            "call": "total_value({\"value\": 12.5, \"children\": []})",
+            "expect": "12.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "total_value({\"value\": 0.0, \"children\": [{\"value\": 1.0, \"children\": []} for _ in range(1000)]})",
+            "expect": "1000.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "total_value(deep)",
+            "expect": "5000.0",
+            "compare": "isclose",
+            "setup": "from functools import reduce; deep = reduce(lambda acc, i: {\"value\": 1.0, \"children\": [acc]}, range(4999), {\"value\": 1.0, \"children\": []})"
+          }
+        ],
+        "examples": [
+          {
+            "call": "total_value(fund)",
+            "expect": "340.25",
+            "compare": "isclose",
+            "setup": "fund = {\"value\": 0.0, \"children\": [{\"value\": 250.0, \"children\": []}, {\"value\": 0.0, \"children\": [{\"value\": 120.5, \"children\": []}, {\"value\": -30.25, \"children\": []}]}]}"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Test 4 is a chain 5,000 funds deep, past the recursion limit."
+      },
+      "feedback": {
+        "correct": "A list stack has no depth limit beyond memory.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 expects £5,000 on a chain 5,000 deep. Recursion runs out of frames there: pop and push on a list instead.",
+          "test-1": "Test 1 expects £340.25. Add every node's value, including the sub-funds' own."
+        }
+      },
+      "explain": {
+        "text": "The loop pops a node, adds its value and pushes its children, until the list is empty. The list grows to at most the number of waiting nodes, held in ordinary memory, so 5,000 levels are no problem."
+      }
+    },
+    {
+      "id": "h-maxrec-depth",
+      "difficulty": 3,
+      "skills": [
+        "at-recursion"
+      ],
+      "prose": "`max_rec(xs, 0, 999)` splits at `mid = (lo + hi) // 2` into `lo..mid` and `mid + 1..hi`.",
+      "question": "How many frames of `max_rec` are on the stack at its tallest?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "frames",
+        "accept": "11: sizes 1,000, 500, 250, 125, 63, 32, 16, 8, 4, 2, 1",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "calls",
+            "value": 1999,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About $\\log_2 n + 1$ frames, here 11.",
+        "generic": "Not quite right. Follow the bigger half each time down to one item.",
+        "byKey": {
+          "ten": "Count the base case's frame too.",
+          "calls": "1,999 is the number of calls. The stack holds one path at a time."
+        }
+      },
+      "explain": {
+        "text": "The bigger half has sizes 1,000, 500, 250, 125, 63, 32, 16, 8, 4, 2 and 1: eleven frames. The stack holds one path through the tree, not all 1,999 calls."
+      }
+    },
+    {
+      "id": "h-pricer-review",
+      "difficulty": 5,
+      "skills": [
+        "at-recursion",
+        "at-complexity"
+      ],
+      "title": "Reviewing a recursive pricer",
+      "kind": "longform",
+      "prompt": "A colleague prices a European call on a binomial tree with this function. Each step the stock moves by `u` or `d`, `p` is the up probability, and `disc` discounts one step.\n\n```python\ndef price(S, step, n, u, d, p, disc, K):\n    if step == n:\n        return max(S - K, 0)\n    up = price(S * u, step + 1, n, u, d, p, disc, K)\n    down = price(S * d, step + 1, n, u, d, p, disc, K)\n    return disc * (p * up + (1 - p) * down)\n```\n\n(a) Write the recurrence for the number of calls with $n$ steps, solve it, and give the count for $n = 20$ and the big O. (b) Explain why most of these calls repeat work, and how many distinct nodes there are. (c) How deep does the call stack go, and what happens for $n = 2{,}000$? (d) Write a version that is $O(n^2)$ in time and needs no recursion.",
+      "model": "**(a) Counting calls.** Let $C(m)$ be the calls made with $m$ steps still to go. A call at the last step is a base case, so $C(0) = 1$. Every other call makes two calls with one fewer step: $C(m) = 2C(m-1) + 1$. The tree has $2^k$ calls on level $k$, for $k = 0$ to $n$, so\n\n$$C(n) = 1 + 2 + \\cdots + 2^n = 2^{n+1} - 1.$$\n\nFor $n = 20$ that is $2^{21} - 1 = 2{,}097{,}151$ calls, and the cost is $O(2^n)$. At $n = 252$ it is about $1.4 \\times 10^{76}$: it would never finish.\n\n**(b) Repeated work.** The price after an up then a down move is $S u d$, the same as after a down then an up. So a node depends only on the step and the number of ups $j$, not on the order of moves. Step $k$ has only $k + 1$ distinct nodes, $j = 0, \\ldots, k$, and the whole tree has\n\n$$1 + 2 + \\cdots + (n + 1) = \\frac{(n+1)(n+2)}{2}$$\n\ndistinct nodes: 231 for $n = 20$, against 2,097,151 calls. The function prices the same node many times, just as naive `fib` recomputes `fib(2)`. Memoising on `(step, j)` would cut the work to $O(n^2)$.\n\n**(c) Stack depth.** The calls go one step deeper each time, so the stack holds $n + 1$ frames at its tallest. With Python's limit of about 1,000 frames, $n = 2{,}000$ raises `RecursionError` before any arithmetic matters. A memo does not fix this; the depth is still $n + 1$.\n\n**(d) A loop over the recombining tree.** Work backwards from the last step, keeping one list of $k + 1$ values:\n\n```python\ndef price(S, n, u, d, p, disc, K):\n    # values at the last step, j = number of ups\n    v = [max(S * u**j * d**(n - j) - K, 0) for j in range(n + 1)]\n    for step in range(n - 1, -1, -1):\n        v = [disc * (p * v[j + 1] + (1 - p) * v[j]) for j in range(step + 1)]\n    return v[0]\n```\n\nStep `step` does `step + 1` updates, so the total is $\\frac{n(n+1)}{2}$ updates: $O(n^2)$ time, $O(n)$ memory and one frame. For $n = 2{,}000$ that is about 2 million updates, well under a second.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Writes $C(m) = 2C(m-1) + 1$ with $C(0) = 1$ and solves it as $2^{n+1} - 1$ by summing the levels."
+        },
+        {
+          "points": 1,
+          "text": "Gives 2,097,151 calls for $n = 20$ and states $O(2^n)$."
+        },
+        {
+          "points": 2,
+          "text": "Explains that up-then-down equals down-then-up, so a node is fixed by (step, number of ups), and counts $\\frac{(n+1)(n+2)}{2}$ distinct nodes."
+        },
+        {
+          "points": 2,
+          "text": "States the stack depth is $n + 1$ frames and that $n = 2{,}000$ raises `RecursionError` under the limit of about 1,000, even with a memo."
+        },
+        {
+          "points": 2,
+          "text": "Writes a correct loop over the recombining tree, working backwards from the last step with one list of values."
+        },
+        {
+          "points": 1,
+          "text": "Shows the loop costs $\\frac{n(n+1)}{2}$ updates, $O(n^2)$ time, and uses one frame."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1200 @@
+{
+ "id": "l3-branches-and-loops",
+ "course": "cpp",
+ "title": "Branches and loops",
+ "minutes": 15,
+ "objectives": [
+  "Write conditionals and loops in C++."
+ ],
+ "skills": [
+  "cp-basics"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Reading a C++ loop",
+   "prose": "Five closes and a C++ loop over them. Read it as you would Python.\n\n```cpp\nint ups = 0;\nfor (int i = 1; i < 5; ++i) {\n    if (prices[i] > prices[i - 1]) {\n        ++ups;\n    }\n}\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      104,
+      101,
+      106,
+      103
+     ],
+     "showIndex": true
+    },
+    "state": {}
+   },
+   "question": "Tap every close that adds 1 to `ups`.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "c1",
+     "c3"
+    ],
+    "countWord": "tapped",
+    "wrong": [
+     {
+      "id": "first",
+      "set": [
+       "c1",
+       "c2",
+       "c3",
+       "c4"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`i` runs 1, 2, 3, 4. Each turn compares `prices[i]` with the close before it."
+    },
+    {
+     "rung": "point",
+     "text": "Index 2 holds 101. What came the day before?",
+     "highlight": [
+      "c1",
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "104 beats 100 and 106 beats 101. The others fell."
+    }
+   ],
+   "feedback": {
+    "correct": "Day 1 and day 3 beat the close before them.",
+    "generic": "Not quite right. Compare each close with its left-hand neighbour only.",
+    "byKey": {
+     "first": "You compared every close with the first one, 100. The loop compares `prices[i]` with `prices[i - 1]`, the day before.",
+     "c0": "The loop starts at `i = 1`, so index 0 is never counted itself; it is only the day before index 1.",
+     "c2": "101 is below 104, the close before it, so that day fell.",
+     "c4": "103 is below 106, the close before it, so that day fell."
+    }
+   },
+   "explain": {
+    "text": "The loop runs `i` from 1 while `i < 5`, adding 1 each turn with `++i`. Days 1 and 3 beat their neighbour, so `ups` ends at 2. Braces, not indentation, mark what is inside the loop and the `if`.",
+    "canvas": {
+     "highlight": [
+      "c1",
+      "c3"
+     ],
+     "pointers": [
+      {
+       "id": "i",
+       "at": 1,
+       "label": "i"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A backtest tracks the **drawdown**: how far the close sits below the highest close so far, as a fraction of that peak. Slide through the days and watch the running peak.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      110,
+      99,
+      105,
+      88,
+      95
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "t",
+       "at": 0,
+       "label": "today"
+      },
+      {
+       "id": "pk",
+       "at": 0,
+       "label": "peak",
+       "below": true
+      }
+     ]
+    },
+    "derive": {
+     "let": {
+      "upto": "params.cells.slice(0, d + 1)",
+      "peak": "Math.max(...upto)",
+      "dd": "(peak - params.cells[d]) / peak"
+     },
+     "t.at": "d",
+     "pk.at": "upto.indexOf(peak)",
+     "caption": "Day {{d}}: peak {{peak}}, close {{params.cells[d]}}, drawdown {{fixed(dd * 100, 1)}}%"
+    },
+    "controls": [
+     {
+      "bind": "d",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "start": 0,
+      "label": "Day"
+     }
+    ]
+   },
+   "question": "What is the largest drawdown you see, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "%",
+    "placeholder": "a percentage",
+    "accept": "20%",
+    "wrong": [
+     {
+      "id": "start",
+      "value": 0.12,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "first",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Stop on each day and read the caption. Which day is lowest against its peak?"
+    }
+   ],
+   "feedback": {
+    "correct": "From the 110 peak down to 88 is a fall of 20%.",
+    "generic": "Not quite right. Slide to day 4 and read the caption.",
+    "byKey": {
+     "start": "You measured from the first close, 100. Drawdown is measured from the highest close so far, 110.",
+     "first": "That is the fall to day 2. Day 4 falls further below the same peak."
+    }
+   },
+   "explain": {
+    "text": "The peak only ever moves up: 100, then 110, where it stays. Day 4 closes at 88, which is $(110 - 88) / 110 = 0.2$ below it. A loop keeps the running peak in one variable and the worst fall in another.",
+    "canvas": {
+     "params": {
+      "d": 4
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The parts of a for loop",
+   "prose": "A C++ `for` has three parts: a start `int i = 1`, a test `i < prices.size()` checked before every turn, and a step `++i`, which adds 1. `prices.size()` is the number of closes, here 6.\n\n```cpp\nfor (int i = 1; i < prices.size(); ++i) { ... }\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      110,
+      99,
+      105,
+      88,
+      95
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "i",
+       "at": 1,
+       "label": "i"
+      }
+     ]
+    }
+   },
+   "question": "How many times does the body run?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "5",
+    "wrong": [
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List the values of `i` that pass the test."
+    },
+    {
+     "rung": "point",
+     "text": "`i` starts at index 1, not 0.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`i` is 1, 2, 3, 4, 5; at 6 the test fails."
+    }
+   ],
+   "feedback": {
+    "correct": "`i` takes 1 to 5: five turns.",
+    "generic": "Not quite right. Write out each `i` until `i < 6` fails.",
+    "byKey": {
+     "six": "You counted every close. The loop starts at 1, so index 0 is skipped.",
+     "four": "The test is `i < 6`, so 5 still passes. The loop stops only when `i` reaches 6."
+    }
+   },
+   "explain": {
+    "text": "The test runs before each turn: 1 to 5 pass and 6 fails, so five turns. Starting at 1 gives every close a day before it. This is Python's `for i in range(1, len(prices))`.",
+    "canvas": {
+     "highlight": {
+      "range": [
+       1,
+       5
+      ],
+      "label": "i = 1 to 5"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Counting up days",
+   "prose": "`const std::vector<double>&` hands the function the caller's closes to read, without copying them; level 2 explains it. Hidden tests include an empty vector and a single close.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      104,
+      101,
+      106,
+      103
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "highlight": [
+      "c1",
+      "c3"
+     ]
+    }
+   },
+   "question": "Write `count_up_days(prices)`: how many closes beat the close before them.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nint count_up_days(const std::vector<double>& prices) {\n    int ups = 0;\n    // compare each close with the one before\n    return ups;\n}\n",
+    "solution": "#include <vector>\n\nint count_up_days(const std::vector<double>& prices) {\n    int ups = 0;\n    for (std::size_t i = 1; i < prices.size(); ++i) {\n        if (prices[i] > prices[i - 1]) {\n            ++ups;\n        }\n    }\n    return ups;\n}\n",
+    "examples": [
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100,
+        104,
+        101,
+        106,
+        103
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 2
+     }
+    ],
+    "tests": [
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100,
+        104,
+        101,
+        106,
+        103
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 2
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       []
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        1.5,
+        2.5,
+        3.5,
+        4.5
+       ]
+      ],
+      "expect": 3
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        5.0,
+        4.0,
+        3.0
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100,
+        100,
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 6 hidden tests that call count_up_days; each must return exactly the expected count."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start the loop at index 1, as on the last screen."
+    },
+    {
+     "rung": "point",
+     "text": "Test 2 is empty. Does your loop run at all when `prices.size()` is 0?",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`for (std::size_t i = 1; i < prices.size(); ++i)` with `if (prices[i] > prices[i - 1]) ++ups;`."
+    }
+   ],
+   "feedback": {
+    "correct": "Start at 1, stop before `size()`.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-2": "The empty vector broke it. If you wrote `i < prices.size() - 1`, note that `size()` is unsigned: 0 − 1 wraps to about 4 billion. Start at 1 and test `i < prices.size()` instead.",
+     "test-6": "Three equal closes are not up days. Use `>`, not `>=`.",
+     "error": "The program stopped. If the message says index out of bounds, your loop read past the last close: test `i < prices.size()`, not `<=`."
+    }
+   },
+   "explain": {
+    "text": "Starting at 1 means every `prices[i - 1]` exists, and on an empty or one-close vector the loop never runs. `std::size_t` is the unsigned type `size()` returns, so comparing it with `i` needs no conversion."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Maximum drawdown",
+   "prose": "Now the drawdown you slid through. `for (double p : prices)` visits each close in turn, like Python's `for p in prices`. Return the largest fall from a running peak as a positive fraction: 0.2 for 20%. No closes, or one close, means 0.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      110,
+      99,
+      105,
+      88,
+      95
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "pk",
+       "at": 1,
+       "label": "peak"
+      },
+      {
+       "id": "lo",
+       "at": 4,
+       "label": "worst"
+      }
+     ]
+    }
+   },
+   "question": "Write `max_drawdown(prices)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\ndouble max_drawdown(const std::vector<double>& prices) {\n    double peak = 0;\n    double worst = 0;\n    // update peak and worst for each close\n    return worst;\n}\n",
+    "solution": "#include <vector>\n\ndouble max_drawdown(const std::vector<double>& prices) {\n    double peak = 0;\n    double worst = 0;\n    for (double p : prices) {\n        if (p > peak) {\n            peak = p;\n        }\n        double fall = (peak - p) / peak;\n        if (fall > worst) {\n            worst = fall;\n        }\n    }\n    return worst;\n}\n",
+    "examples": [
+     {
+      "call": "max_drawdown",
+      "args": [
+       [
+        100,
+        110,
+        99,
+        105,
+        88,
+        95
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0.2,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "max_drawdown",
+      "args": [
+       [
+        100,
+        110,
+        99,
+        105,
+        88,
+        95
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0.2,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_drawdown",
+      "args": [
+       []
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_drawdown",
+      "args": [
+       [
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_drawdown",
+      "args": [
+       [
+        100,
+        90,
+        95
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0.1,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_drawdown",
+      "args": [
+       [
+        50,
+        60,
+        70
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_drawdown",
+      "args": [
+       [
+        100,
+        80,
+        120,
+        60
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_drawdown",
+      "args": [
+       [
+        10,
+        5,
+        10,
+        2.5
+       ]
+      ],
+      "expect": 0.75,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 7 hidden tests that call max_drawdown; each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two variables carry across the loop: the peak so far and the worst fall so far."
+    },
+    {
+     "rung": "point",
+     "text": "Update the peak before you measure today's fall.",
+     "highlight": [
+      "c1",
+      "c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Inside the loop: raise `peak` if `p` is higher, then `double fall = (peak - p) / peak;` and keep the larger of `fall` and `worst`."
+    }
+   ],
+   "feedback": {
+    "correct": "A running peak and a running worst: one pass.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-6": "In `100, 80, 120, 60` the worst fall is from the new peak 120 down to 60: 0.5. If you got 0.4, your peak stayed at 100.",
+     "test-1": "Test 1 should give 0.2: from 110 to 88. Measure each fall from the highest close so far, not from the first.",
+     "test-4": "A fall from 100 to 90 is 0.1, a positive fraction. If you got −0.1, subtract the other way: `peak - p`."
+    }
+   },
+   "explain": {
+    "text": "The peak only rises, so one variable holds it. Each close's fall is measured against it, and the worst fall is kept. With no closes the loop never runs and `worst` stays 0."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A loop over input",
+   "prose": "A program reads how many numbers follow, then the numbers. Loop `n` times with `std::cin >>` inside. Print the sum as `std::cout` prints a `double`. When `n` is 0 the loop must never run.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "3",
+      "1.5",
+      "2.25",
+      "3"
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "n",
+       "at": 0,
+       "label": "n"
+      }
+     ],
+     "highlight": {
+      "range": [
+       1,
+       3
+      ],
+      "label": "add these"
+     },
+     "caption": "Input `3 1.5 2.25 3` prints `6.75`."
+    }
+   },
+   "question": "Complete the program so it prints the sum of the `n` numbers.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <iostream>\n\nint main() {\n    int n;\n    std::cin >> n;\n    double total = 0;\n    // read n numbers and add them up\n    std::cout << total << '\\n';\n    return 0;\n}\n",
+    "solution": "#include <iostream>\n\nint main() {\n    int n;\n    std::cin >> n;\n    double total = 0;\n    for (int i = 0; i < n; ++i) {\n        double x;\n        std::cin >> x;\n        total += x;\n    }\n    std::cout << total << '\\n';\n    return 0;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "3\n1.5\n2.25\n3\n",
+      "expect": "6.75\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "3\n1.5\n2.25\n3\n",
+      "expect": "6.75\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "0\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n-4.5\n",
+      "expect": "-4.5\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "4 100 200 300 400\n",
+      "expect": "1000\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n0.1\n0.2\n",
+      "expect": "0.3\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs your program 5 times with different input on std::cin and compares what it prints."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "You know how many numbers to read, so a counting `for` fits."
+    },
+    {
+     "rung": "point",
+     "text": "Read one number per turn into a fresh `double x`.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`for (int i = 0; i < n; ++i) { double x; std::cin >> x; total += x; }`"
+    }
+   ],
+   "feedback": {
+    "correct": "`n` turns, one read per turn.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "The sum of 1.5, 2.25 and 3 is 6.75. If you got 9.75, you added `n` itself: it was already read before the loop.",
+     "test-2": "With `n` = 0 the loop must not run, and the sum is 0."
+    }
+   },
+   "explain": {
+    "text": "`for (int i = 0; i < n; ++i)` runs exactly `n` times, and zero times when `n` is 0. `std::cin >>` does not care whether numbers sit on one line or many. The last test prints 0.3 because `std::cout` shows six significant digits."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "One step too far",
+   "prose": "In Python, `range(len(prices))` stops for you. In C++ you write the test yourself.\n\n```cpp\ndouble last = 0;\nfor (std::size_t i = 0; i <= prices.size(); ++i) {\n    last = prices[i];\n}\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      101.2,
+      102.5,
+      99.8
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "i",
+       "at": 0,
+       "label": "i"
+      }
+     ]
+    }
+   },
+   "question": "With these three closes, what happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "past",
+      "text": "It reads `prices[3]`, past the end: this app stops it, a normal build may read garbage",
+      "correct": true
+     },
+     {
+      "id": "last",
+      "text": "`last` ends as 99.8",
+      "why": "You read `<=` as `<`. The loop also runs with `i = 3`, and there is no `prices[3]`."
+     },
+     {
+      "id": "throw",
+      "text": "It throws `std::out_of_range`",
+      "why": "Only `prices.at(i)` checks the index and throws. `prices[i]` does no check of its own."
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "The compiler does not know how many closes there will be. This compiles cleanly."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List the values of `i` for which `i <= 3` is true."
+    },
+    {
+     "rung": "point",
+     "text": "The valid indices are 0, 1 and 2.",
+     "highlight": [
+      "c0",
+      "c1",
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`i` reaches 3, and `prices[3]` is one past the last close."
+    }
+   ],
+   "feedback": {
+    "correct": "`<=` runs one turn too many.",
+    "generic": "Not quite right. Write out every `i` the loop takes.",
+    "byKey": {
+     "last": "You read `<=` as `<`. With `<=`, `i` also takes 3, and `prices[3]` is past the end."
+    }
+   },
+   "explain": {
+    "text": "Indices run from 0 to `size() - 1`, so the test must be `i < prices.size()`. This app's library checks `[]` and stops the program; a normal build reads whatever memory is there. Use a range-based `for` when you do not need the index.",
+    "canvas": {
+     "cells": [
+      101.2,
+      102.5,
+      99.8,
+      "past end"
+     ],
+     "pointers": [
+      {
+       "id": "i",
+       "at": 3,
+       "label": "i = 3"
+      }
+     ],
+     "highlight": [
+      "c3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "The loops you wrote, in one place.\n\n```cpp\nfor (std::size_t i = 1; i < xs.size(); ++i)  // by index\nfor (double x : xs)            // each value\nwhile (std::cin >> x)          // until input ends\n    if (x < 0) continue;       // skip to the next turn\n    if (x > limit) break;      // leave the loop now\n```\n\nA variable declared in the `for` lives only inside it.",
+   "question": "After `for (int i = 0; i < 5; ++i) { }` comes `std::cout << i;`. What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "scope",
+      "text": "It does not compile: `i` exists only inside the loop",
+      "correct": true
+     },
+     {
+      "id": "five",
+      "text": "It prints 5",
+      "why": "That is Python, where the loop variable outlives the loop. In C++ `i` ends with the `for`."
+     },
+     {
+      "id": "four",
+      "text": "It prints 4",
+      "why": "4 is the last value the body saw, but `i` no longer exists after the loop."
+     },
+     {
+      "id": "zero",
+      "text": "It prints 0",
+      "why": "`i` is not reset; it is gone. The compiler reports an undeclared name."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where was `i` declared?"
+    }
+   ],
+   "feedback": {
+    "correct": "`i` belongs to the loop.",
+    "generic": "Not quite right. In C++ a name lives inside the braces where it was declared."
+   },
+   "explain": {
+    "text": "`int i` is declared inside the `for`, so it ends with the loop and `i` is undeclared on the next line. Declare it before the loop if you need it afterwards."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Fills by venue",
+   "prose": "A day's fills arrive as one letter each: `L` for the LSE, `C` for Cboe, `T` for Turquoise, anything else for other venues. A `switch` picks a `case` by value. Without `break`, a case runs on into the next one, and this starter has that bug.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "L",
+      "X",
+      "C",
+      "L",
+      "L",
+      "T",
+      "A"
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "`LXCLLTA` gives LSE 3, Cboe 1, Turquoise 1, other 2."
+    }
+   },
+   "question": "Fix and finish `fills_by_venue`: return the counts for LSE, Cboe, Turquoise and other, in that order.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <string>\n#include <vector>\n\nstd::vector<int> fills_by_venue(const std::string& venues) {\n    std::vector<int> counts(4, 0);  // LSE, Cboe, Turquoise, other\n    for (char v : venues) {\n        switch (v) {\n            case 'L': ++counts[0];\n            case 'C': ++counts[1]; break;\n            // add Turquoise ('T') and everything else\n        }\n    }\n    return counts;\n}\n",
+    "solution": "#include <string>\n#include <vector>\n\nstd::vector<int> fills_by_venue(const std::string& venues) {\n    std::vector<int> counts(4, 0);  // LSE, Cboe, Turquoise, other\n    for (char v : venues) {\n        switch (v) {\n            case 'L': ++counts[0]; break;\n            case 'C': ++counts[1]; break;\n            case 'T': ++counts[2]; break;\n            default: ++counts[3]; break;\n        }\n    }\n    return counts;\n}\n",
+    "examples": [
+     {
+      "call": "fills_by_venue",
+      "args": [
+       "LLCT"
+      ],
+      "expect": [
+       2,
+       1,
+       1,
+       0
+      ]
+     }
+    ],
+    "tests": [
+     {
+      "call": "fills_by_venue",
+      "args": [
+       "LLCT"
+      ],
+      "expect": [
+       2,
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "call": "fills_by_venue",
+      "args": [
+       ""
+      ],
+      "expect": [
+       0,
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "call": "fills_by_venue",
+      "args": [
+       "LXCLLTA"
+      ],
+      "expect": [
+       3,
+       1,
+       1,
+       2
+      ]
+     },
+     {
+      "call": "fills_by_venue",
+      "args": [
+       "TTTT"
+      ],
+      "expect": [
+       0,
+       0,
+       4,
+       0
+      ]
+     },
+     {
+      "call": "fills_by_venue",
+      "args": [
+       "CCL"
+      ],
+      "expect": [
+       1,
+       2,
+       0,
+       0
+      ]
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 5 hidden tests that call fills_by_venue; each must return exactly the four expected counts."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Run the starter on `L` in your head. Which counts go up?"
+    },
+    {
+     "rung": "point",
+     "text": "Every `case` needs a `break` at its end.",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Add `break;` after `++counts[0]`, a `case 'T':`, and `default: ++counts[3]; break;`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each case ends with `break`, and `default` takes the rest.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "`LLCT` should give 2, 1, 1, 0. If Cboe came out as 3, each `L` fell through into the `C` case: add `break;`.",
+     "test-3": "`X` and `A` belong in the fourth count. A `default:` case catches every letter no other case names."
+    }
+   },
+   "explain": {
+    "text": "Without `break`, the `L` case ran on into the `C` case, so every LSE fill also counted as Cboe. `default` catches any letter no `case` names. Fall-through is legal C++, so the compiler will not warn you.\n\n```cpp\ncase 'L': ++counts[0];          // falls into 'C'\ncase 'L': ++counts[0]; break;   // stops here\n```"
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`for (std::size_t i = 1; i < xs.size(); ++i)` names a start, a test checked before each turn, and a step; `for (double x : xs)` visits each value.",
+   "Braces mark the body, and a variable declared in a loop ends with it.",
+   "A `switch` picks a `case` by value and falls through to the next case unless it hits `break`."
+  ],
+  "formula": {
+   "name": "Maximum drawdown",
+   "tex": "\\text{MDD} = \\max_t \\dfrac{\\max_{s \\le t} p_s - p_t}{\\max_{s \\le t} p_s}",
+   "note": "One pass: keep the running peak and the worst fall."
+  },
+  "trap": "`i <= prices.size()` runs one turn too many and reads past the end; the test is `i < prices.size()`."
+ },
+ "quiz": [
+  {
+   "id": "q-double-eq",
+   "difficulty": 2,
+   "prose": "```cpp\nif (0.1 + 0.2 == 0.3) {\n    std::cout << \"equal\\n\";\n} else {\n    std::cout << \"different\\n\";\n}\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "diff",
+      "text": "`different`",
+      "correct": true
+     },
+     {
+      "id": "eq",
+      "text": "`equal`",
+      "why": "You did the sum on paper. A `double` stores 0.1 and 0.2 slightly off, so the sum is 0.30000000000000004."
+     },
+     {
+      "id": "noc",
+      "text": "Nothing: `==` cannot compare doubles",
+      "why": "`==` compiles for doubles. It compares them exactly, which is the problem."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The sum is a hair above 0.3.",
+    "generic": "Not quite right. Are 0.1 and 0.2 stored exactly?"
+   },
+   "explain": {
+    "text": "C++ doubles behave like Python floats: `0.1 + 0.2` is 0.30000000000000004. Compare with a tolerance, such as `std::abs(a - b) < 1e-9`; `cpp-pricing` returns to this."
+   }
+  },
+  {
+   "id": "q-loop-count",
+   "difficulty": 2,
+   "prose": "```cpp\nint turns = 0;\nfor (int i = 0; i <= 5; ++i) {\n    ++turns;\n}\n```",
+   "question": "What is `turns` at the end?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "6",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0 to 5 inclusive is six turns.",
+    "generic": "Not quite right. List the values of `i`.",
+    "byKey": {
+     "five": "With `<=`, 5 also passes the test. `i` takes 0, 1, 2, 3, 4 and 5."
+    }
+   },
+   "explain": {
+    "text": "`i` runs 0, 1, 2, 3, 4, 5: six values, because `<=` lets 5 through."
+   }
+  },
+  {
+   "id": "q-empty-minus-one",
+   "difficulty": 3,
+   "prose": "```cpp\nstd::vector<double> prices;   // empty\nfor (std::size_t i = 0; i < prices.size() - 1; ++i) {\n    std::cout << prices[i] << '\\n';\n}\n```",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "wrap",
+      "text": "`prices.size() - 1` wraps to a huge number, so the loop reads past the end",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "The loop never runs, because 0 − 1 is −1",
+      "why": "`size()` returns an unsigned `std::size_t`, which cannot be −1. 0 − 1 wraps to its largest value."
+     },
+     {
+      "id": "once",
+      "text": "The loop runs once, with `i = 0`",
+      "why": "The test `0 < 0 - 1` is the question. In unsigned arithmetic 0 − 1 is huge, so it is true many times."
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "It compiles cleanly. The compiler cannot know the vector will be empty when the loop runs."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Unsigned 0 − 1 is not −1.",
+    "generic": "Not quite right. What type does `size()` return?"
+   },
+   "explain": {
+    "text": "`size()` is a `std::size_t`, which has no negatives, so 0 − 1 wraps to its maximum. The loop then indexes an empty vector. Write `i + 1 < prices.size()` instead."
+   }
+  },
+  {
+   "id": "q-stop-loss",
+   "difficulty": 3,
+   "prose": "A stop-loss sells once a close falls below 95.\n\n```cpp\nint day = 0;\nfor (double p : {101.0, 97.5, 94.0, 92.0, 99.0}) {\n    if (p < 95) break;\n    ++day;\n}\n```",
+   "question": "What is `day` at the end?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "2",
+    "wrong": [
+     {
+      "id": "count",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "idx",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "94.0 triggers the stop on the third close, before `++day`.",
+    "generic": "Not quite right. `break` leaves the loop at once.",
+    "byKey": {
+     "count": "You counted the trigger day too. `break` runs before `++day` on that turn.",
+     "idx": "`break` leaves the loop; the later closes are never visited."
+    }
+   },
+   "explain": {
+    "text": "101.0 and 97.5 pass and add 1 each. 94.0 is below 95, so `break` leaves the loop before `++day`. `day` is 2, the index of the close that triggered the stop."
+   }
+  }
+ ]
+}

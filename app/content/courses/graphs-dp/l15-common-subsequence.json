@@ -1,0 +1,1699 @@
+{
+  "id": "l15-common-subsequence",
+  "course": "graphs-dp",
+  "title": "Comparing two sequences",
+  "minutes": 14,
+  "objectives": [
+    "Find a longest common subsequence.",
+    "Recover the subsequence by walking back through the table",
+    "Adapt the same table to edit distance"
+  ],
+  "skills": [
+    "gd-dp"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Letters in order",
+      "prose": "A **subsequence** keeps letters in their order but may skip some: ACE is a subsequence of ABCDE. We want the longest subsequence that HEDGE and EDGY share.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 2,
+          "cols": 5,
+          "rowHeads": [
+            "a",
+            "b"
+          ],
+          "colHeads": false,
+          "cells": [
+            [
+              "H",
+              "E",
+              "D",
+              "G",
+              "E"
+            ],
+            [
+              "E",
+              "D",
+              "G",
+              "Y",
+              ""
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the letters of HEDGE that make the longest common subsequence.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c2",
+          "r1c3",
+          "r1c4"
+        ],
+        "only": [
+          "row1"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "edge",
+            "set": [
+              "r1c2",
+              "r1c3",
+              "r1c4",
+              "r1c5"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read EDGY from the left. Which of its letters appear in HEDGE, in the same order?"
+        },
+        {
+          "rung": "point",
+          "text": "EDGY has no H, and its only E comes before D.",
+          "highlight": [
+            "r2c1",
+            "r2c2",
+            "r2c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "E, D and G appear in this order in both words. Y is not in HEDGE."
+        }
+      ],
+      "feedback": {
+        "correct": "E, D, G: three letters, in order, in both words.",
+        "generic": "Not quite right. Each tapped letter must appear in EDGY too, in the same order.",
+        "byKey": {
+          "edge": "EDGE needs two Es in EDGY, and EDGY has one. Drop the last E.",
+          "r1c1": "H is not in EDGY at all.",
+          "r1c5": "This E comes after G in HEDGE, but EDGY's only E comes before G."
+        }
+      },
+      "explain": {
+        "text": "EDG is common to both, and no four-letter subsequence is: EDGY has one E and HEDGE has no Y. Checking every subsequence of a 20-letter word means over a million of them. For two 20-letter words, a table needs about 400 cells.",
+        "canvas": {
+          "highlight": [
+            "r1c2",
+            "r1c3",
+            "r1c4",
+            "r2c1",
+            "r2c2",
+            "r2c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Prefixes",
+      "prose": "Shrink the problem to **prefixes**: the first $i$ letters of HEDGE against the first $j$ of EDGY. Row ∅ and column ∅ are empty prefixes, so they hold 0. Row H is all 0: EDGY has no H.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ]
+        },
+        "state": {
+          "highlight": [
+            "r3c2"
+          ]
+        }
+      },
+      "question": "How long is the longest common subsequence of HE and E?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Length",
+        "accept": "1: the letter E.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which letters do HE and E share?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the cell for row E, column E.",
+          "highlight": [
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "HE and E share the letter E, so the length is 1."
+        }
+      ],
+      "feedback": {
+        "correct": "They share E: length 1.",
+        "generic": "Not quite right. List the letters of HE that are also in E.",
+        "byKey": {
+          "zero": "HE ends in E, and E is the whole of the other prefix. They share it.",
+          "two": "E is a single letter, so a common subsequence has at most one letter."
+        }
+      },
+      "explain": {
+        "text": "Call this cell $\\text{lcs}[2][1]$: the longest common subsequence of the first 2 letters of $a$ and the first 1 of $b$. Every cell is one such pair of prefixes. The corner, $\\text{lcs}[5][4]$, is the whole problem.",
+        "canvas": {
+          "cells": {
+            "r3c2": "1"
+          },
+          "highlight": [
+            "r3c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When the letters match",
+      "prose": "Rows ∅ to E are filled. Now $\\text{lcs}[3][2]$: HED against ED. Both prefixes end in D, so that D can pair with D and close the subsequence.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "0",
+              "1",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ]
+        },
+        "state": {
+          "outline": [
+            "r4c3"
+          ]
+        }
+      },
+      "question": "Tap the one cell that $\\text{lcs}[3][2]$ adds 1 to.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3c2"
+        ],
+        "max": 1
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Pair the two final Ds. What is left of each prefix?"
+        },
+        {
+          "rung": "point",
+          "text": "Remove D from both: HE and E.",
+          "highlight": [
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "HE against E is $\\text{lcs}[2][1]$, one row up and one column left."
+        }
+      ],
+      "feedback": {
+        "correct": "The diagonal: HE against E, which is 1. So $\\text{lcs}[3][2] = 2$.",
+        "generic": "Not quite right. Remove the matched D from both prefixes and find that cell.",
+        "byKey": {
+          "r3c3": "That is HE against ED. It still holds $b$'s D, which is already paired with $a$'s D.",
+          "r4c2": "That is HED against E. It still holds $a$'s D, which is already paired.",
+          "r4c3": "That is the cell being filled. Tap the cell it builds on."
+        }
+      },
+      "explain": {
+        "text": "A matched pair uses the last letter of both prefixes. What is left is HE against E, the diagonal cell, so $\\text{lcs}[3][2] = 1 + 1 = 2$. The pair ED is the subsequence so far.",
+        "canvas": {
+          "cells": {
+            "r4c3": "2"
+          },
+          "highlight": [
+            "r3c2",
+            "r4c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When they differ",
+      "prose": "When the last letters differ, one of them is unpaired. Drop $a$'s letter (the cell above) or $b$'s letter (the cell to the left), and keep the larger.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "outline": "row4"
+        },
+        "maxHeight": 220
+      },
+      "question": "Fill row D: $\\text{lcs}[3][j]$ for $j = 1$ to $4$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "E",
+          "D",
+          "G",
+          "Y"
+        ],
+        "rows": [
+          [
+            "D",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only column D is a match. The others take the larger of up and left."
+        },
+        {
+          "rung": "point",
+          "text": "D against E: up is 1, left is 0.",
+          "highlight": [
+            "row3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "E: max(1, 0) = 1. D: diagonal 1 + 1 = 2. G: max(1, 2) = 2. Y: max(1, 2) = 2."
+        }
+      ],
+      "feedback": {
+        "correct": "Row D: 1, 2, 2, 2.",
+        "generic": "Not quite right. Add 1 to the diagonal only on a match; otherwise take the larger of up and left.",
+        "byKey": {
+          "r0c1": "D and E differ. Up (HE against E) is 1 and left is 0: keep 1.",
+          "r0c2": "D matches D: the diagonal is 1, so this cell is 2.",
+          "r0c3": "D and G differ. Up is 1 and left is 2: keep 2. Do not add 1 without a match.",
+          "r0c4": "D and Y differ. Up is 1 and left is 2: keep 2."
+        }
+      },
+      "explain": {
+        "text": "Only the D column matched. Every other cell copied the larger neighbour, so the row never drops below its left or upper cell.",
+        "canvas": {
+          "cells": {
+            "r4c1": "0",
+            "r4c2": "1",
+            "r4c3": "2",
+            "r4c4": "2",
+            "r4c5": "2"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Finish the table",
+      "prose": "Two rows left. The rule is the same: match, diagonal plus 1; no match, the larger of up and left.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "2",
+              "2"
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {},
+        "maxHeight": 220
+      },
+      "question": "Fill rows G and E.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "E",
+          "D",
+          "G",
+          "Y"
+        ],
+        "rows": [
+          [
+            "G",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "E",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the matches first: G against G, and E against E."
+        },
+        {
+          "rung": "point",
+          "text": "G against G: the diagonal is $\\text{lcs}[3][2] = 2$.",
+          "highlight": [
+            "row4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row G: 1, 2, 3, 3. Row E: E matches E with diagonal 0, so 1; then 2, 3, 3 from the larger neighbour."
+        }
+      ],
+      "feedback": {
+        "correct": "Both rows end in 3: the corner is 3, the EDG you found.",
+        "generic": "Not quite right. Check each cell for a match first.",
+        "byKey": {
+          "r0c3": "G matches G: the diagonal $\\text{lcs}[3][2]$ is 2, so 3.",
+          "r1c1": "E matches E. The diagonal is $\\text{lcs}[4][0] = 0$, so this cell is 1.",
+          "r1c3": "E and G differ. Up is 3: keep it.",
+          "r1c4": "E and Y differ. Up and left are both 3."
+        }
+      },
+      "explain": {
+        "text": "The corner $\\text{lcs}[5][4] = 3$, the length of EDG. The final E of HEDGE added nothing: EDGY's E was used up early.",
+        "canvas": {
+          "cells": {
+            "r5c1": "0",
+            "r5c2": "1",
+            "r5c3": "2",
+            "r5c4": "3",
+            "r5c5": "3",
+            "r6c1": "0",
+            "r6c2": "1",
+            "r6c3": "2",
+            "r6c4": "3",
+            "r6c5": "3"
+          },
+          "highlight": [
+            "r6c5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Read the letters back",
+      "prose": "Walk back from the corner. On a match, step diagonally and keep that letter. Otherwise step to the larger of up and left, going up on a tie.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "2",
+              "2"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap the cells where the walk keeps a letter.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r5c4",
+          "r4c3",
+          "r3c2"
+        ],
+        "countWord": "kept"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at the corner, row E, column Y. Do E and Y match?"
+        },
+        {
+          "rung": "point",
+          "text": "No match: up and left are both 3, so go up to row G, column Y. Then left to G, G.",
+          "highlight": [
+            "r6c5",
+            "r5c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Matches on the way: G with G, D with D, E with E."
+        }
+      ],
+      "feedback": {
+        "correct": "G, D, E, read backwards: the subsequence is EDG.",
+        "generic": "Not quite right. Keep a letter only where the row letter equals the column letter on the walk.",
+        "byKey": {
+          "r6c2": "Row E meets column E there, but the walk never reaches it: it goes up from the corner first.",
+          "r6c5": "E and Y differ at the corner, so no letter is kept. Step up."
+        }
+      },
+      "explain": {
+        "text": "The walk keeps G, then D, then E, so reading forwards gives EDG. Each step moves up, left or both, so it takes at most $m + n$ steps.",
+        "canvas": {
+          "paths": [
+            {
+              "id": "walk",
+              "cells": [
+                "r6c5",
+                "r5c5",
+                "r5c4",
+                "r4c3",
+                "r3c2",
+                "r2c1"
+              ],
+              "colour": 2
+            }
+          ],
+          "mark": {
+            "r5c4": "G",
+            "r4c3": "D",
+            "r3c2": "E"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "Write `lcs_length(a, b)`. The table has one extra row and column for the empty prefixes, so cell `t[i][j]` compares `a[i - 1]` with `b[j - 1]`. It should work for lists as well as strings.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "2",
+              "2"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "Write `lcs_length(a, b)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    ...\n    return t[m][n]\n",
+        "solution": "def lcs_length(a, b):\n    m, n = len(a), len(b)\n    t = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                t[i][j] = t[i - 1][j - 1] + 1\n            else:\n                t[i][j] = max(t[i - 1][j], t[i][j - 1])\n    return t[m][n]\n",
+        "examples": [
+          {
+            "call": "lcs_length(\"HEDGE\", \"EDGY\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"\", \"ABC\")",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "lcs_length(\"HEDGE\", \"EDGY\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"\", \"ABC\")",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"ABC\", \"\")",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"ABC\", \"ABC\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"ABC\", \"XYZ\")",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"ABCBDAB\", \"BDCABA\")",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"AGGTAB\", \"GXTXAYB\")",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"AB\", \"BA\")",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length([\"B100\", \"S50\", \"B200\"], [\"B100\", \"B200\"])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "lcs_length(\"AB\" * 100, \"BA\" * 100)",
+            "expect": "199",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: empty strings, identical strings, no common letters, two classic pairs, lists of fills, and two 200-letter strings."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop `i` from 1 to `m` and `j` from 1 to `n`; row 0 and column 0 stay 0."
+        },
+        {
+          "rung": "point",
+          "text": "Compare `a[i - 1]` with `b[j - 1]`: the table is shifted by one.",
+          "highlight": [
+            "r5c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Match: `t[i][j] = t[i - 1][j - 1] + 1`. Else: `t[i][j] = max(t[i - 1][j], t[i][j - 1])`."
+        }
+      ],
+      "feedback": {
+        "correct": "One cell per pair of prefixes, each read from three neighbours.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has an empty string. With the padded table nothing runs and `t[0][3]` is 0.",
+          "test-5": "Test 5 has no common letters, so the answer is 0. Add 1 only when the letters match.",
+          "error": "If you see `IndexError`, compare `a[i - 1]` with `b[j - 1]`, not `a[i]` with `b[j]`."
+        }
+      },
+      "explain": {
+        "text": "Each of the $(m + 1)(n + 1)$ cells costs a constant, so the function is $O(mn)$ in time and space. Only `==` is needed between elements, so lists of fills work as well as strings."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Off by one",
+      "prose": "This version keeps the padded table but indexes the strings directly.\n\n```python\nfor i in range(1, m + 1):\n    for j in range(1, n + 1):\n        if a[i] == b[j]:\n            t[i][j] = t[i - 1][j - 1] + 1\n        else:\n            t[i][j] = max(t[i - 1][j], t[i][j - 1])\n```",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "2",
+              "2"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "What happens on `lcs_length(\"HEDGE\", \"EDGY\")`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "err",
+            "text": "`IndexError: string index out of range`",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "It returns 3",
+            "why": "You read `a[i]` as the row's letter. Row $i$ is for `a[i - 1]`; `a[i]` is the next letter, and `a[5]` does not exist."
+          },
+          {
+            "id": "two",
+            "text": "It returns 2: the shift loses one match",
+            "why": "Before any wrong number comes out, $i = 5$ reads `a[5]`, past the end of HEDGE."
+          },
+          {
+            "id": "zero",
+            "text": "It returns 0",
+            "why": "The loop never finishes: `a[5]` does not exist."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the largest `i` the loop reaches, and how long is HEDGE?"
+        },
+        {
+          "rung": "point",
+          "text": "Row $i$ of the table is for the letter `a[i - 1]`.",
+          "highlight": [
+            "r6c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At `i = 5`, `a[5]` is read. HEDGE has indices 0 to 4."
+        }
+      ],
+      "feedback": {
+        "correct": "At `i = 5` it reads `a[5]`, one past the end.",
+        "generic": "Not quite right. Trace the largest `i` and `j`.",
+        "byKey": {
+          "three": "You expected the right answer. With the padded table, `a[i]` is one letter ahead, and at `i = 5` it runs off the end.",
+          "two": "You expected a wrong number. The loop raises an error before returning anything."
+        }
+      },
+      "explain": {
+        "text": "Row 0 of the table is the empty prefix, so row $i$ holds the letter `a[i - 1]`. Writing `a[i]` compares the wrong letters for $i < 5$ and crashes at $i = 5$. With other loop bounds the same slip gives a silently wrong count, which is worse.",
+        "canvas": {
+          "highlight": [
+            "r6c2",
+            "r6c3",
+            "r6c4",
+            "r6c5"
+          ],
+          "caption": "Row 5 holds a[4], the last E"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The sibling: edit distance",
+      "prose": "You filled $\\text{lcs}[i][j] = \\text{lcs}[i-1][j-1] + 1$ on a match, else $\\max(\\text{lcs}[i-1][j], \\text{lcs}[i][j-1])$. **Edit distance** counts the fewest inserts, deletes and replaces turning $a$ into $b$, on the same table:\n\n$$d[i][j] = \\begin{cases} d[i-1][j-1] & \\text{match} \\\\ 1 + \\min(d[i-1][j],\\ d[i][j-1],\\ d[i-1][j-1]) & \\text{else} \\end{cases}$$\n\nwith $d[i][0] = i$ and $d[0][j] = j$.",
+      "question": "What is the edit distance from HEDGE to EDGY?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "2",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "3",
+            "why": "That is the distance with inserts and deletes only, $5 + 4 - 2 \\times 3$. A replace turns the last E into Y in one step."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "Deleting H gives EDGE, which still differs from EDGY in its last letter."
+          },
+          {
+            "id": "four",
+            "text": "4",
+            "why": "You changed every letter outside a matching position. Keep the shared EDG in place."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Delete H, then replace the final E with Y.",
+        "generic": "Not quite right. Keep EDG and count the operations around it."
+      },
+      "explain": {
+        "text": "Delete H to get EDGE, then replace E with Y: 2 operations. In the recurrence, up is a delete, left an insert and the diagonal a replace. Diff tools and DNA sequence alignment fill this same table."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write edit distance",
+      "prose": "Write `edit_distance(a, b)`. The base cases differ from LCS: turning a prefix of length $i$ into the empty string takes $i$ deletes, so the first column counts up, and so does the first row.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 6,
+          "cols": 5,
+          "rowLabel": "a = HEDGE",
+          "colLabel": "b = EDGY",
+          "rowHeads": [
+            "∅",
+            "H",
+            "E",
+            "D",
+            "G",
+            "E"
+          ],
+          "colHeads": [
+            "∅",
+            "E",
+            "D",
+            "G",
+            "Y"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "2",
+              "2"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ],
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "3"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "Write `edit_distance(a, b)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    ...\n    return d[m][n]\n",
+        "solution": "def edit_distance(a, b):\n    m, n = len(a), len(b)\n    d = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        d[i][0] = i\n    for j in range(n + 1):\n        d[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if a[i - 1] == b[j - 1]:\n                d[i][j] = d[i - 1][j - 1]\n            else:\n                d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])\n    return d[m][n]\n",
+        "examples": [
+          {
+            "call": "edit_distance(\"HEDGE\", \"EDGY\")",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"kitten\", \"sitting\")",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "edit_distance(\"HEDGE\", \"EDGY\")",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"kitten\", \"sitting\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"\", \"abc\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"abc\", \"\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"BRK.B\", \"BRK-B\")",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"same\", \"same\")",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"flaw\", \"lawn\")",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"intention\", \"execution\")",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"RDSA\", \"RDS.A\")",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "edit_distance(\"a\" * 150, \"b\" * 150)",
+            "expect": "150",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: empty strings on either side, identical strings, ticker spellings from two vendors, and two 150-letter strings."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set `d[i][0] = i` and `d[0][j] = j` before the main loops."
+        },
+        {
+          "rung": "point",
+          "text": "On a match, copy the diagonal with no cost.",
+          "highlight": [
+            "col1",
+            "row1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Else `d[i][j] = 1 + min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1])`: delete, insert, replace."
+        }
+      ],
+      "feedback": {
+        "correct": "Same table, a different base and a min instead of a max.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 turns an empty string into abc: three inserts. Set the first row to `d[0][j] = j`.",
+          "test-4": "Test 4 turns abc into an empty string: three deletes. Set the first column to `d[i][0] = i`.",
+          "test-6": "Identical strings need 0 edits. On a match, copy the diagonal without adding 1."
+        }
+      },
+      "explain": {
+        "text": "LCS maximises what is kept and edit distance minimises what changes, on the same $O(mn)$ table. A vendor writing BRK-B for BRK.B is one replace away, which is how fuzzy ticker matching flags likely pairs."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two trade logs that drifted",
+      "prose": "Our fills and the broker's fills for one stock should agree, in time order. A match must keep that order on both sides. The best order-keeping match is a longest common subsequence.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "#",
+            "Our log",
+            "Broker log"
+          ],
+          "rows": [
+            [
+              "1",
+              "Buy 100",
+              "Buy 100"
+            ],
+            [
+              "2",
+              "Sell 50",
+              "Buy 100"
+            ],
+            [
+              "3",
+              "Buy 100",
+              "Sell 50"
+            ],
+            [
+              "4",
+              "Buy 200",
+              "Buy 200"
+            ],
+            [
+              "5",
+              "Sell 100",
+              "Sell 75"
+            ],
+            [
+              "6",
+              "Sell 50",
+              "Sell 100"
+            ],
+            [
+              "7",
+              "",
+              "Sell 50"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "Fills in time order; ids were lost in a vendor change"
+        }
+      },
+      "question": "Under the longest in-order match, how many broker fills have no partner in our log?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Unmatched broker fills",
+        "accept": "2: the LCS has length 5, and the broker log has 7 fills.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "lcs",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the longest list of fills that appears in order in both logs."
+        },
+        {
+          "rung": "point",
+          "text": "Buy 100, Sell 50, Buy 200, Sell 100, Sell 50 is common to both.",
+          "highlight": [
+            "r0",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That match has 5 fills. The broker has 7, so $7 - 5$ have no partner."
+        }
+      ],
+      "feedback": {
+        "correct": "Five fills match in order; the broker's extra Buy 100 and Sell 75 do not.",
+        "generic": "Not quite right. Find the length of the LCS, then subtract it from the broker's count.",
+        "byKey": {
+          "one": "You matched by counting fills, 7 against 6. Order matters: Sell 75 has no partner, and one Buy 100 is unmatched.",
+          "lcs": "5 is the length of the match. The question asks for the broker fills left over."
+        }
+      },
+      "explain": {
+        "text": "`lcs_length(ours, broker)` is 5, so 2 broker fills (a Buy 100 and the Sell 75) need a look, and 1 of ours does too. The same idea compares two versions of a config file line by line.",
+        "canvas": {
+          "highlight": [
+            "r4"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$\\text{lcs}[i][j]$ is the LCS length of the first $i$ letters of $a$ and the first $j$ of $b$. A padded row and column hold the empty prefixes.",
+      "On a match, add 1 to the diagonal; otherwise take the larger of up and left. Walk back from the corner to read the letters.",
+      "Edit distance uses the same $O(mn)$ table with $1 + \\min$ of delete, insert and replace, and base cases $d[i][0] = i$, $d[0][j] = j$."
+    ],
+    "formula": {
+      "name": "Longest common subsequence",
+      "tex": "\\text{lcs}[i][j] = \\begin{cases} \\text{lcs}[i-1][j-1] + 1 & a_i = b_j \\\\ \\max(\\text{lcs}[i-1][j],\\ \\text{lcs}[i][j-1]) & \\text{else} \\end{cases}",
+      "note": "In code, $a_i$ is `a[i - 1]`."
+    },
+    "trap": "With a padded table, row $i$ holds `a[i - 1]`; comparing `a[i]` with `b[j]` is off by one."
+  },
+  "quiz": [
+    {
+      "id": "q-edges",
+      "difficulty": 2,
+      "prose": "`lcs_length` from this lesson.",
+      "question": "Which line is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bad",
+            "text": "`lcs_length(\"ABC\", \"ABC\")` is 0",
+            "correct": true
+          },
+          {
+            "id": "empty",
+            "text": "`lcs_length(\"\", \"ABC\")` is 0",
+            "why": "An empty prefix shares nothing: row 0 is all zeros, so this line is right."
+          },
+          {
+            "id": "none",
+            "text": "`lcs_length(\"ABC\", \"XYZ\")` is 0",
+            "why": "No letter matches, so no cell ever adds 1. This line is right."
+          },
+          {
+            "id": "same",
+            "text": "`lcs_length(\"ABAB\", \"ABAB\")` is 4",
+            "why": "Identical strings share every letter in order, so this line is right."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Identical strings have an LCS equal to their length: 3.",
+        "generic": "Not quite right. Check each line against the table's edges."
+      },
+      "explain": {
+        "text": "An empty string or no common letters gives 0. Identical strings match on the whole diagonal, giving their full length."
+      }
+    },
+    {
+      "id": "q-no-match",
+      "difficulty": 3,
+      "prose": "A bug adds 1 to the diagonal even when the letters differ:\n\n```python\nt[i][j] = max(t[i - 1][j - 1] + 1, t[i - 1][j], t[i][j - 1])\n```",
+      "question": "What does it return for `\"AB\"` and `\"CD\"`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "2",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "You expected the true answer. The diagonal adds 1 at every cell whether or not the letters match."
+          },
+          {
+            "id": "four",
+            "text": "4",
+            "why": "The diagonal grows by one per row, and there are only two rows, so it stops at 2."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It returns 2: the bug counts every diagonal step as a match.",
+        "generic": "Not quite right. Trace the diagonal: $t[1][1]$, then $t[2][2]$."
+      },
+      "explain": {
+        "text": "$t[1][1] = 1$ and $t[2][2] = 2$ although nothing matches. The diagonal adds 1 only on a match."
+      }
+    },
+    {
+      "id": "q-ticker",
+      "difficulty": 2,
+      "prose": "One vendor writes `RDS.A`, another writes `RDSA`.",
+      "question": "What is their edit distance?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Edit distance",
+        "accept": "1: delete the dot.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One delete.",
+        "generic": "Not quite right. Find the fewest single-letter changes.",
+        "byKey": {
+          "two": "You replaced and deleted. Deleting the dot alone is enough."
+        }
+      },
+      "explain": {
+        "text": "Deleting the dot turns `RDS.A` into `RDSA`. A small distance flags the pair for a human to confirm."
+      }
+    },
+    {
+      "id": "q-cost",
+      "difficulty": 3,
+      "prose": "Two config files of 10,000 lines each are compared line by line with the LCS table.",
+      "question": "About how many cells does the table have?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "e8",
+            "text": "About $10^8$",
+            "correct": true
+          },
+          {
+            "id": "e4",
+            "text": "About $2 \\times 10^4$",
+            "why": "That is the number of lines, $m + n$. The table has a cell for every pair, $m \\times n$."
+          },
+          {
+            "id": "exp",
+            "text": "About $2^{10{,}000}$",
+            "why": "That is the number of subsequences. The table avoids listing them."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$10^4 \\times 10^4 = 10^8$ cells.",
+        "generic": "Not quite right. Count the cells: one per pair of prefixes."
+      },
+      "explain": {
+        "text": "The table is $O(mn)$. For large files, diff tools use smarter methods that only explore cells near the best path."
+      }
+    }
+  ]
+}

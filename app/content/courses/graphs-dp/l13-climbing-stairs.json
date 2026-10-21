@@ -1,0 +1,1395 @@
+{
+  "id": "l13-climbing-stairs",
+  "course": "graphs-dp",
+  "title": "Counting ways to climb",
+  "minutes": 14,
+  "objectives": [
+    "Write a recurrence and fill a table from the bottom up.",
+    "Follow the recipe: state, recurrence, base cases, order, answer",
+    "Cut a table to $O(1)$ space when each entry reads a fixed number of earlier ones"
+  ],
+  "skills": [
+    "gd-dp"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Four stairs",
+      "prose": "You climb a staircase of 4 stairs, taking 1 or 2 stairs per step. Different sequences of steps count as different ways: 1, 1, 2 is not 2, 1, 1.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "you",
+              "at": 0,
+              "label": "you"
+            }
+          ],
+          "caption": "Stair 0 is the ground"
+        }
+      },
+      "question": "How many ways are there to reach stair 4?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ways",
+        "label": "Number of ways",
+        "accept": "5: 1111, 112, 121, 211 and 22.",
+        "wrong": [
+          {
+            "id": "pow3",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "pow4",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "List them by how many 2-steps they use: none, one or two."
+        },
+        {
+          "rung": "point",
+          "text": "The last step lands here, from stair 3 or stair 2.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No 2s: 1111. One 2: 112, 121, 211. Two 2s: 22. Five in all."
+        }
+      ],
+      "feedback": {
+        "correct": "Five ways.",
+        "generic": "Not quite right. List the sequences by how many 2-steps they use.",
+        "byKey": {
+          "pow3": "You allowed 1 or 2 at each of three steps. The number of steps varies, and the sum must be exactly 4.",
+          "pow4": "You allowed two choices at each of four stairs. A 2-step skips a stair, so there is no choice there.",
+          "three": "You counted the step mixes, not their orders. 112, 121 and 211 are three different ways."
+        }
+      },
+      "explain": {
+        "text": "No 2-steps gives 1111; one gives 112, 121 and 211; two gives 22. That is 5. Notice the split by the last step: 3 ways end with a 1, 2 ways end with a 2.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "you",
+              "at": 4,
+              "label": "you"
+            }
+          ],
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The last step",
+      "prose": "Every climb to stair 5 ends with one step. Tap stairs to see which can be the stair you stood on just before.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "goal",
+              "at": 5,
+              "label": "goal"
+            }
+          ],
+          "caption": "Stairs 0 to 6"
+        }
+      },
+      "question": "Tap every stair from which one step lands on stair 5.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c3",
+          "c4"
+        ],
+        "only": [
+          "c0",
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c6"
+        ],
+        "countWord": "stairs"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A step covers 1 or 2 stairs."
+        },
+        {
+          "rung": "point",
+          "text": "One stair below the goal works.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Stair 4 (a 1-step) and stair 3 (a 2-step)."
+        }
+      ],
+      "feedback": {
+        "correct": "Stairs 3 and 4.",
+        "generic": "Not quite right. Steps cover 1 or 2 stairs, and only go up.",
+        "byKey": {
+          "c6": "Steps only go up, so you never come down from stair 6.",
+          "c2": "From stair 2 you would need a 3-step."
+        }
+      },
+      "explain": {
+        "text": "Every way to stair 5 is a way to stair 4 plus a 1-step, or a way to stair 3 plus a 2-step. No climb is counted twice, because the last steps differ. So ways(5) = ways(4) + ways(3).",
+        "canvas": {
+          "highlight": [
+            "c3",
+            "c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Fill from the bottom",
+      "prose": "So `ways(n) = ways(n - 1) + ways(n - 2)`. Start from what we know: one way to stand on the ground, `ways(0) = 1`, and one way to reach stair 1.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1",
+            "1",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        "state": {
+          "caption": "ways(0) to ways(6)"
+        }
+      },
+      "question": "Fill in ways(2) to ways(6).",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$n$",
+          "ways(n)"
+        ],
+        "rows": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "1",
+            "1"
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "6",
+            {
+              "edit": true,
+              "answer": 13,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each entry is the sum of the two above it."
+        },
+        {
+          "rung": "point",
+          "text": "ways(2) adds these two.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "2, 3, 5, 8, 13."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 1, 2, 3, 5, 8, 13: the Fibonacci numbers.",
+        "generic": "Not quite right. Add the two entries just above each one.",
+        "byKey": {
+          "r2c1": "ways(2) = ways(1) + ways(0) = 1 + 1: take 1, 1 or one 2."
+        }
+      },
+      "explain": {
+        "text": "You filled the table from the bottom, so both values each entry needs were ready. This is **bottom-up dynamic programming**: a recurrence, base cases, and a table filled in a safe order. Each entry costs one addition, so `ways(n)` is $O(n)$.",
+        "canvas": {
+          "cells": [
+            "1",
+            "1",
+            "2",
+            "3",
+            "5",
+            "8",
+            "13"
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two numbers are enough",
+      "prose": "Each entry only reads the two before it, so we can drop the table and keep two variables:\n\n```python\ndef stairs(n):\n    prev, cur = 1, 1        # ways(0), ways(1)\n    for _ in range(2, n + 1):\n        prev, cur = cur, prev + cur\n    return cur\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1",
+            "1",
+            "2",
+            "3",
+            "5",
+            "8",
+            "13"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "prev",
+              "at": 0,
+              "label": "prev"
+            },
+            {
+              "id": "cur",
+              "at": 1,
+              "label": "cur"
+            }
+          ],
+          "caption": "ways(0) to ways(6)"
+        }
+      },
+      "question": "When `stairs(6)` returns, what are `prev` and `cur`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`prev = 8`, `cur = 13`",
+            "correct": true
+          },
+          {
+            "id": "over",
+            "text": "`prev = 13`, `cur = 21`",
+            "why": "You ran the loop once too often. `range(2, 7)` runs 5 times, moving `cur` from ways(1) to ways(6)."
+          },
+          {
+            "id": "under",
+            "text": "`prev = 5`, `cur = 8`",
+            "why": "You stopped one short. The last pass computes ways(6) from ways(5) and ways(4)."
+          },
+          {
+            "id": "same",
+            "text": "`prev = 1`, `cur = 13`",
+            "why": "`prev` moves too: each pass sets it to the old `cur`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each pass moves both pointers one stair up."
+        },
+        {
+          "rung": "point",
+          "text": "They start here, on ways(0) and ways(1).",
+          "highlight": [
+            "prev",
+            "cur"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Five passes, for $n$ = 2 to 6, move them to ways(5) and ways(6)."
+        }
+      ],
+      "feedback": {
+        "correct": "`cur` is ways(6) = 13 and `prev` is ways(5) = 8.",
+        "generic": "Not quite right. Count the passes and move both pointers each time."
+      },
+      "explain": {
+        "text": "The pair slides up the table one stair per pass. Space drops from $O(n)$ to $O(1)$, and time stays $O(n)$. The simultaneous assignment updates both from the old values.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "prev",
+              "at": 5,
+              "label": "prev"
+            },
+            {
+              "id": "cur",
+              "at": 6,
+              "label": "cur"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Zero stairs",
+      "prose": "A colleague reasons that there are no ways to climb zero stairs, so `ways(0)` should be 0.\n\n```python\ndef stairs(n):\n    ways = [0, 1] + [0] * (n - 1)\n    for i in range(2, n + 1):\n        ways[i] = ways[i - 1] + ways[i - 2]\n    return ways[n]\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "1",
+            "?",
+            "?",
+            "?"
+          ]
+        },
+        "state": {
+          "caption": "The table this code builds for n = 4"
+        }
+      },
+      "question": "What does this `stairs(4)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ways",
+        "label": "Returned value",
+        "accept": "3: the table is 0, 1, 1, 2, 3.",
+        "wrong": [
+          {
+            "id": "right",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "eight",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fill the table from the code's own base cases."
+        },
+        {
+          "rung": "point",
+          "text": "These two starting values drive everything else.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0, 1, then 1, 2, 3. It returns 3, not 5."
+        }
+      ],
+      "feedback": {
+        "correct": "3, one Fibonacci number too low.",
+        "generic": "Not quite right. Build the table from `[0, 1]`.",
+        "byKey": {
+          "right": "You gave the true count. This code starts from `ways(0) = 0`, so every entry slides down: it returns 3.",
+          "two": "Check the loop: it runs up to `i = 4` and stores 3 there."
+        }
+      },
+      "explain": {
+        "text": "With `ways(0) = 0`, ways(2) comes out as 1, missing the single 2-step. Standing still is exactly one way to be on the ground, so `ways(0) = 1`. Check base cases against a small case you can count: ways(2) = 2.",
+        "canvas": {
+          "cells": [
+            "0",
+            "1",
+            "1",
+            "2",
+            "3"
+          ],
+          "highlight": [
+            "c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Fewest coins",
+      "prose": "Pay an amount with as few coins as possible, from coins worth 1, 3 and 4. Let `best(a)` be the fewest coins for amount `a`. The last coin is 1, 3 or 4, so `best(a) = 1 + min(best(a - c))` over coins `c ≤ a`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            3,
+            4
+          ]
+        },
+        "state": {
+          "caption": "Coin values"
+        }
+      },
+      "question": "Fill in `best(a)` for amounts 2 to 6.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Amount $a$",
+          "`best(a)`"
+        ],
+        "rows": [
+          [
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "1"
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "6",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each amount, try each coin last and look up what is left."
+        },
+        {
+          "rung": "point",
+          "text": "For 6, try a 3 last: 3 is left.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "best(6) = 1 + min(best(5), best(3), best(2)) = 1 + min(2, 1, 2) = 2."
+        }
+      ],
+      "feedback": {
+        "correct": "0, 1, 2, 1, 1, 2, 2: two coins pay 6, as 3 + 3.",
+        "generic": "Not quite right. For each amount, take 1 plus the smallest of the entries for amount minus a coin.",
+        "byKey": {
+          "r6c1": "Taking the 4 first leaves 2, which needs two 1s: 3 coins. Try a 3 last: 3 + 3 is 2 coins.",
+          "r5c1": "5 is 4 + 1: two coins."
+        }
+      },
+      "explain": {
+        "text": "Taking the biggest coin first gives 4 + 1 + 1, three coins. The table tries every last coin and finds 3 + 3. Greedy choices can fail; the recurrence cannot, because it checks every option once per amount.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The wrong direction",
+      "prose": "This version fills the same table from the top amount down:\n\n```python\nINF = float('inf')\nbest = [0] + [INF] * amount\nfor a in range(amount, 0, -1):     # top down\n    for c in coins:\n        if c <= a:\n            best[a] = min(best[a], best[a - c] + 1)\nreturn best[amount] if best[amount] < INF else -1\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            3,
+            4
+          ]
+        },
+        "state": {
+          "caption": "Coins 1, 3 and 4; amount 6"
+        }
+      },
+      "question": "What does it return for amount 6?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "label": "Returned value",
+        "accept": "−1: best[6] is still infinite when it is read.",
+        "wrong": [
+          {
+            "id": "right",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "greedy",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When `a = 6` is processed, which entries are filled already?"
+        },
+        {
+          "rung": "point",
+          "text": "Only `best[0]` is ready at that moment.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "best[5], best[3] and best[2] are all still infinite, so best[6] stays infinite and the function returns −1."
+        }
+      ],
+      "feedback": {
+        "correct": "−1: it read entries before they were computed.",
+        "generic": "Not quite right. Trace the first pass, `a = 6`.",
+        "byKey": {
+          "right": "2 is the true answer, but this loop computes `best[6]` first, from entries that are still infinite.",
+          "one": "best[6] is never set: none of 5, 3 or 2 is ready when 6 is processed."
+        }
+      },
+      "explain": {
+        "text": "Each `best[a]` reads smaller amounts, so smaller amounts must come first. Going down, amount 6 reads infinities and keeps one. The order must make every value ready before it is used."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The recipe",
+      "prose": "Both problems followed the same five steps:\n\n1. **State**: what one table entry means.\n2. **Recurrence**: an entry from smaller entries, by the last choice.\n3. **Base cases**: entries with no smaller ones.\n4. **Order**: fill so every entry is ready when read.\n5. **Answer**: read it off.\n\n$$\\text{ways}(n) = \\text{ways}(n-1) + \\text{ways}(n-2)$$",
+      "question": "Now steps of 1, 2 or 3 stairs are allowed. Which recurrence counts the ways?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "ways(n) = ways(n − 1) + ways(n − 2) + ways(n − 3)",
+            "correct": true
+          },
+          {
+            "id": "times",
+            "text": "ways(n) = 3 × ways(n − 1)",
+            "why": "You gave every stair three choices. The last step decides which earlier stair you came from: three different smaller problems."
+          },
+          {
+            "id": "skip",
+            "text": "ways(n) = ways(n − 1) + ways(n − 3)",
+            "why": "You dropped the 2-step. Each allowed last step adds one term."
+          },
+          {
+            "id": "plus",
+            "text": "ways(n) = ways(n − 1) + ways(n − 2) + 1",
+            "why": "The extra 1 counts a climb that does not exist. Each way ends with a 1, 2 or 3-step and nothing else."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "One term per possible last step.",
+        "generic": "Not quite right. Split the ways by their last step."
+      },
+      "explain": {
+        "text": "The last step is 1, 2 or 3 stairs, so it came from stair $n - 1$, $n - 2$ or $n - 3$. Add those counts. With ways(0) = 1 this gives 1, 1, 2, 4, 7, 13."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The recipe for coins",
+      "prose": "Put the five steps for the coin problem in order.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            3,
+            4
+          ]
+        },
+        "state": {
+          "caption": "Coins 1, 3 and 4"
+        }
+      },
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "State: `best[a]` is the fewest coins that pay amount `a`"
+          },
+          {
+            "id": "s2",
+            "text": "Recurrence: `best[a] = 1 + min(best[a - c])` over coins `c ≤ a`"
+          },
+          {
+            "id": "s3",
+            "text": "Base case: `best[0] = 0`, and every other entry starts at infinity"
+          },
+          {
+            "id": "s4",
+            "text": "Order: `a = 1, 2, ..., amount`, so `best[a - c]` is ready"
+          },
+          {
+            "id": "s5",
+            "text": "Answer: `best[amount]`, or −1 if it is still infinite"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You cannot write a recurrence until you say what an entry means."
+        },
+        {
+          "rung": "point",
+          "text": "The order step depends on which entries the recurrence reads: amount minus one of these coins.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "State, recurrence, base case, order, answer."
+        }
+      ],
+      "feedback": {
+        "correct": "State, recurrence, base case, order, answer.",
+        "generic": "Not quite right. Each step uses the one before it.",
+        "byKey": {
+          "s4": "The order comes from the recurrence: it reads smaller amounts, so we fill upwards."
+        }
+      },
+      "explain": {
+        "text": "The state names the table, the recurrence links its entries, and the base case anchors them. The order follows from what the recurrence reads. The answer is one entry, with −1 kept for amounts no coins can make."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Climb and pay",
+      "prose": "`stairs(n)` counts the ways to climb $n$ stairs in steps of 1 or 2, in $O(n)$ time and $O(1)$ space. `min_coins(coins, amount)` returns the fewest coins that pay `amount` exactly, any coin usable any number of times, or −1 when it cannot be done.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1",
+            "1",
+            "2",
+            "3",
+            "5",
+            "8",
+            "13"
+          ]
+        },
+        "state": {
+          "caption": "`stairs(0)` to `stairs(6)`"
+        },
+        "maxHeight": 160
+      },
+      "question": "Write `stairs(n)` and `min_coins(coins, amount)` bottom up.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def stairs(n):\n    ...\n\n\ndef min_coins(coins, amount):\n    ...\n",
+        "solution": "def stairs(n):\n    prev, cur = 1, 1                 # ways(0), ways(1)\n    for _ in range(2, n + 1):\n        prev, cur = cur, prev + cur\n    return cur\n\n\ndef min_coins(coins, amount):\n    INF = float('inf')\n    best = [0] + [INF] * amount      # best[0] = 0: no coins for nothing\n    for a in range(1, amount + 1):   # bottom up: smaller amounts first\n        for c in coins:\n            if c <= a and best[a - c] + 1 < best[a]:\n                best[a] = best[a - c] + 1\n    return best[amount] if best[amount] < INF else -1\n",
+        "examples": [
+          {
+            "call": "stairs(6)",
+            "expect": "13",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([1, 3, 4], 6)",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "stairs(0)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "stairs(1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "stairs(2)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "stairs(10)",
+            "expect": "89",
+            "compare": "equal"
+          },
+          {
+            "call": "stairs(90)",
+            "expect": "4660046610375530309",
+            "compare": "equal"
+          },
+          {
+            "call": "stairs(5000) % (10**9 + 7)",
+            "expect": "419609281",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([1, 3, 4], 6)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([1], 0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([2], 3)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([5], 3)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([5, 1], 3)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([3, 7], 5)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([1, 5, 10, 25], 63)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([186, 419, 83, 408], 6249)",
+            "expect": "20",
+            "compare": "equal"
+          },
+          {
+            "call": "min_coins([2, 5], 11)",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 15 hidden tests, including `stairs(0)`, `amount = 0`, coins larger than the amount, and coin systems where taking the largest coin first fails. `stairs(5000)` is too deep for plain recursion, so fill bottom up."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`stairs`: two variables starting at ways(0) = ways(1) = 1. `min_coins`: a list of size `amount + 1`."
+        },
+        {
+          "rung": "point",
+          "text": "ways(0) is 1, not 0.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`best = [0] + [inf] * amount`; for `a` from 1 up, for each coin `c <= a`, keep `min(best[a], best[a - c] + 1)`. Return −1 if `best[amount]` is infinite."
+        }
+      ],
+      "feedback": {
+        "correct": "Both tables fill from the bottom, and impossible amounts return −1.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 1: there is one way to climb zero stairs. Check your base case.",
+          "test-6": "Test 6 hit the recursion limit or the clock. Use a loop with two variables, not recursion.",
+          "test-7": "Test 7 expects 2 (3 + 3). Taking the largest coin first gives 3; try every coin as the last one.",
+          "test-8": "Test 8 expects 0: paying nothing needs no coins.",
+          "test-9": "Test 9 expects −1: coins of 2 can never make 3. Turn an infinite entry into −1."
+        }
+      },
+      "explain": {
+        "text": "`stairs` keeps two numbers, so memory does not grow with $n$. `min_coins` does `amount` × `len(coins)` steps. A coin larger than an amount is skipped by `c <= a`, and amount 0 returns the base case."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Back to the start price",
+      "prose": "A stock at £100 moves up or down by the same factor each day, so up then down returns to £100. The grid counts price paths by how many ups and downs they contain.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowLabel": "Up moves",
+          "colLabel": "Down moves",
+          "rowHeads": [
+            "0",
+            "1",
+            "2",
+            "3"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3"
+          ],
+          "lattice": true
+        },
+        "state": {
+          "cells": {
+            "r1c1": "1",
+            "r1c2": "1",
+            "r1c3": "1",
+            "r1c4": "1",
+            "r2c1": "1",
+            "r2c2": "2",
+            "r2c3": "3",
+            "r2c4": "4",
+            "r3c1": "1",
+            "r3c2": "3",
+            "r3c3": "6",
+            "r3c4": "10",
+            "r4c1": "1",
+            "r4c2": "4",
+            "r4c3": "10",
+            "r4c4": "?"
+          },
+          "shade": {
+            "start": {
+              "ids": [
+                "r1c1"
+              ],
+              "colour": 3
+            }
+          },
+          "caption": "Paths to each (ups, downs) node of the lattice"
+        }
+      },
+      "question": "After 6 days, how many price paths end back at £100?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "paths",
+        "label": "Paths ending at £100",
+        "accept": "20: $\\binom{6}{3}$.",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 64,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "six",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ending at £100 after 6 days means 3 ups and 3 downs."
+        },
+        {
+          "rung": "point",
+          "text": "The node with 3 ups and 3 downs adds these two.",
+          "highlight": [
+            "r3c4",
+            "r4c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Last move up or down: $10 + 10 = 20$."
+        }
+      ],
+      "feedback": {
+        "correct": "20 paths: $\\binom{6}{3}$.",
+        "generic": "Not quite right. Add the counts from the two nodes one move earlier.",
+        "byKey": {
+          "one-side": "You counted paths whose last move is up. Paths whose last move is down end there too.",
+          "all": "That is every 6-day path, $2^6$. Only those with 3 ups and 3 downs return to £100."
+        }
+      },
+      "explain": {
+        "text": "The last move was up or down, so count(3, 3) = count(2, 3) + count(3, 2) = 20. That is Pascal's triangle: the same recurrence as climbing stairs, on a lattice. A binomial pricer weights these counts by probabilities.",
+        "canvas": {
+          "cells": {
+            "r4c4": "20"
+          },
+          "highlight": [
+            "r4c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Fewest trades",
+      "prose": "A venue only accepts lots of 100, 500, 600 or 900 shares. You need to build a position of exactly 1,100 shares. Treat each lot as a coin.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "100",
+            "500",
+            "600",
+            "900"
+          ]
+        },
+        "state": {
+          "caption": "Lot sizes, in shares"
+        }
+      },
+      "question": "What is the fewest number of trades?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "trades",
+        "label": "Fewest trades",
+        "accept": "2: 500 + 600.",
+        "wrong": [
+          {
+            "id": "greedy",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ones",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try each lot as the last trade and look at what is left."
+        },
+        {
+          "rung": "point",
+          "text": "Taking 900 first leaves 200: two lots of 100.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "500 + 600 = 1,100 in two trades."
+        }
+      ],
+      "feedback": {
+        "correct": "Two trades: 500 and 600.",
+        "generic": "Not quite right. Run the coin recurrence in units of 100 shares.",
+        "byKey": {
+          "greedy": "You took the biggest lot first: 900 + 100 + 100. The table finds 500 + 600."
+        }
+      },
+      "explain": {
+        "text": "In units of 100 this is coins 1, 5, 6 and 9 for amount 11, and the table gives 2. Level 4 extends the recipe to two-dimensional states. Knapsack adds a capacity, and comparing two sequences uses a position in each.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Split the ways by the last choice: ways(n) = ways(n − 1) + ways(n − 2). Base cases ways(0) = ways(1) = 1.",
+      "Bottom-up dynamic programming fills a table in an order where every entry is ready before it is read. Keep only what the recurrence reads: two numbers for stairs.",
+      "For fewest coins, best(a) = 1 + min over coins of best(a − c), with best(0) = 0 and −1 for amounts no coins can make. Greedy can fail; the table cannot."
+    ],
+    "formula": {
+      "name": "Two recurrences",
+      "tex": "\\text{ways}(n) = \\text{ways}(n-1) + \\text{ways}(n-2), \\qquad \\text{best}(a) = 1 + \\min_{c \\le a} \\text{best}(a - c)",
+      "note": "State, recurrence, base cases, order, answer."
+    },
+    "trap": "Setting ways(0) = 0, or filling in an order that reads an entry before it is computed, gives wrong answers with no error."
+  },
+  "quiz": [
+    {
+      "id": "q-zero-amount",
+      "difficulty": 2,
+      "prose": "`min_coins` from the lesson is called with `amount = 0`.",
+      "question": "What does `min_coins([2, 5], 0)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "neg",
+            "text": "−1",
+            "why": "Paying nothing is always possible: use no coins at all. −1 is only for amounts no coins can make."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "No coin is needed for amount 0, so the count is 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0: the base case.",
+        "generic": "Not quite right. How many coins do you hand over to pay nothing?"
+      },
+      "explain": {
+        "text": "`best[0] = 0` is the base case. The loop over amounts 1 to 0 does not run, and the function returns 0."
+      }
+    },
+    {
+      "id": "q-greedy",
+      "difficulty": 3,
+      "prose": "Coins are worth 2 and 5.",
+      "question": "What does `min_coins([2, 5], 11)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "coins",
+        "label": "Fewest coins",
+        "accept": "4: 5 + 2 + 2 + 2.",
+        "wrong": [
+          {
+            "id": "greedy",
+            "value": -1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4 coins: 5 + 2 + 2 + 2.",
+        "generic": "Not quite right. Try each coin as the last one.",
+        "byKey": {
+          "greedy": "You took two 5s first, leaving 1, which no coin pays. The table tries one 5 and finds 5 + 2 + 2 + 2."
+        }
+      },
+      "explain": {
+        "text": "Greedy grabs 5 + 5 and is stuck with 1. The table reaches 11 as 5 + 2 + 2 + 2, four coins. It never commits to a coin it cannot finish with."
+      }
+    },
+    {
+      "id": "q-three-steps",
+      "difficulty": 3,
+      "prose": "Steps of 1, 2 or 3 stairs are allowed, with ways(0) = 1, ways(1) = 1 and ways(2) = 2.",
+      "question": "How many ways are there to climb 5 stairs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ways",
+        "label": "Number of ways",
+        "accept": "13: the table is 1, 1, 2, 4, 7, 13.",
+        "wrong": [
+          {
+            "id": "two-steps",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "pow",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "13 ways.",
+        "generic": "Not quite right. Each entry adds the three before it.",
+        "byKey": {
+          "two-steps": "That is the count with steps of 1 or 2 only. The 3-step adds a third term."
+        }
+      },
+      "explain": {
+        "text": "ways(3) = 2 + 1 + 1 = 4, ways(4) = 4 + 2 + 1 = 7, ways(5) = 7 + 4 + 2 = 13."
+      }
+    },
+    {
+      "id": "q-why-one",
+      "difficulty": 2,
+      "prose": "In the stairs table, ways(0) = 1.",
+      "question": "Why is 1 the right value?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "still",
+            "text": "There is exactly one way to be on the ground: take no steps",
+            "correct": true
+          },
+          {
+            "id": "avoid",
+            "text": "It avoids a zero in the table, which would break the additions",
+            "why": "Zero would not break anything; it gives wrong answers. ways(2) would come out 1 instead of 2."
+          },
+          {
+            "id": "conv",
+            "text": "It is a convention with no effect on ways(2)",
+            "why": "It matters: ways(2) = ways(1) + ways(0) relies on it to count the single 2-step."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The empty climb is one climb.",
+        "generic": "Not quite right. Check ways(2) with each choice."
+      },
+      "explain": {
+        "text": "A climb to stair 2 that ends with a 2-step starts from the ground with no steps taken. That empty start is one way, so ways(0) = 1 and ways(2) = 2."
+      }
+    }
+  ]
+}

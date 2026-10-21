@@ -17,9 +17,14 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "def max_drawdown(prices):\n    # largest fall from a running peak, as a fraction\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    pass\n\n\ndef test_flat():\n    pass\n\n\ndef test_steady_rise():\n    pass\n\n\n# ---- Leave the lines below alone. ----\n# This page cannot load pytest, so they stand in for it.\n# In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n",
-        "solution": "def max_drawdown(prices):\n    # largest fall from a running peak, as a fraction\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    # peak £125.00, low after it £100.00: 25 / 125\n    dd = max_drawdown([100.00, 125.00, 100.00, 110.00])\n    assert dd == pytest.approx(0.2)\n\n\ndef test_flat():\n    dd = max_drawdown([100.00, 100.00, 100.00])\n    assert dd == pytest.approx(0.0)\n\n\ndef test_steady_rise():\n    dd = max_drawdown([100.00, 110.00, 121.00])\n    assert dd == pytest.approx(0.0)\n\n\n# ---- Leave the lines below alone. ----\n# This page cannot load pytest, so they stand in for it.\n# In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n",
+        "starter": "import pytest\n\n\ndef max_drawdown(prices):\n    # largest fall from a running peak, as a fraction\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    pass\n\n\ndef test_flat():\n    pass\n\n\ndef test_steady_rise():\n    pass\n",
+        "solution": "import pytest\n\n\ndef max_drawdown(prices):\n    # largest fall from a running peak, as a fraction\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    # peak £125.00, low after it £100.00: 25 / 125\n    dd = max_drawdown([100.00, 125.00, 100.00, 110.00])\n    assert dd == pytest.approx(0.2)\n\n\ndef test_flat():\n    dd = max_drawdown([100.00, 100.00, 100.00])\n    assert dd == pytest.approx(0.0)\n\n\ndef test_steady_rise():\n    dd = max_drawdown([100.00, 110.00, 121.00])\n    assert dd == pytest.approx(0.0)\n",
         "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          },
           {
             "call": "test_one_dip()",
             "expect": "None"
@@ -95,7 +100,8 @@
             "expect": "Exception"
           }
         ],
-        "how": "Check runs each test against two correct versions that round differently, where all must pass. Then it runs all three against five broken versions, where at least one must fail. The lines at the bottom of the starter stand in for pytest, which this page cannot load."
+        "how": "Check runs each test against two correct versions that round differently, where all must pass. Then it runs all three against five broken versions, where at least one must fail. Run examples runs your tests with pytest and prints its report.",
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\", \"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(**swap):\n    code = _zq_pytest(swap)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n"
       },
       "feedback": {
         "correct": "All three pass on both correct versions, and every bug fails one of them.",
@@ -126,9 +132,14 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "def parse_row(line):\n    # \"2024-03-05,101.25\" -> (\"2024-03-05\", 101.25)\n    date, close = line.strip().split(\",\")\n    price = float(close)\n    if price <= 0:\n        raise ValueError(f\"bad price on {date}\")\n    return date, price\n\n\ndef test_good_row():\n    pass\n\n\ndef test_zero_price_raises():\n    pass\n\n\n# ---- Leave the lines below alone. ----\n# This page cannot load pytest, so they stand in for it.\n# In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass Raises:\n    def __init__(self, expected):\n        self.expected = expected\n\n    def __enter__(self):\n        return self\n\n    def __exit__(self, kind, value, tb):\n        if kind is None:\n            raise AssertionError(\"DID NOT RAISE\")\n        return issubclass(kind, self.expected)\n\n\nclass pytest:\n    approx = Approx\n    raises = Raises\n",
-        "solution": "def parse_row(line):\n    # \"2024-03-05,101.25\" -> (\"2024-03-05\", 101.25)\n    date, close = line.strip().split(\",\")\n    price = float(close)\n    if price <= 0:\n        raise ValueError(f\"bad price on {date}\")\n    return date, price\n\n\ndef test_good_row():\n    row = parse_row(\"2024-03-05,101.25\\n\")\n    assert row == (\"2024-03-05\", 101.25)\n\n\ndef test_zero_price_raises():\n    with pytest.raises(ValueError):\n        parse_row(\"2024-03-06,0.00\\n\")\n\n\n# ---- Leave the lines below alone. ----\n# This page cannot load pytest, so they stand in for it.\n# In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass Raises:\n    def __init__(self, expected):\n        self.expected = expected\n\n    def __enter__(self):\n        return self\n\n    def __exit__(self, kind, value, tb):\n        if kind is None:\n            raise AssertionError(\"DID NOT RAISE\")\n        return issubclass(kind, self.expected)\n\n\nclass pytest:\n    approx = Approx\n    raises = Raises\n",
+        "starter": "import pytest\n\n\ndef parse_row(line):\n    # \"2024-03-05,101.25\" -> (\"2024-03-05\", 101.25)\n    date, close = line.strip().split(\",\")\n    price = float(close)\n    if price <= 0:\n        raise ValueError(f\"bad price on {date}\")\n    return date, price\n\n\ndef test_good_row():\n    pass\n\n\ndef test_zero_price_raises():\n    pass\n",
+        "solution": "import pytest\n\n\ndef parse_row(line):\n    # \"2024-03-05,101.25\" -> (\"2024-03-05\", 101.25)\n    date, close = line.strip().split(\",\")\n    price = float(close)\n    if price <= 0:\n        raise ValueError(f\"bad price on {date}\")\n    return date, price\n\n\ndef test_good_row():\n    row = parse_row(\"2024-03-05,101.25\\n\")\n    assert row == (\"2024-03-05\", 101.25)\n\n\ndef test_zero_price_raises():\n    with pytest.raises(ValueError):\n        parse_row(\"2024-03-06,0.00\\n\")\n",
         "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          },
           {
             "call": "test_good_row()",
             "expect": "None"
@@ -150,37 +161,38 @@
             "expect": "None"
           },
           {
-            "setup": "parse_row = lambda line: (line.strip().split(',')[0], float(line.strip().split(',')[1]))",
-            "call": "(test_good_row(), test_zero_price_raises())",
-            "compare": "raises",
-            "expect": "Exception"
+            "setup": "planted = lambda line: (line.strip().split(',')[0], float(line.strip().split(',')[1]))",
+            "call": "outcome(parse_row=planted)",
+            "compare": "equal",
+            "expect": "'failed'"
           },
           {
-            "setup": "parse_row = lambda line: _right_parse_row(line) if float(line.strip().split(',')[1]) > 0 else None",
-            "call": "(test_good_row(), test_zero_price_raises())",
-            "compare": "raises",
-            "expect": "Exception"
+            "setup": "planted = lambda line: _right_parse_row(line) if float(line.strip().split(',')[1]) > 0 else None",
+            "call": "outcome(parse_row=planted)",
+            "compare": "equal",
+            "expect": "'failed'"
           },
           {
-            "setup": "parse_row = lambda line: (_right_parse_row(line)[0], line.strip().split(',')[1])",
-            "call": "(test_good_row(), test_zero_price_raises())",
-            "compare": "raises",
-            "expect": "Exception"
+            "setup": "planted = lambda line: (_right_parse_row(line)[0], line.strip().split(',')[1])",
+            "call": "outcome(parse_row=planted)",
+            "compare": "equal",
+            "expect": "'failed'"
           },
           {
-            "setup": "parse_row = lambda line: (_right_parse_row(line)[0], _right_parse_row(line)[1] / 100)",
-            "call": "(test_good_row(), test_zero_price_raises())",
-            "compare": "raises",
-            "expect": "Exception"
+            "setup": "planted = lambda line: (_right_parse_row(line)[0], _right_parse_row(line)[1] / 100)",
+            "call": "outcome(parse_row=planted)",
+            "compare": "equal",
+            "expect": "'failed'"
           },
           {
-            "setup": "parse_row = lambda line: _right_parse_row(line)[::-1]",
-            "call": "(test_good_row(), test_zero_price_raises())",
-            "compare": "raises",
-            "expect": "Exception"
+            "setup": "planted = lambda line: _right_parse_row(line)[::-1]",
+            "call": "outcome(parse_row=planted)",
+            "compare": "equal",
+            "expect": "'failed'"
           }
         ],
-        "how": "Check runs both tests against the right `parse_row`, where both must pass, and against five broken versions, where at least one must fail. The lines at the bottom of the starter stand in for pytest, which this page cannot load."
+        "how": "Check runs both tests against the right `parse_row`, where both must pass, and against five broken versions, where at least one must fail. Run examples runs your tests with pytest and prints its report.",
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\", \"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(**swap):\n    code = _zq_pytest(swap)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n"
       },
       "feedback": {
         "correct": "Both tests pass on the right code, and every broken version fails one.",

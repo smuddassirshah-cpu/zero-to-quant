@@ -1,0 +1,1601 @@
+{
+  "id": "l16-grid-paths",
+  "course": "graphs-dp",
+  "title": "Paths through a grid",
+  "minutes": 14,
+  "objectives": [
+    "Count and optimise paths through a grid with obstacles.",
+    "Fill the first row and column correctly when a block sits on the edge",
+    "Link the open grid to Pascal's triangle and the binomial lattice"
+  ],
+  "skills": [
+    "gd-dp",
+    "gd-paths"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Routes across a grid",
+      "prose": "A robot starts at S and must reach G. Each move goes one cell right or one cell down, never left, up or diagonally. One route is drawn.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 3,
+          "cells": [
+            [
+              "S",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "G"
+            ]
+          ],
+          "rowHeads": false,
+          "colHeads": false
+        },
+        "state": {
+          "paths": [
+            {
+              "id": "route",
+              "cells": [
+                "r1c1",
+                "r1c2",
+                "r2c2",
+                "r2c3",
+                "r3c3"
+              ],
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "How many different routes reach G?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Routes",
+        "accept": "6 routes.",
+        "wrong": [
+          {
+            "id": "cells",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "binary",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every route makes 2 right moves and 2 down moves. Only their order changes."
+        },
+        {
+          "rung": "point",
+          "text": "Try listing them: RRDD, RDRD, ...",
+          "highlight": [
+            "r1c1",
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The orders are RRDD, RDRD, RDDR, DRRD, DRDR, DDRR."
+        }
+      ],
+      "feedback": {
+        "correct": "Six orders of two Rs and two Ds.",
+        "generic": "Not quite right. Each route is an order of 2 rights and 2 downs. List them.",
+        "byKey": {
+          "cells": "9 is the number of cells. Count routes: orders of 2 rights and 2 downs.",
+          "binary": "$2^4$ counts every sequence of 4 moves, but exactly 2 must be right and 2 down.",
+          "four": "You may have missed routes that zigzag, such as RDRD and DRDR."
+        }
+      },
+      "explain": {
+        "text": "Each route is an order of R, R, D, D, and there are 6 such orders. Listing works for 3 by 3. A 20 by 20 grid has over 35 billion routes, so we need a better way."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Count to each cell",
+      "prose": "Count routes to every cell, not just G. The first row and column hold 1: only one straight route reaches them. Any other cell is entered from above or from the left.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 3,
+          "cells": [
+            [
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "",
+              ""
+            ],
+            [
+              "1",
+              "",
+              ""
+            ]
+          ],
+          "rowHeads": [
+            "1",
+            "2",
+            "3"
+          ],
+          "colHeads": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "state": {
+          "highlight": [
+            "r2c2"
+          ]
+        }
+      },
+      "question": "Fill the number of routes to each remaining cell.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "Column 2",
+          "Column 3"
+        ],
+        "rows": [
+          [
+            "Row 2",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Row 3",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A route into a cell arrives from above or from the left, never both."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2, column 2 is entered from the 1 above it or the 1 to its left.",
+          "highlight": [
+            "r1c2",
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 2: 1 + 1 = 2, then 1 + 2 = 3. Row 3: 2 + 1 = 3, then 3 + 3 = 6."
+        }
+      ],
+      "feedback": {
+        "correct": "2, 3, 3 and 6: the corner gives the 6 routes.",
+        "generic": "Not quite right. Add the cell above and the cell to the left.",
+        "byKey": {
+          "r0c1": "Row 2, column 2: one route from above, one from the left: 2.",
+          "r1c2": "Row 3, column 3: 3 routes arrive from above and 3 from the left: 6."
+        }
+      },
+      "explain": {
+        "text": "Call the count for cell $(i, j)$ $\\text{ways}[i][j]$. Every route into it ends with one last move, down or right, so $\\text{ways}[i][j] = \\text{ways}[i-1][j] + \\text{ways}[i][j-1]$. The corner gives 6 without listing any route.",
+        "canvas": {
+          "cells": {
+            "r2c2": "2",
+            "r2c3": "3",
+            "r3c2": "3",
+            "r3c3": "6"
+          },
+          "highlight": [
+            "r3c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Blocked cells",
+      "prose": "Now two cells are blocked (■). No route may enter one, so a blocked cell holds 0 routes. The first row and column are open, so they still hold 1.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "cells": [
+            [
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "■",
+              "",
+              "",
+              ""
+            ],
+            [
+              "1",
+              "",
+              "",
+              "■",
+              ""
+            ],
+            [
+              "1",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "blocked": {
+              "ids": [
+                "r2c2",
+                "r3c4"
+              ],
+              "colour": 5
+            }
+          }
+        },
+        "maxHeight": 220
+      },
+      "question": "Fill the remaining counts.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "rows": [
+          [
+            "Row 2",
+            "■",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Row 3",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "■",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Row 4",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Treat a blocked cell as 0 when you add it to its neighbours."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2, column 3: the 1 above plus 0 from the blocked cell on its left.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 2: 1, 2, 3. Row 3: 1, 2, ■, 3. Row 4: 2, 4, 4, 7."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven routes avoid both blocks.",
+        "generic": "Not quite right. Add above and left, with every blocked cell counting 0.",
+        "byKey": {
+          "r0c2": "Row 2, column 3: 1 from above plus 0 from the blocked cell.",
+          "r1c1": "Row 3, column 2: the blocked cell above gives 0, the left gives 1.",
+          "r1c4": "Row 3, column 5: 3 from above, and 0 from the blocked cell to the left.",
+          "r2c4": "The corner: 3 from above plus 4 from the left."
+        }
+      },
+      "explain": {
+        "text": "A block contributes 0 to its neighbours, so routes simply flow round it. The corner is $3 + 4 = 7$. The blocks cut 35 open-grid routes down to 7.",
+        "canvas": {
+          "cells": {
+            "r2c3": "1",
+            "r2c4": "2",
+            "r2c5": "3",
+            "r3c2": "1",
+            "r3c3": "2",
+            "r3c5": "3",
+            "r4c2": "2",
+            "r4c3": "4",
+            "r4c4": "4",
+            "r4c5": "7"
+          },
+          "highlight": [
+            "r4c5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A block on the edge",
+      "prose": "This start fills the first row and column with 1s before the main loop:\n\n```python\nfor j in range(cols):\n    ways[0][j] = 1\nfor i in range(rows):\n    ways[i][0] = 1\n```\n\nThe grid has one block, in the first row.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 5,
+          "cells": [
+            [
+              "S",
+              "",
+              "■",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "G"
+            ]
+          ],
+          "rowHeads": false,
+          "colHeads": false
+        },
+        "state": {
+          "shade": {
+            "blocked": {
+              "ids": [
+                "r1c3"
+              ],
+              "colour": 5
+            }
+          }
+        }
+      },
+      "question": "The code returns 15. How many routes really reach G?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Routes",
+        "accept": "9 routes.",
+        "wrong": [
+          {
+            "id": "all-ones",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero-block",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How can a robot reach the last two cells of the first row?"
+        },
+        {
+          "rung": "point",
+          "text": "In the first row, a cell can only be entered from its left.",
+          "highlight": [
+            "r1c4",
+            "r1c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After the block, the first row holds 0, 0. Then row 2: 1, 2, 2, 2, 2 and row 3: 1, 3, 5, 7, 9."
+        }
+      ],
+      "feedback": {
+        "correct": "9: the first row is 1, 1, 0, 0, 0.",
+        "generic": "Not quite right. Fill the first row cell by cell from the left.",
+        "byKey": {
+          "all-ones": "15 is what the code returns: it lets routes pass through the block. The first row should read 1, 1, 0, 0, 0.",
+          "zero-block": "You zeroed the block but kept 1s after it. Those cells are entered only from the left, through the block, so they are 0 too."
+        }
+      },
+      "explain": {
+        "text": "In the first row each cell is reached only from its left, so everything past a block is 0. Fill the edges with the same rule as the inside, treating a missing neighbour as 0. Then edge cases need no special code.",
+        "canvas": {
+          "cells": {
+            "r1c1": "1",
+            "r1c2": "1",
+            "r1c3": "0",
+            "r1c4": "0",
+            "r1c5": "0",
+            "r2c1": "1",
+            "r2c2": "2",
+            "r2c3": "2",
+            "r2c4": "2",
+            "r2c5": "2",
+            "r3c1": "1",
+            "r3c2": "3",
+            "r3c3": "5",
+            "r3c4": "7",
+            "r3c5": "9"
+          },
+          "mark": {
+            "r1c4": {
+              "text": "0",
+              "tone": "notyet"
+            },
+            "r1c5": {
+              "text": "0",
+              "tone": "notyet"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The cheapest route",
+      "prose": "New grid: each cell charges a fee in £ to pass through, start and goal included. We want the cheapest route, not the number of routes. The cheapest way into a cell comes from the cheaper of its two neighbours.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 4,
+          "cells": [
+            [
+              "3",
+              "1",
+              "4",
+              "2"
+            ],
+            [
+              "2",
+              "5",
+              "1",
+              "3"
+            ],
+            [
+              "6",
+              "2",
+              "2",
+              "1"
+            ]
+          ],
+          "rowHeads": [
+            "1",
+            "2",
+            "3"
+          ],
+          "colHeads": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "state": {
+          "caption": "Fee per cell (£)"
+        },
+        "maxHeight": 220
+      },
+      "question": "Fill the cheapest total cost to reach each cell. Row 1 and column 1 are done.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "rows": [
+          [
+            "Row 1",
+            "3",
+            "4",
+            "8",
+            "10"
+          ],
+          [
+            "Row 2",
+            "5",
+            {
+              "edit": true,
+              "answer": 9,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 9,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Row 3",
+            "11",
+            {
+              "edit": true,
+              "answer": 11,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 11,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Swap the sum for a min: the cheaper of above and left, plus the cell's own fee."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2, column 2: min(4, 5) + 5.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 2: 9, 9, 12. Row 3: min(9, 11) + 2 = 11, then 11, then min(12, 11) + 1 = 12."
+        }
+      ],
+      "feedback": {
+        "correct": "The goal costs £12 at best.",
+        "generic": "Not quite right. Take the cheaper neighbour, then add the cell's fee.",
+        "byKey": {
+          "r1c2": "Row 2, column 2: min(4, 5) + 5 = 9.",
+          "r1c3": "Row 2, column 3: min(8, 9) + 1 = 9.",
+          "r2c4": "The goal: min(12, 11) + 1 = 12."
+        }
+      },
+      "explain": {
+        "text": "Same table, same order; only the combining step changed, from a sum to a min plus the fee. The goal's cheapest total is £12.",
+        "canvas": {
+          "caption": "Cheapest total to the goal: £12"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Trace it",
+      "prose": "The £12 route is unique. Find it by walking back from the goal: at each cell, step to the neighbour whose total, plus this cell's fee, gives this cell's total.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 4,
+          "cells": [
+            [
+              "3",
+              "1",
+              "4",
+              "2"
+            ],
+            [
+              "2",
+              "5",
+              "1",
+              "3"
+            ],
+            [
+              "6",
+              "2",
+              "2",
+              "1"
+            ]
+          ],
+          "rowHeads": [
+            "1",
+            "2",
+            "3"
+          ],
+          "colHeads": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "state": {
+          "caption": "Fee per cell (£); cheapest totals: 3 4 8 10 / 5 9 9 12 / 11 11 11 12"
+        }
+      },
+      "question": "Tap every cell on the cheapest route, start and goal included.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c1",
+          "r1c2",
+          "r1c3",
+          "r2c3",
+          "r3c3",
+          "r3c4"
+        ],
+        "countWord": "on the route",
+        "wrong": [
+          {
+            "id": "via-12",
+            "set": [
+              "r1c1",
+              "r1c2",
+              "r1c3",
+              "r2c3",
+              "r2c4",
+              "r3c4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The goal's total is 12 and its fee is 1, so the route arrives from a cell with total 11."
+        },
+        {
+          "rung": "point",
+          "text": "Above the goal the total is 12, to its left 11. Come from the left.",
+          "highlight": [
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Back from the goal: (3, 3), (2, 3), (1, 3), (1, 2), (1, 1). Fees: 3 + 1 + 4 + 1 + 2 + 1 = 12."
+        }
+      ],
+      "feedback": {
+        "correct": "3 + 1 + 4 + 1 + 2 + 1 = £12.",
+        "generic": "Not quite right. Add the fees on your route and compare with £12.",
+        "byKey": {
+          "via-12": "That route costs 3 + 1 + 4 + 1 + 3 + 1 = £13. The goal's total came from the left, not from above.",
+          "r2c2": "That cell charges £5; every route through it costs at least £13."
+        }
+      },
+      "explain": {
+        "text": "Walking back works because each total was built from one neighbour. The route skirts the £5 and £6 cells. As with knapsack, the table gives the value and the walk gives the choices.",
+        "canvas": {
+          "paths": [
+            {
+              "id": "cheap",
+              "cells": [
+                "r1c1",
+                "r1c2",
+                "r1c3",
+                "r2c3",
+                "r3c3",
+                "r3c4"
+              ],
+              "colour": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write count_paths",
+      "prose": "Write `count_paths(grid)`. The grid is a list of rows; 0 is open and 1 is blocked. Moves go right or down, from the top-left cell to the bottom-right cell. A blocked start or goal gives 0.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "cells": [
+            [
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "■",
+              "",
+              "",
+              ""
+            ],
+            [
+              "1",
+              "",
+              "",
+              "■",
+              ""
+            ],
+            [
+              "1",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "blocked": {
+              "ids": [
+                "r2c2",
+                "r3c4"
+              ],
+              "colour": 5
+            }
+          },
+          "cells": {
+            "r2c3": "1",
+            "r2c4": "2",
+            "r2c5": "3",
+            "r3c2": "1",
+            "r3c3": "2",
+            "r3c5": "3",
+            "r4c2": "2",
+            "r4c3": "4",
+            "r4c4": "4",
+            "r4c5": "7"
+          }
+        },
+        "maxHeight": 200
+      },
+      "question": "Write `count_paths(grid)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    ways = [[0] * cols for _ in range(rows)]\n    ...\n    return ways[rows - 1][cols - 1]\n",
+        "solution": "def count_paths(grid):\n    rows, cols = len(grid), len(grid[0])\n    ways = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if grid[i][j] == 1:\n                continue\n            if i == 0 and j == 0:\n                ways[i][j] = 1\n                continue\n            up = ways[i - 1][j] if i > 0 else 0\n            left = ways[i][j - 1] if j > 0 else 0\n            ways[i][j] = up + left\n    return ways[rows - 1][cols - 1]\n",
+        "examples": [
+          {
+            "call": "count_paths([[0, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 0]])",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[1, 0], [0, 0]])",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_paths([[0, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 0]])",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]])",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[1, 0], [0, 0]])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0, 0], [0, 1]])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0]])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0, 0, 0, 0]])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0, 1, 0]])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0], [0], [0]])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0] * 3 for _ in range(3)])",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "count_paths([[0] * 17 for _ in range(17)])",
+            "expect": "601080390",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, including a blocked start, a blocked goal, a 1 by 1 grid, a single row, a single column, a block in the first row, and an open 17 by 17 grid."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fill row by row. A blocked cell stays 0."
+        },
+        {
+          "rung": "point",
+          "text": "Treat a neighbour outside the grid as 0, so the first row and column need no special loop.",
+          "highlight": [
+            "r4c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Set `ways[0][0] = 1` if it is open. For every other open cell: `up + left`, each 0 at the edge."
+        }
+      ],
+      "feedback": {
+        "correct": "One rule for every cell, edges included.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has a block in the first row. Cells after it can only be entered from the left, so they are 0.",
+          "test-3": "Test 3 has a blocked start: no route exists, so return 0.",
+          "test-10": "Test 10 is an open 17 by 17 grid with 601,080,390 routes. If it timed out, fill a table instead of recursing on every route."
+        }
+      },
+      "explain": {
+        "text": "The table has $rc$ cells and each takes two reads, so the function is $O(rc)$. The open 17 by 17 grid has $\\binom{32}{16} = 601{,}080{,}390$ routes: listing them is hopeless, adding them is instant."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write min_path_cost",
+      "prose": "Write `min_path_cost(costs)`: the cheapest total fee from the top-left cell to the bottom-right cell, moving right or down, counting both end cells. Fees are whole numbers, 0 or more.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 4,
+          "cells": [
+            [
+              "3",
+              "1",
+              "4",
+              "2"
+            ],
+            [
+              "2",
+              "5",
+              "1",
+              "3"
+            ],
+            [
+              "6",
+              "2",
+              "2",
+              "1"
+            ]
+          ],
+          "rowHeads": [
+            "1",
+            "2",
+            "3"
+          ],
+          "colHeads": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "state": {
+          "paths": [
+            {
+              "id": "cheap",
+              "cells": [
+                "r1c1",
+                "r1c2",
+                "r1c3",
+                "r2c3",
+                "r3c3",
+                "r3c4"
+              ],
+              "colour": 2
+            }
+          ]
+        },
+        "maxHeight": 200
+      },
+      "question": "Write `min_path_cost(costs)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def min_path_cost(costs):\n    ...\n",
+        "solution": "def min_path_cost(costs):\n    rows, cols = len(costs), len(costs[0])\n    best = [[0] * cols for _ in range(rows)]\n    for i in range(rows):\n        for j in range(cols):\n            if i == 0 and j == 0:\n                best[i][j] = costs[0][0]\n            elif i == 0:\n                best[i][j] = best[i][j - 1] + costs[i][j]\n            elif j == 0:\n                best[i][j] = best[i - 1][j] + costs[i][j]\n            else:\n                best[i][j] = min(best[i - 1][j], best[i][j - 1]) + costs[i][j]\n    return best[rows - 1][cols - 1]\n",
+        "examples": [
+          {
+            "call": "min_path_cost([[3, 1, 4, 2], [2, 5, 1, 3], [6, 2, 2, 1]])",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[5]])",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "min_path_cost([[3, 1, 4, 2], [2, 5, 1, 3], [6, 2, 2, 1]])",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[5]])",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[1, 2, 3]])",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[1], [2], [3]])",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[1, 3, 1], [1, 5, 1], [4, 2, 1]])",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[0, 0], [0, 0]])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "min_path_cost([[1, 9, 9], [1, 9, 9], [1, 1, 1]])",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "setup": "cs = [[(i * 7 + j * 13) % 10 for j in range(40)] for i in range(30)]",
+            "call": "min_path_cost(cs)",
+            "expect": "132",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, including a 1 by 1 grid, a single row, a single column and a 30 by 40 grid."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first row can only be reached from the left, and the first column only from above."
+        },
+        {
+          "rung": "point",
+          "text": "Start with `best[0][0] = costs[0][0]`.",
+          "highlight": [
+            "r1c1",
+            "r1c2",
+            "r1c3",
+            "r2c3",
+            "r3c3",
+            "r3c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inside: `best[i][j] = min(best[i - 1][j], best[i][j - 1]) + costs[i][j]`. On the edges use the one neighbour there is."
+        }
+      ],
+      "feedback": {
+        "correct": "The same table with min in place of the sum.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is a single cell: the route starts and ends there, so it costs that cell's fee.",
+          "test-3": "Test 3 is one row. Each cell has only a left neighbour; do not take a min with a missing cell.",
+          "test-7": "Test 7 rewards going down the left edge first, then along the bottom: 1 + 1 + 1 + 1 + 1."
+        }
+      },
+      "explain": {
+        "text": "Counting routes adds the two neighbours; costing them takes the min and adds a fee. Both are $O(rc)$. Edge neighbours that do not exist count as 0 for a sum, and must be skipped for a min."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Pascal's triangle in a grid",
+      "prose": "With no blocks, the cell $i$ rows down and $j$ columns across holds\n\n$$\\text{ways}[i][j] = \\text{ways}[i-1][j] + \\text{ways}[i][j-1] = \\binom{i + j}{i},$$\n\nthe number of orders of $i$ downs and $j$ rights. The additions are Pascal's rule, $\\binom{n}{k} = \\binom{n-1}{k-1} + \\binom{n-1}{k}$, so each anti-diagonal is a row of Pascal's triangle.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 5,
+          "cells": [
+            [
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            [
+              "1",
+              "3",
+              "6",
+              "10",
+              "15"
+            ],
+            [
+              "1",
+              "4",
+              "10",
+              "20",
+              "35"
+            ],
+            [
+              "1",
+              "5",
+              "15",
+              "35",
+              "70"
+            ]
+          ],
+          "rowHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "diag": {
+              "ids": [
+                "r1c5",
+                "r2c4",
+                "r3c3",
+                "r4c2",
+                "r5c1"
+              ],
+              "colour": 3
+            }
+          }
+        }
+      },
+      "question": "How many right-and-down routes cross an open 5 by 5 grid, corner to corner?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "seventy",
+            "text": "$\\binom{8}{4} = 70$",
+            "correct": true
+          },
+          {
+            "id": "cells",
+            "text": "25",
+            "why": "That is the number of cells. A route is an order of 4 downs and 4 rights."
+          },
+          {
+            "id": "twofive",
+            "text": "$2^8 = 256$",
+            "why": "That counts every order of 8 moves, but exactly 4 must be down."
+          },
+          {
+            "id": "twenty",
+            "text": "$\\binom{6}{3} = 20$",
+            "why": "That is a 4 by 4 grid, 3 downs and 3 rights. A 5 by 5 grid needs 4 of each."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "4 downs and 4 rights in some order: $\\binom{8}{4} = 70$, the bottom-right cell of this table.",
+        "generic": "Not quite right. Count the downs and rights a route needs."
+      },
+      "explain": {
+        "text": "The table above stops at row and column 4, and its corner is 70. With blocks the formula breaks, but the table still works. That is why we fill tables rather than look for formulas.",
+        "canvas": {
+          "highlight": [
+            "r5c5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A price lattice",
+      "prose": "A stock moves up or down once a day for 4 days, up with probability $q = 0.55$. Read the grid as a recombining tree: columns count up-moves, rows count down-moves, and each diagonal is one day. Each cell holds its number of price paths.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 5,
+          "cells": [
+            [
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              ""
+            ],
+            [
+              "1",
+              "3",
+              "6",
+              "",
+              ""
+            ],
+            [
+              "1",
+              "4",
+              "",
+              "",
+              ""
+            ],
+            [
+              "1",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "rowHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "rowLabel": "Down moves",
+          "colLabel": "Up moves",
+          "lattice": true
+        },
+        "state": {
+          "outline": [
+            "r1c5",
+            "r2c4",
+            "r3c3",
+            "r4c2",
+            "r5c1"
+          ],
+          "highlight": [
+            "r2c4"
+          ]
+        }
+      },
+      "question": "What is the probability of exactly 3 up-moves in the 4 days?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2995,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Probability",
+        "placeholder": "decimal",
+        "accept": "0.2995: 4 paths, each with probability $0.55^3 \\times 0.45$.",
+        "wrong": [
+          {
+            "id": "one-path",
+            "value": 0.0749,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-down",
+            "value": 0.1664,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every path to this node has 3 ups and 1 down, so all have the same probability."
+        },
+        {
+          "rung": "point",
+          "text": "The highlighted node shows how many paths reach it.",
+          "highlight": [
+            "r2c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$4 \\times 0.55^3 \\times 0.45 = 4 \\times 0.074869 = 0.2995$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\binom{4}{3} \\times 0.55^3 \\times 0.45 = 0.2995$.",
+        "generic": "Not quite right. Multiply the number of paths by one path's probability.",
+        "byKey": {
+          "one-path": "0.0749 is one path's probability. Four different paths end at this node.",
+          "no-down": "You left out the down day: each path also has one down-move, with probability 0.45."
+        }
+      },
+      "explain": {
+        "text": "The path counts are the grid's numbers, $\\binom{n}{k}$, so the node's weight is $\\binom{n}{k} q^k (1 - q)^{n - k}$. Binomial pricing in the trees course weights its nodes exactly this way. The cheapest execution schedule across time slots fills the same grid with min instead of sum.",
+        "canvas": {
+          "highlight": [
+            "r2c4"
+          ],
+          "caption": "4 paths to 3 ups and 1 down"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Every route into a cell ends with a move from above or from the left, so $\\text{ways}[i][j] = \\text{ways}[i-1][j] + \\text{ways}[i][j-1]$, and a blocked cell holds 0.",
+      "For the cheapest route, swap the sum for a min and add the cell's fee; walk back from the goal to trace the route.",
+      "Without blocks the grid is Pascal's triangle, $\\binom{i+j}{i}$: the path counts of a binomial price lattice."
+    ],
+    "formula": {
+      "name": "Grid paths",
+      "tex": "\\text{ways}[i][j] = \\text{ways}[i-1][j] + \\text{ways}[i][j-1]",
+      "note": "0 on a block; a neighbour outside the grid counts 0."
+    },
+    "trap": "Filling the first row or column with 1s ignores a block there: every cell after it is 0."
+  },
+  "quiz": [
+    {
+      "id": "q-one-cell",
+      "difficulty": 2,
+      "prose": "`count_paths([[0]])`: the start is the goal.",
+      "question": "What should it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "`1`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`0`",
+            "why": "You counted moves, and there are none. The empty route, staying put, is one route."
+          },
+          {
+            "id": "err",
+            "text": "`IndexError`",
+            "why": "The loop reads `ways[i - 1][j]` only when `i > 0`, so a 1 by 1 grid is safe."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "One route: make no moves.",
+        "generic": "Not quite right. How many ways are there to be at the start?"
+      },
+      "explain": {
+        "text": "`ways[0][0] = 1` when the start is open, and with one cell that is the answer. The base case is what makes the sums work."
+      }
+    },
+    {
+      "id": "q-blocked-start",
+      "difficulty": 2,
+      "prose": "A 3 by 3 grid whose top-left cell is blocked.",
+      "question": "How many routes reach the bottom-right cell?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Routes",
+        "accept": "0: no route can start.",
+        "wrong": [
+          {
+            "id": "open",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0: every route starts in the blocked cell.",
+        "generic": "Not quite right. Where does every route begin?",
+        "byKey": {
+          "open": "6 is the open grid. A route must start in the top-left cell, and it is blocked.",
+          "five": "You removed one route. All of them start in the blocked cell."
+        }
+      },
+      "explain": {
+        "text": "A blocked start sets `ways[0][0] = 0`, and every sum after it is 0. The same holds for a blocked goal."
+      }
+    },
+    {
+      "id": "q-diagonal",
+      "difficulty": 3,
+      "prose": "A puzzle also allows a diagonal step, down and right at once.",
+      "question": "How does the recurrence change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "three",
+            "text": "Add a third term: $\\text{ways}[i-1][j-1]$",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "It stays $\\text{ways}[i-1][j] + \\text{ways}[i][j-1]$",
+            "why": "That recurrence counts only right and down moves. A diagonal step arrives from the upper-left cell, which needs its own term."
+          },
+          {
+            "id": "double",
+            "text": "Double every cell",
+            "why": "The new routes arrive from one extra cell, the upper-left one, not twice from the same cells."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A route now arrives from above, left or upper-left.",
+        "generic": "Not quite right. List the cells a final move can come from."
+      },
+      "explain": {
+        "text": "Each allowed last move adds one term. On a 2 by 2 grid that gives 3 routes instead of 2. Allowing diagonal moves by accident is a common bug in grid problems."
+      }
+    },
+    {
+      "id": "q-servers",
+      "difficulty": 3,
+      "prose": "Servers sit in a grid. A message moves right or down, and each server adds its latency in milliseconds.",
+      "question": "Which recurrence gives the lowest total latency $L[i][j]$ to server $(i, j)$, with $c_{ij}$ its latency?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "min",
+            "text": "$L[i][j] = \\min(L[i-1][j], L[i][j-1]) + c_{ij}$",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "$L[i][j] = L[i-1][j] + L[i][j-1] + c_{ij}$",
+            "why": "Adding both neighbours counts routes, not latency. A message takes one route."
+          },
+          {
+            "id": "max",
+            "text": "$L[i][j] = \\max(L[i-1][j], L[i][j-1]) + c_{ij}$",
+            "why": "max picks the slower neighbour. We want the faster one."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The cheapest-route table with latency as the fee.",
+        "generic": "Not quite right. A message arrives along one route, and we want the fastest."
+      },
+      "explain": {
+        "text": "This is `min_path_cost` with latencies as fees. Only the combining step changes between counting, costing and probability weights."
+      }
+    }
+  ]
+}

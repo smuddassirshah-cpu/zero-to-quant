@@ -1,0 +1,1398 @@
+{
+  "id": "l15-search-trees",
+  "course": "ds",
+  "title": "Binary search trees",
+  "minutes": 15,
+  "objectives": [
+    "Search and insert in a binary search tree.",
+    "Explain why the cost depends on the height",
+    "Validate a BST with bounds from every ancestor"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Is 60 in here",
+      "prose": "In this tree every node's left side holds smaller values and its right side larger ones. We want to know whether 60 is in it, looking at as few nodes as we can.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "50",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "30",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "20",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "40",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "70",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "60",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "80",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Left side smaller, right side larger, at every node"
+        }
+      },
+      "question": "After the root, tap the nodes you compare 60 with.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r",
+          "r-l"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "60 is larger than 50. Which side of 50 can it be on?"
+        },
+        {
+          "rung": "point",
+          "text": "Everything larger than 50 is on the right, under 70.",
+          "highlight": [
+            "r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "60 > 50: go right to 70. 60 < 70: go left, to 60."
+        }
+      ],
+      "feedback": {
+        "correct": "70, then 60: found at the third comparison.",
+        "generic": "Not quite right. At each node, go left if 60 is smaller and right if it is larger.",
+        "byKey": {
+          "l": "30 is on 50's left, where everything is smaller than 50. 60 is larger, so it can only be on the right.",
+          "r-r": "80 is on 70's right. But 60 < 70, so the walk turns left at 70.",
+          "l-r": "40 is on 50's left side, which holds only values below 50."
+        }
+      },
+      "explain": {
+        "text": "60 > 50, so go right; 60 < 70, so go left: found. The whole left side of 50 was never looked at. A tree ordered this way is a **binary search tree** (BST).",
+        "canvas": {
+          "highlight": [
+            "r-l"
+          ],
+          "caption": "Path: 50, 70, 60"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where a new value goes",
+      "prose": "To insert, walk down exactly as if searching. When the walk steps onto a `None` link, the new node goes there.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "50",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "30",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "20",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "40",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "70",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "60",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "80",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each ∅ is a `None` link"
+        }
+      },
+      "question": "Tap the ∅ where 65 goes.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r-l-r"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 65 with 50, then with 70, then with 60."
+        },
+        {
+          "rung": "point",
+          "text": "65 > 50 and 65 < 70, so the walk reaches 60.",
+          "highlight": [
+            "r-l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "65 > 60, so it goes on 60's right."
+        }
+      ],
+      "feedback": {
+        "correct": "65 becomes the right child of 60.",
+        "generic": "Not quite right. Walk down from 50, comparing 65 at each node.",
+        "byKey": {
+          "r-r-l": "You went right at 70. But 65 < 70, so the walk turns left at 70.",
+          "r-l-l": "You turned left at 60. But 65 > 60, so it goes right."
+        }
+      },
+      "explain": {
+        "text": "65 > 50: right. 65 < 70: left. 65 > 60: right, onto a `None`. So 65 becomes 60's right child: an insert always adds a leaf.",
+        "canvas": {
+          "highlight": [
+            "r-l-r"
+          ],
+          "caption": "50, 70, 60, then the empty right link"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two more",
+      "prose": "Start again from the tree without 65. Now 35 and 85 arrive.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "50",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "30",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "20",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "40",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "70",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "60",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "80",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "∅"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each ∅ is a `None` link"
+        }
+      },
+      "question": "Tap the ∅ where 35 goes and the ∅ where 85 goes.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l-r-l",
+          "r-r-r"
+        ],
+        "max": 2,
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "right-of-40",
+            "set": [
+              "l-r-r",
+              "r-r-r"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk each value down separately, from 50."
+        },
+        {
+          "rung": "point",
+          "text": "35 goes left at 50 and right at 30, reaching 40.",
+          "highlight": [
+            "l-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "35 < 40, so left of 40. 85 is larger than 50, 70 and 80: right every time."
+        }
+      ],
+      "feedback": {
+        "correct": "35 left of 40, and 85 right of 80.",
+        "generic": "Not quite right. Walk 35 and 85 down from 50, one comparison per node.",
+        "byKey": {
+          "right-of-40": "You put 35 on 40's right. 35 < 40, so it goes on the left.",
+          "r-r-l": "85 > 80, so it goes on 80's right, not its left."
+        }
+      },
+      "explain": {
+        "text": "35: left at 50, right at 30, left at 40. 85: right three times. An insert makes one comparison per level, so it costs the height of the tree.",
+        "canvas": {
+          "highlight": [
+            "l-r-l",
+            "r-r-r"
+          ],
+          "caption": "35 under 40; 85 under 80"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "In-order on a BST",
+      "prose": "Run `inorder` from lesson 14 on this tree: left side, node, right side.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "50",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "30",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "20",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "40",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "70",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "60",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "80",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[20, 30, 40, 50, 60, 70, 80]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[50, 30, 20, 40, 70, 60, 80]`",
+            "why": "That is pre-order: each node before its sides."
+          },
+          {
+            "id": "c",
+            "text": "`[50, 30, 70, 20, 40, 60, 80]`",
+            "why": "That is level order, the way the tree reads top to bottom."
+          },
+          {
+            "id": "d",
+            "text": "`[20, 40, 30, 60, 80, 70, 50]`",
+            "why": "That is post-order: each node after both of its sides."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In-order starts at the leftmost node."
+        },
+        {
+          "rung": "point",
+          "text": "The leftmost node is 20, the smallest value.",
+          "highlight": [
+            "l-l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Smaller values are always to the left, so in-order reads them in ascending order."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted, from 20 to 80.",
+        "generic": "Not quite right. Left side, node, right side, starting from 50."
+      },
+      "explain": {
+        "text": "Every left side is smaller and every right side larger, so left, node, right reads in ascending order. In-order on a BST gives sorted output in $O(n)$.",
+        "canvas": {
+          "current": "l-l",
+          "caption": "In-order: 20 30 40 50 60 70 80"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Sorted arrivals",
+      "prose": "Prices arrive already sorted: 10, 20, 30, 40, 50. Each one is larger than everything so far, so each insert walks right to the end.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "10",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "∅"
+            },
+            {
+              "id": "r",
+              "label": "20",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "∅"
+                },
+                {
+                  "id": "r",
+                  "label": "30",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "∅"
+                    },
+                    {
+                      "id": "r",
+                      "label": "40",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "∅"
+                        },
+                        {
+                          "id": "r",
+                          "label": "50",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Inserted in the order 10, 20, 30, 40, 50"
+        },
+        "maxHeight": 260
+      },
+      "question": "How many comparisons does a search for 50 make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "log",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "edges",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the nodes on the path from 10 to 50."
+        },
+        {
+          "rung": "point",
+          "text": "The tree is a single line going right.",
+          "highlight": [
+            "r-r-r-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Search compares with 10, 20, 30, 40 and 50: five."
+        }
+      ],
+      "feedback": {
+        "correct": "Five: the search visits every node.",
+        "generic": "Not quite right. Count every node the search compares 50 with.",
+        "byKey": {
+          "log": "About $\\log_2 5$ holds for a balanced tree. This one is a chain, so the search visits every node.",
+          "edges": "You counted links. A search compares with each node on the path, including 50 itself."
+        }
+      },
+      "explain": {
+        "text": "The tree is a chain with height $h = n - 1$, so search and insert cost $O(n)$. Balanced trees, such as AVL and red-black trees, rotate nodes to keep $h$ near $\\log_2 n$. Python has none built in: use `bisect` on a sorted list, or the `sortedcontainers` package.",
+        "canvas": {
+          "highlight": [
+            "r-r-r-r"
+          ],
+          "caption": "Height 4 with 5 nodes: a chain"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Insert and search in code",
+      "prose": "`Node`, `build`, `to_list` and `inorder` are ready. Our rule for duplicates: a value already in the tree is not inserted again, so the tree holds a set.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "50",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "30",
+              "children": []
+            },
+            {
+              "id": "r",
+              "label": "70",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "65",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "∅"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "`to_list(bst_from([50, 30, 70, 65]))` is `[50, 30, 70, None, None, 65]`"
+        },
+        "maxHeight": 220
+      },
+      "question": "Write `insert(root, v)`, which returns the root, `contains(root, v)`, and `min_value(root)` for a non-empty tree.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def insert(root, v):\n    ...\n\n\ndef contains(root, v):\n    ...\n\n\ndef min_value(root):\n    ...\n",
+        "solution": "def insert(root, v):\n    if root is None:\n        return Node(v)\n    if v < root.val:\n        root.left = insert(root.left, v)\n    elif v > root.val:\n        root.right = insert(root.right, v)\n    return root\n\n\ndef contains(root, v):\n    node = root\n    while node is not None:\n        if v == node.val:\n            return True\n        node = node.left if v < node.val else node.right\n    return False\n\n\ndef min_value(root):\n    node = root\n    while node.left is not None:\n        node = node.left\n    return node.val\n",
+        "prelude": "from collections import deque\n\nclass Node:\n    def __init__(self, val, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n    def __repr__(self):\n        return f\"Node({self.val!r})\"\n\ndef build(values):\n    \"\"\"Build a tree from a level-order list with None gaps.\"\"\"\n    if not values or values[0] is None:\n        return None\n    it = iter(values)\n    root = Node(next(it))\n    q = deque([root])\n    while q:\n        node = q.popleft()\n        for side in (\"left\", \"right\"):\n            try:\n                v = next(it)\n            except StopIteration:\n                return root\n            if v is not None:\n                child = Node(v)\n                setattr(node, side, child)\n                q.append(child)\n    return root\n\ndef to_list(root):\n    \"\"\"The level-order list with None gaps, trailing Nones dropped.\"\"\"\n    out, q = [], deque([root])\n    while q:\n        node = q.popleft()\n        if node is None:\n            out.append(None)\n            continue\n        out.append(node.val)\n        q.append(node.left)\n        q.append(node.right)\n    while out and out[-1] is None:\n        out.pop()\n    return out\n\ndef inorder(root):\n    if root is None:\n        return []\n    return inorder(root.left) + [root.val] + inorder(root.right)\n\ndef bst_from(values):\n    \"\"\"Insert the values one by one with your insert.\"\"\"\n    root = None\n    for v in values:\n        root = insert(root, v)\n    return root\n",
+        "examples": [
+          {
+            "call": "inorder(bst_from([50, 30, 70, 20, 40, 60, 80]))",
+            "expect": "[20, 30, 40, 50, 60, 70, 80]",
+            "compare": "equal"
+          },
+          {
+            "call": "contains(bst_from([50, 30, 70, 20, 40]), 45)",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "inorder(bst_from([50, 30, 70, 20, 40, 60, 80]))",
+            "expect": "[20, 30, 40, 50, 60, 70, 80]",
+            "compare": "equal"
+          },
+          {
+            "call": "to_list(bst_from([50, 30, 70, 20, 40, 60, 80]))",
+            "expect": "[50, 30, 70, 20, 40, 60, 80]",
+            "compare": "equal"
+          },
+          {
+            "call": "to_list(bst_from([50, 30, 70, 65]))",
+            "expect": "[50, 30, 70, None, None, 65]",
+            "compare": "equal"
+          },
+          {
+            "call": "contains(bst_from([50, 30, 70, 20, 40]), 40)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "contains(bst_from([50, 30, 70, 20, 40]), 45)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "contains(None, 5)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "min_value(bst_from([50, 30, 70, 20, 40]))",
+            "expect": "20",
+            "compare": "equal"
+          },
+          {
+            "call": "min_value(bst_from([50, 70, 60]))",
+            "expect": "50",
+            "compare": "equal"
+          },
+          {
+            "call": "inorder(bst_from([5, 3, 5, 8, 3]))",
+            "expect": "[3, 5, 8]",
+            "compare": "equal"
+          },
+          {
+            "call": "to_list(insert(None, 7))",
+            "expect": "[7]",
+            "compare": "equal"
+          },
+          {
+            "call": "to_list(bst_from([10, 20, 30]))",
+            "expect": "[10, None, 20, None, 30]",
+            "compare": "equal"
+          },
+          {
+            "call": "contains(bst_from(list(range(0, 400, 3))), 399)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "min_value(bst_from([8, 3, 10, 1, 6, 14, 4, 7, 13]))",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 13 hidden tests. `bst_from(values)` inserts values one by one with your `insert`; `to_list` reads the shape back level by level."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In `insert`, an empty tree becomes `Node(v)`. Otherwise insert into the correct side and return `root`."
+        },
+        {
+          "rung": "point",
+          "text": "Write `root.left = insert(root.left, v)`, so a new leaf is linked to its parent.",
+          "highlight": [
+            "l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`contains` walks left or right until it finds `v` or reaches `None`. `min_value` follows `left` until the next `left` is `None`."
+        }
+      ],
+      "feedback": {
+        "correct": "Insert, search and minimum all walk one path down.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 checks the shape. Each value must go where its walk falls off the tree.",
+          "test-6": "Test 6 searches an empty tree, `None`. Return `False`, not an error.",
+          "test-8": "Test 8's root has no left child, so the root itself is the minimum.",
+          "test-9": "Test 9 inserts 5 and 3 twice. A value already present must not be added again.",
+          "test-10": "Test 10 inserts into an empty tree. Return `Node(v)` as the new root."
+        }
+      },
+      "explain": {
+        "text": "Each function walks one path from the root, so each costs $O(h)$. Returning `root` from `insert` lets the caller start from `None`. The minimum is the leftmost node.",
+        "canvas": {
+          "caption": "Minimum: follow `left` from 50 to 30"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Checking only the children",
+      "prose": "This check compares every node with its own children. It returns `True` for this tree.\n\n```python\ndef looks_ok(node):\n    if node is None:\n        return True\n    if node.left and node.left.val >= node.val:\n        return False\n    if node.right and node.right.val <= node.val:\n        return False\n    return looks_ok(node.left) and looks_ok(node.right)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "10",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "5",
+              "children": []
+            },
+            {
+              "id": "r",
+              "label": "15",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "6",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "20",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "`looks_ok` returns `True` for this tree"
+        },
+        "maxHeight": 230
+      },
+      "question": "Tap the node that breaks the BST rule.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r-l"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every node on 10's right side must be larger than 10, not just larger or smaller than its parent."
+        },
+        {
+          "rung": "point",
+          "text": "Look at the two children of 15.",
+          "highlight": [
+            "r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "6 sits on 10's right side, yet 6 < 10."
+        }
+      ],
+      "feedback": {
+        "correct": "6 is on 10's right side but smaller than 10.",
+        "generic": "Not quite right. Compare each node with every ancestor, not only its parent.",
+        "byKey": {
+          "r": "15 > 10 on 10's right: fine. The problem is one level below it.",
+          "r-r": "20 is larger than 15 and than 10. It is in the right place.",
+          "l": "5 < 10 on the left side: fine."
+        }
+      },
+      "explain": {
+        "text": "6 is in 10's right side, so it must be larger than 10. Against its parent, 15, it looks fine, and that is all `looks_ok` checks. A search for 6 would go right at 10 and never find it.",
+        "canvas": {
+          "highlight": [
+            "r-l"
+          ],
+          "caption": "6 must lie between 10 and 15"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Validate a BST",
+      "prose": "Pass bounds down instead. Every node must lie strictly between `lo` and `hi`. Going left, the node's value becomes the new `hi`; going right, it becomes the new `lo`. `Node` and `build` are ready.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "10",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "5",
+              "children": []
+            },
+            {
+              "id": "r",
+              "label": "15",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "6",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "20",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Bounds for 6: above 10, below 15"
+        },
+        "maxHeight": 200
+      },
+      "question": "Write `validate_bst(root)`: `True` if every node is strictly greater than all of its left side and strictly less than all of its right side.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def validate_bst(root, lo=None, hi=None):\n    ...\n",
+        "solution": "def validate_bst(root, lo=None, hi=None):\n    if root is None:\n        return True\n    if lo is not None and root.val <= lo:\n        return False\n    if hi is not None and root.val >= hi:\n        return False\n    return (validate_bst(root.left, lo, root.val)\n            and validate_bst(root.right, root.val, hi))\n",
+        "prelude": "from collections import deque\n\nclass Node:\n    def __init__(self, val, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n    def __repr__(self):\n        return f\"Node({self.val!r})\"\n\ndef build(values):\n    \"\"\"Build a tree from a level-order list with None gaps.\"\"\"\n    if not values or values[0] is None:\n        return None\n    it = iter(values)\n    root = Node(next(it))\n    q = deque([root])\n    while q:\n        node = q.popleft()\n        for side in (\"left\", \"right\"):\n            try:\n                v = next(it)\n            except StopIteration:\n                return root\n            if v is not None:\n                child = Node(v)\n                setattr(node, side, child)\n                q.append(child)\n    return root\n\ndef to_list(root):\n    \"\"\"The level-order list with None gaps, trailing Nones dropped.\"\"\"\n    out, q = [], deque([root])\n    while q:\n        node = q.popleft()\n        if node is None:\n            out.append(None)\n            continue\n        out.append(node.val)\n        q.append(node.left)\n        q.append(node.right)\n    while out and out[-1] is None:\n        out.pop()\n    return out\n\ndef balanced(values):\n    \"\"\"A perfectly balanced BST from a sorted list.\"\"\"\n    if not values:\n        return None\n    m = len(values) // 2\n    return Node(values[m], balanced(values[:m]), balanced(values[m + 1:]))\n",
+        "examples": [
+          {
+            "call": "validate_bst(build([2, 1, 3]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([10, 5, 15, None, None, 6, 20]))",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "validate_bst(build([2, 1, 3]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([10, 5, 15, None, None, 6, 20]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([5, 1, 4, None, None, 3, 6]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(None)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([1]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([2, 2, 2]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([5, 4, 6, None, None, 3, 7]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([50, 30, 70, 20, 40, 60, 80]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([8, 3, 10, 1, 6, None, 14, None, None, 4, 7, 13]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([-5, -10, 0]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([0, None, -1]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([3, 1, 5, 0, 2, 4, 6, None, None, None, 3]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(balanced(list(range(1, 1024))))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bst(build([2147483647, 2147483646]))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 14 hidden tests: equal values, an empty tree, negative values and a 1,023-node tree. `None` means no bound."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "An empty tree is valid. A node outside its bounds makes the whole tree invalid."
+        },
+        {
+          "rung": "point",
+          "text": "Recurse left with bounds `(lo, root.val)` and right with `(root.val, hi)`.",
+          "highlight": [
+            "r-l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `validate_bst(root.left, lo, root.val) and validate_bst(root.right, root.val, hi)` after checking `root.val` against both bounds."
+        }
+      ],
+      "feedback": {
+        "correct": "Every node is checked against the bounds set by all its ancestors.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is the tree from the last screen. A check against the children alone misses the 6 under 15.",
+          "test-4": "Test 4 is the empty tree, which is a valid BST: return `True`.",
+          "test-6": "Test 6 has equal values. The rule is strict: a duplicate is neither smaller nor larger.",
+          "test-14": "Test 14 holds 2147483647. Use `None` or `float(\"inf\")` for an open bound, not a large number."
+        }
+      },
+      "explain": {
+        "text": "Each call carries the tightest bounds from its ancestors. The 6 under 15 inherits the floor 10 and fails. Every node is visited once, so this is $O(n)$.",
+        "canvas": {
+          "highlight": [
+            "r-l"
+          ],
+          "caption": "6 fails its floor of 10"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Cost is height",
+      "prose": "Search and insert walk one path from the root, one comparison per node on it:\n\n$$\\text{cost} = O(h), \\qquad \\lfloor \\log_2 n \\rfloor \\le h \\le n - 1.$$\n\nA perfect tree of height $h$ holds $2^{h+1} - 1$ nodes. A balanced tree keeps $h$ near $\\log_2 n$; sorted inserts make $h = n - 1$.",
+      "question": "A perfectly balanced BST holds 1,023 prices. At most how many comparisons does a search make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "edges",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "chain",
+            "value": 1023,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 512,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Ten: one per level.",
+        "generic": "Not quite right. Solve $2^{h+1} - 1 = 1023$ for the height, then count nodes on the longest path.",
+        "byKey": {
+          "edges": "Nine is the height, in links. A search compares with every node on the path, one more than the links.",
+          "chain": "That is a chain, the worst case. This tree is perfectly balanced.",
+          "half": "Halving once is one comparison. Each comparison halves what is left: count the halvings."
+        }
+      },
+      "explain": {
+        "text": "$2^{10} - 1 = 1023$, so the height is 9 and the longest path has 10 nodes. The same 1,023 prices inserted in sorted order would need up to 1,023 comparisons."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Price levels between two prices",
+      "prose": "A book keeps its price levels in a BST, one node per price. A dashboard asks for every level from £99.50 to £100.50. In-order returns them sorted, and we can skip any side that cannot hold one.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "100.00",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "99.50",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "99.00",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "99.75",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "100.50",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "100.25",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "101.00",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Resting bid levels in £, as a BST"
+        },
+        "maxHeight": 220
+      },
+      "question": "Write `levels_between(root, lo, hi)`: the values `v` with `lo <= v <= hi`, ascending, without visiting sides that cannot contain any.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def levels_between(root, lo, hi):\n    ...\n",
+        "solution": "def levels_between(root, lo, hi):\n    out = []\n\n    def walk(node):\n        if node is None:\n            return\n        if node.val > lo:\n            walk(node.left)\n        if lo <= node.val <= hi:\n            out.append(node.val)\n        if node.val < hi:\n            walk(node.right)\n\n    walk(root)\n    return out\n",
+        "prelude": "from collections import deque\n\nclass Node:\n    def __init__(self, val, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n    def __repr__(self):\n        return f\"Node({self.val!r})\"\n\ndef build(values):\n    \"\"\"Build a tree from a level-order list with None gaps.\"\"\"\n    if not values or values[0] is None:\n        return None\n    it = iter(values)\n    root = Node(next(it))\n    q = deque([root])\n    while q:\n        node = q.popleft()\n        for side in (\"left\", \"right\"):\n            try:\n                v = next(it)\n            except StopIteration:\n                return root\n            if v is not None:\n                child = Node(v)\n                setattr(node, side, child)\n                q.append(child)\n    return root\n\ndef to_list(root):\n    \"\"\"The level-order list with None gaps, trailing Nones dropped.\"\"\"\n    out, q = [], deque([root])\n    while q:\n        node = q.popleft()\n        if node is None:\n            out.append(None)\n            continue\n        out.append(node.val)\n        q.append(node.left)\n        q.append(node.right)\n    while out and out[-1] is None:\n        out.pop()\n    return out\n\ndef balanced(values):\n    \"\"\"A perfectly balanced BST from a sorted list.\"\"\"\n    if not values:\n        return None\n    m = len(values) // 2\n    return Node(values[m], balanced(values[:m]), balanced(values[m + 1:]))\n\nclass _Seen(Node):\n    seen = set()\n\n    @property\n    def val(self):\n        _Seen.seen.add(id(self))\n        return self._v\n\n    @val.setter\n    def val(self, v):\n        self._v = v\n\ndef _copy(node):\n    if node is None:\n        return None\n    return _Seen(node._v if isinstance(node, _Seen) else node.val, _copy(node.left), _copy(node.right))\n\ndef touched(root, lo, hi):\n    \"\"\"How many nodes levels_between reads.\"\"\"\n    t = _copy(root)\n    _Seen.seen = set()\n    levels_between(t, lo, hi)\n    return len(_Seen.seen)\n",
+        "examples": [
+          {
+            "call": "levels_between(build([100.0, 99.5, 100.5, 99.0, 99.75, 100.25, 101.0]), 99.5, 100.5)",
+            "expect": "[99.5, 99.75, 100.0, 100.25, 100.5]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "levels_between(build([100.0, 99.5, 100.5, 99.0, 99.75, 100.25, 101.0]), 99.5, 100.5)",
+            "expect": "[99.5, 99.75, 100.0, 100.25, 100.5]",
+            "compare": "equal"
+          },
+          {
+            "call": "levels_between(build([100.0, 99.5, 100.5, 99.0, 99.75, 100.25, 101.0]), 100.3, 100.4)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "levels_between(build([100.0, 99.5, 100.5, 99.0, 99.75, 100.25, 101.0]), 0, 1000)",
+            "expect": "[99.0, 99.5, 99.75, 100.0, 100.25, 100.5, 101.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "levels_between(None, 1, 2)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "levels_between(build([50, 30, 70, 20, 40, 60, 80]), 35, 65)",
+            "expect": "[40, 50, 60]",
+            "compare": "equal"
+          },
+          {
+            "call": "levels_between(build([50, 30, 70, 20, 40, 60, 80]), 60, 60)",
+            "expect": "[60]",
+            "compare": "equal"
+          },
+          {
+            "call": "levels_between(build([10, None, 20, None, 30, None, 40]), 15, 35)",
+            "expect": "[20, 30]",
+            "compare": "equal"
+          },
+          {
+            "call": "levels_between(balanced(list(range(1, 1024))), 500, 502)",
+            "expect": "[500, 501, 502]",
+            "compare": "equal"
+          },
+          {
+            "call": "touched(balanced(list(range(1, 1024))), 500, 502) <= 40",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "touched(balanced(list(range(1, 1024))), 1, 3) <= 40",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "touched(balanced(list(range(1, 1024))), 1020, 1030) <= 40",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests. Tests 9 to 11 count the nodes you read in a 1,023-node tree: a narrow range must read at most 40."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk in-order, but only go left when the node is above `lo`."
+        },
+        {
+          "rung": "point",
+          "text": "If `node.val <= lo`, everything on its left is below `lo`: skip it.",
+          "highlight": [
+            "l-l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Go left if `node.val > lo`, append if `lo <= node.val <= hi`, go right if `node.val < hi`."
+        }
+      ],
+      "feedback": {
+        "correct": "A sorted range, reading only the nodes that matter.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 asks for a range with no level in it: return an empty list.",
+          "test-9": "Test 9 counts nodes read. Skip the left side when `node.val <= lo` and the right side when `node.val >= hi`.",
+          "test-7": "Test 7 is a chain with no left children. Check for `None` before reading a node."
+        }
+      },
+      "explain": {
+        "text": "Pruning reads the in-range nodes plus two paths from the root, about $O(h + k)$ for $k$ results. Real venues often go further: prices sit on a tick grid, so an array indexed by tick finds a level in $O(1)$.",
+        "canvas": {
+          "highlight": [
+            "l-r",
+            "r-l"
+          ],
+          "caption": "In range: 99.50, 99.75, 100.00, 100.25, 100.50"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "In a BST every left side is smaller and every right side larger, so search and insert walk one path down.",
+      "The cost is the height: about $\\log_2 n$ when balanced, $n$ for a chain built from sorted inserts.",
+      "In-order on a BST is sorted; a BST is valid when every node fits the bounds set by all its ancestors."
+    ],
+    "formula": {
+      "name": "Cost of a search",
+      "tex": "O(h), \\qquad \\lfloor \\log_2 n \\rfloor \\le h \\le n - 1",
+      "note": "Balanced trees (AVL, red-black) keep $h$ near $\\log_2 n$. In Python, use `bisect` on a sorted list."
+    },
+    "trap": "Checking each node only against its children passes trees that are not BSTs. Pass `lo` and `hi` bounds down instead."
+  },
+  "quiz": [
+    {
+      "id": "q-min",
+      "difficulty": 2,
+      "prose": "You need the smallest value in a non-empty BST.",
+      "question": "Where is it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "At the leftmost node: follow `left` until the next `left` is `None`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "At a leaf on the lowest level",
+            "why": "The lowest level may be on the right side, where the large values are."
+          },
+          {
+            "id": "c",
+            "text": "At the root's left child",
+            "why": "That child may have its own left child, which is smaller still."
+          },
+          {
+            "id": "d",
+            "text": "Anywhere: you must check every node",
+            "why": "The ordering tells you where it is. Checking every node throws that away."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Keep going left.",
+        "generic": "Not quite right. Which direction always leads to smaller values?"
+      },
+      "explain": {
+        "text": "Every step left reaches a smaller value. When there is no left child, nothing smaller exists, even if that node is the root itself."
+      }
+    },
+    {
+      "id": "q-sorted",
+      "difficulty": 2,
+      "prose": "You insert 1,000 prices in ascending order into a plain BST.",
+      "question": "What is the height of the tree, in links?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 999,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "balanced",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "balanced2",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nodes",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "999: the tree is a chain.",
+        "generic": "Not quite right. Where does each new, larger price go?",
+        "byKey": {
+          "balanced": "About 9 or 10 is a balanced tree's height. Sorted inserts all go right, making a chain.",
+          "balanced2": "About 9 or 10 is a balanced tree's height. Sorted inserts all go right, making a chain.",
+          "nodes": "You counted nodes. A chain of 1,000 nodes has 999 links."
+        }
+      },
+      "explain": {
+        "text": "Each price is larger than all before it, so it goes to the right of the last one. The result is a chain of 1,000 nodes with height 999."
+      }
+    },
+    {
+      "id": "q-tick",
+      "difficulty": 3,
+      "prose": "A venue's prices move in ticks of £0.01 between £90.00 and £110.00. It stores each level in a list at index `round((price - 90.00) / 0.01)`.",
+      "question": "What does finding the level for a price cost?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$O(1)$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$O(\\log n)$",
+            "why": "That is a balanced tree's cost. Here the index is computed straight from the price."
+          },
+          {
+            "id": "c",
+            "text": "$O(n)$",
+            "why": "No scan happens: the price gives the index at once."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Constant time: one subtraction and one division.",
+        "generic": "Not quite right. How is the index found?"
+      },
+      "explain": {
+        "text": "Prices on a tick grid map straight to array positions, like a list index. That is why many matching engines use arrays by tick rather than trees."
+      }
+    },
+    {
+      "id": "q-bisect",
+      "difficulty": 3,
+      "prose": "Python has no built-in balanced tree. You need price levels kept sorted, with fast search and range queries.",
+      "question": "What is the usual standard-library answer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`bisect` on a sorted list",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`heapq`",
+            "why": "A heap finds the smallest quickly, but it is not sorted, so range queries fail."
+          },
+          {
+            "id": "c",
+            "text": "A `dict` keyed by price",
+            "why": "A dict finds an exact price in $O(1)$ but keeps no order, so it cannot answer a range."
+          },
+          {
+            "id": "d",
+            "text": "Call `sort()` after every insert",
+            "why": "That costs $O(n \\log n)$ per insert. `bisect.insort` puts each value in place instead."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`bisect` searches in $O(\\log n)$.",
+        "generic": "Not quite right. Which tool searches a sorted list by halving?"
+      },
+      "explain": {
+        "text": "`bisect` searches a sorted list in $O(\\log n)$. Inserting still shifts elements, $O(n)$, which is fast in practice for thousands of levels. The `sortedcontainers` package does better for millions."
+      }
+    }
+  ]
+}
