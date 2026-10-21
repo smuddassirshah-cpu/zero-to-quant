@@ -1190,3 +1190,9 @@ Raised later (graphs-dp levels 2 and 3):
 417. `tree`: a `state.dim: [paths]` to grey out pruned branches (`collapse` hides and does nothing on a leaf).
 418. `grid`: `state.mark` badges sit in the cell corner and `null` in a patch prints "null" instead of removing the badge; offer a centred glyph and treat `null` as removal.
 419. `code`: the time limit is 5 s times the number of cases for the whole run, so a slow-but-correct solution cannot be caught per case (with 394); agents now count reads with a hidden list subclass or time inside a test.
+
+Raised later (ds level 4):
+
+420. `tree`: a binary-tree mode: explicit left and right slots (a single child drawn on its side, no ∅ placeholders needed), a tappable root, per-node `highlight` and `shade` (now the whole path from the root), with 374, 396 and 409.
+421. `orderbook`: `bids` and `asks` as state patches so a book can step through add, cancel and limit-order messages on one screen; order-id labels (with 376).
+422. AUTHORING.md: there is no `build(values)` tree helper; either add one to the Python prelude library or remove the claim from briefs (each lesson defines `Node`, `build`, `to_list` in its prelude).
