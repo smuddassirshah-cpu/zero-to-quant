@@ -331,6 +331,76 @@ Fifth pass (items 195 to 206, 208 to 229, 232 to 271, and the pytest level 2 and
 271. Done: the validator treats ★ ☆ ● ○ ■ □ ▲ △ ▼ ◀ ▶ ◆ and the card suits as text unless written with U+FE0F (covers 274).
 Content conversion: pytest l5 to l8, review-2 and homework-2 (12 code screens) now import real pytest; one shared postlude defines `run_tests()`, `outcome(fn=planted)`, `count(test=, fixture=)` and `is_fixture()` over real pytest, and every hidden check keeps its meaning (each check gives the same result as the stand-in did, on the starter and on the solution). Level 3 (l9 to l12, review-3, homework-3) never used the stand-in classes: its checks call the learner's test functions directly, so only the "pytest cannot load on this page" comment became `import pytest` (l9, l11, l12, homework-3); prose that recommends `math.isclose` is still true and stays. Level 1 (l4, review-1, homework-1) still carries the stand-in and was outside this brief.
 
+Sixth pass (items 272 to 339, and the pytest level 1 conversion):
+272. Done: bars `yScale: "log"` (positive heights; ticks at 1, 2, 5 times powers of ten). A plane category axis was not needed.
+273. Done: `lgamma(x)` and `prod(k, a, b, term)` in curve formulas, and `lgamma` and `prod(a, b, "term in k")` in derive; the exact birthday product is `1 - prod(k, 0, n - 1, (365 - k) / 365)` (checked: 0.5073 at 23).
+274. Covered by 271 (pass 5): the suits are text in the validator.
+275. Done: a `table` widget cell with `bind: "p.a-b"` draws what the learner types on that tree branch as they type, and tapping the branch focuses the cell; the tree takes `state.p` (and "" shows "?").
+276. Covered by 268 (pass 5).
+277. Done: a dimmed blank grid cell greys its background with a dashed edge.
+278. Done: `--shots` waits past the enter patch, then until canvas tweens (a new `ZQ.canvas.busy()` count) and CSS animations settle, at most 3 s, instead of a fixed 300 ms.
+279. Done: bars `groups` (two or more bars per category, a legend; values per group, or a sim outcome `[X, Y]`).
+280. Done: `derive.let: { name: expr }` intermediates, evaluated in order before the rules and never written; the validator checks them.
+281. Deferred: tap-to-classify needs a counting widget bound to the table canvas's row taps (which tally cell a tap adds to, undo, grading against the counts); tap-regions on table rows plus a table widget for the 2 by 2 covers it meanwhile, and the widget is better designed with the lesson that uses it.
+282. Done: grid `population: 1000` with `state.groups` (consecutive runs of dots, one tap target per group, `values()` gives the counts); the validator knows the group ids.
+283. Done: number-line `scale: "log"` and `"log-odds"` (natural-unit values, ticks and labels; `format: "percent"`).
+284. Done: a capital I beside l, I or 1 (and a lone "I") in canvas SVG text is set in the serif face, so "Ill" no longer reads "III"; the canvas font is unchanged elsewhere.
+285. Done: derive reads `params` (the canvas's params: `params.data[n]`) and arrays in `params.params` by name (`data[n]`); documented.
+286. Done: `sim.filter` discards trials; they are not counted, and the trial count says how many were discarded.
+287. Done: table widget cell `unit: "%"` (answer as a fraction, typed as a percentage, a % sign after the input).
+288. Done: on a fan of three or more first-level branches the labels move along their branches, away from the root.
+289. Done: boxes `size: "large"` (or "medium", or a number) and a `door` item kind.
+290. Done: tap-regions `answer`, `among` and `wrong` sets take set names (`cross2`), expanded by the canvas; the validator accepts grid set names there.
+291. Done: distribution `discrete` family (`values`, `probs`) and `cdf: true` (steps with closed and open dots, or the curve).
+292. Done: the `slider` widget binds through the canvas's own `setParam` first, as `canvas.controls` do, so a bars category label moves its bar.
+293. Done: grid `margins: true` (or given sums): row and column sums and the total outside the cells, hidden by `state.margins: false` until a patch, not part of named sets; ids `rsum1`, `csum1`, `total`.
+294. Done another way: typing goes into a `table` widget cell with `bind: "cells.r2c3"`, which fills that grid cell live (margins update). Typing straight into grid cells is not added: the table widget already grades, marks and reveals typed answers.
+295. Done: balance move `remove-unknown-part` (take k of an unknown, such as 1/2, from both pans); the canvas's `removeUnknownBoth`, the solver and the validator know it (E = 1 + E/2 solves as take E/2, divide by 1/2).
+296. Done: scatter `sim: { n, rho, seed, mx, my, sx, sy }` (a control on `rho` re-correlates the same draws) and `values().r`.
+297. Done: the validator warns when an item has both `prose` and a `prompt` (item-level or a longform widget's), since prose replaces it; and a longform widget's `prompt` now shows when there is no prose (it was never drawn). Seven homework items warn now (sql h3, py-found h4, pytest h2 and h3, plotting h1 and h2, testing h3): content agents should merge each prompt into its prose.
+298. Done: bars `xAxis: "value"` with `state.transform: { a, b }` slides categories to aX + b on a numeric axis.
+299. Done: discrete distribution ticks fall on every integer when there is room (else every 2nd, 5th, 10th), and a discrete family's axes follow its support as a slider moves n (`axes: "grow"` keeps the old behaviour).
+300. Done: distribution `hypergeometric` family (`N`, `K`, `n`).
+301. Done: bars `state.pivot` (a fulcrum under the axis, draggable with `drag: true` or a drag-point number target) and `showMean` (the weighted mean); no separate seesaw canvas.
+302. Done: series controls bind `reveal`, `revealAt` (an index) and `markers.<id>.i`; a marker with `i: "reveal"` rides the end of the reveal.
+303. Done: a sim outcome may return a list (`[X, Y]`), drawn as grouped bars (279).
+305. Done: distribution `lognormal` family (with `showMedian` and mean markers), and shading bounds that are expressions in the params (`"mu - sigma"`).
+306. Done: plane function `zeroOutside: true` (0 beyond its domain, drawn flat along the axis, so areas past the end shade correctly).
+307. Done: distribution `drag: true` gives shade handles on an explore screen without a widget.
+308. Done: bars `curves: [{ expr }]` reading params, state.params and the bin width `w`, so an overlay follows n.
+309. Done: a distribution shade with `under: "<overlay id>"` fills under the overlay curve (hatched) separately from the bars; a bars curve takes `shade: { from, to }`.
+310. Done: series `xScale: "log"` and `xStep`.
+311. Done: derive `matmul`, `matpow(P, k)`, `vecmat(v, P)` (checked: π0 P^3 on a two-state chain).
+312. Done: graph edge `loopAngle`.
+313. Done: array `wrap` (cells per row, or true), ranges drawn row by row.
+314. Done: graph node `valueSide` (or `state.valueSide`).
+315. Done: walk `model: "markov"` (`states`, `P`, `start`), state paths as steps on a labelled y axis; the validator checks the matrix shape.
+316. Done with 308: a curve (in state, patchable) over a data histogram on one set of axes.
+317. Done: `rug` on distribution and plane (ticks, or sticks up to the density or a named function).
+318. Done: plane `yAxis: "left"`; a long `xLabel` (or `xLabelPos: "below"`) sits below the ticks; and a plane whose y range starts at 0 now reserves room for its x tick labels, which used to spill under the drawing toward the caption.
+319. Done: README.md (pair) and AUTHORING.md say that the right side's same-named params win in derive, and to prefer distinct names or `left.n` and `right.n`.
+320. Done: distribution `shade` as a list (summed label) and `observed` marker lines.
+321. Done: sim `let` bindings and `tstat(k)`, with `sample`, `mean`, `sd` and friends, so a t statistic of one sample simulates directly.
+322. Done: bars `state.cut: { at, side, colour, label }`, bindable `cut.at`.
+323. Done: walk per-barrier hit counts (`{up}`, `{down}`, `hitCounts()`), `xStep`, and a `{ "reseed": true }` control (a button that draws the next seeded run); the default "Step" x label now has room.
+324. Done: tree `state.leaves` (every leaf has a value slot).
+325. Done: overlay params may be expressions in the main params, and derive addresses an overlay by id (`nrm.params.mu`); documented.
+326. Done: `sim.outcome` reads params and state.params by name (a slider re-runs the stream, which jumps rather than animates), and `mean(k, expr)`, `var`, `varp`, `sd`, `sum` draw k fresh values.
+327. Done: a series `sim` with a running statistic (mean, varp, var, sd, sum); per-sample statistics are outcomes such as `mean(10, n())`.
+328. Covered by 211 (pass 5): `canvas.maxHeight` caps a tall grid.
+329. Done: the validator accepts "all" and `cross5-3` in grid hint highlights, overlay ids from state as well as params, and named shade regions and observed markers on a distribution.
+330. Done with 309 and 320: several regions, one of them under an overlay (alpha and beta at once).
+331. Done: `erf(x)` and `Phi(x)` in curve formulas and derive.
+332. Done: bars `hlines` (params or state).
+333. Done: the graph frame narrows to the column on a phone (down to 300 wide) and re-spaces, so node labels keep 12px; `fitWidth: false` keeps 540.
+334. Done in part: below 480px the code editor's gutter narrows and its text steps down to 13px (CSS only), so about 44 characters fit before a line scrolls. Soft-wrapping is not added: the line-number gutter and the highlight layer would have to measure wrapped rows, which belongs in the editor code the C++ work is changing now.
+335. Done: `--why` also shoots each review and homework item's Explanation sheet (the set-mode hook gained `why()` and `closeWhy()`), and an exam's result page with every explanation open.
+336. Done: payoff tap targets `strike-<leg>`, `breakeven` (numbered when several), leg lines and `total`.
+337. Done: payoff `drag: "spot"` (or a drag-point widget naming `spot`).
+338. Done: payoff `showTotal: false` (legs drawn solid, spot dots per leg) and a leg's `labelAt`.
+339. Done: payoff leg `floor: false`.
+Content conversion (level 1): pytest l4, review-1 and homework-1 (5 code screens) now import real pytest and carry the shared postlude, with a Run examples call `run_tests()` that prints pytest's report; the "stand in for pytest" sentences are gone from their how text and prose. Their hidden checks call the learner's tests directly and keep their meaning; the five homework-1 `parse_row` breaks now use `outcome(parse_row=planted) == 'failed'`, because real `pytest.raises` fails with pytest's own Failed (a BaseException the code widget's raises check does not catch) where the stand-in raised AssertionError. Checked on starter and solution against the stand-in versions; their playthroughs pass.
+
 
 Raised later (equations level 2):
 
@@ -1055,3 +1125,18 @@ Raised later (ds level 2):
 384. `array`: pointers as tap targets ("tap the pointer that should move"), not only the cells under them.
 385. `series`: a label size or offset option for `{value}` markers, so ten labelled points fit at 540 px.
 386. A compact chart beside a `table` without shrinking axis text (`maxHeight: 180` makes a `series` axis unreadable); a `compact` mode or a wider `pair` split.
+
+Raised later (algo-think level 1):
+
+387. `array`: a built-in step control with a step counter (every stepper is now a slider plus `derive` lookups); re-layout when `cells` changes length (1 to 16 cells drew a stacked column); check that `state.active` set by `derive` shows in the Why? copy (unconfirmed).
+388. `plane` with `yScale: "log"`: right-end curve labels drift away from their curves with six curves.
+389. `derive` cannot build an object (braces forbidden), so `highlight: {"range": [...]}` cannot be derived; allow a derived object or a `range` shorthand.
+390. `table` widget: a numeric-looking text answer is graded as a number ("1" for "O(1)"); add a normalised big-O comparison (strip "O", spaces, case) so typed complexity answers need no `accept` lists.
+
+Raised later (ds level 1):
+
+391. `choice` options: a fenced code block inside an option renders as broken inline code; support multi-line code in options.
+392. `boxes`: containers sit in one row and shrink to 60%; wrap onto a second row or offer a grid layout for five or more buckets.
+393. `array`: an insert-and-shift action like `swap`.
+394. `code`: a per-test time budget (the limit is 5 s times the number of tests, so a quadratic attempt waits 30 to 45 s), a timeout reported against the test that hit it, and a way to count operations for complexity checks.
+395. `code`: expose `__learner_source__` to tests always, not only when a prelude or postlude exists.
