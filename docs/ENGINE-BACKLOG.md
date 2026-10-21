@@ -1114,7 +1114,7 @@ Raised later (options level 3, trees level 3):
 381. `longform` prompts do not render Markdown tables; either render them or say so in AUTHORING.md section 4.
 382. `bars`: the number of categories is fixed in params; let `derive` or a slider change the category list so one bar per tree leaf can follow n.
 
-Content note (trees): level 2 grows cash by (1 + r) per step and level 3 by e^{rΔt}; level 3 states this. The second reader for topic 1.7 should check that level 2 never implies its convention is the only one and that the level 3 limit £10.45 is consistent with the exam.
+Content note (trees): l5 and the first screens of l7 grow cash by (1 + r) per step; l6 introduces e^{rΔt} explicitly and l6 onwards use it (checked by the exam 1.7 agent). The second reader for topic 1.7 should check the l5 to l6 handover reads cleanly.
 
 Content gaps (second reader, topic 1.3), to fill in a later gap pass once every course is written:
 
