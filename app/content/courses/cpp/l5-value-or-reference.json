@@ -1,0 +1,1229 @@
+{
+ "id": "l5-value-or-reference",
+ "course": "cpp",
+ "title": "Passing by value or by reference",
+ "minutes": 14,
+ "objectives": [
+  "Choose between a copy and a reference for each argument.",
+  "Predict whether a function call changes the caller's object."
+ ],
+ "skills": [
+  "cp-references",
+  "cp-basics"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Who changes the vector",
+   "prose": "In Python, a function that appends to the list you pass changes your list, as the session above shows. Here is the same code in C++.\n\n```cpp\nvoid add_fee(std::vector<double> costs) {\n    costs.push_back(1.50);\n}\n\nint main() {\n    std::vector<double> mine{250.00, 120.00};\n    add_fee(mine);\n    std::cout << mine.size() << \"\\n\";\n}\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> def add_fee(costs):",
+      "...     costs.append(1.50)",
+      ">>> mine = [250.00, 120.00]",
+      ">>> add_fee(mine)",
+      ">>> len(mine)",
+      "3"
+     ],
+     "title": "Python"
+    },
+    "state": {}
+   },
+   "question": "What does the C++ program print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "two",
+      "text": "`2`",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "`3`",
+      "why": "You read it as Python, where the call shares the list. In C++ `costs` is a new vector, copied from `mine` when the call starts."
+     },
+     {
+      "id": "zero",
+      "text": "`0`",
+      "why": "`costs` starts as a full copy of `mine`, and nothing ever empties `mine`."
+     },
+     {
+      "id": "error",
+      "text": "It does not compile",
+      "why": "It compiles. A parameter of type `std::vector<double>` simply receives a copy of the argument."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is `costs` the caller's vector, or a vector of its own?"
+    },
+    {
+     "rung": "point",
+     "text": "Look at the parameter type. It has no `&` or anything else after the type."
+    },
+    {
+     "rung": "step",
+     "text": "`costs` is built as a copy of `mine`. `push_back` grows the copy, which is destroyed at the closing brace. `mine` keeps its two prices."
+    }
+   ],
+   "feedback": {
+    "correct": "The copy grew; `mine` did not.",
+    "generic": "Not quite right. Ask whether `costs` is `mine` itself or a copy of it.",
+    "byKey": {
+     "three": "You read it as Python, where the call shares the list. In C++ `costs` is a new vector, copied from `mine`."
+    }
+   },
+   "explain": {
+    "text": "`costs` is a separate vector, copied from `mine` when the call starts. `push_back` grows that copy, and the copy is destroyed at the function's closing brace. So `mine.size()` is still 2.",
+    "canvas": {
+     "lines": [
+      "main:     mine  = {250.00, 120.00}",
+      "add_fee:  costs = {250.00, 120.00, 1.50}  (a copy)",
+      "after the call, mine.size() is 2"
+     ],
+     "tone": {
+      "l2": "muted"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Names on boxes",
+   "prose": "In C++ a variable *is* its object: a box in memory. Adding `&` to the type makes a second name for a box that already exists.\n\n```cpp\nstd::vector<double> mine{250.00, 120.00};\nstd::vector<double>& alias = mine;\nstd::vector<double> copy = mine;\nalias.push_back(1.50);\n```",
+   "canvas": {
+    "kind": "boxes",
+    "params": {
+     "itemKind": "card",
+     "containers": [
+      {
+       "id": "names",
+       "label": "Names",
+       "kind": "box",
+       "items": [
+        {
+         "id": "mine",
+         "label": "mine"
+        },
+        {
+         "id": "alias",
+         "label": "alias"
+        },
+        {
+         "id": "copy",
+         "label": "copy"
+        }
+       ],
+       "cols": 3,
+       "fill": "top"
+      },
+      {
+       "id": "big",
+       "label": "{250, 120, 1.5}",
+       "kind": "box",
+       "cols": 2,
+       "capacity": 3
+      },
+      {
+       "id": "small",
+       "label": "{250, 120}",
+       "kind": "box",
+       "cols": 2,
+       "capacity": 3
+      }
+     ]
+    },
+    "state": {
+     "caption": "The two vector objects after the last line"
+    }
+   },
+   "question": "Drag each name onto the box it names after the last line.",
+   "widget": {
+    "kind": "place",
+    "mode": "boxes",
+    "answer": {
+     "big": [
+      "mine",
+      "alias"
+     ],
+     "small": [
+      "copy"
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which line builds a second vector? The other names share the first one."
+    },
+    {
+     "rung": "point",
+     "text": "`copy` has no `&`, so it is a new box.",
+     "highlight": [
+      "copy"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`mine` and `alias` name the box that `push_back` grew. `copy` names its own box, still `{250, 120}`."
+    }
+   ],
+   "feedback": {
+    "correct": "`mine` and `alias` name one box; `copy` is its own.",
+    "generic": "Not quite right. Only a declaration without `&` builds a new box.",
+    "byKey": {
+     "mine": "`mine` is the box the vector was built in, and the `push_back` through `alias` grew it.",
+     "alias": "`alias` was declared with `&`, so it names the box `mine` already names. No new vector is made.",
+     "copy": "`copy` has no `&`, so it is a new box, filled with a copy of `mine`'s two prices before the push."
+    }
+   },
+   "explain": {
+    "text": "`alias` is a second name for `mine`'s box, so pushing through `alias` grew that box. `copy` is its own box, copied before the push, so it still holds two prices.",
+    "canvas": {
+     "move": {
+      "mine": "big",
+      "alias": "big",
+      "copy": "small"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A reference parameter",
+   "prose": "A name declared with `&` is a **reference**: another name for an object that already exists. A reference parameter lets a function reach the caller's object.\n\n```cpp\nvoid apply_fee(double& balance, double fee) {\n    balance -= fee;\n}\n\ndouble cash = 1000.00;\napply_fee(cash, 2.50);\nstd::cout << cash << \"\\n\";\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 240,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "cash",
+       "label": "cash",
+       "x": 0.12,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "balance",
+       "label": "balance",
+       "x": 0.12,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "o1",
+       "label": "double 1000",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "fee",
+       "label": "fee",
+       "x": 0.88,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "o2",
+       "label": "double 2.5",
+       "x": 0.88,
+       "y": 0.8,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "cash",
+       "to": "o1",
+       "directed": true
+      },
+      {
+       "from": "balance",
+       "to": "o1",
+       "directed": true
+      },
+      {
+       "from": "fee",
+       "to": "o2",
+       "directed": true
+      }
+     ]
+    },
+    "state": {
+     "caption": "During the call: `balance` and `cash` name one `double`"
+    }
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "`997.5`",
+      "correct": true
+     },
+     {
+      "id": "unchanged",
+      "text": "`1000`",
+      "why": "That is what happens without the `&`. Here `balance` is another name for `cash`, so `balance -= fee` changes `cash`."
+     },
+     {
+      "id": "fee",
+      "text": "`2.5`",
+      "why": "`balance -= fee` subtracts the fee from the balance. It does not replace the balance with the fee."
+     },
+     {
+      "id": "zeros",
+      "text": "`997.50`",
+      "why": "The value is right, but `std::cout` prints a `double` without trailing zeros unless you ask for fixed decimals."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is `balance` a copy of `cash`, or another name for it?"
+    },
+    {
+     "rung": "point",
+     "text": "Both `cash` and `balance` point at the same box.",
+     "highlight": [
+      "cash",
+      "balance"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`balance -= fee` changes the one `double` that both names share: 1000 minus 2.5 is 997.5."
+    }
+   ],
+   "feedback": {
+    "correct": "`balance` is `cash` under another name.",
+    "generic": "Not quite right. Follow the arrows: which box does `balance -= fee` change?",
+    "byKey": {
+     "unchanged": "That is what happens without the `&`. Here `balance` is another name for `cash`, so `cash` changes."
+    }
+   },
+   "explain": {
+    "text": "`balance` is a reference, so it names the same `double` as `cash`. Subtracting 2.50 through `balance` changes that one `double` to 997.5. `fee` has no `&`: it is a copy of 2.50, and changing it would not touch the caller.",
+    "canvas": {
+     "labels": {
+      "o1": "double 997.5"
+     },
+     "highlight": [
+      "o1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Read without copying",
+   "prose": "`prices` holds 1,000,000 prices, and `mean` only reads them. We want `v` to be a second name for `prices`, and we want the compiler to stop `mean` changing it. The keyword `const` means read only.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "prices",
+       "label": "prices",
+       "x": 0.15,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "v",
+       "label": "v",
+       "x": 0.15,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "big",
+       "label": "1,000,000 doubles",
+       "x": 0.65,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "prices",
+       "to": "big",
+       "directed": true
+      }
+     ]
+    },
+    "state": {
+     "caption": "Which parameter type joins `v` to this box, read only?"
+    }
+   },
+   "question": "Which signature should `mean` have?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cref",
+      "text": "`double mean(const std::vector<double>& v)`",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "`double mean(std::vector<double> v)`",
+      "why": "That builds a second box and copies all 1,000,000 prices into it on every call."
+     },
+     {
+      "id": "ref",
+      "text": "`double mean(std::vector<double>& v)`",
+      "why": "That shares the box, but it lets `mean` change the prices, and the compiler will not stop it."
+     },
+     {
+      "id": "cvalue",
+      "text": "`double mean(const std::vector<double> v)`",
+      "why": "`const` stops changes, but without `&` this is still a full copy of the million prices."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two things are needed: no copy, and no changes."
+    },
+    {
+     "rung": "point",
+     "text": "`&` gives the sharing. What gives the read only part?"
+    },
+    {
+     "rung": "step",
+     "text": "`const std::vector<double>&` is a reference, so nothing is copied, and `const` makes `v` read only."
+    }
+   ],
+   "feedback": {
+    "correct": "Shared and read only.",
+    "generic": "Not quite right. Find the type that has both `&` and `const`.",
+    "byKey": {
+     "value": "That copies all 1,000,000 prices into `v` on every call.",
+     "cvalue": "Without `&` this is still a copy, even if it is a read-only one."
+    }
+   },
+   "explain": {
+    "text": "`const std::vector<double>& v` makes `v` a second name for `prices`, so nothing is copied. `const` means the compiler rejects any line in `mean` that would change it.",
+    "canvas": {
+     "labels": {
+      "v": "v (const&)"
+     },
+     "edges": {
+      "e-v-big": {
+       "from": "v",
+       "to": "big",
+       "dashed": true
+      }
+     },
+     "caption": "`v` names the same box; the dashed arrow is read only"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What a copy costs",
+   "prose": "A `double` takes 8 bytes. Passing a vector by value copies every element into a new buffer. The table shows timings from this browser build.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Prices",
+      "Bytes copied",
+      "Time per by-value call"
+     ],
+     "rows": [
+      [
+       "1,000",
+       "8,000",
+       "about 0.2 µs"
+      ],
+      [
+       "10,000",
+       "80,000",
+       "about 3 µs"
+      ],
+      [
+       "100,000",
+       "800,000",
+       "about 20 µs"
+      ],
+      [
+       "1,000,000",
+       "?",
+       "about 1 ms"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "A `const&` call took a few nanoseconds at every size: nothing is copied.",
+     "highlight": {
+      "cells": [
+       "r3c1"
+      ]
+     }
+    }
+   },
+   "question": "How many megabytes does one by-value call copy for 1,000,000 prices? Take 1 MB as 1,000,000 bytes.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "MB",
+    "label": "Megabytes copied",
+    "accept": "8 MB: 1,000,000 prices times 8 bytes is 8,000,000 bytes.",
+    "wrong": [
+     {
+      "id": "bytes",
+      "value": 8000000
+     },
+     {
+      "id": "one",
+      "value": 1
+     },
+     {
+      "id": "bits",
+      "value": 64
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each price is 8 bytes. How many bytes is a million of them?"
+    },
+    {
+     "rung": "point",
+     "text": "Follow the column: each row multiplies the number of prices by 8.",
+     "highlight": [
+      "r3c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "1,000,000 times 8 bytes is 8,000,000 bytes, which is 8 MB."
+    }
+   ],
+   "feedback": {
+    "correct": "8 MB on every call.",
+    "generic": "Not quite right. Multiply the number of prices by 8 bytes, then convert to MB.",
+    "byKey": {
+     "bytes": "That is the count in bytes. Divide by 1,000,000 to get megabytes.",
+     "one": "That counts one byte per price. A `double` takes 8.",
+     "bits": "You multiplied by 64, the bits in a `double`. Count bytes: 8 each."
+    }
+   },
+   "explain": {
+    "text": "Each of the 1,000,000 prices takes 8 bytes, so a by-value call copies 8,000,000 bytes, which is 8 MB. Here that takes about a millisecond per call. A pricing loop that calls it 1,000 times a second would spend its whole second copying.",
+    "canvas": {
+     "values": {
+      "r3c1": "8,000,000"
+     },
+     "highlight": {
+      "cells": [
+       "r3c1",
+       "r3c2"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Your first const reference",
+   "prose": "A book holds share quantities and their prices in £, one entry per stock. Its value is the sum of quantity times price.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "qty = {100, 250, 40}",
+      "px  = {4.85, 0.72, 31.20}",
+      "",
+      "100 x 4.85  =   485.00",
+      "250 x 0.72  =   180.00",
+      " 40 x 31.20 =  1248.00",
+      "total       =  1913.00"
+     ],
+     "title": "A three-stock book"
+    },
+    "state": {}
+   },
+   "question": "Write `double total_value(...)` with both vectors passed by `const` reference.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "postlude": "#include <type_traits>\nstatic_assert(std::is_same<decltype(&total_value), double (*)(const std::vector<double>&, const std::vector<double>&)>::value,\n              \"total_value should take both vectors as const std::vector<double>&\");\n",
+    "starter": "#include <vector>\n\n// total_value(qty, px): the sum of qty[i] * px[i]\n// Pass both vectors so that nothing is copied\n// and neither can be changed.\n",
+    "solution": "#include <vector>\n\ndouble total_value(const std::vector<double>& qty, const std::vector<double>& px) {\n    double total = 0;\n    for (std::size_t i = 0; i < qty.size(); ++i)\n        total += qty[i] * px[i];\n    return total;\n}\n",
+    "examples": [
+     {
+      "call": "total_value",
+      "args": [
+       [
+        100,
+        250,
+        40
+       ],
+       [
+        4.85,
+        0.72,
+        31.2
+       ]
+      ],
+      "expect": 1913,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "total_value",
+      "args": [
+       [
+        100,
+        250,
+        40
+       ],
+       [
+        4.85,
+        0.72,
+        31.2
+       ]
+      ],
+      "expect": 1913,
+      "compare": "isclose"
+     },
+     {
+      "call": "total_value",
+      "args": [
+       [
+        1
+       ],
+       [
+        101.5
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 101.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "total_value",
+      "args": [
+       [],
+       []
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "call": "total_value",
+      "args": [
+       [
+        -200,
+        300
+       ],
+       [
+        12.5,
+        8.0
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": -100,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> q(1000000, 2.0), p(1000000, 0.5);",
+      "call": "total_value(q, p)",
+      "expect": 1000000,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests, including an empty book, a short position and a million-stock book. A hidden check after your code also tests the signature itself."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the signature: two `const std::vector<double>&` parameters, returning `double`."
+    },
+    {
+     "rung": "point",
+     "text": "Loop over the indices with `std::size_t i` from 0 to `qty.size()`."
+    },
+    {
+     "rung": "step",
+     "text": "Set `double total = 0;`, add `qty[i] * px[i]` for each `i`, then `return total;`. An empty book returns 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Both vectors are read in place; nothing is copied.",
+    "generic": "Not yet. The results under the editor say which test failed."
+   },
+   "explain": {
+    "text": "`const std::vector<double>&` hands the function the caller's vectors without copying them. The loop only reads, so `const` costs nothing. An empty book never enters the loop and returns 0."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The missing ampersand",
+   "prose": "A colleague wants weights that add up to 1. Their function works on its own copy without anyone noticing.\n\n```cpp\nvoid normalise(std::vector<double> w) {\n    double sum = 0;\n    for (double x : w) sum += x;\n    for (double& x : w) x /= sum;\n}\n\nstd::vector<double> w{2.0, 3.0, 5.0};\nnormalise(w);\nstd::cout << w[0] << \"\\n\";\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "cw",
+       "label": "caller's w",
+       "x": 0.2,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "pw",
+       "label": "normalise's w",
+       "x": 0.2,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "o1",
+       "label": "{2, 3, 5}",
+       "x": 0.7,
+       "y": 0.2,
+       "shape": "rect"
+      },
+      {
+       "id": "o2",
+       "label": "{2, 3, 5}",
+       "x": 0.7,
+       "y": 0.8,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "cw",
+       "to": "o1",
+       "directed": true
+      },
+      {
+       "from": "pw",
+       "to": "o2",
+       "directed": true
+      }
+     ]
+    },
+    "state": {
+     "caption": "Two boxes: the parameter has no `&`"
+    }
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "two",
+      "text": "`2`",
+      "correct": true
+     },
+     {
+      "id": "fifth",
+      "text": "`0.2`",
+      "why": "You assumed the call changes the caller's vector. Without `&`, `normalise` divides its own copy, which is then destroyed.",
+      "canvas": {
+       "highlight": [
+        "o2"
+       ]
+      }
+     },
+     {
+      "id": "error",
+      "text": "It does not compile",
+      "why": "It compiles cleanly. Taking a vector by value is legal; it just copies."
+     },
+     {
+      "id": "one",
+      "text": "`1`",
+      "why": "`w[0]` is the first weight, 2, and nothing changed it in the caller."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which box does `x /= sum` divide?"
+    },
+    {
+     "rung": "point",
+     "text": "`normalise`'s `w` is a separate box.",
+     "highlight": [
+      "o2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The parameter has no `&`, so the division happens in the copy. The caller's `w[0]` is still 2."
+    }
+   ],
+   "feedback": {
+    "correct": "The copy was normalised; the caller's weights were not.",
+    "generic": "Not quite right. Check whether `normalise`'s `w` is the caller's vector or a copy.",
+    "byKey": {
+     "fifth": "You assumed the call changes the caller's vector. Without `&`, `normalise` divides its own copy, which is then destroyed."
+    }
+   },
+   "explain": {
+    "text": "`normalise` divided its own copy, `{0.2, 0.3, 0.5}`, and that copy died at the closing brace. The caller's `w` is untouched, so `w[0]` prints 2. The compiler cannot warn you: copying is legal.",
+    "canvas": {
+     "labels": {
+      "o2": "{0.2, 0.3, 0.5}"
+     },
+     "highlight": [
+      "o1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Fix normalise",
+   "prose": "Fix `normalise` so it changes the caller's weights. Weights may be negative (a short position). If the weights sum to 0, or there are none, leave them as they are.",
+   "question": "Fix `normalise`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nvoid normalise(std::vector<double> w) {\n    double sum = 0;\n    for (double x : w) sum += x;\n    for (double& x : w) x /= sum;\n}\n",
+    "solution": "#include <vector>\n\nvoid normalise(std::vector<double>& w) {\n    double sum = 0;\n    for (double x : w) sum += x;\n    if (sum == 0) return;\n    for (double& x : w) x /= sum;\n}\n",
+    "examples": [
+     {
+      "setup": "std::vector<double> w{2.0, 3.0, 5.0};\nnormalise(w);",
+      "call": "w",
+      "expect": [
+       0.2,
+       0.3,
+       0.5
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "std::vector<double> w{2.0, 3.0, 5.0};\nnormalise(w);",
+      "call": "w",
+      "expect": [
+       0.2,
+       0.3,
+       0.5
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> w{1.0, 3.0};\nnormalise(w);",
+      "call": "w[0]",
+      "expect": 0.25,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> w{0.7, 1.1, 2.2, 0.5};\nnormalise(w);",
+      "call": "w[0] + w[1] + w[2] + w[3]",
+      "expect": 1,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> w{1.5, -0.5};\nnormalise(w);",
+      "call": "w",
+      "expect": [
+       1.5,
+       -0.5
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> w{0.0, 0.0};\nnormalise(w);",
+      "call": "w",
+      "expect": [
+       0,
+       0
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> w;\nnormalise(w);",
+      "call": "w.size()",
+      "expect": 0,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Each builds a vector `w`, calls `normalise(w)`, then looks at `w` in the caller."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two fixes: the parameter type, and the case where the sum is 0."
+    },
+    {
+     "rung": "point",
+     "text": "Add `&` after the type so `w` names the caller's vector."
+    },
+    {
+     "rung": "step",
+     "text": "Write `std::vector<double>& w`. After summing, `if (sum == 0) return;` before dividing."
+    }
+   ],
+   "feedback": {
+    "correct": "The caller's weights now add up to 1.",
+    "generic": "Not yet. The results under the editor say which test failed."
+   },
+   "explain": {
+    "text": "With `std::vector<double>& w`, every `x /= sum` divides the caller's own weights. The early `return` avoids dividing by zero, which would turn every weight into `nan` or infinity. An empty vector sums to 0, so it returns at once."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Three ways to pass",
+   "prose": "Each parameter type says what the function will do with your object.\n\n```cpp\nvoid f(std::vector<double> v);         // its own copy\nvoid f(const std::vector<double>& v);  // shared, read only\nvoid f(std::vector<double>& v);        // shared, may change it\nstd::vector<double> g();               // returned, not copied\n```\n\nReturning a local by value is cheap: the compiler builds it straight into the caller's variable. This is **copy elision**.",
+   "question": "A function reads 1,000,000 prices and returns their mean. Which parameter fits?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cref",
+      "text": "`const std::vector<double>& prices`",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "`std::vector<double> prices`",
+      "why": "That copies 8 MB on every call, only to read it."
+     },
+     {
+      "id": "ref",
+      "text": "`std::vector<double>& prices`",
+      "why": "That compiles, but it claims the function may change the prices, and it rejects temporaries and `const` vectors."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Read only, and no copy.",
+    "generic": "Not quite right. The function only reads, and the vector is large."
+   },
+   "explain": {
+    "text": "A function that only reads a large object takes it by `const&`. Small values such as `double` and `int` go by value: copying 8 bytes is as cheap as sharing."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Swap by reference",
+   "prose": "Two reference parameters let one function change two of the caller's variables. Here `a` and `b` are the caller's bid and ask.\n\n```cpp\nvoid swap_px(double& a, double& b) {\n    double t = a;   // keep the old a\n    ________        // missing line\n    b = t;          // b gets the old a\n}\n```",
+   "question": "Which line completes `swap_px`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "ab",
+      "text": "`a = b;`",
+      "correct": true
+     },
+     {
+      "id": "ba",
+      "text": "`b = a;`",
+      "why": "That copies `a` into `b`, so the old `b` is lost and both end up as the old `a`."
+     },
+     {
+      "id": "tb",
+      "text": "`t = b;`",
+      "why": "`t` holds the old `a`. Overwriting it loses that value, and `a` never changes."
+     },
+     {
+      "id": "at",
+      "text": "`a = t;`",
+      "why": "`t` is a copy of `a`, so this writes `a` back into itself and changes nothing."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After the first line, `t` keeps the old `a`. What should `a` become?"
+    },
+    {
+     "rung": "point",
+     "text": "Each line has one job: save `a`, then overwrite `a`, then fill `b`."
+    },
+    {
+     "rung": "step",
+     "text": "`a` should take `b`'s value, which is safe because `t` saved the old `a`. Then `b = t` finishes the swap."
+    }
+   ],
+   "feedback": {
+    "correct": "Save, overwrite, fill.",
+    "generic": "Not quite right. After saving `a` in `t`, which variable can be overwritten safely?",
+    "byKey": {
+     "ba": "That copies `a` into `b` before `b` is saved, so the old `b` is lost."
+    }
+   },
+   "explain": {
+    "text": "Line 1 saves the old `a` in `t`. Line 2 overwrites `a` with `b`, which is safe because `t` holds the old value. Line 3 gives `b` the old `a`; both writes reach the caller through the references."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A risk engine's signature",
+   "prose": "A risk engine revalues a desk 1,000 times a second. The order book has 50,000 price levels and is only read. Every position's P&L is updated in place.",
+   "question": "Which signature should `revalue` have?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`void revalue(const OrderBook& book, std::vector<Position>& pos)`",
+      "correct": true
+     },
+     {
+      "id": "copies",
+      "text": "`void revalue(OrderBook book, std::vector<Position> pos)`",
+      "why": "That copies the whole book 1,000 times a second, and every P&L update lands in a copy the caller never sees."
+     },
+     {
+      "id": "swapped",
+      "text": "`void revalue(OrderBook& book, const std::vector<Position>& pos)`",
+      "why": "The `const` is on the wrong argument. The P&L updates will not compile, and the book could be changed by mistake."
+     },
+     {
+      "id": "constcopy",
+      "text": "`void revalue(const OrderBook book, std::vector<Position>& pos)`",
+      "why": "The positions are right, but `const OrderBook` without `&` still copies 50,000 levels on every call."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask two questions per argument: is it large, and does the function change it?"
+    },
+    {
+     "rung": "point",
+     "text": "The book is large and read only. The positions are changed and must reach the caller."
+    },
+    {
+     "rung": "step",
+     "text": "Book: `const OrderBook&`. Positions: `std::vector<Position>&`."
+    }
+   ],
+   "feedback": {
+    "correct": "Read the book in place; change the positions in place.",
+    "generic": "Not quite right. One argument is read only; the other must be changed for the caller.",
+    "byKey": {
+     "copies": "Both arguments are copied, so the P&L updates are lost.",
+     "swapped": "The `const` belongs on the book, which is only read."
+    }
+   },
+   "explain": {
+    "text": "The book is large and only read, so `const OrderBook&` shares it at no cost. The positions must change for the caller, so they go by plain `&`. Any line that wrote to the book would now be a compile error."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A C++ variable is its object. Passing by value gives the function its own copy; `T&` passes a second name for the caller's object.",
+   "`const T&` shares without copying and promises not to change; it also accepts temporaries such as `{1.0, 2.0}`. A plain `T&` may change the caller's object and needs a real variable.",
+   "Return results by value: the compiler builds them in the caller's variable, so a returned vector is not copied."
+  ],
+  "formula": {
+   "name": "Choosing a parameter",
+   "tex": "\\texttt{T} \\to \\text{copy}, \\qquad \\texttt{const T\\&} \\to \\text{read}, \\qquad \\texttt{T\\&} \\to \\text{change}",
+   "note": "Small types such as `int` and `double` go by value; vectors and strings go by `const&` unless the function must change them."
+  },
+  "trap": "Forgetting `&` compiles cleanly: the function changes its own copy and the caller sees nothing."
+ },
+ "quiz": [
+  {
+   "id": "q-ref-to-ref",
+   "difficulty": 2,
+   "prose": "```cpp\nint x = 5;\nint& r = x;\nint& r2 = r;\nr2 = 9;\nstd::cout << x << \"\\n\";\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "nine",
+      "text": "`9`",
+      "correct": true
+     },
+     {
+      "id": "five",
+      "text": "`5`",
+      "why": "You read `r2` as a copy of `r`. A reference made from a reference names the same object, `x`."
+     },
+     {
+      "id": "error",
+      "text": "It does not compile",
+      "why": "`int& r2 = r;` is fine: `r` is just another name for `x`, so `r2` is a third one."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Three names, one `int`.",
+    "generic": "Not quite right. What does `r` name?"
+   },
+   "explain": {
+    "text": "`r` names `x`, so `int& r2 = r;` makes `r2` name `x` too. There is no reference to a reference: `r2 = 9` writes to `x`."
+   }
+  },
+  {
+   "id": "q-temporary",
+   "difficulty": 2,
+   "prose": "```cpp\nvoid apply_fee(double& balance, double fee) {\n    balance -= fee;\n}\n\nint main() {\n    apply_fee(100.0, 2.50);\n}\n```",
+   "question": "What happens when you build this?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "error",
+      "text": "It does not compile: a plain `double&` cannot bind to the temporary `100.0`",
+      "correct": true
+     },
+     {
+      "id": "runs",
+      "text": "It prints nothing and runs",
+      "why": "A non-const reference must name a real variable. `100.0` is a temporary, so the call is rejected."
+     },
+     {
+      "id": "copy",
+      "text": "It compiles and changes a hidden copy",
+      "why": "C++ will not make a hidden copy for a plain `&`. That is exactly why the call is an error."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A plain reference needs a variable to change.",
+    "generic": "Not quite right. What would `balance -= fee` change here?"
+   },
+   "explain": {
+    "text": "`apply_fee` promises to change its first argument, so the argument must be a variable. clang says \"expects an lvalue for 1st argument\". A `const double&` parameter would accept `100.0`."
+   }
+  },
+  {
+   "id": "q-return",
+   "difficulty": 3,
+   "prose": "```cpp\nstd::vector<double> make_prices(int n) {\n    std::vector<double> v(n, 100.0);\n    return v;\n}\n\nstd::vector<double> px = make_prices(1000000);\n```",
+   "question": "How many times are the 1,000,000 prices copied when `make_prices` returns?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "None: the vector is built in `px` itself",
+      "correct": true
+     },
+     {
+      "id": "once",
+      "text": "Once, from `v` into `px`",
+      "why": "That was the worry before copy elision. The compiler builds `v` directly in `px`, so returning by value is free."
+     },
+     {
+      "id": "twice",
+      "text": "Twice, into a temporary and then into `px`",
+      "why": "The compiler removes both copies. Returning a local vector by value does not copy its elements."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Return by value freely.",
+    "generic": "Not quite right. What does copy elision do with a returned local?"
+   },
+   "explain": {
+    "text": "The compiler builds `v` in the caller's `px` from the start, so nothing is copied. That is why functions return vectors by value rather than through a reference parameter."
+   }
+  },
+  {
+   "id": "q-python",
+   "difficulty": 2,
+   "question": "Which C++ parameter behaves like Python's `def add(costs): costs.append(1.5)`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ref",
+      "text": "`std::vector<double>& costs`",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "`std::vector<double> costs`",
+      "why": "That is C++'s default, a copy. Python's call shares the caller's list."
+     },
+     {
+      "id": "cref",
+      "text": "`const std::vector<double>& costs`",
+      "why": "It shares, but `const` forbids `push_back`, so the append would not compile."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A plain reference shares and allows changes, as Python does.",
+    "generic": "Not quite right. Python shares the list and lets the function change it."
+   },
+   "explain": {
+    "text": "A Python call shares the caller's list and may change it. In C++ that needs `&` without `const`. Without the `&`, C++ copies."
+   }
+  }
+ ]
+}

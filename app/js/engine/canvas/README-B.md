@@ -146,6 +146,15 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
 
 **Integration pass 5 additions:** value labels on negative or near-zero bars sit clear of the baseline and category labels (with a halo). `state.dim: [ids or labels]` (or `dim: true` on a category) fades bars, for "keep the largest singular values".
 
+**Integration pass 6 additions**
+- `groups: [{ id, label, colour }]`: two or more bars per category side by side, with a legend; heights from `state.values.<group id>` (`{ category: value }`), from a category's `value: [a, b]`, or from a sim whose outcome is a list (`"[binomial(6, 0.3), binomial(6, 0.6)]"`). Bar ids are `<category id>-<group id>`.
+- `yScale: "log"`: positive heights on a log axis.
+- `xAxis: "value"` (or `x: [min, max]`) sets numeric categories at their values on a numeric axis; `state.transform: { a, b }` moves them to aX + b, so a linear transformation slides along the axis.
+- `state.cut: { at, side: "above" | "below", colour, label, line }` recolours every bar whose category value is beyond the cut and draws the cut line (`{at}` in the label); a control binds `cut.at`.
+- `hlines` (params or state, patchable): dashed reference lines with labels. `curves: [{ id, expr, colour, dashed, label, shade: { from, to } }]` (params or state): a curve over the bars in category units (bins, value axes, or numeric categories), reading params, `state.params` and `w` (the bin width), so a normal curve follows a slider on n; `shade` fills under it from a cut.
+- `showMean` draws the weighted mean of the heights; `state.pivot` draws a fulcrum under the axis, draggable with `drag: true` or a drag-point widget (target: a number), for "balance the see-saw".
+- Simulations: `sim.outcome` reads params and `state.params` by name, so a slider on sample size re-runs the seeded stream; `sim.let: { xs: "sample(k, n())" }` binds names per trial; `sim.filter: "xs[0] > 0"` discards trials (the count reads "1,000 trials (195 discarded)"); outcome helpers `sample`, `mean`, `var`, `varp`, `sd`, `sum`, `len`, `tstat(k)` (see `engine/sim.js`). Methods `discarded()`, `points()`, `place("pivot", x)`.
+
 ## distribution
 
 A pmf drawn as bars, or a pdf drawn as a curve, with a shaded probability.
@@ -173,6 +182,17 @@ A pmf drawn as bars, or a pdf drawn as a curve, with a shaded probability.
   "params": { "family": "normal", "params": { "mu": 0, "sigma": 1 }, "showMean": true, "showSd": true },
   "state": { "shade": { "from": -1, "to": 1 } } }
 ```
+
+**Integration pass 6 additions**
+- Families `hypergeometric` (`N`, `K`, `n`), `lognormal` (`mu`, `sigma`; `showMedian` adds a median marker beside the mean) and `discrete` (alias `custom`: `values` and `probs`, in params or in `params.params`, any spacing; the mean and sd follow).
+- `cdf: true` (params or state) draws the CDF: steps with a closed dot where each lands and an open dot where it leaves, or the curve for a continuous family; shading is not drawn in CDF mode.
+- Axes: a discrete family's x range and y axis follow its support as a slider moves `n` (`axes: "grow"` keeps the old only-grow behaviour; continuous families grow, `axes: "follow"` tracks). Discrete ticks fall on every integer when there is room, else every 2nd, 5th, 10th.
+- `shade` may be a list of regions: the label sums them (`P(X ≤ 14) + P(X ≥ 26) = 0.0807`); each may carry `id` (default `shade`, `shade1`, …) and `colour`. Bounds may be expressions in the family's params (`"from": "mu - sigma"`), so shading follows a slider. A region with `under: "<overlay id>"` fills under that overlay curve, hatched (a continuity-correction strip, or β under the alternative), with an optional `label` (`{value}` is its probability).
+- Overlays live in state (patchable by id) or params; an overlay's params may be expressions in the main params (`{ "mu": "n * p", "sigma": "sqrt(n * p * (1 - p))" }`), so it follows the sliders. Derive can also address one by id: `"nrm.params.mu": "n * p"`.
+- `observed: 2.1`, `{ x, label, colour }` or a list: solid marker lines with labels (`{x}` in the label), drawn under the probability pill.
+- `rug: [x, …]` or `{ x: [..], sticks: true, colour }`: short ticks on the axis, or sticks up to the density with a dot.
+- `drag: true` (params or state) shows the shade handles on an explore screen without a drag-point widget; dragging moves the first region.
+- ids: `cdf`, `median`, `rug`, `observed`, `observed1`, …, named shade regions.
 
 ## scatter
 
@@ -205,6 +225,8 @@ Points, a least squares line, a given or learner-placed line, and residuals.
 ```
 
 **Integration pass 5 additions:** `curves: [{ id, expr: "f(x)" } | { id, x: "...", y: "...", t: [a, b] } | { id, implicit: "F(x, y)" }]` (params or state, with `colour`, `dashed`, `label`, `labelAt: [x, y]`) draws curves over the cloud, such as a risk ellipse. Controls and derive reach `line.m` and `line.b` directly (a missing line starts flat at 0).
+
+**Integration pass 6 additions:** `sim: { n, rho, seed, mx, my, sx, sy }` draws n seeded normal pairs with correlation `rho`; a control on `rho` (state.params.rho) re-correlates the same draws, and `values()` gives `r`, the sample correlation, for captions.
 
 ## series
 
@@ -245,6 +267,11 @@ One or more time series, with optional candles.
 
 **Integration pass 5 additions:** horizontal reference lines, `hlines: [{ id, y, label, dashed, colour, axis: 2 }]` in params (fixed, and inside the auto y range) or state (patchable by id). Dashed unless `dashed: false`; the label sits at the right end above or below the line, or at the left, wherever no series passes.
 
+**Integration pass 6 additions**
+- A series may be simulated: `sim: { outcome, n, seed, running: "mean" | "varp" | "var" | "sd" | "sum" | "none", let, filter }` plots the running statistic of n seeded outcomes (params read by name).
+- `xScale: "log"` spaces the index on a log axis (from `indexFrom`, default 1); `xStep: 250` fixes the tick spacing.
+- Controls bind `reveal` (0 to 1), `revealAt` (an index) and `markers.<id>.i`; a marker with `i: "reveal"` rides the end of the reveal.
+
 ## walk
 
 Random walks or price paths from the seeded RNG.
@@ -276,6 +303,8 @@ Random walks or price paths from the seeded RNG.
   "params": { "steps": 60, "p": 0.5, "paths": 40, "barriers": [-10, 10], "sim": { "seed": 1 } },
   "state": { "showMean": true, "showHits": true } }
 ```
+
+**Integration pass 6 additions:** `model: "markov"` with `states: ["Bull", "Flat", "Bear"]`, `P` (row-stochastic) and `start` (a state or an index) simulates state paths, drawn as steps on a y axis labelled with the states. `xStep: 1` gives whole-number step ticks. With both barriers, `showHits` counts the top and the bottom separately ("6 hit the top, 11 the bottom (of 20)"; `{up}` and `{down}` in `hitsLabel`; method `hitCounts()`). A control `{ "reseed": true, "label": "New paths" }` is a button that draws the next seeded run.
 
 ## matrix
 
@@ -386,6 +415,8 @@ Random walks or price paths from the seeded RNG.
   "state": { "distribution": { "bull": 0.75, "bear": 0.25 } } }
 ```
 
+**Integration pass 6 additions:** an edge's `loopAngle` (degrees: 0 right, 90 up) points a self-loop that way; a node's `valueSide` (`below` default, `above`, `left`, `right`, or `state.valueSide: { id: side }`) moves its distribution value; on a column narrower than 540px the frame narrows (down to 300) instead of shrinking the drawing, so labels keep their 12px minimum on a phone (`fitWidth: false` keeps the fixed frame).
+
 ## array
 
 **params**
@@ -415,6 +446,8 @@ Random walks or price paths from the seeded RNG.
   "params": { "cells": [2, 5, 8, 12, 16, 23, 38, 56] },
   "state": { "pointers": [{ "id": "lo", "at": 0, "label": "lo" }, { "id": "mid", "at": 3, "label": "mid" }, { "id": "hi", "at": 7, "label": "hi" }], "highlight": { "range": [0, 3] } } }
 ```
+
+**Integration pass 6 additions:** `wrap: 12` (or `true`) puts a long array on rows of that many cells, ranges drawn row by row.
 
 ## payoff
 
@@ -449,6 +482,11 @@ Payoff or profit and loss at expiry against the price of the underlying.
   "params": { "legs": [{ "id": "c1", "type": "call", "side": "long", "strike": 95, "premium": 7, "label": "long 95 call" }, { "id": "c2", "type": "call", "side": "short", "strike": 105, "premium": 2.5, "label": "short 105 call" }], "range": [80, 120], "label": "bull spread" },
   "state": { "spot": 102 } }
 ```
+
+**Integration pass 6 additions**
+- Tap targets: `strike-<leg id>` (the strike tick and kink), `breakeven` (`breakeven2`, … when there are several), each leg's line, and `total` when the combined line shows.
+- `drag: "spot"` (or a drag-point widget naming `spot`) makes the spot a handle on the axis; `points()` and `place("spot", x)` include it.
+- `showTotal: false` hides the combined line and draws each leg solid; a leg's `labelAt` (0 to 1 along the price range) places its label; `floor: false` on a leg drops its floor (the "forgot the right not to exercise" line).
 
 ## orderbook
 

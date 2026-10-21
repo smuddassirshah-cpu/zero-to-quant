@@ -1,0 +1,1266 @@
+{
+ "id": "l12-operators",
+ "course": "cpp",
+ "title": "Overloading operators",
+ "minutes": 14,
+ "objectives": [
+  "Overload arithmetic operators for a small value type.",
+  "Write comparison and stream operators that agree with each other."
+ ],
+ "skills": [
+  "cp-classes",
+  "cp-references"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "What does + mean for money?",
+   "prose": "In Python, `a + b` on your own class calls `a.__add__(b)`. Here are two amounts in C++, held as whole pence, as in level 1. Adding them does not build.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "active": "left",
+    "left": {
+     "kind": "console",
+     "params": {
+      "title": "main.cpp",
+      "lines": [
+       "class Money {",
+       "public:",
+       "    explicit Money(long long pence) : pence_(pence) {}",
+       "private:",
+       "    long long pence_;",
+       "};",
+       "",
+       "int main() {",
+       "    Money fee(250), tax(50);",
+       "    Money total = fee + tax;",
+       "}"
+      ],
+      "numbers": true
+     },
+     "state": {
+      "tone": {
+       "l10": "err"
+      }
+     }
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "title": "Terminal",
+      "lines": [
+       "$ clang++ -std=c++17 main.cpp",
+       "main.cpp:10:23: error: invalid operands to binary expression ('Money' and 'Money')",
+       "   10 |     Money total = fee + tax;",
+       "      |                   ~~~ ^ ~~~",
+       "1 error generated."
+      ]
+     },
+     "state": {
+      "tone": {
+       "l2": "err"
+      }
+     }
+    }
+   },
+   "question": "What must you write so that `fee + tax` compiles?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "A function named `operator+` that takes two `Money` values",
+      "correct": true
+     },
+     {
+      "id": "dunder",
+      "text": "A member function named `__add__`",
+      "why": "That is Python's name. C++ looks for a function spelt `operator+`."
+     },
+     {
+      "id": "auto",
+      "text": "Nothing: `+` should add the members",
+      "why": "C++ does not guess what adding a class means. Only built-in types have `+` ready-made."
+     },
+     {
+      "id": "public",
+      "text": "Make `pence_` public",
+      "why": "Access is not the problem. The error says `+` has no meaning for two `Money` values."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the error: which operands does `+` not understand?"
+    },
+    {
+     "rung": "point",
+     "text": "The two operand types are named here.",
+     "highlight": [
+      "right:l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "You define `+` for a type by writing a function called `operator+`."
+    }
+   ],
+   "feedback": {
+    "correct": "C++ spells `__add__` as `operator+`.",
+    "generic": "Not quite right. The error says `+` is not defined for two `Money` values.",
+    "byKey": {
+     "auto": "C++ does not guess what adding a class means. Only built-in types have `+` ready-made."
+    }
+   },
+   "explain": {
+    "text": "`fee + tax` is a call to `operator+(fee, tax)`, and none exists yet. Writing one is **operator overloading**. Then `+` on two `Money` values runs your function.",
+    "canvas": {
+     "left": {
+      "highlight": [
+       "l10"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Pence as pounds",
+   "prose": "`str()` should show pence as pounds: 1234 becomes `£12.34`. A first try joins `pence_ / 100`, a dot and `pence_ % 100`:\n\n```cpp\nreturn \"£\" + std::to_string(pence_ / 100)\n     + \".\" + std::to_string(pence_ % 100);\n```",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "pence",
+      "first try prints",
+      "wanted"
+     ],
+     "rows": [
+      [
+       "1234",
+       "?",
+       "£12.34"
+      ],
+      [
+       "1205",
+       "?",
+       "£12.05"
+      ],
+      [
+       "1200",
+       "?",
+       "£12.00"
+      ],
+      [
+       "7",
+       "?",
+       "£0.07"
+      ],
+      [
+       "99",
+       "?",
+       "£0.99"
+      ],
+      [
+       "-150",
+       "?",
+       "−£1.50"
+      ]
+     ],
+     "tap": "rows",
+     "align": [
+      "right",
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: tap every row where the first try prints the wrong text.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1",
+     "r2",
+     "r3",
+     "r5"
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`std::to_string(5)` is `\"5\"`, with no leading zero."
+    },
+    {
+     "rung": "point",
+     "text": "Try this row: 1205 / 100 is 12, and 1205 % 100 is 5.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Any remainder below 10 loses its zero. For −150, both `/` and `%` are negative: `£-1.-50`."
+    }
+   ],
+   "feedback": {
+    "correct": "Small remainders lose their zero, and negatives go wrong twice.",
+    "generic": "Not quite right. Work out `pence_ / 100` and `pence_ % 100` for each row.",
+    "byKey": {
+     "r0": "1234 gives 12 and 34, so `£12.34`: that one is right.",
+     "r4": "99 gives 0 and 99, so `£0.99`: that one is right.",
+     "r1": "1205 % 100 is 5, and `std::to_string(5)` is `\"5\"`: the first try prints `£12.5`.",
+     "r2": "1200 % 100 is 0, printed as `\"0\"`: the first try prints `£12.0`.",
+     "r3": "7 / 100 is 0 and 7 % 100 is 7: the first try prints `£0.7`.",
+     "r5": "−150 / 100 is −1 and −150 % 100 is −50 (both round towards zero): the first try prints `£-1.-50`."
+    }
+   },
+   "explain": {
+    "text": "A remainder below 10 needs a leading zero. For a negative amount, format the absolute value and put the minus sign in front. Integer division rounds towards zero, as in level 1.",
+    "canvas": {
+     "values": {
+      "r0c1": "£12.34",
+      "r1c1": "£12.5",
+      "r2c1": "£12.0",
+      "r3c1": "£0.7",
+      "r4c1": "£0.99",
+      "r5c1": "£-1.-50"
+     },
+     "highlight": {
+      "rows": [
+       1,
+       2,
+       3,
+       5
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Money that adds and prints",
+   "prose": "Now write the operators. An arithmetic operator takes its operands by value and **returns a new value**, like built-in `+`. Write them as free functions after the class; they use the public `pence()`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "pence",
+      "first try prints",
+      "wanted"
+     ],
+     "rows": [
+      [
+       "1234",
+       "£12.34",
+       "£12.34"
+      ],
+      [
+       "1205",
+       "£12.5",
+       "£12.05"
+      ],
+      [
+       "1200",
+       "£12.0",
+       "£12.00"
+      ],
+      [
+       "7",
+       "£0.7",
+       "£0.07"
+      ],
+      [
+       "99",
+       "£0.99",
+       "£0.99"
+      ],
+      [
+       "-150",
+       "£-1.-50",
+       "−£1.50"
+      ]
+     ],
+     "align": [
+      "right",
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `str()` to match the wanted column, then `Money operator+(Money a, Money b)` and `Money operator*(Money m, int k)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <string>\n\nclass Money {\npublic:\n    explicit Money(long long pence) : pence_(pence) {}\n    long long pence() const { return pence_; }\n\n    std::string str() const {\n        return \"\";   // 1234 -> \"£12.34\", -150 -> \"-£1.50\"\n    }\n\nprivate:\n    long long pence_;\n};\n\n// Money operator+(Money a, Money b)\n// Money operator*(Money m, int k)\n",
+    "solution": "#include <string>\n\nclass Money {\npublic:\n    explicit Money(long long pence) : pence_(pence) {}\n    long long pence() const { return pence_; }\n\n    std::string str() const {\n        long long p = pence_ < 0 ? -pence_ : pence_;\n        std::string cents = std::to_string(p % 100);\n        if (cents.size() < 2) cents = \"0\" + cents;\n        std::string sign = pence_ < 0 ? \"-\" : \"\";\n        return sign + \"£\" + std::to_string(p / 100) + \".\" + cents;\n    }\n\nprivate:\n    long long pence_;\n};\n\nMoney operator+(Money a, Money b) { return Money(a.pence() + b.pence()); }\nMoney operator*(Money m, int k) { return Money(m.pence() * k); }\n",
+    "examples": [
+     {
+      "call": "(Money(1250) + Money(399)).str()",
+      "expect": "£16.49",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "Money(1234).str()",
+      "expect": "£12.34",
+      "compare": "equal"
+     },
+     {
+      "call": "Money(1205).str()",
+      "expect": "£12.05",
+      "compare": "equal"
+     },
+     {
+      "call": "Money(7).str()",
+      "expect": "£0.07",
+      "compare": "equal"
+     },
+     {
+      "call": "Money(0).str()",
+      "expect": "£0.00",
+      "compare": "equal"
+     },
+     {
+      "call": "(Money(1250) + Money(399)).str()",
+      "expect": "£16.49",
+      "compare": "equal"
+     },
+     {
+      "call": "(Money(250) * 3).str()",
+      "expect": "£7.50",
+      "compare": "equal"
+     },
+     {
+      "call": "(Money(250) * 3).pence()",
+      "expect": 750,
+      "compare": "equal"
+     },
+     {
+      "call": "Money(-150).str()",
+      "expect": "-£1.50",
+      "compare": "equal"
+     },
+     {
+      "call": "(Money(100) + Money(-250)).str()",
+      "expect": "-£1.50",
+      "compare": "equal"
+     },
+     {
+      "call": "Money(-5).str()",
+      "expect": "-£0.05",
+      "compare": "equal"
+     },
+     {
+      "call": "Money(123456789).str()",
+      "expect": "£1234567.89",
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 11 hidden tests that build amounts, add or multiply them, and compare the text from `str()` exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work with the absolute value, then put `-` in front when `pence_` is negative."
+    },
+    {
+     "rung": "point",
+     "text": "Rows 2 to 4 need a leading zero on the pence.",
+     "highlight": [
+      "r1",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`std::string cents = std::to_string(p % 100); if (cents.size() < 2) cents = \"0\" + cents;` and `return Money(a.pence() + b.pence());`."
+    }
+   ],
+   "feedback": {
+    "correct": "Whole pence in, exact text out.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "compile": "The compiler stopped. If it says `invalid operands`, an operator is missing or its parameters do not match the test.",
+     "test-2": "Test 2 expects `£12.05`. Pad a remainder below 10 with a `0`.",
+     "test-8": "Test 8 expects `-£1.50`. Format the absolute value and put the minus sign before the `£`."
+    }
+   },
+   "explain": {
+    "text": "Both operators build and return a new `Money`, so `a + b` leaves `a` and `b` alone. `str()` formats the absolute value and adds the sign. The `£` sign is two bytes in a `std::string`, which prints fine."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Which side is the object on?",
+   "prose": "An operator can also be a **member** function: then the object is always its left operand. This `Money` defines `*` as a member.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "active": "left",
+    "left": {
+     "kind": "console",
+     "params": {
+      "title": "main.cpp",
+      "lines": [
+       "class Money {",
+       "public:",
+       "    explicit Money(long long pence) : pence_(pence) {}",
+       "    Money operator*(int k) const { return Money(pence_ * k); }",
+       "private:",
+       "    long long pence_;",
+       "};",
+       "",
+       "int main() {",
+       "    Money fee(250);",
+       "    Money a = fee * 3;",
+       "    Money b = 3 * fee;",
+       "}"
+      ],
+      "numbers": true
+     },
+     "state": {
+      "tone": {
+       "l12": "err"
+      }
+     }
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "title": "Terminal",
+      "lines": [
+       "$ clang++ -std=c++17 main.cpp",
+       "main.cpp:12:17: error: invalid operands to binary expression ('int' and 'Money')",
+       "   12 |     Money b = 3 * fee;",
+       "      |               ~ ^ ~~~",
+       "1 error generated."
+      ]
+     },
+     "state": {
+      "tone": {
+       "l2": "err"
+      }
+     }
+    }
+   },
+   "question": "Which declaration makes `3 * fee` compile?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "A free function `Money operator*(int k, Money m)`",
+      "correct": true
+     },
+     {
+      "id": "member",
+      "text": "Another member, `Money operator*(int k) const`",
+      "why": "A member operator always has the object on the left, so it only ever gives `fee * 3`."
+     },
+     {
+      "id": "swap",
+      "text": "A free function `Money operator*(Money m, int k)`",
+      "why": "That is `fee * 3` again. The parameters follow the operands, left to right."
+     },
+     {
+      "id": "none",
+      "text": "None: C++ cannot put a class on the right of `*`",
+      "why": "A free function can take its operands in either order."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For a member, which operand is the object?"
+    },
+    {
+     "rung": "point",
+     "text": "In line 12 the left operand is an `int`.",
+     "highlight": [
+      "l12"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only a free function can have an `int` as its first parameter."
+    }
+   ],
+   "feedback": {
+    "correct": "A free function puts the `int` first.",
+    "generic": "Not quite right. Match the parameters to the operands, left to right.",
+    "byKey": {
+     "member": "A member operator always has the object on the left, so it only ever gives `fee * 3`."
+    }
+   },
+   "explain": {
+    "text": "`fee * 3` calls `fee.operator*(3)`, but `3 * fee` needs a function whose first parameter is an `int`. Only a free function can be that. So write symmetric operators as free functions, for both orders when they differ.",
+    "canvas": {
+     "left": {
+      "highlight": [
+       "l4",
+       "l12"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Printing with <<",
+   "prose": "Python prints an object through `__repr__`. C++ prints through `operator<<`, which takes the stream by reference and returns it.\n\n```cpp\nstd::ostream& operator<<(std::ostream& os,\n                         const Money& m) {\n    os << m.str();\n    return os;\n}\n\nstd::cout << Money(1250) << \" + \" << Money(399) << '\\n';\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./main",
+      "£12.50 + £3.99"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "Why does `operator<<` return `os`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "So the next `<<` in the chain has a stream to write to",
+      "correct": true
+     },
+     {
+      "id": "copy",
+      "text": "To hand back a copy of the stream",
+      "why": "It returns a reference. Streams cannot be copied, which is also why `os` is taken by reference."
+     },
+     {
+      "id": "error",
+      "text": "To report whether the write worked",
+      "why": "The stream records errors itself. The returned `os` feeds the next `<<`."
+     },
+     {
+      "id": "repr",
+      "text": "Because Python's `__repr__` returns a string",
+      "why": "`operator<<` writes to the stream rather than returning text. Returning `os` keeps the chain going."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`a << b << c` is read as `(a << b) << c`."
+    },
+    {
+     "rung": "point",
+     "text": "The left operand of the second `<<` is whatever the first one returned.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The first call must return the stream itself, so the second call writes to the same stream."
+    }
+   ],
+   "feedback": {
+    "correct": "Each `<<` hands the stream to the next.",
+    "generic": "Not quite right. Read `std::cout << x << y` as two calls, one inside the other."
+   },
+   "explain": {
+    "text": "`std::cout << a << b` is `operator<<(operator<<(std::cout, a), b)`. Returning `os` by reference keeps one stream flowing through the chain. Taking `std::ostream os` by value would not compile: the stream's copy constructor is deleted.",
+    "canvas": {
+     "highlight": [
+      "l2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A plus that writes",
+   "prose": "A colleague's `+` saves a copy by working on the left operand directly.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "struct Money { long long pence; };",
+      "",
+      "Money& operator+(Money& a, Money b) {",
+      "    a.pence += b.pence;",
+      "    return a;",
+      "}",
+      "",
+      "int main() {",
+      "    Money cash{1000}, fee{250};",
+      "    Money total = cash + fee;",
+      "    std::cout << cash.pence << ' ' << total.pence << '\\n';",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`1250 1250`",
+      "correct": true
+     },
+     {
+      "id": "pure",
+      "text": "`1000 1250`",
+      "why": "You expected `+` to leave `cash` alone, as built-in `+` does. This one takes `a` by non-const reference and adds into it.",
+      "canvas": {
+       "highlight": [
+        "l3",
+        "l4"
+       ]
+      }
+     },
+     {
+      "id": "error",
+      "text": "A compile error: `+` must return a value",
+      "why": "It returns `Money&`, which compiles. The bug is that it changes `a`."
+     },
+     {
+      "id": "swap",
+      "text": "`1250 1000`",
+      "why": "`total` is a copy of the changed `cash`, so it also holds 1250."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the type of the first parameter."
+    },
+    {
+     "rung": "point",
+     "text": "This line writes into `a`, which is `cash` itself.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`cash + fee` adds 250 into `cash`, then `total` copies it: both are 1250."
+    }
+   ],
+   "feedback": {
+    "correct": "This `+` changed `cash`: a `+=` in disguise.",
+    "generic": "Not quite right. Follow `a` back to `cash`.",
+    "byKey": {
+     "pure": "You expected `+` to leave `cash` alone, as built-in `+` does. This one takes `a` by non-const reference and adds into it."
+    }
+   },
+   "explain": {
+    "text": "`Money& a` is `cash` itself, so the sum is written into it. A reader of `cash + fee` never expects `cash` to change. Keep `+` pure and put mutation in `+=`:\n\n```cpp\nMoney operator+(Money a, Money b) {        // new value\n    return Money{a.pence + b.pence};\n}\nMoney& operator+=(Money& a, Money b) {     // says it writes\n    a.pence += b.pence;\n    return a;\n}\n```",
+    "canvas": {
+     "highlight": [
+      "l3",
+      "l4"
+     ],
+     "tone": {
+      "l4": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Equal to the last bit",
+   "prose": "A first `Price` type stores pounds in a `double`. Its `operator==` compares them directly.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "struct Price { double px; };",
+      "",
+      "bool operator==(Price a, Price b) {",
+      "    return a.px == b.px;",
+      "}",
+      "",
+      "int main() {",
+      "    Price fill{0.1 + 0.2}, limit{0.3};",
+      "    std::cout << (fill == limit) << '\\n';",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`0`",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "`1`",
+      "why": "You expected 0.1 + 0.2 to equal 0.3. In binary it is 0.30000000000000004, so `==` says no."
+     },
+     {
+      "id": "error",
+      "text": "A compile error: `==` needs `const` references",
+      "why": "Taking `Price` by value is fine for a small type. It compiles and runs."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is 0.1 + 0.2 exactly 0.3 as a `double`?"
+    },
+    {
+     "rung": "point",
+     "text": "This line compares two doubles bit for bit.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.1 + 0.2 is 0.30000000000000004, so the comparison is false and prints 0."
+    }
+   ],
+   "feedback": {
+    "correct": "`==` on doubles is exact, and binary fractions are not.",
+    "generic": "Not quite right. Work out 0.1 + 0.2 in binary floating point.",
+    "byKey": {
+     "one": "You expected 0.1 + 0.2 to equal 0.3. In binary it is 0.30000000000000004, so `==` says no."
+    }
+   },
+   "explain": {
+    "text": "The fill and the limit print as equal but differ in the last bit. Python's `__eq__` on floats has the same problem. Store prices as whole pence or ticks, and `==` becomes exact.",
+    "canvas": {
+     "highlight": [
+      "l4",
+      "l8"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Ordering prices",
+   "prose": "`std::sort` orders a vector using `<`. So a `Price` in whole pence needs `operator<`. Its `==` must agree: two prices are equal when neither is less than the other, here when their pence match, whatever the venue.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "101.25",
+      "101.00",
+      "101.50"
+     ]
+    },
+    "state": {
+     "caption": "Ask prices in pounds, before sorting"
+    }
+   },
+   "question": "Write `bool operator<(const Price& a, const Price& b)` and `bool operator==(const Price& a, const Price& b)`, comparing pence only.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <string>\n\nstruct Price {\n    long long pence;\n    std::string venue;\n};\n",
+    "postlude": "#include <algorithm>\n#include <vector>\n\nstd::vector<long long> sorted_pence(std::vector<long long> ps) {\n    std::vector<Price> v;\n    for (long long p : ps) v.push_back(Price{p, \"LSE\"});\n    std::sort(v.begin(), v.end());\n    std::vector<long long> out;\n    for (const Price& p : v) out.push_back(p.pence);\n    return out;\n}\n\nlong long lowest(std::vector<long long> ps) { return sorted_pence(ps).front(); }\n",
+    "starter": "// struct Price { long long pence; std::string venue; }; is provided.\n\n// bool operator<(const Price& a, const Price& b)\n// bool operator==(const Price& a, const Price& b)\n",
+    "solution": "// struct Price { long long pence; std::string venue; }; is provided.\n\nbool operator<(const Price& a, const Price& b) {\n    return a.pence < b.pence;\n}\n\nbool operator==(const Price& a, const Price& b) {\n    return a.pence == b.pence;\n}\n",
+    "examples": [
+     {
+      "call": "lowest({10125, 10100, 10150})",
+      "expect": 10100,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "lowest({10125, 10100, 10150})",
+      "expect": 10100,
+      "compare": "equal"
+     },
+     {
+      "call": "sorted_pence({10150, 10100, 10125, 10100})",
+      "expect": [
+       10100,
+       10100,
+       10125,
+       10150
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "sorted_pence({-50, 20, 0})",
+      "expect": [
+       -50,
+       0,
+       20
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "Price{100, \"LSE\"} < Price{101, \"LSE\"}",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "Price{100, \"LSE\"} < Price{100, \"LSE\"}",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "call": "Price{101, \"LSE\"} < Price{100, \"LSE\"}",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "call": "Price{100, \"LSE\"} == Price{100, \"CBOE\"}",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "Price{100, \"LSE\"} == Price{101, \"LSE\"}",
+      "expect": false,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. Hidden code sorts vectors of prices with `std::sort` and reads the pence back; other tests compare two prices directly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the `pence` members."
+    },
+    {
+     "rung": "point",
+     "text": "The smallest goes first after sorting.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return a.pence < b.pence;` and `return a.pence == b.pence;`."
+    }
+   ],
+   "feedback": {
+    "correct": "`std::sort` now orders your type.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-5": "Test 5 asks whether a price is less than itself, and expects false. Use `<`, not `<=`: `std::sort` needs a strict order.",
+     "test-7": "Test 7 compares the same pence at two venues and expects true. Compare pence only, as `<` does."
+    }
+   },
+   "explain": {
+    "text": "`std::sort` calls your `operator<` for every comparison it makes. It must be strict: `a < a` is false. And `==` must match it, or a sort and a search will disagree about which prices are the same.",
+    "canvas": {
+     "cells": [
+      "101.00",
+      "101.25",
+      "101.50"
+     ],
+     "highlight": [
+      "c0"
+     ],
+     "caption": "After `std::sort`"
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The operator toolkit",
+   "prose": "Each Python special method has a C++ operator: `__add__` is `operator+`, `__eq__` is `operator==`, `__lt__` is `operator<`, and `__repr__` becomes `operator<<`. The usual shapes:\n\n```cpp\nMoney operator+(Money a, Money b);       // new value\nMoney operator*(Money m, int k);         // by value\nMoney operator*(int k, Money m);         // other order\nMoney& operator+=(Money& a, Money b);    // mutates\nbool operator==(const Money&, const Money&);\nbool operator<(const Money&, const Money&);\nstd::ostream& operator<<(std::ostream&, const Money&);\n```",
+   "question": "Which declaration is right for subtracting one `Money` from another?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`Money operator-(Money a, Money b)`",
+      "correct": true
+     },
+     {
+      "id": "mut",
+      "text": "`Money& operator-(Money& a, Money b)`",
+      "why": "That writes into the left operand, the trap you met. `-` should return a new value."
+     },
+     {
+      "id": "void",
+      "text": "`void operator-(Money a, Money b)`",
+      "why": "Then `a - b` would have no value to store or print."
+     },
+     {
+      "id": "unary",
+      "text": "`Money operator-(Money a)`",
+      "why": "One parameter makes unary minus, `-a`, not subtraction."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which shape does `+` have?"
+    },
+    {
+     "rung": "step",
+     "text": "Subtraction is binary and pure, like `+`: two values in, a new value out."
+    }
+   ],
+   "feedback": {
+    "correct": "Two values in, one new value out.",
+    "generic": "Not quite right. Copy the shape of `operator+`."
+   },
+   "explain": {
+    "text": "`-` has the same shape as `+`: two `Money` values in, a new one out. Arithmetic returns by value, comparisons return `bool`, and `<<` passes the stream along by reference."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Price, then time",
+   "prose": "An exchange fills resting sell orders by **price-time priority**: the lowest ask first, and at the same price, the earliest. `std::tie` builds a tuple of references, and tuples compare field by field. So `std::tie(a.price, a.time) < std::tie(b.price, b.time)` compares prices, then times.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "order",
+      "price",
+      "arrived"
+     ],
+     "rows": [
+      [
+       "A",
+       "£101.00",
+       "3rd"
+      ],
+      [
+       "B",
+       "£100.50",
+       "5th"
+      ],
+      [
+       "C",
+       "£101.00",
+       "1st"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `bool operator<(const Order& a, const Order& b)`: true when `a` trades before `b` on the ask side.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <string>\n\nstruct Order {\n    std::string id;\n    long long price;   // pence\n    int time;          // arrival number: 1 came first\n};\n",
+    "postlude": "#include <algorithm>\n#include <vector>\n\nstd::vector<std::string> queue(std::vector<Order> book) {\n    std::sort(book.begin(), book.end());\n    std::vector<std::string> ids;\n    for (const Order& o : book) ids.push_back(o.id);\n    return ids;\n}\n",
+    "starter": "#include <tuple>\n\n// struct Order { std::string id; long long price; int time; }; is provided.\n\nbool operator<(const Order& a, const Order& b) {\n    return false;   // which ask order trades first?\n}\n",
+    "solution": "#include <tuple>\n\n// struct Order { std::string id; long long price; int time; }; is provided.\n\nbool operator<(const Order& a, const Order& b) {\n    return std::tie(a.price, a.time) < std::tie(b.price, b.time);\n}\n",
+    "examples": [
+     {
+      "call": "queue({{\"A\", 10100, 3}, {\"B\", 10050, 5}, {\"C\", 10100, 1}})",
+      "expect": [
+       "B",
+       "C",
+       "A"
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "queue({{\"A\", 10100, 3}, {\"B\", 10050, 5}, {\"C\", 10100, 1}})",
+      "expect": [
+       "B",
+       "C",
+       "A"
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "queue({{\"X\", 100, 2}, {\"Y\", 100, 1}})",
+      "expect": [
+       "Y",
+       "X"
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "queue({{\"X\", 99, 9}, {\"Y\", 100, 1}})",
+      "expect": [
+       "X",
+       "Y"
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "Order{\"A\", 100, 2} < Order{\"B\", 101, 1}",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "Order{\"A\", 100, 1} < Order{\"B\", 100, 1}",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "call": "queue({{\"P\", 10200, 4}, {\"Q\", 10150, 6}, {\"R\", 10150, 2}, {\"S\", 10200, 1}, {\"T\", 10175, 3}})",
+      "expect": [
+       "R",
+       "Q",
+       "T",
+       "S",
+       "P"
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "queue({{\"A\", 10100, 1}})",
+      "expect": [
+       "A"
+      ],
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Hidden code sorts a book of orders with `std::sort` and lists their ids in trading order."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare prices first; look at times only when the prices are equal."
+    },
+    {
+     "rung": "point",
+     "text": "A and C share a price; C arrived first.",
+     "highlight": [
+      "r0",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return std::tie(a.price, a.time) < std::tie(b.price, b.time);`"
+    }
+   ],
+   "feedback": {
+    "correct": "B, then C, then A: price first, time second.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-1": "Test 1 expects B, C, A. B has the lowest price; C and A tie on price, and C arrived first.",
+     "test-4": "Test 4 puts a cheaper but later order first. Compare prices before times."
+    }
+   },
+   "explain": {
+    "text": "`std::tie` compares price first and falls through to time only on a tie. For bids you would flip the price test, highest first. A matching engine's queue is exactly this order, kept by a sorted container.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     },
+     "caption": "Trading order: B, C, A"
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`a + b` on your type calls `operator+(a, b)`: C++'s spelling of Python's `__add__`. Arithmetic operators take values and return a new value; mutation belongs in `+=`.",
+   "A member operator always has the object on the left. Write symmetric operators as free functions, so `3 * fee` works as well as `fee * 3`.",
+   "`<` must be strict and agree with `==`; compare whole pence, never doubles. `operator<<` takes and returns `std::ostream&` so output chains."
+  ],
+  "formula": {
+   "name": "Operators are function calls",
+   "tex": "a + b \\;\\equiv\\; \\texttt{operator+}(a, b)",
+   "note": "And `std::cout << a << b` is `operator<<(operator<<(std::cout, a), b)`."
+  },
+  "trap": "A `+` that takes its left operand by non-const reference changes it: `cash + fee` would change `cash`. Return a new value."
+ },
+ "quiz": [
+  {
+   "id": "q-lt-eq",
+   "difficulty": 3,
+   "prose": "```cpp\nstruct Px { long long pence; std::string venue; };\n\nbool operator<(const Px& a, const Px& b) {\n    return a.pence < b.pence;\n}\nbool operator==(const Px& a, const Px& b) {\n    return a.pence == b.pence && a.venue == b.venue;\n}\n\nPx a{100, \"LSE\"}, b{100, \"CBOE\"};\nstd::cout << (a < b) << (b < a) << (a == b);\n```",
+   "question": "What does it print, and what does that mean?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`000`: `<` treats them as the same, `==` does not",
+      "correct": true
+     },
+     {
+      "id": "eq",
+      "text": "`001`",
+      "why": "`==` also compares the venue, and LSE is not CBOE, so it is false."
+     },
+     {
+      "id": "lt",
+      "text": "`100`",
+      "why": "Both have 100 pence, so neither is less than the other."
+     },
+     {
+      "id": "fine",
+      "text": "`000`, which is consistent",
+      "why": "If neither is less than the other, a sort treats them as equal. `==` saying no contradicts that."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Neither is less, yet they are not equal: the two operators disagree.",
+    "generic": "Not quite right. Work out each comparison, then ask whether they agree."
+   },
+   "explain": {
+    "text": "A sort treats `a` and `b` as equivalent, but `==` calls them different, so a search after a sort can miss. Define `==` and `<` on the same fields."
+   }
+  },
+  {
+   "id": "q-pnl-qty",
+   "difficulty": 2,
+   "prose": "```cpp\nstruct Pnl { long long pence; };\nstruct Quantity { int shares; };\nPnl operator+(Pnl a, Pnl b) { return Pnl{a.pence + b.pence}; }\n\nPnl day{12500};\nQuantity filled{300};\nPnl oops = day + filled;\n```",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "A compile error: no `operator+` takes a `Pnl` and a `Quantity`",
+      "correct": true
+     },
+     {
+      "id": "adds",
+      "text": "`oops.pence` is 12800",
+      "why": "You expected C++ to add the numbers inside. It looks for an `operator+` that takes these two types, and there is none."
+     },
+     {
+      "id": "conv",
+      "text": "The `Quantity` converts to `Pnl` first",
+      "why": "There is no conversion from `Quantity` to `Pnl`, so the only `operator+` cannot be used."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Separate types turn a unit mistake into a compile error.",
+    "generic": "Not quite right. Which `operator+` exists?"
+   },
+   "explain": {
+    "text": "The only `operator+` takes two `Pnl` values, and a `Quantity` is not one. With plain `long long` and `int`, the sum would quietly be 12800. Small wrapper types make units part of the type."
+   }
+  },
+  {
+   "id": "q-ostream-value",
+   "difficulty": 3,
+   "prose": "```cpp\nstd::ostream& operator<<(std::ostream os, const Money& m) {\n    os << m.str();\n    return os;\n}\n\nstd::cout << Money(1250) << '\\n';\n```",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "A compile error: the stream's copy constructor is deleted",
+      "correct": true
+     },
+     {
+      "id": "prints",
+      "text": "It prints `£12.50`",
+      "why": "Taking `os` by value would copy `std::cout`. Streams cannot be copied: the copy constructor is `= delete`."
+     },
+     {
+      "id": "nothing",
+      "text": "It prints nothing, because it writes to a copy",
+      "why": "It never gets that far. Copying a stream does not compile."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Streams are passed by reference because they cannot be copied.",
+    "generic": "Not quite right. What does passing `os` by value require?"
+   },
+   "explain": {
+    "text": "A by-value parameter is built with the copy constructor, and `std::ostream` deletes it. Write `std::ostream& os`, and return it, so the chain works."
+   }
+  },
+  {
+   "id": "q-money-mul",
+   "difficulty": 2,
+   "prose": "With your `Money` class:\n\n```cpp\nMoney fee(-375);\nstd::cout << (fee * 2).str() << '\\n';\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`-£7.50`",
+      "correct": true
+     },
+     {
+      "id": "sign",
+      "text": "`£-7.50`",
+      "why": "`str()` puts the sign before the `£`, after formatting the absolute value."
+     },
+     {
+      "id": "trunc",
+      "text": "`-£7.5`",
+      "why": "The pence are padded to two digits: 50 stays `50`, and 5 would become `05`."
+     },
+     {
+      "id": "abs",
+      "text": "`£7.50`",
+      "why": "`operator*` keeps the sign: −375 × 2 is −750."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "−750 pence is −£7.50.",
+    "generic": "Not quite right. Multiply the pence, then format."
+   },
+   "explain": {
+    "text": "`operator*` gives −750 pence. `str()` formats 750 as `£7.50` and puts the minus sign in front."
+   }
+  }
+ ]
+}

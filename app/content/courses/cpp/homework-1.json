@@ -1,0 +1,532 @@
+{
+ "id": "homework-1",
+ "course": "cpp",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-separate-build",
+   "difficulty": 3,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "A backtest has `main.cpp` and `returns.cpp`, and both include `returns.h`. You build it with `g++ -std=c++17 main.cpp returns.cpp -o backtest` and run it.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "The compiler reads `returns.h` into `main.cpp` and writes `main.o`"
+     },
+     {
+      "id": "s2",
+      "text": "The compiler reads `returns.h` into `returns.cpp` and writes `returns.o`"
+     },
+     {
+      "id": "s3",
+      "text": "The linker joins `main.o`, `returns.o` and the standard library"
+     },
+     {
+      "id": "s4",
+      "text": "The linker writes the executable `backtest`"
+     },
+     {
+      "id": "s5",
+      "text": "`./backtest` runs `main`"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "same": [
+     [
+      "s1",
+      "s2"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Two separate compiles, one link, then run.",
+    "generic": "Not quite right. Every object file must exist before the link."
+   },
+   "explain": {
+    "text": "Each `.cpp` is compiled alone, in either order, each seeing `returns.h`. The linker then joins both object files with the library into `backtest`, which you run last."
+   }
+  },
+  {
+   "id": "h-csv-drawdown",
+   "difficulty": 5,
+   "skills": [
+    "cp-basics"
+   ],
+   "prose": "A file of closes arrives on `std::cin`: a header line, then one `date,close` line per day. The file may use Windows line ends (`\\r\\n`) and end with a blank line.\n\n```text\ndate,close\n2026-10-12,100.00\n2026-10-13,110.00\n...\n```\n\n`std::getline(std::cin, line)` reads one line, `line.find(',')` gives the comma's position (or `std::string::npos`), and `std::stod` turns text into a `double`.",
+   "question": "Print the maximum drawdown as `Max drawdown: 20.00%`, with two decimals. With no closes, print `Max drawdown: 0.00%`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <iostream>\n#include <iomanip>\n#include <string>\n\nint main() {\n    std::string line;\n    std::getline(std::cin, line);  // header\n    // read each date,close line and track the drawdown\n    return 0;\n}\n",
+    "solution": "#include <iostream>\n#include <iomanip>\n#include <string>\n\nint main() {\n    std::string line;\n    std::getline(std::cin, line);  // header\n    double peak = 0;\n    double worst = 0;\n    while (std::getline(std::cin, line)) {\n        std::size_t comma = line.find(',');\n        if (comma == std::string::npos) {\n            continue;\n        }\n        double p = std::stod(line.substr(comma + 1));\n        if (p > peak) {\n            peak = p;\n        }\n        double fall = (peak - p) / peak;\n        if (fall > worst) {\n            worst = fall;\n        }\n    }\n    std::cout << \"Max drawdown: \" << std::fixed << std::setprecision(2) << worst * 100 << \"%\\n\";\n    return 0;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "date,close\n2026-10-12,100.00\n2026-10-13,110.00\n2026-10-14,99.00\n2026-10-15,105.00\n2026-10-16,88.00\n2026-10-19,95.00\n",
+      "expect": "Max drawdown: 20.00%\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "date,close\n2026-10-12,100.00\n2026-10-13,110.00\n2026-10-14,99.00\n2026-10-15,105.00\n2026-10-16,88.00\n2026-10-19,95.00\n",
+      "expect": "Max drawdown: 20.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "date,close\n",
+      "expect": "Max drawdown: 0.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "date,close\n2026-10-12,100.00\n2026-10-13,90.00\n2026-10-14,95.00\n",
+      "expect": "Max drawdown: 10.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "date,close\n2026-10-12,250.00\n2026-10-13,262.50\n2026-10-14,199.50\n2026-10-15,275.00\n2026-10-16,247.50\n",
+      "expect": "Max drawdown: 24.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "date,close\n2026-10-12,10.00\n2026-10-13,11.00\n2026-10-14,12.00\n",
+      "expect": "Max drawdown: 0.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "date,close\r\n2026-10-12,80.00\r\n2026-10-13,60.00\r\n2026-10-14,70.00\r\n\r\n",
+      "expect": "Max drawdown: 25.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "date,close\n2026-10-12,101.50\n\n",
+      "expect": "Max drawdown: 0.00%\n",
+      "exact": true
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs your program 7 times with a different file on std::cin each time and compares what it prints."
+   },
+   "feedback": {
+    "correct": "Parse, track the running peak, print once at the end.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-2": "With only a header, the loop never runs and the answer is 0.00%. If the program stopped, something read a close that was not there.",
+     "test-6": "Test 6 uses `\\r\\n` line ends and ends with a blank line. A line with no comma must be skipped, not passed to `std::stod`.",
+     "test-4": "Test 4 has two falls: 262.50 to 199.50 (24%) and 275.00 to 247.50 (10%). Keep the worst, measured from the peak before each fall.",
+     "error": "The program stopped. `std::stod` throws on text that is not a number, which is fatal here. Skip lines without a comma, including the blank last line."
+    }
+   },
+   "explain": {
+    "text": "Read the header once, then loop on `std::getline`, skipping any line without a comma. Each close updates the running peak and the worst fall. `std::fixed` with `std::setprecision(2)` prints exactly two decimals.\n\n```cpp\nstd::size_t comma = line.find(',');\nif (comma == std::string::npos) continue;\ndouble p = std::stod(line.substr(comma + 1));\n```"
+   }
+  },
+  {
+   "id": "h-band-signal",
+   "difficulty": 4,
+   "skills": [
+    "cp-basics"
+   ],
+   "prose": "A mean-reversion rule compares the price with its moving average. Below the average by more than `band`: buy. Above it by more than `band`: sell. Otherwise, including exactly at the edge: hold.",
+   "question": "Write `band_signal(price, average, band)` returning `\"buy\"`, `\"sell\"` or `\"hold\"`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <string>\n\nstd::string band_signal(double price, double average, double band) {\n    return \"hold\";\n}\n",
+    "solution": "#include <string>\n\nstd::string band_signal(double price, double average, double band) {\n    if (price < average - band) {\n        return \"buy\";\n    } else if (price > average + band) {\n        return \"sell\";\n    }\n    return \"hold\";\n}\n",
+    "examples": [
+     {
+      "call": "band_signal",
+      "args": [
+       95,
+       100,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "buy"
+     }
+    ],
+    "tests": [
+     {
+      "call": "band_signal",
+      "args": [
+       95,
+       100,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "buy"
+     },
+     {
+      "call": "band_signal",
+      "args": [
+       103,
+       100,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "sell"
+     },
+     {
+      "call": "band_signal",
+      "args": [
+       101,
+       100,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "hold"
+     },
+     {
+      "call": "band_signal",
+      "args": [
+       98,
+       100,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "hold"
+     },
+     {
+      "call": "band_signal",
+      "args": [
+       102,
+       100,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "hold"
+     },
+     {
+      "call": "band_signal",
+      "args": [
+       100.5,
+       100,
+       0
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "sell"
+     },
+     {
+      "call": "band_signal",
+      "args": [
+       99.5,
+       100,
+       0.25
+      ],
+      "types": [
+       "double",
+       "double",
+       "double"
+      ],
+      "expect": "buy"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 7 hidden tests that call band_signal; each must return exactly the expected word."
+   },
+   "feedback": {
+    "correct": "Strict tests on both sides, hold in between.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-4": "98 is exactly `average - band`. The rule says the edge holds, so use `<`, not `<=`.",
+     "test-5": "102 is exactly `average + band`, so it holds. Use `>`, not `>=`.",
+     "test-1": "95 is more than 2 below 100, so buy. Compare `price < average - band`."
+    }
+   },
+   "explain": {
+    "text": "An `if`, an `else if` and a final `return \"hold\"` cover the three cases. Strict `<` and `>` leave both edges to hold."
+   }
+  },
+  {
+   "id": "h-total-volume",
+   "difficulty": 4,
+   "skills": [
+    "cp-basics"
+   ],
+   "prose": "Each fill's size fits in an `int`, but a day's total may not.",
+   "question": "Write `total_volume(fills)`: the sum of the fill sizes, as a `long long`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nlong long total_volume(const std::vector<int>& fills) {\n    return 0;\n}\n",
+    "solution": "#include <vector>\n\nlong long total_volume(const std::vector<int>& fills) {\n    long long total = 0;\n    for (int f : fills) {\n        total += f;\n    }\n    return total;\n}\n",
+    "examples": [
+     {
+      "call": "total_volume",
+      "args": [
+       [
+        100,
+        250,
+        50
+       ]
+      ],
+      "expect": 400
+     }
+    ],
+    "tests": [
+     {
+      "call": "total_volume",
+      "args": [
+       [
+        100,
+        250,
+        50
+       ]
+      ],
+      "expect": 400
+     },
+     {
+      "call": "total_volume",
+      "args": [
+       []
+      ],
+      "types": [
+       "std::vector<int>"
+      ],
+      "expect": 0
+     },
+     {
+      "call": "total_volume",
+      "args": [
+       [
+        2000000000,
+        2000000000
+       ]
+      ],
+      "expect": 4000000000
+     },
+     {
+      "call": "total_volume",
+      "args": [
+       [
+        2147483647,
+        1
+       ]
+      ],
+      "expect": 2147483648
+     },
+     {
+      "call": "total_volume",
+      "args": [
+       [
+        1500000000,
+        1500000000,
+        1500000000
+       ]
+      ],
+      "expect": 4500000000
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 5 hidden tests that call total_volume; each must equal the expected whole number exactly."
+   },
+   "feedback": {
+    "correct": "Each `int` fill is added into a `long long` total.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-3": "Two fills of 2,000,000,000 should total 4,000,000,000. A negative or wrong total means the sum lived in an `int`: declare `long long total`."
+    }
+   },
+   "explain": {
+    "text": "`total` is a `long long`, so `total += f` converts each `int` fill up before adding. Nothing wraps until about 9.2 × 10¹⁸."
+   }
+  },
+  {
+   "id": "h-signedness",
+   "difficulty": 4,
+   "skills": [
+    "cp-basics",
+    "cp-build"
+   ],
+   "prose": "```cpp\nfor (int i = 0; i < prices.size(); ++i) { ... }\n```\n\n`g++ -Wall` prints `warning: comparison of integer expressions of different signedness: 'int' and 'std::vector<double>::size_type'`.",
+   "question": "What is the best response?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Make `i` a `std::size_t`, or compare with `static_cast<int>(prices.size())`",
+      "correct": true
+     },
+     {
+      "id": "lte",
+      "text": "Change `<` to `<=`",
+      "why": "That reads one past the end and keeps the warning."
+     },
+     {
+      "id": "nowall",
+      "text": "Build without `-Wall`",
+      "why": "That hides the warning and keeps the mixed comparison. A negative `int` compared with an unsigned value turns huge."
+     },
+     {
+      "id": "double",
+      "text": "Make `i` a `double`",
+      "why": "An index is a whole number. A `double` index does not even compile in `prices[i]`."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Compare like with like.",
+    "generic": "Not quite right. The warning is about mixing signed and unsigned types."
+   },
+   "explain": {
+    "text": "`size()` returns an unsigned type, and comparing it with a signed `int` converts the `int`. Here it is harmless, but a negative `int` would become huge. Use the same type on both sides."
+   }
+  },
+  {
+   "id": "h-pence-truncate",
+   "difficulty": 4,
+   "skills": [
+    "cp-basics"
+   ],
+   "prose": "```cpp\ndouble price = 0.29;\nint pence = price * 100;\n```",
+   "question": "What does `pence` hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 28,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "28",
+    "wrong": [
+     {
+      "id": "round",
+      "value": 29,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.29 × 100 is stored as 28.999999999999996, then truncated.",
+    "generic": "Not quite right. Is `0.29 * 100` stored exactly?",
+    "byKey": {
+     "round": "You expected rounding. The product is a hair below 29, and converting a `double` to an `int` drops the fraction."
+    }
+   },
+   "explain": {
+    "text": "0.29 is stored slightly low, so the product is 28.999999999999996 and the conversion truncates to 28. `std::lround(price * 100)` gives 29."
+   }
+  },
+  {
+   "id": "h-port-note",
+   "difficulty": 4,
+   "skills": [
+    "cp-basics"
+   ],
+   "kind": "longform",
+   "prompt": "A colleague ports a Python backtest to C++. Two results look wrong.\n\n```cpp\nint total_qty = 0;\nfor (int q : fills) {\n    total_qty += q;\n}\ndouble avg = total_qty / n_fills;\n```\n\nOn a day with two fills of 1,500,000,000 shares, the total prints −1,294,967,296. On a quieter day, 4 fills totalling 10,000,002 shares give `avg` as 2500000, not 2,500,000.5. Write them a short note. Say what C++ is doing in each case and why Python never showed it. Give a fix in code for each, and one way to catch each sooner.",
+   "model": "**The volume.** `total_qty` is an `int`, which holds at most 2,147,483,647. Two fills of 1,500,000,000 make 3,000,000,000, which does not fit, so the sum wraps by $2^{32}$: $3{,}000{,}000{,}000 - 4{,}294{,}967{,}296 = -1{,}294{,}967{,}296$. Signed overflow is undefined behaviour in C++, so the compiler does not have to warn and the program does not stop.\n\n**The average.** `total_qty / n_fills` divides two `int`s, so C++ does integer division and drops the fraction: 10,000,002 / 4 is 2,500,000, not 2,500,000.5. Only then is the result stored in the `double`.\n\n**Why Python hid both.** Python integers grow without limit, so a sum never overflows, and `/` always gives a float. C++ fixes each variable's type and size when it is declared, and each operation works in the type of its operands.\n\n**Fixes.**\n\n```cpp\nlong long total_qty = 0;                   // 64-bit: up to about 9.2e18\nfor (int q : fills) total_qty += q;\ndouble avg = static_cast<double>(total_qty) / n_fills;  // convert before dividing\n```\n\nWriting `(double)(total_qty / n_fills)` or `total_qty / n_fills * 1.0` would not help: the division has already happened in integers.\n\n**Catching them sooner.** A unit test with a known large day (two fills of 1,500,000,000, expected 3,000,000,000) fails at once on the `int` version. A test with an odd total, such as 10,000,002 over 4 fills expecting 2,500,000.5, catches the division. Building with warnings such as `-Wall -Wconversion` also flags the implicit conversions, and a sanitiser build (`-fsanitize=undefined`) reports the overflow at run time.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Explains that `int` stops at 2,147,483,647 and that 3,000,000,000 wraps to −1,294,967,296 (or says it wraps by 2³²)"
+    },
+    {
+     "points": 2,
+     "text": "Explains that `int / int` is integer division, done before the result reaches the `double`"
+    },
+    {
+     "points": 1,
+     "text": "Says why Python hid both: unbounded integers and `/` always giving a float"
+    },
+    {
+     "points": 2,
+     "text": "Gives a correct fix for the total in code: a `long long` accumulator"
+    },
+    {
+     "points": 2,
+     "text": "Gives a correct fix for the average in code: convert to `double` before dividing, and notes that converting afterwards does not help"
+    },
+    {
+     "points": 1,
+     "text": "Names a way to catch each sooner: a unit test with large or odd values, or warning and sanitiser flags"
+    }
+   ]
+  },
+  {
+   "id": "h-multiple-definition",
+   "difficulty": 4,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "```text\n$ g++ -std=c++17 main.cpp pricer.cpp -o backtest\npricer.cpp:(.text+0x0): multiple definition of `simple_return(double, double)'; main.cpp:(.text+0x0): first defined here\n```\n\n`returns.h` holds the body of `simple_return` and starts with `#pragma once`. Both `.cpp` files include it.",
+   "question": "Which change fixes the build?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Keep only the declaration in `returns.h` and move the body into `returns.cpp`, added to the build",
+      "correct": true
+     },
+     {
+      "id": "guard",
+      "text": "Add include guards as well as `#pragma once`",
+      "why": "Guards and `#pragma once` do the same job: one copy per `.cpp`. Each `.cpp` still gets a body."
+     },
+     {
+      "id": "one",
+      "text": "Include `returns.h` in `main.cpp` only",
+      "why": "Then `pricer.cpp` calls `simple_return` without a declaration, and the compiler stops."
+     },
+     {
+      "id": "order",
+      "text": "Put `pricer.cpp` before `main.cpp` in the command",
+      "why": "The order of files does not matter. Both object files still define the function."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Declarations in headers, one body in one `.cpp`.",
+    "generic": "Not quite right. How many bodies does the program end up with?"
+   },
+   "explain": {
+    "text": "Every `.cpp` that includes a header with a body compiles its own copy, and the linker refuses two. A declaration in the header and one definition in `returns.cpp` gives exactly one. Marking the function `inline` is the other accepted fix."
+   }
+  }
+ ]
+}

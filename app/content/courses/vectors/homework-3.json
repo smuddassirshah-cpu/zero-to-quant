@@ -439,13 +439,13 @@
         "la-product"
       ],
       "title": "Minimum-variance weights",
-      "prose": "The fully invested minimum-variance portfolio has weights $\\mathbf{w} = \\dfrac{\\Sigma^{-1}\\mathbf{1}}{\\mathbf{1}^T\\Sigma^{-1}\\mathbf{1}}$. Compute $\\Sigma^{-1}\\mathbf{1}$ with `solve`, then scale it to sum to 1. Raise `np.linalg.LinAlgError` when $|\\det\\Sigma| < 10^{-12}$: this browser's NumPy returns `nan` rather than raising.",
+      "prose": "The fully invested minimum-variance portfolio has weights $\\mathbf{w} = \\dfrac{\\Sigma^{-1}\\mathbf{1}}{\\mathbf{1}^T\\Sigma^{-1}\\mathbf{1}}$. Compute $\\Sigma^{-1}\\mathbf{1}$ with `solve`, then scale it to sum to 1. Raise `np.linalg.LinAlgError` when `np.linalg.matrix_rank(S)` is less than `len(S)`: this browser's NumPy returns `nan` rather than raising. Do not test $|\\det\\Sigma|$ against a cut-off: daily covariances are tiny, and so is their determinant.",
       "question": "Complete `min_var_weights`.",
       "widget": {
         "kind": "code",
         "language": "python",
         "starter": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    # 1. raise np.linalg.LinAlgError if S is singular\n    # 2. z = S^-1 1, by solving\n    # 3. scale z so the weights sum to 1\n    ...\n",
-        "solution": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    # 1. raise np.linalg.LinAlgError if S is singular\n    if abs(np.linalg.det(S)) < 1e-12:\n        raise np.linalg.LinAlgError(\"singular covariance matrix\")\n    # 2. z = S^-1 1, by solving\n    z = np.linalg.solve(S, ones)\n    # 3. scale z so the weights sum to 1\n    return z / z.sum()\n",
+        "solution": "import numpy as np\n\ndef min_var_weights(cov):\n    S = np.array(cov, dtype=float)\n    ones = np.ones(len(S))\n    # 1. raise np.linalg.LinAlgError if S is singular\n    if np.linalg.matrix_rank(S) < len(S):\n        raise np.linalg.LinAlgError(\"singular covariance matrix\")\n    # 2. z = S^-1 1, by solving\n    z = np.linalg.solve(S, ones)\n    # 3. scale z so the weights sum to 1\n    return z / z.sum()\n",
         "examples": [
           {
             "call": "np.round(min_var_weights([[0.04, 0.0], [0.0, 0.09]]), 6).tolist()",
@@ -487,18 +487,24 @@
             "call": "min_var_weights([[0.04, 0.06], [0.06, 0.09]])",
             "expect": "LinAlgError",
             "compare": "raises"
+          },
+          {
+            "setup": "v = np.array([0.01, 0.012, 0.015, 0.02]); C = np.full((4, 4), 0.3) + 0.7 * np.eye(4)",
+            "call": "np.round(min_var_weights(np.outer(v, v) * C), 6).tolist()",
+            "expect": "[0.543807, 0.309668, 0.132931, 0.013595]"
           }
         ],
-        "how": "Check runs 7 hidden tests: five compare weights after rounding to 6 decimal places, two expect `LinAlgError` for a singular matrix. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 8 hidden tests: six compare weights after rounding to 6 decimal places, two expect `LinAlgError` for a singular matrix. The first run loads NumPy, which takes a few seconds."
       },
       "feedback": {
         "correct": "Solve, then normalise; refuse a singular $\\Sigma$.",
         "generic": "Some tests failed. For two uncorrelated assets with variances 0.04 and 0.09 the weights are about 0.692 and 0.308.",
         "byKey": {
           "test-1": "Uncorrelated assets get weights proportional to $1/\\sigma^2$: 25 and 11.1, which normalise to 0.692 and 0.308. Did you divide by the sum?",
-          "test-6": "Two share classes with correlation 1 give a singular $\\Sigma$. Check `abs(np.linalg.det(S)) < 1e-12` and raise `np.linalg.LinAlgError`.",
+          "test-6": "Two share classes with correlation 1 give a singular $\\Sigma$. Check `np.linalg.matrix_rank(S) < len(S)` and raise `np.linalg.LinAlgError`.",
           "test-7": "Correlation 1 with different volatilities is singular too: $\\det = 0.0036 - 0.0036$.",
-          "error": "Your code stopped with an error. Fill in the three numbered steps in place of the `...`."
+          "error": "Your code stopped with an error. Fill in the three numbered steps in place of the `...`.",
+          "test-8": "Four assets with daily volatilities of 1% to 2% give a healthy $\\Sigma$ with determinant about $8 \\times 10^{-16}$. A determinant cut-off refuses it; the rank is 4."
         }
       },
       "explain": {

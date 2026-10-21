@@ -1,0 +1,1592 @@
+{
+ "id": "l14-vector",
+ "course": "cpp",
+ "title": "Growing arrays with vector",
+ "minutes": 15,
+ "objectives": [
+  "Use `std::vector` and iterators."
+ ],
+ "skills": [
+  "cp-stl"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Python's list, typed",
+   "prose": "In Python you grow a list with `append`. A `std::vector<double>` is C++'s growing list, with one fixed element type.\n\n```cpp\nstd::vector<double> closes;\ncloses.push_back(101.5);\ncloses.push_back(102.0);\ncloses.push_back(100.8);\nstd::cout << closes.size() << ' '\n          << closes[1] << '\\n';\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      101.5,
+      102.0,
+      100.8
+     ],
+     "showIndex": true
+    },
+    "state": {}
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "`3 102`",
+      "correct": true
+     },
+     {
+      "id": "from-one",
+      "text": "`3 101.5`",
+      "why": "You counted from 1. Indices start at 0, as in Python, so `closes[1]` is the second close.",
+      "canvas": {
+       "highlight": [
+        "c1"
+       ]
+      }
+     },
+     {
+      "id": "last",
+      "text": "`2 100.8`",
+      "why": "You took `size()` as the last index. It counts the elements: three."
+     },
+     {
+      "id": "empty",
+      "text": "`0 102`",
+      "why": "`closes` starts empty, but each `push_back` adds one element and `size()` counts them."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`size()` is Python's `len`."
+    },
+    {
+     "rung": "point",
+     "text": "Which element sits at index 1?",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Three elements; `closes[1]` is the second, 102.0, which `std::cout` prints as 102."
+    }
+   ],
+   "feedback": {
+    "correct": "Three closes, and index 1 holds 102.0.",
+    "generic": "Not quite right. Count the `push_back` calls, then index from 0."
+   },
+   "explain": {
+    "text": "`push_back` is `append`, `size()` is `len` and `[]` indexes from 0. `std::cout` prints 102.0 as `102`. Unlike a Python list, every element must be a `double`.",
+    "canvas": {
+     "highlight": [
+      "c1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A vector keeps its elements side by side in one block of memory. The block often has spare slots. Slide to push back closes one at a time and watch the block.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      101.5,
+      102.0,
+      100.8,
+      "",
+      ""
+     ],
+     "showIndex": true,
+     "closes": [
+      101.5,
+      102.0,
+      100.8,
+      101.9,
+      103.2,
+      102.7,
+      104.1,
+      103.6
+     ]
+    },
+    "state": {
+     "params": {
+      "n": 3
+     }
+    },
+    "derive": {
+     "let": {
+      "cap": "n == 0 ? 0 : Math.pow(2, Math.ceil(Math.log2(n)))"
+     },
+     "cells": "params.closes.slice(0, n).concat(Array(cap - n).fill(''))",
+     "done": "Array.from(Array(n).keys())",
+     "caption": "{{n}} in use, room for {{cap}}"
+    },
+    "controls": [
+     {
+      "bind": "n",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "start": 3,
+      "label": "push_backs"
+     }
+    ]
+   },
+   "question": "When 5 closes are in the vector, how many slots does its block have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "8",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to 5 and count every box, empty ones too."
+    }
+   ],
+   "feedback": {
+    "correct": "Five in use, room for eight.",
+    "generic": "Not quite right. Slide to 5 and count all the boxes, full and empty.",
+    "byKey": {
+     "five": "You counted the closes in use. The block also has empty slots waiting for the next pushes.",
+     "six": "You assumed one spare slot. Watch what happens at 5: the block jumps from 4 to 8.",
+     "ten": "You doubled the 5 closes. The block doubles its own size, 4 to 8, when it runs out."
+    }
+   },
+   "explain": {
+    "text": "When the block is full, `push_back` gets a block twice as big, copies the closes across and frees the old one. So the room grows 1, 2, 4, 8. At 5 closes three slots wait empty.",
+    "canvas": {
+     "params": {
+      "n": 5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Size, capacity and reserve",
+   "prose": "`size()` counts the elements in use; `capacity()` counts the slots in the block. A full block doubles on the next `push_back`. `reserve(n)` asks for room for `n` up front.\n\n```cpp\nstd::vector<double> ticks;\nticks.reserve(1000);\nfor (int i = 0; i < 600; ++i) {\n    ticks.push_back(100.0 + i * 0.01);\n}\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "After `reserve(8)`: size 0, capacity 8"
+    }
+   },
+   "question": "How many times does `ticks` move to a bigger block during the loop?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "0",
+    "wrong": [
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "eleven",
+      "value": 11,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does the loop ever fill the 1,000 slots?"
+    },
+    {
+     "rung": "point",
+     "text": "600 is below the capacity `reserve` asked for."
+    },
+    {
+     "rung": "step",
+     "text": "The block holds 1,000 from the start, and 600 pushes never fill it."
+    }
+   ],
+   "feedback": {
+    "correct": "No moves: the room was there from the start.",
+    "generic": "Not quite right. Compare 600 with the capacity after `reserve`.",
+    "byKey": {
+     "ten": "That is the count without `reserve`: the block would pass 1, 2, 4, up to 1,024. `reserve(1000)` made room first.",
+     "eleven": "You counted every allocation without `reserve`. Here one allocation, made by `reserve`, is enough.",
+     "one": "`reserve` itself allocates once, before the loop, with nothing to copy. The loop never moves the block."
+    }
+   },
+   "explain": {
+    "text": "`reserve(1000)` allocated room for 1,000 before the first push, so 600 pushes never fill the block. Without it the block would move ten times, copying 1,023 elements in all. `reserve` changes capacity, never size: `ticks.size()` is still 0 straight after it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A moving average",
+   "prose": "A moving average of `n` closes gives one mean per window: `len(xs) - n + 1` of them. In Python: `[sum(xs[i:i + n]) / n for i in range(len(xs) - n + 1)]`. If `n` is below 1 or above the number of closes, return an empty vector.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      102,
+      101,
+      105,
+      104
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       0,
+       2
+      ],
+      "label": "first window, n = 3"
+     },
+     "caption": "Means for n = 3: 101, 102.67, 103.33"
+    }
+   },
+   "question": "Write `moving_average(xs, n)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nstd::vector<double> moving_average(const std::vector<double>& xs, int n) {\n    std::vector<double> out;\n    // one mean for each run of n neighbouring prices\n    return out;\n}\n",
+    "solution": "#include <vector>\n\nstd::vector<double> moving_average(const std::vector<double>& xs, int n) {\n    std::vector<double> out;\n    if (n < 1 || static_cast<std::size_t>(n) > xs.size()) {\n        return out;\n    }\n    double sum = 0;\n    for (std::size_t i = 0; i < xs.size(); ++i) {\n        sum += xs[i];\n        if (i >= static_cast<std::size_t>(n)) {\n            sum -= xs[i - n];\n        }\n        if (i + 1 >= static_cast<std::size_t>(n)) {\n            out.push_back(sum / n);\n        }\n    }\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "moving_average",
+      "args": [
+       [
+        100,
+        102,
+        101,
+        105,
+        104
+       ],
+       3
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [
+       101.0,
+       102.66666666666667,
+       103.33333333333333
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "moving_average",
+      "args": [
+       [
+        1,
+        2,
+        3,
+        4,
+        5
+       ],
+       2
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [
+       1.5,
+       2.5,
+       3.5,
+       4.5
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "moving_average",
+      "args": [
+       [
+        100,
+        102,
+        101,
+        105,
+        104
+       ],
+       3
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [
+       101.0,
+       102.66666666666667,
+       103.33333333333333
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "moving_average",
+      "args": [
+       [
+        1,
+        2,
+        3,
+        4,
+        5
+       ],
+       5
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [
+       3.0
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "moving_average",
+      "args": [
+       [
+        100,
+        101,
+        102
+       ],
+       4
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "call": "moving_average",
+      "args": [
+       [],
+       1
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "call": "moving_average",
+      "args": [
+       [
+        99.5,
+        100.25
+       ],
+       1
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [
+       99.5,
+       100.25
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "moving_average",
+      "args": [
+       [
+        100,
+        101
+       ],
+       0
+      ],
+      "types": [
+       "std::vector<double>",
+       "int"
+      ],
+      "expect": [],
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests that call moving_average; each mean is accepted within a relative 1e-9, and an empty answer must be empty."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over the windows: window `i` covers `xs[i]` to `xs[i + n - 1]`."
+    },
+    {
+     "rung": "point",
+     "text": "Test 4 has 3 closes and `n = 4`. What is `xs.size() - n + 1` when `size()` is unsigned?",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return early if `n < 1` or `n > xs.size()`. Otherwise, for each start `i` from 0 while `i + n <= xs.size()`, add `n` closes and push back the sum over `n`."
+    }
+   ],
+   "feedback": {
+    "correct": "One mean per full window, and nothing when no window fits.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-4": "With 3 closes and `n = 4` no window fits, so the answer is empty. If the program stopped, `xs.size() - n + 1` wrapped: `size()` is unsigned, so check `n > xs.size()` first.",
+     "test-7": "`n = 0` has no windows, and dividing by 0 gives nonsense. Return an empty vector when `n < 1`.",
+     "test-2": "The second window is 102, 101, 105, so its mean is 102.67. Check where each window starts.",
+     "error": "The program stopped. If the message says index out of bounds, a window ran past the last close: the last start is `xs.size() - n`."
+    }
+   },
+   "explain": {
+    "text": "There are `xs.size() - n + 1` windows when `n` fits, and none otherwise. Check `n` before any `size()` arithmetic, because `size()` is unsigned and cannot go below 0. A running sum adds the newest close and drops the oldest, so each window costs one step."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Reserve what you know",
+   "prose": "Simple returns $r_i = p_i / p_{i-1} - 1$: `n` closes give `n - 1` returns. You know that count before the loop, so `reserve` it and the vector never moves. One hidden test reads `capacity()` to check. Fewer than two closes give no returns.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      110,
+      99
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "Closes 100, 110, 99 give returns 0.1 and −0.1"
+    }
+   },
+   "question": "Write `returns_from(px)`, reserving the exact room first.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nstd::vector<double> returns_from(const std::vector<double>& px) {\n    std::vector<double> out;\n    // reserve room for every return, then push them back\n    return out;\n}\n",
+    "solution": "#include <vector>\n\nstd::vector<double> returns_from(const std::vector<double>& px) {\n    std::vector<double> out;\n    if (px.size() < 2) {\n        return out;\n    }\n    out.reserve(px.size() - 1);\n    for (std::size_t i = 1; i < px.size(); ++i) {\n        out.push_back(px[i] / px[i - 1] - 1);\n    }\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "returns_from",
+      "args": [
+       [
+        100,
+        110,
+        99
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [
+       0.1,
+       -0.1
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "returns_from",
+      "args": [
+       [
+        100,
+        110,
+        99
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [
+       0.1,
+       -0.1
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "returns_from",
+      "args": [
+       [
+        200,
+        202,
+        197.96,
+        198.9498
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [
+       0.01,
+       -0.02,
+       0.005
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "returns_from",
+      "args": [
+       []
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "call": "returns_from",
+      "args": [
+       [
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<double> px{100, 101, 99, 102, 103, 104};",
+      "call": "returns_from(px).capacity()",
+      "expect": 5,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<double> px(1000, 50.0);",
+      "call": "returns_from(px).size()",
+      "expect": 999,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call returns_from; returns are accepted within a relative 1e-9, and test 5 expects capacity() to be exactly 5 for 6 closes."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many returns do `n` closes give?"
+    },
+    {
+     "rung": "point",
+     "text": "Test 3 is empty. What is `px.size() - 1` then?",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return early when `px.size() < 2`. Then `out.reserve(px.size() - 1);` and loop `i` from 1, pushing `px[i] / px[i - 1] - 1`."
+    }
+   ],
+   "feedback": {
+    "correct": "Exact room, one allocation, no moves.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-3": "An empty vector broke it. `px.size() - 1` wraps to a huge number, and `reserve` of that ends the program. Return early when there are fewer than two closes.",
+     "test-5": "Six closes give five returns, so capacity should be 5. If you got 8, the vector grew by doubling: call `reserve(px.size() - 1)` before the loop.",
+     "test-1": "100 to 110 is a return of 0.1. Divide by the earlier close, `px[i - 1]`, then subtract 1."
+    }
+   },
+   "explain": {
+    "text": "`reserve(px.size() - 1)` makes one allocation of the exact size, so `push_back` never copies. The early return matters: on an empty vector `px.size() - 1` wraps to about 18 quintillion. A vector built with `out(px.size() - 1)` and filled by index works too."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "begin and end",
+   "prose": "An **iterator** marks a place in a vector. `begin()` marks the first element and `end()` marks one past the last. `*it` reads the element and `++it` steps on.\n\n```cpp\ndouble total = 0;\nfor (auto it = px.begin() + 1; it != px.end(); ++it) {\n    total += *it;\n}\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100.0,
+      101.5,
+      99.8,
+      102.3
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "b",
+       "at": 0,
+       "label": "begin()"
+      },
+      {
+       "id": "it",
+       "at": 1,
+       "label": "it",
+       "below": true
+      }
+     ],
+     "caption": "`end()` sits just past index 3"
+    }
+   },
+   "question": "What is `total` after the loop?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 303.6,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a number",
+    "accept": "303.6",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 403.6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "short",
+      "value": 201.3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "end",
+      "value": 305.9,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does `it` start, and when does it stop?"
+    },
+    {
+     "rung": "point",
+     "text": "`it` starts at index 1. It stops on reaching `end()`, which is past index 3.",
+     "highlight": [
+      "c1",
+      "c2",
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Add the closes at indices 1, 2 and 3."
+    }
+   ],
+   "feedback": {
+    "correct": "101.5 + 99.8 + 102.3 = 303.6.",
+    "generic": "Not quite right. Start at index 1 and stop after index 3.",
+    "byKey": {
+     "all": "You added index 0 too. `begin() + 1` starts one element in.",
+     "short": "You stopped before index 3. `end()` is one past the last element, so index 3 is still read.",
+     "end": "You read a fifth element at `end()`. `end()` marks the place after the last close and holds no value."
+    }
+   },
+   "explain": {
+    "text": "`it` visits indices 1, 2 and 3; the loop stops when `it` equals `end()`. Because `end()` is one past the last, a range is `[begin, end)`, like Python's slices. The range-based `for (double p : px)` uses these same two iterators.",
+    "canvas": {
+     "highlight": [
+      "c1",
+      "c2",
+      "c3"
+     ],
+     "pointers": [
+      {
+       "id": "b",
+       "at": 0,
+       "label": "begin()"
+      },
+      {
+       "id": "it",
+       "at": 3,
+       "label": "it",
+       "below": true
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The three largest",
+   "prose": "A program reads prices until the input ends. You do not know how many, so a vector fits. `std::sort(v.begin(), v.end())` from `<algorithm>` sorts ascending; lesson 16 says more. Print the three largest, largest first. With fewer than three, print them all.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      101.5,
+      102.25,
+      99.8,
+      104,
+      100
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "highlight": [
+      "c0",
+      "c1",
+      "c3"
+     ],
+     "caption": "Prints 104, then 102.25, then 101.5"
+    }
+   },
+   "question": "Complete the program.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<double> prices;\n    double p;\n    while (std::cin >> p) {\n        // keep every price\n    }\n    // print the three largest, largest first, one per line\n    return 0;\n}\n",
+    "solution": "#include <algorithm>\n#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<double> prices;\n    double p;\n    while (std::cin >> p) {\n        prices.push_back(p);\n    }\n    std::sort(prices.begin(), prices.end());\n    for (std::size_t k = 0; k < 3 && k < prices.size(); ++k) {\n        std::cout << prices[prices.size() - 1 - k] << '\\n';\n    }\n    return 0;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "101.5\n102.25\n99.8\n104\n100\n",
+      "expect": "104\n102.25\n101.5\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "101.5\n102.25\n99.8\n104\n100\n",
+      "expect": "104\n102.25\n101.5\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "100.5\n99\n",
+      "expect": "100.5\n99\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "",
+      "expect": ""
+     },
+     {
+      "compare": "stdout",
+      "stdin": "100 100 99 100\n",
+      "expect": "100\n100\n100\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "72.5\n",
+      "expect": "72.5\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "10 20 30 40 50 60\n",
+      "expect": "60\n50\n40\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 6 times with different input on std::cin and compares what it prints."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First keep every price with `push_back`, then sort."
+    },
+    {
+     "rung": "point",
+     "text": "After an ascending sort the largest sits at index `size() - 1`.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Sort, then print `prices[prices.size() - 1 - k]` for `k` from 0 while `k < 3 && k < prices.size()`."
+    }
+   ],
+   "feedback": {
+    "correct": "Collect, sort, print from the back.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-2": "With two prices you must print just those two. Stop at `prices.size()` as well as at 3.",
+     "test-3": "No input means no output. If the program stopped, it read `prices[size() - 1]` from an empty vector.",
+     "test-1": "Largest first: 104, 102.25, 101.5. If you printed 99.8 first, you printed from the front of the ascending sort.",
+     "error": "The program stopped. With fewer than three prices, a loop that always runs three times reads past the end."
+    }
+   },
+   "explain": {
+    "text": "The `while (std::cin >> p)` loop stops when input runs out, and `push_back` grows the vector as needed. The print loop has two limits, 3 and `size()`, so short inputs are safe. The test `k < prices.size()` compares two unsigned values, so nothing wraps."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Checked access",
+   "prose": "`px[i]` does no check of its own: past the end it reads whatever memory is there. `px.at(i)` checks and throws `std::out_of_range`. This app cannot catch exceptions, so a throw ends the program, which the hidden tests look for. A desk build could catch it.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100.0,
+      101.5,
+      99.75
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "Valid days are 0, 1 and 2"
+    }
+   },
+   "question": "Change `price_change` so a bad day throws `std::out_of_range`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\ndouble price_change(const std::vector<double>& px, int from, int to) {\n    return px[to] - px[from];\n}\n",
+    "solution": "#include <vector>\n\ndouble price_change(const std::vector<double>& px, int from, int to) {\n    return px.at(to) - px.at(from);\n}\n",
+    "examples": [
+     {
+      "call": "price_change",
+      "args": [
+       [
+        100.0,
+        101.5,
+        99.75
+       ],
+       0,
+       2
+      ],
+      "types": [
+       "std::vector<double>",
+       "int",
+       "int"
+      ],
+      "expect": -0.25,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "price_change",
+      "args": [
+       [
+        100.0,
+        101.5,
+        99.75
+       ],
+       0,
+       2
+      ],
+      "types": [
+       "std::vector<double>",
+       "int",
+       "int"
+      ],
+      "expect": -0.25,
+      "compare": "isclose"
+     },
+     {
+      "call": "price_change",
+      "args": [
+       [
+        100.0,
+        101.5,
+        99.75
+       ],
+       0,
+       1
+      ],
+      "types": [
+       "std::vector<double>",
+       "int",
+       "int"
+      ],
+      "expect": 1.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "price_change",
+      "args": [
+       [
+        100.0,
+        101.5,
+        99.75
+       ],
+       0,
+       3
+      ],
+      "types": [
+       "std::vector<double>",
+       "int",
+       "int"
+      ],
+      "compare": "raises",
+      "expect": "std::out_of_range"
+     },
+     {
+      "call": "price_change",
+      "args": [
+       [
+        100.0,
+        101.5,
+        99.75
+       ],
+       -1,
+       1
+      ],
+      "types": [
+       "std::vector<double>",
+       "int",
+       "int"
+      ],
+      "compare": "raises",
+      "expect": "std::out_of_range"
+     },
+     {
+      "call": "price_change",
+      "args": [
+       [],
+       0,
+       0
+      ],
+      "types": [
+       "std::vector<double>",
+       "int",
+       "int"
+      ],
+      "compare": "raises",
+      "expect": "std::out_of_range"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call price_change. Tests 3 to 5 pass a day that does not exist and expect the program to end with std::out_of_range."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which member function checks the index?"
+    },
+    {
+     "rung": "point",
+     "text": "Test 3 asks for day 3 of three closes.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return px.at(to) - px.at(from);`"
+    }
+   ],
+   "feedback": {
+    "correct": "`at` checks; `[]` trusts you.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-3": "Day 3 does not exist. With `[]` this app's library stops the program with a crash, not `std::out_of_range`. Use `px.at(to)`.",
+     "test-4": "Day −1 does not exist either. `at` converts it to a huge unsigned index and throws.",
+     "test-5": "An empty vector has no day 0. `at` throws for it too."
+    }
+   },
+   "explain": {
+    "text": "`at` compares the index with `size()` and throws `std::out_of_range` when it is too big. `[]` skips that check, so it is a little faster and undefined past the end. This app's library traps `[]` too, as a crash; a normal release build reads garbage."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Erasing while you loop",
+   "prose": "A feed sends zeros for missing ticks. This loop tries to drop them.\n\n```cpp\nstd::vector<double> ticks{101.2, 0.0, 0.0, 101.5};\nfor (auto it = ticks.begin(); it != ticks.end(); ++it) {\n    if (*it == 0.0) {\n        ticks.erase(it);\n    }\n}\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      101.2,
+      0.0,
+      0.0,
+      101.5
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "it",
+       "at": 1,
+       "label": "it"
+      }
+     ]
+    }
+   },
+   "question": "What does `ticks` hold after the loop, in this app's run?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "skip",
+      "text": "101.2, 0, 101.5",
+      "correct": true
+     },
+     {
+      "id": "clean",
+      "text": "101.2, 101.5",
+      "why": "You assumed the loop sees every element. After `erase`, the next zero slides into the erased place, and `++it` steps over it.",
+      "canvas": {
+       "cells": [
+        101.2,
+        0.0,
+        101.5
+       ],
+       "pointers": [
+        {
+         "id": "it",
+         "at": 2,
+         "label": "it after ++"
+        }
+       ],
+       "highlight": [
+        "c1"
+       ]
+      }
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "It compiles cleanly. The compiler cannot see that `it` is no longer valid."
+     },
+     {
+      "id": "throw",
+      "text": "It throws `std::out_of_range`",
+      "why": "Only `at` throws that. `erase` and `++it` do no checks of their own."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draw the vector after the first `erase`."
+    },
+    {
+     "rung": "point",
+     "text": "After erasing index 1, the second zero moves to index 1. Where does `++it` go next?",
+     "highlight": [
+      "c1",
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`it` moves on to index 2, which now holds 101.5. The zero at index 1 is never examined."
+    }
+   ],
+   "feedback": {
+    "correct": "One zero survives: `++it` stepped over it.",
+    "generic": "Not quite right. Shift the elements left after each `erase` and follow `it`.",
+    "byKey": {
+     "clean": "You assumed every zero was seen. After `erase`, the second zero slides into index 1, and `++it` skips past it."
+    }
+   },
+   "explain": {
+    "text": "`erase` shifts the later elements left and leaves `it` invalid: using it again is undefined behaviour. Here it skipped a zero; at the last element it can run past `end()`. Python lists skip the same way. The fix takes the iterator `erase` returns:\n\n```cpp\nfor (auto it = ticks.begin(); it != ticks.end(); ) {\n    if (*it == 0.0) it = ticks.erase(it);\n    else ++it;\n}\n```",
+    "canvas": {
+     "cells": [
+      101.2,
+      0.0,
+      101.5
+     ],
+     "pointers": [
+      {
+       "id": "it",
+       "at": 2,
+       "label": "it"
+      }
+     ],
+     "highlight": [
+      "c1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "What you used, in one place.\n\n```cpp\nstd::vector<double> v;        // empty\nstd::vector<double> z(5);     // five zeros\nv.push_back(x);               // append; may move the block\nv.reserve(n);                 // capacity >= n, size unchanged\nv[i]; v.at(i);                // unchecked, checked\nfor (double x : v)            // begin() to end()\nit = v.erase(it);             // next valid iterator\nv.data();                     // pointer to the first element\n```",
+   "question": "`v` holds three closes. What does `for (std::size_t i = v.size() - 1; i >= 0; --i)` do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "never",
+      "text": "It never stops on its own: `i >= 0` is always true, so it runs past the start",
+      "correct": true
+     },
+     {
+      "id": "rev",
+      "text": "It visits indices 2, 1, 0 and stops",
+      "why": "That works for `int i`. A `std::size_t` cannot be negative: 0 minus 1 wraps to about 18 quintillion, which is still `>= 0`."
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "It compiles. Some compilers warn that the comparison is always true."
+     },
+     {
+      "id": "none",
+      "text": "The body never runs",
+      "why": "The first test is `2 >= 0`, which is true, so the body runs."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Can a `std::size_t` ever be below 0?"
+    }
+   ],
+   "feedback": {
+    "correct": "Unsigned values are always `>= 0`.",
+    "generic": "Not quite right. Follow `i` from 0 to the next `--i`."
+   },
+   "explain": {
+    "text": "`--i` at 0 wraps `i` to the largest `std::size_t`, and `v[i]` then reads far past the end. Count down with `for (std::size_t i = v.size(); i-- > 0; )` or use `v.rbegin()` and `v.rend()`. An `int i` works too, but then `i < v.size()` compares signed with unsigned."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A price lattice",
+   "prose": "A binomial pricer stores its tree of share prices as rows: a `std::vector<std::vector<double>>`. Row `i` has `i + 1` nodes; node `j` has gone down `j` times. Build the tree from `s0`, the up factor `u` and the down factor `d`. `cpp-pricing` prices options on it.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "orient": "lr",
+     "rootLabel": "100",
+     "levels": [
+      {
+       "label": "Step 1",
+       "branches": [
+        {
+         "id": "u",
+         "label": "110"
+        },
+        {
+         "id": "d",
+         "label": "90"
+        }
+       ]
+      },
+      {
+       "label": "Step 2",
+       "branches": [
+        {
+         "id": "u",
+         "label": {
+          "u": "121",
+          "d": "99"
+         }
+        },
+        {
+         "id": "d",
+         "label": {
+          "u": "99",
+          "d": "81"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    "state": {
+     "show": "none",
+     "caption": "`s0 = 100`, `u = 1.1`, `d = 0.9`: rows {100}, {110, 90}, {121, 99, 81}"
+    }
+   },
+   "question": "Write `price_lattice(s0, u, d, steps)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nstd::vector<std::vector<double>> price_lattice(double s0, double u, double d, int steps) {\n    std::vector<std::vector<double>> tree;\n    // row i has i + 1 nodes: s0 * u^(i - j) * d^j for j = 0 .. i\n    return tree;\n}\n",
+    "solution": "#include <vector>\n\nstd::vector<std::vector<double>> price_lattice(double s0, double u, double d, int steps) {\n    std::vector<std::vector<double>> tree;\n    tree.reserve(steps + 1);\n    tree.push_back({s0});\n    for (int i = 1; i <= steps; ++i) {\n        const std::vector<double>& prev = tree.back();\n        std::vector<double> row;\n        row.reserve(i + 1);\n        row.push_back(prev[0] * u);\n        for (int j = 0; j < i; ++j) {\n            row.push_back(prev[j] * d);\n        }\n        tree.push_back(row);\n    }\n    return tree;\n}\n",
+    "examples": [
+     {
+      "call": "price_lattice",
+      "args": [
+       100.0,
+       1.1,
+       0.9,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double",
+       "int"
+      ],
+      "expect": [
+       [
+        100.0
+       ],
+       [
+        110.0,
+        90.0
+       ],
+       [
+        121.0,
+        99.0,
+        81.0
+       ]
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "price_lattice",
+      "args": [
+       100.0,
+       1.1,
+       0.9,
+       2
+      ],
+      "types": [
+       "double",
+       "double",
+       "double",
+       "int"
+      ],
+      "expect": [
+       [
+        100.0
+       ],
+       [
+        110.0,
+        90.0
+       ],
+       [
+        121.0,
+        99.0,
+        81.0
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "price_lattice",
+      "args": [
+       50.0,
+       1.2,
+       0.8,
+       0
+      ],
+      "types": [
+       "double",
+       "double",
+       "double",
+       "int"
+      ],
+      "expect": [
+       [
+        50.0
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "price_lattice(100, 1.25, 0.8, 3).size()",
+      "expect": 4,
+      "compare": "equal"
+     },
+     {
+      "call": "price_lattice(100, 1.25, 0.8, 3)[3]",
+      "expect": [
+       195.3125,
+       125.0,
+       80.0,
+       51.2
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "price_lattice(100, 1.25, 0.8, 50)[50].size()",
+      "expect": 51,
+      "compare": "equal"
+     },
+     {
+      "call": "price_lattice(100, 1.25, 0.8, 50)[50][25]",
+      "expect": 100.0,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call price_lattice; prices are accepted within a relative 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the row `{s0}`, then build each row from the one before."
+    },
+    {
+     "rung": "point",
+     "text": "Each new row has one more node: the top node of the last row times `u`, then every node of the last row times `d`."
+    },
+    {
+     "rung": "step",
+     "text": "Push `{s0}`. For `i` from 1 to `steps`: `row.push_back(prev[0] * u)`, then `prev[j] * d` for each `j`, then `tree.push_back(row)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Rows that grow by one, built from the row before.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-2": "With 0 steps the tree is the one row `{s0}`.",
+     "test-4": "Row 3 should read 195.3125, 125, 80, 51.2. Node `j` went down `j` times and up `3 - j` times.",
+     "test-6": "The middle of row 50 has 25 ups and 25 downs: 1.25 × 0.8 = 1, so it is 100 again."
+    }
+   },
+   "explain": {
+    "text": "Each row needs only the row before: the top node goes up once more, and every node can go down. Rows of different lengths are why a vector of vectors fits. A pricer that only rolls back from the last row can keep one vector of `steps + 1` prices instead."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`std::vector<T>` is a growing array of one type: `push_back` appends, `size()` counts, `[]` reads unchecked and `at()` reads checked.",
+   "Elements sit in one block whose capacity doubles when full; `reserve(n)` makes the room once, so a known count never moves the block.",
+   "Iterators mark places: `[begin(), end())` covers every element, and `erase` leaves the old iterator invalid, so use the one it returns."
+  ],
+  "formula": {
+   "name": "Growth by doubling",
+   "tex": "\\text{capacity} = 1, 2, 4, 8, \\ldots \\qquad \\text{copies for } n \\text{ pushes} < 2n",
+   "note": "So `push_back` costs a constant amount on average."
+  },
+  "trap": "Erasing inside a loop and then `++it` skips the next element; write `it = v.erase(it)` and step only when you did not erase."
+ },
+ "quiz": [
+  {
+   "id": "q-sized-ctor",
+   "difficulty": 2,
+   "prose": "```cpp\nstd::vector<double> v(3);\nv.push_back(101.5);\n```",
+   "question": "What is `v.size()` now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "4",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Three zeros, then 101.5.",
+    "generic": "Not quite right. What does `v(3)` put in the vector?",
+    "byKey": {
+     "one": "You read `v(3)` as `reserve(3)`. It makes three elements, each 0.0, and `push_back` adds a fourth.",
+     "three": "`push_back` always appends after the existing elements, so the size goes from 3 to 4."
+    }
+   },
+   "explain": {
+    "text": "`std::vector<double> v(3)` holds three zeros already, so `push_back` makes it 4. To make room without elements, call `v.reserve(3)`."
+   }
+  },
+  {
+   "id": "q-at-end",
+   "difficulty": 2,
+   "prose": "```cpp\nstd::vector<double> px{100.0, 101.5, 99.8};\nstd::cout << px.at(3) << '\\n';\n```",
+   "question": "What happens in this app?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "throw",
+      "text": "`at` throws `std::out_of_range`, and the program ends",
+      "correct": true
+     },
+     {
+      "id": "last",
+      "text": "It prints 99.8",
+      "why": "You counted from 1. Index 3 is the fourth element, and there are only three."
+     },
+     {
+      "id": "garbage",
+      "text": "It prints whatever memory follows",
+      "why": "That is what `px[3]` might do in a normal build. `at` checks the index first."
+     },
+     {
+      "id": "zero",
+      "text": "It prints 0",
+      "why": "`at` never makes up a value: it checks and throws."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`at` checks, and nothing here catches the throw.",
+    "generic": "Not quite right. How many elements are there, and what does `at` do with a bad index?"
+   },
+   "explain": {
+    "text": "Three elements have indices 0 to 2, so `at(3)` throws `std::out_of_range`. This app cannot catch exceptions, so the program ends; a desk build could catch it with `try` and `catch`."
+   }
+  },
+  {
+   "id": "q-data",
+   "difficulty": 3,
+   "prose": "A C library prices a strip of cash flows with `double pv(const double* cf, std::size_t n)`. Your cash flows live in `std::vector<double> cf`.",
+   "question": "Which call is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "data",
+      "text": "`pv(cf.data(), cf.size())`",
+      "correct": true
+     },
+     {
+      "id": "addr",
+      "text": "`pv(&cf, cf.size())`",
+      "why": "`&cf` is the address of the vector object, not of its elements. It does not even have the type `const double*`."
+     },
+     {
+      "id": "vec",
+      "text": "`pv(cf, cf.size())`",
+      "why": "A vector does not convert to a pointer by itself; this does not compile."
+     },
+     {
+      "id": "cap",
+      "text": "`pv(cf.data(), cf.capacity())`",
+      "why": "Only `size()` elements hold cash flows. The slots past `size()` are spare room, not data."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`data()` points at the first element, and the rest follow in memory.",
+    "generic": "Not quite right. Which expression is a pointer to the first element?"
+   },
+   "explain": {
+    "text": "A vector's elements sit side by side, so `data()` and `size()` are all a C function needs. That is also why `&v[0]` works on a non-empty vector."
+   }
+  },
+  {
+   "id": "q-list",
+   "difficulty": 3,
+   "prose": "A tick buffer reserves a day's capacity at 08:00, and a strategy sums the day's prices every second.",
+   "question": "Why is a `std::vector` faster for this than a linked list such as `std::list`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cache",
+      "text": "Its prices sit side by side, so each 64-byte cache line the CPU fetches brings eight of them",
+      "correct": true
+     },
+     {
+      "id": "fewer",
+      "text": "A vector uses fewer additions to sum the same prices",
+      "why": "Both add the same prices once each. The difference is how fast the prices reach the CPU."
+     },
+     {
+      "id": "sorted",
+      "text": "A vector keeps its elements sorted",
+      "why": "Neither container sorts anything. A vector keeps the order you pushed."
+     },
+     {
+      "id": "insert",
+      "text": "Inserting in the middle of a vector is cheaper",
+      "why": "It is the reverse: a middle insert shifts later elements in a vector. The sum is fast for another reason."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Contiguous memory wins: the CPU reads ahead.",
+    "generic": "Not quite right. Think about where each element lives in memory."
+   },
+   "explain": {
+    "text": "A list scatters nodes across the heap, so each step can miss the cache. A vector's prices arrive eight to a cache line, and the CPU fetches the next lines before you ask. With `reserve`, the buffer also never moves during the day."
+   }
+  }
+ ]
+}

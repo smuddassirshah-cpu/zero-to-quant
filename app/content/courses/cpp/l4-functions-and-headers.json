@@ -1,0 +1,1159 @@
+{
+ "id": "l4-functions-and-headers",
+ "course": "cpp",
+ "title": "Functions and headers",
+ "minutes": 15,
+ "objectives": [
+  "Write functions and declare them in a header file."
+ ],
+ "skills": [
+  "cp-basics",
+  "cp-build"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Used before it is known",
+   "prose": "In Python a function can sit below the code that calls it. It only has to exist when the call runs. Here is the same layout in C++.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "active": "right",
+    "left": {
+     "kind": "console",
+     "params": {
+      "title": "Terminal",
+      "lines": [
+       "$ g++ -std=c++17 main.cpp -o main",
+       "main.cpp: In function 'int main()':",
+       "main.cpp:5:18: error: 'annualise' was not declared in this scope"
+      ]
+     },
+     "state": {
+      "tone": {
+       "l3": "err"
+      }
+     }
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "title": "main.cpp",
+      "lines": [
+       "#include <cmath>",
+       "#include <iostream>",
+       "",
+       "int main() {",
+       "    std::cout << annualise(0.01) << '\\n';",
+       "}",
+       "",
+       "double annualise(double daily_vol) {",
+       "    return daily_vol * std::sqrt(252.0);",
+       "}"
+      ],
+      "numbers": true
+     },
+     "state": {}
+    }
+   },
+   "question": "Why does the build fail?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "order",
+      "text": "The compiler reads from the top and has not met `annualise` by line 5",
+      "correct": true
+     },
+     {
+      "id": "spell",
+      "text": "`annualise` is misspelt on line 5",
+      "why": "Lines 5 and 8 spell it the same way. The name is right; it arrives too late."
+     },
+     {
+      "id": "mainlast",
+      "text": "`main` must be the last function in the file",
+      "why": "`main` can sit anywhere. What matters is that each name is known before it is used."
+     },
+     {
+      "id": "link",
+      "text": "The linker cannot find the body of `annualise`",
+      "why": "This is a compiler error, `main.cpp:5:18`. The linker never got to run."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The compiler reads the file once, from top to bottom."
+    },
+    {
+     "rung": "point",
+     "text": "At line 5, which lines has it read?",
+     "highlight": [
+      "right:l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It has seen lines 1 to 4, and `annualise` first appears on line 8."
+    }
+   ],
+   "feedback": {
+    "correct": "At line 5 the compiler has never heard of `annualise`.",
+    "generic": "Not quite right. Think about what the compiler has read by line 5.",
+    "byKey": {
+     "spell": "Lines 5 and 8 spell it the same way. The problem is order: line 5 comes first."
+    }
+   },
+   "explain": {
+    "text": "The compiler reads top to bottom, and every name must be known before it is used. At line 5, `annualise` is still three lines away. Python only looks the name up when the call runs, by which time it exists.",
+    "canvas": {
+     "right": {
+      "highlight": [
+       "l5",
+       "l8"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "This version builds and prints 0.158745, with the function still at the bottom. One line was added.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "#include <cmath>",
+      "#include <iostream>",
+      "",
+      "double annualise(double daily_vol);",
+      "",
+      "int main() {",
+      "    std::cout << annualise(0.01) << '\\n';",
+      "}",
+      "",
+      "double annualise(double daily_vol) {",
+      "    return daily_vol * std::sqrt(252.0);",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Tap the line that lets line 7 call `annualise`.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l4"
+    ],
+    "max": 1,
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare with the last screen. Which line is new?"
+    },
+    {
+     "rung": "point",
+     "text": "It sits above `main` and ends with `;`, not a body.",
+     "highlight": [
+      "l4"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Line 4 announces the function before `main` uses it.",
+    "generic": "Not quite right. Find the line that was not there before.",
+    "byKey": {
+     "l10": "That line starts the body, but the compiler reaches it only after line 7. Something above `main` must announce it.",
+     "l1": "`<cmath>` brings in `std::sqrt`, which the body uses. It says nothing about `annualise`."
+    }
+   },
+   "explain": {
+    "text": "Line 4 is a **declaration**: the name, the return type and the parameter types, ending in `;`. Lines 10 to 12 are the **definition**, with the body. A declaration is a promise that the definition exists somewhere.",
+    "canvas": {
+     "highlight": [
+      "l4"
+     ],
+     "shade": {
+      "def": [
+       "l10",
+       "l11",
+       "l12"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Declaration or definition",
+   "prose": "A **declaration** gives a function's name and types and ends with `;`. A **definition** adds the body in braces, and it declares the name too.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "double annualise(double daily_vol, int days);",
+      "int count_up_days(const std::vector<double>& prices);",
+      "double half(double x) { return x / 2; }",
+      "double rate = 0.04;"
+     ],
+     "title": "Four lines",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Tap every line that only declares a function, with no body.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l1",
+     "l2"
+    ],
+    "countWord": "tapped",
+    "wrong": [
+     {
+      "id": "def",
+      "set": [
+       "l1",
+       "l2",
+       "l3"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for braces."
+    },
+    {
+     "rung": "point",
+     "text": "Line 3 has a body in `{ }`.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Lines 1 and 2 end in `;` with no body; line 4 is a variable."
+    }
+   ],
+   "feedback": {
+    "correct": "Lines 1 and 2: types and a semicolon, no body.",
+    "generic": "Not quite right. A declaration only has no braces.",
+    "byKey": {
+     "def": "Line 3 has a body in braces, so it is a definition. It declares `half` too, but it is not only a declaration.",
+     "l4": "`double rate = 0.04;` is a variable with a value, not a function."
+    }
+   },
+   "explain": {
+    "text": "Lines 1 and 2 promise functions without bodies. Line 3 is a definition, and line 4 a variable. Parameter names in a declaration are optional, but they make it readable.",
+    "canvas": {
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Three files",
+   "prose": "Real projects split the work. `returns.h`, a **header**, holds declarations; `returns.cpp` holds the definitions. Each `.cpp` file is compiled on its own into its own object file, then the linker joins them.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "// returns.h",
+      "#pragma once",
+      "#include <vector>",
+      "std::vector<double> simple_returns(const std::vector<double>& prices);",
+      "double annualise(double daily_vol, int days = 252);",
+      "",
+      "// returns.cpp",
+      "#include \"returns.h\"",
+      "#include <cmath>",
+      "std::vector<double> simple_returns(const std::vector<double>& prices) { ... }",
+      "double annualise(double daily_vol, int days) { return daily_vol * std::sqrt(days); }",
+      "",
+      "// main.cpp",
+      "#include <iostream>",
+      "#include \"returns.h\"",
+      "int main() { std::cout << annualise(0.01) << '\\n'; }",
+      "",
+      "$ g++ -std=c++17 main.cpp returns.cpp -o backtest",
+      "$ ./backtest",
+      "0.158745"
+     ],
+     "title": "Three files and the build",
+     "numbers": true
+    },
+    "state": {
+     "tone": {
+      "l1": "muted",
+      "l7": "muted",
+      "l13": "muted"
+     }
+    }
+   },
+   "question": "`main.cpp` calls `annualise(0.01)`. Tap the line whose body runs.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l11"
+    ],
+    "max": 1,
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which file holds bodies?"
+    },
+    {
+     "rung": "point",
+     "text": "Look under `// returns.cpp`.",
+     "highlight": [
+      "l7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Line 11 is the only `annualise` with braces."
+    }
+   ],
+   "feedback": {
+    "correct": "The body lives in `returns.cpp`, line 11.",
+    "generic": "Not quite right. Find the `annualise` that has a body.",
+    "byKey": {
+     "l5": "Line 5 only declares `annualise`; it has no body. It tells `main.cpp` the call is legal, and the linker finds the body in `returns.o`.",
+     "l16": "That is the call itself. Its body is elsewhere.",
+     "l15": "`#include \"returns.h\"` pastes in the declarations, not the bodies."
+    }
+   },
+   "explain": {
+    "text": "`#include \"returns.h\"` pastes the header's text into `main.cpp`, so the compiler sees the declaration and accepts the call. The body on line 11 is compiled separately into `returns.o`. The linker connects the call to it.",
+    "canvas": {
+     "highlight": [
+      "l5",
+      "l11",
+      "l16"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A default argument",
+   "prose": "Line 5 says `int days = 252`: a **default argument**. A call that leaves `days` out gets 252, which is why `annualise(0.01)` printed 0.158745, which is $0.01\\sqrt{252}$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "// returns.h",
+      "#pragma once",
+      "#include <vector>",
+      "std::vector<double> simple_returns(const std::vector<double>& prices);",
+      "double annualise(double daily_vol, int days = 252);",
+      "",
+      "// returns.cpp",
+      "#include \"returns.h\"",
+      "#include <cmath>",
+      "std::vector<double> simple_returns(const std::vector<double>& prices) { ... }",
+      "double annualise(double daily_vol, int days) { return daily_vol * std::sqrt(days); }",
+      "",
+      "// main.cpp",
+      "#include <iostream>",
+      "#include \"returns.h\"",
+      "int main() { std::cout << annualise(0.01) << '\\n'; }",
+      "",
+      "$ g++ -std=c++17 main.cpp returns.cpp -o backtest",
+      "$ ./backtest",
+      "0.158745"
+     ],
+     "title": "Three files and the build",
+     "numbers": true
+    },
+    "state": {
+     "tone": {
+      "l1": "muted",
+      "l7": "muted",
+      "l13": "muted"
+     },
+     "highlight": [
+      "l5",
+      "l20"
+     ]
+    }
+   },
+   "question": "What does `annualise(0.01, 365)` return, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.191,
+    "tol": {
+     "abs": 6e-05
+    },
+    "placeholder": "a decimal",
+    "accept": "0.1910 (0.01 × √365 = 0.19105)",
+    "wrong": [
+     {
+      "id": "default",
+      "value": 0.1587,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sum",
+      "value": 3.66,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The second argument replaces the default."
+    },
+    {
+     "rung": "point",
+     "text": "Line 11 computes `daily_vol * std::sqrt(days)`.",
+     "highlight": [
+      "l11"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.01 \\times \\sqrt{365} = 0.01 \\times 19.105$."
+    }
+   ],
+   "feedback": {
+    "correct": "365 replaces 252: $0.01\\sqrt{365} \\approx 0.1910$.",
+    "generic": "Not quite right. Use `days = 365` in line 11.",
+    "byKey": {
+     "default": "That is the default, 252. Passing 365 replaces it."
+    }
+   },
+   "explain": {
+    "text": "A default fills in only when the call leaves that argument out. Here `days` is 365, so the result is $0.01 \\times \\sqrt{365} \\approx 0.1910$. Daily volatility of 1% over a 365-day calendar annualises to about 19.1%."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Defining a declared function",
+   "prose": "The header line is hidden above your code, as `#include \"returns.h\"` would paste it. Write the definition. `out.push_back(r)` appends to a vector, like Python's `append`. One close, or none, gives no returns.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "// returns.h",
+      "#pragma once",
+      "#include <vector>",
+      "std::vector<double> simple_returns(const std::vector<double>& prices);",
+      "double annualise(double daily_vol, int days = 252);"
+     ],
+     "title": "returns.h (included for you)",
+     "numbers": true
+    },
+    "state": {
+     "highlight": [
+      "l4"
+     ]
+    }
+   },
+   "question": "Define `simple_returns(prices)`: each day's return after the first, `(today - yesterday) / yesterday`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <vector>\n\n// returns.h, included for you\nstd::vector<double> simple_returns(const std::vector<double>& prices);\n",
+    "starter": "#include <vector>\n\nstd::vector<double> simple_returns(const std::vector<double>& prices) {\n    std::vector<double> out;\n    // one return per day after the first\n    return out;\n}\n",
+    "solution": "#include <vector>\n\nstd::vector<double> simple_returns(const std::vector<double>& prices) {\n    std::vector<double> out;\n    for (std::size_t i = 1; i < prices.size(); ++i) {\n        out.push_back((prices[i] - prices[i - 1]) / prices[i - 1]);\n    }\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "simple_returns",
+      "args": [
+       [
+        100,
+        110,
+        99
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [
+       0.1,
+       -0.1
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "simple_returns",
+      "args": [
+       [
+        100,
+        110,
+        99
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [
+       0.1,
+       -0.1
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "simple_returns",
+      "args": [
+       [
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [],
+      "compare": "isclose"
+     },
+     {
+      "call": "simple_returns",
+      "args": [
+       []
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [],
+      "compare": "isclose"
+     },
+     {
+      "call": "simple_returns",
+      "args": [
+       [
+        50,
+        50
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [
+       0
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "simple_returns",
+      "args": [
+       [
+        200,
+        210,
+        199.5,
+        209.475
+       ]
+      ],
+      "expect": [
+       0.05,
+       -0.05,
+       0.05
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 5 hidden tests that call simple_returns; each returned list must match element by element within a relative 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop from index 1, as in `count_up_days`."
+    },
+    {
+     "rung": "point",
+     "text": "The signature must match the declaration on line 4 exactly.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`out.push_back((prices[i] - prices[i - 1]) / prices[i - 1]);` for `i` from 1 while `i < prices.size()`."
+    }
+   ],
+   "feedback": {
+    "correct": "n closes give n − 1 returns.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-2": "One close has no day before it, so the list must be empty. If the program stopped, your loop read `prices[i - 1]` with `i` at 0.",
+     "test-1": "From 110 to 99 is (99 − 110) / 110 = −0.1. Divide by yesterday's close, not today's.",
+     "compile": "If the error mentions a declaration, make your first line match `returns.h` exactly, including `const` and `&`."
+    }
+   },
+   "explain": {
+    "text": "Starting at index 1 gives each return a yesterday, so one close or none gives an empty list. Your definition matches the hidden declaration, so the two name one function."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Where the default lives",
+   "prose": "The hidden header declares `double annualise(double daily_vol, int days = 252);`. A default argument is written once, in the declaration. Repeating `= 252` in the definition is an error: `redefinition of default argument`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "// returns.h",
+      "#pragma once",
+      "#include <vector>",
+      "std::vector<double> simple_returns(const std::vector<double>& prices);",
+      "double annualise(double daily_vol, int days = 252);"
+     ],
+     "title": "returns.h (included for you)",
+     "numbers": true
+    },
+    "state": {
+     "highlight": [
+      "l5"
+     ]
+    }
+   },
+   "question": "Define `annualise`: the daily volatility times the square root of `days`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <cmath>\n\n// returns.h, included for you\ndouble annualise(double daily_vol, int days = 252);\n",
+    "starter": "#include <cmath>\n\ndouble annualise(double daily_vol, int days) {\n    return 0;\n}\n",
+    "solution": "#include <cmath>\n\ndouble annualise(double daily_vol, int days) {\n    return daily_vol * std::sqrt(days);\n}\n",
+    "examples": [
+     {
+      "call": "annualise(0.01)",
+      "expect": 0.15874507866387544,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "annualise(0.01)",
+      "expect": 0.15874507866387544,
+      "compare": "isclose"
+     },
+     {
+      "call": "annualise(0.01, 365)",
+      "expect": 0.191049731745428,
+      "compare": "isclose"
+     },
+     {
+      "call": "annualise(0.02, 252)",
+      "expect": 0.3174901573277509,
+      "compare": "isclose"
+     },
+     {
+      "call": "annualise(0.01, 12)",
+      "expect": 0.034641016151377546,
+      "compare": "isclose"
+     },
+     {
+      "call": "annualise(0.015, 1)",
+      "expect": 0.015,
+      "compare": "isclose"
+     },
+     {
+      "call": "annualise(0.0)",
+      "expect": 0,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 6 hidden tests, some leaving days out; each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`std::sqrt` from `<cmath>` takes a square root."
+    },
+    {
+     "rung": "point",
+     "text": "The default is already in the header on line 5.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return daily_vol * std::sqrt(days);` and no `= 252` in your line."
+    }
+   ],
+   "feedback": {
+    "correct": "The header holds the default; the definition holds the body.",
+    "generic": "Not quite right. Read the first failing test or the compiler message.",
+    "byKey": {
+     "compile": "If the message says `redefinition of default argument`, delete `= 252` from your definition: the default lives in the header only.",
+     "test-1": "`annualise(0.01)` should be 0.01 × √252 ≈ 0.1587. Multiply by the square root of `days`."
+    }
+   },
+   "explain": {
+    "text": "Callers see only the header, so the default must be there for `annualise(0.01)` to compile in their files. The definition takes `days` as a plain parameter. Annualising a daily volatility by $\\sqrt{252}$ assumes 252 trading days a year."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A body in the header",
+   "prose": "To save a file, someone puts a body in `returns.h`. Both `main.cpp` and `pricer.cpp` include it.\n\n```cpp\n// returns.h\n#pragma once\ndouble simple_return(double before, double after) {\n    return (after - before) / before;\n}\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ g++ -std=c++17 main.cpp pricer.cpp -o backtest",
+      "/usr/bin/ld: /tmp/ccg6pEss.o: in function `simple_return(double, double)':",
+      "pricer.cpp:(.text+0x0): multiple definition of `simple_return(double, double)'; /tmp/ccIdCL2X.o:main.cpp:(.text+0x0): first defined here",
+      "collect2: error: ld returned 1 exit status"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l3": "err"
+     }
+    }
+   },
+   "question": "The header has `#pragma once`. Why does the build still fail?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "two",
+      "text": "Each `.cpp` file gets its own copy of the body, so the linker finds two",
+      "correct": true
+     },
+     {
+      "id": "ignored",
+      "text": "g++ ignores `#pragma once`",
+      "why": "g++ honours it. It stops one `.cpp` file including the header twice, which is not what happened."
+     },
+     {
+      "id": "compiler",
+      "text": "The compiler should have caught it, so it is a compiler bug",
+      "why": "Each file was compiled alone and looked fine. Only the linker sees both object files."
+     },
+     {
+      "id": "std",
+      "text": "`simple_return` clashes with a standard library name",
+      "why": "The message names `main.cpp` and `pricer.cpp` as the two definitions, both yours."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`#pragma once` works within one `.cpp` file."
+    },
+    {
+     "rung": "point",
+     "text": "Line 3 names two object files, one from each `.cpp`.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each `.cpp` pasted the header, body and all, so each object file defines `simple_return`."
+    }
+   ],
+   "feedback": {
+    "correct": "One body per program: in a `.cpp`, not a header.",
+    "generic": "Not quite right. Who sees both object files?",
+    "byKey": {
+     "ignored": "You expected `#pragma once` to cover the whole program. It covers one `.cpp` at a time, and each of the two pasted its own copy of the body."
+    }
+   },
+   "explain": {
+    "text": "`#include` pastes the header into each `.cpp`, so `main.o` and `pricer.o` both contain the body. `#pragma once` only stops a repeat within one file. Put the declaration in the header and the body in one `.cpp`, or mark it `inline`.",
+    "canvas": {
+     "highlight": [
+      "l3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "The pattern you used:\n\n```cpp\n// returns.h: declarations, defaults, #pragma once\ndouble annualise(double daily_vol, int days = 252);\n// returns.cpp: one body each\ndouble annualise(double daily_vol, int days) { ... }\n// main.cpp: include, then call\n#include \"returns.h\"\n```\n\nBuild with `g++ -std=c++17 main.cpp returns.cpp -o backtest`.",
+   "question": "A teammate adds `int days = 252` to the definition in `returns.cpp` only, and removes it from the header. What happens to `annualise(0.01)` in `main.cpp`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "err",
+      "text": "It no longer compiles: `main.cpp` sees no default",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "It still returns 0.158745",
+      "why": "`main.cpp` is compiled from the header alone. It never sees `returns.cpp`, so it never sees the default."
+     },
+     {
+      "id": "zero",
+      "text": "It compiles, and `days` is 0",
+      "why": "C++ never invents a value for a missing argument. Without a visible default, the call is an error."
+     },
+     {
+      "id": "link",
+      "text": "It compiles, but the linker fails",
+      "why": "The problem appears earlier: the compiler rejects a call with too few arguments."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When `main.cpp` is compiled, which files does the compiler read?"
+    }
+   ],
+   "feedback": {
+    "correct": "Callers see the header, so defaults go there.",
+    "generic": "Not quite right. Each `.cpp` is compiled on its own."
+   },
+   "explain": {
+    "text": "`main.cpp` is compiled with only the header's text, so it sees a function that needs two arguments. The call with one is a compile error. Defaults belong in the declaration that callers include."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A library you cannot read",
+   "prose": "A vendor sells a fast volatility library. You receive `fastvol.h` and `libfastvol.a`, a file of compiled object code, but no `.cpp`. Your pricer and your backtest both use it.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "directed": true,
+     "height": 280,
+     "nodes": [
+      {
+       "id": "h",
+       "label": "fastvol.h",
+       "x": 0.1,
+       "y": 0.08,
+       "shape": "rect"
+      },
+      {
+       "id": "src",
+       "label": "pricer.cpp",
+       "x": 0.1,
+       "y": 0.85,
+       "shape": "rect"
+      },
+      {
+       "id": "cc",
+       "label": "compiler",
+       "x": 0.37,
+       "y": 0.85,
+       "shape": "pill"
+      },
+      {
+       "id": "obj",
+       "label": "pricer.o",
+       "x": 0.6,
+       "y": 0.85,
+       "shape": "rect"
+      },
+      {
+       "id": "lib",
+       "label": "libfastvol.a",
+       "x": 0.6,
+       "y": 0.08,
+       "shape": "rect"
+      },
+      {
+       "id": "ld",
+       "label": "linker",
+       "x": 0.86,
+       "y": 0.45,
+       "shape": "pill"
+      }
+     ],
+     "edges": [
+      {
+       "from": "h",
+       "to": "src",
+       "label": "#include",
+       "dashed": true
+      },
+      {
+       "from": "src",
+       "to": "cc"
+      },
+      {
+       "from": "cc",
+       "to": "obj"
+      },
+      {
+       "from": "obj",
+       "to": "ld"
+      },
+      {
+       "from": "lib",
+       "to": "ld"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does each file do in your build?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The header lets your code compile; the `.a` is joined in by the linker",
+      "correct": true
+     },
+     {
+      "id": "compile",
+      "text": "You compile `libfastvol.a` with g++ first",
+      "why": "It is already compiled object code. There is nothing left to compile, only to link."
+     },
+     {
+      "id": "hdr",
+      "text": "The header is enough; the `.a` is optional",
+      "why": "The header holds only declarations. Without the `.a`, the linker reports an undefined reference."
+     },
+     {
+      "id": "inc",
+      "text": "You `#include` both files",
+      "why": "`#include` pastes text. The `.a` is machine code, so it goes to the linker instead."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which file holds declarations, and which holds compiled bodies?"
+    },
+    {
+     "rung": "point",
+     "text": "Follow each file's arrow.",
+     "highlight": [
+      "h",
+      "lib"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Headers feed the compiler; compiled bodies feed the linker."
+    }
+   ],
+   "feedback": {
+    "correct": "Declarations to the compiler, compiled code to the linker.",
+    "generic": "Not quite right. Follow each arrow on the diagram.",
+    "byKey": {
+     "hdr": "The header only promises the functions exist. Without the `.a`, the linker cannot find their bodies: `undefined reference`."
+    }
+   },
+   "explain": {
+    "text": "A library ships declarations in a header and bodies already compiled. A `.a` is joined in at link time; a `.so` loads when the program starts. The vendor keeps the source private and saves you the compile. One `returns.h` serves your pricer and your backtest the same way.",
+    "canvas": {
+     "highlight": [
+      "h",
+      "lib",
+      "ld"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A name must be declared before it is used: a declaration gives the types and ends in `;`, a definition adds the body.",
+   "A header holds declarations and defaults; each `.cpp` compiles alone, and the linker joins the object files.",
+   "Exactly one definition per program: a body in a header included by two `.cpp` files is a linker error."
+  ],
+  "formula": {
+   "name": "Separate compilation",
+   "tex": "\\texttt{main.cpp} \\to \\texttt{main.o},\\quad \\texttt{returns.cpp} \\to \\texttt{returns.o},\\quad \\text{link} \\to \\texttt{backtest}",
+   "note": "`g++ -std=c++17 main.cpp returns.cpp -o backtest` does all three."
+  },
+  "trap": "`#pragma once` stops one file including a header twice; it does not stop two `.cpp` files each getting a body."
+ },
+ "quiz": [
+  {
+   "id": "q-overload",
+   "difficulty": 3,
+   "prose": "Two functions share a name: an **overload**. The compiler picks one by the argument types.\n\n```cpp\ndouble mid(double bid, double ask) { return (bid + ask) / 2; }\nlong long mid(long long bid, long long ask) { return (bid + ask) / 2; }\n\nstd::cout << mid(10001LL, 10002LL) << ' ' << mid(100.01, 100.02);\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`10001 100.015`",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "`10001.5 100.015`",
+      "why": "`10001LL` and `10002LL` are `long long`, so the `long long` version runs, and its division drops the half."
+     },
+     {
+      "id": "err",
+      "text": "Nothing: two functions cannot share a name",
+      "why": "That is true in Python, where the second `def` replaces the first. C++ keeps both and chooses by type."
+     },
+     {
+      "id": "int",
+      "text": "`10001 100`",
+      "why": "The `double` version runs for `100.01` and `100.02`, so the result keeps its fraction: 100.015."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Ticks in `long long`, prices in `double`.",
+    "generic": "Not quite right. Match each call's argument types to a version."
+   },
+   "explain": {
+    "text": "`mid(10001LL, 10002LL)` matches the `long long` version: 20003 / 2 is 10001 in integer division. `mid(100.01, 100.02)` matches the `double` version and gives 100.015."
+   }
+  },
+  {
+   "id": "q-no-params",
+   "difficulty": 2,
+   "prose": "```cpp\ndouble risk_free_rate() { return 0.04; }\n```",
+   "question": "Which line prints 0.04?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`std::cout << risk_free_rate() << '\\n';`",
+      "correct": true
+     },
+     {
+      "id": "noparen",
+      "text": "`std::cout << risk_free_rate << '\\n';`",
+      "why": "Without `()` you name the function without calling it. It prints an address or a 1, not 0.04."
+     },
+     {
+      "id": "void",
+      "text": "`std::cout << risk_free_rate(void) << '\\n';`",
+      "why": "`void` can appear in a declaration's empty list, but not in a call."
+     },
+     {
+      "id": "arg",
+      "text": "`std::cout << risk_free_rate(0) << '\\n';`",
+      "why": "The function takes no arguments, so passing one is a compile error."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Empty brackets call a function with no parameters.",
+    "generic": "Not quite right. A call always has brackets."
+   },
+   "explain": {
+    "text": "A function with no parameters is still called with `()`. Without them you refer to the function itself rather than its result."
+   }
+  },
+  {
+   "id": "q-undefined-ref",
+   "difficulty": 3,
+   "prose": "```text\n$ g++ -std=c++17 main.cpp -o backtest\n/usr/bin/ld: main.cpp:(.text+0x1a): undefined reference to `annualise(double, int)'\ncollect2: error: ld returned 1 exit status\n```",
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`returns.cpp` is missing from the command, so no body was linked",
+      "correct": true
+     },
+     {
+      "id": "include",
+      "text": "`main.cpp` forgot `#include \"returns.h\"`",
+      "why": "Then the compiler would have stopped with `not declared`. This message comes from `ld`, the linker, after compiling worked."
+     },
+     {
+      "id": "typo",
+      "text": "`annualise` is misspelt in `main.cpp`",
+      "why": "A misspelt call would fail to compile. The linker is looking for the correctly spelt function and finds no body."
+     },
+     {
+      "id": "default",
+      "text": "The default argument is missing",
+      "why": "The message names `annualise(double, int)`, so the call compiled with both types known."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Declared, called, never defined in the build.",
+    "generic": "Not quite right. Which program printed the message?"
+   },
+   "explain": {
+    "text": "`ld` is the linker. `main.o` calls `annualise`, but no object file in this build defines it. Add `returns.cpp` to the command."
+   }
+  },
+  {
+   "id": "q-one-close",
+   "difficulty": 2,
+   "prose": "`simple_returns` from this lesson is called with one close: `simple_returns({101.5})`.",
+   "question": "How many returns does it give back?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "0",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No day before it, so no return.",
+    "generic": "Not quite right. A return needs two closes.",
+    "byKey": {
+     "one": "A return compares two closes. With one close there is no yesterday, so the list is empty."
+    }
+   },
+   "explain": {
+    "text": "n closes give n − 1 returns, so one close gives none. The loop from index 1 never runs."
+   }
+  }
+ ]
+}

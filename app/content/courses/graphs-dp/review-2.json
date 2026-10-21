@@ -1,0 +1,586 @@
+{
+  "id": "review-2",
+  "course": "graphs-dp",
+  "level": 2,
+  "items": [
+    {
+      "id": "r-walk-back",
+      "difficulty": 2,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "BFS from S left this `parent` dict:\n\n```python\nparent = {'S': None, 'A': 'S', 'B': 'S', 'C': 'A', 'D': 'B', 'T': 'C'}\n```",
+      "question": "Which route does `shortest_path` return from S to T?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['S', 'A', 'C', 'T']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`['T', 'C', 'A', 'S']`",
+            "why": "That is the walk back from T before it is reversed. The function returns it reversed."
+          },
+          {
+            "id": "c",
+            "text": "`['S', 'B', 'D', 'T']`",
+            "why": "T's parent is C, not D. Follow the parents from T."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "T, C, A, S reversed.",
+        "generic": "Not quite right. Follow parents from T, then reverse."
+      },
+      "explain": {
+        "text": "T's parent is C, C's is A, A's is S. That walk is `['T', 'C', 'A', 'S']`; reversed it is the route, three hops long."
+      }
+    },
+    {
+      "id": "r-dijkstra",
+      "difficulty": 3,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "Arrows carry costs. Run Dijkstra from S.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 230,
+          "nodes": [
+            {
+              "id": "S",
+              "label": "S",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.33,
+              "y": 0.12
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.4,
+              "y": 0.88
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.68,
+              "y": 0.5
+            },
+            {
+              "id": "T",
+              "label": "T",
+              "x": 0.94,
+              "y": 0.12
+            }
+          ],
+          "edges": [
+            {
+              "from": "S",
+              "to": "A",
+              "w": 2
+            },
+            {
+              "from": "S",
+              "to": "B",
+              "w": 6
+            },
+            {
+              "from": "A",
+              "to": "B",
+              "w": 3
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 7
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "B",
+              "to": "T",
+              "w": 8
+            },
+            {
+              "from": "C",
+              "to": "T",
+              "w": 2
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the cheapest cost from S to T?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "sb",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sat",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "S, A, B, C, T costs 2 + 3 + 1 + 2 = 8.",
+        "generic": "Not quite right. Settle nodes in order of cost and relax each one's arrows.",
+        "byKey": {
+          "sb": "S, B, T costs 6 + 8 = 14. B is cheaper through A, at 5.",
+          "sat": "S, A, C, T costs 2 + 7 + 2 = 11. Going on to B first saves 3."
+        }
+      },
+      "explain": {
+        "text": "Dijkstra settles S 0, A 2, B 5 (through A), C 6 (through B) and T 8. The cheapest route uses four arrows.",
+        "canvas": {
+          "labels": {
+            "S": "S·0",
+            "A": "A·2",
+            "B": "B·5",
+            "C": "C·6",
+            "T": "T·8"
+          },
+          "highlight": [
+            "e-S-A",
+            "e-A-B",
+            "e-B-C",
+            "e-C-T"
+          ]
+        }
+      }
+    },
+    {
+      "id": "r-compress",
+      "difficulty": 2,
+      "skills": [
+        "gd-graphs"
+      ],
+      "prose": "`parent = [0, 0, 1, 2, 3]`: a chain 4 → 3 → 2 → 1 → 0. We call `find(4)` with path compression.",
+      "question": "What is `parent` afterwards?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[0, 0, 0, 0, 0]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[0, 0, 1, 2, 0]`",
+            "why": "Compression re-points every node on the path, not only the one you started from."
+          },
+          {
+            "id": "c",
+            "text": "`[0, 0, 1, 2, 3]`",
+            "why": "Without compression nothing changes. With it, the path is flattened."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Every node on the path now points at the root.",
+        "generic": "Not quite right. Which nodes does `find(4)` pass through?"
+      },
+      "explain": {
+        "text": "`find(4)` passes 4, 3, 2 and 1 on the way to the root 0. Compression points each at 0, so later finds take one step."
+      }
+    },
+    {
+      "id": "r-loop",
+      "difficulty": 3,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "GBP to JPY is 191.20, JPY to EUR is 0.006135, and EUR to GBP is 0.8530.",
+      "question": "What does £1 become round the loop GBP, JPY, EUR, GBP? Give 6 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.000579,
+        "tol": {
+          "abs": 2e-06
+        },
+        "unit": "£",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 192.059135,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$191.20 \\times 0.006135 \\times 0.8530 = 1.000579$: a 5.8 bp loop before costs.",
+        "generic": "Not quite right. Multiply the three rates.",
+        "byKey": {
+          "sum": "You added the rates. Each conversion multiplies what you hold."
+        }
+      },
+      "explain": {
+        "text": "$191.20 \\times 0.006135 = 1.173012$ euros, and $\\times\\, 0.8530$ gives £1.000579. In weights, $-\\ln 1.000579 = -0.000579$: a negative cycle, before costs."
+      }
+    },
+    {
+      "id": "r-stale",
+      "difficulty": 4,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "Run the lazy heap version of Dijkstra (skip an entry when `d > dist[u]`) from S on the graph shown. Every improvement pushes a new entry.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 230,
+          "nodes": [
+            {
+              "id": "S",
+              "label": "S",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.33,
+              "y": 0.12
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.4,
+              "y": 0.88
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.68,
+              "y": 0.5
+            },
+            {
+              "id": "T",
+              "label": "T",
+              "x": 0.94,
+              "y": 0.12
+            }
+          ],
+          "edges": [
+            {
+              "from": "S",
+              "to": "A",
+              "w": 2
+            },
+            {
+              "from": "S",
+              "to": "B",
+              "w": 6
+            },
+            {
+              "from": "A",
+              "to": "B",
+              "w": 3
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 7
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "B",
+              "to": "T",
+              "w": 8
+            },
+            {
+              "from": "C",
+              "to": "T",
+              "w": 2
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many stale entries are popped and skipped?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "(6, B), (9, C) and (13, T) are stale.",
+        "generic": "Not quite right. Count the nodes whose cost improved after their first push.",
+        "byKey": {
+          "none": "B is first pushed at 6, then improved to 5. The old (6, B) still sits in the heap and pops later."
+        }
+      },
+      "explain": {
+        "text": "B is pushed at 6, then 5; C at 9, then 6; T at 13, then 8. Each improvement leaves one old entry behind, so three stale pops are skipped."
+      }
+    },
+    {
+      "id": "r-kruskal",
+      "difficulty": 3,
+      "skills": [
+        "gd-graphs"
+      ],
+      "prose": "Kruskal's algorithm builds a minimum spanning tree of this network: sort the edges, keep each one that joins two different groups.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 230,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.08,
+              "y": 0.3
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.4,
+              "y": 0.1
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.35,
+              "y": 0.85
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.7,
+              "y": 0.4
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.95,
+              "y": 0.85
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 4
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "D",
+              "w": 5
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 8
+            },
+            {
+              "from": "D",
+              "to": "E",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "E",
+              "w": 9
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the total weight of the tree?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "cycle",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all-small",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1 + 2 + 3 + 5 = 11.",
+        "generic": "Not quite right. Go through the edges cheapest first, skipping any that close a loop.",
+        "byKey": {
+          "cycle": "You kept A–B at 4, but A and B are already joined through C. That edge closes a loop.",
+          "all-small": "That counts one edge too many. A tree on 5 nodes has 4 edges."
+        }
+      },
+      "explain": {
+        "text": "Keep A–C 1, B–C 2, D–E 3. Skip A–B 4: A and B already share a root. Keep B–D 5, the fourth edge, for a total of 11.",
+        "canvas": {
+          "highlight": [
+            "e-A-C",
+            "e-B-C",
+            "e-D-E",
+            "e-B-D"
+          ]
+        }
+      }
+    },
+    {
+      "id": "r-passes",
+      "difficulty": 4,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "Bellman-Ford runs on a chain 0 → 1 → 2 → 3 → 4 → 5, each edge weight 1, listed in the worst order: 4→5 first, 0→1 last.",
+      "question": "After how many full passes is the cost of node 5 first correct?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "v",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five passes, $V - 1$ for six nodes.",
+        "generic": "Not quite right. In this order, each pass fixes one more node.",
+        "byKey": {
+          "one": "In the listed order, 4→5 is relaxed while node 4 is still ∞. One pass fixes only node 1.",
+          "v": "Six would be one pass too many: that extra pass is the detection pass."
+        }
+      },
+      "explain": {
+        "text": "Each pass extends the known costs by one edge, so node $k$ is fixed after pass $k$. Node 5 needs pass 5, which is $V - 1$."
+      }
+    },
+    {
+      "id": "r-choose",
+      "difficulty": 3,
+      "skills": [
+        "gd-paths",
+        "gd-graphs"
+      ],
+      "prose": "A clearing house adds trades one at a time. After each trade it must say whether two given members are now connected through any chain of trades.",
+      "question": "Which tool fits best?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Union-find: `union` each trade, compare `find` roots",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "BFS from one member after each trade",
+            "why": "That works, but each query costs $O(V + E)$. Union-find answers in nearly constant time."
+          },
+          {
+            "id": "c",
+            "text": "Dijkstra from one member",
+            "why": "There are no costs to minimise. The question is only whether a connection exists."
+          },
+          {
+            "id": "d",
+            "text": "Bellman-Ford",
+            "why": "There are no weights, let alone negative ones. Connectivity needs no path costs."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Trades only ever join groups, which is exactly what union-find does.",
+        "generic": "Not quite right. Ask what each query really needs."
+      },
+      "explain": {
+        "text": "Connections only grow, and each query asks about groups, not routes. Union-find handles both in $O(\\alpha(n))$ per operation."
+      }
+    }
+  ]
+}

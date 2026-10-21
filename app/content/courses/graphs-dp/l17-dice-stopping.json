@@ -1,0 +1,1296 @@
+{
+  "id": "l17-dice-stopping",
+  "course": "graphs-dp",
+  "title": "When to stop: a dice game",
+  "minutes": 15,
+  "objectives": [
+    "Value a stopping game by backward induction.",
+    "Find the stopping threshold and see it rise with the rolls left",
+    "Link the rule to dealer quotes and early exercise of an American put"
+  ],
+  "skills": [
+    "gd-dp"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Stop or roll again",
+      "prose": "You roll a fair die and win £1 per pip. After the roll you may stop and take it, or roll once more and take that second roll, whatever it is. Your first roll is a 3.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 6,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": [
+            "r1c3"
+          ],
+          "caption": "Your first roll: 3"
+        }
+      },
+      "question": "Stop or roll again?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "roll",
+            "text": "Roll again",
+            "correct": true
+          },
+          {
+            "id": "stop",
+            "text": "Stop and take £3",
+            "why": "A sure £3 feels safe, but a fresh roll is worth $\\frac{1 + 2 + \\dots + 6}{6} = 3.5$ on average."
+          },
+          {
+            "id": "same",
+            "text": "It makes no difference",
+            "why": "The two choices have different averages: £3 for sure against £3.50."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is a single fresh roll worth on average?"
+        },
+        {
+          "rung": "point",
+          "text": "The six faces are equally likely.",
+          "highlight": [
+            "r1c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A fresh roll averages $21 / 6 = 3.5$, more than 3."
+        }
+      ],
+      "feedback": {
+        "correct": "A new roll averages £3.50, more than £3.",
+        "generic": "Not quite right. Compare £3 with the average of a fresh roll.",
+        "byKey": {
+          "stop": "You kept the sure £3. Rolling again averages £3.50, so it is worth 50p more on average."
+        }
+      },
+      "explain": {
+        "text": "With one roll left there is no decision, so that roll is worth exactly 3.5. Stopping is right only when the face beats what continuing is worth. Here 3 < 3.5, so roll."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where to stop",
+      "prose": "Same game: two rolls at most. Continuing is worth 3.5, whatever the first roll was.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 6,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "First roll of a 2-roll game"
+        }
+      },
+      "question": "Tap every first-roll face you would stop on.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c4",
+          "r1c5",
+          "r1c6"
+        ],
+        "countWord": "stop faces",
+        "wrong": [
+          {
+            "id": "six-only",
+            "set": [
+              "r1c6"
+            ]
+          },
+          {
+            "id": "with-three",
+            "set": [
+              "r1c3",
+              "r1c4",
+              "r1c5",
+              "r1c6"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Stop when the face beats the value of continuing."
+        },
+        {
+          "rung": "point",
+          "text": "Continuing is worth 3.5.",
+          "highlight": [
+            "r1c4",
+            "r1c5",
+            "r1c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Faces above 3.5: 4, 5 and 6."
+        }
+      ],
+      "feedback": {
+        "correct": "Stop on 4, 5 or 6; roll on 1, 2 or 3.",
+        "generic": "Not quite right. Compare each face with 3.5.",
+        "byKey": {
+          "six-only": "You only stopped on 6. A 4 or a 5 also beats the 3.5 that rolling again is worth.",
+          "with-three": "3 is below 3.5, so rolling again is better on average.",
+          "r1c3": "3 is below 3.5, so rolling again is better on average."
+        }
+      },
+      "explain": {
+        "text": "The rule is a threshold: stop on 4 or more. Each face is compared with the same number, the value of continuing.",
+        "canvas": {
+          "shade": {
+            "stop": {
+              "ids": [
+                "r1c4",
+                "r1c5",
+                "r1c6"
+              ],
+              "colour": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What the game is worth",
+      "prose": "Now price the 2-roll game before the first roll, playing the rule you just found.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 6,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "stop": {
+              "ids": [
+                "r1c4",
+                "r1c5",
+                "r1c6"
+              ],
+              "colour": 3
+            }
+          },
+          "caption": "Stop on 4, 5, 6; otherwise roll for 3.5"
+        }
+      },
+      "question": "What is the 2-roll game worth on average, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.25,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Value",
+        "unit": "£",
+        "accept": "4.25",
+        "wrong": [
+          {
+            "id": "one-roll",
+            "value": 3.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "stop-only",
+            "value": 2.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split on the first roll: you stop on 4, 5 or 6; on 1, 2 or 3 you get a roll worth 3.5."
+        },
+        {
+          "rung": "point",
+          "text": "Each face has probability $\\frac{1}{6}$.",
+          "highlight": [
+            "r1c4",
+            "r1c5",
+            "r1c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\frac{4 + 5 + 6}{6} + \\frac{3}{6} \\times 3.5 = 2.5 + 1.75$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2.5 + 1.75 = 4.25$.",
+        "generic": "Not quite right. Add the stop faces, each times $\\frac{1}{6}$, and the roll-on faces times 3.5.",
+        "byKey": {
+          "one-roll": "3.5 is one roll. The option to roll again adds value.",
+          "stop-only": "2.5 counts only the stop faces. On 1, 2 or 3 you still get a roll worth 3.5, with probability $\\frac{3}{6}$.",
+          "five": "5 is the average of 4, 5 and 6, but you reach those faces only half the time."
+        }
+      },
+      "explain": {
+        "text": "$V_2 = \\frac{4 + 5 + 6}{6} + \\frac{3}{6} \\times 3.5 = 4.25$, by the law of total expectation. We priced the last roll first, then stepped back one roll. Working from the end like this is **backward induction**.",
+        "canvas": {
+          "caption": "$V_1 = 3.5$, $V_2 = 4.25$"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Three rolls",
+      "prose": "Now you may roll up to three times; each time you may stop. Your first roll is a 4.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 6,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": [
+            "r1c4"
+          ],
+          "caption": "First roll of a 3-roll game: 4"
+        }
+      },
+      "question": "Stop or roll again?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "roll",
+            "text": "Roll again: two rolls left are worth 4.25",
+            "correct": true
+          },
+          {
+            "id": "stop",
+            "text": "Stop: 4 beats the average roll of 3.5",
+            "why": "You compared 4 with one roll's value. Rolling on gives you the 2-roll game, worth 4.25."
+          },
+          {
+            "id": "stop-sure",
+            "text": "Stop: a 4 is above the middle of the die",
+            "why": "Being above the middle face is not the test. The test is whether 4 beats the value of continuing."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If you roll on, what game are you left playing?"
+        },
+        {
+          "rung": "point",
+          "text": "Rolling on leaves a 2-roll game.",
+          "highlight": [
+            "r1c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A 2-roll game is worth 4.25, more than 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Rolling on gives the 2-roll game, worth 4.25 > 4.",
+        "generic": "Not quite right. Compare 4 with the value of what is left, not with one roll.",
+        "byKey": {
+          "stop": "You compared with 3.5, the value of one roll. With two rolls left, continuing is worth 4.25, so a 4 is not enough."
+        }
+      },
+      "explain": {
+        "text": "The bar to beat is the value of the game that remains, and it grows with the rolls left. With three rolls you stop only on 5 or 6. Comparing every roll with 3.5 throws value away.",
+        "canvas": {
+          "shade": {
+            "stop": {
+              "ids": [
+                "r1c5",
+                "r1c6"
+              ],
+              "colour": 3
+            }
+          },
+          "caption": "3 rolls: stop on 5 or 6"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Value of three rolls",
+      "prose": "The tree shows the 3-roll game played well. Each leaf shows the average face you take there. Work from the right: the subtree after rolling on is the 2-roll game.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "3 rolls",
+          "orient": "lr",
+          "nodes": [
+            {
+              "id": "s1",
+              "label": "5 or 6: stop",
+              "p": "2/6"
+            },
+            {
+              "id": "c1",
+              "label": "1 to 4: roll",
+              "p": "4/6",
+              "children": [
+                {
+                  "id": "s2",
+                  "label": "4 to 6: stop",
+                  "p": "3/6"
+                },
+                {
+                  "id": "c2",
+                  "label": "1 to 3: roll",
+                  "p": "3/6",
+                  "children": [
+                    {
+                      "id": "s3",
+                      "label": "any face",
+                      "p": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "s1": "5.5",
+            "c1-s2": "5",
+            "c1-c2-s3": "3.5"
+          }
+        },
+        "state": {}
+      },
+      "question": "What is the 3-roll game worth, $V_3$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.6667,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Value",
+        "unit": "£",
+        "placeholder": "decimal",
+        "accept": "4.6667, or $\\frac{14}{3}$",
+        "wrong": [
+          {
+            "id": "v2",
+            "value": 4.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-opt",
+            "value": 4.1667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You stop on 5 or 6 with probability $\\frac{2}{6}$, worth 5.5 on average."
+        },
+        {
+          "rung": "point",
+          "text": "Otherwise, with probability $\\frac{4}{6}$, you play the 2-roll game.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\frac{5 + 6}{6} + \\frac{4}{6} \\times 4.25 = 1.8333 + 2.8333$."
+        }
+      ],
+      "feedback": {
+        "correct": "$V_3 = \\frac{11}{6} + \\frac{4}{6} \\times 4.25 = 4.6667$.",
+        "generic": "Not quite right. Weight the stop leaf by $\\frac{2}{6}$ and the 2-roll game by $\\frac{4}{6}$.",
+        "byKey": {
+          "v2": "4.25 is the 2-roll game, which you reach only after a 1 to 4.",
+          "no-opt": "You used 3.5 for the roll-on branch. Rolling on leaves two rolls, worth 4.25."
+        }
+      },
+      "explain": {
+        "text": "$V_3 = \\frac{2}{6} \\times 5.5 + \\frac{4}{6} \\times 4.25 = 4.6667$. Each node's value is an average of its children, computed from the leaves back to the root.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ],
+          "caption": "$V_3 = 4.6667$"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One more roll",
+      "prose": "Extend the table to four rolls. With $n$ rolls, roll on the first one when it falls short of $V_{n-1}$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "yLabel": "Value $V_n$ (£)",
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "1": 3.5,
+            "2": 4.25,
+            "3": 4.6667,
+            "4": 0
+          },
+          "caption": "Rolls left $n$"
+        },
+        "maxHeight": 200
+      },
+      "question": "Fill the gaps.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Rolls $n$",
+          "Stop on the first roll from",
+          "$V_n$"
+        ],
+        "rows": [
+          [
+            "1",
+            "1 (no choice)",
+            "3.5"
+          ],
+          [
+            "2",
+            "4",
+            "4.25"
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 4.6667,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 4.9444,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The threshold for $n$ rolls is the smallest face at or above $V_{n-1}$."
+        },
+        {
+          "rung": "point",
+          "text": "For $n = 4$, compare faces with $V_3 = 4.6667$.",
+          "highlight": [
+            "x3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$n = 4$: stop on 5 or 6. $V_4 = \\frac{5 + 6}{6} + \\frac{4}{6} \\times 4.6667 = 1.8333 + 3.1111 = 4.9444$."
+        }
+      ],
+      "feedback": {
+        "correct": "$n = 4$ stops on 5 or 6 again, and $V_4 = 4.9444$.",
+        "generic": "Not quite right. Compare faces with the previous value, then average.",
+        "byKey": {
+          "r3c1": "$V_3 = 4.6667$, so a 5 beats it and a 4 does not: stop from 5.",
+          "r3c2": "Stop on 5 or 6 (probability $\\frac{2}{6}$, average 5.5) or roll into $V_3$: $\\frac{11}{6} + \\frac{4}{6} \\times 4.6667$.",
+          "r2c2": "$V_3 = \\frac{5 + 6}{6} + \\frac{4}{6} \\times 4.25 = 4.6667$."
+        }
+      },
+      "explain": {
+        "text": "3.5, 4.25, 4.6667, 4.9444: each extra roll adds less. The threshold climbs from 4 to 5, and from six rolls on it is 6.",
+        "canvas": {
+          "values": {
+            "4": 4.9444
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Backward induction",
+      "prose": "Every row of the table used one rule. With $X$ a fresh roll,\n\n$$V_n = E\\big[\\max(X, V_{n-1})\\big], \\qquad V_1 = 3.5,$$\n\nand you stop when the face is at least $V_{n-1}$. This is **optimal stopping**: compare what you get now with what continuing is worth, computed from the end.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "yLabel": "Value $V_n$ (£)",
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "1": 3.5,
+            "2": 4.25,
+            "3": 4.6667,
+            "4": 4.9444
+          }
+        },
+        "maxHeight": 180
+      },
+      "question": "What happens to $V_n$ as $n$ grows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "six",
+            "text": "It rises towards 6 but never reaches it",
+            "correct": true
+          },
+          {
+            "id": "mean",
+            "text": "It settles back to 3.5",
+            "why": "More rolls only add options, so the value can only rise. 3.5 is the value with no choice."
+          },
+          {
+            "id": "inf",
+            "text": "It grows without limit",
+            "why": "You never win more than the largest face, £6."
+          },
+          {
+            "id": "reach",
+            "text": "It reaches 6 at $n = 6$",
+            "why": "Even with many rolls left, the next roll could be your last chance, so $V_n < 6$ for every $n$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$V_n \\to 6$: with endless rolls you wait for a 6.",
+        "generic": "Not quite right. What does more choice do to the value, and what caps it?"
+      },
+      "explain": {
+        "text": "$V_n$ rises because more rolls never hurt, and it is capped by 6. $V_{10} \\approx 5.65$ and $V_{50} \\approx 5.9998$. The secretary problem is the same idea: pass on early candidates, then take the first that beats the rest."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "Write `dice_value(n)`, the value of the $n$-roll game, and `dice_threshold(n)`, the smallest face you stop on with the first roll of an $n$-roll game. With $n = 1$ you must take any face, so the threshold is 1. Stop on a tie.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "yLabel": "Value $V_n$ (£)",
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "1": 3.5,
+            "2": 4.25,
+            "3": 4.6667,
+            "4": 4.9444
+          }
+        },
+        "maxHeight": 180
+      },
+      "question": "Write both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def dice_value(n):\n    ...\n\n\ndef dice_threshold(n):\n    ...\n",
+        "solution": "def dice_value(n):\n    value = 3.5\n    for _ in range(n - 1):\n        value = sum(max(face, value) for face in range(1, 7)) / 6\n    return value\n\n\ndef dice_threshold(n):\n    if n == 1:\n        return 1\n    later = dice_value(n - 1)\n    for face in range(1, 7):\n        if face >= later:\n            return face\n    return 6\n",
+        "examples": [
+          {
+            "call": "round(dice_value(2), 6)",
+            "expect": "4.25",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_threshold(3)",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(dice_value(1), 6)",
+            "expect": "3.5",
+            "compare": "equal"
+          },
+          {
+            "call": "round(dice_value(2), 6)",
+            "expect": "4.25",
+            "compare": "equal"
+          },
+          {
+            "call": "round(dice_value(3), 6)",
+            "expect": "4.666667",
+            "compare": "equal"
+          },
+          {
+            "call": "round(dice_value(4), 6)",
+            "expect": "4.944444",
+            "compare": "equal"
+          },
+          {
+            "call": "round(dice_value(10), 6)",
+            "expect": "5.650218",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_threshold(1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_threshold(2)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_threshold(3)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_threshold(5)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_threshold(6)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_threshold(30)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "round(dice_value(200), 6)",
+            "expect": "6.0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests. Values are rounded to 6 places and compared exactly, so 4.666667 stands for 14/3."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from $V_1 = 3.5$ and apply the rule $n - 1$ times."
+        },
+        {
+          "rung": "point",
+          "text": "One step: `sum(max(face, value) for face in range(1, 7)) / 6`.",
+          "highlight": [
+            "x4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For the threshold, compute `dice_value(n - 1)` and return the first face that is at least that."
+        }
+      ],
+      "feedback": {
+        "correct": "A loop of $n - 1$ steps from the last roll back to the first.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is $V_3 = 4.666667$. If you got 4.25, run the loop $n - 1$ times, not $n - 2$.",
+          "test-6": "Test 6 is one roll: there is no choice, so you stop on any face, and the threshold is 1.",
+          "test-9": "Test 9: with 5 rolls, compare with $V_4 = 4.9444$, not 3.5. Stop from 5."
+        }
+      },
+      "explain": {
+        "text": "The loop runs from the end of the game to the start, which is the order backward induction needs. Each step costs 6 operations, so `dice_value(n)` is $O(n)$. By $n = 200$ the value rounds to 6.0."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why forwards fails",
+      "prose": "A colleague tries to value the 3-roll game from the first roll forwards, deciding each roll against 3.5. Put the correct backward computation in order.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "3 rolls",
+          "orient": "lr",
+          "nodes": [
+            {
+              "id": "s1",
+              "label": "5 or 6: stop",
+              "p": "2/6"
+            },
+            {
+              "id": "c1",
+              "label": "1 to 4: roll",
+              "p": "4/6",
+              "children": [
+                {
+                  "id": "s2",
+                  "label": "4 to 6: stop",
+                  "p": "3/6"
+                },
+                {
+                  "id": "c2",
+                  "label": "1 to 3: roll",
+                  "p": "3/6",
+                  "children": [
+                    {
+                      "id": "s3",
+                      "label": "any face",
+                      "p": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "s1": "5.5",
+            "c1-s2": "5",
+            "c1-c2-s3": "3.5"
+          }
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "Order the steps.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "The last roll has no choice: $V_1 = 3.5$"
+          },
+          {
+            "id": "b",
+            "text": "With two rolls, stop on 4, 5 or 6, since each beats 3.5"
+          },
+          {
+            "id": "c",
+            "text": "$V_2 = \\frac{4 + 5 + 6}{6} + \\frac{3}{6} \\times 3.5 = 4.25$"
+          },
+          {
+            "id": "d",
+            "text": "With three rolls, stop on 5 or 6, since only these beat 4.25"
+          },
+          {
+            "id": "e",
+            "text": "$V_3 = \\frac{5 + 6}{6} + \\frac{4}{6} \\times 4.25 = 4.6667$"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which roll's value can you write down with no decision at all?"
+        },
+        {
+          "rung": "point",
+          "text": "Every threshold needs the value of the game after it.",
+          "highlight": [
+            "c1-c2-s3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Value of one roll, threshold for two, value of two, threshold for three, value of three."
+        }
+      ],
+      "feedback": {
+        "correct": "Each threshold uses the value computed just before it.",
+        "generic": "Not quite right. Start at the last roll and step back."
+      },
+      "explain": {
+        "text": "Going forwards, the first decision would need $V_2$ before it is known. Using 3.5 there instead gives the wrong threshold of 4, and a value of $\\frac{4+5+6}{6} + \\frac{3}{6} \\times 4.25 = 4.625$ instead of 4.6667.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Shopping a bond sale",
+      "prose": "You sell a bond by calling up to three dealers in turn. Each bids one of four prices, equally likely, independent of the others. Refuse a bid and it is gone; the third dealer's bid must be taken.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Dealer's bid",
+            "Chance"
+          ],
+          "rows": [
+            [
+              "99.0",
+              "1/4"
+            ],
+            [
+              "99.2",
+              "1/4"
+            ],
+            [
+              "99.5",
+              "1/4"
+            ],
+            [
+              "99.9",
+              "1/4"
+            ]
+          ],
+          "align": [
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Each dealer's bid per £100 nominal; a refused bid is gone"
+        }
+      },
+      "question": "What is the expected sale price with the best policy?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 99.6375,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Expected price",
+        "placeholder": "decimal",
+        "accept": "99.6375",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 99.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "two",
+            "value": 99.55,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "first-best",
+            "value": 99.65,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the last dealer: no choice, so the value is the average bid."
+        },
+        {
+          "rung": "point",
+          "text": "Last dealer: 99.4. Second dealer: accept 99.5 or 99.9, else take 99.4.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Second: $\\frac{99.5 + 99.9}{4} + \\frac{2}{4} \\times 99.4 = 99.55$. First: accept only 99.9: $\\frac{99.9}{4} + \\frac{3}{4} \\times 99.55$."
+        }
+      ],
+      "feedback": {
+        "correct": "Accept only 99.9 from the first dealer; the policy is worth 99.6375.",
+        "generic": "Not quite right. Work back from the third dealer, as with the dice.",
+        "byKey": {
+          "mean": "99.4 is one dealer. The option to call others is worth more.",
+          "two": "99.55 is the value with two dealers left. With three, take only 99.9 from the first.",
+          "first-best": "You accepted 99.5 and 99.9 from the first dealer. 99.5 falls short of 99.55, the value of calling on."
+        }
+      },
+      "explain": {
+        "text": "Take a quote when it beats the expected value of continuing: 99.9 from the first dealer, 99.5 or better from the second. Selling a house to a stream of offers follows the same logic.",
+        "canvas": {
+          "highlight": [
+            "r3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Exercising early",
+      "prose": "At one node of a binomial tree, an American put can be exercised now for £8.00. Its discounted, risk-neutral average over the next two nodes, the continuation value, is £7.40.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Value at this node"
+          ],
+          "rows": [
+            [
+              "Exercise now",
+              "£8.00"
+            ],
+            [
+              "Continue (hold)",
+              "£7.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What should the holder do, and what is the put worth at this node?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ex",
+            "text": "Exercise: the node is worth £8.00",
+            "correct": true
+          },
+          {
+            "id": "hold",
+            "text": "Hold: options should never be exercised early",
+            "why": "That is true for a call on a stock without dividends, not for a put. Here exercise beats continuation."
+          },
+          {
+            "id": "avg",
+            "text": "Hold: the node is worth £7.70, the average",
+            "why": "The holder picks one, so the node takes the larger value, not the average."
+          },
+          {
+            "id": "hold74",
+            "text": "Hold: the node is worth £7.40",
+            "why": "Holding gives up £0.60. Exercising now pays more."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "This is the dice decision with different numbers."
+        },
+        {
+          "rung": "point",
+          "text": "Exercise is the face you have now; the continuation value is the game that remains.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take the larger: £8.00 beats £7.40, so exercise."
+        }
+      ],
+      "feedback": {
+        "correct": "The node is worth $\\max(8.00, 7.40) = 8.00$.",
+        "generic": "Not quite right. Compare what you get now with what continuing is worth.",
+        "byKey": {
+          "hold": "You applied the rule for calls. An American put deep in the money is often worth exercising early.",
+          "avg": "You averaged the two. The holder chooses, so the node takes the maximum."
+        }
+      },
+      "explain": {
+        "text": "Each node of an American tree takes $\\max(\\text{exercise}, \\text{continuation})$, worked from expiry backwards: our $V_n = E[\\max(X, V_{n-1})]$. You met this in the trees course; now it is a DP over the tree.",
+        "canvas": {
+          "highlight": [
+            "r0"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Work from the end: the last roll has no choice and is worth 3.5. Each earlier roll is worth $E[\\max(X, V_{n-1})]$.",
+      "Stop when what you have beats the value of continuing. The threshold rises with the rolls left: 4 with two rolls, 5 with three to five, 6 from six on.",
+      "The same comparison prices an American option on a tree and decides when to take a quote, an offer or a candidate."
+    ],
+    "formula": {
+      "name": "Value of the dice game",
+      "tex": "V_n = E\\big[\\max(X, V_{n-1})\\big], \\quad V_1 = 3.5",
+      "note": "3.5, 4.25, 4.6667, 4.9444, ... rising towards 6."
+    },
+    "trap": "Comparing every roll with 3.5, or working forwards, ignores that continuing is worth more when more rolls remain."
+  },
+  "quiz": [
+    {
+      "id": "q-n1",
+      "difficulty": 2,
+      "prose": "A 1-roll game: you must take whatever you roll.",
+      "question": "What is it worth, and is there any decision?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "v",
+            "text": "Worth 3.5, with no decision to make",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "Worth 6, if you stop at the right time",
+            "why": "With one roll there is no later roll to wait for: you take the face."
+          },
+          {
+            "id": "thr",
+            "text": "Worth 3.5, and you stop only on 4 or more",
+            "why": "Stopping on 4 or more needs a second roll to fall back on. Here there is none."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No choice, so the value is the plain average: 3.5.",
+        "generic": "Not quite right. What can you do after the only roll?"
+      },
+      "explain": {
+        "text": "$V_1 = 3.5$ is the base case: the last stage of every stopping problem has no decision. `dice_threshold(1)` is 1 for the same reason."
+      }
+    },
+    {
+      "id": "q-v5",
+      "difficulty": 3,
+      "prose": "$V_4 = 4.9444$.",
+      "question": "With five rolls, which first-roll faces should you stop on?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fivesix",
+            "text": "5 and 6",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "6 only",
+            "why": "6 is the threshold from six rolls on. With five, compare with $V_4 = 4.9444$: a 5 beats it."
+          },
+          {
+            "id": "four",
+            "text": "4, 5 and 6",
+            "why": "You compared with 3.5. A 4 falls short of 4.9444, the value of rolling on."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "5 beats 4.9444, 4 does not.",
+        "generic": "Not quite right. Compare each face with $V_4$."
+      },
+      "explain": {
+        "text": "The threshold is the smallest face at least $V_{n-1}$: 5 here. Once $V_{n-1}$ passes 5, at $n = 6$, only a 6 stops you."
+      }
+    },
+    {
+      "id": "q-house",
+      "difficulty": 3,
+      "prose": "You are selling a house. An offer arrives at £410,000. You estimate that waiting for the next offer, playing well from then on, is worth £402,000 on average.",
+      "question": "What does the stopping rule say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "accept",
+            "text": "Accept: £410,000 beats the value of continuing",
+            "correct": true
+          },
+          {
+            "id": "wait",
+            "text": "Wait: the next offer could be higher",
+            "why": "It could, but on average continuing is worth £402,000. Compare with that average, not with the best case."
+          },
+          {
+            "id": "mean",
+            "text": "Compare £410,000 with the average offer instead",
+            "why": "The average offer ignores that you could also refuse later offers. The value of continuing already includes that."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Accept when the offer beats the value of continuing.",
+        "generic": "Not quite right. Compare the offer in hand with what continuing is worth."
+      },
+      "explain": {
+        "text": "£410,000 > £402,000, so accept. The rule is the dice rule: compare the sure amount with the continuation value."
+      }
+    },
+    {
+      "id": "q-secretary",
+      "difficulty": 3,
+      "prose": "In the secretary problem you see $n$ candidates in random order, accept or reject each on the spot, and win only by picking the best. The optimal rule rejects about the first $n/e$, then takes the first candidate better than all before.",
+      "question": "As $n$ grows, what does the chance of picking the best tend to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "e",
+            "text": "$1/e \\approx 0.368$",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "It feels as if a huge field must defeat any rule, but the threshold rule keeps a chance near 37% for every $n$."
+          },
+          {
+            "id": "half",
+            "text": "$1/2$",
+            "why": "That would need the best candidate to land in the second half and be picked every time. The rule sometimes stops too early."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The success chance tends to $1/e$.",
+        "generic": "Not quite right. The chance stays bounded away from 0."
+      },
+      "explain": {
+        "text": "For $n = 100$ the best rule wins with probability about 0.371, and the limit is $1/e \\approx 0.368$. Like the dice game, it weighs taking what you see against the value of waiting."
+      }
+    }
+  ]
+}

@@ -70,6 +70,13 @@ Lattice paths (counting routes on a 4 by 5 street grid):
     "paths": [{ "id": "route", "cells": ["r4c1", "r4c2", "r3c2", "r3c3", "r2c3", "r2c4", "r1c4", "r1c5"] }] } }
 ```
 
+**Integration pass 6 additions**
+- `population: 1000` draws that many small dots in rows of `cols` (default 40); `state.groups: [{ id, count, colour, label }]` shades consecutive runs in order, and each group is one tap target by its id. `values()` gives each group's count.
+- `margins: true` adds a column of row sums and a row of column sums (and the total) outside the cells, from the cells' numbers (state.cells included), or `margins: { rows, cols, total }` gives them; `state.margins: false` hides them until a patch shows them. Ids `rsum1`, `csum1`, `total`; named sets such as `row1` skip them.
+- A dimmed blank cell greys its background (dashed), so `dim` shows without text.
+- Tap-regions `answer`, `among` and `wrong` sets may use set names (`cross2`, `row5`, `all`).
+- Typing into a canvas: a `table` widget cell with `bind: "cells.r2c3"` writes what the learner types into that grid cell (margins update), so "fill the product of the margins" happens on the grid.
+
 ## tree
 
 Probability and decision trees, left to right or top to bottom; spacing is automatic.
@@ -92,6 +99,8 @@ Label spacing: on a tree with 7 or more leaves shown, probability labels from th
     "leaves": { "r-r": "6/20", "r-b": "6/20", "b-r": "6/20", "b-b": "2/20" } },
   "state": { "highlight": ["r-b"], "unknown": ["b-b"] } }
 ```
+
+**Integration pass 6 additions:** `state.p: { "a-b": "1/3" }` replaces a branch's probability ("" shows "?") and `state.leaves: { "a-b": "£12" }` a leaf's value (give `leaves: { "a-b": "" }` to keep room for values a patch fills). A `table` widget cell with `bind: "p.a-b"` draws what the learner types on that branch and focuses when the branch is tapped. First-level labels on a fan of three or more move along their branches, away from the root.
 
 ## venn
 
@@ -123,6 +132,8 @@ One to three sets in a universe; each region is its exact shape.
   "state": { "points": [{ "id": "p1", "x": -2, "label": "a" }], "intervals": [{ "id": "i1", "from": -1, "to": 2, "open": [true, false] }], "arrows": [{ "id": "j1", "from": -2, "to": 1, "label": "+3" }] } }
 ```
 
+**Integration pass 6 additions:** `scale: "log"` (positive values, ticks at 1, 2, 5 times powers of ten) and `scale: "log-odds"` (probabilities placed by ln(p/(1 − p)), ticks at 1%, 5%, 10%, 25%, 50%, …; `format: "percent"`); values, snapping and labels stay in the natural unit.
+
 ## boxes
 
 Containers and items for counting and drawing without replacement.
@@ -139,6 +150,8 @@ Containers and items for counting and drawing without replacement.
     { "id": "hand", "label": "Drawn", "kind": "hand", "capacity": 2 } ] },
   "state": { "draw": ["b3"] } }
 ```
+
+**Integration pass 6 additions:** `size: "large"` (or `"medium"`, or a number) scales every item, so three large cards fill the canvas; item kind `door` (a tall card with a knob; face down shows its back).
 
 ## area
 
@@ -181,6 +194,8 @@ Two-pan scale. The beam tilts by clamp(k × (right − left), ±15°) on the spr
 ```json
 { "kind": "balance", "params": { "left": [{ "id": "x1", "kind": "unknown" }, { "id": "x2", "kind": "unknown" }, { "id": "w3", "kind": "weight", "value": 3 }], "right": [{ "id": "w11", "kind": "weight", "value": 11 }] }, "state": {} }
 ```
+
+**Integration pass 6 additions:** the widget move `remove-unknown-part` (a number field: "Take away [1/2] E from both") takes k of an unknown from both pans; `removeUnknownBoth(label, k)` on the canvas. The engine's solver uses it, so E = 1 + E/2 is solved by taking E/2 from both, then dividing by 1/2.
 
 ## circle
 
@@ -250,6 +265,7 @@ Two canvases side by side (stacked below 480px, or always with `stack: true`), f
 - **tap: "sides"** makes each whole side one tappable object, ids `left` and `right`, so "tap the misleading chart" is a tap-regions widget (`answer: ["right"]`); `leftLabel` and `rightLabel` name them for screen readers.
 - **shareMargins: true** lines up the plot areas of two series (stacked or side by side) by giving both the larger left and right margins.
 - The Why? copy of a pair keeps `stack`, `active` and `shareMargins`. The Why? copy is a pair too, with derive run on the explained state.
+- **params by name:** derive reads both sides' params; when both sides use the same name, the right side's value wins in plain names, so give each side its own names or read `left.n` and `right.n`.
 - An `explain.canvas` patch under the active side's key (`{ "right": {...} }`) wins over the flattened active state, so it shows in the Why? copy.
 - A matrix side is drawn at its own width (`fit: true`), and a pair with a matrix side stacks whenever side by side would draw a side below 80% of its size; `minScale: 0.7` sets that threshold on any pair.
 

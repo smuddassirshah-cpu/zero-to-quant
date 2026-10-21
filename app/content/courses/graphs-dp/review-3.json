@@ -1,0 +1,430 @@
+{
+  "id": "review-3",
+  "course": "graphs-dp",
+  "level": 3,
+  "items": [
+    {
+      "id": "r-four-subsets",
+      "difficulty": 2,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "prose": "`subsets` from the lesson takes or skips each item.",
+      "question": "How many lists does `subsets(['A', 'B', 'C', 'D'])` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "label": "Number of lists",
+        "accept": "16: $2^4$, the empty list included.",
+        "wrong": [
+          {
+            "id": "no-empty",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "orders",
+            "value": 24,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "square",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2^4 = 16$ lists.",
+        "generic": "Not quite right. Each item doubles the count.",
+        "byKey": {
+          "no-empty": "You left out the empty list. Skipping all four items is one leaf too.",
+          "orders": "That is $4!$, the number of orderings. A subset ignores order."
+        }
+      },
+      "explain": {
+        "text": "Four take-or-skip choices give $2 \\times 2 \\times 2 \\times 2 = 16$ leaves, from `['A', 'B', 'C', 'D']` down to `[]`."
+      }
+    },
+    {
+      "id": "r-loop-order",
+      "difficulty": 3,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "prose": "This common version records `path` at every node, not only at leaves.\n\n```python\ndef walk(start):\n    out.append(path[:])\n    for i in range(start, len(xs)):\n        path.append(xs[i])\n        walk(i + 1)\n        path.pop()\n```",
+      "question": "With `xs = [1, 2, 3]`, which lists are recorded first, second, third and fourth?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`[]`, `[1]`, `[1, 2]`, `[1, 2, 3]`",
+            "correct": true
+          },
+          {
+            "id": "leaf",
+            "text": "`[1, 2, 3]`, `[1, 2]`, `[1, 3]`, `[1]`",
+            "why": "That is the take-or-skip order from the lesson. This walk records on the way down, so the empty list comes first."
+          },
+          {
+            "id": "size",
+            "text": "`[]`, `[1]`, `[2]`, `[3]`",
+            "why": "You listed by size. The walk goes deep first: after `[1]` it extends to `[1, 2]`."
+          },
+          {
+            "id": "noempty",
+            "text": "`[1]`, `[1, 2]`, `[1, 2, 3]`, `[1, 3]`",
+            "why": "The first call records `path` before the loop, while it is still empty."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Empty first, then as deep as possible.",
+        "generic": "Not quite right. The first line of `walk` runs before any item is added."
+      },
+      "explain": {
+        "text": "`walk(0)` records `[]`, then takes 1 and records `[1]`, takes 2 and records `[1, 2]`, takes 3 and records `[1, 2, 3]`. It still produces all 8 subsets, in a different order."
+      }
+    },
+    {
+      "id": "r-queen-row2",
+      "difficulty": 2,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "prose": "A queen sits on r1c1 of a 4 by 4 board.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowLabel": "Row",
+          "colLabel": "Column"
+        },
+        "state": {
+          "cells": {
+            "r1c1": "Q"
+          },
+          "shade": {
+            "queens": {
+              "ids": [
+                "r1c1"
+              ],
+              "colour": 5
+            }
+          }
+        }
+      },
+      "question": "How many cells in row 2 are safe from it?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "cells",
+        "label": "Safe cells in row 2",
+        "accept": "2: r2c3 and r2c4.",
+        "wrong": [
+          {
+            "id": "col-only",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two: r2c3 and r2c4.",
+        "generic": "Not quite right. Rule out the column and the diagonal.",
+        "byKey": {
+          "col-only": "You ruled out column 1 but not r2c2, which is on the queen's diagonal."
+        }
+      },
+      "explain": {
+        "text": "Column 1 and the diagonal cell r2c2 are attacked, so r2c3 and r2c4 are safe. Under r1c2 only one cell would be safe."
+      }
+    },
+    {
+      "id": "r-negative-prune",
+      "difficulty": 3,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "prose": "Exposures in £m are `[4, -2, 1]` and the target is 3. The search prunes as soon as its running total passes the target.\n\n```python\ndef walk(i, total):\n    if total == target: return True\n    if total > target: return False\n    if i == len(xs): return False\n    return walk(i + 1, total + xs[i]) or walk(i + 1, total)\n```",
+      "question": "What does `walk(0, 0)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "f",
+            "text": "`False`",
+            "correct": true
+          },
+          {
+            "id": "t",
+            "text": "`True`: $4 - 2 + 1 = 3$",
+            "why": "That basket exists, but taking 4 makes the total 4, which passes 3, so the branch is cut before −2 is added."
+          },
+          {
+            "id": "err",
+            "text": "A `RecursionError`",
+            "why": "The walk is three levels deep. The problem is the cut, not the depth."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`False`: the prune threw the answer away.",
+        "generic": "Not quite right. Follow the *take 4* branch."
+      },
+      "explain": {
+        "text": "The total 4 passes 3 and is cut, yet −2 would bring it back to 2, and +1 to 3. Without the 4, no basket reaches 3. With negative numbers that prune is unsafe."
+      }
+    },
+    {
+      "id": "r-fib8",
+      "difficulty": 3,
+      "skills": [
+        "gd-dp"
+      ],
+      "prose": "Naive `fib` makes 25 calls for `fib(6)` and 41 for `fib(7)`, counting the first call.",
+      "question": "How many calls does naive `fib(8)` make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 67,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "label": "Calls",
+        "accept": "67: $1 + 41 + 25$.",
+        "wrong": [
+          {
+            "id": "no-one",
+            "value": 66,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "memo",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 + 41 + 25 = 67$.",
+        "generic": "Not quite right. One call plus the calls of the two smaller problems.",
+        "byKey": {
+          "no-one": "You left out the call to `fib(8)` itself.",
+          "memo": "9 is the number of values a memoised `fib(8)` computes. The naive version repeats them."
+        }
+      },
+      "explain": {
+        "text": "$C(8) = 1 + C(7) + C(6) = 1 + 41 + 25 = 67$. A memoised version computes 9 values, $n = 0$ to $8$."
+      }
+    },
+    {
+      "id": "r-unsafe-cache",
+      "difficulty": 3,
+      "skills": [
+        "gd-dp"
+      ],
+      "prose": "Each function below is wrapped in `@lru_cache`. `TODAY` is a global that the overnight job updates.",
+      "question": "Which one can return a wrong answer from its cache?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "today",
+            "text": "`days_to_expiry(expiry)`, which returns `(expiry - TODAY).days`",
+            "correct": true
+          },
+          {
+            "id": "fib",
+            "text": "`fib(n)`",
+            "why": "`fib` depends only on `n`, so a cached answer is always right."
+          },
+          {
+            "id": "tuple",
+            "text": "`max_drawdown(prices)` called with a tuple of prices",
+            "why": "A tuple cannot change, and the answer depends only on it. That cache is safe."
+          },
+          {
+            "id": "df",
+            "text": "`discount(rate, years)`",
+            "why": "Both inputs are arguments, so they are both in the key."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It reads `TODAY`, which is not in the key.",
+        "generic": "Not quite right. Look for an input the function reads but does not take as an argument."
+      },
+      "explain": {
+        "text": "After the date moves, `days_to_expiry` still returns yesterday's count for the same `expiry`. Pass the date in as an argument so it joins the key."
+      }
+    },
+    {
+      "id": "r-three-steps",
+      "difficulty": 3,
+      "skills": [
+        "gd-dp"
+      ],
+      "prose": "Steps of 1, 2 or 3 stairs, with ways(0) = 1. The table starts 1, 1, 2, 4, 7, 13.",
+      "question": "What is ways(6)?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ways",
+        "label": "ways(6)",
+        "accept": "24: $13 + 7 + 4$.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fib",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$13 + 7 + 4 = 24$.",
+        "generic": "Not quite right. Add the three entries before it.",
+        "byKey": {
+          "two": "You added only the two entries before it. A 3-step adds a third term."
+        }
+      },
+      "explain": {
+        "text": "The last step is 1, 2 or 3 stairs, so ways(6) = ways(5) + ways(4) + ways(3) = 13 + 7 + 4 = 24."
+      }
+    },
+    {
+      "id": "r-coins-greedy",
+      "difficulty": 4,
+      "skills": [
+        "gd-dp"
+      ],
+      "prose": "Coins are worth 1, 5, 6 and 9.",
+      "question": "What is the fewest number of coins that pays 11?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "coins",
+        "label": "Fewest coins",
+        "accept": "2: 5 + 6.",
+        "wrong": [
+          {
+            "id": "greedy",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ones",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two coins: 5 + 6.",
+        "generic": "Not quite right. Try each coin as the last one.",
+        "byKey": {
+          "greedy": "You took the 9 first, leaving 1 + 1. The table finds 5 + 6."
+        }
+      },
+      "explain": {
+        "text": "best(11) = 1 + min(best(10), best(6), best(5), best(2)) = 1 + min(2, 1, 1, 2) = 2. Greedy commits to 9 and needs three coins."
+      }
+    },
+    {
+      "id": "r-which-memo",
+      "difficulty": 4,
+      "skills": [
+        "gd-backtrack",
+        "gd-dp"
+      ],
+      "prose": "Memoisation pays off when the same subproblem is asked for many times.",
+      "question": "Select all that apply: where does memoisation cut the work a lot?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fib",
+            "text": "Computing `fib(40)` recursively",
+            "correct": true
+          },
+          {
+            "id": "grid",
+            "text": "Counting right-or-down paths across a 20 by 20 grid",
+            "correct": true
+          },
+          {
+            "id": "perm",
+            "text": "Listing every ordering of 8 trades",
+            "why": "Every leaf is a different ordering that must be written out. Nothing repeats, so there is nothing to reuse."
+          },
+          {
+            "id": "queens",
+            "text": "Counting 8-queens placements by placing one queen per row",
+            "why": "A partial board is almost never reached twice, so a cache rarely hits. Pruning is what makes it fast."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Fibonacci and grid paths repeat subproblems; listings and queens do not.",
+        "generic": "Not quite right. Ask whether the same state is reached by many paths."
+      },
+      "explain": {
+        "text": "`fib(40)` and grid paths reach each small state by many routes, so a cache saves almost everything. Listing orderings needs every leaf anyway. N-queens states rarely repeat, so pruning, not memory, is the tool."
+      }
+    }
+  ]
+}

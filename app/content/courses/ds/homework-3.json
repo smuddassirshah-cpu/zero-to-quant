@@ -1,0 +1,497 @@
+{
+  "id": "homework-3",
+  "course": "ds",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-min-stack",
+      "difficulty": 4,
+      "skills": [
+        "ds-stacks"
+      ],
+      "prose": "A risk engine pushes each new price onto a stack and pops on a correction. It needs the lowest price on the stack at any moment, in $O(1)$, not by scanning.",
+      "question": "Write `MinStack` with `push(x)`, `pop()` (returning the value), `top()` and `get_min()`, each $O(1)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class MinStack:\n    def __init__(self):\n        self.items = []\n\n    def push(self, x):\n        ...\n\n    def pop(self):\n        ...\n\n    def top(self):\n        ...\n\n    def get_min(self):\n        ...\n",
+        "solution": "class MinStack:\n    def __init__(self):\n        self.items = []\n        self.mins = []  # mins[-1] is the minimum of items\n\n    def push(self, x):\n        self.items.append(x)\n        self.mins.append(x if not self.mins else min(x, self.mins[-1]))\n\n    def pop(self):\n        self.mins.pop()\n        return self.items.pop()\n\n    def top(self):\n        return self.items[-1]\n\n    def get_min(self):\n        return self.mins[-1]\n",
+        "examples": [
+          {
+            "setup": "s = MinStack(); s.push(100); s.push(98); s.push(101)",
+            "call": "(s.get_min(), s.top())",
+            "expect": "(98, 101)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "s = MinStack(); s.push(100); s.push(98); s.push(101)",
+            "call": "(s.get_min(), s.top())",
+            "expect": "(98, 101)",
+            "compare": "equal"
+          },
+          {
+            "setup": "s = MinStack(); s.push(100); s.push(98); s.push(101)",
+            "call": "(s.pop(), s.pop(), s.get_min())",
+            "expect": "(101, 98, 100)",
+            "compare": "equal"
+          },
+          {
+            "setup": "s2 = MinStack()\nfor v in [7, 5, 5, 6]: s2.push(v)",
+            "call": "[s2.get_min() for _ in range(3) if s2.pop() is not None]",
+            "expect": "[5, 5, 7]",
+            "compare": "equal"
+          },
+          {
+            "setup": "s3 = MinStack()\nfor v in [4, -3, 2]: s3.push(v)",
+            "call": "s3.get_min()",
+            "expect": "-3",
+            "compare": "equal"
+          },
+          {
+            "setup": "s4 = MinStack()\nfor v in [2, 1]: s4.push(v)",
+            "call": "(s4.get_min(), s4.pop(), s4.get_min())",
+            "expect": "(1, 1, 2)",
+            "compare": "equal"
+          },
+          {
+            "setup": "s5 = MinStack()\nfor v in range(200000, -1, -1): s5.push(v)",
+            "call": "s5.get_min()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each builds a stack in a setup line. Test 3 pushes a repeated minimum, and test 6 pushes 200,001 values."
+      },
+      "feedback": {
+        "correct": "A second stack of running minimums makes every operation $O(1)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 pops 101 and 98; the minimum must go back to 100. Keep the minimum for every height of the stack.",
+          "test-3": "Test 3 pushes 5 twice. After popping one 5, the minimum is still 5."
+        }
+      },
+      "explain": {
+        "text": "`mins[i]` is the minimum of the first $i + 1$ items, so popping both stacks together restores the old minimum. Pushing 7, 5, 5, 6 gives `mins` of 7, 5, 5, 5. The extra space is $O(n)$, and every operation is $O(1)$."
+      }
+    },
+    {
+      "id": "h-span",
+      "difficulty": 4,
+      "skills": [
+        "ds-stacks"
+      ],
+      "prose": "The **span** of a day is how many consecutive days, ending today, closed at or below today's close. A long span means today broke above a long run of closes. For £100, £80, £60, £70, £60, £75, £85 the spans are 1, 1, 1, 2, 1, 4, 6.",
+      "question": "Write `stock_span(prices)` in $O(n)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def stock_span(prices):\n    spans = []\n    stack = []\n    ...\n    return spans\n",
+        "solution": "def stock_span(prices):\n    spans = []\n    stack = []  # indices of days with a higher close, nearest on top\n    for i, p in enumerate(prices):\n        while stack and prices[stack[-1]] <= p:\n            stack.pop()\n        spans.append(i + 1 if not stack else i - stack[-1])\n        stack.append(i)\n    return spans\n",
+        "examples": [
+          {
+            "call": "stock_span([100, 80, 60, 70, 60, 75, 85])",
+            "expect": "[1, 1, 1, 2, 1, 4, 6]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "stock_span([100, 80, 60, 70, 60, 75, 85])",
+            "expect": "[1, 1, 1, 2, 1, 4, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "stock_span([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "stock_span([5])",
+            "expect": "[1]",
+            "compare": "equal"
+          },
+          {
+            "call": "stock_span([1, 2, 3, 4])",
+            "expect": "[1, 2, 3, 4]",
+            "compare": "equal"
+          },
+          {
+            "call": "stock_span([4, 3, 2, 1])",
+            "expect": "[1, 1, 1, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "stock_span([10, 10, 10])",
+            "expect": "[1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "stock_span([31, 41, 59, 26, 53, 58, 97])",
+            "expect": "[1, 2, 3, 1, 2, 3, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "stock_span(list(range(200000)))[-1]",
+            "expect": "200000",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Equal closes count towards the span (`<=`). Test 8 is a rising list of 200,000 closes."
+      },
+      "feedback": {
+        "correct": "The stack keeps only days with a higher close, so each day is pushed and popped once.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-6": "Test 6 is three equal closes: spans 1, 2, 3. A day closing at the same level counts, so pop on `<=`.",
+          "test-8": "Test 8 timed out. Walking back day by day is $O(n^2)$ on a rising list; pop days that can never block again."
+        }
+      },
+      "explain": {
+        "text": "This is the previous greater element: the span reaches back to the last day that closed higher. Days at or below today can never block a later day, so they are popped for good. Each index moves at most twice: $O(n)$."
+      }
+    },
+    {
+      "id": "h-fifo",
+      "difficulty": 3,
+      "skills": [
+        "ds-stacks"
+      ],
+      "prose": "You buy 200 shares at £50.00, then 100 at £52.00, then 300 at £49.50. Then you sell 350. FIFO accounting matches a sale against the oldest lots first, like a queue.",
+      "question": "What is the cost basis of the 350 shares sold, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 17675,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Cost basis",
+        "accept": "£17,675: $200 \\times 50 + 100 \\times 52 + 50 \\times 49.50$",
+        "wrong": [
+          {
+            "id": "lifo",
+            "value": 17325
+          },
+          {
+            "id": "avg",
+            "value": 17558.33,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The first two lots go whole, then 50 shares of the third.",
+        "generic": "Not quite right. Dequeue the oldest lot, then the next, until 350 shares are matched.",
+        "byKey": {
+          "lifo": "You matched the newest lot first: 300 at £49.50 and 50 at £52. That is LIFO, a stack.",
+          "avg": "You used the average cost. FIFO uses each lot's own price, oldest first."
+        }
+      },
+      "explain": {
+        "text": "£10,000 for the first lot, £5,200 for the second, and $50 \\times 49.50 = $ £2,475 from the third: £17,675. The queue keeps 250 shares at £49.50. In code, a `deque` of `[qty, price]` lots with `popleft()` does this."
+      }
+    },
+    {
+      "id": "h-remove-order",
+      "difficulty": 4,
+      "skills": [
+        "ds-lists"
+      ],
+      "prose": "These are the steps of `remove_nth_from_end(head, n)` with a dummy node, shuffled.",
+      "question": "Put them in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d",
+            "text": "`dummy = Node(0, head)`"
+          },
+          {
+            "id": "s",
+            "text": "`fast = slow = dummy`"
+          },
+          {
+            "id": "f",
+            "text": "Move `fast` forward $n + 1$ times"
+          },
+          {
+            "id": "b",
+            "text": "While `fast` is not `None`, move both one step"
+          },
+          {
+            "id": "x",
+            "text": "`slow.next = slow.next.next`"
+          },
+          {
+            "id": "r",
+            "text": "`return dummy.next`"
+          }
+        ],
+        "answer": [
+          "d",
+          "s",
+          "f",
+          "b",
+          "x",
+          "r"
+        ]
+      },
+      "feedback": {
+        "correct": "Dummy, gap of $n + 1$, walk together, unlink, return `dummy.next`.",
+        "generic": "Not quite right. The gap must exist before the two pointers walk together.",
+        "byKey": {
+          "r": "Return `dummy.next`, and only at the end: the head itself may have been removed."
+        }
+      },
+      "explain": {
+        "text": "The gap of $n + 1$ leaves `slow` on the node before the target when `fast` falls off the end. Returning `dummy.next` covers the case where the head was removed. One pass, $O(1)$ extra space."
+      }
+    },
+    {
+      "id": "h-lru",
+      "difficulty": 5,
+      "skills": [
+        "ds-lists",
+        "ds-hashing"
+      ],
+      "prose": "A pricing service caches recent prices. When the cache is full, it evicts the **least recently used** entry; a `get` or a `put` counts as a use. Each operation must be $O(1)$. Build it from a dict and a doubly linked list. The dict maps each key to its node; the most recent node sits at the front.",
+      "question": "Write `LRUCache(capacity)` with `get(key)` (the value, or −1 if absent) and `put(key, value)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "def run(cap, ops):\n    c = LRUCache(cap)\n    out = []\n    for op in ops:\n        if op[0] == 'put':\n            c.put(op[1], op[2])\n        else:\n            out.append(c.get(op[1]))\n    return out\n",
+        "starter": "class LRUCache:\n    def __init__(self, capacity):\n        ...\n\n    def get(self, key):\n        ...\n\n    def put(self, key, value):\n        ...\n",
+        "solution": "class _Node:\n    def __init__(self, key=None, val=None):\n        self.key, self.val = key, val\n        self.prev = self.next = None\n\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.cap = capacity\n        self.map = {}\n        self.head, self.tail = _Node(), _Node()  # sentinels: most recent after head\n        self.head.next, self.tail.prev = self.tail, self.head\n\n    def _unlink(self, node):\n        node.prev.next, node.next.prev = node.next, node.prev\n\n    def _push_front(self, node):\n        node.prev, node.next = self.head, self.head.next\n        self.head.next.prev = node\n        self.head.next = node\n\n    def get(self, key):\n        if key not in self.map:\n            return -1\n        node = self.map[key]\n        self._unlink(node)\n        self._push_front(node)\n        return node.val\n\n    def put(self, key, value):\n        if key in self.map:\n            node = self.map[key]\n            node.val = value\n            self._unlink(node)\n        else:\n            if len(self.map) == self.cap:\n                old = self.tail.prev\n                self._unlink(old)\n                del self.map[old.key]\n            node = _Node(key, value)\n            self.map[key] = node\n        self._push_front(node)\n",
+        "examples": [
+          {
+            "call": "run(2, [['put', 'VOD', 0.72], ['put', 'BP', 4.85], ['get', 'VOD'], ['put', 'AZN', 104.2], ['get', 'BP'], ['get', 'AZN'], ['get', 'VOD']])",
+            "expect": "[0.72, -1, 104.2, 0.72]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run(2, [['put', 'VOD', 0.72], ['put', 'BP', 4.85], ['get', 'VOD'], ['put', 'AZN', 104.2], ['get', 'BP'], ['get', 'AZN'], ['get', 'VOD']])",
+            "expect": "[0.72, -1, 104.2, 0.72]",
+            "compare": "equal"
+          },
+          {
+            "call": "run(1, [['put', 'a', 1], ['put', 'b', 2], ['get', 'a'], ['get', 'b']])",
+            "expect": "[-1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "run(2, [['put', 'a', 1], ['put', 'b', 2], ['put', 'a', 10], ['put', 'c', 3], ['get', 'a'], ['get', 'b'], ['get', 'c']])",
+            "expect": "[10, -1, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "run(2, [['get', 'x']])",
+            "expect": "[-1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run(3, [['put', 1, 1], ['put', 2, 2], ['put', 3, 3], ['get', 1], ['put', 4, 4], ['get', 2], ['get', 3], ['get', 1], ['get', 4]])",
+            "expect": "[1, -1, 3, 1, 4]",
+            "compare": "equal"
+          },
+          {
+            "call": "run(2, [['put', 'a', 1], ['get', 'a'], ['get', 'a'], ['put', 'b', 2], ['put', 'c', 3], ['get', 'a'], ['get', 'b']])",
+            "expect": "[1, 1, -1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "run(1000, [['put', i % 3000, i] for i in range(100000)] + [['get', 99999 % 3000], ['get', 1500]])",
+            "expect": "[99999, -1]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests through a hidden helper, `run(cap, ops)`. It applies the operations in order and lists what each `get` returned. Test 7 makes 100,000 calls."
+      },
+      "feedback": {
+        "correct": "The dict finds a node in $O(1)$; the list reorders and evicts in $O(1)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: after `get('VOD')`, BP is the least recently used, so adding AZN evicts BP, not VOD.",
+          "test-3": "Test 3 updates `a` with `put`. That counts as a use, so `b` is evicted when `c` arrives, and `a` reads 10.",
+          "test-7": "Test 7 timed out. Moving a key to the front must not search a list; hold the node through the dict."
+        }
+      },
+      "explain": {
+        "text": "Two sentinel nodes, `head` and `tail`, mean unlinking never meets `None`. A use unlinks the node and pushes it after `head`; eviction removes `tail.prev` and its dict entry. `collections.OrderedDict` with `move_to_end` is the same structure, built in."
+      }
+    },
+    {
+      "id": "h-cycle-start",
+      "difficulty": 5,
+      "skills": [
+        "ds-lists"
+      ],
+      "prose": "A chain of linked settlement records should end, but a bad update may have looped it back. Ops need the first record inside the loop, to find the broken link. The prelude has `Node`, `from_list`, `to_list` and `make_cycle(values, pos)`.",
+      "question": "Write `cycle_start(head)`: the node where the cycle begins, or `None` if there is no cycle, in $O(1)$ extra space.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "class Node:\n    def __init__(self, val, next=None):\n        self.val = val\n        self.next = next\n\ndef from_list(values):\n    head = None\n    for v in reversed(values):\n        head = Node(v, head)\n    return head\n\ndef to_list(head, limit=10000):\n    out = []\n    while head and len(out) < limit:\n        out.append(head.val)\n        head = head.next\n    return out\n\ndef make_cycle(values, pos):\n    \"\"\"Build a list from values, then point the tail back at index pos (-1: no cycle).\"\"\"\n    head = from_list(values)\n    if head is None or pos < 0:\n        return head\n    cur, target, i = head, None, 0\n    while True:\n        if i == pos:\n            target = cur\n        if cur.next is None:\n            break\n        cur, i = cur.next, i + 1\n    cur.next = target\n    return head\n",
+        "starter": "def cycle_start(head):\n    ...\n",
+        "solution": "def cycle_start(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n        if slow is fast:\n            break\n    else:\n        return None\n    slow = head\n    while slow is not fast:\n        slow = slow.next\n        fast = fast.next\n    return slow\n",
+        "examples": [
+          {
+            "call": "cycle_start(make_cycle([1, 2, 3, 4, 5, 6], 2)).val",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "cycle_start(make_cycle([1, 2, 3, 4, 5, 6], 2)).val",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "cycle_start(from_list([1, 2, 3]))",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "cycle_start(None)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "cycle_start(make_cycle([7], 0)).val",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "cycle_start(make_cycle([1, 2], 0)).val",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "cycle_start(make_cycle([1, 2], 1)).val",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "cycle_start(make_cycle(list(range(8)), 3)).val",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "cycle_start(make_cycle(list(range(100000)), 77777)).val",
+            "expect": "77777",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = make_cycle([5, 5, 5, 5], 0)",
+            "call": "cycle_start(h) is h",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests, including no cycle, an empty list, a node pointing to itself, and 100,000 nodes. Test 9 has equal values, so it compares nodes with `is`."
+      },
+      "feedback": {
+        "correct": "Meet, reset one pointer to the head, then walk both one step at a time.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has no cycle. When `fast` reaches the end, return `None` before the second phase.",
+          "test-4": "Test 4 is one node pointing to itself. They meet on it at once, and the reset pointer is already there.",
+          "test-9": "Test 9 has four nodes all holding 5. Compare nodes with `is`, not values with `==`."
+        }
+      },
+      "explain": {
+        "text": "The first phase meets after $a + b$ moves of `slow`, where $a + b$ is a whole number of laps. So $a$ steps from the meeting point land on the start, as do $a$ steps from the head. Both phases are $O(n)$, and only two names are stored."
+      }
+    },
+    {
+      "id": "h-deque-jobs",
+      "difficulty": 3,
+      "skills": [
+        "ds-stacks"
+      ],
+      "prose": "A `collections.deque` supports `append`, `appendleft`, `pop` and `popleft`, each $O(1)$.",
+      "question": "Select all that apply: which jobs can a deque do in $O(1)$ per step?",
+      "widget": {
+        "kind": "multi",
+        "options": [
+          {
+            "id": "a",
+            "text": "Serve orders at one price in arrival order",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Keep the last 20 closes for a rolling window",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "Act as a stack for undo",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "Read the middle element of a million-item deque",
+            "why": "Indexing near the middle of a deque is $O(n)$; it is fast only at the two ends."
+          },
+          {
+            "id": "e",
+            "text": "Find whether a given price is anywhere in it",
+            "why": "Searching a deque checks each item: $O(n)$. A set does membership in $O(1)$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A deque is fast at both ends and nowhere else.",
+        "generic": "Not quite right. Which jobs touch only the ends?"
+      },
+      "explain": {
+        "text": "Serving in order uses `append` and `popleft`; a rolling window adds at the back and drops at the front; a stack uses `append` and `pop`. Reaching the middle or searching walks through the items."
+      }
+    },
+    {
+      "id": "h-explain-breakout",
+      "difficulty": 4,
+      "skills": [
+        "ds-stacks"
+      ],
+      "title": "Explaining the breakout detector",
+      "kind": "longform",
+      "prompt": "A portfolio manager asks how your breakout detector works: for each day, the number of days until the price next closes strictly above that day's close.\n\n(a) Explain the idea of letting days wait, and why a stack is the right structure. (b) Write the core loop. (c) Prove it runs in $O(n)$ even though it has a loop inside a loop. (d) Explain how ties are handled and why it matters. (e) Work the closes £101.20, £100.50, £102.00, £101.00, £100.80, £103.50, £103.10. (f) Give the result for three edge cases.",
+      "model": "**(a) The idea.** We want, for each day, the number of days until a strictly higher close. Instead of scanning ahead from each day, which is $O(n^2)$, we let days *wait*. We scan left to right and keep a stack of the indices of days whose answer is not yet known.\n\n**(b) The step.** When day $i$ closes at $p_i$, every waiting day with a lower close has found its answer: day $i$. Those days are on top of the stack, because the waiting closes never rise from bottom to top. So:\n\n```python\nans = [0] * len(prices)\nstack = []\nfor i, p in enumerate(prices):\n    while stack and prices[stack[-1]] < p:\n        j = stack.pop()\n        ans[j] = i - j\n    stack.append(i)\n```\n\nDays still on the stack at the end never see a higher close and keep the answer 0.\n\n**(c) Why it is $O(n)$.** The `while` loop sits inside the `for` loop, but each index is pushed exactly once and popped at most once over the whole run. So the total number of pops is at most $n$, and pushes plus pops are at most $2n$. The time is $O(n)$ and the stack uses $O(n)$ space in the worst case, a falling market where nothing is ever popped.\n\n**(d) Ties.** With `<`, a day closing exactly at an earlier day's level does not end its wait: a breakout must be strictly higher. With `<=` a retest of the same level would count as a breakout, which is a different signal. State the convention, then choose the comparison.\n\n**(e) Worked example.** Closes £101.20, £100.50, £102.00, £101.00, £100.80, £103.50, £103.10 give 2, 1, 3, 2, 1, 0, 0. Day 2 waits for day 5, three days; days 5 and 6 never see a higher close.\n\n**(f) Edge cases.** An empty list gives `[]`; one day gives `[0]`; a strictly falling path gives all zeros with the stack holding every index; a strictly rising path gives all ones with the stack never holding more than one index.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Explains waiting days on a stack, with the most recent waiting day on top"
+        },
+        {
+          "points": 2,
+          "text": "Writes a correct loop that pops while the top's close is lower and records `i - j`"
+        },
+        {
+          "points": 2,
+          "text": "Proves $O(n)$ by counting each index pushed once and popped at most once"
+        },
+        {
+          "points": 1,
+          "text": "States the tie convention (`<` for strictly higher) and what `<=` would change"
+        },
+        {
+          "points": 2,
+          "text": "Works the example correctly: 2, 1, 3, 2, 1, 0, 0"
+        },
+        {
+          "points": 1,
+          "text": "Handles the empty, falling and rising cases correctly"
+        }
+      ]
+    }
+  ]
+}

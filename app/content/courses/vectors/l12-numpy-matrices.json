@@ -253,7 +253,7 @@
         }
       },
       "explain": {
-        "text": "`B @ A` is the product $\\mathbf{B}\\mathbf{A}$, and `np.allclose` forgives errors near $10^{-15}$. The candidate without the $\\tfrac{1}{5}$ fails, and so does the transposed one.\n\n```python\nreturn np.allclose(B @ A, np.eye(n))\n```"
+        "text": "`B @ A` is the product $\\mathbf{B}\\mathbf{A}$, and `np.allclose` forgives rounding: by default it allows $10^{-8} + 10^{-5}|y|$ per entry. The candidate without the $\\tfrac{1}{5}$ fails, and so does the transposed one.\n\n```python\nreturn np.allclose(B @ A, np.eye(n))\n```"
       }
     },
     {
@@ -550,7 +550,7 @@
           },
           {
             "id": "l2",
-            "text": "`d = np.linalg.det(A)`, about 0.1: not zero, so one solution exists"
+            "text": "`r = np.linalg.matrix_rank(A)`, 2: full rank, so one solution exists"
           },
           {
             "id": "l3",
@@ -580,11 +580,11 @@
         },
         {
           "rung": "point",
-          "text": "Check the determinant before you trust `solve`."
+          "text": "Check the rank before you trust `solve`."
         },
         {
           "rung": "step",
-          "text": "Build, check the determinant, solve, multiply back, compare."
+          "text": "Build, check the rank, solve, multiply back, compare."
         }
       ],
       "feedback": {
@@ -595,7 +595,7 @@
         }
       },
       "explain": {
-        "text": "Each line needs the one before: `det` and `solve` need `A`, the check needs `x`. The final `np.allclose` catches a wrong matrix or a near-singular one."
+        "text": "Each line needs the one before: `matrix_rank` and `solve` need `A`, the check needs `x`. The final `np.allclose` catches a wrong matrix. A small residual does not prove $\\mathbf{x}$ accurate when $\\mathbf{A}$ is nearly singular: check `np.linalg.cond(A)` too."
       }
     },
     {
@@ -720,13 +720,13 @@
       "type": "transfer",
       "difficulty": 3,
       "title": "When the hedge cannot be solved",
-      "prose": "Option R is replaced by a package T: one P plus one Q. T's column is the sum of theirs, so $\\det\\mathbf{A} = 0$. Desktop NumPy then raises `np.linalg.LinAlgError`; this browser's NumPy quietly returns `nan`. Make the check yourself.",
-      "question": "Complete `safe_hedge`: raise `np.linalg.LinAlgError` when $|\\det\\mathbf{A}| < 10^{-12}$, otherwise return the quantities.",
+      "prose": "Option R is replaced by a package T: one P plus one Q. T's column is the sum of theirs, so the columns are dependent. Desktop NumPy then raises `np.linalg.LinAlgError`; this browser's NumPy quietly returns `nan`. `np.linalg.matrix_rank(A)` counts the independent columns: here 2, not 3.",
+      "question": "Complete `safe_hedge`: raise `np.linalg.LinAlgError` when the rank of `A` is less than `len(A)`, otherwise return the quantities.",
       "widget": {
         "kind": "code",
         "language": "python",
         "starter": "import numpy as np\n\ndef safe_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    # raise np.linalg.LinAlgError when A is singular\n    ...\n    return np.linalg.solve(A, b)\n",
-        "solution": "import numpy as np\n\ndef safe_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    # raise np.linalg.LinAlgError when A is singular\n    if abs(np.linalg.det(A)) < 1e-12:\n        raise np.linalg.LinAlgError(\"singular matrix: no unique hedge\")\n    return np.linalg.solve(A, b)\n",
+        "solution": "import numpy as np\n\ndef safe_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    # raise np.linalg.LinAlgError when A is singular\n    if np.linalg.matrix_rank(A) < len(A):\n        raise np.linalg.LinAlgError(\"singular matrix: no unique hedge\")\n    return np.linalg.solve(A, b)\n",
         "examples": [
           {
             "call": "safe_hedge(S, t)",
@@ -763,36 +763,42 @@
           {
             "call": "np.round(safe_hedge([[0.50, 0.25], [0.20, 0.30]], [0, 60]), 6).tolist()",
             "expect": "[-150.0, 300.0]"
+          },
+          {
+            "setup": "G = [[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]]; s = 1e-4",
+            "call": "np.round(safe_hedge(np.array(G) * s, np.array([235, 140, 19]) * s), 6).tolist()",
+            "expect": "[200.0, 300.0, 100.0]"
           }
         ],
-        "how": "Check runs 5 hidden tests: three expect `safe_hedge` to raise `LinAlgError`, two compare quantities after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 6 hidden tests: three expect `safe_hedge` to raise `LinAlgError`, three compare quantities after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
       },
       "hints": [
         {
           "rung": "nudge",
-          "text": "Compute the determinant before you solve."
+          "text": "Count the independent columns before you solve."
         },
         {
           "rung": "point",
-          "text": "`np.linalg.det(A)` gives it; compare its size, `abs(...)`, with `1e-12`."
+          "text": "`np.linalg.matrix_rank(A)` gives that count; compare it with `len(A)`."
         },
         {
           "rung": "step",
-          "text": "```python\nif abs(np.linalg.det(A)) < 1e-12:\n    raise np.linalg.LinAlgError(\"singular matrix\")\n```"
+          "text": "```python\nif np.linalg.matrix_rank(A) < len(A):\n    raise np.linalg.LinAlgError(\"singular matrix\")\n```"
         }
       ],
       "feedback": {
-        "correct": "Singular hedges now fail loudly everywhere; solvable ones still return quantities.",
+        "correct": "Singular hedges now fail loudly everywhere; solvable ones still return quantities, whatever their scale.",
         "generic": "Some tests failed. A singular matrix must raise `LinAlgError`; others must still be solved.",
         "byKey": {
-          "test-1": "The P, Q, T matrix has determinant 0, yet no error was raised. Test `abs(np.linalg.det(A)) < 1e-12` and `raise np.linalg.LinAlgError(...)`.",
-          "test-3": "The options from the last lesson, with greeks in proportion, are singular too. Check the size of the determinant, not just whether it equals 0.",
-          "test-4": "A solvable hedge must still return its quantities. Raise only when the determinant is tiny.",
-          "error": "Your code stopped with an error. Replace the `...` with an `if` that raises when the determinant is tiny."
+          "test-1": "The P, Q, T matrix has rank 2, yet no error was raised. Test `np.linalg.matrix_rank(A) < len(A)` and `raise np.linalg.LinAlgError(...)`.",
+          "test-3": "The options from the last lesson, with greeks in proportion, are singular too: rank 1. Compare the rank with `len(A)`.",
+          "test-4": "A solvable hedge must still return its quantities. Raise only when the rank falls short.",
+          "error": "Your code stopped with an error. Replace the `...` with an `if` that raises when the rank falls short.",
+          "test-6": "This is the desk's hedge with every greek and target scaled by $10^{-4}$. Its determinant is about $2 \\times 10^{-16}$, yet it solves as before. Test the rank, not the size of the determinant."
         }
       },
       "explain": {
-        "text": "T's column is P's plus Q's, so the columns are dependent and $\\det\\mathbf{A} = 0$. Checking the determinant makes the failure explicit on every platform instead of a silent `nan`.\n\n```python\nif abs(np.linalg.det(A)) < 1e-12:\n    raise np.linalg.LinAlgError(\"singular matrix\")\n```"
+        "text": "T's column is P's plus Q's, so the rank is 2 and `safe_hedge` refuses. A cut-off on $|\\det\\mathbf{A}|$ would misfire: the determinant scales with the entries. A healthy covariance matrix of four assets' daily returns has a determinant near $10^{-16}$.\n\n```python\nif np.linalg.matrix_rank(A) < len(A):\n    raise np.linalg.LinAlgError(\"singular matrix\")\n```"
       }
     }
   ],
@@ -800,7 +806,7 @@
     "ideas": [
       "`@` is the matrix product; `*` multiplies entry by entry and never adds.",
       "`np.linalg.solve(A, b)` beats `np.linalg.inv(A) @ b`: less arithmetic and less rounding error.",
-      "Floating point leaves tiny errors: compare with `np.allclose`, and test the determinant before trusting `solve`."
+      "Floating point leaves tiny errors: compare with `np.allclose`. Before trusting `solve`, test `np.linalg.matrix_rank`, not the size of the determinant."
     ],
     "formula": {
       "name": "Solve, then check",
@@ -927,7 +933,7 @@
         "generic": "Not quite right. Compute $\\det\\mathbf{A}$ first."
       },
       "explain": {
-        "text": "$\\det\\mathbf{A} = 4 - 4 = 0$, and $x + 2y = 1$ has infinitely many solutions. Desktop NumPy raises `np.linalg.LinAlgError`; this browser's NumPy returns `nan`. Check the determinant before you trust the result."
+        "text": "$\\det\\mathbf{A} = 4 - 4 = 0$, and $x + 2y = 1$ has infinitely many solutions. Desktop NumPy raises `np.linalg.LinAlgError`; this browser's NumPy returns `nan`. Check `np.linalg.matrix_rank(A)` before you trust the result."
       }
     },
     {
@@ -967,7 +973,7 @@
         "generic": "Not quite right. Think about what floating point does to $5$."
       },
       "explain": {
-        "text": "Computed results carry rounding error, as the determinant 5.000000000000001 showed. `==` would reject a correct inverse; `np.allclose` accepts differences around $10^{-8}$ and below."
+        "text": "Computed results carry rounding error, as the determinant 5.000000000000001 showed. `==` would reject a correct inverse; `np.allclose` accepts a difference up to $10^{-8} + 10^{-5}|b|$, about $10^{-5}$ for entries near 1."
       }
     }
   ]

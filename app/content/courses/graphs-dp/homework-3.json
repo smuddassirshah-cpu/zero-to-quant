@@ -1,0 +1,453 @@
+{
+  "id": "homework-3",
+  "course": "graphs-dp",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-combination-sum",
+      "difficulty": 4,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "prose": "A desk can buy lots of fixed sizes (in hundreds of shares), as many of each as it likes. List every way to make exactly `target`, ignoring order. Candidates are distinct positive whole numbers in any order. Return the combinations as lists in non-decreasing order, sorted as the take-smallest-first walk produces them: `combination_sum([2, 3, 6, 7], 7)` is `[[2, 2, 3], [7]]`.",
+      "question": "Write `combination_sum(candidates, target)` by backtracking with pruning.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def combination_sum(candidates, target):\n    ...\n",
+        "solution": "def combination_sum(candidates, target):\n    cands = sorted(candidates)\n    out, path = [], []\n\n    def walk(start, left):\n        if left == 0:\n            out.append(path[:])\n            return\n        for i in range(start, len(cands)):\n            if cands[i] > left:\n                break                    # sorted: the rest are bigger\n            path.append(cands[i])\n            walk(i, left - cands[i])     # i, not i + 1: reuse allowed\n            path.pop()\n\n    walk(0, target)\n    return out\n",
+        "examples": [
+          {
+            "call": "combination_sum([2, 3, 6, 7], 7)",
+            "expect": "[[2, 2, 3], [7]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "combination_sum([2, 3, 6, 7], 7)",
+            "expect": "[[2, 2, 3], [7]]",
+            "compare": "equal"
+          },
+          {
+            "call": "combination_sum([2, 3, 5], 8)",
+            "expect": "[[2, 2, 2, 2], [2, 3, 3], [3, 5]]",
+            "compare": "equal"
+          },
+          {
+            "call": "combination_sum([7, 3, 2], 7)",
+            "expect": "[[2, 2, 3], [7]]",
+            "compare": "equal"
+          },
+          {
+            "call": "combination_sum([2], 1)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "combination_sum([1], 0)",
+            "expect": "[[]]",
+            "compare": "equal"
+          },
+          {
+            "call": "combination_sum([5, 10, 25], 40)",
+            "expect": "[[5, 5, 5, 5, 5, 5, 5, 5], [5, 5, 5, 5, 5, 5, 10], [5, 5, 5, 5, 10, 10], [5, 5, 5, 25], [5, 5, 10, 10, 10], [5, 10, 25], [10, 10, 10, 10]]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(combination_sum([2, 3, 5, 7], 30))",
+            "expect": "45",
+            "compare": "equal"
+          },
+          {
+            "call": "len(combination_sum([1, 2, 3, 4, 5], 20))",
+            "expect": "192",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, including unsorted candidates, an impossible target, a target of 0 (one empty combination) and two larger counts."
+      },
+      "feedback": {
+        "correct": "Every combination once, in order, with the loop cut at the first candidate that is too big.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `[[2, 2, 3], [7]]`. If you got `[2, 3, 2]` as well, start the loop at `start`, not 0.",
+          "test-3": "Test 3 passes unsorted candidates. Sort them first.",
+          "test-5": "Test 5 expects `[[]]`: a target of 0 is met by taking nothing."
+        }
+      },
+      "explain": {
+        "text": "Passing `i` lets a candidate repeat; starting at `start` keeps each list non-decreasing, so no combination appears twice. The `break` is safe because the candidates are sorted and positive."
+      }
+    },
+    {
+      "id": "h-word-break",
+      "difficulty": 5,
+      "skills": [
+        "gd-dp"
+      ],
+      "prose": "An old feed sends tickers run together with no separators, such as `'VODBPHSBA'`. Given the set of valid tickers, decide whether the string splits completely into valid tickers. The same ticker may appear more than once.",
+      "question": "Write `word_break(s, words)` returning `True` or `False`, fast enough for long strings.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def word_break(s, words):\n    ...\n",
+        "solution": "from functools import lru_cache\n\n\ndef word_break(s, words):\n    words = set(words)\n\n    @lru_cache(maxsize=None)\n    def ok(i):                           # can s[i:] be split?\n        if i == len(s):\n            return True\n        return any(s.startswith(w, i) and ok(i + len(w)) for w in words if w)\n\n    return ok(0)\n",
+        "examples": [
+          {
+            "call": "word_break('VODBPHSBA', ['VOD', 'BP', 'HSBA', 'HSB'])",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "word_break('VODBPHSBA', ['VOD', 'BP', 'HSBA', 'HSB'])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('VODBPHSB', ['VOD', 'BP', 'HSBA'])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('applepenapple', ['apple', 'pen'])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('catsandog', ['cats', 'dog', 'sand', 'and', 'cat'])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('', ['a'])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('ab', [])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('aaaaaaa', ['aaaa', 'aaa'])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('a' * 40 + 'b', ['a', 'aa', 'aaa', 'aaaa'])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "word_break('a' * 120, ['a', 'aa', 'aaa'])",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests, including an empty string and an empty word list. Test 8 has 40 letters that can be split in billions of ways before a final `b` that cannot: without memoisation it runs out of time."
+      },
+      "feedback": {
+        "correct": "Each start position is decided once.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-5": "Test 5 expects `True`: the empty string is already fully split.",
+          "test-8": "Test 8 timed out. Memoise on the start position `i`: whether `s[i:]` splits does not depend on how you reached `i`.",
+          "test-2": "Test 2 expects `False`: `HSB` is not in this list, so the end cannot be split."
+        }
+      },
+      "explain": {
+        "text": "The state is the start index `i`; the answer for `s[i:]` never depends on how we got there. There are `len(s) + 1` states, each trying every word, so the work is about $n \\times |\\text{words}|$ prefix checks instead of exponential."
+      }
+    },
+    {
+      "id": "h-order-perms",
+      "difficulty": 3,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "prose": "Put the body of the ordering walk in order. `used[i]` marks items already in `path`.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "If `len(path) == len(xs)`: append `path[:]` to `out` and return"
+          },
+          {
+            "id": "s2",
+            "text": "For each index `i`: skip it if `used[i]` is true"
+          },
+          {
+            "id": "s3",
+            "text": "Mark `used[i] = True` and `path.append(xs[i])`"
+          },
+          {
+            "id": "s4",
+            "text": "Call `walk()` to extend the ordering"
+          },
+          {
+            "id": "s5",
+            "text": "`path.pop()` and set `used[i] = False`"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ]
+      },
+      "feedback": {
+        "correct": "Base case, then for each unused item: choose, recurse, un-choose.",
+        "generic": "Not quite right. The un-choose must follow the recursive call.",
+        "byKey": {
+          "s5": "Undoing before the recursive call means the choice is never explored; undoing outside the loop leaves later items blocked."
+        }
+      },
+      "explain": {
+        "text": "The base case records a full ordering. Inside the loop, each unused item is chosen, explored and then released, so the next item starts from the same state."
+      }
+    },
+    {
+      "id": "h-legs",
+      "difficulty": 3,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "prose": "A trade is unwound in 4 legs, A, B, C and D. Risk requires leg A to be sent before leg D. The walk prunes any partial order that sends D while A is unsent.",
+      "question": "How many orders survive?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "orders",
+        "label": "Orders",
+        "accept": "12: half of $4! = 24$.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 24,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fixed",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "12 orders.",
+        "generic": "Not quite right. In how many of the 24 orders does A come before D?",
+        "byKey": {
+          "all": "That is every order. The rule removes those that send D first.",
+          "fixed": "You fixed A first and D last. A only needs to come before D, anywhere."
+        }
+      },
+      "explain": {
+        "text": "Swapping A and D turns each order that breaks the rule into one that keeps it, so exactly half survive: $24 / 2 = 12$. The prune cuts each bad order as soon as D appears before A."
+      }
+    },
+    {
+      "id": "h-subset-states",
+      "difficulty": 4,
+      "skills": [
+        "gd-backtrack",
+        "gd-dp"
+      ],
+      "prose": "Subset sum on 20 positive whole numbers with target 100 can be memoised: whether the rest can finish depends only on `(i, total)`, where `i` runs from 0 to 20 and the running total stays between 0 and 100 after pruning.",
+      "question": "At most how many distinct `(i, total)` states are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2121,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "states",
+        "label": "States",
+        "accept": "2,121: $21 \\times 101$.",
+        "wrong": [
+          {
+            "id": "subsets",
+            "value": 1048576,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-ends",
+            "value": 2000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-off",
+            "value": 2100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$21 \\times 101 = 2{,}121$ states.",
+        "generic": "Not quite right. Count the values of `i` and of `total`.",
+        "byKey": {
+          "subsets": "That is $2^{20}$, the number of subsets. Many subsets reach the same `(i, total)`, and the memo solves each pair once.",
+          "no-ends": "You used 20 values of `i` and 100 of `total`. Both ranges include their ends: 0 to 20 and 0 to 100.",
+          "one-off": "`total` runs from 0 to 100: 101 values."
+        }
+      },
+      "explain": {
+        "text": "`i` takes 21 values and `total` 101, so at most 2,121 states against about a million subsets. Pruning keeps `total` at most 100; memoising makes each state cost one step."
+      }
+    },
+    {
+      "id": "h-lattice",
+      "difficulty": 3,
+      "skills": [
+        "gd-dp"
+      ],
+      "prose": "A binomial tree moves a price up or down by the same factor each day, so the order of moves does not matter for the final price.",
+      "question": "After 10 days, how many paths end back at the starting price?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 252,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "paths",
+        "label": "Paths",
+        "accept": "252: $\\binom{10}{5}$.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 1024,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 512,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\binom{10}{5} = 252$.",
+        "generic": "Not quite right. Back at the start means 5 ups and 5 downs.",
+        "byKey": {
+          "all": "That is every path, $2^{10}$. Only those with 5 ups and 5 downs return.",
+          "half": "Half of all paths do not return: most end above or below."
+        }
+      },
+      "explain": {
+        "text": "A path returns when it has 5 ups among 10 days: $\\binom{10}{5} = 252$. The lattice table builds this by adding the counts from the two nodes one day earlier."
+      }
+    },
+    {
+      "id": "h-complexity",
+      "difficulty": 3,
+      "skills": [
+        "gd-dp"
+      ],
+      "prose": "`grid_paths(r, c)` is memoised on `(i, j)`, and each state adds two cached values.",
+      "question": "How does its running time grow?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rc",
+            "text": "$O(r \\times c)$",
+            "correct": true
+          },
+          {
+            "id": "exp",
+            "text": "$O(2^{r + c})$",
+            "why": "That is the naive recursion. With the cache, each state is computed once."
+          },
+          {
+            "id": "sum",
+            "text": "$O(r + c)$",
+            "why": "That is the length of one path. The cache fills a value for every point, not just one path."
+          },
+          {
+            "id": "binom",
+            "text": "$O\\left(\\binom{r + c - 2}{r - 1}\\right)$",
+            "why": "That is the answer's size, not the work. The memo adds numbers; it never walks each path."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "One step per grid point.",
+        "generic": "Not quite right. Count the states and the work per state."
+      },
+      "explain": {
+        "text": "There are at most $r \\times c$ states and each does $O(1)$ work, so $O(r \\times c)$. The number of paths can be astronomically larger: it is never enumerated."
+      }
+    },
+    {
+      "id": "h-netting-search",
+      "difficulty": 5,
+      "skills": [
+        "gd-backtrack",
+        "gd-dp"
+      ],
+      "title": "Speeding up a netting search",
+      "kind": "longform",
+      "prompt": "A colleague's script looks for a basket of **at most 6** trades, out of 25 candidates, whose exposures net to **exactly zero**. Each exposure is a whole number of £m between −10 and +10, and some are negative. The script builds every subset with `itertools.combinations` for every size from 0 to 25, then filters. It never finishes.\n\n(a) How many subsets does the script build? How many have at most 6 trades?\n(b) Propose a backtracking search. Say which prunes are safe here and which are not, and why.\n(c) Show how to memoise it: what is the state, how many states are there at most, and what must be true of the function for the cache to be correct?\n(d) Say what you would test, including edge cases.",
+      "model": "**(a) The size of the brute force.** All subsets of 25 trades: $2^{25} = 33{,}554{,}432$. Those of size at most 6: $\\sum_{k=0}^{6} \\binom{25}{k} = 1 + 25 + 300 + 2{,}300 + 12{,}650 + 53{,}130 + 177{,}100 = 245{,}506$. So most of the script's work is on baskets that break the size rule before it even checks the net.\n\n**(b) Backtracking with safe prunes.** Walk the trades in order with take or skip, carrying `(i, count, net)`:\n\n```python\ndef walk(i, count, net):\n    if count > 0 and net == 0:\n        return True\n    if i == len(xs) or count == 6:\n        return False\n    return walk(i + 1, count + 1, net + xs[i]) or walk(i + 1, count, net)\n```\n\n- *Safe:* stop taking once `count == 6`. The count only grows along a branch, so a basket with too many trades never recovers.\n- *Unsafe:* stop once `net` passes 0 (or any bound). Exposures can be negative, so a later short can bring the net back: $+5$, then $+2$, then $-3$ and $-4$ nets to 0.\n- *Safe bound instead:* with $k = 6 - \\text{count}$ trades left, the net can move by at most $10k$. If $|\\text{net}| > 10k$, prune: no choice of the remaining trades can bring it back to 0.\n- Undo nothing by hand: passing `count` and `net` as arguments means each branch has its own copies, so state is restored automatically.\n\n**(c) Memoisation.** Whether the rest of the walk can succeed depends only on `(i, count, net)`: which trades remain, how many may still be taken, and the net so far. `i` takes 26 values (0 to 25), `count` 7 (0 to 6), and `net` lies in $[-60, 60]$, 121 values. So at most $26 \\times 7 \\times 121 = 22{,}022$ states, each $O(1)$ work, against 245,506 baskets. Wrap `walk` in `@lru_cache` with the exposures held fixed (a tuple, or a closure over a list that never changes). For the cache to be correct the function must be pure: its answer must depend only on its arguments. If the exposures list were edited between calls, or a limit read from a global, the cache would serve stale answers. The arguments must be hashable: integers here.\n\n**(d) Tests.** A basket that only exists with a negative trade (to catch the unsafe prune); no basket at all (every exposure positive); the empty candidate list (False, since an empty basket does not count); a single zero-exposure trade (True); a basket of exactly 6 that works and one of 7 that would (the size rule); and a 25-trade case that must finish within a second, to show the memo works.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Gives $2^{25} = 33{,}554{,}432$ subsets and 245,506 of size at most 6, with the working"
+        },
+        {
+          "points": 2,
+          "text": "Writes a take-or-skip walk carrying the count and the net, with correct base cases"
+        },
+        {
+          "points": 2,
+          "text": "Says the count prune is safe and the net-passes-zero prune is unsafe because of negative exposures, with an example; a bound prune earns credit"
+        },
+        {
+          "points": 2,
+          "text": "Names the state `(i, count, net)`, bounds it (about 22,000 states) and compares with the brute force"
+        },
+        {
+          "points": 1,
+          "text": "States that the cached function must be pure with hashable arguments, and names a way it could go stale"
+        },
+        {
+          "points": 1,
+          "text": "Lists tests that include a negative-exposure answer, no answer and an empty input"
+        }
+      ]
+    }
+  ]
+}

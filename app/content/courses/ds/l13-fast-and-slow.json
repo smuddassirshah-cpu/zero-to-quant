@@ -1,0 +1,1952 @@
+{
+  "id": "l13-fast-and-slow",
+  "course": "ds",
+  "title": "Fast and slow pointers",
+  "minutes": 15,
+  "objectives": [
+    "Detect a cycle in a linked list with two pointers.",
+    "Find the middle node of a list in one pass",
+    "Explain why resetting one pointer to the head finds the start of the cycle"
+  ],
+  "skills": [
+    "ds-lists"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A list with no end",
+      "prose": "A walk `cur = cur.next` normally stops at `None`. In this list the last node, 6, points back to an earlier node instead.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "1",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "n2",
+              "label": "2",
+              "x": 0.26,
+              "y": 0.5
+            },
+            {
+              "id": "n3",
+              "label": "3",
+              "x": 0.46,
+              "y": 0.5
+            },
+            {
+              "id": "n4",
+              "label": "4",
+              "x": 0.66,
+              "y": 0.2
+            },
+            {
+              "id": "n5",
+              "label": "5",
+              "x": 0.86,
+              "y": 0.5
+            },
+            {
+              "id": "n6",
+              "label": "6",
+              "x": 0.66,
+              "y": 0.8
+            },
+            {
+              "id": "head",
+              "label": "head",
+              "x": 0.08,
+              "y": 0.3,
+              "shape": "pill",
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2",
+              "directed": true
+            },
+            {
+              "from": "n2",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "n3",
+              "to": "n4",
+              "directed": true
+            },
+            {
+              "from": "n4",
+              "to": "n5",
+              "directed": true
+            },
+            {
+              "from": "n5",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "n6",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "head",
+              "to": "n1",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "height": 300,
+          "aria": "A linked list whose tail points back into the middle"
+        },
+        "state": {
+          "caption": "Start at the head and follow the arrows"
+        }
+      },
+      "question": "Following the arrows from the head, tap the first node you reach for a second time.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "n3"
+        ],
+        "max": 1,
+        "only": [
+          "n1",
+          "n2",
+          "n3",
+          "n4",
+          "n5",
+          "n6"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk it out: 1, 2, 3, … Where does 6 lead?"
+        },
+        {
+          "rung": "point",
+          "text": "The last node points back here.",
+          "highlight": [
+            "e-n6-n3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The walk goes 1, 2, 3, 4, 5, 6 and then back to 3. So 3 is the first node you meet twice."
+        }
+      ],
+      "feedback": {
+        "correct": "6 leads back to 3, and the walk goes round 3, 4, 5, 6 for ever.",
+        "generic": "Not quite right. Follow each arrow in turn until a node repeats.",
+        "byKey": {
+          "n1": "Nothing points back to 1. The walk never returns to the head.",
+          "n6": "6 is the last new node. Its arrow leads back to an earlier one.",
+          "n4": "4 does repeat, but 3 comes round first.",
+          "n2": "Nothing points back to 2."
+        }
+      },
+      "explain": {
+        "text": "After 6 the walk returns to 3, so `cur` is never `None`. The list has a **cycle** of four nodes, 3 to 6, and a loop over it never ends. We want to detect that.",
+        "canvas": {
+          "highlight": [
+            "n3",
+            "n4",
+            "n5",
+            "n6"
+          ],
+          "caption": "The cycle: 3 → 4 → 5 → 6 → 3"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Remember everything",
+      "prose": "One fix is to remember every node seen:\n\n```python\ndef has_cycle(head):\n    seen = set()\n    cur = head\n    while cur:\n        if cur in seen:\n            return True\n        seen.add(cur)\n        cur = cur.next\n    return False\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "1",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "n2",
+              "label": "2",
+              "x": 0.26,
+              "y": 0.5
+            },
+            {
+              "id": "n3",
+              "label": "3",
+              "x": 0.46,
+              "y": 0.5
+            },
+            {
+              "id": "n4",
+              "label": "4",
+              "x": 0.66,
+              "y": 0.2
+            },
+            {
+              "id": "n5",
+              "label": "5",
+              "x": 0.86,
+              "y": 0.5
+            },
+            {
+              "id": "n6",
+              "label": "6",
+              "x": 0.66,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2",
+              "directed": true
+            },
+            {
+              "from": "n2",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "n3",
+              "to": "n4",
+              "directed": true
+            },
+            {
+              "from": "n4",
+              "to": "n5",
+              "directed": true
+            },
+            {
+              "from": "n5",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "n6",
+              "to": "n3",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "aria": "A linked list whose tail points back into the middle"
+        },
+        "state": {
+          "caption": "Six nodes, cycle back to 3"
+        }
+      },
+      "question": "How many nodes are in `seen` when it returns `True` on this list?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Nodes in seen",
+        "accept": "6: every node, before 3 comes round again",
+        "wrong": [
+          {
+            "id": "cycle",
+            "value": 4
+          },
+          {
+            "id": "seven",
+            "value": 7
+          },
+          {
+            "id": "three",
+            "value": 3
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When does `cur in seen` first become true?"
+        },
+        {
+          "rung": "point",
+          "text": "3 is the first repeated node, reached after 6.",
+          "highlight": [
+            "n3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Nodes 1 to 6 are added one by one. Then `cur` is 3 again, already in `seen`. So `seen` holds 6 nodes."
+        }
+      ],
+      "feedback": {
+        "correct": "All 6 nodes are stored before 3 repeats.",
+        "generic": "Not quite right. Count the nodes added before the first repeat.",
+        "byKey": {
+          "cycle": "The tail nodes 1 and 2 are added too.",
+          "seven": "When 3 comes round again it is found in `seen` and not added a second time.",
+          "three": "The walk passes 4, 5 and 6 before it returns to 3."
+        }
+      },
+      "explain": {
+        "text": "`seen` grows with every node, so the memory is $O(n)$. It is correct, and in an interview it is a fine first answer. The question that follows is: can we do it in $O(1)$ extra space?",
+        "canvas": {
+          "highlight": [
+            "n1",
+            "n2",
+            "n3",
+            "n4",
+            "n5",
+            "n6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Two speeds",
+      "prose": "Another way needs only two names. `slow` moves one node per move; `fast` moves two. If the list ends, `fast` reaches `None` first. If there is a cycle, `fast` keeps going round.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "1",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "n2",
+              "label": "2",
+              "x": 0.26,
+              "y": 0.5
+            },
+            {
+              "id": "n3",
+              "label": "3",
+              "x": 0.46,
+              "y": 0.5
+            },
+            {
+              "id": "n4",
+              "label": "4",
+              "x": 0.66,
+              "y": 0.2
+            },
+            {
+              "id": "n5",
+              "label": "5",
+              "x": 0.86,
+              "y": 0.5
+            },
+            {
+              "id": "n6",
+              "label": "6",
+              "x": 0.66,
+              "y": 0.8
+            },
+            {
+              "id": "slow",
+              "label": "slow",
+              "x": 0.08,
+              "y": 0.3,
+              "shape": "pill",
+              "colour": 4
+            },
+            {
+              "id": "fast",
+              "label": "fast",
+              "x": 0.08,
+              "y": 0.7,
+              "shape": "pill",
+              "colour": 2
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2",
+              "directed": true
+            },
+            {
+              "from": "n2",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "n3",
+              "to": "n4",
+              "directed": true
+            },
+            {
+              "from": "n4",
+              "to": "n5",
+              "directed": true
+            },
+            {
+              "from": "n5",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "n6",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "slow",
+              "to": "n1",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "fast",
+              "to": "n1",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "height": 300,
+          "aria": "A linked list whose tail points back into the middle"
+        },
+        "state": {
+          "caption": "Both start at the head"
+        }
+      },
+      "question": "Step both pointers until you can say whether there is a cycle.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s5",
+        "states": {
+          "s0": {
+            "tex": "\\text{slow at 1, fast at 1}",
+            "ops": [
+              {
+                "label": "Move: `slow` 1 step, `fast` 2 steps",
+                "to": "s1"
+              },
+              {
+                "label": "Stop: they are on the same node",
+                "to": "x0",
+                "why": "They start together at the head. Look for a meeting only after a move."
+              }
+            ]
+          },
+          "x0": {
+            "tex": "\\text{Stuck: no move made yet}"
+          },
+          "s1": {
+            "tex": "\\text{slow at 2, fast at 3}",
+            "canvas": {
+              "nodes": {
+                "slow": {
+                  "x": 0.26,
+                  "y": 0.3
+                },
+                "fast": {
+                  "x": 0.46,
+                  "y": 0.7
+                }
+              },
+              "edges": {
+                "e-slow-n1": null,
+                "e-slow-n2": {
+                  "from": "slow",
+                  "to": "n2",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-slow-n3": null,
+                "e-slow-n4": null,
+                "e-slow-n5": null,
+                "e-slow-n6": null,
+                "e-fast-n1": null,
+                "e-fast-n2": null,
+                "e-fast-n3": {
+                  "from": "fast",
+                  "to": "n3",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-fast-n4": null,
+                "e-fast-n5": null,
+                "e-fast-n6": null
+              }
+            },
+            "ops": [
+              {
+                "label": "Move both 1 step",
+                "to": "x1",
+                "why": "At the same speed the gap between them never changes, so they would never meet."
+              },
+              {
+                "label": "Move: `slow` 1 step, `fast` 2 steps",
+                "to": "s2"
+              }
+            ]
+          },
+          "x1": {
+            "tex": "\\text{Stuck: the gap never closes}"
+          },
+          "s2": {
+            "tex": "\\text{slow at 3, fast at 5}",
+            "canvas": {
+              "nodes": {
+                "slow": {
+                  "x": 0.46,
+                  "y": 0.3
+                },
+                "fast": {
+                  "x": 0.86,
+                  "y": 0.7
+                }
+              },
+              "edges": {
+                "e-slow-n1": null,
+                "e-slow-n2": null,
+                "e-slow-n3": {
+                  "from": "slow",
+                  "to": "n3",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-slow-n4": null,
+                "e-slow-n5": null,
+                "e-slow-n6": null,
+                "e-fast-n1": null,
+                "e-fast-n2": null,
+                "e-fast-n3": null,
+                "e-fast-n4": null,
+                "e-fast-n5": {
+                  "from": "fast",
+                  "to": "n5",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-fast-n6": null
+              }
+            },
+            "ops": [
+              {
+                "label": "Move: `slow` 1 step, `fast` 2 steps",
+                "to": "s3"
+              },
+              {
+                "label": "Stop: no cycle",
+                "to": "x2",
+                "why": "`fast` has not reached `None`, so the list has not ended. Keep moving."
+              }
+            ]
+          },
+          "x2": {
+            "tex": "\\text{Stuck: fast never saw None}"
+          },
+          "s3": {
+            "tex": "\\text{slow at 4, fast at 3}",
+            "canvas": {
+              "nodes": {
+                "slow": {
+                  "x": 0.66,
+                  "y": 0.0
+                },
+                "fast": {
+                  "x": 0.46,
+                  "y": 0.7
+                }
+              },
+              "edges": {
+                "e-slow-n1": null,
+                "e-slow-n2": null,
+                "e-slow-n3": null,
+                "e-slow-n4": {
+                  "from": "slow",
+                  "to": "n4",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-slow-n5": null,
+                "e-slow-n6": null,
+                "e-fast-n1": null,
+                "e-fast-n2": null,
+                "e-fast-n3": {
+                  "from": "fast",
+                  "to": "n3",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-fast-n4": null,
+                "e-fast-n5": null,
+                "e-fast-n6": null
+              }
+            },
+            "ops": [
+              {
+                "label": "Stop: `fast` is behind `slow`, so something is wrong",
+                "to": "x3",
+                "why": "`fast` is behind only because it went round the cycle. It is now closing in from behind."
+              },
+              {
+                "label": "Move: `slow` 1 step, `fast` 2 steps",
+                "to": "s4"
+              }
+            ]
+          },
+          "x3": {
+            "tex": "\\text{Stuck: fast has lapped slow}"
+          },
+          "s4": {
+            "tex": "\\text{slow at 5, fast at 5}",
+            "canvas": {
+              "nodes": {
+                "slow": {
+                  "x": 0.86,
+                  "y": 0.3
+                },
+                "fast": {
+                  "x": 0.86,
+                  "y": 0.7
+                }
+              },
+              "edges": {
+                "e-slow-n1": null,
+                "e-slow-n2": null,
+                "e-slow-n3": null,
+                "e-slow-n4": null,
+                "e-slow-n5": {
+                  "from": "slow",
+                  "to": "n5",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-slow-n6": null,
+                "e-fast-n1": null,
+                "e-fast-n2": null,
+                "e-fast-n3": null,
+                "e-fast-n4": null,
+                "e-fast-n5": {
+                  "from": "fast",
+                  "to": "n5",
+                  "directed": true,
+                  "dashed": true
+                },
+                "e-fast-n6": null
+              }
+            },
+            "ops": [
+              {
+                "label": "They meet: there is a cycle",
+                "to": "s5"
+              },
+              {
+                "label": "Move: `slow` 1 step, `fast` 2 steps",
+                "to": "x4",
+                "why": "They are on the same node. That meeting proves the cycle; stop here."
+              }
+            ]
+          },
+          "x4": {
+            "tex": "\\text{Stuck: the meeting was missed}"
+          },
+          "s5": {
+            "tex": "\\text{Cycle found at node 5}",
+            "canvas": {
+              "highlight": [
+                "n5"
+              ],
+              "caption": "They met at 5 after 4 moves"
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After each move, are they on the same node?"
+        },
+        {
+          "rung": "point",
+          "text": "`fast` enters the cycle first and goes round it.",
+          "highlight": [
+            "n5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Positions after each move: (2, 3), (3, 5), (4, 3), (5, 5). They meet at 5 after four moves."
+        }
+      ],
+      "feedback": {
+        "correct": "`fast` lapped the cycle and caught `slow` at node 5.",
+        "generic": "Not quite right. Keep moving `slow` 1 and `fast` 2 until they share a node."
+      },
+      "explain": {
+        "text": "Inside the cycle `fast` gains one node per move, so it must land on `slow` rather than jump over it. This is **Floyd's cycle detection**, or the tortoise and the hare. It uses two names: $O(1)$ extra space.",
+        "canvas": {
+          "nodes": {
+            "slow": {
+              "x": 0.86,
+              "y": 0.3
+            },
+            "fast": {
+              "x": 0.86,
+              "y": 0.7
+            }
+          },
+          "edges": {
+            "e-slow-n1": null,
+            "e-slow-n2": null,
+            "e-slow-n3": null,
+            "e-slow-n4": null,
+            "e-slow-n5": {
+              "from": "slow",
+              "to": "n5",
+              "directed": true,
+              "dashed": true
+            },
+            "e-slow-n6": null,
+            "e-fast-n1": null,
+            "e-fast-n2": null,
+            "e-fast-n3": null,
+            "e-fast-n4": null,
+            "e-fast-n5": {
+              "from": "fast",
+              "to": "n5",
+              "directed": true,
+              "dashed": true
+            },
+            "e-fast-n6": null
+          },
+          "caption": "Tortoise and hare meet at 5"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Why they must meet",
+      "prose": "When `slow` first reaches node 3, the start of the cycle, `fast` is at node 5. The cycle has 4 nodes. Each move, `fast` gains exactly one node on `slow`.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "1",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "n2",
+              "label": "2",
+              "x": 0.26,
+              "y": 0.5
+            },
+            {
+              "id": "n3",
+              "label": "3",
+              "x": 0.46,
+              "y": 0.5
+            },
+            {
+              "id": "n4",
+              "label": "4",
+              "x": 0.66,
+              "y": 0.2
+            },
+            {
+              "id": "n5",
+              "label": "5",
+              "x": 0.86,
+              "y": 0.5
+            },
+            {
+              "id": "n6",
+              "label": "6",
+              "x": 0.66,
+              "y": 0.8
+            },
+            {
+              "id": "slow",
+              "label": "slow",
+              "x": 0.46,
+              "y": 0.3,
+              "shape": "pill",
+              "colour": 4
+            },
+            {
+              "id": "fast",
+              "label": "fast",
+              "x": 0.86,
+              "y": 0.7,
+              "shape": "pill",
+              "colour": 2
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2",
+              "directed": true
+            },
+            {
+              "from": "n2",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "n3",
+              "to": "n4",
+              "directed": true
+            },
+            {
+              "from": "n4",
+              "to": "n5",
+              "directed": true
+            },
+            {
+              "from": "n5",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "n6",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "slow",
+              "to": "n3",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "fast",
+              "to": "n5",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "height": 300,
+          "aria": "A linked list whose tail points back into the middle"
+        },
+        "state": {
+          "caption": "`fast` is 2 nodes ahead along the cycle, so 2 behind"
+        }
+      },
+      "question": "How many more moves until they meet?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Moves",
+        "accept": "2: `fast` is 2 nodes behind round the cycle and gains 1 per move",
+        "wrong": [
+          {
+            "id": "lap",
+            "value": 4
+          },
+          {
+            "id": "one",
+            "value": 1
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Going round the cycle from 5, how far is it to 3?"
+        },
+        {
+          "rung": "point",
+          "text": "From 5 the cycle runs 6, then back to 3.",
+          "highlight": [
+            "n6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`fast` is 2 nodes behind `slow` along the cycle. Gaining 1 per move, it catches up in 2 moves."
+        }
+      ],
+      "feedback": {
+        "correct": "A gap of 2 closes at 1 per move: 2 moves.",
+        "generic": "Not quite right. Measure how far `fast` is behind `slow`, going forwards round the cycle.",
+        "byKey": {
+          "lap": "That is the cycle's length. The gap is only 2, and it shrinks by 1 each move.",
+          "one": "After one move `slow` is at 4 and `fast` at 3. They are not together yet."
+        }
+      },
+      "explain": {
+        "text": "The gap behind `slow` goes 2, then 1, then 0. It never skips 0, because it shrinks by exactly one. So once `slow` is inside a cycle of length $L$, they meet within $L$ moves. The whole run is $O(n)$.",
+        "canvas": {
+          "highlight": [
+            "n3",
+            "n5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The middle in one pass",
+      "prose": "With no cycle, the same two speeds find the middle. `fast` covers the list twice as quickly, so when it runs out, `slow` is halfway.\n\n```python\nslow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "m0",
+              "label": "10",
+              "x": 0.05,
+              "y": 0.5
+            },
+            {
+              "id": "m1",
+              "label": "20",
+              "x": 0.2,
+              "y": 0.5
+            },
+            {
+              "id": "m2",
+              "label": "30",
+              "x": 0.35,
+              "y": 0.5
+            },
+            {
+              "id": "m3",
+              "label": "40",
+              "x": 0.49999999999999994,
+              "y": 0.5
+            },
+            {
+              "id": "m4",
+              "label": "50",
+              "x": 0.65,
+              "y": 0.5
+            },
+            {
+              "id": "m5",
+              "label": "60",
+              "x": 0.8,
+              "y": 0.5
+            },
+            {
+              "id": "nil",
+              "label": "None",
+              "x": 0.96,
+              "y": 0.5,
+              "shape": "pill"
+            },
+            {
+              "id": "slow",
+              "label": "slow",
+              "x": 0.05,
+              "y": 0.25,
+              "shape": "pill",
+              "colour": 4
+            },
+            {
+              "id": "fast",
+              "label": "fast",
+              "x": 0.05,
+              "y": 0.75,
+              "shape": "pill",
+              "colour": 2
+            }
+          ],
+          "edges": [
+            {
+              "from": "m0",
+              "to": "m1",
+              "directed": true
+            },
+            {
+              "from": "m1",
+              "to": "m2",
+              "directed": true
+            },
+            {
+              "from": "m2",
+              "to": "m3",
+              "directed": true
+            },
+            {
+              "from": "m3",
+              "to": "m4",
+              "directed": true
+            },
+            {
+              "from": "m4",
+              "to": "m5",
+              "directed": true
+            },
+            {
+              "from": "m5",
+              "to": "nil",
+              "directed": true
+            },
+            {
+              "from": "slow",
+              "to": "m0",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "fast",
+              "to": "m0",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "height": 240,
+          "aria": "A linked list with no cycle"
+        },
+        "state": {
+          "caption": "Six nodes, no cycle"
+        }
+      },
+      "question": "Tap the node where `slow` stops.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "m3"
+        ],
+        "max": 1,
+        "only": [
+          "m0",
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where are `slow` and `fast` after each pass of the loop?"
+        },
+        {
+          "rung": "point",
+          "text": "After two passes `slow` is on 30 and `fast` on 50.",
+          "highlight": [
+            "m2",
+            "m4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pass 1: 20 and 30. Pass 2: 30 and 50. Pass 3: 40 and `None`, since 50's next is 60 and 60's next is `None`. The loop stops with `slow` on 40."
+        }
+      ],
+      "feedback": {
+        "correct": "`slow` stops on 40, the second of the two middle nodes.",
+        "generic": "Not quite right. Run the loop pass by pass, checking the condition each time.",
+        "byKey": {
+          "m2": "30 is the first middle. With 50 not the last node, the loop runs a third time and `slow` moves to 40.",
+          "m4": "`slow` moves one node per pass, and the loop runs three times."
+        }
+      },
+      "explain": {
+        "text": "With an even count there are two middles, and this loop returns the second, 40. With 5 nodes it returns the 3rd; with 2 nodes, the 2nd; with 1, the only one. An empty list skips the loop and returns `None`.",
+        "canvas": {
+          "nodes": {
+            "slow": {
+              "x": 0.54
+            },
+            "fast": {
+              "x": 0.96
+            }
+          },
+          "edges": {
+            "e-slow-m0": null,
+            "e-slow-m3": {
+              "from": "slow",
+              "to": "m3",
+              "directed": true,
+              "dashed": true
+            },
+            "e-fast-m0": null,
+            "e-fast-nil": {
+              "from": "fast",
+              "to": "nil",
+              "directed": true,
+              "dashed": true
+            }
+          },
+          "caption": "`fast` is `None`; `slow` is on 40"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The order of the checks",
+      "prose": "A first attempt at `has_cycle`:\n\n```python\ndef has_cycle(head):\n    slow = fast = head\n    while fast.next and fast:\n        slow = slow.next\n        fast = fast.next.next\n        if slow is fast:\n            return True\n    return False\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "m0",
+              "label": "1",
+              "x": 0.05,
+              "y": 0.5
+            },
+            {
+              "id": "m1",
+              "label": "2",
+              "x": 0.2,
+              "y": 0.5
+            },
+            {
+              "id": "nil",
+              "label": "None",
+              "x": 0.96,
+              "y": 0.5,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "m0",
+              "to": "m1",
+              "directed": true
+            },
+            {
+              "from": "m1",
+              "to": "nil",
+              "directed": true
+            }
+          ],
+          "height": 240,
+          "aria": "A linked list with no cycle"
+        },
+        "state": {
+          "caption": "`from_list([1, 2])`: two nodes, no cycle"
+        }
+      },
+      "question": "What does `has_cycle(from_list([1, 2]))` do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Raises `AttributeError: 'NoneType' object has no attribute 'next'`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Returns `False`",
+            "why": "You expected `and` to test `fast` first. It runs left to right, so `fast.next` is read while `fast` is `None`."
+          },
+          {
+            "id": "c",
+            "text": "Returns `True`",
+            "why": "`slow` is node 2 and `fast` is `None` after one pass, so `slow is fast` is false."
+          },
+          {
+            "id": "d",
+            "text": "Loops for ever",
+            "why": "There is no cycle, and the next condition check fails at once."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After the first pass, what is `fast`?"
+        },
+        {
+          "rung": "point",
+          "text": "`fast` jumps from 1 past 2 to the `None` after it.",
+          "highlight": [
+            "nil"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After one pass `fast` is `None`. The condition then evaluates `fast.next` first, which raises before `and fast` is reached."
+        }
+      ],
+      "feedback": {
+        "correct": "`fast.next` on `None` raises before the `fast` check is reached.",
+        "generic": "Not quite right. Run one pass, then evaluate the condition left to right.",
+        "byKey": {
+          "b": "You read the condition as if `fast` were checked first. `and` runs left to right, so `fast.next` comes first."
+        }
+      },
+      "explain": {
+        "text": "After one pass `fast` is `None`, and the condition reads `None.next`. Write `while fast and fast.next:`: if `fast` is `None`, `and` stops before reading `.next`. The same order also handles an empty list.",
+        "canvas": {
+          "highlight": [
+            "nil"
+          ],
+          "caption": "`fast` is `None` here"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "Two pointers at different speeds:\n\n```python\nslow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow is fast:\n        return True   # a cycle\nreturn False          # fast reached the end\n```\n\nNo cycle: `fast` reaches the end and `slow` is at the middle. A cycle: they meet within $L$ moves of `slow` entering it.",
+      "question": "Why can `fast` never jump over `slow` inside the cycle?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Each move closes the gap between them by exactly one node",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`fast` moves two nodes, so it lands on every node",
+            "why": "`fast` skips every other node. What matters is the gap, which shrinks by exactly one."
+          },
+          {
+            "id": "c",
+            "text": "The cycle always has an even length",
+            "why": "The cycle can have any length. The argument works for all of them."
+          },
+          {
+            "id": "d",
+            "text": "`slow` stops and waits for `fast`",
+            "why": "Both keep moving. `fast` gains one node per move."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A gap that shrinks by one each move must reach 0.",
+        "generic": "Not quite right. How does the distance from `fast` to `slow` change on each move?"
+      },
+      "explain": {
+        "text": "`fast` moves 2 and `slow` moves 1, so the gap changes by $2 - 1 = 1$. Counting down by one from any start, it hits 0 exactly. A speed of 3 against 1 could skip over 0."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write both",
+      "prose": "The prelude adds `make_cycle(values, pos)`: it builds the list, then points the tail back at index `pos`. So `make_cycle([1, 2, 3, 4, 5, 6], 2)` is the list from this lesson. A set of seen nodes would pass the tests; aim for $O(1)$ space.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "1",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "n2",
+              "label": "2",
+              "x": 0.26,
+              "y": 0.5
+            },
+            {
+              "id": "n3",
+              "label": "3",
+              "x": 0.46,
+              "y": 0.5
+            },
+            {
+              "id": "n4",
+              "label": "4",
+              "x": 0.66,
+              "y": 0.2
+            },
+            {
+              "id": "n5",
+              "label": "5",
+              "x": 0.86,
+              "y": 0.5
+            },
+            {
+              "id": "n6",
+              "label": "6",
+              "x": 0.66,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2",
+              "directed": true
+            },
+            {
+              "from": "n2",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "n3",
+              "to": "n4",
+              "directed": true
+            },
+            {
+              "from": "n4",
+              "to": "n5",
+              "directed": true
+            },
+            {
+              "from": "n5",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "n6",
+              "to": "n3",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "aria": "A linked list whose tail points back into the middle"
+        },
+        "state": {
+          "caption": "`make_cycle([1, 2, 3, 4, 5, 6], 2)`"
+        }
+      },
+      "question": "Write `has_cycle(head)` and `middle(head)`; for an even count, `middle` returns the second middle node.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "class Node:\n    def __init__(self, val, next=None):\n        self.val = val\n        self.next = next\n\ndef from_list(values):\n    head = None\n    for v in reversed(values):\n        head = Node(v, head)\n    return head\n\ndef to_list(head, limit=10000):\n    out = []\n    while head and len(out) < limit:\n        out.append(head.val)\n        head = head.next\n    return out\n\ndef make_cycle(values, pos):\n    \"\"\"Build a list from values, then point the tail back at index pos (-1: no cycle).\"\"\"\n    head = from_list(values)\n    if head is None or pos < 0:\n        return head\n    cur, target, i = head, None, 0\n    while True:\n        if i == pos:\n            target = cur\n        if cur.next is None:\n            break\n        cur, i = cur.next, i + 1\n    cur.next = target\n    return head\n",
+        "starter": "# Node, from_list, to_list and make_cycle(values, pos) are ready to use.\n\ndef has_cycle(head):\n    ...\n\n\ndef middle(head):\n    ...\n",
+        "solution": "def has_cycle(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n        if slow is fast:\n            return True\n    return False\n\n\ndef middle(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n    return slow\n",
+        "examples": [
+          {
+            "call": "has_cycle(make_cycle([1, 2, 3, 4, 5, 6], 2))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "middle(from_list([1, 2, 3, 4, 5])).val",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "has_cycle(make_cycle([1, 2, 3, 4, 5, 6], 2))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle(from_list([1, 2, 3]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle(None)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle(make_cycle([1], 0))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle(from_list([1, 2]))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle(make_cycle([1, 2], 0))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle(make_cycle(list(range(100000)), 50000))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "middle(from_list([1, 2, 3, 4, 5])).val",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "middle(from_list([10, 20, 30, 40, 50, 60])).val",
+            "expect": "40",
+            "compare": "equal"
+          },
+          {
+            "call": "middle(None)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "middle(from_list([1, 2])).val",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "middle(from_list([7])).val",
+            "expect": "7",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests: an empty list (`None`), one node pointing to itself, two nodes with and without a cycle, and 100,000 nodes. `middle` returns the node; the tests read its `.val`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both functions use the same loop. What differs?"
+        },
+        {
+          "rung": "point",
+          "text": "Check `fast` before `fast.next`, every time round.",
+          "highlight": [
+            "n3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both: `slow = fast = head`, `while fast and fast.next:` move `slow` 1 and `fast` 2. `has_cycle` returns `True` when `slow is fast`, else `False`. `middle` returns `slow`."
+        }
+      ],
+      "feedback": {
+        "correct": "One loop shape, two answers: a meeting, or the middle.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 passes `None`. `while fast and fast.next:` skips the loop when `fast` is `None`.",
+          "test-5": "Test 5 has two nodes and no cycle. An `AttributeError` means `fast.next` was read while `fast` was `None`.",
+          "test-4": "Test 4 is one node pointing to itself. After one move both pointers are on it, so `slow is fast`.",
+          "test-9": "Test 9 has six nodes and expects 40, the second middle. Loop while `fast and fast.next`."
+        }
+      },
+      "explain": {
+        "text": "Compare nodes with `is`, not values with `==`: two nodes can hold the same value. A self-loop is caught after one move. Both functions are $O(n)$ time and $O(1)$ space.",
+        "canvas": {
+          "highlight": [
+            "n3",
+            "n4",
+            "n5",
+            "n6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Where the cycle starts",
+      "prose": "Let $a$ be the steps from the head to the cycle's start. Let $b$ be the steps on to the meeting point, and $L$ the cycle's length. In our list $a = 2$, $b = 2$ and $L = 4$. Order the argument for finding the start.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "1",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "n2",
+              "label": "2",
+              "x": 0.26,
+              "y": 0.5
+            },
+            {
+              "id": "n3",
+              "label": "3",
+              "x": 0.46,
+              "y": 0.5
+            },
+            {
+              "id": "n4",
+              "label": "4",
+              "x": 0.66,
+              "y": 0.2
+            },
+            {
+              "id": "n5",
+              "label": "5",
+              "x": 0.86,
+              "y": 0.5
+            },
+            {
+              "id": "n6",
+              "label": "6",
+              "x": 0.66,
+              "y": 0.8
+            },
+            {
+              "id": "slow",
+              "label": "slow",
+              "x": 0.86,
+              "y": 0.3,
+              "shape": "pill",
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2",
+              "directed": true
+            },
+            {
+              "from": "n2",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "n3",
+              "to": "n4",
+              "directed": true
+            },
+            {
+              "from": "n4",
+              "to": "n5",
+              "directed": true
+            },
+            {
+              "from": "n5",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "n6",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "slow",
+              "to": "n5",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "height": 300,
+          "aria": "A linked list whose tail points back into the middle"
+        },
+        "state": {
+          "caption": "$a = 2$ (1 → 2 → 3), $b = 2$ (3 → 4 → 5), $L = 4$"
+        }
+      },
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "slow",
+            "text": "At the meeting, `slow` has taken $a + b$ steps"
+          },
+          {
+            "id": "fast",
+            "text": "`fast` has taken $2(a + b)$; the extra $a + b$ is whole laps, so $a + b = kL$"
+          },
+          {
+            "id": "solve",
+            "text": "So $a = kL - b$: from the meeting point, $a$ steps forward reach the start"
+          },
+          {
+            "id": "reset",
+            "text": "Reset one pointer to the head and move both 1 step at a time; they meet at the start"
+          }
+        ],
+        "answer": [
+          "slow",
+          "fast",
+          "solve",
+          "reset"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which line is a fact about `slow` alone?"
+        },
+        {
+          "rung": "point",
+          "text": "`slow` stands $b$ steps into the cycle.",
+          "highlight": [
+            "n5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count `slow`'s steps, then `fast`'s. Their difference is whole laps. Solve for $a$, then use it to place both pointers."
+        }
+      ],
+      "feedback": {
+        "correct": "Steps, laps, solve for $a$, then walk $a$ steps from both ends.",
+        "generic": "Not quite right. Start from what each pointer has walked, then compare them.",
+        "byKey": {
+          "reset": "The reset is the algorithm. It comes last, once $a = kL - b$ says why it works."
+        }
+      },
+      "explain": {
+        "text": "Here $a + b = 4 = 1 \\times L$, so $k = 1$. From the meeting point 5, $a = 2$ steps go 6, then 3; from the head, 2 steps go 2, then 3. Both arrive at 3, the start of the cycle.",
+        "canvas": {
+          "highlight": [
+            "n3"
+          ],
+          "caption": "Head and meeting point are both 2 steps from node 3"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A pricing-rule chain",
+      "prose": "A pricing system falls back from rule to rule. `fallback` maps each rule to the next one, or to `None`; a rule missing from the dict has no fallback. A bad edit can create a loop, and the pricer then hangs. Check a chain without storing it.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "p",
+              "label": "p",
+              "x": 0.1,
+              "y": 0.5
+            },
+            {
+              "id": "q",
+              "label": "q",
+              "x": 0.35,
+              "y": 0.5
+            },
+            {
+              "id": "r",
+              "label": "r",
+              "x": 0.6,
+              "y": 0.2
+            },
+            {
+              "id": "s",
+              "label": "s",
+              "x": 0.6,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "p",
+              "to": "q",
+              "directed": true
+            },
+            {
+              "from": "q",
+              "to": "r",
+              "directed": true
+            },
+            {
+              "from": "r",
+              "to": "s",
+              "directed": true
+            },
+            {
+              "from": "s",
+              "to": "q",
+              "directed": true
+            }
+          ],
+          "height": 240,
+          "aria": "Pricing rules p, q, r, s with a loop q to r to s to q"
+        },
+        "state": {
+          "caption": "`{\"p\": \"q\", \"q\": \"r\", \"r\": \"s\", \"s\": \"q\"}`: a loop"
+        }
+      },
+      "question": "Write `has_loop(fallback, start)`: `True` if following fallbacks from `start` never ends, using $O(1)$ extra space.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def has_loop(fallback, start):\n    slow = fast = start\n    ...\n",
+        "solution": "def has_loop(fallback, start):\n    slow = fast = start\n    while fast is not None and fallback.get(fast) is not None:\n        slow = fallback.get(slow)\n        fast = fallback.get(fallback.get(fast))\n        if fast is not None and slow == fast:\n            return True\n    return False\n",
+        "examples": [
+          {
+            "call": "has_loop({\"p\": \"q\", \"q\": \"r\", \"r\": \"s\", \"s\": \"q\"}, \"p\")",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({\"spot\": \"mid\", \"mid\": \"last\", \"last\": None}, \"spot\")",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "has_loop({\"spot\": \"mid\", \"mid\": \"last\", \"last\": None}, \"spot\")",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({\"a\": \"b\", \"b\": \"c\", \"c\": \"a\"}, \"a\")",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({\"a\": \"a\"}, \"a\")",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({}, \"x\")",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({\"x\": \"y\"}, \"x\")",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({\"p\": \"q\", \"q\": \"r\", \"r\": \"s\", \"s\": \"q\"}, \"p\")",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({\"p\": \"q\", \"q\": None, \"r\": \"r\"}, \"p\")",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_loop({**{i: i + 1 for i in range(100000)}, 100000: 50000}, 0)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: a chain ending in `None`, a rule pointing to itself, an empty dict and a missing rule. Test 8 is a chain of 100,000 rules that loops."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What plays the part of `.next` here?"
+        },
+        {
+          "rung": "point",
+          "text": "`fallback.get(rule)` gives the next rule, or `None` when there is none.",
+          "highlight": [
+            "q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Loop `while fast is not None and fallback.get(fast) is not None:`. Move `slow = fallback.get(slow)` and `fast = fallback.get(fallback.get(fast))`. Return `True` when `fast` is not `None` and they are equal; else `False` after the loop."
+        }
+      ],
+      "feedback": {
+        "correct": "Floyd's method works on any chain where each item names the next.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is a rule that falls back to itself. After one move both pointers are on it.",
+          "test-4": "Test 4 has an empty dict. Use `fallback.get(fast)` so a missing rule counts as `None`, not a `KeyError`.",
+          "test-5": "Test 5: `\"y\"` is not in the dict, so the chain ends there. Use `.get` for both of `fast`'s steps, so a missing rule gives `None`."
+        }
+      },
+      "explain": {
+        "text": "`fallback[x]` plays the part of `x.next`, and a missing key plays `None`. Rule names are strings, so `==` compares them. The check needs two names, however long the chain.",
+        "canvas": {
+          "highlight": [
+            "q",
+            "r",
+            "s"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Move `slow` one step and `fast` two. Without a cycle, `fast` reaches the end and `slow` is at the middle.",
+      "With a cycle, the gap shrinks by one node per move, so they meet within one lap: $O(n)$ time, $O(1)$ space.",
+      "After they meet, start one pointer at the head and one at the meeting point. Moving one step each, they meet at the cycle's start."
+    ],
+    "formula": {
+      "name": "Floyd's cycle start",
+      "tex": "a + b = kL \\;\\Rightarrow\\; a = kL - b",
+      "note": "$a$: head to cycle start; $b$: start to meeting point; $L$: cycle length."
+    },
+    "trap": "`while fast.next and fast` reads `.next` from `None` at the end of a list. Test `fast` first: `while fast and fast.next`."
+  },
+  "quiz": [
+    {
+      "id": "q-self-loop",
+      "difficulty": 2,
+      "prose": "A single node whose `next` is itself: `n = Node(5); n.next = n`.",
+      "question": "What does `has_cycle(n)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`True`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`False`",
+            "why": "`n.next` is `n`, not `None`, so the loop runs, and after one move both pointers are on `n`."
+          },
+          {
+            "id": "c",
+            "text": "It raises `AttributeError`",
+            "why": "Nothing here is `None`: every `.next` leads back to `n`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A node pointing to itself is a cycle of length 1.",
+        "generic": "Not quite right. Where are both pointers after one move?"
+      },
+      "explain": {
+        "text": "`slow` moves to `n.next`, which is `n`; `fast` moves two steps, also to `n`. So `slow is fast` after one move, and it returns `True`."
+      }
+    },
+    {
+      "id": "q-middle4",
+      "difficulty": 2,
+      "prose": "`middle` uses `while fast and fast.next:` and runs on 1 → 2 → 3 → 4.",
+      "question": "Which node does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "3",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "2",
+            "why": "That is the first middle. The loop runs twice here, so `slow` reaches 3."
+          },
+          {
+            "id": "c",
+            "text": "4",
+            "why": "`slow` moves once per pass and there are only two passes."
+          },
+          {
+            "id": "d",
+            "text": "`None`",
+            "why": "`slow` never reaches `None`; only `fast` does."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Two passes put `slow` on 3, the second middle.",
+        "generic": "Not quite right. Run the loop pass by pass."
+      },
+      "explain": {
+        "text": "Pass 1: `slow` 2, `fast` 3. Pass 2: `slow` 3, `fast` `None`. The loop stops and returns 3."
+      }
+    },
+    {
+      "id": "q-space",
+      "difficulty": 3,
+      "prose": "A chain of 10,000,000 linked records may contain a loop.",
+      "question": "How much extra memory do the two approaches need?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A set of seen nodes: up to 10,000,000 entries; Floyd: two names",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Both need $O(n)$ memory",
+            "why": "Floyd stores only `slow` and `fast`, whatever the length."
+          },
+          {
+            "id": "c",
+            "text": "Both need $O(1)$ memory",
+            "why": "The set stores a reference to every node it passes."
+          },
+          {
+            "id": "d",
+            "text": "Floyd needs more, because `fast` visits nodes twice",
+            "why": "Visiting costs time, not memory. Floyd remembers nothing it has passed."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Same $O(n)$ time; $O(n)$ against $O(1)$ space.",
+        "generic": "Not quite right. What does each method have to remember?"
+      },
+      "explain": {
+        "text": "The set grows with every node, so it may hold all 10,000,000. Floyd keeps two references and still finishes in $O(n)$ time. That is the reason interviewers ask for it."
+      }
+    },
+    {
+      "id": "q-track",
+      "difficulty": 3,
+      "prose": "A tortoise and a hare start together on a 400 m circular track. The hare runs twice as fast. Neither stops.",
+      "question": "How far has the tortoise run when the hare first catches it again?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 400,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "m",
+        "label": "Distance",
+        "accept": "400 m: the hare has run 800 m, one lap more",
+        "wrong": [
+          {
+            "id": "hare",
+            "value": 800
+          },
+          {
+            "id": "half",
+            "value": 200
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The hare gains one full lap when the tortoise has run 400 m.",
+        "generic": "Not quite right. The hare must gain exactly one lap, 400 m.",
+        "byKey": {
+          "hare": "That is the hare's distance. The tortoise covers half of it.",
+          "half": "At 200 m the hare has run 400 m: one lap, but the tortoise is not at the start."
+        }
+      },
+      "explain": {
+        "text": "The hare gains as much ground as the tortoise covers. To lap it, the hare must gain 400 m, so the tortoise runs 400 m and the hare 800 m. In the list, the lap is the cycle and the gain is one node per move."
+      }
+    }
+  ]
+}

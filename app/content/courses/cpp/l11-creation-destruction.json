@@ -1,0 +1,1307 @@
+{
+ "id": "l11-creation-destruction",
+ "course": "cpp",
+ "title": "Constructors and destructors",
+ "minutes": 15,
+ "objectives": [
+  "Control what happens when an object is created, copied and destroyed.",
+  "Choose between the rule of zero and the rule of five."
+ ],
+ "skills": [
+  "cp-classes",
+  "cp-memory"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Last in, first out",
+   "prose": "A **destructor**, written `~Logger()`, runs when an object is destroyed. This `Logger` prints when it is made and when it is destroyed.\n\n```cpp\nstruct Logger {\n    std::string name;\n    Logger(std::string n) : name(n) {\n        std::cout << \"open \" << name << '\\n';\n    }\n    ~Logger() { std::cout << \"close \" << name << '\\n'; }\n};\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "int main() {",
+      "    Logger a(\"a\");",
+      "    Logger b(\"b\");",
+      "    std::cout << \"work\\n\";",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Put the program's output in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "oa",
+      "text": "`open a`"
+     },
+     {
+      "id": "ob",
+      "text": "`open b`"
+     },
+     {
+      "id": "w",
+      "text": "`work`"
+     },
+     {
+      "id": "cb",
+      "text": "`close b`"
+     },
+     {
+      "id": "ca",
+      "text": "`close a`"
+     }
+    ],
+    "answer": [
+     "oa",
+     "ob",
+     "w",
+     "cb",
+     "ca"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Both objects live until the closing brace of `main`."
+    },
+    {
+     "rung": "point",
+     "text": "At this brace both are destroyed, one after the other.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "They go in reverse order of construction: `b` was built last, so it closes first."
+    }
+   ],
+   "feedback": {
+    "correct": "Built a, b; destroyed b, a.",
+    "generic": "Not quite right. Ask which object was built last.",
+    "byKey": {
+     "ca": "You closed `a` first. Objects are destroyed in reverse order: `b` was built last, so it closes first. `b` might use `a`, so `a` must outlive it.",
+     "w": "`work` prints while both objects are alive, before the closing brace.",
+     "cb": "Nothing closes until `main` reaches its closing brace, after `work`."
+    }
+   },
+   "explain": {
+    "text": "Objects are destroyed in reverse order of construction, like plates off a stack. `b` may depend on `a`, so `a` must outlive it. Python gives no such promise about when `__del__` runs; C++ does.",
+    "canvas": {
+     "highlight": [
+      "l5"
+     ],
+     "tone": {
+      "l5": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Where an object ends",
+   "prose": "Braces make a **scope**: a block where names live. Here `b` is declared inside an inner pair of braces. Same `Logger` as before.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "int main() {",
+      "    Logger a(\"a\");",
+      "    {",
+      "        Logger b(\"b\");",
+      "        std::cout << \"work\\n\";",
+      "    }",
+      "    Logger c(\"c\");",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Tap the line where `b`'s destructor runs.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l6"
+    ],
+    "countWord": "tapped",
+    "max": 1
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which braces enclose the line that declares `b`?"
+    },
+    {
+     "rung": "point",
+     "text": "`b` is declared here.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`b` lives until the closing brace of the block it was declared in."
+    }
+   ],
+   "feedback": {
+    "correct": "`b` dies at the end of its scope, line 6.",
+    "generic": "Not quite right. Find the closing brace of the block that declares `b`.",
+    "byKey": {
+     "l5": "That is the last line that uses `b`. C++ does not track uses: `b` lives until its scope's closing brace.",
+     "l8": "That brace ends `a` and `c`. `b` was declared in the inner block, which ends earlier.",
+     "l4": "That line builds `b`. Its destructor runs when its scope ends.",
+     "l7": "By line 7 the inner block has already ended, so `b` is gone."
+    }
+   },
+   "explain": {
+    "text": "An object on the stack lives until the closing brace of its scope. So `b` closes on line 6, before `c` is even built. The rule depends only on the braces, never on when a name was last used.",
+    "canvas": {
+     "highlight": [
+      "l3",
+      "l6"
+     ],
+     "tone": {
+      "l6": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two scopes",
+   "prose": "Same program. `c` is built and never used.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "int main() {",
+      "    Logger a(\"a\");",
+      "    {",
+      "        Logger b(\"b\");",
+      "        std::cout << \"work\\n\";",
+      "    }",
+      "    Logger c(\"c\");",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Put the whole output in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "oa",
+      "text": "`open a`"
+     },
+     {
+      "id": "ob",
+      "text": "`open b`"
+     },
+     {
+      "id": "w",
+      "text": "`work`"
+     },
+     {
+      "id": "cb",
+      "text": "`close b`"
+     },
+     {
+      "id": "oc",
+      "text": "`open c`"
+     },
+     {
+      "id": "cc",
+      "text": "`close c`"
+     },
+     {
+      "id": "ca",
+      "text": "`close a`"
+     }
+    ],
+    "answer": [
+     "oa",
+     "ob",
+     "w",
+     "cb",
+     "oc",
+     "cc",
+     "ca"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Walk the lines from top to bottom, printing as each object starts and ends."
+    },
+    {
+     "rung": "point",
+     "text": "Line 6 ends the inner scope.",
+     "highlight": [
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "a, b, work, close b at line 6, then c, and at line 8 close c before close a."
+    }
+   ],
+   "feedback": {
+    "correct": "Each brace ends what it owns, newest first.",
+    "generic": "Not quite right. Walk the lines in order and note every brace that ends a scope.",
+    "byKey": {
+     "oc": "`c` is built on line 7, after the inner scope has closed `b`.",
+     "ca": "At the last brace both `a` and `c` are alive. `c` was built later, so it closes first.",
+     "cb": "`b` closes at line 6, before `c` exists.",
+     "cc": "`c` is never used, but it is still an object. Its destructor runs at the end of `main`, before `a`'s."
+    }
+   },
+   "explain": {
+    "text": "Line 6 closes `b`. At line 8 `c` and `a` are both alive, so they close newest first. `c` was never used, yet its constructor and destructor both ran: an object's life follows its scope, not its uses.",
+    "canvas": {
+     "highlight": [
+      "l6",
+      "l8"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Produce the order",
+   "prose": "Now write `Logger` yourself and make a program produce that shape. It reads three names. The first lives for the whole program. The second lives in an inner scope that also prints `work`. The third is built after that scope ends.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./main",
+      "feed book risk",
+      "open feed",
+      "open book",
+      "work",
+      "close book",
+      "open risk",
+      "close risk",
+      "close feed"
+     ],
+     "title": "What it should do"
+    },
+    "state": {
+     "tone": {
+      "l2": "muted"
+     },
+     "caption": "You type line 2; the program prints the rest."
+    }
+   },
+   "question": "Write the constructor and destructor of `Logger`, then `main`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <iostream>\n#include <string>\n\nclass Logger {\npublic:\n    // constructor: print \"open \" and the name\n    // destructor: print \"close \" and the name\n};\n\nint main() {\n    std::string x, y, z;\n    std::cin >> x >> y >> z;\n    // three Loggers, two scopes\n}\n",
+    "solution": "#include <iostream>\n#include <string>\n\nclass Logger {\npublic:\n    explicit Logger(const std::string& name) : name_(name) {\n        std::cout << \"open \" << name_ << '\\n';\n    }\n    ~Logger() { std::cout << \"close \" << name_ << '\\n'; }\nprivate:\n    std::string name_;\n};\n\nint main() {\n    std::string x, y, z;\n    std::cin >> x >> y >> z;\n    Logger first(x);\n    {\n        Logger second(y);\n        std::cout << \"work\\n\";\n    }\n    Logger third(z);\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "feed book risk\n",
+      "expect": "open feed\nopen book\nwork\nclose book\nopen risk\nclose risk\nclose feed\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "feed book risk\n",
+      "expect": "open feed\nopen book\nwork\nclose book\nopen risk\nclose risk\nclose feed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "md\npricer\nlog\n",
+      "expect": "open md\nopen pricer\nwork\nclose pricer\nopen log\nclose log\nclose md\n",
+      "exact": true
+     },
+     {
+      "compare": "stdout",
+      "stdin": "LSE BATS CBOE\n",
+      "expect": "open LSE\nopen BATS\nwork\nclose BATS\nopen CBOE\nclose CBOE\nclose LSE\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "a b c\n",
+      "expect": "open a\nopen b\nwork\nclose b\nopen c\nclose c\nclose a\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 4 times with different names on `std::cin` and compares what it prints; one run compares character for character."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The constructor prints `open` and the name; `~Logger()` prints `close` and the name."
+    },
+    {
+     "rung": "point",
+     "text": "This line comes from the destructor of the first logger.",
+     "highlight": [
+      "l9"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "In `main`: `Logger first(x);` then `{ Logger second(y); std::cout << \"work\\n\"; }` then `Logger third(z);`."
+    }
+   ],
+   "feedback": {
+    "correct": "The braces alone decide when each `close` prints.",
+    "generic": "Not quite right. Compare your output with the expected lines under the editor.",
+    "byKey": {
+     "compile": "The compiler stopped. Check that the destructor is spelt `~Logger()`, with no return type and no arguments.",
+     "test-1": "Compare the order of your `close` lines with the expected output. An inner pair of braces must end before `third` is built."
+    }
+   },
+   "explain": {
+    "text": "You never call a destructor yourself. The inner braces end `second`, and the end of `main` ends `third`, then `first`. This is how C++ releases files, locks and connections without a `with` block."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Declaration order wins",
+   "prose": "Members are built in the order they are **declared** in the class, whatever order the initialiser list names them. With `-Wall`, clang warns when the two disagree.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "active": "left",
+    "left": {
+     "kind": "console",
+     "params": {
+      "title": "main.cpp",
+      "lines": [
+       "#include <vector>",
+       "",
+       "class Window {",
+       "public:",
+       "    Window(int n) : n_(n), data_(n_, 0.0) {}",
+       "private:",
+       "    std::vector<double> data_;",
+       "    int n_;",
+       "};",
+       "",
+       "int main() {",
+       "    Window w(20);",
+       "}"
+      ],
+      "numbers": true
+     },
+     "state": {
+      "tone": {
+       "l5": "err"
+      }
+     }
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "title": "Terminal",
+      "lines": [
+       "$ clang++ -std=c++17 -Wall main.cpp",
+       "main.cpp:5:21: warning: field 'n_' will be initialized after field 'data_' [-Wreorder-ctor]",
+       "    5 |     Window(int n) : n_(n), data_(n_, 0.0) {}",
+       "      |                     ^~~~~  ~~~~~~~~~~~~~~",
+       "main.cpp:5:34: warning: field 'n_' is uninitialized when used here [-Wuninitialized]",
+       "    5 |     Window(int n) : n_(n), data_(n_, 0.0) {}",
+       "      |                                  ^",
+       "2 warnings generated."
+      ]
+     },
+     "state": {
+      "tone": {
+       "l2": "err",
+       "l5": "err"
+      }
+     }
+    }
+   },
+   "question": "`Window w(20)` runs. What size does `data_` get?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Unpredictable: `n_` is read before it is set",
+      "correct": true
+     },
+     {
+      "id": "twenty",
+      "text": "20",
+      "why": "You read the list left to right. `data_` is declared first, so it is built first, from an `n_` not yet set."
+     },
+     {
+      "id": "zero",
+      "text": "0, because `n_` starts at zero",
+      "why": "An `int` member is not zeroed. Reading it before it is set is undefined behaviour."
+     },
+     {
+      "id": "error",
+      "text": "A compile error",
+      "why": "These are warnings: the program builds. That is why they are worth reading."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which member is declared first, on lines 7 and 8?"
+    },
+    {
+     "rung": "point",
+     "text": "The second warning names the exact problem.",
+     "highlight": [
+      "right:l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`data_` is built first, using `n_`, which is built second."
+    }
+   ],
+   "feedback": {
+    "correct": "`data_` is built first, from an `n_` that holds garbage.",
+    "generic": "Not quite right. Members are built in declaration order.",
+    "byKey": {
+     "twenty": "You read the list left to right. `data_` is declared first, so it is built first, from an `n_` not yet set."
+    }
+   },
+   "explain": {
+    "text": "Declaration order decides, so `data_(n_, 0.0)` reads `n_` before `n_(n)` runs. Build `data_` from the parameter, `data_(n, 0.0)`, or declare `n_` first. Keep the list in declaration order and the warning goes away.",
+    "canvas": {
+     "left": {
+      "highlight": [
+       "l7",
+       "l8"
+      ]
+     },
+     "right": {
+      "highlight": [
+       "l2",
+       "l5"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A copy you did not write",
+   "prose": "Same `Logger`. Now one is made from another.\n\n```cpp\nint main() {\n    Logger a(\"a\");\n    Logger b = a;\n}\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a: \"a\"",
+       "x": 0.2,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "b",
+       "label": "b: \"a\"",
+       "x": 0.8,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "b",
+       "label": "Logger b = a;",
+       "dashed": true
+      }
+     ],
+     "height": 160
+    },
+    "state": {}
+   },
+   "question": "How many lines of output start with `close`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Number of close lines",
+    "accept": "2: `open a`, `close a`, `close a`.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many `Logger` objects exist at the end of `main`?"
+    },
+    {
+     "rung": "point",
+     "text": "`b` is a second object holding a copy of `a`'s name.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Two objects, two destructors. The copy itself printed nothing."
+    }
+   ],
+   "feedback": {
+    "correct": "Two objects, so two destructors: `close a` twice.",
+    "generic": "Not quite right. Count the objects alive at the closing brace.",
+    "byKey": {
+     "one": "You counted one object because only one constructor printed. `b` was built by a constructor that prints nothing, but it still has a destructor.",
+     "three": "Only two objects exist. The copy made `b`; it did not make a third."
+    }
+   },
+   "explain": {
+    "text": "`Logger b = a;` builds `b` with the **copy constructor**, `Logger(const Logger&)`. The compiler wrote one for you: it copies each member and prints nothing. Both objects are destroyed, so `close a` prints twice.",
+    "canvas": {
+     "highlight": [
+      "a",
+      "b"
+     ],
+     "caption": "Two objects, two destructors"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Which one runs",
+   "prose": "A class has four ways to fill an object from another. The **copy constructor** builds a new object. **Copy assignment**, `operator=`, overwrites one that exists. `std::move(a)` marks `a` as finished with, so its contents can be taken: a **move**.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "line",
+      "what runs"
+     ],
+     "rows": [
+      [
+       "`Buffer a(3, 1.5);`",
+       "?"
+      ],
+      [
+       "`Buffer b = a;`",
+       "?"
+      ],
+      [
+       "`Buffer c(a);`",
+       "?"
+      ],
+      [
+       "`b = a;`",
+       "?"
+      ],
+      [
+       "`Buffer d = std::move(a);`",
+       "?"
+      ],
+      [
+       "`c = std::move(b);`",
+       "?"
+      ]
+     ],
+     "tap": "rows",
+     "align": [
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: tap every line that runs the copy constructor.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1",
+     "r2"
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does the line declare a new object, or change one that exists?"
+    },
+    {
+     "rung": "point",
+     "text": "On this line `b` already exists.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Lines that declare a new `Buffer` from `a` build it: `Buffer b = a;` and `Buffer c(a);`."
+    }
+   ],
+   "feedback": {
+    "correct": "A declaration builds; a plain `=` overwrites.",
+    "generic": "Not quite right. Ask whether each line makes a new object.",
+    "byKey": {
+     "r3": "`b` already exists on this line, so `=` overwrites it: that is copy assignment, not construction.",
+     "r4": "`std::move(a)` lets the new object take `a`'s contents: the move constructor runs.",
+     "r5": "`c` exists and takes `b`'s contents: move assignment.",
+     "r0": "That builds a `Buffer` from two numbers: an ordinary constructor.",
+     "r1": "`Buffer b = a;` declares `b`, so it builds a new object. The `=` in a declaration is not assignment, unlike Python."
+    }
+   },
+   "explain": {
+    "text": "A declaration always builds, even when it is written with `=`. Assignment needs an object that already exists. `std::move` changes which one runs, from copy to move.",
+    "canvas": {
+     "values": {
+      "r0c1": "constructor",
+      "r1c1": "copy constructor",
+      "r2c1": "copy constructor",
+      "r3c1": "copy assignment",
+      "r4c1": "move constructor",
+      "r5c1": "move assignment"
+     },
+     "highlight": {
+      "rows": [
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Copies and moves for free",
+   "prose": "A `std::vector` member already copies its doubles on a copy and hands over its heap block on a move. So the compiler's versions are right. `= default` asks for them by name.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "line",
+      "what runs"
+     ],
+     "rows": [
+      [
+       "`Buffer b = a;`",
+       "copy: b gets its own doubles"
+      ],
+      [
+       "`Buffer b = std::move(a);`",
+       "move: b takes a's block; a is left empty"
+      ]
+     ],
+     "align": [
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `Buffer(int n, double x)` (n copies of x), `int size() const`, `double get(int i) const`, `void set(int i, double x)`, and default copy and move constructors.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nclass Buffer {\npublic:\n    // Buffer(int n, double x): n copies of x\n    // copy and move constructors: = default\n    // int size() const, double get(int i) const, void set(int i, double x)\nprivate:\n    std::vector<double> data_;\n};\n",
+    "solution": "#include <vector>\n\nclass Buffer {\npublic:\n    Buffer(int n, double x) : data_(n, x) {}\n    Buffer(const Buffer&) = default;\n    Buffer(Buffer&&) = default;\n\n    int size() const { return static_cast<int>(data_.size()); }\n    double get(int i) const { return data_[i]; }\n    void set(int i, double x) { data_[i] = x; }\n\nprivate:\n    std::vector<double> data_;\n};\n",
+    "examples": [
+     {
+      "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+      "call": "a.size()",
+      "expect": 0,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Buffer a(3, 1.5); Buffer b = a;",
+      "call": "a.size() + b.size()",
+      "expect": 6,
+      "compare": "equal"
+     },
+     {
+      "setup": "Buffer a(3, 1.5); Buffer b = a; b.set(0, 9.0);",
+      "call": "a.get(0)",
+      "expect": 1.5,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Buffer a(3, 1.5); Buffer b = a; b.set(0, 9.0);",
+      "call": "b.get(0)",
+      "expect": 9.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+      "call": "b.size()",
+      "expect": 3,
+      "compare": "equal"
+     },
+     {
+      "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+      "call": "a.size()",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "Buffer a(1000000, 0.5); Buffer b = std::move(a);",
+      "call": "b.get(999999)",
+      "expect": 0.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "Buffer(0, 1.0).size()",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "std::is_copy_constructible_v<Buffer>",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests that copy and move buffers, then read both. One test moves a million doubles."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build `data_` in the initialiser list: `data_(n, x)`."
+    },
+    {
+     "rung": "point",
+     "text": "After a move, the source is left empty.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`Buffer(const Buffer&) = default;` and `Buffer(Buffer&&) = default;`, then three one-line functions on `data_`."
+    }
+   ],
+   "feedback": {
+    "correct": "The vector did the work; you only asked for it.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-2": "Test 2 changes `b` and reads `a`. A copy must not share doubles with its source.",
+     "test-5": "Test 5 reads `a.size()` after a move and expects 0. A moved vector leaves its source empty."
+    }
+   },
+   "explain": {
+    "text": "A copy duplicates the doubles; a move passes the heap block over, so a million doubles cost one pointer swap. `std::vector` guarantees the moved-from vector here is empty in practice; the standard only promises it is valid. Use a moved-from object only to assign it a new value or let it die."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Two owners, one block",
+   "prose": "This class owns a heap block through a raw pointer, and frees it in its destructor. Then it is copied.\n\n```cpp\nclass Prices {\npublic:\n    explicit Prices(int n) : data_(new double[n]) {}\n    ~Prices() { delete[] data_; }\nprivate:\n    double* data_;\n};\n\nint main() {\n    Prices a(100);\n    Prices b = a;\n}\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.15,
+       "y": 0.25,
+       "shape": "pill"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.15,
+       "y": 0.75,
+       "shape": "pill"
+      },
+      {
+       "id": "blk",
+       "label": "100 doubles (heap)",
+       "x": 0.72,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "blk",
+       "label": "data_"
+      }
+     ],
+     "height": 200
+    },
+    "state": {}
+   },
+   "question": "What happens when `main` ends?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Both destructors `delete[]` the same block: undefined behaviour, usually a crash",
+      "correct": true
+     },
+     {
+      "id": "deep",
+      "text": "`b` has its own 100 doubles, so each destructor frees its own",
+      "why": "You expected the copy to copy the doubles. The default copy constructor copies the member, a pointer, so both point at one block.",
+      "canvas": {
+       "edges": {
+        "e-b-blk": {
+         "from": "b",
+         "to": "blk",
+         "label": "data_"
+        }
+       }
+      }
+     },
+     {
+      "id": "noctor",
+      "text": "A compile error: `Prices` has no copy constructor",
+      "why": "The compiler writes one for you. It copies each member, and for a pointer that copies the address."
+     },
+     {
+      "id": "leak",
+      "text": "The block leaks, because nobody frees it",
+      "why": "Each destructor frees it, so it is freed twice, not never."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the member that the default copy copies?"
+    },
+    {
+     "rung": "point",
+     "text": "Draw the arrow for `b` after the copy.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`data_` is an address. `b` gets the same address, so two destructors free one block."
+    }
+   ],
+   "feedback": {
+    "correct": "Copying a raw pointer copies an address, not the doubles.",
+    "generic": "Not quite right. Ask what the default copy does with `data_`.",
+    "byKey": {
+     "deep": "You expected the copy to copy the doubles. The default copy constructor copies the member, a pointer, so both point at one block."
+    }
+   },
+   "explain": {
+    "text": "`b.data_` holds the same address as `a.data_`, so the block is freed twice. The fix is to own it with a member that manages itself: `std::vector<double>` copies properly, and `std::unique_ptr<double[]>` refuses to copy. Then the class needs no destructor at all.",
+    "canvas": {
+     "edges": {
+      "e-b-blk": {
+       "from": "b",
+       "to": "blk",
+       "label": "data_"
+      }
+     },
+     "highlight": [
+      "blk"
+     ],
+     "caption": "Two owners: `delete[]` runs twice"
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rule of zero",
+   "prose": "Five **special members** decide how an object is copied, moved and destroyed. You choose between two patterns:\n\n```cpp\n// rule of zero: members manage themselves\nclass Buffer {\n    std::vector<double> data_;   // write none of the five\n};\n\n// rule of five: you own a raw resource\nclass Handle {\npublic:\n    ~Handle();\n    Handle(const Handle&);              // or = delete\n    Handle& operator=(const Handle&);   // or = delete\n    Handle(Handle&&) noexcept;\n    Handle& operator=(Handle&&) noexcept;\n};\n```",
+   "question": "A `Pricer` holds `std::string name_` and `std::unique_ptr<Lattice> grid_`. What do you write for copying, moving and destruction?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Nothing. Copies are refused because `unique_ptr` cannot be copied, and moves work.",
+      "correct": true
+     },
+     {
+      "id": "five",
+      "text": "All five special members, by hand",
+      "why": "That is for a class that owns a raw resource itself. Here every member already manages its own."
+     },
+     {
+      "id": "dtor",
+      "text": "A destructor that calls `delete grid_.get()`",
+      "why": "`unique_ptr` already deletes the lattice. Deleting it again is a double delete."
+     },
+     {
+      "id": "copy",
+      "text": "A copy constructor that copies the pointer",
+      "why": "Two pricers would then share one lattice, and both would try to delete it."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does any member need help to be copied, moved or destroyed?"
+    },
+    {
+     "rung": "step",
+     "text": "`std::string` and `std::unique_ptr` each handle their own copying, moving and destruction."
+    }
+   ],
+   "feedback": {
+    "correct": "Rule of zero: the members already do the right thing.",
+    "generic": "Not quite right. Check what each member does on its own."
+   },
+   "explain": {
+    "text": "With only self-managing members, the compiler's versions are correct: moves move, and the copy is deleted because `unique_ptr` cannot be copied. Write the five only when the class itself holds a raw resource. `= delete` says a copy makes no sense."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A connection that disconnects once",
+   "prose": "A market-data connection must disconnect exactly once, in its destructor. A copy would disconnect twice, so copying is deleted. It may be moved, say out of a factory: the new object takes over, and the old one must be left closed so its destructor does nothing.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.15,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "feed",
+       "label": "LSE feed",
+       "x": 0.85,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "b",
+       "label": "std::move",
+       "dashed": true
+      },
+      {
+       "from": "b",
+       "to": "feed",
+       "label": "open"
+      }
+     ],
+     "height": 160
+    },
+    "state": {
+     "caption": "After the move, only `b` is open."
+    }
+   },
+   "question": "Write the destructor, delete copying, and write the move constructor so that each venue is disconnected exactly once.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <string>\nint disconnects = 0;\nvoid disconnect(const std::string& venue) { ++disconnects; }\n",
+    "starter": "#include <string>\n#include <utility>\n\n// disconnect(venue) is provided: call it once per open connection.\n\nclass Connection {\npublic:\n    explicit Connection(const std::string& venue) : venue_(venue), open_(true) {}\n\n    // destructor: disconnect if still open\n    // copying: deleted\n    // move constructor: take the venue, leave other closed\n\n    bool is_open() const { return open_; }\n    std::string venue() const { return venue_; }\n\nprivate:\n    std::string venue_;\n    bool open_;\n};\n",
+    "solution": "#include <string>\n#include <utility>\n\n// disconnect(venue) is provided: call it once per open connection.\n\nclass Connection {\npublic:\n    explicit Connection(const std::string& venue) : venue_(venue), open_(true) {}\n\n    ~Connection() {\n        if (open_) disconnect(venue_);\n    }\n    Connection(const Connection&) = delete;\n    Connection& operator=(const Connection&) = delete;\n    Connection(Connection&& other) noexcept\n        : venue_(std::move(other.venue_)), open_(other.open_) {\n        other.open_ = false;\n    }\n\n    bool is_open() const { return open_; }\n    std::string venue() const { return venue_; }\n\nprivate:\n    std::string venue_;\n    bool open_;\n};\n",
+    "examples": [
+     {
+      "setup": "{ Connection a(\"LSE\"); Connection b = std::move(a); }",
+      "call": "disconnects",
+      "expect": 1,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "{ Connection a(\"LSE\"); }",
+      "call": "disconnects",
+      "expect": 1,
+      "compare": "equal"
+     },
+     {
+      "setup": "{ Connection a(\"LSE\"); Connection b = std::move(a); }",
+      "call": "disconnects",
+      "expect": 1,
+      "compare": "equal"
+     },
+     {
+      "setup": "Connection a(\"LSE\"); Connection b = std::move(a);",
+      "call": "a.is_open()",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "setup": "Connection a(\"LSE\"); Connection b = std::move(a);",
+      "call": "b.is_open()",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "setup": "Connection a(\"LSE\"); Connection b = std::move(a);",
+      "call": "b.venue()",
+      "expect": "LSE",
+      "compare": "equal"
+     },
+     {
+      "setup": "{ Connection a(\"LSE\"); Connection b(\"CBOE\"); }",
+      "call": "disconnects",
+      "expect": 2,
+      "compare": "equal"
+     },
+     {
+      "setup": "{ Connection a(\"LSE\"); Connection b = std::move(a); Connection c = std::move(b); }",
+      "call": "disconnects",
+      "expect": 1,
+      "compare": "equal"
+     },
+     {
+      "call": "std::is_copy_constructible_v<Connection>",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "call": "std::is_move_constructible_v<Connection>",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 9 hidden tests. Hidden code counts calls to `disconnect` in `disconnects`; two tests ask whether `Connection` can be copied or moved."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The destructor calls `disconnect(venue_)` only while `open_` is true."
+    },
+    {
+     "rung": "point",
+     "text": "After the move, `a` must be closed.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`Connection(Connection&& other) noexcept : venue_(std::move(other.venue_)), open_(other.open_) { other.open_ = false; }` and `Connection(const Connection&) = delete;`."
+    }
+   ],
+   "feedback": {
+    "correct": "One open connection, one disconnect, wherever it moves.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-2": "Test 2 moves `a` into `b`; both destructors run. Leave `other.open_` false in the move constructor.",
+     "test-8": "Test 8 asks whether `Connection` can be copied. Write `Connection(const Connection&) = delete;`.",
+     "test-1": "Test 1 builds one connection and expects one disconnect. Call `disconnect(venue_)` in `~Connection()` while it is open."
+    }
+   },
+   "explain": {
+    "text": "The move constructor takes the venue and closes the source, so only one destructor disconnects. Deleting the copy turns a double disconnect into a compile error. A pricer's lattice works the same way: returned from a factory by move, its buffer is handed over, never copied."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A destructor runs when its object's scope ends, in reverse order of construction; a temporary dies at the end of its full expression. Members are built in declaration order.",
+   "`T b = a;` builds `b` with the copy constructor; `b = a;` on an existing `b` is copy assignment. `std::move(a)` lets a new object take `a`'s contents.",
+   "Rule of zero: hold members that manage themselves (`std::vector`, `std::string`, `std::unique_ptr`) and write no special members. Owning a raw resource needs all five, or `= delete`."
+  ],
+  "formula": {
+   "name": "Order of destruction",
+   "tex": "\\text{built } a, b, c \\;\\Rightarrow\\; \\text{destroyed } c, b, a",
+   "note": "Within one scope, newest first; an inner scope ends at its own closing brace."
+  },
+  "trap": "A class holding a raw pointer gets a default copy that copies the address, so two destructors free one block. Hold a `std::vector` or `std::unique_ptr` instead."
+ },
+ "quiz": [
+  {
+   "id": "q-temporary",
+   "difficulty": 2,
+   "prose": "Same `Logger`, with `open` and `close` messages.\n\n```cpp\nint main() {\n    Logger(\"tmp\");\n    std::cout << \"next\\n\";\n}\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`open tmp`, `close tmp`, `next`",
+      "correct": true
+     },
+     {
+      "id": "scope",
+      "text": "`open tmp`, `next`, `close tmp`",
+      "why": "A temporary has no name, so it does not live to the end of the scope. It dies at the end of its full expression, the `;`."
+     },
+     {
+      "id": "none",
+      "text": "`next` only",
+      "why": "The temporary is really built, so both its constructor and its destructor run."
+     },
+     {
+      "id": "never",
+      "text": "`open tmp`, `next`",
+      "why": "Every object that is built is destroyed. The temporary's destructor runs at the `;`."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A temporary dies at the end of its full expression.",
+    "generic": "Not quite right. A temporary has no scope of its own."
+   },
+   "explain": {
+    "text": "`Logger(\"tmp\");` builds an unnamed object and destroys it at the semicolon. So `close tmp` prints before `next`. A reference to a temporary's insides dangles for the same reason."
+   }
+  },
+  {
+   "id": "q-move-const",
+   "difficulty": 3,
+   "prose": "`Buffer` is the class you wrote, with default copy and move constructors.\n\n```cpp\nconst Buffer a(3, 1.5);\nBuffer b = std::move(a);\nstd::cout << a.size() << '\\n';\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`3`",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "`0`",
+      "why": "`std::move` only casts. On a `const` object it gives `const Buffer&&`, which the move constructor cannot take, so the copy constructor runs."
+     },
+     {
+      "id": "error",
+      "text": "A compile error: you cannot move from a `const` object",
+      "why": "It compiles. The copy constructor accepts a `const` object, so the compiler quietly picks it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A `const` object cannot be moved from, so it is copied.",
+    "generic": "Not quite right. A move must change its source."
+   },
+   "explain": {
+    "text": "A move empties its source, and `a` is `const`, so the copy constructor runs instead. `a` keeps its 3 doubles. Do not mark an object `const` if you plan to move it."
+   }
+  },
+  {
+   "id": "q-factory",
+   "difficulty": 3,
+   "prose": "A pricer's lattice holds 500 doubles. `Lattice` has a copy constructor and a move constructor.\n\n```cpp\nLattice build(int steps) {\n    Lattice grid(steps);\n    // fill grid\n    return grid;\n}\n\nLattice g = build(500);\n```",
+   "question": "How many times are the 500 doubles copied?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "0",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "1",
+      "why": "You expected `return grid;` to copy. A returned local is moved, or built straight into `g`."
+     },
+     {
+      "id": "two",
+      "text": "2",
+      "why": "Neither the return nor `Lattice g = ...` copies. C++17 builds `g` straight from the returned value."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Returning a local by value never copies it.",
+    "generic": "Not quite right. A returned local is moved or built in place."
+   },
+   "explain": {
+    "text": "The compiler usually builds `grid` directly in `g`'s place; if not, it moves it. Either way no double is copied. So return big objects by value: no pointer or out-parameter needed."
+   }
+  },
+  {
+   "id": "q-member-order",
+   "difficulty": 2,
+   "prose": "```cpp\nclass Desk {\n    Logger risk_;\n    Logger feed_;\npublic:\n    Desk() : feed_(\"feed\"), risk_(\"risk\") {}\n};\n\nint main() {\n    Desk d;\n}\n```",
+   "question": "Which line prints first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`open risk`",
+      "correct": true
+     },
+     {
+      "id": "feed",
+      "text": "`open feed`",
+      "why": "You followed the initialiser list. Members are built in declaration order, and `risk_` is declared first."
+     },
+     {
+      "id": "close",
+      "text": "`close feed`",
+      "why": "Nothing closes until `d` is destroyed at the end of `main`."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Declaration order, not list order.",
+    "generic": "Not quite right. Look at the order of the member declarations."
+   },
+   "explain": {
+    "text": "`risk_` is declared first, so it is built first, whatever the list says. At the end the order reverses: `close feed`, then `close risk`."
+   }
+  }
+ ]
+}

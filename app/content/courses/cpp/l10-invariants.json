@@ -1,0 +1,1337 @@
+{
+ "id": "l10-invariants",
+ "course": "cpp",
+ "title": "Classes that keep their data valid",
+ "minutes": 14,
+ "objectives": [
+  "Write a class whose constructor and methods protect an invariant.",
+  "Keep data private, check every change, and mark readers `const`."
+ ],
+ "skills": [
+  "cp-classes",
+  "cp-references"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Nothing stops a struct",
+   "prose": "A quote's bid must stay below its ask. In Python, any code may set `q.bid` to anything. Here is a C++ `struct` doing the same job.\n\n```cpp\nstruct Quote {\n    double bid;\n    double ask;\n};\n\nQuote q{100.2, 100.4};\nq.bid = 100.6;   // meant 100.16\nstd::cout << q.ask - q.bid << '\\n';\n```",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "member",
+      "value"
+     ],
+     "rows": [
+      [
+       "`q.bid`",
+       "100.2"
+      ],
+      [
+       "`q.ask`",
+       "100.4"
+      ]
+     ],
+     "align": [
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "`q` after its first line"
+    }
+   },
+   "question": "What does the last line print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`-0.2`",
+      "correct": true
+     },
+     {
+      "id": "compile",
+      "text": "A compile error, because the bid is now above the ask",
+      "why": "You expected the compiler to know the rule. It checks types only, and 100.6 is a valid `double`."
+     },
+     {
+      "id": "old",
+      "text": "`0.2`",
+      "why": "You used the old bid. The line before set `q.bid` to 100.6, so the ask minus the bid is negative."
+     },
+     {
+      "id": "crash",
+      "text": "The program stops when it runs",
+      "why": "Nothing checks the values at run time either. A struct stores whatever it is given."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which value does `q.bid` hold when the last line runs?"
+    },
+    {
+     "rung": "point",
+     "text": "The assignment changed this cell.",
+     "highlight": [
+      "r0c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The ask is 100.4 and the bid is now 100.6: 100.4 − 100.6."
+    }
+   ],
+   "feedback": {
+    "correct": "The quote is now crossed, and nothing objected.",
+    "generic": "Not quite right. Follow `q.bid` through each line.",
+    "byKey": {
+     "compile": "You expected the compiler to know the rule. It checks types only, and 100.6 is a valid `double`."
+    }
+   },
+   "explain": {
+    "text": "Every member of a `struct` is open to any code, as in Python. The typo made a quote whose bid is above its ask, and it printed a negative spread. Nothing in the language knew the rule.",
+    "canvas": {
+     "values": {
+      "r0c1": "100.6"
+     },
+     "highlight": {
+      "cells": [
+       "r0c1"
+      ]
+     },
+     "caption": "The bid is above the ask: a crossed quote."
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Who may touch what",
+   "prose": "Suppose a type could hide some members from outside code. Here are the members of a better `Quote`. `set_bid(b)` checks `b` against the ask before it stores it.",
+   "canvas": {
+    "kind": "boxes",
+    "params": {
+     "itemKind": "card",
+     "containers": [
+      {
+       "id": "members",
+       "label": "Members of Quote",
+       "kind": "box",
+       "fill": "top",
+       "cols": 5,
+       "items": [
+        {
+         "id": "bid",
+         "label": "bid_"
+        },
+        {
+         "id": "ask",
+         "label": "ask_"
+        },
+        {
+         "id": "mid",
+         "label": "mid()"
+        },
+        {
+         "id": "spread",
+         "label": "spread()"
+        },
+        {
+         "id": "setbid",
+         "label": "set_bid(b)"
+        }
+       ]
+      },
+      {
+       "id": "inside",
+       "label": "Only Quote's own functions",
+       "kind": "box",
+       "cols": 3,
+       "capacity": 5
+      },
+      {
+       "id": "outside",
+       "label": "Any code",
+       "kind": "box",
+       "cols": 3,
+       "capacity": 5
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Drag each member into a box so that no code outside `Quote` can cross the quote.",
+   "widget": {
+    "kind": "place",
+    "mode": "boxes",
+    "answer": {
+     "inside": [
+      "bid",
+      "ask"
+     ],
+     "outside": [
+      "mid",
+      "spread",
+      "setbid"
+     ]
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which members, if anyone could write them, would let outside code skip the check?"
+    },
+    {
+     "rung": "point",
+     "text": "These two hold the numbers the rule is about.",
+     "highlight": [
+      "bid",
+      "ask"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Hide `bid_` and `ask_`. Leave the three functions open: two only read, and `set_bid` checks."
+    }
+   ],
+   "feedback": {
+    "correct": "Data hidden, checked functions open.",
+    "generic": "Not quite right. Ask of each member: could outside code break the rule through it?",
+    "byKey": {
+     "bid": "If any code can write `bid_`, it can set 100.6 and skip every check. Keep it where only `Quote`'s functions reach it.",
+     "ask": "If any code can write `ask_`, it can drop it below the bid. Keep it where only `Quote`'s functions reach it.",
+     "mid": "`mid()` only reads. Hiding it protects nothing and stops everyone from using the quote.",
+     "spread": "`spread()` only reads. Hiding it protects nothing and stops everyone from using the quote.",
+     "setbid": "`set_bid` checks before it stores, so outside code may call it. Hidden, nobody could ever move the bid."
+    }
+   },
+   "explain": {
+    "text": "You hid the data and left open the functions that read or check. C++ calls the hidden part **private** and the open part **public**. Outside code can then change the bid only through `set_bid`, which checks.",
+    "canvas": {
+     "move": {
+      "bid": "inside",
+      "ask": "inside",
+      "mid": "outside",
+      "spread": "outside",
+      "setbid": "outside"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "private, checked by the compiler",
+   "prose": "Here is that split in C++. A **class** marks its sections `public:` and `private:`. A `struct` is the same thing, except its members are public until you say otherwise. Outside code then writes the bid directly.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "active": "left",
+    "left": {
+     "kind": "console",
+     "params": {
+      "title": "main.cpp",
+      "lines": [
+       "class Quote {",
+       "public:",
+       "    Quote(double bid, double ask) : bid_(bid), ask_(ask) {}",
+       "    double mid() const { return (bid_ + ask_) / 2; }",
+       "private:",
+       "    double bid_;",
+       "    double ask_;",
+       "};",
+       "",
+       "int main() {",
+       "    Quote q(100.2, 100.4);",
+       "    q.bid_ = 100.6;",
+       "}"
+      ],
+      "numbers": true
+     },
+     "state": {
+      "tone": {
+       "l12": "err"
+      }
+     }
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "title": "Terminal",
+      "lines": [
+       "$ clang++ -std=c++17 main.cpp",
+       "main.cpp:12:7: error: 'bid_' is a private member of 'Quote'",
+       "   12 |     q.bid_ = 100.6;",
+       "      |       ^",
+       "main.cpp:6:12: note: declared private here",
+       "    6 |     double bid_;",
+       "      |            ^",
+       "1 error generated."
+      ]
+     },
+     "state": {
+      "tone": {
+       "l2": "err"
+      }
+     }
+    }
+   },
+   "question": "What did the compiler refuse?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Code outside the class writing a private member",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "Storing a bid above the ask",
+      "why": "You expected a check on the value. The compiler refused the name `bid_` before looking at any number."
+     },
+     {
+      "id": "order",
+      "text": "Putting `public:` before `private:`",
+      "why": "The sections can come in any order. The error line names a private member."
+     },
+     {
+      "id": "classword",
+      "text": "Using `class` instead of `struct`",
+      "why": "Both are allowed. The error is about who may name `bid_`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the first `error:` line in the terminal."
+    },
+    {
+     "rung": "point",
+     "text": "It names the member and the class.",
+     "highlight": [
+      "right:l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`'bid_' is a private member of 'Quote'`: line 12 is outside the class, so it may not name `bid_`."
+    }
+   ],
+   "feedback": {
+    "correct": "The rule is about names: outside code may not name `bid_`.",
+    "generic": "Not quite right. Read the `error:` line word by word.",
+    "byKey": {
+     "value": "You expected a check on the value. The compiler refused the name `bid_` before looking at any number."
+    }
+   },
+   "explain": {
+    "text": "Line 12 is in `main`, outside `Quote`, so it may not name a private member. Python has no such check: `q._bid = 100.6` runs, because the underscore is only a convention. C++ refuses before the program even exists.",
+    "canvas": {
+     "left": {
+      "highlight": [
+       "l6",
+       "l12"
+      ]
+     },
+     "right": {
+      "highlight": [
+       "l2"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A checked constructor",
+   "prose": "Now write the class. The **initialiser list**, `: bid_(bid), ask_(ask)`, builds each member before the body runs. The body then checks the rule. A bid equal to the ask is refused too: a zero spread is a locked quote. `const` after `mid()` promises the function only reads.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "Quote q(100.2, 100.4);",
+      "q.mid()         // 100.3",
+      "q.spread()      // 0.2",
+      "Quote(100.0, 100.0)   // stops: bid not below ask",
+      "Quote(101.0, 100.0)   // stops: bid not below ask"
+     ],
+     "title": "What it should do"
+    },
+    "state": {
+     "tone": {
+      "l4": "err",
+      "l5": "err"
+     }
+    }
+   },
+   "question": "Write the constructor's check, `double mid() const` and `double spread() const`. A failed check may `throw` or call `std::abort()`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <stdexcept>\n\nclass Quote {\npublic:\n    Quote(double bid, double ask) : bid_(bid), ask_(ask) {\n        // refuse a bid that is not strictly below the ask\n    }\n\n    // double mid() const\n    // double spread() const\n\nprivate:\n    double bid_;\n    double ask_;\n};\n",
+    "solution": "#include <stdexcept>\n\nclass Quote {\npublic:\n    Quote(double bid, double ask) : bid_(bid), ask_(ask) {\n        if (bid_ >= ask_) throw std::invalid_argument(\"bid must be below ask\");\n    }\n\n    double mid() const { return (bid_ + ask_) / 2; }\n    double spread() const { return ask_ - bid_; }\n\nprivate:\n    double bid_;\n    double ask_;\n};\n",
+    "examples": [
+     {
+      "call": "Quote(100.2, 100.4).mid()",
+      "expect": 100.3,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "Quote(100.2, 100.4).mid()",
+      "expect": 100.3,
+      "compare": "isclose"
+     },
+     {
+      "call": "Quote(100.2, 100.4).spread()",
+      "expect": 0.2,
+      "compare": "isclose"
+     },
+     {
+      "setup": "const Quote q(50.0, 50.5);",
+      "call": "q.spread()",
+      "expect": 0.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "Quote(101.0, 100.0).mid()",
+      "compare": "raises"
+     },
+     {
+      "call": "Quote(100.0, 100.0).spread()",
+      "compare": "raises"
+     },
+     {
+      "call": "Quote(99.0, 101.0).mid()",
+      "expect": 100.0,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Doubles are accepted within a relative 1e-9. Two tests build a bad quote and pass only if the program stops: a `throw` ends it here, because this browser build cannot catch exceptions."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put the check in the constructor's body, after the list has built the members."
+    },
+    {
+     "rung": "point",
+     "text": "A locked quote, bid equal to ask, must stop the program too.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`if (bid_ >= ask_) throw std::invalid_argument(\"bid must be below ask\");` then `double mid() const { return (bid_ + ask_) / 2; }`."
+    }
+   ],
+   "feedback": {
+    "correct": "Every `Quote` that exists now has its bid below its ask.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "compile": "The compiler stopped. If the message says a function is not marked const, add `const` after its brackets. If it names `mid` or `spread`, the function is missing.",
+     "test-4": "Test 4 builds a quote with the bid above the ask, and your program carried on. Check in the constructor body.",
+     "test-5": "Test 5 builds a quote with the bid equal to the ask. Refuse it too: use `>=` in the check, not `>`."
+    }
+   },
+   "explain": {
+    "text": "The list builds `bid_` and `ask_`; the body refuses a crossed or locked quote before anyone can use it. `mid` and `spread` are `const`, so they work on a `const Quote&` too. Inside them `bid_` means `this->bid_`, where `this` points at the object the function was called on.\n\n```cpp\nif (bid_ >= ask_) throw std::invalid_argument(\"bid must be below ask\");\n```"
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Two numbers that move together",
+   "prose": "A `Position` holds a quantity of shares and their **average price**. You hold 100 shares bought at £10.00, then buy 300 more at £12.00.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "fill",
+      "shares",
+      "price"
+     ],
+     "rows": [
+      [
+       "buy",
+       "100",
+       "£10.00"
+      ],
+      [
+       "buy",
+       "300",
+       "£12.00"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the average price of the 400 shares, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "label": "Average price in pounds",
+    "accept": "£11.50: $(100 \\times 10 + 300 \\times 12) / 400 = 4600 / 400$.",
+    "wrong": [
+     {
+      "id": "simple",
+      "value": 11.0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "last",
+      "value": 12.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did the 400 shares cost in total?"
+    },
+    {
+     "rung": "point",
+     "text": "300 of the 400 shares cost £12.00 each.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Total cost $100 \\times 10 + 300 \\times 12 = 4600$, over 400 shares."
+    }
+   ],
+   "feedback": {
+    "correct": "£4,600 over 400 shares is £11.50.",
+    "generic": "Not quite right. Divide the total cost by the total shares.",
+    "byKey": {
+     "simple": "You averaged the two prices. Three times as many shares were bought at £12.00, so they pull the average up.",
+     "last": "That is the price of the last buy. The first 100 shares still cost £10.00."
+    }
+   },
+   "explain": {
+    "text": "You weighted each price by its shares: $4600 / 400 = 11.5$. The quantity and the average change together on every buy. A class can make sure they never drift apart.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     },
+     "caption": "$100 \\times 10 + 300 \\times 12 = 4600$, over 400 shares"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "buy and sell",
+   "prose": "Now let the class keep the two numbers consistent. A buy moves the average; a sale does not. This desk forbids going short, so a sale above the holding is refused. A **flat** position, with no shares, has average price 0.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "step",
+      "qty after",
+      "average after"
+     ],
+     "rows": [
+      [
+       "buy 100 at £10.00",
+       "100",
+       "£10.00"
+      ],
+      [
+       "buy 300 at £12.00",
+       "400",
+       "£11.50"
+      ],
+      [
+       "sell 150",
+       "250",
+       "£11.50"
+      ],
+      [
+       "sell 250",
+       "0",
+       "£0.00"
+      ],
+      [
+       "sell 1",
+       "refused",
+       "unchanged"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `buy(int qty, double px)` and `sell(int qty)` to match the table. Refuse a buy of 0 or fewer shares, and any sale above the holding.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <stdexcept>\n\nclass Position {\npublic:\n    int qty() const { return qty_; }\n    double avg_price() const { return avg_; }\n\n    void buy(int qty, double px) {\n        // refuse qty <= 0, then update avg_ and qty_\n    }\n\n    void sell(int qty) {\n        // refuse qty <= 0 or qty > qty_; a flat position has avg_ 0\n    }\n\nprivate:\n    int qty_ = 0;\n    double avg_ = 0.0;\n};\n",
+    "solution": "#include <stdexcept>\n\nclass Position {\npublic:\n    int qty() const { return qty_; }\n    double avg_price() const { return avg_; }\n\n    void buy(int qty, double px) {\n        if (qty <= 0) throw std::invalid_argument(\"buy a positive quantity\");\n        avg_ = (qty_ * avg_ + qty * px) / (qty_ + qty);\n        qty_ += qty;\n    }\n\n    void sell(int qty) {\n        if (qty <= 0 || qty > qty_) throw std::invalid_argument(\"cannot go short\");\n        qty_ -= qty;\n        if (qty_ == 0) avg_ = 0.0;\n    }\n\nprivate:\n    int qty_ = 0;\n    double avg_ = 0.0;\n};\n",
+    "examples": [
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.buy(300, 12.0);",
+      "call": "p.avg_price()",
+      "expect": 11.5,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Position p; p.buy(100, 10.0);",
+      "call": "p.avg_price()",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.buy(300, 12.0);",
+      "call": "p.avg_price()",
+      "expect": 11.5,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.buy(300, 12.0);",
+      "call": "p.qty()",
+      "expect": 400,
+      "compare": "equal"
+     },
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.buy(300, 12.0); p.sell(150);",
+      "call": "p.avg_price()",
+      "expect": 11.5,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.buy(300, 12.0); p.sell(150);",
+      "call": "p.qty()",
+      "expect": 250,
+      "compare": "equal"
+     },
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.sell(100);",
+      "call": "p.avg_price()",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.sell(100); p.buy(50, 20.0);",
+      "call": "p.avg_price()",
+      "expect": 20.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(100, 10.0); p.sell(101);",
+      "call": "p.qty()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Position p; p.buy(0, 10.0);",
+      "call": "p.qty()",
+      "compare": "raises"
+     },
+     {
+      "call": "Position().qty()",
+      "expect": 0,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 10 hidden tests, each a short sequence of buys and sells. Prices are accepted within a relative 1e-9. Three tests pass only if the program stops."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Update the average before you add to `qty_`: the formula needs the old quantity."
+    },
+    {
+     "rung": "point",
+     "text": "The last row sells 1 share of none.",
+     "highlight": [
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`avg_ = (qty_ * avg_ + qty * px) / (qty_ + qty); qty_ += qty;` In `sell`, check, subtract, and reset `avg_` when `qty_` is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Quantity and average now move together, and never go short.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-2": "Test 2 expects £11.50. Weight each price by its shares, and use `qty_` before you add the new shares.",
+     "test-4": "Test 4 sells 150 shares and expects the average to stay £11.50. A sale changes only the quantity.",
+     "test-6": "Test 6 sells everything. Set the average back to 0 when the quantity reaches 0.",
+     "test-8": "Test 8 sells 101 of 100 shares. Refuse before you change `qty_`.",
+     "test-9": "Test 9 buys 0 shares. Without a check the average becomes $0/0$, which is NaN."
+    }
+   },
+   "explain": {
+    "text": "`buy` updates the average from the old quantity, then the quantity. `sell` refuses a short before changing anything, so a refused sale leaves the position as it was. The flat case resets the average, so no stale price survives.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       3,
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Build members in the list",
+   "prose": "A risk limit should never change once it is set, so its member is `const`. This constructor sets it in the body instead of the initialiser list.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "active": "left",
+    "left": {
+     "kind": "console",
+     "params": {
+      "title": "main.cpp",
+      "lines": [
+       "class Limit {",
+       "public:",
+       "    Limit(double m) {",
+       "        max_ = m;",
+       "    }",
+       "private:",
+       "    const double max_;",
+       "};",
+       "",
+       "int main() {",
+       "    Limit l(5e6);",
+       "}"
+      ],
+      "numbers": true
+     },
+     "state": {
+      "tone": {
+       "l4": "err"
+      }
+     }
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "title": "Terminal",
+      "lines": [
+       "$ clang++ -std=c++17 main.cpp",
+       "main.cpp:3:5: error: constructor for 'Limit' must explicitly initialize the const member 'max_'",
+       "    3 |     Limit(double m) {",
+       "      |     ^",
+       "main.cpp:7:18: note: declared here",
+       "main.cpp:4:14: error: cannot assign to non-static data member 'max_' with const-qualified type 'const double'",
+       "    4 |         max_ = m;",
+       "      |         ~~~~ ^",
+       "2 errors generated."
+      ]
+     },
+     "state": {
+      "tone": {
+       "l2": "err",
+       "l6": "err"
+      }
+     }
+    }
+   },
+   "question": "Which constructor compiles?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`Limit(double m) : max_(m) {}`",
+      "correct": true
+     },
+     {
+      "id": "body",
+      "text": "`Limit(double m) { max_ = m; }`",
+      "why": "That is the code that failed. By the time the body runs, `max_` already exists, and a `const` cannot be assigned."
+     },
+     {
+      "id": "this",
+      "text": "`Limit(double m) { this->max_ = m; }`",
+      "why": "`this->max_` is the same member. It is still an assignment after the member was built."
+     },
+     {
+      "id": "local",
+      "text": "`Limit(double m) { const double max_ = m; }`",
+      "why": "That makes a new local variable that hides the member. The member is still never set, so the first error remains."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When does the body of a constructor run: before or after the members exist?"
+    },
+    {
+     "rung": "point",
+     "text": "The first error says the member must be explicitly initialised.",
+     "highlight": [
+      "right:l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Members are built in the initialiser list, before the body. A `const` member can only get its value there."
+    }
+   ],
+   "feedback": {
+    "correct": "The list builds `max_` with its value, once.",
+    "generic": "Not quite right. A `const` member gets its value when it is built, in the list.",
+    "byKey": {
+     "body": "That is the code that failed. By the time the body runs, `max_` already exists, and a `const` cannot be assigned."
+    }
+   },
+   "explain": {
+    "text": "The list builds each member with its value; the body runs after that. Assigning in the body builds the member first, then overwrites it, which a `const` forbids. Use the list for every member, not only `const` ones.",
+    "canvas": {
+     "left": {
+      "highlight": [
+       "l3",
+       "l4"
+      ]
+     },
+     "right": {
+      "highlight": [
+       "l2"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "One unchecked door",
+   "prose": "This `Quote` checks its constructor and keeps its data private. A colleague adds a setter.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "class Quote {",
+      "public:",
+      "    Quote(double bid, double ask) : bid_(bid), ask_(ask) {",
+      "        if (bid_ >= ask_) throw std::invalid_argument(\"crossed\");",
+      "    }",
+      "    void set_bid(double b) { bid_ = b; }",
+      "    double spread() const { return ask_ - bid_; }",
+      "private:",
+      "    double bid_;",
+      "    double ask_;",
+      "};",
+      "",
+      "int main() {",
+      "    Quote q(100.2, 100.4);",
+      "    q.set_bid(100.6);",
+      "    std::cout << q.spread() << '\\n';",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "What does the program print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`-0.2`",
+      "correct": true
+     },
+     {
+      "id": "ctor",
+      "text": "Nothing: it stops, because the constructor checks the bid",
+      "why": "You expected the constructor's check to guard every change. It runs once, when `q` is built; `set_bid` stores 100.6 without asking.",
+      "canvas": {
+       "highlight": [
+        "l6"
+       ]
+      }
+     },
+     {
+      "id": "private",
+      "text": "A compile error, because `bid_` is private",
+      "why": "`set_bid` is a member function, so it may write `bid_`. Private stops outside code, not the class's own functions."
+     },
+     {
+      "id": "old",
+      "text": "`0.2`",
+      "why": "`set_bid` did store 100.6. The spread is 100.4 − 100.6."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When does the constructor's check run?"
+    },
+    {
+     "rung": "point",
+     "text": "This line changes `bid_`. Does it check anything?",
+     "highlight": [
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The check ran once, on line 14. Line 15 calls `set_bid`, which stores 100.6 straight away."
+    }
+   ],
+   "feedback": {
+    "correct": "A private member is only as safe as the functions that write it.",
+    "generic": "Not quite right. Trace line 15 into `set_bid`.",
+    "byKey": {
+     "ctor": "You expected the constructor's check to guard every change. It runs once, when `q` is built; `set_bid` stores 100.6 without asking."
+    }
+   },
+   "explain": {
+    "text": "The constructor checks once. Every function that changes the data must check again, or it is a way round the rule.\n\n```cpp\n// before: skips the rule\nvoid set_bid(double b) { bid_ = b; }\n// after: checks, then stores\nvoid set_bid(double b) {\n    if (b >= ask_) throw std::invalid_argument(\"crossed\");\n    bid_ = b;\n}\n```",
+    "canvas": {
+     "highlight": [
+      "l6"
+     ],
+     "tone": {
+      "l6": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Invariants",
+   "prose": "Bid below ask, and never short: each is an **invariant**, a fact about the members that holds whenever outside code can look. A class keeps one in four places:\n\n```cpp\nclass Quote {\npublic:\n    Quote(double b, double a)       // 1. the constructor\n        : bid_(b), ask_(a) {        //    builds, then checks\n        if (bid_ >= ask_) throw std::invalid_argument(\"\");\n    }\n    void set_bid(double b);         // 2. every change checks\n    double mid() const;             // 3. readers are const\nprivate:\n    double bid_, ask_;              // 4. the data is private\n};\n```",
+   "question": "Which member function of `Quote` can safely skip the check?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`double spread() const`",
+      "correct": true
+     },
+     {
+      "id": "setask",
+      "text": "`void set_ask(double a)`",
+      "why": "It changes `ask_`, so it could drop the ask below the bid. It must check."
+     },
+     {
+      "id": "widen",
+      "text": "`void widen(double d)`, which subtracts `d` from the bid and adds it to the ask",
+      "why": "With a negative `d` it narrows the quote and can cross it. It changes data, so it checks."
+     },
+     {
+      "id": "ctor",
+      "text": "The constructor `Quote(double b, double a)`",
+      "why": "The constructor is the first place the rule can break. Every object passes through it."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which function cannot change `bid_` or `ask_` at all?"
+    },
+    {
+     "rung": "step",
+     "text": "`const` after the brackets means the function cannot change the members, so the invariant still holds when it returns."
+    }
+   ],
+   "feedback": {
+    "correct": "A `const` function cannot change the members, so it cannot break the rule.",
+    "generic": "Not quite right. Look for the one function that cannot write to the members."
+   },
+   "explain": {
+    "text": "`spread() const` only reads, so the invariant holds after it as before. Every other function on the list changes a member, so each must check. The compiler enforces `private` and `const`; the checks are yours."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "An order that cannot be filled twice",
+   "prose": "An order moves through states. It is `new` while it has shares left, even when partly filled, and `filled` when none remain. A cancel ends it. A filled or cancelled order accepts nothing more. Its state is an `enum class`, a type with named values.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "new",
+       "label": "new",
+       "x": 0.2,
+       "y": 0.5
+      },
+      {
+       "id": "filled",
+       "label": "filled",
+       "x": 0.8,
+       "y": 0.2
+      },
+      {
+       "id": "cancelled",
+       "label": "cancelled",
+       "x": 0.8,
+       "y": 0.8
+      }
+     ],
+     "edges": [
+      {
+       "from": "new",
+       "to": "new",
+       "label": "fill (part)"
+      },
+      {
+       "from": "new",
+       "to": "filled",
+       "label": "fill (rest)"
+      },
+      {
+       "from": "new",
+       "to": "cancelled",
+       "label": "cancel"
+      }
+     ],
+     "height": 240
+    },
+    "state": {}
+   },
+   "question": "Write the constructor's check (quantity above 0), `fill(int q)` and `cancel()`. Refuse a fill or cancel on an order that is not `new`, a fill of 0 or fewer, and any fill beyond what remains.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <stdexcept>\n#include <string>\n\nenum class State { New, Filled, Cancelled };\n\nclass Order {\npublic:\n    explicit Order(int qty) : qty_(qty) {\n        // refuse qty <= 0\n    }\n\n    void fill(int q) {\n        // only a new order fills; never past qty_\n    }\n\n    void cancel() {\n        // only a new order can be cancelled\n    }\n\n    int filled() const { return filled_; }\n    int remaining() const { return qty_ - filled_; }\n    std::string state() const {\n        if (state_ == State::New) return \"new\";\n        if (state_ == State::Filled) return \"filled\";\n        return \"cancelled\";\n    }\n\nprivate:\n    int qty_;\n    int filled_ = 0;\n    State state_ = State::New;\n};\n",
+    "solution": "#include <stdexcept>\n#include <string>\n\nenum class State { New, Filled, Cancelled };\n\nclass Order {\npublic:\n    explicit Order(int qty) : qty_(qty) {\n        if (qty_ <= 0) throw std::invalid_argument(\"quantity must be positive\");\n    }\n\n    void fill(int q) {\n        if (state_ != State::New) throw std::logic_error(\"order is not live\");\n        if (q <= 0 || filled_ + q > qty_) throw std::invalid_argument(\"bad fill\");\n        filled_ += q;\n        if (filled_ == qty_) state_ = State::Filled;\n    }\n\n    void cancel() {\n        if (state_ != State::New) throw std::logic_error(\"order is not live\");\n        state_ = State::Cancelled;\n    }\n\n    int filled() const { return filled_; }\n    int remaining() const { return qty_ - filled_; }\n    std::string state() const {\n        if (state_ == State::New) return \"new\";\n        if (state_ == State::Filled) return \"filled\";\n        return \"cancelled\";\n    }\n\nprivate:\n    int qty_;\n    int filled_ = 0;\n    State state_ = State::New;\n};\n",
+    "examples": [
+     {
+      "setup": "Order o(100); o.fill(40); o.fill(60);",
+      "call": "o.state()",
+      "expect": "filled",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "Order(100).state()",
+      "expect": "new",
+      "compare": "equal"
+     },
+     {
+      "setup": "Order o(100); o.fill(40);",
+      "call": "o.remaining()",
+      "expect": 60,
+      "compare": "equal"
+     },
+     {
+      "setup": "Order o(100); o.fill(40);",
+      "call": "o.state()",
+      "expect": "new",
+      "compare": "equal"
+     },
+     {
+      "setup": "Order o(100); o.fill(40); o.fill(60);",
+      "call": "o.state()",
+      "expect": "filled",
+      "compare": "equal"
+     },
+     {
+      "setup": "Order o(100); o.fill(40); o.cancel();",
+      "call": "o.state()",
+      "expect": "cancelled",
+      "compare": "equal"
+     },
+     {
+      "setup": "Order o(100); o.fill(40); o.cancel();",
+      "call": "o.filled()",
+      "expect": 40,
+      "compare": "equal"
+     },
+     {
+      "setup": "Order o(100); o.cancel(); o.fill(10);",
+      "call": "o.filled()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Order o(100); o.fill(70); o.fill(40);",
+      "call": "o.filled()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Order o(100); o.fill(100); o.cancel();",
+      "call": "o.state()",
+      "compare": "raises"
+     },
+     {
+      "call": "Order(0).state()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Order o(100); o.fill(0);",
+      "call": "o.filled()",
+      "compare": "raises"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 11 hidden tests, each a short sequence of fills and cancels. Five pass only if the program stops."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each function that changes the order checks its state first."
+    },
+    {
+     "rung": "point",
+     "text": "Only `new` has arrows leaving it.",
+     "highlight": [
+      "new"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "In `fill`: refuse unless `state_ == State::New`, refuse `q <= 0` or `filled_ + q > qty_`, add, then set `State::Filled` when `filled_ == qty_`."
+    }
+   ],
+   "feedback": {
+    "correct": "The order's states only move along the arrows.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-4": "Test 4 fills 40 then 60 of 100 and expects `filled`. Change the state when nothing remains.",
+     "test-7": "Test 7 fills a cancelled order. Check the state before you add to `filled_`.",
+     "test-8": "Test 8 fills 70 then 40 of 100. Refuse a fill larger than what remains.",
+     "test-9": "Test 9 cancels a filled order. `cancel` must check the state too."
+    }
+   },
+   "explain": {
+    "text": "Each changing function checks the state first, so the only moves are the arrows from `new`. The fill check also keeps `filled_` between 0 and the order size. An exchange gateway relies on exactly this: a late fill on a cancelled order is a real event, and it must be caught, not booked.",
+    "canvas": {
+     "highlight": [
+      "new"
+     ],
+     "current": "new"
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A `class` keeps its data `private`, so only its own member functions can change it. Python's `_name` is only a convention; C++ checks at compile time.",
+   "An invariant is checked in the constructor and again in every function that changes the data. Functions that only read are marked `const`.",
+   "Members are built in the initialiser list, before the constructor's body runs. A `const` member can only get its value there."
+  ],
+  "formula": {
+   "name": "Weighted average price",
+   "tex": "\\bar p_{\\text{new}} = \\dfrac{q\\,\\bar p + q_b\\,p_b}{q + q_b}",
+   "note": "A buy of $q_b$ shares at $p_b$ moves the average; a sale changes only $q$."
+  },
+  "trap": "A setter that stores without checking, or a getter that returns a non-const reference, lets outside code break the invariant the constructor checked."
+ },
+ "quiz": [
+  {
+   "id": "q-ref-getter",
+   "difficulty": 2,
+   "prose": "```cpp\nclass Quote {\npublic:\n    Quote(double b, double a) : bid_(b), ask_(a) {\n        if (bid_ >= ask_) throw std::invalid_argument(\"\");\n    }\n    double& bid() { return bid_; }\n    double spread() const { return ask_ - bid_; }\nprivate:\n    double bid_, ask_;\n};\n\nQuote q(100.2, 100.4);\nq.bid() = 100.6;\nstd::cout << q.spread() << '\\n';\n```",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "It prints `-0.2`",
+      "correct": true
+     },
+     {
+      "id": "assign",
+      "text": "A compile error: you cannot assign to a function call",
+      "why": "`bid()` returns a `double&`, another name for `bid_` itself. Assigning to it compiles and writes the private member."
+     },
+     {
+      "id": "ctor",
+      "text": "It stops, because the constructor checks the bid",
+      "why": "The constructor checked once, when `q` was built. The reference writes `bid_` with no check."
+     },
+     {
+      "id": "copy",
+      "text": "It prints `0.2`, because `bid()` hands out a copy",
+      "why": "A copy would need the return type `double`. With `double&` the caller writes the member itself."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A non-const reference is an open door to private data.",
+    "generic": "Not quite right. Look at the return type of `bid()`."
+   },
+   "explain": {
+    "text": "`double& bid()` returns a reference to the private member, so `q.bid() = 100.6` writes it directly. Return `double`, or `const double&`, and that line no longer compiles."
+   }
+  },
+  {
+   "id": "q-python-underscore",
+   "difficulty": 2,
+   "prose": "The same class in Python, with the usual underscore for private data:\n\n```python\nclass Quote:\n    def __init__(self, bid, ask):\n        if not bid < ask:\n            raise ValueError(\"crossed\")\n        self._bid, self._ask = bid, ask\n\nq = Quote(100.2, 100.4)\nq._bid = 100.6\nprint(q._ask - q._bid)\n```",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "It prints `-0.19999999999998863`",
+      "correct": true
+     },
+     {
+      "id": "attr",
+      "text": "`AttributeError`, because `_bid` is private",
+      "why": "The underscore is a convention for readers. Python lets any code write `q._bid`."
+     },
+     {
+      "id": "value",
+      "text": "`ValueError: crossed`",
+      "why": "`__init__` checked once, when `q` was built. The assignment afterwards runs no check."
+     },
+     {
+      "id": "rounded",
+      "text": "It prints `-0.2`",
+      "why": "Python prints a float's full shortest repr, so the binary error shows: `-0.19999999999998863`."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Python trusts the caller; C++ `private` does not.",
+    "generic": "Not quite right. Python has no access check at all."
+   },
+   "explain": {
+    "text": "In Python `_bid` only signals \"leave this alone\"; the assignment runs. C++ `private` is checked by the compiler, so the same line would not build."
+   }
+  },
+  {
+   "id": "q-const-method",
+   "difficulty": 3,
+   "prose": "```cpp\nclass Quote {\npublic:\n    Quote(double b, double a) : bid_(b), ask_(a) {}\n    double spread() { return ask_ - bid_; }\nprivate:\n    double bid_, ask_;\n};\n\ndouble width(const Quote& q) {\n    return q.spread();\n}\n```\n\n```text\nerror: 'this' argument to member function 'spread'\nhas type 'const Quote', but function is not marked const\n```",
+   "question": "What is the right fix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Write `double spread() const`",
+      "correct": true
+     },
+     {
+      "id": "nonconst",
+      "text": "Take `Quote& q` in `width` instead",
+      "why": "That compiles, but now `width` could change the quote, and it can no longer take a `const Quote`."
+     },
+     {
+      "id": "public",
+      "text": "Make `bid_` and `ask_` public",
+      "why": "The error is about a promise not to change the object, not about access."
+     },
+     {
+      "id": "copy",
+      "text": "Take `Quote q` by value in `width`",
+      "why": "That compiles by copying the quote on every call. The real gap is that `spread` never promised to only read."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A reader should say it only reads.",
+    "generic": "Not quite right. The message says the function is not marked const."
+   },
+   "explain": {
+    "text": "A `const Quote&` may call only `const` functions, since only they promise not to change it. `spread` only reads, so marking it `const` is honest and fixes every caller at once."
+   }
+  },
+  {
+   "id": "q-sell-average",
+   "difficulty": 3,
+   "prose": "A position holds 200 shares at £5.00. You buy 50 at £6.00, then sell 100.",
+   "question": "What is the average price after the sale, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "label": "Average price in pounds",
+    "accept": "£5.20: $(200 \\times 5 + 50 \\times 6) / 250$; the sale leaves it unchanged.",
+    "wrong": [
+     {
+      "id": "simple",
+      "value": 5.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sold",
+      "value": 6.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£1,300 over 250 shares is £5.20, and selling leaves it there.",
+    "generic": "Not quite right. Weight the two buys by their shares; the sale changes only the quantity.",
+    "byKey": {
+     "simple": "You averaged £5.00 and £6.00. Four times as many shares cost £5.00.",
+     "sold": "That is the last buy's price. The average covers all 250 shares bought."
+    }
+   },
+   "explain": {
+    "text": "The buys give $(1000 + 300) / 250 = 5.2$. Selling 100 shares leaves 150 at the same average cost, £5.20."
+   }
+  }
+ ]
+}

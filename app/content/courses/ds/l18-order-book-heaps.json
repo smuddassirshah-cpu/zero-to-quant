@@ -1,0 +1,1205 @@
+{
+  "id": "l18-order-book-heaps",
+  "course": "ds",
+  "title": "An order book with two heaps",
+  "minutes": 15,
+  "objectives": [
+    "Track the best bid and ask with two heaps.",
+    "Match crossed orders by price-time priority, with partial fills",
+    "Cancel orders with lazy deletion"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Who trades first",
+      "prose": "An order book holds buy orders (**bids**) and sell orders (**asks**) that have not traded yet. A buyer who wants to trade now takes the cheapest ask. A seller takes the highest bid.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              500
+            ],
+            [
+              99.98,
+              200
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              200
+            ],
+            [
+              100.03,
+              400
+            ],
+            [
+              100.05,
+              100
+            ]
+          ],
+          "currency": "£"
+        },
+        "state": {
+          "caption": "Bids below the spread, asks above"
+        }
+      },
+      "question": "Tap the level a buyer trades against first, and the level a seller trades against first.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "ask0",
+          "bid0"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A buyer wants the lowest price on offer."
+        },
+        {
+          "rung": "point",
+          "text": "The asks are the prices on offer: £100.02, £100.03, £100.05.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The buyer takes £100.02; the seller takes the highest bid, £100.00."
+        }
+      ],
+      "feedback": {
+        "correct": "£100.02 for the buyer and £100.00 for the seller.",
+        "generic": "Not quite right. A buyer takes the lowest ask, a seller the highest bid.",
+        "byKey": {
+          "ask2": "A buyer pays the ask price, so it wants the lowest ask, not the highest.",
+          "bid2": "A seller receives the bid price, so it wants the highest bid, not the lowest.",
+          "bid1": "£99.99 is lower than £100.00. A seller takes the highest bid first."
+        }
+      },
+      "explain": {
+        "text": "The highest bid, £100.00, is the **best bid**; the lowest ask, £100.02, is the **best ask**. The book must know both after every order. That is a max-heap of bids and a min-heap of asks.",
+        "canvas": {
+          "highlight": [
+            "bid0",
+            "ask0"
+          ],
+          "caption": "Best bid £100.00, best ask £100.02, spread £0.02"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A max-heap from heapq",
+      "prose": "`heapq` is a min-heap, so bids are stored with the price negated. The time breaks ties.\n\n```python\nbids = []\nheapq.heappush(bids, (-100.00, 1, \"B1\"))\nheapq.heappush(bids, (-99.99, 2, \"B2\"))\nheapq.heappush(bids, (-100.00, 3, \"B3\"))\n```",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              500
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              200
+            ],
+            [
+              100.03,
+              400
+            ],
+            [
+              100.05,
+              100
+            ]
+          ],
+          "currency": "£"
+        },
+        "state": {
+          "caption": "B1 and B3 both bid £100.00"
+        }
+      },
+      "question": "What is `bids[0]`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`(-100.0, 1, \"B1\")`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`(-99.99, 2, \"B2\")`",
+            "why": "You read −99.99 as smaller. It is larger than −100.00, so B2 is not on top."
+          },
+          {
+            "id": "c",
+            "text": "`(-100.0, 3, \"B3\")`",
+            "why": "B3 ties B1 on price but arrived later. The time, 1 against 3, puts B1 first."
+          },
+          {
+            "id": "d",
+            "text": "`(100.0, 1, \"B1\")`",
+            "why": "The heap holds exactly what was pushed: the price stays negated until you read it out."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The smallest stored tuple is on top."
+        },
+        {
+          "rung": "point",
+          "text": "−100.00 is smaller than −99.99.",
+          "highlight": [
+            "bid0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B1 and B3 tie on −100.00; time 1 beats time 3."
+        }
+      ],
+      "feedback": {
+        "correct": "The highest price, and the earliest order at that price.",
+        "generic": "Not quite right. Compare the stored tuples, negated prices first."
+      },
+      "explain": {
+        "text": "Negating turns the highest price into the smallest stored value. The best bid is `-bids[0][0]`, £100.00, read in $O(1)$. Only the price is negated; the time stays as it is, so earlier still wins.",
+        "canvas": {
+          "highlight": [
+            "bid0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Quotes after each message",
+      "prose": "Start from this book. Bids: B1 £100.00, B2 £99.99, B3 £99.98. Asks: A1 £100.02, A2 £100.03, A3 £100.05. Then four messages arrive, one after another.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              500
+            ],
+            [
+              99.98,
+              200
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              200
+            ],
+            [
+              100.03,
+              400
+            ],
+            [
+              100.05,
+              100
+            ]
+          ],
+          "currency": "£"
+        },
+        "state": {
+          "caption": "The book before the four messages"
+        }
+      },
+      "question": "Fill in the best bid and best ask after each message.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "message",
+          "best bid (£)",
+          "best ask (£)"
+        ],
+        "rows": [
+          [
+            "add A4: sell 100 at £100.01",
+            {
+              "edit": true,
+              "answer": 100.0,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 100.01,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "cancel B1",
+            {
+              "edit": true,
+              "answer": 99.99,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 100.01,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "add B4: buy 50 at £100.00",
+            {
+              "edit": true,
+              "answer": 100.0,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 100.01,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "cancel A4",
+            {
+              "edit": true,
+              "answer": 100.0,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 100.02,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each message changes one side only. Carry the other side down unchanged."
+        },
+        {
+          "rung": "point",
+          "text": "A4 at £100.01 undercuts A1 at £100.02, so it becomes the best ask.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows: 100.00 / 100.01, then 99.99 / 100.01, then 100.00 / 100.01, then 100.00 / 100.02."
+        }
+      ],
+      "feedback": {
+        "correct": "Each add or cancel can move the top of one heap.",
+        "generic": "Not quite right. Apply the messages in order, one side at a time.",
+        "byKey": {
+          "r0c2": "A4 sells at £100.01, below A1's £100.02, so the best ask drops to £100.01.",
+          "r1c1": "B1 at £100.00 is gone, so the next best bid is B2 at £99.99.",
+          "r3c2": "With A4 cancelled, the lowest ask is A1 again, £100.02."
+        }
+      },
+      "explain": {
+        "text": "A4 undercuts the asks; cancelling B1 exposes B2; B4 restores £100.00; cancelling A4 exposes A1. Every quote is the top of one heap after one push or one removal.",
+        "canvas": {
+          "caption": "Final quotes: £100.00 bid, £100.02 ask"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "An order that crosses",
+      "prose": "A buy order for 500 at £100.03 arrives. Its price meets the best ask, so it **matches**. It trades with A1 first, then A2, each at the resting order's own price, and partial fills are allowed.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              500
+            ],
+            [
+              99.98,
+              200
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              200
+            ],
+            [
+              100.03,
+              400
+            ],
+            [
+              100.05,
+              100
+            ]
+          ],
+          "currency": "£"
+        },
+        "state": {
+          "caption": "Buy 500, limit £100.03"
+        }
+      },
+      "question": "How many shares are left resting at £100.03 afterwards?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "all",
+            "value": 400,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "skip",
+            "value": -100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fill from the best ask upwards while the ask is no higher than £100.03."
+        },
+        {
+          "rung": "point",
+          "text": "200 trade at £100.02 with A1. 300 of the order remain.",
+          "highlight": [
+            "ask1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Those 300 trade with A2, which had 400: 100 are left."
+        }
+      ],
+      "feedback": {
+        "correct": "100 shares of A2 remain at £100.03.",
+        "generic": "Not quite right. Take 200 at £100.02 first, then the rest at £100.03.",
+        "byKey": {
+          "all": "You left A2 untouched. After A1's 200, the order still needs 300, and A2 supplies them.",
+          "none": "The order needs only 300 more after A1, and A2 holds 400."
+        }
+      },
+      "explain": {
+        "text": "The order sweeps two levels: 200 at £100.02, then 300 at £100.03, for £50,013 in all. A2 keeps 100: a partial fill. The £100.05 ask is above the limit, so it is never touched.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 500
+          },
+          "caption": "200 at £100.02 + 300 at £100.03 = £50,013"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Same price, first come",
+      "prose": "Two sell orders rest at £100.02: A1 arrived at time 1 with 200 shares, A5 at time 5 with 300. A buy for 250 at £100.02 arrives. This is **price-time priority**: best price first, then earliest.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              500
+            ],
+            [
+              100.03,
+              400
+            ]
+          ],
+          "currency": "£"
+        },
+        "state": {
+          "caption": "£100.02 holds A1 (200) and A5 (300)"
+        }
+      },
+      "question": "How many shares does each sell order fill?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "order",
+          "time",
+          "size",
+          "filled"
+        ],
+        "rows": [
+          [
+            "A1",
+            "1",
+            "200",
+            {
+              "edit": true,
+              "answer": 200,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "A5",
+            "5",
+            "300",
+            {
+              "edit": true,
+              "answer": 50,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Same price, so time decides who goes first."
+        },
+        {
+          "rung": "point",
+          "text": "A1 arrived first and fills completely: 200.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The buy has 50 left for A5."
+        }
+      ],
+      "feedback": {
+        "correct": "A1 fills 200 in full, A5 fills the last 50.",
+        "generic": "Not quite right. Fill the earlier order completely before the later one gets any.",
+        "byKey": {
+          "r0c3": "A1 was first at this price, so it fills completely: all 200.",
+          "r1c3": "After A1's 200, only 50 of the 250 remain for A5."
+        }
+      },
+      "explain": {
+        "text": "The earlier order at the best price trades first. A heap does this for free when the time sits second in the tuple: `(price, time, id)`.",
+        "canvas": {
+          "highlight": [
+            "ask0"
+          ],
+          "caption": "A1: 200 filled. A5: 50 filled, 250 left"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Cancelling from a heap",
+      "prose": "B2 is cancelled. Its entry `(-99.99, 2, \"B2\")` sits somewhere in the middle of the bid heap, not at the top.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "B1 100.00",
+            "B2 99.99",
+            "B3 99.98",
+            "B4 99.97",
+            "B5 99.95"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "highlight": [
+            "c1"
+          ],
+          "caption": "The bid heap as a list"
+        }
+      },
+      "question": "Which way keeps every operation correct and fast?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Add `\"B2\"` to a set of dead ids; drop dead entries when they reach the top",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Call `bids.remove(entry)`",
+            "why": "Removing from the middle shifts later items, breaking the parent and child positions. Finding the entry is $O(n)$ too."
+          },
+          {
+            "id": "c",
+            "text": "Remove it, then call `heapq.heapify(bids)`",
+            "why": "That is correct but $O(n)$ per cancel. Most orders on a busy book are cancelled."
+          },
+          {
+            "id": "d",
+            "text": "Set its quantity to 0 and leave it",
+            "why": "Then `best_bid` can report a price nobody is bidding, unless every read skips it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A heap can only remove cheaply from the top."
+        },
+        {
+          "rung": "point",
+          "text": "Leave the entry where it is, but remember that it is dead.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "When a dead entry reaches the top, pop it and look again: **lazy deletion**."
+        }
+      ],
+      "feedback": {
+        "correct": "Mark it now, remove it when it surfaces.",
+        "generic": "Not quite right. Which option avoids touching the middle of the heap?",
+        "byKey": {
+          "b": "You removed from the middle. The list stays a list, but the heap rule can break, and later pops come out wrong."
+        }
+      },
+      "explain": {
+        "text": "Cancelling becomes $O(1)$: add the id to a set, or delete it from a dict of live orders. Reads drop dead entries off the top first. Each entry is popped at most once, so the clean-up is paid for once.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ],
+          "caption": "B2 stays in the list but is skipped when it reaches the top"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A quote nobody is making",
+      "prose": "This book uses lazy deletion: `cancel` adds the id to `self.cancelled`. Then `cancel(\"B1\")` runs on a book whose bids are B1 at £100.00 and B2 at £99.99.\n\n```python\ndef best_bid(self):\n    if not self.bids:\n        return None\n    return -self.bids[0][0]\n```",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              500
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              200
+            ]
+          ],
+          "currency": "£"
+        },
+        "state": {
+          "caption": "B1 is cancelled but its entry is still in the heap"
+        }
+      },
+      "question": "What does this `best_bid()` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "£100.00",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "£99.99",
+            "why": "That is the true best bid, but this code never looks at `cancelled`. B1's entry is still on top."
+          },
+          {
+            "id": "c",
+            "text": "`None`",
+            "why": "The heap still holds both entries, so it is not empty."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the code read `self.cancelled` anywhere?"
+        },
+        {
+          "rung": "point",
+          "text": "The cancelled entry was never removed from `self.bids`.",
+          "highlight": [
+            "bid0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It returns the top entry's price: B1's £100.00."
+        }
+      ],
+      "feedback": {
+        "correct": "It quotes a cancelled order's price.",
+        "generic": "Not quite right. Read the code as it is, not as it should be.",
+        "byKey": {
+          "b": "You expected lazy deletion to clean up by itself. It only works if every read drops dead entries from the top first."
+        }
+      },
+      "explain": {
+        "text": "The book shows a £100.00 bid that nobody is making; a seller would expect a fill that cannot happen. The fix: `while self.bids and self.bids[0][2] in self.cancelled: heapq.heappop(self.bids)` before reading. `match` must skip dead entries the same way.",
+        "canvas": {
+          "highlight": [
+            "bid0"
+          ],
+          "caption": "Stale: £100.00. True best bid: £99.99"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What each operation costs",
+      "prose": "With $n$ live entries:\n\n$$\\text{add: } O(\\log n), \\quad \\text{cancel: } O(1), \\quad \\text{best: } O(1) \\text{ amortised}, \\quad \\text{each fill: } O(\\log n).$$\n\n\"Amortised\" means averaged over all calls: a read may pop many dead entries, but each entry is pushed once and popped at most once.",
+      "question": "A day brings 1,000,000 adds and 900,000 cancels. At most how many dead entries can all the reads pop, in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 900000,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "adds",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "product",
+            "value": 900000000000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At most 900,000: each cancelled entry is popped once.",
+        "generic": "Not quite right. How many times can one dead entry be popped?",
+        "byKey": {
+          "adds": "Only cancelled orders leave dead entries. Filled ones are removed as they trade.",
+          "product": "A dead entry is popped once and then it is gone. It cannot be popped by every read."
+        }
+      },
+      "explain": {
+        "text": "Each cancel creates one dead entry, and popping removes it for good. So all reads together pop at most 900,000, about one per cancel. Spread over the day, a read costs $O(1)$ plus that share."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "What real engines add",
+      "prose": "Our two heaps are the core of a matching engine. Real exchanges handle millions of messages a second and add more around that core.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              500
+            ],
+            [
+              99.98,
+              200
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              200
+            ],
+            [
+              100.03,
+              400
+            ],
+            [
+              100.05,
+              100
+            ]
+          ],
+          "currency": "£"
+        },
+        "state": {
+          "caption": "One instrument's book"
+        }
+      },
+      "question": "Select all that apply: which of these do real matching engines add?",
+      "widget": {
+        "kind": "multi",
+        "options": [
+          {
+            "id": "a",
+            "text": "Price levels in an array indexed by tick, each level a first-in, first-out queue",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "A dict from order id to its order, so a cancel finds it at once",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "Self-match prevention: two orders from the same firm must not trade",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "Re-sorting the whole book after every message",
+            "why": "That costs $O(n \\log n)$ per message. Heaps or arrays by tick keep the order as they go."
+          },
+          {
+            "id": "e",
+            "text": "Filling a crossed order at the midpoint of the two prices",
+            "why": "Fills happen at the resting order's price. That is part of the price-time rule."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Three of these make the engine faster or safer."
+        },
+        {
+          "rung": "point",
+          "text": "Prices sit on a tick grid, so an array index replaces a heap search.",
+          "highlight": [
+            "bid0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Arrays by tick, an id map, and self-match prevention. Re-sorting and midpoint fills are not used."
+        }
+      ],
+      "feedback": {
+        "correct": "Arrays by tick, an id map, and self-match prevention.",
+        "generic": "Not quite right. Keep what makes each message cheap or prevents a bad trade.",
+        "byKey": {
+          "d": "You picked re-sorting. That is $O(n \\log n)$ per message; engines keep order incrementally.",
+          "e": "You picked midpoint fills. The resting order's price is the rule."
+        }
+      },
+      "explain": {
+        "text": "Prices live on a tick grid, so a level is found by index in $O(1)$, with a queue for time priority. An id map makes cancels $O(1)$ without lazy deletion. Self-match prevention stops a firm trading with itself.",
+        "canvas": {
+          "highlight": [
+            "bid0",
+            "ask0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The matching engine",
+      "prose": "Build the book. `side` is `\"buy\"` or `\"sell\"`. `add` only rests an order; `match` trades while the best bid is at least the best ask. Each fill is `(buy_id, sell_id, price, qty)`, at the price of whichever order arrived first. Partial fills leave the rest resting. An empty side quotes `None`; cancelling an unknown or finished id does nothing.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              500
+            ],
+            [
+              99.98,
+              200
+            ]
+          ],
+          "asks": [
+            [
+              100.02,
+              200
+            ],
+            [
+              100.03,
+              400
+            ],
+            [
+              100.05,
+              100
+            ]
+          ],
+          "currency": "£",
+          "depth": 3
+        },
+        "state": {
+          "caption": "Price-time priority; fills at the resting price"
+        }
+      },
+      "question": "Write the `OrderBook` class.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\n\n\nclass OrderBook:\n    def __init__(self):\n        ...\n\n    def add(self, order_id, side, price, qty):\n        ...\n\n    def cancel(self, order_id):\n        ...\n\n    def best_bid(self):\n        ...\n\n    def best_ask(self):\n        ...\n\n    def match(self):\n        ...\n",
+        "solution": "import heapq\n\n\nclass OrderBook:\n    def __init__(self):\n        self.bids = []    # (-price, time, order_id)\n        self.asks = []    # (price, time, order_id)\n        self.live = {}    # order_id -> [side, price, qty, time]\n        self.time = 0\n\n    def add(self, order_id, side, price, qty):\n        self.time += 1\n        self.live[order_id] = [side, price, qty, self.time]\n        if side == \"buy\":\n            heapq.heappush(self.bids, (-price, self.time, order_id))\n        else:\n            heapq.heappush(self.asks, (price, self.time, order_id))\n\n    def cancel(self, order_id):\n        self.live.pop(order_id, None)\n\n    def _top(self, heap):\n        # lazy deletion: drop entries whose order is cancelled or filled\n        while heap and heap[0][2] not in self.live:\n            heapq.heappop(heap)\n        return heap[0] if heap else None\n\n    def best_bid(self):\n        top = self._top(self.bids)\n        return None if top is None else -top[0]\n\n    def best_ask(self):\n        top = self._top(self.asks)\n        return None if top is None else top[0]\n\n    def match(self):\n        fills = []\n        while True:\n            b, a = self._top(self.bids), self._top(self.asks)\n            if b is None or a is None or -b[0] < a[0]:\n                return fills\n            buy, sell = self.live[b[2]], self.live[a[2]]\n            price = buy[1] if buy[3] < sell[3] else sell[1]\n            qty = min(buy[2], sell[2])\n            fills.append((b[2], a[2], price, qty))\n            buy[2] -= qty\n            sell[2] -= qty\n            if buy[2] == 0:\n                del self.live[b[2]]\n            if sell[2] == 0:\n                del self.live[a[2]]\n",
+        "prelude": "def play(events):\n    \"\"\"Run events on a new OrderBook. Return what each best_bid, best_ask and match call returned.\"\"\"\n    book = OrderBook()\n    out = []\n    for name, *args in events:\n        result = getattr(book, name)(*args)\n        if name in (\"best_bid\", \"best_ask\", \"match\"):\n            out.append(result)\n    return out\n",
+        "examples": [
+          {
+            "call": "play([('add', 'B1', 'buy', 100.0, 300), ('add', 'A1', 'sell', 100.02, 200), ('best_bid',), ('best_ask',), ('add', 'B2', 'buy', 100.02, 250), ('match',), ('best_bid',)])",
+            "expect": "[100.0, 100.02, [('B2', 'A1', 100.02, 200)], 100.02]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "play([('best_bid',), ('best_ask',), ('match',)])",
+            "expect": "[None, None, []]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'B1', 'buy', 100.0, 300), ('add', 'B2', 'buy', 99.99, 500), ('add', 'A1', 'sell', 100.02, 200), ('add', 'A2', 'sell', 100.03, 400), ('best_bid',), ('best_ask',), ('match',)])",
+            "expect": "[100.0, 100.02, []]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'B1', 'buy', 100.0, 300), ('add', 'B2', 'buy', 99.99, 500), ('add', 'A1', 'sell', 100.02, 200), ('add', 'A2', 'sell', 100.03, 400), ('cancel', 'B1'), ('best_bid',), ('best_ask',)])",
+            "expect": "[99.99, 100.02]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'A1', 'sell', 100.02, 200), ('add', 'A2', 'sell', 100.03, 400), ('add', 'A3', 'sell', 100.05, 100), ('add', 'B1', 'buy', 100.03, 500), ('match',), ('best_bid',), ('best_ask',)])",
+            "expect": "[[('B1', 'A1', 100.02, 200), ('B1', 'A2', 100.03, 300)], None, 100.03]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'A1', 'sell', 100.02, 200), ('add', 'A2', 'sell', 100.02, 300), ('add', 'B1', 'buy', 100.02, 250), ('match',), ('best_ask',)])",
+            "expect": "[[('B1', 'A1', 100.02, 200), ('B1', 'A2', 100.02, 50)], 100.02]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'B1', 'buy', 100.05, 100), ('add', 'A1', 'sell', 100.0, 60), ('match',), ('best_bid',), ('best_ask',)])",
+            "expect": "[[('B1', 'A1', 100.05, 60)], 100.05, None]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'A1', 'sell', 100.01, 100), ('add', 'A2', 'sell', 100.02, 100), ('cancel', 'A1'), ('add', 'B1', 'buy', 100.02, 150), ('match',), ('best_bid',)])",
+            "expect": "[[('B1', 'A2', 100.02, 100)], 100.02]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'B1', 'buy', 100.0, 100), ('add', 'A1', 'sell', 100.0, 100), ('match',), ('cancel', 'B1'), ('cancel', 'ZZ'), ('best_bid',), ('best_ask',), ('match',)])",
+            "expect": "[[('B1', 'A1', 100.0, 100)], None, None, []]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'B1', 'buy', 100, 100), ('add', 'A1', 'sell', 100, 40), ('match',), ('cancel', 'B1'), ('best_bid',)])",
+            "expect": "[[('B1', 'A1', 100, 40)], None]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'B1', 'buy', 99, 10), ('add', 'A1', 'sell', 100, 10), ('match',), ('best_bid',), ('best_ask',)])",
+            "expect": "[[], 99, 100]",
+            "compare": "equal"
+          },
+          {
+            "call": "play([('add', 'B1', 'buy', 100.0, 300), ('add', 'B2', 'buy', 99.99, 500), ('add', 'A1', 'sell', 100.02, 200), ('add', 'A2', 'sell', 100.03, 400), ('add', 'A3', 'sell', 100.02, 100), ('cancel', 'B1'), ('best_bid',), ('add', 'B3', 'buy', 100.03, 450), ('match',), ('best_bid',), ('best_ask',), ('add', 'A4', 'sell', 99.98, 600), ('match',), ('best_bid',), ('best_ask',)])",
+            "expect": "[99.99, [('B3', 'A1', 100.02, 200), ('B3', 'A3', 100.02, 100), ('B3', 'A2', 100.03, 150)], 99.99, 100.03, [('B2', 'A4', 99.99, 500)], None, 99.98]",
+            "compare": "equal"
+          },
+          {
+            "call": "(len(r[0]), sum(f[3] for f in r[0]), r[1], r[2])",
+            "expect": "(1500, 15000, 1000, 1019)",
+            "compare": "equal",
+            "setup": "evs = [('add', f'B{i}', 'buy', 1000 - i % 50, 10) for i in range(4000)] + [('add', f'S{i}', 'sell', 1001 + i % 50, 10) for i in range(4000)] + [('cancel', f'B{i}') for i in range(0, 4000, 3)] + [('add', 'BIG', 'buy', 1020, 15000), ('match',), ('best_bid',), ('best_ask',)]; r = play(evs)"
+          }
+        ],
+        "how": "Check runs 12 hidden tests. `play(events)` runs a list of method calls on a new book and collects what `best_bid`, `best_ask` and `match` return. Test 12 has 8,000 orders.",
+        "budget": 5000
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep `bids` as `(-price, time, id)`, `asks` as `(price, time, id)`, and a dict of live orders: id to `[side, price, qty, time]`."
+        },
+        {
+          "rung": "point",
+          "text": "Cancel deletes from the dict. A helper pops entries from the top of a heap while their id is not live.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`match`: while both tops exist and bid ≥ ask, trade `min` of the two quantities at the earlier order's price; delete orders that reach 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Price-time priority, lazy cancels and partial fills, all in two heaps.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is an empty book. Both quotes are `None` and `match` returns `[]`.",
+          "test-3": "Test 3 cancels the best bid. Skip dead entries before reading the top.",
+          "test-5": "Test 5 has two asks at one price. The earlier one, A1, must fill first.",
+          "test-6": "Test 6: the buy rested first at £100.05, so the fill is at £100.05, not the seller's £100.00.",
+          "test-7": "Test 7 cancels A1 before the buy arrives. `match` must skip dead entries too."
+        }
+      },
+      "explain": {
+        "text": "In the fixed sequence of test 11, B3 sweeps A1 and A3 at £100.02 and part of A2 at £100.03. A4 then sells at £99.98 into B2 at £99.99, the resting price. Each step is a heap push, a pop or an $O(1)$ dict change.",
+        "canvas": {
+          "caption": "Two heaps, one dict: the core of a matching engine"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Bids live in a max-heap (`(-price, time, id)` in `heapq`) and asks in a min-heap, so both best quotes are at index 0.",
+      "Orders match while the best bid is at least the best ask: best price first, earliest first on a tie, at the resting order's price, partial fills allowed.",
+      "Cancel by marking the order dead and dropping dead entries as they reach the top: never delete from the middle of a heap."
+    ],
+    "formula": {
+      "name": "Costs",
+      "tex": "\\text{add: } O(\\log n) \\quad \\text{cancel: } O(1) \\quad \\text{best: } O(1) \\text{ amortised}",
+      "note": "Each dead entry is popped at most once."
+    },
+    "trap": "Reading `bids[0]` without skipping cancelled entries quotes a price nobody is making."
+  },
+  "quiz": [
+    {
+      "id": "q-empty",
+      "difficulty": 2,
+      "prose": "Every sell order has been filled or cancelled. Bids remain.",
+      "question": "What should `best_ask()` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`None`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`0.0`",
+            "why": "0.0 reads as someone selling for nothing, and every bid would seem to cross it."
+          },
+          {
+            "id": "c",
+            "text": "The best bid",
+            "why": "A bid is a buyer's price. With no sellers there is no ask at all."
+          },
+          {
+            "id": "d",
+            "text": "The last ask that traded",
+            "why": "That order is gone. Quoting it would show a price nobody offers."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No sellers, no ask.",
+        "generic": "Not quite right. What price is on offer when nobody is selling?"
+      },
+      "explain": {
+        "text": "An empty side has no best quote, so `None`. `match` must check for it before comparing prices."
+      }
+    },
+    {
+      "id": "q-negate",
+      "difficulty": 2,
+      "prose": "Bids go into `heapq` as tuples. On equal prices the earliest order must come out first.",
+      "question": "Which tuple does that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`(-price, time, order_id)`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`(-price, -time, order_id)`",
+            "why": "Negating the time puts the latest order first on a tie."
+          },
+          {
+            "id": "c",
+            "text": "`(price, time, order_id)`",
+            "why": "Without negating the price, the lowest bid comes out first."
+          },
+          {
+            "id": "d",
+            "text": "`(time, -price, order_id)`",
+            "why": "Time first gives the oldest bid, whatever its price."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Negate the price only.",
+        "generic": "Not quite right. The highest price first, then the earliest time."
+      },
+      "explain": {
+        "text": "The heap compares the first item, then the second on a tie. Negating the price makes the highest bid smallest; the plain time keeps earliest first."
+      }
+    },
+    {
+      "id": "q-price",
+      "difficulty": 3,
+      "prose": "A sell at £100.02 is resting. A buy at £100.05 arrives and crosses it.",
+      "question": "At what price do they trade?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "£100.02",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "£100.05",
+            "why": "That is the buyer's limit, the most it would pay. The resting order sets the price."
+          },
+          {
+            "id": "c",
+            "text": "£100.035",
+            "why": "Fills are not split down the middle. The resting order's price stands."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The resting order's price.",
+        "generic": "Not quite right. Which order was in the book first?"
+      },
+      "explain": {
+        "text": "The resting sell offered £100.02, and the buyer accepted that offer. The buyer pays £0.03 less than its limit, a price improvement."
+      }
+    },
+    {
+      "id": "q-amortised",
+      "difficulty": 3,
+      "prose": "1,000 cancelled bids sit at the top of the bid heap. The next `best_bid()` pops all of them before it answers.",
+      "question": "Is `best_bid` still cheap over a day?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Yes: each dead entry is popped once, so the work averages out",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "No: that call cost 1,000 pops, so every call costs that",
+            "why": "Those entries are gone after this call. The next read starts from a clean top."
+          },
+          {
+            "id": "c",
+            "text": "No: lazy deletion makes the heap grow without limit",
+            "why": "Dead entries leave as soon as they reach the top, and each was pushed once."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Amortised $O(1)$ per read, plus $O(\\log n)$ per dead entry, once.",
+        "generic": "Not quite right. How often can one dead entry be popped?"
+      },
+      "explain": {
+        "text": "The 1,000 pops are paid once, for 1,000 cancels. Averaged over the day, each read stays cheap."
+      }
+    }
+  ]
+}

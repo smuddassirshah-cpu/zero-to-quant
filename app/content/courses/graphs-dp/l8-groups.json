@@ -1,0 +1,1499 @@
+{
+  "id": "l8-groups",
+  "course": "graphs-dp",
+  "title": "Keeping track of groups",
+  "minutes": 14,
+  "objectives": [
+    "Use union-find to merge and query components.",
+    "Implement `find` with path compression and `union` by size",
+    "Count components and describe Kruskal's minimum spanning tree"
+  ],
+  "skills": [
+    "gd-graphs",
+    "gd-traversal"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Linked stocks",
+      "prose": "A screen links pairs of stocks that move together: SHEL with BP, HSBA with BARC, BARC with LLOY, and AZN with GSK. Linked stocks belong in the same group, and so does anything linked to them.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "g1",
+              "label": "SHEL's group",
+              "kind": "box",
+              "capacity": 5,
+              "cols": 1,
+              "items": [
+                {
+                  "id": "shel",
+                  "label": "SHEL"
+                }
+              ]
+            },
+            {
+              "id": "g2",
+              "label": "HSBA's group",
+              "kind": "box",
+              "capacity": 5,
+              "cols": 1,
+              "items": [
+                {
+                  "id": "hsba",
+                  "label": "HSBA"
+                }
+              ]
+            },
+            {
+              "id": "g3",
+              "label": "AZN's group",
+              "kind": "box",
+              "capacity": 5,
+              "cols": 1,
+              "items": [
+                {
+                  "id": "azn",
+                  "label": "AZN"
+                }
+              ]
+            },
+            {
+              "id": "pool",
+              "label": "Not placed",
+              "kind": "box",
+              "capacity": 5,
+              "cols": 1,
+              "items": [
+                {
+                  "id": "bp",
+                  "label": "BP"
+                },
+                {
+                  "id": "barc",
+                  "label": "BARC"
+                },
+                {
+                  "id": "lloy",
+                  "label": "LLOY"
+                },
+                {
+                  "id": "gsk",
+                  "label": "GSK"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Drag each unplaced stock into its group.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "g1": [
+            "shel",
+            "bp"
+          ],
+          "g2": [
+            "hsba",
+            "barc",
+            "lloy"
+          ],
+          "g3": [
+            "azn",
+            "gsk"
+          ]
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Place the stocks with a direct link to a group's first card, then their partners."
+        },
+        {
+          "rung": "point",
+          "text": "LLOY is not linked to HSBA, but it is linked to BARC.",
+          "highlight": [
+            "lloy",
+            "barc"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "BP joins SHEL. BARC joins HSBA, and LLOY follows BARC. GSK joins AZN."
+        }
+      ],
+      "feedback": {
+        "correct": "Three groups: SHEL and BP, the three banks, AZN and GSK.",
+        "generic": "Not quite right. Follow each link to the group of its partner.",
+        "byKey": {
+          "lloy": "LLOY has no link to HSBA itself, but it is linked to BARC, which is in HSBA's group. Groups chain through links.",
+          "bp": "BP is linked to SHEL, so it goes in SHEL's group.",
+          "gsk": "GSK is linked to AZN."
+        }
+      },
+      "explain": {
+        "text": "LLOY reached HSBA's group through BARC: a group holds everything connected by any chain of links. Each group is named after one member, its **representative**. That is all union-find stores.",
+        "canvas": {
+          "move": {
+            "bp": "g1",
+            "barc": "g2",
+            "lloy": "g2",
+            "gsk": "g3"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "One new link",
+      "prose": "A new link arrives: LLOY now moves with BP. LLOY and BP sit in different groups.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "g1",
+              "label": "SHEL's group",
+              "kind": "box",
+              "capacity": 5,
+              "cols": 1,
+              "items": [
+                {
+                  "id": "shel",
+                  "label": "SHEL"
+                },
+                {
+                  "id": "bp",
+                  "label": "BP"
+                }
+              ]
+            },
+            {
+              "id": "g2",
+              "label": "HSBA's group",
+              "kind": "box",
+              "capacity": 5,
+              "cols": 1,
+              "items": [
+                {
+                  "id": "hsba",
+                  "label": "HSBA"
+                },
+                {
+                  "id": "barc",
+                  "label": "BARC"
+                },
+                {
+                  "id": "lloy",
+                  "label": "LLOY"
+                }
+              ]
+            },
+            {
+              "id": "g3",
+              "label": "AZN's group",
+              "kind": "box",
+              "capacity": 5,
+              "cols": 1,
+              "items": [
+                {
+                  "id": "azn",
+                  "label": "AZN"
+                },
+                {
+                  "id": "gsk",
+                  "label": "GSK"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every stock now in the same group as SHEL, SHEL included.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "shel",
+          "bp",
+          "hsba",
+          "barc",
+          "lloy"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "one-card",
+            "set": [
+              "shel",
+              "bp",
+              "lloy"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "LLOY drags its whole group along with it."
+        },
+        {
+          "rung": "point",
+          "text": "LLOY's group holds three banks.",
+          "highlight": [
+            "hsba",
+            "barc",
+            "lloy"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "BP's group and LLOY's group become one: SHEL, BP, HSBA, BARC, LLOY."
+        }
+      ],
+      "feedback": {
+        "correct": "One link merged two whole groups.",
+        "generic": "Not quite right. A link joins the groups, not just the two stocks.",
+        "byKey": {
+          "one-card": "You moved LLOY alone. HSBA and BARC are still connected to LLOY, so they come too."
+        }
+      },
+      "explain": {
+        "text": "Linking LLOY and BP connects everything in both groups. So a merge must move a whole group, which we do by re-pointing one group's representative. That operation is **union**.",
+        "canvas": {
+          "move": {
+            "hsba": "g1",
+            "barc": "g1",
+            "lloy": "g1"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Following parents",
+      "prose": "In code, items are numbers and each points to a **parent**. A root points to itself and names its group.\n\n```python\nparent = [0, 0, 2, 2, 2, 4, 4, 6]\n\ndef find(x):\n    while parent[x] != x:\n        x = parent[x]\n    return x\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "0",
+              "label": "0",
+              "x": 0.1,
+              "y": 0.2,
+              "colour": 2
+            },
+            {
+              "id": "1",
+              "label": "1",
+              "x": 0.1,
+              "y": 0.8
+            },
+            {
+              "id": "2",
+              "label": "2",
+              "x": 0.6,
+              "y": 0.08,
+              "colour": 2
+            },
+            {
+              "id": "3",
+              "label": "3",
+              "x": 0.38,
+              "y": 0.42
+            },
+            {
+              "id": "4",
+              "label": "4",
+              "x": 0.72,
+              "y": 0.42
+            },
+            {
+              "id": "5",
+              "label": "5",
+              "x": 0.56,
+              "y": 0.75
+            },
+            {
+              "id": "6",
+              "label": "6",
+              "x": 0.95,
+              "y": 0.66
+            },
+            {
+              "id": "7",
+              "label": "7",
+              "x": 0.8,
+              "y": 0.92
+            }
+          ],
+          "edges": [
+            {
+              "from": "1",
+              "to": "0"
+            },
+            {
+              "from": "3",
+              "to": "2"
+            },
+            {
+              "from": "4",
+              "to": "2"
+            },
+            {
+              "from": "5",
+              "to": "4"
+            },
+            {
+              "from": "6",
+              "to": "4"
+            },
+            {
+              "from": "7",
+              "to": "6"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each arrow points to a parent; the shaded nodes are roots"
+        }
+      },
+      "question": "What does `find(7)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a node number",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "self",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the arrows from 7 until a node points to itself."
+        },
+        {
+          "rung": "point",
+          "text": "7 points to 6, which points to 4.",
+          "highlight": [
+            "7",
+            "6",
+            "4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "7, then 6, then 4, then 2. `parent[2]` is 2, so 2 is the root."
+        }
+      ],
+      "feedback": {
+        "correct": "7, 6, 4, 2: the root is 2.",
+        "generic": "Not quite right. Keep following parents until you reach a root.",
+        "byKey": {
+          "one": "6 is 7's parent, but `parent[6]` is 4, not 6. The loop keeps going.",
+          "self": "7 is not a root: `parent[7]` is 6."
+        }
+      },
+      "explain": {
+        "text": "`find` climbs from 7 to the root 2 in three steps. Two items are in the same group exactly when `find` gives the same root. Here `find(1)` is 0, so 1 and 7 are in different groups.",
+        "canvas": {
+          "highlight": [
+            "7",
+            "6",
+            "4",
+            "2",
+            "e-7-6",
+            "e-6-4",
+            "e-4-2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Shortcuts",
+      "prose": "A long chain makes every `find` slow. **Path compression** fixes that: after finding the root, point every node on the path straight at it.\n\n```python\ndef find(x):\n    root = x\n    while parent[root] != root:\n        root = parent[root]\n    while x != root:\n        nxt = parent[x]\n        parent[x] = root\n        x = nxt\n    return root\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "0",
+              "label": "0",
+              "x": 0.1,
+              "y": 0.2,
+              "colour": 2
+            },
+            {
+              "id": "1",
+              "label": "1",
+              "x": 0.1,
+              "y": 0.8
+            },
+            {
+              "id": "2",
+              "label": "2",
+              "x": 0.6,
+              "y": 0.08,
+              "colour": 2
+            },
+            {
+              "id": "3",
+              "label": "3",
+              "x": 0.38,
+              "y": 0.42
+            },
+            {
+              "id": "4",
+              "label": "4",
+              "x": 0.72,
+              "y": 0.42
+            },
+            {
+              "id": "5",
+              "label": "5",
+              "x": 0.56,
+              "y": 0.75
+            },
+            {
+              "id": "6",
+              "label": "6",
+              "x": 0.95,
+              "y": 0.66
+            },
+            {
+              "id": "7",
+              "label": "7",
+              "x": 0.8,
+              "y": 0.92
+            }
+          ],
+          "edges": [
+            {
+              "from": "1",
+              "to": "0"
+            },
+            {
+              "from": "3",
+              "to": "2"
+            },
+            {
+              "from": "4",
+              "to": "2"
+            },
+            {
+              "from": "5",
+              "to": "4"
+            },
+            {
+              "from": "6",
+              "to": "4"
+            },
+            {
+              "from": "7",
+              "to": "6"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 220
+      },
+      "question": "We call `find(7)`. Tap every node whose parent changes.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "7",
+          "6"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "four",
+            "set": [
+              "7",
+              "6",
+              "4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which nodes does the second loop visit, and where do they point now?"
+        },
+        {
+          "rung": "point",
+          "text": "4 already points at the root.",
+          "highlight": [
+            "4",
+            "2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The loop visits 7, 6 and 4. Only 7 and 6 get a new parent, 2."
+        }
+      ],
+      "feedback": {
+        "correct": "7 and 6 now point straight at 2.",
+        "generic": "Not quite right. List the nodes on the path, then ask which already point at the root.",
+        "byKey": {
+          "four": "4 is on the path, but `parent[4]` was already 2. Setting it to 2 again changes nothing."
+        }
+      },
+      "explain": {
+        "text": "After one `find(7)`, nodes 7 and 6 sit one step from the root. The next `find(7)` takes one step instead of three. Long chains flatten as soon as they are used.",
+        "canvas": {
+          "edges": {
+            "e-7-6": null,
+            "e-6-4": null,
+            "e-7-2": {
+              "from": "7",
+              "to": "2"
+            },
+            "e-6-2": {
+              "from": "6",
+              "to": "2"
+            }
+          },
+          "highlight": [
+            "7",
+            "6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Which root moves?",
+      "prose": "Now `union(1, 5)`. `find(1)` is 0 and `find(5)` is 2. Root 2 heads a group of 6 items; root 0 heads a group of 2. One root must point at the other.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "0",
+              "label": "0",
+              "x": 0.1,
+              "y": 0.2,
+              "colour": 2
+            },
+            {
+              "id": "1",
+              "label": "1",
+              "x": 0.1,
+              "y": 0.8
+            },
+            {
+              "id": "2",
+              "label": "2",
+              "x": 0.6,
+              "y": 0.08,
+              "colour": 2
+            },
+            {
+              "id": "3",
+              "label": "3",
+              "x": 0.38,
+              "y": 0.42
+            },
+            {
+              "id": "4",
+              "label": "4",
+              "x": 0.72,
+              "y": 0.42
+            },
+            {
+              "id": "5",
+              "label": "5",
+              "x": 0.56,
+              "y": 0.75
+            },
+            {
+              "id": "6",
+              "label": "6",
+              "x": 0.95,
+              "y": 0.66
+            },
+            {
+              "id": "7",
+              "label": "7",
+              "x": 0.8,
+              "y": 0.92
+            }
+          ],
+          "edges": [
+            {
+              "from": "1",
+              "to": "0"
+            },
+            {
+              "from": "3",
+              "to": "2"
+            },
+            {
+              "from": "4",
+              "to": "2"
+            },
+            {
+              "from": "5",
+              "to": "4"
+            },
+            {
+              "from": "6",
+              "to": "2"
+            },
+            {
+              "from": "7",
+              "to": "2"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 220
+      },
+      "question": "Which line keeps the trees shallow?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "small",
+            "text": "`parent[0] = 2`",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "`parent[2] = 0`",
+            "why": "That hangs the big group under the small one, so six items each get one step deeper. Hang the smaller group instead."
+          },
+          {
+            "id": "leaf",
+            "text": "`parent[0] = 5`",
+            "why": "That attaches to a node, not a root, so items in 0's group sit two steps lower than needed. Always point root at root."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every item under the root that moves gets one step deeper."
+        },
+        {
+          "rung": "point",
+          "text": "This root has only two items under it.",
+          "highlight": [
+            "0",
+            "1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Point the smaller group's root at the larger one: `parent[0] = 2`."
+        }
+      ],
+      "feedback": {
+        "correct": "Only two items get one step deeper.",
+        "generic": "Not quite right. Count how many items get deeper with each choice."
+      },
+      "explain": {
+        "text": "This is **union by size**: the smaller root points at the larger, and the sizes add. An item gets deeper only when its group at least doubles, so no tree is deeper than $\\log_2 n$.",
+        "canvas": {
+          "edges": {
+            "e-0-2": {
+              "from": "0",
+              "to": "2"
+            }
+          },
+          "highlight": [
+            "e-0-2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write it",
+      "prose": "Write the class. Items are `0` to `n − 1`. `union(a, b)` returns `True` if it merged two groups and `False` if they were already one. `count()` returns the number of groups. Use both path compression and union by size.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "0",
+              "label": "0",
+              "x": 0.1,
+              "y": 0.2,
+              "colour": 2
+            },
+            {
+              "id": "1",
+              "label": "1",
+              "x": 0.1,
+              "y": 0.8
+            },
+            {
+              "id": "2",
+              "label": "2",
+              "x": 0.6,
+              "y": 0.08,
+              "colour": 2
+            },
+            {
+              "id": "3",
+              "label": "3",
+              "x": 0.38,
+              "y": 0.42
+            },
+            {
+              "id": "4",
+              "label": "4",
+              "x": 0.72,
+              "y": 0.42
+            },
+            {
+              "id": "5",
+              "label": "5",
+              "x": 0.56,
+              "y": 0.75
+            },
+            {
+              "id": "6",
+              "label": "6",
+              "x": 0.95,
+              "y": 0.66
+            },
+            {
+              "id": "7",
+              "label": "7",
+              "x": 0.8,
+              "y": 0.92
+            }
+          ],
+          "edges": [
+            {
+              "from": "1",
+              "to": "0"
+            },
+            {
+              "from": "3",
+              "to": "2"
+            },
+            {
+              "from": "4",
+              "to": "2"
+            },
+            {
+              "from": "5",
+              "to": "4"
+            },
+            {
+              "from": "6",
+              "to": "2"
+            },
+            {
+              "from": "7",
+              "to": "2"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "Write `DSU` with `find`, `union` and `count`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class DSU:\n    def __init__(self, n):\n        ...\n\n    def find(self, x):\n        ...\n\n    def union(self, a, b):\n        ...\n\n    def count(self):\n        ...\n",
+        "solution": "class DSU:\n    def __init__(self, n):\n        self.parent = list(range(n))\n        self.size = [1] * n\n        self.groups = n\n\n    def find(self, x):\n        root = x\n        while self.parent[root] != root:\n            root = self.parent[root]\n        while x != root:              # path compression\n            nxt = self.parent[x]\n            self.parent[x] = root\n            x = nxt\n        return root\n\n    def union(self, a, b):\n        ra, rb = self.find(a), self.find(b)\n        if ra == rb:\n            return False\n        if self.size[ra] < self.size[rb]:   # union by size\n            ra, rb = rb, ra\n        self.parent[rb] = ra\n        self.size[ra] += self.size[rb]\n        self.groups -= 1\n        return True\n\n    def count(self):\n        return self.groups\n",
+        "tests": [
+          {
+            "call": "(d := DSU(5), d.union(0, 1), d.union(3, 4), d.count())[-1]",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(5), d.union(0, 1), d.union(1, 2), d.find(0) == d.find(2))[-1]",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(5), d.union(0, 1), d.union(3, 4), d.find(1) == d.find(3))[-1]",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(4), d.union(0, 1), d.union(1, 0))[1:]",
+            "expect": "(True, False)",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(3), d.union(2, 2), d.count())[1:]",
+            "expect": "(False, 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(1), d.find(0), d.count())[1:]",
+            "expect": "(0, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(3), d.union(0, 1), d.union(0, 2), d.find(1) == d.find(2), d.count())[-2:]",
+            "expect": "(True, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(6), d.union(0, 1), d.union(2, 3), d.union(1, 3), d.union(4, 5), d.union(0, 2), d.count(), d.find(3) == d.find(0))[-3:]",
+            "expect": "(False, 2, True)",
+            "compare": "equal"
+          },
+          {
+            "call": "chain_check(5000)",
+            "expect": "(True, 1, True)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Each builds a fresh `DSU`, makes some unions and reads the last values. Test 9 joins a chain of 5,000 items, calls `find` 10,000 times and expects it to take under half a second. Python's recursion limit is about 1,000.",
+        "examples": [
+          {
+            "call": "(d := DSU(5), d.union(0, 1), d.union(3, 4), d.count())[-1]",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "(d := DSU(4), d.union(0, 1), d.union(1, 0))[1:]",
+            "expect": "(True, False)",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "import time as _time\n\n\ndef chain_check(n):\n    \"\"\"join a chain of n items, call find 2n times; report whether that took under half a second\"\"\"\n    start = _time.perf_counter()\n    d = DSU(n)\n    for i in range(n - 1):\n        d.union(i, i + 1)\n    same = all(d.find(0) == d.find(n - 1) for _ in range(n))\n    fast = _time.perf_counter() - start < 0.5\n    return same, d.count(), fast\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Store `parent`, `size` and a running `groups` count in `__init__`."
+        },
+        {
+          "rung": "point",
+          "text": "Union always joins two roots.",
+          "highlight": [
+            "0",
+            "2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`find` climbs to the root, then re-points the path. `union` finds both roots, returns `False` if equal, else hangs the smaller under the larger and decrements `groups`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your union-find merges, counts and stays fast on a 5,000-item chain.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-5": "Test 5 unions 2 with itself. It must return `False` and leave 3 groups: check whether the roots match first.",
+          "test-7": "Test 7 unions 0 with 1, then 0 with 2. If 1 ends up apart from 2, you re-pointed the node 0, not its root.",
+          "test-9": "Test 9 builds a 5,000-item chain. A `RecursionError`, or `False` in the last place, means `find` walks the whole chain: add union by size and an iterative compression."
+        }
+      },
+      "explain": {
+        "text": "With both tricks, a run of $m$ operations costs $O(m\\,\\alpha(n))$. The inverse Ackermann function $\\alpha(n)$ is at most 4 for any $n$ you will meet. So each operation is, in practice, constant time."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Joining nodes, not roots",
+      "prose": "A colleague writes a shorter `union`:\n\n```python\ndef union(self, a, b):\n    self.parent[a] = b\n```\n\nThey start with 3 items and call `union(0, 1)`, then `union(0, 2)`.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 200,
+          "nodes": [
+            {
+              "id": "0",
+              "label": "0",
+              "x": 0.2,
+              "y": 0.3
+            },
+            {
+              "id": "1",
+              "label": "1",
+              "x": 0.5,
+              "y": 0.75
+            },
+            {
+              "id": "2",
+              "label": "2",
+              "x": 0.8,
+              "y": 0.3
+            }
+          ],
+          "edges": []
+        },
+        "state": {}
+      },
+      "question": "Afterwards, does `find(1) == find(2)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "false",
+            "text": "`False`: 1 and 2 end up in different groups",
+            "correct": true
+          },
+          {
+            "id": "true",
+            "text": "`True`: all three are linked",
+            "why": "You merged the groups in your head. The second call overwrote `parent[0]`, so 0 let go of 1."
+          },
+          {
+            "id": "error",
+            "text": "It raises an error",
+            "why": "Every assignment is a valid index, so nothing fails. The code just loses a link silently."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write out `parent` after each call."
+        },
+        {
+          "rung": "point",
+          "text": "Node 0 is re-pointed twice.",
+          "highlight": [
+            "0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After the first call `parent[0]` is 1. The second sets it to 2. Now `find(1)` is 1 and `find(2)` is 2."
+        }
+      ],
+      "feedback": {
+        "correct": "The second union cut 0 loose from 1.",
+        "generic": "Not quite right. Track `parent[0]` through both calls.",
+        "byKey": {
+          "true": "You expected both unions to add up. `parent[0] = 2` replaced `parent[0] = 1`, so the link to 1 was lost."
+        }
+      },
+      "explain": {
+        "text": "Setting a node's parent moves that one node and forgets where it was. Union must join the roots: `self.parent[self.find(a)] = self.find(b)`. Then a whole group moves, and no link is lost.",
+        "canvas": {
+          "edges": [
+            {
+              "from": "0",
+              "to": "2"
+            }
+          ],
+          "highlight": [
+            "1"
+          ],
+          "caption": "After both calls: 0 points at 2, and 1 is alone"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "Every union-find you met keeps one parent per item:\n\n```python\nfind(x)      # climb to the root, flatten the path\nunion(a, b)  # smaller root -> larger root\n```\n\nWith both tricks, $m$ operations on $n$ items cost $O(m\\,\\alpha(n))$, where $\\alpha(n) \\le 4$ in practice.",
+      "question": "A graph has 8 nodes and these edges: 0–1, 2–3, 1–3, 5–6. How many connected components?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "edges",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four merges take 8 groups down to 4.",
+        "generic": "Not quite right. Start at 8 and subtract 1 for each union that returns `True`.",
+        "byKey": {
+          "edges": "You counted only the groups with edges. Nodes 4 and 7 have none, and each is a component on its own."
+        }
+      },
+      "explain": {
+        "text": "Start with 8 groups. Each of the four edges joins two different groups, so `count()` falls to $8 - 4 = 4$: {0, 1, 2, 3}, {5, 6}, {4} and {7}."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Kruskal's tree",
+      "prose": "A **minimum spanning tree** joins every node with the cheapest set of edges and no loops. Kruskal's algorithm builds one with union-find. An edge whose ends already share a root would close a loop.",
+      "question": "Put the steps of Kruskal's algorithm in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "sort",
+            "text": "Sort the edges by weight, cheapest first."
+          },
+          {
+            "id": "init",
+            "text": "Put every node in a group of its own."
+          },
+          {
+            "id": "each",
+            "text": "Take the next edge and `find` the roots of its two ends."
+          },
+          {
+            "id": "keep",
+            "text": "If the roots differ, keep the edge and `union` them; if they match, skip it, since it would close a loop."
+          },
+          {
+            "id": "stop",
+            "text": "Stop once $n - 1$ edges are kept."
+          }
+        ],
+        "answer": [
+          "sort",
+          "init",
+          "each",
+          "keep",
+          "stop"
+        ],
+        "same": [
+          [
+            "sort",
+            "init"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The two set-up steps can go in either order. What happens to each edge?"
+        },
+        {
+          "rung": "step",
+          "text": "Set up: sort the edges and make singleton groups. Then for each edge, compare roots, keep or skip. Stop at $n - 1$ edges."
+        }
+      ],
+      "feedback": {
+        "correct": "Sort, start apart, then keep each edge that joins two groups.",
+        "generic": "Not quite right. Set up first, then handle one edge at a time.",
+        "byKey": {
+          "keep": "You can only compare roots after finding them, so the `find` step comes first.",
+          "stop": "Stopping comes last: a tree on $n$ nodes has $n - 1$ edges."
+        }
+      },
+      "explain": {
+        "text": "Sorting costs $O(E\\log E)$ and the union-find work is nearly linear, so sorting dominates. Each kept edge merges two groups, so after $n - 1$ of them one group remains. A skipped edge always joins two nodes already connected."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Correlation clusters",
+      "prose": "A risk team groups holdings that move together. Two holdings are linked when $|\\rho| > 0.7$, the absolute value of their correlation. A strong negative correlation counts too: a gilt future that falls as bank shares rise is the same risk factor.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "height": 270,
+          "nodes": [
+            {
+              "id": "SHEL",
+              "label": "SHEL",
+              "x": 0.1,
+              "y": 0.2
+            },
+            {
+              "id": "BP",
+              "label": "BP",
+              "x": 0.3,
+              "y": 0.2
+            },
+            {
+              "id": "VOD",
+              "label": "VOD",
+              "x": 0.2,
+              "y": 0.8
+            },
+            {
+              "id": "HSBA",
+              "label": "HSBA",
+              "x": 0.5,
+              "y": 0.15
+            },
+            {
+              "id": "BARC",
+              "label": "BARC",
+              "x": 0.62,
+              "y": 0.5
+            },
+            {
+              "id": "LLOY",
+              "label": "LLOY",
+              "x": 0.82,
+              "y": 0.15
+            },
+            {
+              "id": "GILT",
+              "label": "GILT",
+              "x": 0.88,
+              "y": 0.75
+            },
+            {
+              "id": "AZN",
+              "label": "AZN",
+              "x": 0.42,
+              "y": 0.85
+            },
+            {
+              "id": "GSK",
+              "label": "GSK",
+              "x": 0.62,
+              "y": 0.92
+            }
+          ],
+          "edges": [
+            {
+              "from": "SHEL",
+              "to": "BP",
+              "label": "+0.82",
+              "directed": false
+            },
+            {
+              "from": "HSBA",
+              "to": "BARC",
+              "label": "+0.76",
+              "directed": false
+            },
+            {
+              "from": "BARC",
+              "to": "LLOY",
+              "label": "+0.81",
+              "directed": false
+            },
+            {
+              "from": "AZN",
+              "to": "GSK",
+              "label": "+0.64",
+              "directed": false
+            },
+            {
+              "from": "HSBA",
+              "to": "LLOY",
+              "label": "+0.69",
+              "directed": false
+            },
+            {
+              "from": "BP",
+              "to": "BARC",
+              "label": "+0.41",
+              "directed": false
+            },
+            {
+              "from": "BARC",
+              "to": "GILT",
+              "label": "−0.74",
+              "directed": false
+            }
+          ]
+        },
+        "state": {
+          "caption": "Correlations above 0.3 in size, from `CORR`"
+        }
+      },
+      "question": "Write `clusters(names, pairs, threshold=0.7)`: the groups as sorted lists, in sorted order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def clusters(names, pairs, threshold=0.7):\n    ...\n",
+        "solution": "def clusters(names, pairs, threshold=0.7):\n    index = {name: i for i, name in enumerate(names)}\n    d = DSU(len(names))\n    for a, b, rho in pairs:\n        if abs(rho) > threshold:\n            d.union(index[a], index[b])\n    groups = {}\n    for name in names:\n        groups.setdefault(d.find(index[name]), []).append(name)\n    return sorted(sorted(g) for g in groups.values())\n",
+        "tests": [
+          {
+            "call": "clusters(NAMES, CORR)",
+            "expect": "[['AZN'], ['BARC', 'GILT', 'HSBA', 'LLOY'], ['BP', 'SHEL'], ['GSK'], ['VOD']]",
+            "compare": "equal"
+          },
+          {
+            "call": "clusters(NAMES, CORR, 0.6)",
+            "expect": "[['AZN', 'GSK'], ['BARC', 'GILT', 'HSBA', 'LLOY'], ['BP', 'SHEL'], ['VOD']]",
+            "compare": "equal"
+          },
+          {
+            "call": "clusters(NAMES, CORR, 0.76)",
+            "expect": "[['AZN'], ['BARC', 'LLOY'], ['BP', 'SHEL'], ['GILT'], ['GSK'], ['HSBA'], ['VOD']]",
+            "compare": "equal"
+          },
+          {
+            "call": "clusters(NAMES, [])",
+            "expect": "[['AZN'], ['BARC'], ['BP'], ['GILT'], ['GSK'], ['HSBA'], ['LLOY'], ['SHEL'], ['VOD']]",
+            "compare": "equal"
+          },
+          {
+            "call": "clusters(['SHEL', 'BP'], [('SHEL', 'BP', -0.9)])",
+            "expect": "[['BP', 'SHEL']]",
+            "compare": "equal"
+          },
+          {
+            "call": "clusters(['VOD'], [])",
+            "expect": "[['VOD']]",
+            "compare": "equal"
+          },
+          {
+            "call": "clusters(['A', 'B', 'C', 'D'], [('A', 'B', 0.8), ('C', 'D', 0.8), ('B', 'D', 0.8)])",
+            "expect": "[['A', 'B', 'C', 'D']]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. `DSU` from the last screen is already defined, and so are `NAMES` and `CORR`. Return the groups as sorted lists, sorted by their first name.",
+        "examples": [
+          {
+            "call": "clusters(NAMES, CORR)",
+            "expect": "[['AZN'], ['BARC', 'GILT', 'HSBA', 'LLOY'], ['BP', 'SHEL'], ['GSK'], ['VOD']]",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "class DSU:\n    def __init__(self, n):\n        self.parent = list(range(n))\n        self.size = [1] * n\n        self.groups = n\n\n    def find(self, x):\n        root = x\n        while self.parent[root] != root:\n            root = self.parent[root]\n        while x != root:              # path compression\n            nxt = self.parent[x]\n            self.parent[x] = root\n            x = nxt\n        return root\n\n    def union(self, a, b):\n        ra, rb = self.find(a), self.find(b)\n        if ra == rb:\n            return False\n        if self.size[ra] < self.size[rb]:   # union by size\n            ra, rb = rb, ra\n        self.parent[rb] = ra\n        self.size[ra] += self.size[rb]\n        self.groups -= 1\n        return True\n\n    def count(self):\n        return self.groups\n\n\nNAMES = ['AZN', 'BARC', 'BP', 'GILT', 'GSK', 'HSBA', 'LLOY', 'SHEL', 'VOD']\nCORR = [('SHEL', 'BP', 0.82), ('HSBA', 'BARC', 0.76), ('BARC', 'LLOY', 0.81), ('AZN', 'GSK', 0.64), ('HSBA', 'LLOY', 0.69), ('VOD', 'BP', 0.12), ('GSK', 'SHEL', -0.05), ('BP', 'BARC', 0.41), ('BARC', 'GILT', -0.74)]\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Map each name to an index, union every pair with `abs(rho) > threshold`, then gather names by `find`."
+        },
+        {
+          "rung": "point",
+          "text": "BARC and GILT are linked at −0.74.",
+          "highlight": [
+            "BARC",
+            "GILT"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Group names in a dict keyed by `d.find(index[name])`. Return `sorted(sorted(g) for g in groups.values())`."
+        }
+      ],
+      "feedback": {
+        "correct": "Five clusters: the banks with the gilt, the oil pair, and three loners.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `['BARC', 'GILT', 'HSBA', 'LLOY']` together. Missing GILT means you compared `rho`, not `abs(rho)`.",
+          "test-3": "Test 3 sets the threshold to 0.76, and HSBA–BARC is exactly 0.76. The rule is strictly greater, so that link drops.",
+          "test-7": "Test 7 merges two pairs, so D sits two steps below the root. Gather by `find`, not by `parent`: a parent need not be the root."
+        }
+      },
+      "explain": {
+        "text": "HSBA and LLOY correlate at only 0.69, yet they share a cluster through BARC. Union-find captures that chaining for free. AZN and GSK at 0.64 stay apart, as does VOD.",
+        "canvas": {
+          "highlight": [
+            "HSBA",
+            "BARC",
+            "LLOY",
+            "GILT",
+            "SHEL",
+            "BP"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Union-find stores one parent per item. A root names its group, and `find` climbs to it.",
+      "`union` joins two roots, smaller under larger. Path compression re-points every node `find` passes straight at the root.",
+      "With both tricks each operation is nearly constant time, so counting components or building Kruskal's tree is fast."
+    ],
+    "formula": {
+      "name": "Cost of m operations",
+      "tex": "O\\big(m\\,\\alpha(n)\\big), \\quad \\alpha(n) \\le 4 \\text{ in practice}",
+      "note": "$\\alpha$ is the inverse Ackermann function; it grows slower than any logarithm."
+    },
+    "trap": "Setting a node's parent, not its root's, moves one item and silently drops its old links."
+  },
+  "quiz": [
+    {
+      "id": "q-netting",
+      "difficulty": 2,
+      "prose": "Six counterparties trade today: 1 with 2, 3 with 4, 2 with 5. Each group of connected counterparties can be netted to a single settlement.",
+      "question": "How many settlement groups are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "pairs",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "{1, 2, 5}, {3, 4} and {6}.",
+        "generic": "Not quite right. Start at 6 groups and subtract one for each union that merges.",
+        "byKey": {
+          "pairs": "Counterparty 6 traded with nobody, so it is a group of its own."
+        }
+      },
+      "explain": {
+        "text": "Six groups to start; each of the three trades merges two different groups. That leaves $6 - 3 = 3$."
+      }
+    },
+    {
+      "id": "q-self",
+      "difficulty": 2,
+      "prose": "```python\nd = DSU(4)\nprint(d.union(3, 3), d.count())\n```\n\n`DSU` is the class you wrote.",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`False 4`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`True 3`",
+            "why": "3 and 3 already share a root, so nothing merges and the count stays at 4."
+          },
+          {
+            "id": "c",
+            "text": "`False 3`",
+            "why": "The count drops only when a merge happens. `union` returned before changing it."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "An item is already in its own group.",
+        "generic": "Not quite right. Compare the two roots first."
+      },
+      "explain": {
+        "text": "`find(3)` is 3 on both sides, so `union` returns `False` before touching `groups`. All 4 groups remain."
+      }
+    },
+    {
+      "id": "q-records",
+      "difficulty": 3,
+      "prose": "Client records are duplicates when they share an email or a phone number.\n\n```text\nr1: ana@x.com   0207 111\nr2: ana@y.com   0207 111\nr3: ana@y.com   0207 222\nr4: bo@x.com    0207 333\nr5: cy@x.com    0207 333\n```",
+      "question": "How many distinct clients are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "direct",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "{r1, r2, r3} and {r4, r5}.",
+        "generic": "Not quite right. Union the records that share either field, then count roots.",
+        "byKey": {
+          "direct": "r1 and r3 share nothing directly, but both match r2. Duplicates chain."
+        }
+      },
+      "explain": {
+        "text": "r1 and r2 share a phone; r2 and r3 share an email; r4 and r5 share a phone. Union-find merges the chain r1, r2, r3, leaving 2 clients."
+      }
+    },
+    {
+      "id": "q-chain",
+      "difficulty": 3,
+      "prose": "A union-find has no path compression and no union by size. Calling `union(i, i + 1)` for each $i$ from 0 to $n - 2$ builds a chain $n$ long.",
+      "question": "How does the cost of $n$ more calls to `find(0)` grow?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$O(n^2)$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$O(n)$",
+            "why": "Without compression the chain never shortens, so every one of the $n$ calls walks $n$ steps."
+          },
+          {
+            "id": "c",
+            "text": "$O(n \\log n)$",
+            "why": "That bound needs union by size, which keeps trees shallow. Here the tree is a straight line."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$n$ walks of length $n$.",
+        "generic": "Not quite right. How long is each walk, and does it ever get shorter?"
+      },
+      "explain": {
+        "text": "Each `find(0)` climbs the whole chain, about $n$ steps, and leaves it unchanged. With $n$ calls that is $n^2$ steps: $2.5 \\times 10^7$ at $n = 5{,}000$."
+      }
+    }
+  ]
+}

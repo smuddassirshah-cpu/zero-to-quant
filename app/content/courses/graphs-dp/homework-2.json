@@ -1,0 +1,511 @@
+{
+  "id": "homework-2",
+  "course": "graphs-dp",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-maze",
+      "difficulty": 4,
+      "skills": [
+        "gd-paths",
+        "gd-traversal"
+      ],
+      "prose": "A grid maze is a graph: each open cell is a node joined to its open neighbours above, below, left and right. Find the fewest moves from the top-left corner to the bottom-right.",
+      "question": "Write `maze_steps(grid)`: the fewest moves, 0 for a single open cell, or −1 if the corner cannot be reached.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\n\ndef maze_steps(grid):\n    ...\n",
+        "solution": "from collections import deque\n\n\ndef maze_steps(grid):\n    rows, cols = len(grid), len(grid[0])\n    if grid[0][0] == \"#\" or grid[rows - 1][cols - 1] == \"#\":\n        return -1\n    dist = {(0, 0): 0}\n    queue = deque([(0, 0)])\n    while queue:\n        r, c = queue.popleft()\n        if (r, c) == (rows - 1, cols - 1):\n            return dist[(r, c)]\n        for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == \".\" and (nr, nc) not in dist:\n                dist[(nr, nc)] = dist[(r, c)] + 1\n                queue.append((nr, nc))\n    return -1\n",
+        "tests": [
+          {
+            "call": "maze_steps(['...#', '##.#', '....', '.##.'])",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "maze_steps(['.'])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "maze_steps(['.#', '#.'])",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "maze_steps(['#.', '..'])",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "maze_steps(['.....', '####.', '.....', '.####', '.....'])",
+            "expect": "16",
+            "compare": "equal"
+          },
+          {
+            "call": "maze_steps(['..', '..'])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "maze_steps(['.' * 30] * 30)",
+            "expect": "58",
+            "compare": "equal"
+          },
+          {
+            "call": "maze_steps(['.#...', '.#.#.', '...#.'])",
+            "expect": "10",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. `grid` is a list of equal-length strings of `.` and `#`. Moves go up, down, left or right. Return −1 if the corner cannot be reached, including when either corner is a wall.",
+        "examples": [
+          {
+            "call": "maze_steps(['...#', '##.#', '....', '.##.'])",
+            "expect": "6",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Breadth-first search on cells finds the fewest moves.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 6. A 7 means you counted cells rather than moves.",
+          "test-4": "Test 4 has a wall in the start cell, so the answer is −1."
+        }
+      },
+      "explain": {
+        "text": "Each cell is a node with up to four edges, so BFS costs $O(\\text{rows} \\times \\text{cols})$. The first time the corner leaves the queue, its distance is the fewest moves."
+      }
+    },
+    {
+      "id": "h-within-k",
+      "difficulty": 5,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "Compliance allows at most `k` intermediate currencies in a conversion chain. Each quote is `(from, to, bp)` with its cost in basis points. Dijkstra ignores the limit, so it may return a route with too many hops.",
+      "question": "Write `cheapest_within(quotes, src, dst, k)`: the lowest total cost in bp using at most `k + 1` conversions, or −1.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef cheapest_within(quotes, src, dst, k):\n    ...\n",
+        "solution": "import math\n\n\ndef cheapest_within(quotes, src, dst, k):\n    cost = {src: 0}\n    for _ in range(k + 1):\n        new = dict(cost)\n        for a, b, bp in quotes:\n            if a in cost and cost[a] + bp < new.get(b, math.inf):\n                new[b] = cost[a] + bp\n        cost = new\n    return cost.get(dst, -1)\n",
+        "tests": [
+          {
+            "call": "round(cheapest_within(QUOTES, 'GBP', 'JPY', 0), 6)",
+            "expect": "4.0",
+            "compare": "equal"
+          },
+          {
+            "call": "round(cheapest_within(QUOTES, 'GBP', 'JPY', 1), 6)",
+            "expect": "2.7",
+            "compare": "equal"
+          },
+          {
+            "call": "round(cheapest_within(QUOTES, 'GBP', 'JPY', 2), 6)",
+            "expect": "2.6",
+            "compare": "equal"
+          },
+          {
+            "call": "round(cheapest_within(QUOTES, 'GBP', 'THB', 1), 6)",
+            "expect": "7.5",
+            "compare": "equal"
+          },
+          {
+            "call": "round(cheapest_within(QUOTES, 'GBP', 'THB', 2), 6)",
+            "expect": "4.3",
+            "compare": "equal"
+          },
+          {
+            "call": "round(cheapest_within(QUOTES, 'GBP', 'THB', 3), 6)",
+            "expect": "4.2",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_within(QUOTES, 'JPY', 'GBP', 5)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_within(QUOTES, 'GBP', 'GBP', 0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "round(cheapest_within([('A', 'B', 1.0), ('B', 'C', 1.0), ('C', 'D', 1.0), ('A', 'D', 5.0)], 'A', 'D', 1), 6)",
+            "expect": "5.0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests on `QUOTES`, the `(from, to, bp)` triples listed. `k` is the most intermediate currencies allowed, so at most `k + 1` conversions. Return −1 if `dst` cannot be reached within the limit.",
+        "examples": [
+          {
+            "call": "round(cheapest_within(QUOTES, 'GBP', 'JPY', 1), 6)",
+            "expect": "2.7",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "QUOTES = [('GBP', 'USD', 1.2), ('GBP', 'EUR', 0.5), ('EUR', 'USD', 0.6), ('USD', 'JPY', 1.5), ('EUR', 'JPY', 2.4), ('GBP', 'JPY', 4.0), ('EUR', 'CHF', 0.7), ('CHF', 'JPY', 1.9), ('USD', 'SGD', 1.1), ('SGD', 'THB', 2.0), ('JPY', 'THB', 3.5)]\n"
+      },
+      "feedback": {
+        "correct": "Exactly $k + 1$ rounds of Bellman-Ford, each reading only last round's costs, enforce the hop limit.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 allows one intermediate currency, so GBP, EUR, USD, JPY at 2.6 bp is too long. The answer is 2.7 bp through USD. Copy the costs each round so one round adds only one conversion.",
+          "test-1": "Test 1 allows no intermediates: only the direct quote, 4.0 bp. Run `k + 1` rounds, not `k`.",
+          "test-7": "Test 7 has no route from JPY back to GBP, so the answer is −1."
+        }
+      },
+      "explain": {
+        "text": "After round $i$, `cost` holds the cheapest routes of at most $i$ conversions. Relaxing from a copy stops one round from chaining two new edges. This is Bellman-Ford cut off at $k + 1$ rounds: $O(k \\cdot E)$."
+      }
+    },
+    {
+      "id": "h-clients",
+      "difficulty": 4,
+      "skills": [
+        "gd-graphs"
+      ],
+      "prose": "A bank's client file has duplicates. Records that share any email or phone number belong to the same person, even through a chain of records.",
+      "question": "Write `count_clients(records)`: the number of distinct clients.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_clients(records):\n    ...\n",
+        "solution": "def count_clients(records):\n    parent = list(range(len(records)))\n\n    def find(x):\n        while parent[x] != x:\n            parent[x] = parent[parent[x]]\n            x = parent[x]\n        return x\n\n    owner = {}\n    groups = len(records)\n    for i, ids in enumerate(records):\n        for key in ids:\n            if key in owner:\n                ra, rb = find(i), find(owner[key])\n                if ra != rb:\n                    parent[ra] = rb\n                    groups -= 1\n            else:\n                owner[key] = i\n    return groups\n",
+        "tests": [
+          {
+            "call": "count_clients([['ana@x.com', '0207 111'], ['ana@y.com', '0207 111'], ['ana@y.com', '0207 222'], ['bo@x.com', '0207 333'], ['cy@x.com', '0207 333']])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "count_clients([])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_clients([['a'], ['b'], ['c']])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_clients([['a', 'b'], ['c', 'd'], ['b', 'c']])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_clients([['a'], ['b'], ['a', 'b']])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_clients([['a', 'a'], ['a']])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_clients([['k%d' % i, 'k%d' % (i + 1)] for i in range(3000)])",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Each record is a list of identifiers (emails, phone numbers). Two records belong to the same client if they share an identifier, directly or through a chain of records.",
+        "examples": [
+          {
+            "call": "count_clients([['ana@x.com', '0207 111'], ['ana@y.com', '0207 111'], ['ana@y.com', '0207 222'], ['bo@x.com', '0207 333'], ['cy@x.com', '0207 333']])",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Union-find merged the chains of shared identifiers.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 2. A 3 means r1 and r3 were kept apart: they share nothing directly, but both match r2.",
+          "test-4": "Test 4 joins two pairs through the third record, so all three are one client."
+        }
+      },
+      "explain": {
+        "text": "Remember the first record that used each identifier, and union every later record with it. Each union that merges two groups removes one client from the count. With compression, 3,000 chained records take milliseconds."
+      }
+    },
+    {
+      "id": "h-dijkstra-proof",
+      "difficulty": 4,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "Why is a node's cost final when Dijkstra pops it? Assume every weight is at least 0. Call the nodes already popped **final**.",
+      "question": "Put the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "p1",
+            "text": "Node $u$ is popped with cost $d$, the smallest entry in the heap."
+          },
+          {
+            "id": "p2",
+            "text": "Take any other route from the start to $u$. It leaves the final nodes at some first node $x$ that is not final."
+          },
+          {
+            "id": "p3",
+            "text": "$x$ was reached from a final node, so it sits in the heap with cost at least $d$, since $d$ is the smallest."
+          },
+          {
+            "id": "p4",
+            "text": "The rest of the route, from $x$ to $u$, has total weight at least 0, since no weight is negative."
+          },
+          {
+            "id": "p5",
+            "text": "So that route costs at least $d$, and $d$ is $u$'s cheapest cost."
+          }
+        ],
+        "answer": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5"
+        ]
+      },
+      "feedback": {
+        "correct": "The non-negative weights carry the whole argument, in line 4.",
+        "generic": "Not quite right. Start with the pop, consider another route, and bound its cost.",
+        "byKey": {
+          "p4": "The bound on the rest of the route only matters once we know $x$ already costs at least $d$.",
+          "p5": "The conclusion comes last."
+        }
+      },
+      "explain": {
+        "text": "Every rival route passes a non-final node $x$ that costs at least $d$, and the remaining edges cannot reduce that. A negative edge breaks line 4, which is why Bellman-Ford is needed there."
+      }
+    },
+    {
+      "id": "h-latency",
+      "difficulty": 3,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "One-way latencies in ms: LD4 to FR2 4.2, LD4 to NY4 29.5, FR2 to SG1 77.0, LD4 to SG1 84.0, NY4 to CH1 3.9, CH1 to TY3 70.0, SG1 to TY3 34.0.",
+      "question": "What is the lowest latency from LD4 to TY3, in ms?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 103.4,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "ms",
+        "placeholder": "milliseconds",
+        "wrong": [
+          {
+            "id": "sg",
+            "value": 115.2,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "direct-sg",
+            "value": 118.0,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "LD4, NY4, CH1, TY3: 29.5 + 3.9 + 70.0 = 103.4 ms.",
+        "generic": "Not quite right. Compare the route west through Chicago with the routes east through Singapore.",
+        "byKey": {
+          "sg": "Through FR2 and SG1 costs 4.2 + 77.0 + 34.0 = 115.2 ms. The westward route is faster.",
+          "direct-sg": "LD4, SG1, TY3 costs 84.0 + 34.0 = 118.0 ms."
+        }
+      },
+      "explain": {
+        "text": "Dijkstra settles FR2 4.2, NY4 29.5, CH1 33.4, SG1 81.2 and then TY3 103.4 through Chicago. The Singapore route would arrive at 115.2 ms."
+      }
+    },
+    {
+      "id": "h-triangle",
+      "difficulty": 4,
+      "skills": [
+        "gd-paths"
+      ],
+      "prose": "A screen shows GBP to USD at 1.2650, USD to EUR at 0.9230 and EUR to GBP at 0.8580. Each conversion costs 2 bp.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 200,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.08,
+              "y": 0.88
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.5,
+              "y": 0.08
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.92,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.2650"
+            },
+            {
+              "from": "USD",
+              "to": "EUR",
+              "label": "0.9230"
+            },
+            {
+              "from": "EUR",
+              "to": "GBP",
+              "label": "0.8580"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the loop make on £1,000,000 after costs, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1195.55,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "£",
+        "placeholder": "pounds",
+        "wrong": [
+          {
+            "id": "gross",
+            "value": 1796.51,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "onecost",
+            "value": 1596.15,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Gross 1.00179651, times $0.9998^3$, gives about £1,196.",
+        "generic": "Not quite right. Multiply the three rates, apply $0.9998$ three times, then subtract £1,000,000.",
+        "byKey": {
+          "gross": "That is the gain before costs. Three conversions at 2 bp each cost about £600.",
+          "onecost": "You charged the 2 bp only once. Each of the three conversions pays it."
+        }
+      },
+      "explain": {
+        "text": "$1.2650 \\times 0.9230 \\times 0.8580 = 1.00179651$, an 18 bp loop. After $0.9998^3$ it is $1.0011955$, so about £1,195.55 profit. A gap this wide between liquid quotes would close within milliseconds."
+      }
+    },
+    {
+      "id": "h-pick",
+      "difficulty": 3,
+      "skills": [
+        "gd-paths",
+        "gd-graphs"
+      ],
+      "prose": "A network of venues has transfer costs, some of them rebates (negative), and no loop of rebates that pays overall.",
+      "question": "Which algorithm finds the cheapest route from one venue to all the others?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Bellman-Ford",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Dijkstra",
+            "why": "A negative edge can lower a cost after its node is popped, so Dijkstra's answers may be wrong."
+          },
+          {
+            "id": "c",
+            "text": "BFS",
+            "why": "BFS counts hops and ignores costs entirely."
+          },
+          {
+            "id": "d",
+            "text": "Union-find",
+            "why": "Union-find says whether venues are connected, not what a route costs."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Negative weights, no negative cycle: Bellman-Ford.",
+        "generic": "Not quite right. Which methods allow negative weights?"
+      },
+      "explain": {
+        "text": "With no negative cycle, cheapest costs exist, and Bellman-Ford finds them in $O(V \\cdot E)$. Dijkstra needs every weight at least 0."
+      }
+    },
+    {
+      "id": "h-scanner",
+      "difficulty": 5,
+      "skills": [
+        "gd-paths"
+      ],
+      "title": "Designing an arbitrage scanner",
+      "kind": "longform",
+      "prompt": "A desk wants a scanner that flags currency arbitrage across 30 currencies and about 400 two-way quotes, refreshed every second. Each quote has a bid and an ask.\n\n(a) Describe how you would turn the quotes into a graph, including the edge weights and how bid and ask enter. (b) Explain how Bellman-Ford detects an arbitrage, why it needs $V - 1$ passes plus one, and why you add a start node. (c) Give the running time per refresh, and say whether it fits in a second. (d) Explain how to recover the currencies of the cycle, and why you need a tolerance. (e) Explain why most flagged cycles are not tradable, with a worked example.",
+      "model": "**(a) The graph.** Each currency is a node. A quote gives two directed edges: selling the base at the bid, $a \\to b$ with rate $\\text{bid}$, and buying it at the ask, $b \\to a$ with rate $1/\\text{ask}$. Using the dealable side, not the mid, builds the spread into the rates. Each edge gets weight $w = -\\ln(\\text{rate})$, minus the log of any per-trade fee factor. Then a loop's weights sum to $-\\ln$ of its product of rates.\n\n**(b) Detection.** A loop pays when $\\prod r_i > 1$. Taking logs, $\\sum \\ln r_i > 0$, so $\\sum (-\\ln r_i) < 0$: arbitrage is a negative cycle. Bellman-Ford relaxes every edge $V - 1$ times. A cheapest route without cycles uses at most $V - 1$ edges, and each pass extends the correct costs by at least one edge, so $V - 1$ passes settle every cost when no negative cycle exists. If a further pass still lowers some cost, no finite cheapest cost exists, so a negative cycle is reachable. A start node joined to every currency at weight 0 makes every cycle reachable, wherever it sits.\n\n**(c) Cost.** $O(V \\cdot E)$ with $V = 31$ and $E = 800$ directed edges plus 30 from the start: about $31 \\times 830 \\approx 26{,}000$ relaxations per refresh. In Python that is a few milliseconds, well inside a second.\n\n**(d) Recovering the cycle.** Keep `parent[v] = u` on every relaxation. When the extra pass lowers node $v$, step back through `parent` $V$ times: that lands inside the cycle. Then follow parents until a node repeats; those nodes, reversed, are the loop. The tolerance matters because a loop worth exactly 1 can sum to $-5.6 \\times 10^{-17}$ in floating point. Count an improvement only if it beats, say, $10^{-9}$, or better a threshold equal to the minimum profit worth trading.\n\n**(e) Why few cycles survive.** Liquid quotes are kept consistent by many arbitrageurs, so mispricings are a fraction of a basis point. Example: GBP/USD 1.2700, EUR/USD 1.0850 and EUR/GBP 0.8543 imply a loop GBP, EUR, USD, GBP worth 1.0000359, or £36 on £1,000,000. Three conversions at 1 bp each cost about £300, so the trade loses about £264. Quotes may also be stale, sizes small, and other desks faster. A flag is a prompt to check executable prices, not a profit.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Builds the graph with directed edges for both sides of each quote, using bid and $1/\\text{ask}$, and weights $-\\ln(\\text{rate})$."
+        },
+        {
+          "points": 2,
+          "text": "Shows that a product above 1 is a negative sum of weights, with the log step justified."
+        },
+        {
+          "points": 2,
+          "text": "Explains the $V - 1$ passes, the extra detection pass, and the start node joined at weight 0."
+        },
+        {
+          "points": 1,
+          "text": "Gives $O(V \\cdot E)$ with the numbers, and concludes it fits in a second."
+        },
+        {
+          "points": 1,
+          "text": "Recovers the cycle by walking `parent` back $V$ steps, then round the loop."
+        },
+        {
+          "points": 1,
+          "text": "Justifies a tolerance with floating-point error or a minimum tradable profit."
+        },
+        {
+          "points": 1,
+          "text": "Shows with numbers that costs exceed a typical mispricing, and names one further practical obstacle."
+        }
+      ]
+    }
+  ]
+}

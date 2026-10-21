@@ -1,0 +1,1463 @@
+{
+  "id": "l9-arbitrage-cycle",
+  "course": "graphs-dp",
+  "title": "Currency arbitrage as a negative cycle",
+  "minutes": 15,
+  "objectives": [
+    "Detect a currency arbitrage with logarithms and Bellman-Ford.",
+    "Turn a product of rates into a sum with $-\\ln(\\text{rate})$ weights",
+    "Implement Bellman-Ford with negative-cycle detection and a tolerance"
+  ],
+  "skills": [
+    "gd-paths"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Money from nothing",
+      "prose": "Each arrow is a quote: one unit of the first currency buys this many units of the second. You start and finish in the same currency. A loop that hands back more than you put in is an **arbitrage**.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.08,
+              "y": 0.88
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.5,
+              "y": 0.08
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.92,
+              "y": 0.88
+            },
+            {
+              "id": "CHF",
+              "label": "CHF",
+              "x": 0.5,
+              "y": 0.58
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.27"
+            },
+            {
+              "from": "USD",
+              "to": "EUR",
+              "label": "0.92"
+            },
+            {
+              "from": "EUR",
+              "to": "GBP",
+              "label": "0.86"
+            },
+            {
+              "from": "CHF",
+              "to": "GBP",
+              "label": "0.8985"
+            },
+            {
+              "from": "CHF",
+              "to": "USD",
+              "label": "1.142"
+            },
+            {
+              "from": "EUR",
+              "to": "CHF",
+              "label": "0.95"
+            }
+          ]
+        },
+        "state": {
+          "caption": "1 GBP buys 1.27 USD, and so on"
+        }
+      },
+      "question": "Tap the three currencies of the loop that makes money.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "GBP",
+          "USD",
+          "EUR"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "chf",
+            "set": [
+              "USD",
+              "EUR",
+              "CHF"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the arrows round each loop and multiply the rates."
+        },
+        {
+          "rung": "point",
+          "text": "Start with 1 GBP and go to USD.",
+          "highlight": [
+            "GBP",
+            "USD"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "GBP to USD to EUR to GBP: $1.27 \\times 0.92 \\times 0.86 = 1.004824$. The other loops give less than 1."
+        }
+      ],
+      "feedback": {
+        "correct": "£1 comes back as £1.004824.",
+        "generic": "Not quite right. Multiply the rates round each loop and look for a product above 1.",
+        "byKey": {
+          "chf": "That loop gives $1.142 \\times 0.92 \\times 0.95 = 0.998108$, a loss. Try the loop through GBP."
+        }
+      },
+      "explain": {
+        "text": "Round GBP, USD, EUR the rates multiply to $1.27 \\times 0.92 \\times 0.86 = 1.004824$. So £1,000,000 comes back as £1,004,824 before costs. The loop through CHF returns only 0.998108 per unit.",
+        "canvas": {
+          "highlight": [
+            "GBP",
+            "USD",
+            "EUR",
+            "e-GBP-USD",
+            "e-USD-EUR",
+            "e-EUR-GBP"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where it breaks even",
+      "prose": "Keep GBP to USD at 1.27 and USD to EUR at 0.92. Move the EUR to GBP rate and watch what £1 becomes after one loop.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 230,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.1,
+              "y": 0.5
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.75,
+              "y": 0.12
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.75,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.27"
+            },
+            {
+              "from": "USD",
+              "to": "EUR",
+              "label": "0.92"
+            },
+            {
+              "from": "EUR",
+              "to": "GBP",
+              "label": "r"
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "r": 0.86
+          }
+        },
+        "derive": {
+          "caption": "£1 becomes £{{fixed(1.27 * 0.92 * r, 6)}} after one loop"
+        },
+        "controls": [
+          {
+            "bind": "r",
+            "min": 0.84,
+            "max": 0.87,
+            "step": 0.0001,
+            "start": 0.86,
+            "label": "EUR to GBP rate $r$",
+            "decimals": 4
+          }
+        ]
+      },
+      "question": "Which EUR to GBP rate makes the loop exactly break even? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8559,
+        "tol": {
+          "abs": 0.00011
+        },
+        "placeholder": "a rate such as 0.8500",
+        "accept": "0.8559: the rate $r$ with $1.27 \\times 0.92 \\times r = 1$, so $r = 1 / 1.1684$",
+        "wrong": [
+          {
+            "id": "now",
+            "value": 0.86,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Break even means £1 comes back as exactly £1."
+        },
+        {
+          "rung": "step",
+          "text": "Solve $1.27 \\times 0.92 \\times r = 1$: $r = 1 / 1.1684 \\approx 0.8559$."
+        }
+      ],
+      "feedback": {
+        "correct": "At $r \\approx 0.8559$ the loop returns exactly £1.",
+        "generic": "Not quite right. Find $r$ with $1.27 \\times 0.92 \\times r = 1$.",
+        "byKey": {
+          "now": "At 0.86 the loop still makes 0.48%. Lower $r$ until the caption reads £1.000000."
+        }
+      },
+      "explain": {
+        "text": "The loop pays $1.1684\\,r$, so it breaks even at $r = 1/1.1684 = 0.855871$. A loop worth exactly 1 is not an arbitrage. That edge case will matter when we code it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Products into sums",
+      "prose": "Shortest-path algorithms add costs; arbitrage multiplies rates. Logarithms turn products into sums, as in Exponentials and Logarithms. Give each arrow the weight $w = -\\ln(\\text{rate})$. The GBP loop multiplies to 1.004824.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.08,
+              "y": 0.88
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.5,
+              "y": 0.08
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.92,
+              "y": 0.88
+            },
+            {
+              "id": "CHF",
+              "label": "CHF",
+              "x": 0.5,
+              "y": 0.58
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.27"
+            },
+            {
+              "from": "USD",
+              "to": "EUR",
+              "label": "0.92"
+            },
+            {
+              "from": "EUR",
+              "to": "GBP",
+              "label": "0.86"
+            },
+            {
+              "from": "CHF",
+              "to": "GBP",
+              "label": "0.8985"
+            },
+            {
+              "from": "CHF",
+              "to": "USD",
+              "label": "1.142"
+            },
+            {
+              "from": "EUR",
+              "to": "CHF",
+              "label": "0.95"
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "e-GBP-USD",
+            "e-USD-EUR",
+            "e-EUR-GBP"
+          ]
+        }
+      },
+      "question": "What is the total weight round the GBP, USD, EUR loop? Give 6 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.004812,
+        "tol": {
+          "abs": 2e-06
+        },
+        "placeholder": "a decimal",
+        "accept": "−0.004812, which is $-\\ln 1.004824$",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.004812,
+            "tol": {
+              "abs": 1e-05
+            }
+          },
+          {
+            "id": "sum",
+            "value": 3.05,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "prod",
+            "value": 1.004824,
+            "tol": {
+              "abs": 1e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out $-\\ln$ of each rate, then add the three."
+        },
+        {
+          "rung": "point",
+          "text": "This arrow's weight is $-\\ln 1.27 = -0.239017$.",
+          "highlight": [
+            "e-GBP-USD"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-0.239017 + 0.083382 + 0.150823 = -0.004812$."
+        }
+      ],
+      "feedback": {
+        "correct": "The profitable loop has negative total weight.",
+        "generic": "Not quite right. Add $-\\ln(\\text{rate})$ over the three arrows.",
+        "byKey": {
+          "sign": "You added $\\ln(\\text{rate})$. The weight is $-\\ln(\\text{rate})$, so the sign flips.",
+          "sum": "You added the rates themselves. Converting money multiplies rates; only their logs add.",
+          "prod": "That is the product of the rates. The weights are $-\\ln$ of each rate, added."
+        }
+      },
+      "explain": {
+        "text": "The weights add to $-\\ln(1.004824) = -0.004812$. A product above 1 became a sum below 0: a **negative cycle**. So arbitrage detection is negative-cycle detection, which Dijkstra cannot do.",
+        "canvas": {
+          "labels": {
+            "GBP": "GBP",
+            "USD": "USD",
+            "EUR": "EUR"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Pass after pass",
+      "prose": "**Bellman-Ford** works with negative weights. It relaxes every edge, in a fixed order, and repeats. Here the edges are listed in the order C→D, B→C, A→B. Costs start at 0 for A and ∞ elsewhere.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 150,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.36,
+              "y": 0.5
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.64,
+              "y": 0.5
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.92,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "caption": "Relaxed in the order C→D, B→C, A→B"
+        }
+      },
+      "question": "Fill in the costs after each full pass. Write ∞ (or inf) where a cost is still unknown.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "node",
+          "after pass 1",
+          "after pass 2",
+          "after pass 3"
+        ],
+        "rows": [
+          [
+            "B",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "2",
+            "2"
+          ],
+          [
+            "C",
+            {
+              "edit": true,
+              "answer": "∞",
+              "accept": [
+                "inf",
+                "infinity",
+                "math.inf"
+              ]
+            },
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "5"
+          ],
+          [
+            "D",
+            {
+              "edit": true,
+              "answer": "∞",
+              "accept": [
+                "inf",
+                "infinity",
+                "math.inf"
+              ]
+            },
+            {
+              "edit": true,
+              "answer": "∞",
+              "accept": [
+                "inf",
+                "infinity",
+                "math.inf"
+              ]
+            },
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In pass 1, C→D comes first, while C is still ∞."
+        },
+        {
+          "rung": "point",
+          "text": "Only A→B can do anything in pass 1.",
+          "highlight": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pass 1 sets B = 2. Pass 2 sets C = 5. Pass 3 sets D = 6."
+        }
+      ],
+      "feedback": {
+        "correct": "Each pass pushed the known costs one edge further.",
+        "generic": "Not quite right. Relax the edges in the listed order, one pass at a time."
+      },
+      "explain": {
+        "text": "In the worst order, each pass extends the correct costs by one edge. A shortest route uses at most $V - 1$ edges, so $V - 1$ passes always suffice. Here $V = 4$ and we needed all 3.",
+        "canvas": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·2",
+            "C": "C·5",
+            "D": "D·6"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write it",
+      "prose": "Write Bellman-Ford. Relax every edge $n - 1$ times. Then run **one more pass**: if any edge still improves a cost, a negative cycle can lower it for ever, so return `None`.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 150,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.36,
+              "y": 0.5
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.64,
+              "y": 0.5
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.92,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·2",
+            "C": "C·5",
+            "D": "D·6"
+          }
+        }
+      },
+      "question": "Write `bellman_ford(edges, n, s)`: the list of cheapest costs from `s`, or `None` if a negative cycle is reachable.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef bellman_ford(edges, n, s):\n    ...\n",
+        "solution": "import math\n\n\ndef bellman_ford(edges, n, s):\n    dist = [math.inf] * n\n    dist[s] = 0\n    for _ in range(n - 1):\n        for u, v, w in edges:\n            if dist[u] + w < dist[v]:\n                dist[v] = dist[u] + w\n    for u, v, w in edges:\n        if dist[u] + w < dist[v]:\n            return None\n    return dist\n",
+        "tests": [
+          {
+            "call": "bellman_ford([(2, 3, 1), (1, 2, 3), (0, 1, 2)], 4, 0)",
+            "expect": "[0, 2, 5, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "bellman_ford([(0, 1, 4), (0, 2, 5), (2, 1, -3), (1, 3, 2)], 4, 0)",
+            "expect": "[0, 2, 5, 4]",
+            "compare": "equal"
+          },
+          {
+            "call": "bellman_ford([(0, 1, 1), (1, 2, -1), (2, 1, -1)], 3, 0)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "bellman_ford([(0, 1, 2), (2, 3, -1), (3, 2, -1)], 4, 0)",
+            "expect": "[0, 2, float('inf'), float('inf')]",
+            "compare": "equal"
+          },
+          {
+            "call": "bellman_ford([], 1, 0)",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
+            "call": "bellman_ford([(0, 1, 1), (1, 0, -1)], 2, 0)",
+            "expect": "[0, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "bellman_ford([(3, 4, -1), (2, 3, -1), (1, 2, -1), (0, 1, -1)], 5, 0)",
+            "expect": "[0, -1, -2, -3, -4]",
+            "compare": "equal"
+          },
+          {
+            "setup": "import math",
+            "call": "[round(d, 6) for d in bellman_ford([(0, 1, -math.log(1.27)), (1, 2, -math.log(0.92)), (0, 2, -math.log(1.16))], 3, 0)]",
+            "expect": "[0, -0.239017, -0.155635]",
+            "compare": "equal"
+          },
+          {
+            "setup": "import math",
+            "call": "bellman_ford([(0, 1, -math.log(1.27)), (1, 2, -math.log(0.92)), (2, 0, -math.log(0.86))], 3, 0)",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Nodes are `0` to `n − 1` and `edges` holds `(u, v, w)` triples. Return the list of costs, with `math.inf` for unreachable nodes, or `None` if a negative cycle is reachable from `s`.",
+        "examples": [
+          {
+            "call": "bellman_ford([(2, 3, 1), (1, 2, 3), (0, 1, 2)], 4, 0)",
+            "expect": "[0, 2, 5, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "bellman_ford([(0, 1, 1), (1, 2, -1), (2, 1, -1)], 3, 0)",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with `[math.inf] * n` and set `dist[s] = 0`."
+        },
+        {
+          "rung": "point",
+          "text": "This chain is listed backwards, so it needs every one of the $n - 1$ passes.",
+          "highlight": [
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Loop `for _ in range(n - 1)` over every `(u, v, w)`, setting `dist[v] = dist[u] + w` when smaller. Then one more loop: any improvement means return `None`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your Bellman-Ford finds the costs and spots every reachable negative cycle.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 lists the chain backwards. `inf` for node 3 means you ran fewer than $n - 1$ passes.",
+          "test-3": "Test 3 has the cycle 1, 2, 1 with total −2. Run one extra pass and return `None` if anything still improves.",
+          "test-6": "Test 6 has a cycle of total exactly 0. That is not negative, so return the costs."
+        }
+      },
+      "explain": {
+        "text": "The $n - 1$ passes cost $O(V \\cdot E)$, slower than Dijkstra, but negative weights are allowed. The extra pass is the detector. An unreachable negative cycle stays at ∞, since $\\infty + w$ is never smaller.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Forgetting the log",
+      "prose": "A colleague skips the logarithm and weights each arrow with `w = -rate`, then runs Bellman-Ford on the hook's graph.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.08,
+              "y": 0.88
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.5,
+              "y": 0.08
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.92,
+              "y": 0.88
+            },
+            {
+              "id": "CHF",
+              "label": "CHF",
+              "x": 0.5,
+              "y": 0.58
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.27"
+            },
+            {
+              "from": "USD",
+              "to": "EUR",
+              "label": "0.92"
+            },
+            {
+              "from": "EUR",
+              "to": "GBP",
+              "label": "0.86"
+            },
+            {
+              "from": "CHF",
+              "to": "GBP",
+              "label": "0.8985"
+            },
+            {
+              "from": "CHF",
+              "to": "USD",
+              "label": "1.142"
+            },
+            {
+              "from": "EUR",
+              "to": "CHF",
+              "label": "0.95"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 220
+      },
+      "question": "Which loops does their code report as negative cycles?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "all",
+            "text": "Every loop, because every weight is negative",
+            "correct": true
+          },
+          {
+            "id": "gbp",
+            "text": "Only the GBP, USD, EUR loop",
+            "why": "You applied the log in your head. With $w = -\\text{rate}$, every arrow weighs less than 0, so every loop sums below 0."
+          },
+          {
+            "id": "none",
+            "text": "None of them",
+            "why": "Each weight is minus a positive rate, so every loop adds up to a negative number."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What sign does $-\\text{rate}$ have?"
+        },
+        {
+          "rung": "point",
+          "text": "This loop sums to $-1.27 - 0.92 - 0.86 = -3.05$.",
+          "highlight": [
+            "e-GBP-USD"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "All rates are positive, so all weights are negative, and every loop is a negative cycle."
+        }
+      ],
+      "feedback": {
+        "correct": "Without the log, every loop looks like free money.",
+        "generic": "Not quite right. Add up $-\\text{rate}$ round any loop.",
+        "byKey": {
+          "gbp": "You expected only the profitable loop. With $w = -\\text{rate}$, the losing CHF loop sums to −3.012, negative too."
+        }
+      },
+      "explain": {
+        "text": "Adding rates measures nothing: money multiplies along a route. Only $-\\ln(\\text{rate})$ turns the product test, above 1, into a sum test, below 0. A rate of exactly 1 gets weight 0, as it should.",
+        "canvas": {
+          "highlight": [
+            "e-CHF-USD",
+            "e-USD-EUR",
+            "e-EUR-CHF"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Exactly one",
+      "prose": "Two quotes with no spread: GBP to USD at 1.25 and USD to GBP at 0.8. The round trip is worth exactly $1.25 \\times 0.8 = 1$, so no arbitrage.\n\n```python\nimport math\nw = -math.log(1.25) - math.log(0.8)\nprint(w < 0)\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 160,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.15,
+              "y": 0.5
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.85,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.25"
+            },
+            {
+              "from": "USD",
+              "to": "GBP",
+              "label": "0.8"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "true",
+            "text": "`True`",
+            "correct": true
+          },
+          {
+            "id": "false",
+            "text": "`False`",
+            "why": "In exact arithmetic the sum is 0. In floating point it comes out as $-5.6 \\times 10^{-17}$, just below 0."
+          },
+          {
+            "id": "err",
+            "text": "An error",
+            "why": "Both logs are defined, since both rates are positive. The code runs."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Floating-point logs are rounded."
+        },
+        {
+          "rung": "point",
+          "text": "$\\ln 1.25$ and $\\ln 0.8$ are not stored exactly.",
+          "highlight": [
+            "e-USD-GBP"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The sum comes out as $-5.55 \\times 10^{-17}$, which is below 0, so it prints `True`."
+        }
+      ],
+      "feedback": {
+        "correct": "Rounding makes a break-even loop look like a tiny profit.",
+        "generic": "Not quite right. Think about rounding in floating point.",
+        "byKey": {
+          "false": "You trusted exact arithmetic. The computed sum is $-5.55 \\times 10^{-17}$, so `w < 0` is `True`."
+        }
+      },
+      "explain": {
+        "text": "A loop worth exactly 1 can come out a hair below zero. Real code counts an improvement only if it beats a tolerance, such as $10^{-9}$. No arbitrage worth trading is that small."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why the log works",
+      "prose": "We claimed a loop with rates $r_1, r_2, r_3$ makes money exactly when its weights $-\\ln r_i$ sum below 0. Each line follows from the one before.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "$r_1 r_2 r_3 > 1$, the loop makes money"
+          },
+          {
+            "id": "d2",
+            "text": "$\\ln(r_1 r_2 r_3) > \\ln 1 = 0$, since $\\ln$ is increasing"
+          },
+          {
+            "id": "d3",
+            "text": "$\\ln r_1 + \\ln r_2 + \\ln r_3 > 0$, the log of a product is the sum of the logs"
+          },
+          {
+            "id": "d4",
+            "text": "$(-\\ln r_1) + (-\\ln r_2) + (-\\ln r_3) < 0$, multiplying by $-1$ flips the inequality"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from what an arbitrage means in money."
+        },
+        {
+          "rung": "step",
+          "text": "Take logs of both sides, split the log of the product, then multiply by $-1$."
+        }
+      ],
+      "feedback": {
+        "correct": "Profit above 1 is the same as weight below 0.",
+        "generic": "Not quite right. Start with the product and change one thing per line.",
+        "byKey": {
+          "d3": "Splitting the log needs a log first: take $\\ln$ of the product before you split it.",
+          "d4": "The minus signs come last, once the logs are already summed."
+        }
+      },
+      "explain": {
+        "text": "Each step is reversible, so the statements are equivalent. With our rates: $1.004824 > 1$, so $\\ln 1.004824 = 0.004812 > 0$, and the weights sum to $-0.004812 < 0$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "After costs",
+      "prose": "Real quotes are tighter. GBP/USD is 1.2700, EUR/USD 1.0850 and EUR/GBP 0.8543. The implied cross is $1.0850 / 1.2700 = 0.854331$, a hair above the quote. Going GBP to EUR to USD to GBP returns 1.0000359 per pound. Each conversion costs 1 bp in spread and fees.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 220,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.1,
+              "y": 0.5
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.75,
+              "y": 0.12
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.75,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "EUR",
+              "label": "1/0.8543"
+            },
+            {
+              "from": "EUR",
+              "to": "USD",
+              "label": "1.0850"
+            },
+            {
+              "from": "USD",
+              "to": "GBP",
+              "label": "1/1.2700"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the profit or loss on £1,000,000 round the loop after costs, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -264.03,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "£",
+        "placeholder": "pounds; a loss is negative",
+        "accept": "About −£264: $10^6 \\times (1.0000359 \\times 0.9999^3 - 1)$",
+        "wrong": [
+          {
+            "id": "gross",
+            "value": 35.95,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "sum",
+            "value": -264.0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the gross factor by $0.9999$ once for each of the three conversions."
+        },
+        {
+          "rung": "point",
+          "text": "The gross gain is about £36.",
+          "highlight": [
+            "e-GBP-EUR"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.0000359 \\times 0.9999^3 = 0.999736$, so £1,000,000 comes back as £999,736: a loss of about £264."
+        }
+      ],
+      "feedback": {
+        "correct": "A gross gain of £36 becomes a loss of about £264.",
+        "generic": "Not quite right. Apply the 1 bp cost three times, then subtract the £1,000,000.",
+        "byKey": {
+          "gross": "That is the gain before costs. Three conversions at 1 bp each cost about £300."
+        }
+      },
+      "explain": {
+        "text": "The loop earns 0.36 bp gross and pays 3 bp in costs, so it loses about £264. Mispricings between liquid quotes are this small, so triangular arbitrage rarely survives costs. In the graph, the costs make each weight $-\\ln(0.9999 \\times \\text{rate})$, and the cycle stops being negative."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The detector",
+      "prose": "Now put it together. `rates[a][b]` is how many `b` one `a` buys. Map currencies to numbers, weight each quote $-\\ln(\\text{rate})$, and add a start node joined to every currency at weight 0, so every cycle is reachable. `bellman_ford(edges, n, s, eps)` is provided.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.08,
+              "y": 0.88
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.5,
+              "y": 0.08
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.92,
+              "y": 0.88
+            },
+            {
+              "id": "CHF",
+              "label": "CHF",
+              "x": 0.5,
+              "y": 0.58
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.27"
+            },
+            {
+              "from": "USD",
+              "to": "EUR",
+              "label": "0.92"
+            },
+            {
+              "from": "EUR",
+              "to": "GBP",
+              "label": "0.86"
+            },
+            {
+              "from": "CHF",
+              "to": "GBP",
+              "label": "0.8985"
+            },
+            {
+              "from": "CHF",
+              "to": "USD",
+              "label": "1.142"
+            },
+            {
+              "from": "EUR",
+              "to": "CHF",
+              "label": "0.95"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "Write `has_arbitrage(rates)`: `True` if some loop of conversions returns more than it starts with.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef has_arbitrage(rates):\n    ...\n",
+        "solution": "import math\n\n\ndef has_arbitrage(rates):\n    names = sorted(set(rates) | {b for a in rates for b in rates[a]})\n    index = {c: i for i, c in enumerate(names)}\n    n = len(names)\n    edges = [(index[a], index[b], -math.log(r))\n             for a in rates for b, r in rates[a].items()]\n    edges += [(n, i, 0.0) for i in range(n)]   # a start joined to every currency\n    return bellman_ford(edges, n + 1, n, eps=1e-9) is None\n",
+        "tests": [
+          {
+            "call": "has_arbitrage(RATES)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.27}, 'USD': {'EUR': 0.92}, 'EUR': {'GBP': 0.855, 'CHF': 0.95}, 'CHF': {'GBP': 0.8985, 'USD': 1.142}})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.27}, 'USD': {'GBP': 0.787}})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.25}, 'USD': {'GBP': 0.8}})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.6}, 'USD': {'EUR': 0.8}, 'EUR': {'GBP': 0.78125}})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {}})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.27, 'EUR': 1.1705489874751258}, 'USD': {'GBP': 0.7874015748031495, 'EUR': 0.9216589861751152}, 'EUR': {'USD': 1.085, 'GBP': 0.8543}})",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.269873, 'EUR': 1.1704319325763783}, 'USD': {'GBP': 0.7873228346456692, 'EUR': 0.9215668202764977}, 'EUR': {'USD': 1.0848915, 'GBP': 0.85421457}})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.27}, 'USD': {'GBP': 0.787}, 'JPY': {'KRW': 9.1}, 'KRW': {'JPY': 0.1102}})",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.27}, 'USD': {'JPY': 150.0}, 'JPY': {'CHF': 0.00585}, 'CHF': {'GBP': 0.9}})",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. `bellman_ford(edges, n, s, eps=0.0)` is already defined; it ignores improvements smaller than `eps`. `RATES` is the hook's graph. Test 4 is a round trip worth exactly 1.",
+        "examples": [
+          {
+            "call": "has_arbitrage(RATES)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_arbitrage({'GBP': {'USD': 1.25}, 'USD': {'GBP': 0.8}})",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "import math\n\n\ndef bellman_ford(edges, n, s, eps=0.0):\n    \"\"\"Bellman-Ford that counts an improvement only if it is larger than eps.\n    Returns the list of costs, or None if a negative cycle is reachable from s.\"\"\"\n    dist = [math.inf] * n\n    dist[s] = 0\n    for _ in range(n - 1):\n        for u, v, w in edges:\n            if dist[u] + w < dist[v] - eps:\n                dist[v] = dist[u] + w\n    for u, v, w in edges:\n        if dist[u] + w < dist[v] - eps:\n            return None\n    return dist\n\nRATES = {'GBP': {'USD': 1.27}, 'USD': {'EUR': 0.92}, 'EUR': {'GBP': 0.86, 'CHF': 0.95}, 'CHF': {'GBP': 0.8985, 'USD': 1.142}}\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Give each currency an index; the extra start node is index `n`."
+        },
+        {
+          "rung": "point",
+          "text": "The profitable loop here is GBP, USD, EUR.",
+          "highlight": [
+            "GBP",
+            "USD",
+            "EUR"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Build `(index[a], index[b], -math.log(r))` for every quote, add `(n, i, 0.0)` for each `i`, and return `bellman_ford(edges, n + 1, n, eps=1e-9) is None`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your detector finds the 1.004824 loop and ignores break-even and cost-eaten ones.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 lowers EUR to GBP to 0.855, so no loop pays. `True` here means the weights are not $-\\ln(\\text{rate})$.",
+          "test-4": "Test 4 is worth exactly 1. Rounding makes it look negative: pass `eps=1e-9`.",
+          "test-9": "Test 9's profitable loop, JPY and KRW, cannot be reached from GBP. Add a start node joined to every currency."
+        }
+      },
+      "explain": {
+        "text": "The start node reaches every currency at cost 0, so any negative cycle anywhere is reachable. The tolerance stops rounding noise from posing as profit. Run on £1,000,000, the hook's loop is worth £4,824 before costs.",
+        "canvas": {
+          "highlight": [
+            "GBP",
+            "USD",
+            "EUR",
+            "e-GBP-USD",
+            "e-USD-EUR",
+            "e-EUR-GBP"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A loop of conversions is an arbitrage when its rates multiply to more than 1.",
+      "With weights $-\\ln(\\text{rate})$, a product above 1 becomes a sum below 0: arbitrage is a negative cycle.",
+      "Bellman-Ford relaxes every edge $V - 1$ times; if one more pass still improves a cost, a negative cycle exists. Use a small tolerance."
+    ],
+    "formula": {
+      "name": "Arbitrage as a negative cycle",
+      "tex": "\\prod_i r_i > 1 \\iff \\sum_i \\big(-\\ln r_i\\big) < 0",
+      "note": "Logs turn products into sums; the minus sign turns profit into negative cost."
+    },
+    "trap": "Adding rates, or weighting by $-\\text{rate}$, makes every loop look profitable; only $-\\ln(\\text{rate})$ is right."
+  },
+  "quiz": [
+    {
+      "id": "q-passes",
+      "difficulty": 2,
+      "prose": "Bellman-Ford runs on a currency graph with 8 currencies and 40 quotes.",
+      "question": "How many relaxations does it make in total, including the detection pass?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 320,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "nodet",
+            "value": 280,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "v",
+            "value": 360,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(V - 1) + 1 = 8$ passes of 40 edges.",
+        "generic": "Not quite right. Count the passes, then multiply by the edges.",
+        "byKey": {
+          "nodet": "That is the $V - 1 = 7$ main passes. The detection pass adds 40 more.",
+          "v": "That is 9 passes. There are $V - 1 = 7$ passes plus one to detect, 8 in all."
+        }
+      },
+      "explain": {
+        "text": "Seven passes settle every cheapest cost, and one more detects a negative cycle. That is $8 \\times 40 = 320$ relaxations: $O(V \\cdot E)$."
+      }
+    },
+    {
+      "id": "q-spread",
+      "difficulty": 2,
+      "prose": "A dealer quotes GBP to USD at 1.2700 and USD to GBP at 0.7870.",
+      "question": "Is the round trip GBP, USD, GBP an arbitrage?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: it returns 0.99949 per pound",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: $1.27 + 0.787 > 1$",
+            "why": "You added the rates. Converting multiplies them: $1.27 \\times 0.787 = 0.99949$."
+          },
+          {
+            "id": "c",
+            "text": "Yes: 1.27 is above 1",
+            "why": "One leg above 1 means nothing on its own. Only the product round the loop counts."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The spread costs about 5 bp on the round trip.",
+        "generic": "Not quite right. Multiply the two rates."
+      },
+      "explain": {
+        "text": "$1.27 \\times 0.787 = 0.99949 < 1$: the bid-ask spread takes 5.1 bp. In weights, $-\\ln 1.27 - \\ln 0.787 = +0.000510 > 0$, not a negative cycle."
+      }
+    },
+    {
+      "id": "q-cross",
+      "difficulty": 3,
+      "prose": "GBP/USD is 1.2500 and EUR/USD is 1.0500, both as dollars per unit.",
+      "question": "What EUR/GBP rate, in pounds per euro, do these two quotes imply? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.84,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "a rate",
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 1.1905,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1.05 / 1.25 = 0.8400$ pounds per euro.",
+        "generic": "Not quite right. Convert one euro to dollars, then dollars to pounds.",
+        "byKey": {
+          "inv": "That is euros per pound, $1.25 / 1.05$. The question asks for pounds per euro."
+        }
+      },
+      "explain": {
+        "text": "One euro buys 1.05 dollars, and those buy $1.05 / 1.25 = 0.84$ pounds. A quoted EUR/GBP away from 0.84 by more than the costs would be an arbitrage."
+      }
+    },
+    {
+      "id": "q-dijkstra",
+      "difficulty": 3,
+      "prose": "A colleague suggests running Dijkstra on the $-\\ln(\\text{rate})$ weights instead of Bellman-Ford, since it is faster.",
+      "question": "Why does that fail?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Any rate above 1 gives a negative weight, and Dijkstra needs every weight to be at least 0",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Dijkstra cannot handle floating-point weights",
+            "why": "Dijkstra works with any real weights that are not negative. The problem is the sign, not the type."
+          },
+          {
+            "id": "c",
+            "text": "Dijkstra only works on undirected graphs",
+            "why": "Dijkstra handles directed graphs; the l7 graphs were directed. The trouble is the negative weights."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$-\\ln 1.27 < 0$, so a popped node may not be final.",
+        "generic": "Not quite right. What sign does $-\\ln(1.27)$ have?"
+      },
+      "explain": {
+        "text": "A rate above 1 has a positive log, so its weight $-\\ln(\\text{rate})$ is negative. Dijkstra's popped costs are then not final, and with a negative cycle there is no cheapest cost at all."
+      }
+    }
+  ]
+}
