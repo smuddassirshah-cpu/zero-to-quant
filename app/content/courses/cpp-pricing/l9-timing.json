@@ -1,0 +1,1192 @@
+{
+  "id": "l9-timing",
+  "course": "cpp-pricing",
+  "title": "Timing your code",
+  "minutes": 14,
+  "objectives": [
+    "Time code with `<chrono>` and compare it with the Python version."
+  ],
+  "skills": [
+    "cx-perf",
+    "cx-pricers"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Seven runs of one pricer",
+      "prose": "A colleague times level 2's tree pricer at $n = 400$, seven times in a row, in one program. Same code, same inputs, same machine. The times are in microseconds (µs): a millionth of a second.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ./bench_tree 400",
+            "run 1: 1210 us",
+            "run 2:  262 us",
+            "run 3:  258 us",
+            "run 4:  261 us",
+            "run 5:  412 us",
+            "run 6:  259 us",
+            "run 7:  260 us"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "One run is slow every time this program starts. Tap it.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l2"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which run comes before the pricer has ever run?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the first run with the rest.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Run 1 is the first call. Everything the pricer needs is cold before it."
+        }
+      ],
+      "feedback": {
+        "correct": "The first call is slow for a reason that repeats on every start.",
+        "generic": "Not quite right. Look for the run whose position explains its time.",
+        "byKey": {
+          "l6": "Run 5 is a one-off spike: another program took the processor for a moment. Run the program again and the spike moves or vanishes. Run 1 is slow every time.",
+          "l1": "That line is the command. Tap one of the timed runs.",
+          "l3": "Run 2 is about as fast as the rest. Look higher."
+        }
+      },
+      "explain": {
+        "text": "The first call pays one-off costs: memory pages handed over by the system, caches filled, and in a browser the WebAssembly engine compiling hot code. A **warm-up** call absorbs them. Run 5 is noise: another program got in the way.",
+        "canvas": {
+          "shade": {
+            "warm": [
+              "l2"
+            ],
+            "noise": [
+              "l6"
+            ]
+          },
+          "caption": "Run 1: warm-up. Run 5: noise."
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Which summary to report",
+      "prose": "You must report one number for those seven runs. Here are three summaries. The slider sets run 1; the other six stay as measured.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "mean",
+              "label": "Mean"
+            },
+            {
+              "id": "median",
+              "label": "Median"
+            },
+            {
+              "id": "min",
+              "label": "Minimum"
+            }
+          ],
+          "yLabel": "µs",
+          "yMax": 500,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "mean": 417.4,
+            "median": 261,
+            "min": 258
+          },
+          "params": {
+            "w": 1210
+          }
+        },
+        "derive": {
+          "values.mean": "(w + 1712) / 7",
+          "values.median": "min(max(w, 260), 261)",
+          "values.min": "min(w, 258)",
+          "caption": "Run 1 = {{round(w)}} µs"
+        },
+        "controls": [
+          {
+            "bind": "w",
+            "min": 250,
+            "max": 1500,
+            "step": 10,
+            "label": "Run 1 (µs)",
+            "start": 1210
+          }
+        ]
+      },
+      "question": "Slide run 1 between 250 and 1,500 µs. Which summaries hardly move? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "median",
+            "text": "The median",
+            "correct": true
+          },
+          {
+            "id": "min",
+            "text": "The minimum",
+            "correct": true
+          },
+          {
+            "id": "mean",
+            "text": "The mean",
+            "why": "You watched the mean: it swings from about 280 to about 460 µs with one run. One slow run drags it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move the slider to each end and watch which bars change."
+        },
+        {
+          "rung": "point",
+          "text": "Two bars barely twitch.",
+          "highlight": [
+            "xmedian",
+            "xmin"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "One wild run cannot move the median or the minimum much.",
+        "generic": "Not quite right. Drag run 1 to both ends and compare the bars.",
+        "byKey": {
+          "mean": "You picked the mean, but it moves by about 180 µs as run 1 changes. Look for the bars that stay put."
+        }
+      },
+      "explain": {
+        "text": "The **median** is the middle run once sorted, so one extreme run shifts it by at most one place. The minimum is the run with the least interference. Desks report the median, or the minimum for the best case; never a single run, and rarely the mean.",
+        "canvas": {
+          "highlight": [
+            "xmedian",
+            "xmin"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A stopwatch in code",
+      "prose": "`std::chrono::steady_clock::now()` reads a clock that never jumps back. Subtracting two readings gives a duration, and `std::chrono::duration_cast<std::chrono::microseconds>(d).count()` turns it into whole microseconds. `template <class F>` lets `time_us` take any callable: a function or a lambda `[&] { ... }`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ./bench",
+            "time_us(price_once) = 262"
+          ],
+          "title": "What it should do"
+        },
+        "state": {}
+      },
+      "question": "Write `time_us(f)`: read the clock, call `f()`, read it again, and return the microseconds between.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <chrono>\n\ntemplate <class F>\nlong long time_us(F f) {\n    // 1. read std::chrono::steady_clock::now()\n    // 2. call f()\n    // 3. read the clock again; return the gap in microseconds\n    return 0;\n}\n",
+        "solution": "#include <chrono>\n\ntemplate <class F>\nlong long time_us(F f) {\n    auto start = std::chrono::steady_clock::now();\n    f();\n    auto stop = std::chrono::steady_clock::now();\n    return std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();\n}\n",
+        "postlude": "#include <chrono>\nint zq_calls = 0;\nvoid zq_bump() { ++zq_calls; }\nvoid zq_spin_2ms() {\n    auto a = std::chrono::steady_clock::now();\n    while (std::chrono::steady_clock::now() - a < std::chrono::milliseconds(2)) {}\n}\n",
+        "examples": [
+          {
+            "setup": "time_us(zq_bump);",
+            "call": "zq_calls",
+            "expect": 1
+          }
+        ],
+        "tests": [
+          {
+            "setup": "time_us(zq_bump);",
+            "call": "zq_calls",
+            "expect": 1
+          },
+          {
+            "call": "time_us(zq_bump) >= 0",
+            "expect": true
+          },
+          {
+            "setup": "int k = 0;\nfor (int i = 0; i < 3; ++i) time_us([&] { k += 2; });",
+            "call": "k",
+            "expect": 6
+          },
+          {
+            "call": "std::is_same<decltype(time_us(zq_bump)), long long>::value",
+            "expect": true
+          },
+          {
+            "call": "time_us(zq_spin_2ms) >= 1500",
+            "expect": true
+          },
+          {
+            "call": "time_us(zq_spin_2ms) < 1000000",
+            "expect": true
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Six hidden tests: the callable runs exactly once per call, the result is a non-negative `long long`, and a 2 ms wait reads between 1,500 and 999,999 µs, so the unit is microseconds. No test depends on how fast your code is."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Store `steady_clock::now()` in an `auto` before and after the call."
+        },
+        {
+          "rung": "point",
+          "text": "The difference `stop - start` is a duration; cast it to `std::chrono::microseconds`."
+        },
+        {
+          "rung": "step",
+          "text": "`return std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();`"
+        }
+      ],
+      "feedback": {
+        "correct": "That is the stopwatch every benchmark here uses.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the `std::chrono::` prefixes and the angle brackets on `duration_cast`.",
+          "test-1": "The callable did not run once. Call `f()` between the two clock readings.",
+          "test-5": "The 2 ms wait read too little. Did you return milliseconds, or forget to call `f()`?",
+          "test-6": "The 2 ms wait read too much: that is nanoseconds. Cast to `std::chrono::microseconds`."
+        }
+      },
+      "explain": {
+        "text": "`steady_clock` is the clock for intervals; `system_clock` is wall time and can be reset by the system. In this app `system_clock` also ticks only every millisecond. `.count()` returns the number of ticks as a `long long`.\n\n```cpp\nauto start = std::chrono::steady_clock::now();\nf();\nauto stop = std::chrono::steady_clock::now();\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The median",
+      "prose": "Now the summary. The **median** of a sorted list is its middle value. With an even count there are two middles, and the median is their mean. Take the vector by value: sorting the copy leaves the caller's runs alone.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "runs (µs): 1210 262 258 261 412 259 260",
+            "sorted:    258 259 260 261 262 412 1210",
+            "median:    261"
+          ],
+          "title": "Seven runs"
+        },
+        "state": {}
+      },
+      "question": "Write `median_of(xs)` for a non-empty vector of run times.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <algorithm>\n#include <vector>\n\ndouble median_of(std::vector<long long> xs) {\n    // sort, then take the middle (or the mean of the two middles)\n    return 0;\n}\n",
+        "solution": "#include <algorithm>\n#include <vector>\n\ndouble median_of(std::vector<long long> xs) {\n    std::sort(xs.begin(), xs.end());\n    std::size_t m = xs.size() / 2;\n    if (xs.size() % 2 == 1) return xs[m];\n    return (xs[m - 1] + xs[m]) / 2.0;\n}\n",
+        "examples": [
+          {
+            "call": "median_of",
+            "args": [
+              [
+                1210,
+                262,
+                258,
+                261,
+                412,
+                259,
+                260
+              ]
+            ],
+            "types": [
+              "std::vector<long long>"
+            ],
+            "expect": 261,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "median_of",
+            "args": [
+              [
+                1210,
+                262,
+                258,
+                261,
+                412,
+                259,
+                260
+              ]
+            ],
+            "types": [
+              "std::vector<long long>"
+            ],
+            "expect": 261,
+            "compare": "isclose"
+          },
+          {
+            "call": "median_of",
+            "args": [
+              [
+                300,
+                100,
+                200,
+                400
+              ]
+            ],
+            "types": [
+              "std::vector<long long>"
+            ],
+            "expect": 250,
+            "compare": "isclose"
+          },
+          {
+            "call": "median_of",
+            "args": [
+              [
+                5
+              ]
+            ],
+            "types": [
+              "std::vector<long long>"
+            ],
+            "expect": 5,
+            "compare": "isclose"
+          },
+          {
+            "call": "median_of",
+            "args": [
+              [
+                100,
+                101
+              ]
+            ],
+            "types": [
+              "std::vector<long long>"
+            ],
+            "expect": 100.5,
+            "compare": "isclose"
+          },
+          {
+            "call": "median_of",
+            "args": [
+              [
+                7,
+                7,
+                7,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<long long>"
+            ],
+            "expect": 7,
+            "compare": "isclose"
+          },
+          {
+            "call": "median_of",
+            "args": [
+              [
+                3000000000,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<long long>"
+            ],
+            "expect": 1500000000.5,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<long long> runs{9, 1, 5};\nmedian_of(runs);",
+            "call": "runs[0]",
+            "expect": 9
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Seven hidden tests: odd and even counts, one run, ties, values above two billion, and a check that the caller's vector is not sorted."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`std::sort(xs.begin(), xs.end())` sorts the copy."
+        },
+        {
+          "rung": "point",
+          "text": "With `m = xs.size() / 2`, an odd count has its middle at `xs[m]`."
+        },
+        {
+          "rung": "step",
+          "text": "Even count: `(xs[m - 1] + xs[m]) / 2.0`. The `.0` keeps the half."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted copy, middle value: the median.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-2": "Four runs have two middles, 200 and 300. Return their mean, 250.",
+          "test-4": "100 and 101 should give 100.5. Dividing two `long long`s by 2 drops the half: divide by `2.0`.",
+          "test-7": "The caller's vector changed. Take `xs` by value, not by reference, so you sort a copy."
+        }
+      },
+      "explain": {
+        "text": "Sorting costs $O(k \\log k)$ for $k$ runs, nothing beside the runs themselves. The `2.0` makes the division happen in `double`, so 100 and 101 give 100.5, not 100."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A clock with a coarse tick",
+      "prose": "In this app, `steady_clock` moves in steps of 100 µs: the browser rounds its timer for security. One tree at $n = 100$ takes about 25 µs here. So timing one tree reads 0 µs or 100 µs, never 25.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "one tree, n = 100, timed six times:",
+            "0 us",
+            "0 us",
+            "100 us",
+            "0 us",
+            "0 us",
+            "100 us"
+          ],
+          "title": "In the browser"
+        },
+        "state": {}
+      },
+      "question": "How many trees should one timed batch hold so that one 100 µs tick is at most 1% of the batch's time?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 400,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "trees",
+        "accept": "400 trees: the batch must last at least 10,000 µs, and 10,000 / 25 = 400.",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "forty",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "hundred",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For the tick to be 1% of the batch, how long must the batch last?"
+        },
+        {
+          "rung": "point",
+          "text": "100 µs is 1% of 10,000 µs."
+        },
+        {
+          "rung": "step",
+          "text": "10,000 µs divided by 25 µs per tree."
+        }
+      ],
+      "feedback": {
+        "correct": "Time 400 trees together, then divide by 400.",
+        "generic": "Not quite right. First find the batch time that makes 100 µs one per cent.",
+        "byKey": {
+          "four": "Four trees last 100 µs, one tick: the reading is still 0 or 100, an error of up to 100%.",
+          "forty": "Forty trees last 1,000 µs, so one tick is 10% of the batch. You need ten times more.",
+          "hundred": "You divided 10,000 by 100, the tick. Divide by the time of one tree, 25 µs."
+        }
+      },
+      "explain": {
+        "text": "A batch must last at least $100 / 0.01 = 10{,}000$ µs, and at 25 µs a tree that is 400 trees. Time the batch, then divide by the batch size. A desktop clock ticks in nanoseconds, but the same rule protects you from its noise.",
+        "canvas": {
+          "lines": [
+            "400 trees, n = 100, timed as one batch:",
+            "10100 us -> 25.25 us per tree",
+            "10000 us -> 25.00 us per tree",
+            "10100 us -> 25.25 us per tree"
+          ],
+          "caption": "One tick is now 1% of the reading."
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Time the tree yourself",
+      "prose": "Level 2's `binomial_price` is hidden and ready, with your `time_us` and `median_of`. For each $n$: one warm-up call that also gives the price, then five timed batches of `batch` trees. Add every timed price to `sink` and print it, so no work can be thrown away. Run the example to see your own times.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "n =  100  price 10.4306      ... us per tree",
+            "n =  200  price 10.4406      ... us per tree",
+            "n =  400  price 10.4456      ... us per tree"
+          ],
+          "title": "Your run prints"
+        },
+        "state": {}
+      },
+      "question": "Write `tree_table(ns, batch)`. It returns the prices; the tests never look at the times.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cstdio>\n#include <vector>\n\n// Hidden and ready: CallPayoff, binomial_price, time_us, median_of.\nstd::vector<double> tree_table(const std::vector<int>& ns, int batch) {\n    CallPayoff call(100);\n    std::vector<double> prices;\n    double sink = 0;  // every timed price is added here\n    for (int n : ns) {\n        // 1. warm-up: price once and keep the price\n        double price = 0;\n        // 2. time 5 batches of `batch` trees into runs\n        std::vector<long long> runs;\n        // 3. print n, the price and the median time per tree\n        std::printf(\"n = %4d  price %.4f  %8.1f us per tree\\n\", n, price, 0.0);\n        prices.push_back(price);\n    }\n    std::printf(\"(sink %.1f)\\n\", sink);\n    return prices;\n}\n",
+        "solution": "#include <cstdio>\n#include <vector>\n\n// Hidden and ready: CallPayoff, binomial_price, time_us, median_of.\nstd::vector<double> tree_table(const std::vector<int>& ns, int batch) {\n    CallPayoff call(100);\n    std::vector<double> prices;\n    double sink = 0;  // every timed price is added here\n    for (int n : ns) {\n        // 1. warm-up: price once and keep the price\n        double price = binomial_price(call, 100, 0.05, 0.2, 1, n, false);\n        // 2. time 5 batches of `batch` trees into runs\n        std::vector<long long> runs;\n        for (int rep = 0; rep < 5; ++rep)\n            runs.push_back(time_us([&] {\n                for (int b = 0; b < batch; ++b)\n                    sink += binomial_price(call, 100, 0.05, 0.2, 1, n, false);\n            }));\n        // 3. print n, the price and the median time per tree\n        std::printf(\"n = %4d  price %.4f  %8.1f us per tree\\n\", n, price, median_of(runs) / batch);\n        prices.push_back(price);\n    }\n    std::printf(\"(sink %.1f)\\n\", sink);\n    return prices;\n}\n",
+        "prelude": "#include <chrono>\n#include <algorithm>\n#include <cmath>\n#include <vector>\n\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double operator()(double s) const = 0;\n};\n\nstruct CallPayoff : Payoff {\n    double k;\n    explicit CallPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(s - k, 0.0); }\n};\n\nstruct PutPayoff : Payoff {\n    double k;\n    explicit PutPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(k - s, 0.0); }\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble binomial_price(const Payoff& payoff, double s, double r, double sigma,\n                      double t, int n, bool american) {\n    ++zq_trees;\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            if (american)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n        }\n    return v[0];\n}\n\nlong long zq_timed = 0;\n\ntemplate <class F>\nlong long time_us(F f) {\n    ++zq_timed;\n    auto start = std::chrono::steady_clock::now();\n    f();\n    auto stop = std::chrono::steady_clock::now();\n    return std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();\n}\n\ndouble median_of(std::vector<long long> xs) {\n    std::sort(xs.begin(), xs.end());\n    std::size_t m = xs.size() / 2;\n    if (xs.size() % 2 == 1) return xs[m];\n    return (xs[m - 1] + xs[m]) / 2.0;\n}\n",
+        "examples": [
+          {
+            "call": "tree_table({100, 200, 400}, 50)",
+            "expect": [
+              10.430611662249232,
+              10.440591259859703,
+              10.44558584128436
+            ],
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "tree_table({50, 100, 200}, 2)",
+            "expect": [
+              10.41069154073259,
+              10.430611662249232,
+              10.440591259859703
+            ],
+            "compare": "isclose"
+          },
+          {
+            "call": "tree_table({4}, 1)",
+            "expect": [
+              9.970522921901265
+            ],
+            "compare": "isclose"
+          },
+          {
+            "setup": "tree_table({50}, 10);",
+            "call": "zq_timed >= 3",
+            "expect": true
+          },
+          {
+            "setup": "tree_table({50}, 10);",
+            "call": "zq_trees >= 31",
+            "expect": true
+          },
+          {
+            "call": "tree_table({}, 5).size()",
+            "expect": 0
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Run examples prints your timing table under the example. Five hidden tests check the returned prices (relative 1e-9), that `time_us` ran at least three times and that each batch priced its trees. No test reads a time: they vary from machine to machine."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step 1 is one call: `binomial_price(call, 100, 0.05, 0.2, 1, n, false)`."
+        },
+        {
+          "rung": "point",
+          "text": "Step 2: a loop of 5 that pushes `time_us([&] { ... })` into `runs`; inside, a loop of `batch` calls added to `sink`."
+        },
+        {
+          "rung": "step",
+          "text": "Step 3: print `median_of(runs) / batch` as the time per tree."
+        }
+      ],
+      "feedback": {
+        "correct": "Now read your own table: how much longer does $n = 400$ take than $n = 200$?",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "The prices are wrong. Keep the warm-up call's result in `price` and return those.",
+          "test-3": "`time_us` ran fewer than three times. Time five separate batches.",
+          "test-4": "Too few trees were priced. Each batch should price `batch` trees inside the timed lambda."
+        }
+      },
+      "explain": {
+        "text": "Your table shows the time per tree for each $n$. On our test machine in Chrome it read about 20, 80 and 300 µs: close to four times per doubling. A busy machine scatters the readings, which is why we take the median of five."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Four times per doubling",
+      "prose": "Step $i$ updates $i + 1$ nodes, so a tree does $n + (n - 1) + \\dots + 1$ updates:\n\n$$T(n) \\approx c\\,\\frac{n(n+1)}{2} \\approx \\frac{c}{2}\\,n^2, \\qquad \\frac{T(2n)}{T(n)} \\approx 4.$$\n\nSmall trees fall short of 4: the $n + 1$ leaves and the vector cost a little extra.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "model",
+              "label": "c·n²",
+              "values": [
+                0,
+                19,
+                76,
+                171,
+                304,
+                475,
+                684,
+                931,
+                1216
+              ],
+              "dashed": true
+            }
+          ],
+          "xLabel": "n ÷ 100",
+          "yLabel": "µs per tree",
+          "y": [
+            0,
+            1400
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m1",
+              "i": 1,
+              "y": 20,
+              "label": "20"
+            },
+            {
+              "id": "m2",
+              "i": 2,
+              "y": 80,
+              "label": "80"
+            },
+            {
+              "id": "m4",
+              "i": 4,
+              "y": 300,
+              "label": "300"
+            },
+            {
+              "id": "m8",
+              "i": 8,
+              "y": 1200,
+              "label": "1,200"
+            }
+          ],
+          "caption": "Chrome on our test machine; the dashed line is $c\\,n^2$."
+        }
+      },
+      "question": "At $n = 800$ the tree took 1,200 µs. Predict the time at $n = 1{,}600$, in µs.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4800,
+        "tol": {
+          "rel": 0.2
+        },
+        "unit": "µs",
+        "accept": "About 4,800 µs (anything from 3,840 to 5,760): four times 1,200.",
+        "wrong": [
+          {
+            "id": "double",
+            "value": 2400,
+            "tol": {
+              "rel": 0.1
+            }
+          },
+          {
+            "id": "eight",
+            "value": 9600,
+            "tol": {
+              "rel": 0.1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Doubling $n$ multiplies the work by about 4."
+        }
+      ],
+      "feedback": {
+        "correct": "About 4,800 µs: quadratic growth.",
+        "generic": "Not quite right. How does $n^2$ change when $n$ doubles?",
+        "byKey": {
+          "double": "You doubled the time, as for a loop over $n$ items. The tree's work is $n^2/2$ updates, so doubling $n$ quadruples it.",
+          "eight": "Eight times is cubic growth. The tree has about $n^2/2$ nodes, so the factor is 4."
+        }
+      },
+      "explain": {
+        "text": "$T(1600)/T(800) \\approx (1600/800)^2 = 4$, so about 4,800 µs. Reading the ratio from your own run is a check on the code: a factor near 8 would mean a hidden extra loop.",
+        "canvas": {
+          "markers": {
+            "m16": {
+              "i": 8,
+              "y": 1200,
+              "label": "×4 next: 4,800"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Work that vanished",
+      "prose": "A colleague times 200,000 Black-Scholes calls two ways, built by this app's compiler.\n\n```cpp\n// A: the results are thrown away\nfor (int i = 0; i < 200000; ++i)\n    bs_call(100, 100 + i * 1e-6, 0.05, 0.2, 1);\n// B: the results are summed and printed\nfor (int i = 0; i < 200000; ++i)\n    sum += bs_call(100, 100 + i * 1e-6, 0.05, 0.2, 1);\n```",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ./bench_bs",
+            "A, results thrown away:     97 us",
+            "B, summed and printed:   25361 us"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "Why is loop A about 260 times faster?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "dce",
+            "text": "Nothing used A's results, so the compiler deleted the calls",
+            "correct": true
+          },
+          {
+            "id": "warm",
+            "text": "A ran first, so it warmed up the machine for B",
+            "why": "A warm-up makes the first loop slower, not faster. And A is quicker by a factor of 260, far beyond any warm-up."
+          },
+          {
+            "id": "add",
+            "text": "Adding 200,000 numbers into `sum` costs the extra 25 ms",
+            "why": "200,000 additions take well under a millisecond. The 25 ms is the 200,000 calls themselves, which A never made."
+          },
+          {
+            "id": "tick",
+            "text": "The clock's 100 µs tick hides A's true time",
+            "why": "The tick limits a reading to steps of 100 µs; it cannot turn 25 ms of work into 97 µs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What happens to A's results after each call?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the two lines: same calls, one result kept.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A pure function whose result is unused may be removed, and the loop with it."
+        }
+      ],
+      "feedback": {
+        "correct": "A measured an empty loop. The optimiser removed the work.",
+        "generic": "Not quite right. Ask what A does with each price.",
+        "byKey": {
+          "warm": "You blamed warm-up, but a warm-up slows the first loop. A is first and fast: its calls are gone.",
+          "add": "You charged the time to the additions. They are cheap; what B pays for is the calls A never made."
+        }
+      },
+      "explain": {
+        "text": "`bs_call` has no side effects, so when nothing reads its result the optimiser may delete the call, and then the empty loop. Always use the result: add it to a sink you print, or store it in a `volatile double`. A benchmark that reads 0 µs measured nothing.",
+        "canvas": {
+          "shade": {
+            "gone": [
+              "l2"
+            ]
+          },
+          "caption": "A timed an empty loop."
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "A benchmark done right",
+      "prose": "Put what you met together. Each step answers one trap: a debug build, a cold first call, a coarse clock, noise and deleted work.",
+      "question": "Put the steps of a fair benchmark in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "b1",
+            "text": "Build with the flags you ship (`-O2`), not a debug build"
+          },
+          {
+            "id": "b2",
+            "text": "Call the pricer once and throw that time away (warm-up)"
+          },
+          {
+            "id": "b3",
+            "text": "Time a batch long enough to span many clock ticks, adding every result to a sink"
+          },
+          {
+            "id": "b4",
+            "text": "Repeat the batch at least five times, keeping every reading"
+          },
+          {
+            "id": "b5",
+            "text": "Take the median and divide by the batch size"
+          },
+          {
+            "id": "b6",
+            "text": "Print the sink, and report the time with the machine, compiler and flags"
+          }
+        ],
+        "answer": [
+          "b1",
+          "b2",
+          "b3",
+          "b4",
+          "b5",
+          "b6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You cannot time anything before the program is built."
+        },
+        {
+          "rung": "point",
+          "text": "Warm up before the first timed batch; summarise only after all the batches."
+        },
+        {
+          "rung": "step",
+          "text": "Build, warm up, time a batch, repeat, take the median, report."
+        }
+      ],
+      "feedback": {
+        "correct": "Build, warm up, time, repeat, summarise, report.",
+        "generic": "Not quite right. Ask which step needs another step's output."
+      },
+      "explain": {
+        "text": "Each step needs the one before: readings before a median, a build before any reading. The report names the machine and flags because the same code can differ tenfold between builds."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The nightly batch",
+      "prose": "A desk reprices 100,000 options every night, each on a 1,000-step tree. These are illustrative desk numbers for one tree: a Linux server (Intel Xeon, 2.1 GHz), Python 3.13 and g++ 13.3, median of five runs. Note the log scale.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "py",
+              "label": "Python loop"
+            },
+            {
+              "id": "np",
+              "label": "NumPy"
+            },
+            {
+              "id": "dbg",
+              "label": "C++ -O0"
+            },
+            {
+              "id": "rel",
+              "label": "C++ -O2"
+            }
+          ],
+          "yLabel": "ms per tree",
+          "yScale": "log",
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "py": 40,
+            "np": 4.2,
+            "dbg": 4.5,
+            "rel": 0.45
+          }
+        }
+      },
+      "question": "How many minutes does the Python loop take for the whole batch?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 66.7,
+        "tol": {
+          "abs": 1.5
+        },
+        "unit": "minutes",
+        "accept": "About 67 minutes: 100,000 × 0.040 s = 4,000 s.",
+        "wrong": [
+          {
+            "id": "secs",
+            "value": 4000,
+            "tol": {
+              "abs": 50
+            }
+          },
+          {
+            "id": "cpp",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "hours",
+            "value": 1.11,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One tree takes 40 ms, which is 0.040 s."
+        },
+        {
+          "rung": "point",
+          "text": "Read the Python bar.",
+          "highlight": [
+            "xpy"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "100,000 × 0.040 s = 4,000 s; divide by 60."
+        }
+      ],
+      "feedback": {
+        "correct": "About 67 minutes in Python, against 45 seconds for the C++ release build.",
+        "generic": "Not quite right. Multiply the time per tree by 100,000, then convert to minutes.",
+        "byKey": {
+          "secs": "4,000 is the answer in seconds. Divide by 60 for minutes.",
+          "cpp": "That is the C++ -O2 build: 100,000 × 0.45 ms = 45 s. The question asks about the Python loop.",
+          "hours": "1.11 is hours. The question asks for minutes."
+        }
+      },
+      "explain": {
+        "text": "$100{,}000 \\times 0.040\\ \\text{s} = 4{,}000$ s, about 67 minutes; the release build needs 45 s, about 90 times less. NumPy only matches the debug build, and the debug build is ten times slower than release. That is why a benchmark always names its build.",
+        "canvas": {
+          "highlight": [
+            "xpy",
+            "xrel"
+          ],
+          "caption": "Python 4,000 s; C++ -O2 45 s per night."
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Time with `std::chrono::steady_clock`: warm up first, time batches long enough for the clock's tick, repeat, and report the median.",
+      "Use every result (a printed sink), or the optimiser may delete the work you meant to time.",
+      "The tree does about $n^2/2$ updates, so doubling $n$ multiplies its time by about 4; the release C++ build is about 90 times faster than the Python loop."
+    ],
+    "formula": {
+      "name": "Time per tree",
+      "tex": "t_{\\text{tree}} = \\frac{\\operatorname{median}(t_{\\text{batch},1}, \\dots, t_{\\text{batch},5})}{\\text{batch size}}",
+      "note": "A batch must last at least 100 ticks of the clock for 1% accuracy."
+    },
+    "trap": "A loop whose results are never used can be deleted by the compiler: a benchmark that reads almost 0 µs measured nothing."
+  },
+  "quiz": [
+    {
+      "id": "q-debug",
+      "difficulty": 2,
+      "prose": "A colleague reports: \"Our C++ tree prices in 4.5 ms at $n = 1{,}000$.\" They built it with `g++ -O0 -g`.",
+      "question": "What is wrong with the report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "dbg",
+            "text": "It times a debug build, about ten times slower than the release build the desk runs",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: the build flags do not change how fast the same code runs",
+            "why": "The same source ran in 4.5 ms at `-O0` and 0.45 ms at `-O2` on the desk machine. Flags change the machine code."
+          },
+          {
+            "id": "g",
+            "text": "`-g` adds debug information that slows every instruction",
+            "why": "`-g` only stores names and line numbers beside the code. The slowness comes from `-O0`, no optimisation."
+          },
+          {
+            "id": "one",
+            "text": "It should report the mean of the runs instead",
+            "why": "The summary is a separate question. Even a perfect median of a debug build answers the wrong question."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Time the build you ship.",
+        "generic": "Not quite right. Look at the flags."
+      },
+      "explain": {
+        "text": "`-O0` turns optimisation off, so every value goes back to memory after every step. Benchmarks are run on the release build, with the flags stated."
+      }
+    },
+    {
+      "id": "q-median",
+      "difficulty": 2,
+      "prose": "Five runs of one pricer, in µs: 90, 88, 1,210, 91, 89.",
+      "question": "What is their median, in µs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 90,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "µs",
+        "accept": "90: sorted 88, 89, 90, 91, 1,210.",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 313.6,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "mid",
+            "value": 1210,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Sorted, the middle of five is the third.",
+        "generic": "Not quite right. Sort the runs first.",
+        "byKey": {
+          "mean": "313.6 is the mean, dragged up by the warm-up run.",
+          "mid": "1,210 sits in the middle of the list as written. Sort it first."
+        }
+      },
+      "explain": {
+        "text": "Sorted: 88, 89, 90, 91, 1,210. The third value, 90, is the median; the warm-up run of 1,210 µs does not move it."
+      }
+    },
+    {
+      "id": "q-steady",
+      "difficulty": 3,
+      "prose": "You time a tree with `std::chrono::system_clock` instead of `steady_clock`.",
+      "question": "What can go wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "jump",
+            "text": "The system can reset wall time mid-run, so an interval can come out wrong or even negative",
+            "correct": true
+          },
+          {
+            "id": "slow",
+            "text": "Reading `system_clock` is so slow that it dominates the timing",
+            "why": "Both clocks are cheap to read. The difference is whether the clock may jump."
+          },
+          {
+            "id": "units",
+            "text": "`system_clock` counts in seconds, so `duration_cast` fails to compile",
+            "why": "Both clocks convert to microseconds with `duration_cast`. The issue is jumps, and in this app a 1 ms tick."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: the two clocks always agree",
+            "why": "They agree only until something adjusts the wall clock, such as a time-server update."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Intervals need a clock that never jumps.",
+        "generic": "Not quite right. Which clock follows the wall time?"
+      },
+      "explain": {
+        "text": "`system_clock` follows wall time, which a time server may move. `steady_clock` only ever goes forward, so differences of its readings are intervals. In this app `system_clock` also ticks only once a millisecond."
+      }
+    },
+    {
+      "id": "q-publish",
+      "difficulty": 3,
+      "prose": "A pricing library's page says: \"prices a 1,000-step tree in 0.2 ms\".",
+      "question": "What must sit beside that number before a desk can trust it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "ctx",
+            "text": "The machine, compiler, flags and how the time was summarised",
+            "correct": true
+          },
+          {
+            "id": "price",
+            "text": "The price the tree returned",
+            "why": "The price checks correctness, not speed. The same code can run tenfold faster or slower on another build or machine."
+          },
+          {
+            "id": "lines",
+            "text": "The number of lines of code",
+            "why": "Line count says nothing about speed. The build and machine do."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: a time is a time",
+            "why": "On the desk machine the same tree took 0.2 ms at `-O3`, 0.45 ms at `-O2` and 4.5 ms at `-O0`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A time without its setting cannot be compared.",
+        "generic": "Not quite right. What changed the same tree's time tenfold in this lesson?"
+      },
+      "explain": {
+        "text": "The desk's tree took 0.2, 0.45 or 4.5 ms depending only on flags. A published benchmark names the machine, compiler, flags and summary so others can reproduce it."
+      }
+    }
+  ]
+}

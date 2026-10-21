@@ -1,0 +1,1520 @@
+{
+  "id": "l1-doubles",
+  "course": "cpp-pricing",
+  "title": "Doubles and precision",
+  "minutes": 15,
+  "objectives": [
+    "Compare doubles safely and avoid catastrophic cancellation."
+  ],
+  "skills": [
+    "cx-numeric",
+    "cx-testing"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The same 0.3",
+      "prose": "In Python, `0.1 + 0.2 == 0.3` was `False`. Here is the same test in C++.\n\n```cpp\nstd::cout << (0.1 + 0.2 == 0.3) << '\\n';\n```\n\nEach dot is a double near 0.3, counted in gaps from the double closest to 0.3.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": -3,
+          "max": 3,
+          "step": 1,
+          "labels": [
+            {
+              "x": -2,
+              "text": "−2"
+            },
+            {
+              "x": -1,
+              "text": "−1"
+            },
+            {
+              "x": 0,
+              "text": "0"
+            },
+            {
+              "x": 1,
+              "text": "+1"
+            },
+            {
+              "x": 2,
+              "text": "+2"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "dm2",
+              "x": -2
+            },
+            {
+              "id": "dm1",
+              "x": -1
+            },
+            {
+              "id": "d0",
+              "x": 0,
+              "label": "0.3 as stored"
+            },
+            {
+              "id": "d1",
+              "x": 1
+            },
+            {
+              "id": "d2",
+              "x": 2
+            }
+          ],
+          "caption": "Neighbouring doubles near 0.3 are $5.55 \\times 10^{-17}$ apart"
+        }
+      },
+      "question": "What does the line print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "`1`",
+            "why": "You added on paper. Neither 0.1 nor 0.2 is stored exactly, and their rounded sum lands one double above 0.3.",
+            "canvas": {
+              "points": {
+                "d1": {
+                  "label": "0.1 + 0.2",
+                  "colour": 2
+                }
+              }
+            }
+          },
+          {
+            "id": "false",
+            "text": "`false`",
+            "why": "The comparison is false, but `std::cout` prints a `bool` as 0 or 1 unless you send it `std::boolalpha` first."
+          },
+          {
+            "id": "nocompile",
+            "text": "Nothing: `==` on doubles does not compile",
+            "why": "It compiles silently. Only the opt-in warning `-Wfloat-equal` mentions it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "C++ stores 0.1, 0.2 and 0.3 as the same 64-bit doubles Python uses."
+        },
+        {
+          "rung": "point",
+          "text": "The sum lands on one of the other dots.",
+          "highlight": [
+            "d1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The test is false, and `std::cout` prints `false` as 0."
+        }
+      ],
+      "feedback": {
+        "correct": "The test is false, printed as 0.",
+        "generic": "Not quite right. Work out whether the test is true, then how `std::cout` prints a `bool`.",
+        "byKey": {
+          "one": "You added on paper. The rounded sum lands one double above 0.3, so `==` is false.",
+          "false": "`std::cout` prints a `bool` as 0 or 1 unless you send it `std::boolalpha`."
+        }
+      },
+      "explain": {
+        "text": "0.1 and 0.2 are each stored a little off, and their sum rounds to the double one gap above 0.3. So `==` is false and `std::cout` prints 0. C++ and Python share the same doubles, so every float fact you know carries over.",
+        "canvas": {
+          "points": {
+            "d1": {
+              "label": "0.1 + 0.2",
+              "colour": 2
+            }
+          },
+          "arrows": [
+            {
+              "id": "j",
+              "from": 0,
+              "to": 1,
+              "label": "one gap",
+              "side": "below"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Inside a double",
+      "prose": "A `double` is 64 bits in three boxes. Box 2 shows its first 12 bits of 52. Slide through the values and watch which boxes change.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "01111111111",
+            "000000000000…"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "p0",
+              "at": 0,
+              "label": "1 bit",
+              "below": true
+            },
+            {
+              "id": "p1",
+              "at": 1,
+              "label": "11 bits",
+              "below": true
+            },
+            {
+              "id": "p2",
+              "at": 2,
+              "label": "52 bits",
+              "below": true
+            }
+          ],
+          "caption": "1 = +1.0 × 2⁰",
+          "params": {
+            "k": 0
+          }
+        },
+        "derive": {
+          "cells": "[['0', '0', '0', '0', '1', '0', '0'][k], ['01111111111', '10000000000', '10000000001', '01111111110', '10000000000', '10000000000', '01111111011'][k], ['000000000000…', '000000000000…', '000000000000…', '000000000000…', '000000000000…', '100000000000…', '100110011001…'][k]]",
+          "caption": "{{['1 = +1.0 × 2⁰', '2 = +1.0 × 2¹', '4 = +1.0 × 2²', '0.5 = +1.0 × 2⁻¹', '−2 = −1.0 × 2¹', '3 = +1.5 × 2¹', '0.1 = +1.6 × 2⁻⁴'][k]}}"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 6,
+            "step": 1,
+            "start": 0,
+            "label": "Value number (0 to 6)"
+          }
+        ]
+      },
+      "question": "Drag each name onto the box it describes.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "sign",
+            "text": "sign: + or −"
+          },
+          {
+            "id": "exponent",
+            "text": "exponent: the power of 2"
+          },
+          {
+            "id": "mantissa",
+            "text": "mantissa: the digits of 1.xxx"
+          }
+        ],
+        "slots": [
+          {
+            "id": "b0",
+            "label": "Box 0",
+            "accepts": [
+              "sign"
+            ]
+          },
+          {
+            "id": "b1",
+            "label": "Box 1",
+            "accepts": [
+              "exponent"
+            ]
+          },
+          {
+            "id": "b2",
+            "label": "Box 2",
+            "accepts": [
+              "mantissa"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide from 1 to 2 to 4: each value doubles. Which box changes?"
+        },
+        {
+          "rung": "point",
+          "text": "Value 4 is −2. Compare it with value 1, which is 2.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Doubling changes box 1 only. The minus sign flips box 0 only. Going from 2 to 3 changes box 2 only."
+        }
+      ],
+      "feedback": {
+        "correct": "Box 0 is the sign, box 1 the exponent, box 2 the mantissa.",
+        "generic": "Not quite right. Slide through the values and see which box each change touches.",
+        "byKey": {
+          "sign": "Slide to −2: only box 0 differs from 2, so box 0 holds the sign.",
+          "exponent": "Slide 1, 2, 4: each doubling adds 1 to box 1 and leaves box 2 alone. Box 1 is the power of 2.",
+          "mantissa": "Slide from 2 to 3: only box 2 changes, because 3 is 1.5 × 2. Box 2 holds the digits."
+        }
+      },
+      "explain": {
+        "text": "The value is $(-1)^{s} \\times 1.m \\times 2^{e - 1023}$: sign $s$, exponent $e$, mantissa $m$. 0.1 is $1.6 \\times 2^{-4}$, and 1.6 has no finite binary form, so its 52 bits are cut short. The exponent sets the scale; the 52 mantissa bits set the precision.",
+        "canvas": {
+          "params": {
+            "k": 6
+          },
+          "pointers": {
+            "p0": {
+              "label": "sign"
+            },
+            "p1": {
+              "label": "exponent"
+            },
+            "p2": {
+              "label": "mantissa"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The next double after 1",
+      "prose": "1.0 has a mantissa of 52 zeros. The next double up sets only the last of those 52 bits to 1. Each place in the mantissa is worth half the one before it.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "labels": [
+            {
+              "x": 0,
+              "text": "1"
+            },
+            {
+              "x": 1,
+              "text": "next"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "one",
+              "x": 0,
+              "label": "1.0"
+            },
+            {
+              "id": "n1",
+              "x": 1,
+              "label": "?"
+            },
+            {
+              "id": "n2",
+              "x": 2
+            },
+            {
+              "id": "n3",
+              "x": 3
+            }
+          ],
+          "caption": "The doubles just above 1, one gap apart"
+        }
+      },
+      "question": "How far above 1 is the next double? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.220446e-16,
+        "tol": {
+          "rel": 0.01
+        },
+        "placeholder": "for example 1e-10",
+        "accept": "$2^{-52} \\approx 2.22 \\times 10^{-16}$",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 1.110223e-16,
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "id": "sixtyfour",
+            "value": 5.421011e-20,
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "id": "decimal",
+            "value": 1e-16,
+            "tol": {
+              "rel": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first mantissa bit is worth $\\tfrac12$, the second $\\tfrac14$."
+        },
+        {
+          "rung": "point",
+          "text": "The 52nd bit is worth $2^{-52}$.",
+          "highlight": [
+            "n1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2^{-52} = 1 / 4{,}503{,}599{,}627{,}370{,}496 \\approx 2.22 \\times 10^{-16}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2^{-52}$, about $2.22 \\times 10^{-16}$.",
+        "generic": "Not quite right. Work out what the 52nd mantissa bit is worth.",
+        "byKey": {
+          "half": "That is $2^{-53}$, one place too far. The mantissa has 52 bits, so its last bit is worth $2^{-52}$.",
+          "sixtyfour": "That is $2^{-64}$. The sign and exponent use 12 of the 64 bits, so the mantissa has 52.",
+          "decimal": "Doubles are binary, so the gap is a power of 2, not of 10: $2^{-52}$."
+        }
+      },
+      "explain": {
+        "text": "The last mantissa bit is worth $2^{-52} \\approx 2.22 \\times 10^{-16}$ at 1. C++ names it `std::numeric_limits<double>::epsilon()`, from `<limits>`, and `std::nextafter(1.0, 2.0)` returns that next double. So a double holds about 16 significant digits.",
+        "canvas": {
+          "points": {
+            "n1": {
+              "label": "1 + 2⁻⁵²",
+              "colour": 2
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Gaps near 10¹⁶",
+      "prose": "The gap grows with the number: between $2^k$ and $2^{k+1}$ it is $2^{k-52}$. $10^{16}$ lies between $2^{53}$ and $2^{54}$, so the gap there is 2.\n\n```cpp\ndouble big = 1e16;\nstd::cout << (big + 1.0) - big << '\\n';\n```",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": -1,
+          "max": 6,
+          "step": 1,
+          "labels": [
+            {
+              "x": 0,
+              "text": "10¹⁶"
+            },
+            {
+              "x": 1,
+              "text": "+1"
+            },
+            {
+              "x": 2,
+              "text": "+2"
+            },
+            {
+              "x": 3,
+              "text": "+3"
+            },
+            {
+              "x": 4,
+              "text": "+4"
+            },
+            {
+              "x": 5,
+              "text": "+5"
+            },
+            {
+              "x": 6,
+              "text": "+6"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a0",
+              "x": 0,
+              "label": "big"
+            },
+            {
+              "id": "a2",
+              "x": 2
+            },
+            {
+              "id": "a4",
+              "x": 4
+            },
+            {
+              "id": "a6",
+              "x": 6
+            }
+          ],
+          "caption": "Only the dots are doubles"
+        }
+      },
+      "question": "What does the code print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a number",
+        "accept": "0",
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "up",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is $10^{16} + 1$ one of the dots?"
+        },
+        {
+          "rung": "point",
+          "text": "$10^{16} + 1$ sits exactly halfway between two dots.",
+          "highlight": [
+            "a0",
+            "a2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A tie rounds to the neighbour whose last mantissa bit is 0, which here is $10^{16}$ itself. Then $10^{16} - 10^{16} = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "Adding 1 to $10^{16}$ changes nothing.",
+        "generic": "Not quite right. Round $10^{16} + 1$ to a dot first, then subtract.",
+        "byKey": {
+          "exact": "You added exactly. Near $10^{16}$ the doubles are 2 apart, so $10^{16} + 1$ has no double of its own.",
+          "up": "$10^{16} + 1$ is a tie between $10^{16}$ and $10^{16} + 2$. Ties round to the even mantissa, which here is $10^{16}$."
+        }
+      },
+      "explain": {
+        "text": "$10^{16} + 1$ is halfway between two doubles, and the tie rounds back to $10^{16}$. A double keeps about 16 significant digits at every size, and near $10^{16}$ none is left for the units. The gap is always about $2.2 \\times 10^{-16}$ times the number itself.",
+        "canvas": {
+          "points": [
+            {
+              "id": "a0",
+              "x": 0,
+              "label": "result",
+              "labelPos": "above"
+            },
+            {
+              "id": "a2",
+              "x": 2
+            },
+            {
+              "id": "a4",
+              "x": 4
+            },
+            {
+              "id": "a6",
+              "x": 6
+            },
+            {
+              "id": "t",
+              "x": 1,
+              "label": "exact sum",
+              "colour": 2,
+              "labelPos": "below"
+            }
+          ],
+          "arrows": [
+            {
+              "id": "r",
+              "from": 1,
+              "to": 0,
+              "label": "rounds"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A tolerance of 1e-9",
+      "prose": "A risk check values a £250m book twice, adding the same five positions in two orders. It flags a break when the totals differ.\n\n```cpp\nbool same(double a, double b) {\n    return std::abs(a - b) <= 1e-9;\n}\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Order of the sum",
+            "Book value (£), 17 digits"
+          ],
+          "rows": [
+            [
+              "first to last",
+              "250458309.51000002"
+            ],
+            [
+              "last to first",
+              "250458309.50999999"
+            ],
+            [
+              "difference",
+              "2.98e-8"
+            ],
+            [
+              "gap between doubles here",
+              "2.98e-8"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does `same(a, b)` return, and is the book broken?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`false`, but nothing is wrong: the totals are neighbouring doubles",
+            "correct": true
+          },
+          {
+            "id": "penny",
+            "text": "`true`: they differ by far less than a penny",
+            "why": "You compared the difference with a penny. The code compares it with 1e-9, and 2.98e-8 is bigger.",
+            "canvas": {
+              "highlight": [
+                "r2c1"
+              ]
+            }
+          },
+          {
+            "id": "dropped",
+            "text": "`false`, so a position was dropped",
+            "why": "A dropped position would move the total by pounds, not by 3e-8. The totals are one double apart.",
+            "canvas": {
+              "highlight": [
+                "r3c1"
+              ]
+            }
+          },
+          {
+            "id": "absround",
+            "text": "`true`, because `std::abs` rounds to 2 places",
+            "why": "`std::abs` only removes the sign. It rounds nothing."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 2.98e-8 with 1e-9."
+        },
+        {
+          "rung": "point",
+          "text": "The last row is the smallest difference two doubles near £250m can have.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No two different doubles near £250m are within 1e-9 of each other, so `same` is just `==`."
+        }
+      ],
+      "feedback": {
+        "correct": "The tolerance is smaller than the gap, so `same` acts like `==`.",
+        "generic": "Not quite right. Compare 2.98e-8 with the tolerance in the code.",
+        "byKey": {
+          "penny": "The code's tolerance is 1e-9, not a penny, and 2.98e-8 is larger. So `same` returns false.",
+          "dropped": "The totals differ by one gap between doubles, not by a position. Rounding alone did this."
+        }
+      },
+      "explain": {
+        "text": "Near £250m neighbouring doubles are $2^{-25} \\approx 2.98 \\times 10^{-8}$ apart. An absolute tolerance of 1e-9 is below that gap, so it is `==` in disguise and flags every rounding wobble. Scale the tolerance with the size of the numbers.",
+        "canvas": {
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A relative tolerance",
+      "prose": "Scale the tolerance by the larger size, but never by less than 1, so values near zero still compare:\n\n$$|a - b| \\le \\text{rel} \\times \\max(1, |a|, |b|).$$\n\n`std::max` of three values takes a braced list: `std::max({x, y, z})`, from `<algorithm>`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "a",
+            "b",
+            "rel",
+            "close?"
+          ],
+          "rows": [
+            [
+              "0.1 + 0.2",
+              "0.3",
+              "1e-12",
+              "true"
+            ],
+            [
+              "250458309.51000002",
+              "250458309.50999999",
+              "1e-12",
+              "true"
+            ],
+            [
+              "0",
+              "1e-13",
+              "1e-12",
+              "true"
+            ],
+            [
+              "100",
+              "100.01",
+              "1e-9",
+              "false"
+            ],
+            [
+              "NaN",
+              "NaN",
+              "1e-9",
+              "false"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "center"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `close(a, b, rel)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <algorithm>\n#include <cmath>\n\nbool close(double a, double b, double rel) {\n    return a == b;\n}\n",
+        "solution": "#include <algorithm>\n#include <cmath>\n\nbool close(double a, double b, double rel) {\n    double scale = std::max({1.0, std::abs(a), std::abs(b)});\n    return std::abs(a - b) <= rel * scale;\n}\n",
+        "examples": [
+          {
+            "call": "close(0.1 + 0.2, 0.3, 1e-12)",
+            "expect": true
+          }
+        ],
+        "tests": [
+          {
+            "call": "close(0.1 + 0.2, 0.3, 1e-12)",
+            "expect": true
+          },
+          {
+            "call": "close(250458309.51000002, 250458309.50999999, 1e-12)",
+            "expect": true
+          },
+          {
+            "call": "close(100.0, 100.01, 1e-9)",
+            "expect": false
+          },
+          {
+            "call": "close(10.4506, 10.4506 + 1e-7, 1e-6)",
+            "expect": true
+          },
+          {
+            "call": "close(0.0, 1e-13, 1e-12)",
+            "expect": true
+          },
+          {
+            "call": "close(0.0, 1e-6, 1e-9)",
+            "expect": false
+          },
+          {
+            "call": "close(std::nan(\"\"), std::nan(\"\"), 1e-9)",
+            "expect": false
+          },
+          {
+            "call": "close(1e16, 1e16 + 2, 1e-15)",
+            "expect": true
+          },
+          {
+            "call": "close(-5.0, 5.0, 1e-9)",
+            "expect": false
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 9 hidden tests that call close; each must return exactly true or false."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute `std::abs(a - b)` and compare it with `rel` times a scale."
+        },
+        {
+          "rung": "point",
+          "text": "Test 5 compares 0 with 1e-13. A purely relative tolerance shrinks to nothing at zero.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`double scale = std::max({1.0, std::abs(a), std::abs(b)});` then `return std::abs(a - b) <= rel * scale;`."
+        }
+      ],
+      "feedback": {
+        "correct": "Relative for big numbers, absolute near zero, and false for NaN.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "`0.1 + 0.2` and `0.3` are one gap apart, so `==` says no. Compare the difference with a tolerance.",
+          "test-5": "Comparing 0 with 1e-13 failed. Without the 1.0 inside the max, the tolerance at zero is zero. Keep the floor of 1.",
+          "test-7": "Two NaNs compared as close. If you wrote `!(diff > tol)`, that is true for NaN, because every comparison with NaN is false. Write `diff <= tol`."
+        }
+      },
+      "explain": {
+        "text": "Away from zero, `rel` works as a number of significant digits: 1e-12 asks for about 12. Near zero the 1.0 in the max turns it into an absolute tolerance, which is what a comparison with 0 needs. A NaN makes `<=` false, so NaN is never close to anything, not even NaN.",
+        "canvas": {
+          "highlight": [
+            "r2",
+            "r4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Digits that cancel",
+      "prose": "For small $x$, $1 - \\cos x \\approx x^2/2$. The table compares `1 - std::cos(x)` with the true value.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "x",
+            "`1 - std::cos(x)`",
+            "true value",
+            "right digits"
+          ],
+          "rows": [
+            [
+              "10⁻¹",
+              "0.00499583472197418",
+              "0.00499583472197423",
+              "14"
+            ],
+            [
+              "10⁻⁴",
+              "4.99999996961e-9",
+              "4.99999999583e-9",
+              "9"
+            ],
+            [
+              "10⁻⁶",
+              "5.00044450291e-13",
+              "5.00000000000e-13",
+              "?"
+            ],
+            [
+              "10⁻⁸",
+              "0",
+              "5.00000000000e-17",
+              "0"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "center"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many significant digits of `1 - std::cos(1e-6)` are right?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "4: 5.000 agrees, then 44 against 00.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fifteen",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "twelve",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Line the two values up digit by digit."
+        },
+        {
+          "rung": "point",
+          "text": "Row 3: 5.00044... against 5.00000....",
+          "highlight": [
+            "r2c1",
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "5, 0, 0, 0 agree; the fifth digit is 4 against 0. That is 4 right digits."
+        }
+      ],
+      "feedback": {
+        "correct": "Four digits survive out of about 16.",
+        "generic": "Not quite right. Count the leading digits that agree in row 3.",
+        "byKey": {
+          "all": "A double holds about 16 digits, but the subtraction threw most away. Compare 5.00044... with 5.00000....",
+          "fifteen": "A double holds about 16 digits, but the subtraction threw most away. Compare 5.00044... with 5.00000....",
+          "twelve": "Twelve digits were lost, not kept. Compare 5.00044... with 5.00000....",
+          "five": "The fifth digit is 4 in one and 0 in the other, so it is wrong. Four agree."
+        }
+      },
+      "explain": {
+        "text": "$\\cos(10^{-6}) = 0.9999999999995$, stored to about 16 digits. Subtracting it from 1 cancels the twelve leading 9s, leaving about 4 good digits. This is **catastrophic cancellation**: subtracting nearly equal numbers keeps their errors and loses their digits.",
+        "canvas": {
+          "values": {
+            "r2c3": "4"
+          },
+          "highlight": [
+            "r2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Remove the subtraction",
+      "prose": "The half-angle identity gives the same quantity with no subtraction:\n\n$$1 - \\cos x = 2\\sin^2(x/2).$$\n\nWrite `stable_one_minus_cos(x)` with it.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "x",
+            "`1 - std::cos(x)`",
+            "true value",
+            "right digits"
+          ],
+          "rows": [
+            [
+              "10⁻¹",
+              "0.00499583472197418",
+              "0.00499583472197423",
+              "14"
+            ],
+            [
+              "10⁻⁴",
+              "4.99999996961e-9",
+              "4.99999999583e-9",
+              "9"
+            ],
+            [
+              "10⁻⁶",
+              "5.00044450291e-13",
+              "5.00000000000e-13",
+              "4"
+            ],
+            [
+              "10⁻⁸",
+              "0",
+              "5.00000000000e-17",
+              "0"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "center"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `stable_one_minus_cos(x)` with no cancellation.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble stable_one_minus_cos(double x) {\n    return 1 - std::cos(x);\n}\n",
+        "solution": "#include <cmath>\n\ndouble stable_one_minus_cos(double x) {\n    double s = std::sin(x / 2);\n    return 2 * s * s;\n}\n",
+        "examples": [
+          {
+            "call": "stable_one_minus_cos(1e-8) * 1e16",
+            "expect": 0.5,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "stable_one_minus_cos(1e-8) * 1e16",
+            "expect": 0.5,
+            "compare": "isclose"
+          },
+          {
+            "call": "stable_one_minus_cos(1e-6) * 1e12",
+            "expect": 0.49999999999995826,
+            "compare": "isclose"
+          },
+          {
+            "call": "stable_one_minus_cos(1e-4) * 1e8",
+            "expect": 0.4999999995833334,
+            "compare": "isclose"
+          },
+          {
+            "call": "stable_one_minus_cos(0.1)",
+            "expect": 0.004995834721974234,
+            "compare": "isclose"
+          },
+          {
+            "call": "stable_one_minus_cos(3.141592653589793)",
+            "expect": 2,
+            "compare": "isclose"
+          },
+          {
+            "call": "stable_one_minus_cos(0.0)",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "stable_one_minus_cos(-1e-7) * 1e14",
+            "expect": 0.49999999999999956,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Small answers are scaled up first, as in stable_one_minus_cos(1e-8) * 1e16, then accepted within a relative 1e-9."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute $\\sin(x/2)$ once and square it."
+        },
+        {
+          "rung": "point",
+          "text": "At $x = 10^{-8}$, `std::cos(x)` rounds to exactly 1, so any formula with `1 - std::cos` returns 0.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`double s = std::sin(x / 2); return 2 * s * s;`"
+        }
+      ],
+      "feedback": {
+        "correct": "No subtraction, so no digits cancel.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "At 1e-8 you returned 0: `std::cos(1e-8)` rounds to exactly 1, so `1 - cos` is 0. Use the sine form.",
+          "test-3": "At 1e-4 the answer is off in the ninth digit: the subtraction is still there. Use only the sine."
+        }
+      },
+      "explain": {
+        "text": "`std::sin(x / 2)` is accurate to about 16 digits even for tiny $x$, and squaring and doubling keep them. The identity moved the cancellation into exact algebra on paper. Look for this rewrite whenever code subtracts two nearly equal values.",
+        "canvas": {
+          "highlight": [
+            "r3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A million 0.1s",
+      "prose": "Each addition rounds, and over a long sum the errors pile up. **Kahan summation** keeps the part each addition lost in `c` and adds it back on the next step. The starter's comments give the four steps.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Sum of a million 0.1s",
+            "Result"
+          ],
+          "rows": [
+            [
+              "`double`, left to right",
+              "100000.00000133288"
+            ],
+            [
+              "`float`, left to right",
+              "100958.34375"
+            ],
+            [
+              "exact (of the stored 0.1)",
+              "100000.0000000000055..."
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `kahan_sum(xs)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n\ndouble kahan_sum(const std::vector<double>& xs) {\n    double sum = 0.0;\n    double c = 0.0;  // the part lost so far\n    for (double x : xs) {\n        // y = x - c;  t = sum + y;\n        // c = (t - sum) - y;  sum = t;\n        sum += x;\n    }\n    return sum;\n}\n",
+        "solution": "#include <vector>\n\ndouble kahan_sum(const std::vector<double>& xs) {\n    double sum = 0.0;\n    double c = 0.0;  // the part lost so far\n    for (double x : xs) {\n        double y = x - c;\n        double t = sum + y;\n        c = (t - sum) - y;\n        sum = t;\n    }\n    return sum;\n}\n",
+        "examples": [
+          {
+            "call": "kahan_sum({1e16, 1.0, 1.0, -1e16})",
+            "expect": 2,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "kahan_sum(xs)",
+            "expect": 100000,
+            "compare": "equal",
+            "setup": "std::vector<double> xs(1000000, 0.1);"
+          },
+          {
+            "call": "kahan_sum({1e16, 1.0, 1.0, -1e16})",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "call": "kahan_sum(xs)",
+            "expect": 1,
+            "compare": "equal",
+            "setup": "std::vector<double> xs(10, 0.1);"
+          },
+          {
+            "call": "kahan_sum({})",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "kahan_sum({1.5, 2.5})",
+            "expect": 4,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call kahan_sum; each sum must equal the expected double exactly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Replace `sum += x;` with the four commented steps."
+        },
+        {
+          "rung": "point",
+          "text": "`c` must live outside the loop, so each step can correct the next.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`double y = x - c; double t = sum + y; c = (t - sum) - y; sum = t;`"
+        }
+      ],
+      "feedback": {
+        "correct": "Each lost part comes back in the next addition.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "A million 0.1s should give exactly 100000. If you got 100000.00000133288, the loop still does a plain `sum += x`.",
+          "test-2": "{1e16, 1, 1, −1e16} should sum to 2. A plain loop loses each 1 against 1e16; Kahan keeps it in `c`."
+        }
+      },
+      "explain": {
+        "text": "`(t - sum) - y` is the rounding error of the last addition, and the next step subtracts it first. In `float`, with 24-bit mantissas, the plain sum is off by 1%, which is why pricing code uses `double`. Pairwise summation, adding in halves, is the other cure.",
+        "canvas": {
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Rules for doubles",
+      "prose": "Everything on the earlier screens follows a few rules:\n\n```cpp\nclose(a, b, 1e-12);    // never a == b\nstd::abs(pnl) < 0.005; // near 0: absolute\n2 * s * s;             // not 1 - cos(x)\nkahan_sum(xs);         // long sums\nstd::isnan(x);         // the NaN test\n```",
+      "question": "Which test is true when `x` is NaN?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "isnan",
+            "text": "`std::isnan(x)`",
+            "correct": true
+          },
+          {
+            "id": "eqnan",
+            "text": "`x == NAN`",
+            "why": "Every comparison with NaN is false, even with NaN itself."
+          },
+          {
+            "id": "eqself",
+            "text": "`x == x`",
+            "why": "NaN is not equal to itself, so this is false for NaN and true for every other value."
+          },
+          {
+            "id": "big",
+            "text": "`std::abs(x) > 1e300`",
+            "why": "`std::abs(NaN)` is NaN, and NaN compared with anything is false."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A comparison with NaN is always false."
+        }
+      ],
+      "feedback": {
+        "correct": "`std::isnan` from `<cmath>` is the reliable test.",
+        "generic": "Not quite right. Every comparison involving NaN is false."
+      },
+      "explain": {
+        "text": "NaN fails every `==`, `<` and `>`, so no comparison can find it. `std::isnan(x)` checks the bits directly, and `std::isfinite(x)` rules out infinity as well."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A round trip that is not flat",
+      "prose": "You buy one share at each of £108.26, £103.47, £100.10 and £101.47. Then you sell them at the same prices, in reverse order. The P&L prints `-1.13687e-13`, and the end-of-day check flags any book where `pnl != 0.0`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Leg",
+            "Prices added in this order (£)",
+            "Total (£), 17 digits"
+          ],
+          "rows": [
+            [
+              "Buys",
+              "108.26, 103.47, 100.10, 101.47",
+              "413.30000000000007"
+            ],
+            [
+              "Sells",
+              "101.47, 100.10, 103.47, 108.26",
+              "413.29999999999995"
+            ],
+            [
+              "P&L",
+              "sells − buys",
+              "−1.137e-13"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which check should the reconciliation use?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "halfpenny",
+            "text": "`std::abs(pnl) < 0.005`: within half a penny",
+            "correct": true
+          },
+          {
+            "id": "relative",
+            "text": "`std::abs(pnl - 0.0) <= 1e-9 * std::abs(pnl)`: a relative tolerance",
+            "why": "Against zero a relative tolerance is $10^{-9}$ times a tiny number, far below the error. Near zero you need an absolute tolerance."
+          },
+          {
+            "id": "tiny",
+            "text": "`std::abs(pnl) < 1e-15`",
+            "why": "1e-15 is below the rounding error of 1.1e-13, so the book still fails. The tolerance must sit above rounding noise and below a penny."
+          },
+          {
+            "id": "float",
+            "text": "Store `pnl` as a `float`",
+            "why": "A `float` has fewer digits, so its rounding errors are larger, about 1e-5 here. The error does not go away."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the smallest P&L that matters in money?"
+        },
+        {
+          "rung": "point",
+          "text": "The check compares with zero, where relative tolerances shrink to nothing.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A penny matters; 1e-13 does not. Half a penny separates them."
+        }
+      ],
+      "feedback": {
+        "correct": "An absolute tolerance in money units, set below a penny.",
+        "generic": "Not quite right. Compare each check with the error, 1.1e-13, and with a penny.",
+        "byKey": {
+          "relative": "You scaled the tolerance by `pnl` itself, which is tiny. Near zero only an absolute tolerance works.",
+          "tiny": "1e-15 is smaller than the error, so the flat book still fails."
+        }
+      },
+      "explain": {
+        "text": "The two totals round differently, so a flat book shows −1.1e-13. Comparing with zero needs an absolute tolerance, and half a penny is the natural one. Many systems avoid the question by keeping prices in integer pence or ticks, as in the cpp course's *Every value has a type*: integers add exactly.",
+        "canvas": {
+          "highlight": [
+            "r2"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A double is a sign, an 11-bit exponent and a 52-bit mantissa: about 16 significant digits at any size.",
+      "Compare doubles with a relative tolerance and an absolute floor, never with `==`; near zero only an absolute tolerance works.",
+      "Subtracting nearly equal numbers loses digits, and long sums pile up rounding: rewrite the formula, or carry the lost part as Kahan does."
+    ],
+    "formula": {
+      "name": "Safe comparison",
+      "tex": "|a - b| \\le \\text{rel} \\times \\max(1, |a|, |b|)",
+      "note": "The 1 makes it absolute near zero; NaN is never close."
+    },
+    "trap": "An absolute tolerance such as 1e-9 on a £250m value is smaller than the gap between doubles, so it acts like `==`."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "```cpp\ndouble x = std::sqrt(-1.0);\nstd::cout << (x == x) << '\\n';\n```",
+      "question": "What does the code print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "`1`",
+            "why": "You assumed a value always equals itself. `x` is NaN, and NaN equals nothing, not even NaN."
+          },
+          {
+            "id": "crash",
+            "text": "Nothing: `std::sqrt(-1.0)` stops the program",
+            "why": "`<cmath>` does not stop the program on a bad input. It returns NaN."
+          },
+          {
+            "id": "nan",
+            "text": "`-nan`",
+            "why": "The line prints the comparison, a `bool`, not `x`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "NaN is not equal to itself.",
+        "generic": "Not quite right. `x` is NaN; what does `==` do with NaN?"
+      },
+      "explain": {
+        "text": "`std::sqrt(-1.0)` is NaN, and every comparison with NaN is false, `x == x` included. Use `std::isnan(x)` to test for it."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "A `float` has a 23-bit mantissa, so near 1.2 million its values are 0.125 apart.\n\n```cpp\nfloat notional = 1234567.89f;\n```",
+      "question": "What value does `notional` hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "1234567.875",
+            "correct": true
+          },
+          {
+            "id": "exact",
+            "text": "1234567.89",
+            "why": "You assumed the literal is stored as written. A `float` keeps about 7 digits, so it rounds to the nearest multiple of 0.125."
+          },
+          {
+            "id": "whole",
+            "text": "1234568",
+            "why": "Near 1.2 million a `float` still has 0.125 steps, so it keeps 1234567.875, not the next whole number."
+          },
+          {
+            "id": "nine",
+            "text": "1234567.9",
+            "why": "Floats are binary: the nearest value is a multiple of 0.125, and 1234567.9 is not one."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The nearest multiple of 0.125.",
+        "generic": "Not quite right. Find the multiple of 0.125 nearest 1234567.89."
+      },
+      "explain": {
+        "text": "1234567.89 lies between 1234567.875 and 1234568.0, and is nearer the first. A `float` loses a penny-level amount on a £1.2m notional, which is why pricing uses `double`."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "The gap between neighbouring doubles is about $2.2 \\times 10^{-16}$ times the number.",
+      "question": "Roughly how far apart are neighbouring doubles near £1,000,000?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "About $10^{-10}$",
+            "correct": true
+          },
+          {
+            "id": "eps",
+            "text": "About $2.2 \\times 10^{-16}$",
+            "why": "That is the gap at 1. The gap grows with the number: multiply by a million."
+          },
+          {
+            "id": "micro",
+            "text": "About $10^{-6}$",
+            "why": "That would leave only 12 significant digits. A double keeps about 16 at any size."
+          },
+          {
+            "id": "penny",
+            "text": "Exactly 0.01",
+            "why": "Doubles are binary and know nothing of pennies. The gap is a power of 2."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2^{-33} \\approx 1.16 \\times 10^{-10}$.",
+        "generic": "Not quite right. Multiply $2.2 \\times 10^{-16}$ by about a million."
+      },
+      "explain": {
+        "text": "$10^6$ lies between $2^{19}$ and $2^{20}$, so the gap is $2^{19 - 52} = 2^{-33} \\approx 1.16 \\times 10^{-10}$. That is far finer than a penny, so `double` is plenty for prices of this size."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "You must add 1.0 and a million values of $10^{-16}$. The exact total is 1.0000000001.",
+      "question": "Which order of adding gets close to the exact total?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "small",
+            "text": "Add the million small values first, then add 1.0",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "Start from 1.0 and add each small value to it",
+            "why": "You started from 1.0. Each $10^{-16}$ is under half a gap at 1, so every addition rounds back to 1.0 and the total stays 1."
+          },
+          {
+            "id": "same",
+            "text": "The order does not matter: addition is commutative",
+            "why": "On paper, yes. In doubles each addition rounds, so the order changes the total."
+          },
+          {
+            "id": "float",
+            "text": "Either order, if the values are `float`",
+            "why": "A `float` has fewer digits, so the small values vanish even sooner."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Small values first, so they can grow before meeting the big one.",
+        "generic": "Not quite right. What happens to $1 + 10^{-16}$ in doubles?"
+      },
+      "explain": {
+        "text": "$1 + 10^{-16}$ rounds back to 1, so starting from 1.0 loses every small value. The small values summed together reach $10^{-10}$, which 1.0 can absorb. Kahan summation makes the order matter much less."
+      }
+    }
+  ]
+}

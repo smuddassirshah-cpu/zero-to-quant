@@ -1,0 +1,444 @@
+{
+  "id": "homework-4",
+  "course": "ds",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h4-kth",
+      "difficulty": 4,
+      "skills": [
+        "ds-trees"
+      ],
+      "prose": "A BST holds the resting ask prices. The desk wants the $k$-th cheapest level without listing the whole book. `Node`, `build` and `balanced(sorted_values)` are ready.",
+      "question": "Write `kth_smallest(root, k)`: the $k$-th smallest value, with $k$ counted from 1 and at most the number of nodes. Stop as soon as you have it.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def kth_smallest(root, k):\n    ...\n",
+        "solution": "def kth_smallest(root, k):\n    stack, node = [], root\n    while stack or node:\n        while node:\n            stack.append(node)\n            node = node.left\n        node = stack.pop()\n        k -= 1\n        if k == 0:\n            return node.val\n        node = node.right\n    return None\n",
+        "prelude": "from collections import deque\n\nclass Node:\n    def __init__(self, val, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n    def __repr__(self):\n        return f\"Node({self.val!r})\"\n\ndef build(values):\n    \"\"\"Build a tree from a level-order list with None gaps.\"\"\"\n    if not values or values[0] is None:\n        return None\n    it = iter(values)\n    root = Node(next(it))\n    q = deque([root])\n    while q:\n        node = q.popleft()\n        for side in (\"left\", \"right\"):\n            try:\n                v = next(it)\n            except StopIteration:\n                return root\n            if v is not None:\n                child = Node(v)\n                setattr(node, side, child)\n                q.append(child)\n    return root\n\ndef to_list(root):\n    \"\"\"The level-order list with None gaps, trailing Nones dropped.\"\"\"\n    out, q = [], deque([root])\n    while q:\n        node = q.popleft()\n        if node is None:\n            out.append(None)\n            continue\n        out.append(node.val)\n        q.append(node.left)\n        q.append(node.right)\n    while out and out[-1] is None:\n        out.pop()\n    return out\n\ndef balanced(values):\n    if not values:\n        return None\n    m = len(values) // 2\n    return Node(values[m], balanced(values[:m]), balanced(values[m + 1:]))\n\nclass _Seen(Node):\n    \"\"\"A node that records every read of val, left or right.\"\"\"\n    seen = set()\n\n    def __init__(self, val, left=None, right=None):\n        self.__dict__.update(_v=val, _l=left, _r=right)\n\n    def __getattr__(self, name):\n        key = {\"val\": \"_v\", \"left\": \"_l\", \"right\": \"_r\"}.get(name)\n        if key is None:\n            raise AttributeError(name)\n        _Seen.seen.add(id(self))\n        return self.__dict__[key]\n\ndef _copy(node):\n    if node is None:\n        return None\n    return _Seen(node.val, _copy(node.left), _copy(node.right))\n\ndef touched(root, k):\n    \"\"\"How many nodes kth_smallest reads.\"\"\"\n    t = _copy(root)\n    _Seen.seen = set()\n    kth_smallest(t, k)\n    return len(_Seen.seen)\n",
+        "examples": [
+          {
+            "call": "kth_smallest(build([5, 3, 6, 2, 4, None, None, 1]), 3)",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "kth_smallest(build([5, 3, 6, 2, 4, None, None, 1]), 1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "kth_smallest(build([5, 3, 6, 2, 4, None, None, 1]), 3)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "kth_smallest(build([5, 3, 6, 2, 4, None, None, 1]), 6)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "kth_smallest(build([7]), 1)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "kth_smallest(build([3, 1, 4, None, 2]), 1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "kth_smallest(balanced(list(range(1, 1024))), 500)",
+            "expect": "500",
+            "compare": "equal"
+          },
+          {
+            "call": "kth_smallest(build([100.0, 99.5, 100.5]), 3)",
+            "expect": "100.5",
+            "compare": "equal"
+          },
+          {
+            "call": "touched(balanced(list(range(1, 1024))), 1) <= 15",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "touched(balanced(list(range(1, 1024))), 5) <= 20",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Tests 8 and 9 count the nodes you read in a 1,023-node tree: stop the in-order walk at the $k$-th node."
+      },
+      "feedback": {
+        "correct": "An in-order walk that stops early.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-8": "Test 8 counts nodes read. Building the full in-order list reads all 1,023; stop at the $k$-th."
+        }
+      },
+      "explain": {
+        "text": "In-order visits a BST in ascending order, so the $k$-th node visited is the answer. An explicit stack lets the walk stop there, reading about $h + k$ nodes rather than all $n$."
+      }
+    },
+    {
+      "id": "h4-merge",
+      "difficulty": 5,
+      "skills": [
+        "ds-trees"
+      ],
+      "prose": "Three venues send their trades as lists of timestamps, each list already sorted. The tape needs one sorted stream. Sorting everything again costs $O(N \\log N)$ for $N$ trades; a heap holding one item per venue does it in $O(N \\log k)$.",
+      "question": "Write `merge_k(lists)`: merge $k$ sorted lists into one sorted list, using `heapq` with one entry per list.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\n\n\ndef merge_k(lists):\n    ...\n",
+        "solution": "import heapq\n\n\ndef merge_k(lists):\n    heap = []\n    for i, xs in enumerate(lists):\n        if xs:\n            heapq.heappush(heap, (xs[0], i, 0))\n    out = []\n    while heap:\n        value, i, j = heapq.heappop(heap)\n        out.append(value)\n        if j + 1 < len(lists[i]):\n            heapq.heappush(heap, (lists[i][j + 1], i, j + 1))\n    return out\n",
+        "prelude": "",
+        "examples": [
+          {
+            "call": "merge_k([[1, 4, 7], [2, 5, 8], [3, 6, 9]])",
+            "expect": "[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge_k([[1, 4, 7], [2, 5, 8], [3, 6, 9]])",
+            "expect": "[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_k([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_k([[], [], []])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_k([[1, 1, 3], [1, 2]])",
+            "expect": "[1, 1, 1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_k([[5]])",
+            "expect": "[5]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_k([[9.30, 9.31], [], [9.305]])",
+            "expect": "[9.3, 9.305, 9.31]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_k([[2, 3], [1]])",
+            "expect": "[1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_k([list(range(i, 100000, 500)) for i in range(500)]) == list(range(100000))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: empty lists, repeats, and 500 lists of 200 items. Use `heapq`: re-sorting everything ignores that each list is already sorted."
+      },
+      "feedback": {
+        "correct": "One entry per list, refilled from the same list.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 has only empty lists. Push a list's first item only if the list has one.",
+          "test-4": "Test 4 has repeats across lists. Keep every copy."
+        }
+      },
+      "explain": {
+        "text": "The heap holds `(value, list index, position)`: the index breaks ties, so values from two lists never need more than a number comparison. Each pop is replaced by the next item from the same list, so the heap never holds more than $k$ entries."
+      }
+    },
+    {
+      "id": "h4-median",
+      "difficulty": 5,
+      "skills": [
+        "ds-trees"
+      ],
+      "prose": "A dashboard shows the median trade size so far, after every trade. Keep the smaller half in a max-heap (negated values in `heapq`) and the larger half in a min-heap, sizes equal or the lower half one larger. The median is then at the tops.",
+      "question": "Write `running_median(xs)`: a list with the median of the first $i$ values after each value, as a float.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\n\n\ndef running_median(xs):\n    ...\n",
+        "solution": "import heapq\n\n\ndef running_median(xs):\n    lo, hi = [], []      # lo: max-heap of the smaller half (negated); hi: min-heap of the larger half\n    out = []\n    for x in xs:\n        if lo and x > -lo[0]:\n            heapq.heappush(hi, x)\n        else:\n            heapq.heappush(lo, -x)\n        if len(lo) > len(hi) + 1:\n            heapq.heappush(hi, -heapq.heappop(lo))\n        elif len(hi) > len(lo):\n            heapq.heappush(lo, -heapq.heappop(hi))\n        if len(lo) > len(hi):\n            out.append(float(-lo[0]))\n        else:\n            out.append((-lo[0] + hi[0]) / 2)\n    return out\n",
+        "prelude": "",
+        "examples": [
+          {
+            "call": "running_median([5, 15, 1, 3])",
+            "expect": "[5.0, 10.0, 5.0, 4.0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "running_median([5, 15, 1, 3])",
+            "expect": "[5.0, 10.0, 5.0, 4.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([2])",
+            "expect": "[2.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([1, 2, 3, 4, 5])",
+            "expect": "[1.0, 1.5, 2.0, 2.5, 3.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([5, 4, 3, 2, 1])",
+            "expect": "[5.0, 4.5, 4.0, 3.5, 3.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([7, 7, 7])",
+            "expect": "[7.0, 7.0, 7.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([-1, -2, -3])",
+            "expect": "[-1.0, -1.5, -2.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([100.5, 99.5, 101.0, 100.0])",
+            "expect": "[100.5, 100.0, 100.5, 100.25]",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([(i * 7919) % 10007 for i in range(20000)])[-1]",
+            "expect": "5003.0",
+            "compare": "equal"
+          },
+          {
+            "call": "running_median([(i * 7919) % 10007 for i in range(20000)])[:300:37]",
+            "expect": "[0.0, 5143.0, 5244.0, 5027.5, 5013.0, 4989.0, 5090.0, 4989.0, 4984.0]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. An even count gives the mean of the two middle values. Tests 9 and 10 use 20,000 values."
+      },
+      "feedback": {
+        "correct": "Two heaps, balanced after every value.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `[5.0, 10.0, 5.0, 4.0]`. If the second value is wrong, check the even case: the mean of the two tops.",
+          "test-7": "Test 7 has negative values. Remember the lower heap stores negated values: negate again when you read it."
+        }
+      },
+      "explain": {
+        "text": "Each value goes to one half; one move restores the sizes. With an odd count the lower top is the median, with an even count the mean of both tops. Each step is $O(\\log n)$, where re-sorting would be $O(n \\log n)$."
+      }
+    },
+    {
+      "id": "h4-match-order",
+      "difficulty": 4,
+      "skills": [
+        "ds-trees"
+      ],
+      "prose": "`OrderBook.match` from lesson 18 runs a loop.",
+      "question": "Put the steps of one pass of the loop in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "clean",
+            "text": "Drop cancelled or filled entries from the top of both heaps"
+          },
+          {
+            "id": "stop",
+            "text": "If a side is empty, or the best bid is below the best ask, return the fills"
+          },
+          {
+            "id": "price",
+            "text": "Set the fill price to the price of the order that arrived first"
+          },
+          {
+            "id": "qty",
+            "text": "Set the fill quantity to the smaller of the two remaining quantities"
+          },
+          {
+            "id": "reduce",
+            "text": "Record the fill and subtract the quantity from both orders"
+          },
+          {
+            "id": "remove",
+            "text": "Mark any order left with 0 as finished, then go round again"
+          }
+        ],
+        "answer": [
+          "clean",
+          "stop",
+          "price",
+          "qty",
+          "reduce",
+          "remove"
+        ],
+        "same": [
+          [
+            "price",
+            "qty"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Clean, check, price and size, fill, tidy, repeat.",
+        "generic": "Not quite right. You cannot compare tops until dead entries are gone, nor fill before the check.",
+        "byKey": {
+          "stop": "You compared prices before cleaning the tops. A cancelled order could still be on top.",
+          "clean": "Cleaning comes first in each pass: a fill can leave a finished order on top.",
+          "remove": "Finished orders are marked after the fill reduces them to 0, at the end of the pass."
+        }
+      },
+      "explain": {
+        "text": "Dead entries must go before the tops are compared, or the book may match a cancelled order. The price and quantity can be set in either order, and both come before the fill is recorded."
+      }
+    },
+    {
+      "id": "h4-dict-tuple",
+      "difficulty": 4,
+      "skills": [
+        "ds-trees"
+      ],
+      "prose": "A book pushes `(price, order)` onto `heapq`, where `order` is a dict such as `{\"id\": \"A7\", \"qty\": 300}`. It works all morning.\n\n```python\nheapq.heappush(asks, (100.02, {\"id\": \"A7\", \"qty\": 300}))\nheapq.heappush(asks, (100.02, {\"id\": \"A9\", \"qty\": 100}))\n```",
+      "question": "What happens on the second push?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`TypeError`: dicts cannot be compared with `<`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "A9 goes on top, because it is smaller",
+            "why": "`heapq` never measures a dict's size. On the price tie it tries `<` on the dicts, which fails."
+          },
+          {
+            "id": "c",
+            "text": "A7 stays on top, because it arrived first",
+            "why": "A heap has no memory of arrival order unless the tuple carries a time."
+          },
+          {
+            "id": "d",
+            "text": "Nothing unusual; equal prices are skipped",
+            "why": "Equal first items make Python compare the second items."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The tie sends the comparison on to the dicts.",
+        "generic": "Not quite right. What does Python compare when the first items of two tuples are equal?"
+      },
+      "explain": {
+        "text": "Tuples compare item by item, so a price tie compares the dicts, and `dict < dict` raises `TypeError`. It works all morning because prices differed until now. Put a time or counter second: `(price, time, order)`; it also gives price-time priority."
+      }
+    },
+    {
+      "id": "h4-leaves",
+      "difficulty": 3,
+      "skills": [
+        "ds-trees"
+      ],
+      "prose": "A binary heap of 100 items is stored in a list from index 0.",
+      "question": "How many of its items are leaves, with no children?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "half-1",
+            "value": 49,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "levels",
+            "value": 36,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Indices 50 to 99.",
+        "generic": "Not quite right. An item at index $i$ has a child only if $2i + 1 \\le 99$.",
+        "byKey": {
+          "half-1": "Index 49 has a child at $2 \\cdot 49 + 1 = 99$, so it is not a leaf. Count indices 50 to 99."
+        }
+      },
+      "explain": {
+        "text": "Index $i$ has a child when $2i + 1 \\le 99$, that is $i \\le 49$. So indices 50 to 99 are leaves: 50 of them, half the heap. That is why sift-down from the middle builds a heap in $O(n)$."
+      }
+    },
+    {
+      "id": "h4-design",
+      "difficulty": 4,
+      "skills": [
+        "ds-trees"
+      ],
+      "question": "Compare a sorted list with `bisect`, a balanced BST, two heaps with lazy deletion, and an array indexed by tick. Recommend one, with costs.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "You are choosing the core structure of an order book for one instrument. It must report the best bid and ask after every message, add orders, cancel orders (most orders are cancelled), and answer \"all levels between two prices\" for a dashboard.\n\nFor each structure give the cost of: best quote, add, cancel, and a range query. Say what each costs in memory or complexity, then recommend one for this book and justify it in two or three sentences.",
+        "model": "**Sorted list with `bisect`.** Best quote $O(1)$ (an end of the list). Add: $O(\\log n)$ to find the place but $O(n)$ to shift items. Cancel: $O(\\log n)$ to find, $O(n)$ to remove. Range query: two bisections and a slice, $O(\\log n + k)$. Simple, and fast for a few thousand levels, but the shifting hurts on a busy book.\n\n**Balanced BST (AVL, red-black).** Best quote $O(\\log n)$, or $O(1)$ with a pointer kept to the extreme node. Add and cancel $O(\\log n)$. Range query: in-order walk with pruning, $O(\\log n + k)$. Correct for everything, but Python has no built-in one, and the code is long.\n\n**Two heaps with lazy deletion.** Best quote $O(1)$ amortised; add $O(\\log n)$; cancel $O(1)$ (mark the id dead). But a heap is not sorted beyond its top, so a range query must scan everything, $O(n)$, and dead entries use memory until they reach the top.\n\n**Array indexed by tick.** Prices sit on a grid, for example £0.01 ticks in a £90 to £110 band: 2,001 slots. The level for a price is found by index, $O(1)$; each level holds a first-in, first-out queue of orders, so time priority is kept. Add $O(1)$; cancel $O(1)$ with a dict from id to order; range query $O(\\text{ticks in range})$. The best quote needs a pointer that moves when its level empties, which is cheap because nearby levels are usually busy. It costs memory for empty levels and needs a known price band.\n\n**Recommendation.** The array by tick, with a FIFO queue per level and an id dict: every message is $O(1)$, range queries are direct, and this is what many real matching engines use. Two heaps are the right choice when prices have no fixed grid and range queries are rare.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Gives correct costs for the sorted list, including $O(n)$ shifting on add and cancel"
+          },
+          {
+            "points": 2,
+            "text": "Gives correct costs for the balanced BST, including $O(\\log n + k)$ range queries"
+          },
+          {
+            "points": 2,
+            "text": "Gives correct costs for two heaps, including $O(1)$ lazy cancel and the $O(n)$ range query"
+          },
+          {
+            "points": 2,
+            "text": "Explains the tick array: $O(1)$ by index, a FIFO queue per level for time priority, and the memory or price-band cost"
+          },
+          {
+            "points": 2,
+            "text": "Makes a recommendation that follows from the stated needs (frequent cancels, range queries) and names when another choice would win"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and tick the rubric.",
+        "generic": "Compare your answer with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "Heaps win on best quote and cancel but cannot answer ranges; sorted structures answer ranges but pay on updates. A tick grid turns prices into indices, which is why exchanges use it."
+      }
+    }
+  ]
+}

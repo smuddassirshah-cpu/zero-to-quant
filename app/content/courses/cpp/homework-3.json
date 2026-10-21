@@ -1,0 +1,486 @@
+{
+ "id": "homework-3",
+ "course": "cpp",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-temp-order",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes",
+    "cp-memory"
+   ],
+   "prose": "`Logger` prints `open` and `close` with its name.\n\n```cpp\nint main() {\n    Logger a(\"a\");\n    {\n        Logger b(\"b\");\n        Logger(\"tmp\");\n        std::cout << \"work\\n\";\n    }\n    std::cout << \"end\\n\";\n}\n```",
+   "question": "Put the whole output in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "oa",
+      "text": "`open a`"
+     },
+     {
+      "id": "ob",
+      "text": "`open b`"
+     },
+     {
+      "id": "ot",
+      "text": "`open tmp`"
+     },
+     {
+      "id": "ct",
+      "text": "`close tmp`"
+     },
+     {
+      "id": "w",
+      "text": "`work`"
+     },
+     {
+      "id": "cb",
+      "text": "`close b`"
+     },
+     {
+      "id": "e",
+      "text": "`end`"
+     },
+     {
+      "id": "ca",
+      "text": "`close a`"
+     }
+    ],
+    "answer": [
+     "oa",
+     "ob",
+     "ot",
+     "ct",
+     "w",
+     "cb",
+     "e",
+     "ca"
+    ]
+   },
+   "feedback": {
+    "correct": "The temporary dies at its semicolon; the named objects at their braces.",
+    "generic": "Not quite right. A temporary dies at the end of its full expression.",
+    "byKey": {
+     "w": "The temporary has already closed by then: it dies at the `;` on its own line.",
+     "cb": "`b` lives until the inner closing brace, after `work`.",
+     "e": "`end` prints after the inner block has closed `b`.",
+     "ca": "`a` lives until the end of `main`, after `end`."
+    }
+   },
+   "explain": {
+    "text": "`Logger(\"tmp\");` is born and dies on one line. `b` ends at the inner brace, before `end`, and `a` at the end of `main`."
+   }
+  },
+  {
+   "id": "h-avg-chain",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes"
+   ],
+   "prose": "A position: buy 200 at £50.00, buy 100 at £53.00, sell 150, buy 50 at £56.00.",
+   "question": "What is the average price at the end, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 52.25,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "label": "Average price in pounds",
+    "accept": "£52.25: £51.00 on 300, then 150 left at £51.00, then $(150 \\times 51 + 50 \\times 56) / 200$.",
+    "wrong": [
+     {
+      "id": "nosell",
+      "value": 51.875,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "simple",
+      "value": 53.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£10,450 over 200 shares is £52.25.",
+    "generic": "Not quite right. Weight each buy by its shares; a sale changes only the quantity.",
+    "byKey": {
+     "nosell": "You kept all 300 shares in the last step. After selling 150, only 150 remain at £51.00.",
+     "simple": "You averaged the three prices. Weight each by its shares."
+    }
+   },
+   "explain": {
+    "text": "The first two buys give $(10000 + 5300)/300 = 51$. Selling 150 leaves 150 at £51.00. The last buy gives $(7650 + 2800)/200 = 52.25$."
+   }
+  },
+  {
+   "id": "h-realised",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes"
+   ],
+   "prose": "Extend your `Position`: `sell(qty, px)` now returns the P&L of that sale, $q \\times (p - \\bar p)$, and adds it to a running `realised()` total. Prices must be positive.",
+   "question": "Write `buy` and `sell` with every check: no short sales, no quantity of 0 or less, no price of 0 or less. A flat position has average price 0.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <stdexcept>\n\nclass Position {\npublic:\n    int qty() const { return qty_; }\n    double avg_price() const { return avg_; }\n    double realised() const { return realised_; }\n\n    void buy(int qty, double px) {\n        // refuse qty <= 0 or px <= 0; update avg_ and qty_\n    }\n\n    double sell(int qty, double px) {\n        // refuse qty <= 0, px <= 0 or qty > qty_\n        // return this sale's P&L and add it to realised_\n        return 0.0;\n    }\n\nprivate:\n    int qty_ = 0;\n    double avg_ = 0.0;\n    double realised_ = 0.0;\n};\n",
+    "solution": "#include <stdexcept>\n\nclass Position {\npublic:\n    int qty() const { return qty_; }\n    double avg_price() const { return avg_; }\n    double realised() const { return realised_; }\n\n    void buy(int qty, double px) {\n        if (qty <= 0 || px <= 0) throw std::invalid_argument(\"bad buy\");\n        avg_ = (qty_ * avg_ + qty * px) / (qty_ + qty);\n        qty_ += qty;\n    }\n\n    double sell(int qty, double px) {\n        if (qty <= 0 || px <= 0 || qty > qty_) throw std::invalid_argument(\"bad sell\");\n        double pnl = qty * (px - avg_);\n        realised_ += pnl;\n        qty_ -= qty;\n        if (qty_ == 0) avg_ = 0.0;\n        return pnl;\n    }\n\nprivate:\n    int qty_ = 0;\n    double avg_ = 0.0;\n    double realised_ = 0.0;\n};\n",
+    "examples": [
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0);",
+      "call": "p.sell(150, 55.0)",
+      "expect": 600.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0);",
+      "call": "p.sell(150, 55.0)",
+      "expect": 600.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0); p.sell(150, 55.0);",
+      "call": "p.avg_price()",
+      "expect": 51.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0); p.sell(150, 55.0); p.sell(150, 49.0);",
+      "call": "p.realised()",
+      "expect": 300.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0); p.sell(150, 55.0); p.sell(150, 49.0);",
+      "call": "p.qty()",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0); p.sell(150, 55.0); p.sell(150, 49.0);",
+      "call": "p.avg_price()",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(3, 10.0); p.buy(1, 11.0);",
+      "call": "p.sell(4, 10.0)",
+      "expect": -1.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "Position().realised()",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0); p.sell(301, 55.0);",
+      "call": "p.qty()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Position p; p.buy(10, 0.0);",
+      "call": "p.qty()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0); p.sell(10, -1.0);",
+      "call": "p.qty()",
+      "compare": "raises"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 10 hidden tests; P&L is accepted within a relative 1e-9, and three tests pass only if the program stops."
+   },
+   "feedback": {
+    "correct": "Quantity, average and realised P&L stay consistent.",
+    "generic": "Not quite right. Read the first failing test under the editor."
+   },
+   "explain": {
+    "text": "A sale earns $q(p - \\bar p)$ against the average cost and leaves the average alone. Selling 150 at £55.00 against £51.00 makes £600; the last 150 at £49.00 lose £300, so £300 is realised."
+   }
+  },
+  {
+   "id": "h-fixed",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes"
+   ],
+   "prose": "`Fixed<Places>` holds a value as a whole number of $10^{-\\text{Places}}$ units. `Fixed<2>` is pence and `Fixed<4>` an FX rate. A different `Places` is a different type.",
+   "question": "Write `str()` (1234 units of `Fixed<2>` is `\"12.34\"`; `Fixed<0>` has no dot; negatives start with `-`) and `operator+` for two values of the same `Fixed<Places>`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <string>\n\ntemplate <int Places>\nclass Fixed {\npublic:\n    static Fixed from_units(long long u) {\n        Fixed f;\n        f.units_ = u;\n        return f;\n    }\n    long long units() const { return units_; }\n    std::string str() const {\n        return \"\";   // Fixed<2> 1234 units -> \"12.34\"\n    }\nprivate:\n    long long units_ = 0;\n};\n\n// template <int Places>\n// Fixed<Places> operator+(Fixed<Places> a, Fixed<Places> b)\n",
+    "solution": "#include <string>\n\ntemplate <int Places>\nclass Fixed {\npublic:\n    static Fixed from_units(long long u) {\n        Fixed f;\n        f.units_ = u;\n        return f;\n    }\n    long long units() const { return units_; }\n    std::string str() const {\n        long long scale = 1;\n        for (int i = 0; i < Places; ++i) scale *= 10;\n        long long u = units_ < 0 ? -units_ : units_;\n        std::string out = (units_ < 0 ? \"-\" : \"\") + std::to_string(u / scale);\n        if (Places > 0) {\n            std::string frac = std::to_string(u % scale);\n            while (static_cast<int>(frac.size()) < Places) frac = \"0\" + frac;\n            out += \".\" + frac;\n        }\n        return out;\n    }\nprivate:\n    long long units_ = 0;\n};\n\ntemplate <int Places>\nFixed<Places> operator+(Fixed<Places> a, Fixed<Places> b) {\n    return Fixed<Places>::from_units(a.units() + b.units());\n}\n",
+    "examples": [
+     {
+      "call": "Fixed<4>::from_units(5).str()",
+      "expect": "0.0005",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "Fixed<2>::from_units(1234).str()",
+      "expect": "12.34",
+      "compare": "equal"
+     },
+     {
+      "call": "Fixed<4>::from_units(12345).str()",
+      "expect": "1.2345",
+      "compare": "equal"
+     },
+     {
+      "call": "Fixed<4>::from_units(5).str()",
+      "expect": "0.0005",
+      "compare": "equal"
+     },
+     {
+      "call": "Fixed<2>::from_units(-5).str()",
+      "expect": "-0.05",
+      "compare": "equal"
+     },
+     {
+      "call": "Fixed<0>::from_units(42).str()",
+      "expect": "42",
+      "compare": "equal"
+     },
+     {
+      "call": "(Fixed<2>::from_units(199) + Fixed<2>::from_units(1)).str()",
+      "expect": "2.00",
+      "compare": "equal"
+     },
+     {
+      "call": "(Fixed<4>::from_units(12345) + Fixed<4>::from_units(5)).units()",
+      "expect": 12350,
+      "compare": "equal"
+     },
+     {
+      "call": "std::is_same_v<Fixed<2>, Fixed<4>>",
+      "expect": false,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests with `Fixed<0>`, `Fixed<2>` and `Fixed<4>`, comparing text exactly."
+   },
+   "feedback": {
+    "correct": "Exact decimals, with the places fixed at compile time.",
+    "generic": "Not quite right. Read the first failing test under the editor."
+   },
+   "explain": {
+    "text": "`str()` splits the absolute units by $10^{\\text{Places}}$ and pads the fraction to `Places` digits. Because `operator+` takes two `Fixed<Places>` with the same `Places`, adding pence to an FX rate does not compile."
+   }
+  },
+  {
+   "id": "h-raw-fix",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes",
+    "cp-memory"
+   ],
+   "prose": "```cpp\nclass Prices {\npublic:\n    explicit Prices(int n) : data_(new double[n]) {}\n    ~Prices() { delete[] data_; }\nprivate:\n    double* data_;\n};\n```",
+   "question": "Which change makes copying a `Prices` safe?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Replace `double*` with `std::vector<double>`, built with `data_(n)`, and delete the destructor",
+      "correct": true
+     },
+     {
+      "id": "default",
+      "text": "Add `Prices(const Prices&) = default;`",
+      "why": "The default copy still copies the address, so the block is freed twice."
+     },
+     {
+      "id": "nodtor",
+      "text": "Remove the destructor",
+      "why": "Then nothing is freed twice, but nothing is freed at all: every `Prices` leaks."
+     },
+     {
+      "id": "constptr",
+      "text": "Make the member `double* const data_`",
+      "why": "A const pointer still copies the same address. Two destructors free one block."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Rule of zero: let a member own the memory.",
+    "generic": "Not quite right. Who owns the block after a copy?"
+   },
+   "explain": {
+    "text": "A `std::vector<double>` copies its elements, frees them once, and moves cheaply. With it the class needs no special members at all."
+   }
+  },
+  {
+   "id": "h-book",
+   "difficulty": 5,
+   "skills": [
+    "cp-classes",
+    "cp-references"
+   ],
+   "prose": "An order book holds bid and ask **levels**, each a price in pence and a total size. Bids are kept highest first, asks lowest first. The invariant: whenever both sides have levels, the best bid is below the best ask. This quote book refuses any add that would cross, rather than matching it.",
+   "question": "Write `operator<` for `Level` (by price) and the `Book` functions: `add`, `best_bid`, `best_ask`, `spread`, `depth` (levels on a side) and `size_at` (0 when there is no such level). Refuse a size of 0 or less, a crossing add, and a best price on an empty side.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <stdexcept>\n#include <vector>\n\nstruct Level {\n    long long price;   // pence\n    int size;\n};\n\nbool operator<(const Level& a, const Level& b) {\n    return false;   // order levels by price\n}\n\nclass Book {\npublic:\n    void add(bool is_bid, long long price, int size) {\n        // refuse size <= 0 and any add that would cross the book;\n        // add to an existing level, or insert a new one in order\n    }\n    long long best_bid() const { return 0; }\n    long long best_ask() const { return 0; }\n    long long spread() const { return 0; }\n    int depth(bool is_bid) const { return 0; }\n    int size_at(bool is_bid, long long price) const { return 0; }\n\nprivate:\n    std::vector<Level> bids_;   // best (highest) first\n    std::vector<Level> asks_;   // best (lowest) first\n};\n",
+    "solution": "#include <algorithm>\n#include <stdexcept>\n#include <vector>\n\nstruct Level {\n    long long price;   // pence\n    int size;\n};\n\nbool operator<(const Level& a, const Level& b) {\n    return a.price < b.price;\n}\n\nclass Book {\npublic:\n    void add(bool is_bid, long long price, int size) {\n        if (size <= 0) throw std::invalid_argument(\"size must be positive\");\n        if (is_bid && !asks_.empty() && price >= asks_.front().price)\n            throw std::invalid_argument(\"bid would cross the book\");\n        if (!is_bid && !bids_.empty() && price <= bids_.front().price)\n            throw std::invalid_argument(\"ask would cross the book\");\n        std::vector<Level>& side = is_bid ? bids_ : asks_;\n        for (Level& l : side) {\n            if (l.price == price) { l.size += size; return; }\n        }\n        side.push_back(Level{price, size});\n        std::sort(side.begin(), side.end());\n        if (is_bid) std::reverse(side.begin(), side.end());\n    }\n    long long best_bid() const {\n        if (bids_.empty()) throw std::logic_error(\"no bids\");\n        return bids_.front().price;\n    }\n    long long best_ask() const {\n        if (asks_.empty()) throw std::logic_error(\"no asks\");\n        return asks_.front().price;\n    }\n    long long spread() const { return best_ask() - best_bid(); }\n    int depth(bool is_bid) const {\n        return static_cast<int>((is_bid ? bids_ : asks_).size());\n    }\n    int size_at(bool is_bid, long long price) const {\n        for (const Level& l : is_bid ? bids_ : asks_)\n            if (l.price == price) return l.size;\n        return 0;\n    }\n\nprivate:\n    std::vector<Level> bids_;   // best (highest) first\n    std::vector<Level> asks_;   // best (lowest) first\n};\n",
+    "examples": [
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500);",
+      "call": "b.spread()",
+      "expect": 50,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500);",
+      "call": "b.best_bid()",
+      "expect": 10050,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500);",
+      "call": "b.best_ask()",
+      "expect": 10100,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500);",
+      "call": "b.spread()",
+      "expect": 50,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500); b.add(true, 10050, 200);",
+      "call": "b.size_at(true, 10050)",
+      "expect": 300,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500); b.add(true, 10050, 200);",
+      "call": "b.depth(true)",
+      "expect": 2,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500);",
+      "call": "b.size_at(false, 10125)",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(false, 10200, 1); b.add(false, 10120, 1); b.add(false, 10160, 1);",
+      "call": "b.best_ask()",
+      "expect": 10120,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 9900, 10); b.add(true, 9950, 10); b.add(true, 9920, 10);",
+      "call": "b.best_bid()",
+      "expect": 9950,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 5); b.add(true, 20000, 5);",
+      "call": "b.best_bid()",
+      "expect": 20000,
+      "compare": "equal"
+     },
+     {
+      "call": "Level{100, 5} < Level{101, 1}",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500); b.add(true, 10100, 100);",
+      "call": "b.best_bid()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 300); b.add(true, 10050, 100); b.add(false, 10100, 200); b.add(false, 10150, 500); b.add(false, 10050, 100);",
+      "call": "b.best_bid()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Book b;",
+      "call": "b.best_bid()",
+      "compare": "raises"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 0);",
+      "call": "b.depth(true)",
+      "compare": "raises"
+     },
+     {
+      "setup": "Book b; b.add(true, 10000, 5);",
+      "call": "b.spread()",
+      "compare": "raises"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 15 hidden tests, each building a small book and then asking it one question. Five pass only if the program stops."
+   },
+   "feedback": {
+    "correct": "The book stays sorted and never crosses.",
+    "generic": "Not quite right. Read the first failing test under the editor."
+   },
+   "explain": {
+    "text": "`add` checks the size and the crossing rule before touching either side, then merges into an existing level or inserts and re-sorts. `std::sort` uses your `operator<`; reversing gives the bids highest first. Every reader is `const`, and the empty-side checks keep `spread` honest."
+   }
+  },
+  {
+   "id": "h-design-position",
+   "difficulty": 5,
+   "skills": [
+    "cp-classes",
+    "cp-references",
+    "cp-memory"
+   ],
+   "kind": "longform",
+   "title": "Designing a Position class",
+   "prompt": "A desk asks you to design the C++ `Position` class its risk system will use. One object tracks one instrument: the ticker, signed quantity (shorts allowed up to a limit), average entry price and realised P&L. It is stored in containers, copied into reports and printed in logs.\n\n(a) State the invariants the class must keep, and say where each one is checked. (b) Write the class declaration: members, constructor, the functions that change it and those that read it. (c) Say which special members you write and why. (d) Say which operators you would overload, and which you would refuse to, with reasons. (e) Say how money is stored and how a broken rule is reported.",
+   "model": "**(a) Invariants, and where they are checked.**\n\n1. The ticker is not empty. *Checked in the constructor; nothing changes it afterwards.*\n2. $|q| \\le$ the position limit, and the limit is positive. *Checked in the constructor and in `buy` and `sell` before anything changes.*\n3. A flat position ($q = 0$) has average price 0; otherwise the average is the weighted entry price of the open quantity. *Kept by `buy` and `sell`, the only functions that change $q$.*\n4. Realised P&L changes only when a trade reduces the position. *Kept by `sell` (and `buy` covering a short).*\n\n**(b) Declaration.**\n\n```cpp\nclass Position {\npublic:\n    Position(std::string ticker, long long limit);\n    void buy(long long qty, long long px_pence);\n    void sell(long long qty, long long px_pence);\n    const std::string& ticker() const;\n    long long qty() const;\n    double avg_price_pence() const;\n    long long realised_pence() const;\nprivate:\n    std::string ticker_;\n    long long limit_;\n    long long qty_ = 0;\n    double avg_ = 0.0;\n    long long realised_ = 0;\n};\n```\n\nThe data is private, so only `buy` and `sell` can change it. Readers are `const`, and `ticker()` returns a `const` reference, never a non-const one, so no caller can write through it. The constructor builds members in its initialiser list, in declaration order.\n\n**(c) Special members.** None: the rule of zero. Every member (`std::string`, integers, a `double`) copies, moves and destroys itself correctly, so the compiler's versions are right. Copies are wanted (reports take snapshots), and moves are cheap. A raw pointer or handle member would force the rule of five; there is none.\n\n**(d) Operators.** `operator<<(std::ostream&, const Position&)` for logs, returning the stream. `operator==` only if a test needs it, comparing every field. I would **not** define `operator+` on two positions: adding AZN to VOD is meaningless, and even for one ticker it hides which trades happened. Changes go through named functions, `buy` and `sell`. If P&L amounts are summed, they get their own `Money` or `Pnl` type, so a quantity can never be added to money.\n\n**(e) Money and errors.** Prices and P&L are whole pence in `long long`, so sums are exact; only the average, a ratio, is a `double`, and it is never compared with `==`. A broken rule throws (`std::invalid_argument` for bad input, `std::logic_error` for a breach such as exceeding the limit) before any member changes, so a refused call leaves the position exactly as it was.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States at least three invariants (non-empty ticker, limit on |qty|, flat means average 0, or the weighted-average rule) and where each is checked"
+    },
+    {
+     "points": 2,
+     "text": "Data private; changes only through checked functions; readers `const`; no non-const reference to a member returned"
+    },
+    {
+     "points": 1,
+     "text": "Initialiser list used in the constructor, with the check after the members are built"
+    },
+    {
+     "points": 2,
+     "text": "Rule of zero justified from the member types; says a raw resource would need the rule of five or `= delete`"
+    },
+    {
+     "points": 2,
+     "text": "Operators: `operator<<` returning `std::ostream&`; refuses `+` on positions (or on mixed units) with a reason"
+    },
+    {
+     "points": 1,
+     "text": "Money in integer pence (or ticks) with no `==` on doubles, and a refused call leaves the object unchanged"
+    }
+   ]
+  }
+ ]
+}

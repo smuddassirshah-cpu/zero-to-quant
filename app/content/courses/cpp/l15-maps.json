@@ -1,0 +1,1190 @@
+{
+ "id": "l15-maps",
+ "course": "cpp",
+ "title": "Ordered and hashed maps",
+ "minutes": 14,
+ "objectives": [
+  "Choose between `std::map` and `std::unordered_map`."
+ ],
+ "skills": [
+  "cp-stl"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A dict that sorts itself",
+   "prose": "A position book in C++. In Python this would be a dict.\n\n```cpp\nstd::map<std::string, int> pos;\npos[\"VOD\"] = 500;\npos[\"BARC\"] = -200;\npos[\"AZN\"] = 50;\nfor (const auto& [sym, qty] : pos) {\n    std::cout << sym << ' ' << qty << '\\n';\n}\n```",
+   "canvas": {
+    "kind": "boxes",
+    "params": {
+     "itemKind": "card",
+     "containers": [
+      {
+       "id": "ins",
+       "label": "Inserted",
+       "kind": "box",
+       "items": [
+        {
+         "id": "vod",
+         "kind": "card",
+         "label": "VOD 500",
+         "colour": 1
+        },
+        {
+         "id": "barc",
+         "kind": "card",
+         "label": "BARC −200",
+         "colour": 1
+        },
+        {
+         "id": "azn",
+         "kind": "card",
+         "label": "AZN 50",
+         "colour": 1
+        }
+       ]
+      },
+      {
+       "id": "out",
+       "label": "Printed, top line first",
+       "kind": "row",
+       "slots": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Drag the entries into the order the loop prints them.",
+   "widget": {
+    "kind": "place",
+    "mode": "boxes",
+    "answer": {
+     "out": [
+      "azn",
+      "barc",
+      "vod"
+     ]
+    },
+    "ordered": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A `std::map` keeps its keys in one fixed order. Which order would a dictionary of words use?"
+    },
+    {
+     "rung": "point",
+     "text": "Compare the first letters: A, B, V."
+    },
+    {
+     "rung": "step",
+     "text": "AZN, then BARC, then VOD: the keys in alphabetical order."
+    }
+   ],
+   "feedback": {
+    "correct": "AZN, BARC, VOD: sorted by key.",
+    "generic": "Not quite right. The loop walks the keys in sorted order, not in the order you inserted them.",
+    "byKey": {
+     "vod": "You printed VOD first, as it was inserted first. That is Python's dict; a `std::map` sorts by key.",
+     "azn": "AZN sorts first, A before B and V. Check its place in the row.",
+     "barc": "BARC sorts between AZN and VOD."
+    }
+   },
+   "explain": {
+    "text": "A `std::map` keeps its entries sorted by key, here alphabetically, whatever order they arrived in. `auto& [sym, qty]` unpacks each entry, a `std::pair`, into two names. This is a **structured binding**, like Python's `for sym, qty in pos.items()`.",
+    "canvas": {
+     "move": {
+      "azn": "out",
+      "barc": "out",
+      "vod": "out"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Inside, a `std::map` is a balanced tree. Every key to the left of a node sorts before it, and every key to the right sorts after. A search starts at the top and goes left or right at each node.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "orient": "tb",
+     "rootLabel": "HSBA",
+     "nodes": [
+      {
+       "id": "b",
+       "label": "BARC",
+       "children": [
+        {
+         "id": "a",
+         "label": "AZN"
+        },
+        {
+         "id": "p",
+         "label": "BP"
+        }
+       ]
+      },
+      {
+       "id": "s",
+       "label": "SHEL",
+       "children": [
+        {
+         "id": "l",
+         "label": "LLOY"
+        },
+        {
+         "id": "v",
+         "label": "VOD"
+        }
+       ]
+      }
+     ]
+    },
+    "state": {
+     "caption": "Seven symbols in a `std::map`"
+    }
+   },
+   "question": "Tap the branches a search for BP follows.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "b",
+     "b-p"
+    ],
+    "wrong": [
+     {
+      "id": "right",
+      "set": [
+       "s"
+      ]
+     }
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "BP sorts before HSBA, so which way does the search go first?"
+    },
+    {
+     "rung": "point",
+     "text": "After BARC, compare BP with BARC: B-A comes before B-P.",
+     "highlight": [
+      "b"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "HSBA, then BARC, then BP: three comparisons.",
+    "generic": "Not quite right. At each node, go left if BP sorts before it and right if after.",
+    "byKey": {
+     "right": "You went right at HSBA. BP sorts before HSBA (B before H), so the search goes left.",
+     "s": "You went right at HSBA. BP sorts before HSBA (B before H), so the search goes left.",
+     "b-a": "At BARC, BP sorts after it (A before P), so the search goes right, not left."
+    }
+   },
+   "explain": {
+    "text": "Each comparison throws away half of what is left, so 7 keys need at most 3 steps. A million keys need about 20, so find, insert and erase take $O(\\log n)$ time. Reading the tree from left to right gives the keys in order, which is how the loop printed them sorted.",
+    "canvas": {
+     "highlight": [
+      "b-p"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Hashing into buckets",
+   "prose": "`std::unordered_map` stores keys differently. A **hash** function turns each key into a number, which picks one of the **buckets**. A lookup hashes the key, goes straight to its bucket and compares only the keys there. On average that is $O(1)$, whatever the size.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "",
+      "VOD",
+      "",
+      "AZN, BP",
+      "BARC",
+      "",
+      "SHEL",
+      "LLOY, HSBA"
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "Eight buckets; the hash of BP picks bucket 3"
+    }
+   },
+   "question": "How many keys does a lookup of BP compare against?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "2",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "tree",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The hash sends the search straight to one bucket."
+    },
+    {
+     "rung": "point",
+     "text": "Bucket 3 holds two keys.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The lookup checks AZN, then BP: two comparisons."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the keys in bucket 3: AZN and BP.",
+    "generic": "Not quite right. Count the keys in BP's bucket only.",
+    "byKey": {
+     "all": "You compared with every key, like a scan of a list. The hash skips straight to bucket 3.",
+     "tree": "Three was the tree search in a `std::map`. Here the hash jumps straight to one bucket.",
+     "one": "Bucket 3 holds AZN as well as BP, and in the worst order AZN is checked first."
+    }
+   },
+   "explain": {
+    "text": "The hash picked bucket 3, so only AZN and BP were compared. The buckets keep no order, so an `unordered_map` cannot list its keys sorted. The table grows its buckets as keys arrive, which keeps each bucket short on average.",
+    "canvas": {
+     "highlight": [
+      "c3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Choosing a map",
+   "prose": "Here is what each container costs. Choose one for each job on the desk.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Operation",
+      "`std::map`",
+      "`std::unordered_map`"
+     ],
+     "rows": [
+      [
+       "find, insert, erase",
+       "$O(\\log n)$",
+       "$O(1)$ on average"
+      ],
+      [
+       "Loop over all keys",
+       "sorted by key",
+       "no useful order"
+      ],
+      [
+       "Smallest or largest key",
+       "`begin()`, `rbegin()`",
+       "scan every key"
+      ],
+      [
+       "Key needs",
+       "`<`",
+       "a hash and `==`"
+      ]
+     ],
+     "align": [
+      "left",
+      "left",
+      "left"
+     ]
+    },
+    "state": {},
+    "maxHeight": 220
+   },
+   "question": "Type `map` or `unordered_map` for each job.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Job",
+     "Container"
+    ],
+    "rows": [
+     [
+      "Print end-of-day positions sorted by symbol",
+      {
+       "edit": true,
+       "answer": "map",
+       "accept": [
+        "std::map"
+       ]
+      }
+     ],
+     [
+      "Look up a price by instrument id, a million times a second",
+      {
+       "edit": true,
+       "answer": "unordered_map",
+       "accept": [
+        "std::unordered_map",
+        "unordered"
+       ]
+      }
+     ],
+     [
+      "Find the highest bid price in a book",
+      {
+       "edit": true,
+       "answer": "map",
+       "accept": [
+        "std::map"
+       ]
+      }
+     ],
+     [
+      "Count fills per order id, read back one id at a time",
+      {
+       "edit": true,
+       "answer": "unordered_map",
+       "accept": [
+        "std::unordered_map",
+        "unordered"
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does the job need the keys in order?"
+    },
+    {
+     "rung": "point",
+     "text": "Sorted output and the largest key need order; lone lookups do not."
+    },
+    {
+     "rung": "step",
+     "text": "Rows 1 and 3 need order: `map`. Rows 2 and 4 are single lookups: `unordered_map`."
+    }
+   ],
+   "feedback": {
+    "correct": "Order needed: `map`. Only lookups: `unordered_map`.",
+    "generic": "Not quite right. Ask of each job whether the keys must come out in order."
+   },
+   "explain": {
+    "text": "Sorted output and the best price need key order, which only `std::map` keeps. Lone lookups by id never need order, so the hashed table's $O(1)$ wins. When unsure, start with `std::map`: its order makes output repeatable."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A position book",
+   "prose": "Fills arrive as two lists: symbols and signed quantities, a sale negative. Sum them into a position per symbol. `pos[sym] += q` works even for a new symbol: `[]` first inserts it with the value 0. That is Python's `defaultdict(int)`.",
+   "canvas": {
+    "kind": "boxes",
+    "params": {
+     "itemKind": "card",
+     "containers": [
+      {
+       "id": "f",
+       "label": "Fills",
+       "kind": "box",
+       "items": [
+        {
+         "id": "f1",
+         "kind": "card",
+         "label": "VOD +100",
+         "colour": 2
+        },
+        {
+         "id": "f2",
+         "kind": "card",
+         "label": "BARC −50",
+         "colour": 2
+        },
+        {
+         "id": "f3",
+         "kind": "card",
+         "label": "VOD +25",
+         "colour": 2
+        }
+       ]
+      },
+      {
+       "id": "p",
+       "label": "pos",
+       "kind": "box",
+       "items": [
+        {
+         "id": "p1",
+         "kind": "card",
+         "label": "BARC −50",
+         "colour": 1
+        },
+        {
+         "id": "p2",
+         "kind": "card",
+         "label": "VOD 125",
+         "colour": 1
+        }
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `position_by_symbol(syms, qty)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <map>\n#include <string>\n#include <vector>\n\nstd::map<std::string, int> position_by_symbol(const std::vector<std::string>& syms, const std::vector<int>& qty) {\n    std::map<std::string, int> pos;\n    // fill i bought qty[i] of syms[i]; a sale is a negative qty\n    return pos;\n}\n",
+    "solution": "#include <map>\n#include <string>\n#include <vector>\n\nstd::map<std::string, int> position_by_symbol(const std::vector<std::string>& syms, const std::vector<int>& qty) {\n    std::map<std::string, int> pos;\n    for (std::size_t i = 0; i < syms.size(); ++i) {\n        pos[syms[i]] += qty[i];\n    }\n    return pos;\n}\n",
+    "examples": [
+     {
+      "call": "position_by_symbol({\"VOD\", \"BARC\", \"VOD\"}, {100, -50, 25})",
+      "expect": [
+       [
+        "BARC",
+        -50
+       ],
+       [
+        "VOD",
+        125
+       ]
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "position_by_symbol({\"VOD\", \"BARC\", \"VOD\"}, {100, -50, 25})",
+      "expect": [
+       [
+        "BARC",
+        -50
+       ],
+       [
+        "VOD",
+        125
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "position_by_symbol({\"VOD\", \"BARC\", \"VOD\"}, {100, -50, 25}).at(\"VOD\")",
+      "expect": 125,
+      "compare": "equal"
+     },
+     {
+      "call": "position_by_symbol({\"AZN\", \"AZN\"}, {300, -300}).size()",
+      "expect": 1,
+      "compare": "equal"
+     },
+     {
+      "call": "position_by_symbol({}, {}).size()",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "position_by_symbol({\"VOD\", \"BARC\", \"HSBA\", \"AZN\"}, {10, 20, 30, 40}).begin()->first",
+      "expect": "AZN",
+      "compare": "equal"
+     },
+     {
+      "call": "position_by_symbol({\"BP\", \"BP\", \"BP\"}, {1000, -400, -100}).at(\"BP\")",
+      "expect": 500,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call position_by_symbol and read the whole map, one key or its size; each must match exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over the fills by index, since you need `syms[i]` and `qty[i]` together."
+    },
+    {
+     "rung": "point",
+     "text": "A symbol you have not seen yet starts at 0 when `[]` creates it."
+    },
+    {
+     "rung": "step",
+     "text": "`for (std::size_t i = 0; i < syms.size(); ++i) pos[syms[i]] += qty[i];`"
+    }
+   ],
+   "feedback": {
+    "correct": "One line does it: `pos[syms[i]] += qty[i]`.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "VOD should be 100 + 25 = 125. If you got 25, you used `=` and overwrote the first fill: add with `+=`.",
+     "test-3": "AZN bought 300 and sold 300, so its position is 0, but the key stays in the map. The size is 1.",
+     "test-4": "No fills means an empty map, size 0."
+    }
+   },
+   "explain": {
+    "text": "`pos[syms[i]]` finds the entry or inserts one with `int{}`, which is 0, then `+=` adds to it. A flat symbol keeps its key with the value 0. The map comes back sorted, which test 1 shows.",
+    "canvas": {
+     "highlight": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Find, not []",
+   "prose": "Net exposure in pounds is the sum of quantity times price. Prices sit in a cache keyed by symbol. A symbol with no price is skipped. `px` is `const`, so `px[sym]` will not compile: `[]` might insert. Use `px.find(sym)`, which returns `px.end()` when the key is missing.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Symbol",
+      "Position",
+      "Price (£)",
+      "Value (£)"
+     ],
+     "rows": [
+      [
+       "BARC",
+       "−500",
+       "2.10",
+       "−1,050.00"
+      ],
+      [
+       "VOD",
+       "1,000",
+       "0.72",
+       "720.00"
+      ],
+      [
+       "ZZZ",
+       "40",
+       "no price",
+       "skipped"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Exposure: −£330.00"
+    }
+   },
+   "question": "Write `exposure(px, pos)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <map>\n#include <string>\n#include <unordered_map>\n\ndouble exposure(const std::unordered_map<std::string, double>& px, const std::map<std::string, int>& pos) {\n    double total = 0;\n    // add qty * price for every symbol that has a price\n    return total;\n}\n",
+    "solution": "#include <map>\n#include <string>\n#include <unordered_map>\n\ndouble exposure(const std::unordered_map<std::string, double>& px, const std::map<std::string, int>& pos) {\n    double total = 0;\n    for (const auto& [sym, qty] : pos) {\n        auto it = px.find(sym);\n        if (it != px.end()) {\n            total += qty * it->second;\n        }\n    }\n    return total;\n}\n",
+    "examples": [
+     {
+      "call": "exposure({{\"VOD\", 0.72}, {\"BARC\", 2.10}}, {{\"VOD\", 1000}, {\"BARC\", -500}})",
+      "expect": -330.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "exposure({{\"VOD\", 0.72}, {\"BARC\", 2.10}}, {{\"VOD\", 1000}, {\"BARC\", -500}})",
+      "expect": -330.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "exposure({{\"VOD\", 0.72}, {\"BARC\", 2.10}}, {{\"VOD\", 1000}, {\"BARC\", -500}, {\"ZZZ\", 40}})",
+      "expect": -330.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "exposure({{\"AZN\", 118.5}}, {})",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "exposure({}, {{\"AZN\", 10}})",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "exposure({{\"AZN\", 118.5}, {\"HSBA\", 6.42}, {\"BP\", 4.75}}, {{\"AZN\", 20}, {\"HSBA\", -300}})",
+      "expect": 444.0,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call exposure with maps built in the call; each is accepted within a relative 1e-9 (a zero must be exactly 0)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over `pos`, and look each symbol up in `px`."
+    },
+    {
+     "rung": "point",
+     "text": "`auto it = px.find(sym);` then compare `it` with `px.end()`."
+    },
+    {
+     "rung": "step",
+     "text": "For each `[sym, qty]` in `pos`: if `px.find(sym)` is not `px.end()`, add `qty * it->second`."
+    }
+   ],
+   "feedback": {
+    "correct": "`find`, compare with `end()`, then read `it->second`.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "compile": "If the compiler says no viable overloaded `operator[]`, you read `px[sym]` on a `const` map. Use `px.find(sym)`.",
+     "test-2": "ZZZ has no price, so skip it. If the program stopped, you used `px.at(sym)`, which throws for a missing key.",
+     "test-4": "With no prices every symbol is skipped, so the total is 0."
+    }
+   },
+   "explain": {
+    "text": "`find` returns an iterator to the entry, or `end()` when the key is missing; `it->second` is the value. On a `const` map, `[]` is not allowed because it might insert. `px.count(sym)` also tests presence, but then you need a second lookup to read the price."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Reading with []",
+   "prose": "You check whether you hold any AZN before a report.\n\n```cpp\nstd::map<std::string, int> pos{{\"VOD\", 500}, {\"BARC\", -200}};\nif (pos[\"AZN\"] == 0) {\n    std::cout << \"flat AZN\\n\";\n}\nstd::cout << pos.size() << '\\n';\n```",
+   "canvas": {
+    "kind": "boxes",
+    "params": {
+     "itemKind": "card",
+     "containers": [
+      {
+       "id": "m",
+       "label": "pos",
+       "kind": "box",
+       "items": [
+        {
+         "id": "barc",
+         "kind": "card",
+         "label": "BARC −200",
+         "colour": 1
+        },
+        {
+         "id": "vod",
+         "kind": "card",
+         "label": "VOD 500",
+         "colour": 1
+        }
+       ]
+      },
+      {
+       "id": "x",
+       "label": "Not in the map",
+       "kind": "box",
+       "items": [
+        {
+         "id": "azn",
+         "kind": "card",
+         "label": "AZN 0",
+         "colour": 3
+        }
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "three",
+      "text": "`flat AZN`, then `3`",
+      "correct": true
+     },
+     {
+      "id": "two",
+      "text": "`flat AZN`, then `2`",
+      "why": "You read `pos[\"AZN\"]` as a pure lookup. On a missing key `[]` inserts it with 0, so the map grows to 3.",
+      "canvas": {
+       "move": {
+        "azn": "m"
+       },
+       "highlight": [
+        "azn"
+       ]
+      }
+     },
+     {
+      "id": "error",
+      "text": "An error: AZN is not in the map",
+      "why": "That is Python's `KeyError`. In C++ `[]` never fails: it inserts the missing key with the value 0."
+     },
+     {
+      "id": "only2",
+      "text": "Only `2`",
+      "why": "`pos[\"AZN\"]` is 0 once inserted, so the test is true and `flat AZN` prints."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does `[]` do with a key that is not there?"
+    },
+    {
+     "rung": "point",
+     "text": "It cannot return a reference to nothing, so it makes an entry.",
+     "highlight": [
+      "azn"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "AZN goes in with 0, the test is true, and the map now has three keys."
+    }
+   ],
+   "feedback": {
+    "correct": "The read wrote an entry: the map has 3 keys.",
+    "generic": "Not quite right. Follow what `[]` does with the missing key AZN.",
+    "byKey": {
+     "two": "You read `[]` as a lookup. It inserted AZN with 0, so `size()` is 3."
+    }
+   },
+   "explain": {
+    "text": "`operator[]` returns a reference to a value, so for a missing key it first inserts one, `int{}` = 0. Reads with `[]` therefore grow the map, and the report now lists AZN. To read without inserting, use `find`, `count` or `at`.",
+    "canvas": {
+     "move": {
+      "azn": "m"
+     },
+     "highlight": [
+      "azn"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Fills per venue",
+   "prose": "Fills arrive one per line as a venue and a share count. Print each venue once, in alphabetical order, with its number of fills and total shares. Python's dict would keep arrival order; neither C++ map does, and only `std::map` sorts.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "LSE 200",
+      "CBOE 100",
+      "LSE 300",
+      "TURQ 50",
+      "LSE 100",
+      "CBOE 400"
+     ],
+     "title": "Input"
+    },
+    "state": {
+     "caption": "Prints `CBOE 2 500`, `LSE 3 600`, `TURQ 1 50`"
+    }
+   },
+   "question": "Complete the program.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <iostream>\n#include <map>\n#include <string>\n\nint main() {\n    std::string venue;\n    int qty;\n    while (std::cin >> venue >> qty) {\n        // count the fill and add its shares\n    }\n    // print: venue, number of fills, total shares\n    return 0;\n}\n",
+    "solution": "#include <iostream>\n#include <map>\n#include <string>\n\nint main() {\n    std::map<std::string, int> fills;\n    std::map<std::string, int> shares;\n    std::string venue;\n    int qty;\n    while (std::cin >> venue >> qty) {\n        ++fills[venue];\n        shares[venue] += qty;\n    }\n    for (const auto& [v, n] : fills) {\n        std::cout << v << ' ' << n << ' ' << shares[v] << '\\n';\n    }\n    return 0;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "LSE 200\nCBOE 100\nLSE 300\nTURQ 50\nLSE 100\nCBOE 400\n",
+      "expect": "CBOE 2 500\nLSE 3 600\nTURQ 1 50\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "LSE 200\nCBOE 100\nLSE 300\nTURQ 50\nLSE 100\nCBOE 400\n",
+      "expect": "CBOE 2 500\nLSE 3 600\nTURQ 1 50\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "",
+      "expect": ""
+     },
+     {
+      "compare": "stdout",
+      "stdin": "XLON 1000\n",
+      "expect": "XLON 1 1000\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "TURQ 10\nAQX 20\nCBOE 30\nBATS 40\nLSE 50\nAQX 5\n",
+      "expect": "AQX 2 25\nBATS 1 40\nCBOE 1 30\nLSE 1 50\nTURQ 1 10\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "LSE 100 LSE 100 LSE 100\n",
+      "expect": "LSE 3 300\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 5 times with different fills on std::cin and compares what it prints."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two maps keyed by venue work: one counts fills, one sums shares."
+    },
+    {
+     "rung": "point",
+     "text": "`++fills[venue]` counts a fill, inserting the venue at 0 the first time."
+    },
+    {
+     "rung": "step",
+     "text": "Inside the loop: `++fills[venue]; shares[venue] += qty;`. After it, loop `for (const auto& [v, n] : fills)` and print `v`, `n` and `shares[v]`."
+    }
+   ],
+   "feedback": {
+    "correct": "Sorted by venue, because `std::map` keeps key order.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Expected CBOE, LSE, TURQ. If the order differs, you used `unordered_map`, which keeps no order, or printed in arrival order.",
+     "test-4": "AQX appears twice: 20 and 5 shares, so `AQX 2 25`, and it prints first."
+    }
+   },
+   "explain": {
+    "text": "`std::map` iterates in key order, so the output is sorted with no extra work. With `unordered_map` the order depends on the hash and can change between library versions. Reading `shares[v]` with `[]` is safe here because every venue is already present."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "What you used, in one place.\n\n```cpp\nstd::map<K, V> m;            // sorted by key, O(log n)\nstd::unordered_map<K, V> h;  // hashed, O(1) average\nm[k] = v;                    // insert or overwrite\nm.at(k);                     // read; missing key throws\nauto it = m.find(k);         // m.end() if missing\nm.count(k);                  // 0 or 1\nm.insert({k, v});            // only if k is absent\nm.emplace(k, v);             // the same, built in place\nfor (const auto& [k, v] : m) // key order\n```",
+   "question": "`pos` holds VOD 500. After `pos.insert({\"VOD\", 600});` what is `pos.at(\"VOD\")`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "keep",
+      "text": "500",
+      "correct": true
+     },
+     {
+      "id": "over",
+      "text": "600",
+      "why": "You read `insert` as assignment. `insert` leaves an existing key alone; `pos[\"VOD\"] = 600` would overwrite."
+     },
+     {
+      "id": "sum",
+      "text": "1100",
+      "why": "Nothing adds the two. `insert` simply does nothing when the key exists."
+     },
+     {
+      "id": "two",
+      "text": "Both: the map now has two VOD entries",
+      "why": "A map holds each key once. (`std::multimap` allows repeats.)"
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does `insert` replace a value that is already there?"
+    }
+   ],
+   "feedback": {
+    "correct": "`insert` keeps the old value.",
+    "generic": "Not quite right. What does `insert` do when the key exists?"
+   },
+   "explain": {
+    "text": "`insert` and `emplace` add a key only if it is absent, and return a pair saying whether they did. `[]` with `=` overwrites. Pick the one that says what you mean."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A book keyed by price",
+   "prose": "An order book keeps its price levels sorted, so a `std::map` keyed by price seems natural. A tick here is 0.1p.\n\n```cpp\nstd::map<double, int> bids;\ndouble best = 100.1;\nbids[best] += 500;\nbids[best + 0.1] += 300;  // one tick up\nbids[100.2] += 200;       // an order at 100.2\nstd::cout << bids.size() << '\\n';\n```",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       100.2,
+       200
+      ],
+      [
+       100.2,
+       300
+      ],
+      [
+       100.1,
+       500
+      ]
+     ],
+     "asks": [
+      [
+       100.3,
+       400
+      ],
+      [
+       100.4,
+       250
+      ]
+     ],
+     "dp": 1
+    },
+    "state": {
+     "caption": "What the book shows"
+    }
+   },
+   "question": "How many price levels does `bids` hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "3",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is `100.1 + 0.1` exactly the same `double` as `100.2`?"
+    },
+    {
+     "rung": "point",
+     "text": "Two levels both read 100.2 on the ladder.",
+     "highlight": [
+      "bid0",
+      "bid1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`100.1 + 0.1` is 100.19999999999999, a different key from 100.2, so there are three keys."
+    }
+   ],
+   "feedback": {
+    "correct": "Three keys: 100.1, 100.19999999999999 and 100.2.",
+    "generic": "Not quite right. Compare `100.1 + 0.1` with `100.2` exactly.",
+    "byKey": {
+     "two": "You did the sum on paper. As doubles, `100.1 + 0.1` is 100.19999999999999, so the map sees a new key."
+    }
+   },
+   "explain": {
+    "text": "A `double` key splits one price into two levels when the arithmetic rounds differently. Desks key books by integer ticks, such as `std::map<long long, int>` with prices in tenths of a penny. With a narrow band of prices, a `std::vector<int>` indexed by tick is faster still.",
+    "canvas": {
+     "highlight": [
+      "bid0",
+      "bid1"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`std::map` is a balanced tree: keys stay sorted, and find, insert and erase take $O(\\log n)$.",
+   "`std::unordered_map` hashes keys into buckets: $O(1)$ on average, but no order, not even insertion order.",
+   "`[]` inserts a missing key with a zero value; read with `find`, `count` or `at` when you must not insert."
+  ],
+  "formula": {
+   "name": "Lookup cost",
+   "tex": "\\texttt{map}: O(\\log n) \\qquad \\texttt{unordered\\_map}: O(1) \\text{ on average}",
+   "note": "A million keys: about 20 comparisons in a tree, a few in a bucket."
+  },
+  "trap": "`if (pos[\"AZN\"] == 0)` inserts AZN; use `pos.find(\"AZN\") == pos.end()` or `pos.count(\"AZN\")`."
+ },
+ "quiz": [
+  {
+   "id": "q-empty-begin",
+   "difficulty": 2,
+   "prose": "```cpp\nstd::map<std::string, int> pos;\nauto it = pos.begin();\n```",
+   "question": "What is true of `it`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "end",
+      "text": "It equals `pos.end()`, so there is nothing to read",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "`it->second` is 0",
+      "why": "An empty map has no entries, so `it` points at none. Reading `it->second` is undefined."
+     },
+     {
+      "id": "throw",
+      "text": "`begin()` throws on an empty map",
+      "why": "`begin()` never throws. On an empty map it returns `end()`."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "For an empty map, `begin() == end()`.",
+    "generic": "Not quite right. Where does a range with no elements start and end?"
+   },
+   "explain": {
+    "text": "A range `[begin, end)` with nothing in it has `begin() == end()`, so a loop over it runs zero times. Check `!pos.empty()` before reading `pos.begin()->first`."
+   }
+  },
+  {
+   "id": "q-order",
+   "difficulty": 2,
+   "prose": "A script inserts `\"VOD\"`, `\"BARC\"` and `\"AZN\"`, in that order, into a `std::unordered_map` and loops over it.",
+   "question": "In what order do the keys come out?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "hash",
+      "text": "An order set by the hash, which can differ between libraries",
+      "correct": true
+     },
+     {
+      "id": "ins",
+      "text": "VOD, BARC, AZN, as inserted",
+      "why": "That is Python's dict, which keeps insertion order. An `unordered_map` keeps no order at all."
+     },
+     {
+      "id": "sorted",
+      "text": "AZN, BARC, VOD",
+      "why": "Sorted order is `std::map`. A hashed table scatters keys across buckets."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "No promised order at all.",
+    "generic": "Not quite right. What decides which bucket a key lands in?"
+   },
+   "explain": {
+    "text": "The hash picks the bucket, and the loop walks the buckets. The order can change with the library, the number of buckets or a rehash. Sort the keys yourself, or use `std::map`, when output must be repeatable."
+   }
+  },
+  {
+   "id": "q-find-missing",
+   "difficulty": 3,
+   "prose": "```cpp\nstd::unordered_map<std::string, double> px{{\"VOD\", 0.72}};\nauto it = px.find(\"BARC\");\n```",
+   "question": "Which test tells you BARC has no price, without changing `px`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "end",
+      "text": "`it == px.end()`",
+      "correct": true
+     },
+     {
+      "id": "null",
+      "text": "`it == nullptr`",
+      "why": "`find` returns an iterator, not a pointer. A missing key gives `px.end()`."
+     },
+     {
+      "id": "zero",
+      "text": "`px[\"BARC\"] == 0`",
+      "why": "That inserts BARC with 0.0, so it changes `px`."
+     },
+     {
+      "id": "second",
+      "text": "`it->second == 0`",
+      "why": "When the key is missing, `it` is `end()`, which you must not read through."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A missing key comes back as `end()`.",
+    "generic": "Not quite right. What does `find` return for a missing key?"
+   },
+   "explain": {
+    "text": "`find` returns `end()` for a missing key, and that is the only safe test. `px.count(\"BARC\") == 0` also works."
+   }
+  },
+  {
+   "id": "q-cache",
+   "difficulty": 3,
+   "prose": "A pricing service caches the last price of 40,000 instruments, keyed by a 64-bit instrument id. It answers one lookup at a time and never lists the cache.",
+   "question": "Which container fits best?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "um",
+      "text": "`std::unordered_map<long long, double>`",
+      "correct": true
+     },
+     {
+      "id": "m",
+      "text": "`std::map<long long, double>`",
+      "why": "It works, but you pay about 16 comparisons per lookup for an order you never use."
+     },
+     {
+      "id": "v",
+      "text": "`std::vector<double>` indexed by id",
+      "why": "Ids are 64-bit numbers spread far apart. A vector indexed by them would need billions of slots."
+     },
+     {
+      "id": "dk",
+      "text": "`std::map<double, long long>`, price to id",
+      "why": "That keys by price, which is backwards for this lookup, and a `double` key is fragile."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Lone lookups, no order: hashing.",
+    "generic": "Not quite right. Does the service ever need the ids in order?"
+   },
+   "explain": {
+    "text": "Lookups by id with no ordered output are what hashing is for: $O(1)$ on average. A vector by index is fastest only when keys are small and dense, such as ticks in a narrow price band."
+   }
+  }
+ ]
+}

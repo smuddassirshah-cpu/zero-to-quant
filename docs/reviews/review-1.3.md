@@ -261,3 +261,158 @@ Checks: dump.py, style.py, check_limits.py, check_integrals.py, check_multivar.p
 - docs/curriculum.md (topic 1.3 coverage) | Exit: 18.01 final | note | The mean value theorem is cited as a fact (integrals homework-3 model, taylor Lagrange remainder) but never taught. Hyperbolic functions are absent (minor for 18.01). | Add an MVT screen to limits l13 (Rolle then MVT), used later by the FTC proof.
 - docs/curriculum.md (topic 1.3 coverage) | Cover: multiple integrals; Exit: 18.02 problem sets | note | Multivar covers double integrals (rectangles, general regions, polar) only: no triple integrals or general change of variables (Jacobian). Lagrange is taught only for $f(x, y)$ with one constraint; 18.02 sets also use three variables, two constraints and boundary checks for absolute extrema on closed regions. | Add one Lagrange screen in three variables (e.g. minimise $x^2 + y^2 + z^2$ on a plane) and one screen on checking the boundary of a closed region. Triple integrals can wait if "multiple" means double.
 - docs/curriculum.md (topic 1.3 coverage) | Exam skills map | note | All 18 skills are tested and every exam item tests something taught (L'Hôpital in limits l16, Newton in taylor l3, ratio test in taylor l9-l10, parts in integrals l10, Kelly in limits l14). The gaps above are absent from the exam too, so passing it does not show 18.01-final readiness on those topics. | Add exam items once the gaps are taught.
+
+## Fix pass
+
+Fix agent, 2026-10-21. Status per finding: fixed, disputed (with reason) or deferred (with reason). Validator: 0 errors. Playthrough: all 55 touched files pass (40 lessons, 14 sets, exam topic-1.3).
+
+Counts: integrals: deferred 1, disputed 1, fixed 43; limits: fixed 31; multivar: fixed 28; taylor: fixed 32; exam: fixed 5; coverage: deferred 7.
+
+- integrals/homework-1.json | h-volume-profile explain | warning | fixed: reworded to "quietest mid-morning, at 10:00"; bars and graded answer unchanged
+- integrals/homework-1.json | .items[3].explain.text | note | fixed
+- integrals/homework-1.json | .items[5].prose | note | fixed
+- integrals/homework-1.json | .items[7].prompt | note | fixed
+- integrals/homework-1.json | .items[7].rubric[1].text | note | fixed
+- integrals/homework-1.json | .items[7].rubric[2].text | note | fixed
+- integrals/homework-1.json | .items[7].rubric[3].text | note | fixed
+- integrals/homework-2.json | .items[8].rubric[9].text | note | fixed
+- integrals/homework-3.json | .items[3].prose | note | fixed
+- integrals/homework-3.json | .items[3].feedback.correct | note | fixed
+- integrals/homework-3.json | .items[5].feedback.correct | note | fixed
+- integrals/homework-3.json | .items[7].model | note | fixed
+- integrals/l1-thin-rectangles.json | .screens[4].explain.text | note | fixed
+- integrals/l1-thin-rectangles.json | .screens[5].widget.options[2].why | note | fixed
+- integrals/l1-thin-rectangles.json | .screens[5].explain.text | note | fixed
+- integrals/l1-thin-rectangles.json | .screens[9].prose | note | fixed
+- integrals/l11-to-infinity.json | .quiz[2].explain.text | note | fixed
+- integrals/l11-to-infinity.json | .quiz[2].feedback.correct | note | fixed
+- integrals/l11-to-infinity.json | .screens[7].explain.text | note | fixed
+- integrals/l11-to-infinity.json | .screens[8].explain.text | note | fixed
+- integrals/l11-to-infinity.json | .screens[8].feedback.correct | note | fixed
+- integrals/l13-average-as-integral.json | S9 | note | deferred: changing the strike to £105 breaks the screen's comparison with the lesson's own £100 uniform call (S6) and changes a graded answer; better resolved by changing homework-2 h-ev-triangle in a later pass
+- integrals/l13-average-as-integral.json | S5 feedback byKey no-x | note | fixed
+- integrals/l13-average-as-integral.json | .summary.trap | note | fixed
+- integrals/l13-average-as-integral.json | .quiz[3].explain.text | note | fixed
+- integrals/l13-average-as-integral.json | .screens[5].explain.text | note | fixed
+- integrals/l13-average-as-integral.json | .screens[8].explain.text | note | fixed
+- integrals/l2-thinner.json | .screens[1].prose | note | fixed
+- integrals/l3-signed-area.json | .screens[1].prose | note | fixed
+- integrals/l3-signed-area.json | .screens[1].feedback.byKey.crossing | note | fixed
+- integrals/l3-signed-area.json | .screens[2].prose | note | fixed
+- integrals/l4-accumulating-a-rate.json | quiz[3] (Q4) | note | disputed: the prose already reads "Interest accrues daily on an actual/365 basis"; no edit needed
+- integrals/l4-accumulating-a-rate.json | .screens[2].prose | note | fixed
+- integrals/l4-accumulating-a-rate.json | .screens[7].widget.lines[0].text | note | fixed
+- integrals/l4-accumulating-a-rate.json | .screens[7].widget.lines[1].text | note | fixed
+- integrals/l4-accumulating-a-rate.json | .quiz[0].prose | note | fixed
+- integrals/l4-accumulating-a-rate.json | .quiz[3].explain.text | note | fixed
+- integrals/l4-accumulating-a-rate.json | .screens[4].explain.text | note | fixed
+- integrals/l4-accumulating-a-rate.json | .screens[8].explain.text | note | fixed
+- integrals/l5-area-undoes-slope.json | .screens[0].explain.text | note | fixed
+- integrals/l5-area-undoes-slope.json | .screens[5].feedback.byKey.area | note | fixed
+- integrals/l7-evaluating.json | S7 explain | warning | fixed: promise replaced by "such integrals have no finite value"; the missing l11 screen is a coverage gap (backlog 383)
+- integrals/l9-undo-chain.json | .screens[7].explain.text | note | fixed
+- integrals/review-1.json | .items[8].explain.text | note | fixed
+- integrals/review-1.json | .items[8].feedback.correct | note | fixed
+- limits/homework-1.json | .items[8].rubric[2].text | note | fixed
+- limits/homework-2.json | hw2-negative-power explain | warning | fixed
+- limits/homework-2.json | hw2-corners model (d) | note | fixed
+- limits/homework-3.json | h-portfolio-correlated explain | note | fixed
+- limits/homework-4.json | h-second-order feedback.correct vs explain | note | fixed: both now say "about 6.5p" (84.0947 − 84.0292 = 0.0655; "6p" would round the wrong way)
+- limits/l1-getting-closer.json | S6 hint nudge | warning | fixed
+- limits/l1-getting-closer.json | .screens[0].prose | note | fixed
+- limits/l1-getting-closer.json | .screens[3].widget.options[1].why | note | fixed
+- limits/l1-getting-closer.json | .screens[5].widget.options[0].text | note | fixed
+- limits/l1-getting-closer.json | .screens[7].prose | note | fixed
+- limits/l1-getting-closer.json | .screens[9].prose | note | fixed
+- limits/l1-getting-closer.json | .summary.ideas[0] | note | fixed
+- limits/l1-getting-closer.json | .quiz[3].explain.text | note | fixed
+- limits/l10-inside-function.json | S11 explain | note | fixed
+- limits/l12-implicit.json | S7 feedback byKey no-y-prime | warning | fixed: reworded as proposed; note the option's own canvas does draw the dashed segment on Show why, so the premise was only partly right
+- limits/l12-implicit.json | S10 | note | fixed
+- limits/l2-computing-limits.json | S8 explain + summary.ideas[1] | warning | fixed
+- limits/l2-computing-limits.json | S8 / summary.ideas[2] | note | fixed
+- limits/l2-computing-limits.json | .screens[2].prose | note | fixed
+- limits/l3-without-lifting.json | .screens[0].hints[2].text | note | fixed
+- limits/l3-without-lifting.json | .screens[0].feedback.correct | note | fixed
+- limits/l3-without-lifting.json | .screens[6].explain.text | note | fixed
+- limits/l3-without-lifting.json | .screens[9].explain.text | note | fixed
+- limits/l3-without-lifting.json | .summary.ideas[0] | note | fixed
+- limits/l4-far-out.json | S2 explain, excanvas, option `equal` why | error | fixed
+- limits/l4-far-out.json | .screens[6].prose | note | fixed
+- limits/l5-instant-speed.json | S10 explain | note | fixed
+- limits/l6-first-principles.json | .summary.ideas[2] | note | fixed
+- limits/l8-slope-graph.json | S9 explain + hint point | warning | fixed
+- limits/l8-slope-graph.json | .screens[1].explain.text | note | fixed
+- limits/l9-products-quotients.json | S10 order item q2 | note | fixed
+- multivar/homework-2.json | h-plane-expr wrong[fy] | error | fixed
+- multivar/homework-2.json | .items[4].prose | note | fixed
+- multivar/homework-2.json | .items[4].widget.how | note | fixed
+- multivar/homework-4.json | .items[7].rubric[0].text | note | fixed
+- multivar/homework-4.json | .items[3].feedback.correct | note | fixed
+- multivar/homework-4.json | .items[3].widget.accept | note | fixed
+- multivar/l1-two-inputs.json | .summary.ideas[0] | note | fixed
+- multivar/l10-second-derivative-test.json | .screens[0].widget.options[2].why | note | fixed
+- multivar/l10-second-derivative-test.json | .screens[7].explain.text | note | fixed
+- multivar/l13-volume.json | .screens[1].prose | note | fixed
+- multivar/l13-volume.json | .screens[9].hints[2].text | note | fixed
+- multivar/l14-other-regions.json | .screens[8].widget.lines[0].text | note | fixed
+- multivar/l14-other-regions.json | .summary.ideas[2] | note | fixed
+- multivar/l15-polar.json | .screens[1].prose | note | fixed
+- multivar/l15-polar.json | .screens[5].explain.text | note | fixed
+- multivar/l15-polar.json | .screens[6].prose | note | fixed
+- multivar/l15-polar.json | .summary.ideas[0] | note | fixed
+- multivar/l15-polar.json | .summary.trap | note | fixed
+- multivar/l4-chain-two-inputs.json | S9 explain | note | fixed
+- multivar/l4-chain-two-inputs.json | .screens[7].prose | note | fixed
+- multivar/l5-steepest-climb.json | .screens[6].explain.text | note | fixed
+- multivar/l5-steepest-climb.json | .screens[8].explain.text | note | fixed
+- multivar/l7-tangent-planes.json | .screens[5].explain.text | note | fixed
+- multivar/l8-walking-downhill.json | S6 explain | note | fixed
+- multivar/l8-walking-downhill.json | .screens[8].widget.how | note | fixed
+- multivar/review-1.json | r1-pnl-zero feedback byKey wrong-diagonal | error | fixed
+- multivar/review-1.json | .items[0].feedback.byKey.centre-only | note | fixed
+- multivar/review-1.json | .items[8].prose | note | fixed
+- taylor/homework-1.json | h-long-bond model (d), (f) | note | fixed
+- taylor/homework-1.json | .items[8].rubric[3].text | note | fixed
+- taylor/homework-3.json | hw3-drag-longform model (a) | note | fixed
+- taylor/homework-3.json | .items[0].explain.text | note | fixed
+- taylor/homework-3.json | .items[2].prose | note | fixed
+- taylor/l1-tangent-approx.json | S6 prose | error | fixed
+- taylor/l1-tangent-approx.json | .screens[6].prose | note | fixed
+- taylor/l10-how-far.json | S9 | note | fixed
+- taylor/l11-bounding-error.json | S5 feedback byKey two-terms | error | fixed
+- taylor/l11-bounding-error.json | S9 | note | fixed
+- taylor/l11-bounding-error.json | .screens[4].explain.text | note | fixed
+- taylor/l12-log-vs-simple.json | .screens[0].widget.label | note | fixed
+- taylor/l12-log-vs-simple.json | .screens[9].widget.label | note | fixed
+- taylor/l12-log-vs-simple.json | .summary.ideas[0] | note | fixed
+- taylor/l12-log-vs-simple.json | .quiz[1].widget.label | note | fixed
+- taylor/l12-log-vs-simple.json | .quiz[3].widget.label | note | fixed
+- taylor/l2-how-wrong.json | S11 | note | fixed
+- taylor/l3-newton.json | .screens[2].prose | note | fixed
+- taylor/l3-newton.json | .summary.ideas[2] | note | fixed
+- taylor/l4-duration.json | whole lesson | warning | fixed: rebuilt on a 7-year 5% annual coupon bond at 6%, computed twice (term sum and annuity closed form/Decimal): P = £94.42, P′ = −538.40, D = 5.70, tangent fall £5.38 vs true £5.20, convexity gap £0.19 at 7% and £1.60 at 9%, DV01 £5,384 on £10m face (true 1 bp loss £5,382.04); S1 says it builds on limits l15; homework-1 h-yield-93 and l8-convexity S1 now point to limits l15 for the 5-year bond
+- taylor/l4-duration.json | S7 + quiz Q1 | note | fixed
+- taylor/l5-curvature-term.json | S5 explain | error | fixed
+- taylor/l6-matching-derivatives.json | S10 prose | warning | fixed
+- taylor/l6-matching-derivatives.json | .screens[2].prose | note | fixed
+- taylor/l7-standard-series.json | S10, quiz Q3, summary.formula.note | warning | fixed
+- taylor/l7-standard-series.json | .screens[9].question | note | fixed
+- taylor/l7-standard-series.json | .quiz[2].question | note | fixed
+- taylor/l9-does-it-add-up.json | .screens[2].explain.text | note | fixed
+- taylor/review-3.json | .items[7].question | note | fixed
+- taylor/review-3.json | .items[7].widget.label | note | fixed
+- taylor/review-3.json | .items[8].question | note | fixed
+- taylor/review-3.json | .items[8].widget.label | note | fixed
+- exams/topic-1.3.json | c-gauss-disc (I26) wrong[no-half] | error | fixed: distractor value changed 0.6321 → 0.3161 = ½(1 − e^{−1}) (recomputed), why now names integrating re^{−r²}
+- exams/topic-1.3.json | c-gauss-disc (I26) explain | note | fixed
+- exams/topic-1.3.json | .items[24].explain.text | note | fixed
+- exams/topic-1.3.json | .items[26].model | note | fixed
+- exams/topic-1.3.json | .items[26].rubric[3].text | note | fixed
+- docs/curriculum.md (topic 1.3 coverage) | Cover: integrals | warning | deferred: coverage gap, recorded in docs/ENGINE-BACKLOG.md item 383; no lessons added in this pass
+- docs/curriculum.md (topic 1.3 coverage) | Exit: 18.01 final | warning | deferred: coverage gap, recorded in docs/ENGINE-BACKLOG.md item 383; no lessons added in this pass
+- docs/curriculum.md (topic 1.3 coverage) | Exit: 18.01 final | warning | deferred: coverage gap, recorded in docs/ENGINE-BACKLOG.md item 383; no lessons added in this pass
+- docs/curriculum.md (topic 1.3 coverage) | Exit: 18.01 final | warning | deferred: coverage gap, recorded in docs/ENGINE-BACKLOG.md item 383; no lessons added in this pass
+- docs/curriculum.md (topic 1.3 coverage) | Exit: 18.01 final | note | deferred: coverage gap, recorded in docs/ENGINE-BACKLOG.md item 383; no lessons added in this pass
+- docs/curriculum.md (topic 1.3 coverage) | Cover: multiple integrals; Exit: 18.02 problem sets | note | deferred: coverage gap, recorded in docs/ENGINE-BACKLOG.md item 383; no lessons added in this pass
+- docs/curriculum.md (topic 1.3 coverage) | Exam skills map | note | deferred: coverage gap, recorded in docs/ENGINE-BACKLOG.md item 383; no lessons added in this pass

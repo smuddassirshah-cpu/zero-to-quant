@@ -1,0 +1,1375 @@
+{
+ "id": "l5-payoff-classes",
+ "course": "cpp-pricing",
+ "title": "A payoff class",
+ "minutes": 15,
+ "objectives": [
+  "Model payoffs with a small class hierarchy.",
+  "Write a pricer that accepts any payoff through `const Payoff&`."
+ ],
+ "skills": [
+  "cx-pricers"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A pricer for calls only",
+   "prose": "In Python, a pricer calls `payoff(s)` and accepts any object with `__call__`. Here is a first C++ attempt. `value_at` stands in for a pricer: it reads a payoff at one spot. A desk now hands it a put.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "active": "left",
+    "left": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "#include <algorithm>",
+       "#include <iostream>",
+       "struct Call {",
+       "    double k;",
+       "    double operator()(double s) const { return std::max(s - k, 0.0); }",
+       "};",
+       "struct Put {",
+       "    double k;",
+       "    double operator()(double s) const { return std::max(k - s, 0.0); }",
+       "};",
+       "double value_at(const Call& p, double s) { return p(s); }",
+       "",
+       "int main() {",
+       "    Put put{100.0};",
+       "    std::cout << value_at(put, 90.0) << '\\n';",
+       "}"
+      ],
+      "title": "main.cpp",
+      "numbers": true
+     },
+     "state": {
+      "tone": {
+       "l15": "err"
+      }
+     }
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "$ clang++ -std=c++17 main.cpp",
+       "main.cpp:15:18: error: no matching function for call to 'value_at'",
+       "   15 |     std::cout << value_at(put, 90.0) << '\\n';",
+       "      |                  ^~~~~~~~",
+       "main.cpp:11:8: note: candidate function not viable: no known conversion from 'Put' to 'const Call' for 1st argument",
+       "1 error generated."
+      ],
+      "title": "Terminal"
+     },
+     "state": {
+      "tone": {
+       "l2": "err"
+      }
+     }
+    }
+   },
+   "question": "Why does line 15 not compile?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`value_at` takes a `Call`, and a `Put` is a different type",
+      "correct": true
+     },
+     {
+      "id": "noop",
+      "text": "`Put` has no `operator()`",
+      "why": "It has one, on line 9. The note is about the argument's type, not about calling it."
+     },
+     {
+      "id": "ref",
+      "text": "A struct cannot be passed by reference",
+      "why": "References to structs are fine: line 11 itself compiled. The note says there is no conversion from `Put` to `const Call`."
+     },
+     {
+      "id": "dunder",
+      "text": "C++ needs `__call__`, as Python does",
+      "why": "`operator()` is C++'s `__call__`, and both types have one. The parameter type still names only `Call`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the `note:` line in the terminal."
+    },
+    {
+     "rung": "point",
+     "text": "It names the two types involved.",
+     "highlight": [
+      "right:l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "No known conversion from `Put` to `const Call`: the parameter accepts one type only."
+    }
+   ],
+   "feedback": {
+    "correct": "The parameter's type decides what may be passed, before the program runs.",
+    "generic": "Not quite right. Read the note under the error.",
+    "byKey": {
+     "noop": "It has one, on line 9. The note is about the argument's type, not about calling it."
+    }
+   },
+   "explain": {
+    "text": "Python checks only that the object can be called, when the line runs. C++ checks the parameter's type at compile time, and `Put` is not `Call`. One `value_at` per payoff would mean a new pricer for every new payoff.",
+    "canvas": {
+     "left": {
+      "highlight": [
+       "l11",
+       "l15"
+      ]
+     },
+     "right": {
+      "highlight": [
+       "l5"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Spot in, pounds out",
+   "prose": "Look at what the payoffs have in common. Here are a call and a put struck at £100, and a **digital call** that pays £10 when the spot ends above £100. Drag the spot.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      -3,
+      42
+     ],
+     "xLabel": "Spot at expiry (£)",
+     "yLabel": "Payoff (£)",
+     "height": 300,
+     "functions": [
+      {
+       "id": "call",
+       "expr": "max(x - 100, 0)",
+       "label": "call",
+       "colour": 1,
+       "labelAt": 128
+      },
+      {
+       "id": "put",
+       "expr": "max(100 - x, 0)",
+       "label": "put",
+       "colour": 2,
+       "labelAt": 72
+      },
+      {
+       "id": "diglo",
+       "expr": "0",
+       "domain": [
+        60,
+        100
+       ],
+       "colour": 3,
+       "endpoints": [
+        null,
+        "closed"
+       ],
+       "labelAvoid": false
+      },
+      {
+       "id": "dighi",
+       "expr": "10",
+       "domain": [
+        100,
+        140
+       ],
+       "label": "digital",
+       "colour": 3,
+       "endpoints": [
+        "open",
+        null
+       ],
+       "labelAt": 132
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "spot",
+       "x": 120,
+       "y": 0,
+       "drag": true,
+       "lockY": true,
+       "snap": 1,
+       "label": "S"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Spot £{{spot.x}}: call pays £{{max(spot.x - 100, 0)}}, put £{{max(100 - spot.x, 0)}}, digital £{{spot.x > 100 ? 10 : 0}}"
+    }
+   },
+   "question": "Drag the spot to exactly £100. What do the three payoffs pay there?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "£0, £0 and £0",
+      "correct": true
+     },
+     {
+      "id": "dig",
+      "text": "£0, £0 and £10",
+      "why": "You let the digital pay at the strike. It pays only when the spot is strictly above £100, as `spot > strike` says."
+     },
+     {
+      "id": "half",
+      "text": "£0, £0 and £5",
+      "why": "The digital has no half payment. At exactly £100 the test `spot > strike` is false, so it pays £0."
+     },
+     {
+      "id": "kink",
+      "text": "Nothing: a payoff is undefined at its kink",
+      "why": "Each payoff is a rule that gives one number at every spot, kink or not. At £100 all three rules give £0."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the caption as the dot reaches £100."
+    },
+    {
+     "rung": "point",
+     "text": "The digital's line jumps at £100. Which dot is filled there?",
+     "highlight": [
+      "dighi"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The filled dot is at £0: the digital pays only above the strike."
+    }
+   ],
+   "feedback": {
+    "correct": "At the strike, all three pay nothing.",
+    "generic": "Not quite right. Read the caption with the spot at exactly £100.",
+    "byKey": {
+     "dig": "You let the digital pay at the strike. It pays only when the spot is strictly above £100, as `spot > strike` says."
+    }
+   },
+   "explain": {
+    "text": "Every payoff answered the same question: given a spot, how many pounds? At exactly £100 all three give £0, so a test there checks that `>` was written, not `>=`. That one question is all a pricer needs to ask.",
+    "canvas": {
+     "points": {
+      "spot": {
+       "x": 100
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One base, three payoffs",
+   "prose": "C++ puts that one question in a **base class**. Each payoff **derives** from it, `class Call : public Payoff`, and answers it.\n\n```cpp\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 230,
+     "nodes": [
+      {
+       "id": "payoff",
+       "label": "Payoff",
+       "x": 0.5,
+       "y": 0.18,
+       "shape": "rect"
+      },
+      {
+       "id": "call",
+       "label": "Call",
+       "x": 0.16,
+       "y": 0.8,
+       "shape": "rect"
+      },
+      {
+       "id": "put",
+       "label": "Put",
+       "x": 0.5,
+       "y": 0.8,
+       "shape": "rect"
+      },
+      {
+       "id": "dig",
+       "label": "DigitalCall",
+       "x": 0.84,
+       "y": 0.8,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "call",
+       "to": "payoff",
+       "label": "is a"
+      },
+      {
+       "from": "put",
+       "to": "payoff",
+       "label": "is a"
+      },
+      {
+       "from": "dig",
+       "to": "payoff",
+       "label": "is a"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "A pricer takes `const Payoff& p`. Tap every type whose objects it accepts.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "call",
+     "put",
+     "dig"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each arrow reads \"is a\"."
+    },
+    {
+     "rung": "point",
+     "text": "`= 0` means `Payoff` gives no body for its function.",
+     "highlight": [
+      "payoff"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A `Call` is a `Payoff`, and so are the other two. No object is ever just a `Payoff`."
+    }
+   ],
+   "feedback": {
+    "correct": "Anything that derives from `Payoff` is accepted.",
+    "generic": "Not quite right. Follow the arrows: which types are a `Payoff`?",
+    "byKey": {
+     "payoff": "`= 0` makes `Payoff` **abstract**: it has no body for `operator()`, so no `Payoff` object can exist. The reference always refers to a derived object.",
+     "dig": "`DigitalCall` derives from `Payoff` too. Every class that derives is accepted, even one written next year."
+    }
+   },
+   "explain": {
+    "text": "A `Call` is a `Payoff`, so a `const Payoff&` can refer to one. `virtual` means `p(s)` runs the function of the object's real type. `= 0` makes the function **pure virtual** and the base **abstract**: only derived objects exist.",
+    "canvas": {
+     "highlight": [
+      "call",
+      "put",
+      "dig"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Write the payoffs",
+   "prose": "`Payoff` is loaded. Write `Call`, `Put` and `DigitalCall`. Each stores its strike. `override` asks the compiler to confirm that the function replaces the base's. A digital call pays a fixed `cash` when the spot is strictly above the strike.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "Call(100.0)(110.0)               // 10",
+      "Put(100.0)(90.0)                 // 10",
+      "Call(100.0)(100.0)               // 0, at the strike",
+      "Call(0.0)(37.5)                  // 37.5, zero strike",
+      "DigitalCall(100.0, 10.0)(100.5)  // 10",
+      "DigitalCall(100.0, 10.0)(100.0)  // 0"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Write the three classes.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n\n// class Payoff is loaded:\n//     virtual double operator()(double spot) const = 0;\n\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override {\n        return 0.0;  // your code\n    }\nprivate:\n    double strike_;\n};\n\n// class Put : public Payoff { ... };\n\n// class DigitalCall : public Payoff { ... };\n//     DigitalCall(double strike, double cash)\n",
+    "solution": "#include <algorithm>\n\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\n\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n\nclass DigitalCall : public Payoff {\npublic:\n    DigitalCall(double strike, double cash) : strike_(strike), cash_(cash) {}\n    double operator()(double spot) const override { return spot > strike_ ? cash_ : 0.0; }\nprivate:\n    double strike_;\n    double cash_;\n};\n",
+    "prelude": "#include <algorithm>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\ndouble value_at(const Payoff& p, double spot) { return p(spot); }\n",
+    "examples": [
+     {
+      "call": "Call(100.0)(110.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "Call(100.0)(110.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "Put(100.0)(90.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "Put(100.0)(130.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "Call(100.0)(100.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "Call(0.0)(37.5)",
+      "expect": 37.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "DigitalCall(100.0, 10.0)(100.5)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "DigitalCall(100.0, 10.0)(100.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "value_at(Put(95.0), 80.0)",
+      "expect": 15.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "DigitalCall dc(105.0, 2.5); const Payoff& p = dc;",
+      "call": "p(120.0)",
+      "expect": 2.5,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 9 hidden tests. Payoffs are accepted within a relative 1e-9. Two tests call your classes through a `const Payoff&`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Copy `Call` and change one line for `Put`."
+    },
+    {
+     "rung": "point",
+     "text": "The digital needs two members: the strike and the cash."
+    },
+    {
+     "rung": "step",
+     "text": "`return spot > strike_ ? cash_ : 0.0;` inside `double operator()(double spot) const override`."
+    }
+   ],
+   "feedback": {
+    "correct": "Three payoffs, one interface.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "compile": "The compiler stopped. If it says a class is abstract, your `operator()` does not match the base exactly: check `const` and the `double` parameter.",
+     "test-5": "A zero-strike call pays the whole spot, 37.5. If yours returns 0, check the order in `spot - strike_`.",
+     "test-7": "Test 7 puts the spot exactly on the strike. The digital pays only above it: use `>`, not `>=`."
+    }
+   },
+   "explain": {
+    "text": "Each class answers the base's one question in its own way. `override` makes the compiler check that the signature matches the base, `const` included. A zero-strike call pays the spot itself: it is the share.\n\n```cpp\ndouble operator()(double spot) const override { return spot > strike_ ? cash_ : 0.0; }\n```"
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Which function runs",
+   "prose": "A pricer holds `const Payoff& p` and calls `p(90.0)`. Today `p` refers to an object built as `Put(100.0)`. The tree lists the three `operator()` functions in the program.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "orient": "lr",
+     "rootLabel": "p(90.0)",
+     "levels": [
+      {
+       "label": "Function that runs",
+       "branches": [
+        {
+         "id": "base",
+         "label": "Payoff::operator()"
+        },
+        {
+         "id": "call",
+         "label": "Call::operator()"
+        },
+        {
+         "id": "put",
+         "label": "Put::operator()"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "base": "no body",
+      "call": "£0",
+      "put": "£10"
+     }
+    },
+    "state": {
+     "show": "none"
+    }
+   },
+   "question": "Tap the function that runs.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "put"
+    ],
+    "max": 1
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which matters here: the type `p` was declared with, or the object it refers to?"
+    },
+    {
+     "rung": "point",
+     "text": "This is the declared type. It has no body to run.",
+     "highlight": [
+      "base"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`operator()` is `virtual`, so the call follows the object, which was built as a `Put`."
+    }
+   ],
+   "feedback": {
+    "correct": "The object's real type decides, at run time.",
+    "generic": "Not quite right. Ask what the object was built as.",
+    "byKey": {
+     "base": "You followed the reference's type, `Payoff`. Because `operator()` is `virtual`, the call follows the object, which is a `Put`.",
+     "call": "Nothing here is a `Call`. The object `p` refers to was built as `Put(100.0)`."
+    }
+   },
+   "explain": {
+    "text": "`virtual` makes `p(90.0)` look up the function at run time, by the object's real type. So the put's rule runs and pays £10. This is **virtual dispatch**, and it is why one pricer serves every payoff.",
+    "canvas": {
+     "highlight": [
+      "put"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A book of payoffs",
+   "prose": "A position has several **legs**. A `std::vector<std::unique_ptr<Payoff>>` holds them: each `unique_ptr` owns one leg of any payoff type. A **straddle** is a call plus a put at one strike. A hidden `straddle(100.0)` builds one.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "leg",
+      "pays at £90"
+     ],
+     "rows": [
+      [
+       "`Call(100.0)`",
+       "£0"
+      ],
+      [
+       "`Put(100.0)`",
+       "£10"
+      ],
+      [
+       "straddle",
+       "£10"
+      ]
+     ],
+     "align": [
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   },
+   "question": "Write `portfolio_payoff`: the sum of every leg's payoff at `spot`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <memory>\n#include <vector>\n\n// Payoff, Call, Put and DigitalCall are loaded.\n\ndouble portfolio_payoff(const std::vector<std::unique_ptr<Payoff>>& legs,\n                        double spot) {\n    double total = 0.0;\n    // add each leg's payoff at spot\n    return total;\n}\n",
+    "solution": "#include <memory>\n#include <vector>\n\ndouble portfolio_payoff(const std::vector<std::unique_ptr<Payoff>>& legs, double spot) {\n    double total = 0.0;\n    for (const auto& leg : legs) total += (*leg)(spot);\n    return total;\n}\n",
+    "prelude": "#include <algorithm>\n#include <memory>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\nclass DigitalCall : public Payoff {\npublic:\n    DigitalCall(double strike, double cash) : strike_(strike), cash_(cash) {}\n    double operator()(double spot) const override { return spot > strike_ ? cash_ : 0.0; }\nprivate:\n    double strike_;\n    double cash_;\n};\nstd::vector<std::unique_ptr<Payoff>> straddle(double strike) {\n    std::vector<std::unique_ptr<Payoff>> legs;\n    legs.push_back(std::make_unique<Call>(strike));\n    legs.push_back(std::make_unique<Put>(strike));\n    return legs;\n}\n",
+    "examples": [
+     {
+      "call": "portfolio_payoff(straddle(100.0), 90.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "portfolio_payoff(straddle(100.0), 90.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "portfolio_payoff(straddle(100.0), 115.0)",
+      "expect": 15.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "portfolio_payoff(straddle(100.0), 100.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<std::unique_ptr<Payoff>> book; book.push_back(std::make_unique<Call>(95.0)); book.push_back(std::make_unique<Call>(105.0)); book.push_back(std::make_unique<DigitalCall>(100.0, 5.0));",
+      "call": "portfolio_payoff(book, 110.0)",
+      "expect": 25.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<std::unique_ptr<Payoff>> book; book.push_back(std::make_unique<Call>(95.0)); book.push_back(std::make_unique<Call>(105.0)); book.push_back(std::make_unique<DigitalCall>(100.0, 5.0));",
+      "call": "portfolio_payoff(book, 100.0)",
+      "expect": 5.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<std::unique_ptr<Payoff>> book;",
+      "call": "portfolio_payoff(book, 105.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Totals are accepted within a relative 1e-9. One book is empty."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over the legs. Each one is a pointer: how do you call the object it points to?"
+    },
+    {
+     "rung": "point",
+     "text": "Copying a `unique_ptr` is forbidden, so loop by reference."
+    },
+    {
+     "rung": "step",
+     "text": "`for (const auto& leg : legs) total += (*leg)(spot);`"
+    }
+   ],
+   "feedback": {
+    "correct": "One loop prices any mix of payoffs.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "compile": "If the error mentions a deleted copy constructor, your loop copies each `unique_ptr`. Loop by `const auto&`. If it says `leg` cannot be called, write `(*leg)(spot)`.",
+     "test-6": "Test 6 passes an empty book. Start `total` at 0 and return it unchanged."
+    }
+   },
+   "explain": {
+    "text": "`(*leg)` is the payoff the pointer owns, and calling it dispatches by its real type. The loop takes each `unique_ptr` by `const` reference, because a `unique_ptr` cannot be copied. When the vector dies, each `unique_ptr` deletes its leg through `Payoff`'s virtual destructor.\n\n```cpp\nfor (const auto& leg : legs) total += (*leg)(spot);\n```"
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A function that overrides nothing",
+   "prose": "A colleague's older library has a plain base class: its `operator()` returns 0 unless a payoff replaces it. He adds a put, without `override`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "#include <algorithm>",
+      "#include <iostream>",
+      "class Payoff {",
+      "public:",
+      "    virtual ~Payoff() = default;",
+      "    virtual double operator()(double spot) const { return 0.0; }",
+      "};",
+      "class Put : public Payoff {",
+      "public:",
+      "    explicit Put(double k) : k_(k) {}",
+      "    double operator()(double spot) { return std::max(k_ - spot, 0.0); }",
+      "private:",
+      "    double k_;",
+      "};",
+      "double value_at(const Payoff& p, double s) { return p(s); }",
+      "",
+      "int main() {",
+      "    std::cout << value_at(Put(100.0), 90.0) << '\\n';",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "What does the program print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`0`",
+      "correct": true
+     },
+     {
+      "id": "ten",
+      "text": "`10`",
+      "why": "You read lines 6 and 11 as one function. Line 11 has no `const`, so it is a new function, and `value_at` calls line 6's.",
+      "canvas": {
+       "highlight": [
+        "l6",
+        "l11"
+       ]
+      }
+     },
+     {
+      "id": "error",
+      "text": "A compile error",
+      "why": "Without `override`, nothing asks the compiler to check. A second function with the same name is legal C++."
+     },
+     {
+      "id": "crash",
+      "text": "It stops at run time",
+      "why": "Nothing goes wrong at run time. The base's function runs and quietly returns 0."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare line 6 with line 11 word by word."
+    },
+    {
+     "rung": "point",
+     "text": "One of them ends with `const`.",
+     "highlight": [
+      "l6",
+      "l11"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`value_at` holds a `const Payoff&`, so it can call only the `const` function: line 6, which returns 0."
+    }
+   ],
+   "feedback": {
+    "correct": "The put's function never runs.",
+    "generic": "Not quite right. Check whether line 11 really replaces line 6.",
+    "byKey": {
+     "ten": "You read lines 6 and 11 as one function. Line 11 has no `const`, so it is a new function, and `value_at` calls line 6's."
+    }
+   },
+   "explain": {
+    "text": "Line 11 lacks `const`, so it adds a second function instead of replacing line 6's, and the put prices at £0. Write `override` on line 11 and the compiler refuses: `only virtual member functions can be marked 'override'`. An abstract base catches it too, at `Put(100.0)`.\n\n```cpp\ndouble operator()(double spot) { ... }                 // new function\ndouble operator()(double spot) const override { ... }  // replaces line 6\n```",
+    "canvas": {
+     "highlight": [
+      "l6",
+      "l11"
+     ],
+     "tone": {
+      "l11": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A payoff made of payoffs",
+   "prose": "A payoff can be built from others. Write `Straddle`, a `Payoff` that holds a `Call` and a `Put` at one strike and pays their sum. A pricer then sees one payoff, not two legs. `portfolio_payoff` is loaded.",
+   "canvas": {
+    "kind": "payoff",
+    "params": {
+     "legs": [
+      {
+       "id": "c1",
+       "type": "call",
+       "side": "long",
+       "strike": 100,
+       "premium": 0
+      },
+      {
+       "id": "p1",
+       "type": "put",
+       "side": "long",
+       "strike": 100,
+       "premium": 0
+      }
+     ],
+     "range": [
+      60,
+      140
+     ],
+     "pl": false,
+     "label": "straddle"
+    },
+    "state": {
+     "spot": 90
+    }
+   },
+   "question": "Write `Straddle`'s `operator()`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n\n// Payoff, Call and Put are loaded.\n\nclass Straddle : public Payoff {\npublic:\n    explicit Straddle(double strike) : call_(strike), put_(strike) {}\n    // double operator()(double spot) const override\nprivate:\n    Call call_;\n    Put put_;\n};\n",
+    "solution": "#include <algorithm>\n\nclass Straddle : public Payoff {\npublic:\n    explicit Straddle(double strike) : call_(strike), put_(strike) {}\n    double operator()(double spot) const override { return call_(spot) + put_(spot); }\nprivate:\n    Call call_;\n    Put put_;\n};\n",
+    "prelude": "#include <algorithm>\n#include <memory>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\ndouble value_at(const Payoff& p, double spot) { return p(spot); }\ndouble portfolio_payoff(const std::vector<std::unique_ptr<Payoff>>& legs, double spot) {\n    double total = 0.0;\n    for (const auto& leg : legs) total += (*leg)(spot);\n    return total;\n}\n",
+    "examples": [
+     {
+      "call": "Straddle(100.0)(90.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "Straddle(100.0)(90.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "Straddle(100.0)(115.0)",
+      "expect": 15.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "Straddle(100.0)(100.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "value_at(Straddle(50.0), 20.0)",
+      "expect": 30.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<std::unique_ptr<Payoff>> book; book.push_back(std::make_unique<Straddle>(100.0)); book.push_back(std::make_unique<Call>(100.0));",
+      "call": "portfolio_payoff(book, 120.0)",
+      "expect": 40.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<std::unique_ptr<Payoff>> book; book.push_back(std::make_unique<Straddle>(100.0)); book.push_back(std::make_unique<Call>(100.0));",
+      "call": "portfolio_payoff(book, 70.0)",
+      "expect": 30.0,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Payoffs are accepted within a relative 1e-9. Two tests put a `Straddle` in a book beside a `Call`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The members `call_` and `put_` are payoffs already. Call them."
+    },
+    {
+     "rung": "point",
+     "text": "Mark the function `const override`, as the base's is `const`."
+    },
+    {
+     "rung": "step",
+     "text": "`double operator()(double spot) const override { return call_(spot) + put_(spot); }`"
+    }
+   ],
+   "feedback": {
+    "correct": "A composite payoff, priced like any other.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "compile": "If the compiler calls `Straddle` abstract, its `operator()` is missing or not `const`."
+    }
+   },
+   "explain": {
+    "text": "`Straddle` is a `Payoff` that **has** two payoffs inside it. Its function asks each member, then adds. A book can now hold it beside plain calls, and every pricer that takes `const Payoff&` prices it unchanged.",
+    "canvas": {
+     "spot": 120
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Copied into the base",
+   "prose": "The older library again, with a concrete base. Two helpers read a payoff: one takes it by value, one by reference.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "class Payoff {",
+      "public:",
+      "    virtual ~Payoff() = default;",
+      "    virtual double operator()(double spot) const { return 0.0; }",
+      "};",
+      "class Call : public Payoff {",
+      "public:",
+      "    explicit Call(double k) : k_(k) {}",
+      "    double operator()(double spot) const override { return std::max(spot - k_, 0.0); }",
+      "private:",
+      "    double k_;",
+      "};",
+      "double by_value(Payoff p, double s) { return p(s); }",
+      "double by_ref(const Payoff& p, double s) { return p(s); }",
+      "",
+      "int main() {",
+      "    Call c(100.0);",
+      "    std::cout << by_value(c, 120.0) << ' ' << by_ref(c, 120.0) << '\\n';",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "What does the program print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`0 20`",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "`20 20`",
+      "why": "You expected the copy to stay a `Call`. `by_value` builds a new `Payoff` from `c`: only the base part is copied, so the base's function runs.",
+      "canvas": {
+       "highlight": [
+        "l13"
+       ]
+      }
+     },
+     {
+      "id": "swap",
+      "text": "`20 0`",
+      "why": "The reference is the one that keeps the `Call`. The copy on line 13 is the one that loses it."
+     },
+     {
+      "id": "error",
+      "text": "A compile error on line 13",
+      "why": "Copying a `Call` into a `Payoff` compiles when the base is concrete. With our abstract base it would not, one more reason to make it abstract."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What type is the parameter `p` on line 13?"
+    },
+    {
+     "rung": "point",
+     "text": "`Payoff p` is a new object of type `Payoff`.",
+     "highlight": [
+      "l13"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The copy keeps only `Payoff`'s part of `c`, so line 4's function runs: 0. The reference on line 14 still refers to `c`."
+    }
+   ],
+   "feedback": {
+    "correct": "The copy is a `Payoff`, not a `Call`.",
+    "generic": "Not quite right. Ask what type of object each helper actually holds.",
+    "byKey": {
+     "both": "You expected the copy to stay a `Call`. `by_value` builds a new `Payoff` from `c`: only the base part is copied, so the base's function runs."
+    }
+   },
+   "explain": {
+    "text": "Passing by value builds a fresh `Payoff` from the `Payoff` part of `c`; the strike and the call's function are cut off. This is **slicing**. A reference refers to the original `Call`, so virtual dispatch still works.",
+    "canvas": {
+     "highlight": [
+      "l13",
+      "l14"
+     ],
+     "tone": {
+      "l13": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The pattern",
+   "prose": "You built a payoff library. Its shape:\n\n```cpp\nclass Payoff {                        // the one question\npublic:\n    virtual ~Payoff() = default;      // safe delete via base\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {          // one class per payoff\npublic:\n    double operator()(double spot) const override;\n};\ndouble price(const Payoff& p /* ... */);  // never copied\n```",
+   "question": "The desk adds a `Butterfly` payoff. What must change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Only a new class, `Butterfly : public Payoff`",
+      "correct": true
+     },
+     {
+      "id": "overload",
+      "text": "A new overload of `price` for `Butterfly`",
+      "why": "`price` takes `const Payoff&`, so it already accepts any class that derives from `Payoff`."
+     },
+     {
+      "id": "base",
+      "text": "`Payoff` must list its new child",
+      "why": "A base class never names its children. The new class names its base."
+     },
+     {
+      "id": "vector",
+      "text": "The vector type in every book",
+      "why": "`std::unique_ptr<Payoff>` already owns any derived payoff."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which piece of code mentions `Call` by name?"
+    },
+    {
+     "rung": "point",
+     "text": "Only the class itself does. `price` and the books mention `Payoff`."
+    }
+   ],
+   "feedback": {
+    "correct": "New payoffs never touch the pricers.",
+    "generic": "Not quite right. Look for the code that names a particular payoff."
+   },
+   "explain": {
+    "text": "The pricer depends only on `Payoff`'s one function. Each new payoff is one new class, and code already written does not change. Python gets this from duck typing at run time; C++ gets it from the base class, checked when it compiles."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A capped call for the structuring desk",
+   "prose": "A structuring desk sells a **capped call** to a client: it pays like a call struck at £100, but never more than £20. The desk's pricers all take `const Payoff&` and must not change. Write the new payoff.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      70,
+      150
+     ],
+     "y": [
+      -3,
+      30
+     ],
+     "xLabel": "Spot at expiry (£)",
+     "yLabel": "Payoff (£)",
+     "height": 260,
+     "functions": [
+      {
+       "id": "cap",
+       "expr": "min(max(x - 100, 0), 20)",
+       "label": "capped call",
+       "colour": 1,
+       "labelAt": 140
+      }
+     ],
+     "hlines": [
+      {
+       "id": "h20",
+       "y": 20,
+       "label": "cap £20"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `CappedCall`'s `operator()`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n\n// Payoff, Call, Put and portfolio_payoff are loaded.\n\nclass CappedCall : public Payoff {\npublic:\n    CappedCall(double strike, double cap) : strike_(strike), cap_(cap) {}\n    // double operator()(double spot) const override\nprivate:\n    double strike_;\n    double cap_;\n};\n",
+    "solution": "#include <algorithm>\n\nclass CappedCall : public Payoff {\npublic:\n    CappedCall(double strike, double cap) : strike_(strike), cap_(cap) {}\n    double operator()(double spot) const override {\n        return std::min(std::max(spot - strike_, 0.0), cap_);\n    }\nprivate:\n    double strike_;\n    double cap_;\n};\n",
+    "prelude": "#include <algorithm>\n#include <memory>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\ndouble value_at(const Payoff& p, double spot) { return p(spot); }\ndouble portfolio_payoff(const std::vector<std::unique_ptr<Payoff>>& legs, double spot) {\n    double total = 0.0;\n    for (const auto& leg : legs) total += (*leg)(spot);\n    return total;\n}\n",
+    "examples": [
+     {
+      "call": "CappedCall(100.0, 20.0)(110.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "CappedCall(100.0, 20.0)(110.0)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "CappedCall(100.0, 20.0)(150.0)",
+      "expect": 20.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "CappedCall(100.0, 20.0)(120.0)",
+      "expect": 20.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "CappedCall(100.0, 20.0)(90.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "value_at(CappedCall(100.0, 20.0), 100.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "CappedCall(100.0, 20.0)(137.0) - (Call(100.0)(137.0) - Call(120.0)(137.0))",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<std::unique_ptr<Payoff>> book; book.push_back(std::make_unique<CappedCall>(100.0, 20.0)); book.push_back(std::make_unique<Put>(100.0));",
+      "call": "portfolio_payoff(book, 150.0)",
+      "expect": 20.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<std::unique_ptr<Payoff>> book; book.push_back(std::make_unique<CappedCall>(100.0, 20.0)); book.push_back(std::make_unique<Put>(100.0));",
+      "call": "portfolio_payoff(book, 80.0)",
+      "expect": 20.0,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. Payoffs are accepted within a relative 1e-9. One test checks that a capped call equals a call at £100 minus a call at £120."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the call's payoff, then limit it."
+    },
+    {
+     "rung": "point",
+     "text": "`std::min` limits from above; `std::max` from below."
+    },
+    {
+     "rung": "step",
+     "text": "`return std::min(std::max(spot - strike_, 0.0), cap_);`"
+    }
+   ],
+   "feedback": {
+    "correct": "One new class, and every pricer on the desk can price it.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-2": "Test 2 has the spot at £150. The payoff stops at the cap, £20.",
+     "test-4": "Test 4 has the spot below the strike. The payoff is 0 there, not negative."
+    }
+   },
+   "explain": {
+    "text": "`std::min(std::max(spot - strike_, 0.0), cap_)` is the whole job. A capped call equals a call at £100 minus a call at £120, which gives a test against two classes you already trust. A desk's library grows this way: every exotic is one class."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An abstract base class `Payoff` declares one pure virtual function, `double operator()(double spot) const`. Each payoff derives from it and overrides it.",
+   "A pricer takes `const Payoff&`. Virtual dispatch runs the function of the object's real type, so new payoffs never change the pricer.",
+   "Own payoffs with `std::unique_ptr<Payoff>`, give the base a virtual destructor, mark overrides with `override`, and never pass a payoff by value."
+  ],
+  "formula": {
+   "name": "Capped call",
+   "tex": "f(S) = \\min\\big(\\max(S - K, 0),\\ \\text{cap}\\big)",
+   "note": "One class; every pricer prices it unchanged."
+  },
+  "trap": "A derived function whose signature differs from the base's (a missing `const`) adds a new function instead of overriding. `override` turns that into a compile error."
+ },
+ "quiz": [
+  {
+   "id": "q-virtual-destructor",
+   "difficulty": 3,
+   "prose": "```cpp\nclass Payoff {\npublic:\n    ~Payoff() {}\n    virtual double operator()(double spot) const = 0;\n};\nclass Basket : public Payoff {\n    std::vector<double> weights_;   // and a constructor\npublic:\n    double operator()(double spot) const override;\n};\n\nstd::unique_ptr<Payoff> p = std::make_unique<Basket>(/* ... */);\n```",
+   "question": "When `p` goes out of scope, what happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Only `~Payoff` runs, so `weights_` is never freed (formally, undefined behaviour)",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "`~Basket` runs, then `~Payoff`",
+      "why": "That needs `virtual ~Payoff()`. Without `virtual`, deleting through a `Payoff*` calls only `~Payoff`."
+     },
+     {
+      "id": "compile",
+      "text": "A compile error",
+      "why": "It compiles. Clang can warn about a non-virtual destructor, but the code builds."
+     },
+     {
+      "id": "smart",
+      "text": "Nothing goes wrong: `unique_ptr` remembers the real type",
+      "why": "`std::unique_ptr<Payoff>` deletes a `Payoff*`. It is `std::shared_ptr` that remembers the type it was made with."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A base meant for deleting through needs a virtual destructor.",
+    "generic": "Not quite right. Look at the base's destructor."
+   },
+   "explain": {
+    "text": "The deleter calls `delete` on a `Payoff*`, and `~Payoff` is not virtual, so `~Basket` never runs. Its vector leaks, and the standard calls it undefined behaviour. `virtual ~Payoff() = default;` fixes it in one line."
+   }
+  },
+  {
+   "id": "q-zero-strike",
+   "difficulty": 2,
+   "prose": "A book holds `Call(0.0)` and `Put(100.0)`. The spot ends at £92.50.",
+   "question": "What does `portfolio_payoff` return, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "label": "Book payoff in pounds",
+    "accept": "£100: the zero-strike call pays £92.50, the put £7.50.",
+    "wrong": [
+     {
+      "id": "worthless",
+      "value": 7.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "spot",
+      "value": 92.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£92.50 plus £7.50.",
+    "generic": "Not quite right. Work out each leg at £92.50, then add.",
+    "byKey": {
+     "worthless": "You priced the zero-strike call at 0. It pays `max(92.5 - 0, 0)`: the whole spot.",
+     "spot": "That is the zero-strike call alone. Add the put's £7.50."
+    }
+   },
+   "explain": {
+    "text": "A zero-strike call pays the spot, so it is the share. With a put at £100 the book pays $\\max(S, 100)$, here £100."
+   }
+  },
+  {
+   "id": "q-override-signature",
+   "difficulty": 3,
+   "prose": "Each line below is a declaration inside `class Put : public Payoff`, with our abstract `Payoff`.",
+   "question": "Which declaration fails to compile?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`double operator()(double spot) override;`",
+      "correct": true
+     },
+     {
+      "id": "match",
+      "text": "`double operator()(double spot) const override;`",
+      "why": "That matches the base exactly: same parameter, `const`, same return type."
+     },
+     {
+      "id": "constparam",
+      "text": "`double operator()(const double spot) const override;`",
+      "why": "A `const` on a parameter passed by value is not part of the signature, so it still overrides."
+     },
+     {
+      "id": "virtual",
+      "text": "`virtual double operator()(double spot) const override;`",
+      "why": "Repeating `virtual` is allowed. The signature matches the base."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Without `const` it overrides nothing, and `override` says so.",
+    "generic": "Not quite right. Compare each with `virtual double operator()(double spot) const`."
+   },
+   "explain": {
+    "text": "The base's function is `const`. A version without `const` is a different function, so `override` makes the compiler refuse it. Without `override` it would compile and never run through a `Payoff&`."
+   }
+  },
+  {
+   "id": "q-python-contrast",
+   "difficulty": 2,
+   "prose": "In Python, `value_at(p, s)` returns `p(s)`. Someone passes an object with no `__call__`. In C++, someone passes a `std::string` to `value_at(const Payoff& p, double s)`.",
+   "question": "When is each mistake found?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Python when the line runs; C++ when the code compiles",
+      "correct": true
+     },
+     {
+      "id": "both-run",
+      "text": "Both when the line runs",
+      "why": "C++ checks argument types at compile time. The program would not be built."
+     },
+     {
+      "id": "both-compile",
+      "text": "Both before anything runs",
+      "why": "Python checks nothing until it calls `p(s)`; then it raises `TypeError`."
+     },
+     {
+      "id": "never",
+      "text": "Neither: both return 0",
+      "why": "Python raises `TypeError` and C++ refuses to compile. Neither returns a number."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Duck typing checks late; a base class checks early.",
+    "generic": "Not quite right. Ask when each language looks at the argument's type."
+   },
+   "explain": {
+    "text": "Python's duck typing accepts anything until the call fails at run time. C++ accepts only types that derive from `Payoff`, and it checks before the program exists."
+   }
+  }
+ ]
+}

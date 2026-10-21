@@ -1,0 +1,1056 @@
+{
+ "id": "l7-addresses",
+ "course": "cpp",
+ "title": "Addresses and pointers",
+ "minutes": 14,
+ "objectives": [
+  "Read and write through a pointer, and see when one dangles.",
+  "Walk a range with a pair of pointers."
+ ],
+ "skills": [
+  "cp-memory",
+  "cp-references"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A variable that holds an address",
+   "prose": "Every object sits at an **address**, a numbered place in memory. `&qty` gives `qty`'s address, and `int* p` holds one. Addresses here are made up to keep them short.\n\n```cpp\nint qty = 300;\nint* p = &qty;\n*p = 500;\nstd::cout << qty << \"\\n\";\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 230,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "qty",
+       "label": "qty",
+       "x": 0.12,
+       "y": 0.25,
+       "shape": "pill"
+      },
+      {
+       "id": "oq",
+       "label": "300 @0x1000",
+       "x": 0.5,
+       "y": 0.25,
+       "shape": "rect"
+      },
+      {
+       "id": "p",
+       "label": "p",
+       "x": 0.12,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "op",
+       "label": "0x1000",
+       "x": 0.5,
+       "y": 0.8,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "qty",
+       "to": "oq",
+       "directed": true
+      },
+      {
+       "from": "p",
+       "to": "op",
+       "directed": true
+      },
+      {
+       "from": "op",
+       "to": "oq",
+       "directed": true,
+       "dashed": true,
+       "label": "points at"
+      }
+     ]
+    },
+    "state": {
+     "caption": "`p`'s box holds `qty`'s address"
+    }
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "five",
+      "text": "`500`",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "`300`",
+      "why": "You read `*p = 500` as changing `p`. The `*` means the `int` that `p` points at, which is `qty`."
+     },
+     {
+      "id": "addr",
+      "text": "`0x1000`",
+      "why": "Printing `qty` prints its value. Its address would be `&qty`."
+     },
+     {
+      "id": "error",
+      "text": "It does not compile",
+      "why": "`*p = 500` is the normal way to write through a pointer, so it compiles."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the `*` in `*p = 500` refer to: the pointer, or what it points at?"
+    },
+    {
+     "rung": "point",
+     "text": "Follow the dashed arrow from `p`'s box.",
+     "highlight": [
+      "op",
+      "oq"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`*p` is the `int` at the address `p` holds, which is `qty`. Writing 500 there changes `qty`."
+    }
+   ],
+   "feedback": {
+    "correct": "`*p` is `qty`.",
+    "generic": "Not quite right. Follow the arrow: which box does `*p` reach?",
+    "byKey": {
+     "three": "You read `*p = 500` as changing `p`. The `*` reaches the `int` that `p` points at, which is `qty`."
+    }
+   },
+   "explain": {
+    "text": "`p` holds `qty`'s address, so `*p` reaches `qty` itself. Writing 500 through `*p` changes `qty`. `p`'s own box still holds 0x1000.",
+    "canvas": {
+     "labels": {
+      "oq": "500 @0x1000"
+     },
+     "highlight": [
+      "oq"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A pointer into a vector",
+   "prose": "A pointer can hold the address of a vector element. Adding a whole number moves it along the elements.\n\n```cpp\nstd::vector<double> px{101.50, 101.25, 101.75, 102.00};\ndouble* p = &px[1];\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "101.50",
+      "101.25",
+      "101.75",
+      "102.00"
+     ]
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "p",
+       "at": 1,
+       "label": "p"
+      }
+     ],
+     "caption": "`p` points at `px[1]`"
+    }
+   },
+   "question": "Tap the price that `*(p + 2)` reads.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "c3"
+    ],
+    "max": 1,
+    "only": [
+     "c0",
+     "c1",
+     "c2",
+     "c3"
+    ],
+    "countWord": "prices"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does `p` start?"
+    },
+    {
+     "rung": "point",
+     "text": "`p` starts at index 1.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`p + 2` is two elements on from index 1, which is index 3. `*` reads the price there."
+    }
+   ],
+   "feedback": {
+    "correct": "Two elements on from `px[1]` is `px[3]`.",
+    "generic": "Not quite right. Start from where `p` points, not from the front.",
+    "byKey": {
+     "c2": "That is `*(p + 1)`. Move two elements from `px[1]`.",
+     "c1": "That is `*p` itself. `p + 2` moves two elements on.",
+     "c0": "`p` starts at `px[1]`, not `px[0]`. Count two on from there."
+    }
+   },
+   "explain": {
+    "text": "`p` points at `px[1]`, so `p + 2` points at `px[3]`, and `*(p + 2)` reads 102.00. Pointer arithmetic counts whole elements, not bytes.",
+    "canvas": {
+     "pointers": {
+      "q": {
+       "id": "q",
+       "at": 3,
+       "label": "p + 2"
+      }
+     },
+     "highlight": [
+      "c3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Addresses move in steps of the type",
+   "prose": "`&x` is the **address of** `x`. `double* p` is a **pointer**: a variable holding an address. `*p` **dereferences** it, reaching the object there. The elements of `px` sit side by side, 8 bytes apart.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 32,
+     "step": 8,
+     "labels": [
+      {
+       "x": 0,
+       "text": "0x1000"
+      },
+      {
+       "x": 8,
+       "text": "0x1008"
+      },
+      {
+       "x": 16,
+       "text": "0x1010"
+      },
+      {
+       "x": 24,
+       "text": "0x1018"
+      },
+      {
+       "x": 32,
+       "text": "0x1020"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e0",
+       "x": 0,
+       "label": "px[0]"
+      },
+      {
+       "id": "e1",
+       "x": 8,
+       "label": "px[1]"
+      },
+      {
+       "id": "e2",
+       "x": 16,
+       "label": "px[2]"
+      },
+      {
+       "id": "e3",
+       "x": 24,
+       "label": "px[3]"
+      }
+     ],
+     "arrows": [],
+     "caption": "`p` holds 0x1008, the address of `px[1]`"
+    }
+   },
+   "question": "How many bytes past `p`'s address is the address `p + 2` holds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "bytes",
+    "label": "Bytes past p",
+    "accept": "16 bytes: 2 elements of 8 bytes each, so 0x1008 + 16 = 0x1018.",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2
+     },
+     {
+      "id": "eight",
+      "value": 8
+     },
+     {
+      "id": "twentyfour",
+      "value": 24
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`p + 2` moves two elements. How big is one element?"
+    },
+    {
+     "rung": "point",
+     "text": "`px[1]` and `px[3]` are two steps apart on the line.",
+     "highlight": [
+      "e1",
+      "e3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each `double` is 8 bytes, so two elements are 16 bytes: 0x1008 + 16 = 0x1018."
+    }
+   ],
+   "feedback": {
+    "correct": "`p + 2` moves 2 × 8 bytes.",
+    "generic": "Not quite right. Multiply the elements moved by the size of one `double`.",
+    "byKey": {
+     "two": "You counted elements. The address moves by 2 elements times 8 bytes.",
+     "eight": "That is one element, `p + 1`.",
+     "twentyfour": "That is the distance from `px[0]`. Measure from `p`, which starts at `px[1]`."
+    }
+   },
+   "explain": {
+    "text": "`p + 2` moves two whole `double`s, and each is 8 bytes, so the address grows by 16: from 0x1008 to 0x1018. The compiler scales by `sizeof(double)` for you.",
+    "canvas": {
+     "arrows": [
+      {
+       "id": "j",
+       "from": 8,
+       "to": 24,
+       "label": "+2 elements = +16 bytes"
+      }
+     ],
+     "highlight": [
+      "e3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Write through a pointer",
+   "prose": "`nullptr` is the pointer that points at nothing. Reading or writing through it is **undefined behaviour**: a desk build usually dies with `Segmentation fault`. Check for it first.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "int fills = 7;",
+      "bump(&fills);    // fills is now 8",
+      "bump(nullptr);   // does nothing"
+     ],
+     "title": "How bump is used"
+    },
+    "state": {}
+   },
+   "question": "Write `void bump(int* p)`: add 1 to the `int` that `p` points at, and do nothing when `p` is `nullptr`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <vector>\n",
+    "postlude": "// reads the int at address 0, to see whether a call wrote through a null pointer\nint null_word() { return *(volatile int*)0; }\n",
+    "starter": "void bump(int* p) {\n    // add 1 to the int that p points at\n}\n",
+    "solution": "void bump(int* p) {\n    if (p == nullptr) return;\n    *p += 1;\n}\n",
+    "examples": [
+     {
+      "setup": "int fills = 7;\nbump(&fills);",
+      "call": "fills",
+      "expect": 8,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "int fills = 7;\nbump(&fills);",
+      "call": "fills",
+      "expect": 8,
+      "compare": "equal"
+     },
+     {
+      "setup": "int a = 0;\nbump(&a);\nbump(&a);\nbump(&a);",
+      "call": "a",
+      "expect": 3,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<int> v{5, 9};\nbump(&v[1]);",
+      "call": "v",
+      "expect": [
+       5,
+       10
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "int x = -1;\nint* q = &x;\nbump(q);",
+      "call": "*q",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "int before = null_word();\nbump(nullptr);",
+      "call": "null_word() - before",
+      "expect": 0,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. The last passes `nullptr` and checks that nothing was written: this browser build does not crash on a null write, so the test looks at address 0 itself."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two steps: guard against `nullptr`, then write through `p`."
+    },
+    {
+     "rung": "point",
+     "text": "`*p += 1;` changes the `int` that `p` points at. `p += 1` would move the pointer instead."
+    },
+    {
+     "rung": "step",
+     "text": "`if (p == nullptr) return;` then `*p += 1;`."
+    }
+   ],
+   "feedback": {
+    "correct": "Guard, then write through the pointer.",
+    "generic": "Not yet. The results under the editor say which test failed.",
+    "byKey": {
+     "test-5": "The `nullptr` test failed: the code wrote through a null pointer. Return before `*p` when `p == nullptr`."
+    }
+   },
+   "explain": {
+    "text": "`*p += 1` changes the `int` at the address `p` holds, so the caller's `fills` becomes 8. The guard matters: a desk build would crash on `*p` with `p` null. This browser build quietly writes to address 0 instead, which is worse."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Walk a pointer pair",
+   "prose": "C code passes a range as two pointers: `begin` at the first element, and `end` one *past* the last. `end` is never read. A hidden `max_of(v)` calls your function with `v.data()` and `v.data() + v.size()`.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "101.50",
+      "99.25",
+      "102.75",
+      "100.00",
+      ""
+     ]
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "b",
+       "at": 0,
+       "label": "begin"
+      },
+      {
+       "id": "e",
+       "at": 4,
+       "label": "end"
+      }
+     ],
+     "highlight": {
+      "range": [
+       0,
+       3
+      ],
+      "label": "read these"
+     },
+     "caption": "`end` points one past the last price"
+    }
+   },
+   "question": "Write `max_via_pointer(begin, end)`: the largest value in the range. An empty range (`begin == end`) returns 0.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <vector>\ndouble max_via_pointer(const double* begin, const double* end);\ndouble max_of(const std::vector<double>& v) { return max_via_pointer(v.data(), v.data() + v.size()); }\n",
+    "starter": "double max_via_pointer(const double* begin, const double* end) {\n    // walk a pointer from begin up to, not including, end\n    return 0;\n}\n",
+    "solution": "double max_via_pointer(const double* begin, const double* end) {\n    if (begin == end) return 0;\n    double best = *begin;\n    for (const double* p = begin + 1; p != end; ++p)\n        if (*p > best) best = *p;\n    return best;\n}\n",
+    "examples": [
+     {
+      "call": "max_of({101.5, 99.25, 102.75, 100.0})",
+      "expect": 102.75,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "max_of({101.5, 99.25, 102.75, 100.0})",
+      "expect": 102.75,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_of({-3.5, -1.25, -2.0})",
+      "expect": -1.25,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_of({42.0})",
+      "expect": 42,
+      "compare": "isclose"
+     },
+     {
+      "call": "max_of({})",
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "double xs[5] = {9.0, 1.0, 4.0, 2.0, 8.0};",
+      "call": "max_via_pointer(xs + 1, xs + 3)",
+      "expect": 4,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> v(100000);\nfor (int i = 0; i < 100000; ++i) v[i] = (i * 37) % 1000;",
+      "call": "max_of(v)",
+      "expect": 999,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests, including all-negative prices, an empty range and a range in the middle of an array that must not read outside `begin` to `end`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start the best value at `*begin`, not at 0: prices can be negative returns."
+    },
+    {
+     "rung": "point",
+     "text": "A loop `for (const double* p = begin; p != end; ++p)` visits each element once.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return 0 if `begin == end`. Otherwise set `best = *begin`, then for each `p` after it, keep `*p` if it is larger."
+    }
+   ],
+   "feedback": {
+    "correct": "`p != end` stops exactly at the last element.",
+    "generic": "Not yet. The results under the editor say which test failed.",
+    "byKey": {
+     "test-2": "All three values are negative, so a best that starts at 0 never changes. Start from `*begin`.",
+     "test-5": "The range is `xs[1]` to `xs[2]`. Read from `begin` and stop before `end`."
+    }
+   },
+   "explain": {
+    "text": "`++p` moves one `double` on, and `p != end` stops before the address one past the last. Starting `best` at `*begin` handles negative values. This pair of pointers is exactly what `v.begin()` and `v.end()` generalise."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "It printed the right number",
+   "prose": "`bid` lives inside the inner braces. In this browser the program printed `101.25`.\n\n```cpp\ndouble* p = nullptr;\n{\n    double bid = 101.25;\n    p = &bid;\n}\nstd::cout << *p << \"\\n\";\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 150,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "p",
+       "label": "p",
+       "x": 0.15,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "bid",
+       "label": "bid 101.25",
+       "x": 0.7,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "p",
+       "to": "bid",
+       "directed": true
+      }
+     ]
+    },
+    "state": {
+     "caption": "Inside the braces: `p` points at `bid`"
+    }
+   },
+   "question": "Is the program correct?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ub",
+      "text": "No: `bid` ended at `}`, so `*p` reads a dead object, which is undefined behaviour",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Yes: it printed the right price",
+      "why": "That is the trap. The read is undefined: it may print the old value, a stray number or crash. The browser build happened to leave 101.25 there."
+     },
+     {
+      "id": "alive",
+      "text": "Yes: `p` keeps `bid` alive",
+      "why": "A pointer only holds an address. It does not keep the object alive; `bid` ends at its closing brace."
+     },
+     {
+      "id": "compile",
+      "text": "No: it does not compile",
+      "why": "It compiles cleanly. The compiler cannot always see that `p` outlives `bid`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When does `bid` stop existing?"
+    },
+    {
+     "rung": "point",
+     "text": "`bid` is declared inside `{ }`. Its life ends at the `}`.",
+     "highlight": [
+      "bid"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "After the `}`, `p` holds the address of a dead `double`. Reading it is undefined, whatever it prints."
+    }
+   ],
+   "feedback": {
+    "correct": "A right answer from undefined behaviour is luck.",
+    "generic": "Not quite right. Check whether `bid` still exists when `*p` runs.",
+    "byKey": {
+     "fine": "That is the trap. The read is undefined; the browser build just left 101.25 in that memory. A desk build with checks stops here.",
+     "alive": "A pointer does not keep its target alive. `bid` ended at its closing brace."
+    }
+   },
+   "explain": {
+    "text": "`bid` ends at the inner `}`, and `p` is left **dangling**. Undefined behaviour means the compiler may do anything: this browser build is forgiving and printed the stale 101.25. A desk build with `-fsanitize=address` stops at that line, as the next screen shows.",
+    "canvas": {
+     "labels": {
+      "bid": "dead slot (was bid)"
+     },
+     "edges": {
+      "e-p-bid": {
+       "from": "p",
+       "to": "bid",
+       "dashed": true
+      }
+     },
+     "caption": "After the braces: `p` dangles"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "What a desk build says",
+   "prose": "The same code saved as `scope.cpp` and built on Linux with g++ and AddressSanitizer, a checker that watches every memory access. Line 8 of `scope.cpp` is the `std::cout`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ g++ -g -fsanitize=address scope.cpp -o scope",
+      "$ ./scope",
+      "==21292==ERROR: AddressSanitizer: stack-use-after-scope on address 0x7fa34dd00020",
+      "READ of size 8 at 0x7fa34dd00020 thread T0",
+      "    #0 0x5601e14ba363 in main scope.cpp:8",
+      "Address 0x7fa34dd00020 is located in stack of thread T0",
+      "  This frame has 1 object(s):",
+      "    [32, 40) 'bid' (line 5) <== Memory access is inside this variable",
+      "SUMMARY: AddressSanitizer: stack-use-after-scope scope.cpp:8 in main"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "Tap the line that names the variable whose dead memory was read.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l8"
+    ],
+    "max": 1,
+    "only": [
+     "l3",
+     "l4",
+     "l5",
+     "l6",
+     "l7",
+     "l8",
+     "l9"
+    ],
+    "countWord": "lines"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One line quotes a variable name in single quotes."
+    },
+    {
+     "rung": "point",
+     "text": "The frame lists its objects; one of them is where the read landed.",
+     "highlight": [
+      "l7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`[32, 40) 'bid' (line 5)` is the 8 bytes of `bid`, declared on line 5, and the arrow says the read was inside it."
+    }
+   ],
+   "feedback": {
+    "correct": "`bid`, declared on line 5.",
+    "generic": "Not quite right. Find the line naming a variable in quotes.",
+    "byKey": {
+     "l5": "That line says *where in the code* the read happened, line 8. The variable is named further down.",
+     "l4": "`READ of size 8` says a `double` was read. Which variable's memory was it?",
+     "l3": "That names the kind of error. The variable is named further down."
+    }
+   },
+   "explain": {
+    "text": "`'bid' (line 5)` names the variable, and `scope.cpp:8` names the read. `READ of size 8` is one `double`. Build with `-fsanitize=address` while testing: it turns silent undefined behaviour into a report like this.",
+    "canvas": {
+     "shade": {
+      "key": [
+       "l3",
+       "l5",
+       "l8"
+      ]
+     },
+     "tone": {
+      "l8": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Pointers in six lines",
+   "prose": "What you used, in one place:\n\n```cpp\nint* p = &x;       // p holds x's address\n*p = 5;            // write x through p\np = nullptr;       // points at nothing: never use *p\ndouble* q = &px[0];\n*(q + 2)           // px[2]: q + 2 moves 2 * 8 bytes\np == r             // same address? not same value\n```\n\nA pointer to a pointer, `int** pp = &p;`, holds the address of a pointer.",
+   "question": "`double a = 5.0, b = 5.0;` What does `std::cout << (&a == &b);` print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "zero",
+      "text": "`0`",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "`1`",
+      "why": "You compared the values. `&a == &b` compares addresses, and two variables never share one."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two variables, two addresses.",
+    "generic": "Not quite right. What does `==` compare when both sides are addresses?"
+   },
+   "explain": {
+    "text": "`&a` and `&b` are two different addresses, so they compare unequal and `std::cout` prints 0 for `false`. To compare values through pointers, write `*p == *r`."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Evaluate *(p + 2)",
+   "prose": "`px` starts at 0x1000, with 8-byte `double`s, and `p = &px[1]`. Each line below gives one step and its reason.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "`p` holds 0x1008: `px[1]` is one `double` past 0x1000"
+     },
+     {
+      "id": "s2",
+      "text": "`p + 2` holds 0x1008 + 2 × 8 = 0x1018: arithmetic counts whole `double`s"
+     },
+     {
+      "id": "s3",
+      "text": "0x1018 = 0x1000 + 3 × 8, so it is the address of `px[3]`"
+     },
+     {
+      "id": "s4",
+      "text": "`*(p + 2)` reads the `double` at 0x1018: `px[3]`, which is 102.00"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with what `p` holds."
+    },
+    {
+     "rung": "point",
+     "text": "Add before you dereference."
+    },
+    {
+     "rung": "step",
+     "text": "Address of `p`, then the address `p + 2`, then which element sits there, then read it."
+    }
+   ],
+   "feedback": {
+    "correct": "Address, step, element, read.",
+    "generic": "Not quite right. You need an address before you can move it, and you move it before you read."
+   },
+   "explain": {
+    "text": "`p` starts at 0x1008. Moving 2 elements adds 16 bytes, giving 0x1018, which is `px[3]`'s address. Only then does `*` read the value, 102.00. So `*(p + 2)` is `p[2]`."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A C feed hands you pointers",
+   "prose": "An exchange SDK written in C calls you with a pointer to the first of `n` book levels. `p->size` means `(*p).size`.\n\n```cpp\nstruct Level { double px; long long size; };\n\nvoid on_book(const Level* levels, int n) {\n    long long total = 0;\n    // sum every level's size\n}\n```",
+   "question": "Which loop sums every level's size?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`for (const Level* p = levels; p != levels + n; ++p) total += p->size;`",
+      "correct": true
+     },
+     {
+      "id": "le",
+      "text": "`for (const Level* p = levels; p <= levels + n; ++p) total += p->size;`",
+      "why": "`<=` also reads `levels + n`, one past the last level: memory the SDK never gave you."
+     },
+     {
+      "id": "first",
+      "text": "`for (int i = 0; i < n; ++i) total += levels->size;`",
+      "why": "`levels` never moves, so this adds the first level's size `n` times."
+     },
+     {
+      "id": "bytes",
+      "text": "`for (const Level* p = levels; p != levels + n; p += sizeof(Level)) total += p->size;`",
+      "why": "`++p` already moves one whole `Level`. Adding `sizeof(Level)`, 16, jumps 16 levels and runs past `levels + n`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which pointer moves, by how much, and where must it stop?"
+    },
+    {
+     "rung": "point",
+     "text": "`levels + n` is one past the last level, like `end`."
+    },
+    {
+     "rung": "step",
+     "text": "Start at `levels`, step with `++p`, stop when `p == levels + n`. Read `p->size` each time."
+    }
+   ],
+   "feedback": {
+    "correct": "One past the end, never read.",
+    "generic": "Not quite right. Check where each loop starts, how it steps, and where it stops.",
+    "byKey": {
+     "bytes": "Pointer arithmetic already scales by the size of `Level`. Adding `sizeof(Level)` jumps 16 levels at a time."
+    }
+   },
+   "explain": {
+    "text": "`++p` moves one `Level` (16 bytes), and `p != levels + n` stops before the address one past the last. Off-by-one reads like `<=` are undefined: a desk build may read the next object in memory, and nothing warns you."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`&x` is `x`'s address; a pointer `T* p` holds one, and `*p` reaches the object there. `p + k` moves `k` whole elements, `k * sizeof(T)` bytes.",
+   "`nullptr` points at nothing. Reading through it, or through a pointer to an object that has ended, is undefined behaviour.",
+   "This browser build is forgiving: null reads and dangling reads often print stale numbers. A desk build crashes, and `-fsanitize=address` names the line."
+  ],
+  "formula": {
+   "name": "Pointer arithmetic",
+   "tex": "\\text{address}(p + k) = \\text{address}(p) + k \\times \\texttt{sizeof(T)}",
+   "note": "A range is `[begin, end)`: `end` points one past the last element and is never read."
+  },
+  "trap": "A program that prints the right number can still read a dead object. Undefined behaviour is not a crash you can rely on."
+ },
+ "quiz": [
+  {
+   "id": "q-null",
+   "difficulty": 2,
+   "prose": "```cpp\nint* p = nullptr;\nstd::cout << *p << \"\\n\";\n```",
+   "question": "What happens when this runs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ub",
+      "text": "Undefined behaviour: a desk build usually stops with `Segmentation fault`",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "It prints 0, the value of a null pointer",
+      "why": "`*p` reads the `int` at address 0, not the pointer's value. On a desk machine that page is not readable at all."
+     },
+     {
+      "id": "compile",
+      "text": "It does not compile",
+      "why": "It compiles. The compiler does not track which pointers are null."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Never dereference `nullptr`.",
+    "generic": "Not quite right. What does `*p` read when `p` points at nothing?"
+   },
+   "explain": {
+    "text": "On Linux, g++'s build dies with `Segmentation fault` (AddressSanitizer: \"SEGV on unknown address 0x000000000000\"). In this browser, address 0 is ordinary memory, and a test run printed 1. Neither is a promise: guard with `if (p)`."
+   }
+  },
+  {
+   "id": "q-pp",
+   "difficulty": 2,
+   "prose": "```cpp\nint x = 1;\nint* p = &x;\nint** pp = &p;\n**pp = 7;\nstd::cout << x << \"\\n\";\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "seven",
+      "text": "`7`",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "`1`",
+      "why": "`**pp` follows two arrows: `pp` to `p`, then `p` to `x`. Writing 7 there changes `x`."
+     },
+     {
+      "id": "compile",
+      "text": "It does not compile",
+      "why": "`int** pp = &p;` is a pointer to a pointer. It compiles."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Two hops, from `pp` to `p` to `x`.",
+    "generic": "Not quite right. Follow `pp`, then follow what you find."
+   },
+   "explain": {
+    "text": "`pp` holds `p`'s address, so `*pp` is `p`, and `**pp` is what `p` points at: `x`. Writing 7 through it changes `x`."
+   }
+  },
+  {
+   "id": "q-local",
+   "difficulty": 3,
+   "prose": "```cpp\ndouble* best_bid() {\n    double x = 101.25;\n    return &x;\n}\n```",
+   "question": "What does the compiler do with this function?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "warn",
+      "text": "It compiles with a warning; the returned pointer dangles",
+      "correct": true
+     },
+     {
+      "id": "error",
+      "text": "It refuses to compile",
+      "why": "clang only warns: \"address of stack memory associated with local variable 'x' returned\". The build still succeeds."
+     },
+     {
+      "id": "fine",
+      "text": "It compiles silently, and the pointer is safe",
+      "why": "`x` ends when the function returns, so the caller gets the address of a dead object."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A warning, not an error: read your warnings.",
+    "generic": "Not quite right. When does `x` stop existing?"
+   },
+   "explain": {
+    "text": "`x` lives in `best_bid`'s frame and ends at its `}`. clang warns \"address of stack memory associated with local variable 'x' returned\", but builds anyway. Return the `double` itself instead."
+   }
+  },
+  {
+   "id": "q-int-step",
+   "difficulty": 2,
+   "question": "An `int` is 4 bytes. `int* p` holds 0x2000. What address does `p + 3` hold?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "c",
+      "text": "0x200C",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "0x2003",
+      "why": "You added 3 bytes. `p + 3` moves 3 whole `int`s: 3 × 4 = 12 bytes, which is 0xC."
+     },
+     {
+      "id": "eighteen",
+      "text": "0x2018",
+      "why": "You used 8 bytes per element, the size of a `double`. An `int` here is 4."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "3 × 4 = 12 bytes, 0xC in hex.",
+    "generic": "Not quite right. Multiply 3 by the size of an `int`."
+   },
+   "explain": {
+    "text": "Pointer arithmetic scales by the type: `p + 3` moves 3 × 4 = 12 bytes. 12 is C in hex, so the address is 0x200C."
+   }
+  }
+ ]
+}

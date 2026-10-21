@@ -1,0 +1,1367 @@
+{
+  "id": "l5-linear-as-learner",
+  "course": "stat-learning",
+  "title": "Linear regression as a learner",
+  "minutes": 14,
+  "objectives": [
+    "Fit a linear model with scikit-learn and judge it on held-out data.",
+    "Compare test MSE with the training-mean baseline and read a negative test $R^2$."
+  ],
+  "skills": [
+    "sl-linear",
+    "sl-tradeoff"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "More columns, better fit?",
+      "prose": "We fit a linear model on 60 share-months and test it on the next 2,000. Each model uses the first $k$ of 40 candidate features. Slide $k$ and watch both errors.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "train",
+              "label": "Train MSE",
+              "values": [
+                9.84,
+                6.74,
+                6.41,
+                6.18,
+                5.78,
+                5.67,
+                5.66,
+                5.51,
+                5.39,
+                5.38,
+                5.37,
+                5.35,
+                5.25,
+                5.2,
+                4.37,
+                4.37,
+                4.02,
+                3.97,
+                3.88,
+                3.87,
+                3.6,
+                3.57,
+                3.56,
+                3.21,
+                3.14,
+                3.04,
+                3.04,
+                3.04,
+                3.03,
+                2.91,
+                2.87,
+                2.87,
+                2.83,
+                2.55,
+                2.42,
+                2.39,
+                2.38,
+                2.33,
+                2.08,
+                2.08,
+                2.08
+              ],
+              "colour": 2
+            },
+            {
+              "id": "test",
+              "label": "Test MSE",
+              "values": [
+                12.27,
+                10.19,
+                9.34,
+                8.81,
+                9.45,
+                9.64,
+                9.63,
+                10.23,
+                10.62,
+                10.67,
+                10.61,
+                10.69,
+                10.85,
+                10.89,
+                11.2,
+                11.21,
+                11.62,
+                11.81,
+                11.47,
+                11.51,
+                12.06,
+                12.56,
+                12.53,
+                14.76,
+                14.87,
+                15.32,
+                15.23,
+                15.24,
+                15.2,
+                15.26,
+                15.52,
+                15.52,
+                15.37,
+                18.37,
+                20.06,
+                20.47,
+                20.7,
+                20.53,
+                23.74,
+                23.53,
+                23.55
+              ],
+              "colour": 1
+            }
+          ],
+          "x": "index",
+          "xLabel": "Features used, $k$",
+          "yLabel": "MSE (%²)",
+          "y": [
+            0,
+            25
+          ],
+          "decimals": 2,
+          "params": {
+            "tr": [
+              9.84,
+              6.74,
+              6.41,
+              6.18,
+              5.78,
+              5.67,
+              5.66,
+              5.51,
+              5.39,
+              5.38,
+              5.37,
+              5.35,
+              5.25,
+              5.2,
+              4.37,
+              4.37,
+              4.02,
+              3.97,
+              3.88,
+              3.87,
+              3.6,
+              3.57,
+              3.56,
+              3.21,
+              3.14,
+              3.04,
+              3.04,
+              3.04,
+              3.03,
+              2.91,
+              2.87,
+              2.87,
+              2.83,
+              2.55,
+              2.42,
+              2.39,
+              2.38,
+              2.33,
+              2.08,
+              2.08,
+              2.08
+            ],
+            "te": [
+              12.27,
+              10.19,
+              9.34,
+              8.81,
+              9.45,
+              9.64,
+              9.63,
+              10.23,
+              10.62,
+              10.67,
+              10.61,
+              10.69,
+              10.85,
+              10.89,
+              11.2,
+              11.21,
+              11.62,
+              11.81,
+              11.47,
+              11.51,
+              12.06,
+              12.56,
+              12.53,
+              14.76,
+              14.87,
+              15.32,
+              15.23,
+              15.24,
+              15.2,
+              15.26,
+              15.52,
+              15.52,
+              15.37,
+              18.37,
+              20.06,
+              20.47,
+              20.7,
+              20.53,
+              23.74,
+              23.53,
+              23.55
+            ]
+          }
+        },
+        "state": {
+          "params": {
+            "k": 0
+          },
+          "markers": [
+            {
+              "id": "mk1",
+              "i": 0,
+              "series": "train"
+            },
+            {
+              "id": "mk2",
+              "i": 0,
+              "series": "test"
+            }
+          ]
+        },
+        "derive": {
+          "mk1.i": "k",
+          "mk2.i": "k",
+          "caption": "$k = {{k}}$: train MSE {{fixed(tr[k], 2)}}, test MSE {{fixed(te[k], 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 40,
+            "step": 1,
+            "start": 0,
+            "label": "Features used $k$"
+          }
+        ]
+      },
+      "question": "Which $k$ gives the lowest test MSE?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "features",
+        "label": "Number of features with the lowest test MSE",
+        "accept": "3 exactly: test MSE 8.81.",
+        "wrong": [
+          {
+            "id": "train-min",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the test line, not the train line."
+        },
+        {
+          "rung": "point",
+          "text": "The test line dips early and then climbs.",
+          "highlight": [
+            "test"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Step $k$ from 0 to 5 and read the caption. The test MSE is smallest at 8.81."
+        }
+      ],
+      "feedback": {
+        "correct": "Three features give the lowest test MSE, 8.81.",
+        "generic": "Not quite right. Read the test MSE in the caption as you step $k$ from 0 to 6.",
+        "byKey": {
+          "train-min": "You picked the lowest train MSE. Those 40 columns fit the 60 rows, not the next 2,000.",
+          "none": "With no features the model predicts the mean. The first few features do lower test MSE."
+        }
+      },
+      "explain": {
+        "text": "Train MSE falls with every column, from 9.84 to 2.08. Test MSE bottoms out at 8.81 with three features, the three that really move returns here. After that each column fits noise in the 60 rows, and test MSE climbs to 23.55.",
+        "canvas": {
+          "params": {
+            "k": 3
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Fit, predict, score",
+      "prose": "The model you slid is **linear regression**: the OLS of the regression course. scikit-learn fits it with `model = LinearRegression().fit(X_train, y_train)`. Then `model.predict(X_test)` gives forecasts, and `mean_squared_error(y_test, pred)` scores them.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Row",
+            "mom",
+            "value",
+            "vol",
+            "7 more",
+            "Return (%)"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.19",
+              "-0.52",
+              "-0.41",
+              "…",
+              "-0.48"
+            ],
+            [
+              "2",
+              "0.98",
+              "-0.31",
+              "-0.33",
+              "…",
+              "-3.94"
+            ],
+            [
+              "3",
+              "0.84",
+              "0.19",
+              "0.33",
+              "…",
+              "0.16"
+            ],
+            [
+              "4",
+              "0.84",
+              "0.13",
+              "1.08",
+              "…",
+              "-1.03"
+            ],
+            [
+              "…",
+              "…",
+              "…",
+              "…",
+              "…",
+              "…"
+            ],
+            [
+              "400",
+              "0.12",
+              "1.13",
+              "-1.39",
+              "…",
+              "-1.20"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "caption": "`make_panel(2)`: 400 share-months in month order. Rows 1 to 300 train, 301 to 400 test."
+        }
+      },
+      "question": "Complete `fit_predict_mse` so it returns the test MSE, rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_panel(seed, n=400, p=10):\n    \"\"\"n share-months in month order, p features (z-scores), next-month return in %.\n    Only the first three features matter: 0.6, 0.4 and -0.3 per unit.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    beta = np.zeros(p)\n    beta[:3] = [0.6, 0.4, -0.3]\n    y = 0.5 + X @ beta + 3.0 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "from sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\n\ndef fit_predict_mse(X_train, y_train, X_test, y_test):\n    model = ...   # fit on the training rows only\n    pred = ...    # forecasts for the test rows\n    return round(float(mean_squared_error(y_test, pred)), 6)\n",
+        "solution": "from sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\n\ndef fit_predict_mse(X_train, y_train, X_test, y_test):\n    model = LinearRegression().fit(X_train, y_train)\n    pred = model.predict(X_test)\n    return round(float(mean_squared_error(y_test, pred)), 6)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_panel(2)",
+            "call": "fit_predict_mse(X[:300], y[:300], X[300:], y[300:])",
+            "expect": "10.458784",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_panel(2)",
+            "call": "fit_predict_mse(X[:300], y[:300], X[300:], y[300:])",
+            "expect": "10.458784",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(1)",
+            "call": "fit_predict_mse(X[:300], y[:300], X[300:], y[300:])",
+            "expect": "9.249611",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(3, n=100, p=20)",
+            "call": "fit_predict_mse(X[:70], y[:70], X[70:], y[70:])",
+            "expect": "13.70832",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(5, n=200, p=5)",
+            "call": "fit_predict_mse(X[:150], y[:150], X[150:], y[150:])",
+            "expect": "8.785478",
+            "compare": "isclose"
+          },
+          {
+            "call": "fit_predict_mse([[0], [1], [2], [3]], [1, 3, 5, 7], [[4], [5]], [9, 12])",
+            "expect": "0.5",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on panels from `make_panel(seed, n, p)`, which is already defined, and one tiny dataset. Each MSE is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`LinearRegression()` makes an empty model; `.fit` returns the fitted model."
+        },
+        {
+          "rung": "point",
+          "text": "Fit on `X_train, y_train`. Predict from `X_test` alone.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`model = LinearRegression().fit(X_train, y_train)` and `pred = model.predict(X_test)`."
+        }
+      ],
+      "feedback": {
+        "correct": "On `make_panel(2)` the 10-feature model scores a test MSE of 10.4588.",
+        "generic": "Some tests failed. Fit on the training rows, predict the test rows, then score against `y_test`."
+      },
+      "explain": {
+        "text": "`.fit` learns $\\hat{\\boldsymbol\\beta}$ from rows 1 to 300 only. `.predict` applies it to rows 301 to 400, which the fit never saw. On panel 2 that gives a test MSE of 10.4588 (%²)."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Something to beat",
+      "prose": "Is 10.46 good? A model must beat the forecast that ignores every feature: the **training** mean, used for each test row. Its test MSE is the **baseline**.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> fit_predict_mse(X[:300], y[:300], X[300:], y[300:])",
+            "10.458784",
+            ">>> y[:300].mean()",
+            "0.843437",
+            ">>> baseline_mse(y[:300], y[300:])",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `baseline_mse`: predict the training mean for every test row and return the MSE, rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_panel(seed, n=400, p=10):\n    \"\"\"n share-months in month order, p features (z-scores), next-month return in %.\n    Only the first three features matter: 0.6, 0.4 and -0.3 per unit.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    beta = np.zeros(p)\n    beta[:3] = [0.6, 0.4, -0.3]\n    y = 0.5 + X @ beta + 3.0 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "import numpy as np\n\ndef baseline_mse(y_train, y_test):\n    y_train = np.asarray(y_train, dtype=float)\n    y_test = np.asarray(y_test, dtype=float)\n    guess = ...   # one number, known before the test period\n    return round(float(np.mean((y_test - guess) ** 2)), 6)\n",
+        "solution": "import numpy as np\n\ndef baseline_mse(y_train, y_test):\n    y_train = np.asarray(y_train, dtype=float)\n    y_test = np.asarray(y_test, dtype=float)\n    guess = y_train.mean()\n    return round(float(np.mean((y_test - guess) ** 2)), 6)\n",
+        "examples": [
+          {
+            "call": "baseline_mse([1, 2, 3], [2, 4])",
+            "expect": "2.0",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "baseline_mse([1, 2, 3], [2, 4])",
+            "expect": "2.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "baseline_mse([0, 0], [5, 5])",
+            "expect": "25.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(2)",
+            "call": "baseline_mse(y[:300], y[300:])",
+            "expect": "10.845544",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(1)",
+            "call": "baseline_mse(y[:300], y[300:])",
+            "expect": "8.923673",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(3, n=100, p=20)",
+            "call": "baseline_mse(y[:70], y[70:])",
+            "expect": "12.427925",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, two tiny and three on `make_panel` panels. Each MSE is compared with math.isclose. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which mean could you have known at the start of the test period?"
+        },
+        {
+          "rung": "point",
+          "text": "The test rows' own mean uses returns that had not happened yet.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`guess = y_train.mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "On panel 2 the baseline's test MSE is 10.8455, against the model's 10.4588.",
+        "generic": "Some tests failed. The guess is the mean of `y_train`, the same number for every test row.",
+        "byKey": {
+          "test-2": "Your guess for `[5, 5]` scored 0, so it used the test mean. The forecast has to be fixed before the test period starts."
+        }
+      },
+      "explain": {
+        "text": "The baseline guesses 0.84% for every test row and scores 10.8455. The model scores 10.4588, a little lower. That small gap is the model's whole claim to skill."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "How much error did it remove?",
+      "prose": "Put the two test MSEs side by side. The question for any forecaster: what fraction of the baseline's error did the features take away?",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "base",
+              "label": "Baseline"
+            },
+            {
+              "id": "model",
+              "label": "10 features"
+            }
+          ],
+          "yLabel": "Test MSE (%²)",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": 0,
+          "yMax": 12
+        },
+        "state": {
+          "values": {
+            "base": 10.85,
+            "model": 10.46
+          }
+        }
+      },
+      "question": "What percentage of the baseline's test MSE does the model remove?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0357,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "%",
+        "label": "Share of the baseline error removed, in per cent",
+        "accept": "3.57% ± 0.1: $1 - 10.46/10.85$.",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 0.9643,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "diff",
+            "value": 0.0039,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the gap between the bars, as a fraction of the baseline bar."
+        },
+        {
+          "rung": "point",
+          "text": "The gap is the baseline minus the model.",
+          "highlight": [
+            "base",
+            "model"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(10.85 - 10.46) / 10.85 = 1 - 10.46/10.85$."
+        }
+      ],
+      "feedback": {
+        "correct": "The model removes 3.6% of the baseline's error.",
+        "generic": "Not quite right. Divide the gap between the bars by the baseline bar.",
+        "byKey": {
+          "ratio": "That is the model's MSE over the baseline's, the error left. The error removed is 1 minus that.",
+          "diff": "You typed the raw gap in %². Divide it by the baseline's MSE first."
+        }
+      },
+      "explain": {
+        "text": "$1 - 10.46/10.85 = 0.036$: about 3.6% of the error is gone. This number is the **test $R^2$**, $R^2$ computed on held-out rows. On returns it is small even for a model with real signals.",
+        "canvas": {
+          "highlight": [
+            "model"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The algebra under `.fit`",
+      "prose": "`.fit` solves the normal equations $\\mathbf{X}^T\\mathbf{X}\\hat{\\boldsymbol\\beta} = \\mathbf{X}^T\\mathbf{y}$ from the least squares course, with a column of ones in $\\mathbf{X}$. It stores the intercept in `model.intercept_` and the slopes in `model.coef_`. Check that by hand.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "G",
+              "rows": [
+                [
+                  "$n$",
+                  "$\\sum x_1$",
+                  "$\\cdots$"
+                ],
+                [
+                  "$\\sum x_1$",
+                  "$\\sum x_1^2$",
+                  "$\\cdots$"
+                ],
+                [
+                  "$\\vdots$",
+                  "$\\vdots$",
+                  "$\\ddots$"
+                ]
+              ],
+              "label": "$\\mathbf{X}^T\\mathbf{X}$"
+            },
+            {
+              "id": "B",
+              "rows": [
+                [
+                  "$b_0$"
+                ],
+                [
+                  "$b_1$"
+                ],
+                [
+                  "$\\vdots$"
+                ]
+              ],
+              "label": "$\\hat{\\boldsymbol\\beta}$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  "$\\sum y$"
+                ],
+                [
+                  "$\\sum x_1 y$"
+                ],
+                [
+                  "$\\vdots$"
+                ]
+              ],
+              "label": "$\\mathbf{X}^T\\mathbf{y}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `normal_eq_coef` so it returns the slopes only, to match `model.coef_`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_panel(seed, n=400, p=10):\n    \"\"\"n share-months in month order, p features (z-scores), next-month return in %.\n    Only the first three features matter: 0.6, 0.4 and -0.3 per unit.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    beta = np.zeros(p)\n    beta[:3] = [0.6, 0.4, -0.3]\n    y = 0.5 + X @ beta + 3.0 * rng.standard_normal(n)\n    return X, y\nfrom sklearn.linear_model import LinearRegression\n",
+        "starter": "import numpy as np\n\ndef normal_eq_coef(X, y):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    A = ...      # a column of ones, then the columns of X\n    beta = ...   # solve the normal equations\n    return np.round(beta[1:], 6)\n",
+        "solution": "import numpy as np\n\ndef normal_eq_coef(X, y):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    A = np.column_stack([np.ones(len(X)), X])\n    beta = np.linalg.solve(A.T @ A, A.T @ y)\n    return np.round(beta[1:], 6)\n",
+        "examples": [
+          {
+            "call": "normal_eq_coef([[0], [1], [2], [3]], [1, 3, 5, 7]).tolist()",
+            "expect": "[2.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "normal_eq_coef([[0], [1], [2], [3]], [1, 3, 5, 7]).tolist()",
+            "expect": "[2.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "normal_eq_coef([[1, 3], [2, 3], [3, 2], [4, 2], [5, 1], [6, 1]], [12.0, 13.3, 11.3, 12.3, 10.3, 11.0]).tolist()",
+            "expect": "[1.0, 3.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(2)",
+            "call": "normal_eq_coef(X[:300], y[:300]).tolist()",
+            "expect": "[0.31207, 0.374368, -0.328586, 0.019779, -0.005343, -0.03859, 0.094451, -0.104865, -0.054031, 0.004145]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(4)",
+            "call": "normal_eq_coef(X[:300], y[:300]).tolist()",
+            "expect": "[0.41751, 0.311396, -0.342845, -0.135116, 0.014225, 0.236528, -0.212379, 0.135195, -0.187638, 0.135282]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(4); m = LinearRegression().fit(X[:300], y[:300])",
+            "call": "bool(np.allclose(normal_eq_coef(X[:300], y[:300]), m.coef_, atol=1e-6))",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Four compare your rounded slopes with math.isclose; the last checks them against `LinearRegression().fit(...).coef_` to within 0.000001. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Stack `np.ones(len(X))` in front of the columns of `X`."
+        },
+        {
+          "rung": "point",
+          "text": "Pass `A.T @ A` and `A.T @ y` to `np.linalg.solve`.",
+          "highlight": [
+            "G",
+            "R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`A = np.column_stack([np.ones(len(X)), X])`, then `beta = np.linalg.solve(A.T @ A, A.T @ y)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your slopes match `model.coef_` to six places.",
+        "generic": "Some tests failed. Put the ones column first, solve the normal equations, and drop the intercept before returning."
+      },
+      "explain": {
+        "text": "On panel 4 the first three slopes are 0.418, 0.311 and -0.343; the true values are 0.6, 0.4 and −0.3. The other seven should be 0 and are not quite. scikit-learn adds nothing new to OLS: it is the same $\\hat{\\boldsymbol\\beta}$, judged in a new place."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The score that flatters",
+      "prose": "A colleague fits all 40 candidate features on the 60 share-months from the first screen. `model.score` returns $R^2$. They print it on the training rows and want to trade the model.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> model = LinearRegression().fit(X_train, y_train)",
+            ">>> X_train.shape",
+            "(60, 40)",
+            ">>> model.score(X_train, y_train)",
+            "0.7888"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does 0.7888 tell you about the model's skill on new months?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Almost nothing: it is measured on the rows the model was fitted to",
+            "correct": true
+          },
+          {
+            "id": "skill",
+            "text": "It will explain about 79% of next month's returns",
+            "why": "You read the training score as skill. On the 2,000 test rows the same model scores −0.95.",
+            "canvas": {
+              "lines": [
+                ">>> model = LinearRegression().fit(X_train, y_train)",
+                ">>> X_train.shape",
+                "(60, 40)",
+                ">>> model.score(X_train, y_train)",
+                "0.7888",
+                ">>> model.score(X_test, y_test)",
+                "-0.9527"
+              ]
+            }
+          },
+          {
+            "id": "haircut",
+            "text": "It is a little optimistic: expect about 0.7 on new rows",
+            "why": "You expected a small haircut. With 40 columns and 60 rows most of the 0.79 is fitted noise; the test score is −0.95."
+          },
+          {
+            "id": "positive",
+            "text": "Being positive, it proves the model beats the mean",
+            "why": "OLS with an intercept can never score below 0 on its own training rows. A positive training $R^2$ proves nothing."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows did the fit already see?"
+        },
+        {
+          "rung": "point",
+          "text": "Go back to the first screen: what was test MSE at $k = 40$?",
+          "highlight": [
+            "l4",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Train MSE at $k = 40$ was 2.08; test MSE was 23.55, worse than the mean-only model's 12.27."
+        }
+      ],
+      "feedback": {
+        "correct": "A training score grades the model on its own homework.",
+        "generic": "Not quite right. Ask which rows the score was computed on.",
+        "byKey": {
+          "skill": "You read the training $R^2$ as skill. On new months this model is worse than guessing the mean.",
+          "haircut": "You expected a small haircut. Forty columns on 60 rows fit mostly noise: the test score is −0.95."
+        }
+      },
+      "explain": {
+        "text": "On the test rows the same model scores $R^2 = -0.95$: its test MSE, 23.55, is almost double the baseline's 12.27. Training error only falls as columns are added, so it cannot rank models. Score on held-out rows, every time.",
+        "canvas": {
+          "lines": [
+            ">>> model = LinearRegression().fit(X_train, y_train)",
+            ">>> X_train.shape",
+            "(60, 40)",
+            ">>> model.score(X_train, y_train)",
+            "0.7888",
+            ">>> model.score(X_test, y_test)",
+            "-0.9527"
+          ],
+          "tone": {
+            "l7": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "More features than rows",
+      "prose": "Now give the 40 features only 30 training rows. The normal equations have 41 unknowns and 30 rows of data, so $\\mathbf{X}^T\\mathbf{X}$ cannot be inverted.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> X_train.shape",
+            "(30, 40)",
+            ">>> model = LinearRegression().fit(X_train, y_train)",
+            ">>> mean_squared_error(y_train, model.predict(X_train))",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does `LinearRegression().fit` do here?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "minnorm",
+            "text": "Returns one of infinitely many exact fits, the one with the smallest coefficients; train MSE is 0",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "Raises an error, because $\\mathbf{X}^T\\mathbf{X}$ is singular",
+            "why": "You expected it to invert $\\mathbf{X}^T\\mathbf{X}$. scikit-learn uses a least squares solver that never inverts it, so it returns an answer."
+          },
+          {
+            "id": "drop",
+            "text": "Drops 11 features so the rest can be fitted",
+            "why": "You expected it to choose features for you. OLS never drops a column; it keeps all 40."
+          },
+          {
+            "id": "mean",
+            "text": "Falls back to predicting the training mean",
+            "why": "You expected a safe fallback. It fits the 30 rows exactly instead."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many lines can pass exactly through 30 points in 40 dimensions?"
+        },
+        {
+          "rung": "point",
+          "text": "With more unknowns than equations, an exact fit is easy and not unique.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Many $\\boldsymbol\\beta$ give zero training error. The solver returns the one with the smallest $\\lVert\\boldsymbol\\beta\\rVert$."
+        }
+      ],
+      "feedback": {
+        "correct": "Train MSE is 0 and the coefficients are one choice among infinitely many.",
+        "generic": "Not quite right. Count unknowns against rows."
+      },
+      "explain": {
+        "text": "Train MSE is $2 \\times 10^{-29}$: zero up to rounding. On the 2,000 test rows the MSE is 23.98, about double the baseline's 12.15. Lesson 7 adds a penalty that makes the answer unique and far less wild.",
+        "canvas": {
+          "lines": [
+            ">>> X_train.shape",
+            "(30, 40)",
+            ">>> model = LinearRegression().fit(X_train, y_train)",
+            ">>> mean_squared_error(y_train, model.predict(X_train))",
+            "2.26e-29",
+            ">>> mean_squared_error(y_test, model.predict(X_test))",
+            "23.979"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why only the test score can go negative",
+      "prose": "Training $R^2$ for OLS with an intercept is never below 0. Test $R^2$ can be. Put the argument in order.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "min",
+            "text": "OLS chooses $\\hat{\\boldsymbol\\beta}$ to make the training SSE as small as possible over every $\\boldsymbol\\beta$"
+          },
+          {
+            "id": "cand",
+            "text": "The mean-only model, intercept $\\bar y_{\\text{train}}$ and every slope 0, is one candidate, so $\\text{SSE}_{\\text{train}} \\le \\text{SST}_{\\text{train}}$"
+          },
+          {
+            "id": "pos",
+            "text": "So $R^2_{\\text{train}} = 1 - \\text{SSE}_{\\text{train}} / \\text{SST}_{\\text{train}} \\ge 0$"
+          },
+          {
+            "id": "test",
+            "text": "The test rows played no part in choosing $\\hat{\\boldsymbol\\beta}$, so nothing caps $\\text{MSE}_{\\text{model}}$ at $\\text{MSE}_{\\text{baseline}}$, and $R^2_{\\text{test}}$ can be negative"
+          }
+        ],
+        "answer": [
+          "min",
+          "cand",
+          "pos",
+          "test"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from what OLS does on the training rows."
+        },
+        {
+          "rung": "point",
+          "text": "The mean-only model is a special $\\boldsymbol\\beta$ that OLS also considered."
+        },
+        {
+          "rung": "step",
+          "text": "Minimum, then the candidate, then the training bound, then why the bound fails on test rows."
+        }
+      ],
+      "feedback": {
+        "correct": "The bound comes from the minimisation, and the minimisation only saw the training rows.",
+        "generic": "Not quite right. Begin with what OLS minimises, and end with the test rows.",
+        "byKey": {
+          "test": "The test line explains why the bound fails. It needs the training bound first.",
+          "pos": "The bound on $R^2_{\\text{train}}$ needs the comparison with the mean-only model first."
+        }
+      },
+      "explain": {
+        "text": "OLS beat every $\\boldsymbol\\beta$ on the training rows, the mean-only one included. That guarantee says nothing about rows it never saw. The colleague's −0.95 is what happens when the fit chased noise."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The honest score",
+      "prose": "Fit on the training rows, then score on held-out rows against the forecast you could have made without features: $$R^2_{\\text{test}} = 1 - \\frac{\\text{MSE}_{\\text{test}}(\\text{model})}{\\text{MSE}_{\\text{test}}(\\bar y_{\\text{train}})}.$$ scikit-learn's `model.score(X_test, y_test)` uses the test rows' own mean instead. The difference is usually small.",
+      "question": "A model's test MSE is 12.9 and the baseline's is 12.3. What is $R^2_{\\text{test}}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "neg",
+            "text": "$-0.049$",
+            "correct": true
+          },
+          {
+            "id": "pos",
+            "text": "$0.049$",
+            "why": "You subtracted the wrong way round. The model's error is larger, so it removed less than nothing."
+          },
+          {
+            "id": "ratio",
+            "text": "$1.049$",
+            "why": "That is the ratio of the two MSEs. $R^2_{\\text{test}}$ is 1 minus it."
+          },
+          {
+            "id": "zero",
+            "text": "$0$",
+            "why": "You floored it at 0. Test $R^2$ has no floor: a worse-than-baseline model scores below 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the model's MSE by the baseline's."
+        },
+        {
+          "rung": "point",
+          "text": "$12.9 / 12.3 = 1.049$."
+        },
+        {
+          "rung": "step",
+          "text": "$1 - 1.049 = -0.049$."
+        }
+      ],
+      "feedback": {
+        "correct": "Below 0: the model forecast worse than the training mean.",
+        "generic": "Not quite right. Compute $1 - 12.9/12.3$."
+      },
+      "explain": {
+        "text": "$1 - 12.9/12.3 = -0.049$. A negative test $R^2$ is a verdict, not an error: drop the model or the features that hurt it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A cross-sectional return model",
+      "prose": "A desk regresses next-month return on five features over 400 share-months, monthly returns with a spread of about 8%. It trains on the first 300 rows and tests on the last 100.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Train rows",
+            "Test rows"
+          ],
+          "rows": [
+            [
+              "Rows",
+              "300",
+              "100"
+            ],
+            [
+              "$R^2$",
+              "0.0218",
+              "?"
+            ],
+            [
+              "MSE, model (%²)",
+              "",
+              "65.76"
+            ],
+            [
+              "MSE, training mean (%²)",
+              "",
+              "67.04"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the model's test $R^2$, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0191,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "label": "Test R squared in per cent",
+        "accept": "1.91% ± 0.05: $1 - 65.76/67.04$.",
+        "wrong": [
+          {
+            "id": "train",
+            "value": 0.0218,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 0.9809,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the test column only."
+        },
+        {
+          "rung": "point",
+          "text": "Divide the model's test MSE by the baseline's.",
+          "highlight": [
+            "r2c2",
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 - 65.76/67.04$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 1.9%: small, and real.",
+        "generic": "Not quite right. Compute $1 - 65.76/67.04$ and give it in per cent.",
+        "byKey": {
+          "train": "That is the training $R^2$. The question asks about the 100 test rows.",
+          "ratio": "That ratio is the error left. Subtract it from 1."
+        }
+      },
+      "explain": {
+        "text": "$1 - 65.76/67.04 = 0.0191$, about 1.9%. Large studies of monthly stock returns report out-of-sample $R^2$ around 1% or less, so this is what a real signal looks like. Spread over hundreds of shares a month, a 2% edge can still pay.",
+        "canvas": {
+          "values": {
+            "r1c2": "0.0191"
+          },
+          "highlight": {
+            "cells": [
+              "r1c2"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`LinearRegression().fit(X_train, y_train)` is the OLS you know; only the held-out rows can say how good it is.",
+      "The fair rival is the training mean; test $R^2$ is the share of its error the model removes, and it can be negative.",
+      "Extra columns always lower training error; past a point they raise test error, and with more columns than rows OLS fits the noise exactly."
+    ],
+    "formula": {
+      "name": "Test $R^2$",
+      "tex": "R^2_{\\text{test}} = 1 - \\dfrac{\\text{MSE}_{\\text{test}}(\\text{model})}{\\text{MSE}_{\\text{test}}(\\bar y_{\\text{train}})}",
+      "note": "On monthly returns, 1% to 2% is a real signal."
+    },
+    "trap": "A training score, `model.score(X_train, y_train)`, grades the model on rows it has already seen; it says nothing about skill."
+  },
+  "quiz": [
+    {
+      "id": "q-constant",
+      "difficulty": 2,
+      "prose": "A column in `X_train` is 1.0 on every row. You fit `LinearRegression()` with its usual intercept.",
+      "question": "What coefficient does that column get?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0: once each column is centred it is all zeros, and the solver gives it nothing",
+            "correct": true
+          },
+          {
+            "id": "int",
+            "text": "The intercept's value, since it does the intercept's job",
+            "why": "You gave it the intercept's role. The intercept is fitted separately, so this column adds nothing and gets 0."
+          },
+          {
+            "id": "err",
+            "text": "An error, because the column is collinear with the intercept",
+            "why": "You expected a singular-matrix error. scikit-learn's least squares solver returns the minimum-norm answer instead."
+          },
+          {
+            "id": "big",
+            "text": "A huge number, because the variance is zero",
+            "why": "You expected the zero spread to blow up the estimate. The solver sets it to 0 rather than divide by zero."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A constant column carries no information about which share does better.",
+        "generic": "Not quite right. Think about what is left of the column after its mean is taken off.",
+        "byKey": {
+          "err": "You expected an error. The solver quietly returns 0 for that column."
+        }
+      },
+      "explain": {
+        "text": "scikit-learn centres every column before fitting; a constant column becomes all zeros. Its coefficient is 0 and predictions are unchanged. Drop such columns anyway: they only hide mistakes."
+      }
+    },
+    {
+      "id": "q-noise-col",
+      "difficulty": 2,
+      "prose": "You add one column of pure random numbers to an OLS model and refit.",
+      "question": "What happens to training MSE and test MSE?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Training MSE cannot rise; test MSE usually rises a little",
+            "correct": true
+          },
+          {
+            "id": "both-down",
+            "text": "Both fall, because the model has more to work with",
+            "why": "You trusted the training error. The new column fits noise in the training rows, which does not repeat."
+          },
+          {
+            "id": "train-up",
+            "text": "Training MSE rises, because the column is noise",
+            "why": "OLS could set the new coefficient to 0 and keep the old fit, so training MSE cannot rise."
+          },
+          {
+            "id": "same",
+            "text": "Neither changes, because OLS sets its coefficient to 0",
+            "why": "OLS gives it whatever slope lowers training SSE, which is almost never exactly 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "More columns only ever help on the rows they were fitted to.",
+        "generic": "Not quite right. OLS can always ignore a column, but it rarely does."
+      },
+      "explain": {
+        "text": "The old fit is still available, so training SSE cannot rise, and the new slope chases noise to lower it a little. That chasing costs on new rows."
+      }
+    },
+    {
+      "id": "q-negative",
+      "difficulty": 3,
+      "prose": "A model's test MSE is 8.6 (%²). Predicting the training mean on the same test rows gives 8.0.",
+      "question": "What is the model's test $R^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.075,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Test R squared as a decimal",
+        "accept": "−0.075: $1 - 8.6/8.0$.",
+        "wrong": [
+          {
+            "id": "flip",
+            "value": 0.0698,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "pos",
+            "value": 0.075,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Negative: the features made forecasts worse.",
+        "generic": "Not quite right. Compute $1 - 8.6/8.0$.",
+        "byKey": {
+          "flip": "You divided the baseline by the model. The model's MSE goes on top.",
+          "pos": "You dropped the sign. The model's error is larger, so $R^2_{\\text{test}}$ is below 0."
+        }
+      },
+      "explain": {
+        "text": "$8.6/8.0 = 1.075$, so $R^2_{\\text{test}} = -0.075$. The model is 7.5% worse than using no features at all."
+      }
+    },
+    {
+      "id": "q-train-mean",
+      "difficulty": 2,
+      "prose": "The baseline forecast for every test row is the mean of the **training** returns.",
+      "question": "Why not use the mean of the test returns?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "future",
+            "text": "It is only known after the test period, so no real forecaster could use it",
+            "correct": true
+          },
+          {
+            "id": "noisy",
+            "text": "The test set is smaller, so its mean is too noisy",
+            "why": "Size is not the issue. Even a large test set's mean uses returns that had not happened yet."
+          },
+          {
+            "id": "same",
+            "text": "The two means are always equal",
+            "why": "They differ; in panel 2 the training mean is 0.84% and the test mean is different."
+          },
+          {
+            "id": "convention",
+            "text": "It is a convention with no effect on the score",
+            "why": "It has an effect: the test mean always scores at least as well as any other constant on those rows, which flatters the baseline."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A baseline must be a forecast you could have made at the time.",
+        "generic": "Not quite right. Ask when each mean becomes known."
+      },
+      "explain": {
+        "text": "A fair test pits the model against a rival that knows no more than it did. The training mean is that rival; the test mean peeks at the answers."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1209 @@
+{
+ "id": "l6-const",
+ "course": "cpp",
+ "title": "Promising not to change",
+ "minutes": 14,
+ "objectives": [
+  "Use `const` on variables, references and methods.",
+  "Predict which lines a `const` promise makes the compiler reject."
+ ],
+ "skills": [
+  "cp-references"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A tick size that cannot move",
+   "prose": "A tick is the smallest price step an exchange allows. In Python a name can always be pointed at a new value. In C++ you can forbid it with `const`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "int main() {",
+      "    const double tick = 0.01;",
+      "    tick = 0.05;",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "What happens when you build `main.cpp`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "error",
+      "text": "The compiler rejects line 3",
+      "correct": true
+     },
+     {
+      "id": "five",
+      "text": "It builds, and `tick` ends as 0.05",
+      "why": "That is the Python habit of rebinding a name. `const` forbids any assignment after the declaration."
+     },
+     {
+      "id": "one",
+      "text": "It builds, and line 3 is ignored, so `tick` stays 0.01",
+      "why": "C++ never ignores a line silently. Breaking a `const` promise is a compile error."
+     },
+     {
+      "id": "runtime",
+      "text": "It builds, then stops with an error when line 3 runs",
+      "why": "`const` is checked by the compiler, before the program ever runs."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When is `const` checked: while compiling, or while running?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 3 assigns to `tick`, which line 2 declared `const`.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The compiler checks every assignment against the type. `const double` cannot be assigned, so the build fails at line 3."
+    }
+   ],
+   "feedback": {
+    "correct": "The build stops at line 3.",
+    "generic": "Not quite right. `const` is a promise the compiler checks before anything runs.",
+    "byKey": {
+     "five": "That is the Python habit of rebinding a name. `const` forbids any assignment after the declaration."
+    }
+   },
+   "explain": {
+    "text": "The compiler checks every assignment against the variable's type. `tick` is a `const double`, so line 3 is a compile error, and clang names both lines. No program is built.",
+    "canvas": {
+     "lines": [
+      "main.cpp:3:10: error: cannot assign to variable 'tick'",
+      "  with const-qualified type 'const double'",
+      "    3 |     tick = 0.05;",
+      "      |     ~~~~ ^",
+      "main.cpp:2:18: note: variable 'tick' declared const here"
+     ],
+     "tone": {
+      "l5": "muted"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Which lines break the promise",
+   "prose": "`const double& px` makes `px` a read-only name for the caller's price. The other parameter, `fee`, is a plain copy.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "double with_fee(const double& px, double fee) {",
+      "    double out = px;",
+      "    out += fee;",
+      "    px += fee;",
+      "    fee = 0;",
+      "    return out;",
+      "}"
+     ],
+     "title": "fees.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Tap every line the compiler rejects.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l4"
+    ],
+    "only": [
+     "l1",
+     "l2",
+     "l3",
+     "l4",
+     "l5",
+     "l6",
+     "l7"
+    ],
+    "countWord": "lines",
+    "wrong": [
+     {
+      "id": "fee-too",
+      "set": [
+       "l4",
+       "l5"
+      ]
+     },
+     {
+      "id": "copy",
+      "set": [
+       "l3",
+       "l4"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which lines assign to something? Of those, which name is `const`?"
+    },
+    {
+     "rung": "point",
+     "text": "Only `px` carries `const`. `out` is a new local copy.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Line 4 writes through `px`, which is read only. Lines 3 and 5 change `out` and `fee`, which are ordinary copies."
+    }
+   ],
+   "feedback": {
+    "correct": "Only line 4 writes through the `const` name.",
+    "generic": "Not quite right. Find the lines that write to `px` itself.",
+    "byKey": {
+     "fee-too": "`fee` has no `const`: it is the function's own copy, so `fee = 0` is allowed. Only line 4 writes through `px`.",
+     "copy": "`out` is a new `double` copied from `px`. Changing the copy is fine; only line 4 writes through `px`.",
+     "l2": "Line 2 reads `px` to copy it. Reading is what `const` allows.",
+     "l5": "`fee` has no `const`, so line 5 is allowed."
+    }
+   },
+   "explain": {
+    "text": "Line 4 is the only write through `px`, and clang says \"cannot assign to variable 'px' with const-qualified type 'const double &'\". Reading `px` into `out` is fine, and so is changing the copies `out` and `fee`.",
+    "canvas": {
+     "shade": {
+      "bad": [
+       "l4"
+      ]
+     },
+     "tone": {
+      "l4": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "What a promise buys",
+   "prose": "A `const` reference parameter is a **const reference**: the function may read the caller's object but never change it. Here is the version *without* `const`, and three calls.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "double mean(std::vector<double>& v);",
+      "",
+      "std::vector<double> prices{101.5, 99.0};",
+      "const std::vector<double> fixed{100.0, 100.5};",
+      "",
+      "mean(prices);",
+      "mean({101.5, 99.0});",
+      "mean(fixed);"
+     ],
+     "title": "calls.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "With this plain `std::vector<double>&`, which calls compile?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "Only `mean(prices)`",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "All three",
+      "why": "A plain reference may change its object. So the compiler refuses a temporary, which has no variable, and `fixed`, which is `const`."
+     },
+     {
+      "id": "fixed",
+      "text": "`mean(prices)` and `mean(fixed)`",
+      "why": "`fixed` is `const`. Binding a plain reference to it would let `mean` change it, so clang says it \"would lose const qualifier\"."
+     },
+     {
+      "id": "temp",
+      "text": "`mean(prices)` and `mean({101.5, 99.0})`",
+      "why": "`{101.5, 99.0}` is a temporary. A plain reference must name a real variable, so clang says it \"expects an lvalue\"."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A plain reference says the function might change the argument. Which arguments must not be changed, or cannot be?"
+    },
+    {
+     "rung": "point",
+     "text": "`fixed` is `const`, and `{101.5, 99.0}` is a temporary with no name.",
+     "highlight": [
+      "l7",
+      "l8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only `prices` is a non-const variable. Adding `const` to the parameter makes all three calls compile."
+    }
+   ],
+   "feedback": {
+    "correct": "Only a non-const variable binds to a plain reference.",
+    "generic": "Not quite right. Ask which arguments the function would be allowed to change.",
+    "byKey": {
+     "all": "A plain reference may change its object, so it refuses the temporary and the `const` vector."
+    }
+   },
+   "explain": {
+    "text": "A plain reference may change its argument, so it accepts only a non-const variable. With `const std::vector<double>& v`, all three calls compile. That is why read-only parameters are `const&`: they take anything.",
+    "canvas": {
+     "lines": [
+      "double mean(const std::vector<double>& v);",
+      "",
+      "std::vector<double> prices{101.5, 99.0};",
+      "const std::vector<double> fixed{100.0, 100.5};",
+      "",
+      "mean(prices);         // compiles",
+      "mean({101.5, 99.0});  // compiles",
+      "mean(fixed);          // compiles"
+     ],
+     "tone": {
+      "l1": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Const objects, const methods",
+   "prose": "`const` after a method's parameter list promises the method does not change the object. A `const` object may only call such methods.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "struct Quote {",
+      "    double bid, ask;",
+      "    double mid() const { return (bid + ask) / 2; }",
+      "    void widen(double by) { bid -= by; ask += by; }",
+      "};",
+      "",
+      "const Quote q{99.98, 100.02};"
+     ],
+     "title": "quote.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: which lines compile?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mid",
+      "text": "`double m = q.mid();`",
+      "correct": true
+     },
+     {
+      "id": "bid",
+      "text": "`double b = q.bid;`",
+      "correct": true
+     },
+     {
+      "id": "widen",
+      "text": "`q.widen(0.01);`",
+      "why": "`widen` is not marked `const`, so a `const Quote` cannot call it. clang: \"function is not marked const\"."
+     },
+     {
+      "id": "ask",
+      "text": "`q.ask = 100.05;`",
+      "why": "`q` is `const`, so every member is read only, and assigning to `q.ask` is an error."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Reading is always allowed. Which lines would change `q`?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 3 has `const` after `()`; line 4 does not.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`mid()` is a `const` method and reading `q.bid` is fine. `widen` and the assignment would change `q`, so both fail."
+    }
+   ],
+   "feedback": {
+    "correct": "A `const` object reads and calls `const` methods only.",
+    "generic": "Not quite right. Keep the lines that only read `q`.",
+    "byKey": {
+     "widen": "`widen` is not marked `const`, so a `const Quote` cannot call it, even before it runs."
+    }
+   },
+   "explain": {
+    "text": "`q.mid()` compiles because `mid` is marked `const`, and reading `q.bid` is always fine. `q.widen(0.01)` fails because `widen` makes no such promise. `q.ask = 100.05` fails because every member of a `const` object is read only.",
+    "canvas": {
+     "highlight": [
+      "l3"
+     ],
+     "tone": {
+      "l4": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Write spread",
+   "prose": "The data in `Quote` is private: read it through the `const` getters `bid()` and `ask()`. The starter breaks two rules.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "class Quote {",
+      "public:",
+      "    Quote(double bid, double ask);",
+      "    double bid() const;",
+      "    double ask() const;",
+      "    void set(double bid, double ask);",
+      "private:",
+      "    double bid_, ask_;",
+      "};"
+     ],
+     "title": "quote.h (hidden above your code)",
+     "numbers": true
+    },
+    "state": {
+     "highlight": [
+      "l4",
+      "l5"
+     ]
+    }
+   },
+   "question": "Fix `spread(q)`: the ask minus the bid, for any `Quote`, including a `const` one or a temporary.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "// quote.h, included for you\nclass Quote {\npublic:\n    Quote(double bid, double ask) : bid_(bid), ask_(ask) {}\n    double bid() const { return bid_; }\n    double ask() const { return ask_; }\n    void set(double bid, double ask) { bid_ = bid; ask_ = ask; }\nprivate:\n    double bid_, ask_;\n};\n",
+    "postlude": "#include <type_traits>\nstatic_assert(std::is_same<decltype(&spread), double (*)(const Quote&)>::value, \"spread should take const Quote&\");\n",
+    "starter": "// Quote is defined above (hidden)\n\ndouble spread(Quote& q) {\n    return q.ask - q.bid;\n}\n",
+    "solution": "// Quote is defined above (hidden)\n\ndouble spread(const Quote& q) {\n    return q.ask() - q.bid();\n}\n",
+    "examples": [
+     {
+      "setup": "Quote q(99.98, 100.02);",
+      "call": "spread(q)",
+      "expect": 0.04,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Quote q(99.98, 100.02);",
+      "call": "spread(q)",
+      "expect": 0.04,
+      "compare": "isclose"
+     },
+     {
+      "call": "spread(Quote(71.42, 71.46))",
+      "expect": 0.04,
+      "compare": "isclose"
+     },
+     {
+      "setup": "const Quote q(250.0, 250.5);",
+      "call": "spread(q)",
+      "expect": 0.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "spread(Quote(100.0, 100.0))",
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "call": "spread(Quote(100.1, 100.0))",
+      "expect": -0.1,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests, with a `const Quote`, a temporary `Quote(...)`, a locked quote and a crossed one. A hidden check after your code tests the signature."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two fixes: the parameter type, and how the prices are read."
+    },
+    {
+     "rung": "point",
+     "text": "`bid_` and `ask_` are private. The getters are `bid()` and `ask()`, with brackets.",
+     "highlight": [
+      "l4",
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Write `double spread(const Quote& q) { return q.ask() - q.bid(); }`. The getters are `const`, so a `const Quote&` may call them."
+    }
+   ],
+   "feedback": {
+    "correct": "Read only, and it accepts any `Quote`.",
+    "generic": "Not yet. The results under the editor say what failed.",
+    "byKey": {
+     "compile": "Read the compiler's first error. Private members are reached through `q.ask()` and `q.bid()`, and the parameter should be `const Quote&`."
+    }
+   },
+   "explain": {
+    "text": "`const Quote&` accepts a variable, a `const` quote and a temporary, without copying. Inside, only `const` methods may be called, and `bid()` and `ask()` are. A crossed quote gives a negative spread, which a feed handler would flag."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Known before the program runs",
+   "prose": "`constexpr` asks for more than `const`: the value must be known while compiling. The compiler can then fold it into the code. `read_tick` reads a config file when the program starts.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "constexpr int lot_size = 100;",
+      "constexpr double tick = 0.01;",
+      "constexpr double min_fee = tick * lot_size;",
+      "double read_tick();",
+      "constexpr double live_tick = read_tick();",
+      "const double start_tick = read_tick();"
+     ],
+     "title": "limits.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Tap the line the compiler rejects.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l5"
+    ],
+    "max": 1,
+    "only": [
+     "l1",
+     "l2",
+     "l3",
+     "l4",
+     "l5",
+     "l6"
+    ],
+    "countWord": "lines"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which values could the compiler work out without running anything?"
+    },
+    {
+     "rung": "point",
+     "text": "`read_tick()` runs only when the program starts.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Line 5 asks for a compile-time value from a run-time call. Line 6 is fine: `const` only forbids changes later."
+    }
+   ],
+   "feedback": {
+    "correct": "A `constexpr` value cannot come from a run-time call.",
+    "generic": "Not quite right. Find the `constexpr` whose value needs the program to run.",
+    "byKey": {
+     "l6": "Line 6 uses `const`, which only forbids later changes. Its value may come from a run-time call.",
+     "l3": "`tick * lot_size` uses two `constexpr` values, so the compiler can multiply them itself."
+    }
+   },
+   "explain": {
+    "text": "Line 5 is rejected: \"constexpr variable 'live_tick' must be initialized by a constant expression\". Lines 1 to 3 are known while compiling. Line 6 is `const`: it is set once at start-up and never changed.",
+    "canvas": {
+     "tone": {
+      "l5": "err",
+      "l6": "ok"
+     },
+     "shade": {
+      "bad": [
+       "l5"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Const is a view, not a freeze",
+   "prose": "`view` is a read-only name for `px`. (`const int x` and `int const x` mean the same; the place of `const` is not the trap.)\n\n```cpp\nstd::vector<double> px{100.0, 101.0};\nconst std::vector<double>& view = px;\npx[0] = 99.0;\nstd::cout << view[0] << \"\\n\";\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "px",
+       "label": "px",
+       "x": 0.15,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "view",
+       "label": "view (const&)",
+       "x": 0.15,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "o",
+       "label": "{100, 101}",
+       "x": 0.7,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "px",
+       "to": "o",
+       "directed": true
+      },
+      {
+       "from": "view",
+       "to": "o",
+       "directed": true,
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "caption": "Two names, one vector; the dashed name is read only"
+    }
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "ninety9",
+      "text": "`99`",
+      "correct": true
+     },
+     {
+      "id": "hundred",
+      "text": "`100`",
+      "why": "You treated `const` as freezing the vector. It only stops changes made through `view`; `px` may still change it, and `view` sees the change.",
+      "canvas": {
+       "highlight": [
+        "px"
+       ]
+      }
+     },
+     {
+      "id": "error",
+      "text": "It does not compile",
+      "why": "`px` is not `const`, so `px[0] = 99.0` is allowed. Only writes through `view` are refused."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many vectors are there?"
+    },
+    {
+     "rung": "point",
+     "text": "`view` and `px` name the same box.",
+     "highlight": [
+      "o"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`px[0] = 99.0` changes the one vector. `view[0]` reads that vector, so it prints 99."
+    }
+   ],
+   "feedback": {
+    "correct": "`const` limited `view`, not the vector.",
+    "generic": "Not quite right. Count the vectors, then ask which name did the writing.",
+    "byKey": {
+     "hundred": "You treated `const` as freezing the vector. It only stops changes made through `view`; `px` changed it."
+    }
+   },
+   "explain": {
+    "text": "There is one vector with two names. `const` restricts the name `view`, so `view[0] = 1` would not compile, but `px` is free to write. `view[0]` then reads the changed value, 99.",
+    "canvas": {
+     "labels": {
+      "o": "{99, 101}"
+     },
+     "highlight": [
+      "o"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Copy, then change",
+   "prose": "This function does not compile: it writes through a `const` reference. Keep the promise to the caller. Make your own copy, change that, and return it.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "main.cpp:5:15: error: cannot assign to return value because",
+      "  function 'operator[]' returns a const value",
+      "    5 |         px[i] += fee;",
+      "      |         ~~~~~ ^"
+     ],
+     "title": "clang"
+    },
+    "state": {}
+   },
+   "question": "Fix `with_fees`: return the prices with `fee` added to each; leave the caller's vector unchanged.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "postlude": "#include <type_traits>\nstatic_assert(std::is_same<decltype(&with_fees), std::vector<double> (*)(const std::vector<double>&, double)>::value,\n              \"keep the parameter const std::vector<double>& px: copy inside the function instead\");\n",
+    "starter": "#include <vector>\n\nstd::vector<double> with_fees(const std::vector<double>& px, double fee) {\n    for (std::size_t i = 0; i < px.size(); ++i)\n        px[i] += fee;\n    return px;\n}\n",
+    "solution": "#include <vector>\n\nstd::vector<double> with_fees(const std::vector<double>& px, double fee) {\n    std::vector<double> out = px;\n    for (std::size_t i = 0; i < out.size(); ++i)\n        out[i] += fee;\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "with_fees",
+      "args": [
+       [
+        100,
+        101.5
+       ],
+       0.25
+      ],
+      "types": [
+       "std::vector<double>",
+       "double"
+      ],
+      "expect": [
+       100.25,
+       101.75
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "with_fees",
+      "args": [
+       [
+        100,
+        101.5
+       ],
+       0.25
+      ],
+      "types": [
+       "std::vector<double>",
+       "double"
+      ],
+      "expect": [
+       100.25,
+       101.75
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> p{4.85, 0.72};\nstd::vector<double> q = with_fees(p, 0.01);",
+      "call": "p",
+      "expect": [
+       4.85,
+       0.72
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> p{4.85, 0.72};\nstd::vector<double> q = with_fees(p, 0.01);",
+      "call": "q",
+      "expect": [
+       4.86,
+       0.73
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "with_fees",
+      "args": [
+       [],
+       0.5
+      ],
+      "types": [
+       "std::vector<double>",
+       "double"
+      ],
+      "expect": [],
+      "compare": "isclose"
+     },
+     {
+      "call": "with_fees",
+      "args": [
+       [
+        100
+       ],
+       -0.1
+      ],
+      "types": [
+       "std::vector<double>",
+       "double"
+      ],
+      "expect": [
+       99.9
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests, one of which looks at the caller's vector after the call. A hidden check after your code keeps the `const&` parameter."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "You may not change `px`. What may you change?"
+    },
+    {
+     "rung": "point",
+     "text": "A local `std::vector<double> out = px;` is your own copy."
+    },
+    {
+     "rung": "step",
+     "text": "Copy into `out`, add `fee` to each `out[i]`, and `return out;`. Returning it is free: copy elision."
+    }
+   ],
+   "feedback": {
+    "correct": "One deliberate copy, and the caller's prices are untouched.",
+    "generic": "Not yet. The results under the editor say what failed.",
+    "byKey": {
+     "compile": "The parameter must stay `const std::vector<double>&`. Change a local copy instead of `px`."
+    }
+   },
+   "explain": {
+    "text": "`std::vector<double> out = px;` is the one copy this function needs, and it is yours to change. The caller's `p` is untouched, as the `const&` promised. Returning `out` moves it to the caller without a second copy."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Four places for const",
+   "prose": "Every `const` you used is a promise the compiler checks.\n\n```cpp\nconst double tick = 0.01;     // never reassigned\nconstexpr int lot = 100;      // known while compiling\ndouble spread(const Quote& q);// reads q, no copy\ndouble mid() const;           // does not change *this\n```",
+   "question": "A `const Quote q` can call which of its methods?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "const",
+      "text": "Only those marked `const`",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "All of them",
+      "why": "A method without `const` may change the object, so the compiler stops a `const` object calling it."
+     },
+     {
+      "id": "none",
+      "text": "None of them: it can only read members",
+      "why": "Methods marked `const` are allowed, and getters such as `bid()` are written that way."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Only methods that promise not to change it.",
+    "generic": "Not quite right. Think back to `widen` and `mid`."
+   },
+   "explain": {
+    "text": "A `const` object can read its members and call `const` methods. Mark every method that does not change the object `const`, or `const` callers cannot use it."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Read it right to left",
+   "prose": "The next lesson builds pointers: `double* p` holds the address of a `double`, and `*p` is the `double` there. A declaration reads from the name outwards, right to left. Here is `const double* const p`.",
+   "question": "Put the reading of `const double* const p` in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "p",
+      "text": "`p` is: start at the name"
+     },
+     {
+      "id": "c2",
+      "text": "a `const`: the `const` next to `p` fixes `p` itself"
+     },
+     {
+      "id": "star",
+      "text": "pointer to: the `*` to its left"
+     },
+     {
+      "id": "cd",
+      "text": "a `const double`: the type it points at is read only"
+     }
+    ],
+    "answer": [
+     "p",
+     "c2",
+     "star",
+     "cd"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start at the name and move left one piece at a time."
+    },
+    {
+     "rung": "point",
+     "text": "Directly left of `p` is `const`; left of that is `*`."
+    },
+    {
+     "rung": "step",
+     "text": "`p` is a `const` pointer to a `const double`: neither `p` nor `*p` can change."
+    }
+   ],
+   "feedback": {
+    "correct": "A `const` pointer to a `const double`.",
+    "generic": "Not quite right. Begin at `p` and walk left.",
+    "byKey": {
+     "cd": "The type pointed at is the last thing you reach, at the far left."
+    }
+   },
+   "explain": {
+    "text": "From the name: `p` is `const`, then `*` makes it a pointer, then `const double` is what it points at. So `p` cannot be pointed elsewhere and `*p` cannot be changed. `double const` and `const double` read the same."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Two kinds of const pointer",
+   "prose": "Use the right-to-left reading. A `const` next to the name fixes the pointer; a `const` next to `double` fixes the value it points at.",
+   "question": "Fill in Yes or No for each declaration.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Declaration",
+     "Change `*p`?",
+     "Point `p` elsewhere?"
+    ],
+    "rows": [
+     [
+      "`double* p`",
+      "Yes",
+      "Yes"
+     ],
+     [
+      "`const double* p`",
+      {
+       "edit": true,
+       "answer": "No",
+       "accept": [
+        "N"
+       ]
+      },
+      {
+       "edit": true,
+       "answer": "Yes",
+       "accept": [
+        "Y"
+       ]
+      }
+     ],
+     [
+      "`double* const p`",
+      {
+       "edit": true,
+       "answer": "Yes",
+       "accept": [
+        "Y"
+       ]
+      },
+      {
+       "edit": true,
+       "answer": "No",
+       "accept": [
+        "N"
+       ]
+      }
+     ],
+     [
+      "`const double* const p`",
+      {
+       "edit": true,
+       "answer": "No",
+       "accept": [
+        "N"
+       ]
+      },
+      {
+       "edit": true,
+       "answer": "No",
+       "accept": [
+        "N"
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read each declaration from `p` leftwards."
+    },
+    {
+     "rung": "point",
+     "text": "`const double* p`: `p` is a pointer to a `const double`. The pointer itself is not `const`."
+    },
+    {
+     "rung": "step",
+     "text": "Row 2: No, Yes. Row 3: `p` is a `const` pointer to `double`: Yes, No. Row 4: No, No."
+    }
+   ],
+   "feedback": {
+    "correct": "`const` binds to what sits on its left, or to its right when nothing is on its left.",
+    "generic": "Not quite right. Read each line right to left from `p`."
+   },
+   "explain": {
+    "text": "`const double* p` is a pointer to read-only values: `*p = 3` fails, `p = &y` is fine. `double* const p` is the reverse: clang says \"cannot assign to variable 'p' with const-qualified type 'double *const'\". With both, neither can change."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A market-data callback",
+   "prose": "A feed handler calls every strategy for each tick, 2 million times a second.\n\n```cpp\nstruct Tick { std::string sym; double bid, ask; long long ts; };\n\nvoid on_tick(const Tick& t);\n```",
+   "question": "Why does the callback take `const Tick&`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "No copy per call, and no strategy can change the tick the next one sees",
+      "correct": true
+     },
+     {
+      "id": "fast",
+      "text": "`const` makes the compiler run strategies in parallel",
+      "why": "`const` says nothing about threads. It forbids writes through `t` and avoids a copy."
+     },
+     {
+      "id": "lifetime",
+      "text": "`const&` keeps the tick alive after the callback returns",
+      "why": "The feed owns the tick and may reuse it after the call. A strategy that needs it later must copy it."
+     },
+     {
+      "id": "plainref",
+      "text": "A plain `Tick&` would copy the tick",
+      "why": "A plain reference copies nothing either. It would let a strategy change the tick for every other strategy."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two costs matter here: copying, and one strategy breaking another."
+    },
+    {
+     "rung": "point",
+     "text": "Each tick goes to many strategies in turn."
+    },
+    {
+     "rung": "step",
+     "text": "`&` avoids copying the string and three numbers. `const` stops one strategy editing the tick the next one reads."
+    }
+   ],
+   "feedback": {
+    "correct": "Shared, read only, and cheap.",
+    "generic": "Not quite right. Think about copies, and about the strategies that read the same tick later.",
+    "byKey": {
+     "plainref": "A plain reference avoids the copy too, but any strategy could change the tick for the others."
+    }
+   },
+   "explain": {
+    "text": "`&` means the handler passes its own tick without copying the symbol string. `const` means no strategy can edit it before the next one reads it. A strategy that keeps ticks must copy them, because the feed reuses its buffer."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`const` is a promise the compiler checks: a `const` variable is never reassigned, and a `const&` parameter is read but never changed.",
+   "A `const` reference accepts variables, `const` objects and temporaries; a `const` object can call only methods marked `const`.",
+   "`const` restricts one name, not the object: another name may still change it. `constexpr` also demands the value while compiling."
+  ],
+  "formula": {
+   "name": "Reading a declaration",
+   "tex": "\\texttt{const double* const p} \\quad\\to\\quad p \\text{ is a const pointer to a const double}",
+   "note": "Start at the name and read leftwards; `const int` and `int const` are the same."
+  },
+  "trap": "A `const&` view is not a frozen copy: if the object changes through another name, the view sees the change."
+ },
+ "quiz": [
+  {
+   "id": "q-west-const",
+   "difficulty": 2,
+   "question": "Which declarations make `lots` read only?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Both `const int lots = 5;` and `int const lots = 5;`",
+      "correct": true
+     },
+     {
+      "id": "first",
+      "text": "Only `const int lots = 5;`",
+      "why": "`const` may sit either side of `int`; both lines declare the same type."
+     },
+     {
+      "id": "second",
+      "text": "Only `int const lots = 5;`",
+      "why": "`const int` and `int const` are the same type, so both are read only."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Same type, two spellings.",
+    "generic": "Not quite right. Does the side of `int` that `const` sits on change the type?"
+   },
+   "explain": {
+    "text": "For a plain type, `const int` and `int const` mean the same. The position matters only around a `*`, where it decides whether the pointer or the value is fixed."
+   }
+  },
+  {
+   "id": "q-config",
+   "difficulty": 3,
+   "question": "A desk reads its risk limits from `desk.ini` once, at start-up, and never changes them. Which declaration fits?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "const",
+      "text": "`const Limits limits = load_limits(\"desk.ini\");`",
+      "correct": true
+     },
+     {
+      "id": "constexpr",
+      "text": "`constexpr Limits limits = load_limits(\"desk.ini\");`",
+      "why": "`constexpr` needs the value while compiling, but the file is read only when the program runs."
+     },
+     {
+      "id": "plain",
+      "text": "`Limits limits = load_limits(\"desk.ini\");`",
+      "why": "That works, but nothing stops a later line changing the limits by mistake."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Set once at start-up, then read only.",
+    "generic": "Not quite right. When is the value known, and should it ever change?"
+   },
+   "explain": {
+    "text": "The limits are known only when the program runs, so `constexpr` is impossible. `const` fixes them after that one load, and the compiler rejects any later write."
+   }
+  },
+  {
+   "id": "q-report",
+   "difficulty": 2,
+   "prose": "```cpp\nstruct Position { int qty; };\n\nvoid report(const Position& p) {\n    p.qty = 0;\n}\n```",
+   "question": "What happens when you build this?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "error",
+      "text": "It does not compile: `p` is a `const` reference",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "It compiles and sets the caller's quantity to 0",
+      "why": "That would need a plain `Position&`. The `const` forbids the write."
+     },
+     {
+      "id": "copy",
+      "text": "It compiles and changes a local copy",
+      "why": "`const Position&` is not a copy. The compiler simply refuses the write."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The promise is checked at compile time.",
+    "generic": "Not quite right. What does `const` on the parameter forbid?"
+   },
+   "explain": {
+    "text": "clang says \"cannot assign to variable 'p' with const-qualified type 'const Position &'\". A reporting function should only read, which is exactly what `const&` enforces."
+   }
+  },
+  {
+   "id": "q-temp-const",
+   "difficulty": 2,
+   "question": "`double total(const std::vector<double>& v);` Does `total({1.0, 2.0})` compile?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "yes",
+      "text": "Yes: a `const` reference can bind to a temporary",
+      "correct": true
+     },
+     {
+      "id": "no",
+      "text": "No: a reference needs a named variable",
+      "why": "That is the rule for a plain `T&`. A `const&` promises not to change the temporary, so it may bind to one."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`const&` accepts temporaries.",
+    "generic": "Not quite right. Compare a plain `&` with a `const&`."
+   },
+   "explain": {
+    "text": "A `const` reference may bind to a temporary, which then lives until the call ends. That is why `const&` parameters accept literals such as `{1.0, 2.0}`."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1336 @@
+{
+ "id": "l16-algorithms",
+ "course": "cpp",
+ "title": "Standard algorithms and lambdas",
+ "minutes": 14,
+ "objectives": [
+  "Use `std::sort`, `std::accumulate` and lambdas instead of hand-written loops."
+ ],
+ "skills": [
+  "cp-stl"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Sorting by a rule",
+   "prose": "In Python you rank strategies with `sorted(strats, key=lambda s: s.sharpe, reverse=True)`. C++ passes a rule instead: a function that says whether `a` goes before `b`.\n\n```cpp\nstd::sort(strats.begin(), strats.end(),\n    [](const Strat& a, const Strat& b) {\n        return a.sharpe > b.sharpe;\n    });\n```",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Strategy",
+      "Sharpe"
+     ],
+     "rows": [
+      [
+       "Momentum",
+       "1.4"
+      ],
+      [
+       "Carry",
+       "0.6"
+      ],
+      [
+       "Mean reversion",
+       "1.9"
+      ],
+      [
+       "Value",
+       "0.9"
+      ],
+      [
+       "Trend",
+       "1.1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the strategies in the order `std::sort` leaves them.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "mr",
+      "text": "Mean reversion, 1.9"
+     },
+     {
+      "id": "mo",
+      "text": "Momentum, 1.4"
+     },
+     {
+      "id": "tr",
+      "text": "Trend, 1.1"
+     },
+     {
+      "id": "va",
+      "text": "Value, 0.9"
+     },
+     {
+      "id": "ca",
+      "text": "Carry, 0.6"
+     }
+    ],
+    "answer": [
+     "mr",
+     "mo",
+     "tr",
+     "va",
+     "ca"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The rule returns true when `a` should come first. When does it?"
+    },
+    {
+     "rung": "point",
+     "text": "`a.sharpe > b.sharpe`: the larger Sharpe goes first."
+    },
+    {
+     "rung": "step",
+     "text": "Largest Sharpe first: 1.9, 1.4, 1.1, 0.9, 0.6."
+    }
+   ],
+   "feedback": {
+    "correct": "Largest Sharpe first.",
+    "generic": "Not quite right. The rule puts `a` before `b` when `a` has the larger Sharpe."
+   },
+   "explain": {
+    "text": "`std::sort` asks the rule about pairs and arranges the range so that it never says a later element should come first. With `>`, larger Sharpe ratios come first, like `reverse=True`. The bit in `[]() { ... }` is a **lambda**, C++'s `lambda`."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Python's `sum(pnl)` is `std::accumulate(pnl.begin(), pnl.end(), 0.0)` from `<numeric>`. It starts a total at the third argument and adds each element in turn. Slide through the five days of P&L, in pounds.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      120.5,
+      -40.25,
+      75.0,
+      -10.5,
+      30.25
+     ],
+     "showIndex": true,
+     "sums": [
+      0,
+      120.5,
+      80.25,
+      155.25,
+      144.75,
+      175.0
+     ]
+    },
+    "state": {
+     "params": {
+      "k": 0
+     },
+     "pointers": [
+      {
+       "id": "x",
+       "at": 0,
+       "label": "next"
+      }
+     ]
+    },
+    "derive": {
+     "x.at": "min(k, 4)",
+     "caption": "Added {{k}} of 5: total = {{fixed(params.sums[k], 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "start": 0,
+      "label": "Elements added"
+     }
+    ]
+   },
+   "question": "What does `std::accumulate(pnl.begin(), pnl.end(), 0.0)` return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 175,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "placeholder": "pounds",
+    "accept": "£175.00",
+    "wrong": [
+     {
+      "id": "first",
+      "value": 120.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "four",
+      "value": 144.75,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to 5 and read the caption."
+    }
+   ],
+   "feedback": {
+    "correct": "£175.00 after all five days.",
+    "generic": "Not quite right. Slide to the end, 5 of 5.",
+    "byKey": {
+     "first": "That is only the first day. `accumulate` runs from `begin()` to `end()`, all five days.",
+     "four": "That is four days. `end()` is past the last day, so day 4 is added too."
+    }
+   },
+   "explain": {
+    "text": "`accumulate` is a loop you do not write: start at 0.0, add each element from `begin()` up to `end()`. The iterators say which elements; the third argument says where the total starts and what type it has.",
+    "canvas": {
+     "params": {
+      "k": 5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A lambda with a capture",
+   "prose": "A lambda can use a local variable if its **capture list** names it. `[limit]` copies `limit` into the lambda. `std::count_if` counts the elements for which the lambda returns true.\n\n```cpp\ndouble limit = 0.02;\nauto big = std::count_if(rets.begin(), rets.end(),\n    [limit](double r) { return std::abs(r) > limit; });\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      0.01,
+      -0.03,
+      0.025,
+      -0.005,
+      0.04
+     ],
+     "showIndex": true
+    },
+    "state": {}
+   },
+   "question": "Tap every return the lambda counts.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "c1",
+     "c2",
+     "c4"
+    ],
+    "wrong": [
+     {
+      "id": "pos",
+      "set": [
+       "c2",
+       "c4"
+      ]
+     },
+     {
+      "id": "half",
+      "set": [
+       "c1",
+       "c2",
+       "c3",
+       "c4"
+      ]
+     }
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`std::abs(r)` drops the sign before comparing."
+    },
+    {
+     "rung": "point",
+     "text": "−0.03 has size 0.03, which is above 0.02.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Sizes above 0.02: 0.03, 0.025 and 0.04."
+    }
+   ],
+   "feedback": {
+    "correct": "Three moves bigger than 2% either way.",
+    "generic": "Not quite right. Compare the size of each return, ignoring its sign, with 0.02.",
+    "byKey": {
+     "pos": "You kept the sign. `std::abs(-0.03)` is 0.03, which is above the limit.",
+     "half": "You counted −0.005, whose size is 0.005: below 0.02.",
+     "c0": "0.01 is below the 0.02 limit.",
+     "c3": "−0.005 has size 0.005, below the limit."
+    }
+   },
+   "explain": {
+    "text": "The lambda sees `limit` because `[limit]` copied it in. `count_if` returns 3: Python's `sum(1 for r in rets if abs(r) > limit)`. `[&limit]` would capture a reference instead, `[=]` copies every local it uses and `[&]` refers to them all.",
+    "canvas": {
+     "highlight": [
+      "c1",
+      "c2",
+      "c4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "VWAP without a loop",
+   "prose": "VWAP is the volume-weighted average price: $\\sum p_i q_i / \\sum q_i$. `std::inner_product(a.begin(), a.end(), b.begin(), 0.0)` multiplies pairs and adds them up. Use `accumulate` for the shares. Return 0 when no shares traded.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Fill",
+      "Price (£)",
+      "Shares"
+     ],
+     "rows": [
+      [
+       "1",
+       "100.00",
+       "200"
+      ],
+      [
+       "2",
+       "101.00",
+       "100"
+      ],
+      [
+       "3",
+       "102.00",
+       "100"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "VWAP = 40,300 / 400 = £100.75"
+    }
+   },
+   "question": "Write `vwap(px, qty)` with standard algorithms.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <numeric>\n#include <vector>\n\ndouble vwap(const std::vector<double>& px, const std::vector<double>& qty) {\n    // sum of px * qty, divided by the sum of qty; 0 if no shares traded\n    return 0;\n}\n",
+    "solution": "#include <numeric>\n#include <vector>\n\ndouble vwap(const std::vector<double>& px, const std::vector<double>& qty) {\n    double shares = std::accumulate(qty.begin(), qty.end(), 0.0);\n    if (shares == 0) {\n        return 0;\n    }\n    double value = std::inner_product(px.begin(), px.end(), qty.begin(), 0.0);\n    return value / shares;\n}\n",
+    "examples": [
+     {
+      "call": "vwap",
+      "args": [
+       [
+        100,
+        101,
+        102
+       ],
+       [
+        200,
+        100,
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 100.75,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "vwap",
+      "args": [
+       [
+        100,
+        101,
+        102
+       ],
+       [
+        200,
+        100,
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 100.75,
+      "compare": "isclose"
+     },
+     {
+      "call": "vwap",
+      "args": [
+       [
+        72.5
+       ],
+       [
+        1000
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 72.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "vwap",
+      "args": [
+       [],
+       []
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "vwap",
+      "args": [
+       [
+        100,
+        101
+       ],
+       [
+        0,
+        0
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "vwap",
+      "args": [
+       [
+        2.1,
+        2.11,
+        2.1,
+        2.12
+       ],
+       [
+        500,
+        300,
+        1000,
+        200
+       ]
+      ],
+      "types": [
+       "std::vector<double>",
+       "std::vector<double>"
+      ],
+      "expect": 2.1035,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call vwap; each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two totals: the traded value and the shares."
+    },
+    {
+     "rung": "point",
+     "text": "`std::accumulate(qty.begin(), qty.end(), 0.0)` gives the shares. Check it before dividing."
+    },
+    {
+     "rung": "step",
+     "text": "`double shares = accumulate(...)`; if it is 0 return 0; else return `inner_product(px.begin(), px.end(), qty.begin(), 0.0) / shares`."
+    }
+   ],
+   "feedback": {
+    "correct": "Value over volume, in two calls.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-3": "No fills means no shares. Return 0 before dividing, or you get 0 / 0, which is NaN.",
+     "test-4": "Two fills of 0 shares: the volume is 0, so return 0.",
+     "test-1": "Expected 100.75. If you got 101, you averaged the prices without weighting them by shares."
+    }
+   },
+   "explain": {
+    "text": "`inner_product` walks two ranges in step: `px` from `begin()` and `qty` from its own `begin()`. The `0.0` start makes the totals `double`. Divide only after checking the volume, because `0.0 / 0.0` is NaN."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Price, then time",
+   "prose": "Bids queue by price, then by time: the highest price first and, at one price, the earliest order first. `Order` is supplied with `price`, `qty` and `time`. `b` comes in by value, so sort it and return it.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Price (£)",
+      "Shares",
+      "Time"
+     ],
+     "rows": [
+      [
+       "100.50",
+       "100",
+       "7"
+      ],
+      [
+       "100.50",
+       "200",
+       "2"
+      ],
+      [
+       "100.60",
+       "50",
+       "9"
+      ],
+      [
+       "100.50",
+       "300",
+       "4"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Sorted times: 9, 2, 4, 7"
+    }
+   },
+   "question": "Write `sort_book(b)` with `std::sort` and a lambda.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <vector>\n\n// supplied: one resting bid\nstruct Order {\n    double price;    // pounds\n    int qty;         // shares\n    long long time;  // arrival, earlier is smaller\n};\n\nstd::vector<long long> times_of(const std::vector<Order>& b) {\n    std::vector<long long> t;\n    for (const Order& o : b) t.push_back(o.time);\n    return t;\n}\n",
+    "starter": "#include <algorithm>\n#include <vector>\n\n// Order { double price; int qty; long long time; } is supplied\nstd::vector<Order> sort_book(std::vector<Order> b) {\n    // best bid first: higher price, then earlier time\n    return b;\n}\n",
+    "solution": "#include <algorithm>\n#include <vector>\n\n// Order { double price; int qty; long long time; } is supplied\nstd::vector<Order> sort_book(std::vector<Order> b) {\n    std::sort(b.begin(), b.end(), [](const Order& x, const Order& y) {\n        if (x.price != y.price) {\n            return x.price > y.price;\n        }\n        return x.time < y.time;\n    });\n    return b;\n}\n",
+    "examples": [
+     {
+      "call": "times_of(sort_book({{100.5, 100, 7}, {100.5, 200, 2}, {100.6, 50, 9}, {100.5, 300, 4}}))",
+      "expect": [
+       9,
+       2,
+       4,
+       7
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "auto b = sort_book({{100.5, 200, 3}, {100.6, 100, 5}, {100.4, 300, 1}});",
+      "call": "b[0].price",
+      "expect": 100.6,
+      "compare": "isclose"
+     },
+     {
+      "call": "times_of(sort_book({{100.5, 100, 7}, {100.5, 200, 2}, {100.6, 50, 9}, {100.5, 300, 4}}))",
+      "expect": [
+       9,
+       2,
+       4,
+       7
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "sort_book({}).size()",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "times_of(sort_book({{99.9, 1, 6}, {99.9, 1, 5}, {99.9, 1, 4}, {99.9, 1, 3}, {99.9, 1, 2}, {99.9, 1, 1}}))",
+      "expect": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "auto b = sort_book({{101.0, 100, 1}, {101.2, 200, 2}, {100.8, 300, 3}, {101.1, 400, 4}});",
+      "call": "b[3].qty",
+      "expect": 300,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call sort_book and read prices, sizes or the order of the times; each must match exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The lambda gets two orders and returns true when the first should come first."
+    },
+    {
+     "rung": "point",
+     "text": "Compare prices first. Only when they are equal, compare times."
+    },
+    {
+     "rung": "step",
+     "text": "`if (x.price != y.price) return x.price > y.price; return x.time < y.time;`"
+    }
+   ],
+   "feedback": {
+    "correct": "One rule, two keys.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-2": "Expected times 9, 2, 4, 7. If 7 came before 2, the tie on price was not broken by time.",
+     "test-4": "Six orders at one price. If the program stopped with a strict-weak-ordering message, your rule used `<=` or `>=`: use strict `<` and `>`.",
+     "test-1": "The best bid is 100.6. If you got 100.4, the prices sort ascending: use `>` for price."
+    }
+   },
+   "explain": {
+    "text": "The lambda decides by price and falls back to time only on a tie, like Python's `key=lambda o: (-o.price, o.time)`. The rule must be strict: for two equal orders it returns false both ways. Comparing doubles with `!=` is safe here because prices come from the book unchanged."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Up days, again",
+   "prose": "In lesson 3 you counted up days with a loop. Now use algorithms. `std::adjacent_difference` writes `px[0]`, then `px[1] - px[0]`, `px[2] - px[1]` and so on into a range of the same size. Its first output is not a difference.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      104,
+      101,
+      106,
+      103
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "`adjacent_difference` gives 100, 4, −3, 5, −3"
+    }
+   },
+   "question": "Write `count_up_days(px)` with `adjacent_difference` and `count_if`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\nint count_up_days(const std::vector<double>& px) {\n    // adjacent_difference, then count_if; no hand-written loop\n    return 0;\n}\n",
+    "solution": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\nint count_up_days(const std::vector<double>& px) {\n    if (px.size() < 2) {\n        return 0;\n    }\n    std::vector<double> d(px.size());\n    std::adjacent_difference(px.begin(), px.end(), d.begin());\n    return std::count_if(d.begin() + 1, d.end(), [](double x) { return x > 0; });\n}\n",
+    "examples": [
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100,
+        104,
+        101,
+        106,
+        103
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 2,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100,
+        104,
+        101,
+        106,
+        103
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 2,
+      "compare": "equal"
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       []
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        5.0,
+        4.0,
+        3.0
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        100,
+        100,
+        100
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "count_up_days",
+      "args": [
+       [
+        1.5,
+        2.5,
+        3.5,
+        4.5
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 3,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call count_up_days; each must return exactly the expected count."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Make `std::vector<double> d(px.size())` to receive the differences."
+    },
+    {
+     "rung": "point",
+     "text": "Test 4 falls every day, but `d[0]` holds 5.0, which is positive.",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Count from `d.begin() + 1`: `std::count_if(d.begin() + 1, d.end(), [](double x) { return x > 0; })`. Return 0 early for fewer than two closes."
+    }
+   ],
+   "feedback": {
+    "correct": "Differences, then a count that skips the first slot.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-4": "Three falling closes have no up days. If you got 1, you counted `d[0]`, which is the first close itself: start at `d.begin() + 1`.",
+     "test-2": "An empty vector has no days. `d.begin() + 1` on an empty range is past the end, so return 0 first.",
+     "test-1": "Expected 2. If you got 3, the first close, 100, was counted as a rise."
+    }
+   },
+   "explain": {
+    "text": "`adjacent_difference` keeps `px[0]` in slot 0 so the output has the same size; skipping it is the classic slip. Each algorithm names its job, so a reader sees *differences, then count* without tracing a loop.",
+    "canvas": {
+     "highlight": [
+      "c1",
+      "c3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Where transform writes",
+   "prose": "`std::transform` is Python's `[f(x) for x in xs]`. It writes where its output iterator points and never grows a vector.\n\n```cpp\nstd::vector<double> px{100.0, 102.0, 99.0};\nstd::vector<double> pence;\nstd::transform(px.begin(), px.end(), pence.begin(),\n               [](double p) { return p * 100; });\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100.0,
+      102.0,
+      99.0
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "`pence` is empty: `pence.begin() == pence.end()`"
+    }
+   },
+   "question": "What does `pence` hold afterwards?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ub",
+      "text": "Nothing: its size is still 0, and three values went to memory it does not own",
+      "correct": true
+     },
+     {
+      "id": "full",
+      "text": "10000, 10200, 9900",
+      "why": "You expected `transform` to grow `pence`. It only writes where `pence.begin()` points, and an empty vector has no room there."
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "It compiles: `pence.begin()` is a valid iterator. The compiler cannot see that the range is too short."
+     },
+     {
+      "id": "throw",
+      "text": "It throws `std::out_of_range`",
+      "why": "Algorithms do not check iterators. Only `at` throws `std::out_of_range`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many slots does an empty vector have to write into?"
+    },
+    {
+     "rung": "point",
+     "text": "`transform` writes three values starting at `pence.begin()`."
+    },
+    {
+     "rung": "step",
+     "text": "There is no room, so the writes are undefined behaviour and `size()` stays 0."
+    }
+   ],
+   "feedback": {
+    "correct": "The writes went nowhere legal; `pence` is still empty.",
+    "generic": "Not quite right. Does an algorithm ever change a vector's size?"
+   },
+   "explain": {
+    "text": "Algorithms see only iterators, so they cannot call `push_back`. Pass `std::back_inserter(pence)` from `<iterator>`, an output iterator that calls `push_back` for each write. Or make room first with `pence.resize(px.size())`."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The type of the start",
+   "prose": "The same five days of P&L, summed with a habit from Python, where `sum` starts at the integer 0.\n\n```cpp\nauto total = std::accumulate(pnl.begin(), pnl.end(), 0);\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      120.5,
+      -40.25,
+      75.0,
+      -10.5,
+      30.25
+     ],
+     "showIndex": true
+    },
+    "state": {
+     "caption": "Exact total: £175.00"
+    }
+   },
+   "question": "What is `total`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 173,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a number",
+    "accept": "173",
+    "wrong": [
+     {
+      "id": "exact",
+      "value": 175,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "trunc",
+      "value": 174,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The third argument sets the type of the running total."
+    },
+    {
+     "rung": "point",
+     "text": "`0` is an `int`. What happens to `0 + 120.5` when it is stored back in an `int`?",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each step truncates: 120, 79, 154, 143, 173."
+    }
+   ],
+   "feedback": {
+    "correct": "173: every step truncated the total to an `int`.",
+    "generic": "Not quite right. Keep the running total as an `int` after every addition.",
+    "byKey": {
+     "exact": "You summed exactly, as Python would. Here the total is an `int`, so each step drops its fraction: 120, 79, 154, 143, 173.",
+     "trunc": "You truncated only once, at the end. The total is an `int` throughout, so every step loses its fraction."
+    }
+   },
+   "explain": {
+    "text": "`accumulate` keeps its total in the type of the start value. With `0` that is `int`, so 120.5 becomes 120, then 79.75 becomes 79, and so on. Write `0.0`, and the total is a `double`: 175.\n\n```cpp\nstd::accumulate(b, e, 0);    // int: 173\nstd::accumulate(b, e, 0.0);  // double: 175\n```",
+    "canvas": {
+     "highlight": [
+      "c0",
+      "c1",
+      "c3",
+      "c4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "The algorithms you used, beside their Python.\n\n```cpp\nstd::sort(b, e, less);          // sorted(xs, key=...)\nstd::accumulate(b, e, 0.0);     // sum(xs)\nstd::inner_product(b, e, b2, 0.0);\nstd::count_if(b, e, pred);      // sum(1 for x if pred(x))\nstd::transform(b, e, out, f);   // [f(x) for x in xs]\nstd::max_element(b, e);         // max(xs), as an iterator\nstd::find_if(b, e, pred);       // first match, or e\nstd::partial_sum(b, e, out);    // running totals\n```",
+   "question": "`pnl` is empty. What does `std::max_element(pnl.begin(), pnl.end())` return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "end",
+      "text": "`pnl.end()`, which you must not read through",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "An iterator to 0.0",
+      "why": "There is no element to point at. An empty range has only its end."
+     },
+     {
+      "id": "throw",
+      "text": "It throws, as Python's `max([])` raises",
+      "why": "Algorithms never throw for an empty range. They return the end iterator."
+     },
+     {
+      "id": "lowest",
+      "text": "The lowest possible `double`",
+      "why": "That would be a value. `max_element` returns an iterator, and here it is `end()`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What can an iterator into an empty range point at?"
+    }
+   ],
+   "feedback": {
+    "correct": "No elements, so it returns `end()`.",
+    "generic": "Not quite right. Where does an empty range begin and end?"
+   },
+   "explain": {
+    "text": "`max_element` and `find_if` return `end()` when nothing qualifies, so check before `*it`. Reading through `end()` is undefined; this app printed nothing at all when we tried it. Sorting an empty vector, by contrast, is fine: there is nothing to do."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Drawdown of a P&L",
+   "prose": "A desk tracks a strategy's cumulative P&L, which starts at £0. `std::partial_sum` turns daily P&L into running totals. Return the worst fall, in pounds, from the highest total so far, counting the £0 start. A lambda capturing `[&peak, &worst]` can update both as `std::for_each` walks the totals.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pl",
+       "label": "Cumulative P&L",
+       "values": [
+        0,
+        120,
+        70,
+        -30,
+        50,
+        -10,
+        190
+       ]
+      }
+     ],
+     "x": "index",
+     "money": "£",
+     "xLabel": "Day",
+     "baseline": 0
+    },
+    "state": {
+     "drawdown": "money"
+    }
+   },
+   "question": "Write `worst_drawdown(daily)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\ndouble worst_drawdown(const std::vector<double>& daily) {\n    std::vector<double> cum(daily.size());\n    // running total of the daily P&L, then the largest fall from a running peak\n    return 0;\n}\n",
+    "solution": "#include <algorithm>\n#include <numeric>\n#include <vector>\n\ndouble worst_drawdown(const std::vector<double>& daily) {\n    std::vector<double> cum(daily.size());\n    std::partial_sum(daily.begin(), daily.end(), cum.begin());\n    double peak = 0;\n    double worst = 0;\n    std::for_each(cum.begin(), cum.end(), [&peak, &worst](double c) {\n        peak = std::max(peak, c);\n        worst = std::max(worst, peak - c);\n    });\n    return worst;\n}\n",
+    "examples": [
+     {
+      "call": "worst_drawdown",
+      "args": [
+       [
+        120,
+        -50,
+        -100,
+        80,
+        -60,
+        200
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 150.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "worst_drawdown",
+      "args": [
+       [
+        120,
+        -50,
+        -100,
+        80,
+        -60,
+        200
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 150.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "worst_drawdown",
+      "args": [
+       []
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "worst_drawdown",
+      "args": [
+       [
+        -50,
+        -30
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 80.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "worst_drawdown",
+      "args": [
+       [
+        100,
+        50
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "worst_drawdown",
+      "args": [
+       [
+        10,
+        -20,
+        30,
+        -50,
+        5
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 50.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "worst_drawdown",
+      "args": [
+       [
+        2.5,
+        -10.25,
+        4.0,
+        -5.0,
+        30.0
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": 11.25,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call worst_drawdown; each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First `std::partial_sum(daily.begin(), daily.end(), cum.begin())`."
+    },
+    {
+     "rung": "point",
+     "text": "Start `peak` at 0, the P&L before day 1, so an early loss counts as a drawdown."
+    },
+    {
+     "rung": "step",
+     "text": "`std::for_each(cum.begin(), cum.end(), [&peak, &worst](double c) { peak = std::max(peak, c); worst = std::max(worst, peak - c); });`"
+    }
+   ],
+   "feedback": {
+    "correct": "Running totals, then a running peak.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-3": "Losing £50 then £30 from a £0 start is a drawdown of £80. If you got 30, your peak started at the first total, −50, not at 0.",
+     "test-1": "The totals peak at £120 and fall to −£30: £150. If you got 0, the lambda changed copies: capture with `&`.",
+     "test-2": "No days, no drawdown: 0."
+    }
+   },
+   "explain": {
+    "text": "`partial_sum` gives 120, 70, −30, 50, −10, 190, and the worst fall is from 120 to −30. The lambda must capture by reference: `[peak, worst]` would update copies and return 0. These calls inline, so the compiled code is as fast as the loop you would write by hand."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Algorithms take a range as two iterators, `begin()` and `end()`, and never change a container's size; `std::back_inserter` grows one for them.",
+   "A lambda `[capture](args) { body }` passes a rule: `[x]` copies a local, `[&x]` refers to it, `[=]` and `[&]` do so for every local used.",
+   "`accumulate` totals in the type of its start value, so doubles need `0.0`; comparators must be strict, `<` not `<=`."
+  ],
+  "formula": {
+   "name": "VWAP",
+   "tex": "\\text{VWAP} = \\dfrac{\\sum_i p_i q_i}{\\sum_i q_i}",
+   "note": "`inner_product` over `accumulate`, after checking the volume."
+  },
+  "trap": "`std::accumulate(b, e, 0)` on doubles adds in `int` and drops every fraction; start at `0.0`."
+ },
+ "quiz": [
+  {
+   "id": "q-le",
+   "difficulty": 2,
+   "prose": "```cpp\nstd::sort(px.begin(), px.end(),\n    [](double a, double b) { return a <= b; });\n```\n`px` holds 100.5, 100.5, 99.8.",
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "strict",
+      "text": "`<=` says each of two equal prices goes first, which breaks `sort`'s rules",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: it sorts ascending",
+      "why": "It may look sorted, but for equal prices it answers true both ways. `sort` can then read past the range; this app's library stops it."
+     },
+     {
+      "id": "desc",
+      "text": "It sorts descending",
+      "why": "`<=` still puts smaller prices first. The problem is the answer for two equal prices."
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "It compiles. Only running it reveals the broken rule."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Comparators must be strict.",
+    "generic": "Not quite right. What does the lambda say about two equal prices?"
+   },
+   "explain": {
+    "text": "For `a == b` a comparator must return false both ways: neither goes first. `<=` returns true both ways, so `sort` may run off the end of the range. Use `<`."
+   }
+  },
+  {
+   "id": "q-dangle",
+   "difficulty": 3,
+   "prose": "```cpp\nstd::function<bool(double)> make_filter() {\n    double limit = 0.02;\n    return [&limit](double r) { return r > limit; };\n}\n```",
+   "question": "What goes wrong when the returned lambda is called?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dangle",
+      "text": "It reads `limit`, which ended when `make_filter` returned",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the lambda keeps `limit` alive",
+      "why": "A reference capture does not keep anything alive. `limit` died with the function's stack frame."
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "It compiles. The compiler does not track lifetimes across the return."
+     },
+     {
+      "id": "zero",
+      "text": "`limit` reads as 0",
+      "why": "It reads whatever memory is there now, which is undefined. Capture by value: `[limit]`."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A dangling reference capture.",
+    "generic": "Not quite right. How long does `limit` live?"
+   },
+   "explain": {
+    "text": "`[&limit]` stores a reference to a local that ends at `return`. Any later call reads freed stack memory. A lambda that outlives its scope must capture by value, `[limit]` or `[=]`."
+   }
+  },
+  {
+   "id": "q-sorted-key",
+   "difficulty": 2,
+   "prose": "Python: `best = sorted(fills, key=lambda f: f.price)[0]`. You want the C++ cheapest fill without sorting the whole vector.",
+   "question": "Which call fits?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "min",
+      "text": "`std::min_element(fills.begin(), fills.end(), [](const Fill& a, const Fill& b) { return a.price < b.price; })`",
+      "correct": true
+     },
+     {
+      "id": "acc",
+      "text": "`std::accumulate(fills.begin(), fills.end(), 0.0)`",
+      "why": "`accumulate` adds things up. It does not pick an element."
+     },
+     {
+      "id": "count",
+      "text": "`std::count_if(fills.begin(), fills.end(), [](const Fill& f) { return f.price > 0; })`",
+      "why": "That counts fills with a positive price. It returns a number, not a fill."
+     },
+     {
+      "id": "findif",
+      "text": "`std::find_if(fills.begin(), fills.end(), [](const Fill& f) { return f.price; })`",
+      "why": "`find_if` returns the first fill whose price is non-zero, not the cheapest."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "One pass with the same comparator `sort` would use.",
+    "generic": "Not quite right. Which algorithm returns the smallest element under a rule?"
+   },
+   "explain": {
+    "text": "`min_element` makes one pass and returns an iterator to the cheapest fill, or `end()` if there are none. It takes the same comparator as `sort`."
+   }
+  },
+  {
+   "id": "q-partial",
+   "difficulty": 2,
+   "prose": "Daily P&L of £50, −£20 and £35 goes through `std::partial_sum` into `cum`.",
+   "question": "What is `cum`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "run",
+      "text": "50, 30, 65",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "50, −20, 35",
+      "why": "That is the input. `partial_sum` writes running totals."
+     },
+     {
+      "id": "diff",
+      "text": "50, −70, 55",
+      "why": "Those are differences, what `adjacent_difference` writes."
+     },
+     {
+      "id": "total",
+      "text": "65",
+      "why": "`accumulate` returns one total. `partial_sum` writes one total per day."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Running totals.",
+    "generic": "Not quite right. Add up the days so far, one day at a time."
+   },
+   "explain": {
+    "text": "`partial_sum` writes 50, then 50 − 20 = 30, then 30 + 35 = 65: the cumulative P&L curve, like Python's `itertools.accumulate`."
+   }
+  }
+ ]
+}

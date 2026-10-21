@@ -185,3 +185,82 @@ Check scripts in this folder: check_vectors.py, check_elimination.py, check_ls.p
 - a-hedge-lstsq | warning | The exit criterion is "least squares … written in NumPy from the matrix operations". The only least-squares code item calls `np.linalg.lstsq`, so the exam never checks that the learner can build it from AᵀA or QR. | Add a test that bans `lstsq`, or a second item: solve the normal equations with `np.linalg.solve(X.T @ X, X.T @ y)`, or use `np.linalg.qr`.
 - whole exam | warning | The other exit criterion, PCA written in NumPy, is not tested. a-pca-share only reads a share from `eigh` output. | Add a short code item: demean, covariance, `eigh`, sort descending and return the shares. It can reuse l12's yield data or fresh data.
 - whole exam, against the 18.06 final | warning | It has 26 items and is light where 18.06 finals are heavy. It has one item each on the SVD, diagonalisation, elimination and QR. It has none on the projection matrix P = A(AᵀA)⁻¹Aᵀ, the four subspaces, or du/dt = Au. A 70% pass here is a weaker bar than the curriculum's "18.06 final at 70%". | Add items on P (idempotent, rank), on the four subspaces' dimensions, and a second SVD item (a rank-k error). Or state the exam is a gate, with an 18.06 past paper as the exit.
+
+## Fix pass
+
+Fix agent, 2026-10-21. Every corrected number was recomputed before writing (scratchpad `fix-1.4`). Totals: 74 fixed, 0 disputed, 6 deferred (one of the fixed findings has a course.json part deferred). No correct answer of any graded item changed; three distractor values, one distractor option and two code test sets changed (listed below).
+
+### vectors (19: 19 fixed, course.json part of one deferred)
+- l2 screens[6] `pair-sum` | fixed | value 15 → 11 (1 + 2 + 3 + 4 − 5 + 6 = 11).
+- l2 screens[4] hint point | fixed | now starts the learner on p alone: "$2 \times (-1) + 3$. Do the same for the other four."
+- l3 summary.trap | fixed | KaTeX with bold vectors, 18 words.
+- l4 screens[7] explain | fixed | reviewer's wording.
+- l8 screens[5] trap spent | fixed | screen 4 no longer shows $(\mathbf{AB})^T$ or says it matches; its prose, correct line and explain were trimmed, and the trap's point hint sends the learner back to the $\mathbf{B}^T\mathbf{A}^T$ they computed.
+- l8 screens[5] socks and shoes | fixed | replaced with "the row of A and the column of B trade places".
+- l9 q-untidy `sign` why | fixed.
+- l9 screens[7] hint step | fixed | split after "rows times x".
+- l9 objectives (and l8) | fixed in the lesson files | course.json lessonObjectives deferred: this pass may not change course.json.
+- l10 screens[1] `half` why, screens[4] r1c1, summary.ideas[0] | fixed (three findings).
+- l11 screens[10] explain | fixed | "some mix has zero variance: here, long one class and short the other".
+- l11 screens[10] Σ | fixed | `\boldsymbol{\Sigma}` throughout the screen.
+- l11 screens[8] converse | fixed | the unproved converse is dropped.
+- l12 screens[7] explain (error) | fixed | allclose catches a wrong matrix; a small residual does not prove x accurate for a nearly singular A, so check `np.linalg.cond(A)`.
+- l12 determinant threshold | fixed | screen 9 now teaches `np.linalg.matrix_rank(A) < len(A)` and why a det cut-off misfires (the det scales with the entries; four assets' daily covariance has det near 1e-16). New hidden test 6: the desk's hedge scaled by 1e-4 (det 2e-16, rank 3) must solve to (200, 300, 100). Derive line l2, hints, feedback, summary.ideas[2] and q-raise explain updated to the rank test.
+- l12 q-allclose tolerance | fixed | "up to $10^{-8} + 10^{-5}|b|$, about $10^{-5}$ for entries near 1"; screen 2's "forgives errors near 1e-15" corrected to the same default.
+- homework-3 h-min-var | fixed | rank test; new hidden test 8: four assets with daily vols 1% to 2.0%, correlation 0.3 (det 8.4e-16, rank 4) returns weights (0.543807, 0.309668, 0.132931, 0.013595).
+
+### elimination (13: 12 fixed, 1 deferred)
+- l1 screens[7] explain | fixed | "The pivot row has zeros in every column cleared so far."
+- l2 screens[6] `noDiv` (error) | fixed | confirmed products alone are 0 + 1 + 2 = 3 = `perrow`; `noDiv` deleted and the `perrow` line widened.
+- l4 overclaim (screens[6] and q-why-pivot) | fixed | "no step blows up the errors as 10,000 did".
+- l4 screens[8] Black–Scholes | fixed | "Priced at one volatility".
+- l9 whole lesson | deferred | redundant-lesson finding, ENGINE-BACKLOG item 401.
+- l11 screens[8] `\\mathbf` (error) and 21-word sentence | fixed (two findings).
+- l3 screens[4] ids | fixed | ids swapped to match labels; hint highlight `U-1-0` → `A-1-0`; the explain's `A-r1` now lands on row 2 of A, as its text says.
+- l5 q-sum-reachable explain | fixed | three sentences.
+- l6, l8, l10 long sentences | fixed.
+- homework-2 hw-full-analysis | fixed | model renumbered 5(a), 5(b), 6.
+- homework-3 h-arb `whole-copy` (error) | fixed | −97.6 → −97.8 (101.20 − 199 = −97.80); the line now names the slip.
+- homework-3 h-long-covariance `\top` | fixed.
+
+### least-squares (15: 14 fixed, 1 deferred)
+- l1 q-factor-neutral "dollar-neutral" and screens[9] explain | fixed (two findings).
+- l2, l3, homework-1, review-1 `bmatrix` | fixed | `pmatrix` (AUTHORING.md states no rule; this follows the topic's convention).
+- l5 whole lesson | deferred | redundant-lesson finding, ENGINE-BACKLOG item 401.
+- l5 summary.ideas[0] | fixed.
+- l6 screens[7] explain (error) | fixed | 5(1, 1, 1) − 3(0, 1, 2) = (5, 2, −1) confirmed.
+- l6 screens[4] `shrink` | fixed | now (2.38, 5.63), the diagonal-only slip (0.36 × 6.6, 0.64 × 8.8), with a why naming it. P is given on the canvas here, so the suggested "forgot to divide by a·a" slip cannot arise on this screen.
+- l7 q-resid-sum, l8 q-r-shape, l9 summary.trap, l10 objectives | fixed (four findings).
+- l11 screens[0] hint point | fixed | "Start with the slope: how much does y rise per step in x, on average?"
+- l12 screens[8] units | fixed | "$\hat\alpha = 0.13$% a day and $\hat\beta = 1.28$".
+- homework-2 h-long-regression long sentences | fixed.
+- homework-3 h-residual-facts `\betax` (error) | fixed.
+
+### eigen (30: 29 fixed, 1 deferred)
+- course.json lessonObjectives | deferred | this pass may not change course.json.
+- objectives in l1 to l4, l9 to l12 | fixed | full stops added; l2 and l9 matrices bold.
+- l4 "markov", summary.ideas[0], screens[6] four sentences | fixed (three findings).
+- l4 q-speed `keep`, `trace`, `six` | fixed | byKey lines added.
+- l6 screens[3] explain, screens[6] prose, `zero` why | fixed (three findings).
+- l6 q-pivot `full`, `det` | fixed | byKey lines added (3 − 2 = 1; 8 = 4 × 2).
+- l7 screens[1] "£$100k$" | fixed | "$k \times$ £100".
+- l7 screens[6] trap | fixed | the correlation sentence is gone, and the title "A correlation of 1.2" became "A suspect matrix".
+- l7 q-fifty-fifty, summary.trap | fixed (two findings).
+- l7 n against n − 1 | fixed | l7 screen 2 already states n and that n − 1 only rescales; l11 screen 1 now says it divides by n − 1, as NumPy does, where the covariance lesson divided by n.
+- l8 screens[8] | fixed | "probability contour of a mean-zero bivariate normal".
+- l9 screens[7] trap | fixed | SᵀS and its eigenvalues moved from the prose into the step hint.
+- l9 screens[11] transfer | fixed | now "the shock that moves the desks' P&L furthest" ("The biggest combined move"); the explain notes that −v₁ gives a £2.83k loss for desk 1.
+- l9 Σ notation | fixed | screen 3: "Here Σ is the stretch matrix, not a covariance"; l11 writes singular values as sᵢ.
+- l10 screens[1] "twenty" (error) | fixed | 9 / 0.9 = 10, "ten times smaller".
+- l10 screens[9] and homework-3 h-factor shares | fixed | both kept. l10 screen 9, homework-3 h-factor, l11 screen 7 and review-3 r-share and r-pc-share each say which share they mean and that the two differ. Five banks: energy 11.56/12.2 = 94.8%, variance 3.4/5 = 68%. h-factor: 6.25/7 = 89.3% against 2.5/4 = 62.5%. r-pc-share: variance 4/6 against energy 16/20.
+- l10 screens[2] Frobenius, screens[5] 25 words | fixed (two findings).
+- l11 σᵢ → sᵢ | fixed | 6 places.
+- l12 screens[8] +£64 | fixed | +£63 (45 + 98 + 42 − 54 − 68 = 63).
+- review-2 r-zero-eigenvalue, homework-2 hw-risk-analysis | fixed (two findings).
+- homework-3 h-spread (error) | fixed | Var(A − B) = 4 + 4 − 4 = 4 = Var(A), ρ = 0.5. The spread of two equal-variance stocks is quieter than each only when ρ > 0.5.
+- homework-3 h-long-hedge (c) and (d) | fixed | (d) is now a list of four risks.
+
+### exams/topic-1.4.json (3: 3 deferred)
+- a-hedge-lstsq, PCA in NumPy, coverage against 18.06 | deferred | coverage gaps, ENGINE-BACKLOG item 401.
+
+Checks after the pass: `node tools/validate.mjs` 0 errors. The reviewer's style.py and structure.py report no new long sentences, explanations over three sentences or wrong values without byKey (one remaining style hit, eigen homework-3 model, is a false positive across a paragraph break). KaTeX renders every maths span in the 50 touched files.

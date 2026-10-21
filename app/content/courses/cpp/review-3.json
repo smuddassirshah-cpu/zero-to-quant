@@ -1,0 +1,514 @@
+{
+ "id": "review-3",
+ "course": "cpp",
+ "level": 3,
+ "items": [
+  {
+   "id": "r-set-ask",
+   "difficulty": 2,
+   "skills": [
+    "cp-classes"
+   ],
+   "prose": "`Quote` keeps `bid_ < ask_` as an invariant. Four drafts of `set_ask`:",
+   "question": "Which draft keeps the invariant?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`void set_ask(double a) { if (a <= bid_) throw std::invalid_argument(\"\"); ask_ = a; }`",
+      "correct": true
+     },
+     {
+      "id": "after",
+      "text": "`void set_ask(double a) { ask_ = a; if (ask_ <= bid_) std::cout << \"crossed\"; }`",
+      "why": "It stores first and only prints. The quote is left crossed."
+     },
+     {
+      "id": "none",
+      "text": "`void set_ask(double a) { ask_ = a; }`",
+      "why": "It skips the check, so any ask goes in, even one below the bid."
+     },
+     {
+      "id": "wrongside",
+      "text": "`void set_ask(double a) { if (a >= bid_) throw std::invalid_argument(\"\"); ask_ = a; }`",
+      "why": "The test is the wrong way round: it refuses every valid ask and accepts every crossed one."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Check first, then store.",
+    "generic": "Not quite right. The ask must stay above the bid, checked before it is stored."
+   },
+   "explain": {
+    "text": "A changing function checks before it stores, so a refused call leaves the object as it was. An ask equal to the bid is refused too, as in the lesson."
+   }
+  },
+  {
+   "id": "r-desk-order",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes",
+    "cp-memory"
+   ],
+   "prose": "`Logger` prints `open` and `close` with its name.\n\n```cpp\nclass Desk {\npublic:\n    Desk() : feed_(\"feed\"), risk_(\"risk\") {\n        std::cout << \"desk open\\n\";\n    }\n    ~Desk() { std::cout << \"desk close\\n\"; }\nprivate:\n    Logger feed_;\n    Logger risk_;\n};\n\nint main() {\n    Desk d;\n}\n```",
+   "question": "Put the output in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "of",
+      "text": "`open feed`"
+     },
+     {
+      "id": "or",
+      "text": "`open risk`"
+     },
+     {
+      "id": "do",
+      "text": "`desk open`"
+     },
+     {
+      "id": "dc",
+      "text": "`desk close`"
+     },
+     {
+      "id": "cr",
+      "text": "`close risk`"
+     },
+     {
+      "id": "cf",
+      "text": "`close feed`"
+     }
+    ],
+    "answer": [
+     "of",
+     "or",
+     "do",
+     "dc",
+     "cr",
+     "cf"
+    ]
+   },
+   "feedback": {
+    "correct": "Members first, then the body; on the way out, the reverse.",
+    "generic": "Not quite right. Members are built before the constructor's body runs, and destroyed after the destructor's body.",
+    "byKey": {
+     "do": "The constructor's body runs only after every member has been built.",
+     "cf": "Members are destroyed in reverse declaration order: `risk_` before `feed_`.",
+     "dc": "The destructor's body runs first; the members it may use are destroyed after it."
+    }
+   },
+   "explain": {
+    "text": "The members are built in declaration order before the body prints `desk open`. Destruction mirrors it: the body prints `desk close`, then `risk_` and `feed_` close, newest first."
+   }
+  },
+  {
+   "id": "r-ostream-sig",
+   "difficulty": 2,
+   "skills": [
+    "cp-classes",
+    "cp-references"
+   ],
+   "prose": "You want `std::cout << q` to print a `Quote`, and to chain with more `<<`.",
+   "question": "Which declaration do you write?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`std::ostream& operator<<(std::ostream& os, const Quote& q)`",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "`std::ostream operator<<(std::ostream os, const Quote& q)`",
+      "why": "Streams cannot be copied, so neither the parameter nor the return can be by value."
+     },
+     {
+      "id": "member",
+      "text": "`std::ostream& Quote::operator<<(std::ostream& os) const`",
+      "why": "As a member, the `Quote` would be the left operand: you would have to write `q << std::cout`."
+     },
+     {
+      "id": "void",
+      "text": "`void operator<<(std::ostream& os, const Quote& q)`",
+      "why": "It prints once, but returns nothing for the next `<<` in a chain."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Stream by reference in, the same stream out.",
+    "generic": "Not quite right. The stream must be on the left, by reference, and returned."
+   },
+   "explain": {
+    "text": "A free function puts the stream on the left. Taking and returning `std::ostream&` passes the one stream along the chain."
+   }
+  },
+  {
+   "id": "r-inst-count",
+   "difficulty": 2,
+   "skills": [
+    "cp-classes"
+   ],
+   "prose": "```cpp\nmax_of(std::vector<int>{3, 1});\nmax_of(std::vector<std::string>{\"AZN\"});\nmax_of(std::vector<int>{8});\nmax_of(std::vector<double>{0.5});\nmax_of(std::vector<std::string>{\"VOD\", \"BP\"});\n```",
+   "question": "How many functions does the compiler write from the `max_of` template?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Number of functions",
+    "accept": "3: `int`, `std::string` and `double`.",
+    "wrong": [
+     {
+      "id": "calls",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Three element types, three instantiations.",
+    "generic": "Not quite right. Count types, not calls.",
+    "byKey": {
+     "calls": "You counted calls. Calls with the same type share one function.",
+     "one": "Each type used gets its own function."
+    }
+   },
+   "explain": {
+    "text": "`int` and `std::string` are each used twice, `double` once: three instantiations, written at compile time."
+   }
+  },
+  {
+   "id": "r-risk-limit",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes"
+   ],
+   "prose": "A desk's risk limit caps the absolute exposure, long or short. A negative limit makes no sense, so it can never be set.",
+   "question": "Finish `RiskLimit`: refuse a negative limit in the constructor and in `set`, and write `allows`, true when $|\\text{exposure}| \\le$ the limit.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <stdexcept>\n\nclass RiskLimit {\npublic:\n    explicit RiskLimit(double max) : max_(max) {\n        // refuse a negative limit\n    }\n    void set(double max) {\n        max_ = max;\n    }\n    double max() const { return max_; }\n    bool allows(double exposure) const {\n        return false;   // |exposure| <= max_\n    }\nprivate:\n    double max_;\n};\n",
+    "solution": "#include <stdexcept>\n\nclass RiskLimit {\npublic:\n    explicit RiskLimit(double max) : max_(max) {\n        if (max_ < 0) throw std::invalid_argument(\"limit cannot be negative\");\n    }\n    void set(double max) {\n        if (max < 0) throw std::invalid_argument(\"limit cannot be negative\");\n        max_ = max;\n    }\n    double max() const { return max_; }\n    bool allows(double exposure) const {\n        return exposure <= max_ && exposure >= -max_;\n    }\nprivate:\n    double max_;\n};\n",
+    "examples": [
+     {
+      "call": "RiskLimit(5e6).allows(-6e6)",
+      "expect": false,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "RiskLimit(5e6).max()",
+      "expect": 5000000.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "RiskLimit(5e6).allows(4e6)",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "RiskLimit(5e6).allows(-6e6)",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "call": "RiskLimit(5e6).allows(5e6)",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "RiskLimit(5e6).allows(-5e6)",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "RiskLimit(-1.0).max()",
+      "compare": "raises"
+     },
+     {
+      "setup": "RiskLimit r(1e6); r.set(-5.0);",
+      "call": "r.max()",
+      "compare": "raises"
+     },
+     {
+      "setup": "RiskLimit r(1e6); r.set(2e6);",
+      "call": "r.allows(1.5e6)",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "RiskLimit(0.0).allows(0.0)",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 9 hidden tests; two pass only if the program stops."
+   },
+   "feedback": {
+    "correct": "The limit can never go negative, through either door.",
+    "generic": "Not quite right. Read the first failing test under the editor."
+   },
+   "explain": {
+    "text": "The constructor and `set` both refuse a negative value, so no `RiskLimit` ever holds one. `allows` checks both sides: a short of £6m breaks a £5m limit as surely as a long."
+   }
+  },
+  {
+   "id": "r-currency",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes",
+    "cp-references"
+   ],
+   "prose": "Money now carries its currency. Adding pounds to dollars is a bug, so `+` refuses it. Two amounts are equal only when both pence and currency match.",
+   "question": "Write `Money operator+(const Money& a, const Money& b)` and `bool operator==(const Money& a, const Money& b)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <stdexcept>\n#include <string>\n\nclass Money {\npublic:\n    Money(long long pence, const std::string& ccy) : pence_(pence), ccy_(ccy) {}\n    long long pence() const { return pence_; }\n    std::string ccy() const { return ccy_; }\nprivate:\n    long long pence_;\n    std::string ccy_;\n};\n\n// Money operator+(const Money& a, const Money& b)\n// bool operator==(const Money& a, const Money& b)\n",
+    "solution": "#include <stdexcept>\n#include <string>\n\nclass Money {\npublic:\n    Money(long long pence, const std::string& ccy) : pence_(pence), ccy_(ccy) {}\n    long long pence() const { return pence_; }\n    std::string ccy() const { return ccy_; }\nprivate:\n    long long pence_;\n    std::string ccy_;\n};\n\nMoney operator+(const Money& a, const Money& b) {\n    if (a.ccy() != b.ccy()) throw std::invalid_argument(\"currencies differ\");\n    return Money(a.pence() + b.pence(), a.ccy());\n}\n\nbool operator==(const Money& a, const Money& b) {\n    return a.pence() == b.pence() && a.ccy() == b.ccy();\n}\n",
+    "examples": [
+     {
+      "call": "(Money(100, \"GBP\") + Money(250, \"GBP\")).pence()",
+      "expect": 350,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "(Money(100, \"GBP\") + Money(250, \"GBP\")).pence()",
+      "expect": 350,
+      "compare": "equal"
+     },
+     {
+      "call": "(Money(100, \"GBP\") + Money(250, \"GBP\")).ccy()",
+      "expect": "GBP",
+      "compare": "equal"
+     },
+     {
+      "call": "(Money(-100, \"USD\") + Money(30, \"USD\")).pence()",
+      "expect": -70,
+      "compare": "equal"
+     },
+     {
+      "call": "(Money(100, \"GBP\") + Money(100, \"USD\")).pence()",
+      "compare": "raises"
+     },
+     {
+      "call": "Money(100, \"GBP\") == Money(100, \"USD\")",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "call": "Money(100, \"GBP\") == Money(100, \"GBP\")",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "Money(100, \"GBP\") == Money(101, \"GBP\")",
+      "expect": false,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests; adding GBP to USD must stop the program."
+   },
+   "feedback": {
+    "correct": "Mixed currencies are refused, never silently added.",
+    "generic": "Not quite right. Read the first failing test under the editor."
+   },
+   "explain": {
+    "text": "`+` checks the currencies before adding, so £1 plus one dollar stops the program instead of giving 200 pence of nothing. `==` compares both fields, so `<` would need both too if you added one."
+   }
+  },
+  {
+   "id": "r-move-unique",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes",
+    "cp-memory"
+   ],
+   "prose": "```cpp\nclass Pricer {\n    std::string name_;\n    std::unique_ptr<Lattice> grid_;\npublic:\n    explicit Pricer(std::string n);\n};\n\nPricer a(\"binomial\");\n```",
+   "question": "Which line compiles?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`Pricer b = std::move(a);`",
+      "correct": true
+     },
+     {
+      "id": "copy",
+      "text": "`Pricer b = a;`",
+      "why": "The copy constructor is deleted, because `unique_ptr` cannot be copied."
+     },
+     {
+      "id": "assign",
+      "text": "`Pricer b(\"tree\"); b = a;`",
+      "why": "Copy assignment is deleted for the same reason: one lattice cannot have two owners."
+     },
+     {
+      "id": "constmove",
+      "text": "`const Pricer c(\"tree\"); Pricer b = std::move(c);`",
+      "why": "A `const` object cannot be moved from, so this asks for the deleted copy."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A `unique_ptr` member makes the class move-only.",
+    "generic": "Not quite right. Which special members does `unique_ptr` allow?"
+   },
+   "explain": {
+    "text": "With the rule of zero, `Pricer` gets what its members allow: moves, but no copies. Moving from a `const` object falls back to the copy, which is deleted."
+   }
+  },
+  {
+   "id": "r-top-n",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes"
+   ],
+   "prose": "A screen ranks values: the `n` largest, largest first. Write it once for any type with `<`.",
+   "question": "Write `template <typename T> std::vector<T> top_n(std::vector<T> xs, int n)`. If `n` is larger than the vector, return all of it, largest first.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <vector>\n\n// template <typename T>\n// std::vector<T> top_n(std::vector<T> xs, int n)\n",
+    "solution": "#include <algorithm>\n#include <vector>\n\ntemplate <typename T>\nstd::vector<T> top_n(std::vector<T> xs, int n) {\n    std::sort(xs.begin(), xs.end());\n    std::reverse(xs.begin(), xs.end());\n    if (n < static_cast<int>(xs.size())) xs.resize(n);\n    return xs;\n}\n",
+    "examples": [
+     {
+      "call": "top_n(std::vector<int>{5, 1, 9, 3}, 2)",
+      "expect": [
+       9,
+       5
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "top_n(std::vector<int>{5, 1, 9, 3}, 2)",
+      "expect": [
+       9,
+       5
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "top_n(std::vector<double>{101.5, 99.25, 100.75}, 1)",
+      "expect": [
+       101.5
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "top_n(std::vector<std::string>{\"BARC\", \"VOD\", \"AZN\", \"LLOY\"}, 2)",
+      "expect": [
+       "VOD",
+       "LLOY"
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "top_n(std::vector<int>{4, 8}, 5)",
+      "expect": [
+       8,
+       4
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "top_n(std::vector<int>{4, 8}, 0)",
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "call": "top_n(std::vector<int>{}, 3)",
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "call": "top_n(std::vector<int>{7, 7, 2}, 2)",
+      "expect": [
+       7,
+       7
+      ],
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests with vectors of `int`, `double` and `std::string`."
+   },
+   "feedback": {
+    "correct": "One template ranks numbers and tickers alike.",
+    "generic": "Not quite right. Read the first failing test under the editor."
+   },
+   "explain": {
+    "text": "`xs` is taken by value, so sorting it leaves the caller's vector alone. `std::sort` then `std::reverse` puts the largest first, and `resize` keeps `n`, only when `n` is smaller."
+   }
+  },
+  {
+   "id": "r-bid-priority",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes",
+    "cp-references"
+   ],
+   "prose": "On the bid side, the highest price trades first, and at the same price the earliest order. `Order` has `long long price` and `int time` (1 came first).",
+   "question": "Which body of `operator<(const Order& a, const Order& b)` puts bids in trading order?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`return std::tie(b.price, a.time) < std::tie(a.price, b.time);`",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "`return std::tie(b.price, b.time) < std::tie(a.price, a.time);`",
+      "why": "That flips time as well, so at one price the latest order trades first."
+     },
+     {
+      "id": "ask",
+      "text": "`return std::tie(a.price, a.time) < std::tie(b.price, b.time);`",
+      "why": "That is the ask side: lowest price first."
+     },
+     {
+      "id": "price",
+      "text": "`return a.price > b.price;`",
+      "why": "It ignores time, so orders at one price come out in any order."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Price descending, then time ascending.",
+    "generic": "Not quite right. Flip the price comparison only."
+   },
+   "explain": {
+    "text": "Putting `b.price` on the left flips the price order, highest first, while `a.time` on the left keeps earlier times first. Tuples compare the price and look at time only on a tie."
+   }
+  }
+ ]
+}

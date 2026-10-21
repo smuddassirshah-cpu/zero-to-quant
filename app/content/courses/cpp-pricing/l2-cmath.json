@@ -1,0 +1,1259 @@
+{
+  "id": "l2-cmath",
+  "course": "cpp-pricing",
+  "title": "The maths library",
+  "minutes": 14,
+  "objectives": [
+    "Use `<cmath>` functions to write pricing formulas."
+  ],
+  "skills": [
+    "cx-numeric"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "From maths to C++",
+      "prose": "In the trees course one CRR step moved the price up by $u = e^{\\sigma\\sqrt{\\Delta t}}$. The curves show $u$ and $d$ for $\\sigma = 0.2$. In C++, `sigma` and `dt` are `double`s.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0.7,
+            1.35
+          ],
+          "xLabel": "$\\Delta t$ (years)",
+          "yLabel": "factor",
+          "params": {
+            "s": 0.2
+          },
+          "functions": [
+            {
+              "id": "u",
+              "expr": "exp(s*sqrt(x))",
+              "label": "$u$"
+            },
+            {
+              "id": "d",
+              "expr": "exp(-s*sqrt(x))",
+              "label": "$d$",
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.0833,
+              "y": 1.0594,
+              "label": "one month"
+            }
+          ]
+        }
+      },
+      "question": "Which C++ expression computes $u$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`std::exp(sigma * std::sqrt(dt))`",
+            "correct": true
+          },
+          {
+            "id": "e",
+            "text": "`std::pow(e, sigma * std::sqrt(dt))`",
+            "why": "You used Python's habit of a constant `e`. `<cmath>` defines none, so the compiler stops: use of undeclared identifier 'e'."
+          },
+          {
+            "id": "brackets",
+            "text": "`std::exp(sigma) * std::sqrt(dt)`",
+            "why": "That is $e^{\\sigma}\\sqrt{\\Delta t}$. The square root belongs inside the exponent."
+          },
+          {
+            "id": "xor",
+            "text": "`e ^ (sigma * std::sqrt(dt))`",
+            "why": "`^` is bitwise exclusive or in C++, not a power, and it does not even compile on a `double`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Python wrote this as `math.exp(sigma * math.sqrt(dt))`."
+        },
+        {
+          "rung": "point",
+          "text": "`<cmath>` has the same functions, with `std::` in front.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`std::exp(sigma * std::sqrt(dt))`."
+        }
+      ],
+      "feedback": {
+        "correct": "`std::exp` and `std::sqrt` from `<cmath>`.",
+        "generic": "Not quite right. Find the line where the whole of $\\sigma\\sqrt{\\Delta t}$ is the exponent.",
+        "byKey": {
+          "xor": "`^` is exclusive or in C++. For powers use `std::exp` or `std::pow`.",
+          "e": "`<cmath>` has no `e`. `std::exp(x)` is $e^x$."
+        }
+      },
+      "explain": {
+        "text": "`std::exp(x)` is $e^x$ and `std::sqrt(x)` is $\\sqrt{x}$; both live in `<cmath>`, C++'s `math` module. They take and return `double`. The dot is a one-month step, $\\Delta t = 1/12$: $u = 1.0594$.",
+        "canvas": {
+          "highlight": [
+            "P"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Up times down",
+      "prose": "The down factor is $d = e^{-\\sigma\\sqrt{\\Delta t}}$. Drag the dot along $u$ and move the $\\sigma$ slider. Watch the product in the caption.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0.7,
+            1.35
+          ],
+          "xLabel": "$\\Delta t$ (years)",
+          "yLabel": "factor",
+          "params": {
+            "s": 0.2
+          },
+          "functions": [
+            {
+              "id": "u",
+              "expr": "exp(s*sqrt(x))",
+              "label": "$u$"
+            },
+            {
+              "id": "d",
+              "expr": "exp(-s*sqrt(x))",
+              "label": "$d$",
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.25,
+              "y": 1.1052,
+              "drag": true,
+              "on": "u",
+              "label": "u"
+            },
+            {
+              "id": "Q",
+              "x": 0.25,
+              "y": 0.9048,
+              "label": "d"
+            }
+          ]
+        },
+        "derive": {
+          "Q.x": "P.x",
+          "Q.y": "exp(-s*sqrt(P.x))",
+          "caption": "$\\Delta t$ = {{fixed(P.x, 3)}}: u = {{fixed(exp(s*sqrt(P.x)), 4)}}, d = {{fixed(exp(-s*sqrt(P.x)), 4)}}, u × d = {{fixed(exp(s*sqrt(P.x))*exp(-s*sqrt(P.x)), 4)}}"
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0.05,
+            "max": 0.6,
+            "step": 0.05,
+            "start": 0.2,
+            "label": "$\\sigma$"
+          }
+        ]
+      },
+      "question": "Whatever $\\sigma$ and $\\Delta t$, what is $u \\times d$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "a number",
+        "accept": "1",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the last number in the caption, then move things and read it again."
+        }
+      ],
+      "feedback": {
+        "correct": "$u \\times d = 1$ every time.",
+        "generic": "Not quite right. Read $u \\times d$ in the caption.",
+        "byKey": {
+          "zero": "You added the exponents' signs as numbers. $e^{a} e^{-a} = e^{0} = 1$, not 0.",
+          "two": "$u$ and $d$ multiply, they do not add. The caption shows $u \\times d$."
+        }
+      },
+      "explain": {
+        "text": "$e^{a} e^{-a} = e^{0} = 1$, so $d = 1/u$ and the tree recombines. In C++ either `std::exp(-sigma * std::sqrt(dt))` or `1.0 / u` gives $d$.",
+        "canvas": {
+          "params": {
+            "s": 0.4
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The up factor",
+      "prose": "`<cmath>` is the C++ version of Python's `math` module. The table lists the functions pricing code uses most. Write `crr_u`, the up factor of one CRR step.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Maths",
+            "`<cmath>`"
+          ],
+          "rows": [
+            [
+              "$e^x$",
+              "`std::exp(x)`"
+            ],
+            [
+              "$\\ln x$",
+              "`std::log(x)`"
+            ],
+            [
+              "$\\log_{10} x$",
+              "`std::log10(x)`"
+            ],
+            [
+              "$\\sqrt{x}$",
+              "`std::sqrt(x)`"
+            ],
+            [
+              "$x^y$",
+              "`std::pow(x, y)`"
+            ],
+            [
+              "$\\max(x, y)$",
+              "`std::fmax(x, y)`"
+            ],
+            [
+              "$\\lfloor x \\rfloor$",
+              "`std::floor(x)`"
+            ],
+            [
+              "$\\operatorname{erf} x$, $1 - \\operatorname{erf} x$",
+              "`std::erf(x)`, `std::erfc(x)`"
+            ],
+            [
+              "$\\ln \\Gamma(x)$",
+              "`std::lgamma(x)`"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0,
+              3
+            ]
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "Write `crr_u(sigma, dt)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble crr_u(double sigma, double dt) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble crr_u(double sigma, double dt) {\n    return std::exp(sigma * std::sqrt(dt));\n}\n",
+        "examples": [
+          {
+            "call": "crr_u(0.2, 1.0)",
+            "expect": 1.2214027581601699,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "crr_u(0.2, 1.0)",
+            "expect": 1.2214027581601699,
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_u(0.2, 1.0 / 12)",
+            "expect": 1.0594342369612506,
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_u(0.3, 0.25)",
+            "expect": 1.161834242728283,
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_u(0.0, 1.0)",
+            "expect": 1,
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_u(0.2, 0.0)",
+            "expect": 1,
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_u(0.25, 1.0 / 252)",
+            "expect": 1.0158731811967918,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call crr_u; each answer is accepted within a relative 1e-9."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One line: the exponential of $\\sigma\\sqrt{\\Delta t}$."
+        },
+        {
+          "rung": "point",
+          "text": "Rows 1 and 4 of the table.",
+          "highlight": [
+            "r0",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return std::exp(sigma * std::sqrt(dt));`"
+        }
+      ],
+      "feedback": {
+        "correct": "One line of `<cmath>`, the same as in Python.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "`crr_u(0.2, 1.0)` should be $e^{0.2} = 1.2214$. Check that the square root is inside `std::exp`."
+        }
+      },
+      "explain": {
+        "text": "`std::exp(sigma * std::sqrt(dt))` is the formula letter for letter. With $\\sigma = 0.2$ and one year, $u = e^{0.2} = 1.2214$, the number from the trees course."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The discount factor",
+      "prose": "With a continuous rate $r$, £1 paid at time $t$ is worth $e^{-rt}$ today. The trees course discounted each step this way. Write `discount(r, t)`, with $r$ as a decimal and $t$ in years.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Maths",
+            "`<cmath>`"
+          ],
+          "rows": [
+            [
+              "$e^x$",
+              "`std::exp(x)`"
+            ],
+            [
+              "$\\ln x$",
+              "`std::log(x)`"
+            ],
+            [
+              "$\\log_{10} x$",
+              "`std::log10(x)`"
+            ],
+            [
+              "$\\sqrt{x}$",
+              "`std::sqrt(x)`"
+            ],
+            [
+              "$x^y$",
+              "`std::pow(x, y)`"
+            ],
+            [
+              "$\\max(x, y)$",
+              "`std::fmax(x, y)`"
+            ],
+            [
+              "$\\lfloor x \\rfloor$",
+              "`std::floor(x)`"
+            ],
+            [
+              "$\\operatorname{erf} x$, $1 - \\operatorname{erf} x$",
+              "`std::erf(x)`, `std::erfc(x)`"
+            ],
+            [
+              "$\\ln \\Gamma(x)$",
+              "`std::lgamma(x)`"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "Write `discount(r, t)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble discount(double r, double t) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble discount(double r, double t) {\n    return std::exp(-r * t);\n}\n",
+        "examples": [
+          {
+            "call": "discount(0.05, 1.0)",
+            "expect": 0.951229424500714,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "discount(0.05, 1.0)",
+            "expect": 0.951229424500714,
+            "compare": "isclose"
+          },
+          {
+            "call": "discount(0.05, 0.5)",
+            "expect": 0.9753099120283326,
+            "compare": "isclose"
+          },
+          {
+            "call": "discount(0.03, 10.0)",
+            "expect": 0.7408182206817179,
+            "compare": "isclose"
+          },
+          {
+            "call": "discount(0.05, 0.0)",
+            "expect": 1,
+            "compare": "isclose"
+          },
+          {
+            "call": "discount(-0.005, 2.0)",
+            "expect": 1.010050167084168,
+            "compare": "isclose"
+          },
+          {
+            "call": "discount(0.0, 5.0)",
+            "expect": 1,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call discount; each answer is accepted within a relative 1e-9."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Discounting makes money smaller, so the exponent is negative."
+        },
+        {
+          "rung": "point",
+          "text": "Row 1 of the table, with $x = -rt$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return std::exp(-r * t);`"
+        }
+      ],
+      "feedback": {
+        "correct": "$e^{-rt}$: £1 in a year at 5% is worth £0.9512 today.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "`discount(0.05, 1.0)` should be 0.9512. If you got 1.0513, the minus sign is missing: discounting shrinks money.",
+          "test-5": "A negative rate makes £1 later worth more than £1 now. `std::exp(-r * t)` handles it with no special case."
+        }
+      },
+      "explain": {
+        "text": "`std::exp(-r * t)` is the whole function. Test 5 is a negative rate, as euro rates were in 2015 to 2022: the factor is above 1. One formula covers both signs."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Log returns",
+      "prose": "A log return is $\\ln(P_1/P_0)$. In C++, `std::log` is the natural log, like Python's `math.log`. `std::log10` is base 10, a different function.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Maths",
+            "`<cmath>`"
+          ],
+          "rows": [
+            [
+              "$e^x$",
+              "`std::exp(x)`"
+            ],
+            [
+              "$\\ln x$",
+              "`std::log(x)`"
+            ],
+            [
+              "$\\log_{10} x$",
+              "`std::log10(x)`"
+            ],
+            [
+              "$\\sqrt{x}$",
+              "`std::sqrt(x)`"
+            ],
+            [
+              "$x^y$",
+              "`std::pow(x, y)`"
+            ],
+            [
+              "$\\max(x, y)$",
+              "`std::fmax(x, y)`"
+            ],
+            [
+              "$\\lfloor x \\rfloor$",
+              "`std::floor(x)`"
+            ],
+            [
+              "$\\operatorname{erf} x$, $1 - \\operatorname{erf} x$",
+              "`std::erf(x)`, `std::erfc(x)`"
+            ],
+            [
+              "$\\ln \\Gamma(x)$",
+              "`std::lgamma(x)`"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "Write `log_return(p0, p1)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble log_return(double p0, double p1) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble log_return(double p0, double p1) {\n    return std::log(p1 / p0);\n}\n",
+        "examples": [
+          {
+            "call": "log_return(100.0, 105.0)",
+            "expect": 0.04879016416943205,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "log_return(100.0, 105.0)",
+            "expect": 0.04879016416943205,
+            "compare": "isclose"
+          },
+          {
+            "call": "log_return(105.0, 100.0)",
+            "expect": -0.048790164169432056,
+            "compare": "isclose"
+          },
+          {
+            "call": "log_return(100.0, 100.0)",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "log_return(50.0, 100.0)",
+            "expect": 0.6931471805599453,
+            "compare": "isclose"
+          },
+          {
+            "call": "log_return(200.0, 100.0)",
+            "expect": -0.6931471805599453,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call log_return; each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "New price over old, then the natural log."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2 of the table, not row 3.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return std::log(p1 / p0);`"
+        }
+      ],
+      "feedback": {
+        "correct": "`std::log` is $\\ln$.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "From £100 to £105 the log return is 0.0488. If you got 0.0212, you used `std::log10`; if −0.0488, the prices are swapped.",
+          "test-4": "Doubling should give $\\ln 2 = 0.6931$. If you got 0.3010, that is `std::log10`."
+        }
+      },
+      "explain": {
+        "text": "`std::log(p1 / p0)` gives 0.0488 for a move from £100 to £105. Log returns add over time: two days' log returns sum to the two-day one. That is why volatility is measured on them."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "No crash, just NaN",
+      "prose": "Bad inputs reach `<cmath>` sooner or later: a negative variance, a zero price, a negative base.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::cout << std::sqrt(-1.0) << '\\n';",
+            "std::cout << std::log(0.0) << '\\n';",
+            "std::cout << std::pow(-8.0, 1.0 / 3) << '\\n';",
+            "std::cout << \"done\\n\";"
+          ],
+          "title": "main.cpp"
+        },
+        "state": {}
+      },
+      "question": "What does the program print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`-nan`, `-inf`, `-nan`, then `done`",
+            "correct": true
+          },
+          {
+            "id": "stop",
+            "text": "It stops at `std::sqrt(-1.0)` with an error",
+            "why": "You expected an exception. `<cmath>` functions do not throw; a square root of a negative number returns NaN and the program carries on."
+          },
+          {
+            "id": "cbrt",
+            "text": "`-nan`, `-inf`, `-2`, then `done`",
+            "why": "`std::pow` with a negative base and a fractional exponent is NaN: `1.0 / 3` is not exactly a third. `std::cbrt(-8.0)` gives −2."
+          },
+          {
+            "id": "zero",
+            "text": "`-nan`, `0`, `-nan`, then `done`",
+            "why": "$\\ln x$ falls without limit as $x$ shrinks to 0, so `std::log(0.0)` is minus infinity."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "None of these functions throws an exception."
+        },
+        {
+          "rung": "point",
+          "text": "Line 2: what does $\\ln x$ do as $x$ approaches 0?",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Domain errors give NaN, poles give infinity, and the program reaches `done`."
+        }
+      ],
+      "feedback": {
+        "correct": "NaN and infinity, and no crash.",
+        "generic": "Not quite right. Work through the lines one at a time; none stops the program.",
+        "byKey": {
+          "stop": "Nothing stops the program. `std::sqrt(-1.0)` quietly returns NaN.",
+          "cbrt": "A negative base with a fractional power is NaN in `std::pow`. Use `std::cbrt` for cube roots."
+        }
+      },
+      "explain": {
+        "text": "Domain errors give NaN and poles give infinity, and the program carries on; the sign printed on a NaN means nothing. NaN then spreads through every sum it touches. So a pricer checks its inputs, and its tests check outputs with `std::isnan` and `std::isfinite`.",
+        "canvas": {
+          "lines": [
+            "std::cout << std::sqrt(-1.0) << '\\n';    // -nan",
+            "std::cout << std::log(0.0) << '\\n';      // -inf",
+            "std::cout << std::pow(-8.0, 1.0 / 3) << '\\n';  // -nan",
+            "std::cout << \"done\\n\";                   // done"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Annualised volatility",
+      "prose": "From daily closes: take the daily log returns, their sample standard deviation (divide by $n - 1$), and scale by $\\sqrt{252}$ trading days.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "rows": [
+            [
+              "Close (£)",
+              "100",
+              "101",
+              "99.5",
+              "100.2",
+              "102",
+              "101.3"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `annualised_vol(prices)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n#include <vector>\n\ndouble annualised_vol(const std::vector<double>& prices) {\n    // 1. daily log returns\n    // 2. their sample standard deviation (divide by n - 1)\n    // 3. scale by sqrt(252)\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n#include <vector>\n\ndouble annualised_vol(const std::vector<double>& prices) {\n    std::vector<double> r;\n    for (size_t i = 1; i < prices.size(); ++i)\n        r.push_back(std::log(prices[i] / prices[i - 1]));\n    double mean = 0;\n    for (double x : r) mean += x;\n    mean /= r.size();\n    double ss = 0;\n    for (double x : r) ss += (x - mean) * (x - mean);\n    return std::sqrt(ss / (r.size() - 1)) * std::sqrt(252.0);\n}\n",
+        "examples": [
+          {
+            "call": "annualised_vol({100, 101, 99.5, 100.2, 102, 101.3})",
+            "expect": 0.21046535335287356,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "annualised_vol({100, 101, 99.5, 100.2, 102, 101.3})",
+            "expect": 0.21046535335287356,
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol({50, 50.5, 50.25, 51, 50.75, 51.5, 52, 51.6, 52.3, 52.1, 52.8})",
+            "expect": 0.15087213485607642,
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol({100, 100, 100})",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol({100, 110, 100})",
+            "expect": 2.139708229797629,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 4 hidden tests that call annualised_vol; each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Six closes give five returns, so divide the squared deviations by 4."
+        },
+        {
+          "rung": "point",
+          "text": "`std::sqrt(252.0)` is about 15.87.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Loop from `i = 1` pushing `std::log(prices[i] / prices[i - 1])`; take the mean; sum squared deviations; divide by `r.size() - 1`; square root; times `std::sqrt(252.0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "21% a year from six closes.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Expected 0.2105. If you got 0.1883, you divided by $n$, not $n - 1$. If you got 0.0133, the $\\sqrt{252}$ is missing."
+        }
+      },
+      "explain": {
+        "text": "Daily log returns have sd 0.0133 here, and $\\sqrt{252} = 15.87$ scales that to 21.0% a year. Variance grows in proportion to time, so the sd grows with its square root. `r.size() - 1` is the sample correction from the stats courses."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A monthly tree",
+      "prose": "A colleague builds monthly steps from a count of months.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "int months = 12;",
+            "double dt = 1 / months;",
+            "double u = std::exp(0.2 * std::sqrt(dt));",
+            "std::cout << u << '\\n';"
+          ],
+          "title": "main.cpp"
+        },
+        "state": {}
+      },
+      "question": "What does the program print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "one",
+            "text": "`1`",
+            "correct": true
+          },
+          {
+            "id": "right",
+            "text": "`1.05943`",
+            "why": "You divided as on paper. `1 / months` is `int / int`, which is 0 before it ever reaches `dt`.",
+            "canvas": {
+              "highlight": [
+                "l2"
+              ]
+            }
+          },
+          {
+            "id": "year",
+            "text": "`1.2214`",
+            "why": "That is a one-year step, $\\sqrt{1}$. Here `dt` is not 1."
+          },
+          {
+            "id": "error",
+            "text": "Nothing: storing `1 / months` in a `double` does not compile",
+            "why": "An `int` result converts to `double` silently. The code compiles and runs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What type is `1 / months`?"
+        },
+        {
+          "rung": "point",
+          "text": "Both `1` and `months` are `int`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`1 / 12` is 0 in `int`, so `dt` is 0.0, and $e^{0} = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "Integer division made `dt` zero.",
+        "generic": "Not quite right. Work out `1 / months` in `int` first.",
+        "byKey": {
+          "right": "You divided as on paper. `1 / months` is `int / int`, which is 0, so `u` is $e^0 = 1$."
+        }
+      },
+      "explain": {
+        "text": "`1 / months` divides two `int`s and gives 0, so `dt` is 0.0 and $u = e^{0} = 1$. A tree with $u = d = 1$ never moves, so its option prices are just discounted payoffs at today's price. Write `1.0 / months`.",
+        "canvas": {
+          "tone": {
+            "l2": "err"
+          },
+          "lines": [
+            "int months = 12;",
+            "double dt = 1 / months;          // 0: int division",
+            "double u = std::exp(0.2 * std::sqrt(dt));  // 1",
+            "std::cout << u << '\\n';"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Formulas in C++",
+      "prose": "Each formula is one line of `<cmath>`. `std::pow(2, 10)` and `std::sqrt(2)` accept `int`s and promote them; `int / int` does not.\n\n```cpp\nconst double pi = std::acos(-1.0);\ndouble u  = std::exp(sigma * std::sqrt(dt));\ndouble df = std::exp(-r * t);\ndouble lr = std::log(p1 / p0);\ndouble sq = x * x;  // faster than pow(x, 2)\n```",
+      "question": "Which gives $\\pi$ in standard C++17?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "acos",
+            "text": "`std::acos(-1.0)`",
+            "correct": true
+          },
+          {
+            "id": "mpi",
+            "text": "`M_PI`",
+            "why": "Many compilers define `M_PI`, but the C++ standard does not, so some builds reject it. C++20 adds `std::numbers::pi` in `<numbers>`."
+          },
+          {
+            "id": "stdpi",
+            "text": "`std::pi`",
+            "why": "There is no `std::pi`. C++20 has `std::numbers::pi`, in `<numbers>`."
+          },
+          {
+            "id": "frac",
+            "text": "`22.0 / 7`",
+            "why": "That is 3.142857..., right to only 3 digits."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\cos \\pi = -1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\arccos(-1) = \\pi$, to full double precision.",
+        "generic": "Not quite right. Which option is standard C++17 and exact to 16 digits?"
+      },
+      "explain": {
+        "text": "`std::acos(-1.0)` returns $\\pi$ to every digit a double holds, and works on any C++ compiler. Make it a `const double` once and reuse it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Black-Scholes d1",
+      "prose": "Black-Scholes, from the trees course, starts with\n\n$$d_1 = \\frac{\\ln(S/K) + (r + \\sigma^2/2)T}{\\sigma\\sqrt{T}}.$$\n\nWrite `bs_d1`. Level 2 builds the whole price on it.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$S$",
+            "$K$",
+            "$r$",
+            "$\\sigma$",
+            "$T$",
+            "$d_1$"
+          ],
+          "rows": [
+            [
+              "100",
+              "100",
+              "0.05",
+              "0.2",
+              "1",
+              "0.35"
+            ],
+            [
+              "50",
+              "48",
+              "0.04",
+              "0.3",
+              "0.25",
+              "0.4138"
+            ],
+            [
+              "110",
+              "100",
+              "0.03",
+              "0.25",
+              "0.5",
+              "0.7124"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `bs_d1(s, k, r, sigma, t)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble bs_d1(double s, double k, double r, double sigma, double t) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble bs_d1(double s, double k, double r, double sigma, double t) {\n    return (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n}\n",
+        "examples": [
+          {
+            "call": "bs_d1(100, 100, 0.05, 0.2, 1)",
+            "expect": 0.35000000000000003,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "bs_d1(100, 100, 0.05, 0.2, 1)",
+            "expect": 0.35000000000000003,
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_d1(50, 48, 0.04, 0.3, 0.25)",
+            "expect": 0.4138132968017013,
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_d1(110, 100, 0.03, 0.25, 0.5)",
+            "expect": 0.7123969570366825,
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_d1(100, 50, 0.05, 0.2, 2)",
+            "expect": 2.9456201055019506,
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_d1(100, 100, 0, 0.2, 1)",
+            "expect": 0.1,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call bs_d1; each answer is accepted within a relative 1e-9."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the numerator and denominator separately, then divide."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sigma^2/2$ is `0.5 * sigma * sigma`; the whole numerator sits over $\\sigma\\sqrt{T}$.",
+          "highlight": [
+            "r0c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));`"
+        }
+      ],
+      "feedback": {
+        "correct": "$d_1 = 0.35$, as in the trees course.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Expected 0.35. If you got 0.3 or 0.25, check the brackets: the $\\sigma^2/2$ term goes with $r$, and everything is over $\\sigma\\sqrt{T}$."
+        }
+      },
+      "explain": {
+        "text": "The `int` arguments `100` and `1` convert to the `double` parameters, so `bs_d1(100, 100, 0.05, 0.2, 1)` is safe. The danger is `int` arithmetic inside an expression, never `int` arguments to a `double` parameter. $d_2 = d_1 - \\sigma\\sqrt{T}$ follows in one more line."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`<cmath>` is C++'s `math` module: `std::exp`, `std::log` (natural), `std::sqrt`, `std::pow`, `std::erfc` and the rest take and return `double`.",
+      "A formula translates letter for letter, but every division must be in `double`: `1 / months` is 0.",
+      "Bad inputs give NaN or infinity, never a crash, so check inputs and test outputs with `std::isnan`."
+    ],
+    "formula": {
+      "name": "Black-Scholes d1",
+      "tex": "d_1 = \\dfrac{\\ln(S/K) + (r + \\sigma^2/2)T}{\\sigma\\sqrt{T}}",
+      "note": "`(std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t))`"
+    },
+    "trap": "`1 / months` divides two `int`s and gives 0, so a monthly tree gets $\\Delta t = 0$ and $u = 1$."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "`std::cout << std::log(100.0) << '\\n';`",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`4.60517`",
+            "correct": true
+          },
+          {
+            "id": "ten",
+            "text": "`2`",
+            "why": "That is $\\log_{10} 100$, from `std::log10`. `std::log` is the natural log."
+          },
+          {
+            "id": "e",
+            "text": "`100`",
+            "why": "That would be undoing a logarithm. `std::log(100.0)` is $\\ln 100$."
+          },
+          {
+            "id": "err",
+            "text": "Nothing: `log` needs a base",
+            "why": "`std::log` takes one argument and uses base $e$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\ln 100 = 4.60517$.",
+        "generic": "Not quite right. `std::log` is the natural log."
+      },
+      "explain": {
+        "text": "`std::log` is $\\ln$, as in Python's `math.log`. Base 10 is `std::log10`, which gives 2."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "A config file stores the rate as a whole number of percent.\n\n```cpp\nint r = 5;  // 5%\ndouble t = 1.0;\ndouble df = std::exp(-r * t);\n```",
+      "question": "What is `df`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "0.006738",
+            "correct": true
+          },
+          {
+            "id": "right",
+            "text": "0.951229",
+            "why": "You read 5 as 5%. The code multiplies by 5, not 0.05, so it computes $e^{-5}$."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "There is no integer division here: `-r * t` is `int` times `double`, which is −5.0."
+          },
+          {
+            "id": "err",
+            "text": "It does not compile",
+            "why": "`int` times `double` is a `double`. It compiles."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$e^{-5}$: the units were wrong, not the maths.",
+        "generic": "Not quite right. Work out `-r * t` as the code writes it."
+      },
+      "explain": {
+        "text": "`-r * t` is −5.0, so `df` is $e^{-5} = 0.0067$ instead of 0.9512. Convert once at the edge: `double r = pct / 100.0;`."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "A forward price on a share paying a continuous dividend yield $q$ is $F = Se^{(r - q)T}$. Take $S = £100$, $r = 5\\%$, $q = 2\\%$, $T = 1$.",
+      "question": "What does `100 * std::exp((0.05 - 0.02) * 1)` give, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 103.0455,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "pounds",
+        "unit": "£",
+        "accept": "£103.05 (103.0455)",
+        "wrong": [
+          {
+            "id": "noq",
+            "value": 105.1271,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "plus",
+            "value": 107.2508,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$100e^{0.03} = £103.05$.",
+        "generic": "Not quite right. The exponent is $(0.05 - 0.02) \\times 1 = 0.03$.",
+        "byKey": {
+          "noq": "You left out the dividend yield. $F = Se^{(r - q)T}$ uses $r - q = 0.03$.",
+          "plus": "You added $q$. Dividends lower the forward, so it is $r - q$."
+        }
+      },
+      "explain": {
+        "text": "$(r - q)T = 0.03$, so $F = 100e^{0.03} = £103.05$. In C++ that is `s * std::exp((r - q) * t)`, one line."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 2,
+      "prose": "A model needs the cube root of a negative number, −8.",
+      "question": "Which line returns −2?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`std::cbrt(-8.0)`",
+            "correct": true
+          },
+          {
+            "id": "pow",
+            "text": "`std::pow(-8.0, 1.0 / 3)`",
+            "why": "A negative base with a fractional exponent gives NaN in `std::pow`, and `1.0 / 3` is not exactly a third."
+          },
+          {
+            "id": "sqrt",
+            "text": "`std::sqrt(std::sqrt(-8.0))`",
+            "why": "`std::sqrt` of a negative number is NaN, and that is a fourth root anyway."
+          },
+          {
+            "id": "int",
+            "text": "`std::pow(-8, 1 / 3)`",
+            "why": "`1 / 3` is integer division, 0, so this is $(-8)^0 = 1$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`std::cbrt` handles negative numbers.",
+        "generic": "Not quite right. Which function is defined for negative inputs?"
+      },
+      "explain": {
+        "text": "`std::cbrt` is the real cube root, defined for every double. `std::pow` with a negative base and a non-integer exponent returns NaN without stopping the program."
+      }
+    }
+  ]
+}
