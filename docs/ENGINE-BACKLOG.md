@@ -1155,3 +1155,9 @@ Raised later (graphs-dp level 1):
 Content gaps (second reader, topic 1.4), to fill in the gap pass with 383:
 
 401. Linear algebra against the MIT 18.06 exit line: not taught anywhere are du/dt = Au and e^{At}, similar matrices, complex and Hermitian matrices, the pseudoinverse and Cholesky; vector spaces only informally; the exam has no least-squares code built from the normal equations or QR and no PCA in code. Duplication to cut to make room: elimination l9 repeats vectors l10 to l11 (determinant as area), least-squares l5 is the third pass at projection onto a line.
+
+Raised later (cpp level 1):
+
+402. C++ `code` widget: a per-widget `flags` option (for example `["-Wall"]`) so a screen can show a warning under the editor; the worker compiles without `-Wall` now.
+403. C++ `code` widget: several named source files compiled and linked together, so a learner can cause and fix a multiple-definition or undefined-reference linker error (now shown only as console screenshots).
+404. Playthrough: the previous screen's "Correct." toast is still visible in the next screen's screenshot (cosmetic; with 400).
