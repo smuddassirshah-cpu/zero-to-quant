@@ -165,10 +165,13 @@
     bounce: sampled([0, 0.121, 0.366, 0.618, 0.818, 0.952, 1.026, 1.055, 1.057, 1.046, 1.031, 1.017, 1.007, 1.001, 0.998, 0.997, 1]),
     physical: sampled([0, 0.131, 0.407, 0.698, 0.927, 1.068, 1.129, 1.131, 1.101, 1.061, 1.025, 0.999, 0.986, 0.982, 0.984, 0.989, 1]),
   };
+  /* item 278: busy counts running tweens (and a screen's pending enter patch), so a screenshot can wait for them */
+  const busy = { n: 0 };
   const tween = (from, to, ms, fn, easing = 'morph') => new Promise(res => {
     if (Z.reducedMotion() || ms <= 0 || from === to) { fn(to); return res(); }
-    let t0 = null; const e = ease[easing] || ease.morph;
-    const step = (now) => { if (t0 === null) t0 = now; const p = Math.min(1, (now - t0) / ms); fn(from + (to - from) * e(p)); if (p < 1) requestAnimationFrame(step); else res(); };
+    let t0 = null; const e = ease[easing] || ease.morph; busy.n++;
+    const done = () => { busy.n = Math.max(0, busy.n - 1); res(); };
+    const step = (now) => { if (t0 === null) t0 = now; const p = Math.min(1, (now - t0) / ms); try { fn(from + (to - from) * e(p)); } catch (err) { done(); throw err; } if (p < 1 && !document.hidden) requestAnimationFrame(step); else { if (p < 1) fn(to); done(); } };
     requestAnimationFrame(step);
   });
   /* A cancellable progress animation: run(ms, fn(eased, raw), easing) stops the previous run of the same animator. */
@@ -718,6 +721,7 @@
   };
 
   Z.canvas = {
+    busy: () => busy.n,
     register, create, kinds, svg, attrs, label, scale, niceTicks, fmtNum, compile, tween, pulse, clearHighlight, merge, frame, emitter, series, SERIES, INK, NS,
     // added by E3: shared instance and helpers (see header)
     instance, GRADED, ease, animator, lerp, flash, badge, texOf, textW, toLocal, dragger, cellOutline, nextInDirection,

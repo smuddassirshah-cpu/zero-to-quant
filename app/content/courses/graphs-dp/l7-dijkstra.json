@@ -1,0 +1,2126 @@
+{
+  "id": "l7-dijkstra",
+  "course": "graphs-dp",
+  "title": "Shortest paths with weights",
+  "minutes": 15,
+  "objectives": [
+    "Implement Dijkstra’s algorithm with a heap.",
+    "Skip stale heap entries and explain why a popped node is final",
+    "State the running time and why negative weights break the method"
+  ],
+  "skills": [
+    "gd-paths"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Cheapest, not shortest",
+      "prose": "Each arrow has a cost: a fee, a delay, a distance. A route costs the sum of its arrows. You may only travel the way the arrows point.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.32,
+              "y": 0.16
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.32,
+              "y": 0.84
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.62,
+              "y": 0.16
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.62,
+              "y": 0.84
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.9,
+              "y": 0.5
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.95,
+              "y": 0.1
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 4
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "D",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 5
+            },
+            {
+              "from": "D",
+              "to": "F",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "E",
+              "w": 2
+            },
+            {
+              "from": "E",
+              "to": "F",
+              "w": 6
+            },
+            {
+              "from": "G",
+              "to": "F",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "caption": "Start at A, finish at F"
+        }
+      },
+      "question": "Tap every node on the cheapest route from A to F, A and F included.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "A",
+          "C",
+          "B",
+          "D",
+          "F"
+        ],
+        "countWord": "on the route",
+        "wrong": [
+          {
+            "id": "hops-d",
+            "set": [
+              "A",
+              "C",
+              "D",
+              "F"
+            ]
+          },
+          {
+            "id": "hops-e",
+            "set": [
+              "A",
+              "C",
+              "E",
+              "F"
+            ]
+          },
+          {
+            "id": "top",
+            "set": [
+              "A",
+              "B",
+              "D",
+              "F"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add up the arrows on each route. Fewer arrows does not mean a smaller total."
+        },
+        {
+          "rung": "point",
+          "text": "Getting to B through C costs 1 + 2, less than the direct 4.",
+          "highlight": [
+            "C",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A, C, B, D, F costs 1 + 2 + 1 + 3 = 7. Every other route costs 8 or more."
+        }
+      ],
+      "feedback": {
+        "correct": "A, C, B, D, F costs 7, the cheapest.",
+        "generic": "Not quite right. Total each route and keep the smallest.",
+        "byKey": {
+          "hops-d": "That route has only three arrows, but it costs 1 + 5 + 3 = 9. A detour through B costs 7.",
+          "hops-e": "That route costs 1 + 2 + 6 = 9. Fewer arrows, larger total.",
+          "top": "That costs 4 + 1 + 3 = 8. Reaching B through C saves 1."
+        }
+      },
+      "explain": {
+        "text": "The cheapest route uses four arrows, more than the three-arrow routes. With costs on the edges, counting hops is the wrong measure. We need a search that settles nodes in order of cost.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "C",
+            "B",
+            "D",
+            "F",
+            "e-A-C",
+            "e-C-B",
+            "e-B-D",
+            "e-D-F"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Which cost is safe?",
+      "prose": "From A we can see two arrows. The labels show the best cost known so far: B for 4, C for 1. Every cost is zero or more.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.32,
+              "y": 0.16
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.32,
+              "y": 0.84
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.62,
+              "y": 0.16
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.62,
+              "y": 0.84
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.9,
+              "y": 0.5
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.95,
+              "y": 0.1
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 4
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "D",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 5
+            },
+            {
+              "from": "D",
+              "to": "F",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "E",
+              "w": 2
+            },
+            {
+              "from": "E",
+              "to": "F",
+              "w": 6
+            },
+            {
+              "from": "G",
+              "to": "F",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·4",
+            "C": "C·1"
+          },
+          "visited": [
+            "A"
+          ],
+          "caption": "Costs known after looking at A's arrows"
+        }
+      },
+      "question": "Tap the one node whose cost can no longer improve.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "C"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Any other route to that node would start through a node that already costs more."
+        },
+        {
+          "rung": "point",
+          "text": "This is the smallest cost on the board.",
+          "highlight": [
+            "C"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Any route to C other than the direct arrow passes through B first, which already costs 4. So C's 1 is final."
+        }
+      ],
+      "feedback": {
+        "correct": "C costs 1, and any detour would start at 4 or more.",
+        "generic": "Not quite right. Pick the smallest cost and ask whether a detour could beat it.",
+        "byKey": {
+          "B": "B's 4 can still improve: a route through C might be cheaper. Indeed A, C, B costs 3."
+        }
+      },
+      "explain": {
+        "text": "The smallest tentative cost is safe, because every other route starts from something at least as big. With no negative arrows, nothing can bring it back down. This one fact drives the whole algorithm.",
+        "canvas": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·3",
+            "C": "C·1",
+            "D": "D·6",
+            "E": "E·3"
+          },
+          "visited": [
+            "A",
+            "C"
+          ],
+          "current": "C"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Step the heap",
+      "prose": "**Dijkstra's algorithm** keeps a heap of `(cost, node)` entries. Pop the smallest; for each arrow, if `d + w` beats the node's cost, update it and push. An entry larger than its node's current cost is **stale**. A has been popped.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "graph",
+          "params": {
+            "directed": true,
+            "height": 240,
+            "nodes": [
+              {
+                "id": "A",
+                "label": "A",
+                "x": 0.06,
+                "y": 0.5
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 0.32,
+                "y": 0.16
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 0.32,
+                "y": 0.84
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 0.62,
+                "y": 0.16
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 0.62,
+                "y": 0.84
+              },
+              {
+                "id": "F",
+                "label": "F",
+                "x": 0.9,
+                "y": 0.5
+              },
+              {
+                "id": "G",
+                "label": "G",
+                "x": 0.95,
+                "y": 0.1
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B",
+                "w": 4
+              },
+              {
+                "from": "A",
+                "to": "C",
+                "w": 1
+              },
+              {
+                "from": "C",
+                "to": "B",
+                "w": 2
+              },
+              {
+                "from": "B",
+                "to": "D",
+                "w": 1
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "w": 5
+              },
+              {
+                "from": "D",
+                "to": "F",
+                "w": 3
+              },
+              {
+                "from": "C",
+                "to": "E",
+                "w": 2
+              },
+              {
+                "from": "E",
+                "to": "F",
+                "w": 6
+              },
+              {
+                "from": "G",
+                "to": "F",
+                "w": 1
+              }
+            ]
+          },
+          "state": {
+            "labels": {
+              "A": "A·0",
+              "B": "B·4",
+              "C": "C·1"
+            },
+            "visited": [
+              "A"
+            ],
+            "current": "A"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "node",
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G"
+            ],
+            "rows": [
+              [
+                "dist",
+                "0",
+                "4",
+                "1",
+                "∞",
+                "∞",
+                "∞",
+                "∞"
+              ]
+            ],
+            "align": "center"
+          },
+          "state": {
+            "highlight": {
+              "cols": [
+                1
+              ]
+            }
+          }
+        }
+      },
+      "question": "Run the algorithm until D has been popped. Tap the next step each time.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s5",
+        "states": {
+          "s0": {
+            "tex": "\\text{heap: }(1,\\ \\text{C}),\\ (4,\\ \\text{B})",
+            "canvas": {
+              "left": {
+                "labels": {
+                  "A": "A·0",
+                  "B": "B·4",
+                  "C": "C·1"
+                },
+                "visited": [
+                  "A"
+                ],
+                "current": "A"
+              },
+              "right": {
+                "values": {
+                  "r0c1": "0",
+                  "r0c2": "4",
+                  "r0c3": "1",
+                  "r0c4": "∞",
+                  "r0c5": "∞",
+                  "r0c6": "∞",
+                  "r0c7": "∞"
+                },
+                "highlight": {
+                  "cols": [
+                    1
+                  ]
+                }
+              }
+            },
+            "ops": [
+              {
+                "label": "Pop (1, C) and relax its edges",
+                "to": "s1"
+              },
+              {
+                "label": "Pop (4, B) and relax its edges",
+                "to": "m-big",
+                "why": "(4, B) is not the smallest entry. The heap always hands out the smallest, (1, C)."
+              }
+            ]
+          },
+          "m-big": {
+            "tex": "\\text{B popped at 4, but a cheaper route to B may exist}"
+          },
+          "s1": {
+            "tex": "\\text{heap: }(3,\\ \\text{B}),\\ (3,\\ \\text{E}),\\ (4,\\ \\text{B}),\\ (6,\\ \\text{D})",
+            "canvas": {
+              "left": {
+                "labels": {
+                  "A": "A·0",
+                  "B": "B·3",
+                  "C": "C·1",
+                  "D": "D·6",
+                  "E": "E·3"
+                },
+                "visited": [
+                  "A",
+                  "C"
+                ],
+                "current": "C"
+              },
+              "right": {
+                "values": {
+                  "r0c1": "0",
+                  "r0c2": "3",
+                  "r0c3": "1",
+                  "r0c4": "6",
+                  "r0c5": "3",
+                  "r0c6": "∞",
+                  "r0c7": "∞"
+                },
+                "highlight": {
+                  "cols": [
+                    1,
+                    3
+                  ]
+                }
+              }
+            },
+            "ops": [
+              {
+                "label": "Pop (3, B) and relax its edges",
+                "to": "s2"
+              },
+              {
+                "label": "Pop (6, D) and relax its edges",
+                "to": "m-d",
+                "why": "(6, D) is the largest entry. Pop the smallest, (3, B); ties go to the earlier letter."
+              }
+            ]
+          },
+          "m-d": {
+            "tex": "\\text{D popped at 6, before cheaper entries}"
+          },
+          "s2": {
+            "tex": "\\text{heap: }(3,\\ \\text{E}),\\ (4,\\ \\text{B}),\\ (4,\\ \\text{D}),\\ (6,\\ \\text{D})",
+            "canvas": {
+              "left": {
+                "labels": {
+                  "A": "A·0",
+                  "B": "B·3",
+                  "C": "C·1",
+                  "D": "D·4",
+                  "E": "E·3"
+                },
+                "visited": [
+                  "A",
+                  "C",
+                  "B"
+                ],
+                "current": "B"
+              },
+              "right": {
+                "values": {
+                  "r0c1": "0",
+                  "r0c2": "3",
+                  "r0c3": "1",
+                  "r0c4": "4",
+                  "r0c5": "3",
+                  "r0c6": "∞",
+                  "r0c7": "∞"
+                },
+                "highlight": {
+                  "cols": [
+                    1,
+                    3,
+                    2
+                  ]
+                }
+              }
+            },
+            "ops": [
+              {
+                "label": "Pop (3, E) and relax its edges",
+                "to": "s3"
+              },
+              {
+                "label": "Pop (4, D) and relax its edges",
+                "to": "m-d2",
+                "why": "(3, E) is smaller than (4, D), so E comes out first."
+              }
+            ]
+          },
+          "m-d2": {
+            "tex": "\\text{D popped at 4 while (3, E) waits}"
+          },
+          "s3": {
+            "tex": "\\text{heap: }(4,\\ \\text{B}),\\ (4,\\ \\text{D}),\\ (6,\\ \\text{D}),\\ (9,\\ \\text{F})",
+            "canvas": {
+              "left": {
+                "labels": {
+                  "A": "A·0",
+                  "B": "B·3",
+                  "C": "C·1",
+                  "D": "D·4",
+                  "E": "E·3",
+                  "F": "F·9"
+                },
+                "visited": [
+                  "A",
+                  "C",
+                  "B",
+                  "E"
+                ],
+                "current": "E"
+              },
+              "right": {
+                "values": {
+                  "r0c1": "0",
+                  "r0c2": "3",
+                  "r0c3": "1",
+                  "r0c4": "4",
+                  "r0c5": "3",
+                  "r0c6": "9",
+                  "r0c7": "∞"
+                },
+                "highlight": {
+                  "cols": [
+                    1,
+                    3,
+                    2,
+                    5
+                  ]
+                }
+              }
+            },
+            "ops": [
+              {
+                "label": "Skip (4, B): B is already final at 3",
+                "to": "s4"
+              },
+              {
+                "label": "Pop (4, B) and relax B's edges again",
+                "to": "m-stale",
+                "why": "B's cost is already 3, so (4, B) is a stale entry. Relaxing from 4 cannot lower anything: skip it."
+              }
+            ]
+          },
+          "m-stale": {
+            "tex": "\\text{B's edges relaxed again from a stale 4}"
+          },
+          "s4": {
+            "tex": "\\text{heap: }(4,\\ \\text{D}),\\ (6,\\ \\text{D}),\\ (9,\\ \\text{F})",
+            "canvas": {
+              "left": {
+                "labels": {
+                  "A": "A·0",
+                  "B": "B·3",
+                  "C": "C·1",
+                  "D": "D·4",
+                  "E": "E·3",
+                  "F": "F·9"
+                },
+                "visited": [
+                  "A",
+                  "C",
+                  "B",
+                  "E"
+                ],
+                "current": null
+              },
+              "right": {
+                "values": {
+                  "r0c1": "0",
+                  "r0c2": "3",
+                  "r0c3": "1",
+                  "r0c4": "4",
+                  "r0c5": "3",
+                  "r0c6": "9",
+                  "r0c7": "∞"
+                },
+                "highlight": {
+                  "cols": [
+                    1,
+                    3,
+                    2,
+                    5
+                  ]
+                }
+              }
+            },
+            "ops": [
+              {
+                "label": "Pop (4, D) and relax its edges",
+                "to": "s5"
+              },
+              {
+                "label": "Pop (9, F)",
+                "to": "m-f",
+                "why": "(4, D) is smaller, and D's edge may still lower F."
+              }
+            ]
+          },
+          "m-f": {
+            "tex": "\\text{F popped at 9 while (4, D) waits}"
+          },
+          "s5": {
+            "tex": "\\text{heap: }(6,\\ \\text{D}),\\ (7,\\ \\text{F}),\\ (9,\\ \\text{F})",
+            "canvas": {
+              "left": {
+                "labels": {
+                  "A": "A·0",
+                  "B": "B·3",
+                  "C": "C·1",
+                  "D": "D·4",
+                  "E": "E·3",
+                  "F": "F·7"
+                },
+                "visited": [
+                  "A",
+                  "C",
+                  "B",
+                  "E",
+                  "D"
+                ],
+                "current": "D"
+              },
+              "right": {
+                "values": {
+                  "r0c1": "0",
+                  "r0c2": "3",
+                  "r0c3": "1",
+                  "r0c4": "4",
+                  "r0c5": "3",
+                  "r0c6": "7",
+                  "r0c7": "∞"
+                },
+                "highlight": {
+                  "cols": [
+                    1,
+                    3,
+                    2,
+                    5,
+                    4
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`heapq` always pops the smallest entry. Ties on cost go to the earlier letter."
+        },
+        {
+          "rung": "point",
+          "text": "B already costs 3 when (4, B) comes out.",
+          "highlight": [
+            "right:c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pop C, then B at 3, then E at 3. Skip the stale (4, B), then pop (4, D)."
+        }
+      ],
+      "feedback": {
+        "correct": "D pops at 4 and lowers F to 7.",
+        "generic": "Not quite right. Pop the smallest entry each time, and skip a stale one.",
+        "byKey": {
+          "m-big": "You popped (4, B) while (1, C) waited. The heap always hands out the smallest cost first.",
+          "m-stale": "You relaxed B again from 4. B already costs 3, so this entry is stale: skip it."
+        }
+      },
+      "explain": {
+        "text": "Each pop fixes one node, in order of cost: A 0, C 1, B 3, E 3, D 4. The stale (4, B) was skipped because B already cost 3. Then (6, D) is stale too, F pops at 7, and (9, F) is skipped.",
+        "canvas": {
+          "left": {
+            "labels": {
+              "A": "A·0",
+              "B": "B·3",
+              "C": "C·1",
+              "D": "D·4",
+              "E": "E·3",
+              "F": "F·7",
+              "G": "G·∞"
+            },
+            "visited": [
+              "A",
+              "C",
+              "B",
+              "E",
+              "D",
+              "F"
+            ]
+          },
+          "right": {
+            "values": {
+              "r0c1": "0",
+              "r0c2": "3",
+              "r0c3": "1",
+              "r0c4": "4",
+              "r0c5": "3",
+              "r0c6": "7",
+              "r0c7": "∞"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What it costs",
+      "prose": "Each improvement pushes one entry, so the heap receives at most $E + 1$ entries. Each push or pop on a heap of that size costs $O(\\log V)$, since $E \\le V^2$. An older version scans a plain list for the smallest cost at every step instead.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.32,
+              "y": 0.16
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.32,
+              "y": 0.84
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.62,
+              "y": 0.16
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.62,
+              "y": 0.84
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.9,
+              "y": 0.5
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.95,
+              "y": 0.1
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 4
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "D",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 5
+            },
+            {
+              "from": "D",
+              "to": "F",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "E",
+              "w": 2
+            },
+            {
+              "from": "E",
+              "to": "F",
+              "w": 6
+            },
+            {
+              "from": "G",
+              "to": "F",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·3",
+            "C": "C·1",
+            "D": "D·4",
+            "E": "E·3",
+            "F": "F·7",
+            "G": "G·∞"
+          }
+        }
+      },
+      "question": "What is the running time of the heap version?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "heap",
+            "text": "$O((V + E)\\log V)$",
+            "correct": true
+          },
+          {
+            "id": "scan",
+            "text": "$O(V^2)$",
+            "why": "That is the list version: $V$ times it scans up to $V$ nodes for the minimum. The heap finds it in $O(\\log V)$."
+          },
+          {
+            "id": "bfs",
+            "text": "$O(V + E)$",
+            "why": "That is BFS, whose queue costs $O(1)$ per step. A heap costs $O(\\log V)$ per push and pop."
+          },
+          {
+            "id": "ve",
+            "text": "$O(V \\cdot E)$",
+            "why": "That is Bellman-Ford, which relaxes every edge $V - 1$ times. Dijkstra relaxes each edge once, from a final node."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the pushes and pops, then the cost of each."
+        },
+        {
+          "rung": "point",
+          "text": "Each arrow can cause at most one push.",
+          "highlight": [
+            "e-C-B",
+            "e-A-B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At most $E + 1$ pushes and pops, each $O(\\log V)$, plus reading every node once: $O((V + E)\\log V)$."
+        }
+      ],
+      "feedback": {
+        "correct": "Every edge causes at most one push, and each heap step costs $O(\\log V)$.",
+        "generic": "Not quite right. Count heap operations and price each one.",
+        "byKey": {
+          "scan": "You priced the list version. On a sparse graph with a million nodes, $V^2$ is $10^{12}$ steps."
+        }
+      },
+      "explain": {
+        "text": "Pushes and pops number at most $E + 1$, each $O(\\log V)$. On a sparse network, $E$ is a few times $V$, so the heap wins easily. Scanning a list costs $O(V^2)$, which only pays off when nearly every pair of nodes is joined."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "Now write it. Store the graph as `{node: [(neighbour, weight), ...]}`. The starter holds the graph on the canvas. Start every cost at `math.inf`, so unreachable nodes keep it.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.32,
+              "y": 0.16
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.32,
+              "y": 0.84
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.62,
+              "y": 0.16
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.62,
+              "y": 0.84
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.9,
+              "y": 0.5
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.95,
+              "y": 0.1
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 4
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "D",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 5
+            },
+            {
+              "from": "D",
+              "to": "F",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "E",
+              "w": 2
+            },
+            {
+              "from": "E",
+              "to": "F",
+              "w": 6
+            },
+            {
+              "from": "G",
+              "to": "F",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·3",
+            "C": "C·1",
+            "D": "D·4",
+            "E": "E·3",
+            "F": "F·7",
+            "G": "G·∞"
+          }
+        }
+      },
+      "question": "Write `dijkstra(adj, s)`: a dict of the cheapest cost from `s` to every node of `adj`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\nimport math\n\n\ndef dijkstra(adj, s):\n    ...\n\n\ngraph = {\"A\": [(\"B\", 4), (\"C\", 1)], \"B\": [(\"D\", 1)],\n     \"C\": [(\"B\", 2), (\"D\", 5), (\"E\", 2)], \"D\": [(\"F\", 3)],\n     \"E\": [(\"F\", 6)], \"F\": [], \"G\": [(\"F\", 1)]}\nprint(dijkstra(graph, \"A\"))\n",
+        "solution": "import heapq\nimport math\n\n\ndef dijkstra(adj, s):\n    dist = {u: math.inf for u in adj}\n    dist[s] = 0\n    heap = [(0, s)]\n    while heap:\n        d, u = heapq.heappop(heap)\n        if d > dist[u]:\n            continue\n        for v, w in adj[u]:\n            nd = d + w\n            if nd < dist[v]:\n                dist[v] = nd\n                heapq.heappush(heap, (nd, v))\n    return dist\n",
+        "tests": [
+          {
+            "call": "dijkstra({\"A\": [(\"B\", 4), (\"C\", 1)], \"B\": [(\"D\", 1)], \"C\": [(\"B\", 2), (\"D\", 5), (\"E\", 2)], \"D\": [(\"F\", 3)], \"E\": [(\"F\", 6)], \"F\": [], \"G\": [(\"F\", 1)]}, 'A')",
+            "expect": "{'A': 0, 'B': 3, 'C': 1, 'D': 4, 'E': 3, 'F': 7, 'G': float('inf')}",
+            "compare": "equal"
+          },
+          {
+            "call": "dijkstra({\"A\": [(\"B\", 4), (\"C\", 1)], \"B\": [(\"D\", 1)], \"C\": [(\"B\", 2), (\"D\", 5), (\"E\", 2)], \"D\": [(\"F\", 3)], \"E\": [(\"F\", 6)], \"F\": [], \"G\": [(\"F\", 1)]}, 'G')",
+            "expect": "{'A': float('inf'), 'B': float('inf'), 'C': float('inf'), 'D': float('inf'), 'E': float('inf'), 'F': 1, 'G': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "dijkstra({'A': []}, 'A')",
+            "expect": "{'A': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "dijkstra({'S': [('A', 1), ('B', 4)], 'A': [('B', 2)], 'B': [('C', 1)], 'C': []}, 'S')",
+            "expect": "{'S': 0, 'A': 1, 'B': 3, 'C': 4}",
+            "compare": "equal"
+          },
+          {
+            "call": "dijkstra({'A': [('B', 5), ('E', 5)], 'B': [('A', 5), ('C', 5)], 'C': [('B', 5), ('D', 5)], 'D': [('C', 5), ('G', 5), ('H', 5)], 'E': [('A', 5), ('F', 5), ('G', 5)], 'F': [('E', 5), ('H', 5)], 'G': [('D', 5), ('E', 5)], 'H': [('D', 5), ('F', 5)]}, 'A')",
+            "expect": "{'A': 0, 'B': 5, 'C': 10, 'D': 15, 'E': 5, 'F': 10, 'G': 10, 'H': 15}",
+            "compare": "equal"
+          },
+          {
+            "call": "dijkstra({'A': [('B', 0)], 'B': [('C', 0), ('A', 0)], 'C': []}, 'A')",
+            "expect": "{'A': 0, 'B': 0, 'C': 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "{k: round(v, 6) for k, v in dijkstra({'x': [('y', 0.1), ('z', 0.5)], 'y': [('z', 0.2)], 'z': [('x', 0.3)]}, 'x').items()}",
+            "expect": "{'x': 0, 'y': 0.1, 'z': 0.3}",
+            "compare": "equal"
+          },
+          {
+            "call": "dijkstra({1: [(2, 7), (3, 9), (6, 14)], 2: [(1, 7), (3, 10), (4, 15)], 3: [(1, 9), (2, 10), (4, 11), (6, 2)], 4: [(2, 15), (3, 11), (5, 6)], 5: [(4, 6), (6, 9)], 6: [(1, 14), (3, 2), (5, 9)]}, 1)",
+            "expect": "{1: 0, 2: 7, 3: 9, 4: 20, 5: 20, 6: 11}",
+            "compare": "equal"
+          },
+          {
+            "call": "hub_scans(300)",
+            "expect": "(300, 1)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Return a dict with every node of `adj`; an unreachable node maps to `math.inf`. Test 9 builds a graph full of stale entries and checks that each node's edges are read only once.",
+        "examples": [
+          {
+            "call": "dijkstra({\"A\": [(\"B\", 4), (\"C\", 1)], \"B\": [(\"D\", 1)], \"C\": [(\"B\", 2), (\"D\", 5), (\"E\", 2)], \"D\": [(\"F\", 3)], \"E\": [(\"F\", 6)], \"F\": [], \"G\": [(\"F\", 1)]}, 'A')",
+            "expect": "{'A': 0, 'B': 3, 'C': 1, 'D': 4, 'E': 3, 'F': 7, 'G': float('inf')}",
+            "compare": "equal"
+          },
+          {
+            "call": "dijkstra({'A': []}, 'A')",
+            "expect": "{'A': 0}",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "class _Edges(list):\n    def __iter__(self):\n        _SCANS[self.owner] = _SCANS.get(self.owner, 0) + 1\n        return list.__iter__(self)\n\n\n_SCANS = {}\n\n\ndef _edges(owner, items):\n    e = _Edges(items)\n    e.owner = owner\n    return e\n\n\ndef hub_scans(k):\n    \"\"\"dist to the hub h, and how many times h's edge list was read\"\"\"\n    _SCANS.clear()\n    adj = {\"s\": _edges(\"s\", [(\"c1\", 1)])}\n    for i in range(1, k + 1):\n        nxt = [(\"c%d\" % (i + 1), 1)] if i < k else []\n        adj[\"c%d\" % i] = _edges(\"c%d\" % i, nxt + [(\"h\", 2 * k - 2 * i)])\n    adj[\"h\"] = _edges(\"h\", [(\"t%d\" % j, 1) for j in range(k)])\n    for j in range(k):\n        adj[\"t%d\" % j] = _edges(\"t%d\" % j, [])\n    dist = dijkstra(adj, \"s\")\n    return dist[\"h\"], _SCANS.get(\"h\", 0)\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep `dist` for every node and a heap `[(0, s)]`. Pop until the heap is empty."
+        },
+        {
+          "rung": "point",
+          "text": "G has no arrow into it, so its cost stays infinite.",
+          "highlight": [
+            "G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After popping `(d, u)`, skip it if `d > dist[u]`. Otherwise, for each `(v, w)`, if `d + w < dist[v]`, set `dist[v]` and push `(d + w, v)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your costs match, unreachable nodes stay at `inf`, and each node's edges are read once.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects B at 3 and F at 7. B at 4 means you marked nodes seen when first pushed, or a stale pop overwrote a cost.",
+          "test-2": "Test 2 starts at G, which reaches only F. Every other node must still be in the dict, at `math.inf`.",
+          "test-9": "Test 9 reads the hub's edges more than once. Skip a popped entry when `d > dist[u]`: it is stale."
+        }
+      },
+      "explain": {
+        "text": "The `d > dist[u]` check throws away stale entries in $O(1)$, so each node's edges are read once. Without it the answer stays right here, but stale entries redo work. Test 9 had 300 of them.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "C",
+            "B",
+            "D",
+            "F",
+            "e-A-C",
+            "e-C-B",
+            "e-B-D",
+            "e-D-F"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Recording on pop",
+      "prose": "A colleague records each cost when a node is popped and pushes every neighbour, with no check:\n\n```python\ndef dijkstra(adj, s):\n    dist = {}\n    heap = [(0, s)]\n    while heap:\n        d, u = heapq.heappop(heap)\n        dist[u] = d\n        for v, w in adj[u]:\n            heapq.heappush(heap, (d + w, v))\n    return dist\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.32,
+              "y": 0.16
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.32,
+              "y": 0.84
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.62,
+              "y": 0.16
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.62,
+              "y": 0.84
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.9,
+              "y": 0.5
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.95,
+              "y": 0.1
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 4
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "B",
+              "to": "D",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 5
+            },
+            {
+              "from": "D",
+              "to": "F",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "E",
+              "w": 2
+            },
+            {
+              "from": "E",
+              "to": "F",
+              "w": 6
+            },
+            {
+              "from": "G",
+              "to": "F",
+              "w": 1
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "On the canvas graph from A, what is `dist['B']` when it returns?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "right",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "B goes into the heap twice. Which entry comes out last?"
+        },
+        {
+          "rung": "point",
+          "text": "B is pushed at 4 from A and at 3 from C.",
+          "highlight": [
+            "e-A-B",
+            "e-C-B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "(3, B) pops first and sets 3. Later (4, B) pops and overwrites it with 4."
+        }
+      ],
+      "feedback": {
+        "correct": "The stale (4, B) popped last and overwrote the right answer.",
+        "generic": "Not quite right. Follow both of B's entries out of the heap.",
+        "byKey": {
+          "right": "You expected the first pop to stick. Nothing stops the stale (4, B) popping later and overwriting B with 4."
+        }
+      },
+      "explain": {
+        "text": "Every stale entry still pops, and the last one wins. Here B ends at 4 and F at 9, both wrong. The fix is one line after the pop: `if u in dist: continue`, or `if d > dist[u]: continue`.",
+        "canvas": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·4",
+            "C": "C·1",
+            "D": "D·6",
+            "E": "E·3",
+            "F": "F·9"
+          },
+          "highlight": [
+            "B",
+            "F"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A negative arrow",
+      "prose": "One arrow now has a negative cost, a rebate. Dijkstra pops (2, B) before (3, C), and treats a popped node as final.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 220,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.1,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.6,
+              "y": 0.15
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.85
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 2
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "w": 3
+            },
+            {
+              "from": "C",
+              "to": "B",
+              "w": -2
+            }
+          ]
+        },
+        "state": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·2",
+            "C": "C·3"
+          },
+          "visited": [
+            "A",
+            "B"
+          ]
+        }
+      },
+      "question": "What is the true cheapest cost from A to B?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "pop",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try the route through C."
+        },
+        {
+          "rung": "point",
+          "text": "This arrow lowers the total.",
+          "highlight": [
+            "e-C-B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A to C costs 3, then C to B costs −2: a total of 1."
+        }
+      ],
+      "feedback": {
+        "correct": "A, C, B costs 3 − 2 = 1.",
+        "generic": "Not quite right. Add the costs along A, C, B.",
+        "byKey": {
+          "pop": "That is the cost Dijkstra fixed when it popped B. The rebate on C to B arrives later and beats it."
+        }
+      },
+      "explain": {
+        "text": "Popping the smallest cost is safe only if no later arrow can lower it. A negative arrow can, so a popped node is no longer final. If a loop's costs sum below zero, there is no cheapest cost at all; the last lesson of this level deals with that.",
+        "canvas": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·1",
+            "C": "C·3"
+          },
+          "highlight": [
+            "e-A-C",
+            "e-C-B"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "Every cheapest-cost search you ran had this shape:\n\n```python\nwhile heap:\n    d, u = heapq.heappop(heap)\n    if d > dist[u]:\n        continue          # stale\n    for v, w in adj[u]:\n        if d + w < dist[v]:\n            dist[v] = d + w\n            heapq.heappush(heap, (d + w, v))\n```\n\nIt runs in $O((V + E)\\log V)$ when every $w \\ge 0$.",
+      "question": "Every edge costs the same, 5. What does `dijkstra` return for each node?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bfs",
+            "text": "5 times its BFS distance",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "5 for every reachable node",
+            "why": "A node two hops away needs two edges, so it costs 10. Costs add along the route."
+          },
+          {
+            "id": "hops",
+            "text": "Its BFS distance",
+            "why": "The costs are 5 each, so every hop adds 5, not 1."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "With equal weights, cheapest means fewest hops.",
+        "generic": "Not quite right. Add up the costs along a fewest-hops route."
+      },
+      "explain": {
+        "text": "When every weight is the same, a route's cost is that weight times its hops. So Dijkstra and BFS agree, and BFS is the faster choice."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Converting £1m",
+      "prose": "A treasury desk converts £1,000,000 into yen. Each arrow is a currency pair with its all-in cost in basis points (1 bp is 0.01%). At these sizes the costs add up along a route, to within a penny.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 260,
+          "nodes": [
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.07,
+              "y": 0.5
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.35,
+              "y": 0.15
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.42,
+              "y": 0.8
+            },
+            {
+              "id": "CHF",
+              "label": "CHF",
+              "x": 0.68,
+              "y": 0.12
+            },
+            {
+              "id": "JPY",
+              "label": "JPY",
+              "x": 0.92,
+              "y": 0.55
+            }
+          ],
+          "edges": [
+            {
+              "from": "GBP",
+              "to": "USD",
+              "label": "1.2"
+            },
+            {
+              "from": "GBP",
+              "to": "EUR",
+              "label": "0.5"
+            },
+            {
+              "from": "EUR",
+              "to": "USD",
+              "label": "0.6"
+            },
+            {
+              "from": "USD",
+              "to": "JPY",
+              "label": "1.5"
+            },
+            {
+              "from": "EUR",
+              "to": "JPY",
+              "label": "2.4"
+            },
+            {
+              "from": "GBP",
+              "to": "JPY",
+              "label": "4.0"
+            },
+            {
+              "from": "EUR",
+              "to": "CHF",
+              "label": "0.7"
+            },
+            {
+              "from": "CHF",
+              "to": "JPY",
+              "label": "1.9"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Cost of each conversion, in bp"
+        }
+      },
+      "question": "What does the cheapest route cost on £1,000,000, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 260,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "placeholder": "pounds",
+        "accept": "£260: GBP, EUR, USD, JPY costs 0.5 + 0.6 + 1.5 = 2.6 bp",
+        "wrong": [
+          {
+            "id": "direct",
+            "value": 400,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "usd",
+            "value": 270,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "eurjpy",
+            "value": 290,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run Dijkstra from GBP. Which currency settles first?"
+        },
+        {
+          "rung": "point",
+          "text": "EUR costs only 0.5 bp from GBP, and EUR to USD is 0.6 bp.",
+          "highlight": [
+            "EUR",
+            "USD"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "GBP, EUR, USD costs 1.1 bp, less than 1.2 direct. Add 1.5 to JPY: 2.6 bp, so £260."
+        }
+      ],
+      "feedback": {
+        "correct": "2.6 bp on £1,000,000 is £260.",
+        "generic": "Not quite right. Find the cheapest total in bp, then take that share of £1,000,000.",
+        "byKey": {
+          "direct": "You took the one-hop route, GBP to JPY, at 4.0 bp. Fewest hops is not cheapest.",
+          "usd": "GBP, USD, JPY costs 2.7 bp. Reaching USD through EUR is 0.1 bp cheaper.",
+          "eurjpy": "GBP, EUR, JPY costs 2.9 bp. Going on through USD costs less."
+        }
+      },
+      "explain": {
+        "text": "Dijkstra settles EUR at 0.5, USD at 1.1, CHF at 1.2 and JPY at 2.6. So the desk pays £260, against £400 for the direct cross. Compounding the costs exactly gives £259.98.",
+        "canvas": {
+          "highlight": [
+            "GBP",
+            "EUR",
+            "USD",
+            "JPY",
+            "e-GBP-EUR",
+            "e-EUR-USD",
+            "e-USD-JPY"
+          ],
+          "labels": {
+            "GBP": "GBP·0",
+            "EUR": "EUR·0.5",
+            "USD": "USD·1.1",
+            "CHF": "CHF·1.2",
+            "JPY": "JPY·2.6"
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Latency map",
+      "prose": "A risk update leaves one data centre and is forwarded along network links. Each link has a one-way latency in milliseconds. We want the moment the last centre hears it. Lines without arrows run both ways.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "height": 260,
+          "nodes": [
+            {
+              "id": "LD4",
+              "label": "LD4",
+              "x": 0.38,
+              "y": 0.3
+            },
+            {
+              "id": "FR2",
+              "label": "FR2",
+              "x": 0.6,
+              "y": 0.12
+            },
+            {
+              "id": "NY4",
+              "label": "NY4",
+              "x": 0.12,
+              "y": 0.3
+            },
+            {
+              "id": "CH1",
+              "label": "CH1",
+              "x": 0.08,
+              "y": 0.85
+            },
+            {
+              "id": "SG1",
+              "label": "SG1",
+              "x": 0.85,
+              "y": 0.45
+            },
+            {
+              "id": "TY3",
+              "label": "TY3",
+              "x": 0.6,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "LD4",
+              "to": "FR2",
+              "label": "4.2",
+              "directed": false
+            },
+            {
+              "from": "LD4",
+              "to": "NY4",
+              "label": "29.5",
+              "directed": false
+            },
+            {
+              "from": "NY4",
+              "to": "CH1",
+              "label": "3.9",
+              "directed": false
+            },
+            {
+              "from": "FR2",
+              "to": "SG1",
+              "label": "77.0"
+            },
+            {
+              "from": "LD4",
+              "to": "SG1",
+              "label": "84.0"
+            },
+            {
+              "from": "SG1",
+              "to": "TY3",
+              "label": "34.0"
+            },
+            {
+              "from": "CH1",
+              "to": "TY3",
+              "label": "70.0"
+            }
+          ]
+        },
+        "state": {
+          "caption": "One-way latency in ms"
+        }
+      },
+      "question": "Write `slowest_arrival(links, centres, src)`: when the last centre receives the update, or −1 if some centre never does.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\nimport math\n\n\ndef slowest_arrival(links, centres, src):\n    ...\n",
+        "solution": "import heapq\nimport math\n\n\ndef slowest_arrival(links, centres, src):\n    adj = {c: [] for c in centres}\n    for a, b, ms in links:\n        adj[a].append((b, ms))\n    dist = {c: math.inf for c in centres}\n    dist[src] = 0\n    heap = [(0, src)]\n    while heap:\n        d, u = heapq.heappop(heap)\n        if d > dist[u]:\n            continue\n        for v, ms in adj[u]:\n            if d + ms < dist[v]:\n                dist[v] = d + ms\n                heapq.heappush(heap, (d + ms, v))\n    worst = max(dist.values())\n    return -1 if worst == math.inf else worst\n",
+        "tests": [
+          {
+            "call": "round(slowest_arrival(LINKS, CENTRES, 'LD4'), 6)",
+            "expect": "103.4",
+            "compare": "equal"
+          },
+          {
+            "call": "round(slowest_arrival(LINKS, CENTRES, 'NY4'), 6)",
+            "expect": "110.7",
+            "compare": "equal"
+          },
+          {
+            "call": "round(slowest_arrival(LINKS, CENTRES, 'FR2'), 6)",
+            "expect": "107.6",
+            "compare": "equal"
+          },
+          {
+            "call": "slowest_arrival(LINKS, CENTRES, 'TY3')",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "slowest_arrival([], ['LD4'], 'LD4')",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "round(slowest_arrival(LINKS + [('LD4', 'TY3', 120.0)], CENTRES, 'LD4'), 6)",
+            "expect": "103.4",
+            "compare": "equal"
+          },
+          {
+            "call": "round(slowest_arrival(LINKS + [('TY3', 'SG1', 34.0)], CENTRES, 'CH1'), 6)",
+            "expect": "104.0",
+            "compare": "equal"
+          },
+          {
+            "call": "slowest_arrival(LINKS, CENTRES + ['HK1'], 'LD4')",
+            "expect": "-1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on `LINKS` and `CENTRES`, the links on the canvas. Links are one-way. Return −1 if any centre never hears the update.",
+        "examples": [
+          {
+            "call": "round(slowest_arrival(LINKS, CENTRES, 'LD4'), 6)",
+            "expect": "103.4",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "LINKS = [('LD4', 'FR2', 4.2), ('FR2', 'LD4', 4.2), ('LD4', 'NY4', 29.5), ('NY4', 'LD4', 29.5), ('NY4', 'CH1', 3.9), ('CH1', 'NY4', 3.9), ('FR2', 'SG1', 77.0), ('LD4', 'SG1', 84.0), ('SG1', 'TY3', 34.0), ('CH1', 'TY3', 70.0)]\nCENTRES = ['LD4', 'FR2', 'NY4', 'CH1', 'SG1', 'TY3']\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "This is Dijkstra from `src`, then the largest cost."
+        },
+        {
+          "rung": "point",
+          "text": "From LD4, Tokyo is reached faster through Chicago than through Singapore.",
+          "highlight": [
+            "CH1",
+            "TY3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Build `adj` from the `(a, b, ms)` triples, run Dijkstra, then `max(dist.values())`. If that is `inf`, return −1."
+        }
+      ],
+      "feedback": {
+        "correct": "From LD4 the last centre, TY3, hears the update after 103.4 ms.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 103.4: LD4, NY4, CH1, TY3 is 29.5 + 3.9 + 70.0. A sum of all the costs is not the arrival of the last one.",
+          "test-4": "Test 4 starts at TY3, which has no outgoing links. The other centres never hear it, so return −1.",
+          "test-8": "Test 8 adds HK1, which no link reaches. One unreachable centre makes the answer −1."
+        }
+      },
+      "explain": {
+        "text": "From LD4, Tokyo hears first through Chicago at 103.4 ms, not through Singapore at 115.2 ms. The slowest centre sets the answer, so it is a maximum of Dijkstra costs. An unreachable centre leaves `inf`, which we report as −1.",
+        "canvas": {
+          "highlight": [
+            "LD4",
+            "NY4",
+            "CH1",
+            "TY3",
+            "e-LD4-NY4",
+            "e-NY4-CH1",
+            "e-CH1-TY3"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "With non-negative weights, the smallest tentative cost can no longer improve, so Dijkstra pops it from a heap and fixes it.",
+      "Push `(d + w, v)` whenever a cost improves, and skip a popped entry when `d > dist[u]`: it is stale.",
+      "The heap version runs in $O((V + E)\\log V)$. A negative edge breaks the guarantee that a popped node is final."
+    ],
+    "formula": {
+      "name": "Relaxing an edge",
+      "tex": "\\text{dist}(v) \\leftarrow \\min\\big(\\text{dist}(v),\\ \\text{dist}(u) + w(u, v)\\big)",
+      "note": "Done once per edge, from the moment its tail is popped."
+    },
+    "trap": "Without the stale check, an old larger entry can pop later and overwrite a correct cost."
+  },
+  "quiz": [
+    {
+      "id": "q-seen",
+      "difficulty": 3,
+      "prose": "A version copied from BFS marks a node seen when it is first pushed, and never updates it after:\n\n```python\nif v not in seen:\n    seen.add(v)\n    dist[v] = d + w\n    heapq.heappush(heap, (d + w, v))\n```\n\nOn the lesson's graph, A reaches B directly for 4, or through C for 1 + 2.",
+      "question": "What cost does it give B?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "right",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "B was first pushed from A at 4, and that cost was never revised.",
+        "generic": "Not quite right. Which entry for B is pushed first?",
+        "byKey": {
+          "right": "You ran the correct algorithm. This code refuses the cheaper offer from C because B was already seen."
+        }
+      },
+      "explain": {
+        "text": "Popping A pushes B at 4 and marks it seen. When C later offers 3, the `seen` check refuses it. In Dijkstra a cost may fall until its node is popped."
+      }
+    },
+    {
+      "id": "q-single",
+      "difficulty": 2,
+      "prose": "```python\nprint(dijkstra({'X': []}, 'X'))\n```",
+      "question": "What does your `dijkstra` print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`{'X': 0}`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`{}`",
+            "why": "The start is in `adj`, and it costs 0 to stay put. It is set before the loop."
+          },
+          {
+            "id": "c",
+            "text": "`{'X': inf}`",
+            "why": "`dist[s] = 0` runs before the loop. Only nodes that are never reached keep `inf`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The start costs nothing.",
+        "generic": "Not quite right. Look at what is set before the loop."
+      },
+      "explain": {
+        "text": "`dist` starts with `inf` for X, then `dist[s] = 0`. The heap pops `(0, 'X')`, finds no arrows, and empties."
+      }
+    },
+    {
+      "id": "q-sparse",
+      "difficulty": 3,
+      "prose": "A routing graph has 100,000 nodes and 400,000 edges.",
+      "question": "Roughly how many basic steps does the heap version take, compared with scanning a list for the minimum?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "About $10^7$ against about $10^{10}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "About the same, since both visit every edge",
+            "why": "Both read every edge, but the list version also scans up to $V$ nodes $V$ times: $10^{10}$ steps."
+          },
+          {
+            "id": "c",
+            "text": "About $10^{10}$ against about $10^7$",
+            "why": "You swapped them. $(V + E)\\log_2 V \\approx 5 \\times 10^5 \\times 17$ is the heap; $V^2$ is the list."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The heap is about a thousand times faster here.",
+        "generic": "Not quite right. Compare $(V + E)\\log V$ with $V^2$."
+      },
+      "explain": {
+        "text": "$(V + E)\\log_2 V \\approx 5 \\times 10^5 \\times 17 \\approx 8.5 \\times 10^6$. $V^2 = 10^{10}$. On sparse graphs the heap is the right tool."
+      }
+    },
+    {
+      "id": "q-pushes",
+      "difficulty": 2,
+      "prose": "Dijkstra runs on a graph with 6 nodes and 9 edges, all weights positive.",
+      "question": "What is the most entries the heap can ever receive in total, counting the start?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "nodes",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One push for the start and at most one per edge: 10.",
+        "generic": "Not quite right. When does a push happen?",
+        "byKey": {
+          "nodes": "Stale entries mean a node can be pushed more than once. Each push comes from relaxing an edge."
+        }
+      },
+      "explain": {
+        "text": "Each edge is relaxed once, from its popped tail, so it causes at most one push. With the start, that is $E + 1 = 10$."
+      }
+    }
+  ]
+}

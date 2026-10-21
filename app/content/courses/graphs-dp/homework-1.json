@@ -1,0 +1,549 @@
+{
+  "id": "homework-1",
+  "course": "graphs-dp",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-fx-hops",
+      "difficulty": 3,
+      "skills": [
+        "gd-traversal",
+        "gd-paths"
+      ],
+      "prose": "Your desk can trade only quoted currency pairs, listed both ways. To move money between two currencies you want the fewest trades, since each trade pays a spread.",
+      "question": "Write `shortest_hops(adj, s, t)`: the fewest trades from `s` to `t`, 0 when they are the same, −1 when `t` cannot be reached.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\ndef shortest_hops(adj, s, t):\n    ...\n",
+        "solution": "from collections import deque\n\ndef shortest_hops(adj, s, t):\n    dist = {s: 0}\n    queue = deque([s])\n    while queue:\n        u = queue.popleft()\n        if u == t:\n            return dist[u]\n        for v in adj[u]:\n            if v not in dist:\n                dist[v] = dist[u] + 1\n                queue.append(v)\n    return -1\n",
+        "examples": [
+          {
+            "setup": "fx = {\"GBP\": [\"USD\", \"EUR\"], \"USD\": [\"GBP\", \"JPY\", \"CHF\"], \"EUR\": [\"GBP\", \"CHF\"], \"CHF\": [\"USD\", \"EUR\", \"SEK\"], \"JPY\": [\"USD\"], \"SEK\": [\"CHF\"], \"NOK\": []}",
+            "call": "shortest_hops(fx, \"GBP\", \"SEK\")",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "fx = {\"GBP\": [\"USD\", \"EUR\"], \"USD\": [\"GBP\", \"JPY\", \"CHF\"], \"EUR\": [\"GBP\", \"CHF\"], \"CHF\": [\"USD\", \"EUR\", \"SEK\"], \"JPY\": [\"USD\"], \"SEK\": [\"CHF\"], \"NOK\": []}",
+            "call": "shortest_hops(fx, \"GBP\", \"SEK\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "fx = {\"GBP\": [\"USD\", \"EUR\"], \"USD\": [\"GBP\", \"JPY\", \"CHF\"], \"EUR\": [\"GBP\", \"CHF\"], \"CHF\": [\"USD\", \"EUR\", \"SEK\"], \"JPY\": [\"USD\"], \"SEK\": [\"CHF\"], \"NOK\": []}",
+            "call": "shortest_hops(fx, \"JPY\", \"SEK\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "fx = {\"GBP\": [\"USD\", \"EUR\"], \"USD\": [\"GBP\", \"JPY\", \"CHF\"], \"EUR\": [\"GBP\", \"CHF\"], \"CHF\": [\"USD\", \"EUR\", \"SEK\"], \"JPY\": [\"USD\"], \"SEK\": [\"CHF\"], \"NOK\": []}",
+            "call": "shortest_hops(fx, \"GBP\", \"GBP\")",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "setup": "fx = {\"GBP\": [\"USD\", \"EUR\"], \"USD\": [\"GBP\", \"JPY\", \"CHF\"], \"EUR\": [\"GBP\", \"CHF\"], \"CHF\": [\"USD\", \"EUR\", \"SEK\"], \"JPY\": [\"USD\"], \"SEK\": [\"CHF\"], \"NOK\": []}",
+            "call": "shortest_hops(fx, \"GBP\", \"NOK\")",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "setup": "fx = {\"GBP\": [\"USD\", \"EUR\"], \"USD\": [\"GBP\", \"JPY\", \"CHF\"], \"EUR\": [\"GBP\", \"CHF\"], \"CHF\": [\"USD\", \"EUR\", \"SEK\"], \"JPY\": [\"USD\"], \"SEK\": [\"CHF\"], \"NOK\": []}",
+            "call": "shortest_hops(fx, \"EUR\", \"JPY\")",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_hops({\"A\": [\"B\"], \"B\": []}, \"B\", \"A\")",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {i: [i + 1] for i in range(3000)}; adj[3000] = []",
+            "call": "shortest_hops(adj, 0, 3000)",
+            "expect": "3000",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, including the same currency at both ends (0 trades), an unquoted currency (−1), a one-way edge and a 3,001-node chain."
+      },
+      "feedback": {
+        "correct": "BFS distance, read off when `t` is first popped.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 asks for GBP to GBP: no trade needed, so 0.",
+          "test-4": "Test 4 asks for NOK, which has no quotes: return −1.",
+          "test-6": "Test 6 has a one-way edge A → B, so B cannot reach A: −1."
+        }
+      },
+      "explain": {
+        "text": "BFS finds each currency at its fewest trades. GBP reaches SEK in 3: GBP, EUR, CHF, SEK. Stopping when `t` is popped saves work on big graphs."
+      }
+    },
+    {
+      "id": "h-contagion-days",
+      "difficulty": 4,
+      "skills": [
+        "gd-traversal"
+      ],
+      "prose": "Several firms default on day 0. Each day, every firm next to a defaulted firm defaults too. Risk wants the day the last firm falls.",
+      "question": "Write `days_to_spread(adj, defaulted)`: the day the last firm defaults, or −1 if some firm is never reached.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\ndef days_to_spread(adj, defaulted):\n    ...\n",
+        "solution": "from collections import deque\n\ndef days_to_spread(adj, defaulted):\n    day = {f: 0 for f in defaulted}\n    queue = deque(defaulted)\n    while queue:\n        u = queue.popleft()\n        for v in adj[u]:\n            if v not in day:\n                day[v] = day[u] + 1\n                queue.append(v)\n    if len(day) < len(adj):\n        return -1\n    return max(day.values()) if day else 0\n",
+        "examples": [
+          {
+            "setup": "net = {\"Alder\": [\"Birch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Cedar\": [\"Birch\", \"Elm\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"]}",
+            "call": "days_to_spread(net, [\"Alder\"])",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "net = {\"Alder\": [\"Birch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Cedar\": [\"Birch\", \"Elm\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"]}",
+            "call": "days_to_spread(net, [\"Alder\"])",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "setup": "net = {\"Alder\": [\"Birch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Cedar\": [\"Birch\", \"Elm\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"]}",
+            "call": "days_to_spread(net, [\"Alder\", \"Hazel\"])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "net = {\"Alder\": [\"Birch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Cedar\": [\"Birch\", \"Elm\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"]}",
+            "call": "days_to_spread(net, [\"Cedar\"])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "net = {\"Alder\": [\"Birch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Cedar\": [\"Birch\", \"Elm\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"]}",
+            "call": "days_to_spread(net, list(net))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "days_to_spread({\"A\": [\"B\"], \"B\": [\"A\"], \"C\": []}, [\"A\"])",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "days_to_spread({\"A\": []}, [\"A\"])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "days_to_spread({}, [])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {i: [j for j in (i - 1, i + 1) if 0 <= j < 2000] for i in range(2000)}",
+            "call": "days_to_spread(adj, [0, 1999])",
+            "expect": "999",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: one or several firms default on day 0, a firm out of reach (−1), everyone defaulting at once (0), an empty network and a 2,000-firm chain."
+      },
+      "feedback": {
+        "correct": "One BFS started from every defaulted firm at once.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 starts at both ends of the chain. Put both firms in the queue at day 0, so they spread together.",
+          "test-5": "Test 5 has a firm C with no links. It never defaults, so return −1.",
+          "test-8": "Test 8 is a 2,000-firm chain. One BFS per defaulted firm is too slow on big inputs; start them all in one queue."
+        }
+      },
+      "explain": {
+        "text": "Seeding the queue with every defaulted firm at day 0 makes BFS spread from all of them together. Each firm gets its fewest days from the nearest default. The answer is the largest such day, found in one $O(V + E)$ pass."
+      }
+    },
+    {
+      "id": "h-rounds",
+      "difficulty": 5,
+      "skills": [
+        "gd-traversal",
+        "gd-graphs"
+      ],
+      "prose": "The overnight risk run can start any job whose prerequisites have all finished, many at once. Each **round** runs every job that is free at its start, and all finish before the next round.",
+      "question": "Write `batch_rounds(deps)`: the number of rounds the run needs, or `None` if there is a cycle.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def batch_rounds(deps):\n    ...\n",
+        "solution": "def batch_rounds(deps):\n    jobs = set(deps)\n    for pre in deps.values():\n        jobs.update(pre)\n    after = {j: [] for j in jobs}\n    indeg = {j: 0 for j in jobs}\n    for job, pre in deps.items():\n        for p in pre:\n            after[p].append(job)\n            indeg[job] += 1\n    current = [j for j in jobs if indeg[j] == 0]\n    done = rounds = 0\n    while current:\n        rounds += 1\n        done += len(current)\n        nxt = []\n        for u in current:\n            for v in after[u]:\n                indeg[v] -= 1\n                if indeg[v] == 0:\n                    nxt.append(v)\n        current = nxt\n    return rounds if done == len(jobs) else None\n",
+        "examples": [
+          {
+            "setup": "deps = {\"var_report\": [\"pnl_vectors\", \"positions\"], \"pnl_vectors\": [\"positions\", \"scenarios\"], \"scenarios\": [\"market_data\"], \"limits_check\": [\"var_report\"]}",
+            "call": "batch_rounds(deps)",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "deps = {\"var_report\": [\"pnl_vectors\", \"positions\"], \"pnl_vectors\": [\"positions\", \"scenarios\"], \"scenarios\": [\"market_data\"], \"limits_check\": [\"var_report\"]}",
+            "call": "batch_rounds(deps)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "batch_rounds({\"a\": [], \"b\": [], \"c\": []})",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "batch_rounds({})",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "batch_rounds({\"a\": [\"b\"], \"b\": [\"a\"]})",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "batch_rounds({\"report\": [\"x\", \"y\", \"z\"]})",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "batch_rounds({\"b\": [\"a\"], \"c\": [\"a\"], \"d\": [\"b\", \"c\"], \"e\": [\"a\"], \"f\": [\"d\", \"e\"]})",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "batch_rounds({\"x\": [\"y\"], \"y\": [\"z\"], \"z\": [\"y\"], \"w\": []})",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "setup": "deps = {str(i): [str(i - 1)] for i in range(1, 1500)}",
+            "call": "batch_rounds(deps)",
+            "expect": "1500",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. `deps` maps each job to the jobs it needs first; raw inputs appear only as prerequisites and run in round 1. Return the number of rounds, or `None` on a cycle."
+      },
+      "feedback": {
+        "correct": "Kahn's algorithm, one whole layer of free jobs per round.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 needs 4 rounds: market_data and positions, then scenarios, then pnl_vectors, then var_report, then limits_check is a fifth. Count again from the raw inputs.",
+          "test-3": "Test 3 is empty: no jobs, so 0 rounds.",
+          "test-4": "Test 4 is a cycle: return `None`.",
+          "test-7": "Test 7 has a cycle y ↔ z beside a free job w. Some jobs never run, so return `None`."
+        }
+      },
+      "explain": {
+        "text": "Each round is one layer of Kahn's algorithm: all jobs free now. The number of layers equals the longest chain of dependencies, here 5 for the VaR run. Leftover jobs still mean a cycle."
+      }
+    },
+    {
+      "id": "h-kahn-steps",
+      "difficulty": 3,
+      "skills": [
+        "gd-traversal"
+      ],
+      "prose": "The steps of Kahn's algorithm with a cycle check are below, shuffled.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "k1",
+            "text": "Count the in-degree of every node"
+          },
+          {
+            "id": "k2",
+            "text": "Put every node with in-degree 0 in `ready`"
+          },
+          {
+            "id": "k3",
+            "text": "Take a node `u` from `ready` and append it to `order`"
+          },
+          {
+            "id": "k4",
+            "text": "For each `v` after `u`, lower `indeg[v]` by 1"
+          },
+          {
+            "id": "k5",
+            "text": "Add each `v` whose in-degree is now 0 to `ready`"
+          },
+          {
+            "id": "k6",
+            "text": "Repeat from taking a node until `ready` is empty"
+          },
+          {
+            "id": "k7",
+            "text": "If `len(order) < V`, report a cycle"
+          }
+        ],
+        "answer": [
+          "k1",
+          "k2",
+          "k3",
+          "k4",
+          "k5",
+          "k6",
+          "k7"
+        ]
+      },
+      "feedback": {
+        "correct": "Count, seed, take, lower, release, repeat, check.",
+        "generic": "Not quite right. A node can be taken only once its count is 0.",
+        "byKey": {
+          "k2": "The in-degrees must be counted before you can tell which are 0.",
+          "k5": "A count can reach 0 only after it is lowered.",
+          "k7": "The cycle check comes last, once `ready` is empty."
+        }
+      },
+      "explain": {
+        "text": "In-degrees first, then seed with the free nodes. Each taken node lowers its successors' counts and releases any that reach 0. When `ready` empties, a short `order` means a cycle."
+      }
+    },
+    {
+      "id": "h-matrix-gb",
+      "difficulty": 4,
+      "skills": [
+        "gd-graphs"
+      ],
+      "prose": "A graph of 20,000 bonds, linked when they share an issuer. As a Python list of lists, each cell costs one 8-byte pointer.",
+      "question": "About how many gigabytes does the adjacency matrix take? (1 GB = $10^9$ bytes)",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.2,
+        "tol": {
+          "rel": 0.02
+        },
+        "unit": "GB",
+        "label": "Size in GB",
+        "accept": "3.2 GB: $20{,}000^2 \\times 8$ bytes.",
+        "wrong": [
+          {
+            "id": "nobytes",
+            "value": 0.4,
+            "tol": {
+              "rel": 0.02
+            }
+          },
+          {
+            "id": "linear",
+            "value": 0.00016,
+            "tol": {
+              "rel": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4 \\times 10^8$ cells × 8 bytes = 3.2 GB.",
+        "generic": "Not quite right. Square the number of nodes, then multiply by 8 bytes.",
+        "byKey": {
+          "nobytes": "You counted cells, $4 \\times 10^8$. Each costs 8 bytes.",
+          "linear": "That is $V \\times 8$ bytes: one row. The matrix has $V$ rows."
+        }
+      },
+      "explain": {
+        "text": "$V^2 = 20{,}000^2 = 4 \\times 10^8$ cells, at 8 bytes each, is $3.2 \\times 10^9$ bytes. Bonds share an issuer with few others, so an adjacency list of a few megabytes does the same job."
+      }
+    },
+    {
+      "id": "h-ring",
+      "difficulty": 4,
+      "skills": [
+        "gd-traversal"
+      ],
+      "prose": "Land is 1, water is 0; cells join through shared sides.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "compact": true,
+          "cells": [
+            [
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "0",
+              "0",
+              "0",
+              "1"
+            ],
+            [
+              "1",
+              "0",
+              "1",
+              "0",
+              "1"
+            ],
+            [
+              "1",
+              "0",
+              "0",
+              "0",
+              "1"
+            ],
+            [
+              "1",
+              "1",
+              "1",
+              "1",
+              "1"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "land": {
+              "ids": [
+                "row1",
+                "row5",
+                "col1",
+                "col5",
+                "r3c3"
+              ],
+              "colour": 3
+            }
+          }
+        }
+      },
+      "question": "How many islands are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Islands",
+        "accept": "2: the ring and the centre cell.",
+        "wrong": [
+          {
+            "id": "inside",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sides",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The ring is one island and the centre another.",
+        "generic": "Not quite right. Water separates the centre from the ring on every side.",
+        "byKey": {
+          "inside": "You counted the centre as part of the ring because it sits inside it. It shares no side with any ring cell.",
+          "sides": "The four sides of the ring meet at the corners, which are land, so the ring is one island."
+        }
+      },
+      "explain": {
+        "text": "The 16 border cells are joined side to side all the way round. The centre cell has water on all four sides. So `count_islands` returns 2: enclosure is not connection."
+      }
+    },
+    {
+      "id": "h-exposed",
+      "difficulty": 4,
+      "skills": [
+        "gd-traversal",
+        "gd-graphs"
+      ],
+      "prose": "A holdings graph has an arrow A → B when firm A owns shares in firm B. Firm Z defaults. You want every firm that loses money: owners of Z, owners of those owners, and so on.",
+      "question": "How do you find them?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rev",
+            "text": "Reverse every arrow, then search from Z",
+            "correct": true
+          },
+          {
+            "id": "fwd",
+            "text": "Search from Z along the arrows",
+            "why": "That finds the firms Z owns, directly or indirectly. Losses flow to Z's owners, against the arrows."
+          },
+          {
+            "id": "und",
+            "text": "Treat the graph as undirected and search from Z",
+            "why": "That also pulls in Z's holdings and their other owners, firms with no exposure to Z."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Losses flow from a firm to its owners, so walk the arrows backwards.",
+        "generic": "Not quite right. Ask which direction a loss travels."
+      },
+      "explain": {
+        "text": "If A owns Z, Z's default hurts A: the loss runs against the arrow. Build the reversed adjacency list in $O(V + E)$, then BFS or DFS from Z. Every firm reached is exposed."
+      }
+    },
+    {
+      "id": "h-overnight-hang",
+      "difficulty": 5,
+      "skills": [
+        "gd-traversal",
+        "gd-graphs"
+      ],
+      "title": "The overnight run that hung",
+      "kind": "longform",
+      "prompt": "Your firm's overnight risk run has 40 jobs. Each job lists the jobs it needs first. Last night the scheduler hung and the morning risk report was missing.\n\nWrite a short design note for the team: (a) how you model the run, (b) how you compute a valid run order and what it costs, (c) how the same method shows that last night's dependencies were impossible, (d) how you would report exactly which jobs caused the problem, (e) why a simple DFS that records jobs as it reaches them, or a plain `seen` set, is not good enough, and (f) how the method tells you which jobs could run in parallel.",
+      "model": "**(a) Model the run as a graph.** Each of the 40 jobs is a node, and each \"B needs A\" is an arrow A → B. A valid run order is a topological order of this directed graph. It exists exactly when the graph has no cycle.\n\n**(b) Find an order with Kahn's algorithm.**\n\n1. Count each job's in-degree: the arrows into it.\n2. Put every job with in-degree 0 in a queue (a heap, if ties should go to the smallest name, so the order is the same every night).\n3. Repeatedly take a job from the queue, append it to the order, and lower the in-degree of every job that needs it. A job whose count reaches 0 joins the queue.\n4. Stop when the queue is empty.\n\nEach job is queued once and each arrow lowers one count once, so this is $O(V + E)$: here at most 40 jobs plus their arrows, effectively instant.\n\n**(c) Detect the hang.** If the order has fewer than 40 jobs, some jobs never reached in-degree 0. Each of them still has an arrow in from another leftover job, so following those arrows backwards must repeat a job: there is a cycle. Last night's hang is the scheduler waiting on such a loop, for example `risk_limits` needs `backtest` while `backtest` needs `risk_limits`.\n\n**(d) Report which jobs form the cycle.** Run DFS over the leftover jobs with three states: new, active (on the current path) and done. Reaching an active job closes a cycle; the jobs on the path from that job to the current one are the cycle, which we print for the owners. The leftover jobs that are not on a cycle are the ones stuck downstream of it.\n\n**(e) Why not a plain DFS pre-order or a `seen` set alone.** Recording a job when DFS first reaches it can run it before its inputs, and starting from a job with in-degree above 0 does the same. A plain `seen` set also flags harmless diamonds, where two jobs both feed a third, as cycles.\n\n**(f) Running in parallel.** Jobs released in the same pass of Kahn's algorithm do not depend on each other, so each pass can run as one batch. The number of batches is the length of the longest chain of dependencies.\n\n**(g) Prevention.** Run the check whenever a dependency is added, and refuse the change if it creates a cycle, rather than discovering it at 2am.",
+      "rubric": [
+        {
+          "points": 1,
+          "text": "Models jobs as nodes and dependencies as directed edges, and names a topological order as the goal"
+        },
+        {
+          "points": 2,
+          "text": "Describes Kahn's algorithm correctly: in-degrees, a queue of in-degree 0 jobs, decrementing successors"
+        },
+        {
+          "points": 1,
+          "text": "States the cost $O(V + E)$ with a reason"
+        },
+        {
+          "points": 2,
+          "text": "Detects the cycle by fewer than $V$ jobs emitted, and explains why leftover jobs imply a cycle"
+        },
+        {
+          "points": 2,
+          "text": "Finds the actual cycle with a three-state DFS (active versus done) and reports its jobs"
+        },
+        {
+          "points": 1,
+          "text": "Explains why pre-order or a plain `seen` set is wrong (inputs late, or diamonds flagged as cycles)"
+        },
+        {
+          "points": 1,
+          "text": "Uses the passes of Kahn's algorithm for parallel batches, or proposes checking for cycles when dependencies change"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1266 @@
+{
+  "id": "l11-dead-ends",
+  "course": "graphs-dp",
+  "title": "Cutting off dead ends",
+  "minutes": 14,
+  "objectives": [
+    "Prune a backtracking search to make it fast enough.",
+    "Solve N-queens and subset sum with pruning",
+    "Tell a safe prune from one that loses answers"
+  ],
+  "skills": [
+    "gd-backtrack"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Four queens",
+      "prose": "We want four queens on a 4 by 4 board, none attacking another. A queen attacks along its row, its column and both diagonals. One queen sits in row 1.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowLabel": "Row",
+          "colLabel": "Column"
+        },
+        "state": {
+          "cells": {
+            "r1c2": "Q"
+          }
+        }
+      },
+      "question": "Tap every cell in rows 2 to 4 where a second queen would be safe from it.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c4",
+          "r3c1",
+          "r3c3",
+          "r4c1",
+          "r4c3",
+          "r4c4"
+        ],
+        "only": [
+          "row2",
+          "row3",
+          "row4"
+        ],
+        "countWord": "safe cells",
+        "wrong": [
+          {
+            "id": "no-diag",
+            "set": [
+              "r2c1",
+              "r2c3",
+              "r2c4",
+              "r3c1",
+              "r3c3",
+              "r3c4",
+              "r4c1",
+              "r4c3",
+              "r4c4"
+            ],
+            "flash": [
+              "r2c1",
+              "r2c3",
+              "r3c4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rule out the queen's column first, then its two diagonals."
+        },
+        {
+          "rung": "point",
+          "text": "These cells sit on the queen's diagonals.",
+          "highlight": [
+            "r2c1",
+            "r2c3",
+            "r3c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Column 2 is attacked, and so are r2c1, r2c3 and r3c4 on the diagonals. The other six cells are safe."
+        }
+      ],
+      "feedback": {
+        "correct": "Six safe cells.",
+        "generic": "Not quite right. A cell is attacked if it shares the queen's column or a diagonal.",
+        "byKey": {
+          "no-diag": "You ruled out the column but not the diagonals. A queen also attacks corner to corner.",
+          "r2c1": "r2c1 is one step down and left of the queen: on its diagonal.",
+          "r2c3": "r2c3 is one step down and right of the queen: on its diagonal.",
+          "r3c4": "r3c4 is two steps down and two right: on the queen's diagonal.",
+          "r3c2": "Column 2 holds the queen, so every cell below it is attacked."
+        }
+      },
+      "explain": {
+        "text": "Column 2 and the diagonals through r1c2 are attacked. Six cells survive. A search that only ever places a queen on a safe cell never wastes time on the rest.",
+        "canvas": {
+          "shade": {
+            "attacked": [
+              "r1c1",
+              "r1c3",
+              "r1c4",
+              "r2c1",
+              "r2c2",
+              "r2c3",
+              "r3c2",
+              "r3c4",
+              "r4c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "One queen per row",
+      "prose": "The search places one queen per row, top to bottom. Row 2 had one safe cell, r2c4, so a queen went there. Tap cells to test them.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowLabel": "Row",
+          "colLabel": "Column"
+        },
+        "state": {
+          "cells": {
+            "r1c2": "Q",
+            "r2c4": "Q"
+          }
+        }
+      },
+      "question": "Tap every cell in rows 3 and 4 that neither queen attacks.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3c1",
+          "r4c1",
+          "r4c3"
+        ],
+        "only": [
+          "row3",
+          "row4"
+        ],
+        "countWord": "safe cells"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Columns 2 and 4 are gone. Check the diagonals of both queens."
+        },
+        {
+          "rung": "point",
+          "text": "r2c4 attacks this cell diagonally.",
+          "highlight": [
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 3 keeps only r3c1. Row 4 keeps r4c1 and r4c3."
+        }
+      ],
+      "feedback": {
+        "correct": "r3c1 in row 3, and r4c1 and r4c3 in row 4.",
+        "generic": "Not quite right. Test each cell against both queens.",
+        "byKey": {
+          "r3c3": "r3c3 is one step down and left of the queen on r2c4: a diagonal.",
+          "r4c2": "Column 2 holds the first queen.",
+          "r4c4": "Column 4 holds the second queen."
+        }
+      },
+      "explain": {
+        "text": "Row 3 has one safe cell, r3c1. Once a queen sits there, it attacks r4c1, which leaves r4c3. Four queens fit: r1c2, r2c4, r3c1, r4c3.",
+        "canvas": {
+          "cells": {
+            "r3c1": "Q",
+            "r4c3": "Q"
+          },
+          "shade": {
+            "attacked": [
+              "r1c1",
+              "r1c3",
+              "r1c4",
+              "r2c1",
+              "r2c2",
+              "r2c3",
+              "r3c2",
+              "r3c3",
+              "r3c4",
+              "r4c2",
+              "r4c4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "All the answers",
+      "prose": "The search tries every column in row 1. Whenever a row has no safe cell left, it is a dead end: the search steps back and moves the queen above.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowLabel": "Row",
+          "colLabel": "Column"
+        },
+        "state": {
+          "cells": {
+            "r1c2": "Q",
+            "r2c4": "Q",
+            "r3c1": "Q",
+            "r4c3": "Q"
+          },
+          "caption": "One answer, found from r1c2"
+        }
+      },
+      "question": "How many different ways are there to place the four queens safely?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ways",
+        "label": "Number of placements",
+        "accept": "2: this one and its mirror image.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rows",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "orders",
+            "value": 24,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try each column for the row 1 queen and follow the safe cells."
+        },
+        {
+          "rung": "point",
+          "text": "A queen in a corner of row 1 leads to a dead end by row 3.",
+          "highlight": [
+            "r1c1",
+            "r1c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From r1c2 there is this answer; from r1c3 there is its mirror image. Corners fail."
+        }
+      ],
+      "feedback": {
+        "correct": "Two placements, mirror images of each other.",
+        "generic": "Not quite right. Try the row 1 queen in each of the four columns.",
+        "byKey": {
+          "one": "You found the answer above. Its mirror image, starting from r1c3, works too.",
+          "rows": "You counted one per row 1 column. Starting in a corner runs into a dead end.",
+          "orders": "You counted $4!$ column orders. Most of those put queens on a shared diagonal."
+        }
+      },
+      "explain": {
+        "text": "Starting from r1c1 or r1c4, row 3 or row 4 runs out of safe cells. Cutting off a branch as soon as it cannot lead to an answer is called **pruning**. Exactly two placements survive.",
+        "canvas": {
+          "cells": {
+            "r1c2": "",
+            "r2c4": "",
+            "r3c1": "",
+            "r4c3": "",
+            "r1c3": "Q",
+            "r2c1": "Q",
+            "r3c4": "Q",
+            "r4c2": "Q"
+          },
+          "caption": "The mirror answer, from r1c3"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What pruning saves",
+      "prose": "Without pruning, the search puts a queen in any column of each row and checks only at the end. With pruning, it only steps onto safe cells. Count the partial boards each one visits.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowLabel": "Row",
+          "colLabel": "Column"
+        },
+        "state": {
+          "cells": {
+            "r1c1": "Q"
+          },
+          "shade": {
+            "safe": [
+              "r2c3",
+              "r2c4"
+            ]
+          },
+          "caption": "From r1c1, row 2 has 2 safe cells"
+        }
+      },
+      "question": "Fill in the boards visited at each depth.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Queens placed",
+          "Without pruning",
+          "With pruning"
+        ],
+        "rows": [
+          [
+            "0",
+            "1",
+            "1"
+          ],
+          [
+            "1",
+            "4",
+            "4"
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 64,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "4"
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 256,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Total",
+            "341",
+            {
+              "edit": true,
+              "answer": 17,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Without pruning each board has 4 children. With pruning, count the safe row 2 cells under each row 1 column."
+        },
+        {
+          "rung": "point",
+          "text": "From r1c1 there are 2 safe cells in row 2.",
+          "highlight": [
+            "r2c3",
+            "r2c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Safe row 2 cells under columns 1 to 4: 2, 1, 1, 2, so 6. Full boards with pruning are the answers: 2."
+        }
+      ],
+      "feedback": {
+        "correct": "341 boards without pruning, 17 with it.",
+        "generic": "Not quite right. Check each depth in turn.",
+        "byKey": {
+          "r2c1": "Without pruning every board branches 4 ways: $4 \\times 4 = 16$.",
+          "r2c2": "Under each row 1 column, count the safe cells in row 2: $2 + 1 + 1 + 2$.",
+          "r4c2": "Full boards reached with pruning are exactly the answers."
+        }
+      },
+      "explain": {
+        "text": "Without pruning the search visits $1 + 4 + 16 + 64 + 256 = 341$ boards; with pruning, 17. For 8 queens it is 19,173,961 against 2,057. Pruning does not change the answers, only the work."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Subsets that hit a target",
+      "prose": "Now find every subset of the positive numbers 3, 5 and 6 that sums to exactly 8. The walk keeps a running total and refuses any *take* that would push it past 8.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Item 3",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take 3"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Item 5",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take 5"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Item 6",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take 6"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "total 14",
+            "y-y-n": "total 8",
+            "y-n-y": "total 9",
+            "y-n-n": "total 3",
+            "n-y-y": "total 11",
+            "n-y-n": "total 5",
+            "n-n-y": "total 6",
+            "n-n-n": "total 0"
+          }
+        },
+        "state": {}
+      },
+      "question": "Tap every *take 6* branch the walk refuses.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "y-y-y",
+          "y-n-y",
+          "n-y-y"
+        ],
+        "only": [
+          "y-y-y",
+          "y-n-y",
+          "n-y-y",
+          "n-n-y"
+        ],
+        "countWord": "branches"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Before each *take 6*, look at the running total so far."
+        },
+        {
+          "rung": "point",
+          "text": "Here the total is already 8 before the 6.",
+          "highlight": [
+            "y-y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A take of 6 fits only when the total so far is at most 2. That is only true when 3 and 5 were both skipped."
+        }
+      ],
+      "feedback": {
+        "correct": "Three branches are cut; one subset, 3 + 5, hits 8.",
+        "generic": "Not quite right. Add 6 to the total before each branch and compare with 8.",
+        "byKey": {
+          "n-n-y": "Here 3 and 5 were both skipped, so the total is 0 and 6 fits. It ends at 6, not 8, but nothing pushed it past 8."
+        }
+      },
+      "explain": {
+        "text": "The three cut branches would reach 14, 9 and 11. With only positive numbers a total can never come back down, so nothing below a cut branch could hit 8. The one answer is 3 + 5.",
+        "canvas": {
+          "collapse": [
+            "y-y-y",
+            "y-n-y",
+            "n-y-y"
+          ],
+          "highlight": [
+            "y-y-n"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Combination sum",
+      "prose": "A classic variant: each candidate may be used **any number of times**, and order does not count. Sorting lets the loop `break` at the first candidate that is too big.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "combos.py",
+          "numbers": true,
+          "lines": [
+            "def combos(cands, target):",
+            "    cands = sorted(cands)",
+            "    out, path = [], []",
+            "    def walk(start, left):",
+            "        if left == 0:",
+            "            out.append(path[:])",
+            "            return",
+            "        for i in range(start, len(cands)):",
+            "            if cands[i] > left:",
+            "                break        # the rest are bigger",
+            "            path.append(cands[i])",
+            "            walk(i, left - cands[i])",
+            "            path.pop()",
+            "    walk(0, target)",
+            "    return out"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many lists does `combos([2, 3, 5], 8)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "lists",
+        "label": "Number of lists",
+        "accept": "3: [2, 2, 2, 2], [2, 3, 3] and [3, 5].",
+        "wrong": [
+          {
+            "id": "orders",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-reuse",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "List sums to 8 using 2, 3 and 5, each as often as you like, in non-decreasing order."
+        },
+        {
+          "rung": "point",
+          "text": "`walk(i, ...)` passes `i`, not `i + 1`, so the same candidate can be taken again.",
+          "highlight": [
+            "l12"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "2 + 2 + 2 + 2, 2 + 3 + 3 and 3 + 5."
+        }
+      ],
+      "feedback": {
+        "correct": "Three: [2, 2, 2, 2], [2, 3, 3] and [3, 5].",
+        "generic": "Not quite right. Write the sums in non-decreasing order.",
+        "byKey": {
+          "orders": "You counted orders: 2 + 3 + 3 and 3 + 2 + 3 are one combination. Starting the loop at `start` stops the walk going back.",
+          "no-reuse": "You used each candidate once. Line 12 passes `i`, so a candidate can repeat."
+        }
+      },
+      "explain": {
+        "text": "Passing `start` keeps each list non-decreasing, so each combination appears once. The `break` on line 10 prunes every larger candidate at once, because the list is sorted.",
+        "canvas": {
+          "shade": {
+            "prune": [
+              "l9",
+              "l10"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "When totals can fall",
+      "prose": "Trades with exposures +6, −4 and +3 (£m). Is there a basket netting to exactly +2? This walk prunes once the total passes the target.\n\n```python\ndef subset_sum(xs, target):\n    def walk(i, total):\n        if total == target:\n            return True\n        if total > target:      # prune\n            return False\n        if i == len(xs):\n            return False\n        return (walk(i + 1, total + xs[i])\n                or walk(i + 1, total))\n    return walk(0, 0)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Trade 1",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take +6"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Trade 2",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take −4"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Trade 3",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take +3"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "total 5",
+            "y-y-n": "total 2",
+            "y-n-y": "total 9",
+            "y-n-n": "total 6",
+            "n-y-y": "total −1",
+            "n-y-n": "total −4",
+            "n-n-y": "total 3",
+            "n-n-n": "total 0"
+          }
+        },
+        "state": {}
+      },
+      "question": "What does `subset_sum([6, -4, 3], 2)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "false",
+            "text": "`False`",
+            "correct": true
+          },
+          {
+            "id": "true",
+            "text": "`True`, because $6 + (-4) = 2$",
+            "why": "That basket exists, but the walk never reaches it. Taking +6 makes the total 6, which passes 2, so the branch is cut before −4 is tried."
+          },
+          {
+            "id": "error",
+            "text": "A `RecursionError`",
+            "why": "The walk is three levels deep. The bug is in which branches it cuts."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "Every path ends in `return True` or `return False`."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the *take +6* branch: what is the total, and what does line 5 do?"
+        },
+        {
+          "rung": "point",
+          "text": "The total is 6 here, above the target 2.",
+          "highlight": [
+            "y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The take +6 branch is cut at once. No other basket without +6 sums to 2, so the walk returns False."
+        }
+      ],
+      "feedback": {
+        "correct": "`False`, although +6 and −4 net to +2.",
+        "generic": "Not quite right. Trace the total along the *take +6* branch.",
+        "byKey": {
+          "true": "You found the answer by eye. The walk cut the take +6 branch at total 6, before it could add −4. That prune assumes totals only grow."
+        }
+      },
+      "explain": {
+        "text": "With a negative number, a total above the target can come back down. The prune cut the only answer, 6 + (−4). A prune is safe only if a branch that fails it can never recover.",
+        "canvas": {
+          "highlight": [
+            "y-y-n"
+          ],
+          "shade": {
+            "cut": [
+              "y"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Safe pruning",
+      "prose": "Every pruned search has this shape:\n\n```python\ndef search(state):\n    if dead_end(state):     # can never succeed\n        return\n    if complete(state):\n        record(state)\n        return\n    for choice in choices(state):\n        make(choice)\n        search(state)\n        undo(choice)        # also after a dead end\n```\n\nThe test is safe when failing it now means failing it in every extension.",
+      "question": "In `subset_sum` on sorted positive numbers, the walk returns `False` when `total + xs[i] > target`, without trying to skip `xs[i]`. Why is that safe?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sorted",
+            "text": "Every later number is at least `xs[i]`, so none of them fits either",
+            "correct": true
+          },
+          {
+            "id": "target",
+            "text": "The target has already been reached",
+            "why": "If the total equalled the target the walk would have returned True one line earlier."
+          },
+          {
+            "id": "any",
+            "text": "Any prune is safe if the input is sorted",
+            "why": "Sorting alone did not save the trap: with negatives, a sorted input can still dip back down."
+          },
+          {
+            "id": "speed",
+            "text": "It is not safe; it only makes the search faster",
+            "why": "It is safe here: with numbers sorted and positive, no later number can fit if this one does not."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Sorted and positive: if the smallest remaining number overshoots, every one does.",
+        "generic": "Not quite right. Ask what the numbers after `xs[i]` look like."
+      },
+      "explain": {
+        "text": "Sorting puts the smallest remaining number at `xs[i]`. If even it overshoots, every subset of the rest overshoots too. One test then cuts the whole remaining subtree."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Queens and targets",
+      "prose": "Write both searches. `n_queens(n)` returns how many safe placements of $n$ queens exist on an $n \\times n$ board. `subset_sum(xs, target)` gets positive whole numbers in any order and returns whether some subset, possibly empty, sums to `target`.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowLabel": "Row",
+          "colLabel": "Column"
+        },
+        "state": {
+          "cells": {
+            "r1c2": "Q",
+            "r2c4": "Q",
+            "r3c1": "Q",
+            "r4c3": "Q"
+          },
+          "caption": "`n_queens(4)` is 2"
+        }
+      },
+      "question": "Write `n_queens(n)` and `subset_sum(xs, target)`, pruning dead ends in both.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def n_queens(n):\n    cols, diag, anti = set(), set(), set()   # attacked columns and diagonals\n\n    def place(row):\n        ...\n\n    return place(0)\n\n\ndef subset_sum(xs, target):\n    xs = sorted(xs)\n\n    def walk(i, total):\n        ...\n\n    return walk(0, 0)\n",
+        "solution": "def n_queens(n):\n    cols, diag, anti = set(), set(), set()\n\n    def place(row):\n        if row == n:\n            return 1\n        count = 0\n        for c in range(n):\n            if c in cols or row - c in diag or row + c in anti:\n                continue                      # attacked: prune\n            cols.add(c); diag.add(row - c); anti.add(row + c)\n            count += place(row + 1)\n            cols.remove(c); diag.remove(row - c); anti.remove(row + c)\n        return count\n\n    return place(0)\n\n\ndef subset_sum(xs, target):\n    xs = sorted(xs)\n\n    def walk(i, total):\n        if total == target:\n            return True\n        if i == len(xs) or total + xs[i] > target:\n            return False                      # sorted: nothing later fits\n        return walk(i + 1, total + xs[i]) or walk(i + 1, total)\n\n    return walk(0, 0)\n",
+        "examples": [
+          {
+            "call": "n_queens(4)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum([8, 3, 5, 2], 10)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "n_queens(1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "n_queens(4)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "n_queens(5)",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "n_queens(6)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "[n_queens(2), n_queens(3)]",
+            "expect": "[0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "n_queens(8)",
+            "expect": "92",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum([2, 3, 5, 8], 10)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum([2, 3, 5, 8], 4)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum([8, 5, 3, 2], 13)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum([], 0)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum([], 5)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum([5, 7, 11, 13, 17, 19, 23], 47)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "subset_sum(list(range(2, 52, 2)), 7)",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 13 hidden tests: queens for $n$ = 1 to 6 and 8, and subset sums with and without an answer, including an empty list. The last test has 25 even numbers and an odd target: without pruning it takes far longer than the 5-second limit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Queens: one row per call; skip attacked columns; undo the three sets after each recursive call."
+        },
+        {
+          "rung": "point",
+          "text": "Row minus column is the same along one diagonal, row plus column along the other.",
+          "highlight": [
+            "r2c4",
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Subset sum: return True when `total == target`; return False when `i == len(xs)` or `total + xs[i] > target`; else try take, then skip."
+        }
+      ],
+      "feedback": {
+        "correct": "Both searches prune and both restore their state.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 expects 2. If you got fewer, check that you remove the column and both diagonals after each recursive call.",
+          "test-5": "Tests 5 expects 0 for 2 and 3 queens. Both boards have no safe placement.",
+          "test-10": "Test 10 expects True: the empty subset sums to 0. Check `total == target` before anything else.",
+          "test-13": "Test 13 timed out or failed. Sort first, and stop as soon as `total + xs[i]` passes the target."
+        }
+      },
+      "explain": {
+        "text": "A diagonal is a fixed `row - col`, an anti-diagonal a fixed `row + col`, so three sets make every safety test $O(1)$. The sorted cut makes the last test almost instant. Two and three queens have no answers."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Which cuts are safe",
+      "prose": "Three desks run backtracking searches, and each wants to prune.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Search",
+            "Running quantity",
+            "Can it fall back?"
+          ],
+          "rows": [
+            [
+              "Projects",
+              "Spend (£k)",
+              "?"
+            ],
+            [
+              "Netting trades",
+              "Net exposure (£m)",
+              "?"
+            ],
+            [
+              "Shift rota",
+              "Clashes so far",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Select all that apply: which prunes are safe?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "budget",
+            "text": "Projects costing £40k, £25k, £30k and £15k under a £70k cap: cut once spend passes £70k",
+            "correct": true
+          },
+          {
+            "id": "net",
+            "text": "Trades with exposures +£5m, −£3m, +£2m and −£4m, looking for net zero: cut once the net passes +£2m",
+            "why": "A later short can bring the net back down: +5 − 3 + 2 − 4 = 0 passes +2 on the way."
+          },
+          {
+            "id": "rota",
+            "text": "Booking 6 analysts into 4 shifts: cut at the first analyst booked on two overlapping shifts",
+            "correct": true
+          },
+          {
+            "id": "count",
+            "text": "Picking at most 4 of those trades: cut once a fifth trade is chosen",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each, ask whether the quantity can only grow as more choices are made."
+        },
+        {
+          "rung": "point",
+          "text": "Exposures can be negative.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Spend, clashes and the number of trades chosen never fall. Net exposure can."
+        }
+      ],
+      "feedback": {
+        "correct": "Spend, clashes and trade count only grow, so those cuts are safe.",
+        "generic": "Not quite right. A cut is safe only if the quantity cannot come back.",
+        "byKey": {
+          "net": "You cut on net exposure. Shorts make it fall again, so the cut can lose the answer.",
+          "rota": "A clash never disappears when more analysts are booked, so cutting at the first clash is safe."
+        }
+      },
+      "explain": {
+        "text": "Spend, clashes and counts are monotone: they only grow along a branch. Net exposure is not, so it is the trap again. For netting, prune on a bound instead, such as the most the remaining shorts could take off.",
+        "canvas": {
+          "values": {
+            "r0c2": "No",
+            "r1c2": "Yes",
+            "r2c2": "No"
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Pruning cuts a branch as soon as it cannot lead to an answer. It changes the work, never the answers.",
+      "A prune is safe when failing it now means failing it for every extension: spend, clashes and counts only grow.",
+      "Restore state after every branch, dead ends included. Sorting can turn one failed test into a cut of the whole rest of the loop."
+    ],
+    "formula": {
+      "name": "Four queens",
+      "tex": "1 + 4 + 16 + 64 + 256 = 341 \\quad\\text{against}\\quad 1 + 4 + 6 + 4 + 2 = 17",
+      "note": "Boards visited without and with pruning."
+    },
+    "trap": "Pruning when a running total passes the target is wrong once negative numbers are allowed: the total can come back."
+  },
+  "quiz": [
+    {
+      "id": "q-three",
+      "difficulty": 2,
+      "prose": "Three queens on a 3 by 3 board, one per row, none attacking another.",
+      "question": "How many safe placements are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "label": "Number of placements",
+        "accept": "0: every queen in row 1 leaves row 3 with nothing safe.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "orders",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "None.",
+        "generic": "Not quite right. Try each column for the row 1 queen.",
+        "byKey": {
+          "orders": "You counted $3!$ column orders. Every one puts two queens on a diagonal.",
+          "one": "Check the diagonals for every start. Each one runs out of safe cells by row 3.",
+          "two": "You may have checked only columns. Check both diagonals for each pair."
+        }
+      },
+      "explain": {
+        "text": "A middle queen in row 1 attacks all of row 2. A corner queen leaves one cell in row 2, and that queen attacks what is left of row 3. So $n = 3$, like $n = 2$, has no answers."
+      }
+    },
+    {
+      "id": "q-full",
+      "difficulty": 3,
+      "prose": "Without pruning, an 8-queens search puts a queen in any of the 8 columns of each row and checks the board only when it is full.",
+      "question": "How many full boards does it check?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16777216,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "label": "Full boards",
+        "accept": "16,777,216: $8^8$.",
+        "wrong": [
+          {
+            "id": "perm",
+            "value": 40320,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sq",
+            "value": 64,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "total",
+            "value": 19173961,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$8^8 = 16{,}777{,}216$ boards.",
+        "generic": "Not quite right. Each of 8 rows has 8 choices.",
+        "byKey": {
+          "perm": "That is $8!$: you already ruled out repeated columns, which is a prune.",
+          "total": "That counts every partial board too. Only the full boards at depth 8 are checked."
+        }
+      },
+      "explain": {
+        "text": "Eight choices in each of eight rows give $8^8$ full boards. The pruned search visits only 2,057 boards in all and finds the 92 answers."
+      }
+    },
+    {
+      "id": "q-restore",
+      "difficulty": 3,
+      "prose": "In `n_queens`, someone deletes the line that removes the column and diagonals after the recursive call.\n\n```python\ncols.add(c); diag.add(row - c); anti.add(row + c)\ncount += place(row + 1)\n# cols.remove(c) ... deleted\n```",
+      "question": "What does `n_queens(4)` return now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "You expected the answers to survive. Without the undo, columns tried earlier stay blocked for later branches."
+          },
+          {
+            "id": "more",
+            "text": "More than 2",
+            "why": "Leaving squares marked can only block cells. It never makes a new placement safe."
+          },
+          {
+            "id": "err",
+            "text": "A `KeyError`",
+            "why": "Nothing is removed any more, so no missing key can be hit."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "0: stale marks block every answer.",
+        "generic": "Not quite right. Follow what `cols` holds after the first branch fails."
+      },
+      "explain": {
+        "text": "The first try, r1c1, leaves column 1 and its diagonals marked forever. Later branches inherit those marks, and every answer gets blocked. Restore state after every branch, dead ends included."
+      }
+    },
+    {
+      "id": "q-combo",
+      "difficulty": 2,
+      "prose": "`combos` from the lesson, with each candidate usable any number of times.",
+      "question": "How many lists does `combos([2, 3, 6, 7], 7)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "lists",
+        "label": "Number of lists",
+        "accept": "2: [2, 2, 3] and [7].",
+        "wrong": [
+          {
+            "id": "orders",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two: [2, 2, 3] and [7].",
+        "generic": "Not quite right. List sums to 7 in non-decreasing order.",
+        "byKey": {
+          "orders": "You counted 2 + 2 + 3, 2 + 3 + 2 and 3 + 2 + 2 separately. Order does not count.",
+          "one": "7 on its own is a combination too."
+        }
+      },
+      "explain": {
+        "text": "In non-decreasing order the sums to 7 are 2 + 2 + 3 and 7. A 6 leaves 1, which no candidate fits, so the `break` cuts it at once."
+      }
+    }
+  ]
+}

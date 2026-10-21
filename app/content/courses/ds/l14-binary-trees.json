@@ -1,0 +1,1441 @@
+{
+  "id": "l14-binary-trees",
+  "course": "ds",
+  "title": "Binary trees",
+  "minutes": 14,
+  "objectives": [
+    "Traverse a binary tree in pre-order, in-order and post-order.",
+    "Walk a tree level by level with a queue",
+    "Write traversals that handle the empty tree"
+  ],
+  "skills": [
+    "ds-trees"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Nodes with nothing below",
+      "prose": "A binary tree stores values in **nodes**. Each node holds a value and two links, `left` and `right`. A link to nothing is `None`.\n\n```python\nclass Node:\n    def __init__(self, val):\n        self.val = val\n        self.left = None\n        self.right = None\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "A",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "B",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "D",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "E",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "C",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "F",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "G",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "The top node, A, is the **root**."
+        }
+      },
+      "question": "Tap every node whose `left` and `right` are both `None`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l-l",
+          "l-r",
+          "r-l",
+          "r-r"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look for the nodes with no line going down from them."
+        },
+        {
+          "rung": "point",
+          "text": "B has two lines going down, to D and E.",
+          "highlight": [
+            "l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "D, E, F and G have nothing below them."
+        }
+      ],
+      "feedback": {
+        "correct": "D, E, F and G have no children.",
+        "generic": "Not quite right. Tap only the nodes with no lines going down from them.",
+        "byKey": {
+          "l": "B links to D and E, so its `left` and `right` are not `None`.",
+          "r": "C links to F and G, so its `left` and `right` are not `None`."
+        }
+      },
+      "explain": {
+        "text": "A node with no children is a **leaf**: D, E, F and G. A, B and C each have two children. Every node except the root has exactly one parent.",
+        "canvas": {
+          "caption": "Leaves: D, E, F and G. Root: A."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "How far down",
+      "prose": "A program holding only `root` reaches G by following links: `root.right`, then `.right` again.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "A",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "B",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "D",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "E",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "C",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "F",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "G",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "current": "r-r"
+        }
+      },
+      "question": "How many links does it follow from A to G?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "links",
+        "wrong": [
+          {
+            "id": "nodes",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the lines, not the nodes."
+        },
+        {
+          "rung": "point",
+          "text": "The path runs A to C, then C to G.",
+          "highlight": [
+            "r-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two lines: A to C and C to G."
+        }
+      ],
+      "feedback": {
+        "correct": "Two links: A to C, then C to G.",
+        "generic": "Not quite right. Count the lines on the path from A to G.",
+        "byKey": {
+          "nodes": "You counted the nodes A, C and G. Count the links between them instead: there are two."
+        }
+      },
+      "explain": {
+        "text": "The links from the root down to a node give its **depth**: G has depth 2, A has depth 0. The greatest depth, 2 here, is the tree's **height**. So a tree of one node has height 0.",
+        "canvas": {
+          "highlight": [
+            "r-r"
+          ],
+          "caption": "Depth of G: 2. Height of the tree: 2."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Print, then go left",
+      "prose": "This function walks the whole tree. We call `visit(root)`.\n\n```python\ndef visit(node):\n    if node is None:\n        return\n    print(node.val)\n    visit(node.left)\n    visit(node.right)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "A",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "B",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "D",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "E",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "C",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "F",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "G",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Put the letters in the order it prints them.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "tokens": [
+          {
+            "id": "E",
+            "text": "E"
+          },
+          {
+            "id": "A",
+            "text": "A"
+          },
+          {
+            "id": "G",
+            "text": "G"
+          },
+          {
+            "id": "C",
+            "text": "C"
+          },
+          {
+            "id": "D",
+            "text": "D"
+          },
+          {
+            "id": "F",
+            "text": "F"
+          },
+          {
+            "id": "B",
+            "text": "B"
+          }
+        ],
+        "slots": [
+          {
+            "id": "seq",
+            "label": "printed"
+          }
+        ],
+        "order": [
+          "A",
+          "B",
+          "D",
+          "E",
+          "C",
+          "F",
+          "G"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first call prints A before anything else."
+        },
+        {
+          "rung": "point",
+          "text": "After A, `visit(node.left)` must finish the whole of B's side before C is reached.",
+          "highlight": [
+            "l",
+            "l-l",
+            "l-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A, then B, D, E, then C, F, G."
+        }
+      ],
+      "feedback": {
+        "correct": "A, B, D, E, C, F, G.",
+        "generic": "Not quite right. Follow the calls: print, then all of the left side, then the right side.",
+        "byKey": {
+          "C": "You printed C straight after B, level by level. The call on B finishes D and E before C is reached.",
+          "D": "You printed D first. Here `print` runs before `visit(node.left)`, so A is printed first."
+        }
+      },
+      "explain": {
+        "text": "Each call prints its node before either recursive call. So A comes first, then all of B's side, then all of C's side. This order is **pre-order**.",
+        "canvas": {
+          "current": "root",
+          "caption": "Pre-order: A B D E C F G"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Left first",
+      "prose": "Now `print` moves between the two calls.\n\n```python\ndef visit(node):\n    if node is None:\n        return\n    visit(node.left)\n    print(node.val)\n    visit(node.right)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "A",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "B",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "D",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "E",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "C",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "F",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "G",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Put the letters in the order it prints them now.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "tokens": [
+          {
+            "id": "E",
+            "text": "E"
+          },
+          {
+            "id": "A",
+            "text": "A"
+          },
+          {
+            "id": "G",
+            "text": "G"
+          },
+          {
+            "id": "C",
+            "text": "C"
+          },
+          {
+            "id": "D",
+            "text": "D"
+          },
+          {
+            "id": "F",
+            "text": "F"
+          },
+          {
+            "id": "B",
+            "text": "B"
+          }
+        ],
+        "slots": [
+          {
+            "id": "seq",
+            "label": "printed"
+          }
+        ],
+        "order": [
+          "D",
+          "B",
+          "E",
+          "A",
+          "F",
+          "C",
+          "G"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Before A is printed, `visit(node.left)` runs on B. Before B is printed, it runs on D."
+        },
+        {
+          "rung": "point",
+          "text": "D has no children, so it is printed first.",
+          "highlight": [
+            "l-l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "D, B, E, then A, then F, C, G."
+        }
+      ],
+      "feedback": {
+        "correct": "D, B, E, A, F, C, G.",
+        "generic": "Not quite right. Each node is printed after its left side and before its right side.",
+        "byKey": {
+          "A": "You printed A first. `visit(node.left)` now runs before `print`, so the whole left side comes before A.",
+          "E": "You printed E before B. B is printed between its left side, D, and its right side, E."
+        }
+      },
+      "explain": {
+        "text": "Every node is printed after its left side and before its right side. So D, B, E fill the left, then A, then F, C, G. This is **in-order**.",
+        "canvas": {
+          "current": "l-l",
+          "caption": "In-order: D B E A F C G"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Children first",
+      "prose": "Now `print` comes after both calls.\n\n```python\ndef visit(node):\n    if node is None:\n        return\n    visit(node.left)\n    visit(node.right)\n    print(node.val)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "A",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "B",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "D",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "E",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "C",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "F",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "G",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Put the letters in the order it prints them.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "tokens": [
+          {
+            "id": "E",
+            "text": "E"
+          },
+          {
+            "id": "A",
+            "text": "A"
+          },
+          {
+            "id": "G",
+            "text": "G"
+          },
+          {
+            "id": "C",
+            "text": "C"
+          },
+          {
+            "id": "D",
+            "text": "D"
+          },
+          {
+            "id": "F",
+            "text": "F"
+          },
+          {
+            "id": "B",
+            "text": "B"
+          }
+        ],
+        "slots": [
+          {
+            "id": "seq",
+            "label": "printed"
+          }
+        ],
+        "order": [
+          "D",
+          "E",
+          "B",
+          "F",
+          "G",
+          "C",
+          "A"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A cannot be printed until both of its sides are finished."
+        },
+        {
+          "rung": "point",
+          "text": "B waits for D and E.",
+          "highlight": [
+            "l",
+            "l-l",
+            "l-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "D, E, B, then F, G, C, and A last."
+        }
+      ],
+      "feedback": {
+        "correct": "D, E, B, F, G, C, A.",
+        "generic": "Not quite right. A node is printed only after both its sides are done.",
+        "byKey": {
+          "A": "You printed A first. Both recursive calls now run before `print`, so A comes last.",
+          "B": "You printed B between D and E. B waits for both of its children now."
+        }
+      },
+      "explain": {
+        "text": "A node is printed only after both its sides are finished, so the root comes last. This is **post-order**. A parent waits for its children, which is what a calculation over the tree needs.",
+        "canvas": {
+          "current": "root",
+          "caption": "Post-order: D E B F G C A"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Level by level",
+      "prose": "To list the tree level by level we use a queue, as in level 3.\n\n```python\ndef level_order(root):\n    out = []\n    q = deque([root] if root else [])\n    while q:\n        node = q.popleft()\n        out.append(node.val)\n        if node.left:\n            q.append(node.left)\n        if node.right:\n            q.append(node.right)\n    return out\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "A",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "B",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "D",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "E",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "C",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "F",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "G",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the queue hold just after C has been taken out and its children added?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "D, E, F, G",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "F, G",
+            "why": "You dropped D and E. They were added when B came out and are still waiting at the front."
+          },
+          {
+            "id": "c",
+            "text": "D, E",
+            "why": "You stopped before adding C's children. Taking C out adds F and G at the back."
+          },
+          {
+            "id": "d",
+            "text": "F, G, D, E",
+            "why": "You put C's children at the front. A queue adds at the back, so D and E stay ahead."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run the loop by hand: A comes out first."
+        },
+        {
+          "rung": "point",
+          "text": "A adds B and C. Then B comes out and adds D and E.",
+          "highlight": [
+            "l",
+            "r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "C comes out next and adds F and G behind D and E."
+        }
+      ],
+      "feedback": {
+        "correct": "D, E, F, G: the whole next level, in order.",
+        "generic": "Not quite right. Run the loop: take from the front, add children at the back."
+      },
+      "explain": {
+        "text": "A comes out and adds B, C. B comes out and adds D, E. C comes out and adds F, G behind them, so first in, first out keeps each level ahead of the next.",
+        "canvas": {
+          "caption": "Queue after C: D E F G. Output so far: A B C"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Three traversals in code",
+      "prose": "`Node`, `build` and `deque` are ready to use. `build` reads a level-order list, left to right; `None` marks a missing child, which gets no children of its own in the list.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "1",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "2",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "∅"
+                },
+                {
+                  "id": "r",
+                  "label": "4",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "3",
+              "children": []
+            }
+          ]
+        },
+        "state": {
+          "caption": "`build([1, 2, 3, None, 4])`: ∅ marks a `None` child"
+        }
+      },
+      "question": "Write `preorder(root)`, `inorder(root)` and `level_order(root)`, each returning a list of values.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def preorder(root):\n    ...\n\n\ndef inorder(root):\n    ...\n\n\ndef level_order(root):\n    ...\n",
+        "solution": "def preorder(root):\n    if root is None:\n        return []\n    return [root.val] + preorder(root.left) + preorder(root.right)\n\n\ndef inorder(root):\n    if root is None:\n        return []\n    return inorder(root.left) + [root.val] + inorder(root.right)\n\n\ndef level_order(root):\n    out = []\n    q = deque([root] if root else [])\n    while q:\n        node = q.popleft()\n        out.append(node.val)\n        if node.left:\n            q.append(node.left)\n        if node.right:\n            q.append(node.right)\n    return out\n",
+        "prelude": "from collections import deque\n\nclass Node:\n    def __init__(self, val, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n    def __repr__(self):\n        return f\"Node({self.val!r})\"\n\ndef build(values):\n    \"\"\"Build a tree from a level-order list with None gaps.\"\"\"\n    if not values or values[0] is None:\n        return None\n    it = iter(values)\n    root = Node(next(it))\n    q = deque([root])\n    while q:\n        node = q.popleft()\n        for side in (\"left\", \"right\"):\n            try:\n                v = next(it)\n            except StopIteration:\n                return root\n            if v is not None:\n                child = Node(v)\n                setattr(node, side, child)\n                q.append(child)\n    return root\n\ndef to_list(root):\n    \"\"\"The level-order list with None gaps, trailing Nones dropped.\"\"\"\n    out, q = [], deque([root])\n    while q:\n        node = q.popleft()\n        if node is None:\n            out.append(None)\n            continue\n        out.append(node.val)\n        q.append(node.left)\n        q.append(node.right)\n    while out and out[-1] is None:\n        out.pop()\n    return out\n",
+        "examples": [
+          {
+            "call": "inorder(build([1, 2, 3, None, 4]))",
+            "expect": "[2, 4, 1, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "level_order(build([1, 2, 3, None, 4]))",
+            "expect": "[1, 2, 3, 4]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "preorder(build([1, 2, 3, 4, 5, 6, 7]))",
+            "expect": "[1, 2, 4, 5, 3, 6, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "inorder(build([1, 2, 3, 4, 5, 6, 7]))",
+            "expect": "[4, 2, 5, 1, 6, 3, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "level_order(build([1, 2, 3, 4, 5, 6, 7]))",
+            "expect": "[1, 2, 3, 4, 5, 6, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "inorder(build([1, 2, 3, None, 4]))",
+            "expect": "[2, 4, 1, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "preorder(None)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "inorder(None)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "level_order(None)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "inorder(build([7]))",
+            "expect": "[7]",
+            "compare": "equal"
+          },
+          {
+            "call": "inorder(build([5, 4, None, 3, None, 2, None, 1]))",
+            "expect": "[1, 2, 3, 4, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "preorder(build([5, 4, None, 3, None, 2, None, 1]))",
+            "expect": "[5, 4, 3, 2, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "level_order(build([1, None, 2, None, 3]))",
+            "expect": "[1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "level_order(build([3, 9, 20, None, None, 15, 7]))",
+            "expect": "[3, 9, 20, 15, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "preorder(build([1, None, 2, 3]))",
+            "expect": "[1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "inorder(build(list(range(1, 2048))))[:4]",
+            "expect": "[1024, 512, 1025, 256]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 14 hidden tests and compares lists exactly. They include an empty tree (`None`), one node, and long chains."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start each recursive function with the empty tree: `if root is None: return []`."
+        },
+        {
+          "rung": "point",
+          "text": "In-order joins three lists: the left side's, `[root.val]`, then the right side's.",
+          "highlight": [
+            "l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return inorder(root.left) + [root.val] + inorder(root.right)`. Pre-order puts `[root.val]` first. Level order is the queue loop from the last screen."
+        }
+      ],
+      "feedback": {
+        "correct": "All three traversals pass, including the empty tree and the chains.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 expects `[4, 2, 5, 1, 6, 3, 7]`. If 1 came first, you added the node before its left side.",
+          "test-5": "Test 5 passes `None`, an empty tree. Start with `if root is None: return []`.",
+          "test-7": "Test 7 passes an empty tree. Start the queue empty when `root` is `None`, or `node.val` fails."
+        }
+      },
+      "explain": {
+        "text": "Each recursive version is an empty case plus two sides joined around the node. Only the place of `[root.val]` changes. Level order swaps the recursion for a queue.",
+        "canvas": {
+          "caption": "In-order: 2 4 1 3. Level order: 1 2 3 4"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The node in the wrong place",
+      "prose": "This is meant to return in-order. On the A to G tree it returns A, B, D, E, C, F, G.\n\n```python\ndef inorder(node):\n    if node is None:\n        return []\n    out = [node.val]\n    out += inorder(node.left)\n    out += inorder(node.right)\n    return out\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "A",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "B",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "D",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "E",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "C",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "F",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "G",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Returned: A B D E C F G"
+        }
+      },
+      "question": "Which change makes it return D, B, E, A, F, C, G?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Add `node.val` after the left side, not before it",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Swap the two recursive calls",
+            "why": "Swapping them gives A, C, G, F, B, E, D. The node still comes first; only the sides are mirrored."
+          },
+          {
+            "id": "c",
+            "text": "Add a check `if node.left is None`",
+            "why": "The `None` case is already handled at the top. The bug is where the node's own value goes."
+          },
+          {
+            "id": "d",
+            "text": "Sort `out` before returning it",
+            "why": "Sorting gives A to G alphabetically. Tree positions are not alphabetical, so sorting only hides the bug."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which node does the function output first, and why?"
+        },
+        {
+          "rung": "point",
+          "text": "A is added to `out` before the left side is visited.",
+          "highlight": [
+            "l-l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In-order needs the left side, then the node, then the right side."
+        }
+      ],
+      "feedback": {
+        "correct": "The node must sit between its two sides.",
+        "generic": "Not quite right. Look at where `node.val` goes relative to the left side.",
+        "byKey": {
+          "b": "You swapped the calls, but the node is still added first. That is pre-order of the mirror image.",
+          "d": "You sorted the output. That hides the bug on this tree and fails on any tree not labelled in order."
+        }
+      },
+      "explain": {
+        "text": "Putting `node.val` first is pre-order, whatever the function is called. In-order is `inorder(node.left) + [node.val] + inorder(node.right)`. The other classic slip is dropping the `None` check: `None.left` raises `AttributeError`.",
+        "canvas": {
+          "current": "l-l",
+          "caption": "In-order starts at D, the leftmost node"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "One pattern, three orders",
+      "prose": "We wrote three traversals with one pattern. Only the place of the node changes.\n\n```python\ndef walk(node):\n    if node is None:        # empty tree\n        return []\n    left = walk(node.left)\n    right = walk(node.right)\n    return [node.val] + left + right   # pre\n    # left + [node.val] + right        # in\n    # left + right + [node.val]        # post\n```\n\nEach node is visited once. Appending to one shared list keeps a walk $O(n)$.",
+      "question": "A parent needs its children's results before it can compute its own. Which order fits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Post-order",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Pre-order",
+            "why": "Pre-order handles the parent first, before its children have produced anything."
+          },
+          {
+            "id": "c",
+            "text": "In-order",
+            "why": "In-order handles the parent after its left child but before its right child, so one result is missing."
+          },
+          {
+            "id": "d",
+            "text": "Level order",
+            "why": "Level order reaches the parent before every node on the levels below it."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Post-order finishes both children before the parent.",
+        "generic": "Not quite right. Which order handles the node after both of its sides?"
+      },
+      "explain": {
+        "text": "Post-order runs both calls before using the node, so the children's results are ready. Sizes, heights and sums of subtrees all work this way. Lesson 16 is built on it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "An expression tree for P&L",
+      "prose": "A risk system stores formulas as **expression trees**. Leaves hold numbers. Inner nodes hold operators and apply them to their two children, left first.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "−",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "×",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "50",
+                  "children": []
+                },
+                {
+                  "id": "r",
+                  "label": "−",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "108",
+                      "children": []
+                    },
+                    {
+                      "id": "r",
+                      "label": "100",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "12",
+              "children": []
+            }
+          ]
+        },
+        "state": {
+          "caption": "P&L of 50 shares bought at £100, now £108, less a £12 fee"
+        }
+      },
+      "question": "Evaluate the tree. What is the P&L in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 388,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "fee",
+            "value": 400,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sign",
+            "value": -388,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "gross",
+            "value": 5388,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at the bottom: an operator can work only once both its children are numbers."
+        },
+        {
+          "rung": "point",
+          "text": "The lowest operator is 108 − 100.",
+          "highlight": [
+            "l-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "108 − 100 = 8, then 50 × 8 = 400, then subtract the fee."
+        }
+      ],
+      "feedback": {
+        "correct": "£388.",
+        "generic": "Not quite right. Work from the bottom up: 108 − 100 first.",
+        "byKey": {
+          "fee": "You stopped at the × node. The root still subtracts the £12 fee.",
+          "sign": "You subtracted the wrong way round. Each operator takes its left child first: 400 − 12.",
+          "gross": "You treated × as + or skipped the inner −. The inner node gives 8, and 50 × 8 = 400."
+        }
+      },
+      "explain": {
+        "text": "Post-order: 108 − 100 = 8, then 50 × 8 = 400, then 400 − 12 = 388. Each operator waits for both children, which is why expressions are evaluated post-order.",
+        "canvas": {
+          "current": "root",
+          "caption": "8, then 400, then £388"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Evaluate any payoff",
+      "prose": "Now in code. Leaves hold numbers. Inner nodes hold `'+'`, `'-'`, `'*'` or `'max'`, and always have two children. `max` builds option payoffs: a call pays `max(S - K, 0)`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "×",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "100",
+              "children": []
+            },
+            {
+              "id": "r",
+              "label": "max",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "−",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "S",
+                      "children": []
+                    },
+                    {
+                      "id": "r",
+                      "label": "K",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "0",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "100 calls: `100 × max(S − K, 0)`"
+        }
+      },
+      "question": "Write `evaluate(node)`: return the value of the tree under `node`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def evaluate(node):\n    ...\n",
+        "solution": "def evaluate(node):\n    if node.left is None and node.right is None:\n        return node.val\n    a = evaluate(node.left)\n    b = evaluate(node.right)\n    if node.val == '+':\n        return a + b\n    if node.val == '-':\n        return a - b\n    if node.val == '*':\n        return a * b\n    return max(a, b)\n",
+        "prelude": "from collections import deque\n\nclass Node:\n    def __init__(self, val, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n    def __repr__(self):\n        return f\"Node({self.val!r})\"\n\ndef build(values):\n    \"\"\"Build a tree from a level-order list with None gaps.\"\"\"\n    if not values or values[0] is None:\n        return None\n    it = iter(values)\n    root = Node(next(it))\n    q = deque([root])\n    while q:\n        node = q.popleft()\n        for side in (\"left\", \"right\"):\n            try:\n                v = next(it)\n            except StopIteration:\n                return root\n            if v is not None:\n                child = Node(v)\n                setattr(node, side, child)\n                q.append(child)\n    return root\n\ndef to_list(root):\n    \"\"\"The level-order list with None gaps, trailing Nones dropped.\"\"\"\n    out, q = [], deque([root])\n    while q:\n        node = q.popleft()\n        if node is None:\n            out.append(None)\n            continue\n        out.append(node.val)\n        q.append(node.left)\n        q.append(node.right)\n    while out and out[-1] is None:\n        out.pop()\n    return out\n",
+        "examples": [
+          {
+            "call": "evaluate(build(['max', '-', 0, 112, 105]))",
+            "expect": "7",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "evaluate(build(['-', '*', 12, 50, '-', None, None, None, None, 108, 100]))",
+            "expect": "388",
+            "compare": "equal"
+          },
+          {
+            "call": "evaluate(build(['max', '-', 0, 112, 105]))",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "evaluate(build(['max', '-', 0, 98, 105]))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "evaluate(build([42]))",
+            "expect": "42",
+            "compare": "equal"
+          },
+          {
+            "call": "evaluate(build(['*', 100, 'max', None, None, '-', 0, 120, 110]))",
+            "expect": "1000",
+            "compare": "equal"
+          },
+          {
+            "call": "evaluate(build(['-', 'max', 'max', '-', 0, '-', 0, 110, 95, None, None, 110, 105]))",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "evaluate(build(['-', 3, 10]))",
+            "expect": "-7",
+            "compare": "equal"
+          },
+          {
+            "call": "evaluate(build(['*', 0.5, '+', None, None, 3, 4]))",
+            "expect": "3.5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. `'-'` means left minus right. Test 6 is a bull call spread."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A leaf has `left` and `right` both `None`: return its value."
+        },
+        {
+          "rung": "point",
+          "text": "Otherwise evaluate both children first, then apply the operator. That is post-order.",
+          "highlight": [
+            "r-l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`a = evaluate(node.left)`, `b = evaluate(node.right)`, then return `a + b`, `a - b`, `a * b` or `max(a, b)` by `node.val`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every payoff evaluates, from a single number to a spread.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 is a single leaf, 42. A leaf has no children: return its value without recursing.",
+          "test-7": "Test 7 expects −7 for 3 − 10. Subtract the right child from the left."
+        }
+      },
+      "explain": {
+        "text": "Both children are evaluated before the operator, so this is post-order. Test 6 is `max(110 − 95, 0) − max(110 − 105, 0)`, which is 15 − 5 = 10.",
+        "canvas": {
+          "caption": "At S = 120, K = 110: 100 × 10 = 1000"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A binary tree is nodes with `left` and `right` links; `None` marks a missing child, and the empty tree is `None` itself.",
+      "Pre-order, in-order and post-order are one recursion: only the place of the node, before, between or after its two sides, changes.",
+      "Level order takes nodes from the front of a queue and adds their children at the back."
+    ],
+    "formula": {
+      "name": "Three depth-first orders",
+      "tex": "\\text{pre}: v, L, R \\qquad \\text{in}: L, v, R \\qquad \\text{post}: L, R, v",
+      "note": "$v$ is the node, $L$ and $R$ its left and right sides. Every node is visited once: $O(n)$."
+    },
+    "trap": "Adding the node before its left side gives pre-order, not in-order. And without `if node is None` the walk crashes at the first leaf."
+  },
+  "quiz": [
+    {
+      "id": "q-chain",
+      "difficulty": 2,
+      "prose": "`build([5, 4, None, 3])` is a chain: 5 at the root, its left child 4, and 4's left child 3.",
+      "question": "What does `inorder` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[3, 4, 5]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[5, 4, 3]`",
+            "why": "That is pre-order. In-order finishes the left side first, so the deepest node comes first."
+          },
+          {
+            "id": "c",
+            "text": "`[4, 3, 5]`",
+            "why": "You put 4 before its own left child, 3. In-order puts each node after its left side."
+          },
+          {
+            "id": "d",
+            "text": "An `AttributeError`",
+            "why": "The `None` case returns `[]`, so a missing child adds nothing and nothing fails."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The deepest left node comes first.",
+        "generic": "Not quite right. In-order: left side, node, right side."
+      },
+      "explain": {
+        "text": "In-order on 5 finishes its left side, 4, first. In-order on 4 finishes 3 first. So 3, 4, 5."
+      }
+    },
+    {
+      "id": "q-decision",
+      "difficulty": 2,
+      "prose": "A trading rule is a decision tree. Inner nodes ask yes-or-no questions; leaves say buy, sell or hold. You print it like nested `if` statements: each question, then its whole yes-branch, then its no-branch.",
+      "question": "Which traversal prints it that way?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Pre-order",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Post-order",
+            "why": "Post-order prints the answers first and the opening question last."
+          },
+          {
+            "id": "c",
+            "text": "In-order",
+            "why": "In-order prints the yes-branch before the question that leads to it."
+          },
+          {
+            "id": "d",
+            "text": "Level order",
+            "why": "Level order prints all the second questions together, apart from their own branches."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Node, then left side, then right side.",
+        "generic": "Not quite right. The question comes before both of its branches."
+      },
+      "explain": {
+        "text": "Pre-order prints a node, then its whole left side, then its whole right side. That is exactly a question followed by its yes-branch and then its no-branch."
+      }
+    },
+    {
+      "id": "q-portfolio",
+      "difficulty": 3,
+      "prose": "A fund holds regions, regions hold desks, desks hold books. The risk report lists the fund, then every region, then every desk, then every book.",
+      "question": "What do you walk the hierarchy with?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A queue: take from the front, add children at the back",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Recursive pre-order",
+            "why": "Pre-order goes all the way down the first region before starting the second region."
+          },
+          {
+            "id": "c",
+            "text": "A stack: take the newest node first",
+            "why": "A stack takes the newest node first, so it dives deep instead of finishing a level."
+          },
+          {
+            "id": "d",
+            "text": "Recursive post-order",
+            "why": "Post-order lists the books first and the fund last."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Level order, with a queue.",
+        "generic": "Not quite right. Which structure finishes one level before the next?"
+      },
+      "explain": {
+        "text": "A queue hands back nodes in the order they were added. Every region is added before any desk, so the report goes level by level."
+      }
+    },
+    {
+      "id": "q-height",
+      "difficulty": 2,
+      "prose": "We count height in links, from the root down to the deepest node.",
+      "question": "What is the height of a tree with one node?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "nodes",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Zero: there are no links to follow.",
+        "generic": "Not quite right. Count links, not nodes.",
+        "byKey": {
+          "nodes": "You counted the node itself. Height counts links, and a lone root has none."
+        }
+      },
+      "explain": {
+        "text": "A single node is the root and the deepest node at once, with no links between. Its height is 0. Lesson 16 uses this convention."
+      }
+    }
+  ]
+}

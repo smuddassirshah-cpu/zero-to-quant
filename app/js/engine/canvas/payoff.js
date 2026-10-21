@@ -16,7 +16,8 @@
     const legValue = (l, S, pl) => {
       const sign = l.side === 'short' ? -1 : 1, q = l.qty ?? 1;
       if (l.type === 'stock') return sign * q * (S - l.strike);
-      const pay = l.type === 'put' ? Math.max(l.strike - S, 0) : Math.max(S - l.strike, 0);
+      /* item 339: floor: false draws the leg without its floor (the holder "forgot" the right not to exercise) */
+      const pay = l.floor === false ? (l.type === 'put' ? l.strike - S : S - l.strike) : l.type === 'put' ? Math.max(l.strike - S, 0) : Math.max(S - l.strike, 0);
       return sign * q * (pay - (pl ? l.premium : 0));
     };
     const total = (legs, S, pl) => legs.reduce((s, l) => s + legValue(l, S, pl), 0);
@@ -72,19 +73,26 @@
         const plot = svg('g', { 'clip-path': R.clipRect(x0, y1 - 3, x1 - x0, y0 - y1 + 6) }), over = svg('g');
         g.append(plot, over);
         const pts = (f) => { const xs = [range[0], ...legs.map((l) => l.strike).filter((k) => k > range[0] && k < range[1]), range[1]].sort((a, b) => a - b); return 'M' + xs.map((x) => sx(x).toFixed(2) + ',' + sy(f(x)).toFixed(2)).join('L'); };
-        const showLegs = view.showLegs ?? (legs.length > 1);
+        const showLegs = view.showLegs ?? (legs.length > 1 || !showTotalOf(view, legs));
         const labels = [], fixed = [];
         if (showLegs) legs.forEach((l) => {
           const o = K.obj(l.id, '', l.slot), d = pts((S) => legValue(l, S, pl));
-          o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln faint cvb-dash' }));
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (showTotalOf(view, legs) ? ' faint cvb-dash' : ' bold') }));
+          if (R.mode === 'tap') { o.append(svg('path', { d, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 18px; fill: none' })); R.tappable(o, l.id, l.label || l.id); }
           plot.append(o);
-          if (l.label) { const lx = range[0] + (range[1] - range[0]) * 0.06; labels.push({ x: sx(lx), y: sy(legValue(l, lx, pl)) - 11, text: l.label, anchor: 'start' }); }
+          /* item 338: labelAt (a fraction 0 to 1 along the price range, default 0.06) places a leg's label */
+          if (l.label) { const f = Number.isFinite(+l.labelAt) ? K.clamp(+l.labelAt, 0, 1) : 0.06, lx = range[0] + (range[1] - range[0]) * f; labels.push({ x: sx(lx), y: sy(legValue(l, lx, pl)) - 11, text: l.label, anchor: f > 0.6 ? 'end' : f > 0.3 ? 'middle' : 'start' }); }
         });
-        const comb = K.obj(legs.length > 1 ? 'total' : (legs[0] ? legs[0].id : 'total'), '', params.colour || 1), dC = pts((S) => total(legs, S, pl));
-        comb.append(K.washPath(dC), svg('path', { d: dC, class: 'cvb-ln bold' }));
-        plot.append(comb);
-        /* the bold combined line is an obstacle: leg labels move off it */
-        fixed.push(...K.lineBoxes(Array.from({ length: 121 }, (_, i) => { const S = range[0] + (range[1] - range[0]) * i / 120; return [sx(S), sy(total(legs, S, pl))]; }), 8, 4));
+        /* item 338: showTotal: false hides the combined line (several positions at one strike read leg by leg) */
+        const showTotal = (view.showTotal ?? params.showTotal) !== false || legs.length === 1;
+        if (showTotal) {
+          const comb = K.obj(legs.length > 1 ? 'total' : (legs[0] ? legs[0].id : 'total'), '', params.colour || 1), dC = pts((S) => total(legs, S, pl));
+          comb.append(K.washPath(dC), svg('path', { d: dC, class: 'cvb-ln bold' }));
+          if (R.mode === 'tap' && legs.length > 1) { comb.append(svg('path', { d: dC, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 18px; fill: none' })); R.tappable(comb, 'total', 'Combined position'); }
+          plot.append(comb);
+          /* the bold combined line is an obstacle: leg labels move off it */
+          fixed.push(...K.lineBoxes(Array.from({ length: 121 }, (_, i) => { const S = range[0] + (range[1] - range[0]) * i / 120; return [sx(S), sy(total(legs, S, pl))]; }), 8, 4));
+        }
         if (params.label) { const lx = range[1] - (range[1] - range[0]) * 0.03; labels.push({ x: sx(lx), y: sy(total(legs, lx, pl)) - 14, text: params.label, anchor: 'end' }); }
         /* strike ticks and the kinks they make */
         const seenK = new Set();
@@ -92,25 +100,32 @@
           const dup = seenK.has(l.strike); seenK.add(l.strike);
           const x = sx(l.strike), o = K.obj('strike-' + l.id, '', 'ink');
           o.append(svg('line', { x1: x, x2: x, y1: y0 - 5, y2: y0 + 5, class: 'cvb-ln thin' }));
-          const yk = sy(total(legs, l.strike, pl));
+          /* item 336: strikes and breakevens are tap targets ("tap the strike") */
+          if (R.mode === 'tap') { o.append(svg('rect', { x: x - 12, y: Math.min(y0, sy(total(legs, l.strike, pl))) - 12, width: 24, height: Math.abs(y0 - sy(total(legs, l.strike, pl))) + 24, class: 'cvb-tapbox cv-body', fill: 'transparent' })); R.tappable(o, 'strike-' + l.id, `Strike ${K.fmt(l.strike, 2)}`); }
+          const yk = sy(showTotal ? total(legs, l.strike, pl) : legValue(l, l.strike, pl));
           o.append(svg('circle', { cx: x, cy: yk, r: 3.5, class: 'cvb-dot' }));
           over.append(o);
           fixed.push({ x0: x - 6, x1: x + 6, y0: yk - 6, y1: yk + 6 });
           if (view.kinkLabels !== false && !dup) labels.push({ x, y: yk + 18, text: (l.strikeLabel || 'K') + ' = ' + K.fmt(l.strike, 2), anchor: 'middle' });
         });
         /* breakevens on the zero line */
-        if ((view.breakeven ?? pl) && zero > y1 && zero < y0) breakevens(legs, pl).forEach((b) => {
-          const o = K.obj('breakeven', '', 'ink'); o.append(K.washCircle(sx(b), zero, 11), svg('circle', { cx: sx(b), cy: zero, r: 5, class: 'cvb-be' }));
+        if ((view.breakeven ?? pl) && showTotal && zero > y1 && zero < y0) breakevens(legs, pl).forEach((b, bi, all) => {
+          const bid = all.length > 1 ? 'breakeven' + (bi ? bi + 1 : '') : 'breakeven';
+          const o = K.obj(bid, '', 'ink'); o.append(K.washCircle(sx(b), zero, 11), svg('circle', { cx: sx(b), cy: zero, r: 5, class: 'cvb-be cv-body' }));
+          if (R.mode === 'tap') { o.append(svg('circle', { cx: sx(b), cy: zero, r: 14, class: 'cvb-tapbox', fill: 'transparent' })); R.tappable(o, bid, `Breakeven ${K.fmt(b, 2)}`); }
           over.append(o); fixed.push({ x0: sx(b) - 7, x1: sx(b) + 7, y0: zero - 7, y1: zero + 7 }); labels.push({ x: sx(b), y: zero - 16, text: K.fmt(b, 2), anchor: 'middle' });
         });
         /* spot */
         if (view.spot != null && view.spot >= range[0] && view.spot <= range[1]) {
           const x = sx(view.spot), v = total(legs, view.spot, pl), o = K.obj('spot', '', 'manip');
-          o.append(K.washPath(`M${x},${y0}L${x},${y1}`), svg('line', { x1: x, x2: x, y1: y0, y2: y1 + 14, class: 'cvb-ln thin cvb-dash' }), svg('circle', { cx: x, cy: sy(v), r: 5, class: 'cvb-dot' }));
+          o.append(K.washPath(`M${x},${y0}L${x},${y1}`), svg('line', { x1: x, x2: x, y1: y0, y2: y1 + 14, class: 'cvb-ln thin cvb-dash' }));
+          if (showTotal) o.append(svg('circle', { cx: x, cy: sy(v), r: 5, class: 'cvb-dot' })); else legs.forEach((l) => o.append(svg('circle', { cx: x, cy: sy(legValue(l, view.spot, pl)), r: 4.5, class: 'cvb-dot ' + K.colourCls(l.slot) })));
           over.append(o);
-          const t = (params.spotLabel || 'S') + ' = ' + K.fmt(view.spot, 2) + (view.spotValue === false ? '' : ', ' + (pl ? 'P&L ' : 'payoff ') + K.fmt(v, 2));
+          const t = (params.spotLabel || 'S') + ' = ' + K.fmt(view.spot, 2) + (view.spotValue === false || !showTotal ? '' : ', ' + (pl ? 'P&L ' : 'payoff ') + K.fmt(v, 2));
           const lx = K.clamp(x, x0 + K.tw(t) / 2 + 2, x1 - K.tw(t) / 2 - 2);
           over.append(K.txt(lx, y1 + 6, t, { halo: true, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: lx, y: y1 + 6, text: t }));
+          /* item 337: the spot drags along the axis with drag: "spot" (or drag mode naming spot), without a slider */
+          if (spotDrag(view, R)) over.append(K.handle(x, y0, 'spot', { r: 8, label: 'Spot price' }));
         }
         /* value before expiry, and a tangent on it (delta) */
         const vv = view.value ?? params.value;
@@ -138,17 +153,24 @@
         R._sx = sx;
       },
       drag: {
-        start: (id, p, R) => (R.active('drag') && baseLegs.some((l) => l.id === id) ? { id } : null),
-        move(info, p, R, end) { setStrike(R, info.id, R._sx.invert(p.x), end); },
-        key(id, dx, dy, R) { const l = legsOf(R.state).find((q) => q.id === id); if (l) setStrike(R, id, l.strike + (dx || dy) * (params.snap || 1), true); },
+        start: (id, p, R) => (id === 'spot' ? (spotDrag(R.state, R) ? { id } : null) : R.active('drag') && baseLegs.some((l) => l.id === id) ? { id } : null),
+        move(info, p, R, end) { if (info.id === 'spot') setSpot(R, R._sx.invert(p.x), end); else setStrike(R, info.id, R._sx.invert(p.x), end); },
+        key(id, dx, dy, R) { if (id === 'spot') { setSpot(R, +R.state.spot + (dx || dy) * (params.snap || 1), true); return; } const l = legsOf(R.state).find((q) => q.id === id); if (l) setStrike(R, id, l.strike + (dx || dy) * (params.snap || 1), true); },
       },
       methods: (R) => ({
         value: (S) => { const st = R.state; return total(legsOf(st), S, st.pl ?? params.pl ?? true); },
         valueNow: (S) => { const st = R.state, vv = st.value ?? params.value; return vv ? totalNow(legsOf(st), S, vv, st.pl ?? params.pl ?? true) : NaN; },
         breakevens: () => breakevens(legsOf(R.state), R.state.pl ?? params.pl ?? true),
-        points: () => Object.fromEntries(legsOf(R.state).filter((l) => l.type !== 'stock').map((l) => [l.id, { x: l.strike, y: 0 }])),
-        place: (id, pos, opts = {}) => R.inst.set({ strike: { [id]: Array.isArray(pos) ? pos[0] : pos } }, opts),
+        points: () => ({ ...Object.fromEntries(legsOf(R.state).filter((l) => l.type !== 'stock').map((l) => [l.id, { x: l.strike, y: 0 }])), ...(R.state.spot != null ? { spot: { x: +R.state.spot, y: 0 } } : {}) }),
+        place: (id, pos, opts = {}) => (id === 'spot' ? R.inst.set({ spot: Array.isArray(pos) ? pos[0] : +pos }, opts) : R.inst.set({ strike: { [id]: Array.isArray(pos) ? pos[0] : pos } }, opts)),
       }),
+    };
+    const showTotalOf = (view, legs) => (view.showTotal ?? params.showTotal) !== false || legs.length === 1;
+    const spotDrag = (view, R) => !R.static && (params.drag === 'spot' || [].concat(params.drag || []).includes('spot') || view.dragSpot === true || (R.active('drag') && R.modeOpts && Array.isArray(R.modeOpts.ids) && R.modeOpts.ids.includes('spot'))) && R.active();
+    const setSpot = (R, v, end) => {
+      v = K.round(K.clamp(K.snapTo(v, params.snap ?? 1), range[0], range[1]), 6);
+      R.commit({ spot: v });
+      R.emit({ type: 'drag', id: 'spot', x: v, y: 0, phase: end ? 'end' : 'move' });
     };
     const setStrike = (R, id, v, end) => {
       v = K.round(K.clamp(K.snapTo(v, params.snap ?? 1), range[0], range[1]), 6);

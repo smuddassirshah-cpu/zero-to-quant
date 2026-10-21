@@ -30,13 +30,23 @@
       const model = p.model || (p.mu != null || p.sigma != null ? 'normal' : 'coin');
       const d = draws(Math.round(view.run || 0), paths, steps), up = p.p ?? 0.5, step = p.step ?? 1, mu = p.mu ?? 0, sigma = p.sigma ?? 1;
       const out = [];
+      /* item 315: model "markov": states (labels), P (row-stochastic), start (a state label or index); a path's value is
+         its state's index, drawn on a y axis labelled with the states */
+      const mk = model === 'markov' ? markovOf(p) : null;
       for (let j = 0; j < paths; j++) {
-        const a = new Float64Array(steps + 1); a[0] = start;
-        for (let i = 0; i < steps; i++) a[i + 1] = a[i] + (model === 'normal' ? mu + sigma * d.z[j][i] : (d.u[j][i] < up ? step : -step));
+        const a = new Float64Array(steps + 1); a[0] = mk ? mk.s0 : start;
+        for (let i = 0; i < steps; i++) a[i + 1] = mk ? mk.next(a[i], d.u[j][i]) : a[i] + (model === 'normal' ? mu + sigma * d.z[j][i] : (d.u[j][i] < up ? step : -step));
         out.push(a);
       }
+      if (mk) return { p, steps, paths, start: mk.s0, model, out, drift: 0, vol: 0, mk };
       const drift = model === 'normal' ? mu : (2 * up - 1) * step, vol = model === 'normal' ? sigma : 2 * step * Math.sqrt(up * (1 - up));
       return { p, steps, paths, start, model, out, drift, vol };
+    };
+    const markovOf = (p) => {
+      const states = (p.states || []).map(String), M = Array.isArray(p.P) ? p.P : [];
+      const s0 = typeof p.start === 'string' ? Math.max(0, states.indexOf(p.start)) : Math.max(0, Math.min(states.length - 1, Math.round(+p.start || 0)));
+      const next = (i, u) => { const row = M[Math.round(i)] || []; let c = 0; for (let k = 0; k < row.length; k++) { c += +row[k] || 0; if (u < c) return k; } return Math.max(0, row.length - 1); };
+      return { states, s0, next };
     };
     const barriers = (p) => { const b = p.barriers || []; return { lo: b[0] ?? null, hi: b[1] ?? null }; };
     const firstHit = (a, bar) => { for (let i = 0; i < a.length; i++) if ((bar.hi != null && a[i] >= bar.hi) || (bar.lo != null && a[i] <= bar.lo)) return i; return -1; };
@@ -47,7 +57,7 @@
       modes: ['slider', 'tap'],
       size: () => ({ w: W, h: H }),
       skip: ['run'],
-      init: () => ({ run: 0, showMean: false, highlight: [], params: Object.fromEntries(['p', 'mu', 'sigma', 'steps', 'paths', 'start', 'step'].filter((k) => typeof params[k] === 'number').map((k) => [k, params[k]])), reveal: 1 }),
+      init: () => ({ run: 0, showMean: false, highlight: [], params: Object.fromEntries(['p', 'mu', 'sigma', 'steps', 'paths', 'start', 'step'].filter((k) => typeof params[k] === 'number' && !(k === 'start' && params.model === 'markov')).map((k) => [k, params[k]])), reveal: 1 }),
       hlIds: (view) => (view.highlight || []).map((h) => (typeof h === 'number' ? 'path' + h : String(h))),
       animate(prev, next, a, R) {
         if (a.instant) { a.show(next); return; }
@@ -62,12 +72,15 @@
         let lo = Infinity, hi = -Infinity;
         for (const a of B.out) for (const v of a) { if (v < lo) lo = v; if (v > hi) hi = v; }
         if (bar.lo != null) lo = Math.min(lo, bar.lo); if (bar.hi != null) hi = Math.max(hi, bar.hi);
-        let yr = params.y;
+        let yr = params.y || (B.mk ? [-0.5, Math.max(0.5, B.mk.states.length - 0.5)] : null);
         if (!yr) { const pad = (hi - lo || 2) * 0.1; const t = C.niceTicks(lo - pad, hi + pad, 8), st = t[1] - t[0] || 1; yr = [Math.floor((lo - pad) / st) * st, Math.ceil((hi + pad) / st) * st]; seen = seen && !view._fresh ? [Math.min(seen[0], yr[0]), Math.max(seen[1], yr[1])] : yr; yr = seen; }
-        const ml = K.yMargin(yr[0], yr[1], H - 60), mt = 26, mb = params.xLabel ? 46 : 30, mr = 70;
+        const ml = B.mk ? 18 + Math.max(...B.mk.states.map((t) => K.tw(t, 12))) : K.yMargin(yr[0], yr[1], H - 60), mt = 26, mb = params.xLabel === '' ? 30 : 46, mr = 70;
         const sx = C.scale([0, B.steps], [ml, W - mr]), sy = C.scale(yr, [H - mb, mt]);
         const x0 = ml, x1 = W - mr, y0 = H - mb, y1 = mt;
-        K.chartAxes(g, sx, sy, { yLabel: params.yLabel ?? (B.model === 'normal' ? 'Value' : 'Position'), xLabel: params.xLabel ?? 'Step', baseline: B.start >= yr[0] && B.start <= yr[1] ? B.start : null });
+        /* item 323: xStep fixes the step ticks (1 for whole steps) */
+        const xTicks = params.xStep > 0 ? (() => { const t = []; for (let v = 0; v <= B.steps + 1e-9; v += +params.xStep) t.push(Math.round(v * 1e6) / 1e6); return { ticks: t, step: +params.xStep }; })() : undefined;
+        const yTicks = B.mk ? { ticks: B.mk.states.map((_, k) => k), step: 1 } : undefined;
+        K.chartAxes(g, sx, sy, { yLabel: params.yLabel ?? (B.mk ? 'State' : B.model === 'normal' ? 'Value' : 'Position'), xLabel: params.xLabel ?? 'Step', xTicks, yTicks, fmtY: B.mk ? (v) => B.mk.states[Math.round(v)] ?? '' : undefined, baseline: B.mk ? null : B.start >= yr[0] && B.start <= yr[1] ? B.start : null });
         const plot = svg('g', { 'clip-path': R.clipRect(x0, y1 - 3, x1 - x0 + 3, y0 - y1 + 6) }), over = svg('g');
         g.append(plot, over);
         const right = [];
@@ -80,11 +93,11 @@
         });
         const reveal = K.clamp(view.reveal ?? 1, 0, 1), upto = reveal * B.steps;
         const em = new Set(def.hlIds(view));
-        const pathD = (a) => { let d = ''; const last = Math.floor(upto); for (let i = 0; i <= last && i < a.length; i++) d += (i ? 'L' : 'M') + sx(i).toFixed(1) + ',' + sy(a[i]).toFixed(1); if (upto > last && last + 1 < a.length) { const f = upto - last; d += 'L' + sx(upto).toFixed(1) + ',' + sy(a[last] + (a[last + 1] - a[last]) * f).toFixed(1); } return d; };
+        const pathD = (a) => { if (B.mk) { let d = ''; const last = Math.min(a.length - 1, Math.floor(upto)); for (let i = 0; i <= last; i++) d += (i ? `L${sx(i).toFixed(1)},${sy(a[i - 1]).toFixed(1)}L` : 'M') + sx(i).toFixed(1) + ',' + sy(a[i]).toFixed(1); return d; } let d = ''; const last = Math.floor(upto); for (let i = 0; i <= last && i < a.length; i++) d += (i ? 'L' : 'M') + sx(i).toFixed(1) + ',' + sy(a[i]).toFixed(1); if (upto > last && last + 1 < a.length) { const f = upto - last; d += 'L' + sx(upto).toFixed(1) + ',' + sy(a[last] + (a[last + 1] - a[last]) * f).toFixed(1); } return d; };
         const stop = view.stopAtBarrier;
-        let hits = 0;
+        let hits = 0, hitsUp = 0, hitsDown = 0;
         B.out.forEach((a, j) => {
-          const h = (bar.lo != null || bar.hi != null) ? firstHit(a, bar) : -1; if (h >= 0) hits++;
+          const h = (bar.lo != null || bar.hi != null) ? firstHit(a, bar) : -1; if (h >= 0) { hits++; if (bar.hi != null && a[h] >= bar.hi) hitsUp++; else hitsDown++; }
           const arr = stop && h >= 0 ? a.slice(0, h + 1) : a;
           const main = j === (params.bold ?? 0), o = K.obj('path' + j, '', main ? (params.colour || 1) : (params.colour || 1));
           const d = pathD(arr);
@@ -110,7 +123,9 @@
         K.spread(right, 15, y1 + 6, y0 - 6);
         for (const l of right) over.append(K.txt(x1 + 6, l.y, l.text, { anchor: 'start', size: 12, cls: 'cvb-strong', halo: true }));
         if (view.showHits && (bar.lo != null || bar.hi != null) && B.paths > 1) {
-          const t = view.hitsLabel ? String(view.hitsLabel).replace('{hits}', hits).replace('{paths}', B.paths) : `${hits} of ${B.paths} paths hit`;
+          /* item 323: with both barriers the count splits into the top and the bottom ({up}, {down} in hitsLabel) */
+          const both = bar.lo != null && bar.hi != null;
+          const t = view.hitsLabel ? String(view.hitsLabel).replace('{hits}', hits).replace('{paths}', B.paths).replace('{up}', hitsUp).replace('{down}', hitsDown) : both ? `${hitsUp} hit the top, ${hitsDown} the bottom (of ${B.paths})` : `${hits} of ${B.paths} paths hit`;
           over.append(K.txt(x0 + 6, y1 + 10, t, { anchor: 'start', cls: 'cvb-strong', halo: true }));
         }
       },
@@ -119,6 +134,7 @@
         run: () => R.inst.set({ run: Math.round(R.state.run || 0) + 1 }),
         paths: () => build(R.state).out.map((a) => Array.from(a)),
         hits: () => { const B = build(R.state), bar = barriers(B.p); return B.out.map((a) => firstHit(a, bar)); },
+        hitCounts: () => { const B = build(R.state), bar = barriers(B.p); let up = 0, down = 0; B.out.forEach((a) => { const h = firstHit(a, bar); if (h >= 0) { if (bar.hi != null && a[h] >= bar.hi) up++; else down++; } }); return { up, down, paths: B.paths }; },
       }),
     };
     return K.make(host, params, ctx, def);

@@ -1,0 +1,1827 @@
+{
+  "id": "l5-tasks-in-order",
+  "course": "graphs-dp",
+  "title": "Doing tasks in order",
+  "minutes": 15,
+  "objectives": [
+    "Order tasks with dependencies by topological sort.",
+    "Detect a cycle when no valid order exists"
+  ],
+  "skills": [
+    "gd-traversal",
+    "gd-graphs"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A nightly pipeline",
+      "prose": "Each arrow means the first task must finish before the second starts. A backtest needs signals and risk limits; both need returns.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.2,
+              "y": 0.04,
+              "shape": "pill"
+            },
+            {
+              "id": "calendar",
+              "label": "calendar",
+              "x": 0.2,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "returns",
+              "label": "returns",
+              "x": 0.62,
+              "y": 0.17,
+              "shape": "pill"
+            },
+            {
+              "id": "signals",
+              "label": "signals",
+              "x": 0.4,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "risk",
+              "label": "risk",
+              "x": 0.82,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "backtest",
+              "label": "backtest",
+              "x": 0.5,
+              "y": 0.93,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.93,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "calendar",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "signals",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "risk",
+              "directed": true
+            },
+            {
+              "from": "signals",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "risk",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "report",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "lanes": [
+            {
+              "y": 0.17,
+              "label": "data"
+            },
+            {
+              "y": 0.56,
+              "label": "research"
+            },
+            {
+              "y": 0.93,
+              "label": "output"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Seven tasks and their arrows"
+        }
+      },
+      "question": "Put the tasks in an order that respects every arrow.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "prices",
+            "text": "`prices`"
+          },
+          {
+            "id": "calendar",
+            "text": "`calendar`"
+          },
+          {
+            "id": "returns",
+            "text": "`returns`"
+          },
+          {
+            "id": "signals",
+            "text": "`signals`"
+          },
+          {
+            "id": "risk",
+            "text": "`risk`"
+          },
+          {
+            "id": "backtest",
+            "text": "`backtest`"
+          },
+          {
+            "id": "report",
+            "text": "`report`"
+          }
+        ],
+        "answer": [
+          "prices",
+          "calendar",
+          "returns",
+          "signals",
+          "risk",
+          "backtest",
+          "report"
+        ],
+        "same": [
+          [
+            "prices",
+            "calendar"
+          ],
+          [
+            "signals",
+            "risk"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which tasks have no arrow coming in? They can go first."
+        },
+        {
+          "rung": "point",
+          "text": "returns waits for both prices and calendar.",
+          "highlight": [
+            "prices",
+            "calendar"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "prices and calendar first, either way round. Then returns, then signals and risk, then backtest, then report."
+        }
+      ],
+      "feedback": {
+        "correct": "Every arrow points forward in your order.",
+        "generic": "Not quite right. Each task must come after every task with an arrow into it.",
+        "byKey": {
+          "returns": "returns needs both prices and calendar first.",
+          "backtest": "backtest needs signals and risk, so both come before it.",
+          "report": "report is last: it needs the backtest."
+        }
+      },
+      "explain": {
+        "text": "Four orders work: prices and calendar either way round, and signals and risk either way round. An order in which every arrow points forward is a **topological order**. A graph of arrows with no loop is a **DAG**, a directed acyclic graph.",
+        "canvas": {
+          "visited": [
+            "prices",
+            "calendar",
+            "returns",
+            "signals",
+            "risk",
+            "backtest",
+            "report"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Arrows in",
+      "prose": "For each task, count the arrows that point into it: how many tasks it waits for.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.2,
+              "y": 0.04,
+              "shape": "pill"
+            },
+            {
+              "id": "calendar",
+              "label": "calendar",
+              "x": 0.2,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "returns",
+              "label": "returns",
+              "x": 0.62,
+              "y": 0.17,
+              "shape": "pill"
+            },
+            {
+              "id": "signals",
+              "label": "signals",
+              "x": 0.4,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "risk",
+              "label": "risk",
+              "x": 0.82,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "backtest",
+              "label": "backtest",
+              "x": 0.5,
+              "y": 0.93,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.93,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "calendar",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "signals",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "risk",
+              "directed": true
+            },
+            {
+              "from": "signals",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "risk",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "report",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "lanes": [
+            {
+              "y": 0.17,
+              "label": "data"
+            },
+            {
+              "y": 0.56,
+              "label": "research"
+            },
+            {
+              "y": 0.93,
+              "label": "output"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 220
+      },
+      "question": "Fill in each task's count.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "task",
+          "arrows in"
+        ],
+        "rows": [
+          [
+            "prices",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "calendar",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "returns",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "signals",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "risk",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "backtest",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "report",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count only arrowheads touching the task."
+        },
+        {
+          "rung": "point",
+          "text": "returns has two arrows in, from prices and calendar.",
+          "highlight": [
+            "returns"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "prices 0, calendar 0, returns 2, signals 1, risk 1, backtest 2, report 1."
+        }
+      ],
+      "feedback": {
+        "correct": "Two tasks wait for nothing.",
+        "generic": "Not quite right. Count arrowheads, not lines leaving the task.",
+        "byKey": {
+          "r2c1": "returns has arrows in from prices and calendar: 2.",
+          "r5c1": "backtest waits for signals and risk: 2.",
+          "r0c1": "prices has an arrow out, but none in."
+        }
+      },
+      "explain": {
+        "text": "This count is the **in-degree** from lesson 1. A task with in-degree 0 is free to start now. Finishing a task lowers the in-degree of every task it points to.",
+        "canvas": {
+          "highlight": [
+            "prices",
+            "calendar"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Who is free now",
+      "prose": "prices, calendar and returns have run. Their arrows are gone, so the counts they fed have dropped.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.2,
+              "y": 0.04,
+              "shape": "pill"
+            },
+            {
+              "id": "calendar",
+              "label": "calendar",
+              "x": 0.2,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "returns",
+              "label": "returns",
+              "x": 0.62,
+              "y": 0.17,
+              "shape": "pill"
+            },
+            {
+              "id": "signals",
+              "label": "signals",
+              "x": 0.4,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "risk",
+              "label": "risk",
+              "x": 0.82,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "backtest",
+              "label": "backtest",
+              "x": 0.5,
+              "y": 0.93,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.93,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "calendar",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "signals",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "risk",
+              "directed": true
+            },
+            {
+              "from": "signals",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "risk",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "report",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "lanes": [
+            {
+              "y": 0.17,
+              "label": "data"
+            },
+            {
+              "y": 0.56,
+              "label": "research"
+            },
+            {
+              "y": 0.93,
+              "label": "output"
+            }
+          ]
+        },
+        "state": {
+          "visited": [
+            "prices",
+            "calendar",
+            "returns"
+          ],
+          "caption": "Done: prices, calendar, returns"
+        },
+        "enter": {
+          "edges": {
+            "e-prices-returns": null,
+            "e-calendar-returns": null,
+            "e-returns-signals": null,
+            "e-returns-risk": null
+          }
+        }
+      },
+      "question": "Tap every task that can start now.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "signals",
+          "risk"
+        ],
+        "countWord": "tapped",
+        "only": [
+          "signals",
+          "risk",
+          "backtest",
+          "report"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which remaining tasks have no arrow coming in?"
+        },
+        {
+          "rung": "point",
+          "text": "signals and risk waited only for returns.",
+          "highlight": [
+            "signals",
+            "risk"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "signals and risk now have in-degree 0. backtest still waits for both of them."
+        }
+      ],
+      "feedback": {
+        "correct": "signals and risk are both free, in either order.",
+        "generic": "Not quite right. Tap the tasks with no arrow left pointing in.",
+        "byKey": {
+          "backtest": "backtest still has two arrows in, from signals and risk.",
+          "report": "report still waits for backtest."
+        }
+      },
+      "explain": {
+        "text": "That is **Kahn's algorithm**: keep the tasks with in-degree 0 in a queue, take one, and remove its arrows. Any task whose count hits 0 joins the queue. Repeat until the queue is empty.",
+        "canvas": {
+          "highlight": [
+            "signals",
+            "risk"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Kahn's algorithm in code",
+      "prose": "`adj` maps every task to the tasks that need it. When several are free, take the alphabetically smallest, so each graph has one answer: a `heapq` does this. If tasks are left over, there is a cycle.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.2,
+              "y": 0.04,
+              "shape": "pill"
+            },
+            {
+              "id": "calendar",
+              "label": "calendar",
+              "x": 0.2,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "returns",
+              "label": "returns",
+              "x": 0.62,
+              "y": 0.17,
+              "shape": "pill"
+            },
+            {
+              "id": "signals",
+              "label": "signals",
+              "x": 0.4,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "risk",
+              "label": "risk",
+              "x": 0.82,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "backtest",
+              "label": "backtest",
+              "x": 0.5,
+              "y": 0.93,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.93,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "calendar",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "signals",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "risk",
+              "directed": true
+            },
+            {
+              "from": "signals",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "risk",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "report",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "lanes": [
+            {
+              "y": 0.17,
+              "label": "data"
+            },
+            {
+              "y": 0.56,
+              "label": "research"
+            },
+            {
+              "y": 0.93,
+              "label": "output"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Expected: calendar, prices, returns, risk, signals, backtest, report"
+        },
+        "maxHeight": 220
+      },
+      "question": "Write `topo_sort(adj)`: one valid order, ties to the smallest name, or `None` if there is a cycle.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\n\ndef topo_sort(adj):\n    ...\n",
+        "solution": "import heapq\n\ndef topo_sort(adj):\n    indeg = {u: 0 for u in adj}\n    for u in adj:\n        for v in adj[u]:\n            indeg[v] += 1\n    ready = [u for u in adj if indeg[u] == 0]\n    heapq.heapify(ready)\n    order = []\n    while ready:\n        u = heapq.heappop(ready)\n        order.append(u)\n        for v in adj[u]:\n            indeg[v] -= 1\n            if indeg[v] == 0:\n                heapq.heappush(ready, v)\n    return order if len(order) == len(adj) else None\n",
+        "examples": [
+          {
+            "setup": "adj = {\"prices\": [\"returns\"], \"calendar\": [\"returns\"], \"returns\": [\"signals\", \"risk\"], \"signals\": [\"backtest\"], \"risk\": [\"backtest\"], \"backtest\": [\"report\"], \"report\": []}",
+            "call": "topo_sort(adj)",
+            "expect": "['calendar', 'prices', 'returns', 'risk', 'signals', 'backtest', 'report']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "adj = {\"prices\": [\"returns\"], \"calendar\": [\"returns\"], \"returns\": [\"signals\", \"risk\"], \"signals\": [\"backtest\"], \"risk\": [\"backtest\"], \"backtest\": [\"report\"], \"report\": []}",
+            "call": "topo_sort(adj)",
+            "expect": "['calendar', 'prices', 'returns', 'risk', 'signals', 'backtest', 'report']",
+            "compare": "equal"
+          },
+          {
+            "call": "topo_sort({\"c\": [], \"a\": [], \"b\": []})",
+            "expect": "['a', 'b', 'c']",
+            "compare": "equal"
+          },
+          {
+            "call": "topo_sort({\"a\": [\"b\"], \"b\": [\"a\"]})",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "topo_sort({\"x\": [\"x\"]})",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "topo_sort({\"a\": [\"b\"], \"b\": [\"c\"], \"c\": [\"b\"]})",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "topo_sort({})",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "topo_sort({\"d\": [\"c\"], \"c\": [\"b\"], \"b\": [\"a\"], \"a\": []})",
+            "expect": "['d', 'c', 'b', 'a']",
+            "compare": "equal"
+          },
+          {
+            "call": "topo_sort({\"a\": [\"d\"], \"b\": [\"d\"], \"c\": [\"a\"], \"d\": []})",
+            "expect": "['b', 'c', 'a', 'd']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, including a graph with no edges, a two-task cycle, a self-loop and an empty graph. Every task is a key; ties go to the smallest name; return `None` on a cycle."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count in-degrees first. Then repeat: pop the smallest free task, record it, lower its successors' counts."
+        },
+        {
+          "rung": "point",
+          "text": "calendar beats prices: both are free and c comes before p.",
+          "highlight": [
+            "calendar",
+            "prices"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`ready = [u for u in adj if indeg[u] == 0]`, `heapify` it; `heappop`, append, decrement each `v` in `adj[u]`, push it at 0. Return `None` if `len(order) < len(adj)`."
+        }
+      ],
+      "feedback": {
+        "correct": "In-degrees, a heap of free tasks, and a length check for cycles.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 wants the smallest free name each time. A plain queue keeps arrival order, so risk lands after signals; use `heapq`.",
+          "test-3": "Test 3 is a two-task cycle. Nothing is ever free, so the order is empty: return `None`, not `[]`.",
+          "test-6": "Test 6 is the empty graph: no tasks, so the order is `[]`."
+        }
+      },
+      "explain": {
+        "text": "Each task is pushed and popped once, and each arrow lowers one count once. That is $O(V + E)$, or $O(V \\log V + E)$ with the heap. A task on a cycle never reaches in-degree 0, so it is never emitted.",
+        "canvas": {
+          "visited": [
+            "calendar",
+            "prices",
+            "returns",
+            "risk",
+            "signals",
+            "backtest",
+            "report"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Starting in the wrong place",
+      "prose": "A colleague records each task when DFS first reaches it, trying tasks in alphabetical order.\n\n```python\ndef visit(u):\n    seen.add(u)\n    order.append(u)\n    for v in sorted(adj[u]):\n        if v not in seen:\n            visit(v)\n\nfor u in sorted(adj):\n    if u not in seen:\n        visit(u)\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.2,
+              "y": 0.04,
+              "shape": "pill"
+            },
+            {
+              "id": "calendar",
+              "label": "calendar",
+              "x": 0.2,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "returns",
+              "label": "returns",
+              "x": 0.62,
+              "y": 0.17,
+              "shape": "pill"
+            },
+            {
+              "id": "signals",
+              "label": "signals",
+              "x": 0.4,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "risk",
+              "label": "risk",
+              "x": 0.82,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "backtest",
+              "label": "backtest",
+              "x": 0.5,
+              "y": 0.93,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.93,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "calendar",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "signals",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "risk",
+              "directed": true
+            },
+            {
+              "from": "signals",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "risk",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "report",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "lanes": [
+            {
+              "y": 0.17,
+              "label": "data"
+            },
+            {
+              "y": 0.56,
+              "label": "research"
+            },
+            {
+              "y": 0.93,
+              "label": "output"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 220
+      },
+      "question": "Which task does `order` start with?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "backtest",
+            "text": "`backtest`",
+            "correct": true
+          },
+          {
+            "id": "calendar",
+            "text": "`calendar`",
+            "why": "You expected it to start from a task with nothing to wait for. The loop starts from the first name alphabetically, whatever its in-degree."
+          },
+          {
+            "id": "prices",
+            "text": "`prices`",
+            "why": "prices is a fine first task, but the loop never checks in-degrees: it starts with the smallest name."
+          },
+          {
+            "id": "report",
+            "text": "`report`",
+            "why": "report is reached from backtest, so it comes second."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the first name in `sorted(adj)`?"
+        },
+        {
+          "rung": "point",
+          "text": "b comes before c and p.",
+          "highlight": [
+            "backtest"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`sorted(adj)` starts with backtest, so `visit(\"backtest\")` runs first and records it before signals or risk exist."
+        }
+      ],
+      "feedback": {
+        "correct": "It runs the backtest before any of its inputs.",
+        "generic": "Not quite right. Look at where the outer loop starts.",
+        "byKey": {
+          "calendar": "You assumed the loop starts with a free task. It starts with the smallest name, backtest, which has in-degree 2.",
+          "prices": "You assumed the loop checks what is free. It never looks at in-degrees."
+        }
+      },
+      "explain": {
+        "text": "The full result is backtest, report, calendar, returns, risk, signals, prices: backtest runs first, before its inputs. Recording on arrival is pre-order, which only follows arrows forward from wherever it starts. Either start from in-degree 0 (Kahn), or use post-order, next.",
+        "canvas": {
+          "highlight": [
+            "backtest",
+            "e-signals-backtest",
+            "e-risk-backtest"
+          ],
+          "caption": "backtest emitted before signals and risk"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Post-order, reversed",
+      "prose": "Move `order.append(u)` below the loop, so each task is recorded when its call **finishes**. The outer loop is unchanged.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.2,
+              "y": 0.04,
+              "shape": "pill"
+            },
+            {
+              "id": "calendar",
+              "label": "calendar",
+              "x": 0.2,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "returns",
+              "label": "returns",
+              "x": 0.62,
+              "y": 0.17,
+              "shape": "pill"
+            },
+            {
+              "id": "signals",
+              "label": "signals",
+              "x": 0.4,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "risk",
+              "label": "risk",
+              "x": 0.82,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "backtest",
+              "label": "backtest",
+              "x": 0.5,
+              "y": 0.93,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.93,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "calendar",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "signals",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "risk",
+              "directed": true
+            },
+            {
+              "from": "signals",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "risk",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "report",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "lanes": [
+            {
+              "y": 0.17,
+              "label": "data"
+            },
+            {
+              "y": 0.56,
+              "label": "research"
+            },
+            {
+              "y": 0.93,
+              "label": "output"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 220
+      },
+      "question": "Put the tasks in the order they are appended.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "prices",
+            "text": "`prices`"
+          },
+          {
+            "id": "calendar",
+            "text": "`calendar`"
+          },
+          {
+            "id": "returns",
+            "text": "`returns`"
+          },
+          {
+            "id": "signals",
+            "text": "`signals`"
+          },
+          {
+            "id": "risk",
+            "text": "`risk`"
+          },
+          {
+            "id": "backtest",
+            "text": "`backtest`"
+          },
+          {
+            "id": "report",
+            "text": "`report`"
+          }
+        ],
+        "answer": [
+          "report",
+          "backtest",
+          "risk",
+          "signals",
+          "returns",
+          "calendar",
+          "prices"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first call is `visit(\"backtest\")`. What must finish before it does?"
+        },
+        {
+          "rung": "point",
+          "text": "report has no arrows out, so its call finishes first.",
+          "highlight": [
+            "report"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "report, backtest. Then calendar's call runs returns, risk and signals: risk, signals, returns, calendar. prices is last."
+        }
+      ],
+      "feedback": {
+        "correct": "Every task is appended after all the tasks that need it.",
+        "generic": "Not quite right. A call finishes only after every call it starts.",
+        "byKey": {
+          "backtest": "backtest's call starts report's first, so report is appended before backtest.",
+          "risk": "From returns the calls go to risk, then signals, in sorted order.",
+          "prices": "prices is tried last by the outer loop: its only arrow leads to returns, already done."
+        }
+      },
+      "explain": {
+        "text": "In post-order each task comes after everything that depends on it. Reversed, every task comes before its dependents: prices, calendar, returns, signals, risk, backtest, report. That is a valid order, from any starting point.",
+        "canvas": {
+          "visited": [
+            "prices",
+            "calendar",
+            "returns",
+            "signals",
+            "risk",
+            "backtest",
+            "report"
+          ],
+          "caption": "Reversed post-order: a valid run order"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A loop in the pipeline",
+      "prose": "Someone adds an arrow from backtest to risk: risk now needs backtest results, while backtest still needs risk.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.2,
+              "y": 0.04,
+              "shape": "pill"
+            },
+            {
+              "id": "calendar",
+              "label": "calendar",
+              "x": 0.2,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "returns",
+              "label": "returns",
+              "x": 0.62,
+              "y": 0.17,
+              "shape": "pill"
+            },
+            {
+              "id": "signals",
+              "label": "signals",
+              "x": 0.4,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "risk",
+              "label": "risk",
+              "x": 0.82,
+              "y": 0.56,
+              "shape": "pill"
+            },
+            {
+              "id": "backtest",
+              "label": "backtest",
+              "x": 0.5,
+              "y": 0.93,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.93,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "calendar",
+              "to": "returns",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "signals",
+              "directed": true
+            },
+            {
+              "from": "returns",
+              "to": "risk",
+              "directed": true
+            },
+            {
+              "from": "signals",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "risk",
+              "to": "backtest",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "report",
+              "directed": true
+            },
+            {
+              "from": "backtest",
+              "to": "risk",
+              "directed": true
+            }
+          ],
+          "height": 300,
+          "lanes": [
+            {
+              "y": 0.17,
+              "label": "data"
+            },
+            {
+              "y": 0.56,
+              "label": "research"
+            },
+            {
+              "y": 0.93,
+              "label": "output"
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "e-backtest-risk",
+            "e-risk-backtest"
+          ]
+        }
+      },
+      "question": "How many tasks does Kahn's algorithm emit before it stalls?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Tasks emitted",
+        "accept": "4: calendar, prices, returns, signals.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run the counts forward. Which tasks ever reach in-degree 0?"
+        },
+        {
+          "rung": "point",
+          "text": "risk and backtest each wait on the other.",
+          "highlight": [
+            "risk",
+            "backtest"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "calendar, prices, returns and signals are emitted. risk keeps one arrow in, from backtest, and backtest keeps one from risk."
+        }
+      ],
+      "feedback": {
+        "correct": "Four of seven: the cycle and report never start.",
+        "generic": "Not quite right. Emit tasks only when their count reaches 0.",
+        "byKey": {
+          "all": "A task on a cycle never reaches in-degree 0, so not all 7 can be emitted.",
+          "none": "The cycle blocks only part of the graph. calendar and prices still start at 0.",
+          "five": "risk still has an arrow in from backtest, so it is never free."
+        }
+      },
+      "explain": {
+        "text": "Kahn's algorithm stops with 4 of 7 emitted. Fewer than $V$ emitted means a cycle: here risk and backtest, with report stuck behind them. That length check is how `topo_sort` returns `None`.",
+        "canvas": {
+          "visited": [
+            "calendar",
+            "prices",
+            "returns",
+            "signals"
+          ],
+          "highlight": [
+            "risk",
+            "backtest",
+            "report"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Ordering by dependencies",
+      "prose": "```python\nindeg = in-degree of every node\nready = nodes with in-degree 0\nwhile ready:\n    take u from ready, append it to order\n    for each v after u:\n        indeg[v] -= 1; if 0, add v to ready\ncycle if len(order) < V\n```\nThis is $O(V + E)$. Reversed DFS post-order gives an order too, at the same cost.",
+      "question": "Kahn's algorithm emits 9 of a graph's 12 nodes and `ready` is empty. What do you conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cycle",
+            "text": "The other 3 nodes lie on a cycle or wait on one, so no valid order exists",
+            "correct": true
+          },
+          {
+            "id": "isolated",
+            "text": "The other 3 have no edges",
+            "why": "A node with no edges has in-degree 0, so it is emitted at the start."
+          },
+          {
+            "id": "again",
+            "text": "A second pass will emit them",
+            "why": "Their counts can only fall when a prerequisite is emitted, and none of theirs can be."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Leftover nodes always mean a cycle.",
+        "generic": "Not quite right. Ask why a node's in-degree never reached 0."
+      },
+      "explain": {
+        "text": "Every leftover node still has an arrow in from another leftover node. Following those arrows backwards must eventually repeat a node, which is a cycle."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The overnight risk run",
+      "prose": "A risk system lists each job with the jobs it needs first. Raw inputs such as `positions` are never listed as jobs themselves. The scheduler needs one run order.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "market_data",
+              "label": "market_data",
+              "x": 0.12,
+              "y": 0.1,
+              "shape": "pill"
+            },
+            {
+              "id": "scenarios",
+              "label": "scenarios",
+              "x": 0.5,
+              "y": 0.1,
+              "shape": "pill"
+            },
+            {
+              "id": "positions",
+              "label": "positions",
+              "x": 0.12,
+              "y": 0.62,
+              "shape": "pill"
+            },
+            {
+              "id": "pnl_vectors",
+              "label": "pnl_vectors",
+              "x": 0.82,
+              "y": 0.38,
+              "shape": "pill"
+            },
+            {
+              "id": "var_report",
+              "label": "var_report",
+              "x": 0.5,
+              "y": 0.92,
+              "shape": "pill"
+            },
+            {
+              "id": "limits_check",
+              "label": "limits_check",
+              "x": 0.88,
+              "y": 0.92,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "market_data",
+              "to": "scenarios",
+              "directed": true
+            },
+            {
+              "from": "scenarios",
+              "to": "pnl_vectors",
+              "directed": true
+            },
+            {
+              "from": "positions",
+              "to": "pnl_vectors",
+              "directed": true
+            },
+            {
+              "from": "positions",
+              "to": "var_report",
+              "directed": true
+            },
+            {
+              "from": "pnl_vectors",
+              "to": "var_report",
+              "directed": true
+            },
+            {
+              "from": "var_report",
+              "to": "limits_check",
+              "directed": true
+            }
+          ],
+          "height": 260
+        },
+        "state": {
+          "caption": "The overnight VaR run: arrows point from a job to what needs it"
+        }
+      },
+      "question": "Write `run_order(deps)`: every job and raw input in a valid order, ties to the smallest name, or `None` on a cycle.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\n\ndef run_order(deps):\n    ...\n",
+        "solution": "import heapq\n\ndef run_order(deps):\n    jobs = set(deps)\n    for pre in deps.values():\n        jobs.update(pre)\n    after = {j: [] for j in jobs}\n    indeg = {j: 0 for j in jobs}\n    for job, pre in deps.items():\n        for p in pre:\n            after[p].append(job)\n            indeg[job] += 1\n    ready = [j for j in jobs if indeg[j] == 0]\n    heapq.heapify(ready)\n    order = []\n    while ready:\n        u = heapq.heappop(ready)\n        order.append(u)\n        for v in after[u]:\n            indeg[v] -= 1\n            if indeg[v] == 0:\n                heapq.heappush(ready, v)\n    return order if len(order) == len(jobs) else None\n",
+        "examples": [
+          {
+            "setup": "deps = {\"var_report\": [\"pnl_vectors\", \"positions\"], \"pnl_vectors\": [\"positions\", \"scenarios\"], \"scenarios\": [\"market_data\"], \"limits_check\": [\"var_report\"]}",
+            "call": "run_order(deps)",
+            "expect": "['market_data', 'positions', 'scenarios', 'pnl_vectors', 'var_report', 'limits_check']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "deps = {\"var_report\": [\"pnl_vectors\", \"positions\"], \"pnl_vectors\": [\"positions\", \"scenarios\"], \"scenarios\": [\"market_data\"], \"limits_check\": [\"var_report\"]}",
+            "call": "run_order(deps)",
+            "expect": "['market_data', 'positions', 'scenarios', 'pnl_vectors', 'var_report', 'limits_check']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_order({\"report\": []})",
+            "expect": "['report']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_order({})",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_order({\"a\": [\"b\"], \"b\": [\"a\"]})",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "run_order({\"pnl\": [\"prices\", \"positions\"], \"prices\": [], \"positions\": []})",
+            "expect": "['positions', 'prices', 'pnl']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_order({\"c\": [\"a\"], \"b\": [\"a\"], \"d\": [\"b\", \"c\"], \"e\": [\"d\"], \"f\": [\"e\", \"d\"]})",
+            "expect": "['a', 'b', 'c', 'd', 'e', 'f']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_order({\"x\": [\"y\"], \"y\": [\"z\"], \"z\": [\"y\"], \"w\": []})",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. `deps` maps each job to the jobs it needs first; a job named only as a prerequisite is a raw input and must appear too. Ties go to the smallest name; return `None` on a cycle."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Turn each `job: [prerequisites]` into arrows from each prerequisite to the job."
+        },
+        {
+          "rung": "point",
+          "text": "market_data and positions appear only as prerequisites, yet they belong in the order.",
+          "highlight": [
+            "market_data",
+            "positions"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Collect every name into `jobs`. Build `after[p].append(job)` and `indeg[job] += 1`, then run Kahn's algorithm with a heap."
+        }
+      ],
+      "feedback": {
+        "correct": "Reverse the arrows, include the raw inputs, then Kahn's algorithm.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 needs the raw inputs market_data and positions in the order. Add every prerequisite as a node.",
+          "test-4": "Test 4 is a cycle of two jobs: return `None`.",
+          "test-2": "Test 2 is one job with no prerequisites: `[\"report\"]`."
+        }
+      },
+      "explain": {
+        "text": "The order is market_data, positions, scenarios, pnl_vectors, var_report, limits_check. The input listed prerequisites, so the arrows run the other way from `adj`. Forgetting raw inputs leaves them out and breaks the length check.",
+        "canvas": {
+          "visited": [
+            "market_data",
+            "positions",
+            "scenarios",
+            "pnl_vectors",
+            "var_report",
+            "limits_check"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A topological order puts every task after all its prerequisites. It exists only when the graph has no cycle, and often there are several.",
+      "Kahn's algorithm keeps the tasks with in-degree 0, emits one, and lowers its successors' counts. Fewer than $V$ emitted means a cycle.",
+      "Reversed DFS post-order is also a valid order. Pre-order is not: it can emit a task before its inputs."
+    ],
+    "formula": {
+      "name": "Topological sort",
+      "tex": "O(V + E)",
+      "note": "Each task emitted once; each arrow lowers one count once."
+    },
+    "trap": "Starting from a task that still has arrows in, or emitting on arrival, runs a task before its prerequisites."
+  },
+  "quiz": [
+    {
+      "id": "q-noedges",
+      "difficulty": 2,
+      "prose": "Four tasks with no arrows between them at all.",
+      "question": "How many valid orders are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Valid orders",
+        "accept": "24: every arrangement of the 4 tasks.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Any order works: $4! = 24$.",
+        "generic": "Not quite right. With no arrows, nothing constrains the order.",
+        "byKey": {
+          "one": "With no arrows nothing forces one order. Every arrangement is valid.",
+          "four": "That counts the tasks. The orders are the arrangements of 4 tasks: $4!$."
+        }
+      },
+      "explain": {
+        "text": "No arrow means no constraint, so every arrangement is valid: $4 \\times 3 \\times 2 \\times 1 = 24$. Kahn's algorithm with name ties returns just one of them."
+      }
+    },
+    {
+      "id": "q-valid",
+      "difficulty": 2,
+      "prose": "Arrows: a → b, a → c, c → b.",
+      "question": "Which order is valid?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "acb",
+            "text": "a, c, b",
+            "correct": true
+          },
+          {
+            "id": "abc",
+            "text": "a, b, c",
+            "why": "b needs c first: the arrow c → b."
+          },
+          {
+            "id": "cab",
+            "text": "c, a, b",
+            "why": "c needs a first: the arrow a → c."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Each arrow points forward.",
+        "generic": "Not quite right. Check every arrow against your order."
+      },
+      "explain": {
+        "text": "a has in-degree 0, so it goes first. Then c is free, and b needs both a and c. The only valid order is a, c, b."
+      }
+    },
+    {
+      "id": "q-why-reverse",
+      "difficulty": 3,
+      "prose": "The DFS method for ordering tasks reverses the post-order.",
+      "question": "Why reverse it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "dep",
+            "text": "Post-order lists every task after the tasks that depend on it, so reversing puts prerequisites first",
+            "correct": true
+          },
+          {
+            "id": "already",
+            "text": "It is already valid; reversing just breaks ties",
+            "why": "Post-order put report before backtest, which report needs. It must be reversed."
+          },
+          {
+            "id": "pre",
+            "text": "Reversing turns it into pre-order",
+            "why": "Reversed post-order is not pre-order: pre-order emitted backtest before its inputs."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A call finishes only after everything it leads to.",
+        "generic": "Not quite right. Ask which tasks finish before a given task's call does."
+      },
+      "explain": {
+        "text": "A task's call finishes after the calls of every task it points to. So in post-order dependents come first, and the reverse puts each task before its dependents."
+      }
+    },
+    {
+      "id": "q-indeg",
+      "difficulty": 2,
+      "prose": "Arrows: (p, q), (r, q), (s, q), (q, t).",
+      "question": "What is the in-degree of q?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "In-degree",
+        "accept": "3",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "out",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "p, r and s point into q.",
+        "generic": "Not quite right. Count only arrows ending at q.",
+        "byKey": {
+          "all": "You counted every arrow touching q. (q, t) leaves q, so it is not counted.",
+          "out": "That is q's out-degree, the arrow to t."
+        }
+      },
+      "explain": {
+        "text": "Three arrows end at q: from p, r and s. So q waits for three tasks."
+      }
+    }
+  ]
+}

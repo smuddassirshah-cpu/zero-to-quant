@@ -16,9 +16,15 @@
 
   function numberLine(host, params, ctx = {}) {
     const P = params || {};
-    const min = P.min ?? 0, max = P.max ?? 10, step = P.step || 1, snap = P.snap ?? step;
-    const W = 540, x0 = 30, x1 = 510, sx = C.scale([min, max], [x0, x1]);
-    const fmt = (v) => (P.format === 'fraction' ? toFrac(v) : C.fmtNum(v, 3));
+    /* item 283: scale "log" (positive values, ticks at 1, 2 and 5 times powers of ten) or "log-odds" (probabilities,
+       placed by ln(p / (1 - p))); values, snapping and readouts stay in the natural unit */
+    const lmode = P.scale === 'log' || P.scale === 'log-odds' ? P.scale : null;
+    const min = P.min ?? (lmode === 'log-odds' ? 0.01 : lmode ? 1 : 0), max = P.max ?? (lmode === 'log-odds' ? 0.99 : lmode ? 1000 : 10), step = P.step || 1, snap = P.snap ?? (lmode ? 0 : step);
+    const tf = lmode === 'log' ? (v) => Math.log10(Math.max(1e-12, v)) : lmode ? (v) => { const q = Math.min(1 - 1e-12, Math.max(1e-12, v)); return Math.log(q / (1 - q)); } : (v) => v;
+    const itf = lmode === 'log' ? (u) => 10 ** u : lmode ? (u) => 1 / (1 + Math.exp(-u)) : (u) => u;
+    const W = 540, x0 = 30, x1 = 510, t0 = tf(min), t1 = tf(max);
+    const sx = Object.assign((v) => x0 + (tf(v) - t0) / ((t1 - t0) || 1) * (x1 - x0), { invert: (px) => itf(t0 + (px - x0) / (x1 - x0) * (t1 - t0)), domain: [min, max], range: [x0, x1] });
+    const fmt = (v) => (P.format === 'fraction' ? toFrac(v) : P.format === 'percent' ? C.fmtNum(+(v * 100).toFixed(6), 2) + '%' : C.fmtNum(v, 3));
     const fr = C.frame(host, W, 120, { label: P.label || `Number line from ${min} to ${max}` });
     const g = fr.g;
     const axisG = svg('g', { class: 'cv-axis' }), intG = svg('g', { class: 'cv-intervals' }), arrG = svg('g', { class: 'cv-jumps' }), ptG = svg('g', { class: 'cv-points' });
@@ -26,8 +32,12 @@
     let axisY = 60, H = 120;
 
     /* Ticks every step; labels thinned so they never collide */
-    const ticks = []; for (let v = min, k = 0; v <= max + 1e-9 && k < 2000; v = +(min + (++k) * step).toFixed(10)) ticks.push(+v.toFixed(10));
+    const ticks = [];
+    if (lmode === 'log') { for (let e = Math.floor(Math.log10(min)); e <= Math.ceil(Math.log10(max)); e++) for (const m of [1, 2, 5]) { const v = +(m * 10 ** e).toPrecision(6); if (v >= min - 1e-12 && v <= max + 1e-12) ticks.push(v); } }
+    else if (lmode) [0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999].forEach((v) => { if (v >= min - 1e-12 && v <= max + 1e-12) ticks.push(v); });
+    else for (let v = min, k = 0; v <= max + 1e-9 && k < 2000; v = +(min + (++k) * step).toFixed(10)) ticks.push(+v.toFixed(10));
     const labelList = Array.isArray(P.labels) ? P.labels.map(l => (typeof l === 'object' ? l : { x: l, text: fmt(l) })) : P.labels === false ? [] : (() => {
+      if (lmode) { const out = []; let last = -Infinity; ticks.forEach((t) => { const w = C.textW(fmt(t)) + 10, px = sx(t); if (px - w / 2 >= last) { out.push({ x: t, text: fmt(t) }); last = px + w / 2; } }); return out; }
       const every = typeof P.labels === 'number' ? P.labels : Math.max(1, Math.ceil(Math.max(30, ...ticks.map(t => C.textW(fmt(t)) + 12)) / ((x1 - x0) / Math.max(1, ticks.length - 1))));
       return ticks.filter((_, i) => i % every === 0).map(t => ({ x: t, text: fmt(t) }));
     })();

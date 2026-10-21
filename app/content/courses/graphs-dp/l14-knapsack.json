@@ -1,0 +1,1833 @@
+{
+  "id": "l14-knapsack",
+  "course": "graphs-dp",
+  "title": "The knapsack problem",
+  "minutes": 15,
+  "objectives": [
+    "Solve the 0/1 knapsack problem with a table.",
+    "Recover the chosen items by walking back through the table",
+    "Explain why a one-row version must loop the capacity downwards, and why $O(nW)$ is pseudo-polynomial"
+  ],
+  "skills": [
+    "gd-dp"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Pack the bag",
+      "prose": "Four items, one bag that holds 7 kg. Each item goes in whole or not at all. You want the most value in the bag.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Item",
+            "Weight (kg)",
+            "Value (£)",
+            "£ per kg"
+          ],
+          "rows": [
+            [
+              "A",
+              "1",
+              "10",
+              "10.0"
+            ],
+            [
+              "B",
+              "3",
+              "40",
+              "13.3"
+            ],
+            [
+              "C",
+              "4",
+              "50",
+              "12.5"
+            ],
+            [
+              "D",
+              "5",
+              "70",
+              "14.0"
+            ]
+          ],
+          "tap": "rows",
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The bag holds at most 7 kg"
+        }
+      },
+      "question": "Tap the items you would pack.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1",
+          "r2"
+        ],
+        "max": 4,
+        "countWord": "packed",
+        "wrong": [
+          {
+            "id": "greedy",
+            "set": [
+              "r0",
+              "r3"
+            ]
+          },
+          {
+            "id": "three",
+            "set": [
+              "r0",
+              "r1",
+              "r2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add up the weights of your pack first: it must come to 7 kg or less."
+        },
+        {
+          "rung": "point",
+          "text": "D has the best £ per kg. What else still fits once D is in?",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With D in, only A fits: £80. Without D, try B and C: 3 + 4 = 7 kg."
+        }
+      ],
+      "feedback": {
+        "correct": "B and C weigh exactly 7 kg and are worth £90.",
+        "generic": "Not quite right. Check the total weight, then compare the total value with other packs.",
+        "byKey": {
+          "greedy": "You took D first, the best £ per kg, then A. That is £80. B and C fill the bag exactly for £90.",
+          "three": "A, B and C weigh 8 kg, over the limit. Drop one of them.",
+          "r3": "With D in the bag only 2 kg is left, so A is its only partner: £80 at most.",
+          "r0": "A adds £10, but with A packed, B and C no longer fit together."
+        }
+      },
+      "explain": {
+        "text": "B and C fill the bag exactly: £90. D has the best £ per kg, yet any pack with D tops out at £80. Trying every pack works for 4 items (16 packs), but 40 items give over a trillion.",
+        "canvas": {
+          "highlight": [
+            "r1",
+            "r2"
+          ],
+          "caption": "B + C: 7 kg, £90"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A smaller bag",
+      "prose": "Shrink the problem. Allow only the first $i$ items, A to D in order, and a bag of $w$ kg. Each cell will hold the best value for one pair. Rows ∅ and A are done.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 8,
+          "rowLabel": "Items allowed",
+          "colLabel": "Capacity w (kg)",
+          "rowHeads": [
+            "∅",
+            "A",
+            "AB",
+            "ABC",
+            "ABCD"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10"
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ]
+        },
+        "state": {
+          "highlight": [
+            "r3c5"
+          ]
+        }
+      },
+      "question": "Using only A and B, with a 4 kg bag, what is the most value you can pack?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Best value",
+        "unit": "£",
+        "accept": "£50: A and B together weigh 4 kg.",
+        "wrong": [
+          {
+            "id": "only-b",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "both-long",
+            "value": 90,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of A and B fit in 4 kg, alone or together?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the cell for row AB and capacity 4.",
+          "highlight": [
+            "r3c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A is 1 kg and B is 3 kg, so both fit: £10 + £40."
+        }
+      ],
+      "feedback": {
+        "correct": "Both fit: 1 + 3 = 4 kg, for £50.",
+        "generic": "Not quite right. Only A and B are allowed, and the bag holds 4 kg.",
+        "byKey": {
+          "only-b": "You packed B alone. A weighs 1 kg and still fits beside it.",
+          "both-long": "£90 needs C, and this row allows only A and B."
+        }
+      },
+      "explain": {
+        "text": "A and B fit together for £50. Call that cell $\\text{best}[2][4]$: the best value using the first 2 items with capacity 4. Every cell is one smaller version of the problem.",
+        "canvas": {
+          "cells": {
+            "r3c5": "50"
+          },
+          "highlight": [
+            "r3c5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Skip or take",
+      "prose": "Row AB is filled. Now allow C as well (4 kg, £50) with the full 7 kg. Either C stays out, or C goes in and A and B share the weight left over.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 8,
+          "rowLabel": "Items allowed",
+          "colLabel": "Capacity w (kg)",
+          "rowHeads": [
+            "∅",
+            "A",
+            "AB",
+            "ABC",
+            "ABCD"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "50",
+              "50",
+              "50"
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ]
+        },
+        "state": {
+          "outline": [
+            "r4c8"
+          ]
+        }
+      },
+      "question": "Tap the two cells that $\\text{best}[3][7]$ is built from.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3c8",
+          "r3c4"
+        ],
+        "max": 2,
+        "only": [
+          "row3"
+        ],
+        "wrong": [
+          {
+            "id": "minus-one",
+            "set": [
+              "r3c8",
+              "r3c7"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both options use only A and B, so both cells sit in row AB."
+        },
+        {
+          "rung": "point",
+          "text": "Skipping C leaves the bag at 7 kg. Taking C uses 4 of the 7 kg.",
+          "highlight": [
+            "r3c8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Skip: $\\text{best}[2][7]$. Take: C's 4 kg leaves 3 kg, so $\\text{best}[2][3]$ plus £50."
+        }
+      ],
+      "feedback": {
+        "correct": "Skip C: £50 from capacity 7. Take C: £40 from capacity 3, plus £50.",
+        "generic": "Not quite right. One cell is for skipping C, one for taking it.",
+        "byKey": {
+          "minus-one": "You stepped one column left. Taking C removes its own 4 kg, so jump to capacity 3.",
+          "r3c7": "Capacity 6 would mean C weighed 1 kg. C weighs 4 kg: look at capacity 3.",
+          "r3c5": "Capacity 4 is what C uses, not what is left. 7 − 4 = 3 kg remain."
+        }
+      },
+      "explain": {
+        "text": "Skip C: $\\text{best}[2][7] = 50$. Take C: $\\text{best}[2][3] + 50 = 90$. The cell keeps the larger, £90.",
+        "canvas": {
+          "cells": {
+            "r4c8": "90"
+          },
+          "highlight": [
+            "r3c8",
+            "r3c4",
+            "r4c8"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Fill the row for C",
+      "prose": "Fill row ABC cell by cell, the same way. For $w < 4$ item C does not fit, so skipping is the only choice: copy the cell above.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 8,
+          "rowLabel": "Items allowed",
+          "colLabel": "Capacity w (kg)",
+          "rowHeads": [
+            "∅",
+            "A",
+            "AB",
+            "ABC",
+            "ABCD"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "50",
+              "50",
+              "50"
+            ],
+            [
+              "0",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "outline": "row4"
+        },
+        "maxHeight": 220
+      },
+      "question": "Fill $\\text{best}[3][w]$ for $w = 1$ to $7$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$w$",
+          "$\\text{best}[3][w]$"
+        ],
+        "rows": [
+          [
+            "1",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 40,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 50,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            {
+              "edit": true,
+              "answer": 60,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "6",
+            {
+              "edit": true,
+              "answer": 60,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "7",
+            {
+              "edit": true,
+              "answer": 90,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each cell is the larger of skip (the cell above) and take (if C fits)."
+        },
+        {
+          "rung": "point",
+          "text": "Row AB holds every number you need.",
+          "highlight": [
+            "row3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For $w \\ge 4$: compare $\\text{best}[2][w]$ with $\\text{best}[2][w - 4] + 50$. At $w = 5$: 50 against 10 + 50."
+        }
+      ],
+      "feedback": {
+        "correct": "Row ABC: 10, 10, 40, 50, 60, 60, 90.",
+        "generic": "Not quite right. Below 4 kg copy the cell above; from 4 kg compare skip and take.",
+        "byKey": {
+          "r0c1": "C does not fit in 1 kg, so copy the cell above: £10.",
+          "r2c1": "C does not fit in 3 kg. The cell above, £40, is B alone.",
+          "r3c1": "At 4 kg, skip gives £50 (A and B) and take gives 0 + 50. Both are £50.",
+          "r4c1": "At 5 kg, taking C leaves 1 kg for A: 10 + 50 = 60.",
+          "r5c1": "At 6 kg, taking C leaves 2 kg, still only A: 10 + 50 = 60.",
+          "r6c1": "Taking C leaves 3 kg, worth £40 from row AB: 40 + 50 = 90."
+        }
+      },
+      "explain": {
+        "text": "Below 4 kg the row copies row AB: C cannot go in. From 4 kg each cell compares the cell above with the cell 4 columns left in row AB, plus £50.",
+        "canvas": {
+          "cells": {
+            "r4c1": "0",
+            "r4c2": "10",
+            "r4c3": "10",
+            "r4c4": "40",
+            "r4c5": "50",
+            "r4c6": "60",
+            "r4c7": "60",
+            "r4c8": "90"
+          },
+          "outline": "row4"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The last item",
+      "prose": "D weighs 5 kg and is worth £70. For $w < 5$ the row copies the one above, so those cells are given.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 8,
+          "rowLabel": "Items allowed",
+          "colLabel": "Capacity w (kg)",
+          "rowHeads": [
+            "∅",
+            "A",
+            "AB",
+            "ABC",
+            "ABCD"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "50",
+              "50",
+              "50"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "60",
+              "60",
+              "90"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "outline": [
+            "r5c6",
+            "r5c7",
+            "r5c8"
+          ]
+        }
+      },
+      "question": "Fill $\\text{best}[4][5]$, $\\text{best}[4][6]$ and $\\text{best}[4][7]$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$w$",
+          "5",
+          "6",
+          "7"
+        ],
+        "rows": [
+          [
+            "ABCD",
+            {
+              "edit": true,
+              "answer": 70,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 80,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 90,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Taking D uses 5 kg. Look 5 columns left in row ABC."
+        },
+        {
+          "rung": "point",
+          "text": "Skip D: the cell above. Take D: row ABC at $w - 5$, plus £70.",
+          "highlight": [
+            "row4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At 7 kg: skip gives 90, take gives $\\text{best}[3][2] + 70 = 80$. Keep 90."
+        }
+      ],
+      "feedback": {
+        "correct": "70, 80 and 90. The corner, £90, is the answer to the whole problem.",
+        "generic": "Not quite right. Compare the cell above with row ABC at $w - 5$ plus £70.",
+        "byKey": {
+          "r0c1": "At 5 kg D fills the bag alone: 0 + 70 = 70 beats the £60 above.",
+          "r0c2": "At 6 kg, D leaves 1 kg for A: 10 + 70 = 80 beats £60.",
+          "r0c3": "At 7 kg, taking D gives 10 + 70 = 80, but skipping D keeps £90. Keep the larger."
+        }
+      },
+      "explain": {
+        "text": "At 7 kg, taking D leaves 2 kg, worth only £10, so skipping wins: £90. The corner cell $\\text{best}[4][7]$ is the £90 you found by hand. We got it from 40 small cells, never listing a pack.",
+        "canvas": {
+          "cells": {
+            "r5c1": "0",
+            "r5c2": "10",
+            "r5c3": "10",
+            "r5c4": "40",
+            "r5c5": "50",
+            "r5c6": "70",
+            "r5c7": "80",
+            "r5c8": "90"
+          },
+          "highlight": [
+            "r5c8"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Which items?",
+      "prose": "The corner gives the value, not the items. Walk back from it. If a cell equals the cell above, the item was skipped: step up. Otherwise it was taken: step up and left by its weight.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 8,
+          "rowLabel": "Items allowed",
+          "colLabel": "Capacity w (kg)",
+          "rowHeads": [
+            "∅",
+            "A",
+            "AB",
+            "ABC",
+            "ABCD"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "50",
+              "50",
+              "50"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "60",
+              "60",
+              "90"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "70",
+              "80",
+              "90"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap every cell the walk visits, from $\\text{best}[4][7]$ to row ∅.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r5c8",
+          "r4c8",
+          "r3c4",
+          "r2c1",
+          "r1c1"
+        ],
+        "countWord": "visited",
+        "wrong": [
+          {
+            "id": "took-d",
+            "set": [
+              "r5c8",
+              "r4c3",
+              "r3c3",
+              "r2c3",
+              "r1c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at the corner, 90. What is the cell straight above it?"
+        },
+        {
+          "rung": "point",
+          "text": "90 equals the 90 above, so D was skipped. Now at row ABC, 90 differs from the 50 above.",
+          "highlight": [
+            "r5c8",
+            "r4c8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take C: jump to row AB, capacity 3 (40). Take B: row A, capacity 0. Then step up to row ∅."
+        }
+      ],
+      "feedback": {
+        "correct": "The walk takes C and B, and skips D and A.",
+        "generic": "Not quite right. At each cell compare it with the cell straight above.",
+        "byKey": {
+          "took-d": "You took D at the corner. But 90 equals the cell above, so an optimal pack exists without D: step straight up.",
+          "r4c3": "That cell comes from taking D. The corner equals the cell above it, so D is skipped.",
+          "r3c8": "Row ABC at 7 kg is 90, but the cell above is 50. So C was taken: jump left by C's 4 kg."
+        }
+      },
+      "explain": {
+        "text": "Two cells differ from the cell above: row ABC at 7 kg (take C) and row AB at 3 kg (take B). The pack is B and C, £90. The walk visits one cell per row, so it costs $O(n)$.",
+        "canvas": {
+          "paths": [
+            {
+              "id": "walk",
+              "cells": [
+                "r5c8",
+                "r4c8",
+                "r3c4",
+                "r2c1",
+                "r1c1"
+              ],
+              "colour": 2
+            }
+          ],
+          "mark": {
+            "r4c8": "✓",
+            "r3c4": "✓"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write the table",
+      "prose": "Write `knapsack(weights, values, cap)`, returning the best total value. Item $i$ of the table is `weights[i - 1]`, because row 0 means no items. Build the whole table, row by row.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 8,
+          "rowLabel": "Items allowed",
+          "colLabel": "Capacity w (kg)",
+          "rowHeads": [
+            "∅",
+            "A",
+            "AB",
+            "ABC",
+            "ABCD"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "50",
+              "50",
+              "50"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "60",
+              "60",
+              "90"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "70",
+              "80",
+              "90"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "Write `knapsack(weights, values, cap)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    ...\n    return best[n][cap]\n",
+        "solution": "def knapsack(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                take = best[i - 1][w - wt] + val\n                best[i][w] = max(best[i][w], take)\n    return best[n][cap]\n",
+        "examples": [
+          {
+            "call": "knapsack([1, 3, 4, 5], [10, 40, 50, 70], 7)",
+            "expect": "90",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([1, 3, 4, 5], [10, 40, 50, 70], 0)",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "knapsack([1, 3, 4, 5], [10, 40, 50, 70], 7)",
+            "expect": "90",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([1, 3, 4, 5], [10, 40, 50, 70], 0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([8], [100], 7)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([1, 2, 3], [5, 6, 7], 10)",
+            "expect": "18",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([2, 3], [30, 40], 6)",
+            "expect": "70",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([], [], 5)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([5, 4, 6, 3], [10, 40, 30, 50], 10)",
+            "expect": "90",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack([1, 3, 4, 5], [10, 40, 50, 70], 4)",
+            "expect": "50",
+            "compare": "equal"
+          },
+          {
+            "setup": "ws = [(i * 37) % 23 + 1 for i in range(60)]; vs = [(i * 53) % 41 + 5 for i in range(60)]",
+            "call": "knapsack(ws, vs, 200)",
+            "expect": "877",
+            "compare": "equal"
+          },
+          {
+            "setup": "ws = [(i * 7) % 31 + 5 for i in range(120)]; vs = [(i * 11) % 47 + 1 for i in range(120)]",
+            "call": "knapsack(ws, vs, 1000)",
+            "expect": "2054",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: the bag above, capacity 0, an item heavier than the bag, a bag that holds everything, no items, and two large cases (60 items with capacity 200, 120 items with capacity 1,000)."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two loops: items $i$ from 1 to $n$, then every capacity $w$ from 0 to `cap`."
+        },
+        {
+          "rung": "point",
+          "text": "Each cell starts as the cell above (skip). Then try taking the item if it fits.",
+          "highlight": [
+            "r4c8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`best[i][w] = best[i - 1][w]`, then if `wt <= w`: `best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)`."
+        }
+      ],
+      "feedback": {
+        "correct": "A row per item, a cell per capacity, and each cell reads two cells above it.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 has one 8 kg item and a 7 kg bag. Take an item only when `wt <= w`, or the index `w - wt` goes negative.",
+          "test-5": "Test 5 expects 70: each item may be used once. Read the row above, `best[i - 1]`, when you take an item.",
+          "test-10": "Test 10 has 120 items. If it timed out, fill the table rather than trying every subset."
+        }
+      },
+      "explain": {
+        "text": "Each cell does a constant amount of work, so the function costs $(n + 1)(W + 1)$ steps. Reading `best[i - 1][w - wt]` in the row above is what makes each item usable once. A negative index would wrap round in Python, so the `wt <= w` check matters."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "One row, wrong direction",
+      "prose": "A colleague saves memory with a single row `dp`, updated in place.\n\n```python\ndef knapsack_1d(weights, values, cap):\n    dp = [0] * (cap + 1)\n    for wt, val in zip(weights, values):\n        for w in range(wt, cap + 1):\n            dp[w] = max(dp[w], dp[w - wt] + val)\n    return dp[cap]\n```",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 7,
+          "rowHeads": [
+            "dp"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          "colLabel": "Capacity w (kg)",
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "One row, updated in place for each item"
+        }
+      },
+      "question": "What does `knapsack_1d([2, 3], [30, 40], 6)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ninety",
+            "text": "`90`",
+            "correct": true
+          },
+          {
+            "id": "seventy",
+            "text": "`70`",
+            "why": "You expected the one-row version to match the table. Going up, `dp[2]` already holds item 1 when `dp[4]` reads it."
+          },
+          {
+            "id": "eighty",
+            "text": "`80`",
+            "why": "Two of item 2 make £80, but the same loop also lets item 1 in three times, for £90."
+          },
+          {
+            "id": "sixty",
+            "text": "`60`",
+            "why": "Item 1 twice gives £60 at 4 kg, but 6 kg has room for a third copy."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write out `dp` after the first item, one cell at a time from $w = 2$ upwards."
+        },
+        {
+          "rung": "point",
+          "text": "When `dp[4]` is updated, has `dp[2]` already changed in this pass?",
+          "highlight": [
+            "r1c3",
+            "r1c5",
+            "r1c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After item 1: `dp[2] = 30`, then `dp[4] = dp[2] + 30 = 60`, then `dp[6] = 90`. Item 1 is in three times."
+        }
+      ],
+      "feedback": {
+        "correct": "It returns 90: item 1 used three times.",
+        "generic": "Not quite right. Track `dp` during the first item's pass, from left to right.",
+        "byKey": {
+          "seventy": "You expected each item once. Going upwards, `dp[w - wt]` was already updated for this item, so the item can be reused.",
+          "sixty": "You stopped at two copies. `dp[6]` reads `dp[4]`, which already holds two copies of item 1."
+        }
+      },
+      "explain": {
+        "text": "Going up, `dp[w - wt]` already includes the current item, so it can go in again: that is the **unbounded** knapsack. Loop downwards, `for w in range(cap, wt - 1, -1)`, so every read still sees the previous item's values. The correct answer here is 70.",
+        "canvas": {
+          "cells": {
+            "r1c1": "0",
+            "r1c2": "0",
+            "r1c3": "30",
+            "r1c4": "30",
+            "r1c5": "60",
+            "r1c6": "60",
+            "r1c7": "90"
+          },
+          "mark": {
+            "r1c5": {
+              "text": "×2",
+              "tone": "notyet"
+            },
+            "r1c7": {
+              "text": "×3",
+              "tone": "notyet"
+            }
+          },
+          "caption": "After item 1, going upwards"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The knapsack recurrence",
+      "prose": "Each cell came from two cells in the row above:\n\n$$\\text{best}[i][w] = \\max\\big(\\text{best}[i-1][w],\\ \\text{best}[i-1][w - w_i] + v_i\\big)$$\n\nThe second option counts only when $w_i \\le w$, and row 0 is all zeros. With $n$ items and capacity $W$ that is $O(nW)$ work, and the answer sits at $\\text{best}[n][W]$.",
+      "question": "The same items are weighed in grams, so the 7 kg bag becomes 7,000 g. What happens to the table?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cells",
+            "text": "It has about 1,000 times as many cells: the work grows with the number $W$ itself",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Nothing changes: there are still 4 items",
+            "why": "The table has a column for every capacity from 0 to $W$. In grams that is 7,001 columns, not 8."
+          },
+          {
+            "id": "exp",
+            "text": "It becomes exponential in the number of items",
+            "why": "The cost is still $n \\times W$ cells, linear in $n$. Only the size of $W$ changed."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "5 rows of 7,001 cells instead of 8: about 1,000 times the work.",
+        "generic": "Not quite right. Count the columns: one per capacity from 0 to $W$."
+      },
+      "explain": {
+        "text": "$O(nW)$ looks polynomial, but $W$ is a value, not a count: each extra digit in $W$ multiplies the work by 10. That is called **pseudo-polynomial** time. The general knapsack is NP-hard; the table is fast only while $W$ stays small."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Return the items",
+      "prose": "Now return the chosen items as a sorted list of indices. Build the full table, then walk back from `best[n][cap]`. On a tie, skip: if `best[i][w] == best[i - 1][w]`, item `i - 1` stays out.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 8,
+          "rowLabel": "Items allowed",
+          "colLabel": "Capacity w (kg)",
+          "rowHeads": [
+            "∅",
+            "A",
+            "AB",
+            "ABC",
+            "ABCD"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10",
+              "10"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "50",
+              "50",
+              "50"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "60",
+              "60",
+              "90"
+            ],
+            [
+              "0",
+              "10",
+              "10",
+              "40",
+              "50",
+              "70",
+              "80",
+              "90"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "paths": [
+            {
+              "id": "walk",
+              "cells": [
+                "r5c8",
+                "r4c8",
+                "r3c4",
+                "r2c1",
+                "r1c1"
+              ],
+              "colour": 2
+            }
+          ],
+          "mark": {
+            "r4c8": "✓",
+            "r3c4": "✓"
+          }
+        },
+        "maxHeight": 200
+      },
+      "question": "Write `knapsack_items(weights, values, cap)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def knapsack_items(weights, values, cap):\n    ...\n",
+        "solution": "def knapsack_items(weights, values, cap):\n    n = len(weights)\n    best = [[0] * (cap + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        wt, val = weights[i - 1], values[i - 1]\n        for w in range(cap + 1):\n            best[i][w] = best[i - 1][w]\n            if wt <= w:\n                best[i][w] = max(best[i][w], best[i - 1][w - wt] + val)\n    chosen, w = [], cap\n    for i in range(n, 0, -1):\n        if best[i][w] != best[i - 1][w]:\n            chosen.append(i - 1)\n            w -= weights[i - 1]\n    return sorted(chosen)\n",
+        "examples": [
+          {
+            "call": "knapsack_items([1, 3, 4, 5], [10, 40, 50, 70], 7)",
+            "expect": "[1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([2, 2], [5, 5], 2)",
+            "expect": "[0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "knapsack_items([1, 3, 4, 5], [10, 40, 50, 70], 7)",
+            "expect": "[1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([2, 3], [30, 40], 6)",
+            "expect": "[0, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([1, 3, 4, 5], [10, 40, 50, 70], 0)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([8, 2], [100, 5], 7)",
+            "expect": "[1]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([2, 2], [5, 5], 2)",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([1, 1, 1], [1, 1, 1], 2)",
+            "expect": "[0, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([1, 2, 3], [5, 6, 7], 10)",
+            "expect": "[0, 1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "knapsack_items([5, 4, 6, 3], [10, 40, 30, 50], 10)",
+            "expect": "[1, 3]",
+            "compare": "equal"
+          },
+          {
+            "setup": "ws = [(i * 37) % 23 + 1 for i in range(60)]; vs = [(i * 53) % 41 + 5 for i in range(60)]",
+            "call": "sum(vs[i] for i in knapsack_items(ws, vs, 200))",
+            "expect": "877",
+            "compare": "equal"
+          },
+          {
+            "setup": "ws = [(i * 37) % 23 + 1 for i in range(60)]; vs = [(i * 53) % 41 + 5 for i in range(60)]",
+            "call": "sum(ws[i] for i in knapsack_items(ws, vs, 200)) <= 200",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, with ties broken as stated: skip when skipping gives the same value. The last two check a 60-item case by its total value and weight."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep the 2D table: the walk back needs every row, not just the last."
+        },
+        {
+          "rung": "point",
+          "text": "The walk visits one cell per row, from row $n$ up to row 1.",
+          "highlight": [
+            "r5c8",
+            "r4c8",
+            "r3c4",
+            "r2c1",
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Start with `w = cap`. For `i` from `n` down to 1: if `best[i][w] != best[i - 1][w]`, append `i - 1` and subtract its weight from `w`. Return `sorted(chosen)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The table gives the value; the walk back gives the items.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is the bag from this lesson: B and C, indices 1 and 2.",
+          "test-5": "Test 5 is a tie: either item gives £5. Walking back, item 1 ties with the row above, so skip it and take item 0.",
+          "test-4": "Test 4 has an item heavier than the bag. It can never be chosen, since its row copies the one above at every capacity below 8."
+        }
+      },
+      "explain": {
+        "text": "A cell that differs from the one above can only have come from taking the item. Breaking ties towards skipping makes the answer unique, which is what the tests rely on. The one-row trick saves memory but loses the walk back."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Trades under a risk budget",
+      "prose": "A desk has five trade ideas. Each uses whole units of risk budget and has an expected profit. The day's budget is 10 units, and a trade is done in full or not at all.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Risk units",
+            "Expected profit (£k)",
+            "£k per unit"
+          ],
+          "rows": [
+            [
+              "A",
+              "4",
+              "18",
+              "4.50"
+            ],
+            [
+              "B",
+              "3",
+              "11",
+              "3.67"
+            ],
+            [
+              "C",
+              "5",
+              "21",
+              "4.20"
+            ],
+            [
+              "D",
+              "2",
+              "6",
+              "3.00"
+            ],
+            [
+              "E",
+              "6",
+              "25",
+              "4.17"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Risk budget: 10 units for the day"
+        }
+      },
+      "question": "What is the largest total expected profit within the budget, in £k?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 43,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Expected profit",
+        "unit": "£k",
+        "accept": "43: trades A and E use exactly 10 units.",
+        "wrong": [
+          {
+            "id": "greedy",
+            "value": 39,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bce",
+            "value": 38,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Risk is the weight and expected profit is the value. The budget is the capacity."
+        },
+        {
+          "rung": "point",
+          "text": "Ranking by £k per unit takes A, then C, and then nothing else fits.",
+          "highlight": [
+            "r0",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Check packs that use the budget fully: A + E is 4 + 6 = 10 units for 18 + 25."
+        }
+      ],
+      "feedback": {
+        "correct": "A and E: 10 units, £43k expected.",
+        "generic": "Not quite right. Treat it as a knapsack with capacity 10 and compare whole packs.",
+        "byKey": {
+          "greedy": "You ranked by £k per unit: A, then C, for £39k with a unit unused. A and E fill the budget for £43k.",
+          "bce": "B, C and D use 10 units for £38k. A and E use 10 units too, for more."
+        }
+      },
+      "explain": {
+        "text": "The table has 6 rows and 11 columns, so it is instant. The same method picks research projects under a headcount cap. With budgets in pence, $W$ would be huge, and since the general problem is NP-hard, no table trick saves us.",
+        "canvas": {
+          "highlight": [
+            "r0",
+            "r4"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$\\text{best}[i][w]$ is the best value using the first $i$ items with capacity $w$. Each cell is the larger of skipping item $i$ (the cell above) and taking it (the row above at $w - w_i$, plus $v_i$).",
+      "Walk back from the corner to find the items: a cell that differs from the cell above took that item.",
+      "The table costs $O(nW)$, pseudo-polynomial in the capacity. In one row, loop $w$ downwards or each item can be used again."
+    ],
+    "formula": {
+      "name": "0/1 knapsack",
+      "tex": "\\text{best}[i][w] = \\max\\big(\\text{best}[i-1][w],\\ \\text{best}[i-1][w - w_i] + v_i\\big)",
+      "note": "Take only when $w_i \\le w$; row 0 is all zeros."
+    },
+    "trap": "Looping $w$ upwards in the one-row version reuses an item (the unbounded knapsack), and packing by value per weight can miss the best pack."
+  },
+  "quiz": [
+    {
+      "id": "q-zero-cap",
+      "difficulty": 2,
+      "prose": "```python\nknapsack([3, 4], [20, 30], 0)\n```",
+      "question": "What does the function from this lesson return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "thirty",
+            "text": "`30`",
+            "why": "You took the most valuable item without checking it fits. Nothing fits in a bag of capacity 0."
+          },
+          {
+            "id": "err",
+            "text": "`IndexError`",
+            "why": "The table has `cap + 1 = 1` column, so `best[n][0]` exists. Every cell is 0."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Capacity 0 holds nothing, so the best is 0.",
+        "generic": "Not quite right. What fits in a bag of capacity 0?"
+      },
+      "explain": {
+        "text": "With `cap = 0` the table is one column of zeros: no item has $w_i \\le 0$. An edge case like this belongs in every test suite."
+      }
+    },
+    {
+      "id": "q-all-fit",
+      "difficulty": 2,
+      "prose": "Items weigh 1, 2 and 3 kg and are worth £5, £6 and £7. The bag holds 10 kg.",
+      "question": "What is the best value?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Best value",
+        "unit": "£",
+        "accept": "18: all three items fit (6 kg).",
+        "wrong": [
+          {
+            "id": "best-one",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All three fit in 6 kg: £18.",
+        "generic": "Not quite right. Check whether every item fits at once.",
+        "byKey": {
+          "best-one": "You took only the most valuable item. All three weigh 6 kg together, so take them all.",
+          "two": "You left one out, but 1 + 2 + 3 = 6 kg leaves room for all three."
+        }
+      },
+      "explain": {
+        "text": "When the total weight is within the capacity, the answer is the sum of all values. The table agrees: every take wins."
+      }
+    },
+    {
+      "id": "q-greedy",
+      "difficulty": 3,
+      "prose": "Items: X weighs 6 kg, worth £60; Y and Z weigh 5 kg each, worth £45 each. The bag holds 10 kg. A greedy packer takes items in order of £ per kg while they fit.",
+      "question": "What value does the greedy packer reach, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 60,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Greedy value",
+        "unit": "£",
+        "accept": "60: X goes in first and then neither 5 kg item fits.",
+        "wrong": [
+          {
+            "id": "opt",
+            "value": 90,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "xy",
+            "value": 105,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Greedy stops at £60; Y and Z together give £90.",
+        "generic": "Not quite right. X has the best £ per kg, so greedy packs it first. What fits after that?",
+        "byKey": {
+          "opt": "£90 is the true best, Y and Z. Greedy packs X first (£10 per kg), and then 4 kg is left.",
+          "xy": "X and Y weigh 11 kg, over the limit."
+        }
+      },
+      "explain": {
+        "text": "X has the best ratio, £10 per kg, but it wastes 4 kg. Greedy never revisits that choice; the table compares every capacity, so it finds Y and Z for £90."
+      }
+    },
+    {
+      "id": "q-size",
+      "difficulty": 3,
+      "prose": "A knapsack has 200 items and a capacity of 50,000.",
+      "question": "Roughly how many cell updates does the table need?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ten-m",
+            "text": "About 10 million: $200 \\times 50{,}000$",
+            "correct": true
+          },
+          {
+            "id": "subsets",
+            "text": "About $2^{200}$",
+            "why": "That is trying every subset. The table replaces that search with one cell per item and capacity."
+          },
+          {
+            "id": "log",
+            "text": "About $200 \\times \\log_2 50{,}000 \\approx 3{,}000$",
+            "why": "The table has a column for every capacity, not for every bit of it."
+          },
+          {
+            "id": "w",
+            "text": "About 50,000",
+            "why": "Each item needs its own row of 50,001 cells."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "About $10^7$ cells: fine in Python, in a few seconds.",
+        "generic": "Not quite right. Count rows times columns."
+      },
+      "explain": {
+        "text": "$(n + 1)(W + 1) \\approx 200 \\times 50{,}000 = 10^7$. That is fast, but double the digits of $W$ and it is not."
+      }
+    }
+  ]
+}

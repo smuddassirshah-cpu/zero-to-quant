@@ -15,10 +15,11 @@
      node app/tools/playthrough.mjs --routes-only          only the routes
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
      node app/tools/playthrough.mjs --shots out --mobile   also a 390 px wide screenshot of each (name-390.png)
-     node app/tools/playthrough.mjs --shots out --why      also each lesson task's Explanation sheet after the right
+     node app/tools/playthrough.mjs --shots out --why      also each lesson task's (and set item's) Explanation sheet after the right
                                                            answer (name-why.png), and after a wrong one where the
                                                            tool can make one (a choice distractor, a numeric answer
-                                                           well off): name-wrong.png and name-wrong-why.png
+                                                           well off): name-wrong.png and name-wrong-why.png; an
+                                                           exam's result page with every explanation open
      node app/tools/playthrough.mjs --local-cdn <dir>      serve cdn.jsdelivr.net from local npm packages (see below)
      node app/tools/playthrough.mjs --headed               watch it
 
@@ -193,7 +194,10 @@ const main = async () => {
     const shot = async (name) => {
       if (!opt.shots) return;
       const file = (sfx) => path.join(opt.shots, name.replace(/[^\w.-]+/g, '_') + sfx + '.png');
-      await page.waitForTimeout(300); await page.screenshot({ path: file('') });
+      /* item 278: past the enter patch (350 ms), then until canvas tweens and CSS animations have settled (at most 3 s) */
+      await page.waitForTimeout(420);
+      try { await page.waitForFunction(() => (!window.ZQ || !ZQ.canvas || !ZQ.canvas.busy || ZQ.canvas.busy() === 0) && !document.getAnimations().some((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity), null, { timeout: 3000, polling: 50 }); } catch { /* still moving: shoot anyway */ }
+      await page.screenshot({ path: file('') });
       if (opt.mobile) { await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(350); await page.screenshot({ path: file('-390') }); await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
     };
     const whyShot = async (name) => { if (!opt.why || !opt.shots) return; if (await page.evaluate(() => !!(ZQ.test.why && ZQ.test.why()))) { await page.waitForTimeout(450); await shot(name); await page.evaluate(() => ZQ.test.closeWhy()); await page.waitForTimeout(250); } };
@@ -330,6 +334,7 @@ const main = async () => {
             checks++;
             if (!r) fails.push(`item ${c.screenIndex + 1}${c.paper != null ? ` (paper ${c.paper + 1})` : ''}: ${applied === false ? 'answerCorrect() could not apply the authored answer' : 'nothing to check'}`);
             else if (!r.ok) fails.push(`item ${c.screenIndex + 1}${c.paper != null ? ` (paper ${c.paper + 1})` : ''}: not correct, key ${JSON.stringify(r.key)}`);
+            else await whyShot(`${label}-item-${String(c.screenIndex).padStart(2, '0')}-why`); // item 335: set items' Explanation sheets
           }
           await page.evaluate(() => ZQ.test.continue());
           await page.waitForTimeout(120);
@@ -337,6 +342,8 @@ const main = async () => {
         const v = await verify();
         if (v.fail) fails.push(v.fail);
         await shot(`${label}-done`);
+        /* item 335: an exam's result page with every question's explanation opened */
+        if (opt.why && opt.shots && /^exam\//.test(route)) { await page.evaluate(() => document.querySelectorAll('.exm-ri-h[aria-expanded="false"]').forEach((b) => b.click())); await page.waitForTimeout(400); await page.screenshot({ path: path.join(opt.shots, `${label}-done-why`.replace(/[^\w.-]+/g, '_') + '.png'), fullPage: true }); }
         console.log(`${fails.length ? 'FAIL' : 'ok  '} ${label}  ${checks} items, ${v.note || ''}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
         fails.push('threw: ' + String(e.message || e).split('\n')[0]);

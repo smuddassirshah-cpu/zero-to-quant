@@ -185,10 +185,12 @@
         const isLog = (c) => c.scale === 'log' && +c.min > 0 && +c.max > 0;
         const lg = (c) => ({ min: Math.log10(+c.min), max: Math.log10(+c.max), step: 1 / Math.max(1, Math.round(+c.perDecade || 1)) });
         const toVal = (c, p) => (isLog(c) ? +Number(10 ** +p).toPrecision(3) : +p), toPos = (c, v) => (isLog(c) ? Math.log10(Math.max(+c.min, v)) : v);
-        const vals = spec.canvas.controls.map(opening);
+        const vals = spec.canvas.controls.map((c) => (c.reseed ? 0 : opening(c)));
         const rng3 = (c) => (isLog(c) ? lg(c) : { min: c.min ?? 0, max: c.max ?? 1, step: c.step ?? 0.01 });
-        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => { const q = rng3(c); return `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${q.min}" max="${q.max}" step="${q.step}" value="${toPos(c, vals[i])}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`; }).join('')}</div>`);
-        spec.canvas.controls.forEach((c, i) => { if (c.start != null || c.value != null) drive(c, vals[i]); });
+        /* item 323: { "reseed": true, "label": "New paths" } is a button that draws a fresh seeded run (walk, bars sims) */
+        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => { if (c.reseed) return `<div class="lsn-ctl lsn-ctl-btn"><button type="button" class="btn secondary" data-reseed="${i}">${G().inline(c.label || 'New run')}</button></div>`; const q = rng3(c); return `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${q.min}" max="${q.max}" step="${q.step}" value="${toPos(c, vals[i])}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`; }).join('')}</div>`);
+        spec.canvas.controls.forEach((c, i) => { if (!c.reseed && (c.start != null || c.value != null)) drive(c, vals[i]); });
+        ctl.addEventListener('click', (e) => { const b = e.target.closest('[data-reseed]'); if (!b || !canvas) return; try { if (typeof canvas.run === 'function' && canvas.run.length === 0) canvas.run(); else canvas.set({ run: Math.round((canvas.get().run || 0)) + 1 }); } catch (err) { console.error(err); } });
         ctl.addEventListener('input', (e) => {
           const r = e.target.closest('input'); if (!r || !canvas) return;
           const c = spec.canvas.controls[+r.dataset.i], v = toVal(c, r.value);
@@ -1094,6 +1096,9 @@
       },
       continue: () => { if (alive && (st0 === 'ok' || st0 === 'no')) onPrimary(); return new Promise(r => setTimeout(r, 60)); },
       results: () => results.slice(),
+      /* item 335 (playthrough --why): the item's Explanation sheet, opened and closed for a screenshot */
+      why: () => { if (!cur || !cur.explainText) return false; hook._closeWhy = openExplain(cur); return true; },
+      closeWhy: () => { if (hook._closeWhy) { try { hook._closeWhy(); } catch { /* closed */ } hook._closeWhy = null; } },
     };
     window.ZQ.test = hook;
     if (items.length) show(0);

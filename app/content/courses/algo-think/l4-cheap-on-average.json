@@ -1,0 +1,1276 @@
+{
+  "id": "l4-cheap-on-average",
+  "course": "algo-think",
+  "title": "Cheap on average",
+  "minutes": 14,
+  "objectives": [
+    "Explain amortised cost with a list that grows by doubling."
+  ],
+  "skills": [
+    "at-complexity"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where does the next tick go?",
+      "prose": "A growable array keeps spare slots. It starts with capacity 1. When it is full, it allocates a block twice as big and copies every element across.\n\n```python\nif size == capacity:          # full\n    capacity = 2 * capacity   # new block, twice as big\n    # copy all `size` elements across\nslots[size] = x\nsize += 1\n```\n\nStep through the appends. Dashed slots are not allocated yet; green cells were just copied.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "·",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "params": {
+            "m": 0
+          },
+          "done": []
+        },
+        "derive": {
+          "cells": "[[\"·\",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[\"1\",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[\"1\",\"2\",null,null,null,null,null,null,null,null,null,null,null,null,null,null],[\"1\",\"2\",\"3\",\"·\",null,null,null,null,null,null,null,null,null,null,null,null],[\"1\",\"2\",\"3\",\"4\",null,null,null,null,null,null,null,null,null,null,null,null],[\"1\",\"2\",\"3\",\"4\",\"5\",\"·\",\"·\",\"·\",null,null,null,null,null,null,null,null],[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"·\",\"·\",null,null,null,null,null,null,null,null],[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"·\",null,null,null,null,null,null,null,null],[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",null,null,null,null,null,null,null,null],[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\",\"·\",\"·\",\"·\",\"·\",\"·\",\"·\",\"·\"]][m]",
+          "done": "[0,1,2,3,4,5,6,7].slice(0, [0,0,1,2,0,4,0,0,0,8][m])",
+          "caption": "{{m}} appends, capacity {{[1,1,2,4,4,8,8,8,8,16][m]}}. This append copied {{[0,0,1,2,0,4,0,0,0,8][m]}}; total copies {{[0,0,1,3,3,7,7,7,7,15][m]}}."
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": 0,
+            "max": 9,
+            "step": 1,
+            "label": "Appends",
+            "start": 0
+          }
+        ]
+      },
+      "question": "How many elements did the 9th append copy?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "copies",
+        "label": "Copies made by the 9th append",
+        "accept": "8: the array was full at 8, so all 8 moved to a block of 16.",
+        "wrong": [
+          {
+            "id": "write",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "plus-new",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "total",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step from 8 appends to 9 and watch the capacity."
+        },
+        {
+          "rung": "point",
+          "text": "At 8 appends every slot is full.",
+          "highlight": [
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The 9th append finds 8 full slots, allocates 16 and copies the 8 old elements."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight copies: the whole array moved.",
+        "generic": "Not quite right. Read the caption as you step from 8 appends to 9.",
+        "byKey": {
+          "write": "You counted writing the new tick. The 9th append also moved the 8 old elements to the new block.",
+          "plus-new": "You counted the new tick as a copy. It is written once, not copied; the 8 old elements are copied.",
+          "total": "That is the total over all 9 appends. The question asks about the 9th alone."
+        }
+      },
+      "explain": {
+        "text": "Most appends just fill a spare slot. An append that finds the array full copies everything: 1, then 2, then 4, then 8 elements. Python's `list.append` works this way, with a slightly smaller growth factor.",
+        "canvas": {
+          "params": {
+            "m": 9
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Add up the copies",
+      "prose": "The bars show the copies each append makes, for 16 appends from capacity 1. The spikes come when the array is full at size 1, 2, 4 and 8.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16"
+          ],
+          "xLabel": "Append number",
+          "yLabel": "Copies",
+          "showValues": true,
+          "yMax": 10,
+          "height": 220
+        },
+        "state": {
+          "values": {
+            "1": 0,
+            "2": 1,
+            "3": 2,
+            "4": 0,
+            "5": 4,
+            "6": 0,
+            "7": 0,
+            "8": 0,
+            "9": 8,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 0
+          }
+        }
+      },
+      "question": "Fill in the total copies after $n$ appends.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$n$ appends",
+          "Total copies"
+        ],
+        "rows": [
+          [
+            "1",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "8",
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "16",
+            {
+              "edit": true,
+              "answer": 15,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the bars from append 1 up to append $n$."
+        },
+        {
+          "rung": "point",
+          "text": "Append 1 fills the one starting slot, so it copies nothing.",
+          "highlight": [
+            "x1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1: 0. 2: 1. 4: $1 + 2 = 3$. 8: $1 + 2 + 4 = 7$. 16: $1 + 2 + 4 + 8 = 15$."
+        }
+      ],
+      "feedback": {
+        "correct": "0, 1, 3, 7, 15: one less than $n$ each time.",
+        "generic": "Not quite right. Add the bars up to and including append $n$.",
+        "byKey": {
+          "r0c1": "The first append fills the starting slot of capacity 1. Nothing is copied.",
+          "r4c1": "For 16 appends, add the spikes at appends 2, 3, 5 and 9: $1 + 2 + 4 + 8$.",
+          "r2c1": "For 4 appends, the spikes are at appends 2 and 3: $1 + 2$."
+        }
+      },
+      "explain": {
+        "text": "Each total is $1 + 2 + 4 + \\dots$, a geometric sum, and it comes to $n - 1$ when $n$ is a power of two. The edge case $n = 1$ costs nothing, because the starting slot is free.",
+        "canvas": {
+          "highlight": [
+            "x2",
+            "x3",
+            "x5",
+            "x9"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Copies per append",
+      "prose": "Some appends are expensive and most are free. Spread the copying evenly over all the appends.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16"
+          ],
+          "xLabel": "Append number",
+          "yLabel": "Copies",
+          "showValues": true,
+          "yMax": 10,
+          "height": 220
+        },
+        "state": {
+          "values": {
+            "1": 0,
+            "2": 1,
+            "3": 2,
+            "4": 0,
+            "5": 4,
+            "6": 0,
+            "7": 0,
+            "8": 0,
+            "9": 8,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 0
+          },
+          "caption": "15 copies over 16 appends"
+        }
+      },
+      "question": "On average, how many copies does each of the 16 appends make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9375,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "copies",
+        "label": "Average copies per append",
+        "accept": "$\\tfrac{15}{16} = 0.9375$, just under 1.",
+        "wrong": [
+          {
+            "id": "worst",
+            "value": 8,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "total",
+            "value": 15,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "spikes",
+            "value": 3.75,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Average means total divided by the number of appends."
+        },
+        {
+          "rung": "point",
+          "text": "The total for 16 appends is 15.",
+          "highlight": [
+            "x9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac{15}{16} = 0.9375$."
+        }
+      ],
+      "feedback": {
+        "correct": "Under one copy per append, on average.",
+        "generic": "Not quite right. Divide the total copies by 16.",
+        "byKey": {
+          "worst": "That is the worst single append. The average spreads its cost over all 16.",
+          "total": "That is the total. Divide it by the 16 appends.",
+          "spikes": "You averaged over the 4 expensive appends only. The cheap ones count too."
+        }
+      },
+      "explain": {
+        "text": "Fifteen copies spread over 16 appends is under one copy each. This average over a whole sequence of operations is the **amortised** cost. Each append is amortised $O(1)$, though a few cost much more.",
+        "canvas": {
+          "caption": "Amortised: $\\tfrac{15}{16}$ copies per append"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "One bad append",
+      "prose": "Over 1,000 appends, the bars show only the appends that resize. Append 513 copies 512 elements. A colleague concludes that appending is $O(n)$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "2",
+            "3",
+            "5",
+            "9",
+            "17",
+            "33",
+            "65",
+            "129",
+            "257",
+            "513"
+          ],
+          "xLabel": "Appends that resize",
+          "yLabel": "Copies",
+          "showValues": true,
+          "height": 220
+        },
+        "state": {
+          "values": {
+            "2": 1,
+            "3": 2,
+            "5": 4,
+            "9": 8,
+            "17": 16,
+            "33": 32,
+            "65": 64,
+            "129": 128,
+            "257": 256,
+            "513": 512
+          },
+          "highlight": [
+            "x513"
+          ]
+        }
+      },
+      "question": "What is the average number of copies per append over all 1,000 appends?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.023,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "copies",
+        "label": "Average copies per append",
+        "accept": "$\\tfrac{1{,}023}{1{,}000} \\approx 1.02$.",
+        "wrong": [
+          {
+            "id": "worst",
+            "value": 512,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "total",
+            "value": 1023,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 102.3,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add every bar, then divide by all 1,000 appends."
+        },
+        {
+          "rung": "point",
+          "text": "The bars are $1, 2, 4, \\dots, 512$.",
+          "highlight": [
+            "x2",
+            "x513"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 2 + \\dots + 512 = 1{,}023$, so the average is $\\tfrac{1{,}023}{1{,}000} \\approx 1.02$."
+        }
+      ],
+      "feedback": {
+        "correct": "About one copy per append.",
+        "generic": "Not quite right. Total the bars, then divide by 1,000, not by 10.",
+        "byKey": {
+          "worst": "You took the worst single append as the typical one. Only 10 of the 1,000 appends copy anything.",
+          "total": "That is the total. Spread it over the 1,000 appends.",
+          "tenth": "You divided by the 10 resizes. The other 990 appends copy nothing and count too."
+        }
+      },
+      "explain": {
+        "text": "The total is $1 + 2 + \\dots + 512 = 1{,}023$, about one copy per append. The worst single append is $O(n)$, but it is rare: the next one is twice as far away. So a run of $n$ appends costs $O(n)$ in all.",
+        "canvas": {
+          "highlight": [
+            "x2",
+            "x3",
+            "x5",
+            "x9",
+            "x17",
+            "x33",
+            "x65",
+            "x129",
+            "x257",
+            "x513"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why the total stays below $2n$",
+      "prose": "We bound the total copies for $n$ appends with the doubling policy. Put the argument in order.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "when",
+            "text": "Copies happen only when the array is full at size $1, 2, 4, \\dots, 2^{m-1}$, with $2^{m-1} < n$."
+          },
+          {
+            "id": "sum",
+            "text": "So the total copies are $1 + 2 + 4 + \\dots + 2^{m-1}$."
+          },
+          {
+            "id": "geo",
+            "text": "A geometric sum with ratio 2: $1 + 2 + \\dots + 2^{m-1} = 2^m - 1$."
+          },
+          {
+            "id": "bound",
+            "text": "Since $2^{m-1} < n$, we have $2^m < 2n$, so the total is below $2n$."
+          },
+          {
+            "id": "amort",
+            "text": "Dividing by $n$: fewer than 2 copies per append, which is amortised $O(1)$."
+          }
+        ],
+        "answer": [
+          "when",
+          "sum",
+          "geo",
+          "bound",
+          "amort"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from when a copy happens at all."
+        },
+        {
+          "rung": "point",
+          "text": "The geometric sum formula from the series course turns the sum into $2^m - 1$."
+        },
+        {
+          "rung": "step",
+          "text": "When copies happen, the sum they make, its closed form, the bound $2n$, then per append."
+        }
+      ],
+      "feedback": {
+        "correct": "Total under $2n$, so under 2 copies per append.",
+        "generic": "Not quite right. Each line uses the one before it.",
+        "byKey": {
+          "amort": "The per-append claim needs the total bound first.",
+          "geo": "You need the sum written out before you can close it."
+        }
+      },
+      "explain": {
+        "text": "The copies form $1 + 2 + \\dots + 2^{m-1} = 2^m - 1$, and the largest term is below $n$. So the total is under $2n$. For 1,000 appends: $1{,}023 < 2{,}000$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "With doubling, $n$ appends make\n\n$$1 + 2 + 4 + \\dots + 2^{m-1} = 2^m - 1 < 2n$$\n\ncopies in total. That is $O(n)$ for the whole run, and **amortised** $O(1)$ per append. One append can still cost $O(n)$, but those appends get rarer as the array grows.",
+      "question": "The policy changes to tripling the capacity when full. What is the amortised cost of an append?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Still $O(1)$",
+            "correct": true
+          },
+          {
+            "id": "on",
+            "text": "$O(n)$",
+            "why": "You took the worst append as the average. Tripling gives copies $1 + 3 + 9 + \\dots$, a geometric sum below $\\tfrac{3n}{2}$."
+          },
+          {
+            "id": "ologn",
+            "text": "$O(\\log n)$",
+            "why": "There are about $\\log_3 n$ resizes, but their copies add to a geometric sum below a constant times $n$."
+          },
+          {
+            "id": "worse",
+            "text": "$O(1)$ but more total copies than doubling",
+            "why": "Tripling resizes less often, so it copies less in total; it just wastes more spare slots."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Any constant growth factor above 1 gives amortised $O(1)$.",
+        "generic": "Not quite right. Write out the copies as a sum and bound it."
+      },
+      "explain": {
+        "text": "Tripling gives copies $1 + 3 + 9 + \\dots$, still a geometric sum dominated by its last term, which is below $n$. The total is under $1.5n$, so appends stay amortised $O(1)$. The price is more unused slots."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Simulate the array",
+      "prose": "The policy, exactly: capacity starts at 1 and size at 0. Before writing an element, if `size == capacity`, double the capacity and count `size` copies. Writing the new element is not a copy.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "·",
+            "·",
+            "·"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              0,
+              3
+            ],
+            "label": "copied by append 5"
+          },
+          "caption": "After 5 appends: capacity 8, 7 copies in all"
+        }
+      },
+      "question": "Write `total_copies(n)`: the total number of element copies made by $n$ appends.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def total_copies(n):\n    capacity, size, copies = 1, 0, 0\n    ...\n",
+        "solution": "def total_copies(n):\n    capacity, size, copies = 1, 0, 0\n    for _ in range(n):\n        if size == capacity:\n            capacity *= 2\n            copies += size\n        size += 1\n    return copies\n",
+        "tests": [
+          {
+            "call": "total_copies(0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(1)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(2)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(3)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(5)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(16)",
+            "expect": "15",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(17)",
+            "expect": "31",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(100)",
+            "expect": "127",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(1000)",
+            "expect": "1023",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(1025)",
+            "expect": "2047",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, for $n$ from 0 to 1,025, including $n = 1$ (no copy) and the step from 1,024 to 1,025.",
+        "examples": [
+          {
+            "call": "total_copies(5)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "total_copies(1)",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop `n` times; each time round is one append."
+        },
+        {
+          "rung": "point",
+          "text": "Check for a full array before you write, not after.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the loop: `if size == capacity: capacity *= 2; copies += size`, then `size += 1`. Return `copies`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your counts match $2^m - 1$ at every size.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 expects 0 for one append: the starting slot holds it. If you got 1, you resized before checking for space.",
+          "test-3": "Test 3 expects 1 for two appends. Count the elements already stored, not the new one.",
+          "test-10": "Test 10 expects 2,047: append 1,025 finds 1,024 full slots and copies all of them."
+        }
+      },
+      "explain": {
+        "text": "Your simulation reproduces the table: 15 copies for 16 appends, 1,023 for 1,000. The jump from 1,023 to 2,047 at $n = 1{,}025$ is one expensive append. Divided over all appends, it is still under 2 each.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              0,
+              3
+            ],
+            "label": "4 copied"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Growing by ten",
+      "prose": "Another policy starts at capacity 10 and adds 10 slots each time the array fills. Each resize is small, so it sounds thrifty.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "11",
+            "21",
+            "31",
+            "41",
+            "51",
+            "…",
+            "991"
+          ],
+          "xLabel": "Appends that resize",
+          "yLabel": "Copies",
+          "showValues": true,
+          "height": 200
+        },
+        "state": {
+          "values": {
+            "11": 10,
+            "21": 20,
+            "31": 30,
+            "41": 40,
+            "51": 50,
+            "…": 0,
+            "991": 990
+          }
+        }
+      },
+      "question": "How many copies do 1,000 appends make under this policy?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 49500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "copies",
+        "label": "Total copies",
+        "placeholder": "a whole number",
+        "accept": "49,500: $10 + 20 + \\dots + 990 = 10 \\times \\tfrac{99 \\times 100}{2}$.",
+        "wrong": [
+          {
+            "id": "resizes",
+            "value": 99,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "doubling",
+            "value": 1023,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten-each",
+            "value": 990,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "to-1000",
+            "value": 50500,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The array is full at sizes 10, 20, 30, and so on. Each resize copies that many."
+        },
+        {
+          "rung": "point",
+          "text": "The last resize happens at append 991, copying 990.",
+          "highlight": [
+            "x991"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10 + 20 + \\dots + 990 = 10 \\times (1 + 2 + \\dots + 99) = 10 \\times 4{,}950 = 49{,}500$."
+        }
+      ],
+      "feedback": {
+        "correct": "Nearly 50 times the doubling total.",
+        "generic": "Not quite right. Add the copies of every resize: $10, 20, \\dots, 990$.",
+        "byKey": {
+          "resizes": "That is the number of resizes. Each one copies every element stored so far.",
+          "doubling": "That is the doubling policy's total. Here the resizes are small but far more frequent.",
+          "ten-each": "You counted 10 copies per resize. A resize copies all the elements, not just the last 10.",
+          "to-1000": "The array is never full at 1,000 here: the last resize is at size 990."
+        }
+      },
+      "explain": {
+        "text": "The copies are $10 + 20 + \\dots + 990 = 49{,}500$, against 1,023 for doubling. In general about $\\tfrac{n^2}{20}$: growing by a fixed amount makes $n$ appends $O(n^2)$. The resizes must get further apart, which doubling does.",
+        "canvas": {
+          "values": {
+            "11": 10,
+            "21": 20,
+            "31": 30,
+            "41": 40,
+            "51": 50,
+            "…": 0,
+            "991": 990
+          },
+          "caption": "Copies grow by 10 per resize: an arithmetic sum, $O(n^2)$"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Taking from the front",
+      "prose": "A queue of ticks waits to be processed, oldest first. `ticks.pop(0)` removes the front of a Python list, and every element behind it shifts one slot left.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "t1",
+            "t2",
+            "t3",
+            "t4",
+            "t5",
+            "t6"
+          ],
+          "mode": "queue"
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              1,
+              5
+            ],
+            "label": "each shifts left"
+          }
+        }
+      },
+      "question": "Draining 1,000 ticks with `pop(0)` until the list is empty: how many element shifts in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 499500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "shifts",
+        "label": "Total shifts",
+        "placeholder": "a whole number",
+        "accept": "499,500: $999 + 998 + \\dots + 0 = \\tfrac{1{,}000 \\times 999}{2}$.",
+        "wrong": [
+          {
+            "id": "n",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "square",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-pop",
+            "value": 999,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first pop shifts the 999 ticks behind it."
+        },
+        {
+          "rung": "point",
+          "text": "Each pop leaves one fewer tick to shift.",
+          "highlight": [
+            "c1",
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$999 + 998 + \\dots + 1 + 0 = \\tfrac{1{,}000 \\times 999}{2} = 499{,}500$: the pair formula."
+        }
+      ],
+      "feedback": {
+        "correct": "Half a million shifts: $O(n^2)$ to drain the queue.",
+        "generic": "Not quite right. Add the shifts of every pop.",
+        "byKey": {
+          "n": "You counted one step per pop. Each `pop(0)` shifts every remaining tick.",
+          "one-pop": "That is the first pop alone. The next pops shift 998, 997, and so on."
+        }
+      },
+      "explain": {
+        "text": "Each `pop(0)` is $O(n)$, so draining is $O(n^2)$: the pair sum from lesson 1. `collections.deque` keeps both ends free, so `popleft()` is $O(1)$ and draining is $O(n)$. The data structures course builds it.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              0,
+              5
+            ],
+            "label": "deque: popleft is O(1)"
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "An order book's tick log",
+      "prose": "An order book appends every tick to a growable array with the doubling policy. On a busy day it receives 2,000,000 ticks.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Ticks so far",
+            "Capacity",
+            "Copies so far"
+          ],
+          "rows": [
+            [
+              "1,048,576",
+              "1,048,576",
+              "1,048,575"
+            ],
+            [
+              "1,048,577",
+              "2,097,152",
+              "2,097,151"
+            ],
+            [
+              "2,000,000",
+              "2,097,152",
+              "?"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          },
+          "caption": "The last resize happens at tick 1,048,577, which is $2^{20} + 1$"
+        }
+      },
+      "question": "Over the whole day, how many copies per tick is that on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.05,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "copies",
+        "label": "Average copies per tick",
+        "accept": "About 1.05: $\\tfrac{2{,}097{,}151}{2{,}000{,}000}$.",
+        "wrong": [
+          {
+            "id": "worst",
+            "value": 1048576,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.52,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does any resize happen between tick 1,048,577 and tick 2,000,000?"
+        },
+        {
+          "rung": "point",
+          "text": "The capacity after tick 1,048,577 is 2,097,152, more than 2,000,000.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No more resizes, so the total stays 2,097,151. Divide by 2,000,000: about 1.05."
+        }
+      ],
+      "feedback": {
+        "correct": "About one copy per tick, as the bound $2n$ promised.",
+        "generic": "Not quite right. Find the total copies, then divide by 2,000,000.",
+        "byKey": {
+          "worst": "That is the single worst append, at tick 1,048,577. Averaged over the day it is about one copy per tick.",
+          "half": "You divided the copies of the last resize alone. The total is 2,097,151."
+        }
+      },
+      "explain": {
+        "text": "No resize happens after tick 1,048,577, so the total is 2,097,151: about 1.05 copies per tick. One tick that day paid for a million copies, which is a latency spike to know about. A `numpy` array pre-allocated at the expected size avoids even that.",
+        "canvas": {
+          "values": {
+            "r2c2": "2,097,151"
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A doubling array copies $1 + 2 + 4 + \\dots$ elements in all: a geometric sum below $2n$ for $n$ appends.",
+      "So appends are amortised $O(1)$: averaged over the run, though one append can copy $O(n)$ elements.",
+      "Growing by a fixed number of slots makes $n$ appends $O(n^2)$, and so does `pop(0)` from a list; `deque` and pre-allocation avoid both."
+    ],
+    "formula": {
+      "name": "Doubling copies",
+      "tex": "1 + 2 + \\dots + 2^{m-1} = 2^m - 1 < 2n",
+      "note": "Total for $n$ appends, with $2^{m-1} < n$."
+    },
+    "trap": "The worst single append is not the average: one append in 1,000 copied 512 elements, but the average was about 1."
+  },
+  "quiz": [
+    {
+      "id": "q-np-append",
+      "difficulty": 3,
+      "prose": "```python\nimport numpy as np\nout = np.array([])\nfor x in ticks:\n    out = np.append(out, x)\n```\n`np.append` returns a new array holding a copy of `out` plus `x`.",
+      "question": "For $n$ ticks, what is the total cost of this loop?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "n2",
+            "text": "$O(n^2)$: every append copies the whole array",
+            "correct": true
+          },
+          {
+            "id": "n",
+            "text": "$O(n)$: appends are amortised $O(1)$",
+            "why": "That holds for `list.append`, which keeps spare slots. `np.append` copies everything every time."
+          },
+          {
+            "id": "nlogn",
+            "text": "$O(n \\log n)$",
+            "why": "There is no doubling here: each call copies $1, 2, 3, \\dots$ elements, an arithmetic sum."
+          },
+          {
+            "id": "one",
+            "text": "$O(1)$: numpy is vectorised",
+            "why": "Vectorising helps whole-array operations. A Python loop of copies is still $1 + 2 + \\dots + n$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 + 2 + \\dots + n$ copies: quadratic.",
+        "generic": "Not quite right. How many elements does call number $k$ copy?"
+      },
+      "explain": {
+        "text": "Call $k$ copies $k - 1$ elements, so the total is $\\tfrac{n(n-1)}{2}$. Pre-allocate with `np.empty(n)` and fill `out[i] = x`, or collect in a list and convert once."
+      }
+    },
+    {
+      "id": "q-worst-100",
+      "difficulty": 2,
+      "prose": "A growable array starts at capacity 1 and doubles when full. You make 100 appends.",
+      "question": "How many copies does the most expensive of these appends make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 64,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "copies",
+        "label": "Copies in the worst append",
+        "accept": "64, at append 65.",
+        "wrong": [
+          {
+            "id": "hundred",
+            "value": 99,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "total",
+            "value": 127,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "next",
+            "value": 128,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Append 65 copies 64.",
+        "generic": "Not quite right. At which size is the array last full before 100?",
+        "byKey": {
+          "hundred": "The array is never full at 99. It is full at 64, and next at 128.",
+          "total": "That is the total over all 100 appends. The worst single append is one term of it.",
+          "next": "The array would be full at 128, but 100 appends never get there."
+        }
+      },
+      "explain": {
+        "text": "The array is full at sizes 1, 2, 4, ..., 64. Append 65 copies 64 elements into a block of 128, and no later append among the 100 resizes again."
+      }
+    },
+    {
+      "id": "q-deque",
+      "difficulty": 2,
+      "prose": "A strategy keeps the last 500 prices: each new price is added at one end and the oldest is dropped from the other.",
+      "question": "Which structure keeps both operations $O(1)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "deque",
+            "text": "`collections.deque(maxlen=500)`",
+            "correct": true
+          },
+          {
+            "id": "list",
+            "text": "A list with `append` and `pop(0)`",
+            "why": "`pop(0)` shifts all the remaining prices, so dropping the oldest is $O(n)$."
+          },
+          {
+            "id": "insert",
+            "text": "A list with `insert(0, p)` and `pop()`",
+            "why": "`insert(0, p)` shifts every price right, which is $O(n)$."
+          },
+          {
+            "id": "dict",
+            "text": "A dict keyed by time",
+            "why": "Finding the oldest key in a plain dict is not what it is built for; a deque does both ends directly."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A deque is cheap at both ends.",
+        "generic": "Not quite right. Which operations shift every element of a list?"
+      },
+      "explain": {
+        "text": "A Python list is cheap at its end only. `deque` is built for both ends, and `maxlen` drops the oldest price for you on each append."
+      }
+    },
+    {
+      "id": "q-one",
+      "difficulty": 2,
+      "prose": "Same doubling policy, capacity starting at 1.",
+      "question": "How many copies does a single append to the empty array make?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "Writing the new element is not a copy. Nothing was stored before, so nothing moves."
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "The array has room for one element, so no resize happens."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The starting slot takes it.",
+        "generic": "Not quite right. Is the array full before the first append?"
+      },
+      "explain": {
+        "text": "Capacity 1 and size 0 means a free slot. The first append writes into it and copies nothing."
+      }
+    }
+  ]
+}

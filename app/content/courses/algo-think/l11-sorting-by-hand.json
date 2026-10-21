@@ -1,0 +1,1415 @@
+{
+  "id": "l11-sorting-by-hand",
+  "course": "algo-think",
+  "title": "Sorting by hand",
+  "minutes": 14,
+  "objectives": [
+    "Implement insertion sort and count its comparisons.",
+    "Explain why insertion sort is $O(n^2)$ in the worst case, $O(n)$ on sorted input, and stable."
+  ],
+  "skills": [
+    "at-sort"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Make room",
+      "prose": "You hold four cards in order, 2, 5, 7 and 9, and pick up a 6. It sits at the end for now.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            5,
+            7,
+            9,
+            6
+          ]
+        },
+        "state": {
+          "done": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "caption": "The first four are in order; 6 is new"
+        }
+      },
+      "question": "Tap the cards that must move one place right to make room for the 6.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2",
+          "c3"
+        ],
+        "countWord": "tapped",
+        "only": [
+          "c0",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "wrong": [
+          {
+            "id": "neighbour",
+            "set": [
+              "c3"
+            ]
+          },
+          {
+            "id": "all",
+            "set": [
+              "c0",
+              "c1",
+              "c2",
+              "c3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of the sorted cards are bigger than 6?"
+        },
+        {
+          "rung": "point",
+          "text": "The 6 must end up just right of the last card smaller than it.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "7 and 9 are bigger than 6, so both move right. 5 is smaller and stays."
+        }
+      ],
+      "feedback": {
+        "correct": "7 and 9 move right, and the 6 drops in after the 5.",
+        "generic": "Not quite right. Move every card bigger than 6, and no others.",
+        "byKey": {
+          "neighbour": "You moved only the 9. Then 6 would sit right of 7, out of order.",
+          "all": "You moved every card. 2 and 5 are smaller than 6 and can stay.",
+          "c1": "You moved the 5. It is smaller than 6, so it stays where it is.",
+          "c0": "You moved the 2. It is smaller than 6, so it stays."
+        }
+      },
+      "explain": {
+        "text": "Walk left from the 6: 9 is bigger, so it shifts; 7 is bigger, so it shifts. 5 is smaller, so we stop and drop the 6 into the gap.",
+        "canvas": {
+          "cells": [
+            2,
+            5,
+            6,
+            7,
+            9
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One insertion",
+      "prose": "The first four values are sorted: 2, 4, 5, 6. Take the next value, 1, out of the list. That leaves a gap at index 4. Walk the gap left.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            5,
+            6,
+            1,
+            3
+          ]
+        },
+        "state": {
+          "done": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "pointers": [
+            {
+              "id": "key",
+              "at": 4,
+              "label": "key"
+            }
+          ]
+        }
+      },
+      "question": "Insert 1 into the sorted part, one comparison at a time.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "done",
+        "states": {
+          "s0": {
+            "tex": "\\text{key} = 1:\\ \\text{compare with } 6",
+            "ops": [
+              {
+                "label": "6 > 1: shift 6 right",
+                "to": "s1"
+              },
+              {
+                "label": "Place 1 at index 4",
+                "to": "w6",
+                "why": "You placed 1 right of 6, but 6 is larger. The prefix would no longer be sorted."
+              }
+            ]
+          },
+          "s1": {
+            "tex": "\\text{comparisons} = 1:\\ \\text{compare 1 with } 5",
+            "canvas": {
+              "cells": [
+                2,
+                4,
+                5,
+                null,
+                6,
+                3
+              ],
+              "pointers": [
+                {
+                  "id": "gap",
+                  "at": 3,
+                  "label": "gap"
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Place 1 at index 3",
+                "to": "w5",
+                "why": "You placed 1 right of 5, but 5 is larger than 1. Keep shifting."
+              },
+              {
+                "label": "5 > 1: shift 5 right",
+                "to": "s2"
+              }
+            ]
+          },
+          "s2": {
+            "tex": "\\text{comparisons} = 2:\\ \\text{compare 1 with } 4",
+            "canvas": {
+              "cells": [
+                2,
+                4,
+                null,
+                5,
+                6,
+                3
+              ],
+              "pointers": [
+                {
+                  "id": "gap",
+                  "at": 2,
+                  "label": "gap"
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "4 > 1: shift 4 right",
+                "to": "s3"
+              },
+              {
+                "label": "Place 1 at index 2",
+                "to": "w4",
+                "why": "You placed 1 right of 4, but 4 is larger than 1. Keep shifting."
+              }
+            ]
+          },
+          "s3": {
+            "tex": "\\text{comparisons} = 3:\\ \\text{compare 1 with } 2",
+            "canvas": {
+              "cells": [
+                2,
+                null,
+                4,
+                5,
+                6,
+                3
+              ],
+              "pointers": [
+                {
+                  "id": "gap",
+                  "at": 1,
+                  "label": "gap"
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Place 1 at index 1",
+                "to": "w2",
+                "why": "You placed 1 right of 2, but 2 is larger than 1. Keep shifting."
+              },
+              {
+                "label": "2 > 1: shift 2 right",
+                "to": "s4"
+              }
+            ]
+          },
+          "s4": {
+            "tex": "\\text{comparisons} = 4:\\ \\text{the gap reached the left end}",
+            "canvas": {
+              "cells": [
+                null,
+                2,
+                4,
+                5,
+                6,
+                3
+              ],
+              "pointers": [
+                {
+                  "id": "gap",
+                  "at": 0,
+                  "label": "gap"
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Place 1 at index 0",
+                "to": "done"
+              },
+              {
+                "label": "Compare 1 with index −1",
+                "to": "wend",
+                "why": "There is no index −1. Reaching the left end means 1 is the smallest so far."
+              }
+            ]
+          },
+          "w6": {
+            "tex": "6 > 1\\text{, so 1 cannot sit to its right}"
+          },
+          "w5": {
+            "tex": "5 > 1\\text{, so 1 cannot sit to its right}"
+          },
+          "w4": {
+            "tex": "4 > 1\\text{, so 1 cannot sit to its right}"
+          },
+          "w2": {
+            "tex": "2 > 1\\text{, so 1 cannot sit to its right}"
+          },
+          "wend": {
+            "tex": "\\text{nothing is left of index 0}"
+          },
+          "done": {
+            "tex": "[1, 2, 4, 5, 6 \\mid 3]:\\ 4\\ \\text{comparisons}",
+            "canvas": {
+              "cells": [
+                1,
+                2,
+                4,
+                5,
+                6,
+                3
+              ],
+              "pointers": [],
+              "done": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 1 with the value left of the gap. Is that value bigger?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the first value 1 is compared with.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "6, 5, 4 and 2 are all bigger than 1, so each shifts right. Then the gap is at index 0: place 1 there."
+        }
+      ],
+      "feedback": {
+        "correct": "Four comparisons, four shifts, and 1 lands at index 0.",
+        "generic": "Not quite right. Shift every bigger value right before placing 1.",
+        "byKey": {
+          "w6": "You placed 1 right of 6. 6 is bigger, so it has to shift first.",
+          "w5": "You placed 1 right of 5. 5 is bigger than 1, so keep shifting.",
+          "w4": "You placed 1 right of 4. 4 is bigger than 1, so keep shifting.",
+          "w2": "You placed 1 right of 2. 2 is bigger than 1, so keep shifting.",
+          "wend": "You looked for a value left of index 0. There is none, so 1 goes at index 0."
+        }
+      },
+      "explain": {
+        "text": "Each comparison found a bigger value, so it moved right into the gap. At the left end there was nothing left to compare. The sorted part grew from four values to five.",
+        "canvas": {
+          "cells": [
+            1,
+            2,
+            4,
+            5,
+            6,
+            3
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "pointers": []
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Count the comparisons",
+      "prose": "This is **insertion sort**: insert each value into the sorted part on its left. Count one comparison each time a value is tested against the key. Reaching the left end is not a comparison.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            5,
+            2,
+            4,
+            6,
+            1,
+            3
+          ]
+        },
+        "state": {
+          "caption": "Sort this list from the start"
+        }
+      },
+      "question": "Fill in the comparisons for each pass, and the total.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "pass",
+          "key",
+          "sorted part after",
+          "comparisons"
+        ],
+        "rows": [
+          [
+            "1",
+            "2",
+            "2 5",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2",
+            "4",
+            "2 4 5",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            "6",
+            "2 4 5 6",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            "1",
+            "1 2 4 5 6",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            "3",
+            "1 2 3 4 5 6",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "",
+            "",
+            "total",
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each key, count the values you test before you stop."
+        },
+        {
+          "rung": "point",
+          "text": "Pass 3 inserts 6, and 5 is already smaller.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Key 2: one test, then the left end. Key 4: 5, then 2. Key 6: just 5. Key 1: four tests, then the end. Key 3: 6, 5, 4, then 2 stops it. Total 12."
+        }
+      ],
+      "feedback": {
+        "correct": "1 + 2 + 1 + 4 + 4 = 12 comparisons.",
+        "generic": "Not quite right. Count each test against the key, including the one that stops the walk.",
+        "byKey": {
+          "r1c3": "Key 4 is tested against 5 and then against 2. The test that stops the walk counts too.",
+          "r2c3": "Key 6 is tested once, against 5, and stops at once.",
+          "r3c3": "Key 1 is tested against 6, 5, 4 and 2, then reaches the left end: 4.",
+          "r4c3": "Key 3 is tested against 6, 5 and 4, which shift, then against 2, which stops it: 4."
+        }
+      },
+      "explain": {
+        "text": "A key costs one comparison per value it passes, plus one for the value that stops it. Key 1 passed everything and hit the end, so no stopping test. Here the total is 12.",
+        "canvas": {
+          "cells": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "Return the sorted list and the number of comparisons as a tuple, so the count can be tested. Leave the input list unchanged. Count exactly as before.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            5,
+            2,
+            4,
+            6,
+            1,
+            3
+          ]
+        },
+        "state": {
+          "caption": "`insertion_sort([5, 2, 4, 6, 1, 3])` is `([1, 2, 3, 4, 5, 6], 12)`"
+        }
+      },
+      "question": "Write `insertion_sort(xs)`, returning `(sorted_list, comparisons)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def insertion_sort(xs):\n    a = list(xs)\n    comps = 0\n    ...\n    return a, comps\n",
+        "solution": "def insertion_sort(xs):\n    a = list(xs)\n    comps = 0\n    for i in range(1, len(a)):\n        key = a[i]\n        j = i - 1\n        while j >= 0:\n            comps += 1\n            if a[j] > key:\n                a[j + 1] = a[j]\n                j -= 1\n            else:\n                break\n        a[j + 1] = key\n    return a, comps\n",
+        "examples": [
+          {
+            "call": "insertion_sort([5, 2, 4, 6, 1, 3])",
+            "expect": "([1, 2, 3, 4, 5, 6], 12)",
+            "compare": "equal"
+          },
+          {
+            "call": "insertion_sort([1, 2, 3, 4, 5])",
+            "expect": "([1, 2, 3, 4, 5], 4)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "insertion_sort([5, 2, 4, 6, 1, 3])",
+            "expect": "([1, 2, 3, 4, 5, 6], 12)",
+            "compare": "equal"
+          },
+          {
+            "call": "insertion_sort([])",
+            "expect": "([], 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "insertion_sort([7])",
+            "expect": "([7], 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "insertion_sort([1, 2, 3, 4, 5])",
+            "expect": "([1, 2, 3, 4, 5], 4)",
+            "compare": "equal"
+          },
+          {
+            "call": "insertion_sort([5, 4, 3, 2, 1])",
+            "expect": "([1, 2, 3, 4, 5], 10)",
+            "compare": "equal"
+          },
+          {
+            "call": "insertion_sort([3, 1, 3, 1])",
+            "expect": "([1, 1, 3, 3], 5)",
+            "compare": "equal"
+          },
+          {
+            "call": "insertion_sort([1, 2, 4, 3, 5, 6, 8, 7])",
+            "expect": "([1, 2, 3, 4, 5, 6, 7, 8], 9)",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [3, 1, 2]",
+            "call": "(insertion_sort(xs), xs)",
+            "expect": "(([1, 2, 3], 3), [3, 1, 2])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: the example, an empty list, one value, sorted and reversed lists, duplicates, a nearly sorted list, and a check that the input is not changed."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each `i` from 1, hold `key = a[i]` and walk `j` left from `i - 1`."
+        },
+        {
+          "rung": "point",
+          "text": "Each test of `a[j] > key` adds 1 to `comps`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`while j >= 0:` add 1 to `comps`; if `a[j] > key`, set `a[j + 1] = a[j]` and `j -= 1`, else `break`. After the loop, `a[j + 1] = key`."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted, with every comparison counted.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 is already sorted and expects 4 comparisons. More means your inner loop does not stop at the first smaller value.",
+          "test-6": "Test 6 has duplicates and expects 5. Use `>`, not `>=`: an equal value stops the walk.",
+          "test-8": "Test 8 checks the input is unchanged. Sort a copy, `a = list(xs)`."
+        }
+      },
+      "explain": {
+        "text": "The `break` is what makes the walk stop at the first value not bigger than the key. Without it, every pass would test all the way to the left end.",
+        "canvas": {
+          "cells": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Nearly sorted",
+      "prose": "A list arrives almost in order: only two neighbouring pairs are swapped.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            2,
+            4,
+            3,
+            5,
+            6,
+            8,
+            7
+          ]
+        },
+        "state": {
+          "highlight": [
+            "c2",
+            "c3",
+            "c6",
+            "c7"
+          ]
+        }
+      },
+      "question": "How many comparisons does insertion sort make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "worst",
+            "value": 28,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nminus1",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "swaps",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Most keys are already bigger than their left neighbour. What does each of those cost?"
+        },
+        {
+          "rung": "point",
+          "text": "Key 3 is smaller than 4, so it passes one value before 2 stops it.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Seven keys each cost one stopping test: 7. Keys 3 and 7 each pass one value first: 2 more. Total 9."
+        }
+      ],
+      "feedback": {
+        "correct": "Nine: one per key, plus one per value a key passes.",
+        "generic": "Not quite right. Count the stopping test for every key, plus the values passed.",
+        "byKey": {
+          "worst": "You used the worst case, $8 \\times 7 / 2$. The inner loop stops early, so a nearly sorted list is far cheaper.",
+          "nminus1": "You counted one test per key. Keys 3 and 7 each pass one value first.",
+          "swaps": "You counted only the out-of-order pairs. Every key still needs the test that stops it."
+        }
+      },
+      "explain": {
+        "text": "Each key costs one stopping test, plus one test per larger value it passes. On a sorted list that is $n - 1$ comparisons, which is $O(n)$. Each swapped pair adds one.",
+        "canvas": {
+          "cells": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "highlight": []
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The worst case",
+      "prose": "On a list in reverse order, every key passes every value in the sorted part and reaches the left end. Key $i$ costs $i$ comparisons.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            40
+          ],
+          "y": [
+            0,
+            800
+          ],
+          "xLabel": "list length $n$",
+          "yLabel": "comparisons",
+          "xStep": 10,
+          "functions": [
+            {
+              "id": "w",
+              "expr": "x*(x-1)/2",
+              "label": "reversed: $n(n-1)/2$",
+              "domain": [
+                1,
+                40
+              ],
+              "labelAt": 30
+            },
+            {
+              "id": "b",
+              "expr": "x-1",
+              "label": "sorted: $n - 1$",
+              "domain": [
+                1,
+                40
+              ],
+              "labelAt": 34,
+              "colour": 2
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many comparisons does insertion sort make on 1,000 values in reverse order?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 499500,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 500000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "best",
+            "value": 999,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add up the cost of each key: $1 + 2 + \\dots + 999$."
+        },
+        {
+          "rung": "point",
+          "text": "The upper curve is the reversed list.",
+          "highlight": [
+            "w"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 2 + \\dots + (n - 1) = n(n - 1)/2 = 1000 \\times 999 / 2 = 499{,}500$."
+        }
+      ],
+      "feedback": {
+        "correct": "499,500 comparisons, against 999 on a sorted list.",
+        "generic": "Not quite right. Add $1 + 2 + \\dots + 999$.",
+        "byKey": {
+          "square": "You used $n^2$. Key $i$ passes only the $i$ values left of it, so the sum is about half of that.",
+          "half": "You used $n^2/2$. The exact sum is $n(n - 1)/2$, which is 500 less.",
+          "best": "You gave the sorted case. A reversed list makes every key walk to the left end."
+        }
+      },
+      "explain": {
+        "text": "The worst case is $n(n-1)/2$, which is $O(n^2)$. The best case, a sorted list, is $n - 1$, which is $O(n)$. Doubling the length roughly quadruples the worst case.",
+        "canvas": {
+          "points": [
+            {
+              "id": "p",
+              "x": 40,
+              "y": 780,
+              "label": "780 at $n = 40$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Always the long way",
+      "prose": "This version swaps neighbours instead of shifting. It sorts correctly.\n\n```python\nfor i in range(1, len(a)):\n    for j in range(i, 0, -1):\n        comps += 1\n        if a[j - 1] > a[j]:\n            a[j - 1], a[j] = a[j], a[j - 1]\n```",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> insertion_sort([1, 2, 3, 4, 5, 6])",
+            "([1, 2, 3, 4, 5, 6], 15)"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l2": "err"
+          }
+        }
+      },
+      "question": "Why does it make 15 comparisons on a list that is already sorted?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nobreak",
+            "text": "The inner loop never stops early, so every key is tested all the way to the left",
+            "correct": true
+          },
+          {
+            "id": "neighbour",
+            "text": "It compares the wrong neighbour",
+            "why": "You blamed the pair. `a[j - 1]` and `a[j]` are the right two; the loop just carries on after they are in order."
+          },
+          {
+            "id": "swap",
+            "text": "Swapping is slower than shifting",
+            "why": "You blamed the swaps. On a sorted list there are none; the extra cost is comparisons."
+          },
+          {
+            "id": "order",
+            "text": "It does not really sort",
+            "why": "The output is sorted. The problem is the time it takes."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When `a[j - 1] <= a[j]`, what does the loop do next?"
+        },
+        {
+          "rung": "point",
+          "text": "15 is $6 \\times 5 / 2$, the reversed-list cost.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With no `break`, the inner loop always runs `i` times. That totals $1 + 2 + 3 + 4 + 5 = 15$ whatever the input."
+        }
+      ],
+      "feedback": {
+        "correct": "Without a `break`, it is $O(n^2)$ even on sorted input.",
+        "generic": "Not quite right. Look at what happens once a key is in place.",
+        "byKey": {
+          "neighbour": "You blamed the comparison. It is the right pair; the loop simply never stops after it.",
+          "swap": "You blamed swapping. A sorted list needs no swaps at all, yet it still makes 15 comparisons.",
+          "order": "You doubted the result. It is sorted; it just always does the worst-case work."
+        }
+      },
+      "explain": {
+        "text": "Once `a[j - 1] <= a[j]`, everything further left is in order too, so the loop should stop. Add `else: break`. Then a sorted list costs 5 comparisons, not 15.",
+        "canvas": {
+          "lines": [
+            ">>> insertion_sort([1, 2, 3, 4, 5, 6])",
+            "([1, 2, 3, 4, 5, 6], 5)"
+          ],
+          "tone": {
+            "l2": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "```python\nfor i in range(1, len(a)):\n    key, j = a[i], i - 1\n    while j >= 0 and a[j] > key:\n        a[j + 1] = a[j]    # shift right\n        j -= 1\n    a[j + 1] = key\n```\n\nWorst case $\\frac{n(n-1)}{2}$ comparisons, $O(n^2)$; sorted input $n - 1$, $O(n)$. It sorts in place. Python's own `sorted` is Timsort: $O(n \\log n)$.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            101,
+            100,
+            101
+          ]
+        },
+        "state": {
+          "caption": "Two trades at £101: A (index 0) arrived before B (index 2)"
+        }
+      },
+      "question": "After insertion sort by price, which £101 trade comes first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A, which arrived first",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "B, which arrived second",
+            "why": "B stops when it meets A, because `a[j] > key` is False for equal prices. So B never passes A."
+          },
+          {
+            "id": "c",
+            "text": "It depends on the other values",
+            "why": "Equal keys never pass each other with `>`, whatever else is in the list."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Equal values keep their order: insertion sort is **stable**.",
+        "generic": "Not quite right. Does `>` let an equal value pass?"
+      },
+      "explain": {
+        "text": "The shift happens only when `a[j] > key`, so an equal value stops the walk. Equal items keep their arrival order: that is **stability**. With `>=` it would no longer be stable."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A day's trades",
+      "prose": "Trades from a feed arrive almost in time order. Each is `(time, trade_id)`. Sort them by time only, and keep trades with equal times in arrival order.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "time",
+            "id"
+          ],
+          "rows": [
+            [
+              "09:00:01",
+              "a"
+            ],
+            [
+              "09:00:03",
+              "b"
+            ],
+            [
+              "09:00:02",
+              "c"
+            ],
+            [
+              "09:00:03",
+              "d"
+            ],
+            [
+              "09:00:02",
+              "e"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Arrival order"
+        }
+      },
+      "question": "Write `sort_trades(trades)`: a new list sorted by time, stable for equal times.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def sort_trades(trades):\n    ...\n",
+        "solution": "def sort_trades(trades):\n    a = list(trades)\n    for i in range(1, len(a)):\n        key = a[i]\n        j = i - 1\n        while j >= 0 and a[j][0] > key[0]:\n            a[j + 1] = a[j]\n            j -= 1\n        a[j + 1] = key\n    return a\n",
+        "examples": [
+          {
+            "call": "sort_trades([('09:30:00', 'y'), ('09:30:00', 'x')])",
+            "expect": "[('09:30:00', 'y'), ('09:30:00', 'x')]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "TR = [('09:00:01', 'a'), ('09:00:03', 'b'), ('09:00:02', 'c'), ('09:00:03', 'd'), ('09:00:02', 'e')]",
+            "call": "sort_trades(TR)",
+            "expect": "[('09:00:01', 'a'), ('09:00:02', 'c'), ('09:00:02', 'e'), ('09:00:03', 'b'), ('09:00:03', 'd')]",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_trades([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_trades([('10:00:00', 'z')])",
+            "expect": "[('10:00:00', 'z')]",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_trades([('09:30:00', 'y'), ('09:30:00', 'x')])",
+            "expect": "[('09:30:00', 'y'), ('09:30:00', 'x')]",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_trades([('09:00:05', 'p'), ('09:00:04', 'q'), ('09:00:03', 'r')])",
+            "expect": "[('09:00:03', 'r'), ('09:00:04', 'q'), ('09:00:05', 'p')]",
+            "compare": "equal"
+          },
+          {
+            "setup": "TR = [('09:00:02', 'b'), ('09:00:01', 'a')]",
+            "call": "(sort_trades(TR), TR)",
+            "expect": "([('09:00:01', 'a'), ('09:00:02', 'b')], [('09:00:02', 'b'), ('09:00:01', 'a')])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: the feed above, an empty list, one trade, two trades at the same time, a reversed burst, and a check that the input is not changed."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use insertion sort, but compare only the times, `a[j][0] > key[0]`."
+        },
+        {
+          "rung": "point",
+          "text": "c and e share a time; c arrived first, so c must stay first.",
+          "highlight": [
+            "r2",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Copy the list. For each key, shift while `a[j][0] > key[0]`, then place the key. Comparing whole tuples would order equal times by id instead."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted by time, with c before e and b before d.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 has y before x at the same time and expects that order kept. Comparing whole tuples sorted them by id.",
+          "test-1": "Test 1 expects c before e. Compare times only, with `>`, so equal times never pass each other."
+        }
+      },
+      "explain": {
+        "text": "Each late trade walks back only a step or two, so the sort is close to $O(n)$ here. `sorted(trades, key=lambda t: t[0])` gives the same result: Timsort is stable too, and fast on nearly sorted runs.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A new price level",
+      "prose": "A book keeps 1,000 price levels in a list, sorted from low to high. A new level arrives that belongs three places from the end. We insert it by walking left from the end, as insertion sort does.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "…",
+            "99.96",
+            "99.97",
+            "99.98",
+            "99.99",
+            "100.01"
+          ],
+          "showIndex": false
+        },
+        "state": {
+          "caption": "The top six of 1,000 levels (£); the new level is 99.975"
+        }
+      },
+      "question": "How many comparisons does the insertion make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "shifts",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "log",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the values the new level passes, then the one that stops it."
+        },
+        {
+          "rung": "point",
+          "text": "The new level stops at this value, which is smaller.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It passes 100.01, 99.99 and 99.98: three comparisons. Then 99.97 is smaller: one more. Total 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Four comparisons, whatever the size of the book.",
+        "generic": "Not quite right. Count the values passed, plus the stopping test.",
+        "byKey": {
+          "shifts": "You counted the three values it passes. The test against 99.97, which stops the walk, counts too.",
+          "all": "You scanned the whole book. The walk starts at the end and stops after four tests.",
+          "log": "You used binary search. That finds the place in 10 looks, but walking from the end is quicker here."
+        }
+      },
+      "explain": {
+        "text": "Insertion near the end of a sorted list is cheap: 4 comparisons and 3 shifts. New levels usually land near the touch, so insertion into a nearly sorted list fits an order book well.",
+        "canvas": {
+          "cells": [
+            "…",
+            "99.96",
+            "99.97",
+            "99.975",
+            "99.98",
+            "99.99",
+            "100.01"
+          ],
+          "done": [
+            3
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Insertion sort grows a sorted part one value at a time, shifting bigger values right to make room.",
+      "A key costs one comparison per value it passes, plus one that stops it: $n - 1$ on sorted input, $n(n-1)/2$ reversed.",
+      "Shifting only on `>` keeps equal values in arrival order, so insertion sort is stable."
+    ],
+    "formula": {
+      "name": "Worst-case comparisons",
+      "tex": "1 + 2 + \\dots + (n - 1) = \\dfrac{n(n-1)}{2}",
+      "note": "$O(n^2)$ in the worst case, $O(n)$ when nearly sorted."
+    },
+    "trap": "Without a `break` the inner loop always walks to the left end, so even sorted input costs $O(n^2)$."
+  },
+  "quiz": [
+    {
+      "id": "q-count",
+      "difficulty": 2,
+      "prose": "Insertion sort runs on `[3, 1, 2]`, counting each test of a value against the key.",
+      "question": "How many comparisons does it make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number"
+      },
+      "feedback": {
+        "correct": "Three comparisons.",
+        "generic": "Not quite right. Count key 1, then key 2."
+      },
+      "explain": {
+        "text": "Key 1 is tested against 3, then reaches the left end: 1. Key 2 is tested against 3, which shifts, then against 1, which stops it: 2. Total 3."
+      }
+    },
+    {
+      "id": "q-best",
+      "difficulty": 2,
+      "prose": "Insertion sort runs on 10,000 prices.",
+      "question": "On which input is it fastest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Prices already sorted",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Prices in reverse order",
+            "why": "You picked the worst case: every key walks to the left end."
+          },
+          {
+            "id": "c",
+            "text": "Prices in random order",
+            "why": "On random input each key walks about halfway, which is still $O(n^2)$."
+          },
+          {
+            "id": "d",
+            "text": "It takes the same time on every input",
+            "why": "The inner loop stops early, so the time depends on how sorted the input is."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Sorted input costs $n - 1$ comparisons.",
+        "generic": "Not quite right. When does each key stop at once?"
+      },
+      "explain": {
+        "text": "On sorted input every key stops at its first test, so 9,999 comparisons. Reverse order costs about 50 million."
+      }
+    },
+    {
+      "id": "q-one",
+      "difficulty": 2,
+      "prose": "```python\ninsertion_sort([42])\n```",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`([42], 0)`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`([42], 1)`",
+            "why": "You counted a comparison for the only value. With one value the outer loop never runs."
+          },
+          {
+            "id": "c",
+            "text": "`([], 0)`",
+            "why": "The value is kept; a list of one is already sorted."
+          },
+          {
+            "id": "d",
+            "text": "An `IndexError`",
+            "why": "`range(1, 1)` is empty, so nothing is indexed."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "One value, already sorted, no comparisons.",
+        "generic": "Not quite right. Does the outer loop run at all?"
+      },
+      "explain": {
+        "text": "The outer loop is `range(1, 1)`, which is empty. Nothing is compared and the list comes back as it was."
+      }
+    },
+    {
+      "id": "q-sorted",
+      "difficulty": 3,
+      "prose": "You call Python's `sorted` on a million random prices.",
+      "question": "How does its time grow with $n$ in the worst case?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$O(n \\log n)$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$O(n^2)$",
+            "why": "You assumed `sorted` is insertion sort. It is Timsort, which merges runs."
+          },
+          {
+            "id": "c",
+            "text": "$O(n)$",
+            "why": "That is only for input already in order. On random prices Timsort needs $O(n \\log n)$."
+          },
+          {
+            "id": "d",
+            "text": "$O(\\log n)$",
+            "why": "Every value must be looked at, so no sort can beat $O(n)$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Timsort is $O(n \\log n)$, and stable.",
+        "generic": "Not quite right. Which algorithm does `sorted` use?"
+      },
+      "explain": {
+        "text": "`sorted` and `list.sort` use Timsort: $O(n \\log n)$ in the worst case and stable. It uses insertion sort only on short runs."
+      }
+    }
+  ]
+}

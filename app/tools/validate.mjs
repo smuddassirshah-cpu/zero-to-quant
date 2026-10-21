@@ -156,6 +156,21 @@ const ENGINE = (() => {
   } catch { return null; }
 })();
 
+/* The simulation helpers (js/engine/sim.js), so a sim block's outcome, let and filter are compiled as the engine will */
+const SIM = (() => {
+  try {
+    const src = fs.readFileSync(path.join(APP, 'js', 'engine', 'sim.js'), 'utf8');
+    const ctx = { window: {}, console };
+    vm.createContext(ctx); vm.runInContext(src, ctx);
+    return ctx.window.ZQ && ctx.window.ZQ.sim;
+  } catch { return null; }
+})();
+const checkSim = (file, where, sim, names) => {
+  if (!SIM || !isObj(sim)) return;
+  if (sim.outcome == null) { err(file, `${where}.outcome`, 'a sim needs an outcome expression'); return; }
+  try { SIM.trial(sim, Object.fromEntries(names.map(n => [n, 1]))); } catch (e) { err(file, where, `simulation does not compile: ${e.message}`); }
+};
+
 /* A canvas the learner can work without a widget: points with drag: true (plane, number-line), vectors in state.drag,
    or a simulation's run chips (bars, walk) */
 const authorMovable = (c) => {
@@ -557,12 +572,20 @@ const checkCanvas = (file, where, c) => {
   if (c.kind === 'tree' && S.current != null && typeof S.current !== 'string') err(file, `${where}.state.current`, 'current is a branch path such as "a-b", or "root"');
   if (c.kind === 'vectors' && P.points != null && !(Array.isArray(P.points) && P.points.every(q => isObj(q) && typeof q.x === 'number' && typeof q.y === 'number'))) err(file, `${where}.params.points`, 'points is a list of { id, x, y, label }');
   (c.controls || []).forEach((k, i) => {
-    if (!k.bind) err(file, `${where}.controls[${i}].bind`, 'required');
+    if (!k.bind && !k.reseed) err(file, `${where}.controls[${i}].bind`, 'required');
     if (k.format != null && !['fraction', 'percent'].includes(k.format)) err(file, `${where}.controls[${i}].format`, 'format is "fraction" or "percent"');
     if (k.scale != null && k.scale !== 'log') err(file, `${where}.controls[${i}].scale`, 'scale is "log" (or leave it out for a linear slider)');
     if (k.scale === 'log' && !(+k.min > 0 && +k.max > +k.min)) err(file, `${where}.controls[${i}]`, 'a log slider needs 0 < min < max (stops at powers of ten from min)');
   });
   if (c.maxHeight != null && !(typeof c.maxHeight === 'number' && c.maxHeight >= 120)) err(file, `${where}.maxHeight`, 'maxHeight is a number of pixels, 120 or more');
+  /* item 326: a bars sim reads params and state.params by name; series sims read params */
+  if (c.kind === 'bars' && isObj(P.sim)) checkSim(file, `${where}.params.sim`, P.sim, Object.keys({ ...(P.params || {}), ...(S.params || {}) }));
+  if (c.kind === 'series') listOf(P.series).forEach((q, i) => { if (isObj(q) && isObj(q.sim)) checkSim(file, `${where}.params.series[${i}].sim`, q.sim, Object.keys(P.params || {})); });
+  if (c.kind === 'distribution' && P.family != null && !['binomial', 'geometric', 'poisson', 'uniform', 'exponential', 't', 'normal', 'hypergeometric', 'discrete', 'custom', 'lognormal'].includes(P.family)) err(file, `${where}.params.family`, 'family is binomial, geometric, poisson, hypergeometric, discrete, uniform, normal, lognormal, exponential or t');
+  if (c.kind === 'distribution' && ['discrete', 'custom'].includes(P.family)) { const v = P.values ?? (P.params || {}).values, pr = P.probs ?? (P.params || {}).probs; if (!Array.isArray(v) || !v.length) err(file, `${where}.params.values`, 'a discrete family lists its values'); else if (Array.isArray(pr) && Math.abs(pr.reduce((t, x) => t + +x, 0) - 1) > 1e-6) warn(file, `${where}.params.probs`, 'the probabilities do not add to 1'); }
+  if (c.kind === 'walk' && P.model === 'markov' && !(Array.isArray(P.states) && Array.isArray(P.P) && P.P.length === P.states.length)) err(file, `${where}.params`, 'a markov walk needs states and a P matrix with one row per state');
+  if (c.kind === 'number-line' && P.scale != null && !['log', 'log-odds'].includes(P.scale)) err(file, `${where}.params.scale`, 'scale is "log" or "log-odds"');
+  if (c.kind === 'number-line' && P.scale === 'log-odds' && (P.min != null && !(P.min > 0 && P.min < 1) || P.max != null && !(P.max > 0 && P.max < 1))) err(file, `${where}.params`, 'a log-odds line runs between probabilities strictly inside 0 and 1');
   if (c.kind === 'series' && P.hlines != null && !(Array.isArray(P.hlines) && P.hlines.every(h => isObj(h) && typeof h.y === 'number'))) err(file, `${where}.params.hlines`, 'hlines is a list of { id, y, label, dashed }');
   if (c.kind === 'tree' && S.branching != null && !(typeof S.branching === 'number' || isObj(S.branching) || Array.isArray(S.branching))) err(file, `${where}.state.branching`, 'branching is a number, a list per level or { "0": n, ... }');
   if (c.derive != null) {

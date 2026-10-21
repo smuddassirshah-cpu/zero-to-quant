@@ -1,0 +1,1276 @@
+{
+  "id": "l11-first-in-first-out",
+  "course": "ds",
+  "title": "First in, first out",
+  "minutes": 15,
+  "objectives": [
+    "Use a queue and a double-ended queue.",
+    "Explain why `list.pop(0)` is $O(n)$ and `deque.popleft()` is $O(1)$",
+    "Keep a sliding-window maximum with a monotonic deque of indices"
+  ],
+  "skills": [
+    "ds-stacks"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Time priority",
+      "prose": "Four buy orders rest at £7.25, in the order they arrived. An exchange fills orders at one price in arrival order. A sell order for 400 shares now arrives at £7.25.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "queue",
+              "label": "Bids at £7.25, oldest on the left",
+              "kind": "row",
+              "slots": 4,
+              "items": [
+                {
+                  "id": "o1",
+                  "label": "A: 300"
+                },
+                {
+                  "id": "o2",
+                  "label": "B: 100"
+                },
+                {
+                  "id": "o3",
+                  "label": "C: 500"
+                },
+                {
+                  "id": "o4",
+                  "label": "D: 200"
+                }
+              ]
+            },
+            {
+              "id": "filled",
+              "label": "Filled",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 4
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each card is a buyer and a size in shares"
+        }
+      },
+      "question": "Drag the orders that are completely filled into Filled.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "queue": [
+            "o3",
+            "o4"
+          ],
+          "filled": [
+            "o1",
+            "o2"
+          ]
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which order arrived first?"
+        },
+        {
+          "rung": "point",
+          "text": "A arrived first and wants 300 shares.",
+          "highlight": [
+            "o1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A takes 300 of the 400 shares. B, next in line, takes the last 100. C and D wait."
+        }
+      ],
+      "feedback": {
+        "correct": "A and B arrived first and take all 400 shares.",
+        "generic": "Not quite right. Fill the oldest order first, then the next, until 400 shares are used.",
+        "byKey": {
+          "o1": "A arrived first, so it is filled first: 300 shares.",
+          "o2": "After A takes 300, B is next in line and takes the last 100.",
+          "o3": "C is the biggest order, but it arrived after A and B. Size does not jump the queue.",
+          "o4": "D arrived last, so it waits behind everyone."
+        }
+      },
+      "explain": {
+        "text": "A took 300 shares and B the remaining 100: oldest first. C and D keep their places. A line served in arrival order is a **queue**: first in, first out.",
+        "canvas": {
+          "move": {
+            "o1": "filled",
+            "o2": "filled"
+          },
+          "caption": "C is now at the front of the queue"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A deque",
+      "prose": "Python's `collections.deque` is a queue. `append` adds at the back and `popleft()` takes from the front.\n\n```python\nfrom collections import deque\nq = deque()\nq.append(\"A\")\nq.append(\"B\")\nq.popleft()\nq.append(\"C\")\nq.append(\"D\")\nq.popleft()\n```",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "vals",
+              "label": "Values",
+              "kind": "box",
+              "cols": 2,
+              "capacity": 4,
+              "fill": "top",
+              "items": [
+                {
+                  "id": "a",
+                  "label": "A"
+                },
+                {
+                  "id": "b",
+                  "label": "B"
+                },
+                {
+                  "id": "c",
+                  "label": "C"
+                },
+                {
+                  "id": "d",
+                  "label": "D"
+                }
+              ]
+            },
+            {
+              "id": "q",
+              "label": "q",
+              "kind": "row",
+              "slots": 4
+            },
+            {
+              "id": "served",
+              "label": "Taken off",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 4
+            }
+          ]
+        },
+        "state": {
+          "caption": "Run the lines in order"
+        }
+      },
+      "question": "Drag each value to where it ends up: still in `q`, or taken off.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "q": [
+            "c",
+            "d"
+          ],
+          "served": [
+            "a",
+            "b"
+          ]
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is at the front of `q` when the first `popleft()` runs?"
+        },
+        {
+          "rung": "point",
+          "text": "A went in first.",
+          "highlight": [
+            "a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first `popleft()` takes A. Then C and D join the back, and the second `popleft()` takes B, now at the front."
+        }
+      ],
+      "feedback": {
+        "correct": "`q` ends as `deque(['C', 'D'])`; A and B were taken off.",
+        "generic": "Not quite right. Each `popleft()` takes the oldest value still in `q`.",
+        "byKey": {
+          "a": "A went in first, so the first `popleft()` took it.",
+          "b": "After A left, B was the oldest value, so the second `popleft()` took it.",
+          "c": "C joined after B, so it is still waiting.",
+          "d": "D joined last and is at the back."
+        }
+      },
+      "explain": {
+        "text": "A stack would have taken B and then D. The queue took A, then B: the oldest first. `q[0]` reads the front and `q[-1]` the back.",
+        "canvas": {
+          "move": {
+            "a": "served",
+            "b": "served",
+            "c": "q",
+            "d": "q"
+          },
+          "caption": "`q == deque(['C', 'D'])`"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Why not a list",
+      "prose": "A list can act as a queue too: `orders.pop(0)` removes the first value. But a list keeps its values side by side from index 0, with no gap at the front.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        },
+        "state": {
+          "highlight": [
+            "c0"
+          ],
+          "caption": "`orders.pop(0)` removes A"
+        }
+      },
+      "question": "After `orders.pop(0)`, how many values must move one place to the left?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Values moved",
+        "accept": "5: B to F each move left",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0
+          },
+          {
+            "id": "all",
+            "value": 6
+          },
+          {
+            "id": "one",
+            "value": 1
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where must B sit after A is gone?"
+        },
+        {
+          "rung": "point",
+          "text": "Index 0 cannot stay empty.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B moves to index 0, C to index 1, and so on up to F. That is every value after A."
+        }
+      ],
+      "feedback": {
+        "correct": "All 5 values after A shift left by one.",
+        "generic": "Not quite right. Every value after the removed one must close the gap.",
+        "byKey": {
+          "none": "A list cannot leave index 0 empty. Every remaining value shifts left.",
+          "all": "A is removed, not moved. The other 5 shift.",
+          "one": "B moves into index 0, but then index 1 is empty. The shifting carries on to the end."
+        }
+      },
+      "explain": {
+        "text": "`pop(0)` shifts every remaining value one place, so it costs $O(n)$. `deque.popleft()` only moves its front marker, which is $O(1)$. `pop()` from the end of a list is $O(1)$ because nothing behind it moves.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              1,
+              5
+            ],
+            "label": "each shifts left"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Draining a queue",
+      "prose": "A loop handles 1,000 queued orders with `orders.pop(0)` until the list is empty. The first call shifts 999 values, the next 998, and so on.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "o1",
+            "o2",
+            "o3",
+            "…",
+            "o999",
+            "o1000"
+          ]
+        },
+        "state": {
+          "caption": "1,000 orders in a list"
+        }
+      },
+      "question": "How many shifts does the whole loop make in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 499500,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Total shifts",
+        "accept": "499,500: $999 + 998 + \\dots + 0 = \\tfrac{1000 \\times 999}{2}$",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 1000000
+          },
+          {
+            "id": "linear",
+            "value": 1000
+          },
+          {
+            "id": "linear2",
+            "value": 999
+          },
+          {
+            "id": "off",
+            "value": 500500
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many values does each `pop(0)` shift, from the first call to the last?"
+        },
+        {
+          "rung": "point",
+          "text": "The shifts run 999, 998, …, 1, 0.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add $0 + 1 + \\dots + 999$. Pair them up: the sum is $\\tfrac{999 \\times 1000}{2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{1000 \\times 999}{2} = 499{,}500$ shifts: quadratic work.",
+        "generic": "Not quite right. Add the shifts of every call, 999 down to 0.",
+        "byKey": {
+          "square": "That is $1000^2$. The shifts shrink as the list empties, so the sum is about half that.",
+          "linear": "That counts calls, not shifts. Each call shifts every value behind the front.",
+          "linear2": "That is the first call only. Each later call shifts too.",
+          "off": "You added 1 to 1,000. The first call shifts 999, not 1,000, and the last shifts 0."
+        }
+      },
+      "explain": {
+        "text": "The total is $\\tfrac{n(n-1)}{2}$, so a list used as a queue is $O(n^2)$ over $n$ items. With a `deque`, each `popleft()` is $O(1)$ and the loop is $O(n)$. Use `deque` whenever you take from the front.",
+        "canvas": {
+          "caption": "List: 499,500 shifts. Deque: none."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Values that can never win",
+      "prose": "Now a moving maximum: the largest value in each window of 3. The window has just slid to cover indices 2 to 4. It moves one step right each day.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            3,
+            -1,
+            -3,
+            5,
+            3,
+            6,
+            7
+          ]
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              2,
+              4
+            ],
+            "label": "window"
+          },
+          "caption": "The window holds −1, −3 and 5"
+        }
+      },
+      "question": "Tap the values in this window that can never be a window's maximum again.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2",
+          "c3"
+        ],
+        "only": [
+          "c2",
+          "c3",
+          "c4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each value with 5. Which leaves the window first?"
+        },
+        {
+          "rung": "point",
+          "text": "5 is newer than these two and bigger than both.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−1 and −3 leave before 5 does, and 5 beats them while they stay. So neither can ever be the maximum."
+        }
+      ],
+      "feedback": {
+        "correct": "−1 and −3 are beaten by a newer, bigger value.",
+        "generic": "Not quite right. A value can win only if nothing bigger stays in the window as long as it does.",
+        "byKey": {
+          "c4": "5 is the maximum of this window right now, so it can win.",
+          "c2": "−1 leaves the window before 5, and 5 is bigger. It can never win again.",
+          "c3": "−3 leaves before 5, and 5 is bigger. It can never win again."
+        }
+      },
+      "explain": {
+        "text": "Each window that still holds −1 or −3 also holds 5. So we can throw them away. We keep only values that could still win, in a **deque**: drop from the back the smaller old ones, and from the front the ones that left.",
+        "canvas": {
+          "highlight": [
+            "c4"
+          ],
+          "caption": "Only 5 needs remembering from this window"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Run the deque",
+      "prose": "Here $w = 3$. The deque holds indices, shown by their values, largest at the front. Each step: drop the front if it left the window; pop smaller values off the back; push the new index. The front is the maximum.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              5,
+              3,
+              4,
+              1,
+              2,
+              6
+            ]
+          },
+          "state": {
+            "highlight": {
+              "range": [
+                1,
+                3
+              ],
+              "label": "window"
+            },
+            "pointers": [
+              {
+                "id": "i",
+                "at": 3,
+                "label": "i"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              5,
+              4
+            ],
+            "mode": "queue",
+            "frontLabel": "front",
+            "backLabel": "back"
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "The first window [5, 3, 4] gave 5. Below: the deque"
+        }
+      },
+      "question": "Step the deque through the last three windows.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s3",
+        "states": {
+          "s0": {
+            "tex": "i = 3:\\ \\text{window } [3, 4, 1]",
+            "ops": [
+              {
+                "label": "Push 1",
+                "to": "x0",
+                "why": "Index 0 has left the window, yet 5 would stay at the front and be reported as the maximum."
+              },
+              {
+                "label": "Drop 5 from the front (index 0 left), then push 1",
+                "to": "s1"
+              },
+              {
+                "label": "Pop 4 from the back, then push 1",
+                "to": "x0b",
+                "why": "4 is bigger than 1, so 4 can still win. Only smaller values are popped from the back."
+              }
+            ]
+          },
+          "x0": {
+            "tex": "\\text{Stuck: 5 is outside the window}"
+          },
+          "x0b": {
+            "tex": "\\text{Stuck: 4 could still win}"
+          },
+          "s1": {
+            "tex": "i = 4:\\ \\text{window } [4, 1, 2]",
+            "canvas": {
+              "left": {
+                "highlight": {
+                  "range": [
+                    2,
+                    4
+                  ],
+                  "label": "window"
+                },
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 4,
+                    "label": "i"
+                  }
+                ]
+              },
+              "right": {
+                "cells": [
+                  4,
+                  1
+                ]
+              },
+              "caption": "Max of [3, 4, 1] is 4"
+            },
+            "ops": [
+              {
+                "label": "Pop 1 from the back, then push 2",
+                "to": "s2"
+              },
+              {
+                "label": "Push 2",
+                "to": "x1",
+                "why": "1 is smaller than 2 and leaves sooner, so it can never win again. Pop it."
+              },
+              {
+                "label": "Drop 4 from the front, then push 2",
+                "to": "x1b",
+                "why": "4 sits at index 2, still inside the window from 2 to 4."
+              }
+            ]
+          },
+          "x1": {
+            "tex": "\\text{Stuck: 1 can never win}"
+          },
+          "x1b": {
+            "tex": "\\text{Stuck: 4 is still in the window}"
+          },
+          "s2": {
+            "tex": "i = 5:\\ \\text{window } [1, 2, 6]",
+            "canvas": {
+              "left": {
+                "highlight": {
+                  "range": [
+                    3,
+                    5
+                  ],
+                  "label": "window"
+                },
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 5,
+                    "label": "i"
+                  }
+                ]
+              },
+              "right": {
+                "cells": [
+                  4,
+                  2
+                ]
+              },
+              "caption": "Max of [4, 1, 2] is 4"
+            },
+            "ops": [
+              {
+                "label": "Push 6",
+                "to": "x2",
+                "why": "4 has left the window, and 2 is smaller than 6. Neither can win again."
+              },
+              {
+                "label": "Drop 4 from the front, pop 2 from the back, then push 6",
+                "to": "s3"
+              }
+            ]
+          },
+          "x2": {
+            "tex": "\\text{Stuck: 4 and 2 can never win}"
+          },
+          "s3": {
+            "tex": "5,\\ 4,\\ 4,\\ 6",
+            "canvas": {
+              "right": {
+                "cells": [
+                  6
+                ]
+              },
+              "caption": "Max of [1, 2, 6] is 6. Output: 5, 4, 4, 6"
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the front index still inside the window?"
+        },
+        {
+          "rung": "point",
+          "text": "The front value 5 sits at index 0.",
+          "highlight": [
+            "left:c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $i = 3$ drop 5 and push 1. At $i = 4$ pop 1 and push 2. At $i = 5$ drop 4, pop 2 and push 6."
+        }
+      ],
+      "feedback": {
+        "correct": "The maxima are 5, 4, 4 and 6.",
+        "generic": "Not quite right. First drop an expired front, then pop smaller values off the back, then push."
+      },
+      "explain": {
+        "text": "The front left when its index fell out of the window. The back lost values the new arrival beats. Each index joins once and leaves once, so the whole pass is $O(n)$.",
+        "canvas": {
+          "right": {
+            "cells": [
+              6
+            ]
+          },
+          "caption": "Output: 5, 4, 4, 6"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write it",
+      "prose": "Write the monotonic deque. Return one maximum per full window, so a list of $n$ values gives $n - w + 1$ results. A window longer than the list gives none.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            3,
+            -1,
+            -3,
+            5,
+            3,
+            6,
+            7
+          ]
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              0,
+              2
+            ],
+            "label": "first window"
+          },
+          "caption": "With $w = 3$: [3, 3, 5, 5, 6, 7]"
+        }
+      },
+      "question": "Write `max_sliding_window(xs, w)`: the maximum of each window of `w` consecutive values, in $O(n)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\ndef max_sliding_window(xs, w):\n    dq = deque()  # indices; their values fall from front to back\n    out = []\n    ...\n    return out\n",
+        "solution": "from collections import deque\n\ndef max_sliding_window(xs, w):\n    dq = deque()  # indices; their values fall from front to back\n    out = []\n    for i, x in enumerate(xs):\n        if dq and dq[0] <= i - w:\n            dq.popleft()\n        while dq and xs[dq[-1]] <= x:\n            dq.pop()\n        dq.append(i)\n        if i >= w - 1:\n            out.append(xs[dq[0]])\n    return out\n",
+        "examples": [
+          {
+            "call": "max_sliding_window([1, 3, -1, -3, 5, 3, 6, 7], 3)",
+            "expect": "[3, 3, 5, 5, 6, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([3, 1, 2], 5)",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "max_sliding_window([1, 3, -1, -3, 5, 3, 6, 7], 3)",
+            "expect": "[3, 3, 5, 5, 6, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([5, 3, 4, 1, 2, 6], 3)",
+            "expect": "[5, 4, 4, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([4, 2, 7], 1)",
+            "expect": "[4, 2, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([4, 2, 7, 1], 4)",
+            "expect": "[7]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([4, 4, 4, 4], 2)",
+            "expect": "[4, 4, 4]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([3, 1, 2], 5)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([], 3)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([9, 8, 7, 6, 5], 2)",
+            "expect": "[9, 8, 7, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([1, 2, 3, 4, 5], 2)",
+            "expect": "[2, 3, 4, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window([2, 5, 5, 1, 1, 1], 3)",
+            "expect": "[5, 5, 5, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "max_sliding_window(list(range(200000, 0, -1)), 2000)[:3]",
+            "expect": "[200000, 199999, 199998]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: $w = 1$, $w$ equal to the length, $w$ longer than the list, and repeated values. Test 11 has 200,000 values with $w = 2000$; slicing each window cannot finish in time."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which three things happen for each index `i`?"
+        },
+        {
+          "rung": "point",
+          "text": "The first full window ends at index $w - 1$.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For each `i`: `if dq and dq[0] <= i - w: dq.popleft()`; `while dq and xs[dq[-1]] <= x: dq.pop()`; `dq.append(i)`; then if `i >= w - 1`, append `xs[dq[0]]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each index enters once and leaves once: $O(n)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is the deque you stepped through: `[5, 4, 4, 6]`. A 5 in second place means the expired front was never dropped.",
+          "test-6": "Test 6 has $w = 5$ on 3 values. No window is ever full, so return `[]`.",
+          "test-11": "Test 11 timed out. `max(xs[i:i + w])` is $O(nw)$; keep the deque so each step is $O(1)$ on average."
+        }
+      },
+      "explain": {
+        "text": "The front check uses `dq[0] <= i - w`: index `i - w` is the first one outside the window. Popping on `<=` keeps only the newest of equal values, which lasts longest. The `if i >= w - 1` line also handles $w$ longer than the list.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              0,
+              2
+            ],
+            "label": "window"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A deque that never forgets",
+      "prose": "This version pops smaller values off the back but has no front check.\n\n```python\nfor i, x in enumerate(xs):\n    while dq and xs[dq[-1]] <= x:\n        dq.pop()\n    dq.append(i)\n    if i >= w - 1:\n        out.append(xs[dq[0]])\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            5,
+            3,
+            4,
+            1,
+            2,
+            6
+          ]
+        },
+        "state": {
+          "caption": "$w = 3$; the right answer is [5, 4, 4, 6]"
+        }
+      },
+      "question": "What does it return for this list with $w = 3$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[5, 5, 5, 6]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[5, 4, 4, 6]`",
+            "why": "That is the right answer, but this code never removes 5 from the front. It reports 5 after 5 has left.",
+            "canvas": {
+              "highlight": {
+                "range": [
+                  1,
+                  3
+                ],
+                "label": "5 is outside"
+              }
+            }
+          },
+          {
+            "id": "c",
+            "text": "`IndexError`",
+            "why": "The `while` checks `dq` before reading `dq[-1]`, and the deque always holds the newest index, so nothing raises."
+          },
+          {
+            "id": "d",
+            "text": "`[5, 5, 5, 5]`",
+            "why": "6 is bigger than 5, so 6 pops 5 off the back and becomes the front."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Can 5, at index 0, ever leave the deque in this code?"
+        },
+        {
+          "rung": "point",
+          "text": "Only a value of at least 5 arriving at the back could pop it.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Nothing pops 5 until 6 arrives, so the windows ending at indices 3 and 4 both report 5."
+        }
+      ],
+      "feedback": {
+        "correct": "The stale 5 is reported for two windows it has left.",
+        "generic": "Not quite right. Follow the front of the deque from index 0 onwards.",
+        "byKey": {
+          "b": "You ran the correct version in your head. Without the front check, 5 stays at the front after its window has passed.",
+          "d": "6 is larger than 5, so the back pops reach 5 and remove it."
+        }
+      },
+      "explain": {
+        "text": "5 is never smaller than a later arrival until 6, so it stays at the front for too long. The windows [3, 4, 1] and [4, 1, 2] report 5, which is outside both. Add `if dq[0] <= i - w: dq.popleft()` before the back pops.",
+        "canvas": {
+          "highlight": [
+            "c0"
+          ],
+          "caption": "Wrong: [5, 5, 5, 6]. Right: [5, 4, 4, 6]"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "A `deque` is cheap at both ends:\n\n```python\nq.append(x)    # back, O(1)\nq.popleft()    # front, O(1)\nq.pop()        # back, O(1)\n```\n\nAs a queue it serves the oldest first. As a monotonic deque it keeps only values that can still win. Breadth-first search (in `graphs-dp`) visits nodes in the order it finds them, with a queue.",
+      "question": "A breadth-first search takes its next node with `q.popleft()`. What happens if you write `q.pop()` instead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "It takes the newest node first, so the search goes deep before wide",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Nothing changes; both remove one node",
+            "why": "Both remove one node, but from different ends. The order of the visit changes."
+          },
+          {
+            "id": "c",
+            "text": "It raises an error on a deque",
+            "why": "`pop()` works on a deque: it removes from the back."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Taking from the back turns the queue into a stack: depth first.",
+        "generic": "Not quite right. Which end does `pop()` take from?"
+      },
+      "explain": {
+        "text": "`popleft()` serves nodes in the order found: first in, first out, so nearer nodes come first. `pop()` serves the newest node: last in, first out, which is depth-first search. The data structure decides the order of the search."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "An order rate limiter",
+      "prose": "An exchange allows at most 100 orders in any one second, and rejects the rest. Our gateway should refuse an order before sending it. Times are whole milliseconds and arrive in order. An order exactly `t` ms after another falls outside that one's window.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "time (ms)",
+            "0",
+            "5",
+            "9",
+            "10",
+            "15",
+            "20"
+          ],
+          "rows": [
+            [
+              "`allow`, $k = 2$, $t = 10$",
+              "✓",
+              "✓",
+              "✗",
+              "✓",
+              "✓",
+              "✓"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "At 9 ms, the orders at 0 and 5 are still inside the last 10 ms"
+        }
+      },
+      "question": "Write `RateLimiter(k, t)` with `allow(now)`: return `True` and record the order if fewer than `k` accepted orders fall in the last `t` ms, else `False`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\nclass RateLimiter:\n    def __init__(self, k, t):\n        self.k = k            # at most k orders\n        self.t = t            # per t ms\n        self.times = deque()  # accepted, oldest first\n\n    def allow(self, now):\n        ...\n",
+        "solution": "from collections import deque\n\nclass RateLimiter:\n    def __init__(self, k, t):\n        self.k = k            # at most k orders\n        self.t = t            # per t ms\n        self.times = deque()  # accepted, oldest first\n\n    def allow(self, now):\n        while self.times and self.times[0] <= now - self.t:\n            self.times.popleft()\n        if len(self.times) < self.k:\n            self.times.append(now)\n            return True\n        return False\n",
+        "examples": [
+          {
+            "setup": "rl = RateLimiter(2, 10)",
+            "call": "[rl.allow(x) for x in [0, 5, 9, 10, 15, 20]]",
+            "expect": "[True, True, False, True, True, True]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "rl = RateLimiter(2, 10)",
+            "call": "[rl.allow(x) for x in [0, 5, 9, 10, 15, 20]]",
+            "expect": "[True, True, False, True, True, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "rl = RateLimiter(1, 10)",
+            "call": "[rl.allow(x) for x in [0, 5, 10]]",
+            "expect": "[True, False, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "rl = RateLimiter(1, 1000)",
+            "call": "[rl.allow(x) for x in [0, 1000]]",
+            "expect": "[True, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "rl = RateLimiter(1, 1000)",
+            "call": "[rl.allow(x) for x in [0, 999]]",
+            "expect": "[True, False]",
+            "compare": "equal"
+          },
+          {
+            "setup": "rl = RateLimiter(3, 50)",
+            "call": "[rl.allow(x) for x in [7, 7, 7, 7]]",
+            "expect": "[True, True, True, False]",
+            "compare": "equal"
+          },
+          {
+            "setup": "rl = RateLimiter(100, 1000)",
+            "call": "sum(rl.allow(x) for x in range(0, 2000, 5))",
+            "expect": "200",
+            "compare": "equal"
+          },
+          {
+            "setup": "rl = RateLimiter(0, 1000)",
+            "call": "rl.allow(0)",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Each builds a fresh limiter in a setup line, then sends it a burst of times. Rejected orders are not recorded."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which recorded times no longer count at time `now`?"
+        },
+        {
+          "rung": "point",
+          "text": "At 10 ms, the order at 0 ms is exactly 10 ms old, so it has left the window.",
+          "highlight": [
+            "r0c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In `allow`: `while self.times and self.times[0] <= now - self.t: self.times.popleft()`. Then if `len(self.times) < self.k`, append `now` and return `True`; else return `False`."
+        }
+      ],
+      "feedback": {
+        "correct": "Old times drop off the front, and the deque length is the count in the window.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 expects `[True, False, True]`. Only accepted orders count: record `now` only when you return `True`.",
+          "test-3": "Test 3: an order exactly `t` ms later is outside the window. Drop times with `<= now - self.t`.",
+          "test-4": "Test 4: at 999 ms the order at 0 is still inside the window, so the second order is refused."
+        }
+      },
+      "explain": {
+        "text": "The deque holds accepted times, oldest first, so expired ones leave from the front. Its length is the number of orders in the last `t` ms. Each time is appended once and popped once, so each call is $O(1)$ on average.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c3"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A queue serves the oldest item first: first in, first out. Use `collections.deque`, whose `append` and `popleft()` are both $O(1)$.",
+      "`list.pop(0)` shifts every remaining value, so draining a list from the front is $O(n^2)$.",
+      "A monotonic deque of indices keeps only values that can still win. Expired ones leave the front and beaten ones leave the back."
+    ],
+    "formula": {
+      "name": "Sliding-window maximum step",
+      "tex": "\\text{drop front if } q_0 \\le i - w;\\quad \\text{pop back while } x_{\\text{back}} \\le x_i;\\quad \\text{push } i",
+      "note": "The front is the maximum of the window ending at $i$, once $i \\ge w - 1$. Each index enters and leaves once: $O(n)$."
+    },
+    "trap": "Forgetting to drop the expired front reports a maximum that has already left the window. Using a list as a queue makes each `pop(0)` cost $O(n)$."
+  },
+  "quiz": [
+    {
+      "id": "q-deque-ops",
+      "difficulty": 2,
+      "prose": "```python\nfrom collections import deque\nq = deque([1, 2, 3])\nq.append(4)\nq.popleft()\nq.popleft()\nprint(list(q))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[3, 4]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[1, 2]`",
+            "why": "You took from the back, as a stack would. `popleft()` takes from the front: 1, then 2."
+          },
+          {
+            "id": "c",
+            "text": "`[2, 3, 4]`",
+            "why": "There are two `popleft()` calls, so two values leave the front."
+          },
+          {
+            "id": "d",
+            "text": "`[4, 3]`",
+            "why": "A deque keeps arrival order; nothing is reversed."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "1 and 2 left from the front; 3 and 4 remain.",
+        "generic": "Not quite right. `popleft()` takes the oldest value."
+      },
+      "explain": {
+        "text": "After `append(4)` the deque is 1, 2, 3, 4. Two `popleft()` calls remove 1 and 2 from the front, leaving 3 and 4."
+      }
+    },
+    {
+      "id": "q-pop0",
+      "difficulty": 2,
+      "prose": "A backtest replays 1,000,000 ticks from a list, taking each with `ticks.pop(0)`.",
+      "question": "Why is it slow, and what is the fix?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Each `pop(0)` shifts every remaining tick; use a `deque` and `popleft()`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Lists are slow in general; use a dictionary",
+            "why": "A dictionary has no front or order of arrival to serve from. The cost is the shifting."
+          },
+          {
+            "id": "c",
+            "text": "`pop(0)` copies the list; use `pop()` instead",
+            "why": "`pop()` would replay the ticks backwards, from newest to oldest."
+          },
+          {
+            "id": "d",
+            "text": "It is not slow: `pop(0)` is $O(1)$",
+            "why": "`pop(0)` is $O(n)$: every value after index 0 moves left."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The total is about $n^2 / 2$ shifts; a deque makes it $O(n)$.",
+        "generic": "Not quite right. What happens to the other values when the first one leaves a list?"
+      },
+      "explain": {
+        "text": "Each `pop(0)` shifts all remaining ticks, so the loop does about $5 \\times 10^{11}$ moves. `deque.popleft()` is $O(1)$, so the replay is $O(n)$. Iterating with a plain `for` loop works too."
+      }
+    },
+    {
+      "id": "q-rolling-high",
+      "difficulty": 3,
+      "prose": "A year has 250 daily closes. You compute the rolling 20-day high with `max_sliding_window(closes, 20)`. In pandas, `closes.rolling(20).max()` gives the same values after 19 blanks.",
+      "question": "How many values does `max_sliding_window` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 231,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Values",
+        "accept": "231: $250 - 20 + 1$",
+        "wrong": [
+          {
+            "id": "minus",
+            "value": 230
+          },
+          {
+            "id": "all",
+            "value": 250
+          },
+          {
+            "id": "blanks",
+            "value": 19
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$250 - 20 + 1 = 231$ full windows.",
+        "generic": "Not quite right. Count the full windows of 20 that fit in 250 days.",
+        "byKey": {
+          "minus": "You forgot the first window: windows end at index 19, 20, …, 249, which is 231 of them.",
+          "all": "That is pandas' length, blanks included. Our function returns full windows only.",
+          "blanks": "19 is the number of blanks pandas shows, not the number of values."
+        }
+      },
+      "explain": {
+        "text": "The first full window ends at index 19 and the last at index 249. That is $249 - 19 + 1 = 231$ windows. The deque computes all 231 in one pass of 250 steps."
+      }
+    },
+    {
+      "id": "q-fifo-basis",
+      "difficulty": 3,
+      "prose": "You buy 100 shares at £10.00, then 100 at £12.00. You sell 150. FIFO accounting takes the cost of the oldest shares first, like a queue.",
+      "question": "What is the cost basis of the 150 shares sold, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1600,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Cost basis",
+        "accept": "£1,600: $100 \\times 10 + 50 \\times 12$",
+        "wrong": [
+          {
+            "id": "lifo",
+            "value": 1700
+          },
+          {
+            "id": "average",
+            "value": 1650
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All 100 old shares at £10, then 50 at £12.",
+        "generic": "Not quite right. Use up the oldest lot before touching the next.",
+        "byKey": {
+          "lifo": "You took the newest shares first, which is LIFO: a stack. FIFO uses the £10 lot first.",
+          "average": "That uses the average cost of £11. FIFO takes the oldest lot first."
+        }
+      },
+      "explain": {
+        "text": "The queue of lots is 100 at £10, then 100 at £12. Selling 150 dequeues the whole first lot, £1,000, and 50 of the second, £600. The basis is £1,600, and 50 shares at £12 stay in the queue."
+      }
+    }
+  ]
+}

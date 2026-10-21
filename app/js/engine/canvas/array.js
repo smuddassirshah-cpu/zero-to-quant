@@ -16,17 +16,20 @@
     const text0 = (v) => (v == null ? '' : typeof v === 'number' ? K.fmt(v, 3) : String(v));
     /* item 119: cells widen to their text (dates, 102.50) as far as the column allows */
     const widest = Math.max(0, ...(params.cells || []).map((v) => K.tw(text0(v).replace(/\$/g, ''), 13) + 24));
-    const cw = linked ? Math.min(Math.max(58, widest), (W - 60) / cap - 26) : Math.min(Math.max(52, widest), Math.max(30, (W - 40) / cap));
-    const ch = 44;
-    const H = params.height || (stack ? Math.max(200, cap * ch + 80) : 150);
+    /* item 313: wrap (a number of cells per row, or true for as many as fit at 34px) puts a long array on several rows */
+    const perRow = !linked && !stack && params.wrap ? Math.max(1, params.wrap === true ? Math.floor((W - 40) / Math.max(34, Math.min(52, widest || 34))) : Math.round(+params.wrap) || cap) : cap;
+    const rowsN = Math.ceil(cap / perRow);
+    const cw = linked ? Math.min(Math.max(58, widest), (W - 60) / cap - 26) : Math.min(Math.max(52, widest), Math.max(rowsN > 1 ? 34 : 30, (W - 40) / Math.min(cap, perRow)));
+    const ch = 44, rowPitch = ch + 40;
+    const H = params.height || (stack ? Math.max(200, cap * ch + 80) : 150 + (rowsN - 1) * rowPitch);
     const text = (v) => (v == null ? '' : typeof v === 'number' ? K.fmt(v, 3) : String(v));
     let pendingSwap = null, dragView = null;
 
     const geom = (n) => {
       if (stack) { const x = W / 2 - cw / 2 - 20, yb = H - 34; return { pos: (k) => [x, yb - (k + 1) * ch], n }; }
-      const gap = linked ? 26 : 0, total = n * cw + Math.max(0, n - 1) * gap + (linked ? 40 : 0);
+      const gap = linked ? 26 : 0, m = Math.min(n, perRow), total = m * cw + Math.max(0, m - 1) * gap + (linked ? 40 : 0);
       const x0 = Math.max(10, (W - total) / 2), y = params.pointersBelow ? 30 : 58;
-      return { pos: (k) => [x0 + k * (cw + gap), y], n, gap };
+      return { pos: (k) => [x0 + (k % perRow) * (cw + gap), y + Math.floor(k / perRow) * rowPitch], n, gap };
     };
 
     const def = {
@@ -76,7 +79,10 @@
           const a = hlRange[0] - from, b = hlRange[1] - from, [ax, ay] = G.pos(Math.max(0, a)), [bx, by] = G.pos(Math.min(n - 1, b));
           const o = K.obj('range', '', 1);
           if (stack) o.append(svg('rect', { x: ax - 6, y: by - 6, width: cw + 12, height: ay - by + ch + 12, rx: 8, class: 'cvb-range' }));
-          else o.append(svg('rect', { x: ax - 6, y: ay - 6, width: bx - ax + cw + 12, height: ch + 12, rx: 8, class: 'cvb-range' }));
+          else { // one band per row the range covers (wrapped arrays)
+            const lo = Math.max(0, a), hi = Math.min(n - 1, b);
+            for (let r0 = Math.floor(lo / perRow); r0 <= Math.floor(hi / perRow); r0++) { const s0 = Math.max(lo, r0 * perRow), s1 = Math.min(hi, r0 * perRow + perRow - 1), [sx0, sy0] = G.pos(s0), [sx1] = G.pos(s1); o.append(svg('rect', { x: sx0 - 6, y: sy0 - 6, width: sx1 - sx0 + cw + 12, height: ch + 12, rx: 8, class: 'cvb-range' })); }
+          }
           g.append(o);
           if (view.highlight.label) g.append(K.txt(stack ? ax + cw + 14 : (ax + bx + cw) / 2, stack ? (ay + by + ch) / 2 : ay + ch + 34, view.highlight.label, { anchor: stack ? 'start' : 'middle', size: 12, cls: 'cvb-strong' }));
         }

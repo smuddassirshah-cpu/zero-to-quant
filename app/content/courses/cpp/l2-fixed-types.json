@@ -1,0 +1,1289 @@
+{
+ "id": "l2-fixed-types",
+ "course": "cpp",
+ "title": "Every value has a type",
+ "minutes": 14,
+ "objectives": [
+  "Declare variables with fixed types and see integer overflow happen."
+ ],
+ "skills": [
+  "cp-basics"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Seven halves",
+   "prose": "In Python, `7 / 2` is 3.5. Here is the same sum in C++.\n\n```cpp\nint a = 7;\nint b = 2;\nstd::cout << a / b << '\\n';\n```",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5,
+     "labels": 2
+    },
+    "state": {
+     "points": [
+      {
+       "id": "py",
+       "x": 3.5,
+       "label": "Python: 3.5",
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "What does the C++ program print?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a number",
+    "accept": "3",
+    "wrong": [
+     {
+      "id": "py",
+      "value": 3.5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "round",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`a` and `b` are both declared `int`."
+    },
+    {
+     "rung": "point",
+     "text": "An `int` holds whole numbers only, and so does `int / int`.",
+     "highlight": [
+      "py"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The exact answer 3.5 loses its fractional part."
+    }
+   ],
+   "feedback": {
+    "correct": "`int / int` gives an `int`: the .5 is dropped.",
+    "generic": "Not quite right. Both sides are `int`, so the answer is a whole number.",
+    "byKey": {
+     "py": "You divided as Python's `/` does. In C++, two `int`s give an `int`, so the fraction is dropped.",
+     "round": "You rounded 3.5 up. C++ does not round here; it drops the fraction."
+    }
+   },
+   "explain": {
+    "text": "Each variable was declared `int`, so `a / b` is worked out in whole numbers. 3.5 loses its .5 and becomes 3. This is **integer division**, like Python's `7 // 2` for positive numbers.",
+    "canvas": {
+     "points": {
+      "cpp": {
+       "x": 3,
+       "label": "C++ int: 3",
+       "colour": 1
+      }
+     },
+     "arrows": [
+      {
+       "id": "j",
+       "from": 3.5,
+       "to": 3,
+       "label": "drop .5",
+       "side": "below"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "An `int` is 4 bytes, 32 bits, shown here a byte per box. It starts as `int count = 2147483645;`. Slide to add 1 at a time and watch the bits and the value.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "01111111",
+      "11111111",
+      "11111111",
+      "11111101"
+     ],
+     "showIndex": false
+    },
+    "state": {
+     "caption": "`count` = 2,147,483,645"
+    },
+    "derive": {
+     "let": {
+      "v": "(2147483645 + k) | 0"
+     },
+     "cells": "[((v >>> 24) & 255).toString(2).padStart(8, '0'), ((v >>> 16) & 255).toString(2).padStart(8, '0'), ((v >>> 8) & 255).toString(2).padStart(8, '0'), (v & 255).toString(2).padStart(8, '0')]",
+     "caption": "`count` = {{v.toLocaleString('en-GB')}}"
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "start": 0,
+      "label": "Times you add 1"
+     }
+    ]
+   },
+   "question": "What does `count` hold after you add 1 three times?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2147483648,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "−2147483648",
+    "wrong": [
+     {
+      "id": "nowrap",
+      "value": 2147483648,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "stick",
+      "value": 2147483647,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to 3 and read the caption."
+    }
+   ],
+   "feedback": {
+    "correct": "It wrapped round to the most negative `int`.",
+    "generic": "Not quite right. Slide to 3 and read the value under the boxes.",
+    "byKey": {
+     "nowrap": "That is the true sum, but an `int` cannot hold it. Slide to 3: the top bit flips and the value goes negative.",
+     "stick": "That is the value after two additions, the largest an `int` holds. The third one does not stop there; it wraps."
+    }
+   },
+   "explain": {
+    "text": "2,147,483,647 is `0111...1`, the largest `int`. Adding 1 carries into the top bit, which marks a negative number, so the value wraps to −2,147,483,648. This is **overflow**: the compiler does not stop it, and the standard calls it undefined, so never rely on it.",
+    "canvas": {
+     "params": {
+      "k": 3
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Every value has a type",
+   "prose": "In C++ every variable has a **type** fixed when you declare it, as in `int qty = 500;`, and it never changes. The type sets the size in bytes, which `sizeof(int)` reports, and so the range. Tap a row to choose.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Type",
+      "sizeof",
+      "Holds"
+     ],
+     "rows": [
+      [
+       "`int`",
+       "4",
+       "−2,147,483,648 to 2,147,483,647"
+      ],
+      [
+       "`long long`",
+       "8",
+       "about ±9.2 × 10¹⁸"
+      ],
+      [
+       "`double`",
+       "8",
+       "about 15 significant digits"
+      ],
+      [
+       "`bool`",
+       "1",
+       "`true` or `false`"
+      ],
+      [
+       "`char`",
+       "1",
+       "one character, such as `'B'`"
+      ],
+      [
+       "`std::string`",
+       "—",
+       "text of any length, kept elsewhere"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "left"
+     ],
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "A day's traded volume across all UK shares can pass 3 billion. Tap the type that should count it.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1"
+    ],
+    "max": 1,
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare 3 billion with the range of `int`."
+    },
+    {
+     "rung": "point",
+     "text": "`int` stops near 2.1 billion.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A whole-number count above that needs 8 bytes."
+    }
+   ],
+   "feedback": {
+    "correct": "`long long` counts to about 9.2 × 10¹⁸, exactly.",
+    "generic": "Not quite right. Volumes are whole numbers above 2.1 billion.",
+    "byKey": {
+     "r0": "3 billion is above `int`'s limit of 2,147,483,647, so the counter would wrap negative, as on the last screen.",
+     "r2": "A `double` holds 3 billion, but a count is a whole number. An integer type adds exactly, every time.",
+     "r5": "A `std::string` holds text. You cannot add 1 to it as a counter."
+    }
+   },
+   "explain": {
+    "text": "A volume is a whole number that can pass 2.1 billion, so it needs the 8-byte `long long`. A `double` would hold it too, but integers add exactly. In this app's compiler the sizes are as listed; `sizeof` tells you on any machine.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Letting the compiler choose",
+   "prose": "`auto` asks the compiler to give a variable the type of the value on the right. It is still fixed, just not typed out by you.\n\n```cpp\nauto r = 7 / 2;\n```",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Type",
+      "sizeof",
+      "Holds"
+     ],
+     "rows": [
+      [
+       "`int`",
+       "4",
+       "−2,147,483,648 to 2,147,483,647"
+      ],
+      [
+       "`long long`",
+       "8",
+       "about ±9.2 × 10¹⁸"
+      ],
+      [
+       "`double`",
+       "8",
+       "about 15 significant digits"
+      ],
+      [
+       "`bool`",
+       "1",
+       "`true` or `false`"
+      ],
+      [
+       "`char`",
+       "1",
+       "one character, such as `'B'`"
+      ],
+      [
+       "`std::string`",
+       "—",
+       "text of any length, kept elsewhere"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "left"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       0,
+       2
+      ]
+     }
+    }
+   },
+   "question": "What type does `r` get, and what value?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "int3",
+      "text": "`int`, holding 3",
+      "correct": true
+     },
+     {
+      "id": "d35",
+      "text": "`double`, holding 3.5",
+      "why": "You let `auto` pick the type of the true answer. It copies the type of `7 / 2`, which is `int / int`."
+     },
+     {
+      "id": "d3",
+      "text": "`double`, holding 3.0",
+      "why": "Nothing on the right is a `double`. `7` and `2` are both `int` literals."
+     },
+     {
+      "id": "auto",
+      "text": "A type called `auto`, holding 3",
+      "why": "`auto` is not a type of its own. The compiler replaces it with the real type, `int`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the type of `7 / 2` on its own?"
+    },
+    {
+     "rung": "point",
+     "text": "`7` and `2` are written without a decimal point.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`int / int` is an `int`, so `r` is an `int` holding 3."
+    }
+   ],
+   "feedback": {
+    "correct": "`auto` copies the type of `7 / 2`: `int`.",
+    "generic": "Not quite right. Work out the type of the right-hand side first.",
+    "byKey": {
+     "d35": "You let `auto` pick the type of the true answer. It copies the type of the expression, `int / int`, so 3."
+    }
+   },
+   "explain": {
+    "text": "`7 / 2` is an `int` expression with value 3, so `auto r` becomes `int r`. Write `auto r = 7.0 / 2;` and `r` is a `double` holding 3.5.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An average that drops the half",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Type",
+      "sizeof",
+      "Holds"
+     ],
+     "rows": [
+      [
+       "`int`",
+       "4",
+       "−2,147,483,648 to 2,147,483,647"
+      ],
+      [
+       "`long long`",
+       "8",
+       "about ±9.2 × 10¹⁸"
+      ],
+      [
+       "`double`",
+       "8",
+       "about 15 significant digits"
+      ],
+      [
+       "`bool`",
+       "1",
+       "`true` or `false`"
+      ],
+      [
+       "`char`",
+       "1",
+       "one character, such as `'B'`"
+      ],
+      [
+       "`std::string`",
+       "—",
+       "text of any length, kept elsewhere"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "left"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       0,
+       2
+      ]
+     }
+    }
+   },
+   "prose": "This function compiles and is wrong: `average(3, 4)` returns 3. The division happens between two `int`s, before the result becomes a `double`. `static_cast<double>(a)` converts `a` first. One hidden test uses two counts near the `int` limit.",
+   "question": "Fix `average` so that `average(3, 4)` is 3.5.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "double average(int a, int b) {\n    return (a + b) / 2;\n}\n",
+    "solution": "double average(int a, int b) {\n    return (static_cast<double>(a) + b) / 2;\n}\n",
+    "examples": [
+     {
+      "call": "average",
+      "args": [
+       3,
+       4
+      ],
+      "expect": 3.5,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "average",
+      "args": [
+       3,
+       4
+      ],
+      "expect": 3.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "average",
+      "args": [
+       7,
+       2
+      ],
+      "expect": 4.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "average",
+      "args": [
+       10,
+       20
+      ],
+      "expect": 15,
+      "compare": "isclose"
+     },
+     {
+      "call": "average",
+      "args": [
+       -7,
+       2
+      ],
+      "expect": -2.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "average",
+      "args": [
+       2147483647,
+       2147483647
+      ],
+      "expect": 2147483647,
+      "compare": "isclose"
+     },
+     {
+      "call": "average",
+      "args": [
+       -3,
+       -4
+      ],
+      "expect": -3.5,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 6 hidden tests that call average; each answer is accepted within a relative 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Make one side of the division a `double` before dividing."
+    },
+    {
+     "rung": "point",
+     "text": "Test 5 adds 2,147,483,647 to itself. Where does that sum live?",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return (static_cast<double>(a) + b) / 2;` converts before the addition, so nothing overflows."
+    }
+   ],
+   "feedback": {
+    "correct": "Converting first makes every step a `double` step.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-1": "`average(3, 4)` came back as 3: `(a + b) / 2` divides two `int`s, and only then is 3 turned into 3.0.",
+     "test-5": "Test 5 adds 2,147,483,647 to itself. In `int` that sum wraps negative before any division. Convert before adding: `static_cast<double>(a) + b`."
+    }
+   },
+   "explain": {
+    "text": "Once `a` is a `double`, `a + b` and the division are done in `double`, so nothing is dropped and nothing wraps. `(a + b) / 2.0` fixes the half but still overflows on test 5.\n\n```cpp\nreturn (a + b) / 2.0;                        // overflows first\nreturn (static_cast<double>(a) + b) / 2;     // safe\n```"
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A big order",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Type",
+      "sizeof",
+      "Holds"
+     ],
+     "rows": [
+      [
+       "`int`",
+       "4",
+       "−2,147,483,648 to 2,147,483,647"
+      ],
+      [
+       "`long long`",
+       "8",
+       "about ±9.2 × 10¹⁸"
+      ],
+      [
+       "`double`",
+       "8",
+       "about 15 significant digits"
+      ],
+      [
+       "`bool`",
+       "1",
+       "`true` or `false`"
+      ],
+      [
+       "`char`",
+       "1",
+       "one character, such as `'B'`"
+      ],
+      [
+       "`std::string`",
+       "—",
+       "text of any length, kept elsewhere"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "left"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   },
+   "prose": "Prices here are whole pence. This function passes small orders and fails a big one: 20,000 shares at 107,500p (£1,075) each.",
+   "question": "Fix `shares_value` so that it returns the order's value in pence for any size.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "long long shares_value(long long qty, long long pence) {\n    int value = qty * pence;\n    return value;\n}\n",
+    "solution": "long long shares_value(long long qty, long long pence) {\n    long long value = qty * pence;\n    return value;\n}\n",
+    "examples": [
+     {
+      "call": "shares_value",
+      "args": [
+       100,
+       250
+      ],
+      "expect": 25000
+     }
+    ],
+    "tests": [
+     {
+      "call": "shares_value",
+      "args": [
+       100,
+       250
+      ],
+      "expect": 25000
+     },
+     {
+      "call": "shares_value",
+      "args": [
+       20000,
+       107500
+      ],
+      "expect": 2150000000
+     },
+     {
+      "call": "shares_value",
+      "args": [
+       3000000,
+       250000
+      ],
+      "expect": 750000000000
+     },
+     {
+      "call": "shares_value",
+      "args": [
+       0,
+       9999
+      ],
+      "expect": 0
+     },
+     {
+      "call": "shares_value",
+      "args": [
+       12345678,
+       9876
+      ],
+      "expect": 121925915928
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 5 hidden tests that call shares_value; each must equal the expected whole number exactly."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The multiplication is fine. Where does its result go?"
+    },
+    {
+     "rung": "point",
+     "text": "`int value` holds at most 2,147,483,647.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Declare `long long value`, or return `qty * pence` directly."
+    }
+   ],
+   "feedback": {
+    "correct": "A `long long` result needs a `long long` to hold it.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-2": "2,150,000,000 does not fit in `int value`, so it was squeezed in and came out negative. Store it in a `long long`."
+    }
+   },
+   "explain": {
+    "text": "`qty * pence` is worked out in `long long`, then stored in an `int` that cannot hold it. C++ narrows it silently and the value comes out as −2,144,967,296. Keep the whole calculation in `long long`."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Negative halves",
+   "prose": "Python's `//` rounds down, so `-7 // 2` is −4. C++ integer division does something else.\n\n```cpp\nstd::cout << -7 / 2 << '\\n';\n```",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expression",
+      "Python",
+      "C++"
+     ],
+     "rows": [
+      [
+       "`7 / 2` (`//` in Python)",
+       "3",
+       "3"
+      ],
+      [
+       "`-7 / 2` (`//` in Python)",
+       "−4",
+       "?"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "center"
+     ]
+    },
+    "state": {
+     "highlight": [
+      "r1c2"
+     ]
+    }
+   },
+   "question": "What does the C++ line print?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "−3",
+    "wrong": [
+     {
+      "id": "floor",
+      "value": -4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "exact",
+      "value": -3.5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "C++ drops the fraction, whatever the sign."
+    },
+    {
+     "rung": "point",
+     "text": "−3.5 without its fraction is which whole number?",
+     "highlight": [
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Dropping .5 from −3.5 moves towards zero: −3."
+    }
+   ],
+   "feedback": {
+    "correct": "C++ drops the fraction, towards zero.",
+    "generic": "Not quite right. Drop the fractional part of −3.5.",
+    "byKey": {
+     "floor": "You rounded down, as Python's `//` does. C++ truncates towards zero, so −3.5 becomes −3.",
+     "exact": "Both sides are `int`, so the answer is a whole number."
+    }
+   },
+   "explain": {
+    "text": "C++ integer division truncates towards zero: 3.5 becomes 3 and −3.5 becomes −3. Python's `//` floors, so the two languages differ only for negative answers.",
+    "canvas": {
+     "values": {
+      "r1c2": "−3"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Pounds into pence",
+   "prose": "A fill price arrives as a `double` in pounds, and the ledger wants whole pence.\n\n```cpp\ndouble price = 19.99;\nint pence = price * 100;\n```",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 1998,
+     "max": 2000,
+     "step": 0.5,
+     "labels": 2
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": 1998,
+       "label": "1998"
+      },
+      {
+       "id": "b",
+       "x": 1999,
+       "label": "1999"
+      }
+     ]
+    }
+   },
+   "question": "What does `pence` hold?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "trunc",
+      "text": "1998",
+      "correct": true
+     },
+     {
+      "id": "1999",
+      "text": "1999",
+      "why": "You did the sum on paper. `19.99 * 100` is stored as 1998.9999999999998, and turning a `double` into an `int` drops the fraction."
+     },
+     {
+      "id": "19",
+      "text": "19",
+      "why": "The multiplication happens first, in `double`. Only its result is cut down to an `int`."
+     },
+     {
+      "id": "noc",
+      "text": "It does not compile",
+      "why": "C++ converts a `double` to an `int` silently. Only some warning flags mention it."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "19.99 has no exact binary form, like 0.1 in Python."
+    },
+    {
+     "rung": "point",
+     "text": "Is `19.99 * 100` stored a little above or a little below 1999?",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It is 1998.9999999999998, and the conversion to `int` drops everything after the point."
+    }
+   ],
+   "feedback": {
+    "correct": "Truncation turns 1998.9999999999998 into 1998.",
+    "generic": "Not quite right. The `double` result is a hair below 1999.",
+    "byKey": {
+     "1999": "You expected rounding. Assigning a `double` to an `int` drops the fraction, and `19.99 * 100` is 1998.9999999999998, so a penny vanishes."
+    }
+   },
+   "explain": {
+    "text": "`19.99` is stored slightly low, so `price * 100` is 1998.9999999999998. Assigning it to an `int` truncates to 1998: a penny lost, silently. Round on purpose with `std::lround(price * 100)` from `<cmath>`, which gives 1999.",
+    "canvas": {
+     "points": {
+      "c": {
+       "x": 1998.9999999999998,
+       "label": "price * 100",
+       "colour": 2,
+       "labelPos": "below"
+      }
+     },
+     "arrows": [
+      {
+       "id": "t",
+       "from": 1998.9999999999998,
+       "to": 1998,
+       "label": "int drops it"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "Every result you met follows one rule: an operation works in the type of its operands, and one `double` makes it `double`.\n\n```cpp\n7 / 2                        // 3    int / int: drop the fraction\n-7 / 2                       // -3   towards zero\n7.0 / 2                      // 3.5  one double makes it double\nstatic_cast<double>(7) / 2   // 3.5  convert, then divide\nint p = 19.99 * 100;         // 1998 double to int truncates\n```",
+   "question": "Which expression gives 0.75?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`3.0 / 4`",
+      "correct": true
+     },
+     {
+      "id": "int",
+      "text": "`3 / 4`",
+      "why": "Both are `int`, so the answer is 0."
+     },
+     {
+      "id": "late",
+      "text": "`3 / 4 * 1.0`",
+      "why": "The division runs first, in `int`, and gives 0. Multiplying by 1.0 afterwards keeps 0."
+     },
+     {
+      "id": "cast",
+      "text": "`static_cast<double>(3 / 4)`",
+      "why": "That converts after dividing. `3 / 4` is already 0, so you get 0.0."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find where the first `double` appears, and whether the division has already happened."
+    }
+   ],
+   "feedback": {
+    "correct": "The `double` is there before the division.",
+    "generic": "Not quite right. The conversion must come before the division."
+   },
+   "explain": {
+    "text": "`3.0` is a `double`, so `3.0 / 4` divides in `double` and gives 0.75. Every other option divides two `int`s first and gets 0."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "P&L from integer pence",
+   "prose": "Exchanges quote prices in whole ticks, and order books store them as integers: integers add and compare exactly. Keep pence as `long long` and convert to pounds once, at the end.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Buy (p)",
+      "Sell (p)",
+      "Shares",
+      "P&L (£)"
+     ],
+     "rows": [
+      [
+       "10,150",
+       "10,225",
+       "4,000",
+       "3,000.00"
+      ],
+      [
+       "250,000",
+       "249,000",
+       "3,000,000",
+       "−30,000,000.00"
+      ],
+      [
+       "999",
+       "1,000",
+       "1",
+       "0.01"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `pnl_pounds(buy_pence, sell_pence, qty)`: the profit in pounds on buying and then selling `qty` shares.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "double pnl_pounds(long long buy_pence, long long sell_pence, long long qty) {\n    return 0;\n}\n",
+    "solution": "double pnl_pounds(long long buy_pence, long long sell_pence, long long qty) {\n    long long pence = (sell_pence - buy_pence) * qty;\n    return pence / 100.0;\n}\n",
+    "examples": [
+     {
+      "call": "pnl_pounds",
+      "args": [
+       10150,
+       10225,
+       4000
+      ],
+      "expect": 3000,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pnl_pounds",
+      "args": [
+       10150,
+       10225,
+       4000
+      ],
+      "expect": 3000,
+      "compare": "isclose"
+     },
+     {
+      "call": "pnl_pounds",
+      "args": [
+       250000,
+       249000,
+       3000000
+      ],
+      "expect": -30000000,
+      "compare": "isclose"
+     },
+     {
+      "call": "pnl_pounds",
+      "args": [
+       999,
+       1000,
+       1
+      ],
+      "expect": 0.01,
+      "compare": "isclose"
+     },
+     {
+      "call": "pnl_pounds",
+      "args": [
+       5000,
+       5000,
+       100
+      ],
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "call": "pnl_pounds",
+      "args": [
+       100,
+       101,
+       7
+      ],
+      "expect": 0.07,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 5 hidden tests that call pnl_pounds; each answer is accepted within a relative 1e-9 (a zero must be exactly 0)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out the pence first: the change per share times the shares."
+    },
+    {
+     "rung": "point",
+     "text": "Row 2 is −3,000,000,000 pence. Which type holds that?",
+     "highlight": [
+      "r1c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`long long pence = (sell_pence - buy_pence) * qty;` then `return pence / 100.0;`."
+    }
+   ],
+   "feedback": {
+    "correct": "Exact pence, then one conversion to pounds.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-3": "A 1p profit came back wrong. If you got 0, you divided by `100`, an `int`: write `100.0`.",
+     "test-2": "Test 2 is −3,000,000,000 pence. If it came back positive or small, an `int` held it on the way. Keep it in `long long`."
+    }
+   },
+   "explain": {
+    "text": "The pence sum is exact in `long long`, even at three billion. Dividing by `100.0` makes the last step a `double`, so 1p becomes £0.01 rather than £0."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Every variable has a fixed type, which sets its size (`sizeof`) and range; `auto` copies the type of the value on the right.",
+   "An operation works in the type of its operands: `int / int` drops the fraction, towards zero, and one `double` makes it `double`.",
+   "`int` stops at 2,147,483,647 and wraps silently; counts, volumes and pence totals belong in `long long`."
+  ],
+  "formula": {
+   "name": "Integer division",
+   "tex": "7 / 2 = 3, \\quad -7 / 2 = -3, \\quad 7.0 / 2 = 3.5",
+   "note": "Convert with `static_cast<double>(x)` before dividing, not after."
+  },
+  "trap": "`int pence = 19.99 * 100;` is 1998: the `double` is a hair low and the conversion truncates."
+ },
+ "quiz": [
+  {
+   "id": "q-bool-prints",
+   "difficulty": 2,
+   "prose": "```cpp\nbool up = 101.5 > 100.0;\nstd::cout << up << '\\n';\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "one",
+      "text": "`1`",
+      "correct": true
+     },
+     {
+      "id": "true",
+      "text": "`true`",
+      "why": "`std::cout` prints a `bool` as 1 or 0 unless you ask for words with `std::boolalpha`."
+     },
+     {
+      "id": "True",
+      "text": "`True`",
+      "why": "That is Python's spelling. C++ prints the number 1."
+     },
+     {
+      "id": "price",
+      "text": "`101.5`",
+      "why": "`up` holds the result of the comparison, not a price."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A `bool` prints as 1 or 0.",
+    "generic": "Not quite right. How does `std::cout` show a `bool`?"
+   },
+   "explain": {
+    "text": "The comparison is true, so `up` is `true`, and `std::cout` prints `true` as 1. Write `std::cout << std::boolalpha << up` to see the word."
+   }
+  },
+  {
+   "id": "q-sizeof-ll",
+   "difficulty": 2,
+   "question": "How many bytes does `sizeof(long long)` report?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "8",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "bits",
+      "value": 64,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "8 bytes, 64 bits.",
+    "generic": "Not quite right. `sizeof` counts bytes.",
+    "byKey": {
+     "four": "4 bytes is an `int`. `long long` is twice the size.",
+     "bits": "64 is the number of bits. `sizeof` counts bytes."
+    }
+   },
+   "explain": {
+    "text": "A `long long` is 8 bytes, or 64 bits, so it reaches about 9.2 × 10¹⁸. An `int` is 4 bytes."
+   }
+  },
+  {
+   "id": "q-max-plus-one",
+   "difficulty": 3,
+   "prose": "```cpp\nint ticks = 2147483647;\nticks = ticks + 1;\n```",
+   "question": "What does `ticks` hold, in practice?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "wrap",
+      "text": "−2,147,483,648",
+      "correct": true
+     },
+     {
+      "id": "big",
+      "text": "2,147,483,648",
+      "why": "That number does not fit in an `int`. The result wraps round instead."
+     },
+     {
+      "id": "stuck",
+      "text": "2,147,483,647",
+      "why": "C++ does not stop at the limit; adding 1 carries into the sign bit."
+     },
+     {
+      "id": "err",
+      "text": "The program stops with an error",
+      "why": "Nothing checks for overflow at run time. It happens silently."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "It wraps to the most negative `int`.",
+    "generic": "Not quite right. Think of the bits on the slider screen."
+   },
+   "explain": {
+    "text": "The carry lands in the sign bit, so the value wraps to −2,147,483,648. Formally this is undefined behaviour, so use `long long` rather than rely on it."
+   }
+  },
+  {
+   "id": "q-quarter",
+   "difficulty": 3,
+   "prose": "```cpp\ndouble share = 1 / 4;\n```",
+   "question": "What does `share` hold?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "zero",
+      "text": "0",
+      "correct": true
+     },
+     {
+      "id": "q",
+      "text": "0.25",
+      "why": "The type on the left does not reach the right. `1 / 4` is worked out in `int` first."
+     },
+     {
+      "id": "err",
+      "text": "It does not compile",
+      "why": "Storing an `int` in a `double` is allowed and silent."
+     },
+     {
+      "id": "one",
+      "text": "1",
+      "why": "`int` division drops the fraction of 0.25; it does not round up."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`1 / 4` is 0 before `share` ever sees it.",
+    "generic": "Not quite right. Which type is `1 / 4`?"
+   },
+   "explain": {
+    "text": "`1 / 4` divides two `int`s and gives 0, which is then stored as 0.0. Write `1.0 / 4` to get 0.25."
+   }
+  }
+ ]
+}

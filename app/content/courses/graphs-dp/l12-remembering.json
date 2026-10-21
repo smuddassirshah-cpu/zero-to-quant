@@ -1,0 +1,1459 @@
+{
+  "id": "l12-remembering",
+  "course": "graphs-dp",
+  "title": "Remembering answers",
+  "minutes": 14,
+  "objectives": [
+    "Speed up a recursion with memoisation.",
+    "Cache with a dict or `functools.lru_cache`, keyed on hashable arguments",
+    "Spot a cache that serves stale answers"
+  ],
+  "skills": [
+    "gd-dp"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The same work, again",
+      "prose": "The textbook recursion for Fibonacci numbers. The tree shows every call `fib(5)` makes, written `f`.\n\n```python\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "f(4)",
+              "children": [
+                {
+                  "id": "a",
+                  "label": "f(3)",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "f(2)",
+                      "children": [
+                        {
+                          "id": "a",
+                          "label": "f(1)"
+                        },
+                        {
+                          "id": "b",
+                          "label": "f(0)"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "b",
+                      "label": "f(1)"
+                    }
+                  ]
+                },
+                {
+                  "id": "b",
+                  "label": "f(2)",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "f(1)"
+                    },
+                    {
+                      "id": "b",
+                      "label": "f(0)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "f(3)",
+              "children": [
+                {
+                  "id": "a",
+                  "label": "f(2)",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "f(1)"
+                    },
+                    {
+                      "id": "b",
+                      "label": "f(0)"
+                    }
+                  ]
+                },
+                {
+                  "id": "b",
+                  "label": "f(1)"
+                }
+              ]
+            }
+          ],
+          "rootLabel": "f(5)",
+          "orient": "tb",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap every call that computes f(2).",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a-a-a",
+          "a-b",
+          "b-a"
+        ],
+        "countWord": "calls",
+        "wrong": [
+          {
+            "id": "ones",
+            "set": [
+              "a-a-a-a",
+              "a-a-b",
+              "a-b-a",
+              "b-a-a",
+              "b-b"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look for every node labelled f(2), on both sides of the tree."
+        },
+        {
+          "rung": "point",
+          "text": "Here is one of them.",
+          "highlight": [
+            "a-a-a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "f(2) appears under f(4) twice over and once under the right-hand f(3): three times."
+        }
+      ],
+      "feedback": {
+        "correct": "f(2) is computed 3 separate times.",
+        "generic": "Not quite right. Find every pill reading f(2).",
+        "byKey": {
+          "ones": "You tapped the f(1) calls. The question asks for f(2)."
+        }
+      },
+      "explain": {
+        "text": "`fib(5)` computes f(2) three times and f(3) twice, each time from scratch. The calls never share what they found. That repeated work is what makes the recursion slow.",
+        "canvas": {
+          "shade": [
+            "a-a-a",
+            "a-b",
+            "b-a"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Counting calls",
+      "prose": "The table counts every call, the first one included. `fib(5)` made 15 calls: the 15 nodes in the tree.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$n$",
+            "Calls made by `fib(n)`"
+          ],
+          "rows": [
+            [
+              "0",
+              "1"
+            ],
+            [
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "3"
+            ],
+            [
+              "3",
+              "5"
+            ],
+            [
+              "4",
+              "9"
+            ],
+            [
+              "5",
+              "15"
+            ],
+            [
+              "6",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many calls does `fib(6)` make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "label": "Calls made by fib(6)",
+        "accept": "25: one call, plus the calls of `fib(5)` and `fib(4)`.",
+        "wrong": [
+          {
+            "id": "no-one",
+            "value": 24,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "double",
+            "value": 30,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "next-fib",
+            "value": 21,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`fib(6)` makes its own call, then all of `fib(5)`'s calls and all of `fib(4)`'s."
+        },
+        {
+          "rung": "point",
+          "text": "These two rows feed the answer.",
+          "highlight": [
+            "r4",
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 15 + 9 = 25$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 + 15 + 9 = 25$ calls.",
+        "generic": "Not quite right. Add one for the call itself to the calls of the two smaller problems.",
+        "byKey": {
+          "no-one": "You added 15 and 9 but left out the call to `fib(6)` itself.",
+          "double": "You doubled 15. The second subproblem is `fib(4)`, which makes 9 calls, not 15."
+        }
+      },
+      "explain": {
+        "text": "Calls grow like the Fibonacci numbers themselves, by about 1.6 times per step. `fib(30)` makes 2,692,537 calls to compute 832,040. Only 31 different values are ever asked for.",
+        "canvas": {
+          "values": {
+            "r6c1": "25"
+          },
+          "highlight": [
+            "r6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "Keep a notebook",
+      "prose": "Now `fib` keeps a dict of answers. Before working, a call looks up its `n`; if the answer is stored, it returns it at once. Calls run left to right, so the left spine fills the dict first.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "f(4)",
+              "children": [
+                {
+                  "id": "a",
+                  "label": "f(3)",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "f(2)",
+                      "children": [
+                        {
+                          "id": "a",
+                          "label": "f(1)"
+                        },
+                        {
+                          "id": "b",
+                          "label": "f(0)"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "b",
+                      "label": "f(1)"
+                    }
+                  ]
+                },
+                {
+                  "id": "b",
+                  "label": "f(2)",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "f(1)"
+                    },
+                    {
+                      "id": "b",
+                      "label": "f(0)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "f(3)",
+              "children": [
+                {
+                  "id": "a",
+                  "label": "f(2)",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "f(1)"
+                    },
+                    {
+                      "id": "b",
+                      "label": "f(0)"
+                    }
+                  ]
+                },
+                {
+                  "id": "b",
+                  "label": "f(1)"
+                }
+              ]
+            }
+          ],
+          "rootLabel": "f(5)",
+          "orient": "tb",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap every call that finds its answer already stored.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a-a-b",
+          "a-b",
+          "b"
+        ],
+        "countWord": "calls"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The left spine f(4), f(3), f(2), f(1), f(0) runs first and stores each value."
+        },
+        {
+          "rung": "point",
+          "text": "When this call runs, f(2) is already stored.",
+          "highlight": [
+            "a-b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each right-hand child arrives after its value was stored on the spine: f(1) under f(3), f(2) under f(4), f(3) under f(5)."
+        }
+      ],
+      "feedback": {
+        "correct": "Three calls are answered from the dict, and their subtrees never run.",
+        "generic": "Not quite right. Ask, for each call, whether that value was stored before it ran.",
+        "byKey": {
+          "a-a-a-a": "This f(1) is the first f(1) to run, so it computes the value and stores it.",
+          "b-a": "With the dict, this call never happens: its parent f(3) is answered from the dict."
+        }
+      },
+      "explain": {
+        "text": "The three stored answers cut off their whole subtrees: 15 calls become 9, and each value is computed once. Storing answers to subproblems is called **memoisation**. It is top-down dynamic programming.",
+        "canvas": {
+          "collapse": [
+            "a-a-b",
+            "a-b",
+            "b"
+          ],
+          "shade": [
+            "a-a-b",
+            "a-b",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The memo table",
+      "prose": "Memoised `fib(6)` fills its cache from the bottom: f(0) and f(1) first, then each value from the two below it.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "1",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        "state": {
+          "caption": "cache[n] for n = 0 to 6"
+        }
+      },
+      "question": "Fill in the cache, and the total number of values computed.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$n$",
+          "`fib(n)`",
+          "Computed (naive)",
+          "Computed (memo)"
+        ],
+        "rows": [
+          [
+            "0",
+            "0",
+            "5",
+            "1"
+          ],
+          [
+            "1",
+            "1",
+            "8",
+            "1"
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "5",
+            "1"
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "3",
+            "1"
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "2",
+            "1"
+          ],
+          [
+            "5",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "1",
+            "1"
+          ],
+          [
+            "6",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "1",
+            "1"
+          ],
+          [
+            "Total",
+            "",
+            "25",
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each entry is the sum of the two entries before it."
+        },
+        {
+          "rung": "point",
+          "text": "The first two entries are the base cases.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1, 2, 3, 5, 8. Seven values, each computed once."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven values, each computed once, against 25 calls without the cache.",
+        "generic": "Not quite right. Build each value from the two before it.",
+        "byKey": {
+          "r7c3": "Each of the seven values $n = 0$ to $6$ is computed exactly once."
+        }
+      },
+      "explain": {
+        "text": "The naive column repeats small values most: f(1) is computed 8 times. With the cache each $n$ is worked out once, so the work is the number of different subproblems.",
+        "canvas": {
+          "cells": [
+            "0",
+            "1",
+            "1",
+            "2",
+            "3",
+            "5",
+            "8"
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Fib of 30",
+      "prose": "The same memoised `fib` is asked for `fib(30)`. Count the values it works out, not the lookups.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "1",
+            "1",
+            "2",
+            "3",
+            "5",
+            "8",
+            "…",
+            "832040"
+          ]
+        },
+        "state": {
+          "caption": "cache[0] to cache[30]"
+        }
+      },
+      "question": "How many values does memoised `fib(30)` compute?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 31,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "values",
+        "label": "Values computed",
+        "accept": "31: one for each $n$ from 0 to 30.",
+        "wrong": [
+          {
+            "id": "no-zero",
+            "value": 30,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "lookups",
+            "value": 59,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "naive",
+            "value": 2692537,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which values of $n$ does `fib(30)` ever ask about?"
+        },
+        {
+          "rung": "point",
+          "text": "The cache runs from n = 0.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every $n$ from 0 to 30 is computed once: 31 values."
+        }
+      ],
+      "feedback": {
+        "correct": "31 values, against 2,692,537 naive calls.",
+        "generic": "Not quite right. Count the different arguments from 0 to 30.",
+        "byKey": {
+          "no-zero": "You started at 1. `fib(0)` is computed too, as a base case.",
+          "lookups": "You counted every call, lookups included. The question asks for values computed: one per $n$.",
+          "naive": "That is the naive count. With the cache, a repeated call is a lookup."
+        }
+      },
+      "explain": {
+        "text": "Each $n$ from 0 to 30 is computed once: 31 values. Counting the 28 cache hits too gives 59 calls, still tiny. Work drops from exponential to $O(n)$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Paths through a grid",
+      "prose": "A path moves right or down along the streets of a 3 by 4 grid of points. The last step into a point comes from above or from the left, so `paths(i, j) = paths(i - 1, j) + paths(i, j - 1)`.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 4,
+          "rowHeads": false,
+          "colHeads": false,
+          "lattice": true
+        },
+        "state": {
+          "cells": {
+            "r1c1": "1",
+            "r1c2": "1",
+            "r1c3": "1",
+            "r1c4": "1",
+            "r2c1": "1",
+            "r2c2": "2",
+            "r2c3": "3",
+            "r2c4": "4",
+            "r3c1": "1",
+            "r3c2": "3",
+            "r3c3": "?",
+            "r3c4": "?"
+          },
+          "shade": {
+            "start": {
+              "ids": [
+                "r1c1"
+              ],
+              "colour": 3
+            },
+            "end": {
+              "ids": [
+                "r3c4"
+              ],
+              "colour": 2
+            }
+          },
+          "caption": "Paths from the top-left corner to each point, moving right or down"
+        }
+      },
+      "question": "How many paths reach the bottom-right point?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "paths",
+        "label": "Paths to the corner",
+        "accept": "10: $\\binom{5}{2}$.",
+        "wrong": [
+          {
+            "id": "row",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "both",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "cells",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First fill the point just left of the corner."
+        },
+        {
+          "rung": "point",
+          "text": "This point gets 3 from above and 3 from the left.",
+          "highlight": [
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The left neighbour is $3 + 3 = 6$. The corner is $6 + 4 = 10$."
+        }
+      ],
+      "feedback": {
+        "correct": "10 paths.",
+        "generic": "Not quite right. Add the counts above and to the left, one point at a time.",
+        "byKey": {
+          "row": "That is the point left of the corner. The corner adds the 4 above it.",
+          "both": "You may have added the corner's neighbours as 6 + 6. The point above the corner holds 4."
+        }
+      },
+      "explain": {
+        "text": "Each point is the sum of the one above and the one to its left. Every path makes 2 down moves among 5, so there are $\\binom{5}{2} = 10$. A memoised `paths` computes each point once.",
+        "canvas": {
+          "cells": {
+            "r3c3": "6",
+            "r3c4": "10"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A stale price",
+      "prose": "A pricer caches discounted cash flows. Between calls the market moves and `rate` is updated.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "pricer.py",
+          "numbers": true,
+          "lines": [
+            "from functools import lru_cache",
+            "",
+            "rate = 0.05",
+            "",
+            "@lru_cache(maxsize=None)",
+            "def price(cashflow, years):",
+            "    return round(cashflow / (1 + rate) ** years, 2)",
+            "",
+            "print(price(100, 1))",
+            "rate = 0.10",
+            "print(price(100, 1))"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the program print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stale",
+            "text": "`95.24` twice",
+            "correct": true
+          },
+          {
+            "id": "fresh",
+            "text": "`95.24`, then `90.91`",
+            "why": "You expected the cache to notice the new rate. It is keyed on `(100, 1)` only, so the second call returns the stored 95.24."
+          },
+          {
+            "id": "err",
+            "text": "A `TypeError`: floats cannot be cached",
+            "why": "Floats and ints are hashable, so `lru_cache` stores them without trouble."
+          },
+          {
+            "id": "both10",
+            "text": "`90.91` twice",
+            "why": "The first call runs while `rate` is still 0.05, and its result is stored."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `lru_cache` use as the key for a stored result?"
+        },
+        {
+          "rung": "point",
+          "text": "The second call has the same arguments as the first.",
+          "highlight": [
+            "l11"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The key is `(100, 1)`. It was stored at 95.24, so the cache returns that without running the body."
+        }
+      ],
+      "feedback": {
+        "correct": "The cache returns a price computed at the old rate.",
+        "generic": "Not quite right. Compare the arguments of the two calls.",
+        "byKey": {
+          "fresh": "You expected a new price at 10%. The cache key holds only the arguments, and they did not change, so the old 95.24 comes back."
+        }
+      },
+      "explain": {
+        "text": "`price` reads `rate`, which is not one of its arguments. The cache cannot see it, so it serves the 5% price at 10%. Cache only pure functions: pass `rate` in as an argument.",
+        "canvas": {
+          "shade": {
+            "hidden": [
+              "l7"
+            ]
+          },
+          "tone": {
+            "l7": "err"
+          },
+          "caption": "Fix: `def price(cashflow, years, rate)`"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Top-down dynamic programming",
+      "prose": "Every memoised recursion has this shape:\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef solve(state):          # state: hashable\n    if is_base(state):\n        return base_answer(state)\n    return combine(solve(s) for s in smaller(state))\n```\n\nThe function must be pure. Its work is the number of states times the work per state.",
+      "question": "`value` is decorated with `@lru_cache`. Which call raises a `TypeError`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "list",
+            "text": "`value([100, 101, 99])`",
+            "correct": true
+          },
+          {
+            "id": "tuple",
+            "text": "`value((100, 101, 99))`",
+            "why": "A tuple of numbers is hashable, so it can be a cache key. Converting lists to tuples is the usual fix."
+          },
+          {
+            "id": "float",
+            "text": "`value(100.5, 0.05)`",
+            "why": "Floats are hashable. Only mutable containers such as lists, dicts and sets are not."
+          },
+          {
+            "id": "str",
+            "text": "`value('VOD', 3)`",
+            "why": "Strings are hashable, so they make good cache keys."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A list is mutable, so it cannot be a dict key or a cache key.",
+        "generic": "Not quite right. Which argument could change after being stored?"
+      },
+      "explain": {
+        "text": "`lru_cache` keeps a dict keyed by the arguments, and dict keys must be hashable. A list could change after it was stored, so Python refuses it. Pass `tuple(prices)` instead."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Warm cache",
+      "prose": "A dict as a default argument is created once, when `def` runs, and shared by every call. Here `fib(5)` has already run.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            "def fib(n, cache={}):",
+            "    if n in cache:",
+            "        return cache[n]",
+            "    print('computing', n)",
+            "    cache[n] = n if n < 2 else fib(n - 1) + fib(n - 2)",
+            "    return cache[n]",
+            "",
+            ">>> fib(5)",
+            "computing 5",
+            "computing 4",
+            "computing 3",
+            "computing 2",
+            "computing 1",
+            "computing 0",
+            "5",
+            ">>> fib(6)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many `computing` lines does `fib(6)` print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "lines",
+        "label": "Lines printed",
+        "accept": "1: only `computing 6`.",
+        "wrong": [
+          {
+            "id": "fresh",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is `cache` empty when `fib(6)` starts?"
+        },
+        {
+          "rung": "point",
+          "text": "These values are stored by the first call.",
+          "highlight": [
+            "l9",
+            "l14"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`cache` still holds 0 to 5. Only 6 is new, and its two lookups are hits."
+        }
+      ],
+      "feedback": {
+        "correct": "One line, `computing 6`: the default dict kept the earlier answers.",
+        "generic": "Not quite right. The default dict is not reset between calls.",
+        "byKey": {
+          "fresh": "You expected a new empty cache per call. A default argument is built once, so 0 to 5 are already stored.",
+          "none": "6 has never been asked for, so it must be computed once."
+        }
+      },
+      "explain": {
+        "text": "The default dict outlives each call, so the first call after warm-up is mostly cache hits. That is harmless for pure `fib`, but a counter or a changed input makes it a surprise. A cache made inside the function, or by `lru_cache`, is clearer."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Memoise two recursions",
+      "prose": "`fib_memo(n)` returns `(fib(n), computed)`, where `computed` counts the values worked out rather than read from the cache, base cases included. `grid_paths(r, c)` counts right-or-down paths across an $r \\times c$ grid of points. Each call starts with an empty cache.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 4,
+          "rowHeads": false,
+          "colHeads": false,
+          "lattice": true
+        },
+        "state": {
+          "cells": {
+            "r1c1": "1",
+            "r1c2": "1",
+            "r1c3": "1",
+            "r1c4": "1",
+            "r2c1": "1",
+            "r2c2": "2",
+            "r2c3": "3",
+            "r2c4": "4",
+            "r3c1": "1",
+            "r3c2": "3",
+            "r3c3": "6",
+            "r3c4": "10"
+          },
+          "shade": {
+            "start": {
+              "ids": [
+                "r1c1"
+              ],
+              "colour": 3
+            },
+            "end": {
+              "ids": [
+                "r3c4"
+              ],
+              "colour": 2
+            }
+          },
+          "caption": "`grid_paths(3, 4)` is 10"
+        }
+      },
+      "question": "Write `fib_memo(n)` and `grid_paths(r, c)` with a cache.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def fib_memo(n):\n    cache = {}\n    computed = 0          # values worked out, not read from the cache\n\n    def f(k):\n        nonlocal computed\n        ...\n\n    return f(n), computed\n\n\ndef grid_paths(r, c):\n    cache = {}\n\n    def paths(i, j):\n        ...\n\n    return paths(r, c)\n",
+        "solution": "def fib_memo(n):\n    cache = {}\n    computed = 0\n\n    def f(k):\n        nonlocal computed\n        if k in cache:\n            return cache[k]\n        computed += 1\n        value = k if k < 2 else f(k - 1) + f(k - 2)\n        cache[k] = value\n        return value\n\n    return f(n), computed\n\n\ndef grid_paths(r, c):\n    cache = {}\n\n    def paths(i, j):\n        if i == 1 or j == 1:\n            return 1\n        if (i, j) not in cache:\n            cache[(i, j)] = paths(i - 1, j) + paths(i, j - 1)\n        return cache[(i, j)]\n\n    return paths(r, c)\n",
+        "examples": [
+          {
+            "call": "fib_memo(6)",
+            "expect": "(8, 7)",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(3, 4)",
+            "expect": "10",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "fib_memo(0)",
+            "expect": "(0, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "fib_memo(1)",
+            "expect": "(1, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "fib_memo(6)",
+            "expect": "(8, 7)",
+            "compare": "equal"
+          },
+          {
+            "call": "fib_memo(30)",
+            "expect": "(832040, 31)",
+            "compare": "equal"
+          },
+          {
+            "call": "fib_memo(90)",
+            "expect": "(2880067194370816120, 91)",
+            "compare": "equal"
+          },
+          {
+            "call": "fib_memo(10)",
+            "expect": "(55, 11)",
+            "compare": "equal",
+            "setup": "_ = fib_memo(10)"
+          },
+          {
+            "call": "grid_paths(1, 1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(1, 5)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(3, 3)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(3, 7)",
+            "expect": "28",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(7, 3)",
+            "expect": "28",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(18, 18)",
+            "expect": "2333606220",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(30, 30)",
+            "expect": "30067266499541040",
+            "compare": "equal"
+          },
+          {
+            "call": "grid_paths(16, 9) == math.comb(23, 15)",
+            "expect": "True",
+            "compare": "equal",
+            "setup": "import math"
+          }
+        ],
+        "how": "Check runs 14 hidden tests. `computed` must match exactly; `fib_memo(10)` run twice must count 11 both times. `grid_paths(18, 18)` would take billions of calls without the cache, and one test compares with $\\binom{r + c - 2}{r - 1}$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In `f`: return a cached value at once; otherwise add 1 to `computed`, work the value out, store it and return it."
+        },
+        {
+          "rung": "point",
+          "text": "A point on the top row or left column has exactly one path.",
+          "highlight": [
+            "r1c4",
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`paths(i, j)`: return 1 if `i == 1 or j == 1`; else cache `paths(i - 1, j) + paths(i, j - 1)` under the key `(i, j)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each subproblem is solved once, and the counts match.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `(0, 1)`: `fib(0)` is computed once, as a base case. Count base cases too.",
+          "test-4": "Test 4 expects 31. If you got 59, you counted cache lookups as well as computations.",
+          "test-6": "Test 6 ran `fib_memo(10)` twice. A count other than 11 means the cache or counter outlived the first call.",
+          "test-12": "Test 12 timed out or failed: memoise `paths` on the key `(i, j)`."
+        }
+      },
+      "explain": {
+        "text": "Both functions solve each distinct state once: $n + 1$ values for `fib`, $r \\times c$ points at most for the grid. The cache is made inside the call, so each call starts clean. The grid count equals $\\binom{r + c - 2}{r - 1}$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A binomial pricer",
+      "prose": "An option is priced on a 30-step binomial tree. Up then down reaches the same price as down then up, so a node's value depends only on `(step, ups)`. A memoised `value(step, ups)` computes each node once.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Step $k$",
+            "Distinct nodes",
+            "Paths reaching step $k$"
+          ],
+          "rows": [
+            [
+              "0",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "2",
+              "2"
+            ],
+            [
+              "2",
+              "3",
+              "4"
+            ],
+            [
+              "3",
+              "4",
+              "8"
+            ],
+            [
+              "…",
+              "…",
+              "…"
+            ],
+            [
+              "30",
+              "31",
+              "1,073,741,824"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many node values does the memoised pricer compute, from step 0 to step 30?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 496,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "values",
+        "label": "Node values computed",
+        "accept": "496: $1 + 2 + \\dots + 31 = \\tfrac{31 \\times 32}{2}$.",
+        "wrong": [
+          {
+            "id": "paths",
+            "value": 1073741824,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "square",
+            "value": 961,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "last",
+            "value": 31,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step $k$ has $k + 1$ distinct nodes. Add them up."
+        },
+        {
+          "rung": "point",
+          "text": "Step 30 alone has 31 nodes.",
+          "highlight": [
+            "r5c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 2 + \\dots + 31 = \\tfrac{31 \\times 32}{2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "496 values, against about a billion paths.",
+        "generic": "Not quite right. Add the distinct nodes at each step, 0 to 30.",
+        "byKey": {
+          "paths": "That is the number of paths. Paths that recombine share a node, and the cache values each node once.",
+          "square": "You used $31 \\times 31$. Step $k$ has only $k + 1$ nodes, so the total is a triangle.",
+          "last": "That is the final step only. Every earlier step's nodes are valued too."
+        }
+      },
+      "explain": {
+        "text": "The tree recombines, so 30 steps have only 496 distinct nodes against $2^{30}$ paths. Memoising on `(step, ups)` is exactly the backward induction of a binomial pricer. The key holds everything the value depends on."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Naive recursion recomputes the same subproblems: `fib(30)` makes 2,692,537 calls for 31 different values.",
+      "Memoisation stores each answer the first time, so the work is the number of distinct states times the work per state. It is top-down dynamic programming.",
+      "A cache is only safe for a pure function with hashable arguments: anything the answer depends on must be in the key."
+    ],
+    "formula": {
+      "name": "Calls with and without a cache",
+      "tex": "C(n) = 1 + C(n-1) + C(n-2) \\quad\\text{against}\\quad n + 1 \\text{ values}",
+      "note": "Naive calls grow like the Fibonacci numbers; memoised work grows like $n$."
+    },
+    "trap": "Caching a function that reads something outside its arguments, such as a global rate or `self.rate`, returns stale answers."
+  },
+  "quiz": [
+    {
+      "id": "q-calib",
+      "difficulty": 2,
+      "prose": "A calibration loop runs 200 passes. Each pass prices the same 25 bonds through a pure `price(yld, maturity)` wrapped in `lru_cache`.",
+      "question": "How many prices are actually computed?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "prices",
+        "label": "Prices computed",
+        "accept": "25: one per (yield, maturity) pair.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 5000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "passes",
+            "value": 200,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "25: the first pass fills the cache, and the other 199 are lookups.",
+        "generic": "Not quite right. Count the distinct argument pairs.",
+        "byKey": {
+          "all": "You counted every call. After the first pass every call is a cache hit."
+        }
+      },
+      "explain": {
+        "text": "Only 25 distinct keys ever appear, so 25 prices are computed. If the yields moved each pass, the keys would change and the cache would barely help."
+      }
+    },
+    {
+      "id": "q-method",
+      "difficulty": 3,
+      "prose": "```python\nclass Curve:\n    def __init__(self, rate):\n        self.rate = rate\n\n    @lru_cache(maxsize=None)\n    def df(self, t):\n        return (1 + self.rate) ** -t\n\nc = Curve(0.05)\nc.df(2)\nc.rate = 0.06\nprint(round(c.df(2), 4))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stale",
+            "text": "`0.907`, the 5% discount factor",
+            "correct": true
+          },
+          {
+            "id": "fresh",
+            "text": "`0.89`, the 6% discount factor",
+            "why": "You expected the cache to see the new rate. The key is `(c, 2)`, and `c` is the same object, so the old value returns."
+          },
+          {
+            "id": "err",
+            "text": "A `TypeError`: `self` is unhashable",
+            "why": "Ordinary objects are hashable by identity, so `self` makes a valid key."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The stale 5% value: the key ignores `self.rate`.",
+        "generic": "Not quite right. What does the cache key hold?"
+      },
+      "explain": {
+        "text": "`lru_cache` keys on `self` by identity, not on its attributes. Changing `self.rate` leaves the key the same, so a stale factor comes back. The cache also keeps every `Curve` alive."
+      }
+    },
+    {
+      "id": "q-fib7",
+      "difficulty": 2,
+      "prose": "Naive `fib(5)` makes 15 calls and `fib(6)` makes 25.",
+      "question": "How many calls does naive `fib(7)` make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 41,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "label": "Calls",
+        "accept": "41: $1 + 25 + 15$.",
+        "wrong": [
+          {
+            "id": "no-one",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "next",
+            "value": 35,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 + 25 + 15 = 41$.",
+        "generic": "Not quite right. One call plus the calls of `fib(6)` and `fib(5)`.",
+        "byKey": {
+          "no-one": "You left out the call to `fib(7)` itself."
+        }
+      },
+      "explain": {
+        "text": "Calls follow $C(n) = 1 + C(n-1) + C(n-2)$. So $C(7) = 1 + 25 + 15 = 41$, while memoised `fib(7)` computes 8 values."
+      }
+    },
+    {
+      "id": "q-zero",
+      "difficulty": 2,
+      "prose": "`fib_memo` from the lesson returns `(fib(n), computed)`.",
+      "question": "What does `fib_memo(0)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`(0, 1)`",
+            "correct": true
+          },
+          {
+            "id": "nocount",
+            "text": "`(0, 0)`",
+            "why": "A base case is still a value worked out rather than read from the cache, so it counts."
+          },
+          {
+            "id": "one",
+            "text": "`(1, 1)`",
+            "why": "$F_0 = 0$: the base case returns `n` itself."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`(0, 1)`: one value, the base case.",
+        "generic": "Not quite right. Run `f(0)` by hand."
+      },
+      "explain": {
+        "text": "`f(0)` misses the empty cache, counts one computation and returns 0 as a base case. Nothing else is called."
+      }
+    }
+  ]
+}

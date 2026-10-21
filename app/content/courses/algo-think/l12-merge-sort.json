@@ -1,0 +1,1822 @@
+{
+  "id": "l12-merge-sort",
+  "course": "algo-think",
+  "title": "Merge sort",
+  "minutes": 15,
+  "objectives": [
+    "Implement merge sort and derive its running time.",
+    "Use the merge step to merge sorted logs and to count inversions."
+  ],
+  "skills": [
+    "at-sort",
+    "at-recursion"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two sorted lists",
+      "prose": "Two lists are each sorted. We build one sorted list from them by taking values from the front only. The arrows mark each list's front.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              2,
+              5,
+              9,
+              12
+            ]
+          },
+          "state": {
+            "done": [],
+            "caption": "a",
+            "pointers": [
+              {
+                "id": "a",
+                "at": 0,
+                "label": "a"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              3,
+              4,
+              10,
+              15
+            ]
+          },
+          "state": {
+            "done": [],
+            "caption": "b",
+            "pointers": [
+              {
+                "id": "b",
+                "at": 0,
+                "label": "b"
+              }
+            ]
+          }
+        }
+      },
+      "question": "Take values one at a time until every value is out.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "done",
+        "states": {
+          "s0": {
+            "tex": "\\text{out} = []",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 0,
+                    "label": "i"
+                  }
+                ],
+                "done": []
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 0,
+                    "label": "j"
+                  }
+                ],
+                "done": []
+              }
+            },
+            "ops": [
+              {
+                "label": "Take 2 from a",
+                "to": "s1"
+              },
+              {
+                "label": "Take 3 from b",
+                "to": "wbig",
+                "why": "You took 3, but 2 is smaller. The next output is the smaller of the two fronts."
+              }
+            ]
+          },
+          "s1": {
+            "tex": "\\text{out} = [2]",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 1,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0
+                ]
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 0,
+                    "label": "j"
+                  }
+                ],
+                "done": []
+              }
+            },
+            "ops": [
+              {
+                "label": "Take 5 from a",
+                "to": "wbig",
+                "why": "You took 5, but 3 is smaller. The next output is the smaller of the two fronts."
+              },
+              {
+                "label": "Take 3 from b",
+                "to": "s2"
+              }
+            ]
+          },
+          "s2": {
+            "tex": "\\text{out} = [2, 3]",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 1,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0
+                ]
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 1,
+                    "label": "j"
+                  }
+                ],
+                "done": [
+                  0
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Take 4 from b",
+                "to": "s3"
+              },
+              {
+                "label": "Take 5 from a",
+                "to": "wbig",
+                "why": "You took 5, but 4 is smaller. The next output is the smaller of the two fronts."
+              }
+            ]
+          },
+          "s3": {
+            "tex": "\\text{out} = [2, 3, 4]",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 1,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0
+                ]
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 2,
+                    "label": "j"
+                  }
+                ],
+                "done": [
+                  0,
+                  1
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Take 10 from b",
+                "to": "wbig",
+                "why": "You took 10, but 5 is smaller. The next output is the smaller of the two fronts."
+              },
+              {
+                "label": "Take 5 from a",
+                "to": "s4"
+              }
+            ]
+          },
+          "s4": {
+            "tex": "\\text{out} = [2, 3, 4, 5]",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 2,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0,
+                  1
+                ]
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 2,
+                    "label": "j"
+                  }
+                ],
+                "done": [
+                  0,
+                  1
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Take 9 from a",
+                "to": "s5"
+              },
+              {
+                "label": "Take 10 from b",
+                "to": "wbig",
+                "why": "You took 10, but 9 is smaller. The next output is the smaller of the two fronts."
+              }
+            ]
+          },
+          "s5": {
+            "tex": "\\text{out} = [2, 3, 4, 5, 9]",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 3,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0,
+                  1,
+                  2
+                ]
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 2,
+                    "label": "j"
+                  }
+                ],
+                "done": [
+                  0,
+                  1
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Take 12 from a",
+                "to": "wbig",
+                "why": "You took 12, but 10 is smaller. The next output is the smaller of the two fronts."
+              },
+              {
+                "label": "Take 10 from b",
+                "to": "s6"
+              }
+            ]
+          },
+          "s6": {
+            "tex": "\\text{out} = [2, 3, 4, 5, 9, 10]",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 3,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0,
+                  1,
+                  2
+                ]
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 3,
+                    "label": "j"
+                  }
+                ],
+                "done": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Take 12 from a",
+                "to": "s7"
+              },
+              {
+                "label": "Take 15 from b",
+                "to": "wbig",
+                "why": "You took 15, but 12 is smaller. The next output is the smaller of the two fronts."
+              }
+            ]
+          },
+          "s7": {
+            "tex": "\\text{out} = [2, 3, 4, 5, 9, 10, 12]:\\ \\text{a is empty}",
+            "canvas": {
+              "left": {
+                "pointers": [],
+                "done": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              "right": {
+                "pointers": [
+                  {
+                    "id": "j",
+                    "at": 3,
+                    "label": "j"
+                  }
+                ],
+                "done": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Stop: one list is empty",
+                "to": "wstop",
+                "why": "You stopped with 15 still in b. The leftover tail is already sorted and must be copied."
+              },
+              {
+                "label": "Copy the rest of b",
+                "to": "done"
+              }
+            ]
+          },
+          "done": {
+            "tex": "\\text{out} = [2, 3, 4, 5, 9, 10, 12, 15]",
+            "canvas": {
+              "left": {
+                "pointers": [],
+                "done": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              "right": {
+                "pointers": [],
+                "done": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              }
+            }
+          },
+          "wbig": {
+            "tex": "\\text{a larger value went out before a smaller one}"
+          },
+          "wstop": {
+            "tex": "\\text{out} = [2, 3, 4, 5, 9, 10, 12]\\ \\text{lost the 15}"
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two values could be the smallest one left?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the two fronts can be the smallest left: everything behind them is larger.",
+          "highlight": [
+            "left:c0",
+            "right:c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take the smaller front each time: 2, 3, 4, 5, 9, 10, 12. Then a is empty, so copy what is left of b."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight values out in order, one step each.",
+        "generic": "Not quite right. Take the smaller front each time, and empty both lists.",
+        "byKey": {
+          "wbig": "You took the larger front. The smaller front must go out first, or the output is out of order.",
+          "wstop": "You stopped while b still held 15. The leftover tail is sorted and goes on the end."
+        }
+      },
+      "explain": {
+        "text": "Each step compared two fronts and moved one value out, so eight values took at most seven comparisons. This is a **merge**: linear in the total length.",
+        "canvas": {
+          "left": {
+            "pointers": [],
+            "done": [
+              0,
+              1,
+              2,
+              3
+            ]
+          },
+          "right": {
+            "pointers": [],
+            "done": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Split until trivial",
+      "prose": "**Merge sort**: split the list in half, sort each half the same way, then merge the two sorted halves. A list of one value is already sorted.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "t",
+              "label": "38 27 43 3 9 82 10 5",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "38 27 43 3",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "38 27",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "38"
+                        },
+                        {
+                          "id": "r",
+                          "label": "27"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "r",
+                      "label": "43 3",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "43"
+                        },
+                        {
+                          "id": "r",
+                          "label": "3"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "9 82 10 5",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "9 82",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "9"
+                        },
+                        {
+                          "id": "r",
+                          "label": "82"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "r",
+                      "label": "10 5",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "10"
+                        },
+                        {
+                          "id": "r",
+                          "label": "5"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each call splits its list in half"
+        }
+      },
+      "question": "Merging happens once per level above the single values. How many levels of merging does this list of 8 need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "eight",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "seven",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many times can you halve 8 before you reach 1?"
+        },
+        {
+          "rung": "point",
+          "text": "These are the single values at the bottom.",
+          "highlight": [
+            "t-l-l-l",
+            "t-r-r-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "8 splits to 4, then 2, then 1: three halvings. So there are 3 levels of merging back up."
+        }
+      ],
+      "feedback": {
+        "correct": "Three levels: $\\log_2 8 = 3$.",
+        "generic": "Not quite right. Count the halvings from 8 down to 1.",
+        "byKey": {
+          "eight": "You counted the values. The levels count halvings, and 8 halves to 1 in three steps.",
+          "seven": "You counted the merges, seven in all. They sit on three levels.",
+          "four": "You counted the rows of the tree, including the single values, which need no merging."
+        }
+      },
+      "explain": {
+        "text": "The tree has $\\log_2 8 = 3$ levels of splitting. On the way back up, each level merges all 8 values in some groups. So each level costs about 8 steps.",
+        "canvas": {
+          "highlight": [
+            "t-l",
+            "t-r"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write the merge",
+      "prose": "Return a new sorted list with every value of `a` and `b`. Take from `a` when the fronts are equal. Leave the inputs unchanged.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              2,
+              5,
+              9,
+              12
+            ]
+          },
+          "state": {
+            "done": [],
+            "caption": "a",
+            "pointers": [
+              {
+                "id": "a",
+                "at": 0,
+                "label": "a"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              3,
+              4,
+              10,
+              15
+            ]
+          },
+          "state": {
+            "done": [],
+            "caption": "b",
+            "pointers": [
+              {
+                "id": "b",
+                "at": 0,
+                "label": "b"
+              }
+            ]
+          }
+        }
+      },
+      "question": "Write `merge(a, b)` for two sorted lists.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def merge(a, b):\n    ...\n",
+        "solution": "def merge(a, b):\n    out = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    out.extend(a[i:])\n    out.extend(b[j:])\n    return out\n",
+        "examples": [
+          {
+            "call": "merge([2, 5, 9, 12], [3, 4, 10, 15])",
+            "expect": "[2, 3, 4, 5, 9, 10, 12, 15]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([5], [1, 2, 3, 4])",
+            "expect": "[1, 2, 3, 4, 5]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge([2, 5, 9, 12], [3, 4, 10, 15])",
+            "expect": "[2, 3, 4, 5, 9, 10, 12, 15]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([], [1, 2])",
+            "expect": "[1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([1, 2], [])",
+            "expect": "[1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([], [])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([1, 1, 2], [1, 3])",
+            "expect": "[1, 1, 1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([5], [1, 2, 3, 4])",
+            "expect": "[1, 2, 3, 4, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge([1, 2, 3], [7, 8])",
+            "expect": "[1, 2, 3, 7, 8]",
+            "compare": "equal"
+          },
+          {
+            "setup": "a = [1, 3]; b = [2, 4]",
+            "call": "(merge(a, b), a, b)",
+            "expect": "([1, 2, 3, 4], [1, 3], [2, 4])",
+            "compare": "equal"
+          },
+          {
+            "call": "merge(list(range(0, 100000, 2)), list(range(1, 100000, 2))) == list(range(100000))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: the example, empty lists, duplicates, a tail left in either list, unchanged inputs, and two lists of 50,000."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep an index into each list and compare the two fronts."
+        },
+        {
+          "rung": "point",
+          "text": "When one list runs out, values are left in the other.",
+          "highlight": [
+            "right:c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "While both have values, append the smaller front (`a` on a tie) and move its index. Then `extend` with `a[i:]` and `b[j:]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every value comes out once, in order, in one pass.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-6": "Test 6 leaves 5 in `a` after `b` runs out. You dropped the leftover tail; extend with `a[i:]` and `b[j:]`.",
+          "test-2": "Test 2 has an empty `a`. The loop never runs, so everything comes from the tail of `b`.",
+          "test-9": "Test 9 merges 100,000 values. Sorting the joined list, or `pop(0)`, is too slow; walk two indices."
+        }
+      },
+      "explain": {
+        "text": "Each comparison moves one value out, so a merge of $n$ values makes at most $n - 1$ comparisons. The tail is already sorted and larger than everything taken, so it goes on the end as it is.",
+        "canvas": {
+          "left": {
+            "pointers": [],
+            "done": [
+              0,
+              1,
+              2,
+              3
+            ]
+          },
+          "right": {
+            "pointers": [],
+            "done": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write merge sort",
+      "prose": "`merge` from before is in the starter. Now split, sort each half by calling `merge_sort` itself, and merge. Return a new list.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "t",
+              "label": "38 27 43 3 9 82 10 5",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "38 27 43 3",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "38 27",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "38"
+                        },
+                        {
+                          "id": "r",
+                          "label": "27"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "r",
+                      "label": "43 3",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "43"
+                        },
+                        {
+                          "id": "r",
+                          "label": "3"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "9 82 10 5",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "9 82",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "9"
+                        },
+                        {
+                          "id": "r",
+                          "label": "82"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "r",
+                      "label": "10 5",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "10"
+                        },
+                        {
+                          "id": "r",
+                          "label": "5"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each call splits its list in half"
+        }
+      },
+      "question": "Write `merge_sort(xs)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def merge(a, b):\n    out = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    out.extend(a[i:])\n    out.extend(b[j:])\n    return out\n\n\ndef merge_sort(xs):\n    ...\n",
+        "solution": "def merge(a, b):\n    out = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    out.extend(a[i:])\n    out.extend(b[j:])\n    return out\n\n\ndef merge_sort(xs):\n    if len(xs) <= 1:\n        return list(xs)\n    mid = len(xs) // 2\n    return merge(merge_sort(xs[:mid]), merge_sort(xs[mid:]))\n",
+        "examples": [
+          {
+            "call": "merge_sort([38, 27, 43, 3, 9, 82, 10, 5])",
+            "expect": "[3, 5, 9, 10, 27, 38, 43, 82]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_sort([])",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge_sort([38, 27, 43, 3, 9, 82, 10, 5])",
+            "expect": "[3, 5, 9, 10, 27, 38, 43, 82]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_sort([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_sort([1])",
+            "expect": "[1]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_sort([2, 1])",
+            "expect": "[1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_sort([5, 2, 4, 6, 1, 3])",
+            "expect": "[1, 2, 3, 4, 5, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_sort([3, 1, 2, 3, 1])",
+            "expect": "[1, 1, 2, 3, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_sort(list(range(20000, 0, -1))) == list(range(1, 20001))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [3, 1, 2]",
+            "call": "(merge_sort(xs), xs)",
+            "expect": "([1, 2, 3], [3, 1, 2])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: the example, empty and one-value lists, two values, duplicates, 20,000 values in reverse order, and an unchanged input."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What list needs no sorting at all? That is the base case."
+        },
+        {
+          "rung": "point",
+          "text": "Each call splits its list at `len(xs) // 2`.",
+          "highlight": [
+            "t-l",
+            "t-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If `len(xs) <= 1`, return `list(xs)`. Else `mid = len(xs) // 2` and return `merge(merge_sort(xs[:mid]), merge_sort(xs[mid:]))`."
+        }
+      ],
+      "feedback": {
+        "correct": "It sorts 20,000 reversed values quickly, where insertion sort would need 200 million comparisons.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "error": "Your code stopped with an error. If it was `RecursionError`, your base case misses lists of one value.",
+          "test-7": "Test 7 sorts 20,000 values. If it timed out, check that you split in half, not one value at a time."
+        }
+      },
+      "explain": {
+        "text": "The base case `len(xs) <= 1` covers both the empty list and a single value. Every other call splits into two strictly smaller halves, so the recursion always ends.",
+        "canvas": {
+          "highlight": [
+            "t-l-l-l",
+            "t-l-l-r",
+            "t-l-r-l",
+            "t-l-r-r",
+            "t-r-l-l",
+            "t-r-l-r",
+            "t-r-r-l",
+            "t-r-r-r"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Equal prices",
+      "prose": "We merge sort three trades by price. The merge takes from the left half when prices are equal, `a[i] <= b[j]`. The split is `[A]` and `[B, C]`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "A £101",
+            "B £100",
+            "C £101"
+          ]
+        },
+        "state": {
+          "caption": "Trades in arrival order"
+        }
+      },
+      "question": "In what order do they come out?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "B, A, C",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "B, C, A",
+            "why": "You let C pass A on the tie. With `<=` the merge takes A, from the left half, first."
+          },
+          {
+            "id": "c",
+            "text": "A, C, B",
+            "why": "You sorted from high to low. Merge sort here puts the lowest price first."
+          },
+          {
+            "id": "d",
+            "text": "A, B, C",
+            "why": "You kept arrival order. B is cheaper, so it comes out before A."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Sort `[B, C]` first. Then merge `[A]` with it."
+        },
+        {
+          "rung": "point",
+          "text": "A and C tie at £101. The tie goes to the left half.",
+          "highlight": [
+            "c0",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`[B, C]` stays B, C. Merge `[A]` with `[B, C]`: B is cheaper, so B. Then A and C tie, and `<=` takes A. Then C."
+        }
+      ],
+      "feedback": {
+        "correct": "B, then A before C: equal prices keep arrival order.",
+        "generic": "Not quite right. Which half wins a tie?"
+      },
+      "explain": {
+        "text": "A sits in the left half because it arrived first. Taking from the left on a tie keeps it ahead of C. So merge sort is **stable**; with `<` instead of `<=` it would not be.",
+        "canvas": {
+          "cells": [
+            "B £100",
+            "A £101",
+            "C £101"
+          ],
+          "done": [
+            0,
+            1,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "One value, for ever",
+      "prose": "A colleague's base case only stops at the empty list.\n\n```python\ndef merge_sort(xs):\n    if len(xs) == 0:\n        return xs\n    mid = len(xs) // 2\n    return merge(merge_sort(xs[:mid]),\n                 merge_sort(xs[mid:]))\n```",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> merge_sort([7])",
+            "RecursionError: maximum recursion depth exceeded"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l2": "err"
+          }
+        }
+      },
+      "question": "Why does `merge_sort([7])` never finish?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "half",
+            "text": "For one value `mid` is 0, so `xs[mid:]` is the whole list again",
+            "correct": true
+          },
+          {
+            "id": "merge",
+            "text": "`merge` cannot handle an empty list",
+            "why": "You blamed `merge`. It is never reached: the call on `[7]` calls itself on `[7]` first."
+          },
+          {
+            "id": "limit",
+            "text": "Python's recursion limit is set too low",
+            "why": "You blamed the limit. The calls never shrink, so any limit is reached."
+          },
+          {
+            "id": "round",
+            "text": "`mid` should be `(len(xs) + 1) // 2`",
+            "why": "You rounded the split up. Then `mid` is 1 and `xs[:mid]` is the whole list, the same loop on the other side."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out `mid`, `xs[:mid]` and `xs[mid:]` for `xs = [7]`."
+        },
+        {
+          "rung": "point",
+          "text": "The traceback says the calls went on and on.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`mid = 1 // 2 = 0`, so `xs[:0]` is `[]` and `xs[0:]` is `[7]`. The call on `[7]` repeats for ever."
+        }
+      ],
+      "feedback": {
+        "correct": "A one-value list splits into nothing and itself, so the call repeats.",
+        "generic": "Not quite right. Split `[7]` by hand.",
+        "byKey": {
+          "merge": "You blamed `merge`. It never runs; the call on `[7]` calls itself on `[7]` again first.",
+          "limit": "You blamed the limit. The list never gets shorter, so no limit is enough.",
+          "round": "You rounded the split up. That puts the whole list in the left half instead: the same problem."
+        }
+      },
+      "explain": {
+        "text": "A split must make both halves strictly shorter. That fails for one value, whichever way we round. So one value must be a base case: `if len(xs) <= 1`.",
+        "canvas": {
+          "lines": [
+            ">>> merge_sort([7])  # with len(xs) <= 1",
+            "[7]"
+          ],
+          "tone": {
+            "l2": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why $n \\log n$",
+      "prose": "Let $T(n)$ be the steps merge sort takes on $n$ values. Two half-size sorts and a merge give\n$$T(n) = 2\\,T(n/2) + n.$$\nWe sum the work level by level of the tree.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "t",
+              "label": "38 27 43 3 9 82 10 5",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "38 27 43 3",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "38 27",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "38"
+                        },
+                        {
+                          "id": "r",
+                          "label": "27"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "r",
+                      "label": "43 3",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "43"
+                        },
+                        {
+                          "id": "r",
+                          "label": "3"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "9 82 10 5",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "9 82",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "9"
+                        },
+                        {
+                          "id": "r",
+                          "label": "82"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "r",
+                      "label": "10 5",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "10"
+                        },
+                        {
+                          "id": "r",
+                          "label": "5"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each call splits its list in half"
+        }
+      },
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Level 0: one call merges all $n$ values, cost $n$ (the $+\\,n$ term)"
+          },
+          {
+            "id": "s2",
+            "text": "Level $k$: $2^k$ calls each merge $n/2^k$ values, cost $2^k \\cdot n/2^k = n$"
+          },
+          {
+            "id": "s3",
+            "text": "Sizes halve until they reach 1, so there are $\\log_2 n$ levels that merge"
+          },
+          {
+            "id": "s4",
+            "text": "Total: $n$ per level times $\\log_2 n$ levels is $n \\log_2 n$"
+          },
+          {
+            "id": "s5",
+            "text": "So $T(n)$ is $O(n \\log n)$"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at the top of the tree with the cost of one merge."
+        },
+        {
+          "rung": "point",
+          "text": "This level has two calls of half size.",
+          "highlight": [
+            "t-l",
+            "t-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Top level costs $n$. Every level costs $n$, because more calls each merge less. There are $\\log_2 n$ levels. Multiply."
+        }
+      ],
+      "feedback": {
+        "correct": "Every level costs $n$, and there are $\\log_2 n$ levels.",
+        "generic": "Not quite right. Find one level's cost before counting the levels."
+      },
+      "explain": {
+        "text": "For 8 values: 3 levels of about 8 steps each, so about 24, against 28 for insertion sort's worst case. For a million: 20 levels of a million, against half a trillion. The merge needs a new list, so merge sort uses $O(n)$ extra memory.",
+        "canvas": {
+          "caption": "3 levels × 8 values per level"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How out of order",
+      "prose": "Two analysts rank six stocks. List analyst B's ranks in analyst A's order. A pair of stocks the two rank in opposite order is an **inversion**. Counting them measures disagreement, as Kendall's rank correlation does.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            1,
+            2,
+            5,
+            4,
+            6
+          ]
+        },
+        "state": {
+          "caption": "B's ranks, in A's order: 3 inversions out of 15 pairs"
+        }
+      },
+      "question": "Write `count_inversions(xs)`: the number of pairs `i < j` with `xs[i] > xs[j]`, in $O(n \\log n)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_inversions(xs):\n    ...\n",
+        "solution": "def count_inversions(xs):\n    def sort_count(a):\n        if len(a) <= 1:\n            return list(a), 0\n        mid = len(a) // 2\n        left, x = sort_count(a[:mid])\n        right, y = sort_count(a[mid:])\n        out, i, j, c = [], 0, 0, x + y\n        while i < len(left) and j < len(right):\n            if left[i] <= right[j]:\n                out.append(left[i])\n                i += 1\n            else:\n                out.append(right[j])\n                j += 1\n                c += len(left) - i\n        out += left[i:] + right[j:]\n        return out, c\n    return sort_count(xs)[1]\n",
+        "examples": [
+          {
+            "call": "count_inversions([3, 1, 2, 5, 4, 6])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([2, 1])",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_inversions([3, 1, 2, 5, 4, 6])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([1])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([2, 1])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([5, 2, 4, 6, 1, 3])",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([1, 2, 3, 4, 5, 6])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([6, 5, 4, 3, 2, 1])",
+            "expect": "15",
+            "compare": "equal"
+          },
+          {
+            "call": "count_inversions([2, 2, 1])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "big = [(i * 7919) % 20011 for i in range(20000)]",
+            "call": "count_inversions(big)",
+            "expect": "99930366",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [3, 1, 2]",
+            "call": "(count_inversions(xs), xs)",
+            "expect": "(2, [3, 1, 2])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: the ranking, empty and one-value lists, sorted and reversed lists, equal values (not inversions), 20,000 values, where checking every pair is too slow, and an unchanged input."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Merge sort each half, counting inside each. What does the merge add?"
+        },
+        {
+          "rung": "point",
+          "text": "When this 1 is taken from the right half, it is smaller than every value still waiting in the left half.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the merge, each time you take from the right half, add `len(left) - i`: the left values still waiting are all bigger. Return the count from the halves plus the merge."
+        }
+      ],
+      "feedback": {
+        "correct": "The same split and merge as the sort, with a counter, so $O(n \\log n)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-8": "Test 8 has equal values, which are not inversions. Take from the left on a tie, `<=`, so equal pairs are not counted.",
+          "test-9": "Test 9 has 20,000 values, about 200 million pairs. Checking every pair is too slow; count during the merge."
+        }
+      },
+      "explain": {
+        "text": "Here 3 of 15 pairs disagree, so Kendall's tau is $1 - 2 \\times 3/15 = 0.6$. A value taken from the right half jumps over every left value still waiting. Each jump is one inversion, counted in bulk.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3",
+            "c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two venues",
+      "prose": "Each venue's log of `(time, venue, size)` is sorted by time. Merge them into one log by time. On a tie, put the first log's trade first.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "first log (LSE)",
+            "second log (CXE)"
+          ],
+          "rows": [
+            [
+              "09:00:01, 200",
+              "09:00:02, 150"
+            ],
+            [
+              "09:00:03, 100",
+              "09:00:03, 50"
+            ],
+            [
+              "09:00:05, 300",
+              "09:00:06, 400"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Each column is sorted by time"
+        }
+      },
+      "question": "Write `merge_logs(a, b)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def merge_logs(a, b):\n    ...\n",
+        "solution": "def merge_logs(a, b):\n    out = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i][0] <= b[j][0]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    return out + a[i:] + b[j:]\n",
+        "examples": [
+          {
+            "call": "merge_logs([('09:00:00', 'LSE', 10)], [('08:59:59', 'CXE', 5)])",
+            "expect": "[('08:59:59', 'CXE', 5), ('09:00:00', 'LSE', 10)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge_logs([('09:00:01', 'LSE', 200), ('09:00:03', 'LSE', 100), ('09:00:05', 'LSE', 300)], [('09:00:02', 'CXE', 150), ('09:00:03', 'CXE', 50), ('09:00:06', 'CXE', 400)])",
+            "expect": "[('09:00:01', 'LSE', 200), ('09:00:02', 'CXE', 150), ('09:00:03', 'LSE', 100), ('09:00:03', 'CXE', 50), ('09:00:05', 'LSE', 300), ('09:00:06', 'CXE', 400)]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_logs([('09:00:02', 'CXE', 150), ('09:00:03', 'CXE', 50), ('09:00:06', 'CXE', 400)], [('09:00:01', 'LSE', 200), ('09:00:03', 'LSE', 100), ('09:00:05', 'LSE', 300)])[2:4]",
+            "expect": "[('09:00:03', 'CXE', 50), ('09:00:03', 'LSE', 100)]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_logs([], [('09:00:02', 'CXE', 150), ('09:00:03', 'CXE', 50), ('09:00:06', 'CXE', 400)])",
+            "expect": "[('09:00:02', 'CXE', 150), ('09:00:03', 'CXE', 50), ('09:00:06', 'CXE', 400)]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_logs([('09:00:01', 'LSE', 200), ('09:00:03', 'LSE', 100), ('09:00:05', 'LSE', 300)], [])",
+            "expect": "[('09:00:01', 'LSE', 200), ('09:00:03', 'LSE', 100), ('09:00:05', 'LSE', 300)]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_logs([], [])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_logs([('09:00:00', 'LSE', 10)], [('08:59:59', 'CXE', 5)])",
+            "expect": "[('08:59:59', 'CXE', 5), ('09:00:00', 'LSE', 10)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: the two logs, the same logs swapped, an empty log on either side, two empty logs, and a single trade each."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "This is `merge`, comparing only the times."
+        },
+        {
+          "rung": "point",
+          "text": "These two trades share a time. The first log's trade goes first.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Compare `a[i][0] <= b[j][0]`: take from `a` on a tie. Add both tails at the end."
+        }
+      ],
+      "feedback": {
+        "correct": "One pass over both logs, ties to the first log.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 swaps the logs, so the CXE trade must now come first at 09:00:03. Compare only times, with `<=`.",
+          "test-3": "Test 3 has an empty first log. Copy the tail of the second."
+        }
+      },
+      "explain": {
+        "text": "Comparing whole tuples would break ties by venue name, not by log. Comparing times with `<=` keeps the merge stable. Each trade is handled once, so the cost is linear in the total.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Too big for memory",
+      "prose": "A year of ticks is 200 GB, and the machine has 16 GB of memory. You need the file sorted by time.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "run 1",
+            "run 2",
+            "…",
+            "run 13"
+          ],
+          "showIndex": false
+        },
+        "state": {
+          "caption": "Sorted runs of about 15 GB each, written to disk"
+        }
+      },
+      "question": "Which plan works?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Sort chunks that fit in memory, write each sorted run to disk, then merge the runs, reading each from its front",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Load the file and call `sorted`",
+            "why": "You loaded 200 GB into 16 GB of memory. It does not fit."
+          },
+          {
+            "id": "c",
+            "text": "Insertion sort the file on disk, one tick at a time",
+            "why": "You chose an $O(n^2)$ sort with a disk access per step. It would take years."
+          },
+          {
+            "id": "d",
+            "text": "Sort each chunk and join the sorted chunks end to end",
+            "why": "You joined the runs without merging. Each run is sorted, but the joined file is not."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A merge only ever looks at the front of each list."
+        },
+        {
+          "rung": "point",
+          "text": "Each run is sorted on its own.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Sort 13 chunks of about 15 GB in memory, one at a time. Then merge the 13 runs, keeping only each run's front in memory."
+        }
+      ],
+      "feedback": {
+        "correct": "This is **external sorting**: sort in memory, merge on disk.",
+        "generic": "Not quite right. Which plan never needs more than the memory you have?"
+      },
+      "explain": {
+        "text": "A merge reads each run from its front and writes the output in order. So memory holds only a buffer per run, not the whole file. Databases sort large tables this way."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Merging two sorted lists takes the smaller front each time, then copies the leftover tail: linear time.",
+      "Merge sort splits in half until one value is left, then merges back up: $\\log_2 n$ levels of $n$ work each.",
+      "It is stable and $O(n \\log n)$ on every input, but needs $O(n)$ extra memory."
+    ],
+    "formula": {
+      "name": "Merge sort's recurrence",
+      "tex": "T(n) = 2\\,T(n/2) + n \\;\\Rightarrow\\; T(n) = O(n \\log n)",
+      "note": "Each of the $\\log_2 n$ levels costs $n$."
+    },
+    "trap": "A base case that stops only at the empty list recurses for ever on one value, and a merge that forgets the tail drops values."
+  },
+  "quiz": [
+    {
+      "id": "q-tail",
+      "difficulty": 2,
+      "prose": "```python\ndef merge(a, b):\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out\n```",
+      "question": "What does `merge([1, 4, 9], [2, 3])` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[1, 2, 3]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[1, 2, 3, 4, 9]`",
+            "why": "You assumed the tail is added. This version returns as soon as `b` is empty, dropping 4 and 9."
+          },
+          {
+            "id": "c",
+            "text": "`[1, 2, 3, 4]`",
+            "why": "The loop stops when `b` runs out, before 4 is compared with anything."
+          },
+          {
+            "id": "d",
+            "text": "An `IndexError`",
+            "why": "The loop condition keeps both indices in range, so nothing fails loudly."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It silently drops the tail, 4 and 9.",
+        "generic": "Not quite right. When does the loop stop, and what is left?"
+      },
+      "explain": {
+        "text": "After 1, 2 and 3, `b` is empty and the loop ends. Nothing copies `a[i:]`, so 4 and 9 are lost. Always extend with both tails."
+      }
+    },
+    {
+      "id": "q-merge-comps",
+      "difficulty": 2,
+      "prose": "We merge a sorted list of 40 values with a sorted list of 25 values.",
+      "question": "At most how many comparisons does the merge make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 64,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "total",
+            "value": 65,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "product",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "64 comparisons.",
+        "generic": "Not quite right. Each comparison moves one value out.",
+        "byKey": {
+          "total": "You counted every value. The last value goes out with no comparison, because the other list is empty.",
+          "product": "You compared every pair. A merge only ever compares the two fronts."
+        }
+      },
+      "explain": {
+        "text": "Each comparison sends one value out. At worst one list empties only when one value is left, so $40 + 25 - 1 = 64$."
+      }
+    },
+    {
+      "id": "q-big-o",
+      "difficulty": 3,
+      "prose": "Merge sort takes 1 second on a million prices.",
+      "question": "About how long on two million?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A little over 2 seconds",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "4 seconds",
+            "why": "You used $O(n^2)$. Merge sort is $O(n \\log n)$."
+          },
+          {
+            "id": "c",
+            "text": "1 second",
+            "why": "Twice the values need at least twice the merging."
+          },
+          {
+            "id": "d",
+            "text": "20 seconds",
+            "why": "You multiplied by $\\log_2 n$ again. Only one extra level is added."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Twice the values and one more level: about 2.1 seconds.",
+        "generic": "Not quite right. Compare $2n\\log_2(2n)$ with $n \\log_2 n$."
+      },
+      "explain": {
+        "text": "The ratio is $\\dfrac{2n \\log_2 (2n)}{n \\log_2 n} = 2 \\times \\dfrac{21}{20} = 2.1$ for $n = 10^6$. Doubling $n$ adds one level of merging."
+      }
+    },
+    {
+      "id": "q-space",
+      "difficulty": 3,
+      "prose": "You compare merge sort with insertion sort on a long list.",
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Merge sort is faster but needs $O(n)$ extra memory for merging",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Merge sort is faster and sorts in place",
+            "why": "You assumed it works in place. The merge writes into a new list."
+          },
+          {
+            "id": "c",
+            "text": "Merge sort is not stable",
+            "why": "With `<=` the merge takes the left value on a tie, so equal values keep their order."
+          },
+          {
+            "id": "d",
+            "text": "Both are $O(n^2)$ in the worst case",
+            "why": "Merge sort always does $\\log_2 n$ levels of $n$ work: $O(n \\log n)$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Time $O(n \\log n)$, extra memory $O(n)$, stable.",
+        "generic": "Not quite right. Where does the merge put its output?"
+      },
+      "explain": {
+        "text": "Each merge builds a new list as long as its inputs, so merge sort needs $O(n)$ extra memory. In exchange it is $O(n \\log n)$ on every input and stable."
+      }
+    }
+  ]
+}

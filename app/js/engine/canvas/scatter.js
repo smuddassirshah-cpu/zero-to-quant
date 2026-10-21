@@ -17,11 +17,18 @@
     const K = Z.cvb;
     const W = 540, H = params.height || 320;
     const norm = (list) => (list || []).map((p, i) => (Array.isArray(p) ? { id: 'p' + i, x: +p[0], y: +p[1] } : { id: p.id || 'p' + i, x: +p.x, y: +p.y, label: p.label }));
-    const base = norm(params.points);
+    /* item 296: sim: { n, rho, seed, mx, my, sx, sy } draws n seeded normal pairs with correlation rho; a control on
+       "rho" (state.params.rho) re-correlates the same draws, so a live correlation slider needs no derive */
+    const sim = params.sim && typeof params.sim === 'object' ? params.sim : null;
+    const simZ = sim ? (() => { const r = K.rngFor(sim.seed ?? 1), n = Math.max(2, Math.round(sim.n || 60)), z = []; for (let i = 0; i < n; i++) z.push([K.gauss(r), K.gauss(r)]); return z; })() : null;
+    const simPts = (rho) => { const q = K.clamp(+rho, -1, 1), c = Math.sqrt(1 - q * q), mx = +(sim.mx ?? 0), my = +(sim.my ?? 0), sdx = +(sim.sx ?? 1), sdy = +(sim.sy ?? 1); return simZ.map(([a, b], i) => ({ id: 'p' + i, x: mx + sdx * a, y: my + sdy * (q * a + c * b) })); };
+    const rhoOf = (view) => { const v = view && view.params && view.params.rho != null ? view.params.rho : sim.rho ?? 0; return Number.isFinite(+v) ? +v : 0; };
+    const base = sim ? simPts(sim.rho ?? 0) : norm(params.points);
     const lbl = (v, fb) => (typeof v === 'string' ? v : fb);
     const xLabel = params.xLabel ?? lbl(params.x, null), yLabel = params.yLabel ?? lbl(params.y, null);
     const rangeOf = (key, given) => {
       if (Array.isArray(given)) return given;
+      if (sim) { const m = +(sim[key === 'x' ? 'mx' : 'my'] ?? 0), sd = +(sim[key === 'x' ? 'sx' : 'sy'] ?? 1), t = C.niceTicks(m - 3.4 * sd, m + 3.4 * sd, 6); return [t[0], t[t.length - 1]]; }
       const vs = base.map((p) => p[key]); if (!vs.length) return [0, 1];
       const lo = Math.min(...vs), hi = Math.max(...vs), pad = (hi - lo || 1) * 0.08;
       const t = C.niceTicks(lo - pad, hi + pad, 6); const st = t.length > 1 ? t[1] - t[0] : 1;
@@ -41,7 +48,7 @@
       listKeys: ['points'],
       init: () => ({ points: base.map((p) => ({ ...p })), line: null, residuals: false, highlight: [], showFit: !!params.fit }),
       render(view, R) {
-        const g = R.F.g, pts = view.points || [];
+        const g = R.F.g, pts = sim ? simPts(rhoOf(view)) : view.points || [];
         const x0 = ml, x1 = W - mr, y0 = H - mb, y1 = mt;
         K.chartAxes(g, sx, sy, { yLabel, xLabel, baseline: yr[0] < 0 && yr[1] > 0 ? 0 : null });
         if (xr[0] < 0 && xr[1] > 0) g.append(svg('line', { x1: sx(0), x2: sx(0), y1: y0, y2: y1, class: 'cvb-axis thin' }));
@@ -133,6 +140,8 @@
         },
       },
       methods: (R) => ({
+        /* the sample correlation of the points shown, for derive and captions (values.r) */
+        values: () => { const P2 = sim ? simPts(rhoOf(R.state)) : R.state.points || []; const n = P2.length; if (n < 2) return {}; const mx = P2.reduce((t, q) => t + q.x, 0) / n, my = P2.reduce((t, q) => t + q.y, 0) / n; let sxy = 0, sxx = 0, syy = 0; P2.forEach((q) => { sxy += (q.x - mx) * (q.y - my); sxx += (q.x - mx) ** 2; syy += (q.y - my) ** 2; }); return { r: sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0 }; },
         /* item 250: controls and derive reach line.m and line.b directly (a missing line starts flat at 0) */
         setParam: (name, v) => { const n = String(name), m = n.match(/^line\.(m|b)$/); if (m) { const l = R.state.line || { m: 0, b: 0 }; R.inst.set({ line: { ...l, [m[1]]: +v } }, { instant: true }); return; } R.inst.set(Z.canvas.paramPatch(n, v), { instant: true }); },
         getParam: (name) => { const n = String(name), m = n.match(/^line\.(m|b)$/); if (m) return R.state.line ? R.state.line[m[1]] : undefined; return (R.state.params || {})[n]; },
