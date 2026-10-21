@@ -1049,3 +1049,9 @@ Content note (trees): level 2 grows cash by (1 + r) per step and level 3 by e^{r
 Content gaps (second reader, topic 1.3), to fill in a later gap pass once every course is written:
 
 383. Calculus coverage against the MIT 18.01 and 18.02 exit lines: no improper integrals with an unbounded integrand (integrals l7 promises them), no partial fractions, trigonometric substitution or trig powers, inverse trig functions, related rates, volumes of revolution, arc length, hyperbolic functions; the mean value theorem is used but never taught; multivar has no triple integrals or Jacobian, and Lagrange only in two variables with one constraint. Candidate: an extra level in `integrals` (techniques) and one extra lesson each in `limits` (MVT, related rates) and `multivar` (Jacobian, Lagrange in three variables).
+
+Raised later (ds level 2):
+
+384. `array`: pointers as tap targets ("tap the pointer that should move"), not only the cells under them.
+385. `series`: a label size or offset option for `{value}` markers, so ten labelled points fit at 540 px.
+386. A compact chart beside a `table` without shrinking axis text (`maxHeight: 180` makes a `series` axis unreadable); a `compact` mode or a wider `pair` split.
