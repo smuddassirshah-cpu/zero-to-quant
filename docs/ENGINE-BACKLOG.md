@@ -1163,3 +1163,9 @@ Raised later (cpp level 1):
 404. Playthrough: the previous screen's "Correct." toast is still visible in the next screen's screenshot (cosmetic; with 400).
 
 Content note (pass 6, item 297): seven homework items have both prose and a longform `prompt`, so the prompt is hidden: sql h3, py-found h4, pytest h2 and h3, plotting h1 and h2, testing h3. Merge each prompt into its prose in the next fix pass for those courses.
+
+Raised later (ds level 3):
+
+405. `array` stack mode: a cell label separate from its value ("i2" above "6"), so a monotonic stack can show indices and values without shrinking text.
+406. `graph`: named pointers attached to nodes (`pointers: {slow: "n2", fast: "n4"}`) that move by patch, like `array`'s `pointers`, so linked-list lessons need not patch pill positions and null old edge ids.
+407. `manipulate` widget: reject a wrong op in place with its `why` (no dead-end state), halving the state count of stepping screens.
