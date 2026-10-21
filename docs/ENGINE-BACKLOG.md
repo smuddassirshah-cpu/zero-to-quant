@@ -1196,3 +1196,7 @@ Raised later (ds level 4):
 420. `tree`: a binary-tree mode: explicit left and right slots (a single child drawn on its side, no ∅ placeholders needed), a tappable root, per-node `highlight` and `shade` (now the whole path from the root), with 374, 396 and 409.
 421. `orderbook`: `bids` and `asks` as state patches so a book can step through add, cancel and limit-order messages on one screen; order-id labels (with 376).
 422. AUTHORING.md: there is no `build(values)` tree helper; either add one to the Python prelude library or remove the claim from briefs (each lesson defines `Node`, `build`, `to_list` in its prelude).
+
+Content gaps (second reader, topic 1.5), to fill in the gap pass with 383 and 401:
+
+423. Probability against the Stat 110 exit line: missing moment generating functions, continuous joint densities with marginals and independence, transformations and convolution, continuous order statistics, Beta, Gamma, negative binomial, multinomial, chi-square, t and bivariate normal, the law of total variance, Jensen's inequality, the strong law, Poisson process properties, reversibility and MCMC; covariance and conditional expectation only in discrete form. The exam never tests covariance, Poisson, exponential, hypergeometric, lognormal, reflection or absorption, and every item is one step. Duplication to cut: conditional l2 repeats counting-chance l7; counting-chance l9 screens 1 to 5 repeat l3; limits-thm l1 and l2 repeat random-vars.
