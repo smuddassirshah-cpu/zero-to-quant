@@ -1140,3 +1140,18 @@ Raised later (ds level 1):
 393. `array`: an insert-and-shift action like `swap`.
 394. `code`: a per-test time budget (the limit is 5 s times the number of tests, so a quadratic attempt waits 30 to 45 s), a timeout reported against the test that hit it, and a way to count operations for complexity checks.
 395. `code`: expose `__learner_source__` to tests always, not only when a prelude or postlude exists.
+
+Raised later (algo-think level 2):
+
+396. `tree`: per-node label and value patches after the drawing opens (to fill in return values call by call), and arrowheads so calls and returns can be told apart by direction (with 374 for recombining).
+397. `array` stack mode: frames size to the widest text in any state, not the starting `cells`.
+
+Raised later (graphs-dp level 1):
+
+398. `graph`: an ordered tap mode (`ordered: true`) that grades the sequence of taps and shows badges 1, 2, 3, so BFS and DFS visit orders can be tapped on the graph itself.
+399. `graph` pills with `lanes` at 390 px touch each other (with 333).
+400. Playthrough: take the desktop screenshot after any `enter` patch has run (about 350 ms), not 300 ms after the screen opens.
+
+Content gaps (second reader, topic 1.4), to fill in the gap pass with 383:
+
+401. Linear algebra against the MIT 18.06 exit line: not taught anywhere are du/dt = Au and e^{At}, similar matrices, complex and Hermitian matrices, the pseudoinverse and Cholesky; vector spaces only informally; the exam has no least-squares code built from the normal equations or QR and no PCA in code. Duplication to cut to make room: elimination l9 repeats vectors l10 to l11 (determinant as area), least-squares l5 is the third pass at projection onto a line.
