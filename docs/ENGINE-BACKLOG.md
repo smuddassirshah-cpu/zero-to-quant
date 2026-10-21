@@ -1025,3 +1025,14 @@ Raised later (markets level 3):
 371. `payoff`: stock legs (forwards and shorts) get a draggable entry price (or an `F` marker) and a kink label, so "drag F until the payoff is X" works.
 372. `plane` sketch: the x-axis title collision check should include the sketch's own control points.
 373. `series`: a step style (or a vertical top-up marker) for balances that jump, such as a margin account after a call.
+
+Raised later (trees level 2):
+
+374. `tree`: a recombining (`binomial`) mode: up-down and down-up paths share a node, step labels on an axis, a price and a value slot per node that `state` patches, `derive` and a `table` widget can fill. Trees 2 draws the lattice with `graph` rectangles by hand instead.
+375. `plane`: point labels that show a value (`£{y}`) take a decimals option (`£{y:.2f}`), so a £100 leaf can read £100.00.
+
+Raised later (micro level 3):
+
+376. `orderbook`: `bids` and `asks` as patch, `derive` and control targets, and an optional fair-value row (`fair`, `halfSpread`, `skew`) that sliders bind to, so the learner's own quotes move in the book (extends 352 and 370).
+377. `table` canvas ignores `canvas.maxHeight`; a fill-in ladder with a canvas table and a widget table needs a scroll on a laptop.
+378. `code` `isclose`: a per-test `tol` (relative or absolute) so a simulation can be accepted within a stated tolerance rather than needing a fixed draw order.
