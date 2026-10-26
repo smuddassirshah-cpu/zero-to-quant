@@ -1,0 +1,347 @@
+{
+  "id": "homework-1",
+  "course": "ensembles",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-infogain",
+      "difficulty": 3,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "A node of 16 loans holds 8 defaults and 8 repaid. A split sends (6 D, 2 R) left and (2 D, 6 R) right.",
+      "question": "What is the information gain of the split, in bits?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1887,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "bits",
+        "label": "Information gain",
+        "accept": "0.189 ± 0.002: $1 - H(0.75)$, with $H(0.75) = 0.811$.",
+        "wrong": [
+          {
+            "id": "child",
+            "value": 0.8113,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "gini",
+            "value": 0.125,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.189 bits.",
+        "generic": "Not quite right. Each side has entropy $H(0.75)$; weight them by one half each and subtract from the parent's 1 bit.",
+        "byKey": {
+          "child": "0.811 is the weighted entropy left after the split. The gain is $1 - 0.811$.",
+          "gini": "0.125 is the Gini gain. The question asks for entropy."
+        }
+      },
+      "explain": {
+        "text": "$H(0.75) = -0.75\\log_2 0.75 - 0.25\\log_2 0.25 = 0.311 + 0.5 = 0.811$. Both sides weigh one half, so the gain is $1 - 0.811 = 0.189$ bits."
+      }
+    },
+    {
+      "id": "h-prune-order",
+      "difficulty": 4,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "You will tune a credit tree by cost-complexity pruning, as scikit-learn does it, and report one honest accuracy.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "grow",
+            "text": "Grow the full tree on the training rows."
+          },
+          {
+            "id": "alpha",
+            "text": "For every internal node, compute its break-even $\\alpha = (R(t) - R(T_t)) / (|T_t| - 1)$."
+          },
+          {
+            "id": "cut",
+            "text": "Cut the weakest branch, the smallest $\\alpha$, and repeat until only the root is left: this is `cost_complexity_pruning_path`."
+          },
+          {
+            "id": "cv",
+            "text": "Score each $\\alpha$ on the path by cross-validation on the training rows."
+          },
+          {
+            "id": "refit",
+            "text": "Refit with the best `ccp_alpha` on all training rows and score the test set once."
+          }
+        ],
+        "answer": [
+          "grow",
+          "alpha",
+          "cut",
+          "cv",
+          "refit"
+        ]
+      },
+      "feedback": {
+        "correct": "Grow, rank the branches, prune in sequence, choose by CV, test once.",
+        "generic": "Not quite right. The test set appears exactly once, at the end.",
+        "byKey": {
+          "cv": "Cross-validation needs the list of candidate alphas, which comes from the pruning path.",
+          "refit": "The test set is touched only after $\\alpha$ is chosen."
+        }
+      },
+      "explain": {
+        "text": "Pruning needs the full tree first, and the break-even alphas order the cuts. CV on the training rows picks one alpha from that sequence. Only then is the test set used, once."
+      }
+    },
+    {
+      "id": "h-sse",
+      "difficulty": 3,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "Six days, $x = 1$ to $6$, have targets 3, 5, 4, 12, 14 and 13. A regression tree tries every midpoint.",
+      "question": "What is the largest drop in squared error any single split achieves?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 121.5,
+        "tol": {
+          "abs": 0.05
+        },
+        "label": "Largest drop in squared error",
+        "accept": "121.5: split at 3.5; parent 125.5, children 2 + 2.",
+        "wrong": [
+          {
+            "id": "parent",
+            "value": 125.5,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "left",
+            "value": 4,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "121.5, at $x = 3.5$.",
+        "generic": "Not quite right. Find the parent's squared error around 8.5, then try the split between the low and high days.",
+        "byKey": {
+          "parent": "125.5 is the parent's squared error. Subtract what the two sides leave.",
+          "left": "4 is what the best split leaves. The drop is $125.5 - 4$."
+        }
+      },
+      "explain": {
+        "text": "Parent mean 8.5: squared error $125.5$. Splitting at 3.5 gives means 4 and 13, each side leaving $1 + 1 + 0 = 2$. The drop is $125.5 - 4 = 121.5$, more than any other midpoint."
+      }
+    },
+    {
+      "id": "h-monotone",
+      "difficulty": 3,
+      "skills": [
+        "en-trees",
+        "en-interpret"
+      ],
+      "prose": "A credit tree splits on leverage. You replace leverage by $\\ln(\\text{leverage})$ and refit with the same settings.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "The same rows fall in every leaf; each leverage threshold becomes the log of a value between the same two loans",
+            "correct": true
+          },
+          {
+            "id": "diff",
+            "text": "Different splits: the log compresses high leverage, so it matters less",
+            "why": "A split only uses the order of the values. The log keeps the order, so the same loans fall on each side."
+          },
+          {
+            "id": "scale",
+            "text": "The tree must be refitted with standardised features",
+            "why": "Trees need no scaling; any order-keeping transform leaves the partitions unchanged."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Order-keeping transforms do not change a tree.",
+        "generic": "Not quite right. Does the log change which loans sit above or below a threshold?"
+      },
+      "explain": {
+        "text": "The log is increasing, so it keeps the order of the loans and the same partitions are available with the same gains. Thresholds move to the midpoint of the logged values, but every prediction is unchanged."
+      }
+    },
+    {
+      "id": "h-builder",
+      "difficulty": 5,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "Build a depth-2 classification tree from scratch: Gini gain, thresholds at exact midpoints, the first best split kept on a tie, a leaf when a node is pure or nothing gains. Return the nested rules and the predictions for `X_query`. The hidden tests compare your rules and predictions with scikit-learn's `DecisionTreeClassifier(max_depth=2, random_state=0)` on the same rows.",
+      "question": "Complete `best_split`, `grow` and `predict_one`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "# The 12 loans: [leverage, interest cover], outcome 1 = default, 0 = repaid\nX12 = [[1.2, 5.0], [3.8, 2.2], [2.4, 2.5], [4.1, 4.5], [2.2, 1.2], [1.6, 4.0],\n       [5.0, 3.5], [2.8, 1.8], [3.2, 1.5], [2.0, 3.0], [4.4, 2.9], [2.6, 2.0]]\ny12 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0]\n\n# 40 loans from make_loans(4, 40), as lists: [leverage, cover]\nX40 = [[5.69, 5.69], [3.31, 6.28], [5.87, 1.93], [0.94, 3.95], [3.84, 3.21], \n       [2.57, 1.78], [4.91, 2.16], [1.46, 7.72], [5.29, 7.13], [3.49, 3.37], \n       [5.46, 6.05], [3.12, 0.81], [2.87, 7.36], [4.84, 4.53], [5.91, 6.65], \n       [2.53, 2.57], [5.83, 3.32], [5.61, 3.11], [1.48, 7.79], [3.85, 3.72], \n       [4.38, 4.25], [5.69, 7.67], [4.16, 7.27], [1.23, 3.46], [3.24, 2.81], \n       [3.21, 6.55], [3.25, 1.31], [5.77, 3.44], [2.42, 7.07], [1.73, 7.38], \n       [3.37, 2.25], [4.03, 1.09], [5.67, 6.41], [3.7, 5.16], [1.97, 2.28], \n       [5.61, 4.29], [3.2, 1.04], [4.22, 5.75], [3.12, 4.45], [1.69, 5.78]]\ny40 = [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0]\n\nimport numpy as np\n\ndef make_loans(seed, n=400):\n    \"\"\"n loans: [leverage, interest cover], outcome 1 = default, 0 = repaid.\n    Defaults cluster where leverage > 3.5 and cover < 3, or cover < 1.5.\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = np.round(rng.uniform(0.5, 6.0, n), 2)\n    cover = np.round(rng.uniform(0.5, 8.0, n), 2)\n    p = np.where(lev > 3.5, np.where(cover < 3.0, 0.8, 0.3), np.where(cover < 1.5, 0.5, 0.08))\n    y = (rng.random(n) < p).astype(int)\n    return np.column_stack([lev, cover]), y\n",
+        "starter": "from collections import Counter\n\ndef gini(labels):\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    return 1 - sum((c / n) ** 2 for c in Counter(labels).values())\n\ndef majority(labels):\n    \"\"\"Most common label; the smaller label on a tie, as scikit-learn.\"\"\"\n    c = Counter(labels)\n    return min(c, key=lambda k: (-c[k], k))\n\ndef best_split(X, y):\n    \"\"\"(feature, threshold, gain): largest Gini gain, first found on a\n    tie; (None, None, 0.0) when no split gains anything.\"\"\"\n    ...\n\ndef grow(X, y, depth):\n    \"\"\"{\"leaf\": class}, or {\"feature\": f, \"threshold\": t rounded to 6,\n    \"left\": subtree, \"right\": subtree}. Leaf when depth is 0, the node\n    is pure, or no split gains anything.\"\"\"\n    ...\n\ndef predict_one(node, row):\n    ...\n\ndef build_tree_depth2(X, y, X_query):\n    X = [list(r) for r in X]\n    y = [int(v) for v in y]\n    rules = grow(X, y, 2)\n    return rules, [predict_one(rules, list(r)) for r in X_query]\n",
+        "solution": "from collections import Counter\n\ndef gini(labels):\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    return 1 - sum((c / n) ** 2 for c in Counter(labels).values())\n\ndef majority(labels):\n    \"\"\"Most common label; the smaller label on a tie, as scikit-learn.\"\"\"\n    c = Counter(labels)\n    return min(c, key=lambda k: (-c[k], k))\n\ndef best_split(X, y):\n    \"\"\"(feature, threshold, gain): largest Gini gain, first found on a\n    tie; (None, None, 0.0) when no split gains anything.\"\"\"\n    best = (None, None, 0.0)\n    for f in range(len(X[0])):\n        col = [row[f] for row in X]\n        values = sorted(set(col))\n        for a, b in zip(values, values[1:]):\n            t = (a + b) / 2\n            left = [lab for v, lab in zip(col, y) if v <= t]\n            right = [lab for v, lab in zip(col, y) if v > t]\n            g = gini(y) - (len(left) * gini(left)\n                           + len(right) * gini(right)) / len(y)\n            if g > best[2]:\n                best = (f, t, g)\n    return best\n\ndef grow(X, y, depth):\n    \"\"\"{\"leaf\": class}, or {\"feature\": f, \"threshold\": t rounded to 6,\n    \"left\": subtree, \"right\": subtree}. Leaf when depth is 0, the node\n    is pure, or no split gains anything.\"\"\"\n    if depth == 0 or len(set(y)) == 1:\n        return {\"leaf\": majority(y)}\n    f, t, g = best_split(X, y)\n    if f is None:\n        return {\"leaf\": majority(y)}\n    L = [i for i, row in enumerate(X) if row[f] <= t]\n    R = [i for i, row in enumerate(X) if row[f] > t]\n    return {\"feature\": f, \"threshold\": round(t, 6),\n            \"left\": grow([X[i] for i in L], [y[i] for i in L], depth - 1),\n            \"right\": grow([X[i] for i in R], [y[i] for i in R], depth - 1)}\n\ndef predict_one(node, row):\n    while \"leaf\" not in node:\n        go_left = row[node[\"feature\"]] <= node[\"threshold\"]\n        node = node[\"left\"] if go_left else node[\"right\"]\n    return node[\"leaf\"]\n\ndef build_tree_depth2(X, y, X_query):\n    X = [list(r) for r in X]\n    y = [int(v) for v in y]\n    rules = grow(X, y, 2)\n    return rules, [predict_one(rules, list(r)) for r in X_query]\n",
+        "examples": [
+          {
+            "call": "build_tree_depth2([[1], [2]], [1, 1], [[5]])",
+            "expect": "({\"leaf\": 1}, [1])",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "build_tree_depth2(X12, y12, [[2.0, 1.0], [3.5, 3.0], [4.5, 5.0], [1.0, 6.0], [3.3, 4.4]])[0]",
+            "expect": "{\"feature\": 0, \"threshold\": 3.0, \"left\": {\"feature\": 1, \"threshold\": 1.5, \"left\": {\"leaf\": 1}, \"right\": {\"leaf\": 0}}, \"right\": {\"feature\": 1, \"threshold\": 4.0, \"left\": {\"leaf\": 1}, \"right\": {\"leaf\": 0}}}",
+            "compare": "equal"
+          },
+          {
+            "call": "build_tree_depth2(X12, y12, [[2.0, 1.0], [3.5, 3.0], [4.5, 5.0], [1.0, 6.0], [3.3, 4.4]])[1]",
+            "expect": "[1, 1, 0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "build_tree_depth2(X40, y40, X12)[0]",
+            "expect": "{\"feature\": 1, \"threshold\": 2.205, \"left\": {\"feature\": 0, \"threshold\": 2.845, \"left\": {\"leaf\": 0}, \"right\": {\"leaf\": 1}}, \"right\": {\"feature\": 0, \"threshold\": 4.19, \"left\": {\"leaf\": 0}, \"right\": {\"leaf\": 1}}}",
+            "compare": "equal"
+          },
+          {
+            "call": "build_tree_depth2(X40, y40, X12)[1]",
+            "expect": "[0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(2, 60)",
+            "call": "build_tree_depth2(X[:40].tolist(), y[:40].tolist(), X[40:].tolist())[1]",
+            "expect": "[0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(8, 60)",
+            "call": "build_tree_depth2(X[:40].tolist(), y[:40].tolist(), X[40:].tolist())[1]",
+            "expect": "[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "build_tree_depth2([[1], [2]], [1, 1], [[5]])",
+            "expect": "({\"leaf\": 1}, [1])",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: the rules and predictions on the 12 loans and on 40 seeded loans, predictions on two more books from `make_loans`, and a pure node. Every expected value was produced by scikit-learn's own tree. Answers must match exactly; loading NumPy for `make_loans` takes a few seconds."
+      },
+      "feedback": {
+        "correct": "Your tree matches scikit-learn's on every book.",
+        "generic": "Some tests failed. Check the strict `>` for ties, the stopping rules, and that rows exactly at a threshold go left.",
+        "byKey": {
+          "test-7": "A pure node must be a leaf at once: `{\"leaf\": 1}`, with no search for a split."
+        }
+      },
+      "explain": {
+        "text": "The 12-loan rules are leverage at 3.0, then cover at 1.5 and 4.0, as you grew them in lesson 1. scikit-learn runs the same greedy search, so on these books the two agree split for split."
+      }
+    },
+    {
+      "id": "h-honest",
+      "difficulty": 4,
+      "skills": [
+        "en-trees"
+      ],
+      "prose": "Write the whole honest procedure for a time-ordered data set. Train on the first `n_train` rows, test on the rest. Choose the depth by walk-forward cross-validation on the training rows only (`TimeSeriesSplit`, from the validation course), refit there, and score the test rows once.",
+      "question": "Complete `honest_tree_accuracy`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_updays(seed, n=400):\n    \"\"\"n trading days in time order: [momentum z-score, volatility z-score];\n    target 1 if the next day is up. The edge is small and depends on both.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = np.round(rng.standard_normal(n), 2)\n    volz = np.round(rng.standard_normal(n), 2)\n    p = 0.5 + 0.12 * (mom > 0.5) - 0.12 * ((mom < -0.5) & (volz > 0.5))\n    y = (rng.random(n) < p).astype(int)\n    return np.column_stack([mom, volz]), y\n\nimport numpy as np\n\ndef make_loans(seed, n=400):\n    \"\"\"n loans: [leverage, interest cover], outcome 1 = default, 0 = repaid.\n    Defaults cluster where leverage > 3.5 and cover < 3, or cover < 1.5.\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = np.round(rng.uniform(0.5, 6.0, n), 2)\n    cover = np.round(rng.uniform(0.5, 8.0, n), 2)\n    p = np.where(lev > 3.5, np.where(cover < 3.0, 0.8, 0.3), np.where(cover < 1.5, 0.5, 0.08))\n    y = (rng.random(n) < p).astype(int)\n    return np.column_stack([lev, cover]), y\n",
+        "starter": "from sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\n\ndef honest_tree_accuracy(X, y, n_train, depths, folds):\n    \"\"\"Rows are in time order. Return (chosen depth, test accuracy\n    rounded to 4 places).\"\"\"\n    X_train, y_train = ...   # the first n_train rows\n    X_test, y_test = ...     # everything after them\n    cv = TimeSeriesSplit(n_splits=folds)\n    best, best_score = None, -1.0\n    for d in depths:\n        ...   # mean CV accuracy; keep the first best\n    final = ...   # refit at the chosen depth on all training rows\n    return best, round(float(final.score(X_test, y_test)), 4)\n",
+        "solution": "from sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\n\ndef honest_tree_accuracy(X, y, n_train, depths, folds):\n    \"\"\"Rows are in time order. Return (chosen depth, test accuracy\n    rounded to 4 places).\"\"\"\n    X_train, y_train = X[:n_train], y[:n_train]\n    X_test, y_test = X[n_train:], y[n_train:]\n    cv = TimeSeriesSplit(n_splits=folds)\n    best, best_score = None, -1.0\n    for d in depths:\n        model = DecisionTreeClassifier(max_depth=d, random_state=0)\n        score = cross_val_score(model, X_train, y_train, cv=cv).mean()\n        if score > best_score:\n            best, best_score = d, score\n    final = DecisionTreeClassifier(max_depth=best, random_state=0)\n    final.fit(X_train, y_train)\n    return best, round(float(final.score(X_test, y_test)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_updays(3)",
+            "call": "honest_tree_accuracy(X, y, 300, [1, 2, 3, 5, 8], 5)",
+            "expect": "(1, 0.57)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_updays(3)",
+            "call": "honest_tree_accuracy(X, y, 300, [1, 2, 3, 5, 8], 5)",
+            "expect": "(1, 0.57)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_updays(2)",
+            "call": "honest_tree_accuracy(X, y, 300, [1, 2, 3, 5, 8], 5)",
+            "expect": "(1, 0.56)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(3, 500)",
+            "call": "honest_tree_accuracy(X, y, 300, [1, 2, 3, 4, 6, 8], 5)",
+            "expect": "(2, 0.815)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 3 hidden tests: two books of up-days from `make_updays(seed)` and the loan book of lesson 3. Each pair is compared with math.isclose. The first run loads scikit-learn, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "The honest number for the up-day model is close to a coin flip, as it should be for daily direction.",
+        "generic": "Some tests failed. Slice by time, cross-validate on the training rows only, and refit before scoring the test rows."
+      },
+      "explain": {
+        "text": "On `make_updays(3)` walk-forward CV picks depth 1 and the test accuracy is 57%; on 100 test days that is within noise of 52%, the always-down rate. On the loan book CV picks depth 2 and scores 81.5%. The procedure never lets the test rows influence a choice."
+      }
+    },
+    {
+      "id": "h-committee",
+      "difficulty": 4,
+      "skills": [
+        "en-trees",
+        "en-interpret"
+      ],
+      "kind": "longform",
+      "prompt": "A risk committee reviews a new credit model: a depth-3 decision tree on leverage, interest cover and sector, fitted on 4,000 past loans. A member asks why it is a tree and not the logistic regression the bank used before. Write the answer you would give the committee. Explain what each model can and cannot do, the trade-offs for this decision, and what you would check before the tree is approved.",
+      "model": "**Recommendation.** Keep the depth-3 tree as the decision screen, but only after it passes the same out-of-time tests as the logistic model, and use the logistic model as its challenger.\n\n**What each model is.**\n- The tree is at most 8 rules, each a short chain of thresholds: *leverage above 3.5 and cover below 3 → decline*. It predicts each leaf's default rate.\n- Logistic regression is a weighted sum of the features passed through the logistic curve. It gives every borrower a smooth probability, and each coefficient is a change in log-odds per unit of the feature.\n\n**Why the tree.**\n- A committee can read every rule aloud and check it against credit policy; a decline can be explained by the rule that fired.\n- It finds thresholds and interactions on its own (high leverage matters only when cover is low), which logistic regression needs hand-made features to capture.\n- It needs no scaling and is unaffected by any order-keeping transform, so outliers in leverage do not drag it.\n\n**What the tree cannot do.**\n- Its probabilities are coarse: at most 8 values, so ranking within a leaf is lost, and borrowers either side of a threshold get very different answers for a tiny change.\n- It is unstable: refit on a slightly different sample and the questions can change, so the policy can flip between reviews.\n- It cannot extrapolate: a borrower beyond the training range gets the edge leaf's rate, which understates risk in a downturn.\n- It was grown greedily, so it is not the best depth-3 tree, only a good one.\n\n**What logistic regression gives and lacks.** Smooth, monotone, stable probabilities that are often well calibrated and degrade gracefully outside the data. It misses thresholds and interactions unless we add them, and its coefficients are harder to turn into a written policy.\n\n**What I would check before signing off.**\n1. Out-of-time performance of both models on later vintages (walk-forward), on AUC and on precision and recall at the approval cut-off.\n2. Calibration: in each leaf, and in each logistic score band, does the predicted default rate match the observed one?\n3. Stability: refit the tree on bootstrap samples and on rolling windows; do the splits and leaf rates stay put?\n4. Leaf sizes: every leaf should hold enough defaults (say 30 or more) for its rate to mean something.\n5. Behaviour in a stressed period and at the edges of the data, where the tree is flat.\n6. Sense of each rule: higher leverage or lower cover should never lower the predicted risk.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Describes both models correctly: a tree as a few threshold rules predicting leaf rates; logistic regression as a weighted sum through the logistic curve giving smooth probabilities."
+        },
+        {
+          "points": 2,
+          "text": "Gives the tree's real strengths: readable rules a committee can check, thresholds and interactions found without hand-made features, no scaling needed."
+        },
+        {
+          "points": 2,
+          "text": "Gives the tree's weaknesses: coarse probabilities and cliff edges at thresholds, instability under resampling, no extrapolation, greedy rather than optimal."
+        },
+        {
+          "points": 2,
+          "text": "Gives logistic regression's strengths and weaknesses fairly: smooth, stable, often well calibrated; misses interactions unless added."
+        },
+        {
+          "points": 2,
+          "text": "Names concrete checks: out-of-time validation of both models, calibration by leaf or band, stability across resamples or windows, leaf sizes, behaviour in stress."
+        }
+      ]
+    }
+  ]
+}
