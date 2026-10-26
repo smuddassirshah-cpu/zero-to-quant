@@ -614,7 +614,7 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\nfrom math import pi\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega, \"theta\": theta, \"rho\": rho}\n\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n",
+        "prelude": "from math import erf, exp, log, sqrt, pi, isnan\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega, \"theta\": theta, \"rho\": rho}\n\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n",
         "starter": "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef greek_profile(name, strikes, T, S=100.0, r=0.05, sigma=0.2,\n                  q=0.0):\n    \"\"\"One Greek of a call at each strike, as a NumPy array.\"\"\"\n    return ...\n\ndef plot_greek_profiles(strikes, expiries, name):\n    \"\"\"One line per expiry of a Greek against strike.\"\"\"\n    fig, ax = plt.subplots()\n    ...\n    ax.set_title(name)\n    ax.set_xlabel(\"Strike\")\n    ax.legend()\n    return ax\n\nprint(greek_profile(\"delta\", [90, 100, 110], 1.0))\n",
         "solution": "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef greek_profile(name, strikes, T, S=100.0, r=0.05, sigma=0.2,\n                  q=0.0):\n    \"\"\"One Greek of a call at each strike, as a NumPy array.\"\"\"\n    return np.array([bs_greeks(S, K, r, sigma, T, \"call\", q)[name]\n                     for K in strikes])\n\ndef plot_greek_profiles(strikes, expiries, name):\n    \"\"\"One line per expiry of a Greek against strike.\"\"\"\n    fig, ax = plt.subplots()\n    for T in expiries:\n        ax.plot(strikes, greek_profile(name, strikes, T),\n                label=f\"T = {T:g}\")\n    ax.set_title(name)\n    ax.set_xlabel(\"Strike\")\n    ax.legend()\n    return ax\n",
         "examples": [
@@ -682,7 +682,7 @@
           }
         ],
         "how": "Check runs 10 hidden tests: profiles against `bs_greeks` rounded to 6 places (delta, gamma, vega, a dividend case, the return type), then the chart: one line per expiry, a line's values and strikes, the title and the labels. The first run loads NumPy and matplotlib, which takes 20 to 40 seconds.",
-        "budget": 30000
+        "budget": 60000
       },
       "hints": [
         {
@@ -828,7 +828,7 @@
         "generic": "Not quite right. Square the move before halving, and add all four terms with their signs."
       },
       "explain": {
-        "text": "The four Greeks explain £1.6689; repricing at £102, 21% and one day less gives £1.6610. The **residual**, -0.0078, is what the Greeks miss. Here it is mostly the cross term between spot and vol, vanna.",
+        "text": "The four Greeks explain £1.6689; repricing at £102, 21% and one day less gives £1.6610. The **residual**, −0.0078, is what the Greeks miss. Here it is mostly the cross term between spot and vol, vanna.",
         "canvas": {
           "values": {
             "gamma": 0.0375
@@ -929,7 +929,7 @@
         }
       },
       "explain": {
-        "text": "The explain now says £7.6641 against an actual £7.5095, a residual of -0.1546. The residual grows with the move, because the third-order terms the Greeks leave out grow like $dS^3$. Big days need full revaluation beside the explain.",
+        "text": "The explain now says £7.6641 against an actual £7.5095, a residual of −0.1546. The residual grows with the move, because the third-order terms the Greeks leave out grow like $dS^3$. Big days need full revaluation beside the explain.",
         "canvas": {
           "values": {
             "gamma": 0.9381
@@ -1019,7 +1019,7 @@
         }
       },
       "explain": {
-        "text": "Delta fell as the share fell, so each pound down cost less than the last. The gamma term, +0.9381, brings the explain to -5.4478 against -5.3737. Long options gain from curvature in both directions."
+        "text": "Delta fell as the share fell, so each pound down cost less than the last. The gamma term, +0.9381, brings the explain to −5.4478 against −5.3737. Long options gain from curvature in both directions."
       }
     },
     {
@@ -1049,15 +1049,7 @@
             }
           ]
         },
-        "state": {
-          "hlines": [
-            {
-              "id": "z",
-              "y": 0,
-              "label": "break even"
-            }
-          ]
-        }
+        "state": {}
       },
       "question": "How large a move, up or down, does the hedged position need to break even on the day?",
       "widget": {
@@ -1218,7 +1210,7 @@
         }
       ],
       "feedback": {
-        "correct": "The worked example: explained 1.6689, actual 1.661, residual -0.0078.",
+        "correct": "The worked example: explained 1.6689, actual 1.661, residual −0.0078.",
         "generic": "Some tests failed. Check that time to expiry shortens by `dt` in the revaluation, and that the sum skips any `rho`.",
         "byKey": {
           "error": "Your code stopped with an error. Check that every `...` is replaced."
