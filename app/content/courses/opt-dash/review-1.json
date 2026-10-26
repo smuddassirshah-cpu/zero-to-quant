@@ -1,0 +1,403 @@
+{
+  "id": "review-1",
+  "course": "opt-dash",
+  "level": 1,
+  "items": [
+    {
+      "id": "r-buy-puts",
+      "difficulty": 2,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "The six-month 100 put is quoted 4.87 / 5.17. One contract covers 100 shares.",
+      "question": "You buy 3 contracts from the market. What do you pay, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1551,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Cost in pounds",
+        "accept": "£1,551: 3 × 100 × £5.17",
+        "wrong": [
+          {
+            "id": "bid",
+            "value": 1461,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "no-mult",
+            "value": 15.51,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Buyers pay the ask: £1,551.",
+        "generic": "Not quite right. Contracts times 100 shares times the ask.",
+        "byKey": {
+          "bid": "You paid the bid. Buying from the market fills at the ask.",
+          "no-mult": "Each contract covers 100 shares."
+        }
+      },
+      "explain": {
+        "text": "Three contracts of 100 shares at the ask of £5.17 cost £1,551."
+      }
+    },
+    {
+      "id": "r-wide-call",
+      "difficulty": 3,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "```python\n>>> chain_table(chain, 0.5, \"call\").loc[105]\nbid       4.48\nask       7.60\nmid       6.04\nspread    3.12\n```",
+      "question": "Which rule of `clean_quotes` drops this quote?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "wide",
+            "text": "The spread rule",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "The zero-bid rule",
+            "why": "Its bid is £4.48, well above 0."
+          },
+          {
+            "id": "crossed",
+            "text": "The crossed rule",
+            "why": "Its bid, 4.48, is below its ask, 7.60, as it should be."
+          },
+          {
+            "id": "none",
+            "text": "None: it is kept",
+            "why": "Its relative spread is 3.12 / 6.04 = 0.52, over the 0.5 cut."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Relative spread 0.52, over the cut.",
+        "generic": "Not quite right. Work out spread over mid."
+      },
+      "explain": {
+        "text": "$3.12 / 6.04 = 0.517$, so the spread rule drops it. Its six-month neighbours have relative spreads near 0.06."
+      }
+    },
+    {
+      "id": "r-rel-1y",
+      "difficulty": 2,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "The one-year 105 call is quoted 8.00 / 8.50.",
+      "question": "What is its relative spread?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0606,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Relative spread",
+        "accept": "0.0606: 0.50 / 8.25",
+        "wrong": [
+          {
+            "id": "abs",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "bid",
+            "value": 0.0625,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 0.06: kept.",
+        "generic": "Not quite right. Divide the spread by the mid, 8.25.",
+        "byKey": {
+          "abs": "That is the spread in pounds. Divide by the mid.",
+          "bid": "You divided by the bid. The rule uses the mid."
+        }
+      },
+      "explain": {
+        "text": "The spread is £0.50 and the mid £8.25, a relative spread of 0.061."
+      }
+    },
+    {
+      "id": "r-age-limit",
+      "difficulty": 3,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "On `make_chain()` the rules drop 15, 2, 2 and 9 of 130 rows, in the order zero bid, crossed, stale, wide. The two stale quotes have no other fault.",
+      "question": "How many rows does `clean_quotes(chain, max_age_min=300)` keep?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 104,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows kept",
+        "accept": "104: the two stale quotes, 240 minutes old, now pass",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 102,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 130,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "104.",
+        "generic": "Not quite right. Only the age rule changes.",
+        "byKey": {
+          "same": "The stale quotes are 240 minutes old, under the new 300-minute limit, so they now pass.",
+          "all": "Only the age rule changed. The other 26 failures still drop."
+        }
+      },
+      "explain": {
+        "text": "The stale quotes are 240 minutes old, so a 300-minute limit keeps them. They have no other fault, so $102 + 2 = 104$."
+      }
+    },
+    {
+      "id": "r-fwd-3m",
+      "difficulty": 3,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "At three months the 100 call's mid is £4.505 and the 100 put's £3.545. $r = 5\\%$.",
+      "question": "What forward does the 100 strike imply?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100.972,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Forward in pounds",
+        "accept": "£100.972: $100 + e^{0.0125} \\times 0.96$",
+        "wrong": [
+          {
+            "id": "no-grow",
+            "value": 100.96,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "spot",
+            "value": 100,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£100.97.",
+        "generic": "Not quite right. $F = K + e^{rT}(C - P)$ with $T = 0.25$.",
+        "byKey": {
+          "no-grow": "You added $C - P$ without growing it by $e^{rT}$.",
+          "spot": "That is the spot. The forward grows it at $r - q$."
+        }
+      },
+      "explain": {
+        "text": "$C - P = 0.96$, grown by $e^{0.0125}$ to 0.972, gives $F = \\text{£}100.97$. The true forward is $100e^{0.01} = \\text{£}101.01$."
+      }
+    },
+    {
+      "id": "r-q-2m",
+      "difficulty": 3,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "The cleaned two-month chain gives a median forward of £100.650. $S = \\text{£}100$ and $r = 5\\%$.",
+      "question": "What dividend yield does it imply?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0111,
+        "tol": {
+          "abs": 0.0003
+        },
+        "unit": "%",
+        "label": "Dividend yield in percent",
+        "accept": "About 1.11%",
+        "wrong": [
+          {
+            "id": "no-T",
+            "value": 0.043517084996289604,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "growth",
+            "value": 0.038897490022262386,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 1.11%.",
+        "generic": "Not quite right. $q = r - \\ln(F/S)/T$ with $T = 1/6$.",
+        "byKey": {
+          "no-T": "You did not divide the log by $T = 1/6$.",
+          "growth": "That is $r - q$. Subtract it from $r$."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(F/S) = 0.00648$, divided by $1/6$ is 0.0389. So $q = 0.05 - 0.0389 = 0.0111$, near the true 1%."
+      }
+    },
+    {
+      "id": "r-iv-130",
+      "difficulty": 4,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "The three-month 130 call is quoted 0.00 / 0.04. `iv_from_quotes` uses `mid(df)` and a solver that returns NaN where no vol fits.",
+      "question": "What are its `iv_bid`, `iv_mid` and `iv_ask`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "NaN, NaN and about 21.6%",
+            "correct": true
+          },
+          {
+            "id": "mid-ok",
+            "text": "NaN, about 20%, and about 21.6%",
+            "why": "You priced the mid as 0.02. `mid` returns NaN for a zero bid, and the solver passes NaN through."
+          },
+          {
+            "id": "zero",
+            "text": "0%, NaN and about 21.6%",
+            "why": "No volatility gives a price of exactly 0, not even 0%: the solver returns NaN, not zero."
+          },
+          {
+            "id": "all",
+            "text": "NaN, NaN, NaN",
+            "why": "The ask, £0.04, is above the call's lower bound of 0, so a vol does fit it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only the ask has a vol.",
+        "generic": "Not quite right. Take each of the three prices in turn."
+      },
+      "explain": {
+        "text": "A zero bid has no vol and, by our convention, no mid. The ask, £0.04, is a real price with a vol of 21.6%, an upper end with no lower end."
+      }
+    },
+    {
+      "id": "r-vol-quote",
+      "difficulty": 4,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "A broker quotes the one-year 100 call at \"21 bid, 22 offered\" in vol. Its vega is about £0.38 per vol point per share, and one contract covers 100 shares.",
+      "question": "How wide is the quote, in pounds per contract?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 37.8,
+        "tol": {
+          "abs": 1.0
+        },
+        "unit": "£",
+        "label": "Width per contract in pounds",
+        "accept": "About £38: 100 × £0.38",
+        "wrong": [
+          {
+            "id": "share",
+            "value": 0.378,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "points",
+            "value": 100,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About £38 per contract.",
+        "generic": "Not quite right. One vol point times vega times 100 shares.",
+        "byKey": {
+          "share": "That is per share. A contract covers 100.",
+          "points": "You read a vol point as £1 a share. Vega converts it."
+        }
+      },
+      "explain": {
+        "text": "One vol point is worth about £0.38 a share at one year. Per contract that is £38."
+      }
+    },
+    {
+      "id": "r-otm-1m",
+      "difficulty": 2,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "At one month the forward is £100.33.",
+      "question": "Which quote does the fit use at the 100 strike?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "put",
+            "text": "The put",
+            "correct": true
+          },
+          {
+            "id": "call",
+            "text": "The call",
+            "why": "You split at the spot, or rounded the forward to 100. 100 is below £100.33, so the put is out of the money."
+          },
+          {
+            "id": "both",
+            "text": "Both",
+            "why": "Parity makes one of them redundant. The fit uses the out-of-the-money side only."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "100 is below the forward, so the put.",
+        "generic": "Not quite right. Compare 100 with £100.33."
+      },
+      "explain": {
+        "text": "Puts below the forward, calls at or above it. 100 is below £100.33, so the fit uses the 100 put."
+      }
+    }
+  ]
+}

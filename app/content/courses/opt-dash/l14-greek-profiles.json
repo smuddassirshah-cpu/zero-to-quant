@@ -1,0 +1,1525 @@
+{
+  "id": "l14-greek-profiles",
+  "course": "opt-dash",
+  "title": "Greeks across strikes and time",
+  "minutes": 15,
+  "objectives": [
+    "Plot each Greek across strikes and times to expiry.",
+    "Explain a day's P&L with the Greeks and measure the residual."
+  ],
+  "skills": [
+    "od-greeks"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Delta across strikes",
+      "prose": "The dashboard plots each Greek against strike. Here is a call's delta against strike for two expiries, with the share at £100, $r = 5\\%$ and $\\sigma = 20\\%$. The one-month curve is hidden.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            70,
+            130
+          ],
+          "y": [
+            0,
+            1.05
+          ],
+          "xLabel": "Strike (£)",
+          "yLabel": "Call delta",
+          "height": 300,
+          "functions": [
+            {
+              "id": "y1",
+              "expr": "Phi(((ln(100/x)+0.07*1)/(0.2*sqrt(1))))",
+              "label": "1 year",
+              "labelAt": 120
+            },
+            {
+              "id": "m3",
+              "expr": "Phi(((ln(100/x)+0.07*0.25)/(0.2*sqrt(0.25))))",
+              "label": "3 months",
+              "labelAt": 112
+            },
+            {
+              "id": "m1",
+              "expr": "Phi(((ln(100/x)+0.07*0.08333)/(0.2*sqrt(0.08333))))",
+              "label": "1 month",
+              "labelAt": 104,
+              "colour": 4
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "m1"
+          ],
+          "vlines": [
+            {
+              "id": "k",
+              "x": 100,
+              "label": "spot"
+            }
+          ]
+        }
+      },
+      "question": "What will the one-month curve look like?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "step",
+            "text": "Steeper still: close to 1 below £95 and close to 0 above £105",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "The same as the three-month curve",
+            "why": "Time to expiry changes how far the share can travel. With less time, the curve must change."
+          },
+          {
+            "id": "flat",
+            "text": "Flatter, closer to 0.5 everywhere",
+            "why": "Flatter belongs to longer expiries. Compare the one-year curve with the three-month one."
+          },
+          {
+            "id": "shift",
+            "text": "The same shape, moved to lower strikes",
+            "why": "The curve crosses near the spot at every expiry. Less time makes it steeper, not shifted."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the one-year and the three-month curves. Which is steeper?"
+        },
+        {
+          "rung": "point",
+          "text": "A one-month option has even less time for the share to reach a distant strike.",
+          "highlight": [
+            "m3",
+            "y1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Shorter expiries steepen the curve towards a step at £100."
+        }
+      ],
+      "feedback": {
+        "correct": "With a month left, the curve is almost a step at the strike.",
+        "generic": "Not quite right. Follow the change from one year to three months, and carry it on.",
+        "byKey": {
+          "flat": "You reversed the pattern. The one-year curve is the flatter one; shorter means steeper."
+        }
+      },
+      "explain": {
+        "text": "You extended the pattern from one year to three months. A one-month call struck at £90 is almost sure to pay, one at £110 almost sure not to. At expiry the curve becomes the payoff's step.",
+        "canvas": {
+          "hide": []
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Gamma is the slope of delta, so the steepening shows up as a peak. The curve is gamma against strike; the slider sets the time to expiry.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            70,
+            130
+          ],
+          "y": [
+            0,
+            0.16
+          ],
+          "xLabel": "Strike (£)",
+          "yLabel": "Gamma",
+          "height": 300,
+          "params": {
+            "T": 1
+          },
+          "functions": [
+            {
+              "id": "g",
+              "expr": "exp(-(((ln(100/x)+0.07*T)/(0.2*sqrt(T))))^2/2)/sqrt(2*pi)/(20*sqrt(T))",
+              "label": "gamma"
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "k",
+              "x": 100,
+              "label": "spot"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$T$ = {{fixed(T, 2)}} years: gamma at £100 is {{fixed(exp(-pow((0.07*T)/(0.2*sqrt(T)), 2)/2)/sqrt(2*pi)/(20*sqrt(T)), 4)}}"
+        },
+        "controls": [
+          {
+            "bind": "T",
+            "min": 0.02,
+            "max": 1,
+            "step": 0.01,
+            "label": "Years to expiry",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Slide from one year down to 0.02 years. What happens to the gamma peak?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "up",
+            "text": "It rises and narrows around the spot",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "It falls and spreads out",
+            "why": "Read the caption at 1.00 and at 0.02. Gamma at £100 grows as expiry nears."
+          },
+          {
+            "id": "same",
+            "text": "It keeps its height and only moves",
+            "why": "Watch the caption: at £100 gamma goes from 0.0188 to over 0.14."
+          },
+          {
+            "id": "gone",
+            "text": "It vanishes as expiry nears",
+            "why": "Far from the spot it vanishes. Near £100 it grows without limit."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption as well as the curve."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the peak at 1.00 year with the peak at 0.10 years."
+        },
+        {
+          "rung": "step",
+          "text": "At £100 gamma is 0.0188 at one year and about 0.14 at 0.02 years."
+        }
+      ],
+      "feedback": {
+        "correct": "Gamma piles up at the money as expiry nears.",
+        "generic": "Not quite right. Compare the caption at one year and at 0.02 years."
+      },
+      "explain": {
+        "text": "Near expiry, a small move in the share decides whether the option pays, so delta swings fast there. Gamma at £100 grows roughly like $1/\\sqrt{T}$, while far strikes lose all their gamma. This is why short-dated at-the-money options are the hardest to hedge.",
+        "canvas": {
+          "params": {
+            "T": 0.05
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Vega goes the other way",
+      "prose": "These **Greek profiles** are what the dashboard draws. Now vega, per vol point, against strike. The caption reads it at £100.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            70,
+            130
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "xLabel": "Strike (£)",
+          "yLabel": "Vega per point (£)",
+          "height": 300,
+          "params": {
+            "T": 1
+          },
+          "functions": [
+            {
+              "id": "v",
+              "expr": "exp(-(((ln(100/x)+0.07*T)/(0.2*sqrt(T))))^2/2)/sqrt(2*pi)*sqrt(T)",
+              "label": "vega"
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "k",
+              "x": 100,
+              "label": "spot"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$T$ = {{fixed(T, 2)}} years: vega at £100 is {{fixed(exp(-pow((0.07*T)/(0.2*sqrt(T)), 2)/2)/sqrt(2*pi)*sqrt(T), 4)}} per point"
+        },
+        "controls": [
+          {
+            "bind": "T",
+            "min": 0.02,
+            "max": 1,
+            "step": 0.01,
+            "label": "Years to expiry",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Vega at £100 is 0.3752 with one year left. What is it with three months (0.25 years) left?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1964,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "£",
+        "accept": "0.1964, about half: vega scales like $\\sqrt{T}$",
+        "label": "Vega per point",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 0.0938,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "same",
+            "value": 0.3752,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the slider to 0.25."
+        },
+        {
+          "rung": "point",
+          "text": "Read the number in the caption."
+        },
+        {
+          "rung": "step",
+          "text": "The caption reads 0.1964 at 0.25 years."
+        }
+      ],
+      "feedback": {
+        "correct": "0.1964: a quarter of the time leaves about half the vega.",
+        "generic": "Not quite right. Set the slider to 0.25 and read the caption.",
+        "byKey": {
+          "linear": "You scaled vega with $T$. It scales with $\\sqrt{T}$: a quarter of the time halves it.",
+          "same": "That is the one-year value. Move the slider to 0.25 first."
+        }
+      },
+      "explain": {
+        "text": "Vega is $S\\varphi(d_1)\\sqrt{T}$, so near the money it shrinks like $\\sqrt{T}$. Gamma grows as expiry nears while vega fades: short options carry spot risk, long ones vol risk. Theta follows gamma, most negative at the money near expiry.",
+        "canvas": {
+          "params": {
+            "T": 0.25
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The dashboard's second view: delta against time, as a year passes with the share held at £100. Each line is one strike's call.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "k90",
+              "label": "K = 90",
+              "values": [
+                0.8097,
+                0.8102,
+                0.8107,
+                0.8112,
+                0.8118,
+                0.8124,
+                0.8131,
+                0.8138,
+                0.8145,
+                0.8153,
+                0.8161,
+                0.817,
+                0.818,
+                0.819,
+                0.82,
+                0.8212,
+                0.8223,
+                0.8236,
+                0.825,
+                0.8264,
+                0.828,
+                0.8296,
+                0.8313,
+                0.8332,
+                0.8352,
+                0.8373,
+                0.8395,
+                0.8419,
+                0.8445,
+                0.8473,
+                0.8503,
+                0.8535,
+                0.8569,
+                0.8606,
+                0.8646,
+                0.869,
+                0.8737,
+                0.8788,
+                0.8843,
+                0.8904,
+                0.897,
+                0.9043,
+                0.9123,
+                0.921,
+                0.9306,
+                0.9411,
+                0.9525,
+                0.9647,
+                0.9771,
+                0.9886,
+                0.9971,
+                0.9999
+              ]
+            },
+            {
+              "id": "k100",
+              "label": "K = 100",
+              "values": [
+                0.6368,
+                0.6356,
+                0.6343,
+                0.633,
+                0.6317,
+                0.6303,
+                0.629,
+                0.6276,
+                0.6263,
+                0.6249,
+                0.6234,
+                0.622,
+                0.6206,
+                0.6191,
+                0.6176,
+                0.6161,
+                0.6146,
+                0.613,
+                0.6114,
+                0.6098,
+                0.6082,
+                0.6065,
+                0.6048,
+                0.6031,
+                0.6013,
+                0.5996,
+                0.5977,
+                0.5959,
+                0.594,
+                0.592,
+                0.59,
+                0.588,
+                0.5859,
+                0.5838,
+                0.5816,
+                0.5793,
+                0.577,
+                0.5746,
+                0.5721,
+                0.5695,
+                0.5668,
+                0.5639,
+                0.561,
+                0.5579,
+                0.5546,
+                0.5511,
+                0.5473,
+                0.5432,
+                0.5387,
+                0.5335,
+                0.5274,
+                0.5194
+              ]
+            },
+            {
+              "id": "k110",
+              "label": "K = 110",
+              "values": [
+                0.4496,
+                0.4465,
+                0.4432,
+                0.4399,
+                0.4365,
+                0.4331,
+                0.4296,
+                0.426,
+                0.4223,
+                0.4185,
+                0.4146,
+                0.4106,
+                0.4066,
+                0.4024,
+                0.3981,
+                0.3937,
+                0.3892,
+                0.3845,
+                0.3797,
+                0.3747,
+                0.3696,
+                0.3643,
+                0.3588,
+                0.3532,
+                0.3473,
+                0.3412,
+                0.3349,
+                0.3283,
+                0.3214,
+                0.3143,
+                0.3068,
+                0.2989,
+                0.2907,
+                0.282,
+                0.2729,
+                0.2633,
+                0.253,
+                0.2422,
+                0.2306,
+                0.2183,
+                0.205,
+                0.1907,
+                0.1754,
+                0.1587,
+                0.1406,
+                0.1209,
+                0.0996,
+                0.0766,
+                0.0525,
+                0.0287,
+                0.0091,
+                0.0004
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Weeks passed",
+          "yLabel": "Call delta",
+          "y": [
+            0,
+            1.05
+          ],
+          "decimals": 2,
+          "height": 280
+        },
+        "state": {}
+      },
+      "question": "As expiry nears with the share at £100, where does each delta head?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "split",
+            "text": "90 towards 1, 110 towards 0, 100 stays near 0.5",
+            "correct": true
+          },
+          {
+            "id": "all-half",
+            "text": "All three towards 0.5",
+            "why": "Only the at-the-money call stays undecided. The others become sure things."
+          },
+          {
+            "id": "all-one",
+            "text": "All three towards 1",
+            "why": "The 110 call needs the share to rise £10 in the last weeks. Its delta falls to 0."
+          },
+          {
+            "id": "fixed",
+            "text": "Each stays where it started",
+            "why": "Read the right-hand end: the 110 call starts at 0.45 and ends near 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the three lines at the right-hand end."
+        },
+        {
+          "rung": "point",
+          "text": "The 90 call is in the money, the 110 call out of it.",
+          "highlight": [
+            "k100"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the money heads to 1, out of the money to 0, at the money stays near 0.5."
+        }
+      ],
+      "feedback": {
+        "correct": "Deltas split towards 0 and 1, except at the money.",
+        "generic": "Not quite right. Read each line at week 51."
+      },
+      "explain": {
+        "text": "With little time left, only the at-the-money call is still in doubt, so its delta stays near 0.5 (0.52 here). The others become a share or nothing. That collapse is the high gamma we saw, seen through time.",
+        "canvas": {
+          "highlight": [
+            "k100"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Two pieces of the Greeks panel. `greek_profile` returns one Greek at each strike; `plot_greek_profiles` draws one line per expiry, labelled `T = 0.25` and so on. `bs_greeks` is already defined. The app's canvases show the picture; the tests read the `Axes`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> greek_profile(\"delta\", [90, 100, 110], 1.0).round(4)",
+            "array([0.8097, 0.6368, 0.4496])",
+            ">>> len(plot_greek_profiles(ks, [1/12, 0.25, 1], \"gamma\").lines)",
+            "3"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `greek_profile` and `plot_greek_profiles`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\nfrom math import pi\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega, \"theta\": theta, \"rho\": rho}\n\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n",
+        "starter": "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef greek_profile(name, strikes, T, S=100.0, r=0.05, sigma=0.2,\n                  q=0.0):\n    \"\"\"One Greek of a call at each strike, as a NumPy array.\"\"\"\n    return ...\n\ndef plot_greek_profiles(strikes, expiries, name):\n    \"\"\"One line per expiry of a Greek against strike.\"\"\"\n    fig, ax = plt.subplots()\n    ...\n    ax.set_title(name)\n    ax.set_xlabel(\"Strike\")\n    ax.legend()\n    return ax\n\nprint(greek_profile(\"delta\", [90, 100, 110], 1.0))\n",
+        "solution": "import numpy as np\nimport matplotlib.pyplot as plt\n\ndef greek_profile(name, strikes, T, S=100.0, r=0.05, sigma=0.2,\n                  q=0.0):\n    \"\"\"One Greek of a call at each strike, as a NumPy array.\"\"\"\n    return np.array([bs_greeks(S, K, r, sigma, T, \"call\", q)[name]\n                     for K in strikes])\n\ndef plot_greek_profiles(strikes, expiries, name):\n    \"\"\"One line per expiry of a Greek against strike.\"\"\"\n    fig, ax = plt.subplots()\n    for T in expiries:\n        ax.plot(strikes, greek_profile(name, strikes, T),\n                label=f\"T = {T:g}\")\n    ax.set_title(name)\n    ax.set_xlabel(\"Strike\")\n    ax.legend()\n    return ax\n",
+        "examples": [
+          {
+            "call": "np.round(greek_profile(\"delta\", [90, 100, 110], 1.0), 4).tolist()",
+            "compare": "isclose",
+            "expect": "[0.8097, 0.6368, 0.4496]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(greek_profile(\"delta\", [90, 100, 110], 1.0), 6).tolist()",
+            "compare": "isclose",
+            "expect": "[0.809703, 0.636831, 0.449648]"
+          },
+          {
+            "call": "np.round(greek_profile(\"gamma\", [70, 80, 90, 100, 110, 120, 130], 0.25), 6).tolist()",
+            "compare": "isclose",
+            "expect": "[3.6e-05, 0.002205, 0.018756, 0.039288, 0.029474, 0.010257, 0.00199]"
+          },
+          {
+            "call": "np.round(greek_profile(\"vega\", [100], 1 / 12), 6).tolist()",
+            "compare": "isclose",
+            "expect": "[11.457839]"
+          },
+          {
+            "call": "np.round(greek_profile(\"delta\", [100], 1.0, q=0.01), 6).tolist()",
+            "compare": "isclose",
+            "expect": "[0.611763]"
+          },
+          {
+            "call": "type(greek_profile(\"theta\", [90, 100], 0.5)).__name__",
+            "compare": "equal",
+            "expect": "'ndarray'"
+          },
+          {
+            "call": "len(plot_greek_profiles([80, 90, 100, 110, 120], [1 / 12, 0.25, 1.0], \"gamma\").lines)",
+            "compare": "equal",
+            "setup": "plt.close('all')",
+            "expect": "3"
+          },
+          {
+            "call": "np.round(plot_greek_profiles([80, 100, 120], [0.25, 1.0], \"delta\").lines[1].get_ydata(), 6).tolist()",
+            "compare": "isclose",
+            "setup": "plt.close('all')",
+            "expect": "[0.928637, 0.636831, 0.287192]"
+          },
+          {
+            "call": "list(plot_greek_profiles([80, 100, 120], [0.25], \"vega\").lines[0].get_xdata())",
+            "compare": "equal",
+            "setup": "plt.close('all')",
+            "expect": "[80, 100, 120]"
+          },
+          {
+            "call": "plot_greek_profiles([80, 100, 120], [0.25], \"vega\").get_title()",
+            "compare": "equal",
+            "setup": "plt.close('all')",
+            "expect": "'vega'"
+          },
+          {
+            "call": "plot_greek_profiles([80, 100, 120], [0.25, 1.0], \"vega\").lines[0].get_label()",
+            "compare": "equal",
+            "setup": "plt.close('all')",
+            "expect": "'T = 0.25'"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: profiles against `bs_greeks` rounded to 6 places (delta, gamma, vega, a dividend case, the return type), then the chart: one line per expiry, a line's values and strikes, the title and the labels. The first run loads NumPy and matplotlib, which takes 20 to 40 seconds.",
+        "budget": 30000
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`greek_profile` is one `bs_greeks` call per strike, keeping `[name]`."
+        },
+        {
+          "rung": "point",
+          "text": "Wrap the list in `np.array`. In the plot, loop over `expiries` and call `ax.plot` once each.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return np.array([bs_greeks(S, K, r, sigma, T, 'call', q)[name] for K in strikes])`; in the loop, `ax.plot(strikes, greek_profile(name, strikes, T), label=f'T = {T:g}')`."
+        }
+      ],
+      "feedback": {
+        "correct": "One array per expiry, one line per array.",
+        "generic": "Some tests failed. Check you pass `q` through and label each line `T = ...` with `:g`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that both `...` are replaced."
+        }
+      },
+      "explain": {
+        "text": "The profile is a loop over strikes; the chart is a loop over expiries. Keeping them apart lets the tests check the numbers without the picture.\n\n```python\nfor T in expiries:\n    ax.plot(strikes, greek_profile(name, strikes, T),\n            label=f\"T = {T:g}\")\n```"
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Explaining a day's P&L",
+      "prose": "A day passes. The share rises £2 to £102 and implied vol rises one point to 21%. The **P&L explain** splits the call's change into one term per Greek: $\\Delta\\,dS + \\tfrac12\\Gamma\\,dS^2 + \\text{vega}\\,d\\sigma + \\Theta\\,dt$. The gamma bar is still empty.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "delta",
+              "label": "delta"
+            },
+            {
+              "id": "gamma",
+              "label": "gamma"
+            },
+            {
+              "id": "vega",
+              "label": "vega"
+            },
+            {
+              "id": "theta",
+              "label": "theta"
+            }
+          ],
+          "yLabel": "P&L term (£)",
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "delta": 1.2737,
+            "gamma": 0,
+            "vega": 0.3752,
+            "theta": -0.0176
+          }
+        },
+        "maxHeight": 220
+      },
+      "question": "Fill in the gamma term and the explained total.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Term",
+          "Formula",
+          "£"
+        ],
+        "rows": [
+          [
+            "delta",
+            "$0.6368 \\times 2$",
+            "1.2737"
+          ],
+          [
+            "gamma",
+            "$\\tfrac12 \\times 0.018762 \\times 2^2$",
+            {
+              "edit": true,
+              "answer": 0.0375,
+              "tol": {
+                "abs": 0.0006
+              }
+            }
+          ],
+          [
+            "vega",
+            "$37.52 \\times 0.01$",
+            "0.3752"
+          ],
+          [
+            "theta",
+            "$-6.414 / 365$",
+            "−0.0176"
+          ],
+          [
+            "explained",
+            "sum of the four",
+            {
+              "edit": true,
+              "answer": 1.6689,
+              "tol": {
+                "abs": 0.0012
+              }
+            }
+          ],
+          [
+            "actual",
+            "full revaluation",
+            "1.6610"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The gamma term is half of gamma times the move squared."
+        },
+        {
+          "rung": "point",
+          "text": "$\\tfrac12 \\times 0.018762 \\times 4$.",
+          "highlight": [
+            "gamma"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Gamma term 0.0375; total $1.2737 + 0.0375 + 0.3752 - 0.0176 = 1.6689$."
+        }
+      ],
+      "feedback": {
+        "correct": "Explained 1.6689 against an actual 1.6610.",
+        "generic": "Not quite right. Square the move before halving, and add all four terms with their signs."
+      },
+      "explain": {
+        "text": "The four Greeks explain £1.6689; repricing at £102, 21% and one day less gives £1.6610. The **residual**, -0.0078, is what the Greeks miss. Here it is mostly the cross term between spot and vol, vanna.",
+        "canvas": {
+          "values": {
+            "gamma": 0.0375
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Same call, same day, same vol rise, but the share jumps £10 to £110.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "delta",
+              "label": "delta"
+            },
+            {
+              "id": "gamma",
+              "label": "gamma"
+            },
+            {
+              "id": "vega",
+              "label": "vega"
+            },
+            {
+              "id": "theta",
+              "label": "theta"
+            }
+          ],
+          "yLabel": "P&L term (£)",
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "delta": 6.3683,
+            "gamma": 0,
+            "vega": 0.3752,
+            "theta": -0.0176
+          }
+        },
+        "maxHeight": 220
+      },
+      "question": "What is the gamma term now?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9381,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "£",
+        "accept": "0.9381: $\\tfrac12 \\times 0.018762 \\times 10^2$, 25 times the £2 term",
+        "label": "Gamma term",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 0.1876,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "same",
+            "value": 0.0375,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The move enters squared."
+        },
+        {
+          "rung": "point",
+          "text": "Five times the move gives 25 times the gamma term.",
+          "highlight": [
+            "gamma"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac12 \\times 0.018762 \\times 100 = 0.9381$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.9381: 25 times the £2 day's term.",
+        "generic": "Not quite right. Use $\\tfrac12 \\Gamma\\,dS^2$ with $dS = 10$.",
+        "byKey": {
+          "linear": "You scaled the gamma term by 5, like the move. It grows with the square of the move: 25 times.",
+          "same": "That is the £2 day's gamma term. The move is five times larger now."
+        }
+      },
+      "explain": {
+        "text": "The explain now says £7.6641 against an actual £7.5095, a residual of -0.1546. The residual grows with the move, because the third-order terms the Greeks leave out grow like $dS^3$. Big days need full revaluation beside the explain.",
+        "canvas": {
+          "values": {
+            "gamma": 0.9381
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "Another day: the share falls £10 and vol does not move. A colleague explains the call's loss with delta alone: $0.6368 \\times (-10) = -\\text{£}6.37$. Full revaluation says the call lost £5.37.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Term",
+            "£"
+          ],
+          "rows": [
+            [
+              "delta",
+              "−6.3683"
+            ],
+            [
+              "gamma",
+              "?"
+            ],
+            [
+              "theta",
+              "−0.0176"
+            ],
+            [
+              "actual",
+              "−5.3737"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does her explain miss?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gamma",
+            "text": "The gamma term, about +£0.94: delta fell as the share fell",
+            "correct": true
+          },
+          {
+            "id": "noise",
+            "text": "Nothing: a gap of a pound is rounding",
+            "why": "Rounding is a fraction of a penny. A pound on a £10 option is a real missing term."
+          },
+          {
+            "id": "vega",
+            "text": "The vega term",
+            "why": "Vol did not move, so the vega term is zero today."
+          },
+          {
+            "id": "theta-big",
+            "text": "Theta: the call loses a pound a day",
+            "why": "Theta is −6.414 a year, under 2p a day. It cannot explain a pound."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which Greek changes delta as the share moves?"
+        },
+        {
+          "rung": "point",
+          "text": "On a £10 fall the call's delta drops from 0.64 towards 0.45."
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac12 \\times 0.018762 \\times 100 = 0.9381$, a gain that cushions the loss."
+        }
+      ],
+      "feedback": {
+        "correct": "Delta alone overstates a long option's loss on a big fall.",
+        "generic": "Not quite right. A large move needs the curvature term as well as the slope.",
+        "byKey": {
+          "noise": "You put a £1 gap down to rounding. On a £10 move the gamma term is £0.94: that is the gap.",
+          "theta-big": "You took theta per year as per day. Per day it is about 2p."
+        }
+      },
+      "explain": {
+        "text": "Delta fell as the share fell, so each pound down cost less than the last. The gamma term, +0.9381, brings the explain to -5.4478 against -5.3737. Long options gain from curvature in both directions."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A delta-hedged call",
+      "prose": "Hedge the call with 0.6368 shares short, as in trees l12. The delta terms cancel, so a quiet day's P&L is about $\\tfrac12\\Gamma\\,dS^2 + \\Theta\\,dt$: gamma earns, theta costs. The parabola is that P&L against the day's move.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3,
+            3
+          ],
+          "y": [
+            -0.03,
+            0.07
+          ],
+          "xLabel": "Day's move $dS$ (£)",
+          "yLabel": "Hedged P&L (£)",
+          "height": 280,
+          "functions": [
+            {
+              "id": "p",
+              "expr": "0.5*0.018762*x^2 - 0.017573",
+              "label": "hedged P&L"
+            }
+          ]
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "z",
+              "y": 0,
+              "label": "break even"
+            }
+          ]
+        }
+      },
+      "question": "How large a move, up or down, does the hedged position need to break even on the day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.37,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "£",
+        "accept": "About £1.37: $\\sqrt{2 \\times 0.0176 / 0.018762}$",
+        "label": "Break-even move",
+        "wrong": [
+          {
+            "id": "no-root",
+            "value": 1.87,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $\\tfrac12\\Gamma\\,dS^2 + \\Theta\\,dt = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "$dS^2 = 2 \\times 0.0176 / 0.018762$."
+        },
+        {
+          "rung": "step",
+          "text": "$dS = \\sqrt{1.873} \\approx 1.37$."
+        }
+      ],
+      "feedback": {
+        "correct": "About £1.37 a day, either way.",
+        "generic": "Not quite right. Solve $\\tfrac12 \\times 0.018762 \\times dS^2 = 0.0176$ for $dS$.",
+        "byKey": {
+          "no-root": "You found $dS^2$, not $dS$. Take the square root."
+        }
+      },
+      "explain": {
+        "text": "Below £1.37 theta wins and the hedge loses; above it gamma wins. With $r = 0$ it would be exactly $\\sigma S\\sqrt{dt}$, £1.05: a hedged long option profits when the share moves more than implied vol says. This is the trade behind trees l12.",
+        "canvas": {
+          "points": [
+            {
+              "id": "b1",
+              "x": -1.369,
+              "y": 0,
+              "label": "−1.37"
+            },
+            {
+              "id": "b2",
+              "x": 1.369,
+              "y": 0,
+              "label": "1.37"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "The explain panel's two functions. `pnl_explain` takes a dict from `bs_greeks` (vega per 1.00, theta per year), so `dsigma` is in units of vol and `dt` in years. `explain_vs_reval` also reprices after the move, with $T$ shortened by `dt`. `bs_greeks` and `bs_price` are already defined.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> explain_vs_reval(100, 100, 0.05, 0.2, 1, 2, 0.01, 1 / 365)",
+            "(1.6689, 1.661, -0.0078)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `pnl_explain` and `explain_vs_reval`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from math import erf, exp, log, sqrt, pi, isnan\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega, \"theta\": theta, \"rho\": rho}\n",
+        "starter": "def pnl_explain(greeks, dS, dsigma, dt):\n    \"\"\"One P&L term per Greek, and their total. dt in years.\"\"\"\n    terms = {\"delta\": ...,\n             \"gamma\": ...,\n             \"vega\": ...,\n             \"theta\": ...}\n    terms[\"total\"] = sum(terms.values())\n    return terms\n\ndef explain_vs_reval(S, K, r, sigma, T, dS, dsigma, dt, kind=\"call\",\n                     q=0.0):\n    \"\"\"(explained, actual, residual), each rounded to 4 places.\"\"\"\n    g = bs_greeks(S, K, r, sigma, T, kind, q)\n    explained = pnl_explain(g, dS, dsigma, dt)[\"total\"]\n    actual = ...   # reprice after the move, minus the price before\n    return (round(explained, 4), round(actual, 4),\n            round(actual - explained, 4))\n",
+        "solution": "def pnl_explain(greeks, dS, dsigma, dt):\n    \"\"\"One P&L term per Greek, and their total. dt in years.\"\"\"\n    terms = {\"delta\": greeks[\"delta\"] * dS,\n             \"gamma\": 0.5 * greeks[\"gamma\"] * dS ** 2,\n             \"vega\": greeks[\"vega\"] * dsigma,\n             \"theta\": greeks[\"theta\"] * dt}\n    terms[\"total\"] = sum(terms.values())\n    return terms\n\ndef explain_vs_reval(S, K, r, sigma, T, dS, dsigma, dt, kind=\"call\",\n                     q=0.0):\n    \"\"\"(explained, actual, residual), each rounded to 4 places.\"\"\"\n    g = bs_greeks(S, K, r, sigma, T, kind, q)\n    explained = pnl_explain(g, dS, dsigma, dt)[\"total\"]\n    before = bs_price(S, K, r, sigma, T, kind, q)\n    after = bs_price(S + dS, K, r, sigma + dsigma, T - dt, kind, q)\n    actual = after - before\n    return (round(explained, 4), round(actual, 4),\n            round(actual - explained, 4))\n",
+        "examples": [
+          {
+            "call": "explain_vs_reval(100, 100, 0.05, 0.2, 1, 2, 0.01, 1 / 365)",
+            "compare": "equal",
+            "expect": "(1.6689, 1.661, -0.0078)"
+          }
+        ],
+        "tests": [
+          {
+            "call": "{k: round(v, 4) for k, v in pnl_explain(bs_greeks(100, 100, 0.05, 0.2, 1), 2, 0.01, 1 / 365).items()}",
+            "compare": "equal",
+            "expect": "{'delta': 1.2737, 'gamma': 0.0375, 'vega': 0.3752, 'theta': -0.0176, 'total': 1.6689}"
+          },
+          {
+            "call": "pnl_explain({'delta': 0.5, 'gamma': 0.02, 'vega': 30.0, 'theta': -3.65}, 4, -0.02, 0.01)",
+            "compare": "equal",
+            "expect": "{'delta': 2.0, 'gamma': 0.16, 'vega': -0.6, 'theta': -0.0365, 'total': 1.5235}"
+          },
+          {
+            "call": "pnl_explain({'delta': 0.5, 'gamma': 0.02, 'vega': 30.0, 'theta': -3.65}, 0, 0, 0)['total']",
+            "compare": "equal",
+            "expect": "0.0"
+          },
+          {
+            "call": "pnl_explain({'delta': -0.4, 'gamma': 0.03, 'vega': 20.0, 'theta': -5.0}, -2, 0, 0)['gamma']",
+            "compare": "isclose",
+            "expect": "0.06"
+          },
+          {
+            "call": "sorted(pnl_explain({'delta': 1, 'gamma': 0, 'vega': 0, 'theta': 0, 'rho': 9}, 1, 0, 0))",
+            "compare": "equal",
+            "expect": "['delta', 'gamma', 'theta', 'total', 'vega']"
+          },
+          {
+            "call": "explain_vs_reval(100, 100, 0.05, 0.2, 1, 2, 0.01, 1 / 365)",
+            "compare": "equal",
+            "expect": "(1.6689, 1.661, -0.0078)"
+          },
+          {
+            "call": "explain_vs_reval(100, 100, 0.05, 0.2, 1, 10, 0.01, 1 / 365)",
+            "compare": "equal",
+            "expect": "(7.6641, 7.5095, -0.1546)"
+          },
+          {
+            "call": "explain_vs_reval(100, 100, 0.05, 0.2, 1, 0, 0, 1 / 365)",
+            "compare": "equal",
+            "expect": "(-0.0176, -0.0176, -0.0)"
+          },
+          {
+            "call": "explain_vs_reval(100, 100, 0.05, 0.2, 1, 2, 0.01, 1 / 365, 'put')",
+            "compare": "equal",
+            "expect": "(-0.3181, -0.3259, -0.0078)"
+          },
+          {
+            "call": "explain_vs_reval(100, 105, 0.05, 0.22, 0.25, -3, 0.02, 1 / 365, 'call', 0.01)",
+            "compare": "equal",
+            "expect": "(-0.6364, -0.6864, -0.05)"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: the worked example's four terms, hand-made Greeks (signs, a zero move, a fall), that the keys are the four terms and the total (a `rho` in the input is ignored), and explain against revaluation for the £2 day, the £10 day, a quiet day, a put and a dividend case. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each term is one Greek times its move; gamma's move is squared and halved."
+        },
+        {
+          "rung": "point",
+          "text": "The actual change is `bs_price` after the move minus `bs_price` before, with `T - dt` after."
+        },
+        {
+          "rung": "step",
+          "text": "`'gamma': 0.5 * greeks['gamma'] * dS ** 2`, `'theta': greeks['theta'] * dt`; `actual = bs_price(S + dS, K, r, sigma + dsigma, T - dt, kind, q) - bs_price(S, K, r, sigma, T, kind, q)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The worked example: explained 1.6689, actual 1.661, residual -0.0078.",
+        "generic": "Some tests failed. Check that time to expiry shortens by `dt` in the revaluation, and that the sum skips any `rho`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that every `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "Building `terms` from four named keys keeps a stray `rho` out of the total. The revaluation must shorten $T$, or theta is counted in the explain and missing from the actual. On a quiet day the residual is 0.0000: theta alone explains it.\n\n```python\nafter = bs_price(S + dS, K, r, sigma + dsigma, T - dt, kind, q)\n```"
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Where the explain comes from. Treat the price as $V(S, \\sigma, t)$ and expand it about today, keeping first order in $d\\sigma$ and $dt$ and second order in $dS$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "e1",
+            "text": "$dV = V_S\\,dS + V_\\sigma\\,d\\sigma + V_t\\,dt + \\tfrac12 V_{SS}\\,dS^2 + V_{S\\sigma}\\,dS\\,d\\sigma + \\dots$, Taylor's theorem in three variables"
+          },
+          {
+            "id": "e2",
+            "text": "$V_S = \\Delta$, $V_{SS} = \\Gamma$, $V_\\sigma = \\text{vega}$, $V_t = \\Theta$, the Greeks are these partial derivatives"
+          },
+          {
+            "id": "e3",
+            "text": "$dV \\approx \\Delta\\,dS + \\tfrac12\\Gamma\\,dS^2 + \\text{vega}\\,d\\sigma + \\Theta\\,dt$, drop the cross term and higher orders"
+          },
+          {
+            "id": "e4",
+            "text": "$\\text{residual} = dV_{\\text{actual}} - dV_{\\text{explained}} \\approx V_{S\\sigma}\\,dS\\,d\\sigma + \\tfrac16 V_{SSS}\\,dS^3 + \\dots$, what was dropped"
+          }
+        ],
+        "answer": [
+          "e1",
+          "e2",
+          "e3",
+          "e4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the full expansion."
+        },
+        {
+          "rung": "point",
+          "text": "Name the derivatives before you drop anything."
+        },
+        {
+          "rung": "step",
+          "text": "Expansion, names, the four-term explain, then the residual as what was dropped."
+        }
+      ],
+      "feedback": {
+        "correct": "The residual is exactly the terms the explain leaves out.",
+        "generic": "Not quite right. Expand first, name the Greeks, then truncate, then say what was lost.",
+        "byKey": {
+          "e4": "The residual is defined by the truncation, so it comes after the four-term explain."
+        }
+      },
+      "explain": {
+        "text": "On the £2 day the cross term is vanna times $dS\\,d\\sigma$: $-0.281 \\times 2 \\times 0.01 \\approx -0.0056$, most of the −0.0078 residual. The $dS^3$ term explains why the £10 day's residual is twenty times larger."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The explain sent to risk",
+      "prose": "Each evening the desk sends risk management its P&L explain. Yesterday's book: explained −£12,400 from delta, gamma, vega and theta; actual −£31,900 from full revaluation. Spot and the at-the-money vols moved little.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "£"
+          ],
+          "rows": [
+            [
+              "delta",
+              "−3,100"
+            ],
+            [
+              "gamma",
+              "+800"
+            ],
+            [
+              "vega",
+              "−6,200"
+            ],
+            [
+              "theta",
+              "−3,900"
+            ],
+            [
+              "explained",
+              "−12,400"
+            ],
+            [
+              "actual",
+              "−31,900"
+            ],
+            [
+              "residual",
+              "?"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              6
+            ]
+          }
+        }
+      },
+      "question": "What should the desk do with the residual?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "risk",
+            "text": "Investigate it: a £19,500 gap points to a risk the Greeks do not measure",
+            "correct": true
+          },
+          {
+            "id": "noise",
+            "text": "Ignore it: residuals are higher-order noise",
+            "why": "Higher-order terms are small on a quiet day. A residual larger than the explained total is not noise."
+          },
+          {
+            "id": "scale",
+            "text": "Scale every Greek up until the explain matches",
+            "why": "That hides the problem. The Greeks were right for the risks they measure; something else moved."
+          },
+          {
+            "id": "theta",
+            "text": "Book it to theta",
+            "why": "Theta is a formula in time. Booking unexplained P&L to it falsifies the report."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute actual minus explained."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the residual with the explained total."
+        },
+        {
+          "rung": "step",
+          "text": "−£31,900 − (−£12,400) = −£19,500: larger than everything explained."
+        }
+      ],
+      "feedback": {
+        "correct": "The residual is the first sign of a missing risk.",
+        "generic": "Not quite right. A residual this large means something moved that the four Greeks do not see."
+      },
+      "explain": {
+        "text": "The residual is −£19,500, bigger than the whole explained loss. On a quiet spot day the usual suspects are a skew or wing move (vols away from the money), a stale input, or a booking error. Risk managers read the residual line first."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Delta steepens towards a step at the strike as expiry nears. Gamma peaks at the money and grows like $1/\\sqrt{T}$; vega shrinks like $\\sqrt{T}$; theta is most negative at the money near expiry.",
+      "The P&L explain splits a day's change into $\\Delta\\,dS + \\tfrac12\\Gamma\\,dS^2 + \\text{vega}\\,d\\sigma + \\Theta\\,dt$, with vega and theta in the units of the move.",
+      "The residual against full revaluation is what the Greeks miss: vanna and higher orders on normal days, a missing risk on bad ones."
+    ],
+    "formula": {
+      "name": "P&L explain",
+      "tex": "dV \\approx \\Delta\\,dS + \\tfrac12\\Gamma\\,dS^2 + \\text{vega}\\,d\\sigma + \\Theta\\,dt",
+      "note": "Theta per year needs $dt$ in years; vega per 1.00 needs $d\\sigma$ as a decimal."
+    },
+    "trap": "Delta alone misses the gamma term, which grows with the square of the move: £0.94 on a £10 day."
+  },
+  "quiz": [
+    {
+      "id": "q-zero-move",
+      "difficulty": 2,
+      "prose": "A quiet day: the share and vol do not move. The call has theta −6.414 a year.",
+      "question": "What does the P&L explain show for the day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0176,
+        "tol": {
+          "abs": 0.0003
+        },
+        "unit": "£",
+        "accept": "$-6.414/365 \\approx -0.0176$",
+        "label": "Explained P&L",
+        "wrong": [
+          {
+            "id": "year",
+            "value": -6.414,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Theta alone: −1.76p.",
+        "generic": "Not quite right. With no moves, only the time term is left.",
+        "byKey": {
+          "year": "You used theta per year with $dt = 1$. One day is $1/365$ of a year.",
+          "zero": "Time still passed. The theta term is not zero."
+        }
+      },
+      "explain": {
+        "text": "Every term but theta has a zero move, so the explain is $\\Theta\\,dt = -6.414/365 = -0.0176$. Revaluation agrees to four places."
+      }
+    },
+    {
+      "id": "q-gamma-expiry",
+      "difficulty": 2,
+      "prose": "Two calls on the same share, both struck at the money: one with a year left, one with a week left.",
+      "question": "Which has the larger gamma and which the larger vega?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "split",
+            "text": "The week: larger gamma. The year: larger vega",
+            "correct": true
+          },
+          {
+            "id": "week-both",
+            "text": "The week has both",
+            "why": "Vega scales like $\\sqrt{T}$, so a week's option has little of it."
+          },
+          {
+            "id": "year-both",
+            "text": "The year has both",
+            "why": "Gamma at the money grows as expiry nears, like $1/\\sqrt{T}$."
+          },
+          {
+            "id": "equal",
+            "text": "They are equal: same strike, same share",
+            "why": "Time to expiry changes both, in opposite directions."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Gamma lives near expiry, vega far from it.",
+        "generic": "Not quite right. Recall the two sliders: one peak rose, the other fell."
+      },
+      "explain": {
+        "text": "At the money, gamma is about $\\varphi(0)/(S\\sigma\\sqrt{T})$ and vega about $S\\varphi(0)\\sqrt{T}$. One grows and one shrinks as $T$ falls."
+      }
+    },
+    {
+      "id": "q-straddle",
+      "difficulty": 3,
+      "prose": "A trader sells a three-month at-the-money straddle: one call and one put, both struck at £100.",
+      "question": "What are the signs of the position's gamma, vega and theta?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "short",
+            "text": "Gamma negative, vega negative, theta positive",
+            "correct": true
+          },
+          {
+            "id": "long",
+            "text": "Gamma positive, vega positive, theta negative",
+            "why": "Those are the signs of buying the straddle. Selling flips every one."
+          },
+          {
+            "id": "mixed",
+            "text": "Gamma negative, vega positive, theta positive",
+            "why": "Short options lose when vol rises, so vega is negative too."
+          },
+          {
+            "id": "zero",
+            "text": "All near zero: the call and put cancel",
+            "why": "Call and put deltas nearly cancel. Their gammas and vegas add."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Short gamma and vega, collecting theta.",
+        "generic": "Not quite right. Calls and puts share gamma and vega, so a straddle doubles them."
+      },
+      "explain": {
+        "text": "Each option has positive gamma and vega, so the short straddle has about $-0.079$ gamma and $-0.39$ vega per point. It earns about 4.4p a day of theta until the share moves."
+      }
+    }
+  ]
+}

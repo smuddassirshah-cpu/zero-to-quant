@@ -489,7 +489,11 @@
       const ic = { ok: 'check', no: 'cross', rev: 'bulb' }[kind];
       verdict.innerHTML = `<div class="lsn-chip is-${kind}"><span class="lsn-chip-ic">${icon(ic, 'sm')}</span><div class="lsn-chip-tx"><div class="lsn-chip-h"><b>${Z.esc(title)}</b>${xp ? `<span class="lsn-chip-xp tnum">${Z.spark(true)}+${xp} XP</span>` : ''}</div>${line ? `<span>${G().inline(strip(line, title))}</span>` : ''}${extra ? `<span class="lsn-chip-x">${extra}</span>` : ''}</div></div>`;
     };
-    const clearChip = () => { verdict.innerHTML = ''; };
+    /* item 404: a chip still pending when the screen changes (a fast Continue) is dropped, so "Correct." never shows on
+       the next screen */
+    let chipGen = 0;
+    const clearChip = () => { chipGen++; verdict.innerHTML = ''; };
+    const chipLater = (fn, ms) => { const g = chipGen; return later(() => { if (g === chipGen) fn(); }, ms); };
     const updateSO = () => {
       const so = col.querySelector('.lsn-so'); if (!so || !step) return;
       so.disabled = !(['idle', 'engaged', 'no'].includes(S.st) && step.dirty());
@@ -646,7 +650,7 @@
         if (r.ok) S.okChecks++;
         step.mark(r); setFrame(r.ok ? 'ok' : 'no'); syncDots();
         if (r.ok) { Z.sound('correct'); Z.haptic(10); } else Z.sound('notyet');
-        later(() => r.ok ? chip('ok', 'Correct.', spec.feedback && spec.feedback.correct, XP.quiz) : chip('no', 'Not quite right.', notYetLine(spec, r)), 80);
+        chipLater(() => r.ok ? chip('ok', 'Correct.', spec.feedback && spec.feedback.correct, XP.quiz) : chip('no', 'Not quite right.', notYetLine(spec, r)), 80);
         if (r.ok) later(() => addXP(XP.quiz), 160);
         S.st = r.ok ? 'qok' : 'qno'; refresh();
         later(scrollGraded, 140);
@@ -660,14 +664,14 @@
         S.results['s' + S.i] = { first: S.attempts === 0, xp: gain };
         S.st = 'ok'; step.mark(r); setFrame('ok');
         Z.sound('correct'); Z.haptic(10);
-        later(() => chip('ok', S.attempts === 0 ? 'Correct.' : "That's it.", spec.feedback && spec.feedback.correct, gain), 80);
+        chipLater(() => chip('ok', S.attempts === 0 ? 'Correct.' : "That's it.", spec.feedback && spec.feedback.correct, gain), 80);
         if (gain) later(() => addXP(gain), 160);
       } else {
         S.attempts++;
         st('screenGraded', base);
         S.st = 'no'; setFrame('no'); Z.sound('notyet');
         step.mark(r);
-        later(() => chip('no', S.attempts === 1 ? 'Not quite right.' : 'Give it another shot.', notYetLine(spec, r)), 80);
+        chipLater(() => chip('no', S.attempts === 1 ? 'Not quite right.' : 'Give it another shot.', notYetLine(spec, r)), 80);
       }
       refresh();
       later(scrollGraded, 140);

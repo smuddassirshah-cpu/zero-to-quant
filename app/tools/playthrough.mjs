@@ -303,7 +303,9 @@ const main = async () => {
     /* Reviews, homework and exams through the set-mode hook. Each page installs window.ZQ.test on mount; wait for a hook
        that is past 'loading', then: 'start' and 'submit' -> continue(); 'item' -> answerCorrect(), check() (a pending
        long-form check is answered and checked again), continue(); until 'done'. */
-    const playSet = async (route, label, verify) => {
+    /* item 445: a set that reports no items, or a hook that never answers (a course file mid-write by another agent, or a
+       worker left busy by the lessons before), is reloaded and played once more before it counts as a failure */
+    const playSet = async (route, label, verify, attempt = 1) => {
       where = '#' + route;
       const fails = [];
       const t0 = Date.now();
@@ -349,7 +351,12 @@ const main = async () => {
         fails.push('threw: ' + String(e.message || e).split('\n')[0]);
         console.log(`FAIL ${label}  threw`);
       }
-      fails.forEach(f => failures.push(`#${route}: ${f}`));
+      if (attempt === 1 && fails.some(f => f === 'the set has no items' || /^threw: .*(Timeout|waitForFunction)/.test(f))) {
+        console.log(`     ${label}: retrying once after a reload`);
+        try { await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(800); } catch { /* the retry reports it */ }
+        return playSet(route, label, verify, 2);
+      }
+      fails.forEach(f => failures.push(`#${route}: ${f === 'the set has no items' ? f + ' (twice: check that its items exist and validate; a course file may have been mid-write)' : f}`));
     };
     for (const st of sets) {
       await playSet(st.route, st.id, async () => {

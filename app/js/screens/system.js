@@ -121,7 +121,7 @@
       state: { branching: { 1: 3 } }, controls: [{ bind: 'branching.1', min: 1, max: 3, step: 1, label: 'Options at stage 2' }] } },
     { name: 'series (reference line)', about: 'hlines draws a limit across a partial-sum chart; the label keeps clear of the line', spec: { kind: 'series',
       params: { height: 220, indexFrom: 1, series: [{ id: 's', label: 'Partial sums', values: [1, 1.25, 1.361, 1.424, 1.464, 1.491, 1.512, 1.527, 1.539, 1.55] }], hlines: [{ id: 'lim', y: 1.6449, label: '$\\pi^2/6$' }] },
-      derive: { caption: 'A log slider: {{n}} terms' }, controls: [{ bind: 'n', min: 1, max: 1000, scale: 'log', perDecade: 1, label: 'Terms', start: 10 }] } },
+      state: { params: { n: 10 } }, derive: { caption: 'A log slider: {{n}} terms' }, controls: [{ bind: 'n', min: 1, max: 1000, scale: 'log', perDecade: 1, label: 'Terms', start: 10 }] } },
     { name: 'grid (running total)', about: 'derive reads the tap selection: selected.length and total(selected) in the caption', spec: { kind: 'grid',
       params: { rows: 3, cols: 3, cells: 'sum' }, state: { selected: ['r1c1', 'r3c3'] }, derive: { caption: '{{selected.length}} tapped, total {{total(selected)}}' } } },
     { name: 'distribution (tails and overlay)', about: 'Two shaded tails summed, a normal overlay following n and p, a continuity strip under it, an observed value', spec: { kind: 'distribution',

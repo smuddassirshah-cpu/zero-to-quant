@@ -1,0 +1,534 @@
+{
+ "id": "review-2",
+ "course": "arma",
+ "level": 2,
+ "items": [
+  {
+   "id": "r-band",
+   "difficulty": 2,
+   "skills": [
+    "ts-acf"
+   ],
+   "prose": "A correlogram of one trading year of daily returns: 250 days.",
+   "question": "Where does the 95% band sit? Give the half-width to 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.124,
+    "tol": {
+     "abs": 0.0015
+    },
+    "placeholder": "a decimal",
+    "accept": "0.124, which is $1.96/\\sqrt{250}$",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.063,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "n",
+      "value": 0.0078,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $1.96/\\sqrt{250} = 0.124$.",
+    "generic": "Not quite right. Divide 1.96 by $\\sqrt{250}$.",
+    "byKey": {
+     "sd": "You gave one sd, $1/\\sqrt{250}$. The band is 1.96 sds.",
+     "n": "You divided by 250. The band shrinks like $1/\\sqrt n$."
+    }
+   },
+   "explain": {
+    "text": "$1.96/\\sqrt{250} = 1.96/15.8 = 0.124$. With a year of data only autocorrelations above about 0.12 stand out."
+   }
+  },
+  {
+   "id": "r-ar03",
+   "difficulty": 3,
+   "skills": [
+    "ts-acf",
+    "ts-models"
+   ],
+   "prose": "The correlogram of 500 seeded days, lags 1 to 12, with its band of $\\pm 0.088$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "$\\hat\\rho_k$",
+     "height": 200,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877
+      }
+     ],
+     "yMin": -0.15,
+     "yMax": 0.35
+    },
+    "state": {
+     "values": {
+      "1": 0.2666,
+      "2": 0.0569,
+      "3": -0.0003,
+      "4": 0.0042,
+      "5": -0.0065,
+      "6": 0.0719,
+      "7": 0.0673,
+      "8": 0.0031,
+      "9": 0.092,
+      "10": 0.0191,
+      "11": -0.0028,
+      "12": -0.0014
+     }
+    }
+   },
+   "question": "Which model fits this picture best?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ar",
+      "text": "An AR(1) with $\\phi$ near 0.3",
+      "correct": true
+     },
+     {
+      "id": "wn",
+      "text": "White noise: almost every bar is inside the band",
+      "why": "You counted bars. Lag 1 is 0.27, three times the band, which noise almost never does."
+     },
+     {
+      "id": "ar9",
+      "text": "An AR(9), since lag 9 is outside the band",
+      "why": "Lag 9 is one stray bar of twelve. A real lag-9 effect would not leave lags 2 to 8 empty."
+     },
+     {
+      "id": "walk",
+      "text": "A random walk",
+      "why": "A walk's bars sit near 1 and decay slowly. These drop to the band after lag 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $\\hat\\rho_1 = 0.267$, then $\\hat\\rho_2 = 0.057 \\approx 0.3^2$.",
+    "generic": "Not quite right. Look at lag 1, then lag 2."
+   },
+   "explain": {
+    "text": "Lag 1 is 0.267 and lag 2 is 0.057, close to $0.3$ and $0.3^2 = 0.09$. Lag 9 at 0.092 is a stray bar. The series is `make_ar1(0.3, 500, 7)`."
+   }
+  },
+  {
+   "id": "r-lb",
+   "difficulty": 3,
+   "skills": [
+    "ts-acf"
+   ],
+   "prose": "A spread has 50 days of history. Its first two autocorrelations are 0.30 and 0.20.",
+   "question": "Compute the Ljung-Box $Q(2)$ to 2 places, and decide at 5%.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$Q(2) = 50 \\times 52 \\times (0.3^2/49 + 0.2^2/48)$",
+      {
+       "edit": true,
+       "answer": 6.94,
+       "tol": {
+        "abs": 0.03
+       }
+      }
+     ],
+     [
+      "5% point of $\\chi^2_2$",
+      "5.99"
+     ],
+     [
+      "Reject white noise? (yes or no)",
+      {
+       "edit": true,
+       "answer": "yes",
+       "accept": [
+        "y",
+        "reject"
+       ]
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $Q = 6.94$ beats 5.99.",
+    "generic": "Not quite right. Divide each square by $n - k$, add, and multiply by $n(n + 2) = 2600$."
+   },
+   "explain": {
+    "text": "$0.09/49 + 0.04/48 = 0.002670$, and $2600 \\times 0.002670 = 6.94$. That beats 5.99, so p = 0.031 and we reject white noise."
+   }
+  },
+  {
+   "id": "r-squares",
+   "difficulty": 3,
+   "skills": [
+    "ts-acf"
+   ],
+   "prose": "A quant checks 1,000 days of a currency's returns. Ljung-Box at 10 lags: returns p = 0.41; squared returns p = 0.0000.",
+   "question": "Which conclusion is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cl",
+      "text": "No linear memory in the returns, but their size clusters: they are uncorrelated, not independent",
+      "correct": true
+     },
+     {
+      "id": "iid",
+      "text": "The returns are independent, so no model is needed",
+      "why": "You stopped at the first test. If the days were independent, the squares would pass too."
+     },
+     {
+      "id": "pred",
+      "text": "The direction of tomorrow's return is predictable",
+      "why": "The squares lose the sign. Size is predictable; direction is not."
+     },
+     {
+      "id": "contra",
+      "text": "The tests contradict each other, so the data are bad",
+      "why": "They test different things. This pair of results is the usual one for daily returns."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Volatility clusters.",
+    "generic": "Not quite right. Ask what squaring keeps and what it throws away."
+   },
+   "explain": {
+    "text": "Passing Ljung-Box rules out correlation, not dependence. Squares that fail show volatility clustering, the subject of the GARCH course."
+   }
+  },
+  {
+   "id": "r-mean",
+   "difficulty": 2,
+   "skills": [
+    "ts-models"
+   ],
+   "prose": "An AR(1) has $c = 0.4$, $\\phi = 0.8$ and shock variance 1.",
+   "question": "What is its long-run mean?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a decimal",
+    "accept": "2, which is 0.4/(1 − 0.8)",
+    "wrong": [
+     {
+      "id": "c",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "var",
+      "value": 2.778,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $0.4/0.2 = 2$.",
+    "generic": "Not quite right. Use $\\mu = c/(1 - \\phi)$.",
+    "byKey": {
+     "c": "You gave $c$. The series settles where $\\mu = c + \\phi\\mu$.",
+     "var": "That is the variance, $1/(1 - 0.64)$. The mean is $c/(1 - \\phi)$."
+    }
+   },
+   "explain": {
+    "text": "$\\mu = 0.4/(1 - 0.8) = 2$; the variance is $1/(1 - 0.64) = 2.78$."
+   }
+  },
+  {
+   "id": "r-const",
+   "difficulty": 3,
+   "skills": [
+    "ts-models"
+   ],
+   "prose": "`ARIMA(x, order=(1, 0, 0)).fit().params` on a funding spread, in basis points: `const` 12.0, `ar.L1` 0.75, `sigma2` 4.0.",
+   "question": "Today the spread is 20bp. What is tomorrow's forecast, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18.0,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "bp",
+    "accept": "18, which is 12 + 0.75 × (20 − 12)",
+    "wrong": [
+     {
+      "id": "c",
+      "value": 27.0,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "noint",
+      "value": 15.0,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. 18bp.",
+    "generic": "Not quite right. `const` is the mean $\\mu$; forecast $\\mu + \\phi(x_t - \\mu)$.",
+    "byKey": {
+     "c": "You used `const` as $c$: $12 + 0.75 \\times 20 = 27$. In statsmodels `const` is the mean.",
+     "noint": "You dropped the mean: $0.75 \\times 20$. The spread reverts to 12, not to 0."
+    }
+   },
+   "explain": {
+    "text": "`const` is $\\mu = 12$, so the forecast is $12 + 0.75 \\times (20 - 12) = 18$bp. Equivalently $c = 12 \\times 0.25 = 3$ and $3 + 0.75 \\times 20 = 18$."
+   }
+  },
+  {
+   "id": "r-pacf",
+   "difficulty": 3,
+   "skills": [
+    "ts-models",
+    "ts-acf"
+   ],
+   "prose": "A seeded series of 500 days: its ACF and PACF at lags 1 to 12.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "Correlation",
+     "height": 220,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877
+      }
+     ],
+     "yMin": -0.45,
+     "yMax": 0.6,
+     "groups": [
+      {
+       "id": "acf",
+       "label": "ACF"
+      },
+      {
+       "id": "pacf",
+       "label": "PACF"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "acf": {
+       "1": 0.4744,
+       "2": -0.0534,
+       "3": -0.1954,
+       "4": -0.0961,
+       "5": -0.0104,
+       "6": 0.0553,
+       "7": 0.0567,
+       "8": 0.0239,
+       "9": 0.0197,
+       "10": 0.0091,
+       "11": -0.0165,
+       "12": -0.0365
+      },
+      "pacf": {
+       "1": 0.4754,
+       "2": -0.3613,
+       "3": 0.0147,
+       "4": 0.0067,
+       "5": -0.0332,
+       "6": 0.0656,
+       "7": -0.0121,
+       "8": 0.0094,
+       "9": 0.0418,
+       "10": -0.0186,
+       "11": -0.0099,
+       "12": -0.0184
+      }
+     }
+    }
+   },
+   "question": "What AR order do they suggest?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "2",
+      "text": "2",
+      "correct": true
+     },
+     {
+      "id": "1",
+      "text": "1",
+      "why": "Lag 2 of the PACF is −0.36, far outside the band."
+     },
+     {
+      "id": "acf",
+      "text": "As many lags as the ACF has outside the band",
+      "why": "An AR's ACF decays or swings over many lags. The PACF counts the order."
+     },
+     {
+      "id": "0",
+      "text": "0",
+      "why": "Lag 1 of both is 0.48, far outside the band."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. The PACF cuts off after lag 2.",
+    "generic": "Not quite right. Read where the PACF drops into the band."
+   },
+   "explain": {
+    "text": "The PACF is 0.475 and −0.361, then small: an AR(2). It is `make_arma([0.6, -0.3], [], 500, 7)`; the negative second coefficient makes the ACF swing."
+   }
+  },
+  {
+   "id": "r-aic",
+   "difficulty": 4,
+   "skills": [
+    "ts-models"
+   ],
+   "prose": "AIC by AR order on 750 days of a signal: $p = 0$: 2210.4, $p = 1$: 2104.9, $p = 2$: 2103.6, $p = 3$: 2105.1, $p = 4$: 2106.8. The AR(1)'s residuals pass Ljung-Box.",
+   "question": "Which order would you report?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "1",
+      "text": "1: within 2 of the best AIC, smaller, and its residuals pass",
+      "correct": true
+     },
+     {
+      "id": "2",
+      "text": "2: it has the lowest AIC",
+      "why": "You took the minimum at face value. A gap of 1.3 does not separate the models, so prefer the smaller."
+     },
+     {
+      "id": "4",
+      "text": "4: more lags capture more memory",
+      "why": "AIC is higher at 4. Extra lags fit noise."
+     },
+     {
+      "id": "0",
+      "text": "0: the simplest model",
+      "why": "$p = 0$ is 105 points worse. The signal clearly has memory."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Parsimony.",
+    "generic": "Not quite right. How big must an AIC gap be to matter?"
+   },
+   "explain": {
+    "text": "$p = 2$ beats $p = 1$ by only 1.3, below the rule-of-thumb 2. With white-noise residuals at $p = 1$, the smaller model is the honest choice."
+   }
+  },
+  {
+   "id": "r-slow",
+   "difficulty": 4,
+   "skills": [
+    "ts-acf",
+    "ts-stationary",
+    "ts-models"
+   ],
+   "prose": "A spread's correlogram over 250 days starts at 0.96 and decays slowly: 0.90 at lag 3, 0.80 at lag 10. The ADF test gives p = 0.40.",
+   "question": "What should you conclude before modelling?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "unk",
+      "text": "The ACF cannot tell slow reversion from a unit root, and the test cannot reject one: treat it as possibly I(1)",
+      "correct": true
+     },
+     {
+      "id": "ar",
+      "text": "It is an AR(1) with $\\phi = 0.96$: fit and trade it",
+      "why": "You read the ACF as a stationary AR(1). A walk gives the same picture, and ADF does not reject one."
+     },
+     {
+      "id": "wn",
+      "text": "The changes must be white noise",
+      "why": "That would follow for a walk, but it needs checking: run Ljung-Box on the differences."
+     },
+     {
+      "id": "proof",
+      "text": "It has a unit root, proven by p = 0.40",
+      "why": "Not rejecting is not proof. With 250 days, ADF misses $\\phi = 0.96$ most of the time."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Undecided, so be careful.",
+    "generic": "Not quite right. What do a slow ACF and a large ADF p-value each rule out?"
+   },
+   "explain": {
+    "text": "A slowly decaying ACF fits both a walk and an AR(1) near 1. ADF has little power on 250 days (lesson 3). Do not fit a mean-reverting model on this evidence alone; get more data or test the differences."
+   }
+  }
+ ]
+}

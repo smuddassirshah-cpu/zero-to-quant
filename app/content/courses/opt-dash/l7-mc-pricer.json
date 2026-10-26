@@ -1,0 +1,1784 @@
+{
+ "id": "l7-mc-pricer",
+ "course": "opt-dash",
+ "title": "A Monte Carlo pricer",
+ "minutes": 15,
+ "objectives": [
+  "Implement a Monte Carlo pricer with a variance reduction trick.",
+  "Report every simulated price with its standard error."
+ ],
+ "skills": [
+  "od-pricers"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Eight futures",
+   "prose": "No tree this time. Draw the share's price in a year under the risk-neutral model, $S_T = Se^{(r - q - \\sigma^2/2)T + \\sigma\\sqrt T Z}$, with $Z$ standard normal. Here are eight draws from `np.random.default_rng(0)` for our call: $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $q = 0$, $T = 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Path",
+      "$Z$",
+      "$S_T$ (£)",
+      "Payoff (£)"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.1257",
+       "105.67",
+       "5.67"
+      ],
+      [
+       "2",
+       "−0.1321",
+       "100.36",
+       "0.36"
+      ],
+      [
+       "3",
+       "0.6404",
+       "117.13",
+       "17.13"
+      ],
+      [
+       "4",
+       "0.1049",
+       "105.23",
+       "5.23"
+      ],
+      [
+       "5",
+       "−0.5357",
+       "92.58",
+       "0.00"
+      ],
+      [
+       "6",
+       "0.3616",
+       "110.77",
+       "10.77"
+      ],
+      [
+       "7",
+       "1.3040",
+       "133.75",
+       "33.75"
+      ],
+      [
+       "8",
+       "0.9471",
+       "124.53",
+       "24.53"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Average payoff £12.18"
+    }
+   },
+   "question": "Estimate the call's price today from these eight paths, in £.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.59,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£11.59: the average payoff £12.18, discounted by $e^{-0.05}$.",
+    "unit": "£",
+    "label": "Price today",
+    "wrong": [
+     {
+      "id": "nodisc",
+      "value": 12.18,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "formula",
+      "value": 10.45,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The payoffs are paid in a year; the price is paid today."
+    },
+    {
+     "rung": "point",
+     "text": "The caption gives the average payoff.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$12.18 \\times e^{-0.05} = 11.59$."
+    }
+   ],
+   "feedback": {
+    "correct": "£11.59: the discounted average payoff of eight paths.",
+    "generic": "Not quite right. Average the payoffs, then discount them one year at 5%.",
+    "byKey": {
+     "nodisc": "You averaged the payoffs but did not discount. They arrive in a year, so multiply by $e^{-0.05}$.",
+     "formula": "That is the Black-Scholes price. The question asks what these eight paths estimate."
+    }
+   },
+   "explain": {
+    "text": "The **Monte Carlo** price is the discounted average payoff: $e^{-0.05} \\times 12.18 = 11.59$. Eight paths are a poor sample; the formula gives £10.45. How far off we can expect to be is this lesson.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Piling up paths",
+   "prose": "The same seed, now 20,000 paths. The line is the running estimate after every 100 paths. The dashed lines are £10.4506 plus and minus two standard errors, $2s/\\sqrt n$. Slide to reveal the paths.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "est",
+       "label": "Estimate",
+       "values": [
+        11.3397,
+        10.338,
+        10.2388,
+        9.9536,
+        10.1818,
+        10.0837,
+        10.1579,
+        10.1198,
+        9.8335,
+        9.5497,
+        9.6974,
+        9.7846,
+        9.8776,
+        10.1138,
+        10.1295,
+        10.1936,
+        10.1964,
+        10.116,
+        10.1563,
+        10.105,
+        10.1389,
+        10.1143,
+        10.1715,
+        10.1681,
+        10.0903,
+        10.1019,
+        10.0539,
+        10.0474,
+        10.0157,
+        10.0073,
+        10.0794,
+        10.1389,
+        10.1891,
+        10.2429,
+        10.2402,
+        10.1968,
+        10.1621,
+        10.1924,
+        10.3104,
+        10.2862,
+        10.2682,
+        10.339,
+        10.3566,
+        10.3773,
+        10.3664,
+        10.3828,
+        10.3735,
+        10.4007,
+        10.3724,
+        10.3879,
+        10.411,
+        10.4374,
+        10.4082,
+        10.3804,
+        10.3733,
+        10.3772,
+        10.3624,
+        10.3513,
+        10.3669,
+        10.4121,
+        10.3859,
+        10.3896,
+        10.4327,
+        10.4074,
+        10.4087,
+        10.4123,
+        10.4125,
+        10.4004,
+        10.4349,
+        10.4561,
+        10.4401,
+        10.4751,
+        10.4859,
+        10.4601,
+        10.4496,
+        10.4485,
+        10.4519,
+        10.4502,
+        10.4622,
+        10.5032,
+        10.4864,
+        10.5051,
+        10.5151,
+        10.4913,
+        10.5102,
+        10.506,
+        10.5223,
+        10.5167,
+        10.5055,
+        10.5423,
+        10.5717,
+        10.545,
+        10.5343,
+        10.5668,
+        10.5705,
+        10.5672,
+        10.5409,
+        10.5451,
+        10.5473,
+        10.5194,
+        10.5018,
+        10.5102,
+        10.529,
+        10.5119,
+        10.531,
+        10.5373,
+        10.5283,
+        10.5394,
+        10.5107,
+        10.4894,
+        10.4932,
+        10.5004,
+        10.4993,
+        10.4869,
+        10.4854,
+        10.5162,
+        10.507,
+        10.5155,
+        10.5029,
+        10.5106,
+        10.4958,
+        10.5137,
+        10.509,
+        10.5023,
+        10.5061,
+        10.5051,
+        10.4769,
+        10.4563,
+        10.4745,
+        10.4884,
+        10.487,
+        10.4726,
+        10.4743,
+        10.4609,
+        10.4642,
+        10.4592,
+        10.4802,
+        10.4773,
+        10.4775,
+        10.4909,
+        10.5025,
+        10.5105,
+        10.5111,
+        10.5241,
+        10.5294,
+        10.5324,
+        10.5326,
+        10.5629,
+        10.5636,
+        10.5505,
+        10.5362,
+        10.5279,
+        10.5312,
+        10.5189,
+        10.5181,
+        10.5087,
+        10.4984,
+        10.5018,
+        10.4996,
+        10.4906,
+        10.4835,
+        10.4928,
+        10.4904,
+        10.4836,
+        10.4816,
+        10.4902,
+        10.4932,
+        10.4887,
+        10.4801,
+        10.4749,
+        10.4948,
+        10.4948,
+        10.4878,
+        10.4848,
+        10.4739,
+        10.4824,
+        10.4811,
+        10.4856,
+        10.4888,
+        10.4959,
+        10.4953,
+        10.5011,
+        10.5021,
+        10.5124,
+        10.5247,
+        10.5258,
+        10.5227,
+        10.5324,
+        10.5301,
+        10.5247,
+        10.5178,
+        10.5147,
+        10.5192,
+        10.513,
+        10.5131,
+        10.5082,
+        10.4965,
+        10.4921,
+        10.4916,
+        10.4796
+       ]
+      },
+      {
+       "id": "hi",
+       "label": "+2 SE",
+       "values": [
+        13.3764,
+        12.5194,
+        12.1398,
+        11.9135,
+        11.759,
+        11.645,
+        11.5564,
+        11.485,
+        11.4258,
+        11.3758,
+        11.3327,
+        11.2952,
+        11.2621,
+        11.2325,
+        11.206,
+        11.182,
+        11.1602,
+        11.1402,
+        11.1218,
+        11.1048,
+        11.089,
+        11.0744,
+        11.0607,
+        11.0478,
+        11.0357,
+        11.0244,
+        11.0137,
+        11.0035,
+        10.9939,
+        10.9848,
+        10.9761,
+        10.9678,
+        10.9599,
+        10.9524,
+        10.9451,
+        10.9382,
+        10.9316,
+        10.9252,
+        10.9191,
+        10.9132,
+        10.9075,
+        10.902,
+        10.8968,
+        10.8917,
+        10.8867,
+        10.882,
+        10.8774,
+        10.8729,
+        10.8686,
+        10.8644,
+        10.8603,
+        10.8563,
+        10.8525,
+        10.8487,
+        10.8451,
+        10.8416,
+        10.8381,
+        10.8348,
+        10.8315,
+        10.8283,
+        10.8252,
+        10.8222,
+        10.8192,
+        10.8163,
+        10.8135,
+        10.8107,
+        10.808,
+        10.8054,
+        10.8028,
+        10.8003,
+        10.7978,
+        10.7954,
+        10.793,
+        10.7907,
+        10.7884,
+        10.7862,
+        10.784,
+        10.7819,
+        10.7798,
+        10.7777,
+        10.7757,
+        10.7737,
+        10.7717,
+        10.7698,
+        10.7679,
+        10.7661,
+        10.7643,
+        10.7625,
+        10.7607,
+        10.759,
+        10.7573,
+        10.7556,
+        10.754,
+        10.7524,
+        10.7508,
+        10.7492,
+        10.7477,
+        10.7461,
+        10.7446,
+        10.7432,
+        10.7417,
+        10.7403,
+        10.7389,
+        10.7375,
+        10.7361,
+        10.7348,
+        10.7334,
+        10.7321,
+        10.7308,
+        10.7295,
+        10.7283,
+        10.727,
+        10.7258,
+        10.7246,
+        10.7234,
+        10.7222,
+        10.7211,
+        10.7199,
+        10.7188,
+        10.7177,
+        10.7166,
+        10.7155,
+        10.7144,
+        10.7133,
+        10.7123,
+        10.7112,
+        10.7102,
+        10.7092,
+        10.7082,
+        10.7072,
+        10.7062,
+        10.7052,
+        10.7043,
+        10.7033,
+        10.7024,
+        10.7015,
+        10.7006,
+        10.6996,
+        10.6987,
+        10.6979,
+        10.697,
+        10.6961,
+        10.6953,
+        10.6944,
+        10.6936,
+        10.6927,
+        10.6919,
+        10.6911,
+        10.6903,
+        10.6895,
+        10.6887,
+        10.6879,
+        10.6871,
+        10.6864,
+        10.6856,
+        10.6848,
+        10.6841,
+        10.6833,
+        10.6826,
+        10.6819,
+        10.6812,
+        10.6805,
+        10.6797,
+        10.679,
+        10.6784,
+        10.6777,
+        10.677,
+        10.6763,
+        10.6756,
+        10.675,
+        10.6743,
+        10.6737,
+        10.673,
+        10.6724,
+        10.6718,
+        10.6711,
+        10.6705,
+        10.6699,
+        10.6693,
+        10.6687,
+        10.6681,
+        10.6675,
+        10.6669,
+        10.6663,
+        10.6657,
+        10.6651,
+        10.6645,
+        10.664,
+        10.6634,
+        10.6628,
+        10.6623,
+        10.6617,
+        10.6612,
+        10.6606,
+        10.6601,
+        10.6596,
+        10.659,
+        10.6585,
+        10.658,
+        10.6575
+       ],
+       "dashed": true,
+       "thin": true
+      },
+      {
+       "id": "lo",
+       "label": "−2 SE",
+       "values": [
+        7.5248,
+        8.3817,
+        8.7614,
+        8.9877,
+        9.1421,
+        9.2561,
+        9.3447,
+        9.4162,
+        9.4753,
+        9.5254,
+        9.5684,
+        9.606,
+        9.6391,
+        9.6686,
+        9.6951,
+        9.7191,
+        9.741,
+        9.761,
+        9.7794,
+        9.7964,
+        9.8121,
+        9.8268,
+        9.8405,
+        9.8534,
+        9.8654,
+        9.8768,
+        9.8875,
+        9.8977,
+        9.9073,
+        9.9164,
+        9.9251,
+        9.9334,
+        9.9413,
+        9.9488,
+        9.956,
+        9.963,
+        9.9696,
+        9.976,
+        9.9821,
+        9.988,
+        9.9937,
+        9.9991,
+        10.0044,
+        10.0095,
+        10.0144,
+        10.0192,
+        10.0238,
+        10.0283,
+        10.0326,
+        10.0368,
+        10.0409,
+        10.0448,
+        10.0487,
+        10.0524,
+        10.0561,
+        10.0596,
+        10.0631,
+        10.0664,
+        10.0697,
+        10.0729,
+        10.076,
+        10.079,
+        10.082,
+        10.0849,
+        10.0877,
+        10.0904,
+        10.0931,
+        10.0958,
+        10.0984,
+        10.1009,
+        10.1034,
+        10.1058,
+        10.1081,
+        10.1105,
+        10.1127,
+        10.115,
+        10.1172,
+        10.1193,
+        10.1214,
+        10.1235,
+        10.1255,
+        10.1275,
+        10.1294,
+        10.1314,
+        10.1332,
+        10.1351,
+        10.1369,
+        10.1387,
+        10.1405,
+        10.1422,
+        10.1439,
+        10.1455,
+        10.1472,
+        10.1488,
+        10.1504,
+        10.152,
+        10.1535,
+        10.155,
+        10.1565,
+        10.158,
+        10.1595,
+        10.1609,
+        10.1623,
+        10.1637,
+        10.1651,
+        10.1664,
+        10.1677,
+        10.169,
+        10.1703,
+        10.1716,
+        10.1729,
+        10.1741,
+        10.1753,
+        10.1766,
+        10.1778,
+        10.1789,
+        10.1801,
+        10.1812,
+        10.1824,
+        10.1835,
+        10.1846,
+        10.1857,
+        10.1868,
+        10.1878,
+        10.1889,
+        10.1899,
+        10.191,
+        10.192,
+        10.193,
+        10.194,
+        10.195,
+        10.1959,
+        10.1969,
+        10.1978,
+        10.1988,
+        10.1997,
+        10.2006,
+        10.2015,
+        10.2024,
+        10.2033,
+        10.2042,
+        10.2051,
+        10.2059,
+        10.2068,
+        10.2076,
+        10.2084,
+        10.2093,
+        10.2101,
+        10.2109,
+        10.2117,
+        10.2125,
+        10.2133,
+        10.214,
+        10.2148,
+        10.2156,
+        10.2163,
+        10.2171,
+        10.2178,
+        10.2186,
+        10.2193,
+        10.22,
+        10.2207,
+        10.2214,
+        10.2221,
+        10.2228,
+        10.2235,
+        10.2242,
+        10.2249,
+        10.2255,
+        10.2262,
+        10.2268,
+        10.2275,
+        10.2281,
+        10.2288,
+        10.2294,
+        10.23,
+        10.2307,
+        10.2313,
+        10.2319,
+        10.2325,
+        10.2331,
+        10.2337,
+        10.2343,
+        10.2349,
+        10.2355,
+        10.2361,
+        10.2366,
+        10.2372,
+        10.2378,
+        10.2383,
+        10.2389,
+        10.2394,
+        10.24,
+        10.2405,
+        10.2411,
+        10.2416,
+        10.2421,
+        10.2427,
+        10.2432,
+        10.2437
+       ],
+       "dashed": true,
+       "thin": true
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "money": "£",
+     "y": [
+      8.5,
+      12.5
+     ],
+     "xLabel": "Paths (hundreds)",
+     "yLabel": "Call price (£)",
+     "hlines": [
+      {
+       "id": "bs",
+       "y": 10.4506,
+       "label": "£10.4506"
+      }
+     ]
+    },
+    "state": {
+     "reveal": 0.1
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "start": 0.1,
+      "label": "Paths shown"
+     }
+    ]
+   },
+   "question": "From 2,500 to 10,000 paths, what happens to the band's width?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "half",
+      "text": "It halves: four times the paths, half the error",
+      "correct": true
+     },
+     {
+      "id": "quarter",
+      "text": "It falls to a quarter, in step with the paths",
+      "why": "You scaled the error with $n$. It scales with $\\sqrt n$: read the band at 25 and at 100 hundred paths."
+     },
+     {
+      "id": "same",
+      "text": "It barely changes after the first few hundred paths",
+      "why": "The band keeps narrowing: from ±£0.59 at 2,500 paths to ±£0.29 at 10,000."
+     },
+     {
+      "id": "zero",
+      "text": "It closes to zero once the estimate settles",
+      "why": "It narrows for ever but never closes. Every path still moves the average a little."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the band's half-width at 25 and at 100 on the axis."
+    },
+    {
+     "rung": "point",
+     "text": "At 2,500 paths the band is about ±£0.59.",
+     "highlight": [
+      "hi",
+      "lo"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At 10,000 it is about ±£0.29: half."
+    }
+   ],
+   "feedback": {
+    "correct": "±£0.59 becomes ±£0.29: the error falls like $1/\\sqrt n$.",
+    "generic": "Not quite right. Compare the band's width at 2,500 and at 10,000 paths.",
+    "byKey": {
+     "quarter": "A quarter would need sixteen times the paths. Four times the paths halves it.",
+     "same": "Compare 2,500 with 10,000 directly: ±£0.59 against ±£0.29.",
+     "zero": "The band never closes. A simulated price always carries an error."
+    }
+   },
+   "explain": {
+    "text": "The band's half-width is $2s/\\sqrt n$, so four times the paths halves it. One more correct decimal place costs 100 times the paths. That slow rate is why we reduce the variance instead of only adding paths.",
+    "canvas": {
+     "reveal": 1
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The standard error",
+   "prose": "A price without its error is half an answer. With $Y_i$ the discounted payoffs, the estimate is $\\bar Y$ and its **standard error** is $$\\text{SE} = \\frac{s}{\\sqrt n},$$ where $s$ is the sample standard deviation of the $Y_i$, dividing by $n - 1$ (`ddof=1`). With 100,000 plain paths from seed 0, $s = 14.71$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Paths $n$",
+      "$\\bar Y$ (£)",
+      "$s$ (£)"
+     ],
+     "rows": [
+      [
+       "100,000",
+       "10.4362",
+       "14.71"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the standard error, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0465,
+    "tol": {
+     "abs": 0.0003
+    },
+    "accept": "£0.0465: $14.71/\\sqrt{100{,}000} = 14.71/316.2$.",
+    "unit": "£",
+    "label": "Standard error",
+    "wrong": [
+     {
+      "id": "n",
+      "value": 0.000147,
+      "tol": {
+       "abs": 2e-05
+      }
+     },
+     {
+      "id": "s",
+      "value": 14.71,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide $s$ by the square root of the number of paths."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{100{,}000} = 316.2$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$14.71/316.2$."
+    }
+   ],
+   "feedback": {
+    "correct": "£0.0465: the price is £10.44 ± £0.05.",
+    "generic": "Not quite right. $\\text{SE} = s/\\sqrt n$.",
+    "byKey": {
+     "n": "You divided by $n$, not $\\sqrt n$. That would make the error shrink far too fast.",
+     "s": "That is the spread of one path's payoff. The average of 100,000 spreads far less."
+    }
+   },
+   "explain": {
+    "text": "$14.71/316.2 = 0.0465$, so £10.4362 is 0.3 standard errors below £10.4506. A price within two or three standard errors of the truth is what an honest pricer gives. The pricer returns `(price, se)` together."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Antithetic pairs",
+   "prose": "$Z$ and $-Z$ are equally likely. So price each draw twice, with $Z$ and with $-Z$, and average the pair. Here are our eight draws, discounted payoffs in £.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$Z$",
+      "$f(Z)$",
+      "$f(-Z)$",
+      "Pair average"
+     ],
+     "rows": [
+      [
+       "0.1257",
+       "5.39",
+       "0.46",
+       "2.93"
+      ],
+      [
+       "−0.1321",
+       "0.34",
+       "5.52",
+       "2.93"
+      ],
+      [
+       "0.6404",
+       "16.29",
+       "0.00",
+       "8.15"
+      ],
+      [
+       "0.1049",
+       "4.98",
+       "0.86",
+       "2.92"
+      ],
+      [
+       "−0.5357",
+       "0.00",
+       "13.98",
+       "6.99"
+      ],
+      [
+       "0.3616",
+       "10.25",
+       "0.00",
+       "5.12"
+      ],
+      [
+       "1.3040",
+       "32.10",
+       "0.00",
+       "16.05"
+      ],
+      [
+       "0.9471",
+       "23.34",
+       "0.00",
+       "11.67"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why do the pair averages vary less than single payoffs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neg",
+      "text": "A call's payoff rises with $Z$, so when $f(Z)$ is high, $f(-Z)$ tends to be low",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "Each pair uses two paths, and more paths always cut the error",
+      "why": "You credited the path count. Two independent paths also halve the variance; antithetic pairs do better here because they are negatively correlated."
+     },
+     {
+      "id": "exact",
+      "text": "The pairs cancel exactly, so each average is the price",
+      "why": "They do not cancel: row 7 averages £16.05 and row 2 £2.93. They only lean against each other."
+     },
+     {
+      "id": "mean",
+      "text": "$-Z$ has mean 0, so it removes the drift",
+      "why": "Both $Z$ and $-Z$ have mean 0. What matters is how $f(Z)$ and $f(-Z)$ move together."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the second and third columns row by row."
+    },
+    {
+     "rung": "point",
+     "text": "Row 7: £32.10 with $Z$, £0.00 with $-Z$.",
+     "highlight": [
+      "r6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A high payoff pairs with a low one, so the average sits nearer the middle."
+    }
+   ],
+   "feedback": {
+    "correct": "The pair members are negatively correlated, about −0.50 over 50,000 pairs.",
+    "generic": "Not quite right. Look at how the two payoffs in each row move together.",
+    "byKey": {
+     "more": "Independent paths would help too. Negative correlation is why pairs help more than that.",
+     "exact": "The averages still vary, from £2.92 to £16.05. They vary less than single payoffs, which run from 0 to £32.10.",
+     "mean": "The drift is the same for both. The gain comes from the pair's negative correlation."
+    }
+   },
+   "explain": {
+    "text": "The pair average has variance $\\tfrac12\\text{Var}(f)(1 + \\rho)$, with $\\rho$ the correlation of $f(Z)$ and $f(-Z)$. For our call $\\rho = -0.50$, so pairs beat independent paths. This is **antithetic variates** (Glasserman, chapter 4).",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The pricer in code",
+   "prose": "Now the dashboard's `mc_price`. Seed `np.random.default_rng(seed)` and draw all the normals in one call, so a test can expect exact numbers. `n_paths` counts payoffs: with pairs, draw `n_paths // 2` normals. Fewer than two independent samples give no standard error: raise `ValueError`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> mc_price(100, 100, 0.05, 0.2, 1)",
+      "(10.472146563336759, 0.03293359676728182)",
+      ">>> mc_price(100, 100, 0.05, 0.2, 1, antithetic=False)",
+      "(10.436162828243598, 0.04651406201098207)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `mc_price`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_price(S, K, r, sigma, T, kind=\"call\", n_paths=100_000, seed=0,\n             antithetic=True, q=0.0):\n    \"\"\"Monte Carlo price and standard error of a European option.\n\n    Draw every normal in one call of rng.standard_normal. With\n    antithetic=True, draw n_paths // 2 normals and use Z and -Z;\n    the standard error comes from the pair averages.\"\"\"\n    rng = np.random.default_rng(seed)\n    ...\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_price(S, K, r, sigma, T, kind=\"call\", n_paths=100_000, seed=0,\n             antithetic=True, q=0.0):\n    \"\"\"Monte Carlo price and standard error of a European option.\"\"\"\n    rng = np.random.default_rng(seed)\n    m = n_paths // 2 if antithetic else n_paths    # independent samples\n    if m < 2:\n        raise ValueError(\"a standard error needs two independent samples\")\n    z = rng.standard_normal(m)                     # every normal in one call\n    drift = (r - q - sigma ** 2 / 2) * T\n    vol = sigma * sqrt(T)\n\n    def disc_payoff(z):\n        s_T = S * np.exp(drift + vol * z)\n        pay = np.maximum(s_T - K, 0.0) if kind == \"call\" else np.maximum(K - s_T, 0.0)\n        return exp(-r * T) * pay\n\n    if antithetic:\n        y = (disc_payoff(z) + disc_payoff(-z)) / 2  # one average per pair\n    else:\n        y = disc_payoff(z)\n    return float(y.mean()), float(y.std(ddof=1) / sqrt(m))\n",
+    "examples": [
+     {
+      "call": "tuple(round(v, 6) for v in mc_price(100, 100, 0.05, 0.2, 1))",
+      "expect": "(10.472147, 0.032934)",
+      "compare": "equal"
+     },
+     {
+      "call": "tuple(round(v, 6) for v in mc_price(100, 100, 0.05, 0.2, 1, antithetic=False))",
+      "expect": "(10.436163, 0.046514)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "tuple(round(v, 6) for v in mc_price(100, 100, 0.05, 0.2, 1))",
+      "expect": "(10.472147, 0.032934)",
+      "compare": "equal"
+     },
+     {
+      "call": "tuple(round(v, 6) for v in mc_price(100, 100, 0.05, 0.2, 1, \"put\"))",
+      "expect": "(5.589297, 0.020919)",
+      "compare": "equal"
+     },
+     {
+      "call": "tuple(round(v, 6) for v in mc_price(100, 100, 0.05, 0.2, 1, antithetic=False))",
+      "expect": "(10.436163, 0.046514)",
+      "compare": "equal"
+     },
+     {
+      "call": "tuple(round(v, 6) for v in mc_price(100, 100, 0.05, 0.2, 1, q=0.01))",
+      "expect": "(9.848632, 0.032822)",
+      "compare": "equal"
+     },
+     {
+      "call": "all(abs(p - bs_price(*a[:6], q=a[6])) < 3 * se for a in [(110, 100, 0.03, 0.25, 0.5, 'call', 0.0), (100, 95, 0.04, 0.25, 0.5, 'put', 0.0), (100, 100, 0.05, 0.2, 1, 'call', 0.01)] for p, se in [mc_price(*a[:6], n_paths=50_000, seed=7, q=a[6])])",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "mc_price(100, 100, 0.05, 0.2, 1, seed=3)[1] < mc_price(100, 100, 0.05, 0.2, 1, seed=3, antithetic=False)[1]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "mc_price(100, 1000, 0.05, 0.2, 1, n_paths=1000)",
+      "expect": "(0.0, 0.0)",
+      "compare": "equal"
+     },
+     {
+      "call": "mc_price(100, 100, 0.05, 0.2, 1, n_paths=1, antithetic=False)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "mc_price(100, 100, 0.05, 0.2, 1, n_paths=2)",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n",
+    "how": "Check runs 9 hidden tests: seeded prices and errors with and without antithetic pairs, a put and a yield (rounded to 6 places, ==), three options within 3 standard errors of `bs_price` (already defined), a smaller antithetic error, a strike no path reaches, and too few samples. The first run loads NumPy, which takes 10 to 20 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draw `z = rng.standard_normal(m)` once, with `m = n_paths // 2` for pairs."
+    },
+    {
+     "rung": "point",
+     "text": "Discounted payoffs: `exp(-r * T) * np.maximum(s_T - K, 0.0)`; for pairs average the payoffs at `z` and `-z`.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return `y.mean()` and `y.std(ddof=1) / sqrt(m)`, where `y` holds one value per independent sample."
+    }
+   ],
+   "feedback": {
+    "correct": "Your pricer reproduces the seeded values and sits within 3 errors of Black-Scholes.",
+    "generic": "Not quite right. The first failing call shows where your numbers part from the reference.",
+    "byKey": {
+     "test-1": "Your antithetic numbers differ. Draw `n_paths // 2` normals in one call and average each pair before taking the mean and error.",
+     "test-4": "Your yield case is off. The drift is `r - q - sigma ** 2 / 2`; discounting stays at `r`.",
+     "test-9": "Two paths make one antithetic pair: one sample, so no standard error. Raise `ValueError`."
+    }
+   },
+   "explain": {
+    "text": "At the same 100,000 payoffs the pairs cut the error from £0.0465 to £0.0329, a ratio of 0.71. Plain paths would need about 200,000 to match. The error uses the 50,000 pair averages, which are the independent samples."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A control variate",
+   "prose": "The discounted share price $X = e^{-rT}S_T$ moves with the payoff, and its mean is known exactly: $E[X] = Se^{-qT}$. So subtract the sample's error in $X$: $$\\hat c = \\overline{Y - b(X - Se^{-qT})},\\qquad b = \\frac{\\text{Cov}(Y, X)}{\\text{Var}(X)},$$ with $b$ estimated from the same paths. The error is the standard error of $Y - b(X - Se^{-qT})$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "100,000 paths, seed 0",
+      "Price (£)",
+      "SE (£)"
+     ],
+     "rows": [
+      [
+       "Plain",
+       "10.4362",
+       "0.0465"
+      ],
+      [
+       "Antithetic",
+       "10.4721",
+       "0.0329"
+      ],
+      [
+       "Control variate",
+       "?",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `mc_control_variate`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_control_variate(S, K, r, sigma, T, n_paths, seed, q=0.0):\n    \"\"\"Monte Carlo call price and standard error, with the discounted\n    terminal share price as a control variate.\"\"\"\n    if n_paths < 2:\n        raise ValueError(\"a standard error needs two paths\")\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal(n_paths)\n    ...\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_control_variate(S, K, r, sigma, T, n_paths, seed, q=0.0):\n    \"\"\"Monte Carlo call price and standard error, with the discounted\n    terminal share price as a control variate.\"\"\"\n    if n_paths < 2:\n        raise ValueError(\"a standard error needs two paths\")\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal(n_paths)\n    s_T = S * np.exp((r - q - sigma ** 2 / 2) * T + sigma * sqrt(T) * z)\n    y = exp(-r * T) * np.maximum(s_T - K, 0.0)    # discounted payoffs\n    x = exp(-r * T) * s_T                         # the control\n    b = np.cov(y, x)[0, 1] / np.var(x, ddof=1)    # best weight, from the sample\n    adj = y - b * (x - S * exp(-q * T))           # E[x] = S e^{-qT} exactly\n    return float(adj.mean()), float(adj.std(ddof=1) / sqrt(n_paths))\n",
+    "examples": [
+     {
+      "call": "tuple(round(v, 6) for v in mc_control_variate(100, 100, 0.05, 0.2, 1, 100_000, 0))",
+      "expect": "(10.448368, 0.017764)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "tuple(round(v, 6) for v in mc_control_variate(100, 100, 0.05, 0.2, 1, 100_000, 0))",
+      "expect": "(10.448368, 0.017764)",
+      "compare": "equal"
+     },
+     {
+      "call": "tuple(round(v, 6) for v in mc_control_variate(110, 100, 0.03, 0.25, 0.5, 50_000, 7))",
+      "expect": "(14.452191, 0.020536)",
+      "compare": "equal"
+     },
+     {
+      "call": "tuple(round(v, 6) for v in mc_control_variate(100, 100, 0.05, 0.2, 1, 100_000, 0, q=0.01))",
+      "expect": "(9.824422, 0.017888)",
+      "compare": "equal"
+     },
+     {
+      "call": "mc_control_variate(100, 100, 0.05, 0.2, 1, 100_000, 0)[1] < mc_price(100, 100, 0.05, 0.2, 1, antithetic=False)[1] / 2",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(mc_control_variate(100, 100, 0.05, 0.2, 1, 100_000, 0)[0] - bs_price(100, 100, 0.05, 0.2, 1)) < 3 * 0.017764",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "mc_control_variate(100, 100, 0.05, 0.2, 1, 1, 0)",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\nimport numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_price(S, K, r, sigma, T, kind=\"call\", n_paths=100_000, seed=0,\n             antithetic=True, q=0.0):\n    \"\"\"Monte Carlo price and standard error of a European option.\"\"\"\n    rng = np.random.default_rng(seed)\n    m = n_paths // 2 if antithetic else n_paths    # independent samples\n    if m < 2:\n        raise ValueError(\"a standard error needs two independent samples\")\n    z = rng.standard_normal(m)                     # every normal in one call\n    drift = (r - q - sigma ** 2 / 2) * T\n    vol = sigma * sqrt(T)\n\n    def disc_payoff(z):\n        s_T = S * np.exp(drift + vol * z)\n        pay = np.maximum(s_T - K, 0.0) if kind == \"call\" else np.maximum(K - s_T, 0.0)\n        return exp(-r * T) * pay\n\n    if antithetic:\n        y = (disc_payoff(z) + disc_payoff(-z)) / 2  # one average per pair\n    else:\n        y = disc_payoff(z)\n    return float(y.mean()), float(y.std(ddof=1) / sqrt(m))\n",
+    "how": "Check runs 6 hidden tests: three seeded prices and errors (rounded to 6 places, ==), an error below half the plain one, agreement with `bs_price` within 3 errors, and one path. `bs_price` and `mc_price` are already defined. The first run loads NumPy."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build `y`, the discounted payoffs, and `x = exp(-r * T) * s_T` from the same `z`."
+    },
+    {
+     "rung": "point",
+     "text": "`b = np.cov(y, x)[0, 1] / np.var(x, ddof=1)`.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`adj = y - b * (x - S * exp(-q * T))`; return its mean and `adj.std(ddof=1) / sqrt(n_paths)`."
+    }
+   ],
+   "feedback": {
+    "correct": "The control cuts the error to £0.0178, 0.38 of the plain one.",
+    "generic": "Not quite right. Check that `x` uses the same draws as `y`, and that its known mean is $Se^{-qT}$.",
+    "byKey": {
+     "test-1": "Your seeded values differ. Use one draw of `n_paths` normals, `b` from `np.cov` and `np.var` with `ddof=1`, and $E[X] = Se^{-qT}$.",
+     "test-3": "With a yield, $E[X] = Se^{-qT}$, not $S$. The drift also uses `r - q`."
+    }
+   },
+   "explain": {
+    "text": "$X$ and the payoff have correlation 0.92 here, so subtracting $b = 0.67$ times $X$'s error removes most of the noise. The error falls from £0.0465 to £0.0178: plain paths would need about 686,000. Estimating $b$ from the same paths adds a bias too small to see at this size.",
+    "canvas": {
+     "values": {
+      "r2c1": "10.4484",
+      "r2c2": "0.0178"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Does the interval hold?",
+   "prose": "Each run reports a price and a 95% interval, $\\hat c \\pm 1.96\\,\\text{SE}$. We ran your default `mc_price` 200 times with 2,000 paths each, seeds 0 to 199, and counted the intervals that contain £10.4506.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "in",
+       "label": "Contains £10.4506"
+      },
+      {
+       "id": "out",
+       "label": "Misses"
+      }
+     ],
+     "yLabel": "Runs",
+     "yMax": 200,
+     "showValues": true,
+     "decimals": 0
+    },
+    "state": {
+     "values": {
+      "in": 190,
+      "out": 10
+     }
+    }
+   },
+   "question": "How many of the 200 intervals should contain £10.4506 if the errors are right?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 190,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "190: 95% of 200. We counted 190.",
+    "label": "Runs",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 200,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sd",
+      "value": 136,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A 95% interval should miss about one run in twenty."
+    },
+    {
+     "rung": "point",
+     "text": "$0.95 \\times 200$.",
+     "highlight": [
+      "xin"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "190."
+    }
+   ],
+   "feedback": {
+    "correct": "190 expected, and 190 counted.",
+    "generic": "Not quite right. Take 95% of 200 runs.",
+    "byKey": {
+     "all": "An interval that never missed would be too wide. A 95% interval misses about 10 runs in 200.",
+     "sd": "That is the share for ±1 standard error, about 68%. The interval here is ±1.96."
+    }
+   },
+   "explain": {
+    "text": "190 of 200 is 95.0%; over 2,000 runs the count was 1,893, or 94.7%. Two hundred runs are themselves noisy: the count's own standard deviation is about 3 runs. A count far below 190 would mean the error is understated.",
+    "canvas": {
+     "highlight": [
+      "xin"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Two n paths, one n pairs",
+   "prose": "A colleague computes the antithetic error over all 100,000 payoffs, as if independent. Seed 0, 50,000 pairs, our call.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Two errors",
+     "numbers": true,
+     "lines": [
+      "a, b = f(z), f(-z)                     # 50,000 draws",
+      "y_all = np.concatenate([a, b])         # 100,000 payoffs",
+      "y_all.std(ddof=1) / sqrt(100_000)      # 0.0466",
+      "((a + b) / 2).std(ddof=1) / sqrt(50_000)   # 0.0329"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which is the standard error of the antithetic price?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pairs",
+      "text": "Line 4, £0.0329: the pair averages are the independent samples",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "Line 3, £0.0466: it uses all 100,000 payoffs",
+      "why": "You treated $f(Z)$ and $f(-Z)$ as independent. They share one draw, and $s/\\sqrt n$ assumes independence."
+     },
+     {
+      "id": "smaller",
+      "text": "The smaller one is always right, since pairs reduce variance",
+      "why": "Here the smaller is right, but not for that reason. For a straddle the pair formula gives the larger error."
+     },
+     {
+      "id": "same",
+      "text": "Either: they differ only by rounding",
+      "why": "They differ by 40%. Line 3 ignores the correlation inside each pair."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which numbers are independent of each other?"
+    },
+    {
+     "rung": "point",
+     "text": "Each pair shares one $Z$.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So there are 50,000 independent samples: the pair averages on line 4."
+    }
+   ],
+   "feedback": {
+    "correct": "Line 4: 50,000 pair averages, £0.0329.",
+    "generic": "Not quite right. $s/\\sqrt n$ needs $n$ independent samples; count them.",
+    "byKey": {
+     "all": "The 100,000 payoffs come in correlated pairs, so line 3 is not a standard error of anything we computed.",
+     "smaller": "The rule is independence, not size. For an at-the-money straddle the pairs correlate +0.64, and line 3 understates: £0.0419 against £0.0537.",
+     "same": "£0.0466 against £0.0329 is not rounding. The correlation of −0.50 makes the gap."
+    }
+   },
+   "explain": {
+    "text": "The pairs are the independent units, so the error uses their averages. For the call line 3 overstates; for a straddle, whose payoff rises with $|Z|$, it understates, and pairs make the error worse. Reusing one seed across strikes is similar: good for differences, but the prices are not independent.",
+    "canvas": {
+     "highlight": [
+      "l4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The estimator and its error",
+   "prose": "You computed $$\\hat c = e^{-rT}\\frac1n\\sum_{i=1}^n f\\big(S_T^{(i)}\\big),\\qquad \\text{SE} = \\frac{s}{\\sqrt n},$$ an average of payoffs over the lognormal $S_T$ drawn here, where the shaded part pays. Pairs and a control lower $s$, and $n$ counts independent samples.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "lognormal",
+     "params": {
+      "mu": 4.63517,
+      "sigma": 0.2
+     },
+     "x": [
+      50,
+      200
+     ],
+     "xLabel": "$S_T$ (£)"
+    },
+    "state": {
+     "shade": {
+      "from": 100,
+      "to": null
+     },
+     "observed": {
+      "x": 100,
+      "label": "K = 100"
+     }
+    }
+   },
+   "question": "To cut a standard error from £0.04 to £0.01 by paths alone, how many times the paths do you need?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "16",
+      "text": "16 times",
+      "correct": true
+     },
+     {
+      "id": "4",
+      "text": "4 times",
+      "why": "You scaled the error with $n$. It scales with $1/\\sqrt n$: a quarter of the error needs $4^2$ times the paths."
+     },
+     {
+      "id": "2",
+      "text": "2 times",
+      "why": "Doubling the paths cuts the error by $\\sqrt 2$, from £0.04 to £0.028."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(0.04/0.01)^2 = 16$.",
+    "generic": "Not quite right. The error is $s/\\sqrt n$; solve for $n$."
+   },
+   "explain": {
+    "text": "A quarter of the error needs sixteen times the paths. The control variate here does the work of about 6.9 times the paths for almost no extra cost. That is the case for variance reduction."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A price on a trade ticket",
+   "prose": "A client asks for a one-year **Asian** call on our share: it pays the average of 12 monthly prices minus £100. No tree or formula fits this payoff, so the desk simulates every month. The ticket shows 100,000 plain paths, seed 0. Risk wants the error at £0.01 before booking.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Trade ticket",
+      ""
+     ],
+     "rows": [
+      [
+       "Product",
+       "Asian call, 12 monthly fixings"
+      ],
+      [
+       "Price",
+       "£6.1722"
+      ],
+      [
+       "Standard error",
+       "£0.0269"
+      ],
+      [
+       "Paths",
+       "100,000"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many plain paths does the same pricer need for an error of £0.01?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 725000,
+    "tol": {
+     "rel": 0.03
+    },
+    "accept": "About 725,000: $100{,}000 \\times (0.0269/0.01)^2$.",
+    "label": "Paths",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 269000,
+      "tol": {
+       "abs": 5000
+      }
+     },
+     {
+      "id": "ten",
+      "value": 1000000,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The error falls like $1/\\sqrt n$."
+    },
+    {
+     "rung": "point",
+     "text": "The error must fall by $0.0269/0.01 = 2.69$ times.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Paths grow by $2.69^2 = 7.2$: about 725,000."
+    }
+   ],
+   "feedback": {
+    "correct": "About 725,000 paths, or fewer with pairs or a control.",
+    "generic": "Not quite right. Square the ratio of the errors and scale the paths by it.",
+    "byKey": {
+     "linear": "You scaled the paths with the error. They scale with its square: $2.69^2 = 7.2$ times.",
+     "ten": "A million is a safe round number, but the question asks for the need: about 725,000."
+    }
+   },
+   "explain": {
+    "text": "$(0.0269/0.01)^2 = 7.2$, so about 725,000 paths. The Asian call costs £6.17 against £10.45 for the plain call, because an average moves less than one final price. Monte Carlo is the pricer of last resort for such payoffs, and its ticket always carries the error."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`mc_price` returns the discounted average payoff and its standard error $s/\\sqrt n$, from one seeded call of `rng.standard_normal`.",
+   "At 100,000 paths, seed 0, the call's error is £0.0465 plain, £0.0329 with antithetic pairs and £0.0178 with the share price as a control variate.",
+   "The error must use independent samples: with pairs, the pair averages. Four times the paths only halves the error."
+  ],
+  "formula": {
+   "name": "Monte Carlo estimate",
+   "tex": "\\hat c = e^{-rT}\\frac1n\\sum_{i=1}^n f\\big(S_T^{(i)}\\big),\\quad \\text{SE} = \\frac{s}{\\sqrt n}",
+   "note": "$S_T = Se^{(r - q - \\sigma^2/2)T + \\sigma\\sqrt T Z}$; $n$ counts independent samples."
+  },
+  "trap": "Computing an antithetic error over all $2n$ payoffs as if they were independent."
+ },
+ "quiz": [
+  {
+   "id": "q-se-4x",
+   "difficulty": 2,
+   "prose": "A Monte Carlo price has standard error £0.08 with 20,000 paths.",
+   "question": "What error do 80,000 paths give, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.04,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£0.04: four times the paths halves the error.",
+    "unit": "£",
+    "label": "Error",
+    "wrong": [
+     {
+      "id": "quarter",
+      "value": 0.02,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£0.04.",
+    "generic": "Not quite right. The error scales with $1/\\sqrt n$.",
+    "byKey": {
+     "quarter": "You divided by 4. The error divides by $\\sqrt 4 = 2$."
+    }
+   },
+   "explain": {
+    "text": "$0.08/\\sqrt 4 = 0.04$. Halving it again would need 320,000 paths."
+   }
+  },
+  {
+   "id": "q-far-otm",
+   "difficulty": 2,
+   "prose": "`mc_price(100, 1000, 0.05, 0.2, 1, n_paths=1000)` prices a call struck ten times above the share.",
+   "question": "What does it return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "`(0.0, 0.0)`: no path reaches £1,000, so every payoff is 0",
+      "correct": true
+     },
+     {
+      "id": "error",
+      "text": "A `ValueError`, since the error is undefined",
+      "why": "The error is defined: the payoffs are all 0, so their spread is 0."
+     },
+     {
+      "id": "tiny",
+      "text": "A tiny positive price with a large error",
+      "why": "The true price is tiny, but none of 1,000 paths gets near £1,000. The sample sees nothing."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Every payoff is 0, so the price and its error are 0.",
+    "generic": "Not quite right. How many of 1,000 paths could end above £1,000?"
+   },
+   "explain": {
+    "text": "Reaching £1,000 needs $Z$ above 11, which 1,000 draws never give. A zero error here means no information, not certainty: the relative error of rare payoffs is the hard case."
+   }
+  },
+  {
+   "id": "q-pairs-se",
+   "difficulty": 3,
+   "prose": "An antithetic run uses `n_paths = 20_000`.",
+   "question": "How many independent samples does its standard error use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "10k",
+      "text": "10,000 pair averages",
+      "correct": true
+     },
+     {
+      "id": "20k",
+      "text": "20,000 payoffs",
+      "why": "Each pair shares one draw, so its two payoffs are not independent."
+     },
+     {
+      "id": "40k",
+      "text": "40,000: each draw makes two paths",
+      "why": "`n_paths` already counts payoffs: 10,000 draws make 20,000."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "10,000 pair averages.",
+    "generic": "Not quite right. Count the draws."
+   },
+   "explain": {
+    "text": "20,000 payoffs come from 10,000 draws, one pair each. The pair averages are independent, so $n = 10{,}000$ in $s/\\sqrt n$."
+   }
+  },
+  {
+   "id": "q-cv-parity",
+   "difficulty": 3,
+   "prose": "With the same 100,000 paths, the control variate gives a call error of £0.017764 and a put error of £0.017764.",
+   "question": "Why are they equal?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "parity",
+      "text": "Call minus put is $e^{-rT}(S_T - K)$, a straight line in the control $X$, so both have the same residual",
+      "correct": true
+     },
+     {
+      "id": "luck",
+      "text": "Chance, at this seed",
+      "why": "Equal to six places is not chance. Try another seed and they still match."
+     },
+     {
+      "id": "atm",
+      "text": "At the money calls and puts always have equal errors",
+      "why": "Without the control the errors differ: £0.0465 for the call, £0.0274 for the put."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Parity makes the two payoffs differ by a line in $X$, which the control removes.",
+    "generic": "Not quite right. Write call minus put in terms of $X = e^{-rT}S_T$."
+   },
+   "explain": {
+    "text": "$Y_{\\text{call}} - Y_{\\text{put}} = X - e^{-rT}K$. Regressing on $X$ removes that line exactly, so both leave the same residual. It is parity, met again in the noise."
+   }
+  }
+ ]
+}

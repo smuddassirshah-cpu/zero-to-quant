@@ -625,7 +625,7 @@
       for (const [k, e] of lets) { try { S[k] = evalOne(e, S); } catch (er) { console.warn(er.message || er); } }
       for (const [target, expr] of rules) {
         let v; try { v = evalOne(expr, S); } catch (e) { console.warn(e.message || e); continue; }
-        if (typeof v === 'number' && !Number.isFinite(v)) continue;
+        if ((typeof v === 'number' && !Number.isFinite(v)) || v === undefined) continue; // item 355: a rule reading a value not derived yet waits for the next pass
         const m = sides && target.match(/^(left|right):(.+)$/);
         if (m) { patch[m[1]] = patch[m[1]] || {}; put(sides[m[1]].get(), patch[m[1]], m[2], v); }
         else if (sides && target !== 'caption') { const a = inst.activeSide || 'left'; patch[a] = patch[a] || {}; put(sides[a].get(), patch[a], target, v); }
@@ -660,6 +660,8 @@
   const pairOf = (host, spec, ctx) => {
     const wrap = document.createElement('div'); wrap.className = 'cv cv-pair' + (spec.stack ? ' is-stacked' : '');
     const row = document.createElement('div'); row.className = 'cv-pair-row';
+    /* item 386: split (0.3 to 0.7) is the left side's share of the width, so a compact chart can sit beside a wider table */
+    if (Number.isFinite(+spec.split) && +spec.split >= 0.3 && +spec.split <= 0.7) row.style.setProperty('--pair-cols', `minmax(0, ${+spec.split}fr) minmax(0, ${1 - +spec.split}fr)`);
     const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
     wrap.append(row, cap); host.append(wrap);
     const side = {}, active = SIDES.includes(spec.active) ? spec.active : 'left';
@@ -688,7 +690,8 @@
     }
     /* item 251: a pair with a matrix side (or any pair with minScale) stacks when side by side would shrink a drawing
        below minScale of its own size (0.8 for matrices: a 3x3 beside a 2x2 stays legible on a phone) */
-    const minS = spec.minScale ?? (SIDES.some(k => (spec[k] || {}).kind === 'matrix') ? 0.8 : null);
+    /* item 433: a pair holding bars stacks too when side by side would shrink a chart below 70% */
+    const minS = spec.minScale ?? (SIDES.some(k => (spec[k] || {}).kind === 'matrix') ? 0.8 : SIDES.some(k => (spec[k] || {}).kind === 'bars') ? 0.7 : null);
     if (!twoTables && !spec.stack && minS) {
       const fitS = () => {
         if (!wrap.isConnected) return;

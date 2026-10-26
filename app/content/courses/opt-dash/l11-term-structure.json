@@ -1,0 +1,1254 @@
+{
+ "id": "l11-term-structure",
+ "course": "opt-dash",
+ "title": "Volatility across expiries",
+ "minutes": 14,
+ "objectives": [
+  "Plot the term structure of implied volatility.",
+  "Compute forward vols from total variance and spot a calendar arbitrage."
+ ],
+ "skills": [
+  "od-surface"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Vol by expiry",
+   "prose": "Each dot is the at-the-money vol of one expiry of `make_chain()`: its smile read at $m = 0$, the forward. Black-Scholes would give one flat line.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1.05
+     ],
+     "y": [
+      0.17,
+      0.235
+     ],
+     "xLabel": "Expiry $T$ (years)",
+     "yLabel": "At-the-money vol",
+     "xStep": 0.25
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a0",
+       "x": 0.0833,
+       "y": 0.185,
+       "label": "1M",
+       "tap": false
+      },
+      {
+       "id": "a1",
+       "x": 0.1667,
+       "y": 0.1948,
+       "label": "2M",
+       "tap": false
+      },
+      {
+       "id": "a2",
+       "x": 0.25,
+       "y": 0.2013,
+       "label": "3M",
+       "tap": false
+      },
+      {
+       "id": "a3",
+       "x": 0.5,
+       "y": 0.2123,
+       "label": "6M",
+       "tap": false
+      },
+      {
+       "id": "a4",
+       "x": 1.0,
+       "y": 0.2196,
+       "label": "1Y",
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "How many vol points above the one-month vol is the one-year vol?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.46,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "vol points",
+    "label": "Vol points",
+    "placeholder": "vol points, such as 1.5",
+    "accept": "3.46: $21.96 - 18.50$",
+    "wrong": [
+     {
+      "id": "frac",
+      "value": 0.0346,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "neg",
+      "value": -3.46,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the first and last dots."
+    },
+    {
+     "rung": "point",
+     "text": "One month: 0.1850. One year: 0.2196.",
+     "highlight": [
+      "a0",
+      "a4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$21.96 - 18.50 = 3.46$ vol points."
+    }
+   ],
+   "feedback": {
+    "correct": "The one-year vol is 3.46 points higher: the curve slopes up.",
+    "generic": "Not quite right. Subtract the one-month vol from the one-year vol, in percentage points.",
+    "byKey": {
+     "frac": "0.0346 is the gap as a fraction. In vol points it is 3.46.",
+     "neg": "That is the one-month vol less the one-year. The one-year dot is higher."
+    }
+   },
+   "explain": {
+    "text": "The vol rises from 18.50% at one month to 21.96% at one year. This curve is the **term structure** of implied vol. Upward sloping is normal in calm markets; in a crisis short-dated vol spikes and it inverts.",
+    "canvas": {
+     "highlight": [
+      "a0",
+      "a4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Variance adds up",
+   "prose": "The curve is **total implied variance** $w = \\sigma^2 T$ at the money, for the planted surface. Drag the two dots along it. The caption reads the square root of the chord's slope.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1.05
+     ],
+     "y": [
+      0,
+      0.052
+     ],
+     "xLabel": "Expiry $T$ (years)",
+     "yLabel": "Total variance $w$",
+     "xStep": 0.25,
+     "functions": [
+      {
+       "id": "w",
+       "expr": "(0.22-0.045*exp(-x/0.3))^2*x",
+       "domain": [
+        0.0833,
+        1.0
+       ],
+       "label": "$w = \\sigma^2 T$",
+       "labelAt": 0.75
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P1",
+       "x": 0.25,
+       "y": 0.01004,
+       "drag": true,
+       "on": "w",
+       "snap": 0.0833333,
+       "label": "$T_1$"
+      },
+      {
+       "id": "P2",
+       "x": 0.5,
+       "y": 0.02237,
+       "drag": true,
+       "on": "w",
+       "snap": 0.0833333,
+       "label": "$T_2$"
+      }
+     ],
+     "segments": [
+      {
+       "id": "chord",
+       "from": "P1",
+       "to": "P2",
+       "dashed": true
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$T_1$ = {{round(P1.x*12)}} months, $T_2$ = {{round(P2.x*12)}} months: chord vol {{P2.x > P1.x + 0.01 ? fixed(sqrt(max(P2.y - P1.y, 0)/(P2.x - P1.x)), 4) : \"undefined\"}}"
+    }
+   },
+   "question": "Put the dots at six months and one year. What does the caption show?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2251,
+    "tol": {
+     "abs": 0.002
+    },
+    "label": "Chord vol",
+    "placeholder": "a decimal such as 0.21",
+    "accept": "0.2251 ± 0.002",
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 0.2149,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.2184,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag $T_1$ to 0.5 and $T_2$ to 1.0, then read the caption."
+    }
+   ],
+   "feedback": {
+    "correct": "Between six months and a year the chord gives 22.51% vol.",
+    "generic": "Not quite right. Place the dots at 0.5 and 1.0 and read the chord vol.",
+    "byKey": {
+     "avg": "That is the average of the two vols, 21.15% and 21.84%. The chord uses variances.",
+     "one": "That is the one-year vol itself. The caption gives the vol between the two dates."
+    }
+   },
+   "explain": {
+    "text": "From six months to a year, $w$ rises from 0.02237 to 0.04770. The rise over 0.5 years is a variance of 0.0507 per year, a vol of 22.51%. It is higher than both expiries' own vols, because the curve steepens.",
+    "canvas": {
+     "highlight": [
+      "chord"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The forward vol",
+   "prose": "The chord's vol is the **forward vol** $\\sigma_{1,2}$: the vol the market implies between $T_1$ and $T_2$. Derive it. Returns over $[0, T_1]$ and $[T_1, T_2]$ are uncorrelated, so their variances add.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Variance to $T_2$ = variance to $T_1$ + variance from $T_1$ to $T_2$ (uncorrelated returns)"
+     },
+     {
+      "id": "s2",
+      "text": "$\\sigma_2^2 T_2 = \\sigma_1^2 T_1 + \\sigma_{1,2}^2 (T_2 - T_1)$ (each variance is vol squared times time)"
+     },
+     {
+      "id": "s3",
+      "text": "$\\sigma_{1,2}^2 = \\dfrac{\\sigma_2^2 T_2 - \\sigma_1^2 T_1}{T_2 - T_1}$ (subtract $\\sigma_1^2 T_1$, divide by $T_2 - T_1$)"
+     },
+     {
+      "id": "s4",
+      "text": "$\\sigma_{1,2} = \\sqrt{\\dfrac{w_2 - w_1}{T_2 - T_1}}$, real only if $w_2 \\ge w_1$ (square root)"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the statement about variances, before any symbols."
+    },
+    {
+     "rung": "point",
+     "text": "Each variance is $\\sigma^2$ times its length of time.",
+     "highlight": [
+      "w"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then solve for $\\sigma_{1,2}^2$ and take the root last."
+    }
+   ],
+   "feedback": {
+    "correct": "Variances add, so the forward variance is the slope of $w$.",
+    "generic": "Not quite right. Go from words, to an equation, to $\\sigma_{1,2}^2$, to its root.",
+    "byKey": {
+     "s4": "The square root needs $\\sigma_{1,2}^2$ first. It is the last line."
+    }
+   },
+   "explain": {
+    "text": "Vols do not add across time; variances do. So the forward variance is the slope of total variance between the two expiries. The root exists only when $w$ does not fall, which is the calendar no-arbitrage condition."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Forward vols from the chain",
+   "prose": "The steps are the forward vols between consecutive expiries of the chain, drawn month by month. The dots are the at-the-money vols they come from.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "fwd",
+       "label": "forward vol",
+       "values": [
+        0.185,
+        0.2043,
+        0.2137,
+        0.2227,
+        0.2227,
+        0.2227,
+        0.2267,
+        0.2267,
+        0.2267,
+        0.2267,
+        0.2267,
+        0.2267
+       ]
+      },
+      {
+       "id": "atm",
+       "label": "ATM vol",
+       "values": [
+        0.185,
+        0.1948,
+        0.2013,
+        null,
+        null,
+        0.2123,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.2196
+       ],
+       "dashed": true
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "xLabel": "Month",
+     "yLabel": "Vol",
+     "y": [
+      0.17,
+      0.24
+     ],
+     "decimals": 4
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m6",
+       "i": 5,
+       "series": "atm",
+       "label": "0.2123"
+      },
+      {
+       "id": "m12",
+       "i": 11,
+       "series": "atm",
+       "label": "0.2196"
+      }
+     ]
+    }
+   },
+   "question": "From $\\sigma_1 = 0.2123$ at six months and $\\sigma_2 = 0.2196$ at one year, what is the forward vol?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2267,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Forward vol",
+    "placeholder": "a decimal such as 0.21",
+    "accept": "0.2267: $\\sqrt{(0.2196^2 - 0.2123^2 \\times 0.5)/0.5}$",
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 0.216,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.0514,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out the two total variances."
+    },
+    {
+     "rung": "point",
+     "text": "$w_1 = 0.2123^2 \\times 0.5 = 0.02254$ and $w_2 = 0.2196^2 = 0.04822$.",
+     "highlight": [
+      "m6",
+      "m12"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(0.04822 - 0.02254)/0.5 = 0.05138$, and its root is 0.2267."
+    }
+   ],
+   "feedback": {
+    "correct": "The market implies 22.67% vol for the second half-year.",
+    "generic": "Not quite right. Subtract the total variances, divide by 0.5, then take the root.",
+    "byKey": {
+     "avg": "You averaged the two vols. Vols do not add over time; use the total variances.",
+     "nosqrt": "That is the forward variance. Take its square root to get a vol."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{(0.04822 - 0.02254)/0.5} = 0.2267$, against the planted surface's 0.2251. Every forward vol sits above the spot vol before it, because the term structure rises. The small gaps are quote noise in the at-the-money reads.",
+    "canvas": {
+     "highlight": [
+      "fwd"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An inverted curve",
+   "prose": "In a sell-off short-dated vol spikes. A hand term structure: 45% at one month, 35% at three months and 28% at one year. Total variances: 0.016875, 0.030625 and 0.0784.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "spot",
+       "label": "ATM vol",
+       "values": [
+        0.45,
+        null,
+        0.35,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.28
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "xLabel": "Month",
+     "yLabel": "Vol",
+     "y": [
+      0.2,
+      0.5
+     ],
+     "decimals": 2
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m1",
+       "i": 0,
+       "label": "45%"
+      },
+      {
+       "id": "m3",
+       "i": 2,
+       "label": "35%"
+      },
+      {
+       "id": "m12",
+       "i": 11,
+       "label": "28%"
+      }
+     ]
+    }
+   },
+   "question": "What is the forward vol from one month to three months?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2872,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Forward vol",
+    "placeholder": "a decimal such as 0.3",
+    "accept": "0.2872: $\\sqrt{(0.030625 - 0.016875)/(2/12)}$",
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.0825,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The gap in time is two months, $2/12$ of a year."
+    },
+    {
+     "rung": "point",
+     "text": "$0.030625 - 0.016875 = 0.01375$.",
+     "highlight": [
+      "m1",
+      "m3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.01375 / 0.1667 = 0.0825$, and $\\sqrt{0.0825} = 0.2872$."
+    }
+   ],
+   "feedback": {
+    "correct": "28.72%: the market expects the storm to calm.",
+    "generic": "Not quite right. Divide the rise in total variance by two months, then take the root.",
+    "byKey": {
+     "avg": "You averaged 45% and 35%. The forward vol uses variances, and it is lower than both.",
+     "nosqrt": "That is the forward variance per year. Its root is the vol."
+    }
+   },
+   "explain": {
+    "text": "When the curve inverts, forward vols fall below the spot vols: 28.7% from one to three months, 25.2% from three months to a year. Total variance still rises, so there is no arbitrage. It just rises more slowly."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Variance that falls",
+   "prose": "A stale screen shows the one-month option at 40% and the two-month at 26%. Total variance: $0.40^2/12 = 0.01333$ and $0.26^2 \\times 2/12 = 0.01127$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "w",
+       "label": "total variance",
+       "values": [
+        0.01333,
+        0.01127
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "xLabel": "Month",
+     "yLabel": "Total variance",
+     "y": [
+      0.008,
+      0.016
+     ],
+     "decimals": 5
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m1",
+       "i": 0,
+       "label": "{value}"
+      },
+      {
+       "id": "m2",
+       "i": 1,
+       "label": "{value}"
+      }
+     ]
+    }
+   },
+   "question": "What does the forward vol between the two expiries say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "arb",
+      "text": "It is undefined: total variance falls, which is a calendar arbitrage",
+      "correct": true
+     },
+     {
+      "id": "neg",
+      "text": "It is negative, about −35%",
+      "why": "You took the root of a negative number by dropping its sign. A vol cannot be negative; the quotes are inconsistent."
+     },
+     {
+      "id": "low",
+      "text": "It is low, about 12%: the market expects calm",
+      "why": "The forward variance is $(0.01127 - 0.01333) \\cdot 12 < 0$. There is no real vol, low or high."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: vols may fall with expiry",
+      "why": "Vols may fall, as in the sell-off. Total variance may not."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is $w_2 - w_1$ positive?"
+    },
+    {
+     "rung": "point",
+     "text": "$0.01127 - 0.01333 = -0.00206$.",
+     "highlight": [
+      "m1",
+      "m2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A negative forward variance has no real square root."
+    }
+   ],
+   "feedback": {
+    "correct": "Falling total variance cannot be a real market.",
+    "generic": "Not quite right. Check the sign of $w_2 - w_1$ before taking any root.",
+    "byKey": {
+     "neg": "A negative variance has no vol at all. It is a sign the prices are wrong or stale."
+    }
+   },
+   "explain": {
+    "text": "Sell the one-month option and buy the two-month one at the same strike: you receive more than you pay for less total variance. At the first expiry you are still holding the longer option, worth at least the short one. `forward_vol` raises `ValueError` here.",
+    "canvas": {
+     "highlight": [
+      "m1",
+      "m2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Averaging vols",
+   "prose": "One month at 40% vol (results are due) and one year at 20%. A colleague wants the vol for the eleven months after the first.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "spot",
+       "label": "ATM vol",
+       "values": [
+        0.4,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0.2
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "xLabel": "Month",
+     "yLabel": "Vol",
+     "y": [
+      0.1,
+      0.45
+     ],
+     "decimals": 2
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m1",
+       "i": 0,
+       "label": "40%"
+      },
+      {
+       "id": "m12",
+       "i": 11,
+       "label": "20%"
+      }
+     ]
+    }
+   },
+   "question": "What is the forward vol from one month to one year?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "17.1%",
+      "correct": true
+     },
+     {
+      "id": "voladd",
+      "text": "18.2%",
+      "why": "You subtracted vol times time, $(0.2 - 0.4/12)/(11/12)$. Vols do not add over time; variances do."
+     },
+     {
+      "id": "flat",
+      "text": "20%",
+      "why": "You assumed the one-year vol holds throughout. The first month used up more than its share of the variance."
+     },
+     {
+      "id": "avg",
+      "text": "30%",
+      "why": "You averaged 40% and 20%. That ignores how long each vol applies."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work in total variance: $w_1 = 0.4^2/12$, $w_2 = 0.2^2$."
+    },
+    {
+     "rung": "point",
+     "text": "$w_1 = 0.01333$, $w_2 = 0.04$.",
+     "highlight": [
+      "m1",
+      "m12"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{(0.04 - 0.01333)/(11/12)} = 0.171$."
+    }
+   ],
+   "feedback": {
+    "correct": "17.1%: after the results, the market expects a quiet year.",
+    "generic": "Not quite right. Subtract total variances, not vols.",
+    "byKey": {
+     "voladd": "You treated vol as additive in time. Square the vols first: variance is what adds."
+    }
+   },
+   "explain": {
+    "text": "$(0.04 - 0.01333)/(11/12) = 0.02909$, a vol of 17.1%. The vol-additive answer, 18.2%, overstates it by a point. Interpolating vols linearly makes the same error between expiries."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The term structure in code",
+   "prose": "The dashboard's term-structure panel. For each expiry, take `smile(...)`, drop NaN vols, sort by $m$, and interpolate linearly at $m = 0$, the forward. Return a Series indexed by expiry, named `atm_iv`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expiry",
+      "At-the-money vol"
+     ],
+     "rows": [
+      [
+       "1M",
+       "0.1850"
+      ],
+      [
+       "2M",
+       "0.1948"
+      ],
+      [
+       "3M",
+       "0.2013"
+      ],
+      [
+       "6M",
+       "0.2123"
+      ],
+      [
+       "1Y",
+       "0.2196"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `atm_term_structure(clean, S, r, q)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    if \"call\" not in w or \"put\" not in w:\n        return float(\"nan\")\n    w = w.dropna(subset=[\"call\", \"put\"])\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n\ndef otm_quotes(df_T, F):\n    keep = ((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F)) | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\nfrom math import pi\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price, by Newton's method with a bisection fallback.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma            # price too high: the answer is below sigma\n        else:\n            lo = sigma            # price too low: the answer is above sigma\n        v = bs_vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else hi + 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2   # Newton left the bracket: bisect instead\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n\ndef smile(clean, T, S, r, q):\n    \"\"\"OTM quotes of one expiry with standardised moneyness m and the implied vol of the mid.\"\"\"\n    df_T = clean[np.isclose(clean[\"T\"], T)]\n    F = S * exp((r - q) * T)\n    otm = otm_quotes(df_T, F)\n    rows = []\n    for K, kind, b, a in zip(otm[\"strike\"], otm[\"type\"], otm[\"bid\"], otm[\"ask\"]):\n        try:\n            iv = implied_vol((b + a) / 2, S, K, r, T, kind, q)\n        except ValueError:\n            iv = float(\"nan\")\n        rows.append([K, log(K / F) / sqrt(T), iv])\n    return pd.DataFrame(rows, columns=[\"strike\", \"m\", \"iv\"])\n\nclean = clean_quotes(make_chain())\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\n# smile(clean, T, S, r, q) is loaded: strike, m, iv for one expiry.\n\ndef atm_term_structure(clean, S, r, q):\n    \"\"\"At-the-money vol per expiry: the smile interpolated at m = 0.\"\"\"\n    out = {}\n    for T in sorted(clean[\"T\"].unique()):\n        sm = smile(clean, T, S, r, q)\n        ...  # drop NaN vols, sort by m, interpolate at m = 0\n        out[float(T)] = ...\n    return pd.Series(out, name=\"atm_iv\")\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\n# smile(clean, T, S, r, q) is loaded: strike, m, iv for one expiry.\n\ndef atm_term_structure(clean, S, r, q):\n    \"\"\"At-the-money vol per expiry: the smile interpolated at m = 0.\"\"\"\n    out = {}\n    for T in sorted(clean[\"T\"].unique()):\n        sm = smile(clean, T, S, r, q)\n        sm = sm.dropna(subset=[\"iv\"]).sort_values(\"m\")   # np.interp needs rising x\n        if len(sm) == 0:\n            out[float(T)] = float(\"nan\")\n        else:\n            out[float(T)] = float(np.interp(0.0, sm[\"m\"], sm[\"iv\"]))\n    return pd.Series(out, name=\"atm_iv\")\n",
+    "examples": [
+     {
+      "call": "[round(v, 4) for v in atm_term_structure(clean, 100.0, 0.05, 0.01)]",
+      "expect": "[0.185, 0.1948, 0.2013, 0.2123, 0.2196]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rows = []\nfor T, sT in ((0.25, 0.18), (1.0, 0.21)):\n    F = 100 * exp(0.04 * T)\n    for K in range(90, 116, 5):\n        for k in ('call', 'put'):\n            p = bs_price(100, K, 0.05, sT - 0.05 * log(K / F) / sqrt(T), T, k, 0.01)\n            rows.append([T, K, k, p, p, 1, 0.0])\nhand = pd.DataFrame(rows, columns=['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min'])",
+      "call": "[round(v, 6) for v in atm_term_structure(hand, 100.0, 0.05, 0.01)]",
+      "expect": "[0.18, 0.21]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "rows = []\nfor T, sT in ((0.25, 0.18), (1.0, 0.21)):\n    F = 100 * exp(0.04 * T)\n    for K in range(90, 116, 5):\n        for k in ('call', 'put'):\n            p = bs_price(100, K, 0.05, sT - 0.05 * log(K / F) / sqrt(T), T, k, 0.01)\n            rows.append([T, K, k, p, p, 1, 0.0])\nhand = pd.DataFrame(rows, columns=['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min'])",
+      "call": "list(atm_term_structure(hand, 100.0, 0.05, 0.01).index)",
+      "expect": "[0.25, 1.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "atm_term_structure(clean, 100.0, 0.05, 0.01).name",
+      "expect": "'atm_iv'"
+     },
+     {
+      "call": "len(atm_term_structure(clean, 100.0, 0.05, 0.01))",
+      "expect": "5"
+     },
+     {
+      "call": "[round(v, 4) for v in atm_term_structure(clean, 100.0, 0.05, 0.01)]",
+      "expect": "[0.185, 0.1948, 0.2013, 0.2123, 0.2196]",
+      "compare": "isclose"
+     },
+     {
+      "call": "bool(atm_term_structure(clean, 100.0, 0.05, 0.01).is_monotonic_increasing)",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: a hand chain with a known term structure and the seeded chain, to 4 places. The first run loads numpy and pandas, about 15 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.interp(0.0, xs, ys)` needs `xs` in rising order."
+    },
+    {
+     "rung": "point",
+     "text": "`sm.dropna(subset=[\"iv\"]).sort_values(\"m\")`.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`out[float(T)] = float(np.interp(0.0, sm[\"m\"], sm[\"iv\"]))`."
+    }
+   ],
+   "feedback": {
+    "correct": "Five expiries, rising from 0.185 to 0.2196.",
+    "generic": "Not quite right. Check the sort by $m$ and that NaN vols are dropped first."
+   },
+   "explain": {
+    "text": "Interpolating at $m = 0$ reads the smile at the forward. At three months it sits between the 100 put ($m = -0.02$) and the 105 call. Past the last quote, `np.interp` holds the end value flat, so a lopsided expiry still gets a number; the note should say so."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Forward vol in code",
+   "prose": "Now the forward vol. Raise `ValueError` when $T_2 \\le T_1$, and when total variance falls. Equal total variances give a forward vol of exactly 0.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> forward_vol(0.45, 1/12, 0.35, 0.25)",
+      "0.2872281323269014",
+      ">>> forward_vol(0.40, 1/12, 0.26, 2/12)",
+      "ValueError: total variance falls: calendar arbitrage"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `forward_vol(s1, T1, s2, T2)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from math import sqrt\n\ndef forward_vol(s1, T1, s2, T2):\n    \"\"\"Vol between T1 and T2 implied by vols s1 to T1 and s2 to T2.\"\"\"\n    if not T2 > T1:\n        raise ValueError(\"T2 must be later than T1\")\n    fwd_var = ...\n    ...  # total variance must not fall\n    return sqrt(fwd_var)\n",
+    "solution": "from math import sqrt\n\ndef forward_vol(s1, T1, s2, T2):\n    \"\"\"Vol between T1 and T2 implied by vols s1 to T1 and s2 to T2.\"\"\"\n    if not T2 > T1:\n        raise ValueError(\"T2 must be later than T1\")\n    fwd_var = (s2 * s2 * T2 - s1 * s1 * T1) / (T2 - T1)   # variances add\n    if fwd_var < 0:\n        raise ValueError(\"total variance falls: calendar arbitrage\")\n    return sqrt(fwd_var)\n",
+    "examples": [
+     {
+      "call": "round(forward_vol(0.45, 1/12, 0.35, 0.25), 6)",
+      "expect": "0.287228",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(forward_vol(0.45, 1/12, 0.35, 0.25), 6)",
+      "expect": "0.287228",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(forward_vol(0.2123, 0.5, 0.2196, 1.0), 6)",
+      "expect": "0.226665",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(forward_vol(0.4, 1/12, 0.2, 1.0), 6)",
+      "expect": "0.170561",
+      "compare": "isclose"
+     },
+     {
+      "call": "forward_vol(0.4, 0.25, 0.2, 1.0)",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "forward_vol(0.2, 0.5, 0.2, 0.5 + 1e-9) == 0.2 or abs(forward_vol(0.2, 0.5, 0.2, 1.0) - 0.2) < 1e-12",
+      "expect": "True"
+     },
+     {
+      "call": "forward_vol(0.40, 1/12, 0.26, 2/12)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "forward_vol(0.2, 1.0, 0.25, 0.5)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "forward_vol(0.2, 0.5, 0.25, 0.5)",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "how": "Check runs 8 hidden tests, compared to 6 places. Pure Python: nothing to load."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The forward variance is $(s_2^2 T_2 - s_1^2 T_1)/(T_2 - T_1)$."
+    },
+    {
+     "rung": "point",
+     "text": "Check its sign before the root.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`if fwd_var < 0: raise ValueError(...)`, then `return sqrt(fwd_var)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your forward vol refuses an arbitrage instead of inventing a number.",
+    "generic": "Not quite right. Read the failing case: a time order, a sign, or the formula."
+   },
+   "explain": {
+    "text": "Raising on negative variance turns a silent `math domain error` into a named problem the dashboard can log. The zero case is fine: the market expects no movement between the two dates."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Pricing an earnings day",
+   "prose": "A share reports results in 22 days. The 20-day option trades at 24% vol; the 27-day option, which spans the results, at 34%. Assume the share's ordinary vol is 24% on every day.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expiry",
+      "Days",
+      "Vol",
+      "Total variance"
+     ],
+     "rows": [
+      [
+       "before results",
+       "20",
+       "24%",
+       "0.003156"
+      ],
+      [
+       "after results",
+       "27",
+       "34%",
+       "0.008551"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What one-day move, as a standard deviation, does the market price for the results?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0655,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "%",
+    "label": "Results-day move",
+    "accept": "6.55%: $\\sqrt{(0.34^2 - 0.24^2) \\times 27/365}$",
+    "wrong": [
+     {
+      "id": "volpts",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "allvar",
+      "value": 0.0925,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At 24% for all 27 days the variance would be $0.24^2 \\times 27/365$."
+    },
+    {
+     "rung": "point",
+     "text": "The extra variance is $(0.34^2 - 0.24^2) \\times 27/365 = 0.00429$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Its square root is the results-day move: 6.55%."
+    }
+   ],
+   "feedback": {
+    "correct": "About a 6.55% move, one standard deviation, on results day.",
+    "generic": "Not quite right. Find the variance the 27-day option carries beyond 24% vol, then take its root.",
+    "byKey": {
+     "volpts": "10 vol points is the gap in annual vols. Convert to variance over 27 days first.",
+     "allvar": "That is the root of the whole 27-day variance. Take away the ordinary days' share first."
+    }
+   },
+   "explain": {
+    "text": "Total variance jumps by 0.00429 across the results, a 6.55% one-day move. Traders compare this with past results-day moves to decide whether event vol is cheap. It is a forward variance, concentrated on one date."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The term structure is at-the-money vol, read at the forward, against expiry: 18.5% at one month rising to 22.0% at one year in the seeded chain.",
+   "Variances add over time, not vols. Total variance $w = \\sigma^2 T$ must not fall with expiry; its slope is the forward variance.",
+   "Forward vols price the market's view of each future period, such as an earnings day. A falling $w$ means stale or arbitrageable quotes."
+  ],
+  "formula": {
+   "name": "Forward vol",
+   "tex": "\\sigma_{1,2} = \\sqrt{\\frac{\\sigma_2^2 T_2 - \\sigma_1^2 T_1}{T_2 - T_1}}",
+   "note": "Defined only when $\\sigma_2^2 T_2 \\ge \\sigma_1^2 T_1$; otherwise the quotes allow a calendar arbitrage."
+  },
+  "trap": "Averaging or subtracting vols across expiries: from 40% at one month and 20% at a year the forward vol is 17.1%, not 18.2% or 30%."
+ },
+ "quiz": [
+  {
+   "id": "q-zero",
+   "difficulty": 2,
+   "prose": "The three-month option trades at 40% vol and the one-year option at 20%.",
+   "question": "What is the forward vol from three months to one year?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "zero",
+      "text": "0%",
+      "correct": true
+     },
+     {
+      "id": "twenty",
+      "text": "20%",
+      "why": "Total variance is $0.4^2 \\times 0.25 = 0.04$ at three months and $0.2^2 = 0.04$ at a year: no variance is left."
+     },
+     {
+      "id": "none",
+      "text": "Undefined",
+      "why": "Undefined is for falling total variance. Here it is flat, so the forward variance is exactly 0."
+     },
+     {
+      "id": "thirty",
+      "text": "30%",
+      "why": "You averaged the vols. Compare total variances instead."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Equal total variances leave nothing for the later period.",
+    "generic": "Not quite right. Compute $\\sigma^2 T$ for both expiries."
+   },
+   "explain": {
+    "text": "Both total variances are 0.04, so $\\sigma_{1,2}^2 = 0$. The market prices no movement after three months, an edge case that sits right on the arbitrage boundary."
+   }
+  },
+  {
+   "id": "q-spot",
+   "difficulty": 3,
+   "prose": "One-year options, $S = 100$, $r - q = 4\\%$, so $F = 104.08$. On the planted surface the 100 strike has vol 0.2218 and the 104.08 strike 0.2184.",
+   "question": "Which is the one-year at-the-money vol for the term structure?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "fwd",
+      "text": "0.2184, at the forward",
+      "correct": true
+     },
+     {
+      "id": "spot",
+      "text": "0.2218, at the spot",
+      "why": "You read the smile at the spot. At one year the 100 strike is £4 below the forward, partly in the money."
+     },
+     {
+      "id": "avg",
+      "text": "0.2201, the average",
+      "why": "Averaging two points on the smile gives neither the spot nor the forward vol."
+     },
+     {
+      "id": "either",
+      "text": "Either: they differ by noise",
+      "why": "0.34 vol points is a steady skew effect, not noise. Its sign never changes."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The smile is centred on the forward.",
+    "generic": "Not quite right. Where does $m = 0$ fall?"
+   },
+   "explain": {
+    "text": "$m = \\ln(K/F)/\\sqrt{T}$ is zero at $K = F = 104.08$, where the vol is 0.2184. Reading at the spot adds the skew between 100 and 104.08, 0.34 vol points."
+   }
+  },
+  {
+   "id": "q-single",
+   "difficulty": 2,
+   "prose": "A chain arrives with a single expiry.",
+   "question": "What should the term-structure panel do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "say",
+      "text": "Show the one at-the-money vol and say no forward vols exist",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Show a forward vol of 0",
+      "why": "Zero is a real claim: no movement. With one expiry there is no second date to compare."
+     },
+     {
+      "id": "crash",
+      "text": "Raise an error and stop the dashboard",
+      "why": "One missing panel should not cost the rest of the dashboard."
+     },
+     {
+      "id": "flat",
+      "text": "Draw a flat term structure at that vol",
+      "why": "That invents data at expiries nobody quoted."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One expiry gives one point and no forward vols.",
+    "generic": "Not quite right. How many expiries does a forward vol need?"
+   },
+   "explain": {
+    "text": "`atm_term_structure` returns a one-row Series, and there is no pair for `forward_vol`. The panel should say so rather than fail or invent a curve."
+   }
+  },
+  {
+   "id": "q-w",
+   "difficulty": 2,
+   "prose": "The one-year at-the-money vol is 0.2184.",
+   "question": "What is its total implied variance $w = \\sigma^2 T$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0477,
+    "tol": {
+     "abs": 0.0002
+    },
+    "label": "Total variance",
+    "accept": "0.0477: $0.2184^2 \\times 1$",
+    "wrong": [
+     {
+      "id": "vol",
+      "value": 0.2184,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "double",
+      "value": 0.4368,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.2184^2 = 0.0477$.",
+    "generic": "Not quite right. Square the vol and multiply by one year.",
+    "byKey": {
+     "vol": "That is the vol. Square it for the variance.",
+     "double": "You doubled the vol. Square it instead."
+    }
+   },
+   "explain": {
+    "text": "$w = 0.2184^2 \\times 1 = 0.0477$. At six months $w = 0.2115^2 \\times 0.5 = 0.0224$: total variance more than doubles from six months to a year."
+   }
+  }
+ ]
+}

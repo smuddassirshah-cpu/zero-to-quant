@@ -1,0 +1,457 @@
+{
+ "id": "homework-1",
+ "course": "garch",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-prices-to-vol",
+   "difficulty": 3,
+   "skills": [
+    "gv-forecast"
+   ],
+   "title": "From prices to a volatility",
+   "prose": "You have 61 daily closing prices of a share and want its 60-day realised volatility, quoted a year.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "ret",
+      "text": "Turn the 61 closes into 60 daily log returns, $r_t = \\ln(p_t / p_{t-1})$"
+     },
+     {
+      "id": "mean",
+      "text": "Take the mean of the 60 returns, $\\bar r$"
+     },
+     {
+      "id": "sd",
+      "text": "Take the sample sd: $\\sqrt{\\frac{1}{59}\\sum (r_t - \\bar r)^2}$"
+     },
+     {
+      "id": "ann",
+      "text": "Multiply by $\\sqrt{252}$, since daily variances add over a year of uncorrelated days"
+     }
+    ],
+    "answer": [
+     "ret",
+     "mean",
+     "sd",
+     "ann"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Returns first, then their spread, then the yearly scaling.",
+    "byKey": {
+     "ann": "Annualising comes last: it scales the daily sd you have just computed.",
+     "ret": "Volatility is measured on returns, so the returns come first."
+    }
+   },
+   "explain": {
+    "text": "Prices give returns, returns give a mean and a sample sd with $n - 1 = 59$, and the sd scales by $\\sqrt{252}$. With the zero-mean version, skip the mean and divide by 60."
+   }
+  },
+  {
+   "id": "h-weekly-from-annual",
+   "difficulty": 3,
+   "skills": [
+    "gv-forecast"
+   ],
+   "prose": "A fund's risk limit is 20% annual volatility. Its manager watches weekly returns.",
+   "question": "What weekly sd does the limit allow, in %, to 2 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.77,
+    "tol": {
+     "abs": 0.01
+    },
+    "label": "Weekly sd in per cent",
+    "accept": "2.77%: $20\\%/\\sqrt{52}$.",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "252",
+      "value": 1.26,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "52",
+      "value": 0.38,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. A year has 52 weeks; divide by $\\sqrt{52}$.",
+    "byKey": {
+     "252": "You used the daily factor on weekly data.",
+     "52": "You divided the sd by 52. Only the variance scales by 52."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{52} = 7.21$, so $20\\%/7.21 = 2.77\\%$ a week."
+   }
+  },
+  {
+   "id": "h-rolling-vol",
+   "difficulty": 4,
+   "skills": [
+    "gv-clustering",
+    "gv-forecast"
+   ],
+   "title": "Rolling volatility with options",
+   "prose": "Extend lesson 1's `rolling_vol` into the version a risk system needs. `periods_per_year` sets the annualising factor (252 for days, 52 for weeks, 1 for none). With `zero_mean=True` use $\\sqrt{\\frac1w \\sum r^2}$ over the window instead of the sample sd. Both versions are NaN until the window is full.",
+   "question": "Write `rolling_vol(r, w, periods_per_year=252, zero_mean=False)`, returning a NumPy array as long as `r`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\n# The course data set: 2,000 days of a simulated share's daily returns (decimals).\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\n# The contrast: independent normal returns with sd 1%.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef rolling_vol(r, w, periods_per_year=252, zero_mean=False):\n    s = pd.Series(r, dtype=float)\n    ...\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef rolling_vol(r, w, periods_per_year=252, zero_mean=False):\n    s = pd.Series(r, dtype=float)\n    if zero_mean:\n        daily = np.sqrt((s ** 2).rolling(w).mean())\n    else:\n        daily = s.rolling(w).std()\n    return (daily * np.sqrt(periods_per_year)).to_numpy()\n",
+    "examples": [
+     {
+      "call": "int(np.isnan(rolling_vol(r, 20)).sum())",
+      "expect": "19",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "int(np.isnan(rolling_vol(r, 20)).sum())",
+      "expect": "19",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(rolling_vol(r, 20)[1409]), 6)",
+      "expect": "0.492093",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(rolling_vol(r, 20, zero_mean=True)[1409]), 6)",
+      "expect": "0.481934",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(rolling_vol(r, 5, zero_mean=True)[1999]), 6)",
+      "expect": "0.174303",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(rolling_vol(r, 60, periods_per_year=1)[1999]), 8)",
+      "expect": "0.00767437",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(rolling_vol(weekly, 26, periods_per_year=52)[-1]), 6)",
+      "expect": "0.13617",
+      "compare": "isclose",
+      "setup": "weekly = r.reshape(-1, 5).sum(axis=1)"
+     },
+     {
+      "call": "int(np.isnan(rolling_vol(r, 20, zero_mean=True)).sum())",
+      "expect": "19",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.allclose(rolling_vol(r[:700], 60, zero_mean=True)[59:], rolling_vol(r, 60, zero_mean=True)[59:700]))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(rolling_vol([0.01, -0.01, 0.01, -0.01], 2, zero_mean=True)[1]), 9)",
+      "expect": "0.158745079",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 9 hidden tests: NaN counts for both versions, values of `r` rounded to 6 places (day 1,409 and the last day), `periods_per_year=1` (no annualising), 400 weekly returns made by adding B's daily log returns five at a time, and a cut-short test (no value may use a later day). `r` is loaded. The first run loads NumPy and pandas, which takes a few seconds."
+   },
+   "feedback": {
+    "correct": "Correct. Both versions, any frequency, and no look-ahead.",
+    "generic": "Some tests failed. Check the NaN count, the annualising factor and the zero-mean formula (divide by $w$, no mean subtracted)."
+   },
+   "explain": {
+    "text": "`(s ** 2).rolling(w).mean()` is the zero-mean variance and `s.rolling(w).std()` the sample sd; both put each window on its last day. Annualising multiplies by $\\sqrt{\\text{periods}}$. Weekly log returns are sums of five daily ones, so their 26-week volatility should sit near the daily figures."
+   }
+  },
+  {
+   "id": "h-tail-report",
+   "difficulty": 4,
+   "skills": [
+    "gv-clustering"
+   ],
+   "title": "A tail report",
+   "prose": "Summarise a return series' tails in three numbers: the correlation of its QQ plot, from `scipy.stats.probplot(x, dist='norm')`, rounded to 4 places; the number of days more than $k$ sample sds from the mean; and that count divided by a normal's expected count, $n \\times 2(1 - \\Phi(k))$, rounded to 2 places.",
+   "question": "Write `tail_report(x, k=3)` returning `(qq_corr, count, ratio)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\n# The course data set: 2,000 days of a simulated share's daily returns (decimals).\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\n# The contrast: independent normal returns with sd 1%.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n",
+    "starter": "import math\nimport numpy as np\nfrom scipy import stats\n\ndef tail_report(x, k=3):\n    x = np.asarray(x, dtype=float)\n    ...\n    return (qq_corr, count, ratio)\n",
+    "solution": "import math\nimport numpy as np\nfrom scipy import stats\n\ndef tail_report(x, k=3):\n    x = np.asarray(x, dtype=float)\n    (osm, osr), (slope, intercept, corr) = stats.probplot(x, dist='norm')\n    s = x.std(ddof=1)\n    count = int(np.sum(np.abs(x - x.mean()) > k * s))\n    expected = len(x) * 2 * (1 - 0.5 * (1 + math.erf(k / math.sqrt(2))))\n    return (round(float(corr), 4), count, round(count / expected, 2))\n",
+    "examples": [
+     {
+      "call": "tail_report(r)",
+      "expect": "(0.983, 28, 5.19)",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "tail_report(r)",
+      "expect": "(0.983, 28, 5.19)",
+      "compare": "isclose"
+     },
+     {
+      "call": "tail_report(iid)",
+      "expect": "(0.9998, 4, 0.74)",
+      "compare": "isclose"
+     },
+     {
+      "call": "tail_report(r, k=4)",
+      "expect": "(0.983, 12, 94.72)",
+      "compare": "isclose"
+     },
+     {
+      "call": "tail_report(r[:1000])",
+      "expect": "(0.9989, 3, 1.11)",
+      "compare": "isclose"
+     },
+     {
+      "call": "tail_report(100 * r)",
+      "expect": "(0.983, 28, 5.19)",
+      "compare": "isclose"
+     },
+     {
+      "call": "tail_report(r)[0] < tail_report(iid)[0]",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: `r` at 3 and 4 sds, `iid`, B's first 1,000 days, `r` in per cent (nothing should change) and an ordering check. Each tuple is compared after rounding as stated. The first run loads NumPy and SciPy, which takes a few seconds."
+   },
+   "feedback": {
+    "correct": "Correct. B: QQ correlation 0.9830, 28 days, 5.19 times a normal's count.",
+    "generic": "Some tests failed. `probplot` returns two pairs; the correlation is the third value of the second pair."
+   },
+   "explain": {
+    "text": "B's QQ correlation is 0.9830 against A's 0.9998, and its 3-sd count is 5.19 times a normal's (A: 0.74). B's first 1,000 days, mostly calm, look far closer to normal: fat tails come with storms."
+   }
+  },
+  {
+   "id": "h-residual-check",
+   "difficulty": 4,
+   "skills": [
+    "gv-clustering"
+   ],
+   "prose": "A researcher's AR(2) for a currency's daily returns leaves residuals with Ljung-Box $p = 0.33$ at 10 lags. On the squared residuals, ARCH-LM with 5 lags gives $LM = 3.2$ on 1,500 days.",
+   "question": "What should she conclude? The 5% critical value of $\\chi^2_5$ is 11.07.",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "No evidence of ARCH effects: a constant variance is defensible for this sample.",
+      "correct": true
+     },
+     {
+      "id": "arch",
+      "text": "ARCH effects are present, since the LM statistic is positive.",
+      "why": "Any $R^2$ gives a positive LM. It must exceed 11.07 to reject."
+     },
+     {
+      "id": "indep",
+      "text": "The residuals are proven independent.",
+      "why": "Failing to reject is not proof. The tests found no evidence of dependence in mean or variance."
+     },
+     {
+      "id": "more",
+      "text": "Add lags to the AR model until LM is 0.",
+      "why": "AR lags model the mean; LM is about the variance, and 3.2 is already unremarkable."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Not every series clusters: pegged currencies and some short samples show none.",
+    "generic": "Not quite right. Compare $LM$ with the critical value."
+   },
+   "explain": {
+    "text": "$LM = 3.2$ is well below 11.07 (its $p$ is about 0.67), and the mean residuals pass too. A constant variance is a reasonable model here, though a longer sample could change that."
+   }
+  },
+  {
+   "id": "h-stylised-facts",
+   "difficulty": 5,
+   "skills": [
+    "gv-clustering"
+   ],
+   "title": "The stylised facts in one function",
+   "prose": "Write the first check a quant runs on a new return series. Return a dictionary with: `acf1_r` and `acf1_sq`, the lag-1 ACF of $r$ and of $r^2$ (4 places); `p_r` and `p_sq`, Ljung-Box p-values at 10 lags on $r$ and $r^2$ (4 places); `excess_kurtosis` (Fisher, 4 places); `tails_3sd`, the days beyond 3 sample sds; `tails_expected`, a normal's count (2 places); and `verdict`.\n\nThe verdict is `'clustered'` when the squares fail Ljung-Box at 5% on the whole series **and** on each half (the first `n // 2` days, then the rest); `'break'` when they fail on the whole series but not on both halves; else `'none'`.",
+   "question": "Write `stylised_facts(r)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\n# The course data set: 2,000 days of a simulated share's daily returns (decimals).\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\n# The contrast: independent normal returns with sd 1%.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n\n# A planted series: independent normal, sd 0.7% for 1,000 days, then 1.3% (seed 9).\nbreak_series = np.where(np.arange(2000) < 1000, 0.007, 0.013) * np.random.default_rng(9).standard_normal(2000)\n# A second GARCH path with the same parameters (seed 11).\nr11, _ = simulate_garch(2e-6, 0.08, 0.90, 2000, 11)\n",
+    "starter": "import math\nimport numpy as np\nfrom scipy import stats\nfrom statsmodels.tsa.stattools import acf\nfrom statsmodels.stats.diagnostic import acorr_ljungbox\n\ndef stylised_facts(r):\n    r = np.asarray(r, dtype=float)\n    ...\n    return {'acf1_r': ..., 'acf1_sq': ..., 'p_r': ..., 'p_sq': ...,\n            'excess_kurtosis': ..., 'tails_3sd': ..., 'tails_expected': ...,\n            'verdict': ...}\n",
+    "solution": "import math\nimport numpy as np\nfrom scipy import stats\nfrom statsmodels.tsa.stattools import acf\nfrom statsmodels.stats.diagnostic import acorr_ljungbox\n\ndef lb_p(x, lags=10):\n    return float(acorr_ljungbox(x, lags=[lags])['lb_pvalue'].iloc[0])\n\ndef stylised_facts(r):\n    r = np.asarray(r, dtype=float)\n    n = len(r)\n    s = r.std(ddof=1)\n    p_sq = lb_p(r ** 2)\n    half = n // 2\n    both_halves = lb_p(r[:half] ** 2) < 0.05 and lb_p(r[half:] ** 2) < 0.05\n    if p_sq < 0.05 and both_halves:\n        verdict = 'clustered'\n    elif p_sq < 0.05:\n        verdict = 'break'\n    else:\n        verdict = 'none'\n    return {\n        'acf1_r': round(float(acf(r, nlags=1)[1]), 4),\n        'acf1_sq': round(float(acf(r ** 2, nlags=1)[1]), 4),\n        'p_r': round(lb_p(r), 4),\n        'p_sq': round(p_sq, 4),\n        'excess_kurtosis': round(float(stats.kurtosis(r)), 4),\n        'tails_3sd': int(np.sum(np.abs(r - r.mean()) > 3 * s)),\n        'tails_expected': round(n * 2 * (1 - 0.5 * (1 + math.erf(3 / math.sqrt(2)))), 2),\n        'verdict': verdict,\n    }\n",
+    "examples": [
+     {
+      "call": "stylised_facts(r)['verdict']",
+      "expect": "'clustered'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "stylised_facts(r)['verdict']",
+      "expect": "'clustered'",
+      "compare": "equal"
+     },
+     {
+      "call": "stylised_facts(iid)['verdict']",
+      "expect": "'none'",
+      "compare": "equal"
+     },
+     {
+      "call": "stylised_facts(break_series)['verdict']",
+      "expect": "'break'",
+      "compare": "equal"
+     },
+     {
+      "call": "stylised_facts(r11)['verdict']",
+      "expect": "'clustered'",
+      "compare": "equal"
+     },
+     {
+      "call": "[stylised_facts(r)[k] for k in ['acf1_r', 'acf1_sq', 'p_r', 'p_sq']]",
+      "expect": "[0.0213, 0.3596, 0.2692, 0.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[stylised_facts(iid)[k] for k in ['acf1_r', 'acf1_sq', 'p_r', 'p_sq']]",
+      "expect": "[-0.0343, -0.035, 0.7528, 0.0772]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[stylised_facts(r)[k] for k in ['excess_kurtosis', 'tails_3sd', 'tails_expected']]",
+      "expect": "[3.0135, 28, 5.4]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[stylised_facts(break_series)[k] for k in ['p_sq', 'excess_kurtosis', 'tails_3sd']]",
+      "expect": "[0.0, 0.7933, 12]",
+      "compare": "isclose"
+     },
+     {
+      "call": "stylised_facts(r[:1000])['tails_expected']",
+      "expect": "2.7",
+      "compare": "isclose"
+     },
+     {
+      "call": "sorted(stylised_facts(iid).keys())",
+      "expect": "['acf1_r', 'acf1_sq', 'excess_kurtosis', 'p_r', 'p_sq', 'tails_3sd', 'tails_expected', 'verdict']",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 10 hidden tests: the verdict on `r`, `iid`, `break_series` (one variance break at day 1,000) and `r11` (a second GARCH path, seed 11); the four memory statistics on `r` and `iid`; the tail statistics on `r` and `break_series`; the normal expectation on 1,000 days; and the dictionary's keys. Numbers are compared after the rounding stated. The first run loads statsmodels, which takes 20 to 40 seconds in the browser; later runs are quick.",
+    "budget": 10000
+   },
+   "feedback": {
+    "correct": "Correct. Your function tells clustering from a single break.",
+    "generic": "Some tests failed. Check each key's rounding, and test the squares on each half for the verdict."
+   },
+   "explain": {
+    "text": "The break series fails on the whole sample ($p_{sq}$ = 0.0) because its two levels make every square look like its neighbours. Inside each half there is nothing to find, so the halves pass and the verdict is a break. B fails in both halves: its volatility keeps moving."
+   }
+  },
+  {
+   "id": "h-t-scale",
+   "difficulty": 3,
+   "skills": [
+    "gv-clustering"
+   ],
+   "prose": "Level 3 will use Student's t with $\\nu = 5$ as a shock with variance 1. A t with $\\nu$ degrees of freedom has variance $\\nu/(\\nu - 2)$.",
+   "question": "By what factor must a $t_5$ draw be multiplied to have variance 1? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7746,
+    "tol": {
+     "abs": 0.0001
+    },
+    "label": "Scaling factor",
+    "accept": "0.7746: $\\sqrt{3/5}$.",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "inv",
+      "value": 1.291,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Scaling by $c$ multiplies the variance by $c^2$; you need $c^2 \\cdot 5/3 = 1$.",
+    "byKey": {
+     "var": "That is $c^2$. The factor is its square root.",
+     "inv": "You took $\\sqrt{5/3}$, which makes the variance larger, not 1."
+    }
+   },
+   "explain": {
+    "text": "$c^2 \\times 5/3 = 1$ gives $c = \\sqrt{3/5} = 0.7746$. Kurtosis is unchanged by the scaling: still 9."
+   }
+  },
+  {
+   "id": "h-colleague-note",
+   "difficulty": 5,
+   "skills": [
+    "gv-clustering",
+    "gv-forecast"
+   ],
+   "title": "Independent, so normal?",
+   "kind": "longform",
+   "prompt": "A colleague writes: \"Share B's daily returns have a flat ACF, so they are independent. That means a normal distribution with the 250-day sample sd is all we need for its risk. On day 1,404 that sd gives 19.3% a year, so our position limits are set from it.\"\n\nWrite a reply to the risk committee (about 250 words). Cover:\n\n(a) what the flat ACF does and does not show;\n\n(b) the test you would run instead, and its result on B;\n\n(c) what B's tails say about a normal model, with numbers;\n\n(d) what is wrong with a 250-day sd on day 1,404, and what you would use instead;\n\n(e) one thing these numbers cannot tell you yet.",
+   "model": "**(a)** A flat ACF shows the returns are *uncorrelated*: Ljung-Box at 10 lags gives $Q = 12.24$, $p = 0.27$. It does not show independence. Independence would also make $|r_t|$ and $r_t^2$ uncorrelated, and they are not.\n\n**(b)** Ljung-Box on the squared returns (McLeod and Li) gives $Q(10) = 1451.43$, $p$ below $10^{-300}$; Engle's ARCH-LM with 10 lags gives $LM = 463.6$, $p \\approx 3 \\times 10^{-93}$. The lag-1 ACF of $r_t^2$ is 0.36, eight times the band of ±0.0438. Volatility clusters: after a move beyond 2 sds, the next day is beyond 2 sds 28% of the time against 4.5% overall.\n\n**(c)** The tails are fat. Excess kurtosis is 3.01 (raw 6.01, twice a normal's). B had 28 days beyond 3 sds where a normal expects 5.4, and 2 beyond 5 sds, an event a normal puts at once in about 6,900 years. A normal model understates extreme losses.\n\n**(d)** On day 1,404 the true volatility (we simulated B) is 43.6%. The 250-day figure, 19.3%, averages a mostly calm year, so limits set from it allow more than twice the intended risk. Clustering means today's storm predicts tomorrow's, so the estimate must react: a 20-day window read 45.6%, close to the truth, and level 2's EWMA and GARCH do better still, without the 20-day ghost.\n\n**(e)** These are sample statistics. Sample kurtosis hangs on a few days (dropping 5 of 2,000 takes it to 2.02), and part of the fat tail is clustering itself, so we cannot yet say whether the shocks are fat-tailed. Fitting a volatility model and checking its standardised residuals answers that.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Explains that a flat ACF means uncorrelated, not independent, quoting the returns' Ljung-Box result"
+    },
+    {
+     "points": 2,
+     "text": "Proposes Ljung-Box on $r_t^2$ or ARCH-LM and reports a decisive rejection with a number"
+    },
+    {
+     "points": 2,
+     "text": "Quantifies the fat tails: kurtosis with its convention, and the 3-sd count against 5.4"
+    },
+    {
+     "points": 2,
+     "text": "Explains that the 250-day sd lags a storm (19.3% against about 44%) and proposes a shorter window or EWMA/GARCH"
+    },
+    {
+     "points": 1,
+     "text": "Names a limit of the evidence: noisy sample kurtosis, or clustering versus fat-tailed shocks"
+    },
+    {
+     "points": 1,
+     "text": "Writes for a committee: clear, numbered, with a recommendation"
+    }
+   ]
+  }
+ ]
+}

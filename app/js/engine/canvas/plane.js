@@ -1104,6 +1104,27 @@
           if (v.label) labels.push({ x: sx(to[0]) + 8, y: sy(to[1]) - 10, text: v.label, anchor: 'start', id: v.id });
         }
 
+        /* item 346: ci { n, size, mu, sigma, seed, level, known } draws n confidence intervals from repeated seeded samples
+           (one per row, y = 1 to n), those that miss mu in the "neg" colour, mu as a dashed line and "k of n miss" at the
+           top; values().misses and values().covered for derive. A control on ci.n adds samples, the same draws each time */
+        if (K.isObj(view.ci) || K.isObj(params.ci)) {
+          const ci = { ...(params.ci || {}), ...(view.ci || {}) }, n = Math.max(1, Math.min(400, Math.round(+ci.n || 20))), m0 = Math.max(2, Math.round(+ci.size || 25)), mu = +(ci.mu ?? 0), sg = Math.max(1e-9, +(ci.sigma ?? 1)), lv = +(ci.level ?? 0.95);
+          const z = C.compile('qnorm(x)')(1 - (1 - lv) / 2), r = K.rngFor(ci.seed ?? 1), o = K.obj(ci.id || 'ci', 'cvb-ci');
+          let miss = 0;
+          for (let i = 0; i < n; i++) {
+            let sum = 0, sq = 0; for (let k = 0; k < m0; k++) { const x = mu + sg * K.gauss(r); sum += x; sq += x * x; }
+            const mean = sum / m0, sd = ci.known === false ? Math.sqrt(Math.max(0, (sq - m0 * mean * mean) / (m0 - 1))) : sg, half = z * sd / Math.sqrt(m0), bad = mu < mean - half || mu > mean + half;
+            if (bad) miss++;
+            const y = sy(i + 1), g2 = K.obj((ci.id || 'ci') + '-' + i, '', bad ? 'neg' : 'ink');
+            g2.append(svg('path', { d: `M${sx(mean - half).toFixed(1)},${y.toFixed(1)}L${sx(mean + half).toFixed(1)},${y.toFixed(1)}`, class: 'cvb-ln' + (n > 60 ? ' thin' : '') }), svg('circle', { cx: sx(mean), cy: y, r: n > 60 ? 1.5 : 2.5, class: 'cvb-dot' }));
+            o.append(g2);
+          }
+          o.append(svg('path', { d: `M${sx(mu)},${py0}L${sx(mu)},${py1}`, class: 'cvb-ln cvb-dash thin' }));
+          plot.append(o);
+          areaVals.misses = miss; areaVals.covered = n - miss;
+          if (ci.readout !== false) { const t = String(ci.label || '{misses} of {n} miss').replace('{misses}', miss).replace('{n}', n).replace('{covered}', n - miss); over.append(K.txt(px1 - 4, py1 + 10, t, { anchor: 'end', halo: true, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: px1 - 4, y: py1 + 10, text: t, anchor: 'end' })); }
+        }
+
         /* Sketch curve and control points */
         if (Array.isArray(sk.points) && sk.points.length > 1) {
           const pts = sk.points;

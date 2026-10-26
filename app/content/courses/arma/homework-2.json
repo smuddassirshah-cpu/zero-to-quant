@@ -1,0 +1,429 @@
+{
+ "id": "homework-2",
+ "course": "arma",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-ten",
+   "difficulty": 3,
+   "skills": [
+    "ts-acf"
+   ],
+   "prose": "You scan lags 1 to 10 of a correlogram of pure white noise, treating the bars as independent.",
+   "question": "What is the chance that at least one bar leaves the 95% band? Give 3 decimals.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.401,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "a decimal",
+    "accept": "0.401, which is $1 - 0.95^{10}$",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "sum",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "none",
+      "value": 0.599,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $1 - 0.95^{10} = 0.401$.",
+    "generic": "Not quite right. Work out the chance that all ten stay inside, then take the complement.",
+    "byKey": {
+     "sum": "You added ten chances of 5%. The events overlap; use $1 - 0.95^{10}$.",
+     "none": "That is the chance that every bar stays inside.",
+     "one": "That is the chance for a single bar."
+    }
+   },
+   "explain": {
+    "text": "$0.95^{10} = 0.599$ is the chance that all ten stay inside, so at least one strays with chance 0.401."
+   }
+  },
+  {
+   "id": "h-moments",
+   "difficulty": 3,
+   "skills": [
+    "ts-models"
+   ],
+   "prose": "Lesson 7's moments, as a function a risk system can call: the mean $c/(1 - \\phi)$, the variance $\\sigma^2/(1 - \\phi^2)$, and $\\rho_1$, $\\rho_2$. A $\\phi$ with $|\\phi| \\ge 1$ has no such moments.",
+   "question": "Write `ar1_moments(c, phi, sigma2)` returning (mean, variance, $\\rho_1$, $\\rho_2$), with a ValueError when $|\\phi| \\ge 1$.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef ar1_moments(c, phi, sigma2):\n    if ...:                          # not stationary\n        raise ValueError(\"need |phi| < 1\")\n    mean = ...\n    var = ...\n    return mean, var, phi, phi ** 2\n",
+    "solution": "import math\n\ndef ar1_moments(c, phi, sigma2):\n    if abs(phi) >= 1:\n        raise ValueError(\"need |phi| < 1\")\n    mean = c / (1 - phi)\n    var = sigma2 / (1 - phi ** 2)\n    return mean, var, phi, phi ** 2\n",
+    "examples": [
+     {
+      "call": "list(ar1_moments(0.2, 0.6, 1.0))",
+      "expect": "[0.5, 1.5625, 0.6, 0.36]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(ar1_moments(0.2, 0.6, 1.0))",
+      "expect": "[0.5, 1.5625, 0.6, 0.36]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(ar1_moments(0.0, -0.5, 2.0))",
+      "expect": "[0.0, 2.6666666666666665, -0.5, 0.25]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(ar1_moments(3.0, 0.75, 4.0))",
+      "expect": "[12.0, 9.142857142857142, 0.75, 0.5625]",
+      "compare": "isclose"
+     },
+     {
+      "call": "ar1_moments(1.0, 1.0, 1.0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "ar1_moments(1.0, -1.2, 1.0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 5 hidden tests, two of which expect a ValueError for a non-stationary $\\phi$. Plain Python: no packages needed."
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Some tests failed. Check the stationarity condition first, then the two formulas."
+   },
+   "explain": {
+    "text": "At $|\\phi| \\ge 1$ both denominators reach zero or flip sign: a walk has no mean or variance to report, so the function refuses."
+   }
+  },
+  {
+   "id": "h-lb-scratch",
+   "difficulty": 4,
+   "skills": [
+    "ts-acf"
+   ],
+   "prose": "Rebuild Ljung-Box with nothing but the `math` module. For even $m$ the $\\chi^2_m$ tail has a closed form: $$P(\\chi^2_m > q) = e^{-q/2}\\sum_{i=0}^{m/2 - 1}\\frac{(q/2)^i}{i!}.$$ Use the full-sample mean and one denominator, as lesson 5 did.",
+   "question": "Complete `chi2_sf_even(q, m)` and `ljung_box_scratch(x, m)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n",
+    "starter": "import math\n\ndef chi2_sf_even(q, m):\n    \"\"\"Upper tail of chi-squared with an even number m of degrees of freedom.\"\"\"\n    ...\n\ndef ljung_box_scratch(x, m):\n    if m % 2:\n        raise ValueError(\"m must be even\")\n    n = len(x)\n    xbar = sum(x) / n\n    d = [v - xbar for v in x]\n    denom = sum(v * v for v in d)\n    Q = ...\n    return Q, chi2_sf_even(Q, m)\n",
+    "solution": "import math\n\ndef chi2_sf_even(q, m):\n    \"\"\"Upper tail of chi-squared with an even number m of degrees of freedom.\"\"\"\n    h = q / 2\n    term, total = 1.0, 1.0\n    for i in range(1, m // 2):\n        term *= h / i\n        total += term\n    return math.exp(-h) * total\n\ndef ljung_box_scratch(x, m):\n    if m % 2:\n        raise ValueError(\"m must be even\")\n    n = len(x)\n    xbar = sum(x) / n\n    d = [v - xbar for v in x]\n    denom = sum(v * v for v in d)\n    Q = 0.0\n    for k in range(1, m + 1):\n        r = sum(d[t] * d[t - k] for t in range(k, n)) / denom\n        Q += r * r / (n - k)\n    Q *= n * (n + 2)\n    return Q, chi2_sf_even(Q, m)\n",
+    "examples": [
+     {
+      "call": "round(chi2_sf_even(5.991, 2), 4)",
+      "expect": "0.05",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 4) for v in ljung_box_scratch(make_wn(3).tolist(), 10)]",
+      "expect": "[5.0951, 0.8847]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 4) for v in ljung_box_scratch(make_wn(24).tolist(), 20)]",
+      "expect": "[27.5353, 0.1209]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(ljung_box_scratch(make_ar1(0.3, 500, 7).tolist(), 10)[0], 4)",
+      "expect": "46.8514",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(chi2_sf_even(18.307, 10), 4)",
+      "expect": "0.05",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(chi2_sf_even(5.991, 2), 4)",
+      "expect": "0.05",
+      "compare": "isclose"
+     },
+     {
+      "call": "chi2_sf_even(0.0, 6)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "ljung_box_scratch([1.0, 2.0, 3.0, 2.0], 3)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: seeded series (passed as plain lists) against statsmodels' `acorr_ljungbox` to 4 places, three tail areas, and an odd $m$. No NumPy or SciPy in your code; the seeded series come from `make_wn` and `make_ar1`, already defined."
+   },
+   "feedback": {
+    "correct": "Correct. Your test matches statsmodels to 4 places.",
+    "generic": "Some tests failed. Build each term of the tail sum from the one before, and divide each $\\hat\\rho_k^2$ by $n - k$."
+   },
+   "explain": {
+    "text": "Building each term as the previous one times $(q/2)/i$ avoids large factorials. The $\\chi^2_m$ tail for even $m$ is a Poisson probability, which is where the closed form comes from."
+   }
+  },
+  {
+   "id": "h-identify",
+   "difficulty": 5,
+   "skills": [
+    "ts-models",
+    "ts-acf",
+    "ts-stationary"
+   ],
+   "prose": "Put the level together. For each series: test for a unit root first, then let the PACF propose an order and AIC (with a tolerance of 2) propose another, take the smaller, and check that fit's residuals.",
+   "question": "Write `identify_ar(series_list, max_p=4)` returning one dict per series, as the starter describes.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_walk(seed, n=500, drift=0.0):\n    \"\"\"Seeded random walk from 0: x_t = x_{t-1} + drift + e_t, e_t ~ N(0, 1).\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    return np.cumsum(drift + e)\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n\ndef make_arma(phis, thetas, n, seed, burn=200):\n    \"\"\"Seeded ARMA: x_t = e_t + sum phi_i x_{t-i} + sum theta_j e_{t-j},\n    e_t ~ N(0, 1); the first burn values are dropped.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n + burn)\n    x = np.zeros(n + burn)\n    for t in range(n + burn):\n        v = e[t]\n        for i, ph in enumerate(phis, 1):\n            if t - i >= 0:\n                v += ph * x[t - i]\n        for j, th in enumerate(thetas, 1):\n            if t - j >= 0:\n                v += th * e[t - j]\n        x[t] = v\n    return x[burn:]\n\nimport warnings\nwarnings.filterwarnings(\"ignore\")\n",
+    "starter": "import numpy as np\nfrom statsmodels.tsa.stattools import adfuller, pacf\nfrom statsmodels.tsa.arima.model import ARIMA\nfrom statsmodels.stats.diagnostic import acorr_ljungbox\n\ndef identify_ar(series_list, max_p=4):\n    out = []\n    for x in series_list:\n        # 1. ADF with autolag=\"AIC\": p >= 0.05 means treat as non-stationary,\n        #    and report {\"stationary\": False, \"order\": None, \"white_resid\": None}\n        # 2. p_pacf: the largest lag <= max_p with |pacf| outside 1.96/sqrt(n), or 0\n        # 3. p_aic: the smallest p in 0..max_p with AIC within 2 of the best\n        # 4. order = the smaller of p_pacf and p_aic\n        # 5. white_resid: Ljung-Box at 10 lags on that fit's residuals,\n        #    with model_df=order, has p >= 0.05\n        ...\n    return out\n",
+    "solution": "import numpy as np\nfrom statsmodels.tsa.stattools import adfuller, pacf\nfrom statsmodels.tsa.arima.model import ARIMA\nfrom statsmodels.stats.diagnostic import acorr_ljungbox\n\ndef identify_ar(series_list, max_p=4):\n    out = []\n    for x in series_list:\n        if adfuller(x, autolag=\"AIC\")[1] >= 0.05:\n            out.append({\"stationary\": False, \"order\": None, \"white_resid\": None})\n            continue\n        a = pacf(x, nlags=max_p)[1:]\n        band = 1.96 / np.sqrt(len(x))\n        p_pacf = max([k for k in range(1, max_p + 1) if abs(a[k - 1]) > band], default=0)\n        fits = [ARIMA(x, order=(p, 0, 0)).fit() for p in range(max_p + 1)]\n        aics = [f.aic for f in fits]\n        p_aic = min(p for p in range(max_p + 1) if aics[p] <= min(aics) + 2)\n        order = min(p_pacf, p_aic)\n        lb = acorr_ljungbox(fits[order].resid, lags=[10], model_df=order)\n        out.append({\"stationary\": True, \"order\": order,\n                    \"white_resid\": bool(lb[\"lb_pvalue\"].iloc[0] >= 0.05)})\n    return out\n",
+    "examples": [
+     {
+      "call": "identify_ar([make_walk(4, 500)])",
+      "expect": "[{'stationary': False, 'order': None, 'white_resid': None}]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "identify_ar([make_wn(3)])",
+      "expect": "[{'stationary': True, 'order': 0, 'white_resid': True}]",
+      "compare": "equal"
+     },
+     {
+      "call": "identify_ar([make_ar1(0.6, 500, 5)])",
+      "expect": "[{'stationary': True, 'order': 1, 'white_resid': True}]",
+      "compare": "equal"
+     },
+     {
+      "call": "identify_ar([make_arma([0.5, 0.3], [], 500, 11)])",
+      "expect": "[{'stationary': True, 'order': 2, 'white_resid': True}]",
+      "compare": "equal"
+     },
+     {
+      "call": "identify_ar([make_walk(4, 500)])",
+      "expect": "[{'stationary': False, 'order': None, 'white_resid': None}]",
+      "compare": "equal"
+     },
+     {
+      "call": "identify_ar([make_arma([0.5, 0.3], [], 500, 11)], max_p=1)",
+      "expect": "[{'stationary': True, 'order': 1, 'white_resid': False}]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on planted seeded series: white noise, an AR(1), an AR(2), a random walk, and the AR(2) with `max_p=1`. Each test fits up to 5 models. The first run loads statsmodels with NumPy, SciPy and pandas, which takes 20 to 40 seconds; later runs are quick.",
+    "budget": 40000
+   },
+   "feedback": {
+    "correct": "Correct. The walk is refused, the AR(1) seed's stray lag is ignored, and the short AR(2) model fails its residual check.",
+    "generic": "Some tests failed. Run ADF first and skip the rest for a walk; then the PACF order, the AIC order, the smaller of the two, and Ljung-Box with `model_df`."
+   },
+   "explain": {
+    "text": "Seed 5's PACF proposes 3 but AIC with a tolerance says 1, so the smaller wins. Capped at `max_p=1`, the AR(2) leaves memory in its residuals, and the check catches it. A pipeline that tests stationarity first never fits an AR to a walk."
+   }
+  },
+  {
+   "id": "h-steps",
+   "difficulty": 4,
+   "skills": [
+    "ts-models",
+    "ts-stationary",
+    "ts-acf"
+   ],
+   "prose": "You are handed 1,500 daily closes of a share and asked for an AR model of its returns.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Take log returns, $r_t = \\ln p_t - \\ln p_{t-1}$: returns are stationary and prices are not"
+     },
+     {
+      "id": "s2",
+      "text": "Run the ADF test on the returns and check that it rejects a unit root"
+     },
+     {
+      "id": "s3",
+      "text": "Draw the ACF and run Ljung-Box: is there any linear memory to model?"
+     },
+     {
+      "id": "s4",
+      "text": "Read the PACF to propose an order $p$"
+     },
+     {
+      "id": "s5",
+      "text": "Fit `ARIMA(order=(p, 0, 0))` and nearby orders, and compare AIC or BIC"
+     },
+     {
+      "id": "s6",
+      "text": "Run Ljung-Box on the chosen model's residuals, with `model_df=p`"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Transform, test, look, propose, compare, check.",
+    "generic": "Not quite right. Nothing is modelled before the series is stationary, and the residual check comes last."
+   },
+   "explain": {
+    "text": "Each step guards the next: the ACF means nothing on a walk, the PACF only matters if Ljung-Box finds memory, and a model is done only when its residuals are white noise."
+   }
+  },
+  {
+   "id": "h-days",
+   "difficulty": 4,
+   "skills": [
+    "ts-acf"
+   ],
+   "prose": "A researcher believes a strategy's daily returns have lag-1 autocorrelation 0.05.",
+   "question": "How many days are needed before $\\hat\\rho_1 = 0.05$ would sit outside the 95% band? Give a whole number.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1537,
+    "tol": {
+     "abs": 1.5
+    },
+    "placeholder": "days",
+    "accept": "1,537 days: $(1.96/0.05)^2 = 1536.6$, so 1,537 is the first whole number",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 400,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "z",
+      "value": 784,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. About 1,537 days, six years.",
+    "generic": "Not quite right. Solve $1.96/\\sqrt n < 0.05$ for $n$.",
+    "byKey": {
+     "sd": "You solved $1/\\sqrt n = 0.05$, one sd. The band is 1.96 sds.",
+     "z": "You squared $1.96/0.05$ wrongly: $(39.2)^2 = 1536.6$."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt n > 1.96/0.05 = 39.2$, so $n > 1536.6$: about six years of daily data, and that only makes the estimate itself stand out once. A real effect this small needs many assets or much more data."
+   }
+  },
+  {
+   "id": "h-se",
+   "difficulty": 4,
+   "skills": [
+    "ts-models"
+   ],
+   "prose": "An AR(1) fitted to one year, 250 days, of a strategy's daily P&L gives $\\hat\\phi = 0.12$.",
+   "question": "Is the memory distinguishable from zero at 95%?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: the standard error is about $\\sqrt{(1 - 0.0144)/250} = 0.063$, so the interval 0.12 ± 0.12 just reaches 0",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: 0.12 is clearly positive",
+      "why": "You judged by sign alone. With 250 days the standard error is about 0.063, and 1.96 of them is 0.12."
+     },
+     {
+      "id": "se",
+      "text": "Yes: its standard error is $0.12/\\sqrt{250} = 0.008$",
+      "why": "You divided the estimate by $\\sqrt n$. The standard error is $\\sqrt{(1 - \\phi^2)/n}$."
+     },
+     {
+      "id": "band",
+      "text": "No, because the band for 250 days is 0.088",
+      "why": "The band for 250 days is 0.124, not 0.088 (that is 500 days). The conclusion is right, the number is not."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Borderline at best.",
+    "generic": "Not quite right. Compute $\\sqrt{(1 - \\phi^2)/n}$."
+   },
+   "explain": {
+    "text": "The standard error is $\\sqrt{0.9856/250} = 0.063$, so the 95% interval is about −0.003 to 0.243. It touches 0: one year cannot settle it."
+   }
+  },
+  {
+   "id": "h-cycle",
+   "difficulty": 5,
+   "skills": [
+    "ts-acf"
+   ],
+   "prose": "A colleague's note: \"Daily returns of our index, 500 days. Significant autocorrelation at lags 6 and 12 (0.091 and 0.096, band ±0.088). This is a fortnightly cycle and we should trade it.\" The full correlogram to lag 20 has no other bar outside the band. `acorr_ljungbox(r, lags=[20])` gives $Q = 27.54$, p = 0.121.",
+   "question": "Write a reply of about 200 words. Explain what the band means, what 20 bars of pure noise would do, what Ljung-Box says, and what evidence would convince you.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Reply to the colleague: what the band means, the arithmetic of 20 bars, the Ljung-Box result, and what would convince you of a real cycle.",
+    "model": "**What the band means.** The dashed band is $\\pm 1.96/\\sqrt{500} = \\pm 0.088$. If the returns had no memory, each $\\hat\\rho_k$ would land inside it with probability 0.95. A bar outside is surprising for *one pre-chosen lag*, not for the largest of twenty.\n\n**Twenty bars.** Looking at 20 lags gives 20 chances of 5%. The number outside is about Binomial(20, 0.05): we expect $20 \\times 0.05 = 1$, and the chance of at least one is $1 - 0.95^{20} = 0.64$. Two bars out is common; here they are 0.091 and 0.096, barely beyond 0.088.\n\n**Ljung-Box.** Pooling the first 20 lags gives $Q = 27.54$ against $\\chi^2_{20}$, p = 0.121. The joint test does not reject white noise at 5%.\n\n**The 'cycle'.** Lags 6 and 12 are not a fortnight in trading days (that would be 10), and nothing at 18 continues the pattern.\n\n**What would convince me.** A hypothesis fixed in advance, with a reason, such as a fortnightly settlement. Then: the same lags significant in a new sample; a bar well beyond the band, not at its edge; a Ljung-Box rejection; and a backtest that still pays after costs. Until then this is noise: `make_wn(24)`, the series in lesson 6, looks exactly like this.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "States the band as ±1.96/√n = ±0.088 and that it holds 95% of bars under white noise, one lag at a time"
+     },
+     {
+      "points": 2,
+      "text": "Does the 20-bar arithmetic: about one bar expected outside, and 1 − 0.95²⁰ ≈ 0.64 for at least one"
+     },
+     {
+      "points": 2,
+      "text": "Reads Ljung-Box correctly: Q = 27.54 on 20 degrees of freedom, p = 0.12, no rejection at 5%"
+     },
+     {
+      "points": 1,
+      "text": "Notes that the bars are only just outside the band, or that 6 and 12 trading days are not a fortnight"
+     },
+     {
+      "points": 2,
+      "text": "Names convincing evidence: a prior reason, replication out of sample, and a joint test that rejects"
+     },
+     {
+      "points": 1,
+      "text": "Concludes that the cycle is not established and should not be traded on this evidence"
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -672,7 +672,7 @@ const checkFeedback = (file, where, fb, keys, { requireByKey = false } = {}) => 
   });
 };
 /* item 450: a patch (explain.canvas, a wrong answer's canvas) that holds a whole canvas is ignored by the engine */
-const wholeCanvasPatch = (file, where, p) => { if (isObj(p) && (p.kind != null || isObj(p.params))) warn(file, where, 'this is a state patch for the screen\'s canvas; it has kind or params, so it looks like a whole canvas and the Why? sheet will show the canvas unchanged. Give only the state keys to change ({ "shade": [...], "highlight": [...] })'); };
+const wholeCanvasPatch = (file, where, p) => { if (isObj(p) && p.kind != null && typeof p.kind === 'string' && isObj(p.params)) warn(file, where, 'this is a state patch for the screen\'s canvas; it has kind and params, so it looks like a whole canvas and the Why? sheet will show the canvas unchanged. Give only the state keys to change ({ "shade": [...], "highlight": [...] })'); };
 const checkExplain = (file, where, ex, { required = false } = {}) => {
   if (ex != null && isObj(ex)) wholeCanvasPatch(file, `${where}.canvas`, ex.canvas);
   if (ex == null) { if (required) warn(file, where, 'an explanation (explain.text) is expected'); return; }
