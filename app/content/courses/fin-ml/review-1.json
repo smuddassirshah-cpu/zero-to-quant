@@ -1,0 +1,381 @@
+{
+  "id": "review-1",
+  "course": "fin-ml",
+  "level": 1,
+  "items": [
+    {
+      "id": "r-count",
+      "difficulty": 2,
+      "skills": [
+        "fm-labels"
+      ],
+      "prose": "A share has 300 daily closes. You make fixed-horizon labels with $h = 10$.",
+      "question": "How many labelled rows do you get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 290,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Number of labelled rows",
+        "accept": "290: the last 10 closes have no close 10 days later.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 300,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "off",
+            "value": 289,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "290 rows; the last 10 are dropped.",
+        "generic": "Not quite right. A row needs a close $h$ days after it.",
+        "byKey": {
+          "all": "The last 10 days have no close 10 days on, so they cannot be labelled.",
+          "off": "Day 289 pairs with day 299, the last close, so it is labelled. Days 290 to 299 are dropped."
+        }
+      },
+      "explain": {
+        "text": "Days 0 to 289 each have a close 10 days later; days 290 to 299 do not. That gives `len(prices) - h` = 290 labels, the alignment of `p[h:] / p[:-h]`."
+      }
+    },
+    {
+      "id": "r-touch",
+      "difficulty": 2,
+      "skills": [
+        "fm-labels"
+      ],
+      "prose": "Entry at £50.00 with $\\sigma = 2\\%$, $k = 1.5$ and a 5-day limit, so the barriers are £51.50 and £48.50. The next five closes are £50.60, £51.30, £49.90, £48.70, £49.50.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                50,
+                50.6,
+                51.3,
+                49.9,
+                48.7,
+                49.5
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "money": "£",
+          "height": 230,
+          "y": [
+            48,
+            52
+          ],
+          "hlines": [
+            {
+              "id": "up",
+              "y": 51.5,
+              "label": "£51.50"
+            },
+            {
+              "id": "dn",
+              "y": 48.5,
+              "label": "£48.50"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does `first_touch` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(0, 5)`",
+            "correct": true
+          },
+          {
+            "id": "up",
+            "text": "`(1, 2)`",
+            "why": "You rounded £51.30 up to the barrier. It is 20p short of £51.50."
+          },
+          {
+            "id": "dn",
+            "text": "`(-1, 4)`",
+            "why": "£48.70 is still 20p above the stop at £48.50."
+          },
+          {
+            "id": "sign",
+            "text": "`(-1, 5)`",
+            "why": "This course labels a time-out 0, not by the sign of the last return."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Both barriers are near-missed; the time limit ends the trade.",
+        "generic": "Not quite right. Compare each close with £51.50 and £48.50 exactly."
+      },
+      "explain": {
+        "text": "The closes come within 20p of both barriers but touch neither. So the trade ends at the 5-day limit with label 0. This course gives a time-out 0 rather than the sign of its return."
+      }
+    },
+    {
+      "id": "r-recall",
+      "difficulty": 3,
+      "skills": [
+        "fm-eval",
+        "fm-labels"
+      ],
+      "prose": "Out of 120 primary calls, 50 paid. The secondary model, at threshold 0.6, takes 40 calls, and 26 of them paid.",
+      "question": "What is the recall, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.52,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "%",
+        "label": "Recall in per cent",
+        "accept": "52%: 26 of the 50 calls that paid.",
+        "wrong": [
+          {
+            "id": "prec",
+            "value": 0.65,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "base",
+            "value": 0.4167,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "26 of 50 winners kept: 52%.",
+        "generic": "Not quite right. Recall divides by the calls that paid.",
+        "byKey": {
+          "prec": "That is precision, 26 of 40 taken. Recall divides by the 50 that paid.",
+          "base": "That is the primary's hit rate, 50 of 120."
+        }
+      },
+      "explain": {
+        "text": "Recall is $26/50 = 52\\%$; precision is $26/40 = 65\\%$. The primary alone pays $50/120 = 41.7\\%$, so the filter lifts precision well above the base rate."
+      }
+    },
+    {
+      "id": "r-unique",
+      "difficulty": 2,
+      "skills": [
+        "fm-labels"
+      ],
+      "prose": "Two labels on three days: one covers days 0 and 1, the other days 1 and 2.",
+      "question": "What is the average uniqueness of each label?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Average uniqueness of each label",
+        "accept": "0.75: $(1 + \\tfrac12)/2$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each owns one day fully and half of day 1.",
+        "generic": "Not quite right. Average $1/c_t$ over each label's two days.",
+        "byKey": {
+          "half": "Only day 1 is shared. Each label owns its other day outright."
+        }
+      },
+      "explain": {
+        "text": "Concurrency is 1, 2, 1. Each label averages $1$ and $\\tfrac12$ over its two days: 0.75. Together they are worth 1.5 labels."
+      }
+    },
+    {
+      "id": "r-deadzone",
+      "difficulty": 3,
+      "skills": [
+        "fm-labels"
+      ],
+      "prose": "Recent daily volatility is 2.4%, the horizon is 9 days and $k = 0.5$. A nine-day return of $-3.0\\%$ arrives.",
+      "question": "What is its label?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "$0$: the bar is $0.5 \\times 2.4\\% \\times 3 = 3.6\\%$",
+            "correct": true
+          },
+          {
+            "id": "minus",
+            "text": "$-1$: the bar is $0.5 \\times 2.4\\% = 1.2\\%$",
+            "why": "You used the one-day bar. A nine-day return spreads $\\sqrt{9} = 3$ times wider."
+          },
+          {
+            "id": "minus9",
+            "text": "$-1$: the bar is $0.5 \\times 2.4\\% \\times 9 / 9$",
+            "why": "Spread grows with $\\sqrt{h}$, not staying at one day's size."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3.0% is inside the 3.6% bar.",
+        "generic": "Not quite right. Compute $k\\sigma\\sqrt{h}$."
+      },
+      "explain": {
+        "text": "The bar is $0.5 \\times 2.4\\% \\times \\sqrt{9} = 3.6\\%$. A fall of 3.0% is inside it, so the label is 0: in this market a 3% move in nine days is noise."
+      }
+    },
+    {
+      "id": "r-asym",
+      "difficulty": 3,
+      "skills": [
+        "fm-labels"
+      ],
+      "prose": "A long-only fund enters at £200.00 with $\\sigma = 1.2\\%$. It takes profit at $2\\sigma$ and stops at $1\\sigma$.",
+      "question": "Where is the profit barrier, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 204.8,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Profit barrier in pounds",
+        "accept": "£204.80: £200.00 × 1.024.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 202.4,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "stop",
+            "value": 197.6,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£200.00 × (1 + 2 × 0.012) = £204.80.",
+        "generic": "Not quite right. Multiply £200.00 by $1 + 2\\sigma$.",
+        "byKey": {
+          "one": "That uses $1\\sigma$, the stop's width. The profit barrier is $2\\sigma$ away.",
+          "stop": "That is the stop, below the entry."
+        }
+      },
+      "explain": {
+        "text": "The profit barrier is $200 \\times (1 + 2 \\times 0.012) = 204.80$ and the stop $200 \\times 0.988 = 197.60$. Asymmetric barriers let the label ask a long-only fund's question."
+      }
+    },
+    {
+      "id": "r-meta-train",
+      "difficulty": 4,
+      "skills": [
+        "fm-labels",
+        "fm-eval"
+      ],
+      "prose": "A primary model is fitted on 2016 to 2018. You have data to 2023. You want a secondary model and an honest test.",
+      "question": "Which plan is sound?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Secondary on the primary's calls in 2019 to 2021; test both on 2022 to 2023",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Secondary on 2016 to 2018 too, so both models see the same data",
+            "why": "The primary's calls on its own training years look better than they will be. The secondary would learn from flattering meta-labels."
+          },
+          {
+            "id": "shuffle",
+            "text": "Pool 2016 to 2023 and cross-validate the secondary with shuffled folds",
+            "why": "Shuffled folds leak overlapping labels, and the pool includes the primary's in-sample years."
+          },
+          {
+            "id": "test",
+            "text": "Secondary on 2019 to 2023, then report its fit on those years",
+            "why": "That reports an in-sample score. Hold back the last block for the test."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three blocks in time order: primary, secondary, test.",
+        "generic": "Not quite right. Each model must be scored on data it never saw."
+      },
+      "explain": {
+        "text": "The primary's calls are only honest after its training period, so the secondary trains on 2019 to 2021. The last block, untouched by either, gives the test. Purge labels whose windows cross each boundary."
+      }
+    },
+    {
+      "id": "r-tstat",
+      "difficulty": 4,
+      "skills": [
+        "fm-eval"
+      ],
+      "prose": "A signal hits the profit barrier on 55% of 1,200 overlapping labels. Their average uniqueness is 0.1.",
+      "question": "What is the $t$ statistic of the hit rate against 50%, using the effective $n$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.1,
+        "tol": {
+          "abs": 0.02
+        },
+        "label": "t statistic with the effective n",
+        "accept": "1.10 ± 0.02: $n_{\\text{eff}} = 120$, se $= \\sqrt{0.55 \\times 0.45/120} = 0.0454$.",
+        "wrong": [
+          {
+            "id": "naive",
+            "value": 3.48,
+            "tol": {
+              "abs": 0.03
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 1.1: not distinguishable from luck.",
+        "generic": "Not quite right. Use $n_{\\text{eff}} = 1200 \\times 0.1$.",
+        "byKey": {
+          "naive": "That uses all 1,200 labels as independent. They are worth 120."
+        }
+      },
+      "explain": {
+        "text": "$n_{\\text{eff}} = 1200 \\times 0.1 = 120$. The se is $\\sqrt{0.2475/120} = 0.0454$, so $t = 0.05/0.0454 = 1.10$. With the naive $n$ it would read 3.48."
+      }
+    }
+  ]
+}

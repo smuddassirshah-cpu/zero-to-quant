@@ -1,0 +1,1328 @@
+{
+  "id": "l11-deflated-sharpe",
+  "course": "fin-ml",
+  "title": "The deflated Sharpe ratio",
+  "minutes": 15,
+  "objectives": [
+    "Deflate a Sharpe ratio for the number of trials behind it.",
+    "Compute the probabilistic Sharpe ratio with skew and kurtosis."
+  ],
+  "skills": [
+    "fm-eval"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The best of ten",
+      "prose": "A researcher backtests 10 strategy variants over 3 years and reports the best, with a Sharpe ratio of 1.5. Suppose every variant is noise: true Sharpe 0. Each run below is one such search of 10, scored by whether its best reaches 1.5.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "1",
+              "label": "Best reaches 1.5"
+            },
+            {
+              "id": "0",
+              "label": "Best below 1.5"
+            }
+          ],
+          "yLabel": "Share of searches",
+          "exact": [
+            {
+              "x": "1",
+              "y": 0.0459
+            },
+            {
+              "x": "0",
+              "y": 0.9541
+            }
+          ],
+          "sim": {
+            "trials": [
+              10,
+              100,
+              1000
+            ],
+            "outcome": "max(n(), n(), n(), n(), n(), n(), n(), n(), n(), n()) / sqrt(3) >= 1.5",
+            "seed": 11
+          }
+        },
+        "state": {
+          "ran": 0
+        }
+      },
+      "question": "Run at least 1,000 searches. What share of them find a best Sharpe of 1.5 or more?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.046,
+        "tol": {
+          "abs": 0.012
+        },
+        "label": "Share of searches",
+        "accept": "any value from 0.034 to 0.058. The exact share is $1 - \\Phi(1.5\\sqrt3)^{10} = 0.046$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.0046,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "all",
+            "value": 1,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Press Run 1,000 and read the first bar."
+        },
+        {
+          "rung": "point",
+          "text": "The first bar is the share of searches whose best reached 1.5.",
+          "highlight": [
+            "x1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It settles near 0.05: about 1 search in 22."
+        }
+      ],
+      "feedback": {
+        "correct": "About 1 search in 22 finds a 1.5 from pure noise.",
+        "generic": "Not quite right. Run 1,000 searches and read the height of the first bar.",
+        "byKey": {
+          "one": "That is about the chance for one variant. The best of 10 has ten chances.",
+          "all": "Most searches stay below 1.5; read the first bar, not the second."
+        }
+      },
+      "explain": {
+        "text": "About 4.6% of noise searches report 1.5 or more: a single strategy would do it only 0.5% of the time. The testing course (Is this Sharpe ratio real?) found the same effect for the best of 100. This lesson turns it into a number you can quote.",
+        "canvas": {
+          "ran": 1000
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The probabilistic Sharpe ratio",
+      "prose": "Work per day: a Sharpe of 1.5 a year is $1.5/\\sqrt{252} = 0.0945$ a day, over $n = 756$ days. Bailey and López de Prado (2014; AFML chapter 14) give its standard error, with skew $\\gamma_3$ and kurtosis $\\gamma_4$ (3 for a normal): $$\\hat\\sigma_{SR} = \\sqrt{\\frac{1 - \\gamma_3 SR + \\frac{\\gamma_4 - 1}{4}SR^2}{n - 1}}.$$",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0.0945,
+            "sigma": 0.0365
+          },
+          "x": [
+            -0.06,
+            0.25
+          ],
+          "xLabel": "Daily Sharpe ratio"
+        },
+        "state": {
+          "shade": {
+            "from": 0,
+            "to": null
+          }
+        }
+      },
+      "question": "For normal returns ($\\gamma_3 = 0$, $\\gamma_4 = 3$), what is the standard error? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0365,
+        "tol": {
+          "abs": 0.0003
+        },
+        "label": "Standard error",
+        "accept": "0.0365: $\\sqrt{(1 + 0.5 \\times 0.0945^2)/755} = 0.03647$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "annual",
+            "value": 0.5791,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "nosr",
+            "value": 0.0364,
+            "tol": {
+              "abs": 3e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With $\\gamma_3 = 0$ and $\\gamma_4 = 3$ the top is $1 + \\tfrac12 SR^2$."
+        },
+        {
+          "rung": "point",
+          "text": "$1 + 0.5 \\times 0.0945^2 = 1.00446$, and $n - 1 = 755$.",
+          "highlight": [
+            "curve"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{1.00446/755} = 0.03647$."
+        }
+      ],
+      "feedback": {
+        "correct": "The daily Sharpe of 0.0945 sits 2.6 standard errors above 0.",
+        "generic": "Not quite right. Put $SR = 0.0945$, $\\gamma_3 = 0$, $\\gamma_4 = 3$ and $n = 756$ into the formula.",
+        "byKey": {
+          "annual": "You used the annual Sharpe 1.5. The formula takes the Sharpe per observation, here per day.",
+          "nosr": "Close: that is $1/\\sqrt{755}$, which leaves out the $SR^2$ term. Keep it: 0.03647."
+        }
+      },
+      "explain": {
+        "text": "The standard error is 0.0365, so $z = 0.0945/0.0365 = 2.59$ and $\\Phi(2.59) = 0.995$. That is the **probabilistic Sharpe ratio** (PSR): the probability that the true Sharpe beats a benchmark, here 0, $$\\text{PSR}(SR^*) = \\Phi\\!\\left(\\frac{SR - SR^*}{\\hat\\sigma_{SR}}\\right).$$ The shaded area is it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Same Sharpe, different tails",
+      "prose": "Three monthly strategies, each with a Sharpe of 0.3 a month (1.04 a year) over $n = 60$ months. Their measured skew and kurtosis differ.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "nrm",
+              "label": "normal"
+            },
+            {
+              "id": "skw",
+              "label": "skewed"
+            },
+            {
+              "id": "fat",
+              "label": "fat-tailed"
+            }
+          ],
+          "yLabel": "Standard error",
+          "showValues": true,
+          "decimals": 4,
+          "yMax": 0.2
+        },
+        "state": {
+          "values": {
+            "nrm": 0,
+            "skw": 0,
+            "fat": 0
+          }
+        },
+        "maxHeight": 200
+      },
+      "question": "Fill in each standard error to 4 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Returns",
+          "$\\gamma_3$",
+          "$\\gamma_4$",
+          "Standard error"
+        ],
+        "rows": [
+          [
+            "normal",
+            "0",
+            "3",
+            {
+              "edit": true,
+              "answer": 0.1331,
+              "tol": {
+                "abs": 0.0003
+              }
+            }
+          ],
+          [
+            "skewed",
+            "−1.5",
+            "3",
+            {
+              "edit": true,
+              "answer": 0.1592,
+              "tol": {
+                "abs": 0.0003
+              }
+            }
+          ],
+          [
+            "fat-tailed",
+            "0",
+            "12",
+            {
+              "edit": true,
+              "answer": 0.1454,
+              "tol": {
+                "abs": 0.0003
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$SR = 0.3$, so $SR^2 = 0.09$, and $n - 1 = 59$."
+        },
+        {
+          "rung": "point",
+          "text": "Skewed: the top is $1 - (-1.5)(0.3) + 0.5 \\times 0.09 = 1.495$.",
+          "highlight": [
+            "skw"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Normal $\\sqrt{1.045/59} = 0.1331$; skewed $\\sqrt{1.495/59} = 0.1592$; fat-tailed $\\sqrt{1.2475/59} = 0.1454$."
+        }
+      ],
+      "feedback": {
+        "correct": "Negative skew and fat tails both widen the error for the same Sharpe.",
+        "generic": "Not quite right. Compute $1 - \\gamma_3 SR + \\tfrac{\\gamma_4 - 1}{4}SR^2$ for each row, divide by 59, take the root."
+      },
+      "explain": {
+        "text": "Negative skew adds 20% to the standard error and kurtosis 12 adds 9%. A strategy that earns small gains and takes rare big losses looks steadier than it is. The Sharpe alone cannot tell you.",
+        "canvas": {
+          "values": {
+            "nrm": 0.1331,
+            "skw": 0.1592,
+            "fat": 0.1454
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Raising the bar to the best of N",
+      "prose": "If $N$ noise strategies are tried, the best Sharpe is expected near $$E[\\max] \\approx \\sqrt V\\left((1 - \\gamma)\\Phi^{-1}\\!\\left(1 - \\tfrac1N\\right) + \\gamma\\,\\Phi^{-1}\\!\\left(1 - \\tfrac{1}{Ne}\\right)\\right),$$ with $\\gamma = 0.5772$ (Euler-Mascheroni) and $V$ the variance of the trials' Sharpes. For noise, $V = 1/(n - 1)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            30
+          ],
+          "y": [
+            0,
+            1.6
+          ],
+          "xLabel": "Trials $N$",
+          "yLabel": "Best noise Sharpe, a year",
+          "xStep": 5,
+          "yStep": 0.25,
+          "functions": [
+            {
+              "id": "em",
+              "expr": "0.577350*(0.422784*(sqrt(-2*ln(1/x)) - (2.515517 + 0.802853*sqrt(-2*ln(1/x)) + 0.010328*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x)))/(1 + 1.432788*sqrt(-2*ln(1/x)) + 0.189269*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x)) + 0.001308*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x)))) + 0.577216*(sqrt(-2*ln(1/(x*e))) - (2.515517 + 0.802853*sqrt(-2*ln(1/(x*e))) + 0.010328*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e))))/(1 + 1.432788*sqrt(-2*ln(1/(x*e))) + 0.189269*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e))) + 0.001308*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e))))))",
+              "label": "$E[\\max]$, 3 years",
+              "domain": [
+                2,
+                30
+              ],
+              "labelAt": 24,
+              "labelSide": "below"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "rep",
+              "y": 1.5,
+              "label": "reported 1.5"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "For $N = 10$ trials over 756 days, what is $E[\\max]$ as an annual Sharpe? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.91,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Expected best noise Sharpe",
+        "accept": "0.91: $\\sqrt V = 0.0364$ a day; the bracket is 1.575; $0.0364 \\times 1.575 \\times \\sqrt{252} = 0.91$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "daily",
+            "value": 0.0573,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "rule",
+            "value": 1.24,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\Phi^{-1}(0.9) = 1.282$ and $\\Phi^{-1}(1 - 1/(10e)) = \\Phi^{-1}(0.9632) = 1.790$."
+        },
+        {
+          "rung": "point",
+          "text": "The bracket is $0.4228 \\times 1.282 + 0.5772 \\times 1.790 = 1.575$.",
+          "highlight": [
+            "em"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Daily: $1.575/\\sqrt{755} = 0.0573$. Annual: $0.0573 \\times \\sqrt{252} = 0.91$."
+        }
+      ],
+      "feedback": {
+        "correct": "Ten noise trials over 3 years are expected to show a best Sharpe of 0.91.",
+        "generic": "Not quite right. Work the bracket, multiply by $\\sqrt V = 1/\\sqrt{755}$, then annualise.",
+        "byKey": {
+          "daily": "That is the daily value. Multiply by $\\sqrt{252}$ to compare with 1.5.",
+          "rule": "That is the rough bound $\\sqrt{2\\ln N}/\\sqrt T$ from the testing course. This formula is closer to the true mean."
+        }
+      },
+      "explain": {
+        "text": "For $N = 10$ the formula gives 0.91 a year. Check it against a seeded simulation: the testing course's best of 100 over 5 years averaged 1.12 (seed 77), and the formula gives 1.13. It runs about 1% high, close enough for a benchmark.",
+        "canvas": {
+          "highlight": [
+            "em"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The deflated Sharpe ratio",
+      "prose": "The **deflated Sharpe ratio** (DSR) is the PSR with the benchmark raised to $E[\\max]$ for the $N$ trials: the chance that the reported Sharpe beats the best that noise would show. The curve is DSR against $N$ for our 1.5 over 3 years. Slide $N$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            30
+          ],
+          "y": [
+            0.4,
+            1.02
+          ],
+          "xLabel": "Trials $N$",
+          "yLabel": "Deflated Sharpe ratio",
+          "xStep": 5,
+          "yStep": 0.1,
+          "params": {
+            "N": 10
+          },
+          "functions": [
+            {
+              "id": "d",
+              "expr": "Phi((0.094491 - 0.036394*(0.422784*(sqrt(-2*ln(1/x)) - (2.515517 + 0.802853*sqrt(-2*ln(1/x)) + 0.010328*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x)))/(1 + 1.432788*sqrt(-2*ln(1/x)) + 0.189269*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x)) + 0.001308*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x))*sqrt(-2*ln(1/x)))) + 0.577216*(sqrt(-2*ln(1/(x*e))) - (2.515517 + 0.802853*sqrt(-2*ln(1/(x*e))) + 0.010328*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e))))/(1 + 1.432788*sqrt(-2*ln(1/(x*e))) + 0.189269*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e))) + 0.001308*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e)))*sqrt(-2*ln(1/(x*e)))))))/0.036475)",
+              "label": "DSR",
+              "domain": [
+                2,
+                30
+              ],
+              "labelAt": 26
+            }
+          ],
+          "hlines": [
+            {
+              "id": "h95",
+              "y": 0.95,
+              "label": "0.95"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 10,
+              "y": 0.846
+            },
+            {
+              "id": "one",
+              "x": 1,
+              "y": 0.9952,
+              "label": "N = 1"
+            }
+          ]
+        },
+        "derive": {
+          "P.x": "N",
+          "P.y": "Phi((0.094491 - 0.036394*(0.422784*(sqrt(-2*ln(1/N)) - (2.515517 + 0.802853*sqrt(-2*ln(1/N)) + 0.010328*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N)))/(1 + 1.432788*sqrt(-2*ln(1/N)) + 0.189269*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N)) + 0.001308*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N)))) + 0.577216*(sqrt(-2*ln(1/(N*e))) - (2.515517 + 0.802853*sqrt(-2*ln(1/(N*e))) + 0.010328*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e))))/(1 + 1.432788*sqrt(-2*ln(1/(N*e))) + 0.189269*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e))) + 0.001308*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e)))))))/0.036475)",
+          "caption": "$N$ = {{N}}: DSR {{fixed(Phi((0.094491 - 0.036394*(0.422784*(sqrt(-2*ln(1/N)) - (2.515517 + 0.802853*sqrt(-2*ln(1/N)) + 0.010328*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N)))/(1 + 1.432788*sqrt(-2*ln(1/N)) + 0.189269*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N)) + 0.001308*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N))*sqrt(-2*ln(1/N)))) + 0.577216*(sqrt(-2*ln(1/(N*e))) - (2.515517 + 0.802853*sqrt(-2*ln(1/(N*e))) + 0.010328*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e))))/(1 + 1.432788*sqrt(-2*ln(1/(N*e))) + 0.189269*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e))) + 0.001308*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e)))*sqrt(-2*ln(1/(N*e)))))))/0.036475), 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "N",
+            "min": 2,
+            "max": 30,
+            "step": 1,
+            "start": 10,
+            "label": "$N$",
+            "decimals": 0
+          }
+        ]
+      },
+      "question": "What is the smallest whole number of trials for which the DSR falls below 0.95?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Trials",
+        "accept": "4: DSR is 0.959 at $N = 3$ and 0.938 at $N = 4$.",
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "hundred",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $N$ down from 10 and watch the caption."
+        },
+        {
+          "rung": "point",
+          "text": "At $N = 3$ the DSR is 0.959.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $N = 4$ it is 0.938, below 0.95."
+        }
+      ],
+      "feedback": {
+        "correct": "Four trials are enough to make a 1.5 over 3 years doubtful.",
+        "generic": "Not quite right. Find where the curve crosses the 0.95 line, then take the next whole number.",
+        "byKey": {
+          "ten": "At 10 trials the DSR is 0.85, well below. It crosses 0.95 much earlier.",
+          "hundred": "At 100 trials the DSR is 0.53. It crosses 0.95 at a handful of trials."
+        }
+      },
+      "explain": {
+        "text": "The DSR drops below 0.95 at $N = 4$. Edge case: at $N = 1$ there is no search, $E[\\max] = 0$ and the DSR is the PSR against zero, 0.995. Three years of a 1.5 Sharpe survive only if almost nothing else was tried.",
+        "canvas": {
+          "params": {
+            "N": 4
+          },
+          "points": {
+            "P": {
+              "x": 4,
+              "y": 0.9383
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The haircut",
+      "prose": "Another view: how much of the reported 1.5 would noise alone deliver? The bars are $E[\\max]$, annualised, for 3 years of daily data.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "n1",
+              "label": "N = 1"
+            },
+            {
+              "id": "n10",
+              "label": "N = 10"
+            },
+            {
+              "id": "n100",
+              "label": "N = 100"
+            },
+            {
+              "id": "n1000",
+              "label": "N = 1,000"
+            }
+          ],
+          "yLabel": "Best noise Sharpe, a year",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 2,
+          "hlines": [
+            {
+              "id": "rep",
+              "y": 1.5,
+              "label": "reported 1.5"
+            }
+          ]
+        },
+        "state": {
+          "values": {
+            "n1": 0,
+            "n10": 0.91,
+            "n100": 1.46,
+            "n1000": 1.88
+          }
+        }
+      },
+      "question": "At $N = 100$, what share of the reported Sharpe would noise alone explain? Give a percentage to the nearest whole number.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.97,
+        "tol": {
+          "abs": 0.006
+        },
+        "label": "Share explained by noise",
+        "accept": "97%: $1.46 / 1.5 = 0.975$.",
+        "placeholder": "percentage",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "left",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "ten",
+            "value": 0.61,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the $N = 100$ bar by 1.5."
+        },
+        {
+          "rung": "point",
+          "text": "The bar is 1.46.",
+          "highlight": [
+            "n100"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.46/1.5 = 0.97$, so 97%."
+        }
+      ],
+      "feedback": {
+        "correct": "After 100 trials, almost all of the 1.5 is what noise would show.",
+        "generic": "Not quite right. Divide the $N = 100$ bar by the reported 1.5.",
+        "byKey": {
+          "left": "That is the share left over. The question asks what noise explains.",
+          "ten": "That is the share at $N = 10$. Read the $N = 100$ bar."
+        }
+      },
+      "explain": {
+        "text": "Noise explains 61% of the 1.5 at $N = 10$, 97% at 100, and more than all of it at 1,000. The haircut grows slowly with $N$, roughly like $\\sqrt{2\\ln N}$, but it never stops growing.",
+        "canvas": {
+          "highlight": [
+            "n100"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which trials count?",
+      "prose": "A note reports three variants of a signal, the best with Sharpe 1.5 over 3 years. The research team's trial log (validation, Trying too many models) shows 60 configurations run on the same data: lookbacks, filters and two models that were dropped.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trials counted",
+            "$E[\\max]$ a year",
+            "DSR"
+          ],
+          "rows": [
+            [
+              "3 (reported)",
+              "0.49",
+              "0.959"
+            ],
+            [
+              "60 (logged)",
+              "1.35",
+              "0.599"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which DSR should the note report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "three",
+            "text": "0.959: only the three reported variants were candidates",
+            "why": "You counted the reported trials. Every configuration that could have been chosen counts, including the dropped ones."
+          },
+          {
+            "id": "sixty",
+            "text": "0.599: all 60 configurations count",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "About 0.78, the average of the two",
+            "why": "There is one right count: the 60 configurations actually tried on this data."
+          },
+          {
+            "id": "none",
+            "text": "Neither: the DSR only applies to random strategies",
+            "why": "The DSR applies to any search. It asks whether the best beats what noise would give the best of the same number of tries."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which configurations could have ended up as the reported best?"
+        },
+        {
+          "rung": "point",
+          "text": "Any of the 60 runs could have won the search.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count all 60: the DSR falls from 0.96 to 0.60."
+        }
+      ],
+      "feedback": {
+        "correct": "Every run on the data is a trial, reported or not.",
+        "generic": "Not quite right. The count is every configuration tried, including those not reported.",
+        "byKey": {
+          "three": "You counted only the reported trials. The 57 dropped runs were chances to find a lucky best, so they count."
+        }
+      },
+      "explain": {
+        "text": "The search covered 60 configurations, so the benchmark is the best of 60, 1.35 a year, and the DSR is 0.60: weak evidence. Counting only the three shown gives 0.96. This is why the trial log starts before the first run.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Overlapping returns",
+      "prose": "A researcher scores a signal on 10-day returns sampled every day: 756 observations over 3 years. Neighbouring 10-day returns share 9 days. As in level 1 (Overlapping labels), the effective number of independent observations is about $756/10 \\approx 76$.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 800,
+          "step": 100
+        },
+        "state": {
+          "points": [
+            {
+              "id": "neff",
+              "x": 76,
+              "label": "effective 76"
+            },
+            {
+              "id": "nraw",
+              "x": 756,
+              "label": "756 rows"
+            }
+          ]
+        }
+      },
+      "question": "Using $n = 76$ instead of 756, by what factor does the standard error grow? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.2,
+        "tol": {
+          "abs": 0.05
+        },
+        "label": "Factor",
+        "accept": "3.2: $\\sqrt{755/75} = 3.17$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 0.32,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The standard error scales with $1/\\sqrt{n - 1}$."
+        },
+        {
+          "rung": "point",
+          "text": "The ratio is $\\sqrt{755/75}$.",
+          "highlight": [
+            "neff"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{10.07} = 3.17$."
+        }
+      ],
+      "feedback": {
+        "correct": "The honest standard error is about three times larger.",
+        "generic": "Not quite right. Take the square root of the ratio of $n - 1$.",
+        "byKey": {
+          "ten": "The error scales with the square root of $n$, so a tenth of the data gives $\\sqrt{10}$, not 10.",
+          "ratio": "That is the factor by which it shrinks the other way. With fewer observations it grows."
+        }
+      },
+      "explain": {
+        "text": "Counting overlapping rows as independent makes the standard error about 3.2 times too small. A $z$ of 3 becomes about 1. Use the effective $n$, or non-overlapping returns, in every PSR and DSR.",
+        "canvas": {
+          "highlight": [
+            "neff"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "PSR in code",
+      "prose": "Now in code. `sr` is the Sharpe per observation, `n` the number of observations, `kurt` the full kurtosis (3 for a normal). In SciPy that is `kurtosis(x, fisher=False)`. Use `math.erf` for $\\Phi$ and round the PSR to 4 places.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            "sharpe_se(0.3, 60, 0, 3)      ->  0.133086",
+            "psr(0.3, 0, 60, 0, 3)         ->  0.9879"
+          ]
+        }
+      },
+      "question": "Complete `sharpe_se(sr, n, skew, kurt)` and `psr(sr, sr_benchmark, n, skew, kurt)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\ndef sharpe_se(sr, n, skew, kurt):\n    ...\n\ndef psr(sr, sr_benchmark, n, skew, kurt):\n    z = ...\n    return round(..., 4)\n",
+        "solution": "import math\n\ndef sharpe_se(sr, n, skew, kurt):\n    return math.sqrt((1 - skew * sr + (kurt - 1) / 4 * sr ** 2) / (n - 1))\n\ndef psr(sr, sr_benchmark, n, skew, kurt):\n    z = (sr - sr_benchmark) / sharpe_se(sr, n, skew, kurt)\n    return round(0.5 * (1 + math.erf(z / math.sqrt(2))), 4)\n",
+        "examples": [
+          {
+            "call": "round(sharpe_se(0.3, 60, 0, 3), 6)",
+            "expect": "0.133086",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(sharpe_se(0.3, 60, 0, 3), 6)",
+            "expect": "0.133086",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(sharpe_se(0.3, 60, -1.5, 3), 6)",
+            "expect": "0.159182",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(sharpe_se(0.3, 60, 0, 12), 6)",
+            "expect": "0.14541",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(sharpe_se(0.1, 253, 0.5, 4), 6)",
+            "expect": "0.061641",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(sharpe_se(0, 100, 0, 3), 6)",
+            "expect": "0.100504",
+            "compare": "isclose"
+          },
+          {
+            "call": "psr(0.3, 0, 60, 0, 3)",
+            "expect": "0.9879",
+            "compare": "isclose"
+          },
+          {
+            "call": "psr(0.0945, 0, 756, 0, 3)",
+            "expect": "0.9952",
+            "compare": "isclose"
+          },
+          {
+            "call": "psr(0.3, 0.1, 60, -1.5, 12)",
+            "expect": "0.8808",
+            "compare": "isclose"
+          },
+          {
+            "call": "psr(0.05, 0.1, 200, 0, 3)",
+            "expect": "0.2404",
+            "compare": "isclose"
+          },
+          {
+            "call": "psr(0.2, 0.2, 50, 0, 3)",
+            "expect": "0.5",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, including a Sharpe of 0, a benchmark above the Sharpe and one equal to it. Standard errors are rounded to 6 places and PSRs to 4, then compared with math.isclose. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The standard error is one line: `math.sqrt((1 - skew * sr + (kurt - 1) / 4 * sr ** 2) / (n - 1))`."
+        },
+        {
+          "rung": "point",
+          "text": "`z = (sr - sr_benchmark) / sharpe_se(sr, n, skew, kurt)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\Phi(z)$ is `0.5 * (1 + math.erf(z / math.sqrt(2)))`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both functions pass.",
+        "generic": "Not quite right. Check the sign of the skew term and that `kurt` is the full kurtosis."
+      },
+      "explain": {
+        "text": "The skew term enters with a minus sign, so negative skew raises the error. Passing SciPy's default excess kurtosis (normal 0) would understate the error: always say which kurtosis you mean."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "DSR in code",
+      "prose": "Last piece. `expected_max_sharpe` returns 0.0 for a single trial, else the formula, with `statistics.NormalDist().inv_cdf` for $\\Phi^{-1}$. `dsr` is the PSR with that benchmark. `psr` from the last screen is defined.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            "expected_max_sharpe(10, 1 / 755)   ->  0.057305",
+            "dsr(0.0945, 756, 0, 3, 4, 1 / 755)  ->  0.9383"
+          ]
+        }
+      },
+      "question": "Complete `expected_max_sharpe(n_trials, var_trials)` and `dsr(sr, n, skew, kurt, n_trials, var_trials)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import math\n\ndef sharpe_se(sr, n, skew, kurt):\n    return math.sqrt((1 - skew * sr + (kurt - 1) / 4 * sr ** 2) / (n - 1))\n\ndef psr(sr, sr_benchmark, n, skew, kurt):\n    z = (sr - sr_benchmark) / sharpe_se(sr, n, skew, kurt)\n    return round(0.5 * (1 + math.erf(z / math.sqrt(2))), 4)\n",
+        "starter": "import math\nfrom statistics import NormalDist\n\nEULER_GAMMA = 0.5772156649015329\n\ndef expected_max_sharpe(n_trials, var_trials):\n    if n_trials <= 1:\n        return 0.0\n    inv = NormalDist().inv_cdf\n    ...\n\ndef dsr(sr, n, skew, kurt, n_trials, var_trials):\n    ...\n",
+        "solution": "import math\nfrom statistics import NormalDist\n\nEULER_GAMMA = 0.5772156649015329\n\ndef expected_max_sharpe(n_trials, var_trials):\n    if n_trials <= 1:\n        return 0.0\n    inv = NormalDist().inv_cdf\n    g = EULER_GAMMA\n    return math.sqrt(var_trials) * ((1 - g) * inv(1 - 1 / n_trials) + g * inv(1 - 1 / (n_trials * math.e)))\n\ndef dsr(sr, n, skew, kurt, n_trials, var_trials):\n    return psr(sr, expected_max_sharpe(n_trials, var_trials), n, skew, kurt)\n",
+        "examples": [
+          {
+            "call": "round(expected_max_sharpe(10, 1 / 755), 6)",
+            "expect": "0.057305",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(expected_max_sharpe(1, 0.01), 6)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_max_sharpe(2, 1 / 755), 6)",
+            "expect": "0.018916",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_max_sharpe(10, 1 / 755), 6)",
+            "expect": "0.057305",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_max_sharpe(100, 1), 6)",
+            "expect": "2.530603",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_max_sharpe(1000, 0.0025), 6)",
+            "expect": "0.162756",
+            "compare": "isclose"
+          },
+          {
+            "call": "dsr(1.5 / math.sqrt(252), 756, 0, 3, 1, 1 / 755)",
+            "expect": "0.9952",
+            "compare": "isclose"
+          },
+          {
+            "call": "dsr(1.5 / math.sqrt(252), 756, 0, 3, 4, 1 / 755)",
+            "expect": "0.9383",
+            "compare": "isclose"
+          },
+          {
+            "call": "dsr(1.5 / math.sqrt(252), 756, 0, 3, 10, 1 / 755)",
+            "expect": "0.846",
+            "compare": "isclose"
+          },
+          {
+            "call": "dsr(2.1 / math.sqrt(252), 504, -0.5, 5, 40, 1 / 503)",
+            "expect": "0.7724",
+            "compare": "isclose"
+          },
+          {
+            "call": "dsr(0.3, 60, -1.5, 12, 20, 1 / 59)",
+            "expect": "0.6216",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: expected maxima from 1 to 1,000 trials and five DSRs, one for a single trial. Results are rounded and compared with math.isclose. Pure Python (`statistics` is in the standard library): nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\Phi^{-1}(1 - 1/N)$ is `inv(1 - 1 / n_trials)`."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply the bracket by `math.sqrt(var_trials)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`dsr` is one line: `psr(sr, expected_max_sharpe(n_trials, var_trials), n, skew, kurt)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both functions pass.",
+        "generic": "Not quite right. Check the $Ne$ in the second term and the square root of the variance."
+      },
+      "explain": {
+        "text": "For 100 noise trials with $V = 1$ the formula gives 2.531; the exact mean of the best of 100 normals is 2.508. The gap of about 1% is the price of a closed form. With $N = 1$ the DSR equals the PSR against zero."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The fund pitch",
+      "prose": "A fund pitches a Sharpe of 2.1 over 2 years of daily returns, $n = 504$. Due diligence finds it was the best of 40 variants. Daily skew is −0.5 and kurtosis 5. Under noise, $V = 1/503$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Daily Sharpe $2.1/\\sqrt{252}$",
+              "0.1323"
+            ],
+            [
+              "$E[\\max]$, 40 trials, daily",
+              "0.0976"
+            ],
+            [
+              "Standard error",
+              "0.0458"
+            ],
+            [
+              "DSR",
+              ""
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the deflated Sharpe ratio? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.77,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "DSR",
+        "accept": "0.77: $\\Phi((0.1323 - 0.0976)/0.0458) = \\Phi(0.757) = 0.77$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "psr",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "normal",
+            "value": 0.78,
+            "tol": {
+              "abs": 0.004
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "DSR $= \\Phi\\big((SR - E[\\max])/\\hat\\sigma_{SR}\\big)$."
+        },
+        {
+          "rung": "point",
+          "text": "$(0.1323 - 0.0976)/0.0458 = 0.757$.",
+          "highlight": [
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\Phi(0.757) = 0.775$, so 0.77."
+        }
+      ],
+      "feedback": {
+        "correct": "A DSR of 0.77: suggestive, not convincing.",
+        "generic": "Not quite right. Subtract $E[\\max]$ from the daily Sharpe, divide by the standard error, then apply $\\Phi$.",
+        "byKey": {
+          "psr": "That is the PSR against zero, 0.998. The search of 40 raises the benchmark to $E[\\max]$.",
+          "normal": "Close: that is the DSR assuming normal returns. With skew −0.5 and kurtosis 5 the error is a little wider."
+        }
+      },
+      "explain": {
+        "text": "The PSR against zero is 0.998, but against the best of 40 it is 0.77. The 2.1 is above what noise would give, but not by enough to be sure. A desk records the trial count in every research note so a reader can do this sum.",
+        "canvas": {
+          "values": {
+            "r3c1": "0.77"
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The standard error of a Sharpe ratio grows with negative skew and fat tails: $\\hat\\sigma_{SR} = \\sqrt{(1 - \\gamma_3 SR + \\tfrac{\\gamma_4 - 1}{4}SR^2)/(n - 1)}$, per observation.",
+      "The PSR is $\\Phi((SR - SR^*)/\\hat\\sigma_{SR})$; the DSR sets $SR^*$ to the expected best of $N$ noise trials.",
+      "$N$ is every configuration tried on the data, and $n$ is the effective number of independent observations."
+    ],
+    "formula": {
+      "name": "Deflated Sharpe ratio",
+      "tex": "\\text{DSR} = \\Phi\\!\\left(\\dfrac{SR - E[\\max_N]}{\\hat\\sigma_{SR}}\\right)",
+      "note": "$E[\\max_N] \\approx \\sqrt V\\left((1-\\gamma)\\Phi^{-1}(1 - \\tfrac1N) + \\gamma\\Phi^{-1}(1 - \\tfrac{1}{Ne})\\right)$"
+    },
+    "trap": "Counting only the reported trials. Every configuration run on the data could have been the winner."
+  },
+  "quiz": [
+    {
+      "id": "q-one",
+      "difficulty": 2,
+      "prose": "A pension fund fixed one rule in advance and ran nothing else. Its PSR against zero is 0.97.",
+      "question": "What is its DSR?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.97,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "DSR",
+        "accept": "0.97: with $N = 1$, $E[\\max] = 0$ and the DSR is the PSR against zero.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One trial, no deflation.",
+        "generic": "Not quite right. What is the expected best of a single noise trial?",
+        "byKey": {
+          "zero": "With one trial there is no search to correct for."
+        }
+      },
+      "explain": {
+        "text": "With $N = 1$ the benchmark is the expected Sharpe of one noise strategy, 0. So the DSR equals the PSR against zero, 0.97."
+      }
+    },
+    {
+      "id": "q-skew",
+      "difficulty": 3,
+      "prose": "Two monthly strategies have Sharpe 0.4 a month over 60 months. One has normal returns; the other sells insurance: skew −2, kurtosis 10.",
+      "question": "What is the insurance seller's standard error? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.191,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Standard error",
+        "accept": "0.191: $\\sqrt{(1 + 0.8 + 2.25 \\times 0.16)/59} = 0.1913$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "normal",
+            "value": 0.135,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "signflip",
+            "value": 0.0954,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The same Sharpe, 41% more uncertainty.",
+        "generic": "Not quite right. Compute $1 - \\gamma_3 SR + \\tfrac{\\gamma_4 - 1}{4}SR^2$ with $\\gamma_3 = -2$, $\\gamma_4 = 10$.",
+        "byKey": {
+          "normal": "That is the normal strategy's error. Negative skew and fat tails widen it.",
+          "signflip": "You subtracted the skew term the wrong way. With $\\gamma_3 = -2$, $-\\gamma_3 SR = +0.8$."
+        }
+      },
+      "explain": {
+        "text": "The top is $1 + 0.8 + 2.25 \\times 0.16 = 2.16$, so the error is $\\sqrt{2.16/59} = 0.191$, against 0.135 for normal returns. Rare large losses make a high Sharpe less certain."
+      }
+    },
+    {
+      "id": "q-short",
+      "difficulty": 3,
+      "prose": "Edge case. A new strategy shows a Sharpe of 0.5 a month (1.73 a year) over 12 months, normal returns, one trial.",
+      "question": "Is its PSR against zero above 0.95?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: 0.94, because 12 observations give a standard error of 0.32",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: an annual Sharpe of 1.73 is always significant",
+            "why": "You judged the Sharpe without its standard error. With $n = 12$ it is $\\sqrt{1.0625/11} = 0.31$, so $z = 1.6$."
+          },
+          {
+            "id": "na",
+            "text": "The PSR cannot be computed with one trial",
+            "why": "One trial is fine: the PSR needs a Sharpe, $n$, skew and kurtosis."
+          },
+          {
+            "id": "dsr",
+            "text": "Yes, and the DSR is higher still",
+            "why": "The DSR is never above the PSR against zero: the benchmark only rises with $N$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A year of data is too short to be sure of almost anything.",
+        "generic": "Not quite right. Compute the standard error with $n = 12$."
+      },
+      "explain": {
+        "text": "The error is $\\sqrt{(1 + 0.5 \\times 0.25)/11} = 0.32$, so $z = 0.5/0.32 = 1.56$ and PSR $= 0.94$. With too little data, nothing is significant."
+      }
+    },
+    {
+      "id": "q-log",
+      "difficulty": 2,
+      "prose": "A desk asks every research note to state the number of configurations tried, including the failures.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "dsr",
+            "text": "So a reader can set $N$ and deflate the Sharpe",
+            "correct": true
+          },
+          {
+            "id": "audit",
+            "text": "To check the researcher worked hard enough",
+            "why": "Effort is not the point. The count sets the benchmark the best result must beat."
+          },
+          {
+            "id": "cost",
+            "text": "To estimate trading costs",
+            "why": "The trial count says nothing about costs. It sets $E[\\max]$."
+          },
+          {
+            "id": "none",
+            "text": "It changes nothing if the best result is good",
+            "why": "A good best result is exactly what a large search produces by luck. The count tells you how large the search was."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The count is the $N$ in the DSR.",
+        "generic": "Not quite right. Think about what $N$ does to the benchmark."
+      },
+      "explain": {
+        "text": "Without the count a reader cannot tell a 1.5 from one trial (DSR 0.995) from the best of 100 (0.53). The count is part of the result."
+      }
+    }
+  ]
+}
