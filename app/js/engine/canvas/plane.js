@@ -735,6 +735,29 @@
       size: () => size,
       listKeys: ['points', 'vectors', 'segments', 'polygons', 'angles', 'vlines', 'hlines'],
       init: () => ({ points: [], segments: [], vectors: [], params: { ...(params.params || {}) }, highlight: [], showTarget: false }),
+      /* item 340: a point with on: "f" stays on its curve when a control, a derive or an explanation moves its x (or
+         changes the curve's params), not only while it is dragged */
+      prepare(patch, state) {
+        if (!patch || !('points' in patch || 'params' in patch || 'functions' in patch)) return patch;
+        let next; try { next = C.merge(state, patch); } catch { return patch; }
+        const pts = Array.isArray(next.points) ? next.points : [];
+        if (!pts.some((q) => q && q.on)) return patch;
+        const fns = evaluator(next); let changed = false, cvs = null;
+        const out = pts.map((q) => {
+          if (q && q.on && !fns[q.on] && Number.isFinite(+q.x)) { // a polyline (item 461) or parametric curve: the nearest point
+            cvs = cvs || curvesOf(next); const cv = cvs[q.on];
+            if (cv && cv.near && (cv.def.points || cv.kind === 'param')) { const [x, y] = cv.near(+q.x, Number.isFinite(+q.y) ? +q.y : 0); if (Number.isFinite(x) && Number.isFinite(y) && (Math.abs(x - q.x) > 1e-9 || Math.abs(y - q.y) > 1e-9)) { changed = true; return { ...q, x: K.round(x, 6), y: K.round(y, 6) }; } }
+            return q;
+          }
+          if (!q || !q.on || !fns[q.on] || !Number.isFinite(+q.x)) return q;
+          const f = fns[q.on], dom = domOf(f.def, next); let x = +q.x; if (dom) x = K.clamp(x, dom[0], dom[1]);
+          const y = valueAt(f, x); if (!Number.isFinite(y)) return q;
+          if (Math.abs(y - q.y) > 1e-9 || x !== q.x || !Number.isFinite(q.y)) { changed = true; return { ...q, x: K.round(x, 6), y: K.round(y, 6) }; }
+          return q;
+        });
+        if (changed) patch.points = out;
+        return patch;
+      },
       render(view, R) {
         viewRanges(view);
         const { m, sx, sy } = geom(R);
@@ -754,6 +777,9 @@
         const tickTop = svg('g', { class: 'cvb-ticktop' }); g.append(tickTop); // item 204: tick labels move here, above the curves
         const over = svg('g'); g.append(over);
         const labels = [];
+        /* item 447: hide lists ids or group names; it hides functions, points, segments, polygons, angles, vectors and
+           reference lines (a point's group: "test" hides every point of that group), so a control or derive can reveal a set */
+        const hideSet = new Set((view.hide || []).map(String)), isHidden = (it) => !!it && ((it.id != null && hideSet.has(String(it.id))) || (it.group != null && hideSet.has(String(it.group))));
         /* item 216: heat: "expr in x and y" draws a colour ramp over the view behind everything (range: [lo, hi]) */
         for (const fd of functionsOf(view).filter((f) => f.heat != null && !(view.hide || []).includes(f.id))) {
           const P = exprParams(view), c = K.fnOf(String(fd.heat), ['y', ...Object.keys(P)]), nx = 72, ny = 54, vals = [];
@@ -892,7 +918,7 @@
             } else ly = sy(f(lx));
             /* labelSide "above" (default) or "below" the curve, and labelOffset [dx, dy] in px to nudge it */
             const off = Array.isArray(fd.labelOffset) ? fd.labelOffset : [0, 0];
-            const lab0 = lx != null && Number.isFinite(ly) ? { x: sx(lx) + (+off[0] || 0), y: ly + ((fd.labelSide || fd.labelPos) === 'below' ? 16 : -14) + (+off[1] || 0), text: fd.label, id, anchor: fd.labelAnchor === 'start' ? 'start' : fd.labelAnchor === 'middle' ? 'middle' : 'end', side: (fd.labelSide || fd.labelPos) === 'below' ? 1 : -1 } : null;
+            const lab0 = lx != null && Number.isFinite(ly) ? { x: sx(lx) + (+off[0] || 0), y: ly + ((fd.labelSide || fd.labelPos) === 'below' ? 16 : -14) + (+off[1] || 0), text: fd.label, id, cy: ly, anchor: fd.labelAnchor === 'start' ? 'start' : fd.labelAnchor === 'middle' ? 'middle' : 'end', side: (fd.labelSide || fd.labelPos) === 'below' ? 1 : -1 } : null;
             /* item 217: a label placed with labelAt stays exactly there (others keep clear of it), so dense contours keep their order */
             if (lab0 && fd.labelAt != null) { over.append(K.lab(lab0.x, lab0.y, lab0.text, { anchor: lab0.anchor, halo: true, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: lab0.x, y: lab0.y, text: String(lab0.text).replace(/\$/g, ''), anchor: lab0.anchor })); }
             else if (lab0) labels.push(lab0);
@@ -977,16 +1003,25 @@
         }
 
         /* Reference lines x = a and y = b: vlines [{ id, x, label, dashed, colour }], hlines [{ id, y, ... }] */
+        const vlab = [];
         for (const [list, vert] of [[view.vlines || params.vlines || [], true], [view.hlines || params.hlines || [], false]]) {
           for (const l of list) {
-            const v = vert ? l.x : l.y; if (!Number.isFinite(+v)) continue;
+            const v = vert ? l.x : l.y; if (!Number.isFinite(+v) || isHidden(l)) continue;
             const o = K.obj(l.id || (vert ? 'x' : 'y') + '=' + v, 'cvb-seg', l.colour || 'ink');
             const d = vert ? `M${sx(+v)},${py0}L${sx(+v)},${py1}` : `M${px0},${sy(+v)}L${px1},${sy(+v)}`;
             o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (l.dashed !== false ? ' cvb-dash thin' : '') }));
             plot.append(o);
-            if (l.label) labels.push(vert ? { x: sx(+v) + 6, y: py1 + 12, text: l.label, anchor: 'start', id: l.id } : { x: px1 - 4, y: sy(+v) - 10, text: l.label, anchor: 'end', id: l.id });
+            if (l.label) (vert ? vlab : labels).push(vert ? { x: sx(+v) + 6, y: py1 + 12, text: l.label, anchor: 'start', id: l.id, at: sx(+v) } : { x: px1 - 4, y: sy(+v) - 10, text: l.label, anchor: 'end', id: l.id });
           }
         }
+        /* item 345: labels of close vertical lines: when one would run into the next line's label, it goes on the left of its
+           own line (anchor end); still crowded, it drops a row */
+        vlab.sort((a, b) => a.at - b.at).forEach((l, k, arr) => {
+          const nx = arr[k + 1]; if (!nx) return;
+          const w = K.tw(String(l.text).replace(/[$\\{}]/g, '')) + 8;
+          if (l.x + w > nx.x - 2) { l.anchor = 'end'; l.x = l.at - 6; const pv = arr[k - 1]; if (pv && pv.anchor === 'start' && pv.x + K.tw(String(pv.text).replace(/[$\\{}]/g, '')) + 8 > l.x - w) l.y += 16; }
+        });
+        labels.push(...vlab);
 
         /* item 317: a data rug, rug: { x: [..], on: "f", sticks: true, colour } (or a plain list): short ticks on the x
            axis, or sticks up to f(x) with a dot, for likelihood-as-a-product pictures */
@@ -1000,6 +1035,7 @@
         /* Polygons: [{ id, points: [[x, y] | pointId, ...], colour, label, vertexLabels: ["A", "B", "C"], dashed }]: a filled
            shape (a series wash) with its vertices labelled outside the shape */
         for (const pg of view.polygons || params.polygons || []) {
+          if (isHidden(pg)) continue;
           /* item 221: a sector or annulus wedge { cx, cy, r1, r2, theta1, theta2 } (radians; degrees: true for degrees), its
              curved edges sampled in data space so it stays true on unequal axes */
           const sec = pg.sector, toR = sec && sec.degrees ? Math.PI / 180 : 1;
@@ -1030,6 +1066,7 @@
         /* Angle markers: [{ id, at: vertex, from: point, to: point, label, right: true, radius: px }]: an arc (or a square
            for a right angle) between the rays at -> from and at -> to, the smaller angle, labelled on its bisector */
         for (const an of view.angles || params.angles || []) {
+          if (isHidden(an)) continue;
           const [ax, ay] = pointXY(view, an.at), [fx, fy] = pointXY(view, an.from), [tx, ty] = pointXY(view, an.to);
           const A = [sx(ax), sy(ay)], a1 = Math.atan2(sy(fy) - A[1], sx(fx) - A[0]), a2 = Math.atan2(sy(ty) - A[1], sx(tx) - A[0]);
           let da = a2 - a1; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
@@ -1044,6 +1081,7 @@
 
         /* Segments */
         for (const s of view.segments || []) {
+          if (isHidden(s)) continue;
           const [ax, ay] = pointXY(view, s.from), [bx, by] = pointXY(view, s.to);
           const o = K.obj(s.id, 'cvb-seg', s.colour || 'ink');
           const d = `M${sx(ax)},${sy(ay)}L${sx(bx)},${sy(by)}`;
@@ -1058,6 +1096,7 @@
 
         /* Vectors */
         for (const [i, v] of (view.vectors || []).entries()) {
+          if (isHidden(v)) continue;
           const from = v.from ? pointXY(view, v.from) : [0, 0], to = [from[0] + v.v[0], from[1] + v.v[1]];
           const o = K.obj(v.id, 'cvb-vec', v.colour || i + 1);
           o.append(K.washPath(`M${sx(from[0])},${sy(from[1])}L${sx(to[0])},${sy(to[1])}`), K.arrow(sx(from[0]), sy(from[1]), sx(to[0]), sy(to[1]), { cls: 'cvb-ln' }));
@@ -1101,6 +1140,7 @@
         }
         for (const p0 of view.points || []) {
           if (p0.hidden && !enabledFor(R, p0.id)) continue; // item 221: a hidden point (a polygon vertex a derive moves) has no dot
+          if (isHidden(p0) && !enabledFor(R, p0.id)) continue;
           const p = enabledFor(R, p0.id) && !p0.drag ? { ...p0, drag: true } : p0; // item 258: a point the drag-point widget names is draggable without drag: true
           const x = sx(p.x), y = sy(p.y);
           if (!Number.isFinite(x) || !Number.isFinite(y) || x < px0 - 4 || x > px1 + 4 || y < py1 - 4 || y > py0 + 4) continue;
@@ -1116,10 +1156,14 @@
           over.append(o);
           if (p.label) {
             const pos = p.labelPos || 'ne', dx = pos.includes('e') ? 12 : pos.includes('w') ? -12 : 0, dy = pos.includes('n') ? -13 : pos.includes('s') ? 14 : 0;
-            labels.push({ x: x + dx, y: y + dy, text: String(p.label).split(/(\$[^$]*\$)/).map((part) => (part.startsWith('$') ? part : part.replace('{x}', K.fmt(p.x, 2)).replace('{y}', K.fmt(p.y, 2)))).join(''), /* item 239: {x} and {y} are filled outside maths only, so $\mathbf{x}$ stays bold x */ anchor: dx > 0 ? 'start' : dx < 0 ? 'end' : 'middle', id: p.id });
+            /* item 375: {y:.2f} keeps two places ("£100.00"); {x} and {y} trim trailing zeros */
+            const fill = (part) => part.replace(/\{([xy])(?::\.(\d)f)?\}/g, (m0, k, dp) => { const v = k === 'x' ? p.x : p.y; return dp != null ? (v < 0 ? '−' : '') + Math.abs(v).toFixed(+dp) : K.fmt(v, 2); });
+            labels.push({ x: x + dx, y: y + dy, text: String(p.label).split(/(\$[^$]*\$)/).map((part) => (part.startsWith('$') ? part : fill(part))).join(''), /* item 239: {x} and {y} are filled outside maths only, so $\mathbf{x}$ stays bold x */ anchor: dx > 0 ? 'start' : dx < 0 ? 'end' : 'middle', id: p.id });
           }
         }
 
+        /* item 372: the sketch's control points count as points for the x-axis title */
+        if (Array.isArray(sk.points)) sk.points.forEach((q) => { const x = sx(q[0]), y = sy(q[1]); if (Number.isFinite(x) && Number.isFinite(y)) marks.push({ x0: x - 9, x1: x + 9, y0: y - 9, y1: y + 9 }); });
         /* The x-axis title moves below the axis when a point or curve sits under it near y = 0 */
         if (axInfo.xTitle && axInfo.xTitleBox) {
           const tb = axInfo.xTitleBox, hitT = (b) => b.x0 < tb.x1 && tb.x0 < b.x1 && b.y0 < tb.y1 && tb.y0 < b.y1;
@@ -1130,9 +1174,15 @@
         /* item 204: tick labels (they carry a halo) sit above the curves, so a curve just under y = 0 never hides them */
         g.querySelectorAll('.cvb-tick').forEach((n) => { if (n.closest('.cvb-ticktop') !== tickTop && !n.closest('.cvb-ticktop')) tickTop.append(n); });
         /* Labels last, placed clear of each other and of the axis labels, inside the plot */
-        for (const l of labels) l.anchor = l.anchor || 'end';
-        K.placeLabels(labels, fixed, { x0: px0, x1: px1, y0: py1, y1: py0 });
-        for (const l of labels) over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong' }));
+        for (const l of labels) { l.anchor = l.anchor || 'end'; l.y00 = l.y; }
+        /* item 448: labels keep clear of the points too (a point's own label sits beside it, outside its box) */
+        K.placeLabels(labels, fixed.concat(params.labelsAvoidPoints === false ? [] : marks.map((b) => ({ x0: b.x0 + 2, x1: b.x1 - 2, y0: b.y0 + 2, y1: b.y1 - 2 }))), { x0: px0, x1: px1, y0: py1, y1: py0 });
+        const fnIds = new Set(Object.keys(fns));
+        for (const l of labels) {
+          /* item 388: a curve label pushed well away from its curve gets a thin leader back to it */
+          if (fnIds.has(l.id) && l.cy != null && Math.abs(l.y - l.y00) > 14 && params.leaders !== false) { const dn = l.y < l.cy; over.append(svg('line', { x1: l.x, y1: l.y + (dn ? 8 : -8), x2: l.x, y2: l.cy + (dn ? -3 : 3), class: 'cvb-leader ' + K.colourCls((fns[l.id].def || {}).slot) })); }
+          over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong' }));
+        }
       },
       drag: {
         start(id, p, R) {

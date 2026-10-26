@@ -1,0 +1,2196 @@
+{
+ "id": "l12-trees-on-returns",
+ "course": "ensembles",
+ "title": "Trees on a returns dataset",
+ "minutes": 15,
+ "objectives": [
+  "Compare linear and tree models on a tabular returns problem.",
+  "Report hit rate, AUC and P&L after costs from walk-forward predictions, with the uncertainty and the number of models tried."
+ ],
+ "skills": [
+  "en-interpret",
+  "en-boosting"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "What did we know, and when?",
+   "prose": "As in *Predicting tomorrow’s direction*, we forecast whether tomorrow is up, from today's close. Here are six days of an index's returns. At the close of day 4 we want a forecast for day 5.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "Return"
+     ],
+     "rows": [
+      [
+       "1",
+       "+0.42%"
+      ],
+      [
+       "2",
+       "−1.10%"
+      ],
+      [
+       "3",
+       "+0.35%"
+      ],
+      [
+       "4",
+       "−1.85%"
+      ],
+      [
+       "5",
+       "+1.20%"
+      ],
+      [
+       "6",
+       "−0.30%"
+      ]
+     ],
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "Tap every day whose return the day-5 forecast may use.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r0",
+     "r1",
+     "r2",
+     "r3"
+    ],
+    "countWord": "days"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At the close of day 4, which returns have happened?"
+    },
+    {
+     "rung": "point",
+     "text": "Day 5's return is the thing we forecast.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Days 1 to 4 only."
+    }
+   ],
+   "feedback": {
+    "correct": "Days 1 to 4: everything up to the close of the forecast day.",
+    "generic": "Not quite right. Use only returns known at the close of day 4.",
+    "byKey": {
+     "r4": "You used day 5's return. That is the answer the forecast is trying to give: look-ahead.",
+     "r5": "Day 6 is two days in the future at the close of day 4."
+    }
+   },
+   "explain": {
+    "text": "The row for day $t$ holds features built from returns up to $t$, and its label is day $t + 1$'s direction. One misaligned column, as in *Features that know the answer*, makes any model look brilliant. We build the features in code next, and test the alignment exactly.",
+    "canvas": {
+     "shade": {
+      "known": [
+       "r0",
+       "r1",
+       "r2",
+       "r3"
+      ]
+     },
+     "highlight": [
+      "r4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Features without look-ahead",
+   "prose": "Write the two features: today's return, and today's volatility, the standard deviation of the last `vol_window` returns ending today. The label is tomorrow's direction. The first usable day is the first with a full window; the last has a tomorrow.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day $t$",
+      "Return",
+      "3-day vol",
+      "Label: day $t+1$ up?"
+     ],
+     "rows": [
+      [
+       "1",
+       "+0.42%",
+       "",
+       ""
+      ],
+      [
+       "2",
+       "−1.10%",
+       "",
+       ""
+      ],
+      [
+       "3",
+       "+0.35%",
+       "0.0070",
+       "0"
+      ],
+      [
+       "4",
+       "−1.85%",
+       "?",
+       "?"
+      ],
+      [
+       "5",
+       "+1.20%",
+       "?",
+       "?"
+      ],
+      [
+       "6",
+       "−0.30%",
+       "",
+       ""
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `make_threshold_features(returns, vol_window)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef make_threshold_features(returns, vol_window):\n    \"\"\"One row per day t with a full window and a next day:\n    X[i] = [return on day t, std of the last vol_window returns up to t]\n    y[i] = 1 if day t + 1 is up, else 0.\"\"\"\n    r = np.asarray(returns, dtype=float)\n    X, y = [], []\n    for t in range(..., ...):\n        X.append([r[t], ...])\n        y.append(...)\n    return np.array(X), np.array(y)\n",
+    "solution": "import numpy as np\n\ndef make_threshold_features(returns, vol_window):\n    \"\"\"One row per day t with a full window and a next day:\n    X[i] = [return on day t, std of the last vol_window returns up to t]\n    y[i] = 1 if day t + 1 is up, else 0.\"\"\"\n    r = np.asarray(returns, dtype=float)\n    X, y = [], []\n    for t in range(vol_window - 1, len(r) - 1):\n        X.append([r[t], r[t - vol_window + 1:t + 1].std()])\n        y.append(int(r[t + 1] > 0))\n    return np.array(X), np.array(y)\n",
+    "examples": [
+     {
+      "call": "np.round(make_threshold_features([0.0042, -0.011, 0.0035, -0.0185, 0.012, -0.003], 3)[0], 6).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0035, 0.007006], [-0.0185, 0.009132], [0.012, 0.012852]]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(make_threshold_features([0.0042, -0.011, 0.0035, -0.0185, 0.012, -0.003], 3)[0], 6).tolist()",
+      "compare": "equal",
+      "expect": "[[0.0035, 0.007006], [-0.0185, 0.009132], [0.012, 0.012852]]"
+     },
+     {
+      "call": "make_threshold_features([0.0042, -0.011, 0.0035, -0.0185, 0.012, -0.003], 3)[1].tolist()",
+      "compare": "equal",
+      "expect": "[0, 1, 0]"
+     },
+     {
+      "call": "len(make_threshold_features([0.0042, -0.011, 0.0035, -0.0185, 0.012, -0.003], 6)[1])",
+      "compare": "equal",
+      "expect": "0"
+     },
+     {
+      "call": "len(make_threshold_features([0.01] * 30, 20)[1])",
+      "compare": "equal",
+      "expect": "10"
+     },
+     {
+      "call": "np.round(make_threshold_features([1, 2, 3, 4], 2)[0], 6).tolist()",
+      "compare": "equal",
+      "expect": "[[2.0, 0.5], [3.0, 0.5]]"
+     },
+     {
+      "call": "make_threshold_features([1, -2, 3, -4], 2)[1].tolist()",
+      "compare": "equal",
+      "expect": "[1, 0]"
+     }
+    ],
+    "how": "Check runs 6 hidden tests on short lists whose rows and labels must line up exactly. Volatility uses NumPy's `std` (divide by $n$). The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With a window of 3, the first full window ends on index 2."
+    },
+    {
+     "rung": "point",
+     "text": "The last row must have a next day, so stop before `len(r) - 1`.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`range(vol_window - 1, len(r) - 1)`, `r[t - vol_window + 1:t + 1].std()` and `int(r[t + 1] > 0)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Three rows from six days with a 3-day window, each labelled by the day after.",
+    "generic": "Some tests failed. Check the first and last day, and that the label is day $t + 1$."
+   },
+   "explain": {
+    "text": "Six returns and a 3-day window give rows for days 3, 4 and 5; day 6 has no tomorrow. Shift the window one day forward and the vol would include tomorrow's move. The tests compare exact rows, because a one-day slip is the whole leak."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The signal in the data",
+   "prose": "`make_returns(4)` simulates 1,000 days with a planted signal. When trailing volatility is above 1.2%, a big move today (over 1.5%) tends to be followed by a rise, and a small move by a fall. Elsewhere there is nothing. Here is the share of up days after each kind of day.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "lo",
+       "label": "Low vol (616 days)"
+      },
+      {
+       "id": "hs",
+       "label": "High vol, small move (202)"
+      },
+      {
+       "id": "hb",
+       "label": "High vol, big move (162)"
+      }
+     ],
+     "yLabel": "Share of next days up",
+     "showValues": true,
+     "decimals": 3,
+     "yMin": 0,
+     "yMax": 1
+    },
+    "state": {
+     "values": {
+      "lo": 0.526,
+      "hs": 0.297,
+      "hb": 0.735
+     }
+    }
+   },
+   "question": "Why can a logistic regression on today's return and volatility not draw this pattern?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "shape",
+      "text": "The effect depends on the size of today's move only when vol is high; a linear score in the two features cannot switch on above a threshold",
+      "correct": true
+     },
+     {
+      "id": "noise",
+      "text": "The three noise columns confuse it",
+      "why": "Noise columns cost every model a little. The deeper problem is the shape of the signal."
+     },
+     {
+      "id": "small",
+      "text": "The signal is too small for any model",
+      "why": "In high vol the share of up days moves from 0.297 to 0.735: that is not small."
+     },
+     {
+      "id": "scale",
+      "text": "The features are not standardised",
+      "why": "Standardising rescales the inputs; a linear score stays linear."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is the effect of today's return the same at every volatility level?"
+    },
+    {
+     "rung": "point",
+     "text": "Big moves up and big moves down both lead to rises: the sign of today's return does not matter.",
+     "highlight": [
+      "hs",
+      "hb"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A tree splits on vol above 1.2%, then on the size of the move: a threshold interaction."
+    }
+   ],
+   "feedback": {
+    "correct": "It is a threshold interaction, exactly what trees draw.",
+    "generic": "Not quite right. Ask what shape a logistic regression's score can take."
+   },
+   "explain": {
+    "text": "A big move of either sign leads to a rise, so today's return has no single slope. The effect also exists only above a vol threshold. Trees find this with two or three splits; the linear model sees almost nothing.",
+    "canvas": {
+     "highlight": [
+      "hs",
+      "hb"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Walk forward, with a gap",
+   "prose": "The study has 980 rows. As in *Walking forward*, `TimeSeriesSplit(n_splits=5, test_size=50, gap=1)` trains on everything before each 50-day test block, less a purged gap. The first block is rows 730 to 779.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Fold",
+      "Train rows",
+      "Test rows"
+     ],
+     "rows": [
+      [
+       "1",
+       "0 to ?",
+       "730 to 779"
+      ],
+      [
+       "2",
+       "0 to 778",
+       "780 to 829"
+      ],
+      [
+       "3",
+       "0 to 828",
+       "830 to 879"
+      ],
+      [
+       "4",
+       "0 to 878",
+       "880 to 929"
+      ],
+      [
+       "5",
+       "0 to 928",
+       "930 to 979"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the last training row in fold 1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 728,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Last training row in fold 1",
+    "accept": "728: row 729 is purged by the gap of 1.",
+    "wrong": [
+     {
+      "id": "nogap",
+      "value": 729,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "test",
+      "value": 730,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The gap removes rows just before the test block."
+    },
+    {
+     "rung": "point",
+     "text": "Row 729 sits between training and the first test row.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Training ends at 730 − 1 − 1 = 728."
+    }
+   ],
+   "feedback": {
+    "correct": "Row 729 is purged: its label is the return that row 730's features contain.",
+    "generic": "Not quite right. Start from the first test row and step back past the gap.",
+    "byKey": {
+     "nogap": "That ignores the gap. Row 729's label, tomorrow's return, is today's return in row 730: it must go.",
+     "test": "Row 730 is the first test row; it cannot also train."
+    }
+   },
+   "explain": {
+    "text": "Row 729's label is the next day's direction, and that day's return is a feature of test row 730. Purging one row removes the overlap, as in *Purging and embargo*. Five blocks of 50 give 250 out-of-sample days, all forecast by models that never saw them."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Three models, one walk",
+   "prose": "Fit all three families in every fold: logistic regression, a small random forest, and boosting stopped on the last 20% of each training window (`boost_fit`, already defined). Collect every test-block probability, then score the 250 days together.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> X, y, nxt = make_study(4)",
+      ">>> X.shape",
+      "(980, 5)",
+      ">>> walk_forward_models(X, y, 5)",
+      "?"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `walk_forward_models` so it returns the out-of-sample hit rates of logistic, forest and boosting, each rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nfrom sklearn.ensemble import HistGradientBoostingClassifier\n\ndef make_returns(seed, n=1000, kind=\"threshold\"):\n    \"\"\"n daily returns. Volatility moves in slow regimes and the mean\n    drifts a little. kind=\"threshold\": when the trailing 20-day vol is\n    above 1.2%, a move bigger than 1.5% is followed by a rise of 0.6 sd\n    on average, a smaller move by a fall of 0.48 sd. \"linear\": every day\n    reverses 0.3 times yesterday's return. \"none\": no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    lv, h = np.log(0.01), np.zeros(n)\n    h[0] = lv\n    for t in range(1, n):\n        h[t] = lv + 0.98 * (h[t - 1] - lv) + 0.12 * rng.standard_normal()\n    z = rng.standard_normal(n)\n    d = np.zeros(n)\n    for t in range(1, n):\n        d[t] = 0.995 * d[t - 1] + 0.00003 * rng.standard_normal()\n    r = np.zeros(n)\n    for t in range(n):\n        m = 0.0003 + d[t]\n        if t >= 20:\n            v = r[t - 20:t].std()\n            if kind == \"threshold\" and v > 0.012:\n                m += np.exp(h[t]) * (0.6 if abs(r[t - 1]) > 0.015 else -0.48)\n            if kind == \"linear\":\n                m += -0.3 * r[t - 1]\n        r[t] = m + np.exp(h[t]) * z[t]\n    return np.round(r, 6)\n\ndef make_study(seed, kind=\"threshold\"):\n    \"\"\"Features for day t: its return, its 20-day vol, three noise columns.\n    y = 1 if day t + 1 is up; nxt is day t + 1's return.\"\"\"\n    r = make_returns(seed, kind=kind)\n    rows = [[r[t], r[t - 19:t + 1].std()] for t in range(19, len(r) - 1)]\n    y = (r[20:] > 0).astype(int)\n    noise = np.random.default_rng(seed + 1000).standard_normal((len(y), 3))\n    return np.round(np.column_stack([rows, noise]), 6), y, r[20:]\n\nclass _Stopped:\n    def __init__(self, model, n_trees):\n        self.model, self.n_trees = model, n_trees\n    def predict_proba(self, X):\n        for i, p in enumerate(self.model.staged_predict_proba(X), 1):\n            if i == self.n_trees:\n                return p\n\ndef boost_fit(X, y):\n    \"\"\"Boosting stopped in time order: fit on the first 80% of the rows,\n    choose the number of trees (up to 100) on the last 20%.\"\"\"\n    k = int(len(y) * 0.8)\n    m = HistGradientBoostingClassifier(max_iter=100, max_depth=2, learning_rate=0.1,\n                                       early_stopping=False, random_state=0).fit(X[:k], y[:k])\n    yv = y[k:]\n    losses = [-np.mean(yv * np.log(np.clip(p[:, 1], 1e-15, 1)) + (1 - yv) * np.log(np.clip(p[:, 0], 1e-15, 1)))\n              for p in m.staged_predict_proba(X[k:])]\n    return _Stopped(m, int(np.argmin(losses)) + 1)\n",
+    "starter": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import TimeSeriesSplit\n\ndef walk_forward_models(X, y, n_splits):\n    splits = TimeSeriesSplit(n_splits=n_splits, test_size=50, gap=1)\n    preds = {\"logistic\": [], \"forest\": [], \"boost\": []}\n    truth = []\n    for train, test in splits.split(X):\n        Xtr, ytr = X[train], y[train]\n        logit = ...       # StandardScaler then LogisticRegression, fitted\n        forest = ...      # 30 trees, depth 3, min_samples_leaf=20, random_state=0\n        boost = ...       # boost_fit(Xtr, ytr), stopped in time order\n        for name, m in ((\"logistic\", logit), (\"forest\", forest), (\"boost\", boost)):\n            preds[name].extend(m.predict_proba(X[test])[:, 1])\n        truth.extend(y[test])\n    truth = np.array(truth)\n    return ...           # three hit rates of p > 0.5, 4 places\n",
+    "solution": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import TimeSeriesSplit\n\ndef walk_forward_models(X, y, n_splits):\n    splits = TimeSeriesSplit(n_splits=n_splits, test_size=50, gap=1)\n    preds = {\"logistic\": [], \"forest\": [], \"boost\": []}\n    truth = []\n    for train, test in splits.split(X):\n        Xtr, ytr = X[train], y[train]\n        logit = make_pipeline(StandardScaler(), LogisticRegression()).fit(Xtr, ytr)\n        forest = RandomForestClassifier(n_estimators=30, max_depth=3, min_samples_leaf=20,\n                                        random_state=0).fit(Xtr, ytr)\n        boost = boost_fit(Xtr, ytr)\n        for name, m in ((\"logistic\", logit), (\"forest\", forest), (\"boost\", boost)):\n            preds[name].extend(m.predict_proba(X[test])[:, 1])\n        truth.extend(y[test])\n    truth = np.array(truth)\n    return tuple(round(float(np.mean((np.array(preds[k]) > 0.5) == truth)), 4)\n                 for k in (\"logistic\", \"forest\", \"boost\"))\n",
+    "examples": [
+     {
+      "setup": "X, y, nxt = make_study(4)",
+      "call": "walk_forward_models(X, y, 5)",
+      "compare": "equal",
+      "expect": "(0.476, 0.568, 0.532)"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "X, y, nxt = make_study(4)",
+      "call": "walk_forward_models(X, y, 5)",
+      "compare": "equal",
+      "expect": "(0.476, 0.568, 0.532)"
+     },
+     {
+      "setup": "X, y, nxt = make_study(8, kind='linear')",
+      "call": "walk_forward_models(X, y, 5)",
+      "compare": "equal",
+      "expect": "(0.644, 0.628, 0.612)"
+     },
+     {
+      "setup": "X, y, nxt = make_study(7, kind='none')",
+      "call": "walk_forward_models(X, y, 5)",
+      "compare": "equal",
+      "expect": "(0.516, 0.46, 0.512)"
+     },
+     {
+      "setup": "X, y, nxt = make_study(4)",
+      "call": "walk_forward_models(X[:500], y[:500], 2)",
+      "compare": "equal",
+      "expect": "(0.4, 0.57, 0.49)"
+     }
+    ],
+    "how": "Check runs 4 hidden tests on `make_study(seed, kind)`, which is already defined with `boost_fit`. Each test fits 15 small models, a few seconds in all. Tuples must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+    "budget": 60000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every model is fitted on `Xtr, ytr` only."
+    },
+    {
+     "rung": "point",
+     "text": "`make_pipeline(StandardScaler(), LogisticRegression()).fit(Xtr, ytr)`; the forest takes the settings in the comment.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return `tuple(round(float(np.mean((np.array(preds[k]) > 0.5) == truth)), 4) for k in (\"logistic\", \"forest\", \"boost\"))`."
+    }
+   ],
+   "feedback": {
+    "correct": "On `make_study(4)`: logistic 0.476, forest 0.568, boosting 0.532.",
+    "generic": "Some tests failed. Fit each model on the training rows of the fold, and score the pooled test predictions."
+   },
+   "explain": {
+    "text": "On the threshold data the forest scores 56.8% and boosting 53.2%; logistic scores 47.6%. With a purely linear signal, `kind='linear'`, logistic wins: 64.4% against 62.8% and 61.2%. With no signal all three sit near the base rate.",
+    "canvas": {
+     "lines": [
+      ">>> X, y, nxt = make_study(4)",
+      ">>> X.shape",
+      "(980, 5)",
+      ">>> walk_forward_models(X, y, 5)",
+      "(0.476, 0.568, 0.532)"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How sure is the edge?",
+   "prose": "In the test period 48.4% of days were up, so always forecasting down scores 51.6%: the **base rate** to beat. A coin with that hit rate, on $n$ days, has standard error $\\sqrt{b(1 - b)/n}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Test days $n$",
+       "250"
+      ],
+      [
+       "Base rate $b$",
+       "0.516"
+      ],
+      [
+       "Standard error",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `edge_t_stat(hit_rate, base_rate, n)`, rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef edge_t_stat(hit_rate, base_rate, n):\n    \"\"\"How many standard errors the hit rate is above the base rate.\"\"\"\n    se = ...\n    return round((hit_rate - base_rate) / se, 4)\n",
+    "solution": "import math\n\ndef edge_t_stat(hit_rate, base_rate, n):\n    \"\"\"How many standard errors the hit rate is above the base rate.\"\"\"\n    se = math.sqrt(base_rate * (1 - base_rate) / n)\n    return round((hit_rate - base_rate) / se, 4)\n",
+    "examples": [
+     {
+      "call": "edge_t_stat(0.568, 0.516, 250)",
+      "compare": "isclose",
+      "expect": "1.6452"
+     }
+    ],
+    "tests": [
+     {
+      "call": "edge_t_stat(0.568, 0.516, 250)",
+      "compare": "isclose",
+      "expect": "1.6452"
+     },
+     {
+      "call": "edge_t_stat(0.5, 0.5, 100)",
+      "compare": "isclose",
+      "expect": "0.0"
+     },
+     {
+      "call": "edge_t_stat(0.54, 0.5, 250)",
+      "compare": "isclose",
+      "expect": "1.2649"
+     },
+     {
+      "call": "edge_t_stat(0.54, 0.5, 2500)",
+      "compare": "isclose",
+      "expect": "4.0"
+     },
+     {
+      "call": "edge_t_stat(0.45, 0.5, 400)",
+      "compare": "isclose",
+      "expect": "-2.0"
+     }
+    ],
+    "how": "Check runs 5 hidden tests with exact numbers, compared with math.isclose. No packages needed."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The standard error uses the base rate, not the hit rate."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{0.516 \\times 0.484 / 250} = 0.0316$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`se = math.sqrt(base_rate * (1 - base_rate) / n)`."
+    }
+   ],
+   "feedback": {
+    "correct": "54% on 250 days is 1.26 standard errors; on 2,500 days it would be 4.",
+    "generic": "Some tests failed. Divide the edge by $\\sqrt{b(1 - b)/n}$."
+   },
+   "explain": {
+    "text": "The standard error on 250 days is 3.2 percentage points, so an edge needs about 6.3 points to clear two of them. 54% against 50% on 250 days gives $t = 1.26$: weak evidence. The same 54% on 2,500 days would give 4.0.",
+    "canvas": {
+     "values": {
+      "r2c1": "0.0316"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The results table",
+   "prose": "Here is the walk-forward table for `make_study(4)`, all on the same 250 test days. AUC asks how well each model ranks up days above down days; 0.5 is a coin.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Model",
+      "Hit rate",
+      "AUC"
+     ],
+     "rows": [
+      [
+       "Logistic",
+       "0.476",
+       "0.456"
+      ],
+      [
+       "Forest",
+       "0.568",
+       "0.572"
+      ],
+      [
+       "Boosting",
+       "0.532",
+       "0.536"
+      ],
+      [
+       "Always down",
+       "0.516",
+       "0.500"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in each model's edge over the base rate and its $t$ statistic.",
+   "widget": {
+    "kind": "table",
+    "label": "Edges and t statistics",
+    "columns": [
+     "Model",
+     "Edge over 0.516",
+     "$t$"
+    ],
+    "rows": [
+     [
+      "Logistic",
+      {
+       "edit": true,
+       "answer": -0.04,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": -1.27,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "Forest",
+      {
+       "edit": true,
+       "answer": 0.052,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": 1.65,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "Boosting",
+      {
+       "edit": true,
+       "answer": 0.016,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0.51,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Edge is hit rate minus 0.516."
+    },
+    {
+     "rung": "point",
+     "text": "Divide each edge by 0.0316.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Edges −0.040, 0.052, 0.016; $t$ −1.27, 1.65, 0.51."
+    }
+   ],
+   "feedback": {
+    "correct": "The best model, the forest, sits 1.65 standard errors above the base rate.",
+    "generic": "Not quite right. Subtract 0.516, then divide by 0.0316."
+   },
+   "explain": {
+    "text": "Both tree models beat the base rate and logistic does not, as the threshold signal predicts. But no model clears two standard errors on 250 days. And the forest was the best of three tries, which, as in *Trying too many models*, flatters it further."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "After costs",
+   "prose": "Now trade it. Each model goes long £1m when $p > 0.5$ and short £1m otherwise, at the close, for one day. Every change of position costs 10 bp of the notional per unit traded. These are the cumulative P&Ls over the 250 test days.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "l",
+       "label": "Logistic",
+       "values": [
+        -3.9,
+        -3.0,
+        -6.2,
+        -0.2,
+        6.3,
+        -2.9,
+        8.4,
+        -0.6,
+        5.7,
+        -5.0,
+        -12.8,
+        -7.9,
+        -2.4,
+        4.6,
+        4.0,
+        7.5,
+        11.5,
+        7.6,
+        13.3,
+        8.6,
+        11.5,
+        7.3,
+        0.2,
+        -1.4,
+        -10.3,
+        -11.3,
+        -5.9,
+        -10.0,
+        -8.3,
+        -19.7,
+        -26.4,
+        -43.5,
+        -39.3,
+        -38.0,
+        -34.9,
+        -54.0,
+        -46.8,
+        -35.3,
+        -44.0,
+        -36.2,
+        -42.8,
+        -40.1,
+        -42.1,
+        -40.7,
+        -53.7,
+        -43.0,
+        -40.5,
+        -45.0,
+        -49.9,
+        -52.5,
+        -57.7,
+        -57.8,
+        -63.3,
+        -56.0,
+        -60.7,
+        -70.1,
+        -70.9,
+        -63.7,
+        -60.4,
+        -50.2,
+        -52.1,
+        -54.5,
+        -62.6,
+        -63.3,
+        -62.3,
+        -63.2,
+        -65.1,
+        -59.9,
+        -59.4,
+        -63.2,
+        -65.0,
+        -68.6,
+        -69.6,
+        -72.6,
+        -62.7,
+        -57.5,
+        -78.2,
+        -88.7,
+        -74.2,
+        -76.8,
+        -48.7,
+        -44.2,
+        -39.7,
+        -43.9,
+        -46.0,
+        -44.1,
+        -35.8,
+        -39.0,
+        -41.0,
+        -48.6,
+        -52.2,
+        -55.6,
+        -56.3,
+        -61.9,
+        -71.5,
+        -74.9,
+        -39.7,
+        -62.0,
+        -64.5,
+        -59.9,
+        -70.2,
+        -85.0,
+        -77.1,
+        -76.5,
+        -62.2,
+        -65.8,
+        -77.0,
+        -83.2,
+        -57.9,
+        -90.4,
+        -84.0,
+        -79.0,
+        -100.2,
+        -81.8,
+        -72.8,
+        -80.0,
+        -86.3,
+        -90.2,
+        -101.1,
+        -93.2,
+        -112.3,
+        -132.2,
+        -128.4,
+        -136.6,
+        -133.5,
+        -129.7,
+        -136.5,
+        -146.7,
+        -153.7,
+        -159.2,
+        -148.0,
+        -145.5,
+        -155.8,
+        -156.1,
+        -154.1,
+        -159.6,
+        -164.7,
+        -160.4,
+        -155.0,
+        -146.1,
+        -150.5,
+        -148.0,
+        -151.2,
+        -149.9,
+        -149.1,
+        -144.6,
+        -145.2,
+        -144.4,
+        -147.7,
+        -150.9,
+        -153.5,
+        -156.8,
+        -156.9,
+        -163.1,
+        -166.4,
+        -162.7,
+        -158.2,
+        -164.7,
+        -173.3,
+        -172.4,
+        -170.3,
+        -170.1,
+        -171.4,
+        -179.7,
+        -188.4,
+        -182.5,
+        -188.8,
+        -190.0,
+        -179.4,
+        -179.2,
+        -176.8,
+        -175.9,
+        -181.0,
+        -178.2,
+        -184.6,
+        -190.0,
+        -191.1,
+        -199.2,
+        -192.1,
+        -189.7,
+        -186.8,
+        -191.4,
+        -194.0,
+        -192.2,
+        -199.3,
+        -204.5,
+        -208.3,
+        -219.6,
+        -223.1,
+        -218.4,
+        -216.9,
+        -222.1,
+        -235.9,
+        -234.3,
+        -244.7,
+        -242.4,
+        -243.2,
+        -242.4,
+        -247.4,
+        -240.0,
+        -233.2,
+        -237.7,
+        -235.1,
+        -247.1,
+        -249.7,
+        -236.5,
+        -245.4,
+        -249.8,
+        -255.7,
+        -258.5,
+        -267.8,
+        -271.7,
+        -246.4,
+        -250.9,
+        -253.7,
+        -254.2,
+        -241.2,
+        -249.5,
+        -254.8,
+        -263.1,
+        -259.8,
+        -262.0,
+        -274.2,
+        -284.8,
+        -284.3,
+        -272.2,
+        -266.6,
+        -266.0,
+        -262.7,
+        -248.7,
+        -255.0,
+        -245.1,
+        -247.6,
+        -256.7,
+        -254.5,
+        -248.4,
+        -218.3,
+        -230.5,
+        -235.7,
+        -222.6,
+        -232.5,
+        -245.1,
+        -243.8,
+        -230.4,
+        -221.3,
+        -206.3,
+        -215.5,
+        -204.7,
+        -215.6,
+        -204.2
+       ],
+       "colour": 3
+      },
+      {
+       "id": "f",
+       "label": "Forest",
+       "values": [
+        1.9,
+        1.0,
+        -4.2,
+        1.8,
+        -6.7,
+        -14.0,
+        -27.3,
+        -18.3,
+        -13.9,
+        -5.1,
+        -11.0,
+        -6.1,
+        -13.6,
+        -20.6,
+        -20.0,
+        -14.5,
+        -20.4,
+        -26.3,
+        -20.6,
+        -17.8,
+        -16.8,
+        -21.1,
+        -28.2,
+        -29.7,
+        -38.7,
+        -39.7,
+        -34.3,
+        -38.4,
+        -36.7,
+        -48.0,
+        -54.7,
+        -39.6,
+        -33.3,
+        -32.1,
+        -37.2,
+        -58.4,
+        -51.1,
+        -39.6,
+        -32.8,
+        -27.0,
+        -22.4,
+        -17.7,
+        -17.7,
+        -18.2,
+        -7.2,
+        -17.9,
+        -17.3,
+        -21.9,
+        -19.0,
+        -16.4,
+        -11.2,
+        -9.3,
+        -14.9,
+        -7.5,
+        -12.3,
+        -21.7,
+        -23.0,
+        -34.2,
+        -28.8,
+        -41.0,
+        -40.8,
+        -40.4,
+        -46.5,
+        -47.2,
+        -46.2,
+        -47.1,
+        -49.0,
+        -43.8,
+        -46.4,
+        -42.5,
+        -42.3,
+        -40.7,
+        -39.7,
+        -42.6,
+        -32.8,
+        -27.5,
+        -48.3,
+        -58.8,
+        -44.3,
+        -43.7,
+        -17.6,
+        -13.1,
+        -8.6,
+        -6.4,
+        -4.4,
+        -6.3,
+        -14.6,
+        -15.7,
+        -15.7,
+        -8.1,
+        -4.5,
+        -1.1,
+        -0.4,
+        5.2,
+        14.8,
+        18.2,
+        55.5,
+        33.2,
+        30.6,
+        35.2,
+        43.6,
+        58.4,
+        50.5,
+        53.1,
+        36.7,
+        40.3,
+        51.6,
+        57.8,
+        32.5,
+        61.0,
+        69.4,
+        62.4,
+        83.6,
+        65.2,
+        72.3,
+        77.5,
+        83.7,
+        87.6,
+        98.5,
+        108.4,
+        125.5,
+        107.6,
+        111.4,
+        117.6,
+        114.6,
+        110.7,
+        105.9,
+        114.1,
+        121.1,
+        126.6,
+        139.8,
+        135.3,
+        145.6,
+        147.2,
+        143.2,
+        139.7,
+        142.8,
+        145.1,
+        137.8,
+        148.8,
+        144.3,
+        146.8,
+        148.1,
+        146.8,
+        145.9,
+        152.4,
+        151.0,
+        153.8,
+        150.5,
+        151.7,
+        154.3,
+        153.0,
+        151.1,
+        157.3,
+        155.9,
+        159.7,
+        153.2,
+        159.7,
+        153.0,
+        150.2,
+        148.1,
+        147.9,
+        148.6,
+        154.9,
+        163.6,
+        171.5,
+        165.2,
+        164.4,
+        153.8,
+        153.6,
+        151.3,
+        154.2,
+        149.1,
+        144.3,
+        140.0,
+        143.4,
+        144.5,
+        138.4,
+        129.3,
+        126.9,
+        124.0,
+        121.5,
+        122.1,
+        125.9,
+        130.9,
+        127.7,
+        123.9,
+        133.3,
+        131.7,
+        136.4,
+        138.0,
+        141.1,
+        155.0,
+        153.4,
+        163.8,
+        168.2,
+        167.3,
+        164.6,
+        161.5,
+        168.9,
+        160.2,
+        153.7,
+        149.1,
+        135.1,
+        132.5,
+        145.6,
+        152.6,
+        152.9,
+        154.8,
+        153.6,
+        146.4,
+        148.3,
+        123.0,
+        120.6,
+        121.4,
+        122.0,
+        108.9,
+        117.3,
+        122.6,
+        130.8,
+        132.1,
+        129.9,
+        140.1,
+        131.5,
+        129.0,
+        116.8,
+        111.2,
+        110.7,
+        115.9,
+        130.0,
+        134.3,
+        124.4,
+        126.9,
+        115.8,
+        118.0,
+        124.0,
+        91.9,
+        77.8,
+        81.1,
+        96.2,
+        104.1,
+        93.5,
+        94.8,
+        108.2,
+        117.3,
+        100.2,
+        93.0,
+        103.8,
+        92.9,
+        79.6
+       ],
+       "colour": 1
+      },
+      {
+       "id": "b",
+       "label": "Boosting",
+       "values": [
+        -3.9,
+        -3.0,
+        -6.2,
+        -0.2,
+        6.3,
+        13.5,
+        26.9,
+        17.8,
+        24.2,
+        13.5,
+        19.3,
+        26.2,
+        31.8,
+        38.7,
+        38.1,
+        32.6,
+        38.5,
+        34.7,
+        40.4,
+        35.6,
+        38.6,
+        40.8,
+        35.8,
+        34.2,
+        41.2,
+        42.2,
+        47.6,
+        43.5,
+        45.2,
+        33.9,
+        27.2,
+        42.3,
+        48.6,
+        49.8,
+        53.0,
+        33.8,
+        41.1,
+        27.6,
+        20.8,
+        28.6,
+        22.1,
+        17.4,
+        17.4,
+        18.9,
+        29.9,
+        19.2,
+        16.7,
+        21.2,
+        18.3,
+        15.8,
+        10.6,
+        8.7,
+        14.3,
+        23.6,
+        26.4,
+        35.8,
+        37.1,
+        27.9,
+        33.2,
+        21.1,
+        21.2,
+        21.6,
+        15.6,
+        14.8,
+        11.8,
+        12.9,
+        11.0,
+        16.2,
+        13.6,
+        17.5,
+        17.7,
+        19.3,
+        20.3,
+        17.4,
+        27.2,
+        32.4,
+        11.7,
+        1.2,
+        15.7,
+        13.1,
+        41.2,
+        45.7,
+        50.2,
+        46.0,
+        44.0,
+        45.9,
+        54.2,
+        55.3,
+        55.2,
+        47.6,
+        44.1,
+        40.6,
+        40.0,
+        34.3,
+        24.8,
+        21.3,
+        -15.9,
+        -36.2,
+        -38.8,
+        -34.1,
+        -25.8,
+        -11.0,
+        -5.1,
+        -4.5,
+        -20.8,
+        -26.4,
+        -17.1,
+        -11.0,
+        -36.3,
+        -7.8,
+        0.6,
+        -6.3,
+        14.9,
+        31.3,
+        40.3,
+        45.5,
+        51.8,
+        55.7,
+        66.6,
+        76.4,
+        93.5,
+        109.4,
+        105.6,
+        109.8,
+        106.7,
+        102.9,
+        98.1,
+        106.3,
+        113.2,
+        118.8,
+        131.9,
+        134.5,
+        142.8,
+        144.4,
+        140.4,
+        136.9,
+        140.0,
+        135.6,
+        130.3,
+        141.3,
+        143.7,
+        141.2,
+        140.4,
+        139.2,
+        138.3,
+        144.7,
+        143.3,
+        146.1,
+        142.8,
+        144.0,
+        146.6,
+        145.3,
+        143.4,
+        149.6,
+        148.3,
+        152.0,
+        145.5,
+        152.0,
+        145.4,
+        142.5,
+        140.4,
+        140.2,
+        141.0,
+        147.2,
+        155.9,
+        163.8,
+        168.1,
+        169.3,
+        158.7,
+        158.5,
+        156.2,
+        159.1,
+        154.0,
+        149.3,
+        144.9,
+        148.3,
+        149.4,
+        143.3,
+        134.3,
+        131.8,
+        129.0,
+        126.4,
+        127.0,
+        130.8,
+        135.9,
+        132.6,
+        128.9,
+        138.2,
+        136.7,
+        141.4,
+        142.9,
+        146.1,
+        159.9,
+        159.5,
+        167.9,
+        172.3,
+        171.5,
+        168.7,
+        169.7,
+        175.1,
+        181.9,
+        177.4,
+        180.0,
+        168.0,
+        165.4,
+        178.6,
+        185.5,
+        185.8,
+        181.9,
+        182.8,
+        175.5,
+        177.5,
+        152.2,
+        149.8,
+        147.0,
+        146.4,
+        159.5,
+        165.9,
+        158.6,
+        150.3,
+        153.7,
+        153.9,
+        143.7,
+        133.1,
+        133.6,
+        145.8,
+        138.2,
+        136.8,
+        131.5,
+        117.4,
+        113.1,
+        123.0,
+        120.5,
+        111.4,
+        113.6,
+        119.7,
+        149.8,
+        137.7,
+        140.9,
+        123.8,
+        115.9,
+        126.5,
+        125.2,
+        111.8,
+        122.8,
+        105.7,
+        98.5,
+        85.7,
+        92.5,
+        101.9
+       ],
+       "colour": 2
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "xLabel": "Test day",
+     "yLabel": "Cumulative P&L (£ thousands)",
+     "decimals": 0,
+     "baseline": 0
+    },
+    "state": {}
+   },
+   "question": "Which model ends with the most P&L after costs, and why is that not the model with the best hit rate?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "boost",
+      "text": "Boosting, £102k against the forest's £80k: P&L weighs each day by the size of the move, and costs by how often it turns",
+      "correct": true
+     },
+     {
+      "id": "forest",
+      "text": "The forest, since it has the best hit rate",
+      "why": "You took hit rate as P&L. The forest makes £80k, boosting £102k: big days count more than many small ones."
+     },
+     {
+      "id": "logit",
+      "text": "Logistic: it trades least, so it pays least in costs",
+      "why": "Logistic loses £204k after costs. Fewer turns do not help a forecast that is wrong more often than not."
+     },
+     {
+      "id": "same",
+      "text": "All three end near zero",
+      "why": "The three end £306k apart: −£204k, £80k and £102k."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the right-hand end of each line."
+    },
+    {
+     "rung": "point",
+     "text": "Boosting ends highest, though its hit rate is lower than the forest's.",
+     "highlight": [
+      "b",
+      "f"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Before costs the forest makes £201k and boosting £171k; costs take £121k and £69k."
+    }
+   ],
+   "feedback": {
+    "correct": "Hit rate counts days; P&L weighs them.",
+    "generic": "Not quite right. Read the end of each line, then compare with the hit rates."
+   },
+   "explain": {
+    "text": "Before costs the forest makes £201k and boosting £171k. The forest turns its position more often, so 10 bp a turn costs it £121k against boosting's £69k. A hit rate is a start; a desk reads the P&L after costs.",
+    "canvas": {
+     "highlight": [
+      "b"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The P&L in code",
+   "prose": "Write the P&L rule. Going from short to long is a change of 2 units, so it costs twice. `threshold` lets a model stay flat when it is unsure: with 0.55, only $p > 0.55$ goes long and $p < 0.45$ short.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "$p$",
+      "Position",
+      "Return",
+      "Cost (10 bp)",
+      "Day's P&L"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.6",
+       "+1",
+       "+1%",
+       "0.001",
+       "+0.009"
+      ],
+      [
+       "2",
+       "0.6",
+       "+1",
+       "−2%",
+       "0",
+       "−0.020"
+      ],
+      [
+       "3",
+       "0.4",
+       "−1",
+       "−1%",
+       "0.002",
+       "+0.008"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `pnl_after_costs`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef pnl_after_costs(p, returns, threshold, cost_bp):\n    \"\"\"Cumulative P&L per unit notional. Long 1 when p > threshold,\n    short 1 when p < 1 - threshold, flat otherwise. Each change of\n    position costs cost_bp basis points per unit traded.\"\"\"\n    p = np.asarray(p, dtype=float)\n    r = np.asarray(returns, dtype=float)\n    pos = ...\n    prev = np.concatenate([[0.0], pos[:-1]])     # start flat\n    daily = ...\n    return np.round(np.cumsum(daily), 6)\n",
+    "solution": "import numpy as np\n\ndef pnl_after_costs(p, returns, threshold, cost_bp):\n    \"\"\"Cumulative P&L per unit notional. Long 1 when p > threshold,\n    short 1 when p < 1 - threshold, flat otherwise. Each change of\n    position costs cost_bp basis points per unit traded.\"\"\"\n    p = np.asarray(p, dtype=float)\n    r = np.asarray(returns, dtype=float)\n    pos = np.where(p > threshold, 1.0, np.where(p < 1 - threshold, -1.0, 0.0))\n    prev = np.concatenate([[0.0], pos[:-1]])     # start flat\n    daily = pos * r - cost_bp / 10000 * np.abs(pos - prev)\n    return np.round(np.cumsum(daily), 6)\n",
+    "examples": [
+     {
+      "call": "pnl_after_costs([0.6, 0.6, 0.4], [0.01, -0.02, -0.01], 0.5, 0).tolist()",
+      "compare": "equal",
+      "expect": "[0.01, -0.01, 0.0]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pnl_after_costs([0.6, 0.6, 0.4], [0.01, -0.02, -0.01], 0.5, 0).tolist()",
+      "compare": "equal",
+      "expect": "[0.01, -0.01, 0.0]"
+     },
+     {
+      "call": "pnl_after_costs([0.6, 0.6, 0.4], [0.01, -0.02, -0.01], 0.5, 10).tolist()",
+      "compare": "equal",
+      "expect": "[0.009, -0.011, -0.003]"
+     },
+     {
+      "call": "pnl_after_costs([0.52, 0.58, 0.45], [0.01, 0.02, -0.01], 0.55, 10).tolist()",
+      "compare": "equal",
+      "expect": "[0.0, 0.019, 0.018]"
+     },
+     {
+      "call": "pnl_after_costs([0.5], [0.03], 0.5, 10).tolist()",
+      "compare": "equal",
+      "expect": "[0.0]"
+     },
+     {
+      "setup": "import numpy as _n; _r = _n.random.default_rng(0)",
+      "call": "float(pnl_after_costs(_r.uniform(size=100), _r.normal(0, 0.01, 100), 0.5, 10)[-1])",
+      "compare": "isclose",
+      "expect": "-0.232118"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on short series. Lists must match exactly after rounding to 6 places. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build the position with two nested `np.where` calls."
+    },
+    {
+     "rung": "point",
+     "text": "The cost is `cost_bp / 10000` times the size of the position change.",
+     "highlight": [
+      "r2c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`pos = np.where(p > threshold, 1.0, np.where(p < 1 - threshold, -1.0, 0.0))` and `daily = pos * r - cost_bp / 10000 * np.abs(pos - prev)`."
+    }
+   ],
+   "feedback": {
+    "correct": "The three-day example makes 0 before costs and −0.003 after them.",
+    "generic": "Some tests failed. Position from $p$, return times position, minus the cost of each change."
+   },
+   "explain": {
+    "text": "Without costs the three days make $0.01 - 0.02 + 0.01 = 0$. With 10 bp a unit, opening costs 0.001 and the flip from long to short 0.002, so the total is −0.003. A $p$ of exactly 0.5 stays flat and pays nothing."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Shuffle the days?",
+   "prose": "A colleague reruns the study with `KFold(5, shuffle=True, random_state=0)`: every one of the 980 days is scored once, by models trained on a random 80% of the others, future days included.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Walk-forward (250 days)",
+      "Shuffled folds (980 days)"
+     ],
+     "rows": [
+      [
+       "Base rate",
+       "0.516",
+       "0.513"
+      ],
+      [
+       "Logistic",
+       "0.476",
+       "0.450"
+      ],
+      [
+       "Forest",
+       "0.568 ($t$ = 1.65)",
+       "0.567 ($t$ = 3.39)"
+      ],
+      [
+       "Boosting",
+       "0.532 ($t$ = 0.51)",
+       "0.579 ($t$ = 4.09)"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "The colleague says boosting is now proven, at $t = 4.09$. What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "future",
+      "text": "Shuffled folds train on days after the ones they score, so drifting regimes leak in; only the walk-forward numbers describe trading",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: more test days give a more precise answer",
+      "why": "You trusted the larger sample. The models scoring 2019 were trained on 2020: no trader ever had that."
+     },
+     {
+      "id": "forest",
+      "text": "Only that the forest should be preferred, since it was best before",
+      "why": "Picking between the two is not the problem; the shuffled numbers are not valid for either."
+     },
+     {
+      "id": "seed",
+      "text": "The random seed: another seed would give a lower $t$",
+      "why": "The seed moves the numbers a little. The flaw is training on the future, at every seed."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which days trained the model that scored day 400?"
+    },
+    {
+     "rung": "point",
+     "text": "Days 401 to 979 were mostly in its training set.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The mean drifts slowly, so nearby future days teach the model what day 400 was like."
+    }
+   ],
+   "feedback": {
+    "correct": "Random folds on time series answer a question no trader faces.",
+    "generic": "Not quite right. Ask when the training days happened, relative to the test day.",
+    "byKey": {
+     "fine": "You read the bigger $n$ as better evidence. The forecasts used the future, so the $t$ of 4.09 measures a leak, not an edge.",
+     "seed": "Changing the seed keeps the leak. The splits themselves must respect time."
+    }
+   },
+   "explain": {
+    "text": "Boosting's edge rises from 1.6 to 6.5 points and its $t$ from 0.51 to 4.09. The returns' mean drifts slowly, and shuffled folds let the trees learn each period from its neighbours. Use time-ordered validation from the start; random folds only ever flatter.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Which fold did it win in?",
+   "prose": "The desk head reads the note and asks one question: which fold did the forest win in, and by how much? Here are the five 50-day blocks.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Fold",
+      "Logistic",
+      "Forest",
+      "Boosting",
+      "Up days"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.50",
+       "0.58",
+       "0.54",
+       "0.54"
+      ],
+      [
+       "2",
+       "0.46",
+       "0.64",
+       "0.48",
+       "0.48"
+      ],
+      [
+       "3",
+       "0.50",
+       "0.64",
+       "0.66",
+       "0.44"
+      ],
+      [
+       "4",
+       "0.46",
+       "0.46",
+       "0.52",
+       "0.48"
+      ],
+      [
+       "5",
+       "0.46",
+       "0.52",
+       "0.46",
+       "0.48"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the honest answer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "two",
+      "text": "Mostly in folds 2 and 3, by 12 and 8 points over the best constant; it lost fold 4 by 6; one 50-day block has a standard error of 7 points",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "In every fold, which makes the edge robust",
+      "why": "In fold 4 the forest scored 0.46, below always-down's 0.52."
+     },
+     {
+      "id": "pool",
+      "text": "Folds do not matter: only the pooled 56.8% counts",
+      "why": "The pooled number hides that two blocks carry it. That is exactly what the desk head is asking about."
+     },
+     {
+      "id": "boost",
+      "text": "Boosting won more folds, so it is the better model",
+      "why": "Boosting beat the forest in folds 3 and 4, the forest won folds 1, 2 and 5. With 50 days a fold, either could be luck."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the forest with the best constant in each fold: the larger of up and down days."
+    },
+    {
+     "rung": "point",
+     "text": "Fold 2's best constant is 0.52; fold 4's is 0.52 too.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The forest beats the constant by 12 points in fold 2, 8 in fold 3, and loses in fold 4."
+    }
+   ],
+   "feedback": {
+    "correct": "Two strong blocks and one loss: suggestive, not stable.",
+    "generic": "Not quite right. Read the forest column fold by fold against the base rate."
+   },
+   "explain": {
+    "text": "One block of 50 days has a standard error of about 7 points, so single folds swing widely. A desk would want the edge in most folds, over more history, and surviving costs. It survives costs overall, but rests on two blocks out of five.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The note's last paragraph",
+   "prose": "This is the 2.1 exit: one tabular prediction problem, end to end. Features without look-ahead, a linear and two tree families, walk-forward with purging from the start, and every model tried reported. Now write its last paragraph.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Model",
+      "Hit rate",
+      "$t$ vs 0.516",
+      "AUC",
+      "P&L after 10 bp"
+     ],
+     "rows": [
+      [
+       "Logistic",
+       "0.476",
+       "−1.27",
+       "0.456",
+       "−£204k"
+      ],
+      [
+       "Forest",
+       "0.568",
+       "1.65",
+       "0.572",
+       "+£80k"
+      ],
+      [
+       "Boosting",
+       "0.532",
+       "0.51",
+       "0.536",
+       "+£102k"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which paragraph would a desk accept?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "honest",
+      "text": "Trees beat logistic, consistent with a volatility threshold, but the best of three is 1.65 standard errors above the base rate on 250 days and wins in two of five folds. We need more history before trading it.",
+      "correct": true
+     },
+     {
+      "id": "proof",
+      "text": "The forest predicts direction with 56.8% accuracy and makes £80k a year after costs.",
+      "why": "You reported the best of three as if it were the only model tried, and read 250 days as proof."
+     },
+     {
+      "id": "none",
+      "text": "No model is significant, so the study found nothing.",
+      "why": "That discards real information: the trees beat logistic in the way the threshold predicts. Say what was found, and how sure it is."
+     },
+     {
+      "id": "shuffle",
+      "text": "To confirm, we reran with shuffled folds, where boosting reaches $t = 4.09$.",
+      "why": "Shuffled folds train on the future. Citing them would undo the study's main strength."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A good paragraph says what was tried, what was found, and how sure it is."
+    },
+    {
+     "rung": "point",
+     "text": "Three models were tried; the forest was best on one test period.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "State the margin in standard errors, the folds, and what more is needed."
+    }
+   ],
+   "feedback": {
+    "correct": "It reports the winner, the number of tries, the uncertainty and the next step.",
+    "generic": "Not quite right. Look for the paragraph that counts the tries and the uncertainty."
+   },
+   "explain": {
+    "text": "The study is honest because its choices were made before the results: time-ordered splits, a purge, all three models reported. Its finding is modest: a threshold that trees can see, an edge under two standard errors. That is what most real signals look like, and it is the 2.1 exit."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Build features from data known at the close and label them with the next day; check the alignment exactly.",
+   "Score every model on the same walk-forward, purged test days: hit rate against the base rate with its standard error, AUC, and P&L after costs.",
+   "Trees beat a linear model when the signal is a threshold or an interaction; on 250 days the margin is usually within two standard errors, so report every model tried and the folds."
+  ],
+  "formula": {
+   "name": "Edge in standard errors",
+   "tex": "t = \\dfrac{\\hat h - b}{\\sqrt{b(1 - b)/n}}",
+   "note": "On 250 days one standard error is about 3.2 points."
+  },
+  "trap": "Shuffled folds on daily data train on the future; they inflate the tree models' edge and its $t$ statistic."
+ },
+ "quiz": [
+  {
+   "id": "q-linear",
+   "difficulty": 2,
+   "prose": "On `make_study(8, kind='linear')`, where every day reverses 0.3 times yesterday's return, the walk-forward hit rates are logistic 0.644, forest 0.628, boosting 0.612.",
+   "question": "Why does logistic win here?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lin",
+      "text": "The signal is a straight line in today's return, which logistic fits with one coefficient and trees only approximate in steps",
+      "correct": true
+     },
+     {
+      "id": "luck",
+      "text": "Luck: trees are always better",
+      "why": "You assumed trees always win. On a linear signal the linear model is the right shape."
+     },
+     {
+      "id": "tune",
+      "text": "The trees were not tuned",
+      "why": "Tuning helps trees a little, but steps still approximate a line with error."
+     },
+     {
+      "id": "noise",
+      "text": "The noise columns hurt only the trees",
+      "why": "Noise hurts all three models."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Match the model to the shape of the signal.",
+    "generic": "Not quite right. Ask what shape the signal has."
+   },
+   "explain": {
+    "text": "A reversal proportional to yesterday's return is linear on the log-odds scale, near enough. Logistic regression captures it exactly; trees need many steps and pay in variance."
+   }
+  },
+  {
+   "id": "q-none",
+   "difficulty": 2,
+   "prose": "On `make_study(7, kind='none')` the hit rates are 0.516, 0.460 and 0.512, and the base rate is 0.512.",
+   "question": "What does this say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "All three are within two standard errors of the base rate: no model found anything, which is right, because there is nothing",
+      "correct": true
+     },
+     {
+      "id": "logit",
+      "text": "Logistic has a small real edge",
+      "why": "0.516 against 0.512 is 0.1 standard errors: noise."
+     },
+     {
+      "id": "forest",
+      "text": "The forest is broken",
+      "why": "Its 0.460 is 1.6 standard errors below the base rate on 250 days, within chance."
+     },
+     {
+      "id": "more",
+      "text": "More trees would find the signal",
+      "why": "There is no signal to find; more trees would fit more noise."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A study that finds nothing on noise is working.",
+    "generic": "Not quite right. Convert each gap to standard errors of about 3.2 points."
+   },
+   "explain": {
+    "text": "One standard error on 250 days is about 3.2 points. Every model lies within two of the base rate. This is the check every pipeline should pass before it is pointed at real data."
+   }
+  },
+  {
+   "id": "q-54",
+   "difficulty": 3,
+   "prose": "A model scores 54% on 250 test days against a base rate of 50%. It was the best of four models tried.",
+   "question": "What is the fair reading?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "weak",
+      "text": "About 1.3 standard errors, and the best of four: weak evidence that needs more history",
+      "correct": true
+     },
+     {
+      "id": "proof",
+      "text": "Four points of edge on 250 days is proof of skill",
+      "why": "You read 54% as proof. Its $t$ is 1.26, and picking the best of four lifts that further."
+     },
+     {
+      "id": "nothing",
+      "text": "It is certainly noise",
+      "why": "It may be noise; 1.26 standard errors cannot rule out a small edge either."
+     },
+     {
+      "id": "double",
+      "text": "Since four models were tried, the edge is really 16 points",
+      "why": "Trying more models makes the winner's edge less trustworthy, not larger."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Count the tries and the standard errors.",
+    "generic": "Not quite right. Compute $(0.54 - 0.5)/\\sqrt{0.25/250}$."
+   },
+   "explain": {
+    "text": "$0.04 / 0.0316 = 1.26$. The best of four models, even with no skill, often scores this well. More days, or a fresh test period, would settle it."
+   }
+  },
+  {
+   "id": "q-auc",
+   "difficulty": 2,
+   "prose": "The boosted model's AUC is 0.536 on the test days; logistic's is 0.456.",
+   "question": "What does an AUC below 0.5 mean for logistic?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "worse",
+      "text": "It ranks up days below down days more often than not on this period: worse than a coin at ordering days",
+      "correct": true
+     },
+     {
+      "id": "flip",
+      "text": "Flip its signal and it becomes a good model",
+      "why": "Flipping would score 0.544 on this period, but that choice uses the test days. It is look-ahead."
+     },
+     {
+      "id": "prob",
+      "text": "Its probabilities are badly calibrated",
+      "why": "AUC measures ranking, not calibration."
+     },
+     {
+      "id": "same",
+      "text": "Nothing: AUC and hit rate say the same thing",
+      "why": "They differ: hit rate uses one threshold, AUC every threshold."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Below 0.5 means its ordering is wrong more often than right, here.",
+    "generic": "Not quite right. Recall what AUC measures."
+   },
+   "explain": {
+    "text": "AUC is the chance that a random up day gets a higher $p$ than a random down day. At 0.456 logistic gets that wrong slightly more often than right. Deciding to flip it after seeing this would be choosing on the test set."
+   }
+  }
+ ]
+}

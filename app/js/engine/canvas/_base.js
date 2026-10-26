@@ -104,10 +104,12 @@
     x -= 1; let a = c[0]; const t = x + 7.5; for (let i = 1; i < 9; i++) a += c[i] / (x + i);
     return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
   };
-  /* item 380: erfc with relative accuracy about 1e-7 everywhere (Numerical Recipes' Chebyshev fit), so far tails
-     (Phi(-10) = 7.6e-24) keep their digits; erf(x) = 1 - erfc(x) for x >= 0 */
-  FN.erfc = (x) => { const z = Math.abs(x), t = 1 / (1 + 0.5 * z), r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))); return x >= 0 ? r : 2 - r; };
-  FN.erf = (x) => { if (Math.abs(x) < 0.5) { let sum = 0, term = x, n = 0; while (Math.abs(term) > 1e-17 && n < 60) { sum += term / (2 * n + 1); n++; term *= -x * x / n; } return 2 / Math.sqrt(Math.PI) * sum; } return x > 0 ? 1 - FN.erfc(x) : FN.erfc(-x) - 1; };
+  /* item 380: erf by its Taylor series below |x| = 2.5 and erfc by its continued fraction above (both to about 1e-14
+     relative), so far tails keep their digits (Phi(-10) = 7.62e-24) and qnorm inverts Phi cleanly */
+  const erfSeries = (x) => { let sum = 0, term = x, n = 0; while (Math.abs(term) > 1e-17 * Math.max(1e-300, Math.abs(sum)) && n < 200) { sum += term / (2 * n + 1); n++; term *= -x * x / n; } return 2 / Math.sqrt(Math.PI) * sum; };
+  const erfcCf = (x) => { let f = x; for (let k = 80; k >= 1; k--) f = x + (k / 2) / f; return Math.exp(-x * x) / Math.sqrt(Math.PI) / f; };
+  FN.erfc = (x) => (x >= 2.5 ? erfcCf(x) : x <= -2.5 ? 2 - erfcCf(-x) : 1 - erfSeries(x));
+  FN.erf = (x) => (Math.abs(x) < 2.5 ? erfSeries(x) : x > 0 ? 1 - erfcCf(x) : erfcCf(-x) - 1);
   /* Phi(x) and normcdf(x, mu, sigma) (alias pnorm) are the normal CDF, normpdf(x, mu, sigma) (alias dnorm) its density,
      qnorm(p, mu, sigma) the quantile (Acklam's rational approximation, one Newton step); mu 0 and sigma 1 by default */
   FN.Phi = (x) => 0.5 * FN.erfc(-x / Math.SQRT2);
