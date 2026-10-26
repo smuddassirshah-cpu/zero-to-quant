@@ -1,0 +1,1285 @@
+{
+  "id": "l3-signal-to-position",
+  "course": "backtest",
+  "title": "From signal to position",
+  "minutes": 14,
+  "objectives": [
+    "Separate signals, target positions and orders.",
+    "Size targets in whole shares and turn them into orders."
+  ],
+  "skills": [
+    "bt-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "An opinion and a holding",
+      "prose": "Left: a signal over 20 days, from −1 (fully short) to +1 (fully long). Right: the holding it implies for a £1m book in a £100 share, at most 10,000 shares either way. On day 8 the signal is +0.25; on day 9 it is +0.4.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "shareMargins": true,
+        "left": {
+          "kind": "series",
+          "params": {
+            "series": [
+              {
+                "id": "sig",
+                "label": "Signal",
+                "values": [
+                  0,
+                  0.1,
+                  0.25,
+                  0.25,
+                  0.4,
+                  0.6,
+                  0.6,
+                  0.3,
+                  0.25,
+                  0.4,
+                  0.4,
+                  0,
+                  -0.25,
+                  -0.5,
+                  -0.5,
+                  -0.25,
+                  0,
+                  0.2,
+                  0.2,
+                  0.2
+                ]
+              }
+            ],
+            "x": "index",
+            "xLabel": "Day",
+            "yLabel": "Signal",
+            "y": [
+              -1,
+              1
+            ],
+            "baseline": 0,
+            "height": 190
+          },
+          "state": {
+            "markers": [
+              {
+                "id": "m9",
+                "i": 9,
+                "label": "+0.4"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "series",
+          "params": {
+            "series": [
+              {
+                "id": "pos",
+                "label": "Shares",
+                "values": [
+                  0,
+                  1000,
+                  2500,
+                  2500,
+                  4000,
+                  6000,
+                  6000,
+                  3000,
+                  2500,
+                  4000,
+                  4000,
+                  0,
+                  -2500,
+                  -5000,
+                  -5000,
+                  -2500,
+                  0,
+                  2000,
+                  2000,
+                  2000
+                ],
+                "colour": 2
+              }
+            ],
+            "x": "index",
+            "xLabel": "Day",
+            "yLabel": "Shares held",
+            "y": [
+              -10000,
+              10000
+            ],
+            "baseline": 0,
+            "height": 190
+          },
+          "state": {
+            "markers": [
+              {
+                "id": "p9",
+                "i": 9,
+                "label": "4,000"
+              }
+            ]
+          }
+        }
+      },
+      "question": "How many shares must the engine buy on day 9?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1500,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Shares to buy on day 9",
+        "placeholder": "whole number",
+        "accept": "1,500: from 2,500 shares to 4,000.",
+        "wrong": [
+          {
+            "id": "target",
+            "value": 4000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "signal",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On day 8 the engine already holds the day-8 position."
+        },
+        {
+          "rung": "point",
+          "text": "Day 8: 0.25 × 10,000 = 2,500 shares. Day 9: 4,000.",
+          "highlight": [
+            "right:p9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4,000 − 2,500 = 1,500 shares."
+        }
+      ],
+      "feedback": {
+        "correct": "1,500 shares: the gap between what we hold and what we want.",
+        "generic": "Not quite right. Work out the holding on day 8 and on day 9, then subtract.",
+        "byKey": {
+          "target": "4,000 is what we want to hold. We already own 2,500, so buying 4,000 more would leave us with 6,500.",
+          "signal": "0.4 is the opinion, not a number of shares. Scale it by 10,000 first."
+        }
+      },
+      "explain": {
+        "text": "You turned one number into three. The **signal** is an opinion: +0.4. The **target position** is how much we want to hold: 4,000 shares. The **order** is the difference from what we hold: buy 1,500.",
+        "canvas": {
+          "right": {
+            "markers": {
+              "p8": {
+                "id": "p8",
+                "i": 8,
+                "label": "2,500",
+                "below": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Three layers, one slider",
+      "prose": "The book still holds 2,500 shares. Move the signal and watch each layer follow. The target is the signal times 10,000, rounded to whole shares.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Layer",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Signal",
+              "0.40"
+            ],
+            [
+              "Target (shares)",
+              "4000"
+            ],
+            [
+              "Holding now",
+              "2500"
+            ],
+            [
+              "Order (shares)",
+              "1500"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "params": {
+            "s": 0.4
+          },
+          "values": {
+            "r0c1": "0.40",
+            "r1c1": "4000",
+            "r2c1": "2500",
+            "r3c1": "1500"
+          }
+        },
+        "derive": {
+          "values.r0c1": "fixed(s, 2)",
+          "values.r1c1": "fixed(round(s * 10000), 0)",
+          "values.r3c1": "fixed(round(s * 10000) - 2500, 0)",
+          "caption": "{{round(s * 10000) - 2500 > 0 ? 'Buy ' + fixed(round(s * 10000) - 2500, 0) + ' shares' : (round(s * 10000) - 2500 < 0 ? 'Sell ' + fixed(2500 - round(s * 10000), 0) + ' shares' : 'No trade')}}"
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": -1,
+            "max": 1,
+            "step": 0.05,
+            "start": 0.4,
+            "label": "signal",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Set the signal to −0.5. How many shares does the engine trade? Give a sale as a negative number.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -7500,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Order (shares)",
+        "placeholder": "whole number",
+        "accept": "−7,500: from +2,500 to −5,000.",
+        "wrong": [
+          {
+            "id": "target",
+            "value": -5000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sign",
+            "value": 7500,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the order row at a signal of −0.50."
+        },
+        {
+          "rung": "point",
+          "text": "The target is −5,000; the book holds +2,500.",
+          "highlight": [
+            "r1c1",
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−5,000 − 2,500 = −7,500: sell 7,500."
+        }
+      ],
+      "feedback": {
+        "correct": "Sell 7,500: close the 2,500 long and open a 5,000 short.",
+        "generic": "Not quite right. The order is the target minus the holding.",
+        "byKey": {
+          "target": "−5,000 is the target. The book is long 2,500, so it must sell those first: 7,500 in all.",
+          "sign": "Right size, wrong side. Going from long to short is a sale, so the order is negative."
+        }
+      },
+      "explain": {
+        "text": "The order crosses zero in one trade: sell the 2,500 we hold and 5,000 more. A slider move changes the signal; the target and the order follow mechanically. Keeping them apart is what the rest of this lesson builds.",
+        "canvas": {
+          "params": {
+            "s": -0.5
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The pipeline",
+      "prose": "Every backtest engine, and every live trading system, is one chain. The bars come in at one end; the portfolio's cash and shares come out at the other. Each box does one job and hands its output to the next.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n0",
+              "label": "?",
+              "shape": "rect",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "n1",
+              "label": "?",
+              "shape": "rect",
+              "x": 0.248,
+              "y": 0.5
+            },
+            {
+              "id": "n2",
+              "label": "?",
+              "shape": "rect",
+              "x": 0.41600000000000004,
+              "y": 0.5
+            },
+            {
+              "id": "n3",
+              "label": "?",
+              "shape": "rect",
+              "x": 0.584,
+              "y": 0.5
+            },
+            {
+              "id": "n4",
+              "label": "?",
+              "shape": "rect",
+              "x": 0.752,
+              "y": 0.5
+            },
+            {
+              "id": "n5",
+              "label": "?",
+              "shape": "rect",
+              "x": 0.92,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "n0",
+              "to": "n1"
+            },
+            {
+              "from": "n1",
+              "to": "n2"
+            },
+            {
+              "from": "n2",
+              "to": "n3"
+            },
+            {
+              "from": "n3",
+              "to": "n4"
+            },
+            {
+              "from": "n4",
+              "to": "n5"
+            }
+          ],
+          "height": 120
+        },
+        "state": {}
+      },
+      "question": "Put the six layers in the order data flows through them.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "data",
+            "text": "Data: validated daily bars"
+          },
+          {
+            "id": "signal",
+            "text": "Signal: an opinion from −1 to +1"
+          },
+          {
+            "id": "target",
+            "text": "Target: shares we want to hold, after sizing and limits"
+          },
+          {
+            "id": "order",
+            "text": "Order: target minus current holding"
+          },
+          {
+            "id": "fill",
+            "text": "Fill: the price and quantity actually traded"
+          },
+          {
+            "id": "port",
+            "text": "Portfolio: cash, shares and equity"
+          }
+        ],
+        "answer": [
+          "data",
+          "signal",
+          "target",
+          "order",
+          "fill",
+          "port"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each layer needs the one before it as input."
+        },
+        {
+          "rung": "point",
+          "text": "An order needs both a target and the current holding.",
+          "highlight": [
+            "n3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Data, signal, target, order, fill, portfolio."
+        }
+      ],
+      "feedback": {
+        "correct": "Data, signal, target, order, fill, portfolio.",
+        "generic": "Not quite right. Ask what each layer needs to exist before it can run."
+      },
+      "explain": {
+        "text": "Each layer reads only the one before it. The signal never knows how many shares we hold; the order never knows why we want them. That separation lets a size cap or a risk limit edit the target without touching the research.",
+        "canvas": {
+          "labels": {
+            "n0": "Data",
+            "n1": "Signal",
+            "n2": "Target",
+            "n3": "Order",
+            "n4": "Fill",
+            "n5": "Portfolio"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The signal layer",
+      "prose": "First box after the data. In lesson 1 your `vector_targets` returned a sign and called it a target. Here the same number is the **signal**: an opinion with no size. Return a Series indexed like `close`, with 0 where the return is undefined.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> momentum_signal(pd.Series([100, 102, 101, 101, 104.0]), 1).tolist()",
+            "[0.0, 1.0, -1.0, 0.0, 1.0]"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete `momentum_signal(close, lookback)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef momentum_signal(close, lookback):\n    \"\"\"+1, -1 or 0 at each bar: the sign of the lookback-day return, 0 where undefined.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef momentum_signal(close, lookback):\n    \"\"\"+1, -1 or 0 at each bar: the sign of the lookback-day return, 0 where undefined.\"\"\"\n    return np.sign(close.pct_change(lookback)).fillna(0)\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n",
+        "examples": [
+          {
+            "call": "momentum_signal(pd.Series([100, 102, 101, 101, 104.0]), 1).tolist()",
+            "expect": "[0.0, 1.0, -1.0, 0.0, 1.0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "momentum_signal(pd.Series([100, 102, 101, 101, 104.0]), 1).tolist()",
+            "expect": "[0.0, 1.0, -1.0, 0.0, 1.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "momentum_signal(pd.Series([100, 102, 101, 101, 104.0]), 3).tolist()",
+            "expect": "[0.0, 0.0, 0.0, 1.0, 1.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "momentum_signal(make_bars(40)['close'], 3).tolist()",
+            "expect": "[0, 0, 0, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, 1, 1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "momentum_signal(make_bars(40)['close'], 5).tolist()",
+            "expect": "[0, 0, 0, 0, 0, -1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, 1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "b = make_bars(40); s = momentum_signal(b['close'], 5)",
+            "call": "list(s.index) == list(b.index)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "s = momentum_signal(make_bars(40)['close'], 20)",
+            "call": "bool(s.isna().any())",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: a five-bar hand series at lookbacks 1 and 3, `make_bars(40)` (already defined) at lookbacks 3 and 5, and checks that the index matches `close` and that no value is NaN. Lists are compared with ==. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The same line as lesson 1's `vector_targets`."
+        },
+        {
+          "rung": "point",
+          "text": "`close.pct_change(lookback)` is NaN for the first `lookback` bars.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return np.sign(close.pct_change(lookback)).fillna(0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The signal layer: sign only, dated like the bars.",
+        "generic": "Some tests failed. Take the sign of `close.pct_change(lookback)` and fill the NaNs with 0.",
+        "byKey": {
+          "test-6": "Some signals are NaN. A bar with no history yet has no opinion: 0."
+        }
+      },
+      "explain": {
+        "text": "Keeping the dates as the index matters for the next layers: a target or an order always belongs to a bar. The signal says nothing about size, cash or the current holding. That is the next box's job."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "From targets to orders",
+      "prose": "Seven days of targets for one share. The engine starts flat. Each day it trades only the difference between the new target and what it holds.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "tgt",
+              "label": "Target",
+              "values": [
+                0,
+                4000,
+                4000,
+                10000,
+                -10000,
+                -10000,
+                0
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "yLabel": "Target (shares)",
+          "baseline": 0,
+          "height": 200
+        },
+        "state": {}
+      },
+      "question": "Fill in each day's order. Give sales as negative numbers.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "Target",
+          "Order"
+        ],
+        "rows": [
+          [
+            "0",
+            "0",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "1",
+            "4000",
+            {
+              "edit": true,
+              "answer": 4000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2",
+            "4000",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            "10000",
+            {
+              "edit": true,
+              "answer": 6000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            "-10000",
+            {
+              "edit": true,
+              "answer": -20000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            "-10000",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "6",
+            "0",
+            {
+              "edit": true,
+              "answer": 10000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Order = today's target − yesterday's target."
+        },
+        {
+          "rung": "point",
+          "text": "Day 4 goes from +10,000 to −10,000.",
+          "highlight": [
+            "tgt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0, 4,000, 0, 6,000, −20,000, 0, 10,000."
+        }
+      ],
+      "feedback": {
+        "correct": "Unchanged targets trade nothing, and the flip trades twice the position.",
+        "generic": "Not quite right. Subtract yesterday's target from today's, starting from 0."
+      },
+      "explain": {
+        "text": "Day 4's flip from long 10,000 to short 10,000 is an order of 20,000 shares: twice the position, and twice the cost. Days 2 and 5 trade nothing, which costs nothing. The orders add back up to the final target, 0.",
+        "canvas": {
+          "markers": [
+            {
+              "id": "flip",
+              "i": 4,
+              "label": "order −20,000",
+              "below": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The target layer",
+      "prose": "Now the sizing box. Turn signals into whole shares: signal times `max_units`, rounded. A signal above 1 or below −1 is capped there. Edge case: a NaN signal, before there is any data, means hold nothing.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> target_positions(pd.Series([0.4, -1, np.nan, 1.7]), 10_000).tolist()",
+            "[4000, -10000, 0, 10000]"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete `target_positions(signal, max_units)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef target_positions(signal, max_units):\n    \"\"\"Whole shares to hold: signal times max_units, NaN as 0, capped at +/- max_units.\"\"\"\n    s = pd.Series(signal, dtype=float)\n    ...\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef target_positions(signal, max_units):\n    \"\"\"Whole shares to hold: signal times max_units, NaN as 0, capped at +/- max_units.\"\"\"\n    s = pd.Series(signal, dtype=float)\n    s = s.fillna(0).clip(-1, 1)           # no signal yet: hold nothing\n    return np.round(s * max_units).astype(int)\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n",
+        "examples": [
+          {
+            "call": "target_positions(pd.Series([0.4, -1, np.nan, 1.7]), 10_000).tolist()",
+            "expect": "[4000, -10000, 0, 10000]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "target_positions(pd.Series([0.4, -1, np.nan, 1.7]), 10_000).tolist()",
+            "expect": "[4000, -10000, 0, 10000]",
+            "compare": "equal"
+          },
+          {
+            "call": "target_positions(pd.Series([-2.5, 0.0, 0.33333, -0.66667]), 1000).tolist()",
+            "expect": "[-1000, 0, 333, -667]",
+            "compare": "equal"
+          },
+          {
+            "call": "target_positions([0.25, np.nan, np.nan], 8000).tolist()",
+            "expect": "[2000, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "target_positions(pd.Series([0.123, 0.5]), 7).tolist()",
+            "expect": "[1, 4]",
+            "compare": "equal"
+          },
+          {
+            "setup": "b = make_bars(10); s = pd.Series(np.linspace(-1, 1, 10), index=b.index)",
+            "call": "list(target_positions(s, 100).index) == list(s.index)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "all(float(x).is_integer() for x in target_positions(pd.Series([0.123456, -0.98765]), 10_000))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on short signal lists: values inside ±1, beyond it, NaN, and sizes that need rounding. The index of a Series must be kept. Lists of whole numbers are compared with ==. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Three steps: fill NaN with 0, clip to −1 and 1, then scale and round."
+        },
+        {
+          "rung": "point",
+          "text": "`s.fillna(0).clip(-1, 1)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return np.round(s.fillna(0).clip(-1, 1) * max_units).astype(int)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Whole shares, capped, and 0 before any signal.",
+        "generic": "Some tests failed. Fill NaN with 0, clip to ±1, multiply by `max_units`, round to whole shares.",
+        "byKey": {
+          "test-1": "Check the NaN (it must become 0) and the 1.7 (it must stop at 10,000).",
+          "test-4": "0.5 × 7 = 3.5 rounds to 4 here and 0.123 × 7 = 0.861 rounds to 1. Round, do not truncate."
+        }
+      },
+      "explain": {
+        "text": "Capping at the target layer means no signal, however strong, can size past the limit. A NaN signal becomes 0 shares, not NaN shares. Rounding to whole shares is the first place the engine meets reality: you cannot buy 0.861 of a share."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The order layer",
+      "prose": "Last box before the fill. An order is today's target minus yesterday's, and on day 0 it is the first target itself, bought from flat. Keep the index, and remember the screen before: a flip trades twice the position, and an unchanged target trades nothing.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> orders_from_targets([0, 4000, 4000, 10000, -10000]).tolist()",
+            "[0.0, 4000.0, 0.0, 6000.0, -20000.0]"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete `orders_from_targets(targets)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef orders_from_targets(targets):\n    \"\"\"Shares to trade each day: today's target minus yesterday's, from flat on day 0.\"\"\"\n    t = pd.Series(targets)\n    ...\n",
+        "solution": "import pandas as pd\n\ndef orders_from_targets(targets):\n    \"\"\"Shares to trade each day: today's target minus yesterday's, from flat on day 0.\"\"\"\n    t = pd.Series(targets)\n    orders = t.diff()\n    orders.iloc[0] = t.iloc[0]            # day 0 builds its target from nothing\n    return orders\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n",
+        "examples": [
+          {
+            "call": "orders_from_targets([0, 4000, 4000, 10000, -10000]).tolist()",
+            "expect": "[0, 4000, 0, 6000, -20000]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "orders_from_targets([0, 4000, 4000, 10000, -10000]).tolist()",
+            "expect": "[0, 4000, 0, 6000, -20000]",
+            "compare": "equal"
+          },
+          {
+            "call": "orders_from_targets([500]).tolist()",
+            "expect": "[500]",
+            "compare": "equal"
+          },
+          {
+            "call": "orders_from_targets([3000, 3000, 3000, 3000]).tolist()",
+            "expect": "[3000, 0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "orders_from_targets([10000, -10000, 10000]).tolist()",
+            "expect": "[10000, -20000, 20000]",
+            "compare": "equal"
+          },
+          {
+            "setup": "x = [0, 1200, -800, -800, 0, 2500, 2400]",
+            "call": "bool(np.allclose(orders_from_targets(x).cumsum(), x))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "b = make_bars(6); t = pd.Series([0, 100, 100, -100, 0, 0], index=b.index)",
+            "call": "list(orders_from_targets(t).index) == list(b.index)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: a flip, a single day, a run of unchanged targets, repeated flips, a check that the orders add back up to the targets, and that a dated index is kept. Lists are compared with ==, and 4000.0 equals 4000. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`Series.diff()` is today minus yesterday, with NaN on day 0."
+        },
+        {
+          "rung": "point",
+          "text": "Replace that NaN with the first target: `orders.iloc[0] = t.iloc[0]`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`orders = t.diff()`, then `orders.iloc[0] = t.iloc[0]`, then return it."
+        }
+      ],
+      "feedback": {
+        "correct": "Orders that add back up to the targets.",
+        "generic": "Some tests failed. Take `t.diff()` and set day 0's order to the first target.",
+        "byKey": {
+          "test-2": "A single target must be bought in full on day 0, from flat.",
+          "test-4": "A flip from +10,000 to −10,000 is an order of −20,000, not −10,000."
+        }
+      },
+      "explain": {
+        "text": "The cumulative sum of the orders is the target path, which is the test that the layer is honest. Day 0 starts from flat, so its order is the whole first target. Lesson 4's portfolio receives these orders and nothing else."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Trading the signal",
+      "prose": "A colleague's engine skips the order layer: each day it sends the target itself as the order. The signal sits at +0.4 for 10 days, so the target is 4,000 shares every day. The line shows the holding we intended.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "want",
+              "label": "Intended",
+              "values": [
+                4000,
+                4000,
+                4000,
+                4000,
+                4000,
+                4000,
+                4000,
+                4000,
+                4000,
+                4000
+              ]
+            },
+            {
+              "id": "run",
+              "label": "Colleague",
+              "values": [
+                4000,
+                8000,
+                12000,
+                16000,
+                20000,
+                24000,
+                28000,
+                32000,
+                36000,
+                40000
+              ],
+              "colour": 4
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "yLabel": "Shares held",
+          "baseline": 0,
+          "height": 220
+        },
+        "state": {
+          "hide": [
+            "run"
+          ]
+        }
+      },
+      "question": "How many shares does the colleague's engine hold after day 10?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40000,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Shares held after day 10",
+        "placeholder": "whole number",
+        "accept": "40,000: 4,000 bought on each of 10 days.",
+        "wrong": [
+          {
+            "id": "intended",
+            "value": 4000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each day it buys 4,000 more, whatever it already holds."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1: 4,000. Day 2: 8,000.",
+          "highlight": [
+            "want"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "10 days × 4,000 = 40,000 shares."
+        }
+      ],
+      "feedback": {
+        "correct": "40,000 shares, ten times the intended position, and still growing.",
+        "generic": "Not quite right. Add up the orders: the engine buys the whole target each day.",
+        "byKey": {
+          "intended": "4,000 is what we wanted to hold. Sending the target as the order buys 4,000 more every day, so the holding keeps growing."
+        }
+      },
+      "explain": {
+        "text": "Sending the target as the order adds it to the holding every day, so the position grows without limit. A backtest with this bug can show a fine equity curve while the share count runs off to 40,000 and beyond. The order layer is what stops it: target minus holding.",
+        "canvas": {
+          "hide": []
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Three numbers, three jobs",
+      "prose": "Each day you computed three numbers from the signal $s_t$, the size limit $N$ and the holding $h_{t-1}$:\n$$\\text{target}_t = \\operatorname{round}\\big(N \\cdot \\operatorname{clip}(s_t, -1, 1)\\big), \\qquad \\text{order}_t = \\text{target}_t - h_{t-1}$$\nThe signal is research's view; the target is sizing and limits; the order is arithmetic.",
+      "question": "A risk manager caps every position at 3,000 shares. Which layer changes?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The target layer: clip the target at ±3,000",
+            "correct": true
+          },
+          {
+            "id": "signal",
+            "text": "The signal layer: scale the signal down",
+            "why": "You edited research's opinion to fit a risk rule. The research log would then show a view nobody holds, and every other limit would need its own rescaling."
+          },
+          {
+            "id": "order",
+            "text": "The order layer: never send an order above 3,000",
+            "why": "Capping orders lets the holding creep past the limit: 3,000 today, 3,000 more tomorrow."
+          },
+          {
+            "id": "fill",
+            "text": "The fill layer: fill at most 3,000",
+            "why": "Fills are what the market gave. Clipping them hides the problem and leaves the engine's holding wrong."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Limits are sizing, so they live in the target.",
+        "generic": "Not quite right. Ask which layer says how much we want to hold."
+      },
+      "explain": {
+        "text": "A cap is a statement about how much to hold, which is exactly the target. The signal stays as research produced it, and the order layer still trades only the difference. Desks log all three, so a bad trade can be traced to the layer that made it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A limit that did not bite",
+      "prose": "A portfolio manager runs a £50m book in a £100 share, so `max_units = 500_000`. The risk limit: no position above 5% of average daily volume, which is 2,000,000 shares. Yesterday the engine bought 200,000 shares from flat. The logs read: signal +0.40, target 200,000, order +200,000.",
+      "question": "Which layer has the bug?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The target: the 5% limit, 100,000 shares, was never applied",
+            "correct": true
+          },
+          {
+            "id": "signal",
+            "text": "The signal: it should have read +0.20",
+            "why": "You moved the limit into the opinion. The signal is research's view and stays +0.4; the cap is a sizing rule."
+          },
+          {
+            "id": "order",
+            "text": "The order: it should have been 100,000 with the target left at 200,000",
+            "why": "Then tomorrow the engine would buy another 100,000 to reach its target, and break the limit anyway."
+          },
+          {
+            "id": "none",
+            "text": "None: 200,000 is below `max_units`",
+            "why": "`max_units` is the book's size limit. The volume limit is tighter: 5% of 2,000,000 is 100,000."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "5% of 2,000,000 shares is the most we may hold."
+        },
+        {
+          "rung": "point",
+          "text": "The limit is 100,000; the logged target is 200,000."
+        },
+        {
+          "rung": "step",
+          "text": "The target layer should have clipped 200,000 to 100,000. The signal and the order arithmetic are fine."
+        }
+      ],
+      "feedback": {
+        "correct": "The target broke the limit; the other two layers did their jobs.",
+        "generic": "Not quite right. Find the first logged number that breaks the limit."
+      },
+      "explain": {
+        "text": "The signal of +0.4 times 500,000 gives 200,000, and the 5% cap of 100,000 should have clipped it there. The order then correctly bought what the bad target asked. Because the three layers were logged apart, the fix is one line in one place."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The signal is an opinion from −1 to +1; the target is whole shares after sizing and limits; the order is target minus holding.",
+      "Limits and caps edit the target, never the signal, and the engine trades only orders.",
+      "A flip trades twice the position, an unchanged target trades nothing, and a NaN signal means a target of 0."
+    ],
+    "formula": {
+      "name": "Order",
+      "tex": "\\text{order}_t = \\text{target}_t - \\text{target}_{t-1}, \\quad \\text{target}_{-1} = 0",
+      "note": "The orders add back up to the targets."
+    },
+    "trap": "Sending the target as the order adds it to the holding every day, so the position grows without limit."
+  },
+  "quiz": [
+    {
+      "id": "q-target",
+      "difficulty": 2,
+      "prose": "A signal of +0.6 with `max_units = 5_000`.",
+      "question": "What is the target position, in shares?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "3,000: 0.6 × 5,000.",
+        "wrong": [
+          {
+            "id": "max",
+            "value": 5000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.6 × 5,000 = 3,000 shares.",
+        "generic": "Not quite right. Multiply the signal by `max_units`.",
+        "byKey": {
+          "max": "5,000 is the cap, held only at a signal of ±1."
+        }
+      },
+      "explain": {
+        "text": "The signal scales the limit: +0.6 asks for 60% of the 5,000 shares. A signal of 1 or more would hold all 5,000."
+      }
+    },
+    {
+      "id": "q-order",
+      "difficulty": 2,
+      "prose": "The engine holds 2,000 shares. Today's target is −3,000.",
+      "question": "What order does it send? Give a sale as a negative number.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -5000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "−5,000: sell 2,000 and short 3,000.",
+        "wrong": [
+          {
+            "id": "target",
+            "value": -3000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "add",
+            "value": -1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Sell 5,000 shares.",
+        "generic": "Not quite right. Order = target − holding.",
+        "byKey": {
+          "target": "That sends the target as the order. The 2,000 long must be sold first.",
+          "add": "You added the holding. Subtract it: −3,000 − 2,000."
+        }
+      },
+      "explain": {
+        "text": "−3,000 − 2,000 = −5,000. The first 2,000 shares close the long; the next 3,000 open the short."
+      }
+    },
+    {
+      "id": "q-nan",
+      "difficulty": 2,
+      "prose": "On the first day of a 20-day lookback the signal is NaN: there is no data yet.",
+      "question": "What should `target_positions` give for that day?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0 shares",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "NaN shares",
+            "why": "NaN would flow into the order, the cash and the equity, and every number after it would be NaN."
+          },
+          {
+            "id": "max",
+            "text": "`max_units`, to be invested from day one",
+            "why": "No signal means no opinion. Holding the maximum is an opinion the data never gave."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "No signal, no position.",
+        "generic": "Not quite right. Think about what NaN does downstream."
+      },
+      "explain": {
+        "text": "Filling a NaN signal with 0 keeps every later number defined. The first 20 days hold nothing, which is honest: the rule has nothing to say yet."
+      }
+    },
+    {
+      "id": "q-traded",
+      "difficulty": 3,
+      "prose": "Targets over six days, starting flat: 0, 3,000, 3,000, −2,000, −2,000, 1,000.",
+      "question": "How many shares are traded in total, buys and sales together?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "11,000: 3,000 + 5,000 + 3,000.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "noflip",
+            "value": 8000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Orders of 3,000, −5,000 and +3,000: 11,000 shares.",
+        "generic": "Not quite right. Add the absolute sizes of the orders.",
+        "byKey": {
+          "sum": "That adds the orders with their signs, which gives the final holding. Costs follow the size of every trade.",
+          "noflip": "The move from 3,000 to −2,000 is a sale of 5,000, not 2,000."
+        }
+      },
+      "explain": {
+        "text": "The orders are 0, 3,000, 0, −5,000, 0 and 3,000. Their sizes add to 11,000 shares. Lesson 6 charges costs on exactly this number."
+      }
+    }
+  ]
+}

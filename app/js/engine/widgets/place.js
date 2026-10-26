@@ -76,8 +76,40 @@
     };
   };
 
+  /* item 411, mode "array": the learner drags the cells of the screen's array canvas into order; answer lists the cell
+     ids (c0, c1, ... by opening index) in the order wanted; key = the first id out of place */
+  const arrayMode = (host, spec, ctx) => {
+    const cv = ctx.canvas;
+    const el = Z.h('<div class="wd-drag"><p class="t-caption wd-drag-msg" hidden></p></div>');
+    host.append(el);
+    const msg = el.querySelector('.wd-drag-msg');
+    if (!cv || typeof cv.order !== 'function' || typeof cv.setOrder !== 'function') { msg.hidden = false; msg.textContent = 'This task needs its array diagram, which could not be drawn.'; return { el, value: () => [], grade: () => ({ ok: false, key: null, detail: null }) }; }
+    const want = (spec.answer || []).map(String), start = cv.order();
+    let moved = false;
+    cv.enable('drag', {});
+    cv.on('change', (e) => { if (e && e.type === 'order') { moved = true; ctx.change && ctx.change({ order: e.order }); } });
+    const firstOff = () => { const o = cv.order(); const i = want.findIndex((id, k) => o[k] !== id); return i < 0 ? null : want[i]; };
+    return {
+      el,
+      value: () => cv.order(),
+      set(v) { cv.setOrder(v); moved = true; ctx.change && ctx.change({ set: true }); },
+      answer: () => want.slice(),
+      ready: () => moved,
+      dirty: () => moved,
+      grade() { const k = firstOff(); return { ok: !k, key: k, detail: { order: cv.order() } }; },
+      lock() { cv.lock && cv.lock(true); },
+      unlock() { cv.lock && cv.lock(false); cv.unmark && cv.unmark(); },
+      markGraded(res) { cv.unmark && cv.unmark(); const o = cv.order(); if (!cv.mark) return; const at = (id) => 'c' + (o.indexOf(id) + (cv.params && cv.params.indexFrom || 0)); const good = want.filter((id, k) => o[k] === id).map(at), bad = want.filter((id, k) => o[k] !== id).map(at); if (good.length) cv.mark(good, res && res.ok ? 'is-correct' : 'is-dim'); if (bad.length) cv.mark(bad, 'is-notyet'); },
+      reveal() { cv.unmark && cv.unmark(); cv.setOrder(want, {}); cv.lock && cv.lock(true); },
+      reset() { cv.unmark && cv.unmark(); cv.lock && cv.lock(false); cv.setOrder(start); moved = false; },
+      focus() { const n = cv.el.querySelector('[data-drag]'); if (n) n.focus({ preventScroll: true }); },
+      destroy() { if (cv.enable) cv.enable(null); },
+    };
+  };
+
   Z.widgets.register('place', (host, spec, ctx) => {
     if (spec.mode === 'boxes') return boxesMode(host, spec, ctx);
+    if (spec.mode === 'array') return arrayMode(host, spec, ctx);
     const tokens = spec.tokens || [];
     const mode = spec.mode === 'order' ? 'order' : 'assign';
     const slots = mode === 'order' ? (spec.slots && spec.slots.length ? spec.slots.slice(0, 1) : [{ id: 'seq', label: '' }]) : (spec.slots || []);

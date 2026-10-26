@@ -1,0 +1,1419 @@
+{
+ "id": "l7-slippage",
+ "course": "backtest",
+ "title": "Slippage that grows with size",
+ "minutes": 15,
+ "objectives": [
+  "Add slippage that grows with order size.",
+  "Cap participation and say what size a rule can really trade."
+ ],
+ "skills": [
+  "bt-execution"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Walking the book",
+   "prose": "A bigger order now. The rule wants 6,000 shares at once with a market buy. The best ask has only 2,000 shares, so the order takes the next levels too (`micro` l2).",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       99.98,
+       2000
+      ],
+      [
+       99.97,
+       2500
+      ],
+      [
+       99.95,
+       3000
+      ],
+      [
+       99.92,
+       4000
+      ],
+      [
+       99.88,
+       5000
+      ]
+     ],
+     "asks": [
+      [
+       100.02,
+       2000
+      ],
+      [
+       100.03,
+       2500
+      ],
+      [
+       100.05,
+       3000
+      ],
+      [
+       100.08,
+       4000
+      ],
+      [
+       100.12,
+       5000
+      ]
+     ],
+     "depth": 5,
+     "currency": "£",
+     "showMid": true
+    },
+    "state": {}
+   },
+   "question": "What is the average price paid per share, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100.0317,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "£",
+    "label": "Average fill price",
+    "accept": "£100.0317: $(2{,}000 \\times 100.02 + 2{,}500 \\times 100.03 + 1{,}500 \\times 100.05) / 6{,}000$.",
+    "wrong": [
+     {
+      "id": "best",
+      "value": 100.02,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "plain-mean",
+      "value": 100.0333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "last",
+      "value": 100.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Fill level by level until 6,000 shares are bought."
+    },
+    {
+     "rung": "point",
+     "text": "2,000 at £100.02, 2,500 at £100.03, and the last 1,500 at £100.05.",
+     "highlight": [
+      "ask0",
+      "ask1",
+      "ask2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Total paid £600,190; divide by 6,000."
+    }
+   ],
+   "feedback": {
+    "correct": "The order pays £100.0317 on average, above the best ask.",
+    "generic": "Not quite right. Weight each level's price by the shares bought there.",
+    "byKey": {
+     "best": "You priced every share at the best ask. Only 2,000 were there.",
+     "plain-mean": "You averaged the three prices equally. Weight each by the shares bought at it.",
+     "last": "That is the last level's price. Only 1,500 shares paid it."
+    }
+   },
+   "explain": {
+    "text": "The order took 2,000 at £100.02, 2,500 at £100.03 and 1,500 at £100.05: £600,190 in all. That averages £100.0317, more than a penny over the best ask for the last shares.",
+    "canvas": {
+     "order": {
+      "side": "buy",
+      "size": 6000
+     },
+     "highlight": [
+      "ask0",
+      "ask1",
+      "ask2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "What the model missed",
+   "prose": "Our l6 model assumed every share filled at the best ask, £100.02: the mid plus half the spread. The gap between the real average fill and the price the model assumed is **slippage**.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       99.98,
+       2000
+      ],
+      [
+       99.97,
+       2500
+      ],
+      [
+       99.95,
+       3000
+      ],
+      [
+       99.92,
+       4000
+      ],
+      [
+       99.88,
+       5000
+      ]
+     ],
+     "asks": [
+      [
+       100.02,
+       2000
+      ],
+      [
+       100.03,
+       2500
+      ],
+      [
+       100.05,
+       3000
+      ],
+      [
+       100.08,
+       4000
+      ],
+      [
+       100.12,
+       5000
+      ]
+     ],
+     "depth": 5,
+     "currency": "£",
+     "showMid": true
+    },
+    "state": {
+     "order": {
+      "side": "buy",
+      "size": 6000
+     }
+    }
+   },
+   "question": "What was the slippage on this order, in bp of the £100.00 mid?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.1667,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "bp",
+    "label": "Slippage",
+    "accept": "1.17 bp: $(100.0317 - 100.02) / 100 \\times 10^4$.",
+    "wrong": [
+     {
+      "id": "from-mid",
+      "value": 3.1667,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "pence",
+      "value": 0.0117,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the average fill with £100.02, not with the mid."
+    },
+    {
+     "rung": "point",
+     "text": "The gap is £100.0317 − £100.02 = £0.0117 a share."
+    },
+    {
+     "rung": "step",
+     "text": "£0.0117 on £100 is 0.000117, which is 1.17 bp."
+    }
+   ],
+   "feedback": {
+    "correct": "1.17 bp the cost model did not charge.",
+    "generic": "Not quite right. Measure from the price the model assumed, £100.02, and write the gap in bp of £100.",
+    "byKey": {
+     "from-mid": "You measured from the mid. The model already charged the 2 bp half spread; slippage is what it missed.",
+     "pence": "That is the gap in pounds per share. Divide by £100 and multiply by 10,000 for bp."
+    }
+   },
+   "explain": {
+    "text": "The l6 model charged 2 bp; the order really paid 3.17 bp over the mid. The missing 1.17 bp is slippage. It grows with the order, which a fixed model cannot see."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 2,
+   "title": "The square-root model",
+   "prose": "Desks estimate impact with the **square-root model** from `micro` l6: impact in bp $= c\\,\\sigma\\sqrt{Q/V} \\times 10^4$. $Q$ is the order in shares, $V$ the day's volume and $\\sigma$ the daily volatility, 1.2% in `make_bars()`. Drag the dot and move $c$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      12
+     ],
+     "y": [
+      0,
+      60
+     ],
+     "xLabel": "Order as % of the day's volume, $Q/V$",
+     "yLabel": "Impact (bp)",
+     "grid": true,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "c*12*sqrt(x)",
+       "label": "$c\\,\\sigma\\sqrt{Q/V}$"
+      }
+     ],
+     "params": {
+      "c": 1
+     },
+     "vlines": [
+      {
+       "id": "cap",
+       "x": 10,
+       "label": "10% cap"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 1,
+       "y": 12,
+       "drag": true,
+       "on": "f"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$c = {{fixed(c, 1)}}$: an order of {{fixed(p1.x, 1)}}% of volume costs {{fixed(c * 12 * sqrt(p1.x), 1)}} bp"
+    },
+    "controls": [
+     {
+      "bind": "c",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "start": 1,
+      "label": "$c$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "With $c = 1$, what does an order of 1% of the day's volume cost, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "bp",
+    "label": "Impact",
+    "accept": "12 bp: $0.012 \\times \\sqrt{0.01} \\times 10^4$.",
+    "wrong": [
+     {
+      "id": "no-root",
+      "value": 1.2,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "linear",
+      "value": 120,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $c$ to 1 and drag the dot to 1% of volume."
+    }
+   ],
+   "feedback": {
+    "correct": "12 bp: six times the l6 half spread, on an order of only 1%.",
+    "generic": "Not quite right. Read the caption with $c = 1$ and the dot at 1%.",
+    "byKey": {
+     "no-root": "You multiplied $\\sigma$ by 0.01 without the square root. $\\sqrt{0.01} = 0.1$.",
+     "linear": "You used 1 instead of 0.01 for $Q/V$."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{0.01} = 0.1$, so impact is a tenth of $\\sigma$: 0.0012, or 12 bp. Four times the order costs only twice as much per share. The cap at 10% of volume is where the curve stops: the rest of the order waits.",
+    "canvas": {
+     "params": {
+      "c": 1
+     },
+     "points": {
+      "p1": {
+       "x": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A bigger book",
+   "prose": "The lookback-1 rule flips its whole position most days. On a £1m book at £100 a share a flip is 20,000 shares; on a £100m book it is 2,000,000. The share trades $V$ = 2,000,000 a day, with $\\sigma$ = 1.2% and $c = 1$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      12
+     ],
+     "y": [
+      0,
+      60
+     ],
+     "xLabel": "Order as % of the day's volume, $Q/V$",
+     "yLabel": "Impact (bp)",
+     "grid": true,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "c*12*sqrt(x)",
+       "label": "$c\\,\\sigma\\sqrt{Q/V}$"
+      }
+     ],
+     "params": {
+      "c": 1
+     },
+     "vlines": [
+      {
+       "id": "cap",
+       "x": 10,
+       "label": "10% cap"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 1,
+       "y": 12,
+       "drag": true,
+       "on": "f"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$c = {{fixed(c, 1)}}$: an order of {{fixed(p1.x, 1)}}% of volume costs {{fixed(c * 12 * sqrt(p1.x), 1)}} bp"
+    },
+    "controls": [
+     {
+      "bind": "c",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "start": 1,
+      "label": "$c$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "What does each flip cost in impact on the £100m book, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 120,
+    "tol": {
+     "abs": 0.5
+    },
+    "unit": "bp",
+    "label": "Impact per flip",
+    "accept": "120 bp: $0.012 \\times \\sqrt{1} \\times 10^4$, ten times the 12 bp of the £1m book.",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 1200,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "same",
+      "value": 12,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $Q/V$ for the big book first."
+    },
+    {
+     "rung": "point",
+     "text": "2,000,000 shares against 2,000,000 traded: $Q/V = 1$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.012 \\times \\sqrt{1} \\times 10^4 = 120$ bp."
+    }
+   ],
+   "feedback": {
+    "correct": "100 times the book costs $\\sqrt{100} = 10$ times as much per share.",
+    "generic": "Not quite right. Find $Q/V$, take its square root, then multiply by $\\sigma \\times 10^4$.",
+    "byKey": {
+     "linear": "You scaled the impact with the order. It grows with the square root: 100 times the size is 10 times the bp.",
+     "same": "You kept the £1m figure. A bigger order pushes the price further."
+    }
+   },
+   "explain": {
+    "text": "Per share the cost is 10 times higher, on 100 times as many shares: 1,000 times the £. The same rule that pays 12 bp at £1m pays 120 bp at £100m. That is **capacity**, which l11 measures.",
+    "canvas": {
+     "view": {
+      "x": [
+       0,
+       110
+      ],
+      "y": [
+       0,
+       130
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The participation cap",
+   "prose": "Trading the whole day's volume is not realistic. Our engine caps each day's fill at 10% of the day's volume; the rest waits for the next bar. An order to buy 300,000 shares arrives on a day that trades 2,000,000.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      12
+     ],
+     "y": [
+      0,
+      60
+     ],
+     "xLabel": "Order as % of the day's volume, $Q/V$",
+     "yLabel": "Impact (bp)",
+     "grid": true,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "c*12*sqrt(x)",
+       "label": "$c\\,\\sigma\\sqrt{Q/V}$"
+      }
+     ],
+     "params": {
+      "c": 1
+     },
+     "vlines": [
+      {
+       "id": "cap",
+       "x": 10,
+       "label": "10% cap"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 1,
+       "y": 12,
+       "drag": true,
+       "on": "f"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$c = {{fixed(c, 1)}}$: an order of {{fixed(p1.x, 1)}}% of volume costs {{fixed(c * 12 * sqrt(p1.x), 1)}} bp"
+    },
+    "controls": [
+     {
+      "bind": "c",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "start": 1,
+      "label": "$c$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "How many shares are left to trade the next day?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100000,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "shares",
+    "label": "Shares left over",
+    "accept": "100,000: the cap is $0.1 \\times 2{,}000{,}000 = 200{,}000$.",
+    "wrong": [
+     {
+      "id": "filled",
+      "value": 200000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "none",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the cap for the day."
+    },
+    {
+     "rung": "point",
+     "text": "10% of 2,000,000 is 200,000."
+    },
+    {
+     "rung": "step",
+     "text": "300,000 − 200,000."
+    }
+   ],
+   "feedback": {
+    "correct": "200,000 fill today and 100,000 wait.",
+    "generic": "Not quite right. Work out the cap, then what is left.",
+    "byKey": {
+     "filled": "That is what fills today. The question asks for the rest.",
+     "none": "You filled the whole order. The cap stops at 200,000."
+    }
+   },
+   "explain": {
+    "text": "The cap is 200,000 shares, so a third of the order waits a day. On a day with no volume, nothing fills at all. The leftover is real exposure the backtest must carry and price again tomorrow."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A fixed charge",
+   "prose": "A colleague charges a fixed 1p a share of slippage on every order, whatever its size. Take two orders in our £100 share: 1,000 shares and 400,000 shares. $V$ = 2,000,000, $\\sigma$ = 1.2%, $c = 1$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      12
+     ],
+     "y": [
+      0,
+      60
+     ],
+     "xLabel": "Order as % of the day's volume, $Q/V$",
+     "yLabel": "Impact (bp)",
+     "grid": true,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "c*12*sqrt(x)",
+       "label": "$c\\,\\sigma\\sqrt{Q/V}$"
+      }
+     ],
+     "params": {
+      "c": 1
+     },
+     "vlines": [
+      {
+       "id": "cap",
+       "x": 10,
+       "label": "10% cap"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 1,
+       "y": 12,
+       "drag": true,
+       "on": "f"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$c = {{fixed(c, 1)}}$: an order of {{fixed(p1.x, 1)}}% of volume costs {{fixed(c * 12 * sqrt(p1.x), 1)}} bp"
+    },
+    "controls": [
+     {
+      "bind": "c",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "start": 1,
+      "label": "$c$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "For the 400,000-share order, about how much a share does the square-root model charge?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "About 54p",
+      "correct": true
+     },
+     {
+      "id": "fixed",
+      "text": "1p",
+      "why": "You kept the fixed charge. At 20% of volume the model says 53.7 bp, about 54p a share."
+     },
+     {
+      "id": "small",
+      "text": "About 2.7p",
+      "why": "You used the 1,000-share order's figure. The big order is 400 times larger."
+     },
+     {
+      "id": "linear",
+      "text": "About £10.73",
+      "why": "You scaled linearly, 400 times 2.7p. The cost grows with the square root: $\\sqrt{400} = 20$ times."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $Q/V$ for the big order."
+    },
+    {
+     "rung": "point",
+     "text": "400,000 / 2,000,000 = 20%."
+    },
+    {
+     "rung": "step",
+     "text": "$12 \\times \\sqrt{20} = 53.7$ bp; 53.7 bp of £100 is 53.7p."
+    }
+   ],
+   "feedback": {
+    "correct": "About 54p a share: the fixed 1p understates it 50 times.",
+    "generic": "Not quite right. Use $Q/V = 0.2$ in the square-root model."
+   },
+   "explain": {
+    "text": "The small order costs 2.7p a share and the big one 53.7p. A fixed 1p is too high for one and far too low for the other. A size-blind charge makes big books look as cheap as small ones.",
+    "canvas": {
+     "points": {
+      "p1": {
+       "x": 0.05
+      }
+     },
+     "view": {
+      "x": [
+       0,
+       25
+      ],
+      "y": [
+       0,
+       70
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why size hurts more than linearly",
+   "prose": "We found that 100 times the book costs 1,000 times as much. Derive it. $p$ is the price and every other symbol is as before.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Impact per share, as a fraction of price: $c\\,\\sigma\\sqrt{Q/V}$ (the square-root model)"
+     },
+     {
+      "id": "s2",
+      "text": "Cost of the order: $Q\\,p \\times c\\,\\sigma\\sqrt{Q/V}$ (shares times price times the fraction)"
+     },
+     {
+      "id": "s3",
+      "text": "Collect the powers of $Q$: cost $= p\\,c\\,\\sigma\\,V^{-1/2}\\,Q^{3/2}$"
+     },
+     {
+      "id": "s4",
+      "text": "Scale $Q$ by 100: cost scales by $100^{3/2} = 1{,}000$"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the cost of one share."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply by the number of shares and their price."
+    },
+    {
+     "rung": "step",
+     "text": "$Q \\times Q^{1/2} = Q^{3/2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Cost grows like $Q^{3/2}$.",
+    "generic": "Not quite right. Go from one share, to the whole order, to the power of $Q$, to the scaling."
+   },
+   "explain": {
+    "text": "Each share's impact grows like $\\sqrt{Q}$ and there are $Q$ of them. So total cost grows like $Q^{3/2}$, and 100 times the order costs 1,000 times as much."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Impact in code",
+   "prose": "Two pieces for the engine. `slippage_bp` is the square-root model; it uses $|q|$, so sales pay too. `capped_qty` is how much of an order fills today under the participation cap, as whole shares with its sign kept.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> slippage_bp(20_000, 2_000_000, 0.012)",
+      "12.0",
+      ">>> capped_qty(300_000, 2_000_000)",
+      "200000",
+      ">>> capped_qty(1_000, 0)",
+      "0"
+     ]
+    }
+   },
+   "question": "Complete `slippage_bp` and `capped_qty`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\ndef slippage_bp(qty, adv_shares, sigma, c=1.0):\n    \"\"\"Square-root impact in bp: c * sigma * sqrt(|qty| / adv) * 10,000.\"\"\"\n    ...\n\ndef capped_qty(qty, volume, max_participation=0.1):\n    \"\"\"Shares that fill today: at most max_participation of volume,\n    as a whole number, with the sign of qty kept.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef slippage_bp(qty, adv_shares, sigma, c=1.0):\n    \"\"\"Square-root impact in bp: c * sigma * sqrt(|qty| / adv) * 10,000.\"\"\"\n    return c * sigma * math.sqrt(abs(qty) / adv_shares) * 10_000\n\ndef capped_qty(qty, volume, max_participation=0.1):\n    \"\"\"Shares that fill today: at most max_participation of volume,\n    as a whole number, with the sign of qty kept.\"\"\"\n    cap = int(max_participation * volume)          # whole shares\n    return int(np.sign(qty)) * min(abs(int(qty)), cap)\n",
+    "examples": [
+     {
+      "call": "round(slippage_bp(20_000, 2_000_000, 0.012), 6)",
+      "compare": "isclose"
+     },
+     {
+      "call": "capped_qty(300_000, 2_000_000)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(slippage_bp(20_000, 2_000_000, 0.012), 6)",
+      "compare": "isclose",
+      "expect": "12.0"
+     },
+     {
+      "call": "round(slippage_bp(0, 2_000_000, 0.012), 6)",
+      "compare": "isclose",
+      "expect": "0.0"
+     },
+     {
+      "call": "round(slippage_bp(-20_000, 2_000_000, 0.012), 6)",
+      "compare": "isclose",
+      "expect": "12.0"
+     },
+     {
+      "call": "round(slippage_bp(2_000_000, 2_000_000, 0.012), 6)",
+      "compare": "isclose",
+      "expect": "120.0"
+     },
+     {
+      "call": "round(slippage_bp(20_000, 2_000_000, 0.012, c=0.5), 6)",
+      "compare": "isclose",
+      "expect": "6.0"
+     },
+     {
+      "call": "round(slippage_bp(50_000, 1_000_000, 0.02), 6)",
+      "compare": "isclose",
+      "expect": "44.72136"
+     },
+     {
+      "call": "capped_qty(300_000, 2_000_000)",
+      "expect": "200000",
+      "compare": "equal"
+     },
+     {
+      "call": "capped_qty(-300_000, 2_000_000)",
+      "expect": "-200000",
+      "compare": "equal"
+     },
+     {
+      "call": "capped_qty(50_000, 2_000_000)",
+      "expect": "50000",
+      "compare": "equal"
+     },
+     {
+      "call": "capped_qty(1_000, 0)",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "capped_qty(0, 1_000_000)",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "capped_qty(150_000, 1_000_000, 0.2)",
+      "expect": "150000",
+      "compare": "equal"
+     },
+     {
+      "call": "capped_qty(-5, 30)",
+      "expect": "-3",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 13 hidden tests: six impacts (zero and negative orders, a smaller $c$), rounded to 6 places and accepted when math.isclose(actual, expected, rel_tol=1e-9); then seven capped quantities, including a sale and a day with no volume, compared with ==. Pure Python and NumPy."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Both functions work on the size, then put the sign back."
+    },
+    {
+     "rung": "point",
+     "text": "`math.sqrt(abs(qty) / adv_shares)`; the cap is `int(max_participation * volume)`.",
+     "highlight": [
+      "l2",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return int(np.sign(qty)) * min(abs(int(qty)), cap)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both pass, including a sale and a day with no volume.",
+    "generic": "Not quite right. Read the first failing case.",
+    "byKey": {
+     "test-3": "A sale raised an error or a negative impact. Use `abs(qty)`.",
+     "test-8": "A capped sale lost its sign. Cap the size, then multiply by `np.sign(qty)`.",
+     "test-10": "On a day with no volume nothing fills: the cap is 0."
+    }
+   },
+   "explain": {
+    "text": "`abs(qty)` makes sales pay impact like buys. The cap is the edge case: with no volume it is 0, so nothing fills. Order books smaller than the best level pay only the half spread, which l6 already charges."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "An engine that feels its size",
+   "prose": "Now the engine. `book_scale` multiplies the targets and the starting cash. Each fill moves against us by its impact: a buy pays $O_{t+1}(1 + b/10^4)$ and a sale gets $O_{t+1}(1 - b/10^4)$. $V$ is the signal day's volume, known at its close; the fill day's is not.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Book",
+      "Flip",
+      "$Q/V$",
+      "Impact"
+     ],
+     "rows": [
+      [
+       "£1m",
+       "20,000",
+       "1%",
+       "12 bp"
+      ],
+      [
+       "£10m",
+       "200,000",
+       "10%",
+       "38 bp"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the fill inside `backtest_with_impact`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef backtest_with_impact(bars, targets, cash0, book_scale, sigma=0.012, c=1.0):\n    \"\"\"The l5 engine, with each fill moved against us by its impact.\n\n    Targets and cash are scaled by book_scale. The impact uses the\n    signal day's volume. Fees are trade_cost at the moved price.\n    \"\"\"\n    tg = np.round(np.asarray(targets, dtype=float) * book_scale).astype(int)\n    orders = np.diff(tg, prepend=0)\n    opens, closes, vols = (bars[k].to_numpy() for k in (\"open\", \"close\", \"volume\"))\n    pf = Portfolio(cash0 * book_scale)\n    rows = []\n    for t in range(len(bars)):\n        if t > 0 and orders[t - 1] != 0:\n            q = int(orders[t - 1])\n            ...  # impact in bp, the moved price, then the fill\n        rows.append((pf.shares, pf.cash, pf.equity(closes[t])))\n    return pd.DataFrame(rows, columns=[\"shares\", \"cash\", \"equity\"], index=bars.index)\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef backtest_with_impact(bars, targets, cash0, book_scale, sigma=0.012, c=1.0):\n    \"\"\"The l5 engine, with each fill moved against us by its impact.\n\n    Targets and cash are scaled by book_scale. The impact uses the\n    signal day's volume. Fees are trade_cost at the moved price.\n    \"\"\"\n    tg = np.round(np.asarray(targets, dtype=float) * book_scale).astype(int)\n    orders = np.diff(tg, prepend=0)\n    opens, closes, vols = (bars[k].to_numpy() for k in (\"open\", \"close\", \"volume\"))\n    pf = Portfolio(cash0 * book_scale)\n    rows = []\n    for t in range(len(bars)):\n        if t > 0 and orders[t - 1] != 0:\n            q = int(orders[t - 1])\n            bp = slippage_bp(q, vols[t - 1], sigma, c)          # signal day's volume\n            price = opens[t] * (1 + np.sign(q) * bp / 10_000)   # buys pay up, sales get less\n            pf.fill(q, price, trade_cost(q, price))\n        rows.append((pf.shares, pf.cash, pf.equity(closes[t])))\n    return pd.DataFrame(rows, columns=[\"shares\", \"cash\", \"equity\"], index=bars.index)\n",
+    "examples": [
+     {
+      "setup": "hb = hand_bars(); tg = [0, 100, 100, -100, -100, 0]",
+      "call": "backtest_with_impact(hb, tg, 10_000, 1).round(2).values.tolist()",
+      "expect": "[[0.0, 10000.0, 10000.0], [0.0, 10000.0, 10000.0], [100.0, 46.17, 10196.17], [100.0, 46.17, 10296.17], [-100.0, 20637.55, 10437.55], [-100.0, 20637.55, 10337.55]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "hb = hand_bars(); tg = [0, 100, 100, -100, -100, 0]",
+      "call": "backtest_with_impact(hb, tg, 10_000, 1).round(2).values.tolist()",
+      "expect": "[[0.0, 10000.0, 10000.0], [0.0, 10000.0, 10000.0], [100.0, 46.17, 10196.17], [100.0, 46.17, 10296.17], [-100.0, 20637.55, 10437.55], [-100.0, 20637.55, 10337.55]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "hb = hand_bars(); tg = [0, 100, 100, -100, -100, 0]",
+      "call": "backtest_with_impact(hb, tg, 10_000, 10).round(2).values.tolist()",
+      "expect": "[[0.0, 100000.0, 100000.0], [0.0, 100000.0, 100000.0], [1000.0, 448.4, 101948.4], [1000.0, 448.4, 102948.4], [-1000.0, 206286.67, 104286.67], [-1000.0, 206286.67, 103286.67]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "hb = hand_bars(); tg = [0, 100, 100, -100, -100, 0]",
+      "call": "backtest_with_impact(hb, tg, 10_000, 1, c=0.0).round(2).values.tolist()",
+      "expect": "[[0.0, 10000.0, 10000.0], [0.0, 10000.0, 10000.0], [100.0, 47.01, 10197.01], [100.0, 47.01, 10297.01], [-100.0, 20641.89, 10441.89], [-100.0, 20641.89, 10341.89]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "hb = hand_bars()",
+      "call": "backtest_with_impact(hb, [0] * 6, 10_000, 3)['equity'].round(2).tolist()",
+      "expect": "[30000.0, 30000.0, 30000.0, 30000.0, 30000.0, 30000.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(250); tg = target_positions(momentum_signal(b['close'], 1), 10_000)",
+      "call": "round(float(backtest_with_impact(b, tg, 1_000_000, 0.1)['equity'].iloc[-1]), 2)",
+      "expect": "77672.56",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(250); tg = target_positions(momentum_signal(b['close'], 1), 10_000)",
+      "call": "round(float(backtest_with_impact(b, tg, 1_000_000, 1)['equity'].iloc[-1]), 2)",
+      "expect": "572005.4",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(250); tg = target_positions(momentum_signal(b['close'], 1), 10_000)",
+      "call": "bool(backtest_with_impact(b, tg, 1_000_000, 1)['equity'].iloc[-1] < backtest(b, tg, costs=trade_cost)['equity'].iloc[-1])",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    # six hand-made bars, Monday 4 March 2024 to Monday 11 March 2024\n    o = [100.0, 101.0, 99.5, 102.0, 103.0, 101.5]\n    c = [100.5, 100.0, 101.5, 102.5, 102.0, 103.0]\n    v = [1_000_000, 2_000_000, 500_000, 1_000_000, 4_000_000, 1_000_000]\n    return pd.DataFrame({\"open\": o, \"high\": [max(a, b) + 0.5 for a, b in zip(o, c)],\n                         \"low\": [min(a, b) - 0.5 for a, b in zip(o, c)], \"close\": c,\n                         \"volume\": [float(x) for x in v]},\n                        index=pd.bdate_range(\"2024-03-04\", periods=6))\n\ndef iso(index):\n    return [d.strftime(\"%Y-%m-%d\") for d in index]\n\n# level 1 pieces, already defined\ndef momentum_signal(close, lookback):\n    return np.sign(close.pct_change(lookback)).fillna(0.0)\n\ndef target_positions(signal, max_units):\n    return np.round(signal.fillna(0.0).clip(-1, 1) * max_units).astype(int)\n\ndef orders_from_targets(targets):\n    return targets.diff().fillna(targets.iloc[0]).astype(int)\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        self.cash -= qty * price + cost\n        self.shares += qty\n\n    def equity(self, price):\n        return self.cash + self.shares * price\n\ndef sharpe(returns, periods=252):\n    r = pd.Series(returns, dtype=float).dropna()\n    if len(r) < 2 or r.std(ddof=1) == 0:\n        return 0.0\n    return float(np.sqrt(periods) * r.mean() / r.std(ddof=1))\n\ndef fill_at_next_open(orders, bars):\n    o = np.asarray(orders)[:-1]\n    t = np.flatnonzero(o != 0) + 1\n    return pd.Series(bars[\"open\"].to_numpy()[t], index=bars.index[t])\n\ndef backtest(bars, targets, cash0=1_000_000, costs=None):\n    targets = pd.Series(np.asarray(targets), index=bars.index)\n    orders = orders_from_targets(targets)\n    fills = fill_at_next_open(orders, bars)\n    pf = Portfolio(cash0)\n    rows = []\n    for t, (date, close) in enumerate(bars[\"close\"].items()):\n        if date in fills.index:\n            qty = int(orders.iloc[t - 1])\n            price = fills[date]\n            cost = 0.0 if costs is None else costs(qty, price)\n            pf.fill(qty, price, cost)\n        rows.append((pf.shares, pf.cash, pf.equity(close)))\n    return pd.DataFrame(rows, columns=[\"shares\", \"cash\", \"equity\"], index=bars.index)\n\ndef trade_cost(qty, price, per_share=0.005, minimum=1.0, half_spread_bp=2.0):\n    if qty == 0:\n        return 0.0\n    q = abs(qty)\n    return max(per_share * q, minimum) + q * price * half_spread_bp / 10_000\n\nimport math\n\ndef slippage_bp(qty, adv_shares, sigma, c=1.0):\n    return c * sigma * math.sqrt(abs(qty) / adv_shares) * 10_000\n\ndef capped_qty(qty, volume, max_participation=0.1):\n    cap = int(max_participation * volume)\n    return int(np.sign(qty)) * min(abs(int(qty)), cap)\n",
+    "how": "Check runs 7 hidden tests: every row of `hand_bars()` at two book sizes and with no impact, a run with no trades, and the final equity of `make_bars(250)` at book sizes 0.1 and 1, all rounded to 2 places and compared with ==. `slippage_bp`, `trade_cost` and `Portfolio` are already defined; the first run loads NumPy and pandas, 10 to 30 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Impact first, then the moved price, then the fill with its fees."
+    },
+    {
+     "rung": "point",
+     "text": "`bp = slippage_bp(q, vols[t - 1], sigma, c)`; the price moves by `np.sign(q) * bp / 10_000`.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`price = opens[t] * (1 + np.sign(q) * bp / 10_000)`, then `pf.fill(q, price, trade_cost(q, price))`."
+    }
+   ],
+   "feedback": {
+    "correct": "Fills now cost more as the book grows.",
+    "generic": "Not quite right. Check the volume you divide by and the sign of the price move.",
+    "byKey": {
+     "test-1": "Your rows differ on the hand frame. Use the signal day's volume, `vols[t - 1]`, and move a buy's price up.",
+     "test-3": "With $c = 0$ only the fees should apply. Charge `trade_cost(q, price)` at the fill.",
+     "test-5": "Your final equity at book 0.1 differs. Check the moved price for sales: it goes down."
+    }
+   },
+   "explain": {
+    "text": "Using `vols[t - 1]` keeps the model honest: the fill day's volume is known only after it ends. Moving the price rather than adding a fee keeps the fill ticket true. On `make_bars(250)` the £1m book ends far below the fee-only run."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The pre-trade estimate",
+   "prose": "A portfolio manager wants to buy £2m of a share that trades £40m a day, with daily volatility 1.5%. The execution desk quotes impact with the square-root model and $c = 1$, before the order goes out.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Order",
+      "Daily volume",
+      "$\\sigma$",
+      "$c$"
+     ],
+     "rows": [
+      [
+       "£2m",
+       "£40m",
+       "1.5%",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What impact cost should the desk quote, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6708.2,
+    "tol": {
+     "abs": 5
+    },
+    "unit": "£",
+    "label": "Impact cost",
+    "accept": "About £6,708: $0.015 \\times \\sqrt{0.05} = 33.5$ bp of £2m.",
+    "wrong": [
+     {
+      "id": "no-root",
+      "value": 1500,
+      "tol": {
+       "abs": 5
+      }
+     },
+     {
+      "id": "bp",
+      "value": 33.54,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$Q/V$ can be in £ as well as shares."
+    },
+    {
+     "rung": "point",
+     "text": "£2m / £40m = 0.05; $\\sqrt{0.05} = 0.2236$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.015 \\times 0.2236 = 0.003354$, times £2m."
+    }
+   ],
+   "feedback": {
+    "correct": "About 33.5 bp, or £6,708, before the spread and commission.",
+    "generic": "Not quite right. Work out $Q/V$, the impact as a fraction, then times £2m.",
+    "byKey": {
+     "no-root": "You used $Q/V$ without the square root.",
+     "bp": "That is the impact in bp. The desk quotes it in £."
+    }
+   },
+   "explain": {
+    "text": "The order is 5% of the day, so impact is $0.015 \\times \\sqrt{0.05} = 0.0034$. On £2m that is about £6,708. It is a forecast, not a fill: the post-trade report will show what it really cost."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Capacity",
+   "prose": "We ran your `backtest_with_impact` on `make_bars()` with the lookback-2 rule, the one that survived l6 best. Fees only, its Sharpe is 0.28 at any book size. With impact:",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Book",
+      "Fees only",
+      "With impact"
+     ],
+     "rows": [
+      [
+       "£10k",
+       "0.28",
+       "0.17"
+      ],
+      [
+       "£30k",
+       "0.28",
+       "0.09"
+      ],
+      [
+       "£100k",
+       "0.28",
+       "−0.07"
+      ],
+      [
+       "£300k",
+       "0.28",
+       "−0.33"
+      ],
+      [
+       "£1m",
+       "0.28",
+       "−0.83"
+      ],
+      [
+       "£10m",
+       "0.28",
+       "−3.05"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should the results note say about capacity?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "The edge survives only below about £100k; at any useful size impact turns it into a loss.",
+      "correct": true
+     },
+     {
+      "id": "any",
+      "text": "It runs at any size with a Sharpe of 0.28.",
+      "why": "You read the fees-only column. Without impact, size is free, which no market allows."
+     },
+     {
+      "id": "scale",
+      "text": "It works best at £10m, where profits are largest.",
+      "why": "You assumed profit scales with the book. Impact grows faster than the book, so losses grow fastest at £10m."
+     },
+     {
+      "id": "fix",
+      "text": "A smaller $c$ would fix it, so the capacity is unknown.",
+      "why": "You changed the model to suit the result. $c$ near 1 is the desk's estimate; choosing it after the fact is fitting."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find where the impact column turns negative."
+    },
+    {
+     "rung": "point",
+     "text": "Between £30k and £100k."
+    },
+    {
+     "rung": "step",
+     "text": "Fees-only says size is free; impact says it is not."
+    }
+   ],
+   "feedback": {
+    "correct": "A size-blind backtest reports a capacity the rule does not have.",
+    "generic": "Not quite right. Read the impact column, not the fees-only one."
+   },
+   "explain": {
+    "text": "Without impact, the Sharpe never changes with size, so the backtest claims unlimited capacity. With impact the edge is gone by £100k. The honest line in the note: a few tens of thousands of pounds.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Slippage is the gap between the real fill and the price the model assumed; large orders walk the book and pay it.",
+   "The square-root model prices impact at $c\\,\\sigma\\sqrt{Q/V}$: 12 bp for 1% of volume at $\\sigma$ = 1.2%. Cost in £ grows like $Q^{3/2}$.",
+   "A participation cap fills at most 10% of the day's volume; a backtest without impact claims unlimited capacity."
+  ],
+  "formula": {
+   "name": "Square-root impact",
+   "tex": "b = c\\,\\sigma\\sqrt{\\dfrac{Q}{V}} \\times 10^4 \\text{ bp}, \\qquad \\text{fill} = O_{t+1}\\left(1 \\pm \\dfrac{b}{10^4}\\right)",
+   "note": "Use the signal day's volume, which is known at its close."
+  },
+  "trap": "A fixed slippage per share, whatever the size: too high for small orders and far too low for big ones."
+ },
+ "quiz": [
+  {
+   "id": "q-impact",
+   "difficulty": 2,
+   "prose": "An order of 50,000 shares in a share that trades 1,000,000 a day, with $\\sigma$ = 2% and $c = 1$.",
+   "question": "What is the impact, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 44.72,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "bp",
+    "label": "Impact",
+    "accept": "44.7 bp: $0.02 \\times \\sqrt{0.05} \\times 10^4$.",
+    "wrong": [
+     {
+      "id": "no-root",
+      "value": 10,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 44.7 bp.",
+    "generic": "Not quite right. $Q/V = 0.05$; take its square root.",
+    "byKey": {
+     "no-root": "You used $Q/V$ without the square root."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{0.05} = 0.224$, and $0.02 \\times 0.224 = 0.00447$, which is 44.7 bp."
+   }
+  },
+  {
+   "id": "q-small",
+   "difficulty": 2,
+   "prose": "The best ask holds 5,000 shares. You buy 300 with a market order.",
+   "question": "What does the order pay beyond the l6 model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "Nothing: it fills at the best ask, which the half spread already covers.",
+      "correct": true
+     },
+     {
+      "id": "sqrt",
+      "text": "A square-root impact on top of the half spread",
+      "why": "You applied the large-order model to a tiny one. It is a fit over many trades; this order never leaves the best level."
+     },
+     {
+      "id": "walk",
+      "text": "The next level's price on part of the order",
+      "why": "You walked the book. 300 shares fit inside the 5,000 at the best ask."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "An order inside the best level pays just the half spread.",
+    "generic": "Not quite right. Does the order fit in the best level?"
+   },
+   "explain": {
+    "text": "All 300 shares fill at the best ask, half a spread above the mid. That is exactly what l6 charges, so there is no extra slippage."
+   }
+  },
+  {
+   "id": "q-cap",
+   "difficulty": 3,
+   "prose": "A sale of 250,000 shares on a day that trades 1,500,000, with a 10% participation cap.",
+   "question": "What does `capped_qty(-250_000, 1_500_000)` return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -150000,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Shares filled today",
+    "accept": "−150,000: the cap is 150,000 and the sign is kept.",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 150000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "left",
+      "value": -100000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "150,000 sold today; 100,000 wait.",
+    "generic": "Not quite right. Cap the size at 10% of the volume and keep the sign.",
+    "byKey": {
+     "sign": "You dropped the sign. It is a sale.",
+     "left": "That is what is left for tomorrow."
+    }
+   },
+   "explain": {
+    "text": "The cap is $0.1 \\times 1{,}500{,}000 = 150{,}000$. The sale fills that much today, with its minus sign, and the rest waits."
+   }
+  },
+  {
+   "id": "q-scale",
+   "difficulty": 3,
+   "prose": "Under the square-root model an order of 10,000 shares costs £1,200 in impact.",
+   "question": "What does an order of 40,000 shares in the same share cost, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9600,
+    "tol": {
+     "abs": 1
+    },
+    "unit": "£",
+    "label": "Impact cost",
+    "accept": "£9,600: $4^{3/2} = 8$ times £1,200.",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 4800,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "per-share",
+      "value": 2400,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Eight times as much.",
+    "generic": "Not quite right. Cost grows like $Q^{3/2}$.",
+    "byKey": {
+     "linear": "You scaled the cost with the size. Each share also costs more, by $\\sqrt{4} = 2$.",
+     "per-share": "You doubled the cost per share but forgot there are four times the shares."
+    }
+   },
+   "explain": {
+    "text": "Four times the shares, each paying twice the impact: $4 \\times 2 = 8$ times £1,200, £9,600."
+   }
+  }
+ ]
+}

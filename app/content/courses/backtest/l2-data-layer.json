@@ -1,0 +1,1131 @@
+{
+  "id": "l2-data-layer",
+  "course": "backtest",
+  "title": "Loading and caching data",
+  "minutes": 14,
+  "objectives": [
+    "Build a data layer that caches prices to disk.",
+    "Validate bars before the engine uses them."
+  ],
+  "skills": [
+    "bt-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The same download, forty times",
+      "prose": "A research notebook starts by downloading five years of one share. Today it was re-run 40 times while the rule was tuned. The log ends with the vendor refusing to answer.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "[09:02] fetch AAPL 2019-01-02..2023-10-31   network  1.9 s",
+            "[09:05] fetch AAPL 2019-01-02..2023-10-31   network  2.1 s",
+            "[09:11] fetch AAPL 2019-01-02..2023-10-31   network  1.8 s",
+            "[09:14] fetch AAPL 2019-01-02..2023-10-31   network  2.0 s",
+            "... 35 more lines, the same request each time ...",
+            "[15:47] fetch AAPL 2019-01-02..2023-10-31",
+            "HTTPError 429: Too Many Requests. Try again later."
+          ],
+          "title": "Notebook log"
+        },
+        "state": {
+          "tone": {
+            "l5": "muted",
+            "l7": "err"
+          }
+        }
+      },
+      "question": "How many of those 40 downloads did the research need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Downloads needed",
+        "placeholder": "whole number",
+        "accept": "1: the data did not change between runs.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Did 2019 to 2023 change between 09:02 and 15:47?"
+        },
+        {
+          "rung": "point",
+          "text": "Every line asks for the same ticker and the same dates.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One download, saved, answers all 40 runs."
+        }
+      ],
+      "feedback": {
+        "correct": "One download; the other 39 fetched the same bytes again.",
+        "generic": "Not quite right. Count the different requests, not the lines.",
+        "byKey": {
+          "all": "Every run asked for the same ticker and dates. Past prices do not change between runs, so 39 were repeats.",
+          "none": "The first run has to get the data from somewhere: one download."
+        }
+      },
+      "explain": {
+        "text": "Past bars do not change, so one download could have served every run. Fetch once, write the frame to disk, and read the file after that: that is a **cache**. curriculum.md warns that yfinance breaks often and rate-limits, which makes the cache part of the engine, not a nicety.",
+        "canvas": {
+          "shade": {
+            "one": [
+              "l1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A log with a cache",
+      "prose": "The same research script, now with a cache, run three times. The second run also adds a second share. Tap lines to mark them; tap again to clear.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ python research.py",
+            "fetch AAPL ... network 1.9 s",
+            "write cache/AAPL.csv",
+            "$ python research.py",
+            "cache hit cache/AAPL.csv   0.01 s",
+            "fetch MSFT ... network 2.0 s",
+            "write cache/MSFT.csv",
+            "$ python research.py",
+            "cache hit cache/AAPL.csv   0.01 s",
+            "cache hit cache/MSFT.csv   0.01 s"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "Tap every line that went to the network.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l2",
+          "l6"
+        ],
+        "countWord": "lines",
+        "only": [
+          "l2",
+          "l3",
+          "l5",
+          "l6",
+          "l7",
+          "l9",
+          "l10"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Writing and reading a file happen on your own disk."
+        },
+        {
+          "rung": "point",
+          "text": "Look for the word `network`.",
+          "highlight": [
+            "l2",
+            "l6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Lines 2 and 6: the first AAPL and the first MSFT."
+        }
+      ],
+      "feedback": {
+        "correct": "Two downloads in three runs: one per share.",
+        "generic": "Not quite right. Mark only the lines that downloaded.",
+        "byKey": {
+          "l3": "Writing `cache/AAPL.csv` is a local file write, not a download.",
+          "l5": "A cache hit reads the file in a hundredth of a second. No network.",
+          "l9": "A cache hit reads the file in a hundredth of a second. No network."
+        }
+      },
+      "explain": {
+        "text": "Each share is downloaded once, then read from disk on every later run. Adding MSFT cost one more download, not a refetch of AAPL. The file name is what makes a hit: `cache/AAPL.csv` for ticker AAPL.",
+        "canvas": {
+          "shade": {
+            "net": [
+              "l2",
+              "l6"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The cache in code",
+      "prose": "`fetch(ticker)` returns a DataFrame of bars with dates as the index. Save it as CSV, which needs nothing beyond pandas; a real project might use Parquet, which is smaller and keeps types. Read it back with `pd.read_csv(path, index_col=0, parse_dates=True)`. A failed download comes back as an empty frame and must never be cached.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> calls = []; f = counting_fetch(calls)",
+            ">>> a = cached_fetch(\"AAPL\", f, d)   # fetches",
+            ">>> b = cached_fetch(\"AAPL\", f, d)   # reads the file",
+            ">>> calls",
+            "['AAPL']"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete `cached_fetch(ticker, fetch, cache_dir=\"cache\")`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import os\nimport pandas as pd\n\ndef cached_fetch(ticker, fetch, cache_dir=\"cache\"):\n    path = os.path.join(cache_dir, f\"{ticker}.csv\")\n    if ...:                  # the file is already there\n        return ...           # read it back with dates as the index\n    df = fetch(ticker)\n    ...                      # an empty frame is never written\n    os.makedirs(cache_dir, exist_ok=True)\n    ...                      # write the file\n    return df\n",
+        "solution": "import os\nimport pandas as pd\n\ndef cached_fetch(ticker, fetch, cache_dir=\"cache\"):\n    path = os.path.join(cache_dir, f\"{ticker}.csv\")\n    if os.path.exists(path):                 # the file is already there\n        return pd.read_csv(path, index_col=0, parse_dates=True)\n    df = fetch(ticker)\n    if df.empty:                             # an empty frame is never written\n        return df\n    os.makedirs(cache_dir, exist_ok=True)\n    df.to_csv(path)                          # write the file\n    return df\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\nimport os, tempfile\n\ndef counting_fetch(calls, empty=()):\n    \"\"\"A fake download: records each ticker asked for in calls, returns 30 seeded bars,\n    or an empty frame for a ticker listed in empty (a failed download).\"\"\"\n    def fetch(ticker):\n        calls.append(ticker)\n        if ticker in empty:\n            return pd.DataFrame(columns=[\"open\", \"high\", \"low\", \"close\", \"volume\"])\n        return make_bars(30, seed=sum(map(ord, ticker)))\n    return fetch\n",
+        "examples": [
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls); a = cached_fetch('AAPL', f, d); b2 = cached_fetch('AAPL', f, d)",
+            "call": "len(calls)",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls); a = cached_fetch('AAPL', f, d); b2 = cached_fetch('AAPL', f, d)",
+            "call": "len(calls)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls); a = cached_fetch('AAPL', f, d); b2 = cached_fetch('AAPL', f, d)",
+            "call": "b2.round(6).values.tolist() == a.round(6).values.tolist()",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls); a = cached_fetch('AAPL', f, d); b2 = cached_fetch('AAPL', f, d)",
+            "call": "[str(x)[:10] for x in b2.index] == [str(x)[:10] for x in a.index]",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls); a = cached_fetch('AAPL', f, d); b2 = cached_fetch('AAPL', f, d)",
+            "call": "isinstance(b2.index, pd.DatetimeIndex)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls); cached_fetch('AAPL', f, d); cached_fetch('MSFT', f, d); cached_fetch('AAPL', f, d)",
+            "call": "sorted(os.listdir(d))",
+            "expect": "['AAPL.csv', 'MSFT.csv']",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls, empty=('BAD',)); e = cached_fetch('BAD', f, d)",
+            "call": "(len(e), os.listdir(d))",
+            "expect": "(0, [])",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = counting_fetch(calls, empty=('BAD',)); cached_fetch('BAD', f, d); cached_fetch('BAD', f, d)",
+            "call": "len(calls)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); make_bars(5).to_csv(os.path.join(d, 'XYZ.csv')); calls = []; out = cached_fetch('XYZ', counting_fetch(calls), d)",
+            "call": "(len(calls), len(out))",
+            "expect": "(0, 5)",
+            "compare": "equal"
+          },
+          {
+            "setup": "cached_fetch('SPY', counting_fetch([]))",
+            "call": "os.path.exists(os.path.join('cache', 'SPY.csv'))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests with `counting_fetch(calls)`, which is already defined: a fake download that records each ticker in `calls` and returns 30 seeded bars (or an empty frame for a failed ticker). Each test uses a fresh temporary folder `d`. The tests count downloads, compare the frame read back (values to 6 places, dates as ISO strings) and list the folder. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`os.path.exists(path)` says whether the file is there."
+        },
+        {
+          "rung": "point",
+          "text": "Read with `pd.read_csv(path, index_col=0, parse_dates=True)`; write with `df.to_csv(path)`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After `df = fetch(ticker)`, add `if df.empty: return df` before writing."
+        }
+      ],
+      "feedback": {
+        "correct": "One download per ticker, the same frame back, and no empty files.",
+        "generic": "Some tests failed. Return the file when it exists; otherwise fetch, and write only a frame that is not empty.",
+        "byKey": {
+          "test-1": "Your function downloaded twice. Check for the file first and return it without calling `fetch`.",
+          "test-4": "The index came back as text. Pass `index_col=0, parse_dates=True` so the dates are dates again.",
+          "test-6": "An empty frame was written. Next time the cache would serve that empty file instead of trying again."
+        }
+      },
+      "explain": {
+        "text": "The empty-frame line is the edge case that matters. Without it one failed download is cached forever, and every later run quietly gets no data. With it, the next run simply tries the network again."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What stays out of the repository",
+      "prose": "The engine is ready for its first commit. The data vendor's API key sits in `.env`, which the script reads as an environment variable.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ git status --short",
+            "?? .env",
+            "?? cache/",
+            "?? engine.py",
+            "?? tests/test_engine.py",
+            "?? README.md"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "Tap the lines git should never track.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l2",
+          "l3"
+        ],
+        "countWord": "lines",
+        "only": [
+          "l2",
+          "l3",
+          "l4",
+          "l5",
+          "l6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One holds a secret; one can be rebuilt from the network."
+        },
+        {
+          "rung": "point",
+          "text": "`.env` holds the key; `cache/` holds downloaded files.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both go in `.gitignore`: `.env` and `cache/`."
+        }
+      ],
+      "feedback": {
+        "correct": "`.env` and `cache/` go in `.gitignore`.",
+        "generic": "Not quite right. Keep out what is secret or can be rebuilt.",
+        "byKey": {
+          "l4": "`engine.py` is the code. It is exactly what the repository is for.",
+          "l5": "Tests belong in the repository: they are how a reader knows the engine works.",
+          "l6": "The README is the first thing a reader opens. Commit it."
+        }
+      },
+      "explain": {
+        "text": "The cache is rebuilt by the first run, and vendor data is often not yours to publish, so `cache/` goes in `.gitignore`. An API key must never be committed, even once: the git course's lesson 12 shows how it lingers in history. Everything else here is the project.",
+        "canvas": {
+          "shade": {
+            "ignore": [
+              "l2",
+              "l3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Bars that cannot be right",
+      "prose": "Before anything uses a frame, check it: dates rising and unique, no missing closes, the high at or above both the open and the close, the low at or below both, volume not negative. This frame came back from a download with five planted problems.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume"
+          ],
+          "rows": [
+            [
+              "2019-01-02",
+              "100.05",
+              "100.21",
+              "98.70",
+              "99.59",
+              "2,424,184"
+            ],
+            [
+              "2019-01-03",
+              "99.87",
+              "101.29",
+              "99.50",
+              "100.28",
+              "2,670,408"
+            ],
+            [
+              "2019-01-04",
+              "98.81",
+              "99.45",
+              "97.09",
+              "97.31",
+              "1,596,822"
+            ],
+            [
+              "2019-01-04",
+              "97.05",
+              "97.42",
+              "96.65",
+              "96.97",
+              "1,476,872"
+            ],
+            [
+              "2019-01-08",
+              "96.69",
+              "97.05",
+              "96.61",
+              "96.95",
+              "1,865,949"
+            ],
+            [
+              "2019-01-09",
+              "96.69",
+              "96.87",
+              "95.49",
+              "",
+              "2,179,440"
+            ],
+            [
+              "2019-01-10",
+              "96.40",
+              "97.07",
+              "95.77",
+              "96.92",
+              "2,045,433"
+            ],
+            [
+              "2019-01-11",
+              "97.75",
+              "97.70",
+              "97.62",
+              "97.84",
+              "1,739,422"
+            ],
+            [
+              "2019-01-14",
+              "98.08",
+              "99.47",
+              "97.53",
+              "98.90",
+              "2,076,109"
+            ],
+            [
+              "2019-01-15",
+              "98.40",
+              "98.55",
+              "98.43",
+              "98.45",
+              "2,823,168"
+            ],
+            [
+              "2019-01-16",
+              "99.09",
+              "99.80",
+              "99.08",
+              "99.31",
+              "-1,200"
+            ]
+          ],
+          "tap": "rows",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap every row that breaks a check.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3",
+          "r5",
+          "r7",
+          "r9",
+          "r10"
+        ],
+        "countWord": "rows",
+        "wrong": [
+          {
+            "id": "first-dup",
+            "set": [
+              "r2",
+              "r5",
+              "r7",
+              "r9",
+              "r10"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check each row for one rule at a time: date, close, high, low, volume."
+        },
+        {
+          "rung": "point",
+          "text": "Row 7's high is below its open; row 9's low is above its open.",
+          "highlight": [
+            "r7",
+            "r9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows 3 (a repeated date), 5 (no close), 7, 9 and 10 (volume −1,200)."
+        }
+      ],
+      "feedback": {
+        "correct": "Five rows: a repeated date, a missing close, a high below the body, a low above it, and negative volume.",
+        "generic": "Not quite right. Test every row against each of the five checks.",
+        "byKey": {
+          "first-dup": "Row 2 is the first 4 January and is fine on its own. The repeat in row 3 is the problem.",
+          "r4": "Row 4 skips 7 January, but one missing business day is not a gap worth stopping for.",
+          "r8": "Row 8's high, 99.47, is above both its open and its close. It passes."
+        }
+      },
+      "explain": {
+        "text": "Row 7's high of 97.70 is below its open of 97.75, which no real trade can produce. Row 9's low of 98.43 is above its open of 98.40. Each check is one line of pandas, and the next screen writes them.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3,
+              5,
+              7,
+              9,
+              10
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The checks in code",
+      "prose": "Return a sorted list of problem codes: `\"dates-not-rising\"`, `\"duplicate-date\"`, `\"nan-close\"`, `\"high-below-body\"`, `\"low-above-body\"`, `\"negative-volume\"`, and `\"gap\"` for two dates more than five business days apart. The body is the range between the open and the close.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> validate_bars(make_bars(30))",
+            "[]",
+            ">>> validate_bars(planted(\"nan-close\", \"gap\"))",
+            "['gap', 'nan-close']"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete `validate_bars(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef validate_bars(df):\n    \"\"\"A sorted list of problem codes; [] for clean bars.\"\"\"\n    problems = set()\n    idx = df.index\n    if (idx[1:] < idx[:-1]).any():\n        problems.add(\"dates-not-rising\")\n    ...   # duplicate-date, nan-close\n    ...   # high-below-body, low-above-body: compare with open and close\n    ...   # negative-volume\n    days = idx.values.astype(\"datetime64[D]\")\n    ...   # gap: np.busday_count(days[:-1], days[1:]) above 5\n    return sorted(problems)\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef validate_bars(df):\n    \"\"\"A sorted list of problem codes; [] for clean bars.\"\"\"\n    problems = set()\n    idx = df.index\n    if (idx[1:] < idx[:-1]).any():\n        problems.add(\"dates-not-rising\")\n    if idx.duplicated().any():\n        problems.add(\"duplicate-date\")\n    if df[\"close\"].isna().any():\n        problems.add(\"nan-close\")\n    top = df[[\"open\", \"close\"]].max(axis=1)\n    bottom = df[[\"open\", \"close\"]].min(axis=1)\n    if (df[\"high\"] < top).any():\n        problems.add(\"high-below-body\")\n    if (df[\"low\"] > bottom).any():\n        problems.add(\"low-above-body\")\n    if (df[\"volume\"] < 0).any():\n        problems.add(\"negative-volume\")\n    days = idx.values.astype(\"datetime64[D]\")\n    if (np.busday_count(days[:-1], days[1:]) > 5).any():\n        problems.add(\"gap\")\n    return sorted(problems)\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef planted(*kinds, n=30):\n    \"\"\"make_bars(n) with one planted problem per kind.\"\"\"\n    df = make_bars(n)\n    idx = list(df.index)\n    for k in kinds:\n        if k == \"dates-not-rising\":\n            idx[10], idx[11] = idx[11], idx[10]\n        if k == \"duplicate-date\":\n            idx[12] = idx[11]\n        if k == \"nan-close\":\n            df.iloc[5, df.columns.get_loc(\"close\")] = np.nan\n        if k == \"high-below-body\":\n            df.iloc[7, df.columns.get_loc(\"high\")] = max(df[\"open\"].iloc[7], df[\"close\"].iloc[7]) - 0.5\n        if k == \"low-above-body\":\n            df.iloc[9, df.columns.get_loc(\"low\")] = min(df[\"open\"].iloc[9], df[\"close\"].iloc[9]) + 0.3\n        if k == \"negative-volume\":\n            df.iloc[3, df.columns.get_loc(\"volume\")] = -1200.0\n    df.index = pd.DatetimeIndex(idx)\n    if \"gap\" in kinds:\n        df = df.drop(df.index[15:22])\n    return df\n",
+        "examples": [
+          {
+            "call": "validate_bars(make_bars(30))",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "validate_bars(make_bars(30))",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(make_bars())",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('dates-not-rising'))",
+            "expect": "['dates-not-rising']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('duplicate-date'))",
+            "expect": "['duplicate-date']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('nan-close'))",
+            "expect": "['nan-close']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('high-below-body'))",
+            "expect": "['high-below-body']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('low-above-body'))",
+            "expect": "['low-above-body']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('negative-volume'))",
+            "expect": "['negative-volume']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('gap'))",
+            "expect": "['gap']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(planted('nan-close', 'negative-volume', 'gap'))",
+            "expect": "['gap', 'nan-close', 'negative-volume']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_bars(make_bars(1))",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: clean `make_bars(30)`, `make_bars()` and a single bar, then `planted(...)` copies of `make_bars(30)` with one problem each and one with three. `planted` is already defined. Lists are compared with ==, so the order matters. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each check is a boolean Series followed by `.any()`."
+        },
+        {
+          "rung": "point",
+          "text": "`idx.duplicated().any()`, `df[\"close\"].isna().any()`, and `top = df[[\"open\", \"close\"]].max(axis=1)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For the gap: `(np.busday_count(days[:-1], days[1:]) > 5).any()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every planted problem is caught, and clean bars pass.",
+        "generic": "Some tests failed. Check each code on its own planted frame, and return `sorted(problems)`.",
+        "byKey": {
+          "test-2": "Your checks complain about clean bars. Compare the high with the larger of open and close, not with the close alone.",
+          "test-9": "The gap was missed. Seven business days are missing between two rows, so `busday_count` there is 8."
+        }
+      },
+      "explain": {
+        "text": "Each code is a question a bad download can answer yes to. A function that returns codes, rather than raising at the first one, tells you everything wrong at once. Lesson 4's equity and every metric after it assume this list is empty."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A cache that answers the wrong question",
+      "prose": "Last month you cached AAPL for 2019 to 2021 with your `cached_fetch`. Today you ask for 2019 to 2023.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ python research.py --start 2019-01-02 --end 2023-10-31",
+            "cache hit cache/AAPL.csv   0.01 s",
+            "bars: 783   first 2019-01-02   last 2021-12-31"
+          ],
+          "title": "Terminal"
+        },
+        "state": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      },
+      "question": "Why does the backtest stop at the end of 2021?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The file is named by ticker only, so last month's 2019 to 2021 download answers every AAPL request",
+            "correct": true
+          },
+          {
+            "id": "vendor",
+            "text": "The vendor has no AAPL data after 2021",
+            "why": "You blamed the vendor, but the log shows no download at all: the cache answered before the network was asked."
+          },
+          {
+            "id": "nan",
+            "text": "Rows with a missing close were dropped",
+            "why": "Dropping a few bad rows cannot remove two whole years. The file simply ends in 2021."
+          },
+          {
+            "id": "csv",
+            "text": "Reading the CSV lost the later rows",
+            "why": "A CSV gives back what was written. The file was written last month, with last month's range."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the second line: what did the run read?"
+        },
+        {
+          "rung": "point",
+          "text": "The file name holds `AAPL` and nothing about dates.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Any AAPL request finds `cache/AAPL.csv`, whatever dates it asked for."
+        }
+      ],
+      "feedback": {
+        "correct": "The key ignored the dates, so a stale file answered a new question.",
+        "generic": "Not quite right. Ask what the file name says about the request.",
+        "byKey": {
+          "vendor": "Nothing was downloaded: the cache hit came first. The vendor was never asked about 2022 or 2023."
+        }
+      },
+      "explain": {
+        "text": "A cache key must hold everything that changes the answer. Keyed by ticker alone, the file from the first request answers every later one, silently. The fix is to put the dates in the name.",
+        "canvas": {
+          "shade": {
+            "stale": [
+              "l2",
+              "l3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What the key must hold",
+      "prose": "The rule behind every cache you wrote: same key, same data. So the key must name every input that changes the data:\n$$\\text{key} = (\\text{ticker}, \\text{start}, \\text{end})$$\nAs a file name: `AAPL_2019-01-02_2023-10-31.csv`. Then a cache hit is always the answer to the question asked.",
+      "question": "A colleague proposes adding the download time to the file name, \"to be safe\". What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "No later run ever finds its file, so every run downloads again",
+            "correct": true
+          },
+          {
+            "id": "safe",
+            "text": "The cache becomes safer and just as fast",
+            "why": "You treated more in the key as always safer. A key that changes every run never matches, so the cache never hits."
+          },
+          {
+            "id": "stale",
+            "text": "Stale files are served more often",
+            "why": "The opposite: no file is ever reused, stale or not."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Too little in the key serves stale data; too much never hits.",
+        "generic": "Not quite right. Think about whether a later run can ever produce the same name."
+      },
+      "explain": {
+        "text": "The key should change exactly when the answer would. Ticker and dates change the bars; the time of the download does not. A key with too little is wrong, and a key with too much is useless."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Dates in the key",
+      "prose": "Extend `cached_fetch` with optional `start` and `end`. When either is given, they go into the file name and are passed on as `fetch(ticker, start, end)`. With neither, it behaves exactly as before, so earlier calls keep working.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> cached_fetch(\"AAPL\", f, d, start=\"2019-01-02\", end=\"2021-12-31\")",
+            ">>> cached_fetch(\"AAPL\", f, d, start=\"2019-01-02\", end=\"2023-10-31\")",
+            ">>> sorted(os.listdir(d))",
+            "['AAPL_2019-01-02_2021-12-31.csv', 'AAPL_2019-01-02_2023-10-31.csv']"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete the dated `cached_fetch`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import os\nimport pandas as pd\n\ndef cached_fetch(ticker, fetch, cache_dir=\"cache\", start=None, end=None):\n    dated = start is not None or end is not None\n    name = ...    # \"AAPL.csv\", or \"AAPL_2019-01-02_2023-10-31.csv\" when dated\n    path = os.path.join(cache_dir, name)\n    if os.path.exists(path):\n        return pd.read_csv(path, index_col=0, parse_dates=True)\n    df = ...      # fetch(ticker), or fetch(ticker, start, end) when dated\n    if df.empty:\n        return df\n    os.makedirs(cache_dir, exist_ok=True)\n    df.to_csv(path)\n    return df\n",
+        "solution": "import os\nimport pandas as pd\n\ndef cached_fetch(ticker, fetch, cache_dir=\"cache\", start=None, end=None):\n    dated = start is not None or end is not None\n    name = f\"{ticker}_{start}_{end}.csv\" if dated else f\"{ticker}.csv\"\n    path = os.path.join(cache_dir, name)\n    if os.path.exists(path):\n        return pd.read_csv(path, index_col=0, parse_dates=True)\n    df = fetch(ticker, start, end) if dated else fetch(ticker)\n    if df.empty:\n        return df\n    os.makedirs(cache_dir, exist_ok=True)\n    df.to_csv(path)\n    return df\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\nimport os, tempfile\n\nFULL = make_bars()\n\ndef counting_fetch(calls, empty=()):\n    def fetch(ticker):\n        calls.append(ticker)\n        if ticker in empty:\n            return pd.DataFrame(columns=[\"open\", \"high\", \"low\", \"close\", \"volume\"])\n        return make_bars(30, seed=sum(map(ord, ticker)))\n    return fetch\n\ndef ranged_fetch(calls):\n    \"\"\"A fake download that honours dates: fetch(ticker, start, end) slices five years of bars.\"\"\"\n    def fetch(ticker, start=None, end=None):\n        calls.append((ticker, start, end))\n        return FULL.loc[start:end].copy()\n    return fetch\n",
+        "examples": [
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = ranged_fetch(calls); x = cached_fetch('AAPL', f, d, start='2019-01-02', end='2021-12-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31')",
+            "call": "sorted(os.listdir(d))",
+            "expect": "['AAPL_2019-01-02_2021-12-31.csv', 'AAPL_2019-01-02_2023-10-31.csv']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = ranged_fetch(calls); x = cached_fetch('AAPL', f, d, start='2019-01-02', end='2021-12-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31')",
+            "call": "sorted(os.listdir(d))",
+            "expect": "['AAPL_2019-01-02_2021-12-31.csv', 'AAPL_2019-01-02_2023-10-31.csv']",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = ranged_fetch(calls); x = cached_fetch('AAPL', f, d, start='2019-01-02', end='2021-12-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31')",
+            "call": "len(calls)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = ranged_fetch(calls); x = cached_fetch('AAPL', f, d, start='2019-01-02', end='2021-12-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31')",
+            "call": "str(y.index[-1].date())",
+            "expect": "'2023-10-31'",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = ranged_fetch(calls); x = cached_fetch('AAPL', f, d, start='2019-01-02', end='2021-12-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31'); y2 = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31')",
+            "call": "str(y2.index[-1].date())",
+            "expect": "'2023-10-31'",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = ranged_fetch(calls); x = cached_fetch('AAPL', f, d, start='2019-01-02', end='2021-12-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31'); y2 = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31')",
+            "call": "len(calls)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; f = ranged_fetch(calls); x = cached_fetch('AAPL', f, d, start='2019-01-02', end='2021-12-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31'); y = cached_fetch('AAPL', f, d, start='2019-01-02', end='2023-10-31')",
+            "call": "len(y)",
+            "expect": "1260",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; cached_fetch('AAPL', counting_fetch(calls), d); cached_fetch('AAPL', counting_fetch(calls), d)",
+            "call": "sorted(os.listdir(d))",
+            "expect": "['AAPL.csv']",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = tempfile.mkdtemp(); calls = []; cached_fetch('AAPL', counting_fetch(calls), d); cached_fetch('AAPL', counting_fetch(calls), d)",
+            "call": "calls",
+            "expect": "['AAPL']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests with two fakes that are already defined: `ranged_fetch(calls)`, whose `fetch(ticker, start, end)` slices five years of seeded bars, and the undated `counting_fetch(calls)` from before. The tests list the folder, count downloads and read the last date of each answer. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two lines change: the name and the call."
+        },
+        {
+          "rung": "point",
+          "text": "`name = f\"{ticker}_{start}_{end}.csv\" if dated else f\"{ticker}.csv\"`.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`df = fetch(ticker, start, end) if dated else fetch(ticker)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Two ranges, two files, and the 2023 request ends in 2023.",
+        "generic": "Some tests failed. Build the name from ticker, start and end when dated, and pass the dates to `fetch`.",
+        "byKey": {
+          "test-3": "The 2019 to 2023 request came back ending in 2021: the dates are not in the file name yet.",
+          "test-7": "Undated calls must still write `AAPL.csv`, so code from earlier screens keeps working."
+        }
+      },
+      "explain": {
+        "text": "The 2021 file and the 2023 file now sit side by side, and each request finds its own. The old call without dates still writes `AAPL.csv`. That is how a signature grows without breaking what was built on it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Swapping in real data",
+      "prose": "In level 4 the seeded bars are replaced by real ones with this same function: `fetch = lambda t, s, e: yf.download(t, start=s, end=e, auto_adjust=False)`. Two colleagues run it a month apart with the same ticker and dates, so their file names match. Their 2019 closes differ by a few per cent.",
+      "question": "What is the likeliest cause?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "One cache was filled by a yfinance version that adjusted prices for dividends and splits by default, the other not",
+            "correct": true
+          },
+          {
+            "id": "revise",
+            "text": "The exchange revised its 2019 prices",
+            "why": "Exchanges do not rewrite five-year-old trades. A few per cent across a whole year points to an adjustment."
+          },
+          {
+            "id": "csv",
+            "text": "CSV rounding",
+            "why": "A CSV keeps every digit pandas writes. Rounding cannot move prices by per cents."
+          },
+          {
+            "id": "tz",
+            "text": "A time-zone shift in the dates",
+            "why": "A time-zone slip moves a bar by a day, not every close by the same few per cent."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Prices that differ by a smooth few per cent look scaled, not wrong."
+        },
+        {
+          "rung": "point",
+          "text": "Dividends and splits rescale past prices when adjusted."
+        },
+        {
+          "rung": "step",
+          "text": "`auto_adjust`'s default has changed between yfinance versions, so the two caches hold different kinds of price."
+        }
+      ],
+      "feedback": {
+        "correct": "Set `auto_adjust` explicitly, and put it in the cache key.",
+        "generic": "Not quite right. Think about what would rescale every old close at once."
+      },
+      "explain": {
+        "text": "`auto_adjust`'s default has changed between yfinance versions, so the same call can return raw or adjusted prices. Pass it explicitly, as the lambda does, and add it to the key when you use both. The alpha course uses adjusted prices for returns and raw ones for share counts."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Fetch once, write to disk, read the file after that: one download per question, and no rate limits.",
+      "A cache key names every input that changes the data: ticker, start and end. Too little serves stale files; too much never hits.",
+      "Validate a frame before anything uses it, and never cache an empty download. The cache folder and API keys stay out of git."
+    ],
+    "formula": {
+      "name": "Cache key",
+      "tex": "\\text{key} = (\\text{ticker}, \\text{start}, \\text{end})",
+      "note": "Add any setting that changes the answer, such as `auto_adjust`."
+    },
+    "trap": "A cache keyed by ticker alone answers a 2019 to 2023 request with last month's 2019 to 2021 file, silently."
+  },
+  "quiz": [
+    {
+      "id": "q-empty",
+      "difficulty": 2,
+      "prose": "A download fails and `fetch` returns an empty DataFrame.",
+      "question": "What should `cached_fetch` do with it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Return it without writing a file, so the next run tries again",
+            "correct": true
+          },
+          {
+            "id": "write",
+            "text": "Write it like any other frame",
+            "why": "Then every later run reads the empty file as a cache hit and never downloads again."
+          },
+          {
+            "id": "raise",
+            "text": "Delete the whole cache folder",
+            "why": "The other files are good. One failed ticker says nothing about them."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A failure is never cached.",
+        "generic": "Not quite right. Think about the next run."
+      },
+      "explain": {
+        "text": "Caching the empty frame would turn one bad minute into a permanent hole in the data. Returning it unwritten lets the caller notice, and the next run fetches again."
+      }
+    },
+    {
+      "id": "q-fetch-count",
+      "difficulty": 3,
+      "prose": "A dated cache (ticker, start and end in the key) starts empty. Requests in order: AAPL 2019 to 2021, AAPL 2019 to 2023, MSFT 2019 to 2023, AAPL 2019 to 2021, AAPL 2019 to 2023.",
+      "question": "How many downloads happen?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "3: one per different key.",
+        "wrong": [
+          {
+            "id": "tickers",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three different keys, three downloads.",
+        "generic": "Not quite right. Count the different (ticker, start, end) triples.",
+        "byKey": {
+          "tickers": "You counted tickers. With dates in the key, the two AAPL ranges are different files.",
+          "all": "The last two requests repeat earlier keys, so they are cache hits."
+        }
+      },
+      "explain": {
+        "text": "The keys are AAPL 2019 to 2021, AAPL 2019 to 2023 and MSFT 2019 to 2023. The fourth and fifth requests repeat the first two. A ticker-only key would have made 2 downloads and served stale data."
+      }
+    },
+    {
+      "id": "q-gap",
+      "difficulty": 3,
+      "prose": "In a frame of daily bars, one row is dated Friday 6 March 2020 and the next Friday 20 March 2020.",
+      "question": "Which code does `validate_bars` report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`\"gap\"`",
+            "correct": true
+          },
+          {
+            "id": "dup",
+            "text": "`\"duplicate-date\"`",
+            "why": "The two dates are different. A duplicate is the same date twice."
+          },
+          {
+            "id": "rise",
+            "text": "`\"dates-not-rising\"`",
+            "why": "20 March is after 6 March, so the dates still rise."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: weekends are allowed",
+            "why": "Weekends are skipped, but this is two weeks: 10 business days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "10 business days apart, more than 5.",
+        "generic": "Not quite right. Count the business days between the two dates."
+      },
+      "explain": {
+        "text": "`np.busday_count` from 6 March to 20 March is 10. Nine trading days are missing, so a backtest would jump across them in one bar. The check flags it so you can decide what to do."
+      }
+    },
+    {
+      "id": "q-gitignore",
+      "difficulty": 2,
+      "prose": "Your project folder holds `engine.py`, `tests/`, `README.md`, `RESULTS.md`, `cache/` and `.env` with the vendor's key.",
+      "question": "What goes in `.gitignore`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`cache/` and `.env`",
+            "correct": true
+          },
+          {
+            "id": "env",
+            "text": "Only `.env`",
+            "why": "The key must stay out, but so should the cache: it is rebuilt by the first run and vendor data is often not yours to publish."
+          },
+          {
+            "id": "tests",
+            "text": "`cache/`, `.env` and `tests/`",
+            "why": "Tests are part of the project. A reader wants to run them."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Secrets and rebuildable data stay out.",
+        "generic": "Not quite right. Keep out what is secret or can be rebuilt."
+      },
+      "explain": {
+        "text": "The repository holds code, tests, the README and the results note. The cache is rebuilt by running the code, and the key must never appear in history."
+      }
+    }
+  ]
+}

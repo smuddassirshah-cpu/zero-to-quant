@@ -24,7 +24,8 @@
     const itf = lmode === 'log' ? (u) => 10 ** u : lmode ? (u) => 1 / (1 + Math.exp(-u)) : (u) => u;
     const W = 540, x0 = 30, x1 = 510, t0 = tf(min), t1 = tf(max);
     const sx = Object.assign((v) => x0 + (tf(v) - t0) / ((t1 - t0) || 1) * (x1 - x0), { invert: (px) => itf(t0 + (px - x0) / (x1 - x0) * (t1 - t0)), domain: [min, max], range: [x0, x1] });
-    const fmt = (v) => (P.format === 'fraction' ? toFrac(v) : P.format === 'percent' ? C.fmtNum(+(v * 100).toFixed(6), 2) + '%' : C.fmtNum(v, 3));
+    /* item 348: negative tick labels print with the minus sign U+2212 */
+    const fmt = (v) => (P.format === 'fraction' ? toFrac(v) : (P.format === 'percent' ? C.fmtNum(+(v * 100).toFixed(6), 2) + '%' : C.fmtNum(v, 3)).replace(/^-/, '−'));
     const fr = C.frame(host, W, 120, { label: P.label || `Number line from ${min} to ${max}` });
     const g = fr.g;
     const axisG = svg('g', { class: 'cv-axis' }), intG = svg('g', { class: 'cv-intervals' }), arrG = svg('g', { class: 'cv-jumps' }), ptG = svg('g', { class: 'cv-points' });
@@ -166,6 +167,8 @@
           e.g.append(e.bar, e.a, e.b, e.lab); intG.append(e.g); ints.set(iv.id, e); e.fresh = true;
         }
         e.row = rowOf(iv, k); e.spec = iv;
+        /* item 413: intervals are tap targets with params.tapIntervals (or tap: true on an interval) */
+        if (P.tapIntervals || iv.tap === true) { e.g.setAttribute('data-tap', ''); e.g.dataset.label = `Interval from ${C.fmtNum(iv.from, 3)} to ${C.fmtNum(iv.to, 3)}`; } else e.g.removeAttribute('data-tap');
         setSlot(e.g, Math.min(6, Math.max(1, iv.colour || k + 1))); // colour: a series slot 1 to 6, patchable
       });
       for (const [id, e] of ints) if (!seenI.has(id)) { e.g.remove(); ints.delete(id); }

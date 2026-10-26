@@ -60,6 +60,14 @@
         const lo = pairs.length ? pairs[0][0] : 0, hi = pairs.length ? pairs[pairs.length - 1][0] : 1, gap = Math.max(1e-9, Math.min(1, ...pairs.slice(1).map(([v], i) => v - pairs[i][0]).filter((d) => d > 1e-9)));
         return { discrete: true, f, lo, hi, support: [...new Set(pairs.map(([v]) => v))], gap, mean, sd: Math.sqrt(v2), range: [lo - 0.8 * gap, hi + 0.8 * gap], tex: 'X' };
       }
+      case 'beta': { // item 344: Beta(a, b) on [0, 1], for posteriors and credible intervals
+        const a = Math.max(1e-3, pick(p, ['a', 'alpha', 'α'], 2)), b = Math.max(1e-3, pick(p, ['b', 'beta', 'β'], 2));
+        const lB = K.lgamma(a) + K.lgamma(b) - K.lgamma(a + b);
+        const f = (x) => (x <= 0 || x >= 1 ? (x === 0 && a === 1 ? Math.exp(-lB) : x === 1 && b === 1 ? Math.exp(-lB) : 0) : Math.exp((a - 1) * Math.log(x) + (b - 1) * Math.log(1 - x) - lB));
+        const cdf = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : K.clamp(K.simpson(f, 1e-9, x, 800), 0, 1));
+        const mean = a / (a + b), v = a * b / ((a + b) ** 2 * (a + b + 1));
+        return { discrete: false, f, cdf, mean, median: a > 1 && b > 1 ? (a - 1 / 3) / (a + b - 2 / 3) : NaN, sd: Math.sqrt(v), range: [0, 1], tex: `\text{Beta}(${K.fmt(a, 3)}, ${K.fmt(b, 3)})`, jumps: [0, 1] };
+      }
       case 'lognormal': { // item 305: log X ~ N(mu, sigma^2)
         const mu = pick(p, ['mu', 'μ'], 0), s = Math.max(1e-9, pick(p, ['sigma', 'σ'], 0.5));
         const f = (x) => (x <= 0 ? 0 : Math.exp(-0.5 * ((Math.log(x) - mu) / s) ** 2) / (x * s * Math.sqrt(2 * Math.PI)));

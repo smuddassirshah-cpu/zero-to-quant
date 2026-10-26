@@ -1,0 +1,1274 @@
+{
+  "id": "l4-accounting",
+  "course": "backtest",
+  "title": "Cash, positions and equity",
+  "minutes": 15,
+  "objectives": [
+    "Track cash, holdings and equity correctly through every trade.",
+    "Show that a fill changes equity only by its cost."
+  ],
+  "skills": [
+    "bt-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A five-day ledger",
+      "prose": "A £10,000 account trades one share whose close starts at £50.00. Each row is one day: the fill happens during the day, then the books are marked at the close. **Equity** is what the account is worth: the cash plus the shares at that close.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                50.0,
+                50.4,
+                49.8,
+                50.2,
+                50.9,
+                51.3,
+                50.8
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "yLabel": "Close (£)",
+          "money": "£",
+          "height": 190
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "b1",
+              "i": 1,
+              "label": "buy 100"
+            }
+          ]
+        }
+      },
+      "question": "Fill in the cash and the equity at the end of days 1 and 2.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "Trade",
+          "Cash (£)",
+          "Shares",
+          "Close (£)",
+          "Equity (£)"
+        ],
+        "rows": [
+          [
+            "Start",
+            "",
+            "10000.00",
+            "0",
+            "",
+            "10000.00"
+          ],
+          [
+            "1",
+            "buy 100 at £50.10, £1 fee",
+            {
+              "edit": true,
+              "answer": 4989,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            "100",
+            "50.40",
+            {
+              "edit": true,
+              "answer": 10029,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "2",
+            "none",
+            {
+              "edit": true,
+              "answer": 4989,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            "100",
+            "49.80",
+            {
+              "edit": true,
+              "answer": 9969,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The buy pays 100 × £50.10 plus the £1 fee out of cash."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1 cash: 10,000 − 5,010 − 1 = 4,989.",
+          "highlight": [
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Equity is cash + 100 × close: 4,989 + 5,040 = 10,029, then 4,989 + 4,980 = 9,969."
+        }
+      ],
+      "feedback": {
+        "correct": "Cash moves only when we trade; equity moves every day with the close.",
+        "generic": "Not quite right. Cash falls by the shares' price plus the fee; equity is cash plus shares times the close."
+      },
+      "explain": {
+        "text": "The buy turned £5,011 of cash into 100 shares and a £1 fee. On day 2 nothing traded, so cash stayed at £4,989, and equity fell £60 with the close. Marking the shares at each close is **marking to market**.",
+        "canvas": {
+          "markers": [
+            {
+              "id": "b1",
+              "i": 1,
+              "label": "buy 100"
+            },
+            {
+              "id": "d2",
+              "i": 2,
+              "label": "−£60",
+              "below": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where the money went",
+      "prose": "Day 1 again, just after the fill: cash £4,989 and 100 shares. Slide the day's close and watch equity.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Item",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Cash",
+              "£4,989.00"
+            ],
+            [
+              "Shares",
+              "100"
+            ],
+            [
+              "Close",
+              "£50.40"
+            ],
+            [
+              "Equity",
+              "£10,029.00"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "params": {
+            "c": 50.4
+          },
+          "values": {
+            "r2c1": "£50.40",
+            "r3c1": "£10,029.00"
+          }
+        },
+        "derive": {
+          "values.r2c1": "money(c, '£', 2)",
+          "values.r3c1": "money(4989 + 100 * c, '£', 2)",
+          "caption": "Equity minus the starting £10,000: {{money(4989 + 100 * c - 10000, '£', 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "c",
+            "min": 49.5,
+            "max": 51,
+            "step": 0.01,
+            "start": 50.4,
+            "label": "close (£)",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "At what close is equity back to exactly £10,000?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50.11,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Close (£)",
+        "placeholder": "2 decimal places",
+        "accept": "£50.11: 4,989 + 100 × 50.11 = 10,000.",
+        "wrong": [
+          {
+            "id": "fill",
+            "value": 50.1,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "start",
+            "value": 50.0,
+            "tol": {
+              "abs": 0.004
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide until the caption reads £0.00."
+        },
+        {
+          "rung": "point",
+          "text": "Solve 4,989 + 100 × close = 10,000.",
+          "highlight": [
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Close = 5,011 / 100 = £50.11."
+        }
+      ],
+      "feedback": {
+        "correct": "£50.11: the fill price plus 1p a share for the fee.",
+        "generic": "Not quite right. Find the close where cash plus 100 shares makes £10,000.",
+        "byKey": {
+          "fill": "At the fill price, £50.10, equity is £9,999: the £1 fee is still missing.",
+          "start": "At £50.00 equity is £9,989. The fill was 10p above that, and the fee is on top."
+        }
+      },
+      "explain": {
+        "text": "Equity is £10,000 at a close of £50.11. The fill moved £5,010 from cash into shares worth £5,010, and the £1 fee was the only real loss. Every pound above £50.11 is market move, not accounting.",
+        "canvas": {
+          "params": {
+            "c": 50.11
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What a fill does to equity",
+      "prose": "Mark the shares at the fill price itself, the instant after the day-1 buy of 100 at £50.10 with a £1 fee. Before the fill: £10,000 cash, no shares.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Cash (£)",
+            "Shares",
+            "Equity at £50.10 (£)"
+          ],
+          "rows": [
+            [
+              "Before",
+              "10,000.00",
+              "0",
+              "10,000.00"
+            ],
+            [
+              "After",
+              "4,989.00",
+              "100",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "By how much does equity change at the moment of the fill, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Change in equity (£)",
+        "placeholder": "a negative number for a fall",
+        "accept": "−£1: only the fee leaves the account.",
+        "wrong": [
+          {
+            "id": "cash",
+            "value": -5011,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After the fill, equity = 4,989 + 100 × 50.10."
+        },
+        {
+          "rung": "point",
+          "text": "100 × 50.10 = 5,010.",
+          "highlight": [
+            "r1c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4,989 + 5,010 = 9,999, one pound below 10,000."
+        }
+      ],
+      "feedback": {
+        "correct": "Equity falls by the fee and nothing else.",
+        "generic": "Not quite right. Compute equity after the fill at £50.10 and compare it with £10,000.",
+        "byKey": {
+          "cash": "That is the change in cash. The £5,010 did not vanish: it became 100 shares worth £5,010.",
+          "zero": "The shares are worth what was paid, but the £1 fee is gone."
+        }
+      },
+      "explain": {
+        "text": "At the fill price, the shares are worth exactly the cash paid for them, so the fill moves value between two pockets. Only the cost leaves: equity goes from £10,000 to £9,999. Any change after that comes from the close moving away from the fill.",
+        "canvas": {
+          "values": {
+            "r1c3": "9,999.00"
+          },
+          "highlight": [
+            "r1c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Adding, then selling out",
+      "prose": "Days 3 and 4. Day 3 buys 50 more at £49.70; day 4 sells all 150 at £50.60. Each trade pays a £1 fee. Edge case: after day 4 the account holds exactly 0 shares.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                50.0,
+                50.4,
+                49.8,
+                50.2,
+                50.9,
+                51.3,
+                50.8
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "yLabel": "Close (£)",
+          "money": "£",
+          "height": 190
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "b3",
+              "i": 3,
+              "label": "buy 50"
+            },
+            {
+              "id": "s4",
+              "i": 4,
+              "label": "sell 150"
+            }
+          ]
+        }
+      },
+      "question": "Fill in cash, shares and equity for days 3 and 4.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "Trade",
+          "Cash (£)",
+          "Shares",
+          "Close (£)",
+          "Equity (£)"
+        ],
+        "rows": [
+          [
+            "Start",
+            "",
+            "10000.00",
+            "0",
+            "",
+            "10000.00"
+          ],
+          [
+            "1",
+            "buy 100 at £50.10, £1 fee",
+            "4989.00",
+            "100",
+            "50.40",
+            "10029.00"
+          ],
+          [
+            "2",
+            "none",
+            "4989.00",
+            "100",
+            "49.80",
+            "9969.00"
+          ],
+          [
+            "3",
+            "buy 50 at £49.70, £1 fee",
+            {
+              "edit": true,
+              "answer": 2503,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            "150",
+            "50.20",
+            {
+              "edit": true,
+              "answer": 10033,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "4",
+            "sell 150 at £50.60, £1 fee",
+            {
+              "edit": true,
+              "answer": 10092,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "50.90",
+            {
+              "edit": true,
+              "answer": 10092,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A sale adds the proceeds to cash, then subtracts the fee."
+        },
+        {
+          "rung": "point",
+          "text": "Day 3: 4,989 − 50 × 49.70 − 1 = 2,503. Day 4: 2,503 + 150 × 50.60 − 1.",
+          "highlight": [
+            "s4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 3 equity 2,503 + 150 × 50.20 = 10,033. Day 4 cash 10,092, 0 shares, equity 10,092."
+        }
+      ],
+      "feedback": {
+        "correct": "Flat after day 4: equity is all cash, £10,092.",
+        "generic": "Not quite right. A buy spends price × shares plus the fee; a sale receives price × shares minus the fee."
+      },
+      "explain": {
+        "text": "With 0 shares, equity is the cash and the close no longer matters: day 4's close of £50.90 adds nothing. The round trip made £92 after three £1 fees. A position closed to exactly 0 must leave no leftover shares, which the code tests check.",
+        "canvas": {
+          "markers": [
+            {
+              "id": "b3",
+              "i": 3,
+              "label": "buy 50"
+            },
+            {
+              "id": "s4",
+              "i": 4,
+              "label": "flat, £10,092"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A short sale",
+      "prose": "Day 5: from flat, sell 80 shares we do not own at £51.00, with a £1 fee. This is a **short**: cash goes up, shares go negative, and we owe the shares back.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                50.0,
+                50.4,
+                49.8,
+                50.2,
+                50.9,
+                51.3,
+                50.8
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "yLabel": "Close (£)",
+          "money": "£",
+          "height": 190
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "s5",
+              "i": 5,
+              "label": "short 80"
+            }
+          ]
+        }
+      },
+      "question": "Fill in cash, shares and equity at the end of day 5.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "Trade",
+          "Cash (£)",
+          "Shares",
+          "Close (£)",
+          "Equity (£)"
+        ],
+        "rows": [
+          [
+            "4",
+            "sell 150 at £50.60, £1 fee",
+            "10092.00",
+            "0",
+            "50.90",
+            "10092.00"
+          ],
+          [
+            "5",
+            "sell 80 at £51.00, £1 fee",
+            {
+              "edit": true,
+              "answer": 14171,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            {
+              "edit": true,
+              "answer": -80,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "51.30",
+            {
+              "edit": true,
+              "answer": 10067,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The sale brings in 80 × £51.00, less the fee."
+        },
+        {
+          "rung": "point",
+          "text": "Cash 10,092 + 4,080 − 1 = 14,171; shares −80.",
+          "highlight": [
+            "s5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Equity = 14,171 + (−80) × 51.30 = 14,171 − 4,104 = 10,067."
+        }
+      ],
+      "feedback": {
+        "correct": "Cash £14,171, shares −80, equity £10,067.",
+        "generic": "Not quite right. A short sale adds the proceeds to cash, and the negative shares are marked at the close."
+      },
+      "explain": {
+        "text": "The £4,080 in cash is not profit: we owe 80 shares, worth −£4,104 at the close. Equity fell £25: the £1 fee plus 80 × 30p as the price rose against the short. The same formula, cash plus shares times price, works with negative shares.",
+        "canvas": {
+          "markers": [
+            {
+              "id": "s5",
+              "i": 5,
+              "label": "short 80, equity £10,067"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A day with no trade",
+      "prose": "Day 6: no trade. The account is short 80 shares, and the close falls from £51.30 to £50.80. Cash does not move.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                50.0,
+                50.4,
+                49.8,
+                50.2,
+                50.9,
+                51.3,
+                50.8
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "yLabel": "Close (£)",
+          "money": "£",
+          "height": 190
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "s5",
+              "i": 5,
+              "label": "£51.30"
+            },
+            {
+              "id": "d6",
+              "i": 6,
+              "label": "£50.80",
+              "below": true
+            }
+          ]
+        }
+      },
+      "question": "By how much does equity change on day 6, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Change in equity (£)",
+        "placeholder": "a negative number for a fall",
+        "accept": "+£40: −80 × (50.80 − 51.30).",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -40,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "cash",
+            "value": 0,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With no trade, only shares × the price change moves equity."
+        },
+        {
+          "rung": "point",
+          "text": "The price change is −£0.50, and shares are −80.",
+          "highlight": [
+            "d6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−80 × (−0.50) = +£40."
+        }
+      ],
+      "feedback": {
+        "correct": "A falling price makes a short £40 richer.",
+        "generic": "Not quite right. Multiply the shares held by the change in close.",
+        "byKey": {
+          "sign": "You treated the short as a long. With −80 shares, a 50p fall is a gain: −80 × −0.50 = +40.",
+          "cash": "Cash did not move, but the shares owed got cheaper, so equity did."
+        }
+      },
+      "explain": {
+        "text": "On a day with no trade, the change in equity is shares held times the change in close: $-80 \\times (-0.50) = +40$. Equity goes from £10,067 to £10,107. That is the whole of a day's P&L.",
+        "canvas": {
+          "markers": [
+            {
+              "id": "s5",
+              "i": 5,
+              "label": "£51.30"
+            },
+            {
+              "id": "d6",
+              "i": 6,
+              "label": "+£40",
+              "below": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The portfolio in code",
+      "prose": "Write the portfolio the engine fills. `fill(qty, price, cost)` buys `qty` shares at `price` (a sale when `qty` is negative) and pays `cost`. A zero quantity is no trade: nothing changes, not even the cost. `equity(price)` marks the shares at `price`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> p = Portfolio(10_000)",
+            ">>> p.fill(100, 50.10, 1.0)",
+            ">>> p.cash, p.shares, p.equity(50.40)",
+            "(4989.0, 100, 10029.0)"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete the class `Portfolio`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        \"\"\"Buy qty shares (sell if negative) at price, paying cost.\"\"\"\n        ...\n\n    def equity(self, price):\n        \"\"\"Cash plus the shares marked at price.\"\"\"\n        ...\n",
+        "solution": "class Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        \"\"\"Buy qty shares (sell if negative) at price, paying cost.\"\"\"\n        if qty == 0:\n            return                          # no trade, no cost\n        self.cash -= qty * price + cost     # a sale (qty < 0) raises cash\n        self.shares += qty\n\n    def equity(self, price):\n        \"\"\"Cash plus the shares marked at price.\"\"\"\n        return self.cash + self.shares * price\n",
+        "prelude": "import random\n\nDAYS = [(100, 50.10, 1.0, 50.40), (0, 0.0, 0.0, 49.80), (50, 49.70, 1.0, 50.20),\n        (-150, 50.60, 1.0, 50.90), (-80, 51.00, 1.0, 51.30)]\n\ndef run_ledger(cls):\n    \"\"\"The lesson's five days on a 10,000 account: (qty, fill price, cost, close) each day.\"\"\"\n    p = cls(10_000)\n    out = []\n    for qty, price, cost, close in DAYS:\n        p.fill(qty, price, cost)\n        out.append(round(p.equity(close), 2))\n    return out\n\ndef conservation(cls, n=200, seed=7):\n    \"\"\"200 random fills: equity at the fill price must fall by exactly the cost.\"\"\"\n    rng = random.Random(seed)\n    p = cls(100_000)\n    worst = 0.0\n    for _ in range(n):\n        qty = rng.randint(-500, 500)\n        price = round(rng.uniform(20, 80), 2)\n        cost = round(rng.uniform(0, 5), 2) if qty else 0.0\n        before = p.equity(price)\n        p.fill(qty, price, cost)\n        worst = max(worst, abs((before - p.equity(price)) - cost))\n    return worst < 1e-9\n",
+        "examples": [
+          {
+            "call": "run_ledger(Portfolio)",
+            "expect": "[10029.0, 9969.0, 10033.0, 10092.0, 10067.0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_ledger(Portfolio)",
+            "expect": "[10029.0, 9969.0, 10033.0, 10092.0, 10067.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = Portfolio(10_000)",
+            "call": "(p.cash, p.shares)",
+            "expect": "(10000.0, 0)",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = Portfolio(10_000); p.fill(-80, 50.0, 1.0)",
+            "call": "(round(p.cash, 2), p.shares)",
+            "expect": "(13999.0, -80)",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = Portfolio(10_000); p.fill(-80, 50.0, 1.0); p.fill(80, 49.0, 1.0)",
+            "call": "(round(p.cash, 2), p.shares, round(p.equity(55.0), 2))",
+            "expect": "(10078.0, 0, 10078.0)",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = Portfolio(10_000); p.fill(0, 50.0, 1.0)",
+            "call": "(p.cash, p.shares)",
+            "expect": "(10000.0, 0)",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = Portfolio(1_000); p.fill(100, 50.0)",
+            "call": "round(p.equity(60.0), 2)",
+            "expect": "2000.0",
+            "compare": "equal"
+          },
+          {
+            "call": "conservation(Portfolio)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: the lesson's five-day ledger (`run_ledger`, equities to 2 places), a new account, a short and its cover, a zero-quantity fill, the default cost of 0, and `conservation`: 200 random fills from `random.Random(7)`, where equity at the fill price must fall by exactly the cost, to 1e-9. Both helpers are already defined. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A buy spends `qty * price`; a sale has negative `qty`, so the same line raises cash."
+        },
+        {
+          "rung": "point",
+          "text": "`self.cash -= qty * price + cost`, then `self.shares += qty`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Start `fill` with `if qty == 0: return`, and return `self.cash + self.shares * price` from `equity`."
+        }
+      ],
+      "feedback": {
+        "correct": "The ledger matches, and 200 random fills each cost exactly their fee.",
+        "generic": "Some tests failed. One line moves cash by `qty * price + cost`; one moves shares by `qty`.",
+        "byKey": {
+          "test-5": "A zero-quantity fill changed the account. No trade means no fee.",
+          "test-7": "Some fill changed equity by more or less than its cost. Check the sign: a sale adds `-qty * price` to cash."
+        }
+      },
+      "explain": {
+        "text": "One signed line handles buys, sales, shorts and covers: `cash -= qty * price + cost`. The conservation test checks the identity behind the whole lesson on 200 fills at once. Lesson 5's engine calls this `fill` for every order."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Marking at the wrong price",
+      "prose": "Back to day 1: buy 100 at £50.10 with a £1 fee, close £50.40. Four colleagues report the day's closing equity.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                50.0,
+                50.4,
+                49.8,
+                50.2,
+                50.9,
+                51.3,
+                50.8
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "yLabel": "Close (£)",
+          "money": "£",
+          "height": 190
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "b1",
+              "i": 1,
+              "label": "buy at £50.10, close £50.40"
+            }
+          ]
+        }
+      },
+      "question": "Which figure is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "£10,029",
+            "correct": true
+          },
+          {
+            "id": "fillpx",
+            "text": "£9,999",
+            "why": "You marked the shares at the fill price. The day ends at the close, £50.40, so the shares are worth £5,040."
+          },
+          {
+            "id": "twice",
+            "text": "£10,028",
+            "why": "You charged the £1 fee twice: once in cash and once more off equity. Cash already paid it."
+          },
+          {
+            "id": "nofee",
+            "text": "£10,030",
+            "why": "You left out the £1 fee. Cash paid £5,011, not £5,010."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Equity at the end of the day uses the close."
+        },
+        {
+          "rung": "point",
+          "text": "Cash is 10,000 − 5,010 − 1 = 4,989.",
+          "highlight": [
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4,989 + 100 × 50.40 = 10,029."
+        }
+      ],
+      "feedback": {
+        "correct": "Cash £4,989 plus 100 shares at £50.40.",
+        "generic": "Not quite right. Take cash after the fee, then mark the shares at the close.",
+        "byKey": {
+          "fillpx": "That marks at the fill price, which is right only at the instant of the fill. Mark-to-market uses the close.",
+          "twice": "The fee comes out of cash once. Subtracting it again from equity counts it twice."
+        }
+      },
+      "explain": {
+        "text": "The fill price sets the cash; the close sets the value of the shares. Mixing them up makes every day's P&L wrong by the gap between fill and close. Charging the fee in two places makes each trade £1 dearer than it was.",
+        "canvas": {
+          "markers": [
+            {
+              "id": "b1",
+              "i": 1,
+              "label": "equity £10,029"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why a fill costs only its cost",
+      "prose": "Every row you filled obeyed one identity: equity is cash plus shares times price, $E = C + S\\,p$. A fill of $q$ shares at $p$ with cost $c$ sets $C' = C - qp - c$ and $S' = S + q$. Show what it does to equity at that same price.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "$E = C + S\\,p$: equity before the fill, marked at the fill price"
+          },
+          {
+            "id": "b",
+            "text": "$E' = C' + S'\\,p$: equity after the fill, at the same price"
+          },
+          {
+            "id": "c",
+            "text": "$E' = (C - qp - c) + (S + q)\\,p$: substitute the new cash and shares"
+          },
+          {
+            "id": "d",
+            "text": "$E' = C + Sp - c$: the $-qp$ and $+qp$ cancel"
+          },
+          {
+            "id": "e",
+            "text": "$E' = E - c$: the first two terms are $E$"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ],
+        "same": [
+          [
+            "a",
+            "b"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the two definitions of equity, before and after."
+        },
+        {
+          "rung": "point",
+          "text": "Then substitute $C'$ and $S'$ into $E'$."
+        },
+        {
+          "rung": "step",
+          "text": "a and b, then c, d, e."
+        }
+      ],
+      "feedback": {
+        "correct": "A fill changes equity by $-c$ and nothing else.",
+        "generic": "Not quite right. Write both equities, substitute, then cancel.",
+        "byKey": {
+          "e": "$E' = E - c$ is the conclusion. It comes after the $qp$ terms cancel."
+        }
+      },
+      "explain": {
+        "text": "The $qp$ paid in cash reappears as $q$ shares worth $p$ each, so they cancel. What is left is $E' = E - c$, for buys and sales, longs and shorts alike. Your `conservation` test checks this line on 200 fills."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Reconciling with the broker",
+      "prose": "After a year of paper trading, the broker's statement shows £1,000,000 less £61,240 of commissions over 3,062 trades. The engine's equity curve is smooth and matches the broker's in shape, but ends £61,240 higher. Its Sharpe ratio and drawdown look entirely plausible.",
+      "question": "What is the likeliest bug, and what would have caught it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The engine's `fill` never subtracts the cost; a daily reconciliation of cash against the broker catches it",
+            "correct": true
+          },
+          {
+            "id": "sharpe",
+            "text": "A look-ahead leak; a Sharpe above 2 would have flagged it",
+            "why": "A missing fee adds a steady £20 per trade, which looks like a slightly better strategy. The Sharpe stays ordinary, so no metric flags it."
+          },
+          {
+            "id": "close",
+            "text": "Marking at the fill price; the drawdown would have shown it",
+            "why": "That bug moves each day's P&L up or down by the fill-to-close gap. It would not add up to exactly the commission total."
+          },
+          {
+            "id": "none",
+            "text": "No bug: the broker overcharged",
+            "why": "The gap equals the commission total to the pound. The engine is the one leaving something out."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The gap is exactly the total commission."
+        },
+        {
+          "rung": "point",
+          "text": "£61,240 over 3,062 trades is £20 a trade."
+        },
+        {
+          "rung": "step",
+          "text": "Costs are missing from cash. Only comparing cash and shares with an outside record finds that."
+        }
+      ],
+      "feedback": {
+        "correct": "Reconcile cash and shares, not just the curve's shape.",
+        "generic": "Not quite right. Look at what the gap equals."
+      },
+      "explain": {
+        "text": "A dropped cost makes every trade £20 too profitable, a smooth bias that no Sharpe or drawdown check can see. Desks reconcile cash and positions against the broker every day for this reason. In a backtest, the `conservation` test plays the broker's part."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Equity is cash plus shares times price, marked to market at every close.",
+      "A fill moves value between cash and shares; at the fill price it changes equity only by its cost.",
+      "One signed line covers buys, sales, shorts and covers; a zero order changes nothing; a flat account's equity is its cash."
+    ],
+    "formula": {
+      "name": "Equity",
+      "tex": "E = C + S\\,p, \\qquad \\text{fill: } C' = C - qp - c,\\; S' = S + q \\;\\Rightarrow\\; E' = E - c",
+      "note": "Mark at the close for the day's equity; at the fill price only to check the identity."
+    },
+    "trap": "Marking at the fill price, or charging the cost twice, gives a smooth, wrong equity curve that no metric catches."
+  },
+  "quiz": [
+    {
+      "id": "q-cash",
+      "difficulty": 2,
+      "prose": "An account with £10,000 cash and no shares buys 200 shares at £25.05, paying a £1 fee.",
+      "question": "What is the cash afterwards, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4989,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "2 decimal places",
+        "accept": "£4,989.00: 10,000 − 5,010 − 1.",
+        "wrong": [
+          {
+            "id": "nofee",
+            "value": 4990,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "addfee",
+            "value": 4991,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£4,989.",
+        "generic": "Not quite right. Cash falls by 200 × £25.05 and by the fee.",
+        "byKey": {
+          "nofee": "You left out the £1 fee.",
+          "addfee": "The fee is paid, so it comes off cash too."
+        }
+      },
+      "explain": {
+        "text": "200 × £25.05 = £5,010, and the fee makes it £5,011. £10,000 − £5,011 = £4,989."
+      }
+    },
+    {
+      "id": "q-equity",
+      "difficulty": 2,
+      "prose": "Same account: £4,989 cash and 200 shares. The day closes at £25.30.",
+      "question": "What is the closing equity, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10049,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "2 decimal places",
+        "accept": "£10,049.00: 4,989 + 200 × 25.30.",
+        "wrong": [
+          {
+            "id": "fill",
+            "value": 9999,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£10,049.",
+        "generic": "Not quite right. Add the shares at the close to the cash.",
+        "byKey": {
+          "fill": "You marked at the fill price, £25.05. The day's equity uses the close."
+        }
+      },
+      "explain": {
+        "text": "200 × £25.30 = £5,060, plus £4,989 of cash. The £49 gain over £10,000 is 25p a share of market move less the £1 fee."
+      }
+    },
+    {
+      "id": "q-short",
+      "difficulty": 3,
+      "prose": "A flat account with £20,000 cash sells short 100 shares at £40.00 with a £2 fee.",
+      "question": "What happens at the moment of the fill?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Cash rises to £23,998, shares go to −100, and equity at £40 falls to £19,998",
+            "correct": true
+          },
+          {
+            "id": "profit",
+            "text": "Equity rises by £4,000 to £24,000",
+            "why": "You counted the proceeds as profit. The account owes 100 shares, worth −£4,000, which cancel them."
+          },
+          {
+            "id": "cashdown",
+            "text": "Cash falls by £4,002, because shares were traded",
+            "why": "A sale, short or not, brings cash in. Cash falls only on a buy."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Proceeds in, negative shares, equity down by the fee.",
+        "generic": "Not quite right. Apply cash − qp − c with q = −100."
+      },
+      "explain": {
+        "text": "With $q = -100$: cash becomes 20,000 + 4,000 − 2 = 23,998 and shares −100. Equity at £40 is 23,998 − 4,000 = 19,998: down by the fee, as for any fill."
+      }
+    },
+    {
+      "id": "q-noday",
+      "difficulty": 3,
+      "prose": "An account is short 80 shares. On a day with no trade the close moves from £51.30 to £50.80.",
+      "question": "How does equity change, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "a negative number for a fall",
+        "accept": "+£40: −80 × (−0.50).",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -40,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "+£40: the short gains as the price falls.",
+        "generic": "Not quite right. Multiply the shares held by the change in price.",
+        "byKey": {
+          "sign": "A short gains when the price falls: −80 × −0.50 is +40."
+        }
+      },
+      "explain": {
+        "text": "With no trade, cash is fixed and only the shares are re-marked. −80 × (50.80 − 51.30) = +£40."
+      }
+    }
+  ]
+}

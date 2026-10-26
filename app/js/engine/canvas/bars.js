@@ -16,13 +16,21 @@
     let binW = binned ? params.bins.width : null;
     let cats = binned
       ? binsFor(binW)
-      : (params.categories || []).map((c) => (K.isObj(c) ? { id: c.id || 'x' + c.label, label: String(c.label ?? c.id), colour: c.colour } : { id: 'x' + c, label: String(c) }));
-    const rebin = (view) => { if (!binned) return; const w = (view && view.binWidth) || params.bins.width; if (w !== binW) { binW = w; cats = binsFor(w); } };
+      : (params.categories || []).map((c) => (K.isObj(c) ? { id: c.id || 'x' + c.label, label: String(c.label ?? c.id), colour: c.colour, ...(c.atLeast != null ? { atLeast: +c.atLeast } : {}), ...(c.atMost != null ? { atMost: +c.atMost } : {}) } : { id: 'x' + c, label: String(c) }));
+    cats.forEach((c) => { const m = !binned && c.atLeast == null && String(c.label).match(/^(-?\d+(?:\.\d+)?)\s*\+$/); if (m) c.atLeast = +m[1]; });
+    /* item 382: state.categories replaces the category list (a derive such as "seq(0, n)" makes one bar per value of n) */
+    let catKey = null;
+    const recat = (view) => { if (binned || !view || !Array.isArray(view.categories)) return; const k = JSON.stringify(view.categories); if (k === catKey) return; catKey = k; cats = view.categories.map((c) => (K.isObj(c) ? { id: c.id || 'x' + c.label, label: String(c.label ?? c.id), colour: c.colour, ...(c.atLeast != null ? { atLeast: +c.atLeast } : {}), ...(c.atMost != null ? { atMost: +c.atMost } : {}) } : { id: 'x' + c, label: String(c) })); cats.forEach((c) => { const m = c.atLeast == null && String(c.label).match(/^(-?\d+(?:\.\d+)?)\s*\+$/); if (m) c.atLeast = +m[1]; }); };
+    const rebin = (view) => { recat(view); if (!binned) return; const w = (view && view.binWidth) || params.bins.width; if (w !== binW) { binW = w; cats = binsFor(w); } };
     const catIndex = (key) => {
       if (key == null) return -1; const k = String(key);
       let i = cats.findIndex((c) => c.id === k || c.label === k);
       if (i < 0 && binned) { const v = +k; i = cats.findIndex((c) => v >= c.lo - 1e-9 && v < c.hi - 1e-9); }
       if (i < 0 && !binned && Number.isFinite(+k)) i = cats.findIndex((c) => +c.label === +k);
+      /* item 342: a catch-all category "4+" (or { label, atLeast: 4 } / atMost) takes every number from there on */
+      if (i < 0 && !binned && Number.isFinite(+k)) i = cats.findIndex((c) => (c.atLeast != null && +k >= c.atLeast) || (c.atMost != null && +k <= c.atMost));
+      /* item 347: bins are half-open [lo, hi); the top edge of the last bin counts in it */
+      if (i < 0 && binned && Number.isFinite(+k) && Math.abs(+k - params.bins.max) < 1e-9) i = cats.length - 1;
       return i;
     };
     const exact = (params.exact || []).map((e) => ({ i: catIndex(e.x), y: +e.y })).filter((e) => e.i >= 0);
@@ -59,9 +67,12 @@
     /* heights of group g (0 without groups) */
     const heights = (view, g = 0) => {
       rebin(view);
-      if (binned && Array.isArray(params.data)) { // raw observations: counts (or proportions) in the current bins
-        const counts = new Array(cats.length).fill(0); params.data.forEach((v) => { const j = catIndex(+v); if (j >= 0) counts[j]++; else if (+v === params.bins.max) counts[cats.length - 1]++; });
-        return counts.map((c) => (proportion ? (params.data.length ? c / params.data.length : 0) : c));
+      /* item 428: dataSets [[...], [...]] with index: "k" picks one data set by a param, so precomputed draws (from C++,
+         say) follow a control stop without a derive table */
+      const data = Array.isArray(params.dataSets) && params.dataSets.length ? (() => { const raw = typeof params.index === 'number' ? params.index : +simVars(view)[params.index]; return params.dataSets[Math.max(0, Math.min(params.dataSets.length - 1, Math.round(Number.isFinite(raw) ? raw : 0)))] || []; })() : params.data;
+      if (binned && Array.isArray(data)) { // raw observations: counts (or proportions) in the current bins
+        const counts = new Array(cats.length).fill(0); data.forEach((v) => { const j = catIndex(+v); if (j >= 0) counts[j]++; });
+        return counts.map((c) => (proportion ? (data.length ? c / data.length : 0) : c));
       }
       if (sim && view.ran != null && !(view.values && Object.keys(view.values).length && !view.ran)) {
         const n = Math.round(view.ran), counts = tally(n, view, g);

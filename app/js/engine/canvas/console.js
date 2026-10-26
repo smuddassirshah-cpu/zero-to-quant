@@ -11,7 +11,12 @@
   function consoleKind(host, params, ctx = {}) {
     const P = params || {};
     const wrap = document.createElement('div'); wrap.className = 'cv';
-    const box = document.createElement('div'); box.className = 'cv-con' + (P.numbers ? ' has-numbers' : '');
+    /* item 349: compact (or fontSize: 11 to 14) sets a smaller face so 80-column output fits; item 441: wrap: true wraps
+       long lines with a hanging indent, so real compiler and sanitiser lines show verbatim; otherwise a long line scrolls
+       and the box shows a fade at its right edge */
+    const fsz = P.fontSize ? Math.max(10, Math.min(14, +P.fontSize)) : P.compact ? 11.5 : null;
+    const box = document.createElement('div'); box.className = 'cv-con' + (P.numbers ? ' has-numbers' : '') + (P.wrap ? ' is-wrap' : '');
+    if (fsz) { box.style.fontSize = fsz + 'px'; box.style.lineHeight = Math.round(fsz * 1.55) + 'px'; }
     if (P.label) { box.setAttribute('role', 'group'); box.setAttribute('aria-label', P.label); }
     const title = P.title ? Object.assign(document.createElement('div'), { className: 'cv-con-title t-caption', textContent: String(P.title) }) : null;
     const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
@@ -32,8 +37,11 @@
         return ln;
       }));
     };
+    const overflowCue = () => { if (P.wrap) return; requestAnimationFrame(() => { wrap.classList.toggle('cv-con-more', box.scrollWidth > box.clientWidth + 2 && box.scrollLeft + box.clientWidth < box.scrollWidth - 2); }); };
+    box.addEventListener('scroll', overflowCue, { passive: true });
     const draw = (st) => {
       build(Array.isArray(st.lines) ? st.lines.map(String) : base);
+      overflowCue();
       const sets = Array.isArray(st.shade) ? [st.shade] : Object.values(st.shade || {});
       const slot = new Map(); sets.forEach((ids, k) => (ids || []).forEach(id => { if (!slot.has(String(id))) slot.set(String(id), k + 1); }));
       const tone = st.tone || {};

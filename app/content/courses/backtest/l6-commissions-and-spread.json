@@ -1,0 +1,1157 @@
+{
+ "id": "l6-commissions-and-spread",
+ "course": "backtest",
+ "title": "Commissions and spread",
+ "minutes": 14,
+ "objectives": [
+  "Charge commissions and half the bid-ask spread on every trade.",
+  "Report net Sharpe at several costs and judge a signal against twice its expected cost."
+ ],
+ "skills": [
+  "bt-execution"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Crossing the spread",
+   "prose": "The engine from l5 filled every order at the open, as if shares were free to trade. Here is a real book for one share. The mid is £100.00. You send a market buy for 500 shares.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       99.98,
+       800
+      ],
+      [
+       99.97,
+       1200
+      ],
+      [
+       99.96,
+       1500
+      ]
+     ],
+     "asks": [
+      [
+       100.02,
+       700
+      ],
+      [
+       100.03,
+       1100
+      ],
+      [
+       100.04,
+       1500
+      ]
+     ],
+     "currency": "£",
+     "showMid": true
+    },
+    "state": {}
+   },
+   "question": "How much more than the mid do the 500 shares cost in total, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Cost over the mid",
+    "accept": "£10.00: $500 \\times (100.02 - 100.00)$.",
+    "wrong": [
+     {
+      "id": "full",
+      "value": 20,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "per-share",
+      "value": 0.02,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "total",
+      "value": 50010,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A market buy takes the best ask."
+    },
+    {
+     "rung": "point",
+     "text": "The best ask is £100.02, with 700 shares: enough for the whole order.",
+     "highlight": [
+      "ask0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each share pays 2p over the mid: $500 \\times £0.02$."
+    }
+   ],
+   "feedback": {
+    "correct": "Each share pays 2p over the mid: £10.00 in all.",
+    "generic": "Not quite right. Compare the price paid with the mid, then multiply by the shares.",
+    "byKey": {
+     "full": "You charged the whole spread, 4p. A buy pays only from the mid up to the ask.",
+     "per-share": "That is the cost per share. The order is for 500 shares.",
+     "total": "That is the whole bill. The question asks for the part above the mid."
+    }
+   },
+   "explain": {
+    "text": "The order fills at £100.02, two pence above the mid. That is £10.00 on 500 shares, before any commission. Selling them straight back hits £99.98 and costs the same again.",
+    "canvas": {
+     "order": {
+      "side": "buy",
+      "size": 500
+     },
+     "highlight": [
+      "ask0"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "How much cost can it take?",
+   "prose": "The lookback-1 rule from l5, on `make_bars()` with 10,000 shares, made £495,327 gross. It traded £1.37bn of shares and paid £61,150 commission. Every bp of half spread charges 0.01% of what it traded. Drag the dot along the line.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      6
+     ],
+     "y": [
+      -400,
+      500
+     ],
+     "xLabel": "Half spread (bp)",
+     "yLabel": "Net P&L (£k)",
+     "grid": true,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "434.177 - 136.858*x",
+       "label": "net P&L"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 1,
+       "y": 297.319,
+       "drag": true,
+       "on": "f"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "zero",
+       "y": 0,
+       "label": "break even"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Half spread {{fixed(p1.x, 2)}} bp: net {{money(1000 * (434.177 - 136.858 * p1.x), \"£\", 0)}}"
+    }
+   },
+   "question": "At what half spread, in bp, does the rule stop making money?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.17,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "bp",
+    "label": "Break-even half spread",
+    "accept": "3.17 bp: $434{,}177 / 136{,}858 = 3.17$.",
+    "wrong": [
+     {
+      "id": "no-comm",
+      "value": 3.62,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag the dot until the caption's net P&L reaches zero."
+    }
+   ],
+   "feedback": {
+    "correct": "At about 3.17 bp the rule's edge is used up.",
+    "generic": "Not quite right. Find where the line crosses zero.",
+    "byKey": {
+     "no-comm": "You left the commission out: £495,327 over £136,858 a bp is 3.62. The £61,150 commission comes off first."
+    }
+   },
+   "explain": {
+    "text": "Net P&L is a straight line: £434,177 after commission, less £136,858 for each bp. It crosses zero at 3.17 bp. A spread the size of a liquid large cap's would take most of this edge.",
+    "canvas": {
+     "points": {
+      "p1": {
+       "x": 3.1725,
+       "y": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The cost model",
+   "prose": "Our engine charges two things on every fill. A **commission** of £0.005 a share, at least £1, as a stand-in for a broker's tariff. And **half the spread**, in bp of the traded value: 2p on £100 is 2 bp. Fill in the ticket.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Order",
+      "Price",
+      "Tariff",
+      "Half spread"
+     ],
+     "rows": [
+      [
+       "Buy 500",
+       "£100.00",
+       "£0.005 a share, min £1",
+       "2 bp"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the three costs, in £.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Item",
+     "Cost (£)"
+    ],
+    "rows": [
+     [
+      "Commission",
+      {
+       "edit": true,
+       "answer": 2.5,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "Half spread",
+      {
+       "edit": true,
+       "answer": 10,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "Total",
+      {
+       "edit": true,
+       "answer": 12.5,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Commission is per share; the spread charge is a share of the traded value."
+    },
+    {
+     "rung": "point",
+     "text": "The traded value is $500 \\times £100 = £50{,}000$; 2 bp of it is $£50{,}000 \\times 0.0002$."
+    },
+    {
+     "rung": "step",
+     "text": "Commission $500 \\times 0.005 = £2.50$, spread $£10.00$, total $£12.50$."
+    }
+   ],
+   "feedback": {
+    "correct": "£2.50 commission plus £10.00 spread: £12.50.",
+    "generic": "Not quite right. Commission is £0.005 a share; the half spread is 2 bp of £50,000."
+   },
+   "explain": {
+    "text": "The spread charge is the £10.00 you met on the first screen, now written as 2 bp of £50,000. The commission is far smaller here. On big orders the spread dominates; on tiny ones the minimum does."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A small order",
+   "prose": "Same share, same tariff. Now the order is to buy 100 shares at £100.00.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Order",
+      "Price",
+      "Tariff",
+      "Half spread"
+     ],
+     "rows": [
+      [
+       "Buy 100",
+       "£100.00",
+       "£0.005 a share, min £1",
+       "2 bp"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the fill cost in total, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Total cost",
+    "accept": "£3.00: commission $\\max(0.50, 1) = £1.00$ plus spread $£2.00$.",
+    "wrong": [
+     {
+      "id": "no-min",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "min-only",
+      "value": 1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out the commission before the minimum, then apply it."
+    },
+    {
+     "rung": "point",
+     "text": "$100 \\times £0.005 = £0.50$, below the £1 minimum."
+    },
+    {
+     "rung": "step",
+     "text": "Commission £1.00, spread $£10{,}000 \\times 0.0002 = £2.00$."
+    }
+   ],
+   "feedback": {
+    "correct": "The minimum lifts the commission to £1: £3.00 in all.",
+    "generic": "Not quite right. Apply the £1 minimum to the commission, then add the spread.",
+    "byKey": {
+     "no-min": "You charged £0.50 commission. The tariff has a £1 minimum.",
+     "min-only": "You charged the commission only. The spread is 2 bp of £10,000, another £2."
+    }
+   },
+   "explain": {
+    "text": "£0.50 of commission is below the £1 floor, so the floor applies. The spread still costs 2 bp of £10,000. On small orders the minimum is a large share of the bill."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Sells and empty orders",
+   "prose": "The engine calls the cost function on every order it fills, buys and sells alike.",
+   "question": "Which of these costs are right under our model? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sell",
+      "text": "Sell 300 at £100.00: £1.50 + £6.00 = £7.50",
+      "correct": true
+     },
+     {
+      "id": "big",
+      "text": "Buy 1,000 at £50.00: £5.00 + £10.00 = £15.00",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "An order of 0 shares: £1.00, the minimum",
+      "why": "You applied the minimum to an order that never trades. No trade means no ticket and no cost."
+     },
+     {
+      "id": "free-sell",
+      "text": "Sell 300 at £100.00: £0, since a sale brings cash in",
+      "why": "You let sales off. A seller hits the bid, half a spread below the mid, and pays commission too."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every trade pays commission and half the spread; a non-trade pays nothing."
+    },
+    {
+     "rung": "point",
+     "text": "A sale costs exactly what a buy of the same size costs."
+    },
+    {
+     "rung": "step",
+     "text": "Check the two sums: $300 \\times 0.005 + 300 \\times 100 \\times 0.0002$, and $1{,}000 \\times 0.005 + 50{,}000 \\times 0.0002$."
+    }
+   ],
+   "feedback": {
+    "correct": "Sales cost the same as buys, and a zero order costs nothing.",
+    "generic": "Not quite right. Charge every trade by its size, whichever way it goes, and nothing for no trade.",
+    "byKey": {
+     "zero": "You charged the minimum on a zero order. Nothing trades, so nothing is charged.",
+     "free-sell": "You let a sale off. It crosses half the spread and pays commission like a buy."
+    }
+   },
+   "explain": {
+    "text": "The model uses $|q|$, so direction does not matter. A zero order is the edge case: the target did not change, nothing is sent, and the minimum does not apply. Most days of a slow rule are like this."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A round trip",
+   "prose": "You buy 500 shares at £100.00 and later sell all 500 at £100.00; the mid did not move. Same tariff, half spread 2 bp.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Leg",
+      "Shares",
+      "Price"
+     ],
+     "rows": [
+      [
+       "Buy",
+       "500",
+       "£100.00"
+      ],
+      [
+       "Sell",
+       "500",
+       "£100.00"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the round trip cost under our model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "£25.00",
+      "correct": true
+     },
+     {
+      "id": "full",
+      "text": "£45.00",
+      "why": "You charged the full 4 bp spread on each leg. Each leg crosses only from the mid to one side: half the spread."
+     },
+     {
+      "id": "buys",
+      "text": "£15.00",
+      "why": "You charged the spread on the buy only. The sale hits the bid, half a spread below the mid."
+     },
+     {
+      "id": "one",
+      "text": "£12.50",
+      "why": "You costed one leg. A round trip is two fills, and each pays."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many fills is a round trip?"
+    },
+    {
+     "rung": "point",
+     "text": "Each fill costs what the £12.50 ticket cost."
+    },
+    {
+     "rung": "step",
+     "text": "Two fills of £12.50 each."
+    }
+   ],
+   "feedback": {
+    "correct": "Two fills at £12.50: the round trip pays the whole spread once, plus two commissions.",
+    "generic": "Not quite right. Cost each leg as its own fill."
+   },
+   "explain": {
+    "text": "Each leg pays £2.50 commission and £10.00 of half spread. Together the two halves make the whole 4p spread once. Charging the full spread on both legs counts it twice."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The cost function",
+   "prose": "Put the model in code. `qty` is negative for a sale. The engine from l5 already calls `costs(qty, price)` on every fill, so `trade_cost` plugs straight in as `backtest(bars, targets, costs=trade_cost)`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> trade_cost(500, 100.0)",
+      "12.5",
+      ">>> trade_cost(100, 100.0)",
+      "3.0",
+      ">>> trade_cost(0, 100.0)",
+      "0.0"
+     ]
+    }
+   },
+   "question": "Complete `trade_cost`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def trade_cost(qty, price, per_share=0.005, minimum=1.0, half_spread_bp=2.0):\n    \"\"\"Cost in £ of filling qty shares (negative for a sale) at price.\"\"\"\n    ...\n",
+    "solution": "def trade_cost(qty, price, per_share=0.005, minimum=1.0, half_spread_bp=2.0):\n    \"\"\"Cost in £ of filling qty shares (negative for a sale) at price.\"\"\"\n    if qty == 0:\n        return 0.0                      # no trade, no minimum\n    q = abs(qty)                        # buys and sells cost the same\n    commission = max(per_share * q, minimum)\n    spread = q * price * half_spread_bp / 10_000\n    return commission + spread\n",
+    "examples": [
+     {
+      "call": "round(trade_cost(500, 100.0), 6)",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(trade_cost(100, 100.0), 6)",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(trade_cost(500, 100.0), 6)",
+      "compare": "isclose",
+      "expect": "12.5"
+     },
+     {
+      "call": "round(trade_cost(100, 100.0), 6)",
+      "compare": "isclose",
+      "expect": "3.0"
+     },
+     {
+      "call": "round(trade_cost(0, 100.0), 6)",
+      "compare": "isclose",
+      "expect": "0.0"
+     },
+     {
+      "call": "round(trade_cost(-500, 100.0), 6)",
+      "compare": "isclose",
+      "expect": "12.5"
+     },
+     {
+      "call": "round(trade_cost(-100, 50.0), 6)",
+      "compare": "isclose",
+      "expect": "2.0"
+     },
+     {
+      "call": "round(trade_cost(10_000, 100.0), 6)",
+      "compare": "isclose",
+      "expect": "250.0"
+     },
+     {
+      "call": "round(trade_cost(500, 100.0, half_spread_bp=0.0), 6)",
+      "compare": "isclose",
+      "expect": "2.5"
+     },
+     {
+      "call": "round(trade_cost(500, 100.0, per_share=0.01), 6)",
+      "compare": "isclose",
+      "expect": "15.0"
+     },
+     {
+      "call": "round(trade_cost(50, 20.0, minimum=2.0), 6)",
+      "compare": "isclose",
+      "expect": "2.2"
+     },
+     {
+      "call": "round(trade_cost(1_000, 20.0, half_spread_bp=5.0), 6)",
+      "compare": "isclose",
+      "expect": "15.0"
+     },
+     {
+      "setup": "hb = hand_bars(); tg = [0, 100, 100, -100, -100, 0]",
+      "call": "backtest(hb, tg, 10_000, costs=trade_cost)['cash'].round(2).tolist()",
+      "expect": "[10000.0, 10000.0, 47.01, 47.01, 20641.89, 20641.89]",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(250); tg = target_positions(momentum_signal(b['close'], 1), 10_000)",
+      "call": "round(float(backtest(b, tg)['equity'].iloc[-1] - backtest(b, tg, costs=trade_cost)['equity'].iloc[-1]), 2)",
+      "expect": "62274.03",
+      "compare": "equal"
+     }
+    ],
+    "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    # six hand-made bars, Monday 4 March 2024 to Monday 11 March 2024\n    o = [100.0, 101.0, 99.5, 102.0, 103.0, 101.5]\n    c = [100.5, 100.0, 101.5, 102.5, 102.0, 103.0]\n    v = [1_000_000, 2_000_000, 500_000, 1_000_000, 4_000_000, 1_000_000]\n    return pd.DataFrame({\"open\": o, \"high\": [max(a, b) + 0.5 for a, b in zip(o, c)],\n                         \"low\": [min(a, b) - 0.5 for a, b in zip(o, c)], \"close\": c,\n                         \"volume\": [float(x) for x in v]},\n                        index=pd.bdate_range(\"2024-03-04\", periods=6))\n\ndef iso(index):\n    return [d.strftime(\"%Y-%m-%d\") for d in index]\n\n# level 1 pieces, already defined\ndef momentum_signal(close, lookback):\n    return np.sign(close.pct_change(lookback)).fillna(0.0)\n\ndef target_positions(signal, max_units):\n    return np.round(signal.fillna(0.0).clip(-1, 1) * max_units).astype(int)\n\ndef orders_from_targets(targets):\n    return targets.diff().fillna(targets.iloc[0]).astype(int)\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        self.cash -= qty * price + cost\n        self.shares += qty\n\n    def equity(self, price):\n        return self.cash + self.shares * price\n\ndef sharpe(returns, periods=252):\n    r = pd.Series(returns, dtype=float).dropna()\n    if len(r) < 2 or r.std(ddof=1) == 0:\n        return 0.0\n    return float(np.sqrt(periods) * r.mean() / r.std(ddof=1))\n\ndef fill_at_next_open(orders, bars):\n    o = np.asarray(orders)[:-1]\n    t = np.flatnonzero(o != 0) + 1\n    return pd.Series(bars[\"open\"].to_numpy()[t], index=bars.index[t])\n\ndef backtest(bars, targets, cash0=1_000_000, costs=None):\n    targets = pd.Series(np.asarray(targets), index=bars.index)\n    orders = orders_from_targets(targets)\n    fills = fill_at_next_open(orders, bars)\n    pf = Portfolio(cash0)\n    rows = []\n    for t, (date, close) in enumerate(bars[\"close\"].items()):\n        if date in fills.index:\n            qty = int(orders.iloc[t - 1])\n            price = fills[date]\n            cost = 0.0 if costs is None else costs(qty, price)\n            pf.fill(qty, price, cost)\n        rows.append((pf.shares, pf.cash, pf.equity(close)))\n    return pd.DataFrame(rows, columns=[\"shares\", \"cash\", \"equity\"], index=bars.index)\n",
+    "how": "Check runs 12 hidden tests: ten costs (a zero order, sales, the minimum, other tariffs), each rounded to 6 places and accepted when math.isclose(actual, expected, rel_tol=1e-9); then your function inside the engine on `hand_bars()` and on `make_bars(250)`, compared with ==. The last two load NumPy and pandas the first time, 10 to 30 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Return 0.0 straight away for a zero order."
+    },
+    {
+     "rung": "point",
+     "text": "Use `abs(qty)` for both parts; apply `max(..., minimum)` to the commission only.",
+     "highlight": [
+      "l2",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`max(per_share * q, minimum) + q * price * half_spread_bp / 10_000` with `q = abs(qty)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Every case passes, and on `make_bars(250)` the rule paid £62,274.03 in costs.",
+    "generic": "Not quite right. Read the first failing case: zero orders, sales and the minimum are the usual culprits.",
+    "byKey": {
+     "test-3": "A zero order should cost 0.0. Return before the minimum is applied.",
+     "test-4": "A sale costs the same as a buy. Use `abs(qty)`.",
+     "test-5": "A small sale should hit the £1 minimum. Apply `max` to the commission, using `abs(qty)`.",
+     "test-11": "Your cost changed the engine's cash wrongly. Return a positive cost in £ for every fill."
+    }
+   },
+   "explain": {
+    "text": "The early return is the edge case: without it, a zero order pays £1. With `abs(qty)` a sale pays like a buy. Over 250 days the lookback-1 rule paid £62,274 on a £1m book, most of it spread."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Net Sharpe at several costs",
+   "prose": "Now report the rule at several costs, as `fin-ml` l10 does. The engine holds a fixed 10,000 shares, not a fixed share of equity. So take each day's equity change over the starting £1m as the daily return. `sharpe(returns)` is already defined: $\\sqrt{252}$ times mean over sample sd.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Shape of the answer",
+     "lines": [
+      ">>> net_sharpe_table(make_bars(500), [1, 2], [0.0, 2.5, 10.0])",
+      "     0.0    2.5   10.0",
+      "1    ...    ...    ...",
+      "2    ...    ...    ..."
+     ]
+    }
+   },
+   "question": "Complete `net_sharpe_table`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import pandas as pd\n\ndef net_sharpe_table(bars, lookbacks, half_spreads_bp):\n    \"\"\"Annualised Sharpe of the momentum rule, one row per lookback,\n    one column per half spread, each rounded to 3 places.\"\"\"\n    table = {}\n    for h in half_spreads_bp:\n        column = []\n        for lookback in lookbacks:\n            targets = target_positions(momentum_signal(bars[\"close\"], lookback), 10_000)\n            ...  # run the engine with trade_cost at half spread h\n            daily = ...  # equity change over the starting £1m\n            column.append(round(sharpe(daily), 3))\n        table[h] = column\n    return pd.DataFrame(table, index=list(lookbacks))\n",
+    "solution": "import pandas as pd\n\ndef net_sharpe_table(bars, lookbacks, half_spreads_bp):\n    \"\"\"Annualised Sharpe of the momentum rule, one row per lookback,\n    one column per half spread, each rounded to 3 places.\"\"\"\n    table = {}\n    for h in half_spreads_bp:\n        column = []\n        for lookback in lookbacks:\n            targets = target_positions(momentum_signal(bars[\"close\"], lookback), 10_000)\n            costs = lambda q, p: trade_cost(q, p, half_spread_bp=h)\n            equity = backtest(bars, targets, costs=costs)[\"equity\"]\n            daily = equity.diff().dropna() / 1_000_000\n            column.append(round(sharpe(daily), 3))\n        table[h] = column\n    return pd.DataFrame(table, index=list(lookbacks))\n",
+    "examples": [
+     {
+      "setup": "b = make_bars(500); t = net_sharpe_table(b, [1, 2], [0.0, 2.5, 10.0])",
+      "call": "t.values.tolist()",
+      "expect": "[[0.082, -0.352, -1.645], [0.349, 0.132, -0.518]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "b = make_bars(500); t = net_sharpe_table(b, [1, 2], [0.0, 2.5, 10.0])",
+      "call": "t.values.tolist()",
+      "expect": "[[0.082, -0.352, -1.645], [0.349, 0.132, -0.518]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(500); t = net_sharpe_table(b, [1, 2], [0.0, 2.5, 10.0])",
+      "call": "list(t.index), list(t.columns)",
+      "expect": "([1, 2], [0.0, 2.5, 10.0])",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(500)",
+      "call": "net_sharpe_table(b, [1], [2.0]).values.tolist()",
+      "expect": "[[-0.266]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(300)",
+      "call": "net_sharpe_table(b, [5, 20], [1.0]).values.tolist()",
+      "expect": "[[-0.519], [-1.006]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = make_bars(500)",
+      "call": "bool((net_sharpe_table(b, [1, 2], [0.0, 5.0]).diff(axis=1).iloc[:, 1] < 0).all())",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    # six hand-made bars, Monday 4 March 2024 to Monday 11 March 2024\n    o = [100.0, 101.0, 99.5, 102.0, 103.0, 101.5]\n    c = [100.5, 100.0, 101.5, 102.5, 102.0, 103.0]\n    v = [1_000_000, 2_000_000, 500_000, 1_000_000, 4_000_000, 1_000_000]\n    return pd.DataFrame({\"open\": o, \"high\": [max(a, b) + 0.5 for a, b in zip(o, c)],\n                         \"low\": [min(a, b) - 0.5 for a, b in zip(o, c)], \"close\": c,\n                         \"volume\": [float(x) for x in v]},\n                        index=pd.bdate_range(\"2024-03-04\", periods=6))\n\ndef iso(index):\n    return [d.strftime(\"%Y-%m-%d\") for d in index]\n\n# level 1 pieces, already defined\ndef momentum_signal(close, lookback):\n    return np.sign(close.pct_change(lookback)).fillna(0.0)\n\ndef target_positions(signal, max_units):\n    return np.round(signal.fillna(0.0).clip(-1, 1) * max_units).astype(int)\n\ndef orders_from_targets(targets):\n    return targets.diff().fillna(targets.iloc[0]).astype(int)\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        self.cash -= qty * price + cost\n        self.shares += qty\n\n    def equity(self, price):\n        return self.cash + self.shares * price\n\ndef sharpe(returns, periods=252):\n    r = pd.Series(returns, dtype=float).dropna()\n    if len(r) < 2 or r.std(ddof=1) == 0:\n        return 0.0\n    return float(np.sqrt(periods) * r.mean() / r.std(ddof=1))\n\ndef fill_at_next_open(orders, bars):\n    o = np.asarray(orders)[:-1]\n    t = np.flatnonzero(o != 0) + 1\n    return pd.Series(bars[\"open\"].to_numpy()[t], index=bars.index[t])\n\ndef backtest(bars, targets, cash0=1_000_000, costs=None):\n    targets = pd.Series(np.asarray(targets), index=bars.index)\n    orders = orders_from_targets(targets)\n    fills = fill_at_next_open(orders, bars)\n    pf = Portfolio(cash0)\n    rows = []\n    for t, (date, close) in enumerate(bars[\"close\"].items()):\n        if date in fills.index:\n            qty = int(orders.iloc[t - 1])\n            price = fills[date]\n            cost = 0.0 if costs is None else costs(qty, price)\n            pf.fill(qty, price, cost)\n        rows.append((pf.shares, pf.cash, pf.equity(close)))\n    return pd.DataFrame(rows, columns=[\"shares\", \"cash\", \"equity\"], index=bars.index)\n\ndef trade_cost(qty, price, per_share=0.005, minimum=1.0, half_spread_bp=2.0):\n    if qty == 0:\n        return 0.0\n    q = abs(qty)\n    return max(per_share * q, minimum) + q * price * half_spread_bp / 10_000\n",
+    "how": "Check runs 5 hidden tests on `make_bars(500)` and `make_bars(300)`: the table's values, its index and columns, two one-cell tables, and that a higher cost always lowers the Sharpe. Compared with ==. `backtest`, `trade_cost`, `sharpe`, `momentum_signal` and `target_positions` are already defined. Each test runs the engine a few times: allow about 10 seconds in all."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each cell is one engine run with its own cost function."
+    },
+    {
+     "rung": "point",
+     "text": "`costs = lambda q, p: trade_cost(q, p, half_spread_bp=h)`; then `backtest(bars, targets, costs=costs)['equity']`.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`daily = equity.diff().dropna() / 1_000_000`."
+    }
+   ],
+   "feedback": {
+    "correct": "One row per lookback, one column per cost, and every cost lowers the Sharpe.",
+    "generic": "Not quite right. Check that each run uses its own half spread and that returns are equity changes over £1m.",
+    "byKey": {
+     "test-1": "Your table's values differ. Run the engine once per cell with `trade_cost(q, p, half_spread_bp=h)`, and divide equity changes by 1,000,000.",
+     "test-2": "Your index or columns differ. Rows are lookbacks, columns are half spreads.",
+     "test-5": "A higher cost did not lower the Sharpe. Pass the column's `h` into `trade_cost`."
+    }
+   },
+   "explain": {
+    "text": "Each cell is a full engine run, so the cost goes through the same fills as the trades. Even the 0.0 column pays commission. Dividing by the fixed £1m, not yesterday's equity, keeps a bad run's returns from blowing up near zero equity."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rule",
+   "prose": "Every ticket in this lesson used one formula. For an order of $q$ shares at price $p$, with commission $c_s$ a share, minimum $m$ and half spread $h$ in bp:\n$$\\text{cost}(q, p) = \\begin{cases} \\max(c_s |q|,\\, m) + |q|\\,p\\,\\dfrac{h}{10^4} & q \\neq 0 \\\\ 0 & q = 0 \\end{cases}$$",
+   "question": "What does an order of 1,000 shares at £20.00 cost with $h = 5$ bp, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 15,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Cost",
+    "accept": "£15.00: $\\max(5, 1) + 20{,}000 \\times 0.0005$.",
+    "wrong": [
+     {
+      "id": "no-comm",
+      "value": 10,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£5.00 commission plus £10.00 spread.",
+    "generic": "Not quite right. Commission is $0.005 \\times 1{,}000$; the spread is 5 bp of £20,000.",
+    "byKey": {
+     "no-comm": "You left out the commission of $1{,}000 \\times £0.005 = £5$."
+    }
+   },
+   "explain": {
+    "text": "The commission is $\\max(5, 1) = £5$. The spread part is 5 bp of £20,000, £10. Both follow $|q|$, so the sale back would cost £15 again."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Twice the expected cost",
+   "prose": "A desk rule from `fin-ml` l10: a signal must survive twice its expected cost. This share's half spread is about 2.5 bp. The bars are the engine's Sharpe on `make_bars()` for lookbacks 1 and 2, from your `net_sharpe_table` (commission included).",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "g",
+       "label": "Gross"
+      },
+      {
+       "id": "c1",
+       "label": "1 bp"
+      },
+      {
+       "id": "c25",
+       "label": "2.5 bp"
+      },
+      {
+       "id": "c5",
+       "label": "5 bp"
+      },
+      {
+       "id": "c10",
+       "label": "10 bp"
+      }
+     ],
+     "groups": [
+      {
+       "id": "lb1",
+       "label": "Lookback 1"
+      },
+      {
+       "id": "lb2",
+       "label": "Lookback 2"
+      }
+     ],
+     "yLabel": "Sharpe",
+     "xLabel": "Half spread (with commission)",
+     "showValues": true,
+     "decimals": 2,
+     "yMin": -1.2,
+     "yMax": 0.8
+    },
+    "state": {
+     "values": {
+      "lb1": {
+       "g": 0.604,
+       "c1": 0.362,
+       "c25": 0.112,
+       "c5": -0.304,
+       "c10": -1.129
+      },
+      "lb2": {
+       "g": 0.507,
+       "c1": 0.374,
+       "c25": 0.236,
+       "c5": 0.007,
+       "c10": -0.449
+      }
+     }
+    }
+   },
+   "question": "What do the bars support?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Lookback 2 is better at 2.5 bp, but at 5 bp neither keeps an edge.",
+      "correct": true
+     },
+     {
+      "id": "gross",
+      "text": "Lookback 1 is the one to trade: it has the higher Sharpe.",
+      "why": "You read the gross bars. Lookback 1 trades about twice as often, so costs take its lead away by 1 bp."
+     },
+     {
+      "id": "both",
+      "text": "Both pass: their Sharpes are positive at 2.5 bp.",
+      "why": "You tested at the expected cost. The rule asks for twice it, 5 bp, where lookback 1 is at −0.30 and lookback 2 at 0.01."
+     },
+     {
+      "id": "neither",
+      "text": "Neither ever had an edge.",
+      "why": "You ignored the gross bars. Both are positive before costs; the edge is real but small."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the 5 bp pair of bars."
+    },
+    {
+     "rung": "point",
+     "text": "Lookback 1 is at −0.30 there; lookback 2 at 0.01.",
+     "highlight": [
+      "c5-lb1",
+      "c5-lb2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A Sharpe of 0.01 is no edge. At the expected 2.5 bp, lookback 2 keeps 0.24 against 0.11."
+    }
+   ],
+   "feedback": {
+    "correct": "The edge is real but thin, and twice the expected cost erases it.",
+    "generic": "Not quite right. Compare the two lookbacks at 2.5 bp, then at 5 bp."
+   },
+   "explain": {
+    "text": "Lookback 1 wins gross, 0.60 against 0.51, but trades about twice as often. By 1 bp the order flips. At 5 bp lookback 2 keeps 0.01, which is nothing: the desk would not trade either.",
+    "canvas": {
+     "highlight": [
+      "c5-lb1",
+      "c5-lb2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Two tariffs",
+   "prose": "The rule's typical order is a flip of 20,000 shares at about £100. Broker A charges £0.005 a share and your fills cross a 2 bp half spread. Broker B charges no commission, but its fills average 3 bp from the mid.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Broker",
+      "Commission",
+      "Half spread"
+     ],
+     "rows": [
+      [
+       "A",
+       "£0.005 a share, min £1",
+       "2 bp"
+      ],
+      [
+       "B",
+       "none",
+       "3 bp"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How much more does broker B cost per flip, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100,
+    "tol": {
+     "abs": 0.5
+    },
+    "unit": "£",
+    "label": "Extra cost at broker B",
+    "accept": "£100: A costs $100 + 400 = £500$, B costs $£600$.",
+    "wrong": [
+     {
+      "id": "minus",
+      "value": -100,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "spread-only",
+      "value": 200,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Cost one flip at each broker with the same formula."
+    },
+    {
+     "rung": "point",
+     "text": "The traded value is £2,000,000. A: commission £100 plus 2 bp; B: 3 bp."
+    },
+    {
+     "rung": "step",
+     "text": "A: $100 + 400 = £500$. B: $£600$."
+    }
+   ],
+   "feedback": {
+    "correct": "The free broker costs £100 more on every flip.",
+    "generic": "Not quite right. Cost each broker's flip in full, then take B minus A.",
+    "byKey": {
+     "minus": "You took A minus B. B is the dearer one.",
+     "spread-only": "You compared spreads only. A also charges £100 of commission."
+    }
+   },
+   "explain": {
+    "text": "On £2m traded, 1 bp is £200, while A's commission is only £100. A wider fill outweighs a missing commission. Zero commission is not zero cost."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Every fill pays a commission (here £0.005 a share, at least £1) and half the spread in bp of the traded value; a zero order pays nothing.",
+   "A round trip pays the whole spread once: half on the buy, half on the sale.",
+   "Costs follow units traded: the lookback-1 rule's £434,177 after commission is gone at a half spread of 3.17 bp, so report net Sharpe at several costs."
+  ],
+  "formula": {
+   "name": "Cost of a fill",
+   "tex": "\\text{cost}(q, p) = \\max(c_s |q|, m) + |q|\\,p\\,\\dfrac{h}{10^4}, \\quad \\text{cost}(0, p) = 0",
+   "note": "Use $|q|$: sales pay like buys."
+  },
+  "trap": "Charging the full spread on each leg, or charging only buys. Each fill crosses half the spread, whichever way it goes."
+ },
+ "quiz": [
+  {
+   "id": "q-cost",
+   "difficulty": 2,
+   "prose": "A buy of 2,000 shares at £25.00. Commission £0.005 a share, minimum £1; half spread 4 bp.",
+   "question": "What is the cost, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 30,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Cost",
+    "accept": "£30.00: $10 + 50{,}000 \\times 0.0004$.",
+    "wrong": [
+     {
+      "id": "full",
+      "value": 50,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£10 commission plus £20 spread.",
+    "generic": "Not quite right. Commission per share, then 4 bp of the traded value.",
+    "byKey": {
+     "full": "You charged 8 bp, the whole spread. Each fill crosses half of it."
+    }
+   },
+   "explain": {
+    "text": "Commission is $2{,}000 \\times 0.005 = £10$. The traded value is £50,000 and 4 bp of it is £20."
+   }
+  },
+  {
+   "id": "q-zero",
+   "difficulty": 2,
+   "prose": "Today's target equals yesterday's, so the order is 0 shares.",
+   "question": "What does `trade_cost(0, 100.0)` return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "zero",
+      "text": "0.0",
+      "correct": true
+     },
+     {
+      "id": "min",
+      "text": "1.0",
+      "why": "You applied the minimum to a non-trade. No order is sent, so nothing is charged."
+     },
+     {
+      "id": "spread",
+      "text": "0.02",
+      "why": "You charged a spread on no shares. Both parts scale with $|q|$, which is 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No trade, no cost.",
+    "generic": "Not quite right. Does anything trade?"
+   },
+   "explain": {
+    "text": "A zero order never reaches the broker. The function returns 0.0 before it applies the minimum."
+   }
+  },
+  {
+   "id": "q-trip",
+   "difficulty": 3,
+   "prose": "A round trip of 1,000 shares at £50.00, with £0.005 a share (minimum £1) and a 2 bp half spread.",
+   "question": "What does the round trip cost, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 30,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Round-trip cost",
+    "accept": "£30.00: two fills of $5 + 10$.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 15,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "full",
+      "value": 50,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two fills of £15.",
+    "generic": "Not quite right. Cost each leg, then add.",
+    "byKey": {
+     "one": "You costed one leg. A round trip has two.",
+     "full": "You charged the whole spread on each leg."
+    }
+   },
+   "explain": {
+    "text": "Each leg: £5 commission and 2 bp of £50,000, £10. Two legs make £30."
+   }
+  },
+  {
+   "id": "q-break",
+   "difficulty": 3,
+   "prose": "A rule made £30,000 gross after commission. It traded £60m of shares.",
+   "question": "At what half spread, in bp, does it break even?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "bp",
+    "label": "Break-even half spread",
+    "accept": "5 bp: $30{,}000 / 60{,}000{,}000 \\times 10^4$.",
+    "wrong": [
+     {
+      "id": "pct",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each £1 traded carries 5 bp of edge.",
+    "generic": "Not quite right. Divide the P&L by the traded value and write it in bp.",
+    "byKey": {
+     "pct": "That is the break-even as a percentage. 1 bp is 0.01%, so 0.05% is 5 bp."
+    }
+   },
+   "explain": {
+    "text": "£30,000 over £60m is 0.0005 of what it traded, which is 5 bp. Any half spread above that makes it lose."
+   }
+  }
+ ]
+}

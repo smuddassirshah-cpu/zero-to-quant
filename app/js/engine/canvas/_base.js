@@ -546,6 +546,8 @@
      range(a, b) is { range: [a, b] } (an array canvas's highlight) */
   DERIVE_FN.obj = (...kv) => { const o = {}; for (let i = 0; i + 1 < kv.length; i += 2) o[String(kv[i])] = kv[i + 1]; return o; };
   DERIVE_FN.range = (a, b) => ({ range: [a, b] });
+  /* item 382: seq(a, b, step) is the list a, a + step, ..., b (categories that follow a slider) */
+  DERIVE_FN.seq = (a, b, st = 1) => { const out = []; if (!(+st > 0)) return out; for (let v = +a, k = 0; v <= +b + 1e-9 && k < 1000; v += +st, k++) out.push(+v.toFixed(10)); return out; };
   /* item 367: seeded noise for live series: randn(n, seed) is n standard normal draws, ar1(phi, n, seed, sigma, x0) an
      AR(1) path x_t = phi x_(t-1) + sigma e_t on the same draws, so a slider on phi redraws the same shocks */
   const normals = (n, seed) => { const r = Z.sim && Z.sim.rng ? Z.sim.rng(seed ?? 1) : Math.random, out = []; for (let i = 0; i < n; i++) { let u = 0; while (u <= 1e-12) u = r(); out.push(Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r())); } return out; };
