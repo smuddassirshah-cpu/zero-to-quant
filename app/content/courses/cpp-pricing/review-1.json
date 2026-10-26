@@ -1,0 +1,365 @@
+{
+  "id": "review-1",
+  "course": "cpp-pricing",
+  "level": 1,
+  "items": [
+    {
+      "id": "r-compare-prices",
+      "difficulty": 2,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "A test compares your pricer's £10.450583572185565 with a reference £10.450583572185568 from another library.",
+      "question": "Which assertion should the test use?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`close(price, ref, 1e-12)`, with the relative-plus-floor tolerance",
+            "correct": true
+          },
+          {
+            "id": "eq",
+            "text": "`price == ref`",
+            "why": "You compared doubles exactly. Two correct pricers that add in a different order differ in the last digit."
+          },
+          {
+            "id": "abs",
+            "text": "`std::abs(price - ref) <= 1e-20`",
+            "why": "1e-20 is far below the gap between doubles near 10, about 1.8e-15, so this is `==` again."
+          },
+          {
+            "id": "round",
+            "text": "`std::round(price) == std::round(ref)`",
+            "why": "Rounding to whole pounds would pass a pricer that is £0.40 wrong."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Twelve agreeing digits, whatever the order of operations.",
+        "generic": "Not quite right. The two values differ by one gap between doubles."
+      },
+      "explain": {
+        "text": "The prices differ by $3 \\times 10^{-15}$, rounding noise. A relative tolerance of 1e-12 asks for 12 agreeing digits, which catches real bugs and ignores the noise."
+      }
+    },
+    {
+      "id": "r-bond-loop",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric"
+      ],
+      "prose": "```cpp\ndouble price = 0;\nfor (int t = 1; t <= 5; ++t)\n    price += 4 * std::exp(-0.05 * t);\nprice += 100 * std::exp(-0.05 * 5);\n```\n\nThe bond pays a £4 coupon each year and £100 at year 5, discounted at a continuous 5%. $e^{-0.25} = 0.7788$, and the five coupon factors sum to 4.2172.",
+      "question": "What is `price`, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 95.1373,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "pounds",
+        "unit": "£",
+        "accept": "£95.14: $4 \\times 4.2172 + 100 \\times 0.7788$",
+        "wrong": [
+          {
+            "id": "nocoupon",
+            "value": 77.88,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "noprincipal",
+            "value": 16.87,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£95.14: below par, because the coupon is under the rate.",
+        "generic": "Not quite right. Add the coupons' value to the principal's.",
+        "byKey": {
+          "nocoupon": "That is the principal alone. Add $4 \\times 4.2172$ for the coupons.",
+          "noprincipal": "That is the coupons alone. Add the £100 at year 5, worth £77.88 today."
+        }
+      },
+      "explain": {
+        "text": "Coupons: $4 \\times 4.2172 = £16.87$. Principal: $100 \\times 0.7788 = £77.88$. Total £95.14, below £100 because a 4% coupon pays less than the 5% rate."
+      }
+    },
+    {
+      "id": "r-two-paths",
+      "difficulty": 2,
+      "skills": [
+        "cx-numeric"
+      ],
+      "prose": "```cpp\ndouble path_a(unsigned seed);  // builds std::mt19937 gen(seed)\ndouble path_b(unsigned seed);  // builds std::mt19937 gen(seed)\ndouble a = path_a(42), b = path_b(42);\n```\n\nBoth functions simulate the same share the same way.",
+      "question": "What is true of `a` and `b`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "They are equal: both paths use the same draws",
+            "correct": true
+          },
+          {
+            "id": "indep",
+            "text": "They are independent draws",
+            "why": "Two engines with one seed produce one stream twice, so the paths are copies."
+          },
+          {
+            "id": "half",
+            "text": "They are negatives of each other",
+            "why": "Nothing flips the draws; that would be antithetic sampling, done on purpose."
+          },
+          {
+            "id": "vary",
+            "text": "They change from run to run",
+            "why": "Seeded engines repeat exactly on one compiler."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Same seed, same draws, same path.",
+        "generic": "Not quite right. What does each engine start from?"
+      },
+      "explain": {
+        "text": "Each function rebuilds an engine from 42, so both see the same stream. For independent paths, pass one engine by reference, or give each its own seed."
+      }
+    },
+    {
+      "id": "r-right-tail",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "You need $1 - \\Phi(9)$, the chance of a 9 sd rise in one step, for a tail-risk test. `norm_cdf` is the erfc version.",
+      "question": "Which line keeps its digits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`norm_cdf(-9.0)`",
+            "correct": true
+          },
+          {
+            "id": "minus",
+            "text": "`1 - norm_cdf(9.0)`",
+            "why": "$\\Phi(9)$ rounds to exactly 1, so the subtraction gives 0."
+          },
+          {
+            "id": "erf",
+            "text": "`0.5 * (1 - std::erf(9 / std::sqrt(2.0)))`",
+            "why": "$\\operatorname{erf}(6.36)$ rounds to 1, and $1 - 1 = 0$: the same cancellation."
+          },
+          {
+            "id": "pdf",
+            "text": "`norm_pdf(9.0)`",
+            "why": "That is the density's height, not a tail probability."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\Phi(-9) = 1.13 \\times 10^{-19}$, every digit kept.",
+        "generic": "Not quite right. Which line avoids subtracting from 1?"
+      },
+      "explain": {
+        "text": "By symmetry $1 - \\Phi(9) = \\Phi(-9)$, and the erfc form computes it directly: $1.13 \\times 10^{-19}$. Any route through $1 - (\\text{something near } 1)$ prints 0."
+      }
+    },
+    {
+      "id": "r-ties",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric"
+      ],
+      "prose": "Near $10^{16}$ neighbouring doubles are 2 apart, and a tie rounds to the neighbour whose last mantissa bit is 0. $10^{16}$ and $10^{16} + 4$ have last bit 0; $10^{16} + 2$ has last bit 1.\n\n```cpp\nstd::cout << (1e16 + 3.0) - 1e16 << '\\n';\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "4",
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "down",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The tie between +2 and +4 goes to +4.",
+        "generic": "Not quite right. Round $10^{16} + 3$ to a double first.",
+        "byKey": {
+          "exact": "You added exactly. $10^{16} + 3$ is not a double; it sits halfway between $+2$ and $+4$.",
+          "down": "$+2$ has last bit 1, so the tie goes the other way, to $+4$."
+        }
+      },
+      "explain": {
+        "text": "$10^{16} + 3$ is halfway between $10^{16} + 2$ and $10^{16} + 4$; ties go to the even mantissa, $+4$. So adding 3 adds 4, and adding 1 added 0: rounding to even makes errors cancel on average."
+      }
+    },
+    {
+      "id": "r-forward-code",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric"
+      ],
+      "prose": "A share pays a continuous dividend yield $q$. Its forward price is $F = Se^{(r - q)T}$.",
+      "question": "Write `forward(s, r, q, t)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble forward(double s, double r, double q, double t) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble forward(double s, double r, double q, double t) {\n    return s * std::exp((r - q) * t);\n}\n",
+        "examples": [
+          {
+            "call": "forward(100, 0.05, 0.02, 1)",
+            "expect": 103.0454533953517,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "forward(100, 0.05, 0.02, 1)",
+            "expect": 103.0454533953517,
+            "compare": "isclose"
+          },
+          {
+            "call": "forward(100, 0.05, 0.0, 1)",
+            "expect": 105.12710963760242,
+            "compare": "isclose"
+          },
+          {
+            "call": "forward(50, 0.03, 0.04, 2)",
+            "expect": 49.00993366533776,
+            "compare": "isclose"
+          },
+          {
+            "call": "forward(80, 0.05, 0.02, 0)",
+            "expect": 80,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 4 hidden tests that call forward; each answer is accepted within a relative 1e-9."
+      },
+      "feedback": {
+        "correct": "One line of `<cmath>`.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Expected 103.05. If you got 105.13, $q$ is missing; if 107.25, it is added rather than subtracted."
+        }
+      },
+      "explain": {
+        "text": "`s * std::exp((r - q) * t)`. Test 3 has $q > r$, so the forward is below spot: holding the share pays more than the cash would."
+      }
+    },
+    {
+      "id": "r-se-draws",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "A Monte Carlo price has a standard error of £0.08 with 10,000 paths. Risk wants £0.02.",
+      "question": "How many paths are needed?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 160000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "160,000: a quarter of the error needs 16 times the paths",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 40000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Error falls like $1/\\sqrt{n}$, so ×16 paths for ÷4 error.",
+        "generic": "Not quite right. The standard error is $s/\\sqrt{n}$.",
+        "byKey": {
+          "four": "Four times the paths only halves the error: $\\sqrt4 = 2$. You need $\\sqrt{n}$ four times larger."
+        }
+      },
+      "explain": {
+        "text": "To cut $s/\\sqrt{n}$ by 4, $\\sqrt{n}$ must grow by 4 and $n$ by 16: 160,000 paths. Lesson 3's antithetic preview is one cheaper way to the same error."
+      }
+    },
+    {
+      "id": "r-var95",
+      "difficulty": 4,
+      "skills": [
+        "cx-numeric"
+      ],
+      "prose": "A £5m portfolio has daily volatility 2%. Your `norm_quantile(0.05)` returns −1.6449.",
+      "question": "What is its 95% one-day VaR, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 164485,
+        "tol": {
+          "abs": 100
+        },
+        "placeholder": "pounds",
+        "unit": "£",
+        "accept": "£164,485: $1.6449 \\times 0.02 \\times £5\\text{m}$",
+        "wrong": [
+          {
+            "id": "ninetynine",
+            "value": 232635,
+            "tol": {
+              "abs": 200
+            }
+          },
+          {
+            "id": "sd",
+            "value": 100000,
+            "tol": {
+              "abs": 200
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One sd of daily P&L is £100,000; the 5% point is 1.645 sds out.",
+        "generic": "Not quite right. Multiply 1.6449 by one sd of daily P&L.",
+        "byKey": {
+          "ninetynine": "That uses 2.3263, the 99% quantile. This is a 95% VaR.",
+          "sd": "That is one sd. The 95% point is 1.6449 sds below the mean."
+        }
+      },
+      "explain": {
+        "text": "$0.02 \\times £5\\text{m} = £100{,}000$ is one sd, and $1.6449 \\times £100{,}000 = £164{,}485$. On about 1 day in 20 the loss should be at least this."
+      }
+    }
+  ]
+}

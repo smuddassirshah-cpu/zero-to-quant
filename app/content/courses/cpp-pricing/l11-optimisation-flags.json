@@ -495,31 +495,31 @@
       }
     },
     {
-      "type": "ladder",
+      "type": "problem",
       "difficulty": 2,
       "title": "An assert that stays on",
-      "prose": "`assert(cond)` from `<cassert>` stops the program with a message when `cond` is false. A build with `NDEBUG` defined deletes every assert. This app's build does not define `NDEBUG`, so here asserts stay on. With $n = 0$ the tree divides by zero and quietly returns a wrong number.",
+      "prose": "`assert(cond)` from `<cassert>` stops the program with a message when `cond` is false. A build with `NDEBUG` defined deletes every assert. This app's build does not define `NDEBUG`, so here asserts stay on. Your `american_put` with $n = 0$ quietly returns £0, and with $\\sigma = 0$ or $T = 0$ it returns nan.",
       "canvas": {
         "kind": "console",
         "params": {
           "lines": [
             "$ ./pricer    (n = 0)",
-            "Assertion failed: n > 0 (main.cpp: checked_call: 5)"
+            "Assertion failed: n > 0 (main.cpp: checked_put: 5)"
           ],
           "title": "What it should do"
         },
         "state": {}
       },
-      "question": "Add asserts so `checked_call` stops when `n`, `sigma` or `t` is not positive.",
+      "question": "Add asserts so `checked_put` stops when `n`, `sigma` or `t` is not positive.",
       "widget": {
         "kind": "code",
         "language": "cpp",
-        "starter": "#include <cassert>\n\n// Hidden: CallPayoff and level 2's binomial_price.\ndouble checked_call(double s, double k, double r, double sigma, double t, int n) {\n    // assert that n, sigma and t are all positive\n    return binomial_price(CallPayoff(k), s, r, sigma, t, n, false);\n}\n",
-        "solution": "#include <cassert>\n\n// Hidden: CallPayoff and level 2's binomial_price.\ndouble checked_call(double s, double k, double r, double sigma, double t, int n) {\n    assert(n > 0);\n    assert(sigma > 0);\n    assert(t > 0);\n    return binomial_price(CallPayoff(k), s, r, sigma, t, n, false);\n}\n",
-        "prelude": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double operator()(double s) const = 0;\n};\n\nstruct CallPayoff : Payoff {\n    double k;\n    explicit CallPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(s - k, 0.0); }\n};\n\nstruct PutPayoff : Payoff {\n    double k;\n    explicit PutPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(k - s, 0.0); }\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble binomial_price(const Payoff& payoff, double s, double r, double sigma,\n                      double t, int n, bool american) {\n    ++zq_trees;\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            if (american)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n        }\n    return v[0];\n}\n",
+        "starter": "#include <cassert>\n\n// Hidden: american_put from the last screen.\ndouble checked_put(double s, double k, double r, double sigma, double t, int n) {\n    // assert that n, sigma and t are all positive\n    return american_put(s, k, r, sigma, t, n);\n}\n",
+        "solution": "#include <cassert>\n\n// Hidden: american_put from the last screen.\ndouble checked_put(double s, double k, double r, double sigma, double t, int n) {\n    assert(n > 0);\n    assert(sigma > 0);\n    assert(t > 0);\n    return american_put(s, k, r, sigma, t, n);\n}\n",
+        "prelude": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\ndouble american_put(double s, double k, double r, double sigma, double t, int n) {\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    double node = s * std::pow(d, n);   // price at (n, 0): all downs\n    for (int j = 0; j <= n; ++j) {\n        v[j] = std::max(k - node, 0.0);\n        node *= u * u;                  // one more up, one fewer down\n    }\n    for (int i = n - 1; i >= 0; --i) {\n        node = s * std::pow(d, i);      // one pow per step, not per node\n        for (int j = 0; j <= i; ++j) {\n            double hold = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            v[j] = std::max(hold, k - node);\n            node *= u * u;\n        }\n    }\n    return v[0];\n}\n",
         "examples": [
           {
-            "call": "checked_call",
+            "call": "checked_put",
             "args": [
               100.0,
               100.0,
@@ -541,14 +541,14 @@
         ],
         "tests": [
           {
-            "call": "checked_call",
+            "call": "checked_put",
             "args": [
               100.0,
               100.0,
               0.05,
               0.2,
               1.0,
-              128
+              100
             ],
             "types": [
               "double",
@@ -558,11 +558,11 @@
               "double",
               "int"
             ],
-            "expect": 10.434976156747096,
+            "expect": 6.082354409142385,
             "compare": "isclose"
           },
           {
-            "call": "checked_call",
+            "call": "checked_put",
             "args": [
               100.0,
               100.0,
@@ -582,27 +582,7 @@
             "compare": "raises"
           },
           {
-            "call": "checked_call",
-            "args": [
-              100.0,
-              100.0,
-              0.05,
-              0.2,
-              1.0,
-              -5
-            ],
-            "types": [
-              "double",
-              "double",
-              "double",
-              "double",
-              "double",
-              "int"
-            ],
-            "compare": "raises"
-          },
-          {
-            "call": "checked_call",
+            "call": "checked_put",
             "args": [
               100.0,
               100.0,
@@ -622,7 +602,7 @@
             "compare": "raises"
           },
           {
-            "call": "checked_call",
+            "call": "checked_put",
             "args": [
               100.0,
               100.0,
@@ -642,10 +622,30 @@
             "compare": "raises"
           },
           {
-            "call": "checked_call",
+            "call": "checked_put",
             "args": [
               100.0,
               100.0,
+              0.05,
+              -0.2,
+              1.0,
+              64
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "compare": "raises"
+          },
+          {
+            "call": "checked_put",
+            "args": [
+              100.0,
+              110.0,
               0.05,
               0.2,
               1.0,
@@ -659,11 +659,11 @@
               "double",
               "int"
             ],
-            "expect": 12.162284964623941,
+            "expect": 11.304236451473336,
             "compare": "isclose"
           }
         ],
-        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Six hidden tests: two good inputs give the level 2 prices, and $n = 0$, $n = -5$, $\\sigma = 0$ and $T = 0$ must each stop the program."
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Six hidden tests: two good inputs give the prices from the last screen, and $n = 0$, $\\sigma = 0$, $\\sigma = -0.2$ and $T = 0$ must each stop the program."
       },
       "hints": [
         {
@@ -672,7 +672,10 @@
         },
         {
           "rung": "point",
-          "text": "`assert(n > 0);`"
+          "text": "The message names the failed condition.",
+          "highlight": [
+            "l2"
+          ]
         },
         {
           "rung": "step",
@@ -684,12 +687,12 @@
         "generic": "Not quite right. Read the first failing test.",
         "byKey": {
           "test-2": "With $n = 0$ the program ran to the end. Add `assert(n > 0);` before the return.",
-          "test-4": "$\\sigma = 0$ was not stopped. Assert on `sigma` too.",
-          "test-5": "$T = 0$ was not stopped. Assert on `t` too."
+          "test-3": "$\\sigma = 0$ was not stopped. Assert on `sigma` too.",
+          "test-4": "$T = 0$ was not stopped. Assert on `t` too."
         }
       },
       "explain": {
-        "text": "An assert states something that must be true for the code to be right. Here it catches a caller's mistake during testing. A release build with `-DNDEBUG` removes these checks, so inputs from outside the program need a check that stays, such as returning an error."
+        "text": "An assert states something that must hold for the code to be right, and here it catches a caller's mistake during testing. A release build with `-DNDEBUG` removes these checks. Inputs from outside the program, such as a trade file, need a check that stays."
       }
     },
     {
@@ -935,9 +938,9 @@
       "widget": {
         "kind": "code",
         "language": "cpp",
-        "starter": "#include <cstdio>\n\n// Hidden: CallPayoff and level 2's binomial_price.\nint main() {\n#ifdef __OPTIMIZE__\n    std::printf(\"optimised: yes\\n\");\n#else\n    std::printf(\"optimised: no\\n\");\n#endif\n    // print \"asserts: on\" or \"asserts: off\", using NDEBUG\n    CallPayoff call(100);\n    std::printf(\"price: %.4f\\n\", binomial_price(call, 100, 0.05, 0.2, 1, 512, false));\n}\n",
-        "solution": "#include <cstdio>\n\n// Hidden: CallPayoff and level 2's binomial_price.\nint main() {\n#ifdef __OPTIMIZE__\n    std::printf(\"optimised: yes\\n\");\n#else\n    std::printf(\"optimised: no\\n\");\n#endif\n#ifdef NDEBUG\n    std::printf(\"asserts: off\\n\");\n#else\n    std::printf(\"asserts: on\\n\");\n#endif\n    CallPayoff call(100);\n    std::printf(\"price: %.4f\\n\", binomial_price(call, 100, 0.05, 0.2, 1, 512, false));\n}\n",
-        "prelude": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double operator()(double s) const = 0;\n};\n\nstruct CallPayoff : Payoff {\n    double k;\n    explicit CallPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(s - k, 0.0); }\n};\n\nstruct PutPayoff : Payoff {\n    double k;\n    explicit PutPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(k - s, 0.0); }\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble binomial_price(const Payoff& payoff, double s, double r, double sigma,\n                      double t, int n, bool american) {\n    ++zq_trees;\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            if (american)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n        }\n    return v[0];\n}\n",
+        "starter": "#include <cstdio>\n\n// Hidden: Call and level 2's binomial_price.\nint main() {\n#ifdef __OPTIMIZE__\n    std::printf(\"optimised: yes\\n\");\n#else\n    std::printf(\"optimised: no\\n\");\n#endif\n    // print \"asserts: on\" or \"asserts: off\", using NDEBUG\n    Call call(100);\n    std::printf(\"price: %.4f\\n\", binomial_price(call, 100, 0.05, 0.2, 1, 512, false));\n}\n",
+        "solution": "#include <cstdio>\n\n// Hidden: Call and level 2's binomial_price.\nint main() {\n#ifdef __OPTIMIZE__\n    std::printf(\"optimised: yes\\n\");\n#else\n    std::printf(\"optimised: no\\n\");\n#endif\n#ifdef NDEBUG\n    std::printf(\"asserts: off\\n\");\n#else\n    std::printf(\"asserts: on\\n\");\n#endif\n    Call call(100);\n    std::printf(\"price: %.4f\\n\", binomial_price(call, 100, 0.05, 0.2, 1, 512, false));\n}\n",
+        "prelude": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n#include <vector>\n\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s, double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    ++zq_trees;\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\n",
         "examples": [
           {
             "compare": "stdout",

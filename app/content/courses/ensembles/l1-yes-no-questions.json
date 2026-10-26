@@ -371,7 +371,7 @@
       "type": "explore",
       "difficulty": 1,
       "title": "Watch the tree grow",
-      "prose": "Each node shows its loans. The labels on the branches are the answers that lead there. Slide the depth from 0 to 2.",
+      "prose": "Each node shows its loans. The labels on the branches are the answers that lead there. Slide the depth from 1 to 2.",
       "canvas": {
         "kind": "tree",
         "params": {
@@ -420,7 +420,8 @@
           ],
           "coll": [
             [
-              ""
+              "lo",
+              "hi"
             ],
             [
               "lo",
@@ -436,23 +437,24 @@
         },
         "state": {
           "params": {
-            "d": 0
+            "d": 1
           },
           "collapse": [
-            ""
+            "lo",
+            "hi"
           ]
         },
         "derive": {
           "collapse": "params.coll[d]",
-          "caption": "Depth {{d}}: {{params.err[d]}} of 12 loans on the wrong side of their leaf's majority."
+          "caption": "Depth {{d}}: {{params.err[d]}} of 12 loans misclassified."
         },
         "controls": [
           {
             "bind": "d",
-            "min": 0,
+            "min": 1,
             "max": 2,
             "step": 1,
-            "start": 0,
+            "start": 1,
             "label": "Depth"
           }
         ]
@@ -500,7 +502,7 @@
       "type": "problem",
       "difficulty": 2,
       "title": "Questions are lines",
-      "prose": "Plot each loan by leverage and cover. Each question cuts the plane along a line parallel to an axis. Slide the depth to 2, then place a new loan with leverage 2.0 and cover 1.0.",
+      "prose": "Plot each loan by leverage and cover. Each question cuts the plane along a line parallel to an axis. Slide the depth to 2, then place a new loan with leverage 1.4 and cover 0.9.",
       "canvas": {
         "kind": "plane",
         "params": {
@@ -820,9 +822,10 @@
             },
             {
               "id": "new",
-              "x": 2.0,
-              "y": 1.0,
+              "x": 1.4,
+              "y": 0.9,
               "label": "new loan",
+              "labelPos": "w",
               "colour": 6,
               "tap": false
             }
@@ -956,7 +959,7 @@
         "derive": {
           "polygons": "params.polys[d]",
           "segments": "params.segs[d]",
-          "caption": "Depth {{d}}: orange areas predict default, green areas predict repaid."
+          "caption": "Depth {{d}}. Orange dots defaulted, green dots were repaid; the shading is the tree's prediction."
         },
         "controls": [
           {
@@ -980,7 +983,7 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "Answer the root question first: is leverage 2.0 above 3?"
+          "text": "Answer the root question first: is leverage 1.4 above 3?"
         },
         {
           "rung": "point",
@@ -991,7 +994,7 @@
         },
         {
           "rung": "step",
-          "text": "Leverage 2.0 is at most 3 and cover 1.0 is at most 1.5: the bottom-left rectangle. One training loan sits there."
+          "text": "Leverage 1.4 is at most 3 and cover 0.9 is at most 1.5: the bottom-left rectangle. One training loan sits there."
         }
       ],
       "feedback": {
@@ -1004,7 +1007,7 @@
         }
       },
       "explain": {
-        "text": "Leverage 2.0 is left of the line at 3, and cover 1.0 is below the line at 1.5. Each question is an axis-parallel line and each leaf is a rectangle. The new loan gets the majority of its rectangle's training loans: loan 5, a default.",
+        "text": "Leverage 1.4 is left of the line at 3, and cover 0.9 is below the line at 1.5. Each question is an axis-parallel line and each leaf is a rectangle. The new loan gets the majority of its rectangle's training loans: loan 5, a default.",
         "canvas": {
           "params": {
             "d": 2
@@ -1290,7 +1293,7 @@
           },
           {
             "id": "recur",
-            "text": "Send each loan to the side its answer picks, and go back to step 2 for each side."
+            "text": "Send each loan to the side its answer picks, then run the stopping test on each side."
           }
         ],
         "answer": [
@@ -1352,8 +1355,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "# The 12 loans: [leverage, interest cover], outcome 1 = default, 0 = repaid\nX12 = [[1.2, 5.0], [3.8, 2.2], [2.4, 2.5], [4.1, 4.5], [2.2, 1.2], [1.6, 4.0],\n       [5.0, 3.5], [2.8, 1.8], [3.2, 1.5], [2.0, 3.0], [4.4, 2.9], [2.6, 2.0]]\ny12 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0]\n",
-        "starter": "def split_counts(X, y, feature, threshold):\n    left = [0, 0]    # [repaid, default] with X[i][feature] <= threshold\n    right = [0, 0]   # [repaid, default] with X[i][feature] > threshold\n    for row, label in zip(X, y):\n        ...\n    return left, right\n",
-        "solution": "def split_counts(X, y, feature, threshold):\n    left = [0, 0]    # [repaid, default] with X[i][feature] <= threshold\n    right = [0, 0]   # [repaid, default] with X[i][feature] > threshold\n    for row, label in zip(X, y):\n        if row[feature] <= threshold:\n            left[label] += 1\n        else:\n            right[label] += 1\n    return left, right\n",
+        "starter": "def split_counts(X, y, feature, threshold):\n    left = [0, 0]    # [repaid, default], value <= threshold\n    right = [0, 0]   # [repaid, default], value > threshold\n    for row, label in zip(X, y):\n        ...\n    return left, right\n",
+        "solution": "def split_counts(X, y, feature, threshold):\n    left = [0, 0]    # [repaid, default], value <= threshold\n    right = [0, 0]   # [repaid, default], value > threshold\n    for row, label in zip(X, y):\n        if row[feature] <= threshold:\n            left[label] += 1\n        else:\n            right[label] += 1\n    return left, right\n",
         "examples": [
           {
             "call": "split_counts(X12, y12, 0, 3.0)",
@@ -1529,8 +1532,10 @@
         "params": {
           "title": "Python",
           "lines": [
-            ">>> m = DecisionTreeClassifier(max_depth=2, random_state=0).fit(X12, y12)",
-            ">>> print(export_text(m, feature_names=['leverage', 'cover']))",
+            ">>> tree = DecisionTreeClassifier(max_depth=2, random_state=0)",
+            ">>> m = tree.fit(X12, y12)",
+            ">>> names = ['leverage', 'cover']",
+            ">>> print(export_text(m, feature_names=names))",
             "|--- leverage <= 3.00",
             "|   |--- cover <= 1.50",
             "|   |   |--- class: 1",

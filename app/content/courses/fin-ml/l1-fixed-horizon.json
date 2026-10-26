@@ -1,0 +1,2728 @@
+{
+  "id": "l1-fixed-horizon",
+  "course": "fin-ml",
+  "title": "Fixed-horizon labels and their problems",
+  "minutes": 14,
+  "objectives": [
+    "Label returns over a fixed horizon and find its weaknesses.",
+    "Scale a dead zone by recent volatility and check the class balance."
+  ],
+  "skills": [
+    "fm-labels",
+    "fm-eval"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Up or down in five days",
+      "prose": "Twelve closes of one share, days 0 to 11. We want to label each day for a model: **up** if the close five days later is higher than this day's close.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                101.3,
+                100.4,
+                99.2,
+                100.9,
+                100.05,
+                102.1,
+                101.6,
+                98.7,
+                99.6,
+                100.7,
+                101.9
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "d0",
+              "i": 0
+            },
+            {
+              "id": "d1",
+              "i": 1
+            },
+            {
+              "id": "d2",
+              "i": 2
+            },
+            {
+              "id": "d3",
+              "i": 3
+            },
+            {
+              "id": "d4",
+              "i": 4
+            },
+            {
+              "id": "d5",
+              "i": 5
+            },
+            {
+              "id": "d6",
+              "i": 6
+            },
+            {
+              "id": "d7",
+              "i": 7
+            },
+            {
+              "id": "d8",
+              "i": 8
+            },
+            {
+              "id": "d9",
+              "i": 9
+            },
+            {
+              "id": "d10",
+              "i": 10
+            },
+            {
+              "id": "d11",
+              "i": 11
+            }
+          ],
+          "caption": "Tap a day to choose it"
+        }
+      },
+      "question": "Tap every day whose close five days later is higher.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "d0",
+          "d1",
+          "d2",
+          "d5"
+        ],
+        "countWord": "days",
+        "wrong": [
+          {
+            "id": "next-day",
+            "set": [
+              "d0",
+              "d3",
+              "d5",
+              "d8",
+              "d9",
+              "d10"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each day with the day five steps to its right, not the next one."
+        },
+        {
+          "rung": "point",
+          "text": "Day 0 pairs with day 5, and day 6 pairs with day 11, the last close.",
+          "highlight": [
+            "d0",
+            "d5",
+            "d6",
+            "d11"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 0: £100.00 then £100.05. Day 1: £101.30 then £102.10. Day 2: £100.40 then £101.60. Day 5: £100.05 then £100.70."
+        }
+      ],
+      "feedback": {
+        "correct": "Days 0, 1, 2 and 5 are up. Days 7 to 11 cannot be labelled at all.",
+        "generic": "Not quite right. Pair each day with the close five days later, and skip days with no such close.",
+        "byKey": {
+          "next-day": "You compared each day with the next day. The label looks five days ahead: day 0 pairs with day 5.",
+          "d7": "Day 7 would need a close on day 12, and the data stop at day 11. That day gets no label.",
+          "d8": "Day 8 would need day 13. Days 7 to 11 have no close five days on, so they get no label.",
+          "d9": "Day 9 would need day 14. Days 7 to 11 have no close five days on, so they get no label.",
+          "d10": "Day 10 would need day 15. Days 7 to 11 have no close five days on, so they get no label.",
+          "d11": "Day 11 is the last close. Nothing comes five days after it, so it gets no label.",
+          "d3": "Day 3 closes at £99.20 and day 8 at £98.70: down.",
+          "d4": "Day 4 closes at £100.90 and day 9 at £99.60: down.",
+          "d6": "Day 6 closes at £102.10 and day 11 at £101.90: down, by 20p."
+        }
+      },
+      "explain": {
+        "text": "You paired each day $t$ with day $t + 5$ and kept the sign of the change. Four days are up and three down. Day 0 is up by 5p, 0.05%, and gets the same label as day 2, up 1.2%.",
+        "canvas": {
+          "markers": {
+            "d0": {
+              "label": "+1"
+            },
+            "d1": {
+              "label": "+1"
+            },
+            "d2": {
+              "label": "+1"
+            },
+            "d3": {
+              "label": "−1"
+            },
+            "d4": {
+              "label": "−1"
+            },
+            "d5": {
+              "label": "+1"
+            },
+            "d6": {
+              "label": "−1"
+            }
+          },
+          "shade": [
+            {
+              "id": "nolab",
+              "from": 7,
+              "to": 11,
+              "label": "no label",
+              "tone": "neutral"
+            }
+          ],
+          "highlight": [
+            "d0",
+            "d1",
+            "d2",
+            "d5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where the labels mean little",
+      "prose": "We label all 746 days of a three-year price series this way. The chart counts the five-day returns behind the labels. Every bar left of zero becomes $-1$ and every bar right of it $+1$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "bins": {
+            "min": -8,
+            "max": 10,
+            "width": 1
+          },
+          "data": [
+            2.242,
+            0.83,
+            -1.931,
+            -1.1,
+            -3.341,
+            -2.313,
+            -0.677,
+            1.055,
+            0.316,
+            -1.293,
+            -0.437,
+            0.024,
+            1.896,
+            5.51,
+            6.204,
+            5.863,
+            5.431,
+            2.97,
+            0.492,
+            1.739,
+            0.005,
+            0.322,
+            0.214,
+            3.148,
+            2.19,
+            2.951,
+            2.466,
+            1.257,
+            -2.049,
+            0.076,
+            0.131,
+            -0.66,
+            0.852,
+            1.466,
+            0.526,
+            -0.819,
+            -0.4,
+            0.31,
+            0.715,
+            1.456,
+            0.935,
+            0.359,
+            -2.433,
+            -2.152,
+            -3.054,
+            -2.075,
+            -2.051,
+            1.181,
+            3.049,
+            1.461,
+            3.144,
+            1.358,
+            -1.134,
+            -3.011,
+            -1.454,
+            -4.047,
+            -2.888,
+            -1.938,
+            -2.548,
+            -3.423,
+            -1.417,
+            0.56,
+            0.395,
+            1.256,
+            2.014,
+            0.651,
+            -1.077,
+            -2.231,
+            -1.489,
+            -1.565,
+            -1.19,
+            -0.342,
+            1.551,
+            2.497,
+            2.265,
+            1.942,
+            1.942,
+            0.272,
+            0.093,
+            1.545,
+            2.888,
+            2.494,
+            4.462,
+            4.184,
+            3.652,
+            2.448,
+            0.541,
+            0.792,
+            -0.892,
+            -2.476,
+            -1.097,
+            1.334,
+            -1.502,
+            -1.202,
+            -0.519,
+            -0.397,
+            -3.031,
+            -1.821,
+            -1.867,
+            0.141,
+            -2.323,
+            -3.54,
+            -4.689,
+            -4.229,
+            -4.927,
+            -1.658,
+            2.365,
+            3.082,
+            3.854,
+            2.836,
+            0.476,
+            0.015,
+            2.539,
+            0.365,
+            -0.847,
+            -0.687,
+            -0.788,
+            -3.244,
+            -3.218,
+            -1.577,
+            0.096,
+            1.037,
+            2.871,
+            5.529,
+            2.571,
+            -0.875,
+            -2.548,
+            -4.722,
+            -7.244,
+            -4.921,
+            -4.663,
+            -4.363,
+            -5.331,
+            -5.314,
+            -3.853,
+            -2.994,
+            -2.096,
+            1.19,
+            1.779,
+            0.847,
+            1.767,
+            2.224,
+            0.589,
+            -0.55,
+            -2.443,
+            -3.339,
+            -3.527,
+            -3.026,
+            -1.807,
+            -0.809,
+            1.18,
+            -0.16,
+            1.917,
+            0.908,
+            0.41,
+            0.115,
+            1.437,
+            -1.403,
+            -0.071,
+            -0.211,
+            -0.215,
+            -0.189,
+            -0.018,
+            0.591,
+            1.004,
+            -0.108,
+            -0.676,
+            -0.498,
+            -0.465,
+            0.528,
+            1.13,
+            2.401,
+            2.76,
+            0.435,
+            -0.703,
+            -0.971,
+            -2.249,
+            -1.247,
+            1.504,
+            1.957,
+            1.577,
+            0.354,
+            0.903,
+            -0.385,
+            -1.532,
+            -2.712,
+            -2.041,
+            -1.425,
+            -0.191,
+            -0.92,
+            0.265,
+            1.085,
+            -0.036,
+            -0.549,
+            0.716,
+            1.366,
+            0.375,
+            -3.019,
+            -4.237,
+            -4.289,
+            -3.664,
+            -1.785,
+            -0.366,
+            0.695,
+            1.637,
+            -1.236,
+            -4.853,
+            -3.759,
+            -3.802,
+            -4.589,
+            -6.039,
+            -3.729,
+            -4.289,
+            -5.46,
+            -5.152,
+            -3.333,
+            -2.648,
+            -1.957,
+            -1.568,
+            -0.849,
+            0.464,
+            -2.01,
+            -2.192,
+            -2.072,
+            -4.42,
+            -5.129,
+            -2.889,
+            -3.441,
+            -1.256,
+            2.904,
+            3.332,
+            3.49,
+            6.785,
+            4.579,
+            1.37,
+            1.229,
+            -1.085,
+            -4.973,
+            -4.356,
+            -3.801,
+            -3.025,
+            -0.833,
+            -0.135,
+            -0.617,
+            -0.441,
+            -1.528,
+            -3.081,
+            -1.817,
+            -1.753,
+            -1.042,
+            0.961,
+            3.228,
+            1.475,
+            0.607,
+            -0.101,
+            -1.147,
+            -1.237,
+            -1.059,
+            -0.56,
+            0.042,
+            1.378,
+            1.915,
+            1.862,
+            2.137,
+            0.852,
+            0.392,
+            -0.725,
+            0.05,
+            -0.428,
+            0.898,
+            1.059,
+            -0.403,
+            -0.362,
+            0.508,
+            0.174,
+            -0.595,
+            -0.872,
+            -1.194,
+            -3.783,
+            -3.739,
+            -2.89,
+            -4.114,
+            -4.157,
+            -0.645,
+            -0.882,
+            -4.347,
+            -0.571,
+            -1.514,
+            -0.954,
+            -1.478,
+            -0.063,
+            -1.423,
+            0.252,
+            -0.671,
+            0.633,
+            1.31,
+            2.898,
+            3.81,
+            3.404,
+            2.949,
+            3.014,
+            1.298,
+            1.239,
+            1.483,
+            1.366,
+            2.726,
+            2.499,
+            2.218,
+            2.691,
+            1.277,
+            -0.265,
+            2.073,
+            0.381,
+            0.734,
+            0.801,
+            1.614,
+            -1.664,
+            -1.261,
+            -3.054,
+            -2.458,
+            -1.75,
+            0.513,
+            2.322,
+            3.023,
+            5.761,
+            5.786,
+            5.142,
+            2.749,
+            3.358,
+            2.144,
+            1.005,
+            1.476,
+            3.715,
+            2.498,
+            2.391,
+            2.702,
+            2.21,
+            0.856,
+            0.657,
+            0.119,
+            1.431,
+            3.91,
+            3.875,
+            3.141,
+            2.573,
+            -0.18,
+            -3.412,
+            -2.519,
+            -2.355,
+            -1.235,
+            0.712,
+            3.076,
+            4.85,
+            7.284,
+            9.44,
+            7.758,
+            6.166,
+            4.088,
+            3.393,
+            1.862,
+            2.078,
+            3.854,
+            5.238,
+            5.13,
+            4.435,
+            3.635,
+            -1.446,
+            -3.038,
+            -3.071,
+            -3.346,
+            -3.492,
+            -1.108,
+            1.1,
+            1.601,
+            2.077,
+            3.05,
+            4.531,
+            3.947,
+            3.984,
+            2.722,
+            3.457,
+            1.477,
+            -0.434,
+            -0.631,
+            -0.782,
+            -1.39,
+            1.374,
+            1.542,
+            1.755,
+            2.042,
+            0.946,
+            -0.761,
+            -0.987,
+            -4.211,
+            -5.235,
+            -4.42,
+            -2.729,
+            -2.977,
+            -0.66,
+            1.533,
+            2.399,
+            0.209,
+            2.963,
+            4.659,
+            0.903,
+            1.71,
+            2.785,
+            1.905,
+            0.399,
+            4.379,
+            5.587,
+            7.065,
+            8.102,
+            9.351,
+            9.478,
+            8.202,
+            4.617,
+            5.221,
+            4.205,
+            3.465,
+            2.458,
+            4.419,
+            -0.902,
+            -0.91,
+            -2.77,
+            -4.041,
+            -6.671,
+            -6.223,
+            -5.825,
+            -4.952,
+            -3.95,
+            -2.003,
+            -1.354,
+            -2.866,
+            -3.756,
+            -3.997,
+            -6.316,
+            -5.46,
+            -3.623,
+            -0.753,
+            0.979,
+            4.296,
+            3.534,
+            3.526,
+            2.677,
+            1.604,
+            -0.447,
+            1.221,
+            1.83,
+            2.099,
+            1.497,
+            3.645,
+            3.167,
+            1.66,
+            1.784,
+            2.48,
+            1.904,
+            2.367,
+            1.155,
+            -1.043,
+            -0.877,
+            -1.662,
+            -1.457,
+            -2.65,
+            -0.071,
+            -0.766,
+            1.943,
+            -1.681,
+            -1.495,
+            -1.252,
+            -0.948,
+            -2.542,
+            0.53,
+            2.766,
+            1.713,
+            0.311,
+            -0.248,
+            1.162,
+            1.189,
+            -0.198,
+            1.128,
+            2.601,
+            0.783,
+            0.354,
+            1.694,
+            2.615,
+            3.146,
+            3.233,
+            3.884,
+            4.574,
+            1.199,
+            -0.393,
+            0.316,
+            -0.194,
+            -2.422,
+            0.522,
+            1.853,
+            1.192,
+            0.715,
+            1.488,
+            2.677,
+            2.684,
+            2.85,
+            2.105,
+            0.838,
+            -1.393,
+            -3.207,
+            -2.944,
+            -2.98,
+            -1.647,
+            -0.633,
+            -2.245,
+            0.157,
+            2.223,
+            3.026,
+            0.795,
+            1.598,
+            0.063,
+            0.442,
+            -3.048,
+            -0.154,
+            1.966,
+            1.491,
+            -0.901,
+            2.347,
+            0.218,
+            0.023,
+            1.496,
+            3.651,
+            4.602,
+            4.975,
+            3.009,
+            0.787,
+            1.272,
+            1.827,
+            2.14,
+            3.717,
+            3.21,
+            -0.136,
+            -1.773,
+            -1.29,
+            -2.074,
+            -1.806,
+            -1.901,
+            -1.934,
+            -0.709,
+            -0.242,
+            0.682,
+            3.427,
+            2.423,
+            0.996,
+            0.038,
+            2.859,
+            2.566,
+            2.16,
+            0.047,
+            2.855,
+            0.056,
+            0.285,
+            -0.042,
+            1.129,
+            -2.097,
+            -1.529,
+            -2.61,
+            1.302,
+            2.622,
+            3.724,
+            4.025,
+            2.081,
+            -1.238,
+            -2.321,
+            -0.681,
+            -0.995,
+            1.959,
+            0.813,
+            0.659,
+            -1.926,
+            -1.724,
+            -2.659,
+            0.138,
+            3.041,
+            4.319,
+            3.634,
+            3.705,
+            3.034,
+            0.819,
+            0.927,
+            0.168,
+            0.156,
+            2.365,
+            1.52,
+            1.802,
+            1.356,
+            -0.889,
+            -1.949,
+            -0.912,
+            -2.822,
+            -3.327,
+            -2.578,
+            -3.381,
+            -1.832,
+            1.262,
+            0.573,
+            0.435,
+            0.724,
+            0.868,
+            -0.54,
+            2.291,
+            2.69,
+            1.9,
+            0.387,
+            -0.173,
+            -1.695,
+            0.782,
+            0.159,
+            -1.555,
+            -0.182,
+            0.378,
+            -1.63,
+            -0.378,
+            0.136,
+            0.005,
+            -0.3,
+            0.55,
+            -0.897,
+            0.012,
+            -0.809,
+            1.477,
+            1.772,
+            1.071,
+            3.36,
+            0.917,
+            0.624,
+            -0.361,
+            2.963,
+            0.213,
+            3.363,
+            1.368,
+            2.284,
+            1.221,
+            0.664,
+            0.582,
+            -0.753,
+            -1.493,
+            -2.705,
+            -2.072,
+            -1.205,
+            -0.918,
+            -1.074,
+            -1.806,
+            -2.17,
+            -2.938,
+            -2.837,
+            -2.178,
+            -1.551,
+            -0.973,
+            -3.991,
+            -2.437,
+            -1.003,
+            -1.298,
+            -1.481,
+            -0.167,
+            0.322,
+            -0.03,
+            4.552,
+            4.381,
+            4.426,
+            2.59,
+            0.295,
+            -2.886,
+            -2.277,
+            -0.14,
+            0.931,
+            1.963,
+            3.305,
+            3.647,
+            3.539,
+            1.606,
+            1.1,
+            -1.214,
+            -2.354,
+            -5.82,
+            -3.094,
+            -2.358,
+            -0.59,
+            0.819,
+            5.382,
+            4.601,
+            5.351,
+            3.375,
+            2.585,
+            2.92,
+            0.09,
+            -1.187,
+            0.038,
+            1.859,
+            -1.555,
+            0.021,
+            1.072,
+            4.578,
+            1.524,
+            2.693,
+            4.191,
+            3.139,
+            -0.159,
+            1.399,
+            1.163,
+            0.699,
+            3.687,
+            3.375,
+            2.35,
+            1.887,
+            1.75,
+            0.927,
+            0.962,
+            1.866,
+            6.11,
+            4.858,
+            2.235,
+            2.395,
+            1.755,
+            -0.745,
+            1.669,
+            3.438,
+            2.858,
+            3.768,
+            3.657,
+            2.016,
+            0.882,
+            1.932,
+            1.056,
+            -0.9,
+            0.02,
+            0.083,
+            -1.358,
+            -0.351,
+            0.078,
+            -0.952,
+            -1.504,
+            -2.669,
+            -3.091,
+            -0.341,
+            -1.176,
+            1.391,
+            4.586,
+            6.113
+          ],
+          "xLabel": "Five-day return (%)",
+          "yLabel": "Days"
+        },
+        "state": {
+          "caption": "746 labelled days"
+        }
+      },
+      "question": "Tap the two bars where a label of $+1$ or $-1$ tells a trader least.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "b7",
+          "b8"
+        ],
+        "countWord": "bars",
+        "max": 2,
+        "wrong": [
+          {
+            "id": "tails",
+            "set": [
+              "b0",
+              "b17"
+            ]
+          },
+          {
+            "id": "tallest",
+            "set": [
+              "b8",
+              "b9"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A trade pays the size of the move, not just its sign."
+        },
+        {
+          "rung": "point",
+          "text": "These bars hold moves of less than 1% either way.",
+          "highlight": [
+            "b7",
+            "b8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bars from −1% to 0 and from 0 to 1% get full labels for moves smaller than a day's noise."
+        }
+      ],
+      "feedback": {
+        "correct": "Those two bars hold 229 of the 746 labels, 31%, all for moves under 1%.",
+        "generic": "Not quite right. Look for the labels that rest on the smallest moves.",
+        "byKey": {
+          "tails": "You picked the biggest moves. Those labels are the most informative: the sign there is worth a lot.",
+          "tallest": "You picked the two tallest bars. The bar from 1% to 2% is a real move; the one from −1% to 0 is noise with a $-1$."
+        }
+      },
+      "explain": {
+        "text": "The two bars beside zero hold 229 labels, 31% of the data, for moves under 1% in a week. The sign of a 0.05% move is a coin toss, yet it counts as much as a 5% move. 28 labels rest on moves under 0.1%.",
+        "canvas": {
+          "highlight": [
+            "b7",
+            "b8"
+          ],
+          "caption": "229 of 746 labels come from moves under 1%"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The fixed-horizon label in code",
+      "prose": "What you did has a name: the **fixed-horizon label** $y_t = \\operatorname{sign}(P_{t+h}/P_t - 1)$. It is the `forward_label` alignment from validation lesson 7: row $t$ holds what happens after $t$, and the last $h$ rows are dropped.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$t$",
+            "$P_t$",
+            "$P_{t+5}$",
+            "$y_t$"
+          ],
+          "rows": [
+            [
+              "0",
+              "100.00",
+              "100.05",
+              "+1"
+            ],
+            [
+              "1",
+              "101.30",
+              "102.10",
+              "+1"
+            ],
+            [
+              "…",
+              "…",
+              "…",
+              "…"
+            ],
+            [
+              "6",
+              "102.10",
+              "101.90",
+              "−1"
+            ],
+            [
+              "7 to 11",
+              "…",
+              "none",
+              "dropped"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `fixed_horizon_label` so it returns one label per day that has a close $h$ days later.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n",
+        "starter": "import numpy as np\n\ndef fixed_horizon_label(prices, h):\n    p = np.asarray(prices, dtype=float)\n    fwd = ...   # P[t + h] / P[t] - 1, for every t with a close h days later\n    return np.sign(fwd).astype(int).tolist()\n",
+        "solution": "import numpy as np\n\ndef fixed_horizon_label(prices, h):\n    p = np.asarray(prices, dtype=float)\n    fwd = p[h:] / p[:-h] - 1\n    return np.sign(fwd).astype(int).tolist()\n",
+        "examples": [
+          {
+            "call": "fixed_horizon_label([100.0, 101.3, 100.4, 99.2, 100.9, 100.05, 102.1, 101.6, 98.7, 99.6, 100.7, 101.9], 5)",
+            "expect": "[1, 1, 1, -1, -1, 1, -1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "fixed_horizon_label([100.0, 101.3, 100.4, 99.2, 100.9, 100.05, 102.1, 101.6, 98.7, 99.6, 100.7, 101.9], 5)",
+            "expect": "[1, 1, 1, -1, -1, 1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "fixed_horizon_label([100, 101, 101, 99], 1)",
+            "expect": "[1, 0, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "fixed_horizon_label([100, 102, 98, 103, 97], 2)",
+            "expect": "[-1, 1, -1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(750, seed=21)",
+            "call": "len(fixed_horizon_label(p, 5))",
+            "expect": "746",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(750, seed=21)",
+            "call": "fixed_horizon_label(p, 5)[:12]",
+            "expect": "[1, 1, -1, -1, -1, -1, -1, 1, 1, -1, -1, 1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(750, seed=21)",
+            "call": "sum(fixed_horizon_label(p, 5))",
+            "expect": "100",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(750, seed=21)",
+            "call": "fixed_horizon_label(p, 20)[-6:]",
+            "expect": "[1, 1, -1, 1, 1, 1]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: the twelve closes above, two tiny series (one with a flat day) and a seeded series from `make_prices(750, seed=21)`, which is already defined. Lists must match exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With NumPy, `p[h:]` lines up each close with the one $h$ days before it, `p[:-h]`."
+        },
+        {
+          "rung": "point",
+          "text": "Both slices have length `len(p) - h`, which is exactly the number of labels.",
+          "highlight": [
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write `fwd = p[h:] / p[:-h] - 1`."
+        }
+      ],
+      "feedback": {
+        "correct": "One label per day with a future close; a flat day gets 0.",
+        "generic": "Not quite right. Check the length first: `len(prices) - h` labels."
+      },
+      "explain": {
+        "text": "`p[h:] / p[:-h]` divides each close by the one $h$ days earlier, so entry $t$ is the move after day $t$. `np.sign` gives $+1$, $-1$, or $0$ for an exact tie, the edge case in the second test. With $h = 1$ the label is tomorrow's direction."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The path in between",
+      "prose": "A trader buys at £100.00 on day 0 with a stop at £97.00: if a close falls below it, she sells. The fixed-horizon label for day 0, with $h = 5$, compares day 5 with day 0.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                98.2,
+                96.4,
+                97.1,
+                98.9,
+                100.3
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "money": "£",
+          "height": 250,
+          "hlines": [
+            {
+              "id": "stop",
+              "y": 97,
+              "label": "stop £97.00"
+            }
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m5",
+              "i": 5,
+              "label": "£100.30"
+            }
+          ]
+        }
+      },
+      "question": "What label does day 0 get, and what happened to the trade?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Label $+1$; the trade was stopped out on day 2 at a 3.6% loss",
+            "correct": true
+          },
+          {
+            "id": "agree",
+            "text": "Label $+1$; the trade made 0.3%",
+            "why": "You read the trade off the last close. The close of £96.40 on day 2 is below the stop, so she sold there.",
+            "canvas": {
+              "highlight": [
+                "stop"
+              ]
+            }
+          },
+          {
+            "id": "minus",
+            "text": "Label $-1$, because the price fell first",
+            "why": "The fixed-horizon label never looks at days 1 to 4. It compares £100.30 with £100.00 only."
+          },
+          {
+            "id": "zero",
+            "text": "Label $0$, because the move was small",
+            "why": "Our label so far has no dead zone. Any rise, even 0.3%, is $+1$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute the label from days 0 and 5 only. Then walk the path day by day as the trader."
+        },
+        {
+          "rung": "point",
+          "text": "Day 2 closes at £96.40.",
+          "highlight": [
+            "stop"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Label: £100.30 > £100.00 gives $+1$. Trade: sold at £96.40 on day 2, a loss of 3.6%."
+        }
+      ],
+      "feedback": {
+        "correct": "The label says win; the trade lost 3.6%.",
+        "generic": "Not quite right. The label uses two closes; the trade lives through every close in between."
+      },
+      "explain": {
+        "text": "The label compares day 5 with day 0, so it says $+1$. The trader sold at £96.40 on day 2, down 3.6%, and never saw the recovery. A model trained on these labels learns that this trade was a winner.",
+        "canvas": {
+          "shade": [
+            {
+              "id": "live",
+              "from": 0,
+              "to": 2,
+              "label": "stopped out",
+              "tone": "neg"
+            }
+          ],
+          "markers": {
+            "m2": {
+              "id": "m2",
+              "i": 2,
+              "label": "sold £96.40"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Calm and wild",
+      "prose": "Another share: calm for 250 days, then wild, with daily moves about 3.7 times larger. A colleague adds a dead zone: a five-day return within ±1% is labelled $0$, beyond it $+1$ or $-1$. We count 225 labelled days in each half.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                100.04,
+                100.88,
+                101.64,
+                101.35,
+                101.19,
+                100.89,
+                101.26,
+                101.25,
+                101.72,
+                100.62,
+                101.59,
+                101.55,
+                101.99,
+                101.92,
+                101.71,
+                102.02,
+                102.54,
+                102.44,
+                102.37,
+                102.81,
+                102.29,
+                101.39,
+                101.65,
+                101.26,
+                100.12,
+                99.65,
+                99.39,
+                98.7,
+                97.84,
+                97.89,
+                98.43,
+                98.32,
+                97.9,
+                98.14,
+                98.59,
+                98.43,
+                98.77,
+                99.41,
+                99.31,
+                98.84,
+                99.07,
+                99.24,
+                99.91,
+                99.17,
+                98.79,
+                98.32,
+                97.32,
+                97.41,
+                97.74,
+                97.33,
+                98.16,
+                98.66,
+                99.06,
+                99.32,
+                99.91,
+                99.13,
+                99.52,
+                99.9,
+                98.86,
+                99.09,
+                98.96,
+                99.45,
+                99.2,
+                99.21,
+                99.44,
+                98.93,
+                99.31,
+                99.27,
+                99.58,
+                99.29,
+                99.96,
+                100.34,
+                100.26,
+                100.66,
+                101.44,
+                102.56,
+                101.61,
+                102.17,
+                102.48,
+                102.44,
+                101.85,
+                102.64,
+                101.88,
+                102.25,
+                103.07,
+                102.11,
+                101.95,
+                101.17,
+                101.34,
+                102.28,
+                103.55,
+                102.47,
+                102.14,
+                102.59,
+                103.59,
+                103.87,
+                103.43,
+                103.64,
+                103.65,
+                103.54,
+                103.11,
+                103.37,
+                103.58,
+                103.54,
+                103.42,
+                102.65,
+                102.37,
+                103.14,
+                103.04,
+                102.17,
+                103.02,
+                103.36,
+                104.7,
+                104.76,
+                104.49,
+                103.61,
+                104.46,
+                106.1,
+                105.6,
+                105.21,
+                105.61,
+                105.11,
+                104.96,
+                104.76,
+                104.9,
+                105.61,
+                105.65,
+                106.25,
+                106.01,
+                106.24,
+                104.9,
+                104.02,
+                104.53,
+                104.19,
+                104.57,
+                104.93,
+                105.79,
+                106.33,
+                107.0,
+                106.95,
+                106.52,
+                106.08,
+                105.79,
+                105.09,
+                104.77,
+                104.73,
+                104.91,
+                104.72,
+                103.54,
+                103.52,
+                103.68,
+                104.37,
+                104.76,
+                104.37,
+                103.94,
+                105.23,
+                105.73,
+                106.92,
+                108.31,
+                107.8,
+                108.07,
+                108.39,
+                108.78,
+                109.16,
+                109.31,
+                109.45,
+                108.49,
+                108.4,
+                107.94,
+                108.04,
+                107.76,
+                108.18,
+                108.74,
+                108.96,
+                109.19,
+                109.27,
+                109.0,
+                108.91,
+                108.61,
+                108.89,
+                108.92,
+                109.32,
+                108.47,
+                109.07,
+                108.6,
+                108.14,
+                108.04,
+                107.69,
+                107.9,
+                107.55,
+                106.89,
+                106.37,
+                107.23,
+                107.28,
+                106.55,
+                106.58,
+                105.61,
+                106.77,
+                105.82,
+                106.14,
+                106.51,
+                105.61,
+                105.82,
+                106.48,
+                106.8,
+                106.99,
+                107.62,
+                107.75,
+                107.99,
+                107.93,
+                108.36,
+                107.77,
+                108.3,
+                108.0,
+                107.31,
+                107.57,
+                108.69,
+                109.34,
+                109.03,
+                109.5,
+                109.23,
+                109.17,
+                109.25,
+                107.76,
+                107.91,
+                107.27,
+                106.84,
+                105.92,
+                104.98,
+                104.41,
+                104.95,
+                106.02,
+                106.03,
+                106.75,
+                106.6,
+                105.41,
+                105.52,
+                105.82,
+                105.57,
+                105.79,
+                106.17,
+                105.64,
+                104.73,
+                104.62,
+                104.5,
+                104.3,
+                104.94,
+                106.06,
+                105.81,
+                106.28,
+                108.32,
+                109.9,
+                112.25,
+                111.4,
+                113.08,
+                117.78,
+                119.71,
+                118.26,
+                119.73,
+                122.82,
+                123.75,
+                122.39,
+                126.25,
+                123.16,
+                124.43,
+                124.41,
+                121.5,
+                124.53,
+                125.42,
+                122.55,
+                124.06,
+                123.02,
+                118.45,
+                116.85,
+                117.49,
+                119.02,
+                119.44,
+                119.57,
+                120.73,
+                120.24,
+                123.13,
+                123.52,
+                124.27,
+                125.65,
+                123.05,
+                121.34,
+                125.13,
+                126.0,
+                125.31,
+                126.2,
+                125.01,
+                125.73,
+                124.1,
+                124.81,
+                120.96,
+                124.24,
+                123.0,
+                119.19,
+                118.69,
+                117.83,
+                118.22,
+                115.56,
+                116.51,
+                125.29,
+                122.15,
+                123.0,
+                122.26,
+                122.76,
+                118.42,
+                115.74,
+                116.84,
+                116.77,
+                120.68,
+                119.01,
+                119.45,
+                126.64,
+                124.74,
+                122.53,
+                122.47,
+                122.39,
+                124.5,
+                124.84,
+                122.99,
+                123.54,
+                130.26,
+                133.64,
+                126.43,
+                126.1,
+                123.94,
+                125.51,
+                125.11,
+                130.06,
+                132.53,
+                134.94,
+                135.47,
+                135.39,
+                136.34,
+                139.95,
+                141.48,
+                140.52,
+                144.18,
+                144.76,
+                144.57,
+                142.32,
+                140.75,
+                139.0,
+                131.48,
+                134.2,
+                135.76,
+                135.21,
+                138.09,
+                139.34,
+                140.4,
+                133.65,
+                133.05,
+                134.5,
+                138.93,
+                144.17,
+                148.37,
+                144.99,
+                138.79,
+                140.41,
+                140.51,
+                143.27,
+                142.94,
+                143.6,
+                139.38,
+                140.67,
+                139.45,
+                140.45,
+                141.78,
+                141.48,
+                142.4,
+                142.39,
+                144.6,
+                146.09,
+                144.53,
+                142.87,
+                147.97,
+                147.7,
+                150.68,
+                151.9,
+                150.23,
+                148.03,
+                148.41,
+                149.21,
+                151.08,
+                147.33,
+                145.62,
+                145.37,
+                150.13,
+                143.24,
+                144.53,
+                143.0,
+                144.27,
+                142.89,
+                143.96,
+                148.57,
+                149.66,
+                150.99,
+                152.15,
+                149.91,
+                151.58,
+                150.98,
+                148.58,
+                148.49,
+                147.85,
+                150.12,
+                150.03,
+                148.48,
+                152.89,
+                155.98,
+                160.02,
+                162.01,
+                161.69,
+                160.37,
+                159.51,
+                162.59,
+                162.99,
+                158.26,
+                158.17,
+                153.78,
+                154.32,
+                150.68,
+                146.95,
+                147.33,
+                147.13,
+                142.35,
+                144.52,
+                150.94,
+                146.56,
+                152.03,
+                149.98,
+                148.53,
+                148.03,
+                143.84,
+                147.66,
+                149.15,
+                146.96,
+                146.17,
+                141.84,
+                140.88,
+                143.57,
+                138.76,
+                137.58,
+                138.01,
+                140.96,
+                144.85,
+                143.56,
+                141.48,
+                142.79,
+                141.78,
+                140.93,
+                144.04,
+                149.02,
+                149.85,
+                149.3,
+                151.05,
+                145.48,
+                145.46,
+                142.43,
+                149.43,
+                151.63,
+                152.09,
+                151.53,
+                144.13,
+                146.23,
+                151.1,
+                148.94,
+                151.02,
+                153.25,
+                148.61,
+                151.45,
+                155.64,
+                156.38,
+                156.21,
+                158.73,
+                153.94,
+                154.26,
+                157.58,
+                153.74,
+                156.86,
+                155.58,
+                149.27,
+                148.98,
+                146.14,
+                147.11,
+                143.73,
+                146.81,
+                144.69,
+                145.75,
+                144.06,
+                143.16,
+                146.64,
+                147.3,
+                146.17,
+                142.59,
+                145.97,
+                148.15,
+                147.21
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "money": "£",
+          "height": 230
+        },
+        "state": {
+          "shade": [
+            {
+              "id": "calm",
+              "from": 0,
+              "to": 249,
+              "label": "calm",
+              "tone": "neutral"
+            },
+            {
+              "id": "wild",
+              "from": 250,
+              "to": 500,
+              "label": "wild",
+              "tone": "neg"
+            }
+          ]
+        },
+        "maxHeight": 220
+      },
+      "question": "Fill in the share of days labelled $+1$ or $-1$ in each half.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Half",
+          "Labelled days",
+          "Beyond ±1%",
+          "Share labelled ±1"
+        ],
+        "rows": [
+          [
+            "Calm",
+            "225",
+            "103",
+            {
+              "edit": true,
+              "answer": 0.4578,
+              "tol": {
+                "abs": 0.005
+              },
+              "unit": "%"
+            }
+          ],
+          [
+            "Wild",
+            "225",
+            "178",
+            {
+              "edit": true,
+              "answer": 0.7911,
+              "tol": {
+                "abs": 0.005
+              },
+              "unit": "%"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Share = days beyond ±1% divided by labelled days."
+        },
+        {
+          "rung": "point",
+          "text": "Calm: 103 out of 225.",
+          "highlight": [
+            "calm"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Calm: $103/225 = 45.8\\%$. Wild: $178/225 = 79.1\\%$."
+        }
+      ],
+      "feedback": {
+        "correct": "45.8% in the calm half, 79.1% in the wild half.",
+        "generic": "Not quite right. Divide the count beyond ±1% by 225 in each row."
+      },
+      "explain": {
+        "text": "One threshold gives 45.8% directional labels in the calm half and 79.1% in the wild half. Nothing about the share's prospects changed; only the noise grew. The model is told the wild half is full of clear moves.",
+        "canvas": {
+          "highlight": [
+            "wild"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A 1% move is a 1% move?",
+      "prose": "Your colleague defends the threshold: \"A 1% move is a 1% move.\" A typical five-day move, one standard deviation, is 1.24% in the calm half and 4.55% in the wild half.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Half",
+            "Typical 5-day move",
+            "1% threshold in typical moves",
+            "Share labelled ±1"
+          ],
+          "rows": [
+            [
+              "Calm",
+              "1.24%",
+              "?",
+              "45.8%"
+            ],
+            [
+              "Wild",
+              "4.55%",
+              "?",
+              "79.1%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does a $+1$ label mean in each half?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "scaled",
+            "text": "Calm: a rise of 0.81 typical moves. Wild: only 0.22. The same label means different things",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "The same thing in both: a rise of more than 1%",
+            "why": "You read the threshold in per cent. Measured against each half's own noise, 1% is a real move in the calm half and a shrug in the wild one.",
+            "canvas": {
+              "highlight": {
+                "cols": [
+                  1
+                ]
+              }
+            }
+          },
+          {
+            "id": "more",
+            "text": "The wild half is easier to predict: it has more clear moves",
+            "why": "More $\\pm 1$ labels came from bigger noise, not more signal. The wild half's labels are mostly noise past a low bar."
+          },
+          {
+            "id": "fine",
+            "text": "Both are fine, because the dead zone removes the noise",
+            "why": "A dead zone fixed in per cent removes noise only where the noise is small. In the wild half it removes almost nothing."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide 1% by each half's typical five-day move."
+        },
+        {
+          "rung": "point",
+          "text": "Calm: $1 / 1.24$. Wild: $1 / 4.55$.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Calm: 0.81 typical moves. Wild: 0.22."
+        }
+      ],
+      "feedback": {
+        "correct": "A fixed per cent bar is high in calm markets and low in wild ones.",
+        "generic": "Not quite right. Measure the 1% bar against each half's typical five-day move.",
+        "byKey": {
+          "same": "You read the threshold in per cent. Against each half's own noise, 1% is a real move when calm and a shrug when wild."
+        }
+      },
+      "explain": {
+        "text": "You measured 1% in units of each half's noise: 0.81 typical moves when calm, 0.22 when wild. The fix is to set the bar in those units, scaled by recent volatility. Then a label means the same surprise in any market.",
+        "canvas": {
+          "values": {
+            "r0c2": "0.81",
+            "r1c2": "0.22"
+          },
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A dead zone that scales",
+      "prose": "The fix: measure recent volatility $\\sigma$, the sd of the last 20 daily returns. A five-day return has spread about $\\sigma\\sqrt{5}$. Label $0$ when $|R| \\le k\\sigma\\sqrt{h}$. Here $\\sigma = 1.8\\%$, $h = 5$ and $k = 0.5$.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": -4,
+          "max": 5,
+          "step": 1
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a",
+              "x": -3.1,
+              "label": "−3.1%"
+            },
+            {
+              "id": "b",
+              "x": -1.6,
+              "label": "−1.6%"
+            },
+            {
+              "id": "c",
+              "x": 0.4,
+              "label": "+0.4%"
+            },
+            {
+              "id": "d",
+              "x": 1.9,
+              "label": "+1.9%"
+            },
+            {
+              "id": "e",
+              "x": 2.3,
+              "label": "+2.3%"
+            },
+            {
+              "id": "f",
+              "x": 4.0,
+              "label": "+4.0%"
+            }
+          ],
+          "caption": "Six five-day returns, in %"
+        }
+      },
+      "question": "Tap every return that is labelled $0$.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "b",
+          "c",
+          "d"
+        ],
+        "countWord": "returns",
+        "wrong": [
+          {
+            "id": "no-root",
+            "set": [
+              "c"
+            ]
+          },
+          {
+            "id": "root-two",
+            "set": [
+              "b",
+              "c"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out the threshold $k\\sigma\\sqrt{h}$ first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt{5} \\approx 2.236$. The close calls are these two.",
+          "highlight": [
+            "d",
+            "e"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.5 \\times 1.8 \\times 2.236 = 2.01\\%$. Everything between $-2.01\\%$ and $2.01\\%$ is $0$."
+        }
+      ],
+      "feedback": {
+        "correct": "The bar is 2.01%, so −1.6%, +0.4% and +1.9% are labelled 0.",
+        "generic": "Not quite right. Compute $0.5 \\times 1.8\\% \\times \\sqrt{5}$, then keep the returns inside it.",
+        "byKey": {
+          "no-root": "You used $k\\sigma = 0.9\\%$, a one-day bar. A five-day return spreads $\\sqrt{5}$ times wider, so the bar is 2.01%.",
+          "root-two": "You rounded $\\sqrt{5}$ to 2, giving a bar of 1.8%. With $\\sqrt{5} \\approx 2.236$ the bar is 2.01%, so +1.9% is inside it.",
+          "e": "+2.3% is beyond the 2.01% bar, so it is $+1$.",
+          "a": "−3.1% is beyond the bar, so it is $-1$.",
+          "f": "+4.0% is beyond the bar, so it is $+1$."
+        }
+      },
+      "explain": {
+        "text": "The bar is $0.5 \\times 1.8\\% \\times \\sqrt{5} = 2.01\\%$. Three returns fall inside and get $0$; the rest keep their sign. In a calm month $\\sigma$ shrinks and the bar shrinks with it.",
+        "canvas": {
+          "intervals": [
+            {
+              "id": "dz",
+              "from": -2.01,
+              "to": 2.01,
+              "label": "label 0"
+            }
+          ],
+          "highlight": [
+            "b",
+            "c",
+            "d"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The dead-zone label in code",
+      "prose": "Now in code, on daily log returns, so an $h$-day return is a plain sum. Row $t$ may use returns up to $t$ for $\\sigma$; the label uses $t + 1$ to $t + h$. The first `vol_window - 1` rows have no $\\sigma$ yet, and the last $h$ have no future.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> r = [0.01, -0.01, 0.02, -0.02, 0.0, 0.03, -0.01, 0.005, -0.03]",
+            ">>> dead_zone_label(r, 2, 3, 0.5)",
+            "[-1, 1, 1, 0, -1]"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `dead_zone_label` so it returns $-1$, $0$ or $+1$ for every row that has both a $\\sigma$ and a future.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n",
+        "starter": "import numpy as np\n\ndef dead_zone_label(returns, h, vol_window, k):\n    r = np.asarray(returns, dtype=float)\n    labels = []\n    for t in range(vol_window - 1, len(r) - h):\n        sigma = ...   # sample sd (ddof=1) of r[t - vol_window + 1] .. r[t]\n        fwd = ...     # sum of the next h returns, r[t + 1] .. r[t + h]\n        thr = k * sigma * np.sqrt(h)\n        labels.append(...)   # +1 above thr, -1 below -thr, else 0\n    return labels\n",
+        "solution": "import numpy as np\n\ndef dead_zone_label(returns, h, vol_window, k):\n    r = np.asarray(returns, dtype=float)\n    labels = []\n    for t in range(vol_window - 1, len(r) - h):\n        sigma = r[t - vol_window + 1:t + 1].std(ddof=1)\n        fwd = r[t + 1:t + h + 1].sum()\n        thr = k * sigma * np.sqrt(h)\n        labels.append(1 if fwd > thr else (-1 if fwd < -thr else 0))\n    return labels\n",
+        "examples": [
+          {
+            "call": "dead_zone_label([0.01, -0.01, 0.02, -0.02, 0.0, 0.03, -0.01, 0.005, -0.03], 2, 3, 0.5)",
+            "expect": "[-1, 1, 1, 0, -1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "dead_zone_label([0.01, -0.01, 0.02, -0.02, 0.0, 0.03, -0.01, 0.005, -0.03], 2, 3, 0.5)",
+            "expect": "[-1, 1, 1, 0, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "dead_zone_label([0.01, -0.01, 0.02, -0.02, 0.0, 0.03, -0.01, 0.005, -0.03], 1, 4, 1.0)",
+            "expect": "[0, 1, 0, 0, -1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = log_returns(make_regime_prices(500, seed=11))",
+            "call": "len(dead_zone_label(r, 5, 20, 0.5))",
+            "expect": "476",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = log_returns(make_regime_prices(500, seed=11))",
+            "call": "dead_zone_label(r, 5, 20, 0.5)[:15]",
+            "expect": "[-1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 0, 0, 1, 1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = log_returns(make_regime_prices(500, seed=11))",
+            "call": "[dead_zone_label(r, 5, 20, 0.5).count(c) for c in (-1, 0, 1)]",
+            "expect": "[127, 184, 165]",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = log_returns(make_regime_prices(500, seed=11))",
+            "call": "[dead_zone_label(r, 10, 60, 1.0).count(c) for c in (-1, 0, 1)]",
+            "expect": "[45, 301, 85]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: a nine-day list and the calm-then-wild share from `make_regime_prices(500, seed=11)`, turned into returns by `log_returns`. Both helpers are already defined. Lists must match exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`r[a:b]` stops before `b`, so the window ending at `t` is `r[t - vol_window + 1:t + 1]`."
+        },
+        {
+          "rung": "point",
+          "text": "The future starts the day after `t`: `r[t + 1:t + h + 1]`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`sigma = r[t - vol_window + 1:t + 1].std(ddof=1)` and `fwd = r[t + 1:t + h + 1].sum()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each label uses only the past for its bar and only the future for its move.",
+        "generic": "Not quite right. Check the two slices: the volatility window ends at `t`, the future starts at `t + 1`."
+      },
+      "explain": {
+        "text": "On the calm-then-wild share this labels 65% of calm days and 56% of wild days $\\pm 1$, against 46% and 79% with the fixed 1%. The bar moved with the noise. Note that `sigma` stops at `t`: a window reaching past `t` would leak the future into the bar."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How balanced are the labels?",
+      "prose": "Before training anything, count the classes. The three-year series from earlier drifted upwards, so we expect more $+1$ than $-1$. A share of each class is the first number to report.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> y = fixed_horizon_label(make_prices(750, seed=21), 5)",
+            ">>> len(y)",
+            "746",
+            ">>> label_balance(y)",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `label_balance` so it returns the shares of $-1$, $0$ and $+1$, in that order, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n\ndef fixed_horizon_label(prices, h):\n    p = np.asarray(prices, dtype=float)\n    return np.sign(p[h:] / p[:-h] - 1).astype(int).tolist()\n\ndef dead_zone_label(returns, h, vol_window, k):\n    r = np.asarray(returns, dtype=float)\n    out = []\n    for t in range(vol_window - 1, len(r) - h):\n        s = r[t - vol_window + 1:t + 1].std(ddof=1)\n        f = r[t + 1:t + h + 1].sum()\n        b = k * s * np.sqrt(h)\n        out.append(1 if f > b else (-1 if f < -b else 0))\n    return out\n",
+        "starter": "import numpy as np\n\ndef label_balance(labels):\n    y = np.asarray(labels)\n    return [...]   # shares of -1, 0 and +1, each rounded to 4 places\n",
+        "solution": "import numpy as np\n\ndef label_balance(labels):\n    y = np.asarray(labels)\n    return [round(float(np.mean(y == c)), 4) for c in (-1, 0, 1)]\n",
+        "examples": [
+          {
+            "call": "label_balance([1, -1, 1, 0])",
+            "expect": "[0.25, 0.25, 0.5]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "label_balance([1, -1, 1, 0])",
+            "expect": "[0.25, 0.25, 0.5]",
+            "compare": "equal"
+          },
+          {
+            "call": "label_balance([1, 1, 1])",
+            "expect": "[0.0, 0.0, 1.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "label_balance([-1, 0, 0, 1, 1, 1, -1])",
+            "expect": "[0.2857, 0.2857, 0.4286]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(750, seed=21)",
+            "call": "label_balance(fixed_horizon_label(p, 5))",
+            "expect": "[0.433, 0.0, 0.567]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(750, seed=21)",
+            "call": "label_balance(fixed_horizon_label(p, 5)[522:])",
+            "expect": "[0.3705, 0.0, 0.6295]",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = log_returns(make_regime_prices(500, seed=11))",
+            "call": "label_balance(dead_zone_label(r, 5, 20, 0.5))",
+            "expect": "[0.2668, 0.3866, 0.3466]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: three short lists and labels from the seeded series, made by `fixed_horizon_label` and `dead_zone_label`, which are already defined. Lists must match exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`y == c` is an array of True and False; its mean is the share of class `c`."
+        },
+        {
+          "rung": "point",
+          "text": "Loop over the classes in the order `(-1, 0, 1)`.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`[round(float(np.mean(y == c)), 4) for c in (-1, 0, 1)]`."
+        }
+      ],
+      "feedback": {
+        "correct": "On the drifting series: [0.433, 0.0, 0.567]. More than half the labels are $+1$.",
+        "generic": "Not quite right. Return a list of three shares, in the order $-1$, $0$, $+1$."
+      },
+      "explain": {
+        "text": "The fixed-horizon labels split 0.433 down and 0.567 up: the share drifted upwards. In the last 224 rows the split is 0.629 up. That share is the score of a model that always says $+1$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A score to beat",
+      "prose": "A colleague trains a classifier on the first 522 labels and tests it on the last 224. It calls the direction right 58.0% of the time, above a coin's 50%. In those 224 test rows, 62.9% of labels are $+1$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "coin",
+              "label": "Coin"
+            },
+            {
+              "id": "model",
+              "label": "Classifier"
+            },
+            {
+              "id": "up",
+              "label": "Always +1"
+            }
+          ],
+          "yLabel": "Test hit rate (%)",
+          "showValues": true,
+          "decimals": 1,
+          "yMin": 0,
+          "yMax": 70
+        },
+        "state": {
+          "values": {
+            "coin": 50.0,
+            "model": 58.0,
+            "up": 0
+          }
+        }
+      },
+      "question": "What does the 58.0% show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "No skill yet: always saying $+1$ scores 62.9%, more than the model",
+            "correct": true,
+            "canvas": {
+              "values": {
+                "up": 62.9
+              }
+            }
+          },
+          {
+            "id": "skill",
+            "text": "Skill: 8 points above a coin over 224 rows",
+            "why": "You compared with a coin. The fair baseline is the base rate: always $+1$ scores 62.9%.",
+            "canvas": {
+              "values": {
+                "up": 62.9
+              }
+            }
+          },
+          {
+            "id": "half",
+            "text": "Half skill: it beats a coin but not perfection",
+            "why": "You placed it between 50% and 100%. The floor is the base rate, not 50%."
+          },
+          {
+            "id": "overfit",
+            "text": "Overfitting, because test beats training",
+            "why": "Nothing here compares test with training. Compare it with the cheapest rule that needs no model."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would a rule with no features score on these 224 rows?"
+        },
+        {
+          "rung": "point",
+          "text": "Fill in the third bar.",
+          "highlight": [
+            "up"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Always $+1$ is right on every up label: 62.9%."
+        }
+      ],
+      "feedback": {
+        "correct": "The base rate is the bar to clear, not 50%.",
+        "generic": "Not quite right. Compare the model with always predicting the majority class."
+      },
+      "explain": {
+        "text": "Always $+1$ scores 62.9% on these rows, so the model is below the free baseline. A drifting share gives more up labels, and a hit rate has to beat that share. Stat-learning lesson 14 met the same trap with tomorrow's direction.",
+        "canvas": {
+          "values": {
+            "up": 62.9
+          },
+          "highlight": [
+            "up"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The fixed-horizon family",
+      "prose": "With $R_t = P_{t+h}/P_t - 1$ and $\\sigma_t$ the recent daily volatility, known at $t$: $$y_t = \\begin{cases} +1 & R_t > k\\sigma_t\\sqrt{h} \\\\ 0 & |R_t| \\le k\\sigma_t\\sqrt{h} \\\\ -1 & R_t < -k\\sigma_t\\sqrt{h} \\end{cases}$$ With $k = 0$ this is the plain sign label. The last $h$ rows have no label.",
+      "question": "With $h = 1$, $k = 0$ and a close exactly unchanged, what is the label?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "$0$: the return is exactly zero",
+            "correct": true
+          },
+          {
+            "id": "plus",
+            "text": "$+1$, because the share did not fall",
+            "why": "You counted \"not down\" as up. `np.sign(0)` is 0, and the case $|R| \\le 0$ catches it."
+          },
+          {
+            "id": "drop",
+            "text": "No label: the row is dropped",
+            "why": "Only rows with no future close are dropped. This row has one; its return is just zero."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $R_t = 0$ into the cases."
+        }
+      ],
+      "feedback": {
+        "correct": "A flat close sits in the middle case even with no dead zone.",
+        "generic": "Not quite right. Put $R_t = 0$ and $k = 0$ into the three cases."
+      },
+      "explain": {
+        "text": "With $k = 0$ the middle case reads $|R_t| \\le 0$, which holds only for an exact zero. On prices quoted to the penny a flat close happens, so a binary label must decide where it goes. Our code gives it 0, a third class."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A 55% hit rate",
+      "prose": "A research note claims a 55% hit rate on 1,000 one-day sign calls. Its appendix splits them. Moves under 0.1% (average size 0.05%): 600 calls, 350 right. Moves over 0.1% (average size 1.0%): 400 calls, 200 right. Each trade costs 0.10% round trip.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Moves",
+            "Calls",
+            "Right",
+            "Wrong",
+            "Average size"
+          ],
+          "rows": [
+            [
+              "under 0.1%",
+              "600",
+              "350",
+              "250",
+              "0.05%"
+            ],
+            [
+              "over 0.1%",
+              "400",
+              "200",
+              "200",
+              "1.0%"
+            ],
+            [
+              "all",
+              "1,000",
+              "550",
+              "450",
+              ""
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the average return per trade after costs, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.00095,
+        "tol": {
+          "abs": 2e-05
+        },
+        "unit": "%",
+        "label": "Average net return per trade, in per cent",
+        "accept": "−0.095% ± 0.002: gross $(100 \\times 0.05 + 0 \\times 1.0)/1000 = 0.005\\%$, minus 0.10%.",
+        "wrong": [
+          {
+            "id": "gross",
+            "value": 5e-05,
+            "tol": {
+              "abs": 1e-05
+            }
+          },
+          {
+            "id": "hit",
+            "value": 0.001,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Right calls earn the move; wrong calls lose it. Net out each row."
+        },
+        {
+          "rung": "point",
+          "text": "Under 0.1%: $350 - 250 = 100$ net right calls of 0.05%. Over 0.1%: $200 - 200 = 0$.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Gross: $100 \\times 0.05\\% / 1000 = 0.005\\%$ per trade. Subtract the 0.10% cost."
+        }
+      ],
+      "feedback": {
+        "correct": "About −0.095% a trade: the 55% came from moves too small to pay for themselves.",
+        "generic": "Not quite right. Weight each call by the size of its move, then subtract the cost.",
+        "byKey": {
+          "gross": "That is the gross return, 0.005% a trade. Each trade still pays 0.10%.",
+          "hit": "You turned the 5-point edge in hit rate into 0.10% a trade. The edge sits on 0.05% moves, so it is worth far less."
+        }
+      },
+      "explain": {
+        "text": "The edge lives in the small moves: 100 net right calls of 0.05% each. On the big moves the note is a coin. After 0.10% per trade the strategy loses 0.095% a trade. Level 3 returns to costs; a label with a dead zone would never have counted those small calls.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The fixed-horizon label is the sign of the $h$-day forward return; the last $h$ rows have no label.",
+      "It labels tiny moves as confidently as big ones, ignores the path, and means different things in calm and wild markets.",
+      "A dead zone of $k\\sigma\\sqrt{h}$, with $\\sigma$ known at $t$, keeps a label's meaning steady; then check the class balance."
+    ],
+    "formula": {
+      "name": "Fixed-horizon label with a dead zone",
+      "tex": "y_t = \\operatorname{sign}(R_t)\\,\\mathbf{1}\\{|R_t| > k\\sigma_t\\sqrt{h}\\}",
+      "note": "With $k = 0$ it is the plain sign label."
+    },
+    "trap": "A threshold fixed in per cent is a high bar in calm markets and a low one in wild markets."
+  },
+  "quiz": [
+    {
+      "id": "q-overlap",
+      "difficulty": 2,
+      "prose": "Fixed-horizon labels with $h = 5$ on consecutive days. Day $t$'s label uses the returns of days $t + 1$ to $t + 5$.",
+      "question": "What share of day $t + 1$'s five returns does it share with day $t$'s label?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "%",
+        "label": "Shared share, in per cent",
+        "accept": "80%: days $t + 2$ to $t + 5$, four of five.",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four of the five days are the same.",
+        "generic": "Not quite right. List the days each label covers.",
+        "byKey": {
+          "none": "Neighbouring labels are not separate. Day $t + 1$ covers days $t + 2$ to $t + 6$.",
+          "one": "One day is new, so four of five are shared: 80%."
+        }
+      },
+      "explain": {
+        "text": "Day $t$ covers $t + 1$ to $t + 5$; day $t + 1$ covers $t + 2$ to $t + 6$. Four of five days are shared, so neighbouring labels nearly always agree. Lesson 4 counts how much this overlap shrinks the real sample."
+      }
+    },
+    {
+      "id": "q-shuffle",
+      "difficulty": 3,
+      "prose": "A model is trained on 20-day fixed-horizon labels with features from the past. Its author scores it with 5-fold cross-validation on shuffled rows and gets a 61% hit rate.",
+      "question": "What is the main problem?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "leak",
+            "text": "Test rows sit between training rows whose labels share 19 of their 20 days, so the answer leaks in",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "Five folds is too few for a stable estimate",
+            "why": "More folds would not help. Shuffled folds put near-copies of each test label in training."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: cross-validation always gives an honest score",
+            "why": "It is honest only when rows are independent. Validation lesson 5 showed shuffling a time series lies."
+          },
+          {
+            "id": "balance",
+            "text": "The classes may be unbalanced",
+            "why": "Worth checking, but not the main problem. The folds leak the labels."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Shuffled folds hand the model its neighbours' answers.",
+        "generic": "Not quite right. Think about what training rows sit next to each test row."
+      },
+      "explain": {
+        "text": "With a 20-day label, the rows either side of a test row share 19 days of its outcome. Shuffling puts them in training, so the model is graded on answers it has nearly seen. Validation lessons 5 and 7 give the fix: time-ordered folds with a purge."
+      }
+    },
+    {
+      "id": "q-dead-zone",
+      "difficulty": 2,
+      "prose": "Recent daily volatility is $\\sigma = 1.2\\%$. The label horizon is $h = 4$ days and $k = 0.5$. A four-day return of $+0.9\\%$ arrives.",
+      "question": "What is its label?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "$0$: the bar is $0.5 \\times 1.2\\% \\times 2 = 1.2\\%$",
+            "correct": true
+          },
+          {
+            "id": "plus",
+            "text": "$+1$: the bar is $0.5 \\times 1.2\\% = 0.6\\%$",
+            "why": "You used the one-day bar. A four-day return spreads $\\sqrt{4} = 2$ times wider."
+          },
+          {
+            "id": "plus4",
+            "text": "$+1$: any rise is $+1$",
+            "why": "That is the plain sign label. With a dead zone, small moves get $0$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.9% sits inside the 1.2% bar.",
+        "generic": "Not quite right. Compute $k\\sigma\\sqrt{h}$."
+      },
+      "explain": {
+        "text": "The bar is $k\\sigma\\sqrt{h} = 0.5 \\times 1.2\\% \\times 2 = 1.2\\%$. A move of 0.9% is inside it, so the label is 0. The $\\sqrt{h}$ is there because an $h$-day return spreads that much wider than one day."
+      }
+    },
+    {
+      "id": "q-lag",
+      "difficulty": 3,
+      "prose": "A feature is updated every day from yesterday's return. The label is the sign of the next 20 days' return. A colleague counts 1,000 daily rows as 1,000 independent tests of the feature.",
+      "question": "Why is 1,000 too many?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "overlap",
+            "text": "The label changes slowly: each row shares 19 days of outcome with the next, so rows repeat one bet",
+            "correct": true
+          },
+          {
+            "id": "lag",
+            "text": "The feature uses yesterday, so it is stale",
+            "why": "A one-day lag is fine for a feature. The trouble is the 20-day label spanning many rows."
+          },
+          {
+            "id": "fine",
+            "text": "1,000 is right: one row per day",
+            "why": "Rows per day is not independent evidence. Neighbouring labels share 95% of their days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A label 20 times longer than the feature's step repeats the same outcome.",
+        "generic": "Not quite right. Compare how often the feature changes with how often the label does."
+      },
+      "explain": {
+        "text": "The feature changes daily but the label covers 20 days, so 20 neighbouring rows score almost the same outcome. The 1,000 rows hold far fewer independent bets. Lesson 4 measures how many."
+      }
+    }
+  ]
+}

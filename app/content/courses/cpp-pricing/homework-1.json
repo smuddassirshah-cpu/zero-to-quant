@@ -1,0 +1,442 @@
+{
+  "id": "homework-1",
+  "course": "cpp-pricing",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-bs-script",
+      "difficulty": 5,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "Write a program that reads $S$, $K$, $r$, $\\sigma$ and $T$ from `std::cin` and prints $d_1$, $d_2$, $\\Phi(d_1)$ and $\\Phi(d_2)$, each to 6 significant figures (`std::setprecision(6)`, default format). Use a stable `norm_cdf`: deep out of the money, $\\Phi$ is tiny but not 0. If $\\sigma \\le 0$ or $T \\le 0$, print nothing and `return 1;`.\n\n```text\n$ echo 100 100 0.05 0.2 1 | ./bs\nd1 = 0.35\nd2 = 0.15\nN(d1) = 0.636831\nN(d2) = 0.559618\n```",
+      "question": "Write the program.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n#include <iomanip>\n#include <iostream>\n\nint main() {\n    double s, k, r, sigma, t;\n    std::cin >> s >> k >> r >> sigma >> t;\n    // d1, d2, N(d1), N(d2), 6 significant figures\n}\n",
+        "solution": "#include <cmath>\n#include <iomanip>\n#include <iostream>\n\ndouble norm_cdf(double x) {\n    return 0.5 * std::erfc(-x / std::sqrt(2.0));\n}\n\nint main() {\n    double s, k, r, sigma, t;\n    std::cin >> s >> k >> r >> sigma >> t;\n    if (sigma <= 0 || t <= 0) return 1;\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    std::cout << std::setprecision(6);\n    std::cout << \"d1 = \" << d1 << '\\n';\n    std::cout << \"d2 = \" << d2 << '\\n';\n    std::cout << \"N(d1) = \" << norm_cdf(d1) << '\\n';\n    std::cout << \"N(d2) = \" << norm_cdf(d2) << '\\n';\n}\n",
+        "examples": [
+          {
+            "compare": "stdout",
+            "stdin": "100 100 0.05 0.2 1\n",
+            "expect": "d1 = 0.35\nd2 = 0.15\nN(d1) = 0.636831\nN(d2) = 0.559618\n"
+          }
+        ],
+        "tests": [
+          {
+            "compare": "stdout",
+            "stdin": "100 100 0.05 0.2 1\n",
+            "expect": "d1 = 0.35\nd2 = 0.15\nN(d1) = 0.636831\nN(d2) = 0.559618\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "50 48 0.04 0.3 0.25\n",
+            "expect": "d1 = 0.413813\nd2 = 0.263813\nN(d1) = 0.660495\nN(d2) = 0.604038\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "100 200 0.01 0.1 0.5\n",
+            "expect": "d1 = -9.69652\nd2 = -9.76723\nN(d1) = 1.55986e-22\nN(d2) = 7.78277e-23\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "100 50 0.05 0.2 2\n",
+            "expect": "d1 = 2.94562\nd2 = 2.66278\nN(d1) = 0.998388\nN(d2) = 0.996125\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "100 100 0 0.2 1\n",
+            "expect": "d1 = 0.1\nd2 = -0.1\nN(d1) = 0.539828\nN(d2) = 0.460172\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "110 100 0.03 0.25 0.5\n",
+            "expect": "d1 = 0.712397\nd2 = 0.53562\nN(d1) = 0.761891\nN(d2) = 0.703889\n"
+          },
+          {
+            "compare": "raises",
+            "stdin": "100 100 0.05 0 1\n"
+          },
+          {
+            "compare": "raises",
+            "stdin": "100 100 0.05 0.2 0\n"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 8 times with inputs on std::cin and compares what it prints; the last two must end with a non-zero exit status."
+      },
+      "feedback": {
+        "correct": "Stable in the tails, and it refuses bad inputs.",
+        "generic": "Not quite right. Compare your output with the expected lines under the editor.",
+        "byKey": {
+          "test-3": "A deep out-of-the-money option: $\\Phi(-9.7)$ is about $1.6 \\times 10^{-22}$. If you printed 0, your `norm_cdf` uses the erf form. Use `0.5 * std::erfc(-x / std::sqrt(2.0))`.",
+          "test-7": "With $\\sigma = 0$, $d_1$ divides by zero. Check `sigma <= 0 || t <= 0` first and `return 1;`."
+        }
+      },
+      "explain": {
+        "text": "The erfc form keeps $\\Phi(-9.7)$ at $1.6 \\times 10^{-22}$, where the erf form prints 0. Checking inputs before dividing turns a silent NaN into a clear failure. `std::setprecision(6)` in default format counts significant figures, so 0.35 prints as `0.35`."
+      }
+    },
+    {
+      "id": "h-mc-se",
+      "difficulty": 4,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "Simulate $n$ terminal prices $S_T = S_0\\exp\\big((r - \\tfrac12\\sigma^2)T + \\sigma\\sqrt T Z\\big)$, one $Z$ each, from `std::mt19937 gen(seed)` and one `std::normal_distribution`. Return `{mean, standard error}`, with the sample sd dividing by $n - 1$. Assume $n \\ge 2$.",
+      "question": "Write `mc_mean_se(s0, r, sigma, t, n, seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n#include <random>\n#include <vector>\n\nstd::vector<double> mc_mean_se(double s0, double r, double sigma, double t, int n, unsigned seed) {\n    return {0, 0};\n}\n",
+        "solution": "#include <cmath>\n#include <random>\n#include <vector>\n\nstd::vector<double> mc_mean_se(double s0, double r, double sigma, double t, int n, unsigned seed) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    std::vector<double> st(n);\n    double sum = 0;\n    for (int i = 0; i < n; ++i) {\n        st[i] = s0 * std::exp(drift + vol * z(gen));\n        sum += st[i];\n    }\n    double mean = sum / n;\n    double ss = 0;\n    for (double x : st) ss += (x - mean) * (x - mean);\n    double sd = std::sqrt(ss / (n - 1));\n    return {mean, sd / std::sqrt(static_cast<double>(n))};\n}\n",
+        "examples": [
+          {
+            "call": "mc_mean_se(100, 0.05, 0.2, 1, 10000, 42)",
+            "expect": [
+              105.2967960361,
+              0.2132144243
+            ],
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "mc_mean_se(100, 0.05, 0.2, 1, 10000, 42)",
+            "expect": [
+              105.2967960361,
+              0.2132144243
+            ],
+            "compare": "isclose"
+          },
+          {
+            "call": "mc_mean_se(100, 0.05, 0.2, 1, 1000, 7)",
+            "expect": [
+              104.9147301423,
+              0.6679882502
+            ],
+            "compare": "isclose"
+          },
+          {
+            "call": "mc_mean_se(50, 0.03, 0.25, 2, 5000, 2024)",
+            "expect": [
+              52.9842327055,
+              0.2766082707
+            ],
+            "compare": "isclose"
+          },
+          {
+            "call": "std::abs(mc_mean_se(100, 0.05, 0.2, 1, 10000, 42)[0] - 100 * std::exp(0.05)) < 3 * mc_mean_se(100, 0.05, 0.2, 1, 10000, 42)[1]",
+            "expect": true
+          },
+          {
+            "call": "mc_mean_se(100, 0.05, 0.0, 1, 100, 1)[1]",
+            "expect": 0,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. The two returned numbers are each accepted within a relative 1e-9 of this compiler's values (a zero must be exactly 0)."
+      },
+      "feedback": {
+        "correct": "A mean, and how far to trust it.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Expected {105.2968, 0.2132}. If the standard error is 0.2132 but the mean is off, check the drift's $-\\tfrac12\\sigma^2$; if it is 21.3, you returned the sd, not sd over $\\sqrt n$.",
+          "test-5": "With $\\sigma = 0$ every price is the same, so the sd must be exactly 0. A one-pass formula, sum of squares minus $n\\bar x^2$, leaves rounding dust; use two passes."
+        }
+      },
+      "explain": {
+        "text": "The mean £105.30 is 0.8 standard errors from the exact £105.13, as an honest simulation should be. The standard error £0.21 is what the report quotes beside the price. Two passes over the prices avoid the cancellation in the one-pass variance formula."
+      }
+    },
+    {
+      "id": "h-order-repeatable",
+      "difficulty": 4,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "A colleague must rerun your Monte Carlo price and get the same number to the last digit.",
+      "question": "Put the steps in order, from choosing the seed to the published price.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "seed",
+            "text": "Choose a seed (or take one from `std::random_device`) and write it to the log"
+          },
+          {
+            "id": "engine",
+            "text": "Build one `std::mt19937 gen(seed)` and one `std::normal_distribution<double>`"
+          },
+          {
+            "id": "loop",
+            "text": "Draw every path's $Z$ from that engine, in a fixed order"
+          },
+          {
+            "id": "stats",
+            "text": "Average the discounted payoffs and compute the standard error"
+          },
+          {
+            "id": "report",
+            "text": "Publish the price with the seed, path count, compiler and library"
+          }
+        ],
+        "answer": [
+          "seed",
+          "engine",
+          "loop",
+          "stats",
+          "report"
+        ]
+      },
+      "feedback": {
+        "correct": "Seed, one engine, fixed order, statistics, a full report.",
+        "generic": "Not quite right. The seed must exist before the engine, and the report needs the final numbers.",
+        "byKey": {
+          "engine": "The engine is built from the seed, so the seed comes first.",
+          "report": "The report is last: it carries the price and its standard error."
+        }
+      },
+      "explain": {
+        "text": "A seed taken from `std::random_device` is fine only if it is logged before use. One engine drawn in a fixed order makes the stream repeatable. The report names the library because `normal_distribution` differs between libc++ and libstdc++."
+      }
+    },
+    {
+      "id": "h-review-pricer",
+      "difficulty": 5,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "kind": "longform",
+      "title": "Review a colleague's pricer",
+      "prompt": "A colleague asks you to review this Monte Carlo call pricer before it goes into the risk system.\n\n```cpp\ndouble norm_cdf(double x) {\n    return 1 / 2 * (1 + std::erf(x / std::sqrt(2.0)));\n}\n\ndouble mc_call(double s, double k, double r,\n               double sigma, double t, int n) {\n    double sum = 0;\n    for (int i = 0; i < n; ++i) {\n        std::mt19937 gen(42);\n        std::normal_distribution<double> z(0.0, 1.0);\n        double st = s * std::exp((r - 0.5 * sigma * sigma) * t\n                                 + sigma * std::sqrt(t) * z(gen));\n        sum += std::fmax(st - k, 0.0);\n    }\n    return std::exp(-r * t) * sum / n;\n}\n\nbool test_price() {\n    return mc_call(100, 100, 0.05, 0.2, 1, 100000) == 10.4506;\n}\n```\n\nWrite the review: name each bug, say what it does to the output with numbers where you can, and give the fix in code. Then say how you would test the fixed pricer.",
+      "model": "**1. `1 / 2` is integer division.** `1 / 2` is 0, so `norm_cdf` returns 0 for every input. Any Black-Scholes check built on it is wrong. Fix: `0.5`.\n\n**2. The erf form cancels in the tails.** `1 + std::erf(x / std::sqrt(2.0))` adds a number near −1 to 1 when $x$ is very negative. At $x = -10$ it gives 0, where $\\Phi(-10) = 7.6 \\times 10^{-24}$; at $x = -5$ it is already wrong in the 11th digit. Fix:\n\n```cpp\ndouble norm_cdf(double x) {\n    return 0.5 * std::erfc(-x / std::sqrt(2.0));\n}\n```\n\n**3. The engine is reseeded inside the loop.** Each pass builds `std::mt19937 gen(42)` and a new distribution, so every path uses the same first draw, $Z = 0.5154$ in libc++. Every path ends at $S_T = 100e^{0.03 + 0.2 \\times 0.5154} = £114.23$, the payoff is £14.23 on every path, and the 'price' is $e^{-0.05} \\times 14.23 = £13.54$ whatever $n$ is. The standard error is 0, which hides the bug. Fix: build the engine and distribution once, before the loop, from a seed passed in:\n\n```cpp\ndouble mc_call(double s, double k, double r, double sigma,\n               double t, int n, unsigned seed) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    double sum = 0;\n    for (int i = 0; i < n; ++i)\n        sum += std::fmax(s * std::exp(drift + vol * z(gen)) - k, 0.0);\n    return std::exp(-r * t) * sum / n;\n}\n```\n\n**4. The seed is hidden.** A fixed 42 inside the function cannot be logged or varied. Passing `seed` in makes runs repeatable and lets a colleague reproduce a number from the report.\n\n**5. The test compares doubles with `==`.** A simulated price is never exactly 10.4506: with 100,000 paths and seed 42 the fixed pricer gives £10.4741, with standard error £0.047. Even a perfect Black-Scholes value would differ from 10.4506 after the fourth decimal. Fix: compare against the Black-Scholes price with a tolerance set by the standard error, such as `std::abs(price - 10.450584) < 3 * se`, and return the standard error from the pricer.\n\n**6. Testing the fixed pricer.**\n\n- `norm_cdf` against known values to 12 digits: $\\Phi(0) = 0.5$, $\\Phi(1.96) = 0.9750021$, $\\Phi(-10) = 7.62 \\times 10^{-24}$, plus $\\pm\\infty$ and NaN.\n- Repeatability: the same seed gives the same price; two seeds give different prices.\n- Agreement: the Monte Carlo price lies within 3 standard errors of the Black-Scholes £10.4506.\n- Edge cases: $\\sigma = 0$ gives the discounted forward payoff $\\max(Se^{rT} - K, 0)e^{-rT}$ exactly; $K = 0$ gives about $S$, within a few standard errors.\n- Convergence: the standard error falls by about half when $n$ goes up four times.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Finds `1 / 2` as integer division, making `norm_cdf` always 0, and fixes it with `0.5`"
+        },
+        {
+          "points": 2,
+          "text": "Explains the erf form's cancellation in the tails (for example $\\Phi(-10)$ prints 0) and switches to `0.5 * std::erfc(-x / std::sqrt(2.0))`"
+        },
+        {
+          "points": 2,
+          "text": "Finds the engine reseeded inside the loop, says every path then uses the same draw (so the price is one path's payoff and the standard error is 0), and moves engine and distribution before the loop"
+        },
+        {
+          "points": 1,
+          "text": "Makes the seed a parameter so runs can be logged and reproduced"
+        },
+        {
+          "points": 2,
+          "text": "Replaces the `==` test with a tolerance tied to the standard error against the Black-Scholes £10.4506"
+        },
+        {
+          "points": 1,
+          "text": "Proposes at least two further tests: known $\\Phi$ values, repeatability, an edge case such as $\\sigma = 0$, or convergence"
+        }
+      ]
+    },
+    {
+      "id": "h-small-root",
+      "difficulty": 4,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "The textbook small root of $ax^2 + bx + c = 0$ with $b < 0$ is $\\frac{-b - \\sqrt{b^2 - 4ac}}{2a}$. For $x^2 - 10^8x + 1 = 0$ it gives $7.45 \\times 10^{-9}$; the truth is $10^{-8}$. The two terms on top nearly cancel. Instead compute $q = -\\tfrac12\\big(b + \\operatorname{sign}(b)\\sqrt{b^2 - 4ac}\\big)$ and return $c/q$, the root of smaller size. `std::copysign(x, b)` gives $|x|$ with the sign of $b$.",
+      "question": "Write `small_root(a, b, c)`. Assume real roots and $b \\ne 0$.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble small_root(double a, double b, double c) {\n    return (-b - std::sqrt(b * b - 4 * a * c)) / (2 * a);\n}\n",
+        "solution": "#include <cmath>\n\ndouble small_root(double a, double b, double c) {\n    double q = -0.5 * (b + std::copysign(std::sqrt(b * b - 4 * a * c), b));\n    return c / q;\n}\n",
+        "examples": [
+          {
+            "call": "small_root(1, -3, 2)",
+            "expect": 1,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "small_root(1, -1e8, 1) * 1e8",
+            "expect": 1,
+            "compare": "isclose"
+          },
+          {
+            "call": "small_root(1, 1e8, 1) * 1e8",
+            "expect": -1,
+            "compare": "isclose"
+          },
+          {
+            "call": "small_root(1, -3, 2)",
+            "expect": 1,
+            "compare": "isclose"
+          },
+          {
+            "call": "small_root(2, -1e6, 3) * 1e6",
+            "expect": 3.000000000018,
+            "compare": "isclose"
+          },
+          {
+            "call": "small_root(1, -1e5, 1) * 1e5",
+            "expect": 1.0000000001,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. Small roots are scaled up first, then accepted within a relative 1e-9."
+      },
+      "feedback": {
+        "correct": "No subtraction of near-equal numbers, so all the digits survive.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Expected $10^{-8}$. If you got $7.45 \\times 10^{-9}$, the subtraction is still there: compute $q$ and return `c / q`.",
+          "test-2": "With $b > 0$ the sign flips. `std::copysign(..., b)` keeps $b$ and the root adding, never cancelling."
+        }
+      },
+      "explain": {
+        "text": "$b$ and $\\operatorname{sign}(b)\\sqrt{b^2 - 4ac}$ have the same sign, so $q$ is a sum, never a cancellation. Since the roots multiply to $c/a$, the small root is $c/q$. The same rewrite shows up wherever two large terms nearly cancel, as in lesson 1's $1 - \\cos x$."
+      }
+    },
+    {
+      "id": "h-gap-notional",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric"
+      ],
+      "prose": "A book is valued at about £6bn, between $2^{32}$ and $2^{33}$. Between $2^k$ and $2^{k+1}$ neighbouring doubles are $2^{k-52}$ apart.",
+      "question": "How far apart are neighbouring doubles there? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9.5367e-07,
+        "tol": {
+          "rel": 0.01
+        },
+        "placeholder": "for example 1e-6",
+        "accept": "$2^{-20} \\approx 9.54 \\times 10^{-7}$",
+        "wrong": [
+          {
+            "id": "k33",
+            "value": 1.9073e-06,
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "id": "eps",
+            "value": 2.22e-16,
+            "tol": {
+              "rel": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2^{32 - 52} = 2^{-20}$, about a millionth of a pound.",
+        "generic": "Not quite right. Use $k = 32$ in $2^{k-52}$.",
+        "byKey": {
+          "k33": "That is $2^{-19}$, the gap above $2^{33} = 8.59 \\times 10^9$. £6bn is below that, so $k = 32$.",
+          "eps": "That is the gap at 1. It grows with the number."
+        }
+      },
+      "explain": {
+        "text": "With $k = 32$ the gap is $2^{-20} \\approx 9.5 \\times 10^{-7}$, still far finer than a penny. An absolute tolerance of 1e-9 on this book would be below the gap: `==` in disguise."
+      }
+    },
+    {
+      "id": "h-stop-two-sd",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric"
+      ],
+      "prose": "A stop sits 3% below today's price. Daily returns are normal with mean 0 and sd 1.5%.",
+      "question": "What is the chance a day's close is below the stop?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.02275,
+        "tol": {
+          "abs": 0.0002
+        },
+        "placeholder": "a decimal",
+        "accept": "0.0228: $\\Phi(-2)$",
+        "wrong": [
+          {
+            "id": "upper",
+            "value": 0.97725,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "twotail",
+            "value": 0.0455,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\Phi(-2) = 0.0228$, about 1 day in 44.",
+        "generic": "Not quite right. Standardise: $-0.03/0.015 = -2$.",
+        "byKey": {
+          "upper": "That is the chance of closing above the stop.",
+          "twotail": "That counts both tails. Only falls hit the stop."
+        }
+      },
+      "explain": {
+        "text": "$z = -0.03/0.015 = -2$ and `norm_cdf(-2.0)` is 0.02275. Over a 250-day year that is about 5.7 closes below the stop."
+      }
+    },
+    {
+      "id": "h-nan-payoff",
+      "difficulty": 3,
+      "skills": [
+        "cx-numeric",
+        "cx-testing"
+      ],
+      "prose": "A payoff library computes a power payoff as `std::pow(st - k, 1.5)`, meant only for `st > k`. A test feeds `st = 90`, `k = 100` and sums the payoffs of a portfolio.",
+      "question": "What does the portfolio total become?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "NaN, because one NaN spreads through the sum",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "The other payoffs' total, as if this one were 0",
+            "why": "`std::pow(-10, 1.5)` is NaN, and NaN plus anything is NaN."
+          },
+          {
+            "id": "crash",
+            "text": "The program stops at `std::pow`",
+            "why": "`<cmath>` returns NaN; it never stops the program."
+          },
+          {
+            "id": "neg",
+            "text": "The total minus 31.6",
+            "why": "There is no real $(-10)^{1.5}$; `std::pow` returns NaN, not $-10^{1.5}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One NaN poisons the whole total.",
+        "generic": "Not quite right. What is $(-10)^{1.5}$ in doubles, and what does it do to a sum?"
+      },
+      "explain": {
+        "text": "A negative base with a fractional power is NaN, and NaN plus anything is NaN, so the book's total is NaN. Write `std::pow(std::fmax(st - k, 0.0), 1.5)`, and test totals with `std::isfinite`."
+      }
+    }
+  ]
+}

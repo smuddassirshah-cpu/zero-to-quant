@@ -1,0 +1,358 @@
+{
+ "id": "review-2",
+ "course": "cpp-pricing",
+ "level": 2,
+ "items": [
+  {
+   "id": "r-book-digital",
+   "difficulty": 2,
+   "skills": [
+    "cx-pricers"
+   ],
+   "prose": "A book holds `DigitalCall(100.0, 5.0)`, `Put(100.0)` and `Call(110.0)`, each owned by a `std::unique_ptr<Payoff>`. The share ends at £105.",
+   "question": "What does `portfolio_payoff` return, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Book payoff in pounds",
+    "accept": "£5: the digital pays £5; the put and the 110 call pay nothing.",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "callpays",
+      "value": 10,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "putpays",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only the digital pays.",
+    "generic": "Not quite right. Work out each leg at £105, then add.",
+    "byKey": {
+     "callpays": "The call is struck at £110, above the spot, so it pays 0.",
+     "putpays": "The digital pays its £5 cash because £105 is above its strike of £100."
+    }
+   },
+   "explain": {
+    "text": "Digital: £105 > £100, so £5. Put at £100: 0. Call at £110: 0. Each `(*leg)(105.0)` dispatches to its own class."
+   }
+  },
+  {
+   "id": "r-one-step-put",
+   "difficulty": 3,
+   "skills": [
+    "cx-pricers",
+    "cx-numeric"
+   ],
+   "prose": "`tree_price(Put(100.0), 100.0, 1.1, 0.9, 1.02, 1, false)`: one step, growth $1 + r = 1.02$.",
+   "question": "What does it return, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.9216,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Price in pounds",
+    "accept": "£3.92: $q = 0.12/0.2 = 0.6$; $(0.4 \\times 10)/1.02$",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "nodisc",
+      "value": 4.0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "swapq",
+      "value": 5.8824,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£3.92.",
+    "generic": "Not quite right. Find q, then one discounted step back from [10, 0].",
+    "byKey": {
+     "nodisc": "You forgot to divide by the growth, 1.02.",
+     "swapq": "You weighted the down leaf by q. Here q = 0.6 goes with the up leaf, which pays 0."
+    }
+   },
+   "explain": {
+    "text": "Leaves: £90 pays 10, £110 pays 0. $q = (1.02 - 0.9)/(1.1 - 0.9) = 0.6$, so the price is $(0.6 \\times 0 + 0.4 \\times 10)/1.02 = 3.92$."
+   }
+  },
+  {
+   "id": "r-int-dt",
+   "difficulty": 2,
+   "skills": [
+    "cx-numeric"
+   ],
+   "prose": "A colleague writes `double dt = 1 / n * t;` in `binomial_price`, with `int n = 4` and `t = 1.0`.",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`dt` is 0, so u = d = 1 and the q check throws",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "It works: `dt` is 0.25",
+      "why": "`1 / n` is `int` division, 0, before `t` is involved."
+     },
+     {
+      "id": "quarter",
+      "text": "It prices a one-step tree",
+      "why": "`dt` is 0, not 1: the tree has no time at all in each step."
+     },
+     {
+      "id": "compile",
+      "text": "A compile error",
+      "why": "Mixing `int` and `double` compiles. The bug is silent."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Integer division, again.",
+    "generic": "Not quite right. Evaluate `1 / n` with `int n = 4` first."
+   },
+   "explain": {
+    "text": "`1 / 4` is 0 in `int` arithmetic, so `dt` is 0, u = d = 1, and q is $0/0$. Write `t / n`, where `t` is a `double`."
+   }
+  },
+  {
+   "id": "r-parity-put",
+   "difficulty": 3,
+   "skills": [
+    "cx-pricers",
+    "cx-testing"
+   ],
+   "prose": "Your `bs_call` gives £10.4506 for our one-year call ($S = K = 100$, $r = 5\\%$). Use put-call parity, $c - p = S - Ke^{-rT}$, with $e^{-0.05} = 0.951229$.",
+   "question": "What must `bs_put` give for the same inputs, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.5735,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Put price in pounds",
+    "accept": "£5.5735: $10.4506 - 100 + 95.1229$",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 15.3277,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "nodisc",
+      "value": 10.4506,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£5.5735.",
+    "generic": "Not quite right. Rearrange: $p = c - S + Ke^{-rT}$.",
+    "byKey": {
+     "sign": "You added $S - Ke^{-rT}$. The put is the call minus it.",
+     "nodisc": "Without discounting, $S - K = 0$ and the put would equal the call. Discount the strike."
+    }
+   },
+   "explain": {
+    "text": "$p = 10.4506 - 100 + 95.1229 = 5.5735$, which is what `bs_put` returns. A parity test needs no known put price at all."
+   }
+  },
+  {
+   "id": "r-put-hedge",
+   "difficulty": 3,
+   "skills": [
+    "cx-pricers"
+   ],
+   "prose": "A desk is short 2,000 of our one-year puts struck at £100. `bs_delta_call` gives 0.6368, and a put's delta is the call's minus 1.",
+   "question": "How many shares must the desk sell short to be delta neutral?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 726,
+    "tol": {
+     "abs": 1
+    },
+    "label": "Shares to short",
+    "accept": "726: the book's delta is $-2000 \\times (-0.3632) = +726.4$",
+    "wrong": [
+     {
+      "id": "call",
+      "value": 1274,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "calld",
+      "value": 637,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Short 726 shares.",
+    "generic": "Not quite right. Find the put's delta, then the book's.",
+    "byKey": {
+     "call": "You used the call's delta. The put's is $0.6368 - 1 = -0.3632$.",
+     "calld": "That is the call's delta per thousand. Use the put's, −0.3632, times 2,000."
+    }
+   },
+   "explain": {
+    "text": "Each short put has delta $+0.3632$, so the book is long 726.4 deltas. Shorting 726 shares makes it flat."
+   }
+  },
+  {
+   "id": "r-paths",
+   "difficulty": 3,
+   "skills": [
+    "cx-numeric"
+   ],
+   "prose": "A Monte Carlo price has standard error £0.06 with 10,000 paths.",
+   "question": "How many paths give a standard error of £0.02?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 90000,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Paths",
+    "accept": "90,000: a third of the error needs nine times the paths",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 30000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "90,000.",
+    "generic": "Not quite right. The error goes like $1/\\sqrt n$.",
+    "byKey": {
+     "linear": "Three times the paths cuts the error only by $\\sqrt 3$. A third of the error needs $3^2 = 9$ times."
+    }
+   },
+   "explain": {
+    "text": "£0.06 to £0.02 is a factor of 3, so $3^2 = 9$ times the paths: 90,000."
+   }
+  },
+  {
+   "id": "r-antithetic-even",
+   "difficulty": 4,
+   "skills": [
+    "cx-numeric"
+   ],
+   "prose": "Antithetic variates average $f(Z)$ and $f(-Z)$. For our call they halved the variance for the same work.",
+   "question": "For which payoff do they give no gain at all?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "One with $f(Z) = f(-Z)$ for every $Z$, such as a payoff on $Z^2$",
+      "correct": true
+     },
+     {
+      "id": "put",
+      "text": "A put",
+      "why": "A put falls as $Z$ rises, so $f(Z)$ and $f(-Z)$ still move in opposite directions. It gains."
+     },
+     {
+      "id": "linear",
+      "text": "A payoff linear in $Z$",
+      "why": "Linear payoffs gain the most: $f(Z) + f(-Z)$ is constant, so the pairs have no variance at all."
+     },
+     {
+      "id": "digital",
+      "text": "A digital call",
+      "why": "A digital pays when $Z$ is high, so its mirror tends to pay 0. The pair is negatively correlated and it gains."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A symmetric payoff makes each pair one path counted twice.",
+    "generic": "Not quite right. Ask when $f(Z)$ and $f(-Z)$ are perfectly positively correlated."
+   },
+   "explain": {
+    "text": "If $f(Z) = f(-Z)$, each pair average is just $f(Z)$: two payoffs for the information of one. The variance per unit of work doubles, so plain paths do better."
+   }
+  },
+  {
+   "id": "r-by-value",
+   "difficulty": 4,
+   "skills": [
+    "cx-pricers"
+   ],
+   "prose": "A colleague writes `double mc_price(Payoff p, double s, double r, double sigma, double t, int n, unsigned seed)`, with our abstract `Payoff`.",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "It does not compile: a parameter cannot have an abstract type",
+      "correct": true
+     },
+     {
+      "id": "slice",
+      "text": "It compiles and slices every payoff to 0",
+      "why": "That happens with a concrete base. With `= 0` in `Payoff`, no `Payoff` object can be made, not even a parameter."
+     },
+     {
+      "id": "works",
+      "text": "It works, only a little slower",
+      "why": "A by-value `Payoff` would be a new `Payoff` object, which an abstract class forbids."
+     },
+     {
+      "id": "runtime",
+      "text": "It stops at run time on the first call",
+      "why": "The compiler refuses first: `Payoff` is abstract."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The abstract base turns slicing into a compile error.",
+    "generic": "Not quite right. Can a `Payoff` object exist?"
+   },
+   "explain": {
+    "text": "Passing by value would build a `Payoff` object, and `= 0` forbids that. Take `const Payoff&`, which refers to the caller's object and keeps virtual dispatch."
+   }
+  }
+ ]
+}

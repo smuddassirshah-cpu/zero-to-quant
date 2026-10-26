@@ -1,0 +1,1633 @@
+{
+  "id": "l2-good-split",
+  "course": "ensembles",
+  "title": "Measuring a good split",
+  "minutes": 15,
+  "objectives": [
+    "Compute Gini impurity and entropy for a split.",
+    "Choose a split by the weighted drop in impurity."
+  ],
+  "skills": [
+    "en-trees"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two splits, one score",
+      "prose": "A node holds 40 loans: 20 defaults and 20 repaid. Two candidate splits, A and B, divide it in different ways. Each side predicts its majority, as in lesson 1.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "al",
+              "label": "A: left"
+            },
+            {
+              "id": "ar",
+              "label": "A: right"
+            },
+            {
+              "id": "bl",
+              "label": "B: left"
+            },
+            {
+              "id": "br",
+              "label": "B: right"
+            }
+          ],
+          "groups": [
+            {
+              "id": "D",
+              "label": "Default",
+              "colour": 2
+            },
+            {
+              "id": "R",
+              "label": "Repaid",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Loans",
+          "yMax": 32,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "D": {
+              "al": 15,
+              "ar": 5,
+              "bl": 10,
+              "br": 10
+            },
+            "R": {
+              "al": 5,
+              "ar": 15,
+              "bl": 20,
+              "br": 0
+            }
+          }
+        }
+      },
+      "question": "How many of the 40 loans does split B misclassify?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "loans",
+        "label": "Loans split B gets wrong",
+        "accept": "10 exactly: the 10 defaults on B's left side, which predicts repaid.",
+        "wrong": [
+          {
+            "id": "twenty",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On each side, the loans outside the majority are the mistakes."
+        },
+        {
+          "rung": "point",
+          "text": "B's left side has 10 D and 20 R, so it predicts repaid.",
+          "highlight": [
+            "bl-D",
+            "br-R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Left: 10 defaults are wrong. Right: 10 D and 0 R, no mistakes. Total 10."
+        }
+      ],
+      "feedback": {
+        "correct": "Ten, the same as split A: 5 + 5.",
+        "generic": "Not quite right. Count the minority on each side of B and add.",
+        "byKey": {
+          "twenty": "You counted the 20 repaid loans as mistakes. B's left side predicts repaid, so its 10 defaults are the mistakes.",
+          "zero": "B's right side is pure, but its left side still mixes 10 defaults with 20 repaid."
+        }
+      },
+      "explain": {
+        "text": "Split B gets 10 wrong, and so does A (5 on each side). Yet B leaves a pure node of 10 defaults that needs no more work. Counting mistakes cannot tell the two splits apart; we need a finer score.",
+        "canvas": {
+          "highlight": [
+            "br-D"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A finer score",
+      "prose": "Score a node by its mix. If a share $p_D$ defaulted and $p_R$ repaid, use $$G = 1 - p_D^2 - p_R^2.$$ A pure node scores 0; a 50-50 node scores the most. This is the **Gini impurity**.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "al",
+              "label": "A: left"
+            },
+            {
+              "id": "ar",
+              "label": "A: right"
+            },
+            {
+              "id": "bl",
+              "label": "B: left"
+            },
+            {
+              "id": "br",
+              "label": "B: right"
+            }
+          ],
+          "groups": [
+            {
+              "id": "D",
+              "label": "Default",
+              "colour": 2
+            },
+            {
+              "id": "R",
+              "label": "Repaid",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Loans",
+          "yMax": 32,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "D": {
+              "al": 15,
+              "ar": 5,
+              "bl": 10,
+              "br": 10
+            },
+            "R": {
+              "al": 5,
+              "ar": 15,
+              "bl": 20,
+              "br": 0
+            }
+          }
+        }
+      },
+      "question": "What is $G$ for A's left side, 15 D and 5 R?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.375,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Gini impurity of 15 D and 5 R",
+        "accept": "0.375: $1 - 0.75^2 - 0.25^2$.",
+        "wrong": [
+          {
+            "id": "nosq",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "err",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sumsq",
+            "value": 0.625,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the two shares first: 15 of 20 and 5 of 20."
+        },
+        {
+          "rung": "point",
+          "text": "$p_D = 0.75$ and $p_R = 0.25$.",
+          "highlight": [
+            "al-D",
+            "al-R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 - 0.5625 - 0.0625 = 0.375$."
+        }
+      ],
+      "feedback": {
+        "correct": "$G = 0.375$.",
+        "generic": "Not quite right. Square each share, add the squares, and subtract from 1.",
+        "byKey": {
+          "nosq": "You subtracted the shares without squaring them. The shares always add to 1, so that gives 0 for every node.",
+          "err": "That is the error rate, the minority share. Gini squares the shares: $1 - 0.75^2 - 0.25^2$.",
+          "sumsq": "That is $p_D^2 + p_R^2$. Gini is 1 minus it."
+        }
+      },
+      "explain": {
+        "text": "$1 - 0.75^2 - 0.25^2 = 0.375$. By symmetry A's right side, 5 D and 15 R, also scores 0.375. $G$ is the chance that two loans drawn from the node at random have different outcomes."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two impurity curves",
+      "prose": "Here is $G$ against the default share $p$, beside a second score, **entropy** $H = -p\\log_2 p - (1-p)\\log_2(1-p)$, in bits. The dashed line is the error rate. Slide $p$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.05
+          ],
+          "xLabel": "Default share $p$",
+          "yLabel": "Impurity",
+          "grid": true,
+          "height": 320,
+          "functions": [
+            {
+              "id": "ent",
+              "expr": "-(x*ln(x) + (1-x)*ln(1-x))/ln(2)",
+              "domain": [
+                0.0005,
+                0.9995
+              ],
+              "label": "Entropy",
+              "colour": 6,
+              "labelAt": 0.2
+            },
+            {
+              "id": "gini",
+              "expr": "2*x*(1-x)",
+              "label": "Gini",
+              "colour": 1,
+              "labelAt": 0.82,
+              "labelSide": "below"
+            },
+            {
+              "id": "err",
+              "expr": "min(x, 1-x)",
+              "label": "Error rate",
+              "colour": 4,
+              "dashed": true,
+              "labelAt": 0.5,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "p": 0.5
+          },
+          "points": [
+            {
+              "id": "P",
+              "x": 0.5,
+              "y": 1,
+              "colour": 6,
+              "tap": false
+            },
+            {
+              "id": "G",
+              "x": 0.5,
+              "y": 0.5,
+              "colour": 1,
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "P.x": "p",
+          "P.y": "-(max(p, 1e-9)*log(max(p, 1e-9)) + max(1-p, 1e-9)*log(max(1-p, 1e-9)))/log(2)",
+          "G.x": "p",
+          "G.y": "2*p*(1-p)",
+          "caption": "$p = {{fixed(p, 2)}}$: Gini {{fixed(2*p*(1-p), 3)}}, entropy {{fixed(-(max(p, 1e-9)*log(max(p, 1e-9)) + max(1-p, 1e-9)*log(max(1-p, 1e-9)))/log(2), 3)}} bits"
+        },
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "start": 0.5,
+            "label": "Default share $p$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Read the entropy at $p = 0.2$, in bits.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.722,
+        "tol": {
+          "abs": 0.003
+        },
+        "unit": "bits",
+        "label": "Entropy at p = 0.2",
+        "accept": "0.722 ± 0.003: $-0.2\\log_2 0.2 - 0.8\\log_2 0.8$.",
+        "wrong": [
+          {
+            "id": "gini",
+            "value": 0.32,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "half",
+            "value": 1,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move the slider to 0.20 and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The entropy curve is the top one.",
+          "highlight": [
+            "ent"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-0.2\\log_2 0.2 - 0.8\\log_2 0.8 = 0.464 + 0.258$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.722 bits; Gini there is 0.32.",
+        "generic": "Not quite right. Set $p$ to 0.20 and read the entropy, not the Gini.",
+        "byKey": {
+          "gini": "0.32 is the Gini value at 0.2. Entropy is the higher curve.",
+          "half": "That is the peak at $p = 0.5$. Move the slider to 0.20."
+        }
+      },
+      "explain": {
+        "text": "Both curves are 0 at a pure node and peak at $p = \\tfrac12$: Gini at 0.5, entropy at 1 bit. Both are curved, unlike the error rate, so they reward a side that gets purer even when its majority does not change.",
+        "canvas": {
+          "params": {
+            "p": 0.2
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Weigh each side",
+      "prose": "A split's score is the **weighted** impurity of its sides: each side's Gini times its share of the loans. Fill the table for both splits, then name the better one.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "al",
+              "label": "A: left"
+            },
+            {
+              "id": "ar",
+              "label": "A: right"
+            },
+            {
+              "id": "bl",
+              "label": "B: left"
+            },
+            {
+              "id": "br",
+              "label": "B: right"
+            }
+          ],
+          "groups": [
+            {
+              "id": "D",
+              "label": "Default",
+              "colour": 2
+            },
+            {
+              "id": "R",
+              "label": "Repaid",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Loans",
+          "yMax": 32,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "D": {
+              "al": 15,
+              "ar": 5,
+              "bl": 10,
+              "br": 10
+            },
+            "R": {
+              "al": 5,
+              "ar": 15,
+              "bl": 20,
+              "br": 0
+            }
+          }
+        },
+        "maxHeight": 200
+      },
+      "question": "Fill in the missing cells.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Node",
+          "Loans",
+          "Gini"
+        ],
+        "rows": [
+          [
+            "Parent",
+            "40",
+            "0.5"
+          ],
+          [
+            "A left",
+            "20",
+            "0.375"
+          ],
+          [
+            "A right",
+            "20",
+            "0.375"
+          ],
+          [
+            "A weighted",
+            "",
+            {
+              "edit": true,
+              "answer": 0.375,
+              "tol": {
+                "abs": 0.003
+              }
+            }
+          ],
+          [
+            "B left",
+            "30",
+            {
+              "edit": true,
+              "answer": 0.4444,
+              "tol": {
+                "abs": 0.003
+              }
+            }
+          ],
+          [
+            "B right",
+            "10",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "B weighted",
+            "",
+            {
+              "edit": true,
+              "answer": 0.3333,
+              "tol": {
+                "abs": 0.003
+              }
+            }
+          ],
+          [
+            "Better split",
+            "",
+            {
+              "edit": true,
+              "answer": "B",
+              "accept": [
+                "split B"
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weighted Gini = (left loans / 40) × left Gini + (right loans / 40) × right Gini."
+        },
+        {
+          "rung": "point",
+          "text": "B left has 10 D and 20 R: $p_D = \\tfrac13$, so $G = 1 - \\tfrac19 - \\tfrac49$.",
+          "highlight": [
+            "bl-D",
+            "bl-R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B left: $\\tfrac49 = 0.444$. B right is pure: 0. Weighted: $\\tfrac{30}{40} \\times 0.444 = 0.333$, below A's 0.375."
+        }
+      ],
+      "feedback": {
+        "correct": "B scores 0.333 against A's 0.375, so B is better.",
+        "generic": "Not quite right. Weight each side's Gini by its share of the 40 loans, then pick the lower weighted score."
+      },
+      "explain": {
+        "text": "A: $0.5 \\times 0.375 + 0.5 \\times 0.375 = 0.375$. B: $0.75 \\times 0.444 + 0.25 \\times 0 = 0.333$. The drop from the parent's 0.5 is the split's **gain**: 0.125 for A, 0.167 for B.",
+        "canvas": {
+          "highlight": [
+            "br-D"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The tiny pure side",
+      "prose": "Split C peels off one loan: its left side is 1 D, 0 R, and its right side is 19 D, 20 R. A colleague averages the two Gini values: C scores $\\tfrac{0 + 0.500}{2} = 0.25$, below A's 0.375.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "al",
+              "label": "A: left"
+            },
+            {
+              "id": "ar",
+              "label": "A: right"
+            },
+            {
+              "id": "cl",
+              "label": "C: left"
+            },
+            {
+              "id": "cr",
+              "label": "C: right"
+            }
+          ],
+          "groups": [
+            {
+              "id": "D",
+              "label": "Default",
+              "colour": 2
+            },
+            {
+              "id": "R",
+              "label": "Repaid",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Loans",
+          "yMax": 22,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "D": {
+              "al": 15,
+              "ar": 5,
+              "cl": 1,
+              "cr": 19
+            },
+            "R": {
+              "al": 5,
+              "ar": 15,
+              "cl": 0,
+              "cr": 20
+            }
+          }
+        }
+      },
+      "question": "Which split should the tree prefer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A: weighted by size, C scores 0.487 against A's 0.375",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "C: its average impurity, 0.25, is lower",
+            "why": "You averaged the sides as if they were the same size. C's pure side holds 1 loan; its other 39 are as mixed as the parent."
+          },
+          {
+            "id": "tie",
+            "text": "Neither: both have one side better than the parent",
+            "why": "Only A purifies both sides. C's big side is barely purer than the parent's 0.5."
+          },
+          {
+            "id": "c2",
+            "text": "C: a pure side always wins",
+            "why": "A pure side of one loan buys almost nothing. What counts is how many loans end up purer."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many loans sit on each side of C?"
+        },
+        {
+          "rung": "point",
+          "text": "C's right side holds 39 of the 40 loans, with Gini 0.500.",
+          "highlight": [
+            "cr-D",
+            "cr-R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Weighted: $\\tfrac{1}{40} \\times 0 + \\tfrac{39}{40} \\times 0.4997 = 0.487$. A scores 0.375."
+        }
+      ],
+      "feedback": {
+        "correct": "Weighting shows C barely helps: its gain is 0.013 against A's 0.125.",
+        "generic": "Not quite right. Weight each side by its share of the loans before comparing.",
+        "byKey": {
+          "c": "You compared impurities without weighting by group size. One pure loan cannot outweigh 39 mixed ones."
+        }
+      },
+      "explain": {
+        "text": "Weighted, C scores $\\tfrac{39}{40} \\times 0.4997 = 0.487$, a gain of only 0.013. A gains 0.125. Always weight a side by its share of the parent's rows.",
+        "canvas": {
+          "highlight": [
+            "cr-D",
+            "cr-R"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A gain that accuracy cannot see",
+      "prose": "A node holds 30 defaults and 10 repaid, so it predicts default and gets 10 wrong. A split sends 18 defaults left and the other 22 loans, 12 D and 10 R, right.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "p",
+              "label": "Parent"
+            },
+            {
+              "id": "l",
+              "label": "Left"
+            },
+            {
+              "id": "r",
+              "label": "Right"
+            }
+          ],
+          "groups": [
+            {
+              "id": "D",
+              "label": "Default",
+              "colour": 2
+            },
+            {
+              "id": "R",
+              "label": "Repaid",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Loans",
+          "yMax": 32,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "D": {
+              "p": 30,
+              "l": 18,
+              "r": 12
+            },
+            "R": {
+              "p": 10,
+              "l": 0,
+              "r": 10
+            }
+          }
+        }
+      },
+      "question": "Both sides still predict default, so mistakes stay at 10. What is the Gini gain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1023,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Gini gain of the split",
+        "accept": "0.102 ± 0.002: $0.375 - \\tfrac{22}{40} \\times 0.496$.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "unw",
+            "value": 0.127,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Parent Gini first: $p_D = 0.75$."
+        },
+        {
+          "rung": "point",
+          "text": "Left is pure. Right: $1 - (\\tfrac{12}{22})^2 - (\\tfrac{10}{22})^2 = 0.496$.",
+          "highlight": [
+            "l-D",
+            "r-D",
+            "r-R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Gain $= 0.375 - (\\tfrac{18}{40} \\times 0 + \\tfrac{22}{40} \\times 0.496) = 0.375 - 0.273 = 0.102$."
+        }
+      ],
+      "feedback": {
+        "correct": "A gain of 0.102, while the mistake count does not move.",
+        "generic": "Not quite right. Subtract the weighted child Gini from the parent's 0.375.",
+        "byKey": {
+          "zero": "That is the gain in accuracy: 10 mistakes before and after. Gini sees that 18 loans are now settled for sure.",
+          "unw": "You averaged the two sides without weighting. The right side holds 22 of the 40 loans."
+        }
+      },
+      "explain": {
+        "text": "Accuracy sees no change, so a tree that split on accuracy would stop here. Gini sees 18 settled loans and a 12-10 node that the next question can work on. That is why trees split on impurity, not accuracy."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Three rating buckets",
+      "prose": "The formulas never assumed two classes. A node of 20 bonds holds 10 rated A, 6 BBB and 4 BB. Gini sums a square for every class: $G = 1 - \\sum_k p_k^2$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a",
+              "label": "A",
+              "colour": 1
+            },
+            {
+              "id": "bbb",
+              "label": "BBB",
+              "colour": 4
+            },
+            {
+              "id": "bb",
+              "label": "BB",
+              "colour": 2
+            }
+          ],
+          "yLabel": "Bonds",
+          "yMax": 12,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "a": 10,
+            "bbb": 6,
+            "bb": 4
+          }
+        }
+      },
+      "question": "What is the Gini impurity of this node?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.62,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Gini of 10, 6 and 4 bonds",
+        "accept": "0.62: $1 - 0.5^2 - 0.3^2 - 0.2^2$.",
+        "wrong": [
+          {
+            "id": "sumsq",
+            "value": 0.38,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "two",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Shares first: 10, 6 and 4 out of 20."
+        },
+        {
+          "rung": "point",
+          "text": "$p = 0.5, 0.3, 0.2$.",
+          "highlight": [
+            "xA",
+            "xBBB",
+            "xBB"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 - 0.25 - 0.09 - 0.04 = 0.62$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.62, above the two-class ceiling of 0.5.",
+        "generic": "Not quite right. Square all three shares and subtract their sum from 1.",
+        "byKey": {
+          "sumsq": "That is $\\sum_k p_k^2$. Gini is 1 minus it.",
+          "two": "0.5 is the most two classes can reach. With three classes the ceiling is $\\tfrac23$."
+        }
+      },
+      "explain": {
+        "text": "$1 - 0.25 - 0.09 - 0.04 = 0.62$. With $K$ classes Gini peaks at $1 - \\tfrac1K$ and entropy at $\\log_2 K$ bits, here 0.667 and 1.585. Splits are scored exactly as before."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Gain, in general",
+      "prose": "For a split of $n$ rows into $n_L$ left and $n_R$ right, with impurity $I$: $$\\text{gain} = I(\\text{parent}) - \\tfrac{n_L}{n} I(L) - \\tfrac{n_R}{n} I(R).$$ With entropy, the gain is called **information gain**. scikit-learn uses Gini unless you pass `criterion=\"entropy\"`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "al",
+              "label": "A: left"
+            },
+            {
+              "id": "ar",
+              "label": "A: right"
+            },
+            {
+              "id": "bl",
+              "label": "B: left"
+            },
+            {
+              "id": "br",
+              "label": "B: right"
+            }
+          ],
+          "groups": [
+            {
+              "id": "D",
+              "label": "Default",
+              "colour": 2
+            },
+            {
+              "id": "R",
+              "label": "Repaid",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Loans",
+          "yMax": 32,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "D": {
+              "al": 15,
+              "ar": 5,
+              "bl": 10,
+              "br": 10
+            },
+            "R": {
+              "al": 5,
+              "ar": 15,
+              "bl": 20,
+              "br": 0
+            }
+          }
+        },
+        "maxHeight": 180
+      },
+      "question": "Split A sends 20 loans each way, and each side has entropy 0.811. What is A's information gain? The parent's entropy is 1.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.189,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "bits",
+        "label": "Information gain of split A",
+        "accept": "0.189 ± 0.002: $1 - 0.5 \\times 0.811 - 0.5 \\times 0.811$.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 0.378,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "child",
+            "value": 0.811,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both sides weigh one half."
+        },
+        {
+          "rung": "point",
+          "text": "Weighted child entropy: $0.5 \\times 0.811 + 0.5 \\times 0.811 = 0.811$."
+        },
+        {
+          "rung": "step",
+          "text": "Gain $= 1 - 0.811 = 0.189$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.189 bits for A; B gains 0.311, so entropy also prefers B.",
+        "generic": "Not quite right. Subtract the weighted child entropy from 1.",
+        "byKey": {
+          "sum": "You subtracted 0.811 without weighting each side by one half: $1 - 0.811$, not $2 - 2 \\times 0.811$.",
+          "child": "0.811 is the weighted child entropy. The gain is the drop from the parent's 1."
+        }
+      },
+      "explain": {
+        "text": "A gains 0.189 bits and B 0.311, the same order as Gini's 0.125 and 0.167. The two curves have nearly the same shape, so they nearly always choose the same split."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Gini and entropy in code",
+      "prose": "Turn the two formulas into functions of a node's class counts. Shares with a count of 0 add nothing to entropy, so skip them: $0 \\log_2 0$ is taken as 0.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> gini([15, 5]), entropy([15, 5])",
+            "(0.375, 0.811278)",
+            ">>> gini([10, 6, 4])",
+            "0.62"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `gini` and `entropy`. Each returns its value rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import log2\n\ndef gini(counts):\n    n = sum(counts)\n    if n == 0:\n        return 0.0\n    return round(..., 6)\n\ndef entropy(counts):\n    \"\"\"In bits; classes with a count of 0 are skipped.\"\"\"\n    n = sum(counts)\n    return round(..., 6)\n",
+        "solution": "from math import log2\n\ndef gini(counts):\n    n = sum(counts)\n    if n == 0:\n        return 0.0\n    return round(1 - sum((c / n) ** 2 for c in counts), 6)\n\ndef entropy(counts):\n    \"\"\"In bits; classes with a count of 0 are skipped.\"\"\"\n    n = sum(counts)\n    return round(-sum(c / n * log2(c / n) for c in counts if c > 0), 6)\n",
+        "examples": [
+          {
+            "call": "gini([15, 5])",
+            "expect": "0.375",
+            "compare": "isclose"
+          },
+          {
+            "call": "entropy([15, 5])",
+            "expect": "0.811278",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "gini([20, 20])",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "gini([15, 5])",
+            "expect": "0.375",
+            "compare": "isclose"
+          },
+          {
+            "call": "gini([10, 6, 4])",
+            "expect": "0.62",
+            "compare": "isclose"
+          },
+          {
+            "call": "gini([7, 0])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "gini([0, 0])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "entropy([20, 20])",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "entropy([15, 5])",
+            "expect": "0.811278",
+            "compare": "isclose"
+          },
+          {
+            "call": "entropy([10, 6, 4])",
+            "expect": "1.485475",
+            "compare": "isclose"
+          },
+          {
+            "call": "entropy([5, 0])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "entropy([1, 1, 1, 1])",
+            "expect": "2.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: two classes, three and four classes, pure nodes and an empty node. Each value is compared with math.isclose."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Turn each count into a share `c / n` first."
+        },
+        {
+          "rung": "point",
+          "text": "Gini: `1 - sum((c / n) ** 2 for c in counts)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Entropy: `-sum(c / n * log2(c / n) for c in counts if c > 0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both scores match the curves you read.",
+        "generic": "Some tests failed. Skip zero counts in entropy, and square the shares in Gini.",
+        "byKey": {
+          "test-9": "`log2(0)` raises an error. Skip classes with a count of 0, as the `if c > 0` filter does."
+        }
+      },
+      "explain": {
+        "text": "A four-way even split has entropy 2 bits: you need two yes-or-no answers to name the class. That is the sense in which entropy measures surprise."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The gain of a split",
+      "prose": "Now score a whole split from the labels on each side. `impurity(labels, criterion)` is written for you. You add the weighting.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> left = [1] * 10 + [0] * 20   # split B",
+            ">>> right = [1] * 10",
+            ">>> split_gain(left, right, 'gini')",
+            "0.166667",
+            ">>> split_gain(left, right, 'entropy')",
+            "0.311278"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `split_gain`: the parent's impurity minus the weighted impurity of the sides, rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "# The 12 loans: [leverage, interest cover], outcome 1 = default, 0 = repaid\nX12 = [[1.2, 5.0], [3.8, 2.2], [2.4, 2.5], [4.1, 4.5], [2.2, 1.2], [1.6, 4.0],\n       [5.0, 3.5], [2.8, 1.8], [3.2, 1.5], [2.0, 3.0], [4.4, 2.9], [2.6, 2.0]]\ny12 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0]\n",
+        "starter": "from collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of a list of labels; 0.0 for an empty list.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n\ndef split_gain(y_left, y_right, criterion=\"gini\"):\n    parent = list(y_left) + list(y_right)\n    n = len(parent)\n    child = ...   # weighted impurity of the two sides\n    return round(impurity(parent, criterion) - child, 6)\n",
+        "solution": "from collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of a list of labels; 0.0 for an empty list.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n\ndef split_gain(y_left, y_right, criterion=\"gini\"):\n    parent = list(y_left) + list(y_right)\n    n = len(parent)\n    child = (len(y_left) * impurity(y_left, criterion)\n             + len(y_right) * impurity(y_right, criterion)) / n\n    return round(impurity(parent, criterion) - child, 6)\n",
+        "examples": [
+          {
+            "call": "split_gain([1] * 10 + [0] * 20, [1] * 10, 'gini')",
+            "expect": "0.166667",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "split_gain([1] * 10 + [0] * 20, [1] * 10, 'gini')",
+            "expect": "0.166667",
+            "compare": "isclose"
+          },
+          {
+            "call": "split_gain([1] * 10 + [0] * 20, [1] * 10, 'entropy')",
+            "expect": "0.311278",
+            "compare": "isclose"
+          },
+          {
+            "call": "split_gain([1] * 15 + [0] * 5, [1] * 5 + [0] * 15, 'gini')",
+            "expect": "0.125",
+            "compare": "isclose"
+          },
+          {
+            "call": "split_gain([1], [1] * 19 + [0] * 20, 'gini')",
+            "expect": "0.012821",
+            "compare": "isclose"
+          },
+          {
+            "call": "split_gain([], [0, 1, 1], 'gini')",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "split_gain(['A'] * 5 + ['BBB'], ['BBB'] * 5 + ['BB'] * 4, 'gini')",
+            "expect": "0.25037",
+            "compare": "isclose"
+          },
+          {
+            "call": "split_gain(['A'] * 5 + ['BBB'], ['BBB'] * 5 + ['BB'] * 4, 'entropy')",
+            "expect": "0.710942",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = [y for x, y in zip(X12, y12) if x[0] <= 3.0]; R = [y for x, y in zip(X12, y12) if x[0] > 3.0]",
+            "call": "split_gain(L, R, 'gini')",
+            "expect": "0.209921",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = [y for x, y in zip(X12, y12) if x[0] <= 3.0]; R = [y for x, y in zip(X12, y12) if x[0] > 3.0]",
+            "call": "split_gain(L, R, 'entropy')",
+            "expect": "0.333923",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: splits A, B and C, a split that moves no rows, three rating classes, and the root of the 12-loan tree. The 12-loan gains match scikit-learn's own impurity drop at that root. Values are compared with math.isclose."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight each side by its number of rows over `n`."
+        },
+        {
+          "rung": "point",
+          "text": "`len(y_left) * impurity(y_left, criterion)` is the left side's share times its impurity, times `n`.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`child = (len(y_left) * impurity(y_left, criterion) + len(y_right) * impurity(y_right, criterion)) / n`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your gains match scikit-learn's at the root of the 12-loan tree: 0.209921 with Gini.",
+        "generic": "Some tests failed. Weight each side's impurity by its number of rows, divide by `n`, and pass `criterion` through.",
+        "byKey": {
+          "test-4": "Split C should gain only 0.012821. If you got about 0.25, the sides were averaged without weights."
+        }
+      },
+      "explain": {
+        "text": "An empty side has weight 0, so a split that moves no rows gains exactly 0. At the 12-loan root, *leverage ≤ 3* gains 0.209921 with Gini, the largest of any split, which is why scikit-learn chose it."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The best split, by search",
+      "prose": "Put it together: try every feature and every midpoint, and keep the largest Gini gain. `impurity(labels)` is loaded. Keep the first best found when two tie.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> best_split(X12, y12)",
+            "(0, 3.0, 0.209921)",
+            ">>> best_split(X40, y40)   # 40 seeded loans",
+            "(1, 2.205, 0.120135)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `best_split(X, y)`, returning `(feature, threshold, gain)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "# The 12 loans: [leverage, interest cover], outcome 1 = default, 0 = repaid\nX12 = [[1.2, 5.0], [3.8, 2.2], [2.4, 2.5], [4.1, 4.5], [2.2, 1.2], [1.6, 4.0],\n       [5.0, 3.5], [2.8, 1.8], [3.2, 1.5], [2.0, 3.0], [4.4, 2.9], [2.6, 2.0]]\ny12 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0]\n\n# 40 loans from make_loans(4, 40), as lists: [leverage, cover]\nX40 = [[5.69, 5.69], [3.31, 6.28], [5.87, 1.93], [0.94, 3.95], [3.84, 3.21], \n       [2.57, 1.78], [4.91, 2.16], [1.46, 7.72], [5.29, 7.13], [3.49, 3.37], \n       [5.46, 6.05], [3.12, 0.81], [2.87, 7.36], [4.84, 4.53], [5.91, 6.65], \n       [2.53, 2.57], [5.83, 3.32], [5.61, 3.11], [1.48, 7.79], [3.85, 3.72], \n       [4.38, 4.25], [5.69, 7.67], [4.16, 7.27], [1.23, 3.46], [3.24, 2.81], \n       [3.21, 6.55], [3.25, 1.31], [5.77, 3.44], [2.42, 7.07], [1.73, 7.38], \n       [3.37, 2.25], [4.03, 1.09], [5.67, 6.41], [3.7, 5.16], [1.97, 2.28], \n       [5.61, 4.29], [3.2, 1.04], [4.22, 5.75], [3.12, 4.45], [1.69, 5.78]]\ny40 = [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0]\n\nfrom collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of a list of labels; 0.0 for an empty list.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n",
+        "starter": "def best_split(X, y):\n    \"\"\"(feature, threshold, gain) with the largest Gini gain;\n    (None, None, 0.0) when no split gains anything.\"\"\"\n    y = list(y)\n    best = (None, None, 0.0)\n    for f in range(len(X[0])):\n        col = [row[f] for row in X]\n        values = sorted(set(col))\n        for a, b in zip(values, values[1:]):\n            t = (a + b) / 2\n            ...\n    if best[0] is None:\n        return best\n    return (best[0], round(best[1], 6), round(best[2], 6))\n",
+        "solution": "def best_split(X, y):\n    \"\"\"(feature, threshold, gain) with the largest Gini gain;\n    (None, None, 0.0) when no split gains anything.\"\"\"\n    y = list(y)\n    best = (None, None, 0.0)\n    for f in range(len(X[0])):\n        col = [row[f] for row in X]\n        values = sorted(set(col))\n        for a, b in zip(values, values[1:]):\n            t = (a + b) / 2\n            left = [lab for v, lab in zip(col, y) if v <= t]\n            right = [lab for v, lab in zip(col, y) if v > t]\n            g = impurity(y) - (len(left) * impurity(left)\n                               + len(right) * impurity(right)) / len(y)\n            if g > best[2]:\n                best = (f, t, g)\n    if best[0] is None:\n        return best\n    return (best[0], round(best[1], 6), round(best[2], 6))\n",
+        "examples": [
+          {
+            "call": "best_split(X12, y12)",
+            "expect": "(0, 3.0, 0.209921)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "best_split(X12, y12)",
+            "expect": "(0, 3.0, 0.209921)",
+            "compare": "equal"
+          },
+          {
+            "call": "best_split(X40, y40)",
+            "expect": "(1, 2.205, 0.120135)",
+            "compare": "equal"
+          },
+          {
+            "call": "best_split([[1, 10], [2, 20], [3, 30], [4, 40]], [0, 0, 1, 1])",
+            "expect": "(0, 2.5, 0.5)",
+            "compare": "equal"
+          },
+          {
+            "call": "best_split([[5, 1], [5, 2], [5, 3], [5, 4]], [0, 1, 1, 1])",
+            "expect": "(1, 1.5, 0.375)",
+            "compare": "equal"
+          },
+          {
+            "call": "best_split([[1], [2], [3]], [1, 1, 1])",
+            "expect": "(None, None, 0.0)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: the 12 loans, 40 seeded loans, a tie between two features, a constant feature, and a pure node. Both loan answers match the root split of scikit-learn's `DecisionTreeClassifier` on the same rows. Answers must match exactly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split the labels by `v <= t`, as in lesson 1."
+        },
+        {
+          "rung": "point",
+          "text": "Gain is `impurity(y)` minus the weighted impurity of `left` and `right`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then `if g > best[2]: best = (f, t, g)`. Strict `>` keeps the first best on a tie."
+        }
+      ],
+      "feedback": {
+        "correct": "Your search finds the same root splits as scikit-learn.",
+        "generic": "Some tests failed. Weight the sides by their sizes, and replace `best` only on a strictly larger gain.",
+        "byKey": {
+          "test-3": "Both features split these rows perfectly. Strict `>` keeps feature 0, found first.",
+          "test-5": "A pure node gains nothing from any split, so `best` should stay `(None, None, 0.0)`."
+        }
+      },
+      "explain": {
+        "text": "This is the search scikit-learn runs at every node, written in C and on sorted columns so it is fast. On the 40 seeded loans the best first question is cover at 2.205, with gain 0.120."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A market-regime classifier",
+      "prose": "A desk labels 200 trading days risk-on (120) or risk-off (80). A tree's first split is *realised volatility above 20%?* Below it: 105 on, 15 off. Above it: 15 on, 65 off.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "p",
+              "label": "All days"
+            },
+            {
+              "id": "l",
+              "label": "Vol ≤ 20%"
+            },
+            {
+              "id": "r",
+              "label": "Vol > 20%"
+            }
+          ],
+          "groups": [
+            {
+              "id": "D",
+              "label": "Risk-off",
+              "colour": 2
+            },
+            {
+              "id": "R",
+              "label": "Risk-on",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Days",
+          "yMax": 125,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "D": {
+              "p": 80,
+              "l": 15,
+              "r": 65
+            },
+            "R": {
+              "p": 120,
+              "l": 105,
+              "r": 15
+            }
+          }
+        }
+      },
+      "question": "What is the Gini gain of this split?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2269,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Gini gain of the volatility split",
+        "accept": "0.227 ± 0.002: $0.48 - (0.6 \\times 0.219 + 0.4 \\times 0.305)$.",
+        "wrong": [
+          {
+            "id": "child",
+            "value": 0.2531,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "unw",
+            "value": 0.2183,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Parent: 80 off of 200, so $p = 0.4$ and $G = 0.48$."
+        },
+        {
+          "rung": "point",
+          "text": "Left: $p = \\tfrac{15}{120}$, $G = 0.219$. Right: $p = \\tfrac{65}{80}$, $G = 0.305$.",
+          "highlight": [
+            "l-D",
+            "r-D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Weighted: $0.6 \\times 0.219 + 0.4 \\times 0.305 = 0.253$. Gain $= 0.48 - 0.253 = 0.227$."
+        }
+      ],
+      "feedback": {
+        "correct": "A gain of 0.227: nearly half the parent's 0.48.",
+        "generic": "Not quite right. Find the three Gini values, weight the sides by 120 and 80 days, and subtract.",
+        "byKey": {
+          "child": "0.253 is the weighted impurity left after the split. The gain is how far it fell from 0.48.",
+          "unw": "You averaged the sides equally. The calm side holds 120 of the 200 days, so it weighs 0.6."
+        }
+      },
+      "explain": {
+        "text": "The split removes 0.227 of the parent's 0.48, about 47% of the impurity. The gain measures how much the question tells you about the regime. A momentum split gaining 0.01 would say almost nothing.",
+        "canvas": {
+          "highlight": [
+            "l-R",
+            "r-D"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Counting mistakes is too blunt: two splits can make the same mistakes while one leaves a pure node.",
+      "Gini $1 - \\sum p_k^2$ and entropy $-\\sum p_k \\log_2 p_k$ are 0 when pure, peak at an even mix and nearly always rank splits the same way.",
+      "A split's gain is the parent's impurity minus the size-weighted impurity of its sides; the tree takes the largest."
+    ],
+    "formula": {
+      "name": "Gain of a split",
+      "tex": "\\text{gain} = I(\\text{parent}) - \\tfrac{n_L}{n}\\,I(L) - \\tfrac{n_R}{n}\\,I(R)",
+      "note": "With entropy it is the information gain."
+    },
+    "trap": "Averaging the sides' impurities without weighting by size, which makes a one-row pure side look good."
+  },
+  "quiz": [
+    {
+      "id": "q-weighted",
+      "difficulty": 2,
+      "prose": "A node of 20 loans, 9 D and 11 R, splits into 10 loans with 8 D, 2 R and 10 loans with 1 D, 9 R.",
+      "question": "What is the weighted Gini of the two sides?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.25,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Weighted Gini of the sides",
+        "accept": "0.25: $0.5 \\times 0.32 + 0.5 \\times 0.18$.",
+        "wrong": [
+          {
+            "id": "parent",
+            "value": 0.495,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "gain",
+            "value": 0.245,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.25, down from the parent's 0.495.",
+        "generic": "Not quite right. Find each side's Gini, then weight each by one half.",
+        "byKey": {
+          "parent": "0.495 is the parent's Gini, before the split.",
+          "gain": "0.245 is the gain, the drop from 0.495. The question asks for the weighted Gini left after the split."
+        }
+      },
+      "explain": {
+        "text": "Left: $1 - 0.64 - 0.04 = 0.32$. Right: $1 - 0.01 - 0.81 = 0.18$. Weighted: $0.5 \\times 0.32 + 0.5 \\times 0.18 = 0.25$, a gain of 0.245."
+      }
+    },
+    {
+      "id": "q-nomove",
+      "difficulty": 2,
+      "prose": "A candidate threshold sits below every value of the feature, so every row goes right.",
+      "question": "What is the Gini gain of this split?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0: the right side is the parent itself",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "The parent's whole impurity: the empty side is pure",
+            "why": "An empty side has weight 0, so its purity counts for nothing."
+          },
+          {
+            "id": "neg",
+            "text": "Negative: an empty side is worse than none",
+            "why": "Gain is never negative for Gini or entropy. Here it is exactly 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Zero gain: the split changed nothing.",
+        "generic": "Not quite right. What are the two sides' weights?"
+      },
+      "explain": {
+        "text": "The right side holds all $n$ rows with the parent's impurity, weight 1; the empty left side has weight 0. Gain $= I - 1 \\times I - 0 = 0$."
+      }
+    },
+    {
+      "id": "q-criterion",
+      "difficulty": 3,
+      "prose": "You fit `DecisionTreeClassifier(random_state=0)` and later the same with `criterion=\"entropy\"`.",
+      "question": "What do you expect?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "The same or nearly the same splits: both curves rise and fall together",
+            "correct": true
+          },
+          {
+            "id": "diff",
+            "text": "Very different trees, since entropy can exceed 1",
+            "why": "Entropy's scale is larger, but the split that lowers one score most nearly always lowers the other most."
+          },
+          {
+            "id": "acc",
+            "text": "Entropy chooses splits by accuracy",
+            "why": "Entropy is an impurity, curved like Gini. Neither counts mistakes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Gini is the default, and the two rarely disagree.",
+        "generic": "Not quite right. Compare the shapes of the two curves on screen 3."
+      },
+      "explain": {
+        "text": "Both are 0 when pure, peak at $p = \\tfrac12$ and are curved. On splits A and B they gave the same ranking. When they differ, the gains are usually close."
+      }
+    },
+    {
+      "id": "q-three",
+      "difficulty": 3,
+      "prose": "A node holds 12 bonds: 4 rated A, 4 BBB and 4 BB.",
+      "question": "What is its Gini impurity?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6667,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Gini of three equal classes",
+        "accept": "$\\tfrac23$: $1 - 3 \\times (\\tfrac13)^2$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "third",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac23$, the most three classes allow.",
+        "generic": "Not quite right. Each share is $\\tfrac13$; square, add and subtract from 1.",
+        "byKey": {
+          "half": "0.5 is the two-class maximum. With three equal classes Gini reaches $1 - \\tfrac13 = \\tfrac23$.",
+          "third": "$\\tfrac13$ is $\\sum p_k^2$. Gini is 1 minus it."
+        }
+      },
+      "explain": {
+        "text": "$1 - 3 \\times \\tfrac19 = \\tfrac23$. An even mix of $K$ classes gives the largest Gini, $1 - \\tfrac1K$."
+      }
+    }
+  ]
+}

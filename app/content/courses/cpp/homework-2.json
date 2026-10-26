@@ -1,0 +1,455 @@
+{
+ "id": "homework-2",
+ "course": "cpp",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-apply-fills",
+   "difficulty": 4,
+   "skills": [
+    "cp-references",
+    "cp-basics"
+   ],
+   "title": "Apply fills to a book",
+   "prose": "A position book in £ holds one `Position` per symbol (hidden above your code):\n\n```cpp\nstruct Position { std::string sym; int qty; double cash; };\nstruct Fill { std::string sym; int qty; double px; };\n```\n\nFor each fill, find the position with the same symbol: add the fill's quantity, and take `qty * px` from its cash (a sale has negative `qty`, so cash rises). An unknown symbol gets a new position at the end of the book.",
+   "question": "Write `apply_fills(book, fills)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <string>\n#include <vector>\nstruct Position { std::string sym; int qty; double cash; };\nstruct Fill { std::string sym; int qty; double px; };\n",
+    "starter": "#include <string>\n#include <vector>\n\nvoid apply_fills(std::vector<Position>& book, const std::vector<Fill>& fills) {\n    // for each fill: update the position with the same symbol,\n    // or add a new position at the end of the book\n}\n",
+    "solution": "#include <string>\n#include <vector>\n\nvoid apply_fills(std::vector<Position>& book, const std::vector<Fill>& fills) {\n    for (const Fill& f : fills) {\n        bool found = false;\n        for (Position& p : book) {\n            if (p.sym == f.sym) {\n                p.qty += f.qty;\n                p.cash -= f.qty * f.px;\n                found = true;\n                break;\n            }\n        }\n        if (!found) book.push_back(Position{f.sym, f.qty, -f.qty * f.px});\n    }\n}\n",
+    "examples": [
+     {
+      "setup": "std::vector<Position> book{{\"VOD\", 1000, 0.0}};\napply_fills(book, {{\"VOD\", 500, 0.72}});",
+      "call": "book[0].qty",
+      "expect": 1500,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "std::vector<Position> book{{\"VOD\", 1000, 0.0}};\napply_fills(book, {{\"VOD\", 500, 0.72}});",
+      "call": "book[0].qty",
+      "expect": 1500,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Position> book{{\"VOD\", 1000, 0.0}};\napply_fills(book, {{\"VOD\", 500, 0.72}});",
+      "call": "book[0].cash",
+      "expect": -360,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<Position> book;\napply_fills(book, {{\"BARC\", 200, 1.85}, {\"BARC\", -50, 1.90}});",
+      "call": "book.size()",
+      "expect": 1,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Position> book;\napply_fills(book, {{\"BARC\", 200, 1.85}, {\"BARC\", -50, 1.90}});",
+      "call": "book[0].qty",
+      "expect": 150,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Position> book;\napply_fills(book, {{\"BARC\", 200, 1.85}, {\"BARC\", -50, 1.90}});",
+      "call": "book[0].cash",
+      "expect": -275,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<Position> book{{\"VOD\", 100, 0.0}};\napply_fills(book, {{\"AZN\", 10, 105.0}, {\"VOD\", -100, 0.75}});",
+      "call": "book.size()",
+      "expect": 2,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Position> book{{\"VOD\", 100, 0.0}};\napply_fills(book, {{\"AZN\", 10, 105.0}, {\"VOD\", -100, 0.75}});",
+      "call": "book[0].qty",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Position> book{{\"VOD\", 100, 0.0}};\napply_fills(book, {{\"AZN\", 10, 105.0}, {\"VOD\", -100, 0.75}});",
+      "call": "book[1].sym",
+      "expect": "AZN",
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Position> book{{\"VOD\", 1000, 0.0}};\napply_fills(book, {});",
+      "call": "book[0].qty",
+      "expect": 1000,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 9 hidden tests. Each builds a book, applies some fills, then reads the book's positions."
+   },
+   "feedback": {
+    "correct": "Every fill lands on the caller's book.",
+    "generic": "Not yet. The results under the editor say which test failed.",
+    "byKey": {
+     "test-1": "The quantity did not change. If you loop with `for (Position p : book)`, each `p` is a copy: use `Position& p`."
+    }
+   },
+   "explain": {
+    "text": "`book` is a plain reference because the caller's positions must change; `fills` is only read, so it is `const&` and accepts the braced lists the tests pass. The inner loop must use `Position& p`: a copy would absorb the fill and vanish. Buying 200 at 1.85 and selling 50 at 1.90 leaves 150 shares and £275 spent."
+   }
+  },
+  {
+   "id": "h-vwap",
+   "difficulty": 5,
+   "skills": [
+    "cp-references",
+    "cp-memory",
+    "cp-basics"
+   ],
+   "title": "VWAP from a day's fills",
+   "prose": "A day's executions arrive on `std::cin`: a count `n`, then `n` lines of `qty price`. A quantity of 0 or less is a cancel: skip it. Print the total quantity, then the volume-weighted average price (total of `qty * price` over total `qty`) to 4 decimals, or `VWAP n/a` when no shares traded.\n\n```text\nQTY 1200\nVWAP 101.2375\n```",
+   "question": "Complete the program.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "struct Order { long long qty; double px; };\n",
+    "postlude": "#include <type_traits>\nstatic_assert(std::is_same<decltype(&vwap), double (*)(const std::vector<Order>&)>::value,\n              \"write double vwap(const std::vector<Order>& orders)\");\n",
+    "starter": "#include <iostream>\n#include <iomanip>\n#include <vector>\n\n// struct Order { long long qty; double px; }; is defined above (hidden)\n\ndouble vwap(const std::vector<Order>& orders) {\n    return 0;\n}\n\nint main() {\n    // read n, then n orders as \"qty price\"; skip any order with qty <= 0\n    // print \"QTY <total>\" then \"VWAP <price to 4 decimals>\", or \"VWAP n/a\"\n}\n",
+    "solution": "#include <iostream>\n#include <iomanip>\n#include <vector>\n\nlong long total_qty(const std::vector<Order>& orders) {\n    long long q = 0;\n    for (const Order& o : orders) q += o.qty;\n    return q;\n}\n\ndouble vwap(const std::vector<Order>& orders) {\n    double notional = 0;\n    for (const Order& o : orders) notional += o.qty * o.px;\n    return notional / total_qty(orders);\n}\n\nint main() {\n    int n = 0;\n    std::cin >> n;\n    std::vector<Order> orders;\n    for (int i = 0; i < n; ++i) {\n        Order o;\n        std::cin >> o.qty >> o.px;\n        if (o.qty > 0) orders.push_back(o);\n    }\n    long long q = total_qty(orders);\n    std::cout << \"QTY \" << q << \"\\n\";\n    if (q == 0) std::cout << \"VWAP n/a\\n\";\n    else std::cout << \"VWAP \" << std::fixed << std::setprecision(4) << vwap(orders) << \"\\n\";\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "3\n500 101.25\n300 101.40\n400 101.10\n",
+      "expect": "QTY 1200\nVWAP 101.2375\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "3\n500 101.25\n300 101.40\n400 101.10\n",
+      "expect": "QTY 1200\nVWAP 101.2375\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "QTY 0\nVWAP n/a\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "4\n1000 4.85\n-200 4.90\n0 5.00\n500 4.88\n",
+      "expect": "QTY 1500\nVWAP 4.8600\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n2500000000 0.7215\n",
+      "expect": "QTY 2500000000\nVWAP 0.7215\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n1 100\n2 100.0001\n",
+      "expect": "QTY 3\nVWAP 100.0001\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n-5 10\n0 11\n",
+      "expect": "QTY 0\nVWAP n/a\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 6 times with different orders on std::cin, including cancels, no orders and 2.5 billion shares. A hidden check after your code requires `double vwap(const std::vector<Order>& orders)`."
+   },
+   "feedback": {
+    "correct": "Read once, pass by `const&`, print to four decimals.",
+    "generic": "Not yet. The results under the editor say which test failed.",
+    "byKey": {
+     "test-4": "2,500,000,000 shares does not fit in an `int`. Keep quantities as `long long`, as `Order` does."
+    }
+   },
+   "explain": {
+    "text": "The orders are read once into a vector, and every function after that takes `const std::vector<Order>&`, so nothing is copied. The VWAP is total notional over total quantity: 121,485 / 1,200 = 101.2375. With no live orders the quantity is 0, so the program prints n/a instead of dividing by zero."
+   }
+  },
+  {
+   "id": "h-frames",
+   "difficulty": 4,
+   "skills": [
+    "cp-memory"
+   ],
+   "prose": "```cpp\ndouble payoff(double s, double k) {\n    return s > k ? s - k : 0;\n}\ndouble price_option(double s, double k) {\n    return 0.5 * payoff(s * 1.1, k) + 0.5 * payoff(s * 0.9, k);\n}\nint main() {\n    std::cout << price_option(100, 95) << \"\\n\";\n}\n```",
+   "question": "Put the stack events of `price_option(100, 95)` in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "e1",
+      "text": "Push `main`: the program starts"
+     },
+     {
+      "id": "e2",
+      "text": "Push `price_option(100, 95)`: `main` calls it"
+     },
+     {
+      "id": "e3",
+      "text": "Push `payoff(110, 95)`: the up state, 100 × 1.1"
+     },
+     {
+      "id": "e4",
+      "text": "Pop `payoff`, returning 15"
+     },
+     {
+      "id": "e5",
+      "text": "Push `payoff(90, 95)`: the down state, 100 × 0.9"
+     },
+     {
+      "id": "e6",
+      "text": "Pop `payoff`, returning 0: 90 is below the strike"
+     },
+     {
+      "id": "e7",
+      "text": "Pop `price_option`, returning 0.5 × 15 + 0.5 × 0 = 7.5"
+     },
+     {
+      "id": "e8",
+      "text": "`main` prints 7.5, then its frame is popped"
+     }
+    ],
+    "answer": [
+     "e1",
+     "e2",
+     "e3",
+     "e4",
+     "e5",
+     "e6",
+     "e7",
+     "e8"
+    ]
+   },
+   "feedback": {
+    "correct": "At most three frames, pushed and popped in strict order.",
+    "generic": "Not quite right. A frame must be popped before the next call from the same caller starts."
+   },
+   "explain": {
+    "text": "C++ evaluates the left `payoff` call first here, and it returns before the second starts, so the stack is at most three deep: `main`, `price_option`, `payoff`. Each `payoff` frame, with its `s` and `k`, dies at its return. 0.5 × 15 + 0.5 × 0 = 7.5, which a run printed."
+   }
+  },
+  {
+   "id": "h-const-methods",
+   "difficulty": 3,
+   "skills": [
+    "cp-references"
+   ],
+   "question": "Select all that apply: which `OrderBook` methods should be marked `const`?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bid",
+      "text": "`double best_bid()`",
+      "correct": true
+     },
+     {
+      "id": "depth",
+      "text": "`std::size_t depth()`",
+      "correct": true
+     },
+     {
+      "id": "add",
+      "text": "`void add(const Order& o)`",
+      "why": "`add` changes the book. The `const` on its parameter protects `o`, not the book."
+     },
+     {
+      "id": "cancel",
+      "text": "`bool cancel(long long id)`",
+      "why": "Cancelling removes an order, so it changes the book."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Mark every reader `const`.",
+    "generic": "Not quite right. Which methods only read the book?"
+   },
+   "explain": {
+    "text": "`best_bid` and `depth` only read, so mark them `const`. A pricer that holds a `const OrderBook&` can then call them, and the compiler checks they really do not change the book."
+   }
+  },
+  {
+   "id": "h-leak-mb",
+   "difficulty": 3,
+   "skills": [
+    "cp-memory"
+   ],
+   "prose": "A pricer allocates `new double[steps + 1]` per call and forgets the `delete[]`. A calibration calls it 10,000 times a day with `steps = 500`.",
+   "question": "How many MB does a day's calibration leak? Take 1 MB as 1,000,000 bytes.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 40.08,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "MB",
+    "label": "Megabytes leaked",
+    "accept": "40.08 MB: 10,000 calls × 501 × 8 bytes = 40,080,000 bytes.",
+    "wrong": [
+     {
+      "id": "n",
+      "value": 40
+     },
+     {
+      "id": "one",
+      "value": 0.004008
+     },
+     {
+      "id": "bytes",
+      "value": 40080000
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "501 doubles, 8 bytes each, 10,000 times.",
+    "generic": "Not quite right. Count the doubles per call first: `steps + 1`.",
+    "byKey": {
+     "n": "You used 500 doubles per call. The lattice has `steps + 1` = 501.",
+     "one": "That is one call. Multiply by 10,000 calls.",
+     "bytes": "That is the count in bytes. Divide by 1,000,000."
+    }
+   },
+   "explain": {
+    "text": "Each call leaks `new double[501]`, 4,008 bytes. 10,000 calls leak 40,080,000 bytes, about 40 MB a day. A `std::vector<double>` member, sized once, would allocate once and never leak."
+   }
+  },
+  {
+   "id": "h-which-ub",
+   "difficulty": 4,
+   "skills": [
+    "cp-memory"
+   ],
+   "prose": "Each snippet ran in this browser build without stopping.",
+   "question": "Select all that apply: which are undefined behaviour?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "null",
+      "text": "`int* p = nullptr; int x = *p;`",
+      "correct": true
+     },
+     {
+      "id": "mismatch",
+      "text": "`double* q = new double[4]; delete q;`",
+      "correct": true
+     },
+     {
+      "id": "twice",
+      "text": "`double* r = new double(1.0); delete r; delete r;`",
+      "correct": true
+     },
+     {
+      "id": "at",
+      "text": "`std::vector<double> v(3); double y = v.at(5);`",
+      "why": "`at` checks the index and throws `std::out_of_range`. That is a defined, reported error."
+     },
+     {
+      "id": "zero",
+      "text": "`double* s = new double[0]; delete[] s;`",
+      "why": "A zero-length `new[]` is legal and `delete[]` is its matching free."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Null read, mismatched delete, double delete.",
+    "generic": "Not quite right. Separate checked errors from unchecked ones."
+   },
+   "explain": {
+    "text": "In this browser all three undefined lines ran without a crash: the null read returned a stray number and both bad deletes were silent. A desk build with `-fsanitize=address` reports SEGV, alloc-dealloc-mismatch and double-free. `at` and `new double[0]` are defined."
+   }
+  },
+  {
+   "id": "h-realloc",
+   "difficulty": 4,
+   "skills": [
+    "cp-references",
+    "cp-memory"
+   ],
+   "prose": "```cpp\nstd::vector<double> px{100.0, 101.0, 102.0};\nconst double& first = px[0];\npx.push_back(103.0);\nstd::cout << first << \"\\n\";\n```",
+   "question": "What does `first` print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ub",
+      "text": "Anything: `push_back` may move the elements, leaving `first` dangling",
+      "correct": true
+     },
+     {
+      "id": "hundred",
+      "text": "`100`",
+      "why": "That assumes the elements stay put. A full vector moves them to a bigger buffer, so `first` refers to freed memory."
+     },
+     {
+      "id": "hundred3",
+      "text": "`103`",
+      "why": "`first` was bound to the old `px[0]`, not to the last element. And after the move it refers to nothing valid."
+     },
+     {
+      "id": "error",
+      "text": "It does not compile",
+      "why": "It compiles. The compiler cannot know the vector will grow at run time."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A reference into a vector dies when the vector grows.",
+    "generic": "Not quite right. Where are the three prices after `push_back` on a full vector?"
+   },
+   "explain": {
+    "text": "The vector was full, so `push_back` moved its elements to a new buffer and freed the old one. `first` still refers to the old buffer: in this browser it printed 2.93699e-306, and AddressSanitizer reports heap-use-after-free on line 4. Take the reference after the last `push_back`, or store an index."
+   }
+  },
+  {
+   "id": "h-review-signatures",
+   "difficulty": 5,
+   "skills": [
+    "cp-references",
+    "cp-memory"
+   ],
+   "title": "Review a colleague's trade utilities",
+   "kind": "longform",
+   "prompt": "A colleague's utilities for a trade blotter, in £:\n\n```cpp\nstruct Trade { std::string sym; int qty; double px; };\n\ndouble total_notional(std::vector<Trade> trades) {\n    double sum = 0;\n    for (std::size_t i = 0; i <= trades.size(); ++i)\n        sum += trades[i].qty * trades[i].px;\n    return sum;\n}\n\nTrade* best_trade(std::vector<Trade>& trades) {\n    Trade best = trades[0];\n    for (Trade t : trades)\n        if (t.qty * t.px > best.qty * best.px) best = t;\n    return &best;\n}\n\nvoid add_fee(Trade t, double fee) {\n    t.px += fee;\n}\n\nPricer* make_pricer() {\n    return new Pricer();\n}\n```\n\n(a) Name two problems in `total_notional`, one about cost and one about correctness, and say what each does in this browser and on a desk build. (b) What is wrong with what `best_trade` returns, and with its parameter? What happens for an empty blotter? (c) Why does `add_fee` have no effect? (d) What does `make_pricer` ask of every caller, and how would you remove that burden? (e) Write corrected signatures and bodies for all four.",
+   "model": "**(a)** Cost: `trades` is taken by value, so every call copies the whole blotter, every `std::string` included. It only reads, so it should be `const std::vector<Trade>&`. Correctness: `i <= trades.size()` runs one step too far and reads `trades[trades.size()]`, past the end. That is undefined behaviour. In this browser libc++'s hardening check stops the program with \"vector[] index out of bounds\"; a normal desk build silently reads whatever follows the buffer and adds it to the total. Use `<`, or a range `for`.\n\n**(b)** `best` is a local, so it dies at the closing brace, and `&best` is a dangling pointer. clang warns \"address of stack memory associated with local variable 'best' returned\". Reading through it is undefined: it may print the right trade in testing and garbage in production. The parameter is a plain `&` although the function only reads, so it rejects `const` blotters and temporaries: use `const std::vector<Trade>&`. The loop `for (Trade t : trades)` also copies every trade; use `const Trade&`. With an empty blotter, `trades[0]` reads past the end: undefined again. Return the best trade by value, wrapped in `std::optional<Trade>`, or return an index with `-1` for none; returning by value is cheap thanks to copy elision.\n\n**(c)** `t` is a copy of the caller's trade. The fee is added to the copy, which dies at the `}`, so the caller sees nothing. The parameter must be `Trade& t`.\n\n**(d)** It returns a raw owning pointer: every caller must remember `delete`, on every path, exactly once. One early return leaks a `Pricer`, and two deletes are undefined. Return `std::unique_ptr<Pricer>` from `std::make_unique<Pricer>()`, so ownership is in the type and the `Pricer` frees itself; or return a `Pricer` by value if it is cheap to move.\n\n**(e)**\n\n```cpp\ndouble total_notional(const std::vector<Trade>& trades) {\n    double sum = 0;\n    for (const Trade& t : trades) sum += t.qty * t.px;\n    return sum;\n}\n\nstd::optional<Trade> best_trade(const std::vector<Trade>& trades) {\n    if (trades.empty()) return std::nullopt;\n    Trade best = trades[0];\n    for (const Trade& t : trades)\n        if (t.qty * t.px > best.qty * best.px) best = t;\n    return best;\n}\n\nvoid add_fee(Trade& t, double fee) {\n    t.px += fee;\n}\n\nstd::unique_ptr<Pricer> make_pricer() {\n    return std::make_unique<Pricer>();\n}\n```",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "(a) Says the by-value parameter copies the whole blotter on each call and should be `const std::vector<Trade>&`, and finds the `<=` off-by-one read past the end"
+    },
+    {
+     "points": 1,
+     "text": "(a) Says the off-by-one is undefined behaviour: this browser's libc++ check stops it, while a desk build may silently add garbage"
+    },
+    {
+     "points": 2,
+     "text": "(b) Says `&best` points at a local that dies at the `}` (dangling), and proposes returning by value (`std::optional<Trade>` or an index)"
+    },
+    {
+     "points": 1,
+     "text": "(b) Notes the parameter should be `const&`, the loop variable `const Trade&`, and that an empty blotter makes `trades[0]` undefined"
+    },
+    {
+     "points": 1,
+     "text": "(c) Explains that `add_fee` changes a copy and needs `Trade&`"
+    },
+    {
+     "points": 2,
+     "text": "(d) Says the raw `new` makes every caller responsible for exactly one `delete`, and replaces it with `std::unique_ptr<Pricer>` from `std::make_unique`"
+    },
+    {
+     "points": 1,
+     "text": "(e) Gives four corrected functions that compile and match the fixes above"
+    }
+   ]
+  }
+ ]
+}

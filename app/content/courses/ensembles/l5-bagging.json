@@ -1,0 +1,2477 @@
+{
+  "id": "l5-bagging",
+  "course": "ensembles",
+  "title": "Averaging many noisy trees",
+  "minutes": 15,
+  "objectives": [
+    "Reduce variance by averaging trees fitted to bootstrap samples.",
+    "Explain why bagging helps deep trees, not stumps, and why more trees never overfit."
+  ],
+  "skills": [
+    "en-bagging",
+    "en-trees"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two trees, one book",
+      "prose": "A bank has 400 past loans, each with 8 features as z-scores. Two analysts each draw 400 rows from the book at random, with replacement, and grow a depth-2 tree. Loan Q has leverage 0.2, margin 0.0 and vol 0.5.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "tree",
+          "params": {
+            "label": "Tree A (resample 1)",
+            "rootLabel": "lev ≤ −0.14?",
+            "nodes": [
+              {
+                "id": "y",
+                "label": "vol ≤ 2.30?",
+                "p": "yes",
+                "children": [
+                  {
+                    "id": "y",
+                    "label": "Repay",
+                    "p": "yes"
+                  },
+                  {
+                    "id": "n",
+                    "label": "Default",
+                    "p": "no"
+                  }
+                ]
+              },
+              {
+                "id": "n",
+                "label": "margin ≤ −0.33?",
+                "p": "no",
+                "children": [
+                  {
+                    "id": "y",
+                    "label": "Default",
+                    "p": "yes"
+                  },
+                  {
+                    "id": "n",
+                    "label": "Default",
+                    "p": "no"
+                  }
+                ]
+              }
+            ],
+            "leaves": {
+              "y-y": "10%",
+              "y-n": "100%",
+              "n-y": "90%",
+              "n-n": "55%"
+            },
+            "compact": true
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "tree",
+          "params": {
+            "label": "Tree B (resample 2)",
+            "rootLabel": "lev ≤ 0.46?",
+            "nodes": [
+              {
+                "id": "y",
+                "label": "margin ≤ −1.12?",
+                "p": "yes",
+                "children": [
+                  {
+                    "id": "y",
+                    "label": "Default",
+                    "p": "yes"
+                  },
+                  {
+                    "id": "n",
+                    "label": "Repay",
+                    "p": "no"
+                  }
+                ]
+              },
+              {
+                "id": "n",
+                "label": "margin ≤ 0.21?",
+                "p": "no",
+                "children": [
+                  {
+                    "id": "y",
+                    "label": "Default",
+                    "p": "yes"
+                  },
+                  {
+                    "id": "n",
+                    "label": "Repay",
+                    "p": "no"
+                  }
+                ]
+              }
+            ],
+            "leaves": {
+              "y-y": "63%",
+              "y-n": "18%",
+              "n-y": "88%",
+              "n-n": "50%"
+            },
+            "compact": true
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "Up a branch is yes. Each leaf shows its vote and the share of its rows that defaulted."
+        }
+      },
+      "question": "What does each tree predict for loan Q?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A says default; B says repay",
+            "correct": true
+          },
+          {
+            "id": "a-left",
+            "text": "Both say repay",
+            "why": "You sent Q left at tree A's root. Its leverage, 0.2, is above −0.14, so it goes right.",
+            "canvas": {
+              "highlight": [
+                "left:n"
+              ]
+            }
+          },
+          {
+            "id": "b-right",
+            "text": "Both say default",
+            "why": "In tree B, 0.2 is below 0.46, so Q goes up the yes branch, to a leaf where 18% defaulted.",
+            "canvas": {
+              "highlight": [
+                "right:y"
+              ]
+            }
+          },
+          {
+            "id": "same",
+            "text": "They must agree, because both grew on the same book",
+            "why": "You expected the same data to give the same tree. Each analyst drew a different resample, and the splits moved."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow Q through tree A first: is 0.2 at most −0.14?"
+        },
+        {
+          "rung": "point",
+          "text": "In tree A, Q goes down the no branch and meets the margin question.",
+          "highlight": [
+            "left:n",
+            "right:y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tree A: no, then margin 0.0 > −0.33, so no again: default. Tree B: 0.2 ≤ 0.46 is yes, then 0.0 > −1.12 is no: repay."
+        }
+      ],
+      "feedback": {
+        "correct": "Same book, two resamples, two answers.",
+        "generic": "Not quite right. Answer each question with Q's numbers, one tree at a time.",
+        "byKey": {
+          "same": "Both trees came from the same book, but from different resamples of it. Follow Q through each tree."
+        }
+      },
+      "explain": {
+        "text": "Tree A splits leverage at −0.14 and sends Q to a leaf where 55% defaulted. Tree B splits at 0.46 and sends Q to a leaf with 18%. A small change in the rows moved the splits, and Q's answer flipped.",
+        "canvas": {
+          "highlight": [
+            "left:n-n",
+            "right:y-n"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Let many trees vote",
+      "prose": "Now grow $B$ deep trees, each on its own resample of the 400 loans, and let them vote. We score the vote on 2,000 new loans from the same book. The dashed line is one deep tree grown on all 400. Slide $B$.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "bag",
+              "label": "Bagged trees",
+              "values": [
+                0.2965,
+                0.3075,
+                0.269,
+                0.2585,
+                0.246,
+                0.251,
+                0.236,
+                0.241,
+                0.2335,
+                0.2345,
+                0.226,
+                0.2325,
+                0.226,
+                0.229,
+                0.2185,
+                0.227,
+                0.2175,
+                0.227,
+                0.2235,
+                0.229,
+                0.2175,
+                0.2185,
+                0.2145,
+                0.2165,
+                0.2145,
+                0.22,
+                0.216,
+                0.2185,
+                0.2125,
+                0.216,
+                0.212,
+                0.2145,
+                0.211,
+                0.2125,
+                0.2105,
+                0.214,
+                0.212,
+                0.212,
+                0.2145,
+                0.2145,
+                0.2145,
+                0.213,
+                0.2135,
+                0.216,
+                0.2135,
+                0.217,
+                0.2125,
+                0.217,
+                0.2125,
+                0.216,
+                0.2115,
+                0.212,
+                0.213,
+                0.213,
+                0.2115,
+                0.213,
+                0.2115,
+                0.213,
+                0.21,
+                0.209,
+                0.2075,
+                0.2085,
+                0.209,
+                0.2085,
+                0.208,
+                0.2125,
+                0.2085,
+                0.2115,
+                0.2085,
+                0.21,
+                0.208,
+                0.211,
+                0.2105,
+                0.2095,
+                0.205,
+                0.21,
+                0.2075,
+                0.2095,
+                0.209,
+                0.21,
+                0.209,
+                0.209,
+                0.207,
+                0.2085,
+                0.2065,
+                0.2075,
+                0.2065,
+                0.2065,
+                0.2065,
+                0.205,
+                0.2055,
+                0.207,
+                0.2045,
+                0.2065,
+                0.206,
+                0.206,
+                0.2055,
+                0.2065,
+                0.206,
+                0.2075
+              ],
+              "colour": 1
+            },
+            {
+              "id": "one",
+              "label": "One deep tree",
+              "values": [
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595
+              ],
+              "colour": 2,
+              "dashed": true,
+              "thin": true
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Trees in the vote, $B$",
+          "yLabel": "Test error",
+          "y": [
+            0.18,
+            0.31
+          ],
+          "decimals": 3,
+          "params": {
+            "e": [
+              0.2965,
+              0.3075,
+              0.269,
+              0.2585,
+              0.246,
+              0.251,
+              0.236,
+              0.241,
+              0.2335,
+              0.2345,
+              0.226,
+              0.2325,
+              0.226,
+              0.229,
+              0.2185,
+              0.227,
+              0.2175,
+              0.227,
+              0.2235,
+              0.229,
+              0.2175,
+              0.2185,
+              0.2145,
+              0.2165,
+              0.2145,
+              0.22,
+              0.216,
+              0.2185,
+              0.2125,
+              0.216,
+              0.212,
+              0.2145,
+              0.211,
+              0.2125,
+              0.2105,
+              0.214,
+              0.212,
+              0.212,
+              0.2145,
+              0.2145,
+              0.2145,
+              0.213,
+              0.2135,
+              0.216,
+              0.2135,
+              0.217,
+              0.2125,
+              0.217,
+              0.2125,
+              0.216,
+              0.2115,
+              0.212,
+              0.213,
+              0.213,
+              0.2115,
+              0.213,
+              0.2115,
+              0.213,
+              0.21,
+              0.209,
+              0.2075,
+              0.2085,
+              0.209,
+              0.2085,
+              0.208,
+              0.2125,
+              0.2085,
+              0.2115,
+              0.2085,
+              0.21,
+              0.208,
+              0.211,
+              0.2105,
+              0.2095,
+              0.205,
+              0.21,
+              0.2075,
+              0.2095,
+              0.209,
+              0.21,
+              0.209,
+              0.209,
+              0.207,
+              0.2085,
+              0.2065,
+              0.2075,
+              0.2065,
+              0.2065,
+              0.2065,
+              0.205,
+              0.2055,
+              0.207,
+              0.2045,
+              0.2065,
+              0.206,
+              0.206,
+              0.2055,
+              0.2065,
+              0.206,
+              0.2075
+            ]
+          }
+        },
+        "state": {
+          "params": {
+            "B": 1
+          },
+          "markers": [
+            {
+              "id": "mk",
+              "i": 0,
+              "series": "bag"
+            }
+          ]
+        },
+        "derive": {
+          "mk.i": "B - 1",
+          "caption": "$B = {{B}}$: test error {{fixed(e[B - 1], 4)}}; one deep tree: 0.2595"
+        },
+        "controls": [
+          {
+            "bind": "B",
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "start": 1,
+            "label": "Trees $B$"
+          }
+        ]
+      },
+      "question": "What happens to the test error as $B$ grows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It falls fast, then flattens near 0.21",
+            "correct": true
+          },
+          {
+            "id": "climb",
+            "text": "It falls, then climbs again once the trees overfit",
+            "why": "You expected extra trees to overfit. Past about 40 trees the line only wobbles by a few loans; it never turns up."
+          },
+          {
+            "id": "steady",
+            "text": "It keeps falling at the same pace all the way to 100",
+            "why": "Slide from 50 to 100: the error moves from 0.2160 to 0.2075. Most of the fall happens in the first 20 trees."
+          },
+          {
+            "id": "flat",
+            "text": "It stays near the single tree's 0.26",
+            "why": "Compare $B = 100$, 0.2075, with the dashed line at 0.2595. The vote is clearly better."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the caption at $B = 1$, 20, 50 and 100."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the drop from 1 to 20 with the drop from 50 to 100."
+        },
+        {
+          "rung": "step",
+          "text": "0.2965 to 0.2290 over the first 20 trees; 0.2160 to 0.2075 over the last 50."
+        }
+      ],
+      "feedback": {
+        "correct": "Most of the gain comes in the first 20 or so trees.",
+        "generic": "Not quite right. Slide $B$ and read the error at 1, 20, 50 and 100."
+      },
+      "explain": {
+        "text": "The error drops from 0.2965 at $B = 1$ to 0.2290 at $B = 20$, then only to 0.2075 by $B = 100$. This is **bagging**, short for bootstrap aggregating: resample the rows, grow a tree on each resample, and aggregate their votes.",
+        "canvas": {
+          "params": {
+            "B": 100
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A vote of one",
+      "prose": "Look at the left end. With $B = 1$ the vote is a single deep tree grown on one resample. Its test error is 0.2965. The plain tree, grown on all 400 loans, scores 0.2595.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "bag",
+              "label": "Bagged trees",
+              "values": [
+                0.2965,
+                0.3075,
+                0.269,
+                0.2585,
+                0.246,
+                0.251,
+                0.236,
+                0.241,
+                0.2335,
+                0.2345,
+                0.226,
+                0.2325,
+                0.226,
+                0.229,
+                0.2185,
+                0.227,
+                0.2175,
+                0.227,
+                0.2235,
+                0.229,
+                0.2175,
+                0.2185,
+                0.2145,
+                0.2165,
+                0.2145,
+                0.22,
+                0.216,
+                0.2185,
+                0.2125,
+                0.216,
+                0.212,
+                0.2145,
+                0.211,
+                0.2125,
+                0.2105,
+                0.214,
+                0.212,
+                0.212,
+                0.2145,
+                0.2145,
+                0.2145,
+                0.213,
+                0.2135,
+                0.216,
+                0.2135,
+                0.217,
+                0.2125,
+                0.217,
+                0.2125,
+                0.216,
+                0.2115,
+                0.212,
+                0.213,
+                0.213,
+                0.2115,
+                0.213,
+                0.2115,
+                0.213,
+                0.21,
+                0.209,
+                0.2075,
+                0.2085,
+                0.209,
+                0.2085,
+                0.208,
+                0.2125,
+                0.2085,
+                0.2115,
+                0.2085,
+                0.21,
+                0.208,
+                0.211,
+                0.2105,
+                0.2095,
+                0.205,
+                0.21,
+                0.2075,
+                0.2095,
+                0.209,
+                0.21,
+                0.209,
+                0.209,
+                0.207,
+                0.2085,
+                0.2065,
+                0.2075,
+                0.2065,
+                0.2065,
+                0.2065,
+                0.205,
+                0.2055,
+                0.207,
+                0.2045,
+                0.2065,
+                0.206,
+                0.206,
+                0.2055,
+                0.2065,
+                0.206,
+                0.2075
+              ],
+              "colour": 1
+            },
+            {
+              "id": "one",
+              "label": "One deep tree",
+              "values": [
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595
+              ],
+              "colour": 2,
+              "dashed": true,
+              "thin": true
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Trees in the vote, $B$",
+          "yLabel": "Test error",
+          "y": [
+            0.18,
+            0.31
+          ],
+          "decimals": 3,
+          "params": {
+            "e": [
+              0.2965,
+              0.3075,
+              0.269,
+              0.2585,
+              0.246,
+              0.251,
+              0.236,
+              0.241,
+              0.2335,
+              0.2345,
+              0.226,
+              0.2325,
+              0.226,
+              0.229,
+              0.2185,
+              0.227,
+              0.2175,
+              0.227,
+              0.2235,
+              0.229,
+              0.2175,
+              0.2185,
+              0.2145,
+              0.2165,
+              0.2145,
+              0.22,
+              0.216,
+              0.2185,
+              0.2125,
+              0.216,
+              0.212,
+              0.2145,
+              0.211,
+              0.2125,
+              0.2105,
+              0.214,
+              0.212,
+              0.212,
+              0.2145,
+              0.2145,
+              0.2145,
+              0.213,
+              0.2135,
+              0.216,
+              0.2135,
+              0.217,
+              0.2125,
+              0.217,
+              0.2125,
+              0.216,
+              0.2115,
+              0.212,
+              0.213,
+              0.213,
+              0.2115,
+              0.213,
+              0.2115,
+              0.213,
+              0.21,
+              0.209,
+              0.2075,
+              0.2085,
+              0.209,
+              0.2085,
+              0.208,
+              0.2125,
+              0.2085,
+              0.2115,
+              0.2085,
+              0.21,
+              0.208,
+              0.211,
+              0.2105,
+              0.2095,
+              0.205,
+              0.21,
+              0.2075,
+              0.2095,
+              0.209,
+              0.21,
+              0.209,
+              0.209,
+              0.207,
+              0.2085,
+              0.2065,
+              0.2075,
+              0.2065,
+              0.2065,
+              0.2065,
+              0.205,
+              0.2055,
+              0.207,
+              0.2045,
+              0.2065,
+              0.206,
+              0.206,
+              0.2055,
+              0.2065,
+              0.206,
+              0.2075
+            ]
+          }
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "b1",
+              "i": 0,
+              "series": "bag",
+              "label": "$B = 1$: 0.2965"
+            },
+            {
+              "id": "pl",
+              "i": 0,
+              "series": "one",
+              "label": "plain tree: 0.2595",
+              "below": true
+            }
+          ]
+        }
+      },
+      "question": "Why is one bootstrap tree worse than the plain tree?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Its resample holds only about 63% of the distinct loans, so it learned from fewer",
+            "correct": true
+          },
+          {
+            "id": "shallow",
+            "text": "Bootstrap trees are grown shallower than the plain tree",
+            "why": "Both trees grow until their leaves are pure. Depth is not the difference; the distinct rows are."
+          },
+          {
+            "id": "seed",
+            "text": "Bad luck with the seed: another resample would beat the plain tree",
+            "why": "You blamed the seed. On average a one-resample tree is worse, because it sees about 253 of the 400 loans."
+          },
+          {
+            "id": "odd",
+            "text": "A vote needs at least three trees to count",
+            "why": "One tree can vote. The trouble is what that tree learned from, not the vote."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many different loans does a resample of 400 draws contain?"
+        },
+        {
+          "rung": "point",
+          "text": "Some loans are drawn twice or more, so others are not drawn at all."
+        },
+        {
+          "rung": "step",
+          "text": "About 63% of the 400 loans appear, roughly 253. The rest are repeats."
+        }
+      ],
+      "feedback": {
+        "correct": "A resample repeats some loans and leaves others out.",
+        "generic": "Not quite right. Think about which loans the one bootstrap tree actually saw.",
+        "byKey": {
+          "seed": "You blamed the seed. Averaged over many seeds, one resampled tree is still worse than the tree grown on all 400 loans."
+        }
+      },
+      "explain": {
+        "text": "A resample of 400 draws holds about 253 distinct loans; the rest are repeats. One tree grown on that does a little worse than one grown on all 400. Bagging pays only once many such trees vote.",
+        "canvas": {
+          "highlight": [
+            "b1",
+            "pl"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Rows drawn with replacement",
+      "prose": "Each tree's rows are a **bootstrap sample**: $n$ draws from the $n$ rows, with replacement, as in *Resampling your own data*. Here is a book of 10 loans, numbered 0 to 9, and one resample of it.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "book",
+              "label": "Book: loans 0 to 9",
+              "kind": "row",
+              "slots": 10,
+              "items": [
+                {
+                  "id": "k0",
+                  "label": "0"
+                },
+                {
+                  "id": "k1",
+                  "label": "1"
+                },
+                {
+                  "id": "k2",
+                  "label": "2"
+                },
+                {
+                  "id": "k3",
+                  "label": "3"
+                },
+                {
+                  "id": "k4",
+                  "label": "4"
+                },
+                {
+                  "id": "k5",
+                  "label": "5"
+                },
+                {
+                  "id": "k6",
+                  "label": "6"
+                },
+                {
+                  "id": "k7",
+                  "label": "7"
+                },
+                {
+                  "id": "k8",
+                  "label": "8"
+                },
+                {
+                  "id": "k9",
+                  "label": "9"
+                }
+              ]
+            },
+            {
+              "id": "res",
+              "label": "Resample: 10 draws",
+              "kind": "row",
+              "slots": 10,
+              "items": [
+                {
+                  "id": "d0",
+                  "label": "7",
+                  "colour": 1
+                },
+                {
+                  "id": "d1",
+                  "label": "9",
+                  "colour": 1
+                },
+                {
+                  "id": "d2",
+                  "label": "2",
+                  "colour": 1
+                },
+                {
+                  "id": "d3",
+                  "label": "2",
+                  "colour": 1
+                },
+                {
+                  "id": "d4",
+                  "label": "7",
+                  "colour": 1
+                },
+                {
+                  "id": "d5",
+                  "label": "8",
+                  "colour": 1
+                },
+                {
+                  "id": "d6",
+                  "label": "5",
+                  "colour": 1
+                },
+                {
+                  "id": "d7",
+                  "label": "1",
+                  "colour": 1
+                },
+                {
+                  "id": "d8",
+                  "label": "8",
+                  "colour": 1
+                },
+                {
+                  "id": "d9",
+                  "label": "5",
+                  "colour": 1
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every loan in the book that the resample never drew.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "k0",
+          "k3",
+          "k4",
+          "k6"
+        ],
+        "only": [
+          "k0",
+          "k1",
+          "k2",
+          "k3",
+          "k4",
+          "k5",
+          "k6",
+          "k7",
+          "k8",
+          "k9"
+        ],
+        "countWord": "loans",
+        "wrong": [
+          {
+            "id": "dups",
+            "set": [
+              "k2",
+              "k5",
+              "k7",
+              "k8"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the resample's labels and cross each one off the book."
+        },
+        {
+          "rung": "point",
+          "text": "Loans 2, 5, 7 and 8 were each drawn twice.",
+          "highlight": [
+            "d0",
+            "d1",
+            "d2",
+            "d3",
+            "d4",
+            "d5",
+            "d6",
+            "d7",
+            "d8",
+            "d9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The resample holds 1, 2, 5, 7, 8 and 9. Tap the other four."
+        }
+      ],
+      "feedback": {
+        "correct": "Loans 0, 3, 4 and 6 never appear.",
+        "generic": "Not quite right. Tap the loans whose numbers never show in the resample.",
+        "byKey": {
+          "k1": "Loan 1 is in the resample. Tap only loans that never appear.",
+          "k2": "Loan 2 is in the resample, twice. Tap only loans that never appear.",
+          "k5": "Loan 5 is in the resample, twice. Tap only loans that never appear.",
+          "k7": "Loan 7 is in the resample, twice. Tap only loans that never appear.",
+          "k8": "Loan 8 is in the resample, twice. Tap only loans that never appear.",
+          "k9": "Loan 9 is in the resample. Tap only loans that never appear.",
+          "dups": "You tapped the loans drawn twice. Tap the ones drawn zero times."
+        }
+      },
+      "explain": {
+        "text": "Six distinct loans fill ten draws, because 2, 5, 7 and 8 each came twice. Loans 0, 3, 4 and 6 sit out. A tree grown on this resample never saw them, which lesson 7 will put to use.",
+        "canvas": {
+          "highlight": [
+            "k0",
+            "k3",
+            "k4",
+            "k6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why about 63%",
+      "prose": "Here 6 of the 10 loans appeared. For large books the share settles near 63%. Build the argument for one row, say loan 0, in a book of $n$ loans.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "one",
+            "text": "One draw misses loan 0 with probability $1 - \\frac{1}{n}$, since each of the $n$ loans is equally likely"
+          },
+          {
+            "id": "all",
+            "text": "The $n$ draws are independent, so all of them miss it with probability $\\left(1 - \\frac{1}{n}\\right)^n$"
+          },
+          {
+            "id": "lim",
+            "text": "As $n$ grows, $\\left(1 - \\frac{1}{n}\\right)^n \\to e^{-1} \\approx 0.368$, the limit that defines $e$"
+          },
+          {
+            "id": "comp",
+            "text": "So loan 0 appears at least once with probability $1 - e^{-1} \\approx 0.632$, the complement"
+          }
+        ],
+        "answer": [
+          "one",
+          "all",
+          "lim",
+          "comp"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with a single draw."
+        },
+        {
+          "rung": "point",
+          "text": "Independence lets you multiply the miss chances of the $n$ draws."
+        },
+        {
+          "rung": "step",
+          "text": "One draw, then all $n$ draws, then the limit, then the complement."
+        }
+      ],
+      "feedback": {
+        "correct": "Every row has the same chance, so about 63% of rows appear in each resample.",
+        "generic": "Not quite right. Go from one draw, to all draws, to large $n$, to the complement.",
+        "byKey": {
+          "comp": "The complement needs the miss chance for large $n$ first.",
+          "lim": "The limit is of the expression for all $n$ draws, so that line comes first."
+        }
+      },
+      "explain": {
+        "text": "For $n = 10$ the miss chance is $0.9^{10} = 0.349$; for $n = 400$ it is $0.367$, already close to $e^{-1} = 0.368$. So about 63.2% of rows appear and 36.8% sit out of each resample."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Your own sampler",
+      "prose": "Write the sampler. `rng.integers(0, n, size=n)` draws $n$ row numbers from 0 to $n - 1$, with replacement. The resample on the last screens came from `bootstrap_indices(10, 10)`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            7,
+            9,
+            2,
+            2,
+            7,
+            8,
+            5,
+            1,
+            8,
+            5
+          ]
+        },
+        "state": {
+          "caption": "`bootstrap_indices(10, 10)`: six distinct loans, so `fraction_unique(10, 10)` is 0.6"
+        }
+      },
+      "question": "Complete `bootstrap_indices` and `fraction_unique`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef bootstrap_indices(n, seed):\n    rng = np.random.default_rng(seed)\n    return ...   # n row numbers from 0 to n - 1, with replacement\n\ndef fraction_unique(n, seed):\n    idx = bootstrap_indices(n, seed)\n    return ...   # share of the n rows drawn at least once\n",
+        "solution": "import numpy as np\n\ndef bootstrap_indices(n, seed):\n    rng = np.random.default_rng(seed)\n    return rng.integers(0, n, size=n)\n\ndef fraction_unique(n, seed):\n    idx = bootstrap_indices(n, seed)\n    return len(np.unique(idx)) / n\n",
+        "examples": [
+          {
+            "call": "bootstrap_indices(10, 10).tolist()",
+            "expect": "[7, 9, 2, 2, 7, 8, 5, 1, 8, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "fraction_unique(10, 10)",
+            "expect": "0.6",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "bootstrap_indices(10, 10).tolist()",
+            "expect": "[7, 9, 2, 2, 7, 8, 5, 1, 8, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "bootstrap_indices(10, 0).tolist()",
+            "expect": "[8, 6, 5, 2, 3, 0, 0, 0, 1, 8]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(bootstrap_indices(400, 1))",
+            "expect": "400",
+            "compare": "equal"
+          },
+          {
+            "call": "fraction_unique(10, 3)",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "fraction_unique(400, 1)",
+            "expect": "0.65",
+            "compare": "isclose"
+          },
+          {
+            "call": "fraction_unique(1, 0)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "fraction_unique(100000, 7)",
+            "expect": "0.63394",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Index lists must match exactly, so draw with `rng.integers(0, n, size=n)`; fractions are compared with math.isclose. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`np.unique(idx)` keeps one copy of each row number."
+        },
+        {
+          "rung": "point",
+          "text": "Divide the number of distinct rows by $n$."
+        },
+        {
+          "rung": "step",
+          "text": "`return rng.integers(0, n, size=n)` and `return len(np.unique(idx)) / n`."
+        }
+      ],
+      "feedback": {
+        "correct": "With 100,000 rows the share is 0.634, close to $1 - e^{-1} = 0.632$.",
+        "generic": "Some tests failed. Draw with `rng.integers(0, n, size=n)` and count distinct rows with `np.unique`."
+      },
+      "explain": {
+        "text": "`fraction_unique(400, 1)` is 0.65 and `fraction_unique(100000, 7)` is 0.634. Small books wander around 63.2%; large ones sit on it. A book of one loan always draws it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Aggregate the votes",
+      "prose": "To aggregate, average each tree's probability of default. scikit-learn's bagging does this, then predicts default where the average exceeds 0.5. For a regression tree we would average the predicted numbers instead.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Loan",
+            "Tree 1",
+            "Tree 2",
+            "Tree 3",
+            "Average"
+          ],
+          "rows": [
+            [
+              "0",
+              "0.2",
+              "0.4",
+              "0.9",
+              "0.5"
+            ],
+            [
+              "1",
+              "1.0",
+              "0.0",
+              "1.0",
+              "?"
+            ],
+            [
+              "2",
+              "0.0",
+              "0.0",
+              "1.0",
+              "?"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Each tree's $P(\\text{default})$ for three loans"
+        }
+      },
+      "question": "Complete `bagged_predict` so it returns the average $P(\\text{default})$ for each row of `X`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n\nclass Fixed:\n    \"\"\"A stand-in model whose P(default) for each row is fixed.\"\"\"\n    def __init__(self, p):\n        self.p = np.asarray(p, dtype=float)\n    def predict_proba(self, X):\n        return np.column_stack([1 - self.p, self.p])\n\nfrom sklearn.tree import DecisionTreeClassifier\n",
+        "starter": "import numpy as np\n\ndef bagged_predict(models, X):\n    probs = ...   # one row per model: its P(class 1) for every row of X\n    return ...    # the average over models\n",
+        "solution": "import numpy as np\n\ndef bagged_predict(models, X):\n    probs = [m.predict_proba(X)[:, 1] for m in models]\n    return np.mean(probs, axis=0)\n",
+        "examples": [
+          {
+            "setup": "ms = [Fixed([0.2, 1, 0]), Fixed([0.4, 0, 0]), Fixed([0.9, 1, 1])]",
+            "call": "np.round(bagged_predict(ms, None), 4).tolist()",
+            "expect": "[0.5, 0.6667, 0.3333]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "ms = [Fixed([0.2, 1, 0]), Fixed([0.4, 0, 0]), Fixed([0.9, 1, 1])]",
+            "call": "np.round(bagged_predict(ms, None), 4).tolist()",
+            "expect": "[0.5, 0.6667, 0.3333]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "ms = [Fixed([0.7])]",
+            "call": "np.round(bagged_predict(ms, None), 4).tolist()",
+            "expect": "[0.7]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "ms = [Fixed([0.1, 0.3])] * 4",
+            "call": "np.round(bagged_predict(ms, None), 4).tolist()",
+            "expect": "[0.1, 0.3]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(1, 400); Xn, yn = make_loans(2, 2000); ms = [DecisionTreeClassifier(random_state=0).fit(X[i], y[i]) for i in [np.random.default_rng(s).integers(0, 400, 400) for s in range(1, 6)]]",
+            "call": "np.round(bagged_predict(ms, Xn[:6]), 4).tolist()",
+            "expect": "[1.0, 0.4, 1.0, 0.0, 0.8, 0.6]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(1, 400); Xn, yn = make_loans(2, 2000); ms = [DecisionTreeClassifier(max_depth=3, random_state=0).fit(X[i], y[i]) for i in [np.random.default_rng(s).integers(0, 400, 400) for s in range(1, 4)]]",
+            "call": "np.round(bagged_predict(ms, Xn[:5]), 4).tolist()",
+            "expect": "[0.5724, 0.3609, 0.9073, 0.0763, 0.7594]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: three with stand-in models whose probabilities are fixed, and two with trees grown on bootstrap samples of `make_loans`. Values are rounded to 4 places and compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`m.predict_proba(X)` has two columns: $P(0)$ and $P(1)$."
+        },
+        {
+          "rung": "point",
+          "text": "Take column 1 from each model, then average across models.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`probs = [m.predict_proba(X)[:, 1] for m in models]` and `return np.mean(probs, axis=0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Loan 1 averages to 0.667, loan 2 to 0.333.",
+        "generic": "Some tests failed. Average column 1 of `predict_proba` across the models, one value per row."
+      },
+      "explain": {
+        "text": "`axis=0` averages across models, leaving one number per loan. Five deep trees give only 0, 0.2, 0.4 and so on, since each deep tree says 0 or 1. Depth-3 trees give leaf shares, so their averages are finer."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What is worth bagging",
+      "prose": "Bag two kinds of tree on the same 400 loans: a stump, with one split, and a deep tree grown until its leaves are pure. Here is the test error of one of each, and of 100 bagged.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "stump",
+              "label": "Stump"
+            },
+            {
+              "id": "deep",
+              "label": "Deep tree"
+            }
+          ],
+          "groups": [
+            {
+              "id": "one",
+              "label": "One tree",
+              "colour": 2
+            },
+            {
+              "id": "bag",
+              "label": "100 bagged",
+              "colour": 1
+            }
+          ],
+          "yLabel": "Test error",
+          "showValues": true,
+          "decimals": 3,
+          "yMin": 0,
+          "yMax": 0.3
+        },
+        "state": {
+          "values": {
+            "one": {
+              "stump": 0.266,
+              "deep": 0.2595
+            },
+            "bag": {
+              "stump": 0.2585,
+              "deep": 0.2075
+            }
+          }
+        }
+      },
+      "question": "Why does bagging help the deep tree far more than the stump?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A deep tree's predictions swing from resample to resample; a stump's barely move",
+            "correct": true
+          },
+          {
+            "id": "bias",
+            "text": "Bagging removes bias, and deep trees have more of it",
+            "why": "You gave bagging the job of removing bias. Averaging leaves bias where it was; deep trees have little bias and lots of variance."
+          },
+          {
+            "id": "better",
+            "text": "The deep tree was the better model to begin with",
+            "why": "One deep tree, 0.260, and one stump, 0.266, start almost level. The gap opens only after bagging."
+          },
+          {
+            "id": "few",
+            "text": "100 trees are too few to help a stump",
+            "why": "You blamed the count. The bagged stumps were already flat by 10 trees: every resample picks nearly the same split."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What can averaging take away, and what does it leave?"
+        },
+        {
+          "rung": "point",
+          "text": "Every stump splits on leverage near the same value, whatever the resample."
+        },
+        {
+          "rung": "step",
+          "text": "Averaging cuts variance. A stump has little variance to cut; a deep tree has plenty."
+        }
+      ],
+      "feedback": {
+        "correct": "Averaging can only remove what varies.",
+        "generic": "Not quite right. Ask how much each kind of tree changes from one resample to the next."
+      },
+      "explain": {
+        "text": "Every bootstrap stump splits on leverage at nearly the same point, so 100 of them vote like one: 0.266 to 0.259. Deep trees differ a lot, so their average is steadier: 0.260 to 0.208. Bag low-bias, high-variance models.",
+        "canvas": {
+          "highlight": [
+            "deep-bag"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Cut the trees back?",
+      "prose": "A colleague reads the curve closely. The test error is 0.2045 at 93 trees and 0.2075 at 100. They cut the model back to 93 trees, \"to stop it overfitting\".",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "bag",
+              "label": "Bagged trees",
+              "values": [
+                0.2965,
+                0.3075,
+                0.269,
+                0.2585,
+                0.246,
+                0.251,
+                0.236,
+                0.241,
+                0.2335,
+                0.2345,
+                0.226,
+                0.2325,
+                0.226,
+                0.229,
+                0.2185,
+                0.227,
+                0.2175,
+                0.227,
+                0.2235,
+                0.229,
+                0.2175,
+                0.2185,
+                0.2145,
+                0.2165,
+                0.2145,
+                0.22,
+                0.216,
+                0.2185,
+                0.2125,
+                0.216,
+                0.212,
+                0.2145,
+                0.211,
+                0.2125,
+                0.2105,
+                0.214,
+                0.212,
+                0.212,
+                0.2145,
+                0.2145,
+                0.2145,
+                0.213,
+                0.2135,
+                0.216,
+                0.2135,
+                0.217,
+                0.2125,
+                0.217,
+                0.2125,
+                0.216,
+                0.2115,
+                0.212,
+                0.213,
+                0.213,
+                0.2115,
+                0.213,
+                0.2115,
+                0.213,
+                0.21,
+                0.209,
+                0.2075,
+                0.2085,
+                0.209,
+                0.2085,
+                0.208,
+                0.2125,
+                0.2085,
+                0.2115,
+                0.2085,
+                0.21,
+                0.208,
+                0.211,
+                0.2105,
+                0.2095,
+                0.205,
+                0.21,
+                0.2075,
+                0.2095,
+                0.209,
+                0.21,
+                0.209,
+                0.209,
+                0.207,
+                0.2085,
+                0.2065,
+                0.2075,
+                0.2065,
+                0.2065,
+                0.2065,
+                0.205,
+                0.2055,
+                0.207,
+                0.2045,
+                0.2065,
+                0.206,
+                0.206,
+                0.2055,
+                0.2065,
+                0.206,
+                0.2075
+              ],
+              "colour": 1
+            },
+            {
+              "id": "one",
+              "label": "One deep tree",
+              "values": [
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595,
+                0.2595
+              ],
+              "colour": 2,
+              "dashed": true,
+              "thin": true
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Trees in the vote, $B$",
+          "yLabel": "Test error",
+          "y": [
+            0.18,
+            0.31
+          ],
+          "decimals": 3,
+          "params": {
+            "e": [
+              0.2965,
+              0.3075,
+              0.269,
+              0.2585,
+              0.246,
+              0.251,
+              0.236,
+              0.241,
+              0.2335,
+              0.2345,
+              0.226,
+              0.2325,
+              0.226,
+              0.229,
+              0.2185,
+              0.227,
+              0.2175,
+              0.227,
+              0.2235,
+              0.229,
+              0.2175,
+              0.2185,
+              0.2145,
+              0.2165,
+              0.2145,
+              0.22,
+              0.216,
+              0.2185,
+              0.2125,
+              0.216,
+              0.212,
+              0.2145,
+              0.211,
+              0.2125,
+              0.2105,
+              0.214,
+              0.212,
+              0.212,
+              0.2145,
+              0.2145,
+              0.2145,
+              0.213,
+              0.2135,
+              0.216,
+              0.2135,
+              0.217,
+              0.2125,
+              0.217,
+              0.2125,
+              0.216,
+              0.2115,
+              0.212,
+              0.213,
+              0.213,
+              0.2115,
+              0.213,
+              0.2115,
+              0.213,
+              0.21,
+              0.209,
+              0.2075,
+              0.2085,
+              0.209,
+              0.2085,
+              0.208,
+              0.2125,
+              0.2085,
+              0.2115,
+              0.2085,
+              0.21,
+              0.208,
+              0.211,
+              0.2105,
+              0.2095,
+              0.205,
+              0.21,
+              0.2075,
+              0.2095,
+              0.209,
+              0.21,
+              0.209,
+              0.209,
+              0.207,
+              0.2085,
+              0.2065,
+              0.2075,
+              0.2065,
+              0.2065,
+              0.2065,
+              0.205,
+              0.2055,
+              0.207,
+              0.2045,
+              0.2065,
+              0.206,
+              0.206,
+              0.2055,
+              0.2065,
+              0.206,
+              0.2075
+            ]
+          }
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m93",
+              "i": 92,
+              "series": "bag",
+              "label": "93: 0.2045",
+              "below": true
+            },
+            {
+              "id": "m100",
+              "i": 99,
+              "series": "bag",
+              "label": "100: 0.2075"
+            }
+          ],
+          "window": {
+            "from": 49,
+            "to": 99,
+            "label": "50 to 100 trees"
+          }
+        }
+      },
+      "question": "What should they do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Keep 100 trees or more: the wobble is noise, and adding trees cannot overfit",
+            "correct": true
+          },
+          {
+            "id": "cut",
+            "text": "Cut to 93: past that point the extra trees fit noise",
+            "why": "You read a 0.003 dip as overfitting. That is 6 loans out of 2,000, and each new tree is just another draw from the same kind of tree."
+          },
+          {
+            "id": "tune",
+            "text": "Tune $B$ on the test set, like any other setting",
+            "why": "You treated $B$ like depth. Depth can overfit; extra trees only average more of the same thing, and tuning on the test set spends it."
+          },
+          {
+            "id": "fewer",
+            "text": "Go back to 20 trees, since smaller models generalise better",
+            "why": "You traded trees for simplicity. At 20 trees the error is 0.2290, clearly worse than 0.2075."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many loans is a 0.003 change in error, out of 2,000?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the shaded window: does the line trend up anywhere?"
+        },
+        {
+          "rung": "step",
+          "text": "It is 6 loans. The average of more trees converges; it does not chase noise."
+        }
+      ],
+      "feedback": {
+        "correct": "More trees only make the average steadier.",
+        "generic": "Not quite right. Ask whether the line trends up, or only wobbles.",
+        "byKey": {
+          "cut": "You read a 6-loan wobble as overfitting. A bagged vote converges as $B$ grows; it never turns back up."
+        }
+      },
+      "explain": {
+        "text": "Each extra tree is another draw from the same kind of tree, so the vote converges as $B$ grows. A 0.003 wobble is 6 of 2,000 loans. Choose $B$ large enough that the curve is flat, then stop for speed, not for accuracy.",
+        "canvas": {
+          "highlight": [
+            "m93",
+            "m100"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Why averaging works",
+      "prose": "Each tree's prediction for a loan is a random variable: it depends on the resample. If $B$ trees were independent, each with variance $\\sigma^2$, then as in *Averages settle down* $$\\operatorname{Var}\\left(\\frac{1}{B}\\sum_{b=1}^{B} \\hat f_b(x)\\right) = \\frac{\\sigma^2}{B}.$$ Averaging leaves each tree's bias unchanged.",
+      "question": "One tree's $P(\\text{default})$ for loan Q has sd 0.30 across resamples. What would the sd of the average of 9 independent trees be?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Standard deviation of the average",
+        "placeholder": "decimal",
+        "accept": "0.1: the sd falls as $1/\\sqrt{B}$, so $0.30/\\sqrt{9} = 0.10$.",
+        "wrong": [
+          {
+            "id": "overB",
+            "value": 0.0333,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "var",
+            "value": 0.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "same",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The formula is for the variance. Square the sd first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sigma^2 = 0.09$, so the variance of the average is $0.09/9$."
+        },
+        {
+          "rung": "step",
+          "text": "$0.09/9 = 0.01$, and the sd is $\\sqrt{0.01} = 0.10$."
+        }
+      ],
+      "feedback": {
+        "correct": "Variance falls as $1/B$, so the sd falls as $1/\\sqrt{B}$.",
+        "generic": "Not quite right. Divide the variance by 9, then take the square root.",
+        "byKey": {
+          "overB": "You divided the sd by 9. The variance falls by 9, so the sd falls by $\\sqrt{9} = 3$.",
+          "var": "0.01 is the variance of the average. Take its square root for the sd.",
+          "same": "Averaging independent trees does shrink the spread. Divide the variance by 9."
+        }
+      },
+      "explain": {
+        "text": "$0.30/\\sqrt{9} = 0.10$. Our trees are not independent: any two share most of their rows and both split on leverage first. So their errors are correlated, and the variance stops falling long before $1/B$ would; lesson 6 measures by how much."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The curve in code",
+      "prose": "Now rebuild the curve. `BaggingClassifier(DecisionTreeClassifier(), n_estimators=B, random_state=0)` grows `B` deep trees on bootstrap samples and averages their probabilities. Fix `random_state` so the curve repeats exactly.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> X, y = make_loans(1, 400)",
+            ">>> Xn, yn = make_loans(2, 2000)",
+            ">>> bagging_test_acc(X, y, Xn, yn, [1, 10, 50])",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `bagging_test_acc` so it returns the test accuracy for each $B$ in the list, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 15000,
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n",
+        "starter": "from sklearn.ensemble import BaggingClassifier\nfrom sklearn.tree import DecisionTreeClassifier\n\ndef bagging_test_acc(X_train, y_train, X_test, y_test, n_estimators):\n    accs = []\n    for B in n_estimators:\n        model = ...   # B deep trees, random_state=0, fitted on the training rows\n        accs.append(round(float(model.score(X_test, y_test)), 4))\n    return accs\n",
+        "solution": "from sklearn.ensemble import BaggingClassifier\nfrom sklearn.tree import DecisionTreeClassifier\n\ndef bagging_test_acc(X_train, y_train, X_test, y_test, n_estimators):\n    accs = []\n    for B in n_estimators:\n        model = BaggingClassifier(DecisionTreeClassifier(), n_estimators=B,\n                                  random_state=0).fit(X_train, y_train)\n        accs.append(round(float(model.score(X_test, y_test)), 4))\n    return accs\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(5, 200)",
+            "call": "bagging_test_acc(X[:150], y[:150], X[150:], y[150:], [2, 20])",
+            "expect": "[0.44, 0.66]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(5, 200)",
+            "call": "bagging_test_acc(X[:150], y[:150], X[150:], y[150:], [2, 20])",
+            "expect": "[0.44, 0.66]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(1, 400); Xn, yn = make_loans(2, 2000)",
+            "call": "bagging_test_acc(X, y, Xn, yn, [1, 10, 50])",
+            "expect": "[0.7035, 0.7655, 0.784]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(3, 300); Xn, yn = make_loans(4, 1000)",
+            "call": "bagging_test_acc(X, y, Xn, yn, [1, 5, 25])",
+            "expect": "[0.72, 0.767, 0.79]",
+            "compare": "isclose"
+          },
+          {
+            "call": "bagging_test_acc([[0], [1], [2], [3]], [0, 0, 1, 1], [[0.2], [2.9]], [0, 1], [])",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on loans from `make_loans(seed, n)`, which is already defined, and one empty list of $B$. Each list of accuracies is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick. The longest test fits 61 trees and takes about 2 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Make the model, then call `.fit(X_train, y_train)` on it."
+        },
+        {
+          "rung": "point",
+          "text": "Pass the tree as the first argument, then `n_estimators=B` and `random_state=0`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`model = BaggingClassifier(DecisionTreeClassifier(), n_estimators=B, random_state=0).fit(X_train, y_train)`."
+        }
+      ],
+      "feedback": {
+        "correct": "On the 2,000 new loans: 0.7035 with one tree, 0.784 with 50.",
+        "generic": "Some tests failed. Fit a fresh `BaggingClassifier` for each $B$, with `random_state=0`, on the training rows only."
+      },
+      "explain": {
+        "text": "One bootstrap tree scores 0.7035, ten score 0.7655 and fifty 0.784: the curve from the second screen. `random_state=0` fixes every resample, so the numbers repeat on any machine."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Fifty analysts",
+      "prose": "Fifty analysts forecast a company's annual earnings growth. Over many years, one analyst's error has sd 4.0%. The consensus, their plain average, has error sd 2.9%. With independent errors it would be $4.0/\\sqrt{50} = 0.57\\%$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "one",
+              "label": "One analyst"
+            },
+            {
+              "id": "cons",
+              "label": "Consensus of 50"
+            },
+            {
+              "id": "ind",
+              "label": "If independent"
+            }
+          ],
+          "yLabel": "Error sd (%)",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": 0,
+          "yMax": 4.5
+        },
+        "state": {
+          "values": {
+            "one": 4.0,
+            "cons": 2.9,
+            "ind": 0.57
+          }
+        }
+      },
+      "question": "Why does the consensus improve so much less than $1/\\sqrt{50}$ promises?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Their errors are correlated: they read the same filings and hear the same guidance",
+            "correct": true
+          },
+          {
+            "id": "few",
+            "text": "Fifty forecasts are too few for averaging to work",
+            "why": "You blamed the count. Fifty independent errors would give 0.57%; the shortfall comes from errors they share."
+          },
+          {
+            "id": "bias",
+            "text": "Averaging removes bias but cannot touch variance",
+            "why": "That is the wrong way round. Averaging cuts variance and leaves bias alone."
+          },
+          {
+            "id": "numbers",
+            "text": "Averaging only helps votes, not forecasts of numbers",
+            "why": "Averaging works for numbers too: regression trees are bagged by averaging their predictions."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When would 50 forecasts be no better than one?"
+        },
+        {
+          "rung": "point",
+          "text": "If all 50 made the same mistake, averaging would change nothing."
+        },
+        {
+          "rung": "step",
+          "text": "Shared information makes the errors move together, so they do not cancel."
+        }
+      ],
+      "feedback": {
+        "correct": "Shared errors survive averaging.",
+        "generic": "Not quite right. Ask what the analysts have in common.",
+        "byKey": {
+          "few": "Fifty is plenty when errors are independent. These are not."
+        }
+      },
+      "explain": {
+        "text": "Errors that move together do not cancel in an average. Bagged trees have the same problem: they share most rows and the same strong feature. Lesson 6 gives the formula and a way to break the link.",
+        "canvas": {
+          "highlight": [
+            "cons",
+            "ind"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A deep tree is a high-variance predictor: a resample of the same rows can move its splits and flip its answers.",
+      "Bagging grows a tree on each bootstrap sample and averages their probabilities, or votes; each sample holds about 63.2% of the rows, $1 - e^{-1}$.",
+      "Averaging cuts variance and leaves bias alone, so bag deep trees, not stumps; more trees never overfit, they just stop helping."
+    ],
+    "formula": {
+      "name": "Variance of an average of independent predictors",
+      "tex": "\\operatorname{Var}\\left(\\frac{1}{B}\\sum_{b=1}^{B} \\hat f_b(x)\\right) = \\frac{\\sigma^2}{B}",
+      "note": "Bagged trees are correlated, so the real variance falls more slowly."
+    },
+    "trap": "A small dip in test error at some $B$ is noise. Extra trees cannot overfit; choose $B$ where the curve is flat."
+  },
+  "quiz": [
+    {
+      "id": "q-copies",
+      "difficulty": 2,
+      "prose": "You fit one deep tree on all 400 loans. Then you put 50 copies of that same tree into a vote.",
+      "question": "How does the vote's test error compare with the single tree's?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "It is exactly the same",
+            "correct": true
+          },
+          {
+            "id": "lower",
+            "text": "Lower, because 50 votes average out the noise",
+            "why": "You expected any average to help. Fifty identical trees make identical mistakes, so nothing cancels."
+          },
+          {
+            "id": "sqrt",
+            "text": "Lower by a factor of $\\sqrt{50}$",
+            "why": "That needs independent errors. Copies are perfectly correlated."
+          },
+          {
+            "id": "higher",
+            "text": "Higher, because 50 trees overfit",
+            "why": "Copying a tree changes nothing; the vote is the tree."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Identical trees give no gain.",
+        "generic": "Not quite right. Ask whether the 50 trees ever disagree."
+      },
+      "explain": {
+        "text": "Every copy votes the same way on every loan, so the vote is the tree. Bagging gains only because bootstrap trees differ."
+      }
+    },
+    {
+      "id": "q-distinct",
+      "difficulty": 2,
+      "prose": "A book has 1,000 loans. You draw a bootstrap sample of 1,000 rows.",
+      "question": "About how many distinct loans does the sample hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 632,
+        "tol": {
+          "abs": 15
+        },
+        "unit": "loans",
+        "label": "Distinct loans in the sample",
+        "accept": "About 632, $1000 \\times (1 - e^{-1})$; anything from 617 to 647.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "miss",
+            "value": 368,
+            "tol": {
+              "abs": 15
+            }
+          },
+          {
+            "id": "half",
+            "value": 500,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 632 distinct loans, and 368 left out.",
+        "generic": "Not quite right. Each loan appears with probability about $1 - e^{-1}$.",
+        "byKey": {
+          "all": "Drawing with replacement repeats some loans, so fewer than 1,000 are distinct.",
+          "miss": "368 is the number left out. The question asks how many appear.",
+          "half": "The share is not a half: it is $1 - e^{-1} \\approx 0.632$."
+        }
+      },
+      "explain": {
+        "text": "Each loan is missed by all 1,000 draws with probability $(1 - 1/1000)^{1000} \\approx e^{-1} = 0.368$. So about 632 appear."
+      }
+    },
+    {
+      "id": "q-soft",
+      "difficulty": 3,
+      "prose": "Five bagged trees give loan R these probabilities of default: 0.95, 0.45, 0.45, 0.45 and 0.45. scikit-learn's bagging averages them, then calls default above 0.5.",
+      "question": "What does the bagged model predict for loan R?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "def",
+            "text": "Default: the average is 0.55",
+            "correct": true
+          },
+          {
+            "id": "rep",
+            "text": "Repay: four of the five trees are below 0.5",
+            "why": "You counted votes. scikit-learn averages the probabilities: $(0.95 + 4 \\times 0.45)/5 = 0.55$."
+          },
+          {
+            "id": "avg",
+            "text": "Repay: the average is 0.45",
+            "why": "You left out the 0.95. Average all five numbers."
+          },
+          {
+            "id": "tie",
+            "text": "No prediction: the trees disagree",
+            "why": "Disagreement is the normal case; the average settles it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Averaging probabilities and counting votes can disagree.",
+        "generic": "Not quite right. Average the five probabilities."
+      },
+      "explain": {
+        "text": "$(0.95 + 4 \\times 0.45)/5 = 2.75/5 = 0.55$, above 0.5, so default. A majority vote of the trees' classes would have said repay."
+      }
+    },
+    {
+      "id": "q-which",
+      "difficulty": 2,
+      "prose": "You can bag any model.",
+      "question": "Which one gains most from bagging?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "deep",
+            "text": "A deep, unpruned regression tree",
+            "correct": true
+          },
+          {
+            "id": "stump",
+            "text": "A stump with one split",
+            "why": "A stump hardly changes between resamples, so there is little variance to average away."
+          },
+          {
+            "id": "ols",
+            "text": "A linear regression on three features",
+            "why": "OLS on a few features is already stable; its resampled fits barely differ."
+          },
+          {
+            "id": "pruned",
+            "text": "A tree pruned to depth 2",
+            "why": "Pruning has already cut most of the variance bagging would remove."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Bagging cuts variance, so it helps the most variable model.",
+        "generic": "Not quite right. Which model changes most when the rows change?"
+      },
+      "explain": {
+        "text": "A deep tree has low bias and high variance: exactly what averaging fixes. Stable models, like a stump or OLS, gain almost nothing."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1522 @@
+{
+  "id": "l8-setting-to-zero",
+  "course": "stat-learning",
+  "title": "Setting coefficients to zero",
+  "minutes": 15,
+  "objectives": [
+    "Use the lasso to select features.",
+    "Explain why the absolute-value penalty produces exact zeros, and what a zero does not mean."
+  ],
+  "skills": [
+    "sl-regularise"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A penalty that bites",
+      "prose": "The same six features as last lesson, but a new penalty: $\\alpha$ times the sum of the coefficients' sizes, $\\sum_j |\\beta_j|$. Each curve is one coefficient's size. Slide $\\alpha$ and watch the curves meet the axis.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.7
+          ],
+          "y": [
+            0,
+            0.65
+          ],
+          "grid": true,
+          "xLabel": "Penalty $\\alpha$",
+          "yLabel": "Coefficient size $|\\hat\\beta_j|$",
+          "functions": [
+            {
+              "id": "mom",
+              "expr": "max(0.6 - x, 0)",
+              "label": "mom",
+              "colour": 1,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "value",
+              "expr": "max(0.4 - x, 0)",
+              "label": "value",
+              "colour": 2,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "vol",
+              "expr": "max(0.3 - x, 0)",
+              "label": "vol",
+              "colour": 3,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "size",
+              "expr": "max(0.12 - x, 0)",
+              "label": "size",
+              "colour": 4,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "turnover",
+              "expr": "max(0.08 - x, 0)",
+              "label": "turnover",
+              "colour": 5,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "beta",
+              "expr": "max(0.05 - x, 0)",
+              "label": "beta",
+              "colour": 6,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            }
+          ],
+          "params": {
+            "a": 0
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0,
+              "label": ""
+            }
+          ]
+        },
+        "maxHeight": 300,
+        "derive": {
+          "v.x": "a",
+          "caption": "$\\alpha = {{fixed(a, 2)}}$: {{(a < 0.6 ? 1 : 0) + (a < 0.4 ? 1 : 0) + (a < 0.3 ? 1 : 0) + (a < 0.12 ? 1 : 0) + (a < 0.08 ? 1 : 0) + (a < 0.05 ? 1 : 0)}} of 6 coefficients are not zero"
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 0.7,
+            "step": 0.01,
+            "start": 0,
+            "label": "Penalty $\\alpha$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "How many coefficients are not zero at $\\alpha = 0.1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "coefficients",
+        "label": "Coefficients not zero at alpha 0.1",
+        "accept": "4: mom, value, vol and size; turnover and beta are 0.",
+        "wrong": [
+          {
+            "id": "six",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $\\alpha = 0.1$ and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "Two small curves have already landed on the axis.",
+          "highlight": [
+            "turnover",
+            "beta"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A coefficient is 0 once $\\alpha$ passes its OLS size. Sizes 0.08 and 0.05 are below 0.1."
+        }
+      ],
+      "feedback": {
+        "correct": "Four survive at $\\alpha = 0.1$; turnover and beta are exactly 0.",
+        "generic": "Not quite right. Slide to 0.10 and count the curves still above the axis.",
+        "byKey": {
+          "six": "You expected ridge's behaviour, where nothing reaches 0. Here two curves have landed by $\\alpha = 0.1$.",
+          "three": "Size, at 0.12, is still above 0.1: it lands at $\\alpha = 0.12$."
+        }
+      },
+      "explain": {
+        "text": "Each size falls in a straight line, $|\\hat\\beta_j| - \\alpha$, and stops at 0. Beta lands at 0.05, turnover at 0.08 and size at 0.12: the three noise features go first. Real effects survive longer simply because they are larger.",
+        "canvas": {
+          "params": {
+            "a": 0.1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The lasso",
+      "prose": "This is the **lasso**. scikit-learn's `Lasso(alpha=a)` minimises $$\\frac{1}{2n}\\sum_i (y_i - \\hat y_i)^2 + \\alpha\\sum_j |\\beta_j|.$$ With features like ours, each coefficient moves $\\alpha$ towards 0 and stops there. The bars show the signed coefficients.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "mom",
+              "label": "mom"
+            },
+            {
+              "id": "value",
+              "label": "value"
+            },
+            {
+              "id": "vol",
+              "label": "vol"
+            },
+            {
+              "id": "size",
+              "label": "size"
+            },
+            {
+              "id": "turnover",
+              "label": "turnover"
+            },
+            {
+              "id": "beta",
+              "label": "beta"
+            }
+          ],
+          "yLabel": "Lasso coefficient",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": -0.4,
+          "yMax": 0.7
+        },
+        "state": {
+          "params": {
+            "a": 0
+          },
+          "values": {
+            "mom": 0.6,
+            "value": 0.4,
+            "vol": -0.3,
+            "size": 0.12,
+            "turnover": -0.08,
+            "beta": 0.05
+          }
+        },
+        "derive": {
+          "values.mom": "(0.6 > 0 ? 1 : -1) * max(0.6 - a, 0)",
+          "values.value": "(0.4 > 0 ? 1 : -1) * max(0.4 - a, 0)",
+          "values.vol": "(-0.3 > 0 ? 1 : -1) * max(0.3 - a, 0)",
+          "values.size": "(0.12 > 0 ? 1 : -1) * max(0.12 - a, 0)",
+          "values.turnover": "(-0.08 > 0 ? 1 : -1) * max(0.08 - a, 0)",
+          "values.beta": "(0.05 > 0 ? 1 : -1) * max(0.05 - a, 0)",
+          "caption": "$\\alpha = {{fixed(a, 2)}}$"
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 0.7,
+            "step": 0.01,
+            "start": 0,
+            "label": "Penalty $\\alpha$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "vol's OLS coefficient is −0.3. What is its lasso coefficient at $\\alpha = 0.2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.1,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "vol coefficient at alpha 0.2",
+        "accept": "−0.1: move −0.3 by 0.2 towards 0.",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "away",
+            "value": -0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide to 0.2 and read the vol bar."
+        },
+        {
+          "rung": "point",
+          "text": "Towards 0 means up, for a negative coefficient.",
+          "highlight": [
+            "vol"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-0.3 + 0.2 = -0.1$."
+        }
+      ],
+      "feedback": {
+        "correct": "−0.1: shrunk by 0.2, sign kept.",
+        "generic": "Not quite right. Move −0.3 a distance of 0.2 towards 0.",
+        "byKey": {
+          "sign": "You shrank its size correctly but flipped the sign. The lasso never pushes a coefficient past 0.",
+          "away": "You moved it away from 0. The penalty always pulls towards 0.",
+          "zero": "Not yet: vol's size, 0.3, is more than 0.2, so it survives."
+        }
+      },
+      "explain": {
+        "text": "The lasso subtracts $\\alpha$ from each size and keeps the sign: $-0.3 \\to -0.1$. Ridge would scale instead, and never reach 0. Here size, turnover and beta are already 0 at $\\alpha = 0.2$.",
+        "canvas": {
+          "params": {
+            "a": 0.2
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why it stops at zero",
+      "prose": "With uncorrelated z-scored features, each coefficient solves its own problem: minimise $\\tfrac{1}{2}(\\beta - b)^2 + \\alpha|\\beta|$, where $b$ is the OLS value. Put the argument in order.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "pos",
+            "text": "If $\\beta > 0$, the slope is $\\beta - b + \\alpha$; it is 0 at $\\beta = b - \\alpha$, which is positive only when $b > \\alpha$"
+          },
+          {
+            "id": "neg",
+            "text": "If $\\beta < 0$, the slope is $\\beta - b - \\alpha$; it is 0 at $\\beta = b + \\alpha$, which is negative only when $b < -\\alpha$"
+          },
+          {
+            "id": "kink",
+            "text": "If $|b| \\le \\alpha$, neither side has a stationary point, the function falls towards 0 from both sides, so the minimum is at the kink $\\beta = 0$"
+          },
+          {
+            "id": "res",
+            "text": "So $\\hat\\beta = \\operatorname{sign}(b)\\max(|b| - \\alpha, 0)$: **soft thresholding**"
+          }
+        ],
+        "answer": [
+          "pos",
+          "neg",
+          "kink",
+          "res"
+        ],
+        "same": [
+          [
+            "pos",
+            "neg"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$|\\beta|$ has a kink at 0, so treat $\\beta > 0$ and $\\beta < 0$ separately."
+        },
+        {
+          "rung": "point",
+          "text": "The two sides come first, in either order; then what is left over."
+        },
+        {
+          "rung": "step",
+          "text": "Positive side, negative side, the case where neither works, then the formula."
+        }
+      ],
+      "feedback": {
+        "correct": "The kink at 0 is a minimum for a whole range of $b$: that is where exact zeros come from.",
+        "generic": "Not quite right. Handle each sign of $\\beta$, then the case neither covers, then summarise.",
+        "byKey": {
+          "res": "The formula summarises all three cases, so it comes last.",
+          "kink": "The kink case is what is left after both signs fail, so it follows them."
+        }
+      },
+      "explain": {
+        "text": "A squared penalty has slope 0 at $\\beta = 0$, so it never holds a coefficient there. $|\\beta|$ has a corner with slopes $\\pm\\alpha$, and any $b$ with $|b| \\le \\alpha$ is held at exactly 0."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Soft thresholding in code",
+      "prose": "Write the one-step lasso operator. It takes a number $z$ and a threshold $t \\ge 0$, and moves $z$ a distance $t$ towards 0, stopping at 0.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "mom",
+              "label": "mom"
+            },
+            {
+              "id": "value",
+              "label": "value"
+            },
+            {
+              "id": "vol",
+              "label": "vol"
+            },
+            {
+              "id": "size",
+              "label": "size"
+            },
+            {
+              "id": "turnover",
+              "label": "turnover"
+            },
+            {
+              "id": "beta",
+              "label": "beta"
+            }
+          ],
+          "yLabel": "Lasso coefficient",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": -0.4,
+          "yMax": 0.7
+        },
+        "state": {
+          "params": {
+            "a": 0
+          },
+          "values": {
+            "mom": 0.6,
+            "value": 0.4,
+            "vol": -0.3,
+            "size": 0.12,
+            "turnover": -0.08,
+            "beta": 0.05
+          }
+        },
+        "derive": {
+          "values.mom": "(0.6 > 0 ? 1 : -1) * max(0.6 - a, 0)",
+          "values.value": "(0.4 > 0 ? 1 : -1) * max(0.4 - a, 0)",
+          "values.vol": "(-0.3 > 0 ? 1 : -1) * max(0.3 - a, 0)",
+          "values.size": "(0.12 > 0 ? 1 : -1) * max(0.12 - a, 0)",
+          "values.turnover": "(-0.08 > 0 ? 1 : -1) * max(0.08 - a, 0)",
+          "values.beta": "(0.05 > 0 ? 1 : -1) * max(0.05 - a, 0)",
+          "caption": "$\\alpha = {{fixed(a, 2)}}$"
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 0.7,
+            "step": 0.01,
+            "start": 0,
+            "label": "Penalty $\\alpha$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Complete `soft_threshold(z, t)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def soft_threshold(z, t):\n    if z > t:\n        return ...\n    if z < -t:\n        return ...\n    return 0.0\n",
+        "solution": "def soft_threshold(z, t):\n    if z > t:\n        return z - t\n    if z < -t:\n        return z + t\n    return 0.0\n",
+        "examples": [
+          {
+            "call": "soft_threshold(0.4, 0.15)",
+            "expect": "0.25",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "soft_threshold(0.4, 0.15)",
+            "expect": "0.25",
+            "compare": "isclose"
+          },
+          {
+            "call": "soft_threshold(-0.3, 0.2)",
+            "expect": "-0.1",
+            "compare": "isclose"
+          },
+          {
+            "call": "soft_threshold(0.12, 0.2)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "soft_threshold(-0.05, 0.05)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "soft_threshold(2.5, 0)",
+            "expect": "2.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "[soft_threshold(b, 0.1) for b in [0.6, 0.4, -0.3, 0.12, -0.08, 0.05]]",
+            "expect": "[0.5, 0.3, -0.2, 0.02, 0.0, 0.0]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests in plain Python, each compared with math.isclose; the last applies your function to the six coefficients on the canvas."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A positive $z$ above the threshold loses $t$."
+        },
+        {
+          "rung": "point",
+          "text": "A negative $z$ below $-t$ gains $t$.",
+          "highlight": [
+            "vol"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return z - t` in the first branch and `return z + t` in the second."
+        }
+      ],
+      "feedback": {
+        "correct": "At $t = 0.1$ the six coefficients become 0.5, 0.3, −0.2, 0.02, 0 and 0.",
+        "generic": "Some tests failed. Subtract $t$ from a large positive $z$, add $t$ to a large negative one, else return 0."
+      },
+      "explain": {
+        "text": "Every lasso solver repeats this step, one coefficient at a time, on the partial residuals. With uncorrelated z-scored features one pass is the whole answer."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Diamond against circle",
+      "prose": "Another view: minimise the squared errors subject to $|\\beta_1| + |\\beta_2| \\le 1$, the shaded diamond. The ellipses are levels of the squared error, smallest at OLS. Grow them until one first touches the diamond.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.4,
+            1.8
+          ],
+          "y": [
+            -1.3,
+            2.2
+          ],
+          "equal": true,
+          "grid": false,
+          "xLabel": "$\\beta_1$",
+          "yLabel": "$\\beta_2$",
+          "functions": [
+            {
+              "id": "rss",
+              "contour": "(x - 0.4)^2 + (x - 0.4)*(y - 1.6) + (y - 1.6)^2",
+              "levels": [
+                0.1,
+                0.35,
+                0.76
+              ],
+              "colour": 1,
+              "levelLabels": false,
+              "labelAvoid": false
+            }
+          ]
+        },
+        "state": {
+          "polygons": [
+            {
+              "id": "dia",
+              "points": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  -1,
+                  0
+                ],
+                [
+                  0,
+                  -1
+                ]
+              ],
+              "colour": 2
+            }
+          ],
+          "points": [
+            {
+              "id": "ols",
+              "x": 0.4,
+              "y": 1.6,
+              "label": "OLS",
+              "tap": false
+            },
+            {
+              "id": "C1",
+              "x": 0,
+              "y": 1,
+              "label": "A"
+            },
+            {
+              "id": "E1",
+              "x": 0.3,
+              "y": 0.7,
+              "label": "B"
+            },
+            {
+              "id": "E2",
+              "x": 0.5,
+              "y": 0.5,
+              "label": "C"
+            },
+            {
+              "id": "C2",
+              "x": 1,
+              "y": 0,
+              "label": "D"
+            }
+          ]
+        },
+        "maxHeight": 320
+      },
+      "question": "Tap the point where the growing ellipses first touch the diamond.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "C1"
+        ],
+        "max": 1
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The outer ellipse is the first one to reach the diamond."
+        },
+        {
+          "rung": "point",
+          "text": "Follow the outer ellipse down towards the diamond's top.",
+          "highlight": [
+            "C1",
+            "E1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The outer ellipse just meets the corner A at $(0, 1)$, where $\\beta_1 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "The ellipse touches at the corner A, so $\\beta_1 = 0$ exactly.",
+        "generic": "Not quite right. Find where the outermost ellipse meets the diamond.",
+        "byKey": {
+          "E1": "B lies on an edge just inside the outer ellipse, so the squared error there is larger. The touch is at the corner.",
+          "E2": "C is further from OLS. The touch is at the corner A.",
+          "C2": "D is on the far side from OLS. The touch is at A."
+        }
+      },
+      "explain": {
+        "text": "A diamond's corners stick out, so an ellipse usually reaches a corner first, and at a corner one coefficient is 0. The dashed circle, ridge's constraint, has no corners: it is touched at $(0.43, 0.90)$, both non-zero.",
+        "canvas": {
+          "functions": [
+            {
+              "id": "rss",
+              "contour": "(x - 0.4)^2 + (x - 0.4)*(y - 1.6) + (y - 1.6)^2",
+              "levels": [
+                0.1,
+                0.35,
+                0.466,
+                0.76
+              ],
+              "colour": 1,
+              "levelLabels": false,
+              "labelAvoid": false
+            },
+            {
+              "id": "circ",
+              "implicit": "x^2 + y^2 - 1",
+              "dashed": true,
+              "colour": 4
+            }
+          ],
+          "points": {
+            "R": {
+              "x": 0.426,
+              "y": 0.905,
+              "label": "ridge",
+              "tap": false
+            }
+          },
+          "highlight": [
+            "C1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Which features survive?",
+      "prose": "`Lasso(alpha=a, max_iter=10000).fit(X, y)` puts the coefficients in `.coef_`. The solver cycles through the coefficients until they settle; `max_iter=10000` gives it room on noisy data, where the default 1,000 can stop early with a warning.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Index",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "rows": [
+            [
+              "OLS, panel 2",
+              "0.31",
+              "0.37",
+              "-0.33",
+              "0.02",
+              "-0.01",
+              "-0.04",
+              "0.09",
+              "-0.10",
+              "-0.05",
+              "0.00"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "caption": "`make_panel(2)`, rows 1 to 300. Only features 0, 1 and 2 truly matter."
+        }
+      },
+      "question": "Complete `lasso_support(X, y, alpha)` so it returns the sorted indices of the non-zero coefficients.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_panel(seed, n=400, p=10):\n    \"\"\"n share-months in month order, p features (z-scores), next-month return in %.\n    Only the first three features matter: 0.6, 0.4 and -0.3 per unit.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    beta = np.zeros(p)\n    beta[:3] = [0.6, 0.4, -0.3]\n    y = 0.5 + X @ beta + 3.0 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.linear_model import Lasso\n\ndef lasso_support(X, y, alpha):\n    model = ...   # Lasso with max_iter=10000\n    coef = model.coef_\n    return [int(i) for i in ...]   # indices where coef is not 0\n",
+        "solution": "import numpy as np\nfrom sklearn.linear_model import Lasso\n\ndef lasso_support(X, y, alpha):\n    model = Lasso(alpha=alpha, max_iter=10000).fit(X, y)\n    coef = model.coef_\n    return [int(i) for i in np.flatnonzero(coef)]\n",
+        "examples": [
+          {
+            "setup": "X, y = make_panel(2)",
+            "call": "lasso_support(X[:300], y[:300], 0.2)",
+            "expect": "[0, 1, 2]"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_panel(2)",
+            "call": "lasso_support(X[:300], y[:300], 0.2)",
+            "expect": "[0, 1, 2]"
+          },
+          {
+            "setup": "X, y = make_panel(4)",
+            "call": "lasso_support(X[:300], y[:300], 0.3)",
+            "expect": "[0, 1, 5]"
+          },
+          {
+            "setup": "X, y = make_panel(1)",
+            "call": "lasso_support(X[:300], y[:300], 0.15)",
+            "expect": "[0, 1, 2, 5, 7, 8, 9]"
+          },
+          {
+            "setup": "X, y = make_panel(7)",
+            "call": "lasso_support(X[:300], y[:300], 0.25)",
+            "expect": "[0, 1, 5]"
+          },
+          {
+            "setup": "X, y = make_panel(2)",
+            "call": "lasso_support(X[:300], y[:300], 0.4)",
+            "expect": "[]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_panel` panels, already defined; each list of indices must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fit the model, then look for entries of `.coef_` that are not 0."
+        },
+        {
+          "rung": "point",
+          "text": "`np.flatnonzero(coef)` lists the indices of non-zero entries in order.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`model = Lasso(alpha=alpha, max_iter=10000).fit(X, y)`, then `np.flatnonzero(coef)`."
+        }
+      ],
+      "feedback": {
+        "correct": "On panel 2 at $\\alpha = 0.2$ the lasso keeps exactly the three real features, [0, 1, 2].",
+        "generic": "Some tests failed. Fit `Lasso(alpha=alpha, max_iter=10000)` and return the positions where `.coef_` is not 0."
+      },
+      "explain": {
+        "text": "Panel 2 at $\\alpha = 0.2$ keeps features [0, 1, 2], the true ones. Panel 1 at 0.15 keeps [0, 1, 2, 5, 7, 8, 9]: four noise features slip in. At 0.4 panel 2 keeps nothing. Selection is a result of the penalty, not a guarantee of truth."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Who drops out first?",
+      "prose": "Walk $\\alpha$ up a grid and record which coefficient reaches 0 first. If several first reach 0 at the same $\\alpha$, return the smallest index.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.7
+          ],
+          "y": [
+            0,
+            0.65
+          ],
+          "grid": true,
+          "xLabel": "Penalty $\\alpha$",
+          "yLabel": "Coefficient size $|\\hat\\beta_j|$",
+          "functions": [
+            {
+              "id": "mom",
+              "expr": "max(0.6 - x, 0)",
+              "label": "mom",
+              "colour": 1,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "value",
+              "expr": "max(0.4 - x, 0)",
+              "label": "value",
+              "colour": 2,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "vol",
+              "expr": "max(0.3 - x, 0)",
+              "label": "vol",
+              "colour": 3,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "size",
+              "expr": "max(0.12 - x, 0)",
+              "label": "size",
+              "colour": 4,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "turnover",
+              "expr": "max(0.08 - x, 0)",
+              "label": "turnover",
+              "colour": 5,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "beta",
+              "expr": "max(0.05 - x, 0)",
+              "label": "beta",
+              "colour": 6,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            }
+          ],
+          "params": {
+            "a": 0.06
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0.06,
+              "label": ""
+            }
+          ]
+        },
+        "maxHeight": 300,
+        "derive": {
+          "v.x": "a",
+          "caption": "$\\alpha = {{fixed(a, 2)}}$: {{(a < 0.6 ? 1 : 0) + (a < 0.4 ? 1 : 0) + (a < 0.3 ? 1 : 0) + (a < 0.12 ? 1 : 0) + (a < 0.08 ? 1 : 0) + (a < 0.05 ? 1 : 0)}} of 6 coefficients are not zero"
+        }
+      },
+      "question": "Complete `first_to_zero(X, y, alphas)`, with `alphas` in increasing order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_panel(seed, n=400, p=10):\n    \"\"\"n share-months in month order, p features (z-scores), next-month return in %.\n    Only the first three features matter: 0.6, 0.4 and -0.3 per unit.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    beta = np.zeros(p)\n    beta[:3] = [0.6, 0.4, -0.3]\n    y = 0.5 + X @ beta + 3.0 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.linear_model import Lasso\n\ndef first_to_zero(X, y, alphas):\n    for a in alphas:\n        coef = Lasso(alpha=a, max_iter=10000).fit(X, y).coef_\n        zeros = ...   # indices where coef is 0\n        if ...:\n            return int(zeros[0])\n    return None\n",
+        "solution": "import numpy as np\nfrom sklearn.linear_model import Lasso\n\ndef first_to_zero(X, y, alphas):\n    for a in alphas:\n        coef = Lasso(alpha=a, max_iter=10000).fit(X, y).coef_\n        zeros = np.flatnonzero(coef == 0)\n        if len(zeros) > 0:\n            return int(zeros[0])\n    return None\n",
+        "examples": [
+          {
+            "setup": "X, y = make_panel(2); grid = [round(0.005 * k, 3) for k in range(1, 101)]",
+            "call": "first_to_zero(X[:300], y[:300], grid)",
+            "expect": "9"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_panel(2); grid = [round(0.005 * k, 3) for k in range(1, 101)]",
+            "call": "first_to_zero(X[:300], y[:300], grid)",
+            "expect": "9"
+          },
+          {
+            "setup": "X, y = make_panel(4); grid = [round(0.005 * k, 3) for k in range(1, 101)]",
+            "call": "first_to_zero(X[:300], y[:300], grid)",
+            "expect": "4"
+          },
+          {
+            "setup": "X, y = make_panel(1); grid = [round(0.005 * k, 3) for k in range(1, 101)]",
+            "call": "first_to_zero(X[:300], y[:300], grid)",
+            "expect": "4"
+          },
+          {
+            "setup": "X, y = make_panel(7); grid = [round(0.005 * k, 3) for k in range(1, 101)]",
+            "call": "first_to_zero(X[:300], y[:300], grid)",
+            "expect": "7"
+          },
+          {
+            "call": "first_to_zero([[1, 0], [0, 1], [-1, 0], [0, -1]], [2, 1, -2, -1], [0.1, 0.4, 0.6])",
+            "expect": "1"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: four on `make_panel` panels with alphas 0.005 to 0.5, one tiny; each index must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At each alpha, find the coefficients that are exactly 0."
+        },
+        {
+          "rung": "point",
+          "text": "Return as soon as any coefficient is 0; the smallest index comes first in `np.flatnonzero`.",
+          "highlight": [
+            "beta"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`zeros = np.flatnonzero(coef == 0)` and `if len(zeros) > 0:`."
+        }
+      ],
+      "feedback": {
+        "correct": "On panel 2 feature 9 goes first; its OLS coefficient is the smallest, 0.004.",
+        "generic": "Some tests failed. Return the index of the first 0 at the smallest alpha where any coefficient is 0."
+      },
+      "explain": {
+        "text": "On every panel here a noise feature goes first, because noise coefficients are small. The tiny case has OLS slopes 1 and 0.5 (scaled), and feature 1 goes at $\\alpha = 0.4$. With correlated features the order can surprise, as the next screen shows."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Zero is not no effect",
+      "prose": "Two momentum signals, 6-month and 12-month, have correlation 0.97. In this generated market each truly adds 0.3% per unit. A colleague fits the lasso at $\\alpha = 0.1$ on 300 share-months.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "mom6",
+            "mom12"
+          ],
+          "rows": [
+            [
+              "True effect",
+              "0.30",
+              "0.30"
+            ],
+            [
+              "OLS",
+              "0.05",
+              "0.44"
+            ],
+            [
+              "Lasso, $\\alpha = 0.1$",
+              "0.00",
+              "0.38"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "The colleague writes: 6-month momentum has no effect on returns. What is the right reading?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The two signals carry nearly the same information, and the lasso kept one of them; mom6 may matter as much as mom12",
+            "correct": true
+          },
+          {
+            "id": "noeffect",
+            "text": "Agreed: the lasso tested mom6 and found no effect",
+            "why": "You read a zero as a test result. The lasso keeps the cheaper of two near-copies; that is a choice, not a test."
+          },
+          {
+            "id": "mom12",
+            "text": "mom12 is the true signal and mom6 a weaker copy of it",
+            "why": "You trusted which one survived. On another sample from the same market the lasso kept mom6 and dropped mom12."
+          },
+          {
+            "id": "ols",
+            "text": "Trust OLS instead: mom6 is worth 0.05 and mom12 0.44",
+            "why": "OLS splits correlated signals noisily; both of its numbers are far from the true 0.30."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a correlation of 0.97 say about the two columns?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the true row with the lasso row.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With near-copies, one coefficient can do the work of both, and the penalty charges less for one large coefficient than for two."
+        }
+      ],
+      "feedback": {
+        "correct": "A lasso zero means not needed alongside the others, not no effect.",
+        "generic": "Not quite right. Think about what the lasso does with two near-identical columns.",
+        "byKey": {
+          "noeffect": "You read the zero as evidence of no effect. With a near-copy in the model, the lasso can drop either one."
+        }
+      },
+      "explain": {
+        "text": "The lasso put 0.38 on mom12 and 0 on mom6, while the truth is 0.30 each. On another sample (seed 9) it kept mom6 at 0.44 and zeroed mom12. Ridge would share the weight between them instead.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The far end",
+      "prose": "Back to the six uncorrelated features. As $\\alpha$ grows, coefficients leave one by one until none is left and the model forecasts the training mean.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.7
+          ],
+          "y": [
+            0,
+            0.65
+          ],
+          "grid": true,
+          "xLabel": "Penalty $\\alpha$",
+          "yLabel": "Coefficient size $|\\hat\\beta_j|$",
+          "functions": [
+            {
+              "id": "mom",
+              "expr": "max(0.6 - x, 0)",
+              "label": "mom",
+              "colour": 1,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "value",
+              "expr": "max(0.4 - x, 0)",
+              "label": "value",
+              "colour": 2,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "vol",
+              "expr": "max(0.3 - x, 0)",
+              "label": "vol",
+              "colour": 3,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "size",
+              "expr": "max(0.12 - x, 0)",
+              "label": "size",
+              "colour": 4,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "turnover",
+              "expr": "max(0.08 - x, 0)",
+              "label": "turnover",
+              "colour": 5,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "beta",
+              "expr": "max(0.05 - x, 0)",
+              "label": "beta",
+              "colour": 6,
+              "labelAt": 0.01,
+              "labelAnchor": "start"
+            }
+          ],
+          "params": {
+            "a": 0.3
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0.3,
+              "label": ""
+            }
+          ]
+        },
+        "maxHeight": 300,
+        "derive": {
+          "v.x": "a",
+          "caption": "$\\alpha = {{fixed(a, 2)}}$: {{(a < 0.6 ? 1 : 0) + (a < 0.4 ? 1 : 0) + (a < 0.3 ? 1 : 0) + (a < 0.12 ? 1 : 0) + (a < 0.08 ? 1 : 0) + (a < 0.05 ? 1 : 0)}} of 6 coefficients are not zero"
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 0.7,
+            "step": 0.01,
+            "start": 0.3,
+            "label": "Penalty $\\alpha$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "What is the smallest $\\alpha$ at which every coefficient is 0?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Smallest alpha with every coefficient zero",
+        "accept": "0.6: the largest OLS size, mom's.",
+        "wrong": [
+          {
+            "id": "inf",
+            "value": 1000000,
+            "tol": {
+              "abs": 999000
+            }
+          },
+          {
+            "id": "sum",
+            "value": 1.55,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "small",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which curve reaches the axis last?"
+        },
+        {
+          "rung": "point",
+          "text": "mom has the largest OLS size.",
+          "highlight": [
+            "mom"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "mom's size is 0.6, so it reaches 0 at $\\alpha = 0.6$."
+        }
+      ],
+      "feedback": {
+        "correct": "At $\\alpha = 0.6$ the last coefficient, mom, reaches 0.",
+        "generic": "Not quite right. Find where the last curve meets the axis.",
+        "byKey": {
+          "inf": "That is ridge's far end. The lasso empties the model at a finite $\\alpha$.",
+          "sum": "You added the sizes. The model is empty once $\\alpha$ passes the largest one.",
+          "small": "That is where the first coefficient leaves, not the last."
+        }
+      },
+      "explain": {
+        "text": "Every coefficient is 0 once $\\alpha \\ge \\max_j |b_j| = 0.6$, and the forecast is the training mean. In general that point is $\\alpha_{\\max} = \\max_j |\\mathbf{x}_j^T(\\mathbf{y} - \\bar y)| / n$ for centred columns. Solvers start their grid there and walk down.",
+        "canvas": {
+          "params": {
+            "a": 0.6
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The lasso, and its units",
+      "prose": "Textbooks write the lasso as $\\sum_i (y_i - \\hat y_i)^2 + \\lambda\\sum_j |\\beta_j|$. scikit-learn divides the first term by $2n$, so $$\\lambda = 2n\\alpha.$$ `Ridge(alpha)` uses no such factor. The **elastic net** mixes both penalties: it zeroes coefficients but shares weight across correlated features.",
+      "question": "A lasso on $n = 200$ rows uses `Lasso(alpha=0.1)`. What is the textbook $\\lambda$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "r",
+            "text": "40",
+            "correct": true
+          },
+          {
+            "id": "n",
+            "text": "20",
+            "why": "You multiplied by $n$ only. The $\\tfrac{1}{2n}$ in front of the squared errors makes the factor $2n$."
+          },
+          {
+            "id": "same",
+            "text": "0.1",
+            "why": "You assumed the conventions match. They differ by $2n$."
+          },
+          {
+            "id": "div",
+            "text": "0.00025",
+            "why": "You divided by $2n$. Multiply both sides of scikit-learn's objective by $2n$ instead."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply scikit-learn's objective by $2n$."
+        },
+        {
+          "rung": "point",
+          "text": "The squared errors lose their $\\tfrac{1}{2n}$; the penalty becomes $2n\\alpha\\sum|\\beta_j|$."
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times 200 \\times 0.1 = 40$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\lambda = 2 \\times 200 \\times 0.1 = 40$.",
+        "generic": "Not quite right. Use $\\lambda = 2n\\alpha$."
+      },
+      "explain": {
+        "text": "Multiplying an objective by a constant does not move its minimum, so both forms give the same coefficients when $\\lambda = 2n\\alpha$. Check the convention before copying a penalty from a paper."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two hundred candidate signals",
+      "prose": "A desk screens 200 candidate signals on 240 months of a strategy's returns. At $\\alpha = 0.53$ the lasso keeps 5. Refitted by OLS they explain 9.8% of the 240 months. We generated all 200 as pure noise.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Candidates",
+              "200"
+            ],
+            [
+              "Survivors at $\\alpha = 0.53$",
+              "5"
+            ],
+            [
+              "$R^2$, 240 months used",
+              "9.8%"
+            ],
+            [
+              "$R^2$, next 120 months",
+              "-13.9%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "If each of 200 pure-noise signals were tested on its own at the 5% level, how many would you expect to pass?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "signals",
+        "label": "Expected number of false passes",
+        "accept": "10: $200 \\times 0.05$.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each noise signal passes a 5% test with probability 0.05."
+        },
+        {
+          "rung": "point",
+          "text": "Expected passes add up across the 200 tests.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$200 \\times 0.05 = 10$."
+        }
+      ],
+      "feedback": {
+        "correct": "Ten false discoveries are expected from noise alone.",
+        "generic": "Not quite right. Multiply the number of tests by the false-positive rate.",
+        "byKey": {
+          "zero": "You expected noise never to pass. At 5%, one in twenty does by chance.",
+          "five": "That is the 5% read as a count. It is a rate: 5% of 200.",
+          "one": "One would be the expected count for 20 tests, not 200."
+        }
+      },
+      "explain": {
+        "text": "Searching 200 signals guarantees survivors, as the `testing` course's multiple-testing lesson showed. These five scored -13.9% on the next 120 months. A desk wants an economic reason, a much stricter threshold, and fresh data before trading any of them."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The lasso penalises $\\sum_j |\\beta_j|$; coefficients move towards 0 and stop there, one by one, so it selects features.",
+      "The corner of $|\\beta|$ at 0, like the diamond's corners, is what makes exact zeros; ridge's smooth penalty never does.",
+      "A zero means not needed alongside the others: with correlated features the lasso keeps one, and searches over many signals keep some noise."
+    ],
+    "formula": {
+      "name": "Lasso",
+      "tex": "\\min_{\\boldsymbol\\beta} \\ \\frac{1}{2n}\\lVert\\mathbf{y} - \\mathbf{X}\\boldsymbol\\beta\\rVert^2 + \\alpha\\lVert\\boldsymbol\\beta\\rVert_1, \\qquad \\lambda_{\\text{textbook}} = 2n\\alpha",
+      "note": "One coefficient: $\\operatorname{sign}(b)\\max(|b| - \\alpha, 0)$. `Lasso(alpha=a, max_iter=10000)`."
+    },
+    "trap": "A zeroed coefficient does not mean no effect: of two correlated signals the lasso keeps one, and which one can change with the sample."
+  },
+  "quiz": [
+    {
+      "id": "q-train-alpha",
+      "difficulty": 2,
+      "prose": "A colleague chooses the lasso's $\\alpha$ by the lowest training MSE.",
+      "question": "Which $\\alpha$ will they pick?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "The smallest on the grid, the one closest to OLS",
+            "correct": true
+          },
+          {
+            "id": "mid",
+            "text": "One in the middle, where bias and variance balance",
+            "why": "That balance shows only on held-out rows. On training rows less penalty always fits better."
+          },
+          {
+            "id": "big",
+            "text": "The largest, because it keeps the fewest features",
+            "why": "Fewer features fit the training rows worse, not better."
+          },
+          {
+            "id": "random",
+            "text": "It depends on the data",
+            "why": "On training rows it does not: the penalty only ever raises training error."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The penalty can only cost training fit, so training MSE always prefers none.",
+        "generic": "Not quite right. Ask what the penalty does to the fit on the rows it was fitted to."
+      },
+      "explain": {
+        "text": "Any penalty moves the coefficients away from the training least squares solution, so training MSE rises with $\\alpha$. Choosing by training error always picks $\\alpha \\approx 0$."
+      }
+    },
+    {
+      "id": "q-identical",
+      "difficulty": 3,
+      "prose": "A dataset contains the same column twice, $x_3$ and an exact copy $x_4$, both useful.",
+      "question": "What do ridge and the lasso do with the pair?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "r",
+            "text": "Ridge splits the weight equally; the lasso can put it all on one copy",
+            "correct": true
+          },
+          {
+            "id": "both-split",
+            "text": "Both split it equally",
+            "why": "Splitting costs the lasso nothing extra, but nothing makes it split; scikit-learn's solver gives it all to the first copy it updates."
+          },
+          {
+            "id": "both-one",
+            "text": "Both put it all on one copy",
+            "why": "For ridge, $c^2/2 + c^2/2 < c^2$, so splitting is strictly cheaper."
+          },
+          {
+            "id": "err",
+            "text": "Both fail, like OLS",
+            "why": "Penalised fits have an answer even with duplicate columns; for ridge it is unique."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Squares reward sharing; absolute values are indifferent to it.",
+        "generic": "Not quite right. Compare the penalties of $(c, 0)$ and $(c/2, c/2)$."
+      },
+      "explain": {
+        "text": "Ridge: $c^2 > 2(c/2)^2$, so it shares. Lasso: $|c| = |c/2| + |c/2|$, so any split costs the same, and the solver usually leaves one copy at 0."
+      }
+    },
+    {
+      "id": "q-soft",
+      "difficulty": 2,
+      "prose": "Uncorrelated z-scored features. A coefficient's OLS value is $-0.45$.",
+      "question": "What is its lasso value at $\\alpha = 0.3$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.15,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Lasso coefficient",
+        "accept": "−0.15: $-0.45 + 0.3$.",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "away",
+            "value": -0.75,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Moved 0.3 towards 0, sign kept.",
+        "generic": "Not quite right. Use $\\operatorname{sign}(b)\\max(|b| - \\alpha, 0)$.",
+        "byKey": {
+          "sign": "You dropped the sign. Soft thresholding keeps it.",
+          "away": "You moved it away from 0.",
+          "zero": "Its size, 0.45, is above 0.3, so it survives."
+        }
+      },
+      "explain": {
+        "text": "$\\operatorname{sign}(-0.45)\\max(0.45 - 0.3, 0) = -0.15$."
+      }
+    }
+  ]
+}

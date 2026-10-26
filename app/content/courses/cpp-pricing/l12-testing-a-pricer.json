@@ -1,0 +1,967 @@
+{
+  "id": "l12-testing-a-pricer",
+  "course": "cpp-pricing",
+  "title": "Testing a pricer",
+  "minutes": 15,
+  "objectives": [
+    "Test a pricer against limits, put-call parity and known prices."
+  ],
+  "skills": [
+    "cx-testing",
+    "cx-pricers"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where the price goes",
+      "prose": "Here is the Black-Scholes call at $S = K = 100$, $r = 5\\%$, $T = 1$, as volatility $\\sigma$ changes. Drag the point towards the left edge. With no volatility at all, the share simply grows at the risk-free rate.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            26
+          ],
+          "xLabel": "σ",
+          "yLabel": "call (£)",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "100 * Phi((0.05 + x^2 / 2) / x) - 100 * exp(-0.05) * Phi((0.05 - x^2 / 2) / x)",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "call"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 0.2,
+              "y": 10.4506,
+              "on": "f",
+              "drag": true
+            }
+          ]
+        },
+        "derive": {
+          "caption": "σ = {{fixed(p.x, 3)}}: call £{{fixed(p.y, 4)}}"
+        }
+      },
+      "question": "As $\\sigma \\to 0$, what does the call's price approach, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.8771,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "accept": "£4.8771 = 100 − 100e^{−0.05}, within 0.01.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "nodisc",
+            "value": 5.127,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag the point to $\\sigma = 0.01$ and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "Without volatility the share ends at $100e^{0.05}$ for sure."
+        },
+        {
+          "rung": "step",
+          "text": "Pay-off $100e^{0.05} - 100$, discounted: $100 - 100e^{-0.05}$."
+        }
+      ],
+      "feedback": {
+        "correct": "£4.8771: a sure payoff, discounted.",
+        "generic": "Not quite right. Drag the point to the far left and read the caption.",
+        "byKey": {
+          "zero": "An at-the-money call with no volatility is not worthless: the share drifts up at 5%, so it ends in the money for sure.",
+          "nodisc": "£5.127 is the payoff in a year. Discount it to today: $100 - 100e^{-0.05}$."
+        }
+      },
+      "explain": {
+        "text": "With $\\sigma = 0$ the share ends at $100e^{0.05}$, so the call pays $100e^{0.05} - 100$ for sure, worth $100 - 100e^{-0.05} = 4.8771$ today. A known answer at an extreme like this is a **limit**, and it makes a test.",
+        "canvas": {
+          "points": {
+            "p": {
+              "x": 0.01
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Deep in and out of the money",
+      "prose": "Now $\\sigma = 20\\%$ again and the share price $S$ moves. The dashed line is $S - Ke^{-rT}$, a forward bought today. Drag the point to both ends.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            40,
+            200
+          ],
+          "y": [
+            0,
+            110
+          ],
+          "xLabel": "S",
+          "yLabel": "call (£)",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x * Phi((ln(x / 100) + 0.07) / 0.2) - 100 * exp(-0.05) * Phi((ln(x / 100) + 0.03) / 0.2)",
+              "domain": [
+                40,
+                200
+              ],
+              "label": "call"
+            },
+            {
+              "id": "fwd",
+              "expr": "x - 100 * exp(-0.05)",
+              "domain": [
+                95.2,
+                200
+              ],
+              "label": "S − Ke^(−rT)",
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 100,
+              "y": 10.4506,
+              "on": "f",
+              "drag": true
+            }
+          ]
+        },
+        "derive": {
+          "caption": "S = {{fixed(p.x, 1)}}: call £{{fixed(p.y, 4)}}"
+        }
+      },
+      "question": "At $S = 200$, deep in the money, which value is the call closest to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fwd",
+            "text": "$S - Ke^{-rT} = 104.88$",
+            "correct": true
+          },
+          {
+            "id": "intr",
+            "text": "$S - K = 100$",
+            "why": "You used the payoff today. The strike is paid in a year, so it is discounted: the call is worth $S - Ke^{-rT}$."
+          },
+          {
+            "id": "s",
+            "text": "$S = 200$",
+            "why": "The call never beats the share itself; you still pay the strike. It is worth about £95 less."
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "That is the other end: far out of the money, at $S = 40$, the call is worth almost nothing."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag the point to $S = 200$ and compare it with the dashed line."
+        },
+        {
+          "rung": "point",
+          "text": "The dashed line is the forward.",
+          "highlight": [
+            "fwd"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Deep in the money the call is a forward; deep out it is worth nothing.",
+        "generic": "Not quite right. Drag to $S = 200$ and read the caption."
+      },
+      "explain": {
+        "text": "At $S = 200$ the call is £104.8777, against $200 - 95.1229 = 104.8771$. At $S = 50$ it is £0.0024. Both limits are values a test can check without any formula of its own.",
+        "canvas": {
+          "points": {
+            "p": {
+              "x": 200
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Your first two tests",
+      "prose": "The hidden code gives you a small test kit: `TEST(name) { ... }` registers a test, and `CHECK_CLOSE(a, b, tol)` fails it when $|a - b| > \\text{tol}$. Write a **put-call parity** test, $C - P = S - Ke^{-rT}$, and the $\\sigma \\to 0$ **limit test** for the call.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "PASS test_parity",
+            "PASS test_call_tiny_vol",
+            "2 passed, 0 failed"
+          ],
+          "title": "What it should print"
+        },
+        "state": {}
+      },
+      "question": "Fill in both tests. Check also runs them against two planted bugs.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\n// Hidden: TEST, CHECK, CHECK_CLOSE, bs_call, bs_put and run_tests().\nTEST(test_parity) {\n    double s = 100, k = 100, r = 0.05, sigma = 0.2, t = 1;\n    // C - P = S - K e^{-rT}, within 1e-9\n}\n\nTEST(test_call_tiny_vol) {\n    // at sigma = 1e-6 the call is worth S - K e^{-rT}, within 1e-6\n}\n",
+        "solution": "#include <cmath>\n\n// Hidden: TEST, CHECK, CHECK_CLOSE, bs_call, bs_put and run_tests().\nTEST(test_parity) {\n    double s = 100, k = 100, r = 0.05, sigma = 0.2, t = 1;\n    double lhs = bs_call(s, k, r, sigma, t) - bs_put(s, k, r, sigma, t);\n    CHECK_CLOSE(lhs, s - k * std::exp(-r * t), 1e-9);\n}\n\nTEST(test_call_tiny_vol) {\n    double limit = 100 - 100 * std::exp(-0.05);\n    CHECK_CLOSE(bs_call(100, 100, 0.05, 1e-6, 1), limit, 1e-6);\n}\n",
+        "prelude": "#include <cmath>\n#include <cstdio>\n#include <string>\n#include <vector>\n\nstruct ZqTest { const char* name; void (*fn)(); };\nstd::vector<ZqTest>& zq_registry() { static std::vector<ZqTest> t; return t; }\nstruct ZqAdd { ZqAdd(const char* n, void (*f)()) { zq_registry().push_back({n, f}); } };\nint zq_bad = 0, zq_passed = 0, zq_failed = 0;\n\n#define TEST(name) void name(); static ZqAdd name##_zq(#name, name); void name()\n#define CHECK(cond) do { if (!(cond)) { ++zq_bad; std::printf(\"  %s:%d: CHECK(%s) failed\\n\", __FILE__, __LINE__, #cond); } } while (0)\n#define CHECK_CLOSE(a, b, tol) do { double zq_a = (a), zq_b = (b); if (!(std::fabs(zq_a - zq_b) <= (tol))) { ++zq_bad; std::printf(\"  %s:%d: CHECK_CLOSE(%s, %s, %s) failed: %.10g and %.10g\\n\", __FILE__, __LINE__, #a, #b, #tol, zq_a, zq_b); } } while (0)\n#include <algorithm>\n#include <stdexcept>\n\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s, double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    ++zq_trees;\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\n\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\n\ndouble bs_call_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n\ndouble bs_put_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1);\n}\n\ndouble bs_call_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return s * norm_cdf(d1) - k * norm_cdf(d1 - sigma * std::sqrt(t));\n}\ndouble bs_put_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return k * norm_cdf(-(d1 - sigma * std::sqrt(t))) - s * norm_cdf(-d1);\n}\ndouble bs_put_buggy(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(d2) - s * norm_cdf(-d1);\n}\ndouble bs_delta_ok(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_d2(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_disc(double s, double k, double r, double sigma, double t) {\n    return std::exp(-r * t) * bs_delta_ok(s, k, r, sigma, t);\n}\ndouble tree_call_ok(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n, false);\n}\ndouble tree_call_capped(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n > 64 ? 64 : n, false);\n}\ndouble tree_call_nodisc(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, 0.0, sigma, t, n, false);\n}\ntypedef double (*Pricer)(double, double, double, double, double);\nPricer bs_call = bs_call_ok, bs_put = bs_put_ok, bs_delta_call = bs_delta_ok;\ndouble (*tree_call)(double, double, double, double, double, int) = tree_call_ok;\n",
+        "postlude": "std::string run_tests() {\n    zq_passed = zq_failed = 0;\n    for (const ZqTest& t : zq_registry()) {\n        int before = zq_bad;\n        t.fn();\n        if (zq_bad == before) { ++zq_passed; std::printf(\"PASS %s\\n\", t.name); }\n        else { ++zq_failed; std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    return std::to_string(zq_passed) + \" passed, \" + std::to_string(zq_failed) + \" failed\";\n}\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "2 passed, 0 failed"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_tests()",
+            "expect": "2 passed, 0 failed"
+          },
+          {
+            "setup": "bs_put = bs_put_nodisc;",
+            "call": "run_tests()",
+            "expect": "1 passed, 1 failed"
+          },
+          {
+            "setup": "bs_call = bs_call_nodisc;",
+            "call": "run_tests()",
+            "expect": "0 passed, 2 failed"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 runs your tests on correct pricers. Test 2 swaps in a put that forgets to discount the strike: your parity test must fail and the limit test pass. Test 3 does the same to the call: both must fail."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Inside a test, compute both sides and compare them with `CHECK_CLOSE`."
+        },
+        {
+          "rung": "point",
+          "text": "Parity: `CHECK_CLOSE(bs_call(...) - bs_put(...), s - k * std::exp(-r * t), 1e-9);`"
+        },
+        {
+          "rung": "step",
+          "text": "Limit: `CHECK_CLOSE(bs_call(100, 100, 0.05, 1e-6, 1), 100 - 100 * std::exp(-0.05), 1e-6);`"
+        }
+      ],
+      "feedback": {
+        "correct": "Two tests, and both bite on real bugs.",
+        "generic": "Not quite right. Read the PASS and FAIL lines under each test row.",
+        "byKey": {
+          "test-2": "With the put's discount missing, your parity test should fail. Does it compare $C - P$ with $S - Ke^{-rT}$, not with $S - K$?",
+          "test-3": "With the call's discount missing, both tests should fail. Does each test call `bs_call` and check against a value it does not get from `bs_call`?"
+        }
+      },
+      "explain": {
+        "text": "Parity links two pricers by a law that holds for any model without arbitrage, so it catches a bug in either. The limit pins the call to a value from first principles. Neither test copies the formula it tests.\n\n```cpp\nCHECK_CLOSE(c - p, s - k * std::exp(-r * t), 1e-9);\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The tree must converge",
+      "prose": "Level 2's tree tends to Black-Scholes as $n$ grows: at $n = 512$ it is 10.4467, within 0.004 of 10.4506. A **convergence test** checks that, with a tolerance tight enough to bite. Check plants two bugs: a tree that quietly stops at 64 steps, and one that drops the interest rate.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "n =  64: 10.4194",
+            "n = 128: 10.4350",
+            "n = 512: 10.4467",
+            "Black-Scholes: 10.4506"
+          ],
+          "title": "Level 2's tree"
+        },
+        "state": {}
+      },
+      "question": "Write the convergence test: `tree_call` at $n = 512$ within 0.01 of `bs_call`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\n// Hidden: tree_call(s, k, r, sigma, t, n), bs_call and the test kit.\nTEST(test_tree_converges) {\n    // the tree at n = 512 is within 0.01 of Black-Scholes\n}\n",
+        "solution": "#include <cmath>\n\n// Hidden: tree_call(s, k, r, sigma, t, n), bs_call and the test kit.\nTEST(test_tree_converges) {\n    double tree = tree_call(100, 100, 0.05, 0.2, 1, 512);\n    double exact = bs_call(100, 100, 0.05, 0.2, 1);\n    CHECK_CLOSE(tree, exact, 0.01);\n}\n",
+        "prelude": "#include <cmath>\n#include <cstdio>\n#include <string>\n#include <vector>\n\nstruct ZqTest { const char* name; void (*fn)(); };\nstd::vector<ZqTest>& zq_registry() { static std::vector<ZqTest> t; return t; }\nstruct ZqAdd { ZqAdd(const char* n, void (*f)()) { zq_registry().push_back({n, f}); } };\nint zq_bad = 0, zq_passed = 0, zq_failed = 0;\n\n#define TEST(name) void name(); static ZqAdd name##_zq(#name, name); void name()\n#define CHECK(cond) do { if (!(cond)) { ++zq_bad; std::printf(\"  %s:%d: CHECK(%s) failed\\n\", __FILE__, __LINE__, #cond); } } while (0)\n#define CHECK_CLOSE(a, b, tol) do { double zq_a = (a), zq_b = (b); if (!(std::fabs(zq_a - zq_b) <= (tol))) { ++zq_bad; std::printf(\"  %s:%d: CHECK_CLOSE(%s, %s, %s) failed: %.10g and %.10g\\n\", __FILE__, __LINE__, #a, #b, #tol, zq_a, zq_b); } } while (0)\n#include <algorithm>\n#include <stdexcept>\n\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s, double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    ++zq_trees;\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\n\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\n\ndouble bs_call_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n\ndouble bs_put_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1);\n}\n\ndouble bs_call_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return s * norm_cdf(d1) - k * norm_cdf(d1 - sigma * std::sqrt(t));\n}\ndouble bs_put_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return k * norm_cdf(-(d1 - sigma * std::sqrt(t))) - s * norm_cdf(-d1);\n}\ndouble bs_put_buggy(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(d2) - s * norm_cdf(-d1);\n}\ndouble bs_delta_ok(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_d2(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_disc(double s, double k, double r, double sigma, double t) {\n    return std::exp(-r * t) * bs_delta_ok(s, k, r, sigma, t);\n}\ndouble tree_call_ok(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n, false);\n}\ndouble tree_call_capped(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n > 64 ? 64 : n, false);\n}\ndouble tree_call_nodisc(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, 0.0, sigma, t, n, false);\n}\ntypedef double (*Pricer)(double, double, double, double, double);\nPricer bs_call = bs_call_ok, bs_put = bs_put_ok, bs_delta_call = bs_delta_ok;\ndouble (*tree_call)(double, double, double, double, double, int) = tree_call_ok;\n",
+        "postlude": "std::string run_tests() {\n    zq_passed = zq_failed = 0;\n    for (const ZqTest& t : zq_registry()) {\n        int before = zq_bad;\n        t.fn();\n        if (zq_bad == before) { ++zq_passed; std::printf(\"PASS %s\\n\", t.name); }\n        else { ++zq_failed; std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    return std::to_string(zq_passed) + \" passed, \" + std::to_string(zq_failed) + \" failed\";\n}\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "1 passed, 0 failed"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_tests()",
+            "expect": "1 passed, 0 failed"
+          },
+          {
+            "setup": "tree_call = tree_call_capped;",
+            "call": "run_tests()",
+            "expect": "0 passed, 1 failed"
+          },
+          {
+            "setup": "tree_call = tree_call_nodisc;",
+            "call": "run_tests()",
+            "expect": "0 passed, 1 failed"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Three hidden runs of your test: on the correct tree it passes; on a tree capped at 64 steps (10.4194) and on one with the rate dropped it must fail."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Price both, then `CHECK_CLOSE` them."
+        },
+        {
+          "rung": "point",
+          "text": "`tree_call(100, 100, 0.05, 0.2, 1, 512)` against `bs_call(100, 100, 0.05, 0.2, 1)`."
+        },
+        {
+          "rung": "step",
+          "text": "Tolerance `0.01`: the capped tree is 0.031 away, the correct one 0.004."
+        }
+      ],
+      "feedback": {
+        "correct": "Tight enough to catch a tree 0.03 off, loose enough for the 0.004 the tree really has.",
+        "generic": "Not quite right. Read the PASS and FAIL lines under each row.",
+        "byKey": {
+          "test-2": "Your test passed a tree stuck at 64 steps, 0.031 away. Is the tolerance looser than 0.01, or is $n$ below 512?",
+          "test-1": "Your test failed the correct tree. At $n = 512$ it is 0.004 from Black-Scholes, so 0.01 must pass."
+        }
+      },
+      "explain": {
+        "text": "The tolerance comes from what we know: the tree's error at $n = 512$ is about 0.004, so 0.01 passes it with room. A tolerance of 0.05 would pass the capped tree too, and then the test could never fail on that bug."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A test that agrees with itself",
+      "prose": "A colleague tests the call against a value they work out in the test:\n\n```cpp\nTEST(test_call_value) {\n    double d1 = (std::log(100.0 / 100) + 0.07) / 0.2;\n    double d2 = d1 - 0.2;\n    double expected = 100 * norm_cdf(d1)\n        - 100 * std::exp(-0.05) * norm_cdf(d2);\n    CHECK_CLOSE(bs_call(100, 100, 0.05, 0.2, 1), expected, 1e-12);\n}\n```",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "PASS test_call_value",
+            "1 passed, 0 failed"
+          ],
+          "title": "Their output"
+        },
+        "state": {}
+      },
+      "question": "Suppose `norm_cdf` has a bug. Does this test catch it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "no",
+            "text": "No: `expected` uses the same `norm_cdf`, so both sides carry the bug and still agree",
+            "correct": true
+          },
+          {
+            "id": "tight",
+            "text": "Yes: a tolerance of 1e-12 is strict enough to catch anything",
+            "why": "A strict tolerance only helps if the two sides are computed differently. Here both share the faulty function, so they match to every digit."
+          },
+          {
+            "id": "hand",
+            "text": "Yes: it works out $d_1$ and $d_2$ by hand",
+            "why": "Writing $d_1$ out again is not independent: the result still goes through the same `norm_cdf` as the pricer."
+          },
+          {
+            "id": "loose",
+            "text": "No, because 1e-12 is too loose",
+            "why": "The tolerance is fine. The flaw is that the expected value repeats the code under test."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which functions does `expected` call?"
+        },
+        {
+          "rung": "point",
+          "text": "If `norm_cdf` returned the wrong number, what would happen to both sides?"
+        }
+      ],
+      "feedback": {
+        "correct": "A test that recomputes the formula is circular.",
+        "generic": "Not quite right. Follow a wrong `norm_cdf` through both sides.",
+        "byKey": {
+          "tight": "You trusted the tolerance, but both sides use the same `norm_cdf`. A wrong value on one side is the same wrong value on the other."
+        }
+      },
+      "explain": {
+        "text": "The expected value repeats the pricer's own steps, so any bug in them cancels. Check against something independent: a published value (10.4506), a limit, parity, or a different method such as the tree. Here `CHECK_CLOSE(bs_call(...), 10.4506, 1e-4)` would do.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l1"
+            ]
+          },
+          "caption": "It passes whatever `norm_cdf` returns."
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Catch the planted bug",
+      "prose": "Somebody changed one character in `bs_put`: it now uses $N(d_2)$ where it needs $N(-d_2)$. Write exactly one test that fails on that version and passes on the correct one. The correct put at the standard inputs is £5.5735.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "correct put:   5.5735",
+            "changed put:  16.9155"
+          ],
+          "title": "The two versions"
+        },
+        "state": {}
+      },
+      "question": "Write one `TEST` that catches the changed `bs_put`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\n// Hidden: bs_call, bs_put and the test kit.\nTEST(test_put) {\n    // one check that a wrong bs_put cannot pass\n}\n",
+        "solution": "#include <cmath>\n\n// Hidden: bs_call, bs_put and the test kit.\nTEST(test_put_known_value) {\n    CHECK_CLOSE(bs_put(100, 100, 0.05, 0.2, 1), 5.5735, 1e-4);\n}\n",
+        "prelude": "#include <cmath>\n#include <cstdio>\n#include <string>\n#include <vector>\n\nstruct ZqTest { const char* name; void (*fn)(); };\nstd::vector<ZqTest>& zq_registry() { static std::vector<ZqTest> t; return t; }\nstruct ZqAdd { ZqAdd(const char* n, void (*f)()) { zq_registry().push_back({n, f}); } };\nint zq_bad = 0, zq_passed = 0, zq_failed = 0;\n\n#define TEST(name) void name(); static ZqAdd name##_zq(#name, name); void name()\n#define CHECK(cond) do { if (!(cond)) { ++zq_bad; std::printf(\"  %s:%d: CHECK(%s) failed\\n\", __FILE__, __LINE__, #cond); } } while (0)\n#define CHECK_CLOSE(a, b, tol) do { double zq_a = (a), zq_b = (b); if (!(std::fabs(zq_a - zq_b) <= (tol))) { ++zq_bad; std::printf(\"  %s:%d: CHECK_CLOSE(%s, %s, %s) failed: %.10g and %.10g\\n\", __FILE__, __LINE__, #a, #b, #tol, zq_a, zq_b); } } while (0)\n#include <algorithm>\n#include <stdexcept>\n\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s, double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    ++zq_trees;\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\n\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\n\ndouble bs_call_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n\ndouble bs_put_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1);\n}\n\ndouble bs_call_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return s * norm_cdf(d1) - k * norm_cdf(d1 - sigma * std::sqrt(t));\n}\ndouble bs_put_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return k * norm_cdf(-(d1 - sigma * std::sqrt(t))) - s * norm_cdf(-d1);\n}\ndouble bs_put_buggy(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(d2) - s * norm_cdf(-d1);\n}\ndouble bs_delta_ok(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_d2(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_disc(double s, double k, double r, double sigma, double t) {\n    return std::exp(-r * t) * bs_delta_ok(s, k, r, sigma, t);\n}\ndouble tree_call_ok(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n, false);\n}\ndouble tree_call_capped(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n > 64 ? 64 : n, false);\n}\ndouble tree_call_nodisc(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, 0.0, sigma, t, n, false);\n}\ntypedef double (*Pricer)(double, double, double, double, double);\nPricer bs_call = bs_call_ok, bs_put = bs_put_ok, bs_delta_call = bs_delta_ok;\ndouble (*tree_call)(double, double, double, double, double, int) = tree_call_ok;\n",
+        "postlude": "std::string run_tests() {\n    zq_passed = zq_failed = 0;\n    for (const ZqTest& t : zq_registry()) {\n        int before = zq_bad;\n        t.fn();\n        if (zq_bad == before) { ++zq_passed; std::printf(\"PASS %s\\n\", t.name); }\n        else { ++zq_failed; std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    return std::to_string(zq_passed) + \" passed, \" + std::to_string(zq_failed) + \" failed\";\n}\n",
+        "examples": [
+          {
+            "setup": "bs_put = bs_put_buggy;",
+            "call": "run_tests()",
+            "expect": "0 passed, 1 failed"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "bs_put = bs_put_buggy;",
+            "call": "run_tests()",
+            "expect": "0 passed, 1 failed"
+          },
+          {
+            "call": "run_tests()",
+            "expect": "1 passed, 0 failed"
+          },
+          {
+            "setup": "bs_put = bs_put_nodisc;",
+            "call": "run_tests()",
+            "expect": "0 passed, 1 failed"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Three hidden runs: the planted $N(d_2)$ bug must make your test fail, the correct put must make it pass, and a second bug (the strike not discounted, 7.7213) must also fail it."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What do you know about the put that does not come from `bs_put` itself?"
+        },
+        {
+          "rung": "point",
+          "text": "A known value (5.5735), or parity with `bs_call`."
+        },
+        {
+          "rung": "step",
+          "text": "`CHECK_CLOSE(bs_put(100, 100, 0.05, 0.2, 1), 5.5735, 1e-4);`"
+        }
+      ],
+      "feedback": {
+        "correct": "Your test fails on the bug and passes on the fix.",
+        "generic": "Not quite right. Read which run went the wrong way.",
+        "byKey": {
+          "test-1": "Your test passed the bugged put. A check such as `bs_put(...) > 0` holds for both: compare with an independent value.",
+          "test-2": "Your test failed the correct put. Is the tolerance at least 1e-4 against the rounded 5.5735?"
+        }
+      },
+      "explain": {
+        "text": "A good test is one a plausible bug cannot pass. The known value 5.5735 or put-call parity both work; `bs_put(...) > 0` does not, because 16.9155 is positive too. Planting a bug on purpose is how you test your tests."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A Greek by bumping",
+      "prose": "Delta is $\\partial C/\\partial S$, and the pricer has a closed form, `bs_delta_call`, which is $N(d_1)$. Check it against the **central difference**\n\n$$\\Delta \\approx \\frac{C(S + h) - C(S - h)}{2h},$$\n\nwhose error shrinks like $h^2$. With $h = 0.01$ it is about $10^{-8}$ here, so a tolerance of $10^{-5}$ has room.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "bs_delta_call:      0.636831",
+            "central difference: 0.636831"
+          ],
+          "title": "At the standard inputs"
+        },
+        "state": {}
+      },
+      "question": "Write the finite-difference delta test with $h = 0.01$ and tolerance 1e-5.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\n// Hidden: bs_call, bs_delta_call and the test kit.\nTEST(test_delta_matches_bumps) {\n    double h = 0.01;\n    // central difference of bs_call in s, against bs_delta_call, within 1e-5\n}\n",
+        "solution": "#include <cmath>\n\n// Hidden: bs_call, bs_delta_call and the test kit.\nTEST(test_delta_matches_bumps) {\n    double h = 0.01;\n    double up = bs_call(100 + h, 100, 0.05, 0.2, 1);\n    double down = bs_call(100 - h, 100, 0.05, 0.2, 1);\n    double fd = (up - down) / (2 * h);\n    CHECK_CLOSE(bs_delta_call(100, 100, 0.05, 0.2, 1), fd, 1e-5);\n}\n",
+        "prelude": "#include <cmath>\n#include <cstdio>\n#include <string>\n#include <vector>\n\nstruct ZqTest { const char* name; void (*fn)(); };\nstd::vector<ZqTest>& zq_registry() { static std::vector<ZqTest> t; return t; }\nstruct ZqAdd { ZqAdd(const char* n, void (*f)()) { zq_registry().push_back({n, f}); } };\nint zq_bad = 0, zq_passed = 0, zq_failed = 0;\n\n#define TEST(name) void name(); static ZqAdd name##_zq(#name, name); void name()\n#define CHECK(cond) do { if (!(cond)) { ++zq_bad; std::printf(\"  %s:%d: CHECK(%s) failed\\n\", __FILE__, __LINE__, #cond); } } while (0)\n#define CHECK_CLOSE(a, b, tol) do { double zq_a = (a), zq_b = (b); if (!(std::fabs(zq_a - zq_b) <= (tol))) { ++zq_bad; std::printf(\"  %s:%d: CHECK_CLOSE(%s, %s, %s) failed: %.10g and %.10g\\n\", __FILE__, __LINE__, #a, #b, #tol, zq_a, zq_b); } } while (0)\n#include <algorithm>\n#include <stdexcept>\n\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s, double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    ++zq_trees;\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\n\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\n\ndouble bs_call_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n\ndouble bs_put_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1);\n}\n\ndouble bs_call_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return s * norm_cdf(d1) - k * norm_cdf(d1 - sigma * std::sqrt(t));\n}\ndouble bs_put_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return k * norm_cdf(-(d1 - sigma * std::sqrt(t))) - s * norm_cdf(-d1);\n}\ndouble bs_put_buggy(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(d2) - s * norm_cdf(-d1);\n}\ndouble bs_delta_ok(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_d2(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_disc(double s, double k, double r, double sigma, double t) {\n    return std::exp(-r * t) * bs_delta_ok(s, k, r, sigma, t);\n}\ndouble tree_call_ok(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n, false);\n}\ndouble tree_call_capped(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n > 64 ? 64 : n, false);\n}\ndouble tree_call_nodisc(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, 0.0, sigma, t, n, false);\n}\ntypedef double (*Pricer)(double, double, double, double, double);\nPricer bs_call = bs_call_ok, bs_put = bs_put_ok, bs_delta_call = bs_delta_ok;\ndouble (*tree_call)(double, double, double, double, double, int) = tree_call_ok;\n",
+        "postlude": "std::string run_tests() {\n    zq_passed = zq_failed = 0;\n    for (const ZqTest& t : zq_registry()) {\n        int before = zq_bad;\n        t.fn();\n        if (zq_bad == before) { ++zq_passed; std::printf(\"PASS %s\\n\", t.name); }\n        else { ++zq_failed; std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    return std::to_string(zq_passed) + \" passed, \" + std::to_string(zq_failed) + \" failed\";\n}\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "1 passed, 0 failed"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_tests()",
+            "expect": "1 passed, 0 failed"
+          },
+          {
+            "setup": "bs_delta_call = bs_delta_d2;",
+            "call": "run_tests()",
+            "expect": "0 passed, 1 failed"
+          },
+          {
+            "setup": "bs_delta_call = bs_delta_disc;",
+            "call": "run_tests()",
+            "expect": "0 passed, 1 failed"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Three hidden runs: the correct delta passes; a delta of $N(d_2)$ (0.5596) and one discounted by $e^{-rT}$ (0.6058) must each fail."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Price the call at $S + h$ and $S - h$."
+        },
+        {
+          "rung": "point",
+          "text": "`double fd = (up - down) / (2 * h);`"
+        },
+        {
+          "rung": "step",
+          "text": "`CHECK_CLOSE(bs_delta_call(100, 100, 0.05, 0.2, 1), fd, 1e-5);`"
+        }
+      ],
+      "feedback": {
+        "correct": "The closed form and the bump agree to about 1e-8.",
+        "generic": "Not quite right. Read which run went the wrong way.",
+        "byKey": {
+          "test-1": "Your test failed the correct delta. Divide by `2 * h`, and bump `s`, not `k`.",
+          "test-3": "Your test passed a delta 0.03 off. Is the tolerance 1e-5?"
+        }
+      },
+      "explain": {
+        "text": "The bump uses only `bs_call`, so it is independent of `bs_delta_call`. Its error is about $h^2/6$ times the third derivative, here $9 \\times 10^{-9}$. Too small an $h$ fails differently: at $h = 10^{-12}$ rounding in the subtraction swamps the answer."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "A test file for a pricer",
+      "prose": "Your tests fall into four families. On a desk they are written with a framework such as Catch2:\n\n```cpp\nTEST_CASE(\"Black-Scholes call\") {\n    SECTION(\"known value\") {\n        REQUIRE(bs_call(100, 100, 0.05, 0.2, 1)\n                == Approx(10.4506).epsilon(1e-5));\n    }\n    SECTION(\"bad volatility is rejected\") {\n        REQUIRE_THROWS(bs_call(100, 100, 0.05, -0.2, 1));\n    }\n}\n```\n\n`REQUIRE_THROWS` needs exceptions to be caught, which this app cannot do.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "test_pricer.cpp",
+          "orient": "tb",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "lim",
+              "label": "limits",
+              "children": [
+                {
+                  "id": "vol",
+                  "label": "σ → 0"
+                },
+                {
+                  "id": "money",
+                  "label": "deep in or out"
+                }
+              ]
+            },
+            {
+              "id": "rel",
+              "label": "relations",
+              "children": [
+                {
+                  "id": "par",
+                  "label": "put-call parity"
+                },
+                {
+                  "id": "mono",
+                  "label": "rises with σ, S"
+                }
+              ]
+            },
+            {
+              "id": "known",
+              "label": "known values",
+              "children": [
+                {
+                  "id": "bsv",
+                  "label": "BS 10.4506"
+                },
+                {
+                  "id": "conv",
+                  "label": "tree at n = 512"
+                }
+              ]
+            },
+            {
+              "id": "greek",
+              "label": "Greeks",
+              "children": [
+                {
+                  "id": "fd",
+                  "label": "delta by bumping"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "A **property test** loops over 1,000 seeded random inputs and checks the call rises with $\\sigma$. It passes. What does that show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "some",
+            "text": "The property holds on those 1,000 inputs, and the run repeats exactly; it is not a proof for every input",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "The property holds for every possible input",
+            "why": "1,000 points are a sample. A bug confined to, say, tiny $T$ could fall between them."
+          },
+          {
+            "id": "random",
+            "text": "Nothing, because random inputs make the test flaky",
+            "why": "The seed fixes the inputs, so every run checks the same 1,000 cases."
+          },
+          {
+            "id": "value",
+            "text": "That the price is correct",
+            "why": "A price can rise with $\\sigma$ and still be wrong. Monotonicity is one property among several."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the fixed seed guarantee, and what can 1,000 points not guarantee?"
+        }
+      ],
+      "feedback": {
+        "correct": "Repeatable, broad, not exhaustive.",
+        "generic": "Not quite right. Ask what a fixed seed fixes."
+      },
+      "explain": {
+        "text": "A seeded loop is a hand-made property test: the same inputs every run, so a failure can be replayed, but only those inputs are checked. Combine it with limits, parity, known values and a Greek, as in the tree.",
+        "canvas": {
+          "highlight": [
+            "mono"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "C++ against Python",
+      "prose": "The exit task: your C++ tree must match the Python tree of the trees course. A regression test prices 100 seeded random inputs in both and compares them with `==`. It passed on the debug build. CTest now runs it on the release build, `-O2 -march=native`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ctest --test-dir build --output-on-failure",
+            "1/3 Test #1: pricer_limits ........   Passed  0.01 sec",
+            "2/3 Test #2: pricer_parity ........   Passed  0.01 sec",
+            "3/3 Test #3: cpp_matches_python ...***Failed  0.42 sec",
+            "  87 of 100 differ; worst, input 17:",
+            "  C++ 14.403685711729995  Python 14.403685711730011",
+            "67% tests passed, 1 tests failed out of 3"
+          ],
+          "title": "Desk terminal"
+        },
+        "state": {}
+      },
+      "question": "Both trees are correct. What should the comparison use?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "rel",
+            "text": "A relative tolerance of about 1e-9",
+            "correct": true
+          },
+          {
+            "id": "eq",
+            "text": "Keep `==`: the release build has a bug in its last digit",
+            "why": "`-march=native` lets the compiler fuse a multiply and an add into one rounding. Both prices are correct; they differ by one part in $10^{15}$."
+          },
+          {
+            "id": "loose",
+            "text": "An absolute tolerance of 0.01",
+            "why": "Too loose: a tree capped at 64 steps is only 0.03 off, and a bug of 0.005 would pass."
+          },
+          {
+            "id": "tiny",
+            "text": "An absolute tolerance of 1e-17",
+            "why": "That is below the spacing of doubles near 10, about 1.8e-15, so it is `==` in disguise."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How far apart are the two prices?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the two numbers on line 6.",
+          "highlight": [
+            "l6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Same algorithm, different rounding: allow a few parts in a billion."
+        }
+      ],
+      "feedback": {
+        "correct": "Same algorithm, so they should agree to about nine significant figures, not every bit.",
+        "generic": "Not quite right. Look at how far apart the two prices are."
+      },
+      "explain": {
+        "text": "The prices differ by $1.1 \\times 10^{-15}$ relative: a fused multiply-add rounds once where Python rounds twice. A relative 1e-9 accepts that and still catches any real bug. With that test passing on 100 inputs, and l9's timings, the exit task is done: the C++ pricer, tested and timed against Python.",
+        "canvas": {
+          "tone": {
+            "l4": "err",
+            "l6": "err"
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Test a pricer against things it does not compute itself: limits, parity, published values, another method, and finite differences for Greeks.",
+      "Choose each tolerance from the known error: tight enough that a plausible bug fails, loose enough for rounding. Never `==` on doubles.",
+      "Test your tests: plant a bug and watch the test fail. Seeded property loops are repeatable but not exhaustive."
+    ],
+    "formula": {
+      "name": "Put-call parity",
+      "tex": "C - P = S - Ke^{-rT}",
+      "note": "With the standard inputs: $10.4506 - 5.5735 = 4.8771$."
+    },
+    "trap": "A test that recomputes the formula under test agrees with itself and catches nothing."
+  },
+  "quiz": [
+    {
+      "id": "q-parity",
+      "difficulty": 2,
+      "prose": "At $S = K = 100$, $r = 5\\%$, $T = 1$, $\\sigma = 20\\%$, your call prices at £10.4506 and $S - Ke^{-rT} = 4.8771$.",
+      "question": "What must the put be, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.5735,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "£",
+        "accept": "£5.5735 = 10.4506 − 4.8771.",
+        "wrong": [
+          {
+            "id": "add",
+            "value": 15.3277,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "nodisc",
+            "value": 10.4506,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Parity: $P = C - (S - Ke^{-rT})$.",
+        "generic": "Not quite right. Rearrange $C - P = S - Ke^{-rT}$.",
+        "byKey": {
+          "add": "You added. $P = C - 4.8771$.",
+          "nodisc": "You used $S - K = 0$. The strike is discounted: $S - Ke^{-rT} = 4.8771$."
+        }
+      },
+      "explain": {
+        "text": "$P = C - (S - Ke^{-rT}) = 10.4506 - 4.8771 = 5.5735$, the Black-Scholes put. Parity checks the put against the call."
+      }
+    },
+    {
+      "id": "q-loose",
+      "difficulty": 3,
+      "prose": "A convergence test reads `CHECK_CLOSE(tree_call(100, 100, 0.05, 0.2, 1, 512), 10.4506, 1.0);`.",
+      "question": "What is wrong with it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "loose",
+            "text": "The tolerance is so loose that a tree capped at 64 steps, or with several other bugs, still passes",
+            "correct": true
+          },
+          {
+            "id": "tight",
+            "text": "The tolerance is too tight for a tree",
+            "why": "The tree is 0.004 away at $n = 512$; 1.0 is 250 times that."
+          },
+          {
+            "id": "circ",
+            "text": "It is circular",
+            "why": "10.4506 is an independent published value, not a recomputation."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing",
+            "why": "A test that cannot fail on plausible bugs gives false comfort."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A tolerance must be tight enough to fail.",
+        "generic": "Not quite right. Which bugs could this test still catch?"
+      },
+      "explain": {
+        "text": "Set the tolerance from the known error, here about 0.004, with some room: 0.01. A tolerance of 1.0 passes trees that are 0.03 or 0.5 off."
+      }
+    },
+    {
+      "id": "q-fd",
+      "difficulty": 3,
+      "prose": "The call prices at £11.0967 with $S = 101$ and £9.8232 with $S = 99$.",
+      "question": "What is the central-difference delta?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6367,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.6367 = (11.0967 − 9.8232) / 2.",
+        "wrong": [
+          {
+            "id": "h",
+            "value": 1.2735,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Divide by $2h = 2$.",
+        "generic": "Not quite right. The two prices are $2h = 2$ apart in $S$.",
+        "byKey": {
+          "h": "You divided by $h = 1$. The bumps are $S + h$ and $S - h$, so divide by $2h$."
+        }
+      },
+      "explain": {
+        "text": "$(11.0967 - 9.8232)/2 = 0.6367$, close to $N(d_1) = 0.6368$. With $h = 1$ the error is about $10^{-4}$; with $h = 0.01$ about $10^{-8}$."
+      }
+    },
+    {
+      "id": "q-crash",
+      "difficulty": 2,
+      "prose": "You want a test that `bs_call` with $\\sigma < 0$ throws `std::invalid_argument`.",
+      "question": "Where can that test run?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "desk",
+            "text": "On a desk build, as `REQUIRE_THROWS_AS(..., std::invalid_argument)`; this app cannot catch exceptions",
+            "correct": true
+          },
+          {
+            "id": "here",
+            "text": "Here, with `try` and `catch` inside a `TEST`",
+            "why": "This app's runtime has no unwinder: a `throw` always ends the program, so `catch` never runs."
+          },
+          {
+            "id": "nowhere",
+            "text": "Nowhere: C++ cannot test for exceptions",
+            "why": "Catch2's `REQUIRE_THROWS` and GoogleTest's `EXPECT_THROW` do exactly that on a normal build."
+          },
+          {
+            "id": "assert",
+            "text": "Here, by asserting that the price is NaN",
+            "why": "A throw does not return a NaN; it never returns at all."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Exception tests belong on a full desk build.",
+        "generic": "Not quite right. Recall what this app does with a `throw`."
+      },
+      "explain": {
+        "text": "Catch2's `REQUIRE_THROWS_AS` catches the exception and passes. In this app a throw ends the whole program, so the test file would stop there; a code widget can only check that the program stops, with a `raises` case."
+      }
+    }
+  ]
+}

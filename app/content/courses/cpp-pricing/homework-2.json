@@ -1,0 +1,419 @@
+{
+ "id": "homework-2",
+ "course": "cpp-pricing",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-american-put",
+   "difficulty": 5,
+   "skills": [
+    "cx-pricers",
+    "cx-numeric"
+   ],
+   "prose": "Write a self-contained American put pricer on a CRR tree: $\\Delta t = T/n$, $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$, growth $e^{r\\Delta t}$ per step. Use one vector of n + 1 values. At every node take the larger of holding and exercising now. With T = 0, return the payoff. Trees level 3 found £5.88 with four steps.",
+   "question": "Write `american_put(s, k, r, sigma, t, n)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\ndouble american_put(double s, double k, double r, double sigma, double t, int n) {\n    // CRR tree, growth e^{r dt} per step, early exercise at every node\n    return 0.0;\n}\n",
+    "solution": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\ndouble american_put(double s, double k, double r, double sigma, double t, int n) {\n    if (t == 0.0) return std::max(k - s, 0.0);\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1.0 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1.0 / growth;\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = std::max(k - s * std::pow(u, j) * std::pow(d, n - j), 0.0);\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            double hold = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            double exercise = k - s * std::pow(u, j) * std::pow(d, i - j);\n            v[j] = std::max(hold, exercise);\n        }\n    return v[0];\n}\n",
+    "examples": [
+     {
+      "call": "american_put(100.0, 100.0, 0.05, 0.2, 1.0, 4)",
+      "expect": 5.882800351329434,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "american_put(100.0, 100.0, 0.05, 0.2, 1.0, 4)",
+      "expect": 5.882800351329434,
+      "compare": "isclose"
+     },
+     {
+      "call": "american_put(100.0, 100.0, 0.05, 0.2, 1.0, 1)",
+      "expect": 7.285227414695336,
+      "compare": "isclose"
+     },
+     {
+      "call": "american_put(100.0, 100.0, 0.05, 0.2, 1.0, 500)",
+      "expect": 6.088810110703037,
+      "compare": "isclose"
+     },
+     {
+      "call": "american_put(60.0, 100.0, 0.05, 0.2, 1.0, 500)",
+      "expect": 40.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "american_put(90.0, 110.0, 0.03, 0.3, 0.75, 200)",
+      "expect": 21.974394914184433,
+      "compare": "isclose"
+     },
+     {
+      "call": "american_put(90.0, 100.0, 0.05, 0.2, 0.0, 4)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "american_put(100.0, 100.0, 0.05, 0.2, 1.0, 4) - 5.0934653719726519 > 0.78",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Prices are compared within a relative 1e-9 with the 4-step £5.8828 (growth $e^{r\\Delta t}$), a 500-step value and four other cases. One test checks the early-exercise premium over the European £5.0935."
+   },
+   "feedback": {
+    "correct": "£5.8828 at 4 steps and £6.0888 at 500, both with growth $e^{r\\Delta t}$.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-4": "Test 4 has the share at £60, deep in the money. Exercising now gives £40, more than holding: the price is exactly £40.",
+     "test-6": "Test 6 has T = 0: return `std::max(k - s, 0.0)` before dividing by n."
+    }
+   },
+   "explain": {
+    "text": "The node at time i with j ups has spot $Su^jd^{i-j}$; its value is the larger of the discounted expectation and $K - $ spot. With growth $e^{r\\Delta t}$ the 4-step put is £5.8828 and the 500-step one £6.0888, against £5.5695 European at 500 steps. At £60 the put is worth exactly its exercise value, £40."
+   }
+  },
+  {
+   "id": "h-tree-vs-bs",
+   "difficulty": 4,
+   "skills": [
+    "cx-pricers",
+    "cx-testing"
+   ],
+   "prose": "Write a command-line check of the tree against the closed form. Read $S$, $K$, $r$, $\\sigma$, $T$ and $n$ from `std::cin`. Print the European call's tree price (growth $e^{r\\Delta t}$), its Black-Scholes price, and tree minus Black-Scholes, each to 4 places. Refuse missing input, $n < 1$ or a non-positive $S$, $K$, $\\sigma$ or $T$ with exit status 1.",
+   "question": "Write `main`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <iostream>\n#include <iomanip>\n\n// Loaded: Payoff, Call, binomial_price and bs_call.\n\nint main() {\n    double s, k, r, sigma, t;\n    int n;\n    // read s k r sigma t n; print three lines:\n    // tree <price>, bs <price>, diff <tree - bs>, each to 4 places\n}\n",
+    "solution": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    double s, k, r, sigma, t;\n    int n;\n    if (!(std::cin >> s >> k >> r >> sigma >> t >> n) || s <= 0 || k <= 0 ||\n        sigma <= 0 || t <= 0 || n < 1) {\n        std::cerr << \"usage: S K r sigma T n, all positive, n >= 1\\n\";\n        return 1;\n    }\n    double tree = binomial_price(Call(k), s, r, sigma, t, n, false);\n    double bs = bs_call(s, k, r, sigma, t);\n    std::cout << std::fixed << std::setprecision(4);\n    std::cout << \"tree \" << tree << '\\n' << \"bs \" << bs << '\\n' << \"diff \" << tree - bs << '\\n';\n}\n",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <memory>\n#include <stdexcept>\n#include <vector>\n#include <iostream>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nstd::vector<double> terminal_values(const Payoff& payoff, double s,\n                                    double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\ndouble bs_call(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "100 100 0.05 0.2 1 4\n",
+      "expect": "tree 9.9705\nbs 10.4506\ndiff -0.4801\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "100 100 0.05 0.2 1 4\n",
+      "expect": "tree 9.9705\nbs 10.4506\ndiff -0.4801\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "100 100 0.05 0.2 1 512\n",
+      "expect": "tree 10.4467\nbs 10.4506\ndiff -0.0039\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "110 100 0.03 0.25 0.5 200\n",
+      "expect": "tree 14.4682\nbs 14.4670\ndiff 0.0012\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "100\n105\n0.04\n0.3\n2\n50\n",
+      "expect": "tree 18.1922\nbs 18.1219\ndiff 0.0703\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": "100 100 0.05 0.2 1 0\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": "100 100 0.05 0 1 4\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": "100 100 0.05\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. It runs your program 7 times with different input on `std::cin`. Output must read exactly `tree ...`, `bs ...`, `diff ...` on three lines. The last three runs must end with a non-zero exit status."
+   },
+   "feedback": {
+    "correct": "One program that checks one pricer against another.",
+    "generic": "Not quite right. Compare your output with the expected lines of the first failing run.",
+    "byKey": {
+     "test-3": "Test 3 expects `diff 0.0012`. Print the difference of the full prices, not of the rounded ones.",
+     "test-7": "Test 7 gives only three numbers. Check that the read itself succeeded."
+    }
+   },
+   "explain": {
+    "text": "`std::cin >> s >> k >> ...` is false if any read fails, so one check covers missing input. The differences show the tree's error: −0.4801 at 4 steps, −0.0039 at 512, and +0.0703 for a 50-step two-year call."
+   }
+  },
+  {
+   "id": "h-antithetic-order",
+   "difficulty": 4,
+   "skills": [
+    "cx-numeric"
+   ],
+   "prose": "Show why antithetic variates help a call. Let $Y = f(Z)$ and $Y' = f(-Z)$ be the discounted payoffs of a path and its mirror, and $v = \\mathrm{Var}(Y)$.",
+   "question": "Put the lines of the argument in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$Z$ and $-Z$ have the same distribution, so $\\mathrm{Var}(Y') = v$ and $E[Y'] = E[Y]$."
+     },
+     {
+      "id": "s2",
+      "text": "So the pair average $A = (Y + Y')/2$ has $E[A] = E[Y]$: the estimate stays unbiased."
+     },
+     {
+      "id": "s3",
+      "text": "By the variance of a sum, $\\mathrm{Var}(A) = \\tfrac14\\big(2v + 2\\,\\mathrm{Cov}(Y, Y')\\big) = \\tfrac12\\big(v + \\mathrm{Cov}(Y, Y')\\big)$."
+     },
+     {
+      "id": "s4",
+      "text": "The same work buys two independent plain paths, whose mean has variance $v/2$."
+     },
+     {
+      "id": "s5",
+      "text": "So the pair beats two plain paths exactly when $\\mathrm{Cov}(Y, Y') < 0$."
+     },
+     {
+      "id": "s6",
+      "text": "A call's payoff rises with $Z$, so $f(Z)$ and $f(-Z)$ move in opposite directions: the covariance is negative."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ]
+   },
+   "feedback": {
+    "correct": "Negative covariance is the whole trick.",
+    "generic": "Not quite right. Establish the pieces' moments, then the pair's variance, then compare."
+   },
+   "explain": {
+    "text": "The pair's variance is $\\tfrac12(v + \\mathrm{Cov})$ against $\\tfrac12 v$ for two plain paths. For our call, $v/2$ per pair of paths was 0.0109 × 20,000 / 2 in total terms; antithetic pairs gave half the variance, so the covariance was close to $-v/2$... in our run, the variance fell from 0.0109 to 0.0054 for the same 20,000 payoffs."
+   }
+  },
+  {
+   "id": "h-library-design",
+   "difficulty": 5,
+   "skills": [
+    "cx-pricers",
+    "cx-testing"
+   ],
+   "prose": "A small desk asks you to design its C++ pricing library from this level's pieces. Describe the interface: the payoff classes, the three pricers (tree, closed form, Monte Carlo), what each is for, and how you would test them against each other. Mention one payoff the interface cannot price as it stands, and how you would extend it.",
+   "question": "Write your design in about 250 words.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Design the pricing library: payoff classes, three pricers and their uses, and cross-tests. Name one payoff the design cannot yet price and the extension it needs.",
+    "model": "**Payoffs.** An abstract base `class Payoff { public: virtual ~Payoff() = default; virtual double operator()(double spot) const = 0; };`. Each payoff is one class: `Call`, `Put`, `DigitalCall`, `CappedCall`, and composites such as `Straddle` that hold other payoffs. Books are `std::vector<std::unique_ptr<Payoff>>`. Pricers take `const Payoff&`, never a copy, so adding a payoff never changes a pricer.\n\n**Pricers.**\n\n- `binomial_price(const Payoff&, s, r, sigma, t, n, american)`: a CRR tree on one vector of n + 1 values. It is the only one of the three that handles early exercise. It costs $O(n^2)$ and converges like $1/n$.\n- `bs_call`, `bs_put` and the Greeks: exact for European calls and puts under Black-Scholes, and instant. They are the reference the others are tested against.\n- `mc_price` and `mc_standard_error(const Payoff&, ..., n, seed)`: any European payoff, with an error bar. The error falls like $1/\\sqrt n$; antithetic pairs halve the variance for a call.\n\n**Cross-tests.** The closed form against known values (£10.4506, £5.5735) and parity. The tree against Black-Scholes: within 0.005 at 512 steps. Monte Carlo against Black-Scholes: within 3 standard errors, with a fixed seed. Limits for all three: T = 0 gives the payoff, small σ gives the discounted forward payoff. The American put is at least the European, and equals the exercise value deep in the money (£40 at £60).\n\n**Limit.** `Payoff` sees one spot, so it cannot price an Asian option, whose payoff needs the whole path. Add a second interface, `class PathPayoff { virtual double operator()(const std::vector<double>& path) const = 0; }`, and a Monte Carlo pricer that simulates m steps per path.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "An abstract `Payoff` base with a pure virtual `operator()` and a virtual destructor; one class per payoff"
+     },
+     {
+      "points": 1,
+      "text": "Pricers take `const Payoff&` (no slicing) and books own payoffs through `std::unique_ptr<Payoff>`"
+     },
+     {
+      "points": 2,
+      "text": "Names the three pricers with what each is for: tree for American exercise, closed form as the fast exact reference, Monte Carlo for general payoffs with an error bar"
+     },
+     {
+      "points": 1,
+      "text": "States each pricer's cost or error rate: $O(n^2)$ and $1/n$ for the tree, $1/\\sqrt n$ for Monte Carlo"
+     },
+     {
+      "points": 3,
+      "text": "Gives at least three cross-tests with tolerances: known values or parity, tree against Black-Scholes, Monte Carlo within a few standard errors with a fixed seed, limits such as T = 0"
+     },
+     {
+      "points": 1,
+      "text": "Names a path-dependent payoff the interface cannot price and proposes a path interface"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your design with the model answer and tick the rubric.",
+    "generic": "Compare your design with the model answer and tick the rubric."
+   },
+   "explain": {
+    "text": "A good design separates what is paid (payoff classes) from how it is priced (pricers), and tests the pricers against each other where their domains overlap."
+   }
+  },
+  {
+   "id": "h-paths-for-cent",
+   "difficulty": 4,
+   "skills": [
+    "cx-numeric"
+   ],
+   "prose": "Our call's Monte Carlo price, seed 42, has standard error £0.1042 with 20,000 paths. A client wants the price to ± £0.01 (one standard error).",
+   "question": "About how many paths does that take?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2171528,
+    "tol": {
+     "rel": 0.02
+    },
+    "label": "Paths",
+    "accept": "About 2.17 million: $20{,}000 \\times (0.1042/0.01)^2$",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 208400,
+      "tol": {
+       "rel": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Over two million paths.",
+    "generic": "Not quite right. Scale the paths by the square of the factor the error must fall by.",
+    "byKey": {
+     "linear": "You scaled the paths by the factor 10.42 itself. The error goes like $1/\\sqrt n$, so square it."
+    }
+   },
+   "explain": {
+    "text": "The error must fall by $0.1042/0.01 = 10.42$, so the paths rise by $10.42^2 = 108.6$: about 2.17 million. Antithetic pairs would roughly halve that."
+   }
+  },
+  {
+   "id": "h-american-call",
+   "difficulty": 3,
+   "skills": [
+    "cx-pricers"
+   ],
+   "prose": "On trees level 2's example ($u = 1.2$, $d = 0.8$, growth 1.05 per step, two steps), `tree_price` gives £15.59 for the call with `american` false and with `american` true.",
+   "question": "Why does the flag change nothing for the call?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "On a share without dividends, holding a call is always worth at least exercising it",
+      "correct": true
+     },
+     {
+      "id": "bug",
+      "text": "The American branch has a bug",
+      "why": "The same branch lifts the put from £6.29 to £7.99. It works; the call never wants it."
+     },
+     {
+      "id": "short",
+      "text": "Two steps are too few for early exercise",
+      "why": "The put exercises early on the same two-step tree."
+     },
+     {
+      "id": "strike",
+      "text": "The strike equals the spot",
+      "why": "Moneyness is not the reason: a deep in-the-money call is not exercised early either."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Never exercise a call early on a share that pays no dividends.",
+    "generic": "Not quite right. Compare a call's value before expiry with $S - K$."
+   },
+   "explain": {
+    "text": "Before expiry a call is worth at least $S - Ke^{-r\\tau} > S - K$ when rates are positive. So `std::max(hold, exercise)` always picks hold, and both prices are £15.59."
+   }
+  },
+  {
+   "id": "h-bisection-steps",
+   "difficulty": 3,
+   "skills": [
+    "cx-numeric"
+   ],
+   "prose": "`implied_vol` halves the bracket $[0.0001, 5]$ until it is narrower than 1e-8.",
+   "question": "How many halvings does that take?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 29,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Halvings",
+    "accept": "29: $4.9999 / 2^{29} = 9.3 \\times 10^{-9}$, while $2^{28}$ leaves $1.9 \\times 10^{-8}$",
+    "wrong": [
+     {
+      "id": "decimal",
+      "value": 8,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "hundred",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "29 calls to `bs_call`.",
+    "generic": "Not quite right. Find the smallest $k$ with $4.9999/2^k < 10^{-8}$.",
+    "byKey": {
+     "decimal": "Each halving gains one binary digit, not one decimal digit. It takes about 3.3 halvings per decimal place.",
+     "hundred": "Trees l11 looped 100 times for safety. Stopping at the width needs only 29."
+    }
+   },
+   "explain": {
+    "text": "$\\log_2(4.9999 / 10^{-8}) = 28.9$, so 29 halvings. That is 29 calls to `bs_call`, a few microseconds in C++."
+   }
+  },
+  {
+   "id": "h-mc-tolerance",
+   "difficulty": 4,
+   "skills": [
+    "cx-testing"
+   ],
+   "prose": "A test asserts `std::abs(mc_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, seed) - bs_call(100.0, 100.0, 0.05, 0.2, 1.0)) < 0.01`.",
+   "question": "What is wrong with it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "0.01 is a tenth of a standard error, so the test fails for most seeds, including 42",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: a good pricer is within a penny",
+      "why": "With 20,000 paths the error is about £0.10. Seed 42 is £0.023 off, and most seeds are further."
+     },
+     {
+      "id": "loose",
+      "text": "It is too loose to catch bugs",
+      "why": "It is far too tight. A sound tolerance is a few standard errors, about £0.31 here."
+     },
+     {
+      "id": "seed",
+      "text": "It should use a random seed each run",
+      "why": "A fixed seed makes the test repeatable. The tolerance is the problem."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Size a simulation test's tolerance in standard errors.",
+    "generic": "Not quite right. Compare 0.01 with the standard error, £0.1042."
+   },
+   "explain": {
+    "text": "The gap is about normal with standard deviation £0.104, so $|{\\rm gap}| < 0.01$ holds only about 8% of the time. Use 3 standard errors, about £0.31, and fix the seed so the test is repeatable."
+   }
+  }
+ ]
+}

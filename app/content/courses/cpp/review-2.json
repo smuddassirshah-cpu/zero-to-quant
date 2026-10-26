@@ -1,0 +1,346 @@
+{
+ "id": "review-2",
+ "course": "cpp",
+ "level": 2,
+ "items": [
+  {
+   "id": "r-swap-copy",
+   "difficulty": 2,
+   "skills": [
+    "cp-references"
+   ],
+   "prose": "```cpp\nvoid swap_px(double a, double b) {\n    double t = a; a = b; b = t;\n}\n\ndouble bid = 99.5, ask = 100.5;\nswap_px(bid, ask);\nstd::cout << bid << \" \" << ask << \"\\n\";\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "same",
+      "text": "`99.5 100.5`",
+      "correct": true
+     },
+     {
+      "id": "swapped",
+      "text": "`100.5 99.5`",
+      "why": "The parameters have no `&`, so `swap_px` swaps its own copies and the caller's `bid` and `ask` never change."
+     },
+     {
+      "id": "error",
+      "text": "It does not compile",
+      "why": "Passing `double`s by value is legal. It just does nothing useful here."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The swap happened to the copies.",
+    "generic": "Not quite right. Are `a` and `b` the caller's variables, or copies?"
+   },
+   "explain": {
+    "text": "`a` and `b` are copies of `bid` and `ask`, swapped and then destroyed at the `}`. The caller's variables keep 99.5 and 100.5. `double& a, double& b` would swap them."
+   }
+  },
+  {
+   "id": "r-const-view",
+   "difficulty": 3,
+   "skills": [
+    "cp-references"
+   ],
+   "question": "Inside `void report(const std::vector<double>& v)`, select all that apply: which lines compile?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "size",
+      "text": "`std::size_t n = v.size();`",
+      "correct": true
+     },
+     {
+      "id": "read",
+      "text": "`double first = v[0];`",
+      "correct": true
+     },
+     {
+      "id": "copy",
+      "text": "`std::vector<double> c = v; c.push_back(1.0);`",
+      "correct": true
+     },
+     {
+      "id": "push",
+      "text": "`v.push_back(1.0);`",
+      "why": "`push_back` changes the vector, and `v` is a `const` reference, so it is rejected."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Read `v`, or change your own copy.",
+    "generic": "Not quite right. Which lines change `v` itself?"
+   },
+   "explain": {
+    "text": "Reading through `v` is allowed, and so is copying it into a vector of your own and changing that. Only `v.push_back` writes through the `const` reference, so only it is rejected."
+   }
+  },
+  {
+   "id": "r-level-step",
+   "difficulty": 3,
+   "skills": [
+    "cp-memory"
+   ],
+   "question": "`struct Level { double px; long long size; };` takes 16 bytes. `const Level* p` holds 0x4000. How many bytes past 0x4000 is the address `p + 5`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 80,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "bytes",
+    "label": "Bytes past 0x4000",
+    "accept": "80 bytes: 5 levels of 16 bytes, so 0x4050.",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5
+     },
+     {
+      "id": "eight",
+      "value": 40
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "5 × 16 = 80 bytes.",
+    "generic": "Not quite right. Multiply the steps by the size of one `Level`.",
+    "byKey": {
+     "five": "You counted elements. Each step moves a whole 16-byte `Level`.",
+     "eight": "You used 8 bytes per step. A `Level` holds a `double` and a `long long`: 16 bytes."
+    }
+   },
+   "explain": {
+    "text": "Pointer arithmetic moves whole objects: `p + 5` is 5 × 16 = 80 bytes on, address 0x4050. That is why `++p` walks an array of structs one element at a time."
+   }
+  },
+  {
+   "id": "r-which-ub",
+   "difficulty": 3,
+   "skills": [
+    "cp-memory"
+   ],
+   "question": "Select all that apply: which snippets are undefined behaviour?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "local",
+      "text": "`double* f() { double x = 1.0; return &x; }` then reading `*f()`",
+      "correct": true
+     },
+     {
+      "id": "twice",
+      "text": "`double* p = new double(1.0); delete p; delete p;`",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "`double* q = new double[0]; delete[] q;`",
+      "why": "Allocating zero elements is legal, and freeing the block with `delete[]` is exactly right."
+     },
+     {
+      "id": "at",
+      "text": "`std::vector<double> v(3); v.at(5);`",
+      "why": "`at` checks the index and throws `std::out_of_range`. That is defined behaviour, a reported error."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A dead local and a double delete.",
+    "generic": "Not quite right. Separate checked errors from unchecked ones."
+   },
+   "explain": {
+    "text": "Reading a dead local and deleting twice are undefined: this browser build ran both silently, while a desk build with `-fsanitize=address` reports \"double-free\". `new double[0]` is legal, and `v.at(5)` throws a defined exception."
+   }
+  },
+  {
+   "id": "r-frames",
+   "difficulty": 2,
+   "skills": [
+    "cp-memory"
+   ],
+   "prose": "```cpp\nint depth(int n) {\n    if (n == 0) return 0;\n    return 1 + depth(n - 1);\n}\n```",
+   "question": "How many frames are on the stack at the deepest point of `main` calling `depth(4)`, counting `main`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "frames",
+    "label": "Frames",
+    "accept": "6: `main` plus `depth(4)` down to `depth(0)`.",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5
+     },
+     {
+      "id": "four",
+      "value": 4
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`main` and five calls of `depth`.",
+    "generic": "Not quite right. List every call that is still waiting when `depth(0)` runs.",
+    "byKey": {
+     "five": "You left out `main`, whose frame is at the bottom the whole time.",
+     "four": "`depth(0)` is a call too, with its own frame."
+    }
+   },
+   "explain": {
+    "text": "While `depth(0)` runs, `depth(4)`, `depth(3)`, `depth(2)` and `depth(1)` are waiting, and `main` is under them all: 6 frames. Each returns in reverse order."
+   }
+  },
+  {
+   "id": "r-scope-close",
+   "difficulty": 3,
+   "skills": [
+    "cp-memory"
+   ],
+   "prose": "`Position` prints `open` and `close` from its constructor and destructor.\n\n```cpp\n{\n    std::vector<std::unique_ptr<Position>> book;\n    book.push_back(std::make_unique<Position>(\"AZN\", 10));\n}\nstd::cout << \"end\\n\";\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`open AZN`, `close AZN`, `end`",
+      "correct": true
+     },
+     {
+      "id": "end",
+      "text": "`open AZN`, `end`, `close AZN`",
+      "why": "`book` owns the position and dies at the inner `}`, so the destructor runs before `end`."
+     },
+     {
+      "id": "never",
+      "text": "`open AZN`, `end`",
+      "why": "`book` is a vector of `unique_ptr`s; when it dies, each owner deletes its position."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The owner died at the inner brace.",
+    "generic": "Not quite right. When does `book` go out of scope?"
+   },
+   "explain": {
+    "text": "`book` lives inside the braces. At the `}` the vector is destroyed, its `unique_ptr` deletes the position, and `close AZN` prints. Only then does `end` print."
+   }
+  },
+  {
+   "id": "r-accrue",
+   "difficulty": 3,
+   "skills": [
+    "cp-references",
+    "cp-basics"
+   ],
+   "prose": "A small balance book earns interest once per period.",
+   "question": "Write `accrue(balances, rates)`: change each balance in place; never change or copy the rates.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\n// add one period's interest to each balance: balances[i] *= 1 + rates[i]\n",
+    "solution": "#include <vector>\n\nvoid accrue(std::vector<double>& balances, const std::vector<double>& rates) {\n    for (std::size_t i = 0; i < balances.size(); ++i)\n        balances[i] *= 1 + rates[i];\n}\n",
+    "examples": [
+     {
+      "setup": "std::vector<double> b{1000.0, 2500.0};\naccrue(b, {0.01, 0.002});",
+      "call": "b",
+      "expect": [
+       1010,
+       2505
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "std::vector<double> b{1000.0, 2500.0};\naccrue(b, {0.01, 0.002});",
+      "call": "b",
+      "expect": [
+       1010,
+       2505
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> b{100.0};\naccrue(b, {-0.05});",
+      "call": "b[0]",
+      "expect": 95,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> b;\naccrue(b, {});",
+      "call": "b.size()",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<double> b{100.0, 100.0};\naccrue(b, {0.1, 0.1});\naccrue(b, {0.1, 0.1});",
+      "call": "b[1]",
+      "expect": 121,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 4 hidden tests. Each builds `b`, calls `accrue`, and reads `b` afterwards; some pass the rates as a temporary `{...}`, which only a `const&` accepts."
+   },
+   "feedback": {
+    "correct": "Changed in place, read in place.",
+    "generic": "Not yet. The results under the editor say which test failed."
+   },
+   "explain": {
+    "text": "`balances` must reach the caller, so it is `std::vector<double>&`. `rates` is only read, and the tests pass it as a temporary, so it must be `const std::vector<double>&`. Two periods at 10% give 121."
+   }
+  },
+  {
+   "id": "r-const-method",
+   "difficulty": 2,
+   "skills": [
+    "cp-references"
+   ],
+   "question": "Which `Book` method should be marked `const`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "best",
+      "text": "`double best_bid()`",
+      "correct": true
+     },
+     {
+      "id": "add",
+      "text": "`void add(const Order& o)`",
+      "why": "`add` changes the book, so it cannot promise not to. The `const` on its parameter is about `o`, not the book."
+     },
+     {
+      "id": "cancel",
+      "text": "`void cancel(int id)`",
+      "why": "Cancelling removes an order, which changes the book."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Readers are `const`; writers are not.",
+    "generic": "Not quite right. Which method only reads the book?"
+   },
+   "explain": {
+    "text": "`best_bid()` only reads, so mark it `double best_bid() const;`. Then code holding a `const Book&`, such as a pricer, can call it."
+   }
+  }
+ ]
+}

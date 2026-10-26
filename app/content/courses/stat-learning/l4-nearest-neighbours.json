@@ -1,0 +1,1967 @@
+{
+  "id": "l4-nearest-neighbours",
+  "course": "stat-learning",
+  "title": "Nearest neighbours",
+  "minutes": 15,
+  "objectives": [
+    "Fit $k$-nearest neighbours and choose $k$ by test error.",
+    "Use scikit-learn's `fit` and `predict` on a 2-D feature matrix."
+  ],
+  "skills": [
+    "sl-tradeoff"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Days like today",
+      "prose": "Each filled cell is a past day, placed by yesterday's return (across) and the volume ratio (up), both standardised. The number is what the stock did the next day, in per cent. Today is the cell marked ?.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 7,
+          "cols": 7,
+          "rowLabel": "Volume ratio (standardised)",
+          "colLabel": "Yesterday's return (standardised)",
+          "rowHeads": [
+            "1.5",
+            "1",
+            "0.5",
+            "0",
+            "−0.5",
+            "−1",
+            "−1.5"
+          ],
+          "colHeads": [
+            "−1.5",
+            "−1",
+            "−0.5",
+            "0",
+            "0.5",
+            "1",
+            "1.5"
+          ],
+          "cells": [
+            [
+              "",
+              "−0.8",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "−0.5",
+              ""
+            ],
+            [
+              "",
+              "",
+              "+0.2",
+              "",
+              "",
+              "",
+              "+0.6"
+            ],
+            [
+              "+0.1",
+              "",
+              "",
+              "?",
+              "+0.4",
+              "",
+              ""
+            ],
+            [
+              "",
+              "+0.9",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "−0.3",
+              "",
+              "",
+              "−1.1"
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "+1.2",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "query": {
+              "ids": [
+                "r4c4"
+              ],
+              "colour": 3
+            }
+          }
+        }
+      },
+      "question": "Tap the 3 past days closest to today, by straight-line distance.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r4c5",
+          "r3c3",
+          "r6c4"
+        ],
+        "only": [
+          "r4c5",
+          "r3c3",
+          "r6c4",
+          "r5c2",
+          "r2c6",
+          "r7c5",
+          "r1c2",
+          "r4c1",
+          "r6c7",
+          "r3c7"
+        ],
+        "wrong": [
+          {
+            "id": "diag",
+            "set": [
+              "r4c5",
+              "r3c3",
+              "r5c2"
+            ]
+          },
+          {
+            "id": "row",
+            "set": [
+              "r4c5",
+              "r4c1",
+              "r3c3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count cells across and up from the ? to each day."
+        },
+        {
+          "rung": "point",
+          "text": "One day is right next door, one is a diagonal step away.",
+          "highlight": [
+            "r4c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Distances: the +0.4 day is 1 cell away, the +0.2 day is $\\sqrt{2} \\approx 1.41$, the −0.3 day is 2. The next is $\\sqrt{5} \\approx 2.24$."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 1.41 and 2 cells away.",
+        "generic": "Not quite right. Use Pythagoras on the steps across and up from the ?.",
+        "byKey": {
+          "diag": "The +0.9 day is 2 across and 1 down: $\\sqrt{5} \\approx 2.24$ cells. The −0.3 day, 2 straight down, is closer.",
+          "row": "The +0.1 day is 3 cells along the row. The −0.3 day is only 2 away."
+        }
+      },
+      "explain": {
+        "text": "You picked the days 1, $\\sqrt{2}$ and 2 cells away. The next nearest, +0.9, is $\\sqrt{5} \\approx 2.24$ away. Distance in feature space is how we decide which past days resemble today.",
+        "canvas": {
+          "shade": {
+            "query": {
+              "ids": [
+                "r4c4"
+              ],
+              "colour": 3
+            },
+            "near": [
+              "r4c5",
+              "r3c3",
+              "r6c4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 1,
+      "title": "Average the neighbours",
+      "prose": "To forecast tomorrow, average what happened after the 3 closest days. This rule is **$k$-nearest neighbours** ($k$-NN), here with $k = 3$.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 7,
+          "cols": 7,
+          "rowLabel": "Volume ratio (standardised)",
+          "colLabel": "Yesterday's return (standardised)",
+          "rowHeads": [
+            "1.5",
+            "1",
+            "0.5",
+            "0",
+            "−0.5",
+            "−1",
+            "−1.5"
+          ],
+          "colHeads": [
+            "−1.5",
+            "−1",
+            "−0.5",
+            "0",
+            "0.5",
+            "1",
+            "1.5"
+          ],
+          "cells": [
+            [
+              "",
+              "−0.8",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "−0.5",
+              ""
+            ],
+            [
+              "",
+              "",
+              "+0.2",
+              "",
+              "",
+              "",
+              "+0.6"
+            ],
+            [
+              "+0.1",
+              "",
+              "",
+              "?",
+              "+0.4",
+              "",
+              ""
+            ],
+            [
+              "",
+              "+0.9",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "−0.3",
+              "",
+              "",
+              "−1.1"
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "+1.2",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "query": {
+              "ids": [
+                "r4c4"
+              ],
+              "colour": 3
+            },
+            "near": [
+              "r4c5",
+              "r3c3",
+              "r6c4"
+            ]
+          }
+        }
+      },
+      "question": "What does 3-NN forecast for tomorrow's return, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "0.1: $(0.4 + 0.2 - 0.3)/3$",
+        "unit": "%",
+        "label": "Forecast",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sum",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the three shaded numbers."
+        },
+        {
+          "rung": "point",
+          "text": "$0.4 + 0.2 - 0.3 = 0.3$.",
+          "highlight": [
+            "r4c5",
+            "r3c3",
+            "r6c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by $k = 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.3 / 3 = 0.1\\%$.",
+        "generic": "Not quite right. Average the three shaded days' next-day returns.",
+        "byKey": {
+          "one": "That copies the single nearest day, which is $k = 1$.",
+          "sum": "That is the sum of the three. Divide by 3."
+        }
+      },
+      "explain": {
+        "text": "The forecast is the mean of the neighbours' targets: $(0.4 + 0.2 - 0.3)/3 = 0.1\\%$. No coefficients are fitted. The training data itself is the model."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One neighbour, or all of them",
+      "prose": "$k$ sets the flexibility. With $k = 1$ the forecast copies the nearest day, noise and all: it memorises the training set. Now go to the other end.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 7,
+          "cols": 7,
+          "rowLabel": "Volume ratio (standardised)",
+          "colLabel": "Yesterday's return (standardised)",
+          "rowHeads": [
+            "1.5",
+            "1",
+            "0.5",
+            "0",
+            "−0.5",
+            "−1",
+            "−1.5"
+          ],
+          "colHeads": [
+            "−1.5",
+            "−1",
+            "−0.5",
+            "0",
+            "0.5",
+            "1",
+            "1.5"
+          ],
+          "cells": [
+            [
+              "",
+              "−0.8",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "−0.5",
+              ""
+            ],
+            [
+              "",
+              "",
+              "+0.2",
+              "",
+              "",
+              "",
+              "+0.6"
+            ],
+            [
+              "+0.1",
+              "",
+              "",
+              "?",
+              "+0.4",
+              "",
+              ""
+            ],
+            [
+              "",
+              "+0.9",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "−0.3",
+              "",
+              "",
+              "−1.1"
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "+1.2",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "query": {
+              "ids": [
+                "r4c4"
+              ],
+              "colour": 3
+            },
+            "near": [
+              "r4c5",
+              "r3c3",
+              "r6c4",
+              "r5c2",
+              "r2c6",
+              "r7c5",
+              "r1c2",
+              "r4c1",
+              "r6c7",
+              "r3c7"
+            ]
+          }
+        }
+      },
+      "question": "With $k = 10$ every past day is a neighbour. What does 10-NN forecast?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.07,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "0.07: the mean of all ten days, $0.7 / 10$",
+        "unit": "%",
+        "label": "Forecast",
+        "wrong": [
+          {
+            "id": "k3",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "sum",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every shaded day counts equally."
+        },
+        {
+          "rung": "point",
+          "text": "The ten next-day returns add to 0.7.",
+          "highlight": [
+            "r4c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide 0.7 by 10."
+        }
+      ],
+      "feedback": {
+        "correct": "0.07%, the mean of every day, whatever today looks like.",
+        "generic": "Not quite right. Average all ten numbers.",
+        "byKey": {
+          "k3": "That is the 3-NN forecast. Now all ten days count.",
+          "sum": "That is the sum. Divide by the ten days."
+        }
+      },
+      "explain": {
+        "text": "With $k$ equal to the number of training rows, $k$-NN forecasts the training mean for every day: zero variance in where it looks, maximum bias. With $k = 1$ it copies one day. Asking scikit-learn for more neighbours than rows is an error.",
+        "canvas": {
+          "shade": {
+            "near": [
+              "r4c5",
+              "r3c3",
+              "r6c4",
+              "r5c2",
+              "r2c6",
+              "r7c5",
+              "r1c2",
+              "r4c1",
+              "r6c7",
+              "r3c7"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Up or down",
+      "prose": "$k$-NN also **classifies**. Label each day up or down by its next-day return, and let the $k$ nearest days vote. The shaded cells are the 5 nearest.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 7,
+          "cols": 7,
+          "rowLabel": "Volume ratio (standardised)",
+          "colLabel": "Yesterday's return (standardised)",
+          "rowHeads": [
+            "1.5",
+            "1",
+            "0.5",
+            "0",
+            "−0.5",
+            "−1",
+            "−1.5"
+          ],
+          "colHeads": [
+            "−1.5",
+            "−1",
+            "−0.5",
+            "0",
+            "0.5",
+            "1",
+            "1.5"
+          ],
+          "cells": [
+            [
+              "",
+              "−0.8",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "−0.5",
+              ""
+            ],
+            [
+              "",
+              "",
+              "+0.2",
+              "",
+              "",
+              "",
+              "+0.6"
+            ],
+            [
+              "+0.1",
+              "",
+              "",
+              "?",
+              "+0.4",
+              "",
+              ""
+            ],
+            [
+              "",
+              "+0.9",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "−0.3",
+              "",
+              "",
+              "−1.1"
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "+1.2",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "query": {
+              "ids": [
+                "r4c4"
+              ],
+              "colour": 3
+            },
+            "near": [
+              "r4c5",
+              "r3c3",
+              "r6c4",
+              "r5c2",
+              "r2c6"
+            ]
+          }
+        }
+      },
+      "question": "What does 5-NN classify tomorrow as?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "up",
+            "text": "Up: 3 of the 5 votes",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "Down: 3 of the 5 votes",
+            "why": "Count the signs: +0.4, +0.2, +0.9 are up; −0.3 and −0.5 are down."
+          },
+          {
+            "id": "tie",
+            "text": "A tie",
+            "why": "With an odd $k$ and two classes a tie cannot happen: 5 votes split 3 to 2 at worst."
+          },
+          {
+            "id": "mean",
+            "text": "Up, because the mean is +0.14",
+            "why": "The mean does point up here, but classification counts votes. A big up move counts once."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the shaded days with a plus sign."
+        },
+        {
+          "rung": "point",
+          "text": "The five shaded days are +0.4, +0.2, −0.3, +0.9 and −0.5.",
+          "highlight": [
+            "r4c5",
+            "r3c3",
+            "r6c4",
+            "r5c2",
+            "r2c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Three up, two down: the majority says up."
+        }
+      ],
+      "feedback": {
+        "correct": "3 votes to 2: up.",
+        "generic": "Not quite right. Count up days against down days among the five shaded.",
+        "byKey": {
+          "down": "Count the signs again: +0.4, +0.2 and +0.9 are up."
+        }
+      },
+      "explain": {
+        "text": "Regression averages the neighbours' values; classification takes their majority class. An odd $k$ avoids tied votes between two classes."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "$k$-NN in NumPy",
+      "prose": "Write it. `X_train` has one row per past day and one column per feature. Use Euclidean distance. On a tie in distance, the earlier row wins: `np.argsort(d, kind='stable')` keeps rows with equal distances in index order.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 7,
+          "cols": 7,
+          "rowLabel": "Volume ratio (standardised)",
+          "colLabel": "Yesterday's return (standardised)",
+          "rowHeads": [
+            "1.5",
+            "1",
+            "0.5",
+            "0",
+            "−0.5",
+            "−1",
+            "−1.5"
+          ],
+          "colHeads": [
+            "−1.5",
+            "−1",
+            "−0.5",
+            "0",
+            "0.5",
+            "1",
+            "1.5"
+          ],
+          "cells": [
+            [
+              "",
+              "−0.8",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "−0.5",
+              ""
+            ],
+            [
+              "",
+              "",
+              "+0.2",
+              "",
+              "",
+              "",
+              "+0.6"
+            ],
+            [
+              "+0.1",
+              "",
+              "",
+              "?",
+              "+0.4",
+              "",
+              ""
+            ],
+            [
+              "",
+              "+0.9",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "−0.3",
+              "",
+              "",
+              "−1.1"
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "+1.2",
+              "",
+              ""
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "query": {
+              "ids": [
+                "r4c4"
+              ],
+              "colour": 3
+            },
+            "near": [
+              "r4c5",
+              "r3c3",
+              "r6c4"
+            ]
+          }
+        }
+      },
+      "question": "Complete `knn_predict` so it returns the mean target of the `k` nearest rows.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef knn_predict(X_train, y_train, x_query, k):\n    X_train = np.asarray(X_train, float)\n    y_train = np.asarray(y_train, float)\n    x_query = np.asarray(x_query, float)\n    ...\n",
+        "solution": "import numpy as np\n\ndef knn_predict(X_train, y_train, x_query, k):\n    X_train = np.asarray(X_train, float)\n    y_train = np.asarray(y_train, float)\n    x_query = np.asarray(x_query, float)\n    d = np.sqrt(((X_train - x_query) ** 2).sum(axis=1))\n    idx = np.argsort(d, kind='stable')[:k]\n    return float(y_train[idx].mean())\n",
+        "examples": [
+          {
+            "setup": "X = [[0.5, -0.0], [-0.5, 0.5], [0.0, -1.0], [-1.0, -0.5], [1.0, 1.0], [0.5, -1.5], [-1.0, 1.5], [-1.5, -0.0], [1.5, -1.0], [1.5, 0.5]]; y = [0.4, 0.2, -0.3, 0.9, -0.5, 1.2, -0.8, 0.1, -1.1, 0.6]",
+            "call": "knn_predict(X, y, [0, 0], 3)",
+            "expect": "0.1",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X = [[0.5, -0.0], [-0.5, 0.5], [0.0, -1.0], [-1.0, -0.5], [1.0, 1.0], [0.5, -1.5], [-1.0, 1.5], [-1.5, -0.0], [1.5, -1.0], [1.5, 0.5]]; y = [0.4, 0.2, -0.3, 0.9, -0.5, 1.2, -0.8, 0.1, -1.1, 0.6]",
+            "call": "knn_predict(X, y, [0, 0], 3)",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[0.5, -0.0], [-0.5, 0.5], [0.0, -1.0], [-1.0, -0.5], [1.0, 1.0], [0.5, -1.5], [-1.0, 1.5], [-1.5, -0.0], [1.5, -1.0], [1.5, 0.5]]; y = [0.4, 0.2, -0.3, 0.9, -0.5, 1.2, -0.8, 0.1, -1.1, 0.6]",
+            "call": "knn_predict(X, y, [0, 0], 1)",
+            "expect": "0.4",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[0.5, -0.0], [-0.5, 0.5], [0.0, -1.0], [-1.0, -0.5], [1.0, 1.0], [0.5, -1.5], [-1.0, 1.5], [-1.5, -0.0], [1.5, -1.0], [1.5, 0.5]]; y = [0.4, 0.2, -0.3, 0.9, -0.5, 1.2, -0.8, 0.1, -1.1, 0.6]",
+            "call": "knn_predict(X, y, [0, 0], 10)",
+            "expect": "0.07",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[0.5, -0.0], [-0.5, 0.5], [0.0, -1.0], [-1.0, -0.5], [1.0, 1.0], [0.5, -1.5], [-1.0, 1.5], [-1.5, -0.0], [1.5, -1.0], [1.5, 0.5]]; y = [0.4, 0.2, -0.3, 0.9, -0.5, 1.2, -0.8, 0.1, -1.1, 0.6]",
+            "call": "knn_predict(X, y, [0, 0], 7)",
+            "expect": "0.2857142857142857",
+            "compare": "isclose"
+          },
+          {
+            "call": "knn_predict([[1, 0], [0, 1], [-1, 0]], [1, 2, 3], [0, 0], 1)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "knn_predict([[1, 0], [0, 1], [-1, 0]], [1, 2, 3], [0, 0], 2)",
+            "expect": "1.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "knn_predict([[0, 0], [3, 4], [6, 8]], [5, 7, 9], [3, 4.5], 2)",
+            "expect": "8.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, including ties in distance. Each value is compared with `math.isclose(actual, expected, rel_tol=1e-9)`. The first run loads NumPy."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the query from every row, square, sum across columns, take the root."
+        },
+        {
+          "rung": "point",
+          "text": "`d = np.sqrt(((X_train - x_query) ** 2).sum(axis=1))` gives one distance per row.",
+          "highlight": [
+            "r4c5",
+            "r3c3",
+            "r6c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`idx = np.argsort(d, kind='stable')[:k]`, then return `float(y_train[idx].mean())`."
+        }
+      ],
+      "feedback": {
+        "correct": "The grid's days give 0.1 for $k = 3$, as you found by hand.",
+        "generic": "Not quite right. Check the failing test: is the distance per row, and do ties keep index order?"
+      },
+      "explain": {
+        "text": "The fourth test has a tie: at $k = 7$ the days +1.2 and +0.6 are both $\\sqrt{10}$ cells away. The stable sort keeps the earlier row, +1.2, giving $2.0 / 7 \\approx 0.286$. Another tie rule gives 0.2."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Pounds against per cent",
+      "prose": "A new version uses raw features: yesterday's return in per cent and traded value in £ millions. Today is 0.5% on £100m. Across past days the return's standard deviation is 1% and traded value's is £20m.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "Return (%)",
+            "Traded (£m)",
+            "Raw distance",
+            "Scaled distance"
+          ],
+          "rows": [
+            [
+              "Today",
+              "0.5",
+              "100",
+              "",
+              ""
+            ],
+            [
+              "P",
+              "0.6",
+              "108",
+              "8.00",
+              ""
+            ],
+            [
+              "Q",
+              "2.4",
+              "101",
+              "2.15",
+              ""
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "On raw features Q is nearer. After dividing each feature by its standard deviation, which day is nearer to today?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "p",
+            "text": "P, at about 0.41 against 1.90",
+            "correct": true
+          },
+          {
+            "id": "q",
+            "text": "Q, at about 2.15 against 8.00",
+            "why": "Those are the raw distances. There £8m outweighs a 1.9 point gap in return."
+          },
+          {
+            "id": "same",
+            "text": "They tie",
+            "why": "Scaled, P differs by 0.1 and 0.4 standard deviations; Q by 1.9 and 0.05. No tie."
+          },
+          {
+            "id": "cant",
+            "text": "It cannot be told without more days",
+            "why": "Two standard deviations are all the scaling needs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Turn each gap into standard deviations."
+        },
+        {
+          "rung": "point",
+          "text": "P: return gap $0.1/1 = 0.1$, value gap $8/20 = 0.4$. Q: $1.9/1$ and $1/20$.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "P: $\\sqrt{0.1^2 + 0.4^2} \\approx 0.41$. Q: $\\sqrt{1.9^2 + 0.05^2} \\approx 1.90$."
+        }
+      ],
+      "feedback": {
+        "correct": "Scaled, P is far nearer: 0.41 against 1.90.",
+        "generic": "Not quite right. Divide each gap by its feature's standard deviation, then use Pythagoras.",
+        "byKey": {
+          "q": "You kept the raw scales, so an £8m gap swamped a 1.9 point return gap. Scale first."
+        }
+      },
+      "explain": {
+        "text": "Raw, the £ column dominates: P's £8m gap counts 80 times its 0.1 point return gap. Scaled, P is the true analogue. Lesson 9 makes standardising a habit.",
+        "canvas": {
+          "values": {
+            "r1c4": "0.41",
+            "r2c4": "1.90"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "scikit-learn's two verbs",
+      "prose": "scikit-learn does this for us. Every model has the same two verbs: `model.fit(X_train, y_train)` learns, and `model.predict(X_test)` forecasts. `X` is always 2-D: one row per day, one column per feature. The prelude's `make_knn(n, seed)` makes 300 days with standardised features.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "The pattern",
+          "lines": [
+            ">>> model = KNeighborsRegressor(n_neighbors=7)",
+            ">>> model.fit(X_train, y_train)",
+            ">>> pred = model.predict(X_test)",
+            ">>> X_train.shape",
+            "(200, 2)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `knn_test_mse` so it returns the test MSE of $k$-NN regression, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom sklearn.neighbors import KNeighborsRegressor\n\ndef knn_test_mse(X_train, y_train, X_test, y_test, k):\n    model = KNeighborsRegressor(n_neighbors=k)\n    ...\n",
+        "solution": "import numpy as np\nfrom sklearn.neighbors import KNeighborsRegressor\n\ndef knn_test_mse(X_train, y_train, X_test, y_test, k):\n    model = KNeighborsRegressor(n_neighbors=k)\n    model.fit(X_train, y_train)\n    pred = model.predict(X_test)\n    return round(float(np.mean((pred - y_test) ** 2)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_test_mse(Xtr, ytr, Xte, yte, 7)",
+            "expect": "0.6079",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_test_mse(Xtr, ytr, Xte, yte, 7)",
+            "expect": "0.6079",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_test_mse(Xtr, ytr, Xte, yte, 1)",
+            "expect": "1.1838",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_test_mse(Xtr, ytr, Xte, yte, 25)",
+            "expect": "0.7057",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(150, 3); Xtr, ytr, Xte, yte = X[:100], y[:100], X[100:], y[100:]",
+            "call": "knn_test_mse(Xtr, ytr, Xte, yte, 1)",
+            "expect": "1.0072",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(150, 3); Xtr, ytr, Xte, yte = X[:100], y[:100], X[100:], y[100:]",
+            "call": "knn_test_mse(Xtr, ytr, Xte, yte, 5)",
+            "expect": "0.5648",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(150, 3); Xtr, ytr, Xte, yte = X[:100], y[:100], X[100:], y[100:]",
+            "call": "knn_test_mse(Xtr, ytr, Xte, yte, 15)",
+            "expect": "0.6166",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each value is compared with `math.isclose(actual, expected, rel_tol=1e-9)`, against values from running the solution in this browser's scikit-learn 1.6.1. **The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds**; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_knn(n, seed):\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, 2))\n    signal = (0.8 * X[:, 0] * np.tanh(2 * X[:, 1])\n              - 0.3 * X[:, 1] ** 2 + 0.3)\n    y = (signal + rng.normal(0, 0.7, n)).round(2)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fit on the training rows, predict the test rows."
+        },
+        {
+          "rung": "point",
+          "text": "`model.fit(X_train, y_train)` returns the model; `model.predict(X_test)` returns an array.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `round(float(np.mean((pred - y_test) ** 2)), 4)`."
+        }
+      ],
+      "feedback": {
+        "correct": "With $k = 7$ on the 300-day set: test MSE 0.6079.",
+        "generic": "Not quite right. Fit on the training rows only, predict the test rows, then average the squared misses."
+      },
+      "explain": {
+        "text": "`fit` stores the training rows, `predict` finds neighbours and averages. Your NumPy `knn_predict` gives the same numbers, which is how these tests were checked: 0.6079 at $k = 7$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Choosing $k$",
+      "prose": "`knn_test_mse` for every $k$ from 1 to 25, on the first 200 days with the last 100 held out. Training MSE at $k = 1$ is 0: each training day is its own nearest neighbour. Forecasting the training mean scores 1.0082.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "train",
+              "label": "training MSE",
+              "values": [
+                0.0,
+                0.3222,
+                0.413,
+                0.481,
+                0.4967,
+                0.5567,
+                0.575,
+                0.5833,
+                0.6104,
+                0.6351,
+                0.6333,
+                0.6431,
+                0.6532,
+                0.6663,
+                0.6902,
+                0.6983,
+                0.7057,
+                0.7059,
+                0.7236,
+                0.7334,
+                0.7409,
+                0.752,
+                0.7611,
+                0.7617,
+                0.7694
+              ],
+              "colour": 1
+            },
+            {
+              "id": "test",
+              "label": "test MSE",
+              "values": [
+                1.1838,
+                0.7259,
+                0.694,
+                0.6249,
+                0.6377,
+                0.6209,
+                0.6079,
+                0.6206,
+                0.6505,
+                0.6495,
+                0.6584,
+                0.6579,
+                0.6734,
+                0.6858,
+                0.678,
+                0.6758,
+                0.6731,
+                0.6772,
+                0.6902,
+                0.7011,
+                0.6963,
+                0.6897,
+                0.6949,
+                0.6939,
+                0.7057
+              ],
+              "colour": 2
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "decimals": 3,
+          "xLabel": "$k$ (neighbours)",
+          "yLabel": "MSE (%²)",
+          "height": 250,
+          "y": [
+            0,
+            1.3
+          ],
+          "hlines": [
+            {
+              "id": "mean",
+              "y": 1.0082,
+              "label": "mean forecast 1.008"
+            }
+          ],
+          "margins": {
+            "right": 100
+          }
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "best",
+              "i": 6,
+              "series": "test",
+              "label": "k = 7: {value}"
+            },
+            {
+              "id": "k1",
+              "i": 0,
+              "series": "test",
+              "label": "{value}"
+            }
+          ]
+        }
+      },
+      "question": "Which $k$ has the lowest test MSE?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "7, at 0.6079",
+        "label": "$k$",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "big",
+            "value": 25,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the orange test curve to its lowest point."
+        },
+        {
+          "rung": "point",
+          "text": "The curve falls steeply from $k = 1$ and flattens around 4 to 8.",
+          "highlight": [
+            "best"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The marker at $k = 7$ reads 0.6079."
+        }
+      ],
+      "feedback": {
+        "correct": "$k = 7$: test MSE 0.6079.",
+        "generic": "Not quite right. Read the test curve, not the training curve.",
+        "byKey": {
+          "one": "$k = 1$ has zero training error, the number that lies. Its test MSE is the worst, 1.184.",
+          "big": "At $k = 25$ the forecast is over-smoothed: test MSE rises to 0.706."
+        }
+      },
+      "explain": {
+        "text": "Small $k$ overfits, large $k$ drifts towards the mean forecast: the U again, now in $k$. Note the direction: flexibility falls as $k$ rises.",
+        "canvas": {
+          "highlight": [
+            "best"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "$k$ by test error",
+      "prose": "Automate the choice. The prelude defines `make_knn` and `knn_test_mse` from two screens back. Try $k$ from 1 to `max_k` and return the $k$ with the lowest test MSE. On a tie, the smaller $k$ wins.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "train",
+              "label": "training MSE",
+              "values": [
+                0.0,
+                0.3222,
+                0.413,
+                0.481,
+                0.4967,
+                0.5567,
+                0.575,
+                0.5833,
+                0.6104,
+                0.6351,
+                0.6333,
+                0.6431,
+                0.6532,
+                0.6663,
+                0.6902,
+                0.6983,
+                0.7057,
+                0.7059,
+                0.7236,
+                0.7334,
+                0.7409,
+                0.752,
+                0.7611,
+                0.7617,
+                0.7694
+              ],
+              "colour": 1
+            },
+            {
+              "id": "test",
+              "label": "test MSE",
+              "values": [
+                1.1838,
+                0.7259,
+                0.694,
+                0.6249,
+                0.6377,
+                0.6209,
+                0.6079,
+                0.6206,
+                0.6505,
+                0.6495,
+                0.6584,
+                0.6579,
+                0.6734,
+                0.6858,
+                0.678,
+                0.6758,
+                0.6731,
+                0.6772,
+                0.6902,
+                0.7011,
+                0.6963,
+                0.6897,
+                0.6949,
+                0.6939,
+                0.7057
+              ],
+              "colour": 2
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "decimals": 3,
+          "xLabel": "$k$ (neighbours)",
+          "yLabel": "MSE (%²)",
+          "height": 250,
+          "y": [
+            0,
+            1.3
+          ],
+          "hlines": [
+            {
+              "id": "mean",
+              "y": 1.0082,
+              "label": "mean forecast 1.008"
+            }
+          ],
+          "margins": {
+            "right": 100
+          }
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "best",
+              "i": 6,
+              "series": "test",
+              "label": "k = 7: {value}"
+            },
+            {
+              "id": "k1",
+              "i": 0,
+              "series": "test",
+              "label": "{value}"
+            }
+          ]
+        }
+      },
+      "question": "Complete `best_k`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef best_k(X_train, y_train, X_test, y_test, max_k=25):\n    ...\n",
+        "solution": "import numpy as np\n\ndef best_k(X_train, y_train, X_test, y_test, max_k=25):\n    errs = [knn_test_mse(X_train, y_train, X_test, y_test, k)\n            for k in range(1, max_k + 1)]\n    return int(np.argmin(errs)) + 1\n",
+        "examples": [
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "best_k(Xtr, ytr, Xte, yte)",
+            "expect": "7",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "best_k(Xtr, ytr, Xte, yte)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "best_k(Xtr, ytr, Xte, yte, 5)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_knn(150, 3); Xtr, ytr, Xte, yte = X[:100], y[:100], X[100:], y[100:]",
+            "call": "best_k(Xtr, ytr, Xte, yte)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_knn(300, 9); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "best_k(Xtr, ytr, Xte, yte)",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_knn(240, 21); Xtr, ytr, Xte, yte = X[:180], y[:180], X[180:], y[180:]",
+            "call": "best_k(Xtr, ytr, Xte, yte)",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each $k$ is compared exactly with the one found by the solution in this browser's scikit-learn 1.6.1. **The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds**; later runs are quick.",
+        "prelude": "import numpy as np\nfrom sklearn.neighbors import KNeighborsRegressor\n\ndef make_knn(n, seed):\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, 2))\n    signal = (0.8 * X[:, 0] * np.tanh(2 * X[:, 1])\n              - 0.3 * X[:, 1] ** 2 + 0.3)\n    y = (signal + rng.normal(0, 0.7, n)).round(2)\n    return X, y\n\ndef knn_test_mse(X_train, y_train, X_test, y_test, k):\n    model = KNeighborsRegressor(n_neighbors=k)\n    model.fit(X_train, y_train)\n    pred = model.predict(X_test)\n    return round(float(np.mean((pred - y_test) ** 2)), 4)\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build a list of test MSEs for $k = 1, 2, \\ldots$"
+        },
+        {
+          "rung": "point",
+          "text": "`np.argmin` gives a position, starting at 0.",
+          "highlight": [
+            "best"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `int(np.argmin(errs)) + 1`, since position 0 is $k = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$k = 7$ on the lesson's data.",
+        "generic": "Not quite right. Remember that position 0 in the list is $k = 1$."
+      },
+      "explain": {
+        "text": "The off-by-one is the usual slip: position $i$ holds $k = i + 1$. Each test reruns up to 25 fits of 200 rows, a fraction of a second once scikit-learn is loaded."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A perfect score",
+      "prose": "A colleague fits $k = 1$ on all 300 days, then scores it on the last 100 of them. Test MSE: 0.0000. They want to trade it.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "train",
+              "label": "training MSE",
+              "values": [
+                0.0,
+                0.3222,
+                0.413,
+                0.481,
+                0.4967,
+                0.5567,
+                0.575,
+                0.5833,
+                0.6104,
+                0.6351,
+                0.6333,
+                0.6431,
+                0.6532,
+                0.6663,
+                0.6902,
+                0.6983,
+                0.7057,
+                0.7059,
+                0.7236,
+                0.7334,
+                0.7409,
+                0.752,
+                0.7611,
+                0.7617,
+                0.7694
+              ],
+              "colour": 1
+            },
+            {
+              "id": "test",
+              "label": "test MSE",
+              "values": [
+                1.1838,
+                0.7259,
+                0.694,
+                0.6249,
+                0.6377,
+                0.6209,
+                0.6079,
+                0.6206,
+                0.6505,
+                0.6495,
+                0.6584,
+                0.6579,
+                0.6734,
+                0.6858,
+                0.678,
+                0.6758,
+                0.6731,
+                0.6772,
+                0.6902,
+                0.7011,
+                0.6963,
+                0.6897,
+                0.6949,
+                0.6939,
+                0.7057
+              ],
+              "colour": 2
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "decimals": 3,
+          "xLabel": "$k$ (neighbours)",
+          "yLabel": "MSE (%²)",
+          "height": 250,
+          "y": [
+            0,
+            1.3
+          ],
+          "hlines": [
+            {
+              "id": "mean",
+              "y": 1.0082,
+              "label": "mean forecast 1.008"
+            }
+          ],
+          "margins": {
+            "right": 100
+          }
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "best",
+              "i": 6,
+              "series": "test",
+              "label": "k = 7: {value}"
+            },
+            {
+              "id": "k1",
+              "i": 0,
+              "series": "test",
+              "label": "{value}"
+            }
+          ]
+        }
+      },
+      "question": "What explains the perfect score?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "leak",
+            "text": "Every test day is also in the training set, so its nearest neighbour is itself",
+            "correct": true
+          },
+          {
+            "id": "good",
+            "text": "$k = 1$ is the most flexible model, so it fits best",
+            "why": "Flexible fits the training rows best, and here the test rows are training rows. On new days $k = 1$ scores 1.184."
+          },
+          {
+            "id": "easy",
+            "text": "The last 100 days were easy to forecast",
+            "why": "No real forecast of daily returns scores 0. Zero error means the answers were in the training set."
+          },
+          {
+            "id": "round",
+            "text": "Rounding to 4 places hid a small error",
+            "why": "The error is exactly 0: each test day's own target is copied back."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows did the model see when it was fitted?"
+        },
+        {
+          "rung": "point",
+          "text": "All 300 days, including the 100 it is scored on.",
+          "highlight": [
+            "k1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A test day sits at distance 0 from its own copy in the training set, so 1-NN returns its own target."
+        }
+      ],
+      "feedback": {
+        "correct": "The test rows leaked into training: each one finds itself.",
+        "generic": "Not quite right. Check which rows were used to fit.",
+        "byKey": {
+          "good": "You read in-sample fit as skill. Here the test rows are training rows, so this is training error. On new days $k = 1$ scores 1.184."
+        }
+      },
+      "explain": {
+        "text": "With the test rows inside the training set, every test day is its own nearest neighbour: error 0. Fit on days 1 to 200 only and the same $k = 1$ scores 1.184. Leakage makes any model look perfect.",
+        "canvas": {
+          "highlight": [
+            "k1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Too many features",
+      "prose": "Why not match on 10 features instead of 2? Spread days evenly through a cube of side 1 in $d$ dimensions. The bars show the share within distance 0.5 of the centre, the volume of a ball of radius 0.5.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "d1",
+              "label": "d = 1"
+            },
+            {
+              "id": "d2",
+              "label": "d = 2"
+            },
+            {
+              "id": "d3",
+              "label": "d = 3"
+            },
+            {
+              "id": "d5",
+              "label": "d = 5"
+            },
+            {
+              "id": "d10",
+              "label": "d = 10"
+            }
+          ],
+          "yLabel": "Share within 0.5 (log scale)",
+          "yScale": "log",
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "d1": 1.0,
+            "d2": 0.7854,
+            "d3": 0.5236,
+            "d5": 0.1645,
+            "d10": 0.00249
+          }
+        }
+      },
+      "question": "Of 1,000 past days, about how many lie within 0.5 of the centre when $d = 10$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.1
+        },
+        "accept": "About 2.5: $1000 \\times 0.0025$",
+        "label": "Days within 0.5",
+        "wrong": [
+          {
+            "id": "d5",
+            "value": 164.5,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "all",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the $d = 10$ bar."
+        },
+        {
+          "rung": "point",
+          "text": "The $d = 10$ share is 0.0025.",
+          "highlight": [
+            "d10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Multiply by 1,000."
+        }
+      ],
+      "feedback": {
+        "correct": "About 2.5 of 1,000: the neighbourhood is nearly empty.",
+        "generic": "Not quite right. Multiply the $d = 10$ share by 1,000.",
+        "byKey": {
+          "d5": "That uses the $d = 5$ bar. At $d = 10$ the share is far smaller.",
+          "all": "In 1 dimension every day is within 0.5 of the centre. Not in 10."
+        }
+      },
+      "explain": {
+        "text": "At $d = 10$ only 0.25% of the cube is within 0.5, so the nearest neighbours are no longer near. This is the **curse of dimensionality**: $k$-NN needs few features or vast data.",
+        "canvas": {
+          "highlight": [
+            "d10"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The analogue model",
+      "prose": "A desk's \"analogue\" model finds the 20 past days most like today on six standardised features and averages their next-day returns. That is 20-NN regression. It is scored on the last two years, after choosing everything on earlier data.",
+      "question": "Which change is most likely to improve its forecasts on new days?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cv",
+            "text": "Choose the number of analogues by error on held-out days, trying 5 to 100",
+            "correct": true
+          },
+          {
+            "id": "feat",
+            "text": "Add 30 more features so the analogues match today more closely",
+            "why": "With 36 features almost no past day is near today. The curse of dimensionality makes the matches worse."
+          },
+          {
+            "id": "one",
+            "text": "Use only the single best analogue",
+            "why": "That is $k = 1$: it copies one day's noise, the high-variance end of the U."
+          },
+          {
+            "id": "raw",
+            "text": "Drop the standardising so big features count more",
+            "why": "Then the feature with the largest units dominates the distance, as the £ column did."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which number in the model was picked without looking at test error?"
+        },
+        {
+          "rung": "point",
+          "text": "The 20 is $k$. Nothing says 20 is the bottom of the U."
+        },
+        {
+          "rung": "step",
+          "text": "Pick $k$ by error on held-out days, as `best_k` did."
+        }
+      ],
+      "feedback": {
+        "correct": "Choose $k$ honestly, on held-out days.",
+        "generic": "Not quite right. Think of the analogue model as $k$-NN and recall what set $k$ today."
+      },
+      "explain": {
+        "text": "The analogue model is $k$-NN with $k = 20$, and everything in this lesson applies: pick $k$ on held-out days, keep features few and scaled, and never let the test days into the pool of analogues."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$k$-NN forecasts with the mean target of the $k$ nearest training rows (regression) or their majority class (classification). $k = 1$ memorises; $k = n$ forecasts the mean.",
+      "Distance needs features on the same scale, and few of them: in many dimensions no neighbour is near.",
+      "Choose $k$ by test error on rows the fit never saw. In scikit-learn every model is `fit(X_train, y_train)` then `predict(X_test)`, with `X` 2-D."
+    ],
+    "formula": {
+      "name": "$k$-NN regression",
+      "tex": "\\hat f(\\mathbf{x}_0) = \\frac{1}{k} \\sum_{i \\in N_k(\\mathbf{x}_0)} y_i",
+      "note": "$N_k(\\mathbf{x}_0)$ is the set of the $k$ training rows nearest $\\mathbf{x}_0$ in Euclidean distance."
+    },
+    "trap": "Scoring on rows that are also in the training set: with $k = 1$ each one finds itself and the error is 0."
+  },
+  "quiz": [
+    {
+      "id": "q-tie",
+      "difficulty": 3,
+      "prose": "Training rows in order: $(1, 0)$ with $y = 4$, $(0, 2)$ with $y = 10$, $(-1, 0)$ with $y = 8$. Query $(0, 0)$, $k = 2$, ties broken by index order.",
+      "question": "What does $k$-NN forecast?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "6: rows 1 and 3 are both at distance 1, row 2 at 2, so the two nearest are $y = 4$ and $y = 8$.",
+        "label": "Forecast",
+        "wrong": [
+          {
+            "id": "first2",
+            "value": 7,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "all",
+            "value": 7.3333,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(4 + 8)/2 = 6$.",
+        "generic": "Not quite right. Compute each row's distance to $(0, 0)$ first.",
+        "byKey": {
+          "first2": "You took the first two rows in order. Row 2 is at distance 2, further than row 3.",
+          "all": "That averages all three rows. With $k = 2$ only the two nearest count."
+        }
+      },
+      "explain": {
+        "text": "Distances are 1, 2 and 1. The two nearest are rows 1 and 3, a tie at distance 1, so both are in: $(4 + 8)/2 = 6$. Index order only matters when a tie straddles the $k$-th place."
+      }
+    },
+    {
+      "id": "q-k-big",
+      "difficulty": 2,
+      "prose": "You call `KNeighborsRegressor(n_neighbors=250).fit(X_train, y_train)` with 200 training rows, then `predict`.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "err",
+            "text": "scikit-learn raises an error: there are fewer rows than neighbours",
+            "correct": true
+          },
+          {
+            "id": "mean",
+            "text": "It forecasts the training mean for every row",
+            "why": "That is what $k = 200$ does. Asking for 250 neighbours from 200 rows is refused."
+          },
+          {
+            "id": "pad",
+            "text": "It repeats rows until it has 250",
+            "why": "scikit-learn never invents rows."
+          },
+          {
+            "id": "clip",
+            "text": "It quietly uses $k = 200$",
+            "why": "scikit-learn checks $k$ against the rows and stops with a ValueError."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A ValueError: n_neighbors must not exceed the number of training rows.",
+        "generic": "Not quite right. Can 250 neighbours be found among 200 rows?"
+      },
+      "explain": {
+        "text": "`fit` accepts it, but `predict` raises `ValueError: Expected n_neighbors <= n_samples_fit`. The largest legal $k$ is the number of rows, which forecasts the training mean everywhere."
+      }
+    },
+    {
+      "id": "q-scale",
+      "difficulty": 3,
+      "prose": "Two features: momentum in per cent (sd 2) and market capitalisation in £ billions (sd 40). You run $k$-NN on the raw columns.",
+      "question": "What will drive the choice of neighbours?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cap",
+            "text": "Almost only market capitalisation",
+            "correct": true
+          },
+          {
+            "id": "mom",
+            "text": "Almost only momentum",
+            "why": "Momentum gaps are a few units; capitalisation gaps run to tens. Squared, the large units dominate."
+          },
+          {
+            "id": "both",
+            "text": "Both equally",
+            "why": "Only after dividing each by its standard deviation."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: $k$-NN ignores units",
+            "why": "Euclidean distance adds raw squared gaps, so units decide everything."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The column with the larger spread dominates the distance.",
+        "generic": "Not quite right. Compare typical gaps in each column."
+      },
+      "explain": {
+        "text": "A typical capitalisation gap of 40 squares to 1,600; a momentum gap of 2 squares to 4. Standardise both and they count equally."
+      }
+    }
+  ]
+}

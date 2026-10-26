@@ -1,0 +1,1356 @@
+{
+ "id": "l8-monte-carlo",
+ "course": "cpp-pricing",
+ "title": "Monte Carlo pricing",
+ "minutes": 15,
+ "objectives": [
+  "Price an option by simulation and report its standard error.",
+  "Reduce the error with antithetic variates and price a path-dependent payoff."
+ ],
+ "skills": [
+  "cx-pricers",
+  "cx-numeric",
+  "cx-testing"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Eight futures",
+   "prose": "No tree this time. Draw possible prices for our share in a year, under the risk-neutral model. Here are eight draws, made by a C++ program with a fixed seed, with the call's payoff on each ($K = 100$, $r = 5\\%$, $T = 1$).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "path",
+      "$S_T$ (£)",
+      "call payoff (£)"
+     ],
+     "rows": [
+      [
+       "1",
+       "114.23",
+       "14.23"
+      ],
+      [
+       "2",
+       "92.31",
+       "0.00"
+      ],
+      [
+       "3",
+       "135.48",
+       "35.48"
+      ],
+      [
+       "4",
+       "113.29",
+       "13.29"
+      ],
+      [
+       "5",
+       "100.52",
+       "0.52"
+      ],
+      [
+       "6",
+       "85.78",
+       "0.00"
+      ],
+      [
+       "7",
+       "93.37",
+       "0.00"
+      ],
+      [
+       "8",
+       "68.92",
+       "0.00"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Estimate the call's price today from these eight paths, in pounds.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7.55,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "£",
+    "label": "Price in pounds",
+    "accept": "£7.55: the payoffs average £7.94, times $e^{-0.05}$",
+    "wrong": [
+     {
+      "id": "nodisc",
+      "value": 7.94,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "bs",
+      "value": 10.45,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "itm",
+      "value": 12.71,
+      "tol": {
+       "abs": 0.03
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Average the payoff column."
+    },
+    {
+     "rung": "point",
+     "text": "The payoffs add to £63.53 over eight paths.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$63.53 / 8 = 7.94$, paid in a year: multiply by $e^{-0.05} = 0.9512$."
+    }
+   ],
+   "feedback": {
+    "correct": "£7.55 from eight paths, far from £10.45.",
+    "generic": "Not quite right. Average all eight payoffs, then discount one year.",
+    "byKey": {
+     "nodisc": "That is the average payoff, paid in a year. Discount it: $7.94 \\times e^{-0.05} = 7.55$.",
+     "bs": "That is the Black-Scholes price. Eight paths give a much rougher answer; compute what they say.",
+     "itm": "You averaged only the paths that paid. The other four paid £0 and count too."
+    }
+   },
+   "explain": {
+    "text": "The payoffs average £7.94, worth $7.94e^{-0.05} = 7.55$ today. Eight paths are a poor sample: the true price is £10.45. More paths, and a measure of the error, are this lesson.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Piling up paths",
+   "prose": "This chart repeats the experiment with 5,000 paths, in the browser's own random stream. The line is the running estimate: the discounted average payoff of the first $i$ paths. Slide to reveal it.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "est",
+       "label": "estimate",
+       "sim": {
+        "outcome": "exp(-0.05) * max(100 * exp(0.03 + 0.2 * n()) - 100, 0)",
+        "n": 5000,
+        "seed": 42,
+        "running": "mean"
+       }
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "y": [
+      6,
+      15
+     ],
+     "money": "£",
+     "xLabel": "paths",
+     "yLabel": "estimate (£)",
+     "height": 280,
+     "hlines": [
+      {
+       "id": "bs",
+       "y": 10.4506,
+       "label": "Black-Scholes £10.45"
+      }
+     ]
+    },
+    "state": {
+     "reveal": 0.05
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.02,
+      "max": 1,
+      "step": 0.02,
+      "label": "Paths shown",
+      "start": 0.05,
+      "format": "percent"
+     }
+    ]
+   },
+   "question": "As the paths pile up, how does the estimate behave?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "It wobbles less and less, but still wobbles after thousands of paths",
+      "correct": true
+     },
+     {
+      "id": "exact",
+      "text": "It lands exactly on £10.45 after a few hundred paths",
+      "why": "Each new path moves the average a little, for ever. It gets close, never exactly there."
+     },
+     {
+      "id": "drift",
+      "text": "It drifts steadily upwards",
+      "why": "The early swings go both ways. There is no trend, only noise that shrinks."
+     },
+     {
+      "id": "same",
+      "text": "It wobbles as much at the end as at the start",
+      "why": "Late paths move an average of thousands only slightly. The swings shrink as the count grows."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the swings in the first 250 paths with those in the last 1,000."
+    },
+    {
+     "rung": "point",
+     "text": "One new path changes an average of $i$ paths by about $1/i$ of its payoff."
+    }
+   ],
+   "feedback": {
+    "correct": "The noise shrinks, but slowly.",
+    "generic": "Not quite right. Reveal the whole line and compare its start with its end."
+   },
+   "explain": {
+    "text": "One more path moves an average of $i$ paths by a fraction $1/i$ of its payoff, so the swings shrink. They shrink slowly, though: we will measure how slowly. A price from simulation needs its error beside it.",
+    "canvas": {
+     "reveal": 1
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Terminal prices",
+   "prose": "Under the risk-neutral model $$S_T = S\\exp\\!\\big((r - \\tfrac12\\sigma^2)T + \\sigma\\sqrt T\\,Z\\big),$$ with $Z$ standard normal. As in level 1, seed one `std::mt19937` once and draw from one `std::normal_distribution<double>`, one draw per path, in order.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "terminal_prices(100.0, 0.05, 0.2, 1.0, 3, 42u)",
+      "// {114.2349, 92.3073, 135.4849}",
+      "terminal_prices(100.0, 0.05, 0.0, 1.0, 3, 1u)",
+      "// {105.1271, 105.1271, 105.1271}: no volatility"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Write `terminal_prices`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n#include <random>\n#include <vector>\n\nstd::vector<double> terminal_prices(double s, double r, double sigma,\n                                    double t, int n, unsigned seed) {\n    std::vector<double> out(n);\n    // seed one std::mt19937 once; draw one Z per path, in order\n    return out;\n}\n",
+    "solution": "#include <cmath>\n#include <random>\n#include <vector>\n\nstd::vector<double> terminal_prices(double s, double r, double sigma,\n                                    double t, int n, unsigned seed) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    std::vector<double> out(n);\n    for (int i = 0; i < n; ++i) out[i] = s * std::exp(drift + vol * z(gen));\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "terminal_prices(100.0, 0.05, 0.2, 1.0, 3, 42u)",
+      "expect": [
+       114.23489373863933,
+       92.30730542752808,
+       135.4849020913099
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "terminal_prices(100.0, 0.05, 0.2, 1.0, 3, 42u)",
+      "expect": [
+       114.23489373863933,
+       92.30730542752808,
+       135.4849020913099
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "terminal_prices(100.0, 0.05, 0.2, 1.0, 20000, 42u).size()",
+      "expect": 20000,
+      "compare": "equal"
+     },
+     {
+      "call": "terminal_prices(100.0, 0.05, 0.0, 1.0, 3, 1u)",
+      "expect": [
+       105.12710963760242,
+       105.12710963760242,
+       105.12710963760242
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "terminal_prices(100.0, 0.05, 0.2, 1.0, 5, 7u) == terminal_prices(100.0, 0.05, 0.2, 1.0, 5, 7u)",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "terminal_prices(100.0, 0.05, 0.2, 1.0, 1, 1u)[0] != terminal_prices(100.0, 0.05, 0.2, 1.0, 1, 2u)[0]",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<double> xs = terminal_prices(100.0, 0.05, 0.2, 1.0, 20000, 42u); double m = 0; for (double x : xs) m += x;",
+      "call": "std::abs(m / xs.size() - 105.1271) < 0.5",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Prices are compared within a relative 1e-9 with the values this compiler's libc++ gives for the same seed. `std::normal_distribution` is implementation-defined, so another library would give other draws."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Make the generator and the distribution before the loop, once."
+    },
+    {
+     "rung": "point",
+     "text": "Work out the drift $(r - \\sigma^2/2)T$ and $\\sigma\\sqrt T$ once too."
+    },
+    {
+     "rung": "step",
+     "text": "`out[i] = s * std::exp(drift + vol * z(gen));` with `std::mt19937 gen(seed);` and `std::normal_distribution<double> z(0.0, 1.0);`"
+    }
+   ],
+   "feedback": {
+    "correct": "Reproducible draws: the same seed gives the same paths.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-1": "Test 1 expects the first three draws of seed 42. Seed once, outside the loop, and draw exactly one `z(gen)` per path.",
+     "test-6": "Test 6 averages 20,000 prices and expects about $100e^{0.05} = 105.13$. Check the drift: $(r - \\sigma^2/2)T$, not $rT$."
+    }
+   },
+   "explain": {
+    "text": "The $-\\tfrac12\\sigma^2$ makes the average $S_T$ grow at exactly $r$: here £105.17 against $100e^{0.05} = 105.13$. The seed fixes the whole stream, so a test can expect exact numbers. Those numbers are libc++'s; `std::normal_distribution` differs between libraries."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The Monte Carlo price",
+   "prose": "The price is the discounted average payoff over many paths. Take the payoff as `const Payoff&`, as in lesson 5, so one function prices calls, puts and digitals. `terminal_prices` is loaded.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "mc_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 8, 42u)      // 7.5536, the eight paths",
+      "mc_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u)  // 10.4735",
+      "mc_price(Call(100.0), 100.0, 0.05, 0.0, 1.0, 10, 1u)      // 4.8771, σ = 0"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Write `mc_price`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n#include <vector>\n\n// Loaded: Payoff, Call, Put, DigitalCall and terminal_prices.\n\ndouble mc_price(const Payoff& p, double s, double r, double sigma,\n                double t, int n, unsigned seed) {\n    return 0.0;  // the discounted average payoff\n}\n",
+    "solution": "#include <cmath>\n#include <vector>\n\ndouble mc_price(const Payoff& p, double s, double r, double sigma,\n                double t, int n, unsigned seed) {\n    std::vector<double> st = terminal_prices(s, r, sigma, t, n, seed);\n    double sum = 0.0;\n    for (double x : st) sum += p(x);\n    return std::exp(-r * t) * sum / n;\n}\n",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <memory>\n#include <random>\n#include <stdexcept>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\nclass DigitalCall : public Payoff {\npublic:\n    DigitalCall(double strike, double cash) : strike_(strike), cash_(cash) {}\n    double operator()(double spot) const override { return spot > strike_ ? cash_ : 0.0; }\nprivate:\n    double strike_;\n    double cash_;\n};\nstd::vector<double> terminal_prices(double s, double r, double sigma,\n                                    double t, int n, unsigned seed) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    std::vector<double> out(n);\n    for (int i = 0; i < n; ++i) out[i] = s * std::exp(drift + vol * z(gen));\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "std::round(mc_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) * 1e4) / 1e4",
+      "expect": 10.4735,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "std::round(mc_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) * 1e4) / 1e4",
+      "expect": 10.4735,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::abs(mc_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) - 10.4506) < 3 * 0.1042",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::round(mc_price(Put(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) * 1e4) / 1e4",
+      "expect": 5.5547,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::round(mc_price(DigitalCall(100.0, 10.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) * 1e4) / 1e4",
+      "expect": 5.3183,
+      "compare": "isclose"
+     },
+     {
+      "call": "mc_price(Call(100.0), 100.0, 0.05, 0.0, 1.0, 10, 1u)",
+      "expect": 4.877057549928611,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::round(mc_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 8, 42u) * 1e4) / 1e4",
+      "expect": 7.5536,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Four prices are rounded to 4 places and compared with this compiler's values for the same seed. One test only asks that the 20,000-path call is within 3 standard errors (3 × 0.1042) of 10.4506."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Get the terminal prices, add up `p(x)` over them, then average."
+    },
+    {
+     "rung": "point",
+     "text": "Discount once, at the end: `std::exp(-r * t)`."
+    },
+    {
+     "rung": "step",
+     "text": "`return std::exp(-r * t) * sum / n;`"
+    }
+   ],
+   "feedback": {
+    "correct": "£10.4735 from 20,000 paths, against £10.4506.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-1": "Test 1 expects 10.4735. If you got 11.0105, you forgot to discount. If your digits differ, call `terminal_prices` with the same seed.",
+     "test-5": "Test 5 has σ = 0: every path ends at £105.13, so the price is exactly $e^{-0.05} \\times 5.13 = 4.8771$."
+    }
+   },
+   "explain": {
+    "text": "20,000 paths give £10.4735, £0.023 above Black-Scholes. With σ = 0 every path is the same, so the estimate is the discounted forward payoff exactly. The `Payoff&` argument means a new payoff class needs no new pricer."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The standard error",
+   "prose": "A price without its error is half an answer. The **standard error** is $s/\\sqrt n$, where $s$ is the sample standard deviation of the discounted payoffs, dividing by $n - 1$. With one path there is no spread to measure: throw.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "mc_standard_error(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u)  // 0.1042",
+      "mc_standard_error(Call(100.0), 100.0, 0.05, 0.2, 1.0, 2, 42u)      // 6.7703",
+      "mc_standard_error(Call(100.0), 100.0, 0.05, 0.2, 1.0, 1, 42u)      // throws"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Write `mc_standard_error`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n#include <stdexcept>\n#include <vector>\n\n// Loaded: Payoff, Call, Put, DigitalCall and terminal_prices.\n\ndouble mc_standard_error(const Payoff& p, double s, double r, double sigma,\n                         double t, int n, unsigned seed) {\n    // s / sqrt(n), s the sample sd of the discounted payoffs (n - 1);\n    // throw std::invalid_argument when n < 2\n    return 0.0;\n}\n",
+    "solution": "#include <cmath>\n#include <stdexcept>\n#include <vector>\n\ndouble mc_standard_error(const Payoff& p, double s, double r, double sigma,\n                         double t, int n, unsigned seed) {\n    if (n < 2) throw std::invalid_argument(\"need at least two paths\");\n    std::vector<double> st = terminal_prices(s, r, sigma, t, n, seed);\n    double disc = std::exp(-r * t), mean = 0.0;\n    for (double x : st) mean += disc * p(x);\n    mean /= n;\n    double ss = 0.0;\n    for (double x : st) {\n        double dev = disc * p(x) - mean;\n        ss += dev * dev;\n    }\n    return std::sqrt(ss / (n - 1) / n);\n}\n",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <memory>\n#include <random>\n#include <stdexcept>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\nclass DigitalCall : public Payoff {\npublic:\n    DigitalCall(double strike, double cash) : strike_(strike), cash_(cash) {}\n    double operator()(double spot) const override { return spot > strike_ ? cash_ : 0.0; }\nprivate:\n    double strike_;\n    double cash_;\n};\nstd::vector<double> terminal_prices(double s, double r, double sigma,\n                                    double t, int n, unsigned seed) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    std::vector<double> out(n);\n    for (int i = 0; i < n; ++i) out[i] = s * std::exp(drift + vol * z(gen));\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "std::round(mc_standard_error(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) * 1e4) / 1e4",
+      "expect": 0.1042,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "std::round(mc_standard_error(Call(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) * 1e4) / 1e4",
+      "expect": 0.1042,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::round(mc_standard_error(Put(100.0), 100.0, 0.05, 0.2, 1.0, 20000, 42u) * 1e4) / 1e4",
+      "expect": 0.0609,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::round(mc_standard_error(Call(100.0), 100.0, 0.05, 0.2, 1.0, 2, 42u) * 1e4) / 1e4",
+      "expect": 6.7703,
+      "compare": "isclose"
+     },
+     {
+      "call": "mc_standard_error(Call(100.0), 100.0, 0.05, 0.0, 1.0, 10, 1u) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "mc_standard_error(Call(100.0), 100.0, 0.05, 0.2, 1.0, 1, 42u)",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. Three errors are rounded to 4 places. One path must throw `std::invalid_argument`, which ends the program here."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two passes: first the mean of the discounted payoffs, then the squared deviations."
+    },
+    {
+     "rung": "point",
+     "text": "Divide the sum of squares by $n - 1$, then by $n$, then take the square root."
+    },
+    {
+     "rung": "step",
+     "text": "`return std::sqrt(ss / (n - 1) / n);` after `if (n < 2) throw std::invalid_argument(\"...\");`"
+    }
+   ],
+   "feedback": {
+    "correct": "£10.4735 ± £0.1042.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-3": "Test 3 uses two paths, paying £13.54 and £0. Dividing by $n - 1 = 1$ gives 6.7703; dividing by $n$ gives 4.7873.",
+     "test-5": "Test 5 has one path. There is no spread to estimate: throw `std::invalid_argument` when `n < 2`."
+    }
+   },
+   "explain": {
+    "text": "With 20,000 paths, $n$ against $n - 1$ changes nothing you can see; with two paths it is the difference between 6.77 and 4.79. Two passes avoid the cancellation of level 1: summing $y^2$ and subtracting $n\\bar y^2$ gives 2.5e-8 instead of 0 when σ = 0."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "How fast the error falls",
+   "prose": "Your `mc_standard_error` for our call at six path counts, each four times the last. Same seed, so each run extends the one before.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "n100",
+       "label": "100"
+      },
+      {
+       "id": "n400",
+       "label": "400"
+      },
+      {
+       "id": "n1600",
+       "label": "1,600"
+      },
+      {
+       "id": "n6400",
+       "label": "6,400"
+      },
+      {
+       "id": "n25600",
+       "label": "25,600"
+      },
+      {
+       "id": "n102400",
+       "label": "102,400"
+      }
+     ],
+     "xLabel": "paths",
+     "yLabel": "standard error (£)",
+     "showValues": true,
+     "decimals": 3,
+     "height": 260
+    },
+    "state": {
+     "values": {
+      "n100": 1.3306,
+      "n400": 0.7271,
+      "n1600": 0.3892,
+      "n6400": 0.1869,
+      "n25600": 0.0919,
+      "n102400": 0.0462
+     }
+    }
+   },
+   "question": "Our 20,000-path price has standard error £0.104. How many paths would give £0.052?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 80000,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Paths",
+    "accept": "80,000: half the error needs four times the paths",
+    "wrong": [
+     {
+      "id": "double",
+      "value": 40000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "root",
+      "value": 28284,
+      "tol": {
+       "abs": 2
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare neighbouring bars: what does four times the paths do?"
+    },
+    {
+     "rung": "point",
+     "text": "Each bar is about half the one before.",
+     "highlight": [
+      "n400",
+      "n1600"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Halving the error needs $2^2 = 4$ times the paths: $4 \\times 20{,}000$."
+    }
+   ],
+   "feedback": {
+    "correct": "Four times the work for half the error.",
+    "generic": "Not quite right. Read how much each ×4 in paths cuts the error.",
+    "byKey": {
+     "double": "Doubling the paths cuts the error only by $\\sqrt 2$, to about £0.074. Halving needs four times.",
+     "root": "You took $\\sqrt 2$ times the paths. The error is $s/\\sqrt n$, so it halves when $n$ is multiplied by 4."
+    }
+   },
+   "explain": {
+    "text": "The error is $s/\\sqrt n$: each four-fold increase halves it, bar after bar. So one more correct decimal place costs 100 times the paths. That slow rate is why variance reduction matters.",
+    "canvas": {
+     "highlight": [
+      "n6400",
+      "n25600"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Antithetic variates",
+   "prose": "$Z$ and $-Z$ are equally likely. For each draw, price the path with $Z$ and its mirror with $-Z$, and average the pair. When one is high the other tends to be low, so pair averages vary less. Write it with n draws, so 2n paths.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "method",
+      "draws",
+      "payoffs",
+      "standard error"
+     ],
+     "rows": [
+      [
+       "plain",
+       "20,000",
+       "20,000",
+       "£0.1042"
+      ],
+      [
+       "antithetic",
+       "10,000",
+       "20,000",
+       "?"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `mc_price_antithetic`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n#include <random>\n\n// Loaded: Payoff, Call, Put and DigitalCall.\n\ndouble mc_price_antithetic(const Payoff& p, double s, double r,\n                           double sigma, double t, int n, unsigned seed) {\n    // n draws Z; for each, average the payoffs at Z and at -Z\n    return 0.0;\n}\n",
+    "solution": "#include <cmath>\n#include <random>\n\ndouble mc_price_antithetic(const Payoff& p, double s, double r,\n                           double sigma, double t, int n, unsigned seed) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t, vol = sigma * std::sqrt(t);\n    double sum = 0.0;\n    for (int i = 0; i < n; ++i) {\n        double e = z(gen);\n        sum += 0.5 * (p(s * std::exp(drift + vol * e)) + p(s * std::exp(drift - vol * e)));\n    }\n    return std::exp(-r * t) * sum / n;\n}\n",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <memory>\n#include <random>\n#include <stdexcept>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\nclass DigitalCall : public Payoff {\npublic:\n    DigitalCall(double strike, double cash) : strike_(strike), cash_(cash) {}\n    double operator()(double spot) const override { return spot > strike_ ? cash_ : 0.0; }\nprivate:\n    double strike_;\n    double cash_;\n};\nstd::vector<double> terminal_prices(double s, double r, double sigma,\n                                    double t, int n, unsigned seed) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    std::vector<double> out(n);\n    for (int i = 0; i < n; ++i) out[i] = s * std::exp(drift + vol * z(gen));\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "std::round(mc_price_antithetic(Call(100.0), 100.0, 0.05, 0.2, 1.0, 10000, 42u) * 1e4) / 1e4",
+      "expect": 10.5031,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "std::round(mc_price_antithetic(Call(100.0), 100.0, 0.05, 0.2, 1.0, 10000, 42u) * 1e4) / 1e4",
+      "expect": 10.5031,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::abs(mc_price_antithetic(Call(100.0), 100.0, 0.05, 0.2, 1.0, 10000, 42u) - 10.4506) < 3 * 0.0737",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::round(mc_price_antithetic(Put(100.0), 100.0, 0.05, 0.2, 1.0, 10000, 42u) * 1e4) / 1e4",
+      "expect": 5.6082,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::round(mc_price_antithetic(Call(100.0), 100.0, 0.05, 0.2, 1.0, 1, 42u) * 1e4) / 1e4",
+      "expect": 6.7703,
+      "compare": "isclose"
+     },
+     {
+      "call": "mc_price_antithetic(Call(100.0), 100.0, 0.05, 0.0, 1.0, 10, 1u)",
+      "expect": 4.877057549928611,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. Prices are rounded to 4 places and compared with this compiler's values for seed 42. Draw one `z(gen)` per pair, in order."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draw `e = z(gen)` once per pair and use it twice."
+    },
+    {
+     "rung": "point",
+     "text": "The mirror path is `s * std::exp(drift - vol * e)`."
+    },
+    {
+     "rung": "step",
+     "text": "`sum += 0.5 * (p(s * std::exp(drift + vol * e)) + p(s * std::exp(drift - vol * e)));` then discount `sum / n`."
+    }
+   ],
+   "feedback": {
+    "correct": "Same work as 20,000 plain paths, smaller error.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-1": "Test 1 expects 10.5031. Draw once per pair, not twice: the mirror reuses the same `e`.",
+     "test-4": "Test 4 uses one pair. Its payoffs are £14.23 and £0 in a year: average them, then discount."
+    }
+   },
+   "explain": {
+    "text": "For the same 20,000 payoffs, the standard error falls from £0.1042 to £0.0737: the variance halves, from 0.0109 to 0.0054. The pairs are negatively correlated because a call rises with $Z$. The estimate, £10.5031, is 0.7 standard errors from £10.4506.",
+    "canvas": {
+     "values": {
+      "r1c3": "£0.0737"
+     },
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A suspiciously exact price",
+   "prose": "A colleague's pricer reports an error of zero. Here is his loop.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "double total = 0.0;",
+      "for (int i = 0; i < n; ++i) {",
+      "    std::mt19937 gen(seed);",
+      "    std::normal_distribution<double> z(0.0, 1.0);",
+      "    double st = s * std::exp(drift + vol * z(gen));",
+      "    total += payoff(st);",
+      "}",
+      "",
+      "$ ./mc 20000 42",
+      "price 13.5406   standard error 0.0000"
+     ],
+     "title": "mc.cpp",
+     "numbers": true
+    },
+    "state": {
+     "tone": {
+      "l10": "err"
+     }
+    }
+   },
+   "question": "Why is the standard error zero?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Every path reseeds the generator, so every path draws the same $Z$",
+      "correct": true
+     },
+     {
+      "id": "many",
+      "text": "20,000 paths make the error vanish",
+      "why": "The error falls like $1/\\sqrt n$, never to zero: 20,000 paths give about £0.10.",
+      "canvas": {
+       "highlight": [
+        "l10"
+       ]
+      }
+     },
+     {
+      "id": "seeded",
+      "text": "A seeded generator is deterministic, so a seeded run has no error",
+      "why": "A seed fixes the whole stream, not each draw. Seeded once, the draws still differ from path to path."
+     },
+     {
+      "id": "dist",
+      "text": "The distribution must be built outside the loop; the generator is fine",
+      "why": "Moving `z` out helps, but `gen` would still restart from the same state on every path."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which line runs again on every pass of the loop?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 3 builds a fresh generator from the same seed each time.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Every path draws the first number of seed 42's stream: $Z = 0.5154$, $S_T = 114.23$, payoff £14.23, discounted £13.54."
+    }
+   ],
+   "feedback": {
+    "correct": "One path, counted 20,000 times.",
+    "generic": "Not quite right. Follow `gen` through two passes of the loop.",
+    "byKey": {
+     "many": "The error falls like $1/\\sqrt n$, never to zero: 20,000 paths give about £0.10.",
+     "seeded": "A seed fixes the whole stream, not each draw. Seeded once, the draws still differ from path to path."
+    }
+   },
+   "explain": {
+    "text": "Line 3 restarts the stream on every path, so all 20,000 paths are the first path: £14.23 discounted to £13.54, with no spread at all. Build the generator once, before the loop, as `terminal_prices` does.\n\n```cpp\nstd::mt19937 gen(seed);                        // once\nstd::normal_distribution<double> z(0.0, 1.0);  // once\nfor (int i = 0; i < n; ++i) { /* draw z(gen) */ }\n```",
+    "canvas": {
+     "highlight": [
+      "l3"
+     ],
+     "tone": {
+      "l3": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A payoff on the whole path",
+   "prose": "An **Asian** call pays the average of m monthly prices minus the strike. Our `Payoff` takes one spot, so it cannot express this: a path pricer simulates every month. With m = 12, seed 42 and 20,000 paths, a C++ program printed:",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./asian",
+      "European call   10.4735   (se 0.1042)",
+      "Asian call       6.1774   (se 0.0601)",
+      "draws: 20,000 European, 240,000 Asian"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "Why is the Asian call so much cheaper?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "An average of twelve monthly prices moves less than the final price does",
+      "correct": true
+     },
+     {
+      "id": "early",
+      "text": "It pays out earlier, so it is discounted less",
+      "why": "Both pay at year end. The difference is in what they pay, not when."
+     },
+     {
+      "id": "noise",
+      "text": "Monte Carlo noise: run it again and they will agree",
+      "why": "The gap of £4.30 is about 35 combined standard errors. It is real."
+     },
+     {
+      "id": "fewer",
+      "text": "It used fewer paths",
+      "why": "Both used 20,000 paths; the Asian one drew twelve normals per path."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the volatility of an average compared with one price?"
+    },
+    {
+     "rung": "point",
+     "text": "Early months of the average are close to today's £100."
+    },
+    {
+     "rung": "step",
+     "text": "Averaging smooths the path, so the payoff's spread is smaller and the option is cheaper."
+    }
+   ],
+   "feedback": {
+    "correct": "Averaging lowers the effective volatility.",
+    "generic": "Not quite right. Compare how far the average can move with how far $S_T$ can."
+   },
+   "explain": {
+    "text": "The average of the monthly prices is less volatile than $S_T$, and a call's value rises with volatility. There is no simple closed form for this average, which is where Monte Carlo earns its keep."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The estimator and its error",
+   "prose": "You computed $$\\hat c = e^{-rT}\\,\\frac1n\\sum_{i=1}^n f\\big(S_T^{(i)}\\big),\\qquad \\text{SE} = \\frac{s}{\\sqrt n},$$ with $s$ the sample standard deviation of the discounted payoffs. The chart shows your C++ estimate for 1,000 to 20,000 paths, seed 42, with a band of two standard errors.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "hi",
+       "label": "+2 SE",
+       "values": [
+        12.4257,
+        11.798,
+        11.7492,
+        11.3682,
+        11.1294,
+        11.1973,
+        11.0608,
+        11.0263,
+        10.9027,
+        10.8905,
+        10.8593,
+        10.8761,
+        10.833,
+        10.8231,
+        10.7923,
+        10.763,
+        10.7197,
+        10.7145,
+        10.7132,
+        10.6819
+       ],
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "est",
+       "label": "estimate",
+       "values": [
+        11.4193,
+        11.1116,
+        11.1932,
+        10.896,
+        10.7054,
+        10.8093,
+        10.7048,
+        10.6945,
+        10.5917,
+        10.5951,
+        10.5779,
+        10.6057,
+        10.5736,
+        10.5729,
+        10.5513,
+        10.53,
+        10.4941,
+        10.4951,
+        10.4988,
+        10.4735
+       ],
+       "colour": 1
+      },
+      {
+       "id": "lo",
+       "label": "−2 SE",
+       "values": [
+        10.4129,
+        10.4252,
+        10.6372,
+        10.4238,
+        10.2814,
+        10.4213,
+        10.3488,
+        10.3627,
+        10.2807,
+        10.2997,
+        10.2965,
+        10.3353,
+        10.3142,
+        10.3227,
+        10.3103,
+        10.297,
+        10.2685,
+        10.2757,
+        10.2844,
+        10.2651
+       ],
+       "dashed": true,
+       "colour": 3
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "money": "£",
+     "xLabel": "thousands of paths",
+     "y": [
+      9.4,
+      12.6
+     ],
+     "height": 280,
+     "hlines": [
+      {
+       "id": "bs",
+       "y": 10.4506,
+       "label": "£10.4506"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Is 10.4735 ± 0.1042 consistent with Black-Scholes, 10.4506?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Yes: it is 0.22 standard errors away",
+      "correct": true
+     },
+     {
+      "id": "no",
+      "text": "No: the two numbers differ",
+      "why": "A simulated price always differs a little. The question is by how many standard errors."
+     },
+     {
+      "id": "more",
+      "text": "Only after more paths",
+      "why": "It already is: the gap of £0.023 is well inside one standard error."
+     },
+     {
+      "id": "exact",
+      "text": "Yes, because simulation is exact",
+      "why": "Simulation has error; that is what SE measures. Here the error happens to cover the gap."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the gap by the standard error."
+    },
+    {
+     "rung": "point",
+     "text": "$(10.4735 - 10.4506)/0.1042$."
+    }
+   ],
+   "feedback": {
+    "correct": "Well within two standard errors.",
+    "generic": "Not quite right. Measure the gap in standard errors."
+   },
+   "explain": {
+    "text": "The gap is £0.023, or 0.22 standard errors. At every n on the chart the band holds £10.4506, as it should about 95% of the time. A test that the price lies within 3 standard errors of a known value fails by chance only about 0.3% of the time."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A price on a trade ticket",
+   "prose": "For an exotic with no closed form, the trade ticket carries the Monte Carlo price and its error. This one priced a payoff with 20,000 paths. Risk wants the error down to ± £0.02 before the trade is booked.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "field",
+      "value"
+     ],
+     "rows": [
+      [
+       "model",
+       "Monte Carlo, seed 42"
+      ],
+      [
+       "paths",
+       "20,000"
+      ],
+      [
+       "price",
+       "£10.47"
+      ],
+      [
+       "standard error",
+       "£0.10"
+      ]
+     ],
+     "align": [
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       3
+      ]
+     }
+    }
+   },
+   "question": "How many paths does the same pricer need?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 500000,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Paths",
+    "accept": "500,000: the error must fall 5 times, so the paths rise $5^2 = 25$ times",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 100000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sqrt",
+      "value": 44721,
+      "tol": {
+       "abs": 2
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "By what factor must the error fall?"
+    },
+    {
+     "rung": "point",
+     "text": "From £0.10 to £0.02 is a factor of 5."
+    },
+    {
+     "rung": "step",
+     "text": "The error goes like $1/\\sqrt n$, so the paths rise $5^2 = 25$ times: $25 \\times 20{,}000$."
+    }
+   ],
+   "feedback": {
+    "correct": "500,000 paths.",
+    "generic": "Not quite right. The error falls with the square root of the paths.",
+    "byKey": {
+     "linear": "Five times the paths cuts the error only by $\\sqrt 5$, to about £0.045. It needs 25 times.",
+     "sqrt": "You took $\\sqrt 5$ times the paths. The paths must rise by $5^2$."
+    }
+   },
+   "explain": {
+    "text": "From £0.10 to £0.02 is 5 times smaller, so $5^2 = 25$ times the paths: 500,000. Antithetic pairs would roughly halve that. Desks also swap pseudo-random draws for quasi-random sequences such as Sobol, whose error falls closer to $1/n$."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Simulate $S_T = S\\exp((r - \\sigma^2/2)T + \\sigma\\sqrt T Z)$ with one `std::mt19937` seeded once, average the payoffs and discount. Seed 42 and 20,000 paths give £10.4735 for our call.",
+   "Report the standard error $s/\\sqrt n$ beside the price: £0.1042 here. Halving it costs four times the paths. Test a simulated price against a known one within 3 standard errors.",
+   "Antithetic pairs, $Z$ and $-Z$, halve the variance of our call for the same work. Path payoffs such as an Asian average need every step simulated."
+  ],
+  "formula": {
+   "name": "Monte Carlo price and error",
+   "tex": "\\hat c = e^{-rT}\\frac1n\\sum_{i=1}^n f\\big(S_T^{(i)}\\big),\\quad \\text{SE} = \\frac{s}{\\sqrt n}",
+   "note": "$s$ divides by $n - 1$; with $n = 1$ there is no error estimate."
+  },
+  "trap": "Seeding the generator inside the loop gives every path the same draw: a price from one path and a standard error of zero."
+ },
+ "quiz": [
+  {
+   "id": "q-discount",
+   "difficulty": 2,
+   "prose": "A Monte Carlo pricer prints 11.0105 for our call (seed 42, 20,000 paths). Black-Scholes says £10.4506; the correct pricer gives 10.4735 ± 0.1042.",
+   "question": "What did it most likely forget?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "To discount by $e^{-rT}$",
+      "correct": true
+     },
+     {
+      "id": "paths",
+      "text": "To use enough paths",
+      "why": "The gap is £0.56, over five standard errors. More paths would not close it."
+     },
+     {
+      "id": "drift",
+      "text": "The $-\\sigma^2/2$ in the drift",
+      "why": "That would raise every path by $e^{0.02}$. Check $10.4735 \\times e^{0.05}$ instead."
+     },
+     {
+      "id": "seed",
+      "text": "To seed the generator",
+      "why": "An unseeded `std::mt19937` uses a default seed and still gives a sound estimate."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$10.4735 \\times e^{0.05} = 11.0105$.",
+    "generic": "Not quite right. Compare 11.0105 with 10.4735."
+   },
+   "explain": {
+    "text": "$11.0105 / 10.4735 = 1.0513 = e^{0.05}$: the average payoff was reported in year-end pounds. Multiply by $e^{-rT}$."
+   }
+  },
+  {
+   "id": "q-n-minus-1",
+   "difficulty": 3,
+   "prose": "With 20,000 paths, a colleague divides by $n$ instead of $n - 1$ in the sample variance.",
+   "question": "How much does his standard error of £0.1042 change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "By a factor $\\sqrt{19999/20000}$: about £0.0000026",
+      "correct": true
+     },
+     {
+      "id": "half",
+      "text": "It halves",
+      "why": "Only the divisor of the variance changes, from 19,999 to 20,000."
+     },
+     {
+      "id": "big",
+      "text": "It becomes biased by about 5%",
+      "why": "The relative change is about $1/(2n) = 0.0025\\%$ here. It matters only for tiny samples."
+     },
+     {
+      "id": "zero",
+      "text": "It becomes zero",
+      "why": "The deviations are unchanged. Only the divisor moves, by one in 20,000."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Negligible at 20,000; large at 2.",
+    "generic": "Not quite right. Compare $1/19999$ with $1/20000$."
+   },
+   "explain": {
+    "text": "The standard error scales by $\\sqrt{(n-1)/n}$, here 0.999975. With two paths the same slip cuts it by 29%, from 6.77 to 4.79."
+   }
+  },
+  {
+   "id": "q-int-n",
+   "difficulty": 2,
+   "prose": "`mc_price` takes the number of paths as an `int`.",
+   "question": "Up to how many paths is that safe?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "2,147,483,647",
+      "correct": true
+     },
+     {
+      "id": "short",
+      "text": "32,767",
+      "why": "That is a 16-bit limit. An `int` here is 32 bits."
+     },
+     {
+      "id": "ull",
+      "text": "18,446,744,073,709,551,615",
+      "why": "That is an unsigned 64-bit limit. An `int` is signed and 32 bits here."
+     },
+     {
+      "id": "million",
+      "text": "1,000,000",
+      "why": "There is no such limit. Two billion paths would be far beyond the time budget long before overflow."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Over two billion: far more paths than any run here would use.",
+    "generic": "Not quite right. A 32-bit signed `int` holds up to $2^{31} - 1$."
+   },
+   "explain": {
+    "text": "$2^{31} - 1 = 2{,}147{,}483{,}647$. A million paths is far inside it. The sum is a `double`, so it never overflows either."
+   }
+  },
+  {
+   "id": "q-one-path",
+   "difficulty": 2,
+   "prose": "Edge case: `mc_price` with `n = 1` and seed 42 returns £13.54.",
+   "question": "What standard error goes with it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "None: one path gives no estimate of the spread",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "£0: one path has no spread",
+      "why": "One value has no spread to measure, which is not the same as a spread of zero. The $n - 1$ divisor is 0."
+     },
+     {
+      "id": "price",
+      "text": "£13.54, the price itself",
+      "why": "The error measures spread between paths. One path has none to compare."
+     },
+     {
+      "id": "bs",
+      "text": "£3.09, the gap to Black-Scholes",
+      "why": "The gap to a known price is not the standard error. It needs the sample spread."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "So `mc_standard_error` throws for n < 2.",
+    "generic": "Not quite right. Try dividing by $n - 1$ with one path."
+   },
+   "explain": {
+    "text": "With $n = 1$ the sample variance is $0/0$. Our function throws rather than report a fake zero."
+   }
+  }
+ ]
+}
