@@ -3,7 +3,10 @@
    Nodes and edges live in state (seeded from params), so a patch can add, move or remove them: a list replaces,
    a map keyed by id merges, adds (a new id) or removes (null); nodes and edges fade and grow in or out. layout:
    "ring" seats the nodes evenly round a circle and state.rotate turns them (in seats). state.labels relabels nodes.
-   Without nodeRadius, the radius grows to the longest label (up to 34) and longer labels shrink to fit. */
+   Without nodeRadius, the radius grows to the longest label (up to 34) and longer labels shrink to fit.
+   Pass 7: the radius follows labels set later too (item 416), the frame padding follows the nodes' own extents
+   (item 439), edge labels may hold KaTeX, state.pointers names nodes (slow, fast) with labelled arrows (item 406),
+   state.values writes a value under a node, and params.lattice lays out a recombining binomial lattice (items 374, 444). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -13,20 +16,36 @@
   C.register('graph', (host, params, ctx) => {
     const K = Z.cvb;
     let fitWatch = null;
-    let W = 540; const H = params.height || 300, ring = params.layout === 'ring';
+    let W = 540; const ring = params.layout === 'ring';
+    /* items 374, 444: lattice: { steps: n, S0, u, d, decimals, money, labels, stepLabels } generates nodes n{t}_{k} (k up
+       moves after t steps) at x = t / n, recombining, with edges to n{t+1}_{k+1} (up) and n{t+1}_{k} (down) */
+    const lat = params.lattice && typeof params.lattice === 'object' ? params.lattice : null;
+    const latSteps = lat ? Math.max(1, Math.min(8, Math.round(+lat.steps || 2))) : 0;
+    const latNodes = () => {
+      const out = [], L = lat.labels || {}, dp = lat.decimals ?? 2;
+      for (let t = 0; t <= latSteps; t++) for (let k = 0; k <= t; k++) {
+        const id = `n${t}_${k}`, price = lat.S0 != null ? +lat.S0 * Math.pow(+(lat.u ?? 1.1), k) * Math.pow(+(lat.d ?? 1 / +(lat.u ?? 1.1)), t - k) : null;
+        const text = L[id] != null ? String(L[id]) : price != null ? (lat.money || '') + price.toFixed(dp) : `${k}u ${t - k}d`;
+        out.push({ id, label: text, x: t / latSteps, y: 0.5 - (2 * k - t) / (2 * latSteps), shape: lat.shape || 'rect' });
+      }
+      return out;
+    };
+    const latEdges = () => { const out = []; for (let t = 0; t < latSteps; t++) for (let k = 0; k <= t; k++) { out.push({ from: `n${t}_${k}`, to: `n${t + 1}_${k + 1}` }, { from: `n${t}_${k}`, to: `n${t + 1}_${k}` }); } return out; };
+    const H = params.height || (lat ? Math.max(240, 70 * latSteps + 90) : 300);
     const normNodes = (list) => (list || []).filter(Boolean).map((n, i) => ({ ...n, id: String(n.id ?? 'n' + i) }));
     const normEdges = (list) => (list || []).filter((e) => e && e.from != null && e.to != null).map((e) => ({ ...e, from: String(e.from), to: String(e.to), id: e.id || `e-${e.from}-${e.to}` }));
     const isDir = (e) => e.directed ?? params.directed ?? !!params.markov;
-    const nodes0 = normNodes(params.nodes);
+    const nodes0 = normNodes(lat ? [...latNodes(), ...(params.nodes || [])] : params.nodes);
     /* item 99: the radius fits the longest label (from 22 up to 34) unless nodeRadius is given; longer labels shrink */
     const labOf = (n, view) => String((view && view.labels && view.labels[n.id] != null ? view.labels[n.id] : n.label) ?? n.id);
     const plainW = (t, size) => K.tw(String(t).replace(/\$|\\[a-zA-Z]+|[{}^_]/g, ''), size);
     const initLabels = (params.state && params.state.labels) || {};
-    const r = params.nodeRadius || Math.round(K.clamp(Math.max(0, ...nodes0.flatMap((n) => String(initLabels[n.id] ?? n.label ?? n.id).split('\n').map((l) => plainW(l, 14)))) / 2 + 8, 22, 34));
-    const padX = r + 26, padY = r + 22;
+    const fitR = (list, labels) => Math.round(K.clamp(Math.max(0, ...list.flatMap((n) => String((labels || {})[n.id] ?? n.label ?? n.id).split('\n').map((l) => plainW(l, 14)))) / 2 + 8, 22, 34));
+    const r0 = params.nodeRadius || fitR(nodes0, initLabels);
+    let r = r0, padX = r + 26, padY = r + 22, small = false;
     /* item 152: a node may carry its own r, and shape: "pill" (a rounded box as wide as its label); edges stop at the rim */
     /* item 117: also shape "rect" (a rounded box sized to the label, multi-line labels too) and "diamond" */
-    const widest = (t) => Math.max(...String(t).split('\n').map(l => plainW(l, 14)));
+    const widest = (t) => Math.max(...String(t).split('\n').map(l => plainW(l, small ? 12 : 14)));
     const shapeOf = (n, view) => {
       const rr = n.r || r, lt = labOf(n, view), nl = String(lt).split('\n').length;
       if (n.shape === 'pill') return { kind: 'pill', pill: true, hw: Math.max(rr, widest(lt) / 2 + 12), hh: Math.max(Math.min(rr, 18), nl * 9 + 4), rr };
@@ -44,7 +63,7 @@
     const nodeLabel = (x, y, lt, maxW) => {
       lt = String(lt);
       if (lt.includes('$')) return K.lab(x, y, lt, { w: maxW + 20, size: 14 });
-      let lines = lt.split('\n'), size = 14;
+      let lines = lt.split('\n'), size = small ? 12 : 14;
       while (size > 12 && lines.some(l => plainW(l, size) > maxW)) size--;
       if (lines.length === 1 && plainW(lines[0], size) > maxW && lines[0].includes(' ')) {
         const words = lines[0].split(' '); let best = null;
@@ -78,10 +97,10 @@
       kind: 'graph', aria: params.aria || 'Graph',
       modes: ['tap'],
       size: () => ({ w: W, h: H }),
-      skip: ['visited', 'current', 'labels', 'gone'],
+      skip: ['visited', 'current', 'labels', 'gone', 'values', 'pointers'],
       init: () => {
         const nodes = ring ? seat(nodes0) : nodes0;
-        return { nodes, edges: normEdges(params.edges), rotate: 0, seats: nodes.length, labels: {}, visited: [], current: null, highlight: [], distribution: null, selected: [] };
+        return { nodes, edges: normEdges(lat ? [...latEdges(), ...(params.edges || [])] : params.edges), rotate: 0, seats: nodes.length, labels: {}, visited: [], current: null, highlight: [], distribution: null, selected: [] };
       },
       prepare(patch, state) {
         if ('nodes' in patch) {
@@ -119,7 +138,15 @@
           fitWatch = new ResizeObserver(() => { const w = Math.round(R.F.wrap.clientWidth || 0); if (!w) return; const nw = Math.max(300, Math.min(540, w)); if (nw !== W) { W = nw; ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY)); R.F.resize(W, H); R.redraw(); } });
           fitWatch.observe(R.F.wrap);
         }
+        /* item 416: a label set later can widen the circles (never below the opening radius); item 439: the padding is
+           the nodes' own half-size plus a margin, so rect and pill nodes neither waste the frame nor run off its edge;
+           item 399: below 440px pills and rects size their text at 12px */
+        small = W < 440;
+        if (!params.nodeRadius) r = Math.max(r0, fitR(view.nodes || [], view.labels));
+        { const ext = (view.nodes || []).filter((n) => !n.gone).map((n) => shapeOf(n, view)); const mw = Math.max(r, ...ext.map((q) => q.hw)), mh = Math.max(14, ...ext.map((q) => q.hh)); padX = mw + 26; padY = mh + 22 + (lat && lat.stepLabels ? 14 : 0); ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY)); }
         const g = R.F.g, eg = svg('g'), ng = svg('g'), lg = svg('g'); g.append(eg, ng, lg);
+        /* lattice step labels along the bottom (t = 0, 1, ...; stepLabels: true or a list) */
+        if (lat && lat.stepLabels) { const sl = Array.isArray(lat.stepLabels) ? lat.stepLabels : Array.from({ length: latSteps + 1 }, (_, t) => 't = ' + t); sl.forEach((t, k) => { if (t == null || t === '' || k > latSteps) return; const x = padX + (k / latSteps) * (W - 2 * padX); g.append(String(t).includes('$') ? K.lab(x, H - 12, String(t), { size: 12, cls: 'cvb-muted' }) : K.txt(x, H - 12, String(t), { size: 12, cls: 'cvb-muted' })); }); }
         /* lanes (item 149): labelled horizontal bands behind the graph, such as "local" and "origin" for commits */
         if (Array.isArray(params.lanes) && params.lanes.length) {
           const lanesG = svg('g', { class: 'cvb-lanes' });
@@ -170,9 +197,10 @@
           eg.append(o);
           const wt = view.show === 'none' ? '' : wText(e);
           if (wt) {
-            const w = K.tw(wt, 12) + 10;
+            const tex = /\$/.test(wt), w = K.tw(tex ? wt.replace(/\$|\\[a-zA-Z]+|[{}^_]/g, '') : wt, 12) + (tex ? 14 : 10);
             const lgp = fade(svg('g', { class: 'cv-obj', 'data-id': 'w-' + e.id }), Math.min(e.o ?? 1, a.o ?? 1, b.o ?? 1));
-            lgp.append(svg('rect', { x: lx - w / 2, y: ly - 10, width: w, height: 20, rx: 10, class: 'cvb-wpill' }), K.txt(lx, ly, wt, { size: 12, weight: 600 }));
+            /* item 416: an edge label may hold KaTeX ("$\\lambda$", "$w = 2$") */
+            lgp.append(svg('rect', { x: lx - w / 2, y: ly - 10, width: w, height: 20, rx: 10, class: 'cvb-wpill' }), tex ? K.lab(lx, ly, wt, { w: w + 8, h: 20, size: 12 }) : K.txt(lx, ly, wt, { size: 12, weight: 600 }));
             lg.append(lgp);
           }
         }
@@ -201,12 +229,30 @@
           }
           const lt = labOf(n, view);
           o.append(nodeLabel(x, y, lt, sh.pill ? 2 * hw - 12 : sh.kind === 'diamond' ? hw * 1.1 : 2 * hw - 8));
+          /* state.values { id: text }: a value under the node (valueSide moves it), for a lattice's option values */
+          if (view.values && view.values[n.id] != null && view.values[n.id] !== '' && !(dist && dist[n.id] != null)) {
+            const vs = n.valueSide || (view.valueSide || {})[n.id] || 'below', vt = String(view.values[n.id]);
+            const [vx, vy, va] = vs === 'above' ? [x, y - hh - 12, 'middle'] : vs === 'left' ? [x - hw - 6, y, 'end'] : vs === 'right' ? [x + hw + 6, y, 'start'] : [x, y + hh + 12, 'middle'];
+            o.append(vt.includes('$') ? K.lab(vx, vy, vt, { anchor: va, size: 12, halo: true }) : K.txt(vx, vy, vt, { size: 12, weight: 600, halo: true, cls: 'cvb-outink', anchor: va }));
+          }
           if (vi >= 0 && view.order !== false) {
             const bx = x + (sh.pill ? hw - 4 : hw * 0.78), by = y - hh * 0.78;
             o.append(svg('circle', { cx: bx, cy: by, r: 9, class: 'cvb-visit' }), K.txt(bx, by + 0.5, String(vi + 1), { cls: 'cvb-visit-t', size: 11 }));
           }
           if (!n.gone) R.tappable(o, n.id, 'Node ' + String(lt).replace(/\n/g, ' '));
           ng.append(o);
+        }
+        /* item 406: pointers { slow: "n2", fast: "n4" } (or a list [{ id, at, label, side }]): a labelled arrow onto a node,
+           above it (side "below" puts it under); several on one node stack; a patch moves them */
+        const ptrs = Array.isArray(view.pointers) ? view.pointers : K.isObj(view.pointers) ? Object.entries(view.pointers).map(([id, at]) => (K.isObj(at) ? { id, ...at } : { id, at })) : [];
+        const stack = {};
+        for (const p of ptrs) {
+          const n = byId[p.at]; if (!n || n.gone || p.at == null) continue;
+          const [x, y] = pos(n, view), sh = shapeOf(n, view), below = p.side === 'below', key = p.at + (below ? 'b' : 'a'), k = (stack[key] = (stack[key] || 0) + 1) - 1;
+          const y0 = below ? y + sh.hh + 3 : y - sh.hh - 3, y1 = below ? y0 + 16 + k * 18 : y0 - 16 - k * 18;
+          const o = K.obj(String(p.id), 'cvb-ptr', p.colour || 'manip');
+          o.append(K.arrow(x, y1, x, y0, { cls: 'cvb-ln', head: 6 }), K.txt(x, below ? y1 + 9 : y1 - 8, String(p.label ?? p.id), { size: 12, weight: 700, halo: true }));
+          lg.append(o);
         }
       },
     };
