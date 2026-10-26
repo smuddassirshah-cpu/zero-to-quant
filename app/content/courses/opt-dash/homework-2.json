@@ -1,0 +1,363 @@
+{
+ "id": "homework-2",
+ "course": "opt-dash",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-richardson",
+   "difficulty": 5,
+   "skills": [
+    "od-pricers"
+   ],
+   "title": "A tree that converges faster",
+   "prose": "Richardson extrapolation cancels a $1/n$ error: if $P_n \\approx P + a/n$, then $2P_{2n} - P_n \\approx P$. On a plain CRR tree it fails when the strike falls between nodes: the error zig-zags instead of falling like $a/n$. The fix is to price the last step with Black-Scholes, which smooths the error, then extrapolate. `bs_price` and `crr_price` are already defined.",
+   "question": "Complete `bbs_price` and `richardson_tree`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef bbs_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"CRR tree whose last step is priced by Black-Scholes: the values one\n    step before expiry are bs_price(s, K, r, sigma, dt, kind, q), and an\n    American option also takes the max with exercise there.\"\"\"\n    ...\n\n\ndef richardson_tree(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"Richardson extrapolation of the smoothed tree from n and 2n steps.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef bbs_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"CRR tree whose last step is priced by Black-Scholes.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    disc = exp(-r * dt)\n\n    def payoff(s):\n        return np.maximum(s - K, 0.0) if kind == \"call\" else np.maximum(K - s, 0.0)\n\n    j = np.arange(n)\n    s = S * u ** j * d ** (n - 1 - j)              # one step before expiry\n    v = np.array([bs_price(x, K, r, sigma, dt, kind, q) for x in s])\n    if american:\n        v = np.maximum(v, payoff(s))\n    for i in range(n - 2, -1, -1):\n        v = disc * (p * v[1:] + (1 - p) * v[:-1])\n        if american:\n            j = np.arange(i + 1)\n            v = np.maximum(v, payoff(S * u ** j * d ** (i - j)))\n    return float(v[0])\n\n\ndef richardson_tree(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"Richardson extrapolation of the smoothed tree from n and 2n steps.\"\"\"\n    return (2 * bbs_price(S, K, r, sigma, T, 2 * n, kind, american, q)\n            - bbs_price(S, K, r, sigma, T, n, kind, american, q))\n",
+    "examples": [
+     {
+      "call": "abs(richardson_tree(100, 100, 0.05, 0.2, 1, 50) - 10.450584) < 0.0005",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "abs(richardson_tree(100, 100, 0.05, 0.2, 1, 50) - 10.450584) < 0.0005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(richardson_tree(100, 95, 0.04, 0.25, 0.5, 50, \"put\") - 3.904298) < 0.001",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(richardson_tree(100, 110, 0.05, 0.3, 0.75, 40, \"call\", False, 0.02) - 7.255969) < 0.001",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(richardson_tree(100, 95, 0.04, 0.25, 0.5, 50, \"put\", True) - 4.003848) < 0.002",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(richardson_tree(100, 100, 0.05, 0.2, 1, 50, \"put\", True) - 6.090219) < 0.002",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(richardson_tree(100, 95, 0.04, 0.25, 0.5, 20, \"put\", True) - 4.003848) < abs(crr_price(100, 95, 0.04, 0.25, 0.5, 20, \"put\", True) - 4.003848)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(richardson_tree(100, 95, 0.04, 0.25, 0.5, 50, \"put\", True), 4)",
+      "expect": "4.0045",
+      "compare": "equal"
+     },
+     {
+      "call": "round(bbs_price(100, 100, 0.05, 0.2, 1, 1), 6)",
+      "expect": "10.450584",
+      "compare": "equal"
+     }
+    ],
+    "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\nimport numpy as np\nfrom math import exp, sqrt\n\n\ndef crr_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"CRR binomial price with n steps and dividend yield q.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    if not 0 <= p <= 1:\n        raise ValueError(f\"p = {p:.4f} is outside [0, 1]: use more steps\")\n    disc = exp(-r * dt)\n\n    def payoff(s):\n        return np.maximum(s - K, 0.0) if kind == \"call\" else np.maximum(K - s, 0.0)\n\n    j = np.arange(n + 1)\n    v = payoff(S * u ** j * d ** (n - j))          # the n + 1 leaves\n    for i in range(n - 1, -1, -1):                 # step back to today\n        v = disc * (p * v[1:] + (1 - p) * v[:-1])\n        if american:                               # exercise at step i?\n            j = np.arange(i + 1)\n            v = np.maximum(v, payoff(S * u ** j * d ** (i - j)))\n    return float(v[0])\n",
+    "how": "Check runs 8 hidden tests: three European options within 0.05p to 0.1p of `bs_price`, two American puts within 0.2p of a 5,000-step tree (£4.0038 and £6.0902), a check that 20 extrapolated steps beat 20 plain steps, one value to 4 places, and a one-step smoothed tree, which is Black-Scholes itself. The first run loads NumPy."
+   },
+   "feedback": {
+    "correct": "Your extrapolated tree is within a fifth of a penny at 50 steps, where the plain tree misses by 2p.",
+    "generic": "Not quite right. Build the values one step before expiry from `bs_price` with `dt` left, then step back as in `crr_price`.",
+    "byKey": {
+     "test-4": "Your American put is off. Take the max with exercise at the Black-Scholes step too, then at every earlier step.",
+     "test-8": "With one step, the smoothed tree is `bs_price` over the whole life: no backward steps are left."
+    }
+   },
+   "explain": {
+    "text": "The Black-Scholes last step removes the kink of the payoff from the tree, so the error falls smoothly like $a/n$ and extrapolation can cancel it. At 50 steps the American put is £4.0045 against £4.0038 from 5,000 plain steps. Plain CRR at 50 steps misses by 1.9p, and naive extrapolation can make it worse."
+   }
+  },
+  {
+   "id": "h-naive-rich",
+   "difficulty": 4,
+   "skills": [
+    "od-pricers"
+   ],
+   "prose": "Plain CRR trees for the six-month 95 put ($S = 100$, $r = 4\\%$, $\\sigma = 25\\%$), European: 20 steps give £3.9697 and 40 steps £3.8889. Black-Scholes gives £3.9043.",
+   "question": "What does the naive extrapolation $2P_{40} - P_{20}$ give, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.8081,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "£3.8081: $2 \\times 3.8889 - 3.9697$, which misses by 9.6p.",
+    "unit": "£",
+    "label": "Extrapolated price",
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 3.9293,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£3.8081: worse than either tree.",
+    "generic": "Not quite right. Compute $2 \\times 3.8889 - 3.9697$.",
+    "byKey": {
+     "avg": "That is the average of the two. Richardson weights the finer tree by 2 and subtracts the coarser one."
+    }
+   },
+   "explain": {
+    "text": "The 20-step tree misses by +6.5p and the 40-step by −1.5p: the error changed sign, so it is not $a/n$. Extrapolating a zig-zag throws the estimate 9.6p off. That is why `richardson_tree` smooths the last step first."
+   }
+  },
+  {
+   "id": "h-mc-delta",
+   "difficulty": 4,
+   "skills": [
+    "od-pricers"
+   ],
+   "title": "Delta by simulation",
+   "prose": "Delta is the slope of price against $S$. By simulation, bump the share both ways: $\\Delta \\approx (\\hat c(S + h) - \\hat c(S - h))/2h$. Use one draw of $Z$ for both bumps, so their noise cancels in the difference. `norm_cdf` is already defined; the closed form is $e^{-qT}\\Phi(d_1)$, 0.636831 for our call.",
+   "question": "Complete `mc_greek_delta`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_greek_delta(S, K, r, sigma, T, n_paths, seed, h, q=0.0):\n    \"\"\"Delta of a European call by a central bump of S, with the same\n    normal draws for S + h and S - h: common random numbers.\"\"\"\n    rng = np.random.default_rng(seed)\n    ...\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_greek_delta(S, K, r, sigma, T, n_paths, seed, h, q=0.0):\n    \"\"\"Delta of a European call by a central bump of S, with the same\n    normal draws for S + h and S - h: common random numbers.\"\"\"\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal(n_paths)\n    growth = np.exp((r - q - sigma ** 2 / 2) * T + sigma * sqrt(T) * z)\n    up = np.maximum((S + h) * growth - K, 0.0)\n    down = np.maximum((S - h) * growth - K, 0.0)\n    return float(exp(-r * T) * (up - down).mean() / (2 * h))\n",
+    "examples": [
+     {
+      "call": "round(mc_greek_delta(100, 100, 0.05, 0.2, 1, 100_000, 0, 1.0), 6)",
+      "expect": "0.635973",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(mc_greek_delta(100, 100, 0.05, 0.2, 1, 100_000, 0, 1.0), 6)",
+      "expect": "0.635973",
+      "compare": "equal"
+     },
+     {
+      "call": "round(mc_greek_delta(100, 100, 0.05, 0.2, 1, 100_000, 0, 0.01), 6)",
+      "expect": "0.636373",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(mc_greek_delta(100, 100, 0.05, 0.2, 1, 100_000, 0, 1.0) - norm_cdf(0.35)) < 0.005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(mc_greek_delta(100, 100, 0.05, 0.2, 1, 100_000, 0, 0.5, 0.01) - exp(-0.01) * norm_cdf(0.3)) < 0.005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(mc_greek_delta(100, 110, 0.05, 0.25, 0.5, 100_000, 3, 1.0) - 0.378529) < 0.005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(mc_greek_delta(100, 100, 0.05, 0.2, 1, 100_000, 0, 1e-4) - mc_greek_delta(100, 100, 0.05, 0.2, 1, 100_000, 0, 0.01)) < 1e-4",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n",
+    "how": "Check runs 6 hidden tests: two seeded values to 6 places, three deltas within 0.005 of the closed form (one with a yield, one out of the money), and a tiny bump that still agrees with $h = 0.01$. Draw `n_paths` normals in one call; no antithetic pairs. The first run loads NumPy."
+   },
+   "feedback": {
+    "correct": "Your delta is 0.6360 against 0.6368, and it is stable for any bump.",
+    "generic": "Not quite right. Draw `z` once, build both bumped payoffs from it, and average their discounted difference over $2h$.",
+    "byKey": {
+     "test-6": "Your delta changes with a tiny bump. Use the same `z` for both bumps: with fresh draws the noise is divided by $2h$."
+    }
+   },
+   "explain": {
+    "text": "With shared draws the two prices move together, so their difference holds only the bump's effect. With separate seeds and $h = 0.01$ the same estimate came out at −2.42: noise of 4p divided by 2p. Common random numbers make bumped Greeks possible."
+   }
+  },
+  {
+   "id": "h-backward-order",
+   "difficulty": 4,
+   "skills": [
+    "od-pricers"
+   ],
+   "title": "Backward induction in order",
+   "prose": "Pricing an American put on an $n$-step CRR tree.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Set $\\Delta t = T/n$, $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$ and $p = (e^{(r-q)\\Delta t} - d)/(u - d)$; refuse if $p \\notin [0, 1]$"
+     },
+     {
+      "id": "b",
+      "text": "Value the $n + 1$ leaves at $\\max(K - S, 0)$, the payoff at expiry"
+     },
+     {
+      "id": "c",
+      "text": "Step back one level: hold value $= e^{-r\\Delta t}[pV_{\\text{up}} + (1-p)V_{\\text{down}}]$, the discounted risk-neutral average"
+     },
+     {
+      "id": "d",
+      "text": "At that level replace each value by $\\max(\\text{hold}, K - S)$, since the holder may exercise there"
+     },
+     {
+      "id": "e",
+      "text": "Repeat the last two steps down to step 0; the root's value is the price"
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ]
+   },
+   "feedback": {
+    "correct": "Set up, price the leaves, then step back with the exercise check at every level.",
+    "generic": "Not quite right. The leaves come before any step back, and the check follows each step."
+   },
+   "explain": {
+    "text": "The tree is built before it is used, and values flow from expiry back to today. The exercise check must follow every step back, not only the first. Dropping it prices the European put."
+   }
+  },
+  {
+   "id": "h-anti-order",
+   "difficulty": 4,
+   "skills": [
+    "od-pricers"
+   ],
+   "title": "Why antithetic pairs help",
+   "prose": "Let $f$ be a discounted payoff with variance $\\sigma_f^2$, and $\\rho$ the correlation of $f(Z)$ and $f(-Z)$.",
+   "question": "Put the derivation of the pair average's variance in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Write $A = \\tfrac12\\big(f(Z) + f(-Z)\\big)$, the pair average"
+     },
+     {
+      "id": "b",
+      "text": "$\\text{Var}(A) = \\tfrac14\\big[\\text{Var} f(Z) + \\text{Var} f(-Z) + 2\\,\\text{Cov}(f(Z), f(-Z))\\big]$, the variance of a sum"
+     },
+     {
+      "id": "c",
+      "text": "$= \\tfrac14\\big[2\\sigma_f^2 + 2\\rho\\sigma_f^2\\big]$, since $-Z$ has the same distribution as $Z$"
+     },
+     {
+      "id": "d",
+      "text": "$= \\tfrac12\\sigma_f^2(1 + \\rho)$, collecting terms"
+     },
+     {
+      "id": "e",
+      "text": "So $n$ pairs give $\\text{SE} = \\sigma_f\\sqrt{(1 + \\rho)/2n}$, against $\\sigma_f/\\sqrt{2n}$ for $2n$ plain paths: pairs win when $\\rho < 0$"
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ]
+   },
+   "feedback": {
+    "correct": "Pairs halve the variance and then scale it by $1 + \\rho$.",
+    "generic": "Not quite right. Start from the definition of $A$, expand its variance, then use the symmetry of $Z$."
+   },
+   "explain": {
+    "text": "For our call $\\rho = -0.50$, so pairs cut the variance to a quarter of one payoff's, against a half for two independent paths. For a straddle $\\rho = +0.64$ and pairs do worse. The rule is in the last line: it depends on the sign of $\\rho$."
+   }
+  },
+  {
+   "id": "h-cv-paths",
+   "difficulty": 3,
+   "skills": [
+    "od-pricers"
+   ],
+   "prose": "For our one-year call at 100,000 paths, seed 0: plain Monte Carlo gives a standard error of £0.0465 and the control variate £0.0178.",
+   "question": "How many plain paths would match the control variate's error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 686000,
+    "tol": {
+     "rel": 0.02
+    },
+    "accept": "About 686,000: $100{,}000 \\times (0.0465/0.0178)^2$.",
+    "label": "Paths",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 261000,
+      "tol": {
+       "abs": 5000
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 686,000 paths: the control is worth 6.9 times the paths.",
+    "generic": "Not quite right. Square the ratio of the errors.",
+    "byKey": {
+     "linear": "You scaled the paths with the error ratio. They scale with its square."
+    }
+   },
+   "explain": {
+    "text": "$(0.0465/0.0178)^2 = 6.86$, so about 686,000 plain paths. The control costs one more array and one covariance. That is the trade a desk makes on every Monte Carlo price."
+   }
+  },
+  {
+   "id": "h-long-pricers",
+   "difficulty": 5,
+   "skills": [
+    "od-pricers"
+   ],
+   "title": "Two suspicious prices",
+   "kind": "longform",
+   "prompt": "A colleague's report on the one-year at-the-money put ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $q = 0$) shows two results. (a) Their Monte Carlo \"American put\" exercises on the first monthly date when the share is below £100, and prices at £3.20 ± £0.01, below the European £5.57. (b) Their 50-step tree prices the matching one-year call 4p below Black-Scholes's £10.45. Explain each result, say what each pricer can and cannot do, and write the pricer section of the dashboard's results note.",
+   "model": "**(a) The Monte Carlo put.** £3.20 ± £0.01 is about 240 errors below £5.57, so it is not noise. An American value is the best exercise rule; any fixed rule gives a lower bound. \"Exercise the first time it is in the money\" is a poor rule: it cashes in a few pence just below the strike and gives up the time value. So it is worth less than never exercising early, the European put. The 500-step tree gives the American put £6.09, a premium of 52p over £5.57. Plain Monte Carlo simulates forward and cannot see the hold value at each date; American options need a tree, or a regression method such as Longstaff-Schwartz.\n\n**(b) The tree.** 50 steps give £10.4107, 3.99p below £10.4506. CRR error shrinks like $1/n$ and alternates with the parity of $n$: 51 steps give +3.4p, 100 steps −2.0p, 500 steps −0.4p. So 4p is discretisation error, not a bug: average $n$ and $n + 1$, use more steps, or smooth the last step and extrapolate.\n\n**What each pricer can do.** Black-Scholes is exact and fast (3.7 µs) for European options under its model, and has no early exercise. The tree prices European and American options, with error falling like $1/n$ and cost like $n^2$ (50 ms at 500 steps). Monte Carlo handles any European or path-dependent payoff, always with a standard error that falls like $1/\\sqrt n$; it cannot price early exercise without a regression step.\n\n**Results note, Pricers.** \"Three pricers were compared on puts at strikes 80 to 120 and expiries 0.25, 0.5 and 1 year ($S = 100$, $r = 5\\%$, $q = 1\\%$, $\\sigma = 20\\%$). On European prices the 500-step tree agreed with Black-Scholes within 0.4p, and Monte Carlo (100,000 antithetic paths, seed 0) within 1.3 standard errors in every cell. American puts exceeded European ones by 3p to £2.18, largest deep in the money and long-dated. What failed: a forward Monte Carlo with a fixed exercise rule priced the American put at £3.20, below the European; and a 50-step tree missed by 4p, fixed by more steps.\"",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "Shows the Monte Carlo gap is far beyond its error, so it is not noise."
+    },
+    {
+     "points": 2,
+     "text": "Explains that a fixed exercise rule gives a lower bound, and that exercising at the first in-the-money date gives up time value."
+    },
+    {
+     "points": 1,
+     "text": "States that plain forward Monte Carlo cannot price early exercise, naming the tree or a regression method instead."
+    },
+    {
+     "points": 2,
+     "text": "Identifies the 4p as CRR discretisation error that falls like $1/n$ and alternates with odd and even $n$, with a remedy."
+    },
+    {
+     "points": 2,
+     "text": "Says what each of the three pricers can and cannot do, with their error behaviour."
+    },
+    {
+     "points": 2,
+     "text": "Writes a pricer section with the grid, the agreement in pence and errors, the American premium and at least one concrete failure."
+    }
+   ]
+  }
+ ]
+}
