@@ -122,13 +122,27 @@
       cellsG.append(n); cell.set(id, n); ctext.set(id, t); baseText.set(id, txt);
     }
     if (!lattice) g.append(pathsG);
+    /* item 457: the text of each cell a route passes is repeated above the routes with a halo, so numbers stay readable */
+    const textTop = svg('g', { class: 'cv-ctext-top', 'aria-hidden': 'true' }); g.append(textTop);
+    let routeCells = new Set();
+    const refreshTop = () => { textTop.replaceChildren(...[...routeCells].filter(id => ctext.has(id) && ctext.get(id).textContent).map(id => { const c = ctext.get(id).cloneNode(true); c.classList.add('cv-ctext-halo'); return c; })); };
+    /* item 410: a cell text with a newline is drawn on two lines ("£5\n£20": a fee and a running total) */
+    const setText = (el, txt) => {
+      if (el.tagName !== 'text') { el.textContent = txt; return; }
+      el.dataset.text = txt;
+      if (!String(txt).includes('\n')) { el.textContent = txt; el.removeAttribute('data-two'); return; }
+      const [a, b] = String(txt).split('\n'), x = el.getAttribute('x');
+      el.replaceChildren(svg('tspan', { x, dy: '-0.55em' }, [a]), svg('tspan', { x, dy: '1.15em', class: 'cv-ct2' }, [b || '']));
+      el.dataset.two = '1';
+    };
+    cell.forEach((n, id) => { const t = baseText.get(id); if (t.includes('\n')) setText(ctext.get(id), t); });
     const margG = svg('g', { class: 'cv-margins' }); if (marg) g.append(margG);
     const drawMargins = (st) => {
       if (!marg) return;
       margG.replaceChildren();
       const on = st.margins !== false, M = typeof P.margins === 'object' ? P.margins : {};
       margG.classList.toggle('is-hidden', !on);
-      const num = (id) => { const v = parseFloat(String(ctext.get(id).textContent).replace('−', '-')); return Number.isFinite(v) ? v : 0; };
+      const num = (id) => { const v = parseFloat(String(ctext.get(id).dataset.text ?? ctext.get(id).textContent).split('\n')[0].replace('−', '-')); return Number.isFinite(v) ? v : 0; };
       const rs = range(rows).map((i) => (Array.isArray(M.rows) && M.rows[i - 1] != null ? M.rows[i - 1] : range(cols).reduce((t, j) => t + num(`r${i}c${j}`), 0)));
       const cs = range(cols).map((j) => (Array.isArray(M.cols) && M.cols[j - 1] != null ? M.cols[j - 1] : range(rows).reduce((t, i) => t + num(`r${i}c${j}`), 0)));
       const tot = M.total ?? rs.reduce((t, v) => t + (+v || 0), 0);
@@ -173,8 +187,9 @@
       const list = pathList(v), key = JSON.stringify(list);
       if (key === pathsKey) return; pathsKey = key;
       const old = new Map([...pathsG.children].map(n => [n.dataset.id, n]));
-      pathsG.replaceChildren();
+      pathsG.replaceChildren(); routeCells = new Set();
       list.forEach(p => {
+        p.cells.map(String).filter(id => cell.has(id)).forEach(id => routeCells.add(id));
         const pts = p.cells.map(String).filter(id => cell.has(id)).map(id => { const [i, j] = rc(id); return [cx(j, i) + s / 2, cy(i) + s / 2]; });
         if (pts.length < 2) return;
         const d = 'M' + pts.map(q => q.map(v2 => +v2.toFixed(1)).join(' ')).join(' L');
@@ -198,7 +213,7 @@
         if (Array.isArray(v)) { const row = v[i - 1]; t = Array.isArray(row) && row[j - 1] != null ? String(row[j - 1]) : undefined; }
         else if (v && typeof v === 'object' && v[id] != null) t = String(v[id]);
         const txt = t === undefined ? baseText.get(id) : t, el = ctext.get(id);
-        if (el.textContent !== txt) { el.textContent = txt; n.dataset.label = cellLab(i, j, txt); }
+        if ((el.dataset.text ?? el.textContent) !== txt) { setText(el, txt); n.dataset.label = cellLab(i, j, txt.replace('\n', ', ')); }
       });
     };
 
@@ -237,11 +252,16 @@
           I.later(() => { attrs(outline, { d }); outline.classList.toggle('on', !!d); }, grew && 'dim' in patch ? 520 : outline.getAttribute('d') ? 160 : 0);
         }
       }
-      /* mark: { id: "✓" | { text, tone } } glyph badges */
+      /* mark: { id: "✓" | { text, tone, pos } } glyph badges; item 418: null (or "") removes a badge, and pos: "centre" (or
+         params.markPos) draws the glyph large in the middle of the cell (a queen, a cross on a ruled-out square) */
       markLayer.replaceChildren();
       for (const [id, v] of Object.entries(st.mark || {})) {
-        if (!cell.has(id)) continue;
+        if (!cell.has(id) || v == null || v === '' || (typeof v === 'object' && (v.text == null || v.text === ''))) continue;
         const t = typeof v === 'object' && v ? v : { text: String(v) }, [i, j] = rc(id);
+        if ((t.pos || P.markPos) === 'centre' || (t.pos || P.markPos) === 'center') {
+          markLayer.append(svg('g', { class: 'cv-mark cv-mark-c' + (t.tone ? ' tone-' + t.tone : '') + (instant ? '' : ' pop'), 'data-for': id }, [C.label(cx(j, i) + s / 2, cy(i) + s / 2 + 1, String(t.text), { size: Math.round(Math.min(28, s * 0.5)), cls: 'cv-mark-t' })]));
+          continue;
+        }
         const w = Math.max(18, C.textW(t.text, 11, 800) + 10), x = cx(j, i) + s - 2, y = cy(i) + 2;
         markLayer.append(svg('g', { class: 'cv-mark' + (t.tone ? ' tone-' + t.tone : '') + (instant ? '' : ' pop'), 'data-for': id }, [
           svg('rect', { x: x - w / 2, y: y - 9, width: w, height: 18, rx: 9 }), C.label(x, y + 0.5, t.text, { size: 11, cls: 'cv-mark-t' }),
@@ -251,6 +271,7 @@
       applyText(st.cells);
       drawMargins(st);
       drawPaths(st.paths, instant);
+      refreshTop();
     };
 
     /* point: the prototype's hint box around the cells' bounding box; pulses twice and fades after 3.2s */
@@ -292,7 +313,7 @@
     api.ids = () => [...cell.keys()];
     /* item 224: each cell's number (its text as shown, when numeric), for derive: total(selected) is the running sum of
        the tapped cells, selected.length their count */
-    api.values = () => { const o = {}; ctext.forEach((el, id) => { const v = parseFloat(String(el.textContent).replace('−', '-')); if (Number.isFinite(v)) o[id] = v; }); return o; };
+    api.values = () => { const o = {}; ctext.forEach((el, id) => { const v = parseFloat(String(el.dataset.text ?? el.textContent).split('\n')[0].replace('−', '-')); if (Number.isFinite(v)) o[id] = v; }); return o; };
     api.expand = expand;
     api.set({}, { instant: true });
     return api;
