@@ -1,0 +1,1014 @@
+{
+  "id": "l16-assembling",
+  "course": "opt-dash",
+  "title": "Assembling the dashboard",
+  "minutes": 15,
+  "objectives": [
+    "Assemble the dashboard and write its results note.",
+    "State what changes to run it on real data."
+  ],
+  "skills": [
+    "od-greeks",
+    "od-surface",
+    "od-data"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One run, every panel",
+      "prose": "Everything you built across four levels, run on the seeded chain: data and cleaning, the three pricers, the smiles, term structure and surface, then Greeks, the P&L explain and the arbitrage checks. This is the dashboard's printed summary.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Terminal",
+          "lines": [
+            "$ python dashboard.py",
+            "chain    130 quotes, kept 102 (zero bid 15, crossed 2,",
+            "         stale 2, wide 9)",
+            "forward  1y 104.12, q 0.96%",
+            "pricers  tree within 0.0098 of BS, MC within 0.7 se,",
+            "         American put premium up to 1.0438",
+            "smile    1m: 4 OTM quotes, a 0.1857 b -0.0789 c 0.0835",
+            "term     ATM vol 0.1854 (1m) to 0.2192 (1y)",
+            "greeks   3m £100 call: delta 0.5580 gamma 0.0390",
+            "explain  explained 1.3636 actual 1.3556 residual -0.0080",
+            "arb      butterfly raw 4, fitted 0; calendar 0"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many quotes did cleaning throw away?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 28,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "28: $130 - 102$, or $15 + 2 + 2 + 9$",
+        "label": "Quotes dropped",
+        "wrong": [
+          {
+            "id": "kept",
+            "value": 102,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first line has the counts."
+        },
+        {
+          "rung": "point",
+          "text": "130 quotes came in and 102 were kept.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$130 - 102 = 28$."
+        }
+      ],
+      "feedback": {
+        "correct": "28 dropped, logged by reason.",
+        "generic": "Not quite right. Subtract the kept quotes from the total.",
+        "byKey": {
+          "kept": "That is how many were kept. The question asks how many were dropped.",
+          "zero": "That is the zero-bid count alone. Add the crossed, stale and wide ones."
+        }
+      },
+      "explain": {
+        "text": "Fifteen zero bids, two crossed, two stale and nine too wide make 28. Every later number rests on the 102 that survived, which is why the log is the note's first fact.",
+        "canvas": {
+          "state": {},
+          "shade": {
+            "log": [
+              "l2",
+              "l3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The **dashboard** is one function, `dashboard(df, S, r)`, that runs the pieces in order and returns every table. Each step uses only what came before it.",
+      "question": "Put the dashboard's steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "Clean the quotes and log what was dropped (`clean_quotes`, `drop_report`)"
+          },
+          {
+            "id": "d2",
+            "text": "Back out the forward and $q$ for each expiry (`implied_forward`, `implied_q`)"
+          },
+          {
+            "id": "d3",
+            "text": "Solve implied vols and build each expiry's smile (`smile`)"
+          },
+          {
+            "id": "d4",
+            "text": "Fit the surface and read the term structure (`iv_surface`, `atm_term_structure`)"
+          },
+          {
+            "id": "d5",
+            "text": "Compute Greeks and the P&L explain with the surface's vols (`bs_greeks`, `explain_vs_reval`)"
+          },
+          {
+            "id": "d6",
+            "text": "Check raw mids and the fitted surface for arbitrage (`butterfly_violations`, `calendar_violations`)"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does an implied vol need as inputs?"
+        },
+        {
+          "rung": "point",
+          "text": "A smile is centred on the forward, so the forward comes before any vol."
+        },
+        {
+          "rung": "step",
+          "text": "Clean, forwards, smiles, surface, Greeks, checks."
+        }
+      ],
+      "feedback": {
+        "correct": "Data, forwards, vols, surface, Greeks, checks.",
+        "generic": "Not quite right. Each step must have its inputs ready: which step needs the forward?",
+        "byKey": {
+          "d3": "Implied vols need $q$ for each expiry, so the forward step comes first.",
+          "d5": "Greeks take their vols from the surface, so the surface must be fitted first."
+        }
+      },
+      "explain": {
+        "text": "Cleaning feeds the forwards, the forwards centre every smile, the smiles make the surface, and the surface supplies every Greek's vol. The arbitrage checks read both the raw mids and the fitted surface. The pricer comparison stands beside the chain and can run at any point."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Every earlier function is already defined, as you wrote them, with `node_iv(surface, K, T, F_of_T)` from l15. Fill in the five gaps: the forward and $q$, the one-expiry case, the surface's vol for the Greeks, and the explain for the three-month £100 call. `run_once()` runs your dashboard on `make_chain()`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> out = dashboard(make_chain(), 100.0, 0.05)",
+            ">>> sorted(out)",
+            "['arbitrage', 'clean_log', 'explain', 'greeks',",
+            " 'pricers', 'smiles', 'surface', 'term']",
+            ">>> out['explain']",
+            "{'explained': 1.3636, 'actual': 1.3556, 'residual': -0.008}"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `dashboard`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\nfrom math import pi, isnan\n# ---- level 1 ----\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef drop_report(df, max_age_min=30, max_rel_spread=0.5):\n    out = {\"zero_bid\": 0, \"crossed\": 0, \"stale\": 0, \"wide\": 0}\n    for b, a, age in zip(df[\"bid\"], df[\"ask\"], df[\"age_min\"]):\n        if b <= 0:\n            out[\"zero_bid\"] += 1\n        elif b > a:\n            out[\"crossed\"] += 1\n        elif age > max_age_min:\n            out[\"stale\"] += 1\n        elif (a - b) / ((a + b) / 2) >= max_rel_spread:\n            out[\"wide\"] += 1\n    return out\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    if \"call\" not in w or \"put\" not in w:\n        return float(\"nan\")\n    w = w.dropna(subset=[\"call\", \"put\"])\n    if len(w) < 3:\n        return float(\"nan\")\n    return float(np.median(w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])))\n\ndef implied_q(F, S, r, T):\n    return r - log(F / S) / T\n\ndef otm_quotes(df_T, F):\n    keep = (((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F))\n            | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F)))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\n# ---- level 2 ----\ndef crr_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    if not 0 <= p <= 1:\n        raise ValueError(\"p outside [0, 1]: use more steps\")\n    disc = exp(-r * dt)\n    sign = 1.0 if kind == \"call\" else -1.0\n    j = np.arange(n + 1)\n    v = np.maximum(sign * (S * u ** (2 * j - n) - K), 0.0)\n    for i in range(n - 1, -1, -1):\n        v = disc * (p * v[1:] + (1 - p) * v[:-1])\n        if american:\n            j = np.arange(i + 1)\n            v = np.maximum(v, sign * (S * u ** (2 * j - i) - K))\n    return float(v[0])\n\ndef mc_price(S, K, r, sigma, T, kind=\"call\", n_paths=100_000, seed=0, antithetic=True, q=0.0):\n    rng = np.random.default_rng(seed)\n    m = n_paths // 2 if antithetic else n_paths\n    if m < 2:\n        raise ValueError(\"need at least two independent samples\")\n    z = rng.standard_normal(m)\n    drift, vol = (r - q - sigma ** 2 / 2) * T, sigma * sqrt(T)\n    sign = 1.0 if kind == \"call\" else -1.0\n    def pay(zz):\n        return exp(-r * T) * np.maximum(sign * (S * np.exp(drift + vol * zz) - K), 0.0)\n    y = (pay(z) + pay(-z)) / 2 if antithetic else pay(z)\n    return float(y.mean()), float(y.std(ddof=1) / sqrt(m))\n\ndef compare_grid(S, r, q, sigma, strikes, expiries, n_steps, n_paths, seed):\n    rows = []\n    for T in expiries:\n        for K in strikes:\n            mc, se = mc_price(S, K, r, sigma, T, \"put\", n_paths, seed, True, q)\n            rows.append({\"K\": K, \"T\": T,\n                         \"bs\": bs_price(S, K, r, sigma, T, \"put\", q),\n                         \"tree_eu\": crr_price(S, K, r, sigma, T, n_steps, \"put\", False, q),\n                         \"tree_am_put\": crr_price(S, K, r, sigma, T, n_steps, \"put\", True, q),\n                         \"mc\": mc, \"mc_se\": se})\n    return pd.DataFrame(rows, columns=[\"K\", \"T\", \"bs\", \"tree_eu\", \"tree_am_put\", \"mc\", \"mc_se\"])\n\n# ---- level 3 ----\ndef _vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma\n        else:\n            lo = sigma\n        v = _vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else lo - 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n\ndef smile(clean, T, S, r, q):\n    df_T = clean[np.isclose(clean[\"T\"], T)]\n    F = S * exp((r - q) * T)\n    otm = otm_quotes(df_T, F)\n    rows = []\n    for K, kind, b, a in zip(otm[\"strike\"], otm[\"type\"], otm[\"bid\"], otm[\"ask\"]):\n        try:\n            iv = implied_vol((b + a) / 2, S, K, r, T, kind, q)\n        except ValueError:\n            iv = float(\"nan\")\n        rows.append([K, log(K / F) / sqrt(T), iv])\n    return pd.DataFrame(rows, columns=[\"strike\", \"m\", \"iv\"])\n\ndef fit_smile(m, iv, weights=None):\n    m, iv = np.asarray(m, float), np.asarray(iv, float)\n    w = np.ones_like(m) if weights is None else np.asarray(weights, float)\n    ok = ~(np.isnan(m) | np.isnan(iv) | np.isnan(w))\n    m, iv, w = m[ok], iv[ok], w[ok]\n    if len(m) < 3:\n        raise ValueError(\"need at least three quotes\")\n    X = np.column_stack([np.ones_like(m), m, m * m]) * np.sqrt(w)[:, None]\n    coef = np.linalg.lstsq(X, iv * np.sqrt(w), rcond=None)[0]\n    return tuple(round(float(c), 4) for c in coef)\n\ndef atm_term_structure(clean, S, r, q):\n    rows = []\n    for T in sorted(clean[\"T\"].unique()):\n        qT = q[T] if isinstance(q, dict) else q\n        s = smile(clean, T, S, r, qT).dropna().sort_values(\"m\")\n        rows.append([T, float(np.interp(0.0, s[\"m\"], s[\"iv\"]))])\n    return pd.DataFrame(rows, columns=[\"T\", \"atm_iv\"])\n\ndef forward_vol(s1, T1, s2, T2):\n    w = s2 ** 2 * T2 - s1 ** 2 * T1\n    if w < 0:\n        raise ValueError(\"total variance falls: calendar arbitrage\")\n    return sqrt(w / (T2 - T1))\n\ndef iv_surface(clean, S, r, q):\n    out = {}\n    for T in sorted(clean[\"T\"].unique()):\n        qT = q[T] if isinstance(q, dict) else q\n        s = smile(clean, T, S, r, qT)\n        out[float(T)] = fit_smile(s[\"m\"], s[\"iv\"])\n    return out\n\ndef smile_iv(coeffs, m):\n    a, b, c = coeffs\n    return a + b * m + c * m * m\n\ndef interp_iv(surface, K, T, F_of_T):\n    Ts = sorted(surface)\n    def w_at(Tn):\n        m = log(K / F_of_T(Tn)) / sqrt(Tn)\n        return smile_iv(surface[Tn], m) ** 2 * Tn\n    if T <= Ts[0]:\n        m = log(K / F_of_T(T)) / sqrt(T)\n        return smile_iv(surface[Ts[0]], m), T < Ts[0]\n    if T >= Ts[-1]:\n        m = log(K / F_of_T(T)) / sqrt(T)\n        return smile_iv(surface[Ts[-1]], m), T > Ts[-1]\n    for T1, T2 in zip(Ts, Ts[1:]):\n        if T1 <= T <= T2:\n            k = log(K / F_of_T(T))\n            w1 = smile_iv(surface[T1], k / sqrt(T1)) ** 2 * T1\n            w2 = smile_iv(surface[T2], k / sqrt(T2)) ** 2 * T2\n            w = w1 + (w2 - w1) * (T - T1) / (T2 - T1)\n            return sqrt(w / T), False\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega, \"theta\": theta, \"rho\": rho}\n\ndef fd_greeks(pricer, S, sigma, T, h_S=0.01, h_sigma=0.0001, h_T=1 / 365):\n    v = pricer(S, sigma, T)\n    up, down = pricer(S + h_S, sigma, T), pricer(S - h_S, sigma, T)\n    return {\"delta\": (up - down) / (2 * h_S),\n            \"gamma\": (up - 2 * v + down) / h_S ** 2,\n            \"vega\": (pricer(S, sigma + h_sigma, T) - pricer(S, sigma - h_sigma, T)) / (2 * h_sigma),\n            \"theta\": -(pricer(S, sigma, T + h_T) - pricer(S, sigma, T - h_T)) / (2 * h_T)}\n\ndef best_bump(pricer, S, sigma, T, hs, true_gamma):\n    errs = [abs(fd_greeks(pricer, S, sigma, T, h_S=h)[\"gamma\"] - true_gamma) for h in hs]\n    return hs[errs.index(min(errs))]\n\ndef greek_profile(name, strikes, T, S=100.0, r=0.05, sigma=0.2, q=0.0, kind=\"call\"):\n    return np.array([bs_greeks(S, K, r, sigma, T, kind, q)[name] for K in strikes])\n\ndef pnl_explain(greeks, dS, dsigma, dt):\n    terms = {\"delta\": greeks[\"delta\"] * dS,\n             \"gamma\": 0.5 * greeks[\"gamma\"] * dS ** 2,\n             \"vega\": greeks[\"vega\"] * dsigma,\n             \"theta\": greeks[\"theta\"] * dt}\n    terms[\"total\"] = sum(terms.values())\n    return terms\n\ndef explain_vs_reval(S, K, r, sigma, T, dS, dsigma, dt, kind=\"call\", q=0.0):\n    g = bs_greeks(S, K, r, sigma, T, kind, q)\n    explained = pnl_explain(g, dS, dsigma, dt)[\"total\"]\n    actual = bs_price(S + dS, K, r, sigma + dsigma, T - dt, kind, q) - bs_price(S, K, r, sigma, T, kind, q)\n    return round(explained, 4), round(actual, 4), round(actual - explained, 4)\n\ndef vertical_violations(calls, disc=1.0):\n    c = calls.sort_values(\"strike\")\n    K, C = list(c[\"strike\"]), list(c[\"price\"])\n    out = []\n    for i in range(1, len(K)):\n        fall = C[i - 1] - C[i]\n        if fall < 0:\n            out.append((K[i], -fall))\n        elif fall > disc * (K[i] - K[i - 1]):\n            out.append((K[i], fall - disc * (K[i] - K[i - 1])))\n    return out\n\ndef butterfly_violations(calls):\n    c = calls.sort_values(\"strike\")\n    K, C = list(c[\"strike\"]), list(c[\"price\"])\n    out = []\n    for i in range(1, len(K) - 1):\n        w = (K[i + 1] - K[i]) / (K[i + 1] - K[i - 1])\n        fly = 2 * (w * C[i - 1] + (1 - w) * C[i + 1] - C[i])\n        if fly < 0:\n            out.append((K[i], -fly))\n    return out\n\ndef node_iv(surface, K, T, F_of_T):\n    return smile_iv(surface[T], log(K / F_of_T(T)) / sqrt(T))\n\ndef calendar_violations(surface, F_of_T, ks):\n    Ts = sorted(surface)\n    out = []\n    for k in ks:\n        w = [node_iv(surface, F_of_T(T) * exp(k), T, F_of_T) ** 2 * T for T in Ts]\n        for i in range(len(Ts) - 1):\n            if w[i + 1] < w[i]:\n                out.append((k, Ts[i], Ts[i + 1]))\n    return out\n\n_cache = {}\n\ndef run_once():\n    \"\"\"The dashboard on the seeded chain, run once and kept.\"\"\"\n    if \"out\" not in _cache:\n        _cache[\"out\"] = dashboard(make_chain(), 100.0, 0.05)\n    return _cache[\"out\"]\n\none_expiry = make_chain()\none_expiry = one_expiry[np.isclose(one_expiry[\"T\"], 0.25)]\n",
+        "starter": "def dashboard(df, S, r):\n    \"\"\"Every panel of the dashboard from one raw chain.\"\"\"\n    clean = clean_quotes(df)\n    log_ = drop_report(df)\n    log_[\"kept\"], log_[\"total\"] = len(clean), len(df)\n    expiries = sorted(float(T) for T in clean[\"T\"].unique())\n    q = {}\n    for T in expiries:\n        F = ...       # level 1's implied forward for this expiry\n        q[T] = ...\n    F_of_T = lambda T: S * exp((r - q[min(q, key=lambda t: abs(t - T))]) * T)\n    smiles = {T: smile(clean, T, S, r, q[T]) for T in expiries}\n    surface = iv_surface(clean, S, r, q)\n    if len(expiries) > 1:\n        term = atm_term_structure(clean, S, r, q)\n    else:\n        term = ...    # say so in words instead of failing\n    pricers = compare_grid(S, r, float(np.median(list(q.values()))), 0.2,\n                           [90, 100, 110], [0.25, 1.0], 200, 20_000, 0)\n    rows = []\n    for T in expiries:\n        iv = ...          # the surface's vol at strike 100\n        g = bs_greeks(S, 100.0, r, iv, T, \"call\", q[T])\n        rows.append({\"T\": T, \"iv\": iv, **g})\n    greeks = pd.DataFrame(rows)\n    T0 = min(expiries, key=lambda t: abs(t - 0.25))\n    iv0 = node_iv(surface, 100.0, T0, F_of_T)\n    e, a, res = ...   # explain_vs_reval: +2 share, +0.01 vol, one day\n    explain = {\"explained\": e, \"actual\": a, \"residual\": res}\n    fly_raw, fly_fit = [], []\n    for T in expiries:\n        c = clean[np.isclose(clean[\"T\"], T) & (clean[\"type\"] == \"call\")]\n        raw = pd.DataFrame({\"strike\": c[\"strike\"], \"price\": mid(c)})\n        fly_raw += [(T, k, a) for k, a in butterfly_violations(raw)]\n        ks = list(range(70, 131, 5))\n        fit = pd.DataFrame({\"strike\": ks, \"price\": [\n            bs_price(S, K, r, node_iv(surface, K, T, F_of_T), T, \"call\", q[T])\n            for K in ks]})\n        fly_fit += [(T, k, a) for k, a in butterfly_violations(fit)]\n    grid = [round(-0.3 + 0.05 * i, 2) for i in range(13)]\n    arbitrage = {\"butterfly_raw\": fly_raw, \"butterfly_fitted\": fly_fit,\n                 \"calendar\": calendar_violations(surface, F_of_T, grid)}\n    return {\"clean_log\": log_, \"pricers\": pricers, \"smiles\": smiles,\n            \"term\": term, \"surface\": surface, \"greeks\": greeks,\n            \"explain\": explain, \"arbitrage\": arbitrage}\n",
+        "solution": "def dashboard(df, S, r):\n    \"\"\"Every panel of the dashboard from one raw chain.\"\"\"\n    clean = clean_quotes(df)\n    log_ = drop_report(df)\n    log_[\"kept\"], log_[\"total\"] = len(clean), len(df)\n    expiries = sorted(float(T) for T in clean[\"T\"].unique())\n    q = {}\n    for T in expiries:\n        F = implied_forward(clean[np.isclose(clean[\"T\"], T)], r, T)\n        q[T] = implied_q(F, S, r, T)\n    F_of_T = lambda T: S * exp((r - q[min(q, key=lambda t: abs(t - T))]) * T)\n    smiles = {T: smile(clean, T, S, r, q[T]) for T in expiries}\n    surface = iv_surface(clean, S, r, q)\n    if len(expiries) > 1:\n        term = atm_term_structure(clean, S, r, q)\n    else:\n        term = \"one expiry: no term structure\"\n    pricers = compare_grid(S, r, float(np.median(list(q.values()))), 0.2,\n                           [90, 100, 110], [0.25, 1.0], 200, 20_000, 0)\n    rows = []\n    for T in expiries:\n        iv = node_iv(surface, 100.0, T, F_of_T)\n        g = bs_greeks(S, 100.0, r, iv, T, \"call\", q[T])\n        rows.append({\"T\": T, \"iv\": iv, **g})\n    greeks = pd.DataFrame(rows)\n    T0 = min(expiries, key=lambda t: abs(t - 0.25))\n    iv0 = node_iv(surface, 100.0, T0, F_of_T)\n    e, a, res = explain_vs_reval(S, 100.0, r, iv0, T0, 2.0, 0.01, 1 / 365,\n                                 \"call\", q[T0])\n    explain = {\"explained\": e, \"actual\": a, \"residual\": res}\n    fly_raw, fly_fit = [], []\n    for T in expiries:\n        c = clean[np.isclose(clean[\"T\"], T) & (clean[\"type\"] == \"call\")]\n        raw = pd.DataFrame({\"strike\": c[\"strike\"], \"price\": mid(c)})\n        fly_raw += [(T, k, a) for k, a in butterfly_violations(raw)]\n        ks = list(range(70, 131, 5))\n        fit = pd.DataFrame({\"strike\": ks, \"price\": [\n            bs_price(S, K, r, node_iv(surface, K, T, F_of_T), T, \"call\", q[T])\n            for K in ks]})\n        fly_fit += [(T, k, a) for k, a in butterfly_violations(fit)]\n    grid = [round(-0.3 + 0.05 * i, 2) for i in range(13)]\n    arbitrage = {\"butterfly_raw\": fly_raw, \"butterfly_fitted\": fly_fit,\n                 \"calendar\": calendar_violations(surface, F_of_T, grid)}\n    return {\"clean_log\": log_, \"pricers\": pricers, \"smiles\": smiles,\n            \"term\": term, \"surface\": surface, \"greeks\": greeks,\n            \"explain\": explain, \"arbitrage\": arbitrage}\n",
+        "examples": [
+          {
+            "call": "sorted(run_once())",
+            "compare": "equal",
+            "expect": "['arbitrage', 'clean_log', 'explain', 'greeks', 'pricers', 'smiles', 'surface', 'term']"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sorted(run_once())",
+            "compare": "equal",
+            "expect": "['arbitrage', 'clean_log', 'explain', 'greeks', 'pricers', 'smiles', 'surface', 'term']"
+          },
+          {
+            "call": "(run_once()['clean_log']['kept'], run_once()['clean_log']['total'])",
+            "compare": "equal",
+            "expect": "(102, 130)"
+          },
+          {
+            "call": "len(run_once()['term'])",
+            "compare": "equal",
+            "expect": "5"
+          },
+          {
+            "call": "round(run_once()['surface'][1.0][0], 4)",
+            "compare": "isclose",
+            "expect": "0.2185"
+          },
+          {
+            "call": "round(float(run_once()['greeks']['delta'].iloc[2]), 4)",
+            "compare": "isclose",
+            "expect": "0.558"
+          },
+          {
+            "call": "round(float(run_once()['greeks']['iv'].iloc[4]), 4)",
+            "compare": "isclose",
+            "expect": "0.2219"
+          },
+          {
+            "call": "run_once()['explain']",
+            "compare": "equal",
+            "expect": "{'explained': 1.3636, 'actual': 1.3556, 'residual': -0.008}"
+          },
+          {
+            "call": "(len(run_once()['arbitrage']['butterfly_raw']), run_once()['arbitrage']['butterfly_fitted'], run_once()['arbitrage']['calendar'])",
+            "compare": "equal",
+            "expect": "(4, [], [])"
+          },
+          {
+            "call": "run_once()['pricers'].shape",
+            "compare": "equal",
+            "expect": "(6, 7)"
+          },
+          {
+            "call": "isinstance(dashboard(one_expiry, 100.0, 0.05)['term'], str)",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "call": "dashboard(one_expiry, 100.0, 0.05)['clean_log']['kept']",
+            "compare": "equal",
+            "expect": "21"
+          }
+        ],
+        "how": "Check runs 11 hidden tests on `make_chain()`: the eight keys, the cleaning counts, five expiries in the term structure, the one-year ATM vol, a delta and a vol from the Greeks table, the explain, the arbitrage counts, the pricer grid's shape, and a one-expiry chain. Values are rounded to 4 places. The first run loads NumPy and pandas, which takes about 15 seconds.",
+        "budget": 20000
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The forward comes from the expiry's rows: `clean[np.isclose(clean['T'], T)]`."
+        },
+        {
+          "rung": "point",
+          "text": "The Greeks' vol is `node_iv(surface, 100.0, T, F_of_T)`; the explain is `explain_vs_reval(S, 100.0, r, iv0, T0, 2.0, 0.01, 1 / 365, 'call', q[T0])`."
+        },
+        {
+          "rung": "step",
+          "text": "`F = implied_forward(clean[np.isclose(clean['T'], T)], r, T)`, `q[T] = implied_q(F, S, r, T)`, and `term = 'one expiry: no term structure'`."
+        }
+      ],
+      "feedback": {
+        "correct": "Kept 102 of 130; residual −0.0080; no fitted or calendar failures.",
+        "generic": "Some tests failed. Check that `q` is per expiry, and that the Greeks use the surface's vol rather than a flat 20%.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check every `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "Each panel is a call to a function you tested on its own, so the dashboard is mostly wiring. The one-expiry branch returns words, so the panel reports the gap instead of crashing. The three-month £100 call has vol 0.2018 on the surface, delta 0.5580 and an explain residual of −0.0080.\n\n```python\niv = node_iv(surface, 100.0, T, F_of_T)\n```"
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "A client sends a chain with one expiry, three months. Cleaning keeps 21 of its 26 quotes, the forward and the smile work, but a term structure needs at least two expiries.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Panel",
+            "One-expiry chain"
+          ],
+          "rows": [
+            [
+              "Cleaning",
+              "21 of 26 kept"
+            ],
+            [
+              "Smile",
+              "fitted"
+            ],
+            [
+              "Term structure",
+              "?"
+            ],
+            [
+              "Calendar check",
+              "no pairs to compare"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      },
+      "question": "What should the term-structure panel show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "say",
+            "text": "A plain sentence: one expiry, no term structure",
+            "correct": true
+          },
+          {
+            "id": "crash",
+            "text": "An error, so the user knows something is wrong",
+            "why": "Then one missing panel stops every other panel. Report the gap and carry on."
+          },
+          {
+            "id": "flat",
+            "text": "The one ATM vol repeated across expiries",
+            "why": "That invents data the chain does not hold. A flat line looks like a real measurement."
+          },
+          {
+            "id": "blank",
+            "text": "An empty table with no comment",
+            "why": "An empty table looks like a bug. Say why it is empty."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The other panels still work."
+        },
+        {
+          "rung": "point",
+          "text": "The reader needs to know the panel is empty on purpose."
+        },
+        {
+          "rung": "step",
+          "text": "Return a sentence in place of the table."
+        }
+      ],
+      "feedback": {
+        "correct": "Say so, and let the other panels run.",
+        "generic": "Not quite right. Which choice keeps the other panels and tells the truth?"
+      },
+      "explain": {
+        "text": "A dashboard meets odd chains in real use: a holiday, a new listing, a vendor outage. Returning a sentence keeps the run alive and the note honest. The calendar check returns an empty list for the same reason."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You built the dashboard as a pipeline: each panel reads only the panels before it.\n\n```python\nclean = clean_quotes(df)                 # data\nq = {T: implied_q(...) for T in Ts}       # forwards\nsurface = iv_surface(clean, S, r, q)      # vols\niv = node_iv(surface, K, T, F_of_T)       # Greeks\n```",
+      "question": "A vendor corrects one stale three-month quote. Which panels change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "all",
+            "text": "Everything downstream of cleaning: forwards, smiles, surface, Greeks, explain and checks",
+            "correct": true
+          },
+          {
+            "id": "smile",
+            "text": "Only the three-month smile",
+            "why": "The surface, the Greeks and the checks all read that smile."
+          },
+          {
+            "id": "none",
+            "text": "None: one quote is too small to matter",
+            "why": "One quote moves the forward's median, the smile fit and so every vol read from it."
+          },
+          {
+            "id": "pricers",
+            "text": "Only the pricer panel",
+            "why": "The pricer panel uses a flat vol and fixed strikes. It is the one panel that does not change."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Rerun the whole pipeline.",
+        "generic": "Not quite right. Follow the arrows from the quote."
+      },
+      "explain": {
+        "text": "A quote feeds the three-month forward, smile and surface node, and the Greeks and checks read the surface. That is why the dashboard is one function run from the raw chain. Caching a half-updated panel is how dashboards end up quoting two different surfaces."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague's version prices options from your surface but takes each option's Greeks from the vendor's `impliedVolatility` column, \"to save time\". His P&L explain shows a residual of £0.20 on a quiet day.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input",
+            "Source"
+          ],
+          "rows": [
+            [
+              "Prices",
+              "your surface"
+            ],
+            [
+              "Greeks",
+              "vendor's vols"
+            ],
+            [
+              "Residual",
+              "£0.20 on a quiet day"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      },
+      "question": "What is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mixed",
+            "text": "The Greeks and the prices come from two different vol models, so the explain compares unlike things",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: the vendor's vols are close enough",
+            "why": "Close is not equal. A one-point difference in vol moves the Greeks and makes the residual meaningless."
+          },
+          {
+            "id": "higher",
+            "text": "The residual is higher-order terms",
+            "why": "On a quiet day those are tiny. A £0.20 residual has another cause."
+          },
+          {
+            "id": "speed",
+            "text": "Only speed: the vendor's vols are slower to load",
+            "why": "Speed is not the problem. Consistency is."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does each Greek's vol come from, and where does each price's vol come from?"
+        },
+        {
+          "rung": "point",
+          "text": "The explain subtracts one model's revaluation from another model's Greeks."
+        },
+        {
+          "rung": "step",
+          "text": "Take every vol from the one surface."
+        }
+      ],
+      "feedback": {
+        "correct": "One surface for prices and Greeks.",
+        "generic": "Not quite right. Compare the two sources in the table.",
+        "byKey": {
+          "nothing": "You trusted the vendor's vols to match yours. They come from a different solver, forward and rate, so they never quite do."
+        }
+      },
+      "explain": {
+        "text": "The explain is only meaningful when the Greeks are derivatives of the same model that does the revaluation. Mixing sources builds a model difference into the residual every day. The note should say that every vol came from the dashboard's own surface."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "The **results note**: one page, these headings in this order, and a section that says what failed. `results_note` refuses to write a note without failures. `summary` (the seeded dashboard's output) and a two-item `failures` list are already defined.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> note = results_note(summary, failures)",
+            ">>> [l for l in note.splitlines() if l.startswith('## ')][:3]",
+            "['## Question', '## Data', '## Pricers']",
+            ">>> results_note(summary, [])",
+            "ValueError: a results note must say what failed"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `results_note`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "summary = {'clean_log': {'zero_bid': 15, 'crossed': 2, 'stale': 2, 'wide': 9, 'kept': 102, 'total': 130}, 'explain': {'explained': 1.3636, 'actual': 1.3556, 'residual': -0.008}, 'arbitrage': {'butterfly_raw': [(0.08333333333333333, 75, 0.1700000000000088), (0.16666666666666666, 75, 0.14499999999999602), (0.16666666666666666, 85, 0.3100000000000023), (0.5, 85, 0.03499999999999659)], 'butterfly_fitted': [], 'calendar': []}, 'surface': {0.08333333333333333: (0.1857, -0.0789, 0.0835), 0.16666666666666666: (0.1942, -0.0778, 0.0972), 0.25: (0.2001, -0.0805, 0.109), 0.5: (0.2114, -0.081, 0.1028), 1.0: (0.2185, -0.0813, 0.0953)}, 'pricers': {'bs': [0.580096, 3.481691, 10.021128, 2.50663, 5.944896, 11.233693], 'tree_eu': [0.581686, 3.476722, 10.021828, 2.510518, 5.935053, 11.240266], 'tree_am_put': [0.590474, 3.563151, 10.414884, 2.646244, 6.363226, 12.284109], 'mc': [0.571452, 3.490473, 10.00993, 2.494286, 5.9606, 11.234376], 'mc_se': [0.013213, 0.026575, 0.015271, 0.035001, 0.046565, 0.041177]}}\n\nfailures = [\"Plain Newton from 0.2 failed on the one-month 75 call.\",\n            \"The one-month smile rests on four OTM quotes.\"]\n\ndef error_message(fn, *args):\n    try:\n        fn(*args)\n    except ValueError as e:\n        return str(e)\n    return None\n",
+        "starter": "HEADINGS = [\"Question\", \"Data\", \"Pricers\", \"Implied volatility\", \"Greeks\",\n            \"Arbitrage checks\", \"What failed\", \"Next steps\"]\n\ndef results_note(summary, failures):\n    \"\"\"The one-page results note, in Markdown.\"\"\"\n    # no failures: raise ValueError(\"a results note must say what failed\")\n    log, ex = summary[\"clean_log\"], summary[\"explain\"]\n    arb, surf, p = summary[\"arbitrage\"], summary[\"surface\"], summary[\"pricers\"]\n    T0, T1 = min(surf), max(surf)\n    tree = max(abs(a - b) for a, b in zip(p[\"tree_eu\"], p[\"bs\"]))\n    mc = max(abs(a - b) / s for a, b, s in zip(p[\"mc\"], p[\"bs\"], p[\"mc_se\"]))\n    prem = max(a - b for a, b in zip(p[\"tree_am_put\"], p[\"tree_eu\"]))\n    text = {\n        \"Question\": \"Can one option chain give an arbitrage-free volatility \"\n                    \"surface and Greeks that explain a day's P&L?\",\n        \"Data\": ...,  # \"Kept 102 of 130 quotes: 15 zero bids, ...\"\n        \"Pricers\": f\"Tree within {tree:.4f} of Black-Scholes, Monte Carlo \"\n                   f\"within {mc:.1f} standard errors; American put premium \"\n                   f\"up to {prem:.4f}.\",\n        \"Implied volatility\": f\"At-the-money vol {surf[T0][0]:.4f} at \"\n                              f\"T = {T0:.4f} rising to {surf[T1][0]:.4f} \"\n                              f\"at T = {T1:.4f}.\",\n        \"Greeks\": f\"P&L explain: explained {ex['explained']:.4f}, actual \"\n                  f\"{ex['actual']:.4f}, residual {ex['residual']:.4f}.\",\n        \"Arbitrage checks\": f\"{len(arb['butterfly_raw'])} butterfly failures \"\n                            f\"in raw mids, {len(arb['butterfly_fitted'])} on \"\n                            f\"the fitted surface, {len(arb['calendar'])} \"\n                            \"calendar failures.\",\n        \"What failed\": ...,  # one \"- \" bullet per failure\n        \"Next steps\": \"Load a real chain with the same columns and rerun.\",\n    }\n    lines = [\"# Results note: options analytics dashboard\", \"\"]\n    ...   # for each heading: \"## heading\", a blank, the text, a blank\n    return \"\\n\".join(lines)\n",
+        "solution": "HEADINGS = [\"Question\", \"Data\", \"Pricers\", \"Implied volatility\", \"Greeks\",\n            \"Arbitrage checks\", \"What failed\", \"Next steps\"]\n\ndef results_note(summary, failures):\n    \"\"\"The one-page results note, in Markdown.\"\"\"\n    if not failures:\n        raise ValueError(\"a results note must say what failed\")\n    log, ex = summary[\"clean_log\"], summary[\"explain\"]\n    arb, surf, p = summary[\"arbitrage\"], summary[\"surface\"], summary[\"pricers\"]\n    T0, T1 = min(surf), max(surf)\n    tree = max(abs(a - b) for a, b in zip(p[\"tree_eu\"], p[\"bs\"]))\n    mc = max(abs(a - b) / s for a, b, s in zip(p[\"mc\"], p[\"bs\"], p[\"mc_se\"]))\n    prem = max(a - b for a, b in zip(p[\"tree_am_put\"], p[\"tree_eu\"]))\n    text = {\n        \"Question\": \"Can one option chain give an arbitrage-free volatility \"\n                    \"surface and Greeks that explain a day's P&L?\",\n        \"Data\": f\"Kept {log['kept']} of {log['total']} quotes: \"\n                f\"{log['zero_bid']} zero bids, {log['crossed']} crossed, \"\n                f\"{log['stale']} stale, {log['wide']} too wide.\",\n        \"Pricers\": f\"Tree within {tree:.4f} of Black-Scholes, Monte Carlo \"\n                   f\"within {mc:.1f} standard errors; American put premium \"\n                   f\"up to {prem:.4f}.\",\n        \"Implied volatility\": f\"At-the-money vol {surf[T0][0]:.4f} at \"\n                              f\"T = {T0:.4f} rising to {surf[T1][0]:.4f} \"\n                              f\"at T = {T1:.4f}.\",\n        \"Greeks\": f\"P&L explain: explained {ex['explained']:.4f}, actual \"\n                  f\"{ex['actual']:.4f}, residual {ex['residual']:.4f}.\",\n        \"Arbitrage checks\": f\"{len(arb['butterfly_raw'])} butterfly failures \"\n                            f\"in raw mids, {len(arb['butterfly_fitted'])} on \"\n                            f\"the fitted surface, {len(arb['calendar'])} \"\n                            \"calendar failures.\",\n        \"What failed\": \"\\n\".join(\"- \" + f for f in failures),\n        \"Next steps\": \"Load a real chain with the same columns and rerun.\",\n    }\n    lines = [\"# Results note: options analytics dashboard\", \"\"]\n    for h in HEADINGS:\n        lines += [\"## \" + h, \"\", text[h], \"\"]\n    return \"\\n\".join(lines)\n",
+        "examples": [
+          {
+            "call": "[l[3:] for l in results_note(summary, failures).splitlines() if l.startswith('## ')]",
+            "compare": "equal",
+            "expect": "['Question', 'Data', 'Pricers', 'Implied volatility', 'Greeks', 'Arbitrage checks', 'What failed', 'Next steps']"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[l[3:] for l in results_note(summary, failures).splitlines() if l.startswith('## ')]",
+            "compare": "equal",
+            "expect": "['Question', 'Data', 'Pricers', 'Implied volatility', 'Greeks', 'Arbitrage checks', 'What failed', 'Next steps']"
+          },
+          {
+            "call": "results_note(summary, failures).splitlines()[0]",
+            "compare": "equal",
+            "expect": "'# Results note: options analytics dashboard'"
+          },
+          {
+            "call": "'Kept 102 of 130 quotes' in results_note(summary, failures)",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "call": "'15 zero bids, 2 crossed, 2 stale, 9 too wide' in results_note(summary, failures)",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "call": "'residual -0.0080' in results_note(summary, failures)",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "call": "all('- ' + f in results_note(summary, failures) for f in failures)",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "call": "results_note(summary, ['x']).count('\\n- ')",
+            "compare": "equal",
+            "expect": "1"
+          },
+          {
+            "call": "error_message(results_note, summary, [])",
+            "compare": "equal",
+            "expect": "'a results note must say what failed'"
+          },
+          {
+            "call": "'Kept 21 of 26' in results_note(dict(summary, clean_log={'kept': 21, 'total': 26, 'zero_bid': 2, 'crossed': 0, 'stale': 0, 'wide': 3}), failures)",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "call": "'4 butterfly failures in raw mids' in results_note(summary, failures)",
+            "compare": "equal",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: the eight headings in order, the title line, the cleaning counts, the P&L residual, one bullet per failure, the `ValueError` message for no failures, another chain's counts, and the arbitrage line. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Guard first: `if not failures: raise ValueError(...)`."
+        },
+        {
+          "rung": "point",
+          "text": "The Data line is an f-string over `log`; the failures are joined with newlines."
+        },
+        {
+          "rung": "step",
+          "text": "`\"\\n\".join(\"- \" + f for f in failures)`, and in the loop `lines += [\"## \" + h, \"\", text[h], \"\"]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight headings, the counts, the residual, and a refusal to skip what failed.",
+        "generic": "Some tests failed. Check the exact wording of the Data line and the `ValueError` message.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check every `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "The note is built from the dashboard's own numbers, so it cannot drift from them. The guard turns the curriculum's rule, every note says what failed, into code. The headings never change, so a reader can find the same fact in every project's note."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Candidates for the note's What failed section, all from our own runs.",
+      "question": "Select all that apply: which belong under What failed?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "newton",
+            "text": "Plain Newton from $\\sigma = 0.2$ gave NaN on the one-month £75 call, where vega is nearly 0; the bracketed fallback found 0.4865",
+            "correct": true
+          },
+          {
+            "id": "wings",
+            "text": "The one-month smile rests on four OTM quotes (£90 to £105), so its wings are extrapolated; its curvature came out 0.0835 against the planted 0.10",
+            "correct": true
+          },
+          {
+            "id": "bump",
+            "text": "A bump of $10^{-6}$ gave gamma 0.0284 against 0.0188, and a £0.01 bump of the tree gave 3.35",
+            "correct": true
+          },
+          {
+            "id": "ran",
+            "text": "The dashboard ran without errors",
+            "why": "Running is the minimum, not a finding. What failed lists things that went wrong or could not be trusted."
+          },
+          {
+            "id": "bs",
+            "text": "Black-Scholes gave £10.4506 for the test call",
+            "why": "That is a passing check. It belongs under Pricers."
+          },
+          {
+            "id": "cal",
+            "text": "The fitted surface showed no calendar failures",
+            "why": "That is a result, and a good one. It belongs under Arbitrage checks."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A failure is something that went wrong, or a number you cannot trust."
+        },
+        {
+          "rung": "point",
+          "text": "Passing checks and clean results go in their own sections."
+        },
+        {
+          "rung": "step",
+          "text": "Newton, the thin one-month smile and the bump sizes."
+        }
+      ],
+      "feedback": {
+        "correct": "Three real failures, each with its numbers.",
+        "generic": "Not quite right. Keep the things that broke or are weak; move the passes to their own sections."
+      },
+      "explain": {
+        "text": "Each failure says what broke, where, and what fixed it or what it costs. A reader trusts a note that names its weak points, such as a smile with no wing quotes. Passing checks belong in the sections they test."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "On real data",
+      "prose": "To run on real data, replace `make_chain` with a loader that returns the same columns. With yfinance, `yf.Ticker(\"SPY\").options` lists expiries and `.option_chain(date)` returns `calls` and `puts` with `strike`, `bid`, `ask`, `lastPrice`, `volume`, `lastTradeDate` and `impliedVolatility`. Cache it to disk: yfinance breaks often and rate-limits. Run while the market is open, or the bids are stale.",
+      "question": "What should the loader do with the vendor's `impliedVolatility` column?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "recompute",
+            "text": "Keep it only for comparison: recompute every vol from bid and ask with your own solver, forward and rate",
+            "correct": true
+          },
+          {
+            "id": "use",
+            "text": "Use it as the surface's input: it saves the solver step",
+            "why": "Then your Greeks and prices rest on a vendor's solver, forward and rate that you cannot see."
+          },
+          {
+            "id": "drop-all",
+            "text": "Drop any option where it is missing",
+            "why": "Missing vendor vols say nothing about the quote. Your own solver decides which quotes have a vol."
+          },
+          {
+            "id": "last",
+            "text": "Recompute it from `lastPrice`",
+            "why": "Last prices can be hours old. The course calibrates to bid and ask."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Recall the trap on the last screen but two."
+        },
+        {
+          "rung": "point",
+          "text": "Every vol should come from one consistent model."
+        },
+        {
+          "rung": "step",
+          "text": "Recompute from the quotes; compare with the vendor's as a check."
+        }
+      ],
+      "feedback": {
+        "correct": "Recompute, and log the difference as a sanity check.",
+        "generic": "Not quite right. Which choice keeps every number in one model?"
+      },
+      "explain": {
+        "text": "The rest of the pipeline is unchanged once the columns match: `T` in years from the quote's timestamp to expiry, `type`, `bid`, `ask`, `volume` and `age_min`. Take $r$ from a rate curve per expiry. US single-stock options are American, so back out vols with the tree of l6, or use OTM options where the early-exercise premium is small."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The other source the curriculum suggests is Deribit's public API, with no key needed: `public/get_instruments?currency=BTC&kind=option` and `public/get_book_summary_by_currency?currency=BTC&kind=option`. Expiries run from daily to quarterly. Quotes are in BTC per option, not in dollars.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Field",
+            "Value"
+          ],
+          "rows": [
+            [
+              "instrument",
+              "BTC-27DEC-70000-C"
+            ],
+            [
+              "mid price",
+              "0.0425 BTC"
+            ],
+            [
+              "index price",
+              "64,000 USD"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is this option's mid price in US dollars?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2720,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "USD",
+        "accept": "2,720: $0.0425 \\times 64{,}000$",
+        "label": "Mid in dollars",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 0.0425,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "divide",
+            "value": 6.6e-07,
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A price in BTC times the dollar price of one BTC."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply by the index price."
+        },
+        {
+          "rung": "step",
+          "text": "$0.0425 \\times 64{,}000 = 2{,}720$."
+        }
+      ],
+      "feedback": {
+        "correct": "2,720 dollars.",
+        "generic": "Not quite right. Multiply the BTC price by the index price.",
+        "byKey": {
+          "raw": "That is still in BTC. The pricers need the price in the same units as the strike."
+        }
+      },
+      "explain": {
+        "text": "A strike of 70,000 is in dollars, so the option price must be too: $0.0425 \\times 64{,}000 = 2{,}720$. Forget the conversion and every implied vol comes out near zero. Use the index price as $S$ and Deribit's own forward per expiry."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "On a CV",
+      "prose": "The repository, with its README, tests and results note, goes on your CV for derivatives and trading roles. An interviewer asks: \"Your Greeks match bumping to $10^{-4}$. What do they still miss?\"",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Terminal",
+          "lines": [
+            "$ pytest -q",
+            "........................................",
+            "40 passed",
+            "$ python dashboard.py | grep explain",
+            "explain  explained 1.3636 actual 1.3556 residual -0.0080"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which answer shows you understood your own dashboard?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "model",
+            "text": "They are Black-Scholes Greeks at a fixed smile: they miss the cross terms like vanna, and how the smile moves when spot moves",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: they agree with bumping, so they are exact",
+            "why": "Agreement with bumping tests the arithmetic, not the model. Both use the same Black-Scholes price."
+          },
+          {
+            "id": "noise",
+            "text": "Only Monte Carlo noise",
+            "why": "The Greeks are closed form, with no simulation noise. The question is what the model leaves out."
+          },
+          {
+            "id": "rates",
+            "text": "Only rho, which we did not report",
+            "why": "Rho was computed. What the explain's residual measures is the cross terms and smile dynamics."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the residual in the explain line."
+        },
+        {
+          "rung": "point",
+          "text": "Where did l14 say the residual came from?"
+        },
+        {
+          "rung": "step",
+          "text": "Cross terms, higher orders, and the smile moving with spot."
+        }
+      ],
+      "feedback": {
+        "correct": "Name the residual and what causes it.",
+        "generic": "Not quite right. Agreeing with bumps checks the code, not the model."
+      },
+      "explain": {
+        "text": "Bumping a model checks the derivatives of that model. The residual of −0.0080 is vanna and higher orders, and on real data the smile also moves with spot. Saying so, with the number from your own note, is the answer an interviewer wants."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The dashboard is one function from the raw chain: clean, forwards, smiles, surface, Greeks and explain from the surface's vols, then the arbitrage checks.",
+      "The results note has fixed headings, takes its numbers from the run, and must say what failed: here Newton without a fallback, a one-month smile on four quotes, and the bump sizes.",
+      "On real data only the loader changes: same columns, quotes cached with a timestamp, vols recomputed rather than taken from the vendor, $r$ from a curve, and a tree for American options."
+    ],
+    "formula": {
+      "name": "The pipeline",
+      "tex": "\\text{chain} \\to F_T, q_T \\to \\sigma(K, T) \\to \\Delta, \\Gamma, \\text{vega}, \\Theta \\to dV",
+      "note": "Every vol after the surface comes from the surface."
+    },
+    "trap": "Greeks from the vendor's vols with prices from your own surface make the P&L explain compare two models."
+  },
+  "quiz": [
+    {
+      "id": "q-note-order",
+      "difficulty": 2,
+      "prose": "The results note's headings run Question, Data, Pricers, Implied volatility, Greeks, Arbitrage checks, …",
+      "question": "Which two headings come last?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "What failed, then Next steps",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "Next steps, then What failed",
+            "why": "What failed comes first: the next steps answer it."
+          },
+          {
+            "id": "readme",
+            "text": "README, then Tests",
+            "why": "The README sits beside the note, not inside it."
+          },
+          {
+            "id": "summary",
+            "text": "Summary, then Conclusion",
+            "why": "The template has no such headings. It ends with what failed and what comes next."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "What failed, then Next steps.",
+        "generic": "Not quite right. The note ends with what went wrong and what to do about it."
+      },
+      "explain": {
+        "text": "What failed comes before Next steps, so each next step can answer a named failure."
+      }
+    },
+    {
+      "id": "q-yf",
+      "difficulty": 2,
+      "prose": "You run the dashboard on a yfinance chain downloaded on a Sunday.",
+      "question": "What is the main risk?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stale",
+            "text": "Every quote is stale: bids and asks are from Friday's close or later",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "None: option chains do not change at weekends",
+            "why": "The prices do not change, which is the problem: the surface is two days old."
+          },
+          {
+            "id": "vol",
+            "text": "Implied vols cannot be computed at weekends",
+            "why": "They can be computed. They describe Friday's market, not today's."
+          },
+          {
+            "id": "rate",
+            "text": "yfinance has no rate data",
+            "why": "True, but you take $r$ from a rate curve anyway. Stale quotes are the bigger issue."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Stale quotes, and often zero bids after the close.",
+        "generic": "Not quite right. When were these quotes last updated?"
+      },
+      "explain": {
+        "text": "Out of hours many chains show zero bids or Friday's last quotes. Download while the market is open, cache it, and record the timestamp in the note's Data section."
+      }
+    },
+    {
+      "id": "q-raise",
+      "difficulty": 3,
+      "prose": "`results_note(summary, [])` raises `ValueError`.",
+      "question": "Why build that refusal into the code?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rule",
+            "text": "Every project's note must say what failed; the code makes skipping it impossible",
+            "correct": true
+          },
+          {
+            "id": "bug",
+            "text": "An empty list would make the join fail",
+            "why": "Joining an empty list gives an empty string, which works. The refusal is deliberate."
+          },
+          {
+            "id": "tests",
+            "text": "So the tests have something to check",
+            "why": "Tests check the rule; the rule comes from how the note is used."
+          },
+          {
+            "id": "length",
+            "text": "To keep the note to one page",
+            "why": "A list of failures makes the note longer, not shorter."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The rule lives in the code.",
+        "generic": "Not quite right. What does the curriculum ask of every results note?"
+      },
+      "explain": {
+        "text": "A note with no failures is either untested or dishonest. Raising turns the rule into something no deadline can skip."
+      }
+    }
+  ]
+}

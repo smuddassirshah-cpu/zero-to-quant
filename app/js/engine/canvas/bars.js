@@ -131,6 +131,9 @@
     const canDrag = (view, R) => R.active('drag') || (!!(view.drag ?? params.drag) && R.active());
     const def = {
       kind: 'bars', aria: params.aria || 'Bar chart',
+      /* inbox (alpha 1): "x" + an object category's id ("xall" for { id: "all" }) reaches that category too, as a plain
+         category's x{label} does, so highlights written either way work */
+      alias: (id) => { const k = String(id); return /^x/.test(k) && cats.some((c) => c.id === k.slice(1)) && !cats.some((c) => c.id === k) ? [k.slice(1)] : [k]; },
       modes: ['tap', 'slider', 'drag'],
       drag: {
         start: (id, p, R) => (id === 'pivot' && canDrag(R.state, R) && geo && geo.pxOf ? { id } : null),

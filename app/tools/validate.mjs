@@ -777,7 +777,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     if (s.type === 'generalise') {
       /* item 101: in a programming course (a topic on the code track) a fenced code block states the rule as well as KaTeX does */
       /* inbox (backtest 1): a lesson with a code widget (a guided Python build such as backtest) counts too */
-      const codeCourse = (C.stages || []).some(st => (st.topics || []).some(t => t.track === 'code' && (t.courses || []).includes(courseId))) || (Array.isArray(data.screens) && data.screens.some(q => isObj(q) && isObj(q.widget) && q.widget.kind === 'code'));
+      const codeCourse = (C.stages || []).some(st => (st.topics || []).some(t => t.track === 'code' && (t.courses || []).includes(courseId))) || screens.some(q => isObj(q) && isObj(q.widget) && q.widget.kind === 'code');
       if (!s.prose || !(/\$/.test(s.prose) || (codeCourse && /```[\w+-]*\n[\s\S]*?```/.test(s.prose)))) err(file, `${at}.prose`, codeCourse ? 'a generalise screen states the rule in KaTeX or a fenced code block' : 'a generalise screen states the rule in KaTeX');
       if (s.widget) checkFeedback(file, `${at}.feedback`, s.feedback, keys);
     }
