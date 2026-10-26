@@ -1,0 +1,2529 @@
+{
+  "id": "l3-tuning",
+  "course": "validation",
+  "title": "Choosing hyperparameters",
+  "minutes": 15,
+  "objectives": [
+    "Tune a model by cross-validation without touching the test set."
+  ],
+  "skills": [
+    "vl-cv",
+    "vl-overfit"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "How many neighbours",
+      "prose": "A $k$-nearest-neighbour model predicts a loan’s spread from the $k$ most similar loans in 300. For each $k$ from 1 to 60 the chart shows the training MSE and the 5-fold CV MSE.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "$k$ (neighbours)",
+          "yLabel": "MSE",
+          "decimals": 3,
+          "y": [
+            0,
+            0.5
+          ],
+          "series": [
+            {
+              "id": "cv",
+              "label": "5-fold CV",
+              "values": [
+                0.4613,
+                0.3956,
+                0.3419,
+                0.3306,
+                0.3207,
+                0.3133,
+                0.3051,
+                0.3015,
+                0.3013,
+                0.2958,
+                0.2962,
+                0.298,
+                0.2989,
+                0.2981,
+                0.3023,
+                0.2983,
+                0.3022,
+                0.3033,
+                0.3062,
+                0.3038,
+                0.3073,
+                0.3094,
+                0.3107,
+                0.3125,
+                0.3118,
+                0.3137,
+                0.3157,
+                0.3147,
+                0.3148,
+                0.3148,
+                0.3167,
+                0.3187,
+                0.3221,
+                0.3235,
+                0.3251,
+                0.3279,
+                0.3292,
+                0.3309,
+                0.3336,
+                0.3348,
+                0.3387,
+                0.3416,
+                0.345,
+                0.3463,
+                0.3485,
+                0.3503,
+                0.3531,
+                0.3539,
+                0.3537,
+                0.3542,
+                0.3553,
+                0.3584,
+                0.3607,
+                0.3624,
+                0.3653,
+                0.3671,
+                0.3682,
+                0.3711,
+                0.3748,
+                0.376
+              ]
+            },
+            {
+              "id": "train",
+              "label": "training",
+              "values": [
+                0.0,
+                0.1051,
+                0.1579,
+                0.1821,
+                0.1866,
+                0.1968,
+                0.213,
+                0.2094,
+                0.2149,
+                0.2247,
+                0.2255,
+                0.2271,
+                0.2323,
+                0.2336,
+                0.2401,
+                0.245,
+                0.2454,
+                0.2512,
+                0.2539,
+                0.2572,
+                0.2602,
+                0.2629,
+                0.2641,
+                0.2669,
+                0.2693,
+                0.2725,
+                0.2752,
+                0.2787,
+                0.2785,
+                0.28,
+                0.2839,
+                0.2848,
+                0.2887,
+                0.2891,
+                0.2896,
+                0.2903,
+                0.2929,
+                0.2943,
+                0.2972,
+                0.2981,
+                0.3015,
+                0.3033,
+                0.3054,
+                0.3066,
+                0.3077,
+                0.3099,
+                0.313,
+                0.3138,
+                0.3157,
+                0.3176,
+                0.3193,
+                0.3219,
+                0.325,
+                0.3277,
+                0.329,
+                0.3308,
+                0.3341,
+                0.3356,
+                0.3369,
+                0.3375
+              ],
+              "dashed": true
+            }
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "best",
+              "i": 9,
+              "series": "cv",
+              "label": "k = 10: {value}"
+            },
+            {
+              "id": "one",
+              "i": 0,
+              "series": "cv",
+              "label": "{value}"
+            }
+          ]
+        }
+      },
+      "question": "Which $k$ would you choose?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "k10",
+            "text": "$k = 10$: the lowest CV MSE, 0.296",
+            "correct": true
+          },
+          {
+            "id": "k1",
+            "text": "$k = 1$: its training MSE is 0",
+            "why": "You chose by training error. With $k = 1$ each loan is its own nearest neighbour, so training MSE is 0 while the CV MSE is the worst on the chart, 0.461."
+          },
+          {
+            "id": "k60",
+            "text": "$k = 60$: the smoothest model is the safest",
+            "why": "Smooth is not safe here: averaging 60 loans blurs real differences, and the CV MSE climbs to 0.376."
+          },
+          {
+            "id": "k30",
+            "text": "$k = 30$: the middle of the range",
+            "why": "The middle of the range we happened to try has no special status. Let the held-out score decide."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which curve uses loans the model did not see?"
+        },
+        {
+          "rung": "point",
+          "text": "The solid line is cross-validated; the dashed line is scored on the fitting loans.",
+          "highlight": [
+            "cv",
+            "best"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Read the lowest point of the solid line."
+        }
+      ],
+      "feedback": {
+        "correct": "The held-out curve bottoms out at $k = 10$.",
+        "generic": "Not quite right. Choose by the curve that measures unseen loans."
+      },
+      "explain": {
+        "text": "Training error only falls as $k$ shrinks, so it always points to $k = 1$. The CV curve falls, bottoms out at $k = 10$, then rises: too few neighbours chase noise, too many blur the signal. Choosing $k$ this way is our first tuning."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A validation curve",
+      "prose": "Ridge on 200 loans with 15 features, at nine penalties $\\alpha$ from 0.01 to 100. Each dot is the mean 5-fold CV MSE; each bar spans one fold sd either side. Tap the $\\alpha$ with the lowest mean.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.4,
+            2.4
+          ],
+          "y": [
+            0.15,
+            0.37
+          ],
+          "xLabel": "$\\log_{10} \\alpha$",
+          "yLabel": "5-fold CV MSE",
+          "xStep": 1,
+          "grid": true,
+          "yAxis": "left"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a0",
+              "x": -2.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a1",
+              "x": -1.523,
+              "y": 0.2025
+            },
+            {
+              "id": "a2",
+              "x": -1.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a3",
+              "x": -0.523,
+              "y": 0.2024
+            },
+            {
+              "id": "a4",
+              "x": 0.0,
+              "y": 0.2021
+            },
+            {
+              "id": "a5",
+              "x": 0.477,
+              "y": 0.2013
+            },
+            {
+              "id": "a6",
+              "x": 1.0,
+              "y": 0.201
+            },
+            {
+              "id": "a7",
+              "x": 1.477,
+              "y": 0.2125
+            },
+            {
+              "id": "a8",
+              "x": 2.0,
+              "y": 0.2967
+            }
+          ],
+          "segments": [
+            {
+              "id": "e0",
+              "from": [
+                -2.0,
+                0.1725
+              ],
+              "to": [
+                -2.0,
+                0.2325
+              ]
+            },
+            {
+              "id": "e1",
+              "from": [
+                -1.523,
+                0.1725
+              ],
+              "to": [
+                -1.523,
+                0.2325
+              ]
+            },
+            {
+              "id": "e2",
+              "from": [
+                -1.0,
+                0.1726
+              ],
+              "to": [
+                -1.0,
+                0.2324
+              ]
+            },
+            {
+              "id": "e3",
+              "from": [
+                -0.523,
+                0.1727
+              ],
+              "to": [
+                -0.523,
+                0.2321
+              ]
+            },
+            {
+              "id": "e4",
+              "from": [
+                0.0,
+                0.173
+              ],
+              "to": [
+                0.0,
+                0.2312
+              ]
+            },
+            {
+              "id": "e5",
+              "from": [
+                0.477,
+                0.1741
+              ],
+              "to": [
+                0.477,
+                0.2285
+              ]
+            },
+            {
+              "id": "e6",
+              "from": [
+                1.0,
+                0.1796
+              ],
+              "to": [
+                1.0,
+                0.2224
+              ]
+            },
+            {
+              "id": "e7",
+              "from": [
+                1.477,
+                0.1977
+              ],
+              "to": [
+                1.477,
+                0.2273
+              ]
+            },
+            {
+              "id": "e8",
+              "from": [
+                2.0,
+                0.2397
+              ],
+              "to": [
+                2.0,
+                0.3537
+              ]
+            },
+            {
+              "id": "c0",
+              "from": [
+                -2.0,
+                0.2025
+              ],
+              "to": [
+                -1.523,
+                0.2025
+              ]
+            },
+            {
+              "id": "c1",
+              "from": [
+                -1.523,
+                0.2025
+              ],
+              "to": [
+                -1.0,
+                0.2025
+              ]
+            },
+            {
+              "id": "c2",
+              "from": [
+                -1.0,
+                0.2025
+              ],
+              "to": [
+                -0.523,
+                0.2024
+              ]
+            },
+            {
+              "id": "c3",
+              "from": [
+                -0.523,
+                0.2024
+              ],
+              "to": [
+                0.0,
+                0.2021
+              ]
+            },
+            {
+              "id": "c4",
+              "from": [
+                0.0,
+                0.2021
+              ],
+              "to": [
+                0.477,
+                0.2013
+              ]
+            },
+            {
+              "id": "c5",
+              "from": [
+                0.477,
+                0.2013
+              ],
+              "to": [
+                1.0,
+                0.201
+              ]
+            },
+            {
+              "id": "c6",
+              "from": [
+                1.0,
+                0.201
+              ],
+              "to": [
+                1.477,
+                0.2125
+              ]
+            },
+            {
+              "id": "c7",
+              "from": [
+                1.477,
+                0.2125
+              ],
+              "to": [
+                2.0,
+                0.2967
+              ]
+            }
+          ]
+        }
+      },
+      "question": "Tap the dot with the lowest mean CV MSE.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a6"
+        ],
+        "max": 1,
+        "countWord": "dots",
+        "wrong": [
+          {
+            "id": "left",
+            "set": [
+              "a0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The dots sit almost level on the left, then rise."
+        },
+        {
+          "rung": "point",
+          "text": "Look just before the curve turns up.",
+          "highlight": [
+            "a6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The lowest dot is at $\\log_{10}\\alpha = 1$, that is $\\alpha = 10$, with mean 0.2010."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\alpha = 10$, mean 0.2010.",
+        "generic": "Not quite right. Find the dot just before the curve climbs.",
+        "byKey": {
+          "left": "The dots on the left are 0.2025, a whisker above the dip at $\\alpha = 10$.",
+          "a8": "That is $\\alpha = 100$, the highest mean on the chart."
+        }
+      },
+      "explain": {
+        "text": "The lowest mean is 0.2010, at $\\alpha = 10$. But look at the bars: every dot up to $\\alpha = 30$ lies inside the others’ spread. The dip is real but small next to the fold noise.",
+        "canvas": {
+          "highlight": [
+            "a6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A grid that stops too soon",
+      "prose": "Ridge’s $\\alpha$, like $k$, is a **hyperparameter**: set before fitting, not learned by it. Choosing it by CV is **tuning**, and the chart is a **validation curve**. A colleague tried $\\alpha$ only up to 10, and the best mean sits at that edge.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.4,
+            2.4
+          ],
+          "y": [
+            0.15,
+            0.37
+          ],
+          "xLabel": "$\\log_{10} \\alpha$",
+          "yLabel": "5-fold CV MSE",
+          "xStep": 1,
+          "grid": true,
+          "yAxis": "left"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a0",
+              "x": -2.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a1",
+              "x": -1.523,
+              "y": 0.2025
+            },
+            {
+              "id": "a2",
+              "x": -1.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a3",
+              "x": -0.523,
+              "y": 0.2024
+            },
+            {
+              "id": "a4",
+              "x": 0.0,
+              "y": 0.2021
+            },
+            {
+              "id": "a5",
+              "x": 0.477,
+              "y": 0.2013
+            },
+            {
+              "id": "a6",
+              "x": 1.0,
+              "y": 0.201
+            }
+          ],
+          "segments": [
+            {
+              "id": "e0",
+              "from": [
+                -2.0,
+                0.1725
+              ],
+              "to": [
+                -2.0,
+                0.2325
+              ]
+            },
+            {
+              "id": "e1",
+              "from": [
+                -1.523,
+                0.1725
+              ],
+              "to": [
+                -1.523,
+                0.2325
+              ]
+            },
+            {
+              "id": "e2",
+              "from": [
+                -1.0,
+                0.1726
+              ],
+              "to": [
+                -1.0,
+                0.2324
+              ]
+            },
+            {
+              "id": "e3",
+              "from": [
+                -0.523,
+                0.1727
+              ],
+              "to": [
+                -0.523,
+                0.2321
+              ]
+            },
+            {
+              "id": "e4",
+              "from": [
+                0.0,
+                0.173
+              ],
+              "to": [
+                0.0,
+                0.2312
+              ]
+            },
+            {
+              "id": "e5",
+              "from": [
+                0.477,
+                0.1741
+              ],
+              "to": [
+                0.477,
+                0.2285
+              ]
+            },
+            {
+              "id": "e6",
+              "from": [
+                1.0,
+                0.1796
+              ],
+              "to": [
+                1.0,
+                0.2224
+              ]
+            },
+            {
+              "id": "c0",
+              "from": [
+                -2.0,
+                0.2025
+              ],
+              "to": [
+                -1.523,
+                0.2025
+              ]
+            },
+            {
+              "id": "c1",
+              "from": [
+                -1.523,
+                0.2025
+              ],
+              "to": [
+                -1.0,
+                0.2025
+              ]
+            },
+            {
+              "id": "c2",
+              "from": [
+                -1.0,
+                0.2025
+              ],
+              "to": [
+                -0.523,
+                0.2024
+              ]
+            },
+            {
+              "id": "c3",
+              "from": [
+                -0.523,
+                0.2024
+              ],
+              "to": [
+                0.0,
+                0.2021
+              ]
+            },
+            {
+              "id": "c4",
+              "from": [
+                0.0,
+                0.2021
+              ],
+              "to": [
+                0.477,
+                0.2013
+              ]
+            },
+            {
+              "id": "c5",
+              "from": [
+                0.477,
+                0.2013
+              ],
+              "to": [
+                1.0,
+                0.201
+              ]
+            }
+          ],
+          "caption": "The colleague’s grid: $\\alpha$ from 0.01 to 10"
+        }
+      },
+      "question": "What should the colleague do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "widen",
+            "text": "Widen the grid past 10 until the curve turns up, then choose",
+            "correct": true
+          },
+          {
+            "id": "accept",
+            "text": "Take $\\alpha = 10$: it is the best tried",
+            "why": "A best value on the edge only says the curve was still falling there. The minimum may lie beyond it."
+          },
+          {
+            "id": "finer",
+            "text": "Add more points between 0.01 and 10",
+            "why": "Filling in the inside cannot find a minimum outside the range."
+          },
+          {
+            "id": "zero",
+            "text": "Drop the penalty: the curve is flat anyway",
+            "why": "The flat left side says small penalties are equivalent, not that the best penalty is small."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the best dot sit in the range tried?"
+        },
+        {
+          "rung": "point",
+          "text": "It is the last dot on the right.",
+          "highlight": [
+            "a6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A minimum at the edge is not yet a minimum. Try 30 and 100."
+        }
+      ],
+      "feedback": {
+        "correct": "A best value on the edge of a grid means widen the grid.",
+        "generic": "Not quite right. Look at where the best value sits."
+      },
+      "explain": {
+        "text": "Adding $\\alpha = 30$ and $100$ shows the curve turning up: 0.2125, then 0.2967. Now $\\alpha = 10$ is a true interior minimum. Always check that the best setting is not on the grid’s boundary.",
+        "canvas": {
+          "points": {
+            "a7": {
+              "id": "a7",
+              "x": 1.477,
+              "y": 0.2125
+            },
+            "a8": {
+              "id": "a8",
+              "x": 2.0,
+              "y": 0.2967
+            }
+          },
+          "segments": {
+            "e7": {
+              "id": "e7",
+              "from": [
+                1.477,
+                0.1977
+              ],
+              "to": [
+                1.477,
+                0.2273
+              ]
+            },
+            "e8": {
+              "id": "e8",
+              "from": [
+                2.0,
+                0.2397
+              ],
+              "to": [
+                2.0,
+                0.3537
+              ]
+            },
+            "c6": {
+              "id": "c6",
+              "from": [
+                1.0,
+                0.201
+              ],
+              "to": [
+                1.477,
+                0.2125
+              ]
+            },
+            "c7": {
+              "id": "c7",
+              "from": [
+                1.477,
+                0.2125
+              ],
+              "to": [
+                2.0,
+                0.2967
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The one-standard-error rule",
+      "prose": "The dip at $\\alpha = 10$ is smaller than the fold spread. The **one-standard-error rule** takes the simplest model whose mean is within one sd of the best. For ridge, simplest means most shrunk: the largest $\\alpha$. Here the limit is $0.2010 + 0.0214 = 0.2224$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.4,
+            2.4
+          ],
+          "y": [
+            0.15,
+            0.37
+          ],
+          "xLabel": "$\\log_{10} \\alpha$",
+          "yLabel": "5-fold CV MSE",
+          "xStep": 1,
+          "grid": true,
+          "yAxis": "left"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a0",
+              "x": -2.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a1",
+              "x": -1.523,
+              "y": 0.2025
+            },
+            {
+              "id": "a2",
+              "x": -1.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a3",
+              "x": -0.523,
+              "y": 0.2024
+            },
+            {
+              "id": "a4",
+              "x": 0.0,
+              "y": 0.2021
+            },
+            {
+              "id": "a5",
+              "x": 0.477,
+              "y": 0.2013
+            },
+            {
+              "id": "a6",
+              "x": 1.0,
+              "y": 0.201
+            },
+            {
+              "id": "a7",
+              "x": 1.477,
+              "y": 0.2125
+            },
+            {
+              "id": "a8",
+              "x": 2.0,
+              "y": 0.2967
+            }
+          ],
+          "segments": [
+            {
+              "id": "e0",
+              "from": [
+                -2.0,
+                0.1725
+              ],
+              "to": [
+                -2.0,
+                0.2325
+              ]
+            },
+            {
+              "id": "e1",
+              "from": [
+                -1.523,
+                0.1725
+              ],
+              "to": [
+                -1.523,
+                0.2325
+              ]
+            },
+            {
+              "id": "e2",
+              "from": [
+                -1.0,
+                0.1726
+              ],
+              "to": [
+                -1.0,
+                0.2324
+              ]
+            },
+            {
+              "id": "e3",
+              "from": [
+                -0.523,
+                0.1727
+              ],
+              "to": [
+                -0.523,
+                0.2321
+              ]
+            },
+            {
+              "id": "e4",
+              "from": [
+                0.0,
+                0.173
+              ],
+              "to": [
+                0.0,
+                0.2312
+              ]
+            },
+            {
+              "id": "e5",
+              "from": [
+                0.477,
+                0.1741
+              ],
+              "to": [
+                0.477,
+                0.2285
+              ]
+            },
+            {
+              "id": "e6",
+              "from": [
+                1.0,
+                0.1796
+              ],
+              "to": [
+                1.0,
+                0.2224
+              ]
+            },
+            {
+              "id": "e7",
+              "from": [
+                1.477,
+                0.1977
+              ],
+              "to": [
+                1.477,
+                0.2273
+              ]
+            },
+            {
+              "id": "e8",
+              "from": [
+                2.0,
+                0.2397
+              ],
+              "to": [
+                2.0,
+                0.3537
+              ]
+            },
+            {
+              "id": "c0",
+              "from": [
+                -2.0,
+                0.2025
+              ],
+              "to": [
+                -1.523,
+                0.2025
+              ]
+            },
+            {
+              "id": "c1",
+              "from": [
+                -1.523,
+                0.2025
+              ],
+              "to": [
+                -1.0,
+                0.2025
+              ]
+            },
+            {
+              "id": "c2",
+              "from": [
+                -1.0,
+                0.2025
+              ],
+              "to": [
+                -0.523,
+                0.2024
+              ]
+            },
+            {
+              "id": "c3",
+              "from": [
+                -0.523,
+                0.2024
+              ],
+              "to": [
+                0.0,
+                0.2021
+              ]
+            },
+            {
+              "id": "c4",
+              "from": [
+                0.0,
+                0.2021
+              ],
+              "to": [
+                0.477,
+                0.2013
+              ]
+            },
+            {
+              "id": "c5",
+              "from": [
+                0.477,
+                0.2013
+              ],
+              "to": [
+                1.0,
+                0.201
+              ]
+            },
+            {
+              "id": "c6",
+              "from": [
+                1.0,
+                0.201
+              ],
+              "to": [
+                1.477,
+                0.2125
+              ]
+            },
+            {
+              "id": "c7",
+              "from": [
+                1.477,
+                0.2125
+              ],
+              "to": [
+                2.0,
+                0.2967
+              ]
+            }
+          ],
+          "hlines": [
+            {
+              "id": "lim",
+              "y": 0.2224,
+              "label": "0.2224"
+            }
+          ]
+        }
+      },
+      "question": "Tap the dot the one-standard-error rule picks.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a7"
+        ],
+        "max": 1,
+        "countWord": "dots",
+        "wrong": [
+          {
+            "id": "best",
+            "set": [
+              "a6"
+            ]
+          },
+          {
+            "id": "over",
+            "set": [
+              "a8"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which dots have a mean below the dashed line?"
+        },
+        {
+          "rung": "point",
+          "text": "Of those, take the one furthest right.",
+          "highlight": [
+            "a7",
+            "lim"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\alpha = 30$ has mean 0.2125, under 0.2224; $\\alpha = 100$ has 0.2967, over it."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\alpha = 30$: within one sd of the best, and more shrunk.",
+        "generic": "Not quite right. Find the largest $\\alpha$ whose dot sits below the line.",
+        "byKey": {
+          "best": "That is the best mean itself. The rule moves to a simpler model when one is within the noise.",
+          "over": "At $\\alpha = 100$ the mean, 0.2967, is above the line."
+        }
+      },
+      "explain": {
+        "text": "Every mean below the line is indistinguishable from the best given the fold noise, so we prefer the most shrunk of them, $\\alpha = 30$. Textbooks often use $\\text{sd}/\\sqrt{k}$ as the error bar. Lesson 2 showed that understates the noise, so we use the plain fold sd.",
+        "canvas": {
+          "highlight": [
+            "a7"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Two hyperparameters",
+      "prose": "A model can have two knobs. Here a `Pipeline` adds polynomial terms of degree 1 to 3, scales them, and fits ridge. Each cell is the 5-fold CV MSE for one pair, on 200 loans with a curved leverage effect.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 5,
+          "rowLabel": "Polynomial degree",
+          "colLabel": "Ridge α",
+          "rowHeads": [
+            "1",
+            "2",
+            "3"
+          ],
+          "colHeads": [
+            "0.1",
+            "1",
+            "10",
+            "100",
+            "1000"
+          ],
+          "cells": [
+            [
+              "0.334",
+              "0.334",
+              "0.336",
+              "0.406",
+              "0.665"
+            ],
+            [
+              "0.287",
+              "0.285",
+              "0.277",
+              "0.365",
+              "0.656"
+            ],
+            [
+              "4.653",
+              "2.477",
+              "0.750",
+              "0.356",
+              "0.531"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the best cell.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c3"
+        ],
+        "max": 1,
+        "countWord": "cells",
+        "wrong": [
+          {
+            "id": "deg3",
+            "set": [
+              "r3c4"
+            ]
+          },
+          {
+            "id": "simple",
+            "set": [
+              "r1c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look for the smallest number in the whole grid, not in one row."
+        },
+        {
+          "rung": "point",
+          "text": "Degree 2 has the lowest row.",
+          "highlight": [
+            "row2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Within degree 2 the smallest is 0.277, at $\\alpha = 10$."
+        }
+      ],
+      "feedback": {
+        "correct": "Degree 2 with $\\alpha = 10$: 0.277.",
+        "generic": "Not quite right. Compare every cell.",
+        "byKey": {
+          "deg3": "That is degree 3’s best, 0.356. Degree 2 does better at 0.277.",
+          "simple": "The plain linear model, 0.334, misses the curve in leverage."
+        }
+      },
+      "explain": {
+        "text": "Degree 2 captures the curve; degree 3 has 119 terms and needs heavy shrinkage to survive. The best pair is degree 2, $\\alpha = 10$, an interior cell on both axes. Fifteen settings times five folds is 75 fits.",
+        "canvas": {
+          "highlight": [
+            "r2c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The curve in code",
+      "prose": "Compute a validation curve: for each $\\alpha$, the mean 5-fold MSE of `Ridge(alpha=a)`, using one `KFold(n_splits=k, shuffle=True, random_state=seed)` for every $\\alpha$. Round each mean to 4 places.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.4,
+            2.4
+          ],
+          "y": [
+            0.15,
+            0.37
+          ],
+          "xLabel": "$\\log_{10} \\alpha$",
+          "yLabel": "5-fold CV MSE",
+          "xStep": 1,
+          "grid": true,
+          "yAxis": "left"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a0",
+              "x": -2.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a1",
+              "x": -1.523,
+              "y": 0.2025
+            },
+            {
+              "id": "a2",
+              "x": -1.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a3",
+              "x": -0.523,
+              "y": 0.2024
+            },
+            {
+              "id": "a4",
+              "x": 0.0,
+              "y": 0.2021
+            },
+            {
+              "id": "a5",
+              "x": 0.477,
+              "y": 0.2013
+            },
+            {
+              "id": "a6",
+              "x": 1.0,
+              "y": 0.201
+            },
+            {
+              "id": "a7",
+              "x": 1.477,
+              "y": 0.2125
+            },
+            {
+              "id": "a8",
+              "x": 2.0,
+              "y": 0.2967
+            }
+          ],
+          "segments": [
+            {
+              "id": "e0",
+              "from": [
+                -2.0,
+                0.1725
+              ],
+              "to": [
+                -2.0,
+                0.2325
+              ]
+            },
+            {
+              "id": "e1",
+              "from": [
+                -1.523,
+                0.1725
+              ],
+              "to": [
+                -1.523,
+                0.2325
+              ]
+            },
+            {
+              "id": "e2",
+              "from": [
+                -1.0,
+                0.1726
+              ],
+              "to": [
+                -1.0,
+                0.2324
+              ]
+            },
+            {
+              "id": "e3",
+              "from": [
+                -0.523,
+                0.1727
+              ],
+              "to": [
+                -0.523,
+                0.2321
+              ]
+            },
+            {
+              "id": "e4",
+              "from": [
+                0.0,
+                0.173
+              ],
+              "to": [
+                0.0,
+                0.2312
+              ]
+            },
+            {
+              "id": "e5",
+              "from": [
+                0.477,
+                0.1741
+              ],
+              "to": [
+                0.477,
+                0.2285
+              ]
+            },
+            {
+              "id": "e6",
+              "from": [
+                1.0,
+                0.1796
+              ],
+              "to": [
+                1.0,
+                0.2224
+              ]
+            },
+            {
+              "id": "e7",
+              "from": [
+                1.477,
+                0.1977
+              ],
+              "to": [
+                1.477,
+                0.2273
+              ]
+            },
+            {
+              "id": "e8",
+              "from": [
+                2.0,
+                0.2397
+              ],
+              "to": [
+                2.0,
+                0.3537
+              ]
+            },
+            {
+              "id": "c0",
+              "from": [
+                -2.0,
+                0.2025
+              ],
+              "to": [
+                -1.523,
+                0.2025
+              ]
+            },
+            {
+              "id": "c1",
+              "from": [
+                -1.523,
+                0.2025
+              ],
+              "to": [
+                -1.0,
+                0.2025
+              ]
+            },
+            {
+              "id": "c2",
+              "from": [
+                -1.0,
+                0.2025
+              ],
+              "to": [
+                -0.523,
+                0.2024
+              ]
+            },
+            {
+              "id": "c3",
+              "from": [
+                -0.523,
+                0.2024
+              ],
+              "to": [
+                0.0,
+                0.2021
+              ]
+            },
+            {
+              "id": "c4",
+              "from": [
+                0.0,
+                0.2021
+              ],
+              "to": [
+                0.477,
+                0.2013
+              ]
+            },
+            {
+              "id": "c5",
+              "from": [
+                0.477,
+                0.2013
+              ],
+              "to": [
+                1.0,
+                0.201
+              ]
+            },
+            {
+              "id": "c6",
+              "from": [
+                1.0,
+                0.201
+              ],
+              "to": [
+                1.477,
+                0.2125
+              ]
+            },
+            {
+              "id": "c7",
+              "from": [
+                1.477,
+                0.2125
+              ],
+              "to": [
+                2.0,
+                0.2967
+              ]
+            }
+          ]
+        }
+      },
+      "question": "Complete `validation_curve_ridge(X, y, alphas, k, seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import KFold, cross_val_score\n\ndef validation_curve_ridge(X, y, alphas, k, seed):\n    folds = KFold(n_splits=k, shuffle=True, random_state=seed)\n    means = []\n    for a in alphas:\n        ...\n    return means\n",
+        "solution": "import numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import KFold, cross_val_score\n\ndef validation_curve_ridge(X, y, alphas, k, seed):\n    folds = KFold(n_splits=k, shuffle=True, random_state=seed)\n    means = []\n    for a in alphas:\n        scores = -cross_val_score(Ridge(alpha=a), X, y, cv=folds,\n                                  scoring='neg_mean_squared_error')\n        means.append(round(float(scores.mean()), 4))\n    return means\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "validation_curve_ridge(X, y, [1, 10, 100], 5, 0)",
+            "expect": "[0.2021, 0.201, 0.2967]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "validation_curve_ridge(X, y, [1, 10, 100], 5, 0)",
+            "expect": "[0.2021, 0.201, 0.2967]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "validation_curve_ridge(X, y, [0.01, 0.1, 1, 3, 10, 30, 100], 5, 0)",
+            "expect": "[0.2025, 0.2025, 0.2021, 0.2013, 0.201, 0.2125, 0.2967]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "validation_curve_ridge(X, y, [10], 10, 1)",
+            "expect": "[0.1918]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 8, 53)",
+            "call": "validation_curve_ridge(X, y, [0.1, 10, 1000], 5, 2)",
+            "expect": "[0.2166, 0.2171, 0.6039]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(250, 12, 54)",
+            "call": "validation_curve_ridge(X, y, [1, 30, 300], 3, 0)",
+            "expect": "[0.239, 0.2519, 0.4534]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on loans from `make_loans(n, p, seed)`, compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One `cross_val_score` call per $\\alpha$."
+        },
+        {
+          "rung": "point",
+          "text": "Use `scoring='neg_mean_squared_error'` and flip the sign.",
+          "highlight": [
+            "a6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "scores = -cross_val_score(Ridge(alpha=a), X, y, cv=folds, scoring='neg_mean_squared_error'); means.append(round(float(scores.mean()), 4))"
+        }
+      ],
+      "feedback": {
+        "correct": "Your curve matches the dots: 0.2021, 0.2010, 0.2967 at 1, 10, 100.",
+        "generic": "Some tests failed. For `make_loans(200, 15, 52)` and $\\alpha = 1, 10, 100$ the answer is [0.2021, 0.201, 0.2967].",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the `scoring` name."
+        }
+      },
+      "explain": {
+        "text": "One `KFold` object, reused, scores every $\\alpha$ on identical folds, so the comparison is fair. Build `folds` once, outside the loop."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The rule in code",
+      "prose": "Write the one-standard-error rule. Find the setting with the lowest mean. Add its sd to its mean to get the limit. Return the largest $\\alpha$ whose mean is at or below the limit. The list of alphas may come in any order.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.4,
+            2.4
+          ],
+          "y": [
+            0.15,
+            0.37
+          ],
+          "xLabel": "$\\log_{10} \\alpha$",
+          "yLabel": "5-fold CV MSE",
+          "xStep": 1,
+          "grid": true,
+          "yAxis": "left"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a0",
+              "x": -2.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a1",
+              "x": -1.523,
+              "y": 0.2025
+            },
+            {
+              "id": "a2",
+              "x": -1.0,
+              "y": 0.2025
+            },
+            {
+              "id": "a3",
+              "x": -0.523,
+              "y": 0.2024
+            },
+            {
+              "id": "a4",
+              "x": 0.0,
+              "y": 0.2021
+            },
+            {
+              "id": "a5",
+              "x": 0.477,
+              "y": 0.2013
+            },
+            {
+              "id": "a6",
+              "x": 1.0,
+              "y": 0.201
+            },
+            {
+              "id": "a7",
+              "x": 1.477,
+              "y": 0.2125
+            },
+            {
+              "id": "a8",
+              "x": 2.0,
+              "y": 0.2967
+            }
+          ],
+          "segments": [
+            {
+              "id": "e0",
+              "from": [
+                -2.0,
+                0.1725
+              ],
+              "to": [
+                -2.0,
+                0.2325
+              ]
+            },
+            {
+              "id": "e1",
+              "from": [
+                -1.523,
+                0.1725
+              ],
+              "to": [
+                -1.523,
+                0.2325
+              ]
+            },
+            {
+              "id": "e2",
+              "from": [
+                -1.0,
+                0.1726
+              ],
+              "to": [
+                -1.0,
+                0.2324
+              ]
+            },
+            {
+              "id": "e3",
+              "from": [
+                -0.523,
+                0.1727
+              ],
+              "to": [
+                -0.523,
+                0.2321
+              ]
+            },
+            {
+              "id": "e4",
+              "from": [
+                0.0,
+                0.173
+              ],
+              "to": [
+                0.0,
+                0.2312
+              ]
+            },
+            {
+              "id": "e5",
+              "from": [
+                0.477,
+                0.1741
+              ],
+              "to": [
+                0.477,
+                0.2285
+              ]
+            },
+            {
+              "id": "e6",
+              "from": [
+                1.0,
+                0.1796
+              ],
+              "to": [
+                1.0,
+                0.2224
+              ]
+            },
+            {
+              "id": "e7",
+              "from": [
+                1.477,
+                0.1977
+              ],
+              "to": [
+                1.477,
+                0.2273
+              ]
+            },
+            {
+              "id": "e8",
+              "from": [
+                2.0,
+                0.2397
+              ],
+              "to": [
+                2.0,
+                0.3537
+              ]
+            },
+            {
+              "id": "c0",
+              "from": [
+                -2.0,
+                0.2025
+              ],
+              "to": [
+                -1.523,
+                0.2025
+              ]
+            },
+            {
+              "id": "c1",
+              "from": [
+                -1.523,
+                0.2025
+              ],
+              "to": [
+                -1.0,
+                0.2025
+              ]
+            },
+            {
+              "id": "c2",
+              "from": [
+                -1.0,
+                0.2025
+              ],
+              "to": [
+                -0.523,
+                0.2024
+              ]
+            },
+            {
+              "id": "c3",
+              "from": [
+                -0.523,
+                0.2024
+              ],
+              "to": [
+                0.0,
+                0.2021
+              ]
+            },
+            {
+              "id": "c4",
+              "from": [
+                0.0,
+                0.2021
+              ],
+              "to": [
+                0.477,
+                0.2013
+              ]
+            },
+            {
+              "id": "c5",
+              "from": [
+                0.477,
+                0.2013
+              ],
+              "to": [
+                1.0,
+                0.201
+              ]
+            },
+            {
+              "id": "c6",
+              "from": [
+                1.0,
+                0.201
+              ],
+              "to": [
+                1.477,
+                0.2125
+              ]
+            },
+            {
+              "id": "c7",
+              "from": [
+                1.477,
+                0.2125
+              ],
+              "to": [
+                2.0,
+                0.2967
+              ]
+            }
+          ],
+          "hlines": [
+            {
+              "id": "lim",
+              "y": 0.2224,
+              "label": "0.2224"
+            }
+          ]
+        }
+      },
+      "question": "Complete `pick_one_se(means, sds, alphas)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def pick_one_se(means, sds, alphas):\n    best = ...    # index of the lowest mean\n    limit = ...\n    return ...\n",
+        "solution": "def pick_one_se(means, sds, alphas):\n    best = min(range(len(means)), key=lambda i: means[i])\n    limit = means[best] + sds[best]\n    return max(a for a, m in zip(alphas, means) if m <= limit)\n",
+        "examples": [
+          {
+            "call": "pick_one_se([0.2025, 0.2021, 0.201, 0.2125, 0.2967], [0.03, 0.0291, 0.0214, 0.0148, 0.057], [0.01, 1, 10, 30, 100])",
+            "expect": "30",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "pick_one_se([0.2025, 0.2021, 0.201, 0.2125, 0.2967], [0.03, 0.0291, 0.0214, 0.0148, 0.057], [0.01, 1, 10, 30, 100])",
+            "expect": "30",
+            "compare": "equal"
+          },
+          {
+            "call": "pick_one_se([0.30, 0.25, 0.27, 0.40], [0.01, 0.01, 0.01, 0.01], [1, 10, 100, 1000])",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "pick_one_se([0.30, 0.25, 0.27, 0.40], [0.05, 0.05, 0.05, 0.05], [1, 10, 100, 1000])",
+            "expect": "100",
+            "compare": "equal"
+          },
+          {
+            "call": "pick_one_se([0.5], [0.1], [3])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "pick_one_se([0.20, 0.20, 0.30], [0.0, 0.0, 0.0], [1, 10, 100])",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "pick_one_se([0.21, 0.26, 0.20, 0.35], [0.02, 0.02, 0.02, 0.02], [0.1, 1, 10, 100])",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "pick_one_se([0.41, 0.38, 0.36, 0.37, 0.52], [0.05, 0.04, 0.03, 0.03, 0.06], [100, 30, 10, 3, 1])",
+            "expect": "30",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, including a grid of one, an exact tie and alphas listed largest first, compared exactly. Pure Python, so it runs at once."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use `min(range(len(means)), key=lambda i: means[i])` for the best index."
+        },
+        {
+          "rung": "point",
+          "text": "`limit = means[best] + sds[best]`.",
+          "highlight": [
+            "lim"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `max(a for a, m in zip(alphas, means) if m <= limit)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your rule picks $\\alpha = 30$ on the ridge curve.",
+        "generic": "Some tests failed. For the ridge curve’s five values at 0.01, 1, 10, 30, 100 the answer is 30.",
+        "byKey": {
+          "test-7": "The alphas there run from largest to smallest. Return the largest $\\alpha$ by value, not the last in the list."
+        }
+      },
+      "explain": {
+        "text": "The rule uses the best setting’s own sd as the noise yardstick. Taking `max` over values, not positions, works however the grid is ordered. With a grid of one, it returns that one setting."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The best score is not the expected score",
+      "prose": "You tune the 15-cell grid with `GridSearchCV`. Its `best_score_` is $-0.277$, the MSE of degree 2 with $\\alpha = 10$. Your manager asks what MSE to expect on new loans.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 5,
+          "rowLabel": "Polynomial degree",
+          "colLabel": "Ridge α",
+          "rowHeads": [
+            "1",
+            "2",
+            "3"
+          ],
+          "colHeads": [
+            "0.1",
+            "1",
+            "10",
+            "100",
+            "1000"
+          ],
+          "cells": [
+            [
+              "0.334",
+              "0.334",
+              "0.336",
+              "0.406",
+              "0.665"
+            ],
+            [
+              "0.287",
+              "0.285",
+              "0.277",
+              "0.365",
+              "0.656"
+            ],
+            [
+              "4.653",
+              "2.477",
+              "0.750",
+              "0.356",
+              "0.531"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": [
+            "r2c3"
+          ]
+        }
+      },
+      "question": "What is the honest answer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "best",
+            "text": "0.277, the best cross-validated score",
+            "why": "You reported the winner’s own score. It was chosen because it was the lowest of 15 noisy numbers, so it is biased low."
+          },
+          {
+            "id": "test",
+            "text": "Probably a little above 0.277; one score on the locked test set will say",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "The average of all 15 cells",
+            "why": "That averages settings you will never use, including degree 3 at 4.653. It measures the grid, not the model."
+          },
+          {
+            "id": "minus",
+            "text": "0.277 minus one fold sd, to allow for noise",
+            "why": "You moved it the wrong way. Selection makes the best score optimistic, so the expected error is higher, not lower."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Why did this cell win?"
+        },
+        {
+          "rung": "point",
+          "text": "Among 15 noisy scores, the lowest has a lucky draw built in.",
+          "highlight": [
+            "r2c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The winning score did the choosing, so it cannot also be the unbiased report. Use rows the search never saw."
+        }
+      ],
+      "feedback": {
+        "correct": "The score that chose the model cannot also report on it.",
+        "generic": "Not quite right. Ask what job the 0.277 has already done.",
+        "byKey": {
+          "best": "You reported the best CV score as the expected test score. It is the minimum of 15 estimates, so it flatters the winner."
+        }
+      },
+      "explain": {
+        "text": "Each cell’s CV score has noise; the minimum of 15 tends to have caught some lucky noise. One evaluation on the locked test set removes that bias. Lesson 4 measures it without a test set, by nested CV."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "GridSearchCV",
+      "prose": "`GridSearchCV(pipe, param_grid, cv=folds, scoring=...)` runs the whole grid. A pipeline parameter is named `<step>__<parameter>`, so name the steps `'scale'` and `'ridge'` and the grid key is `'ridge__alpha'`. Plain `cv=5` gives unshuffled folds; pass a shuffled `KFold` instead.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> search.fit(X_train, y_train)",
+            ">>> search.best_params_",
+            "{'ridge__alpha': 10}",
+            ">>> search.cv_results_['mean_test_score']",
+            "array([...])   # one entry per setting"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `grid_search_best(X_train, y_train, param_grid)` so it returns the best $\\alpha$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import GridSearchCV, KFold\n\ndef grid_search_best(X_train, y_train, param_grid):\n    pipe = Pipeline([('scale', StandardScaler()), ('ridge', Ridge())])\n    folds = KFold(n_splits=5, shuffle=True, random_state=0)\n    search = ...\n    ...\n    return ...\n",
+        "solution": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import GridSearchCV, KFold\n\ndef grid_search_best(X_train, y_train, param_grid):\n    pipe = Pipeline([('scale', StandardScaler()), ('ridge', Ridge())])\n    search = GridSearchCV(pipe, param_grid,\n                          cv=KFold(n_splits=5, shuffle=True, random_state=0),\n                          scoring='neg_mean_squared_error')\n    search.fit(X_train, y_train)\n    return search.best_params_['ridge__alpha']\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "grid_search_best(X, y, {'ridge__alpha': [1, 10, 100]})",
+            "expect": "10",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "grid_search_best(X, y, {'ridge__alpha': [1, 10, 100]})",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "grid_search_best(X, y, {'ridge__alpha': [0.1, 1, 3, 10, 30]})",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(200, 15, 71)",
+            "call": "grid_search_best(X, y, {'ridge__alpha': [0.1, 10, 1000, 10000]})",
+            "expect": "1000",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(300, 8, 53)",
+            "call": "grid_search_best(X, y, {'ridge__alpha': [0.01, 1, 100]})",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "grid_search_best(X, y, {'ridge__alpha': [30]})",
+            "expect": "30",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, including a grid of one value, comparing the returned $\\alpha$ exactly with values from scikit-learn 1.6.1 in Pyodide. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n\ndef make_noise(n, p, seed):\n    \"\"\"Loans whose p signals are all pure noise: spread = 2.5 + noise sd 0.45, unrelated to X.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    y = (2.5 + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Pass `scoring='neg_mean_squared_error'` and `cv=folds`."
+        },
+        {
+          "rung": "point",
+          "text": "Call `search.fit(X_train, y_train)` before reading results.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `search.best_params_['ridge__alpha']`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your search agrees with scikit-learn on every grid.",
+        "generic": "Some tests failed. For `make_loans(200, 15, 52)` and `{'ridge__alpha': [1, 10, 100]}` the answer is 10.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that the grid key matches the step name: `ridge__alpha`."
+        }
+      },
+      "explain": {
+        "text": "The pipeline refits the scaler inside every fold, so no fold sees another’s means. With `refit=True`, the default, the search ends by fitting the best setting on all the training rows. That refitted model is what you score once on the test set."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Tune, then test",
+      "prose": "Put the honest tuning procedure in order.",
+      "question": "Order the steps from first to last.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Split off the test rows and lock them"
+          },
+          {
+            "id": "s2",
+            "text": "Build the pipeline: `StandardScaler`, then `Ridge`"
+          },
+          {
+            "id": "s3",
+            "text": "Run `GridSearchCV` on the training rows only"
+          },
+          {
+            "id": "s4",
+            "text": "Read `best_params_`; the search refits that setting on all training rows"
+          },
+          {
+            "id": "s5",
+            "text": "Score the refitted model once on the test rows"
+          },
+          {
+            "id": "s6",
+            "text": "Report the test score and the grid that was searched"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "same": [
+          [
+            "s1",
+            "s2"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must happen before any data is used to choose?"
+        },
+        {
+          "rung": "point",
+          "text": "The test rows are locked first, or at least before the search."
+        },
+        {
+          "rung": "step",
+          "text": "Lock, build, search, refit, score once, report."
+        }
+      ],
+      "feedback": {
+        "correct": "The test rows wait, untouched, until one final score.",
+        "generic": "Not quite right. The test rows must be locked before the search and used once after it."
+      },
+      "explain": {
+        "text": "Locking the test rows first means the search cannot see them. Building the pipeline uses no data, so it may come first too. After the refit, the test rows give one score, and the report names the grid so readers know how much was searched."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Choosing a lookback",
+      "prose": "A momentum signal can look back 5 to 60 days. A researcher picked 20 days by eyeballing backtests of the whole sample. A colleague suggests choosing the lookback by cross-validation on the training years, with later years locked.",
+      "question": "What does the colleague’s method fix?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "heldout",
+            "text": "The lookback is chosen on rows it is then not judged on, so its score is not inflated by the choice",
+            "correct": true
+          },
+          {
+            "id": "better",
+            "text": "It guarantees a better lookback than 20 days",
+            "why": "CV may pick 20 days too. What changes is that the reported score no longer contains the choice."
+          },
+          {
+            "id": "eye",
+            "text": "Nothing: eyeballing and CV both look at data",
+            "why": "Both look, but the eyeballed backtest scores the choice on the very rows that made it. CV keeps choosing and scoring apart."
+          },
+          {
+            "id": "none",
+            "text": "It removes the need for a locked test period",
+            "why": "The CV score still did the choosing. The locked years give the clean final number."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows judged the 20-day choice?"
+        },
+        {
+          "rung": "point",
+          "text": "The eyeballed backtest used every year both to pick and to score."
+        },
+        {
+          "rung": "step",
+          "text": "CV picks on held-out folds of the training years; the locked years then score once."
+        }
+      ],
+      "feedback": {
+        "correct": "Choosing and judging on different rows is the whole point.",
+        "generic": "Not quite right. Ask which rows the chosen lookback is scored on."
+      },
+      "explain": {
+        "text": "Eyeballing a full-sample backtest is tuning on the test set. CV on the training years separates the choice from the score, and the locked years report once. Because returns arrive in time order, the folds must respect time; level 2 shows how."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Reading a research note",
+      "prose": "A research note on a spread model says: “$\\alpha$ chosen by 5-fold CV on 2015 to 2021; 2022 to 2023 held out. Test MSE 0.23.”",
+      "question": "Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "clean",
+            "text": "The choice of $\\alpha$ never saw 2022 to 2023",
+            "correct": true
+          },
+          {
+            "id": "once",
+            "text": "If 2022 to 2023 was scored once, 0.23 is a fair estimate for loans like those",
+            "correct": true
+          },
+          {
+            "id": "time",
+            "text": "Random folds within 2015 to 2021 may let later years inform earlier ones; level 2 deals with that",
+            "correct": true
+          },
+          {
+            "id": "cv",
+            "text": "The CV score on 2015 to 2021 is the expected error for 2022 to 2023",
+            "why": "The CV score chose $\\alpha$, so it is optimistic, and later years may differ. The held-out years answer that question."
+          },
+          {
+            "id": "refit",
+            "text": "Refitting on 2015 to 2023 before deployment invalidates the 0.23",
+            "why": "Refitting the frozen recipe on more rows is normal. The 0.23 describes the recipe; the refit usually does slightly better."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows did the tuning see?"
+        },
+        {
+          "rung": "point",
+          "text": "The held-out years are clean if they were scored once."
+        },
+        {
+          "rung": "step",
+          "text": "Three statements hold; the CV score and the refit claims do not."
+        }
+      ],
+      "feedback": {
+        "correct": "A clean held-out period, with one caution about time order.",
+        "generic": "Not quite right. Separate what the tuning saw from what was held out."
+      },
+      "explain": {
+        "text": "The line is good practice: tuning on earlier years and one score on later ones. The CV number itself is optimistic and is not the forecast. The remaining worry is the random folds inside 2015 to 2021, which level 2 replaces with forward-moving folds."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Choose a hyperparameter by its cross-validated score on the training rows, never by training error or the test set.",
+      "Widen a grid whose best value sits on its edge; within the fold noise, prefer the simpler model.",
+      "The best CV score was selected, so it is optimistic: refit the winner and score it once on the locked test set."
+    ],
+    "formula": {
+      "name": "One-standard-error rule",
+      "tex": "\\alpha^{*} = \\max\\{\\alpha : \\overline{\\text{MSE}}(\\alpha) \\le \\overline{\\text{MSE}}_{\\text{best}} + \\text{sd}_{\\text{best}}\\}",
+      "note": "For ridge, a larger $\\alpha$ is a simpler model."
+    },
+    "trap": "Reporting the best cross-validated score as the expected score on new data."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "Edge case: a grid of one. `GridSearchCV(Ridge(), {'alpha': [30]}, cv=folds)` is run.",
+      "question": "How does its `best_score_` compare with `cross_val_score(Ridge(alpha=30), ..., cv=folds)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "They are the same number: with one setting nothing is selected, so nothing is flattered",
+            "correct": true
+          },
+          {
+            "id": "lower",
+            "text": "It is lower, because it is the best of the grid",
+            "why": "A best of one is just the one. There is no competition, so no selection bias."
+          },
+          {
+            "id": "higher",
+            "text": "It is higher, because GridSearchCV refits on all rows",
+            "why": "The refit happens after scoring and does not change `best_score_`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "No choice, no optimism.",
+        "generic": "Not quite right. Ask how many settings competed."
+      },
+      "explain": {
+        "text": "Selection bias comes from picking the minimum of several noisy scores. With one setting, `best_score_` is the plain CV score. The optimism grows with the size of the search."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "Edge case: two settings tie. $\\alpha = 0.01$ and $\\alpha = 0.03$ both score 0.2025, with the same sd.",
+      "question": "Which should you choose?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "simpler",
+            "text": "$\\alpha = 0.03$, the more shrunk model, in the spirit of the one-standard-error rule",
+            "correct": true
+          },
+          {
+            "id": "smaller",
+            "text": "$\\alpha = 0.01$, because a smaller penalty fits the data better",
+            "why": "It fits the training rows a touch better, but the held-out scores say the two predict equally well. Prefer the simpler."
+          },
+          {
+            "id": "average",
+            "text": "Average the two models’ predictions",
+            "why": "Possible, but needless: the two models are nearly identical. A tie is settled by preferring the simpler one."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "When the data cannot separate them, take the simpler model.",
+        "generic": "Not quite right. With equal scores, which model is simpler?"
+      },
+      "explain": {
+        "text": "Equal CV scores mean the data cannot tell the settings apart. More shrinkage means fewer effective parameters, so prefer it. GridSearchCV itself would take the first in the list."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "An analyst tries ten values of $k$ for $k$-nearest neighbours, scores each on the test set, keeps the best, and reports its test MSE.",
+      "question": "What has gone wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tuned",
+            "text": "The test set did the tuning, so the reported score is the best of ten and biased low",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing, as long as the test set is large",
+            "why": "A large test set reduces noise in each score, but the best of ten still flatters the winner, and no clean set is left."
+          },
+          {
+            "id": "knn",
+            "text": "$k$-nearest neighbours cannot be tuned",
+            "why": "It can, by CV on the training rows."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Tune on the training rows; test once.",
+        "generic": "Not quite right. Ask which rows chose $k$."
+      },
+      "explain": {
+        "text": "Choosing $k$ on the test rows turns them into validation rows. The fix: tune $k$ by CV on the training rows, then score the winner once on the test rows."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "A notebook calls `GridSearchCV(pipe, grid, cv=5)` on a file of loans sorted by size.",
+      "question": "What folds does `cv=5` give for this regression?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "unshuffled",
+            "text": "`KFold(5)` without shuffling: consecutive blocks of the sorted file",
+            "correct": true
+          },
+          {
+            "id": "shuffled",
+            "text": "Five shuffled folds",
+            "why": "An integer `cv` builds `KFold(n_splits=5)`, which does not shuffle. Pass `KFold(5, shuffle=True, random_state=0)` yourself."
+          },
+          {
+            "id": "strat",
+            "text": "Stratified folds",
+            "why": "Stratified folds are the default only for classifiers. For a regression an integer gives plain, unshuffled `KFold`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "On a sorted file that repeats lesson 2’s trap.",
+        "generic": "Not quite right. Recall what `KFold` does without `shuffle=True`."
+      },
+      "explain": {
+        "text": "For a regressor, `cv=5` means `KFold(5)` with no shuffle. On a sorted file each fold is a block of sizes the others never saw. Pass a shuffled `KFold` explicitly."
+      }
+    }
+  ]
+}

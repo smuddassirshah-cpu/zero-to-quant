@@ -1,0 +1,499 @@
+{
+  "id": "homework-3",
+  "course": "validation",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-centre-week",
+      "difficulty": 3,
+      "skills": [
+        "vl-leakage",
+        "vl-time"
+      ],
+      "prose": "A weekly model predicts at the close of day 0 the return over days 1 to 5. Its volatility feature is `rolling(11, center=True).std()`, read on day 0.",
+      "question": "How many label days does the day-0 value contain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Label days inside the window",
+        "accept": "5 exactly: the window is days −5 to 5, covering the whole label.",
+        "unit": "days",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All five: the window runs from day −5 to day 5.",
+        "generic": "Not quite right. A centred 11-day window has 5 days on each side of day 0.",
+        "byKey": {
+          "half": "The window reaches 5 days past day 0, and the label has only 5 days."
+        }
+      },
+      "explain": {
+        "text": "Days −5 to 5 include days 1 to 5, the whole label. A centred window of half-width at least the horizon leaks the entire answer."
+      }
+    },
+    {
+      "id": "h-pit",
+      "difficulty": 4,
+      "skills": [
+        "vl-leakage",
+        "vl-time"
+      ],
+      "prose": "Lesson 9's earnings table, as records. A backtest on any date must use, for each quarter, the latest version published on or before that date.",
+      "question": "Write `pit_value(versions, as_of)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def pit_value(versions, as_of):\n    \"\"\"versions: (period, value, published) records, ISO dates.\n    Returns {period: value} using, for each period, the latest\n    version published on or before as_of.\"\"\"\n    ...\n",
+        "solution": "def pit_value(versions, as_of):\n    \"\"\"versions: (period, value, published) records, ISO dates.\n    Returns {period: value} using, for each period, the latest\n    version published on or before as_of.\"\"\"\n    best = {}\n    for period, value, published in versions:\n        if published <= as_of:\n            if period not in best or published >= best[period][1]:\n                best[period] = (value, published)\n    return {p: v for p, (v, _) in best.items()}\n",
+        "examples": [
+          {
+            "setup": "E = [('2019Q3', 42, '2019-11-05'), ('2019Q3', 31, '2021-03-12'), ('2019Q4', 47, '2020-02-20'), ('2019Q4', 39, '2021-03-12'), ('2020Q1', 12, '2020-05-06')]",
+            "call": "pit_value(E, '2020-03-01')",
+            "expect": "{'2019Q3': 42, '2019Q4': 47}",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "E = [('2019Q3', 42, '2019-11-05'), ('2019Q3', 31, '2021-03-12'), ('2019Q4', 47, '2020-02-20'), ('2019Q4', 39, '2021-03-12'), ('2020Q1', 12, '2020-05-06')]",
+            "call": "pit_value(E, '2020-03-01')",
+            "expect": "{'2019Q3': 42, '2019Q4': 47}",
+            "compare": "equal"
+          },
+          {
+            "setup": "E = [('2019Q3', 42, '2019-11-05'), ('2019Q3', 31, '2021-03-12'), ('2019Q4', 47, '2020-02-20'), ('2019Q4', 39, '2021-03-12'), ('2020Q1', 12, '2020-05-06')]",
+            "call": "pit_value(E, '2025-01-01')",
+            "expect": "{'2019Q3': 31, '2019Q4': 39, '2020Q1': 12}",
+            "compare": "equal"
+          },
+          {
+            "setup": "E = [('2019Q3', 42, '2019-11-05'), ('2019Q3', 31, '2021-03-12'), ('2019Q4', 47, '2020-02-20'), ('2019Q4', 39, '2021-03-12'), ('2020Q1', 12, '2020-05-06')]",
+            "call": "pit_value(E, '2019-11-05')",
+            "expect": "{'2019Q3': 42}",
+            "compare": "equal"
+          },
+          {
+            "setup": "E = [('2019Q3', 42, '2019-11-05'), ('2019Q3', 31, '2021-03-12'), ('2019Q4', 47, '2020-02-20'), ('2019Q4', 39, '2021-03-12'), ('2020Q1', 12, '2020-05-06')]",
+            "call": "pit_value(E, '2019-01-01')",
+            "expect": "{}",
+            "compare": "equal"
+          },
+          {
+            "setup": "E = [('2019Q3', 42, '2019-11-05'), ('2019Q3', 31, '2021-03-12'), ('2019Q4', 47, '2020-02-20'), ('2019Q4', 39, '2021-03-12'), ('2020Q1', 12, '2020-05-06')]",
+            "call": "pit_value(E, '2021-03-12')",
+            "expect": "{'2019Q3': 31, '2019Q4': 39, '2020Q1': 12}",
+            "compare": "equal"
+          },
+          {
+            "setup": "E = [('2019Q3', 42, '2019-11-05'), ('2019Q3', 31, '2021-03-12'), ('2019Q4', 47, '2020-02-20'), ('2019Q4', 39, '2021-03-12'), ('2020Q1', 12, '2020-05-06')]",
+            "call": "pit_value(list(reversed(E)), '2021-06-01')",
+            "expect": "{'2020Q1': 12, '2019Q4': 39, '2019Q3': 31}",
+            "compare": "equal"
+          },
+          {
+            "call": "pit_value([], '2020-01-01')",
+            "expect": "{}",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on the table from Lesson 9, in both orders, and an empty list. Each compares your dict with ==, so order does not matter. Pure Python is enough."
+      },
+      "feedback": {
+        "correct": "Each quarter takes its latest version published by `as_of`.",
+        "generic": "Some tests failed. Skip versions published after `as_of`; among the rest keep the latest per period.",
+        "byKey": {
+          "test-3": "A version published on `as_of` itself is known that day: use `<=`.",
+          "test-6": "With the records in another order you kept the wrong version. Compare publish dates, not list position."
+        }
+      },
+      "explain": {
+        "text": "On 1 March 2020 the answer is 42p and 47p, as in Lesson 9. From 12 March 2021 the restated 31p and 39p take over. Store every version with its date and this query is all a backtest needs."
+      }
+    },
+    {
+      "id": "h-encode-hit",
+      "difficulty": 4,
+      "skills": [
+        "vl-leakage"
+      ],
+      "prose": "When a feature and a label are bivariate normal with correlation $\\rho$, the chance their signs agree is $\\tfrac12 + \\arcsin(\\rho)/\\pi$. A target-encoded feature averages each share's label over 25 months, its own month included, on pure noise.",
+      "question": "What test hit rate does that leak produce?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5641,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Hit rate",
+        "accept": "56.4%: $\\rho = 1/\\sqrt{25} = 0.2$, and $\\tfrac12 + \\arcsin(0.2)/\\pi = 0.5641$.",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "rho",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "lin",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac12 + \\arcsin(0.2)/\\pi = 0.564$.",
+        "generic": "Not quite right. The correlation is $1/\\sqrt{25}$; put it in the formula.",
+        "byKey": {
+          "rho": "That is the correlation. Turn it into a hit rate with the formula.",
+          "lin": "You added $\\rho/2$. Use $\\arcsin(\\rho)/\\pi$."
+        }
+      },
+      "explain": {
+        "text": "Each average holds 1 of 25 labels that are its own, so $\\rho = 1/5 = 0.2$ and the hit rate is 56.4% from noise. Lesson 9's 36 months gave 55.3% by the same formula."
+      }
+    },
+    {
+      "id": "h-delist",
+      "difficulty": 3,
+      "skills": [
+        "vl-leakage"
+      ],
+      "prose": "A backtest gives 11.0% a year on today's members. With every firm kept and real delisting returns it gives 6.5%. With every firm kept but delisting returns set to 0 it gives 7.8%.",
+      "question": "How much survivorship bias is left in the 7.8%?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.013,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Bias left, percentage points a year",
+        "accept": "1.3 points: 7.8% minus 6.5%.",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "full",
+            "value": 0.045,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "removed",
+            "value": 0.032,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$7.8 - 6.5 = 1.3$ points.",
+        "generic": "Not quite right. Compare 7.8% with the honest 6.5%.",
+        "byKey": {
+          "full": "That is the whole bias. The 7.8% has already removed part of it.",
+          "removed": "That is the part removed. The question asks what is left."
+        }
+      },
+      "explain": {
+        "text": "Zero delisting returns pretend that holders of failing firms lost nothing in the last month. Here that hides 1.3 of the 4.5 points."
+      }
+    },
+    {
+      "id": "h-bonf",
+      "difficulty": 4,
+      "skills": [
+        "vl-overfit"
+      ],
+      "prose": "A strategy was the best of 30 tried over 3 years. The testing course's one-sided Bonferroni bar at 5% is $t \\ge z_{1 - 0.05/30} = 2.94$, with $t = \\mathrm{SR}\\sqrt T$.",
+      "question": "What Sharpe must the best of 30 reach to pass?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.7,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Sharpe needed",
+        "accept": "1.70: $2.94 / \\sqrt 3 = 2.94 / 1.732$.",
+        "wrong": [
+          {
+            "id": "t",
+            "value": 2.94,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "noise",
+            "value": 1.18,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2.94 / 1.732 = 1.70$.",
+        "generic": "Not quite right. Divide 2.94 by $\\sqrt 3$.",
+        "byKey": {
+          "t": "That is the bar for $t$. Divide by $\\sqrt 3$ to get a Sharpe.",
+          "noise": "1.18 is the mean best of 30 under noise. The Bonferroni bar is stricter."
+        }
+      },
+      "explain": {
+        "text": "$t = \\mathrm{SR}\\sqrt 3 \\ge 2.94$ gives $\\mathrm{SR} \\ge 1.70$. The mean best of noise is 1.18, so the bar sits well above what luck usually gives."
+      }
+    },
+    {
+      "id": "h-years",
+      "difficulty": 4,
+      "skills": [
+        "vl-overfit"
+      ],
+      "prose": "By the rule of thumb, how many years of data are needed before the best of 40 noise strategies stops reaching a Sharpe of 0.5?",
+      "question": "Solve $\\sqrt{2\\ln 40}/\\sqrt T = 0.5$ for $T$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 29.5,
+        "tol": {
+          "abs": 0.3
+        },
+        "label": "Years",
+        "accept": "29.5: $(2.716/0.5)^2$.",
+        "unit": "years",
+        "wrong": [
+          {
+            "id": "noSq",
+            "value": 5.43,
+            "tol": {
+              "abs": 0.3
+            }
+          },
+          {
+            "id": "half",
+            "value": 14.8,
+            "tol": {
+              "abs": 0.3
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(2.716/0.5)^2 = 29.5$ years.",
+        "generic": "Not quite right. Rearrange to $T = (\\sqrt{2\\ln 40}/0.5)^2$.",
+        "byKey": {
+          "noSq": "That is $\\sqrt T$. Square it."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt{2 \\ln 40} = 2.716$, so $\\sqrt T = 5.43$ and $T = 29.5$ years. Longer data shrinks selection inflation only slowly; a smaller, logged $N$ works faster."
+      }
+    },
+    {
+      "id": "h-order",
+      "difficulty": 4,
+      "skills": [
+        "vl-leakage",
+        "vl-overfit",
+        "vl-time"
+      ],
+      "prose": "Put a leak-free research procedure in order, from the universe to the reported score.",
+      "question": "Order the steps.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "u",
+            "text": "Build the universe as of each date, dead firms and delisting returns kept"
+          },
+          {
+            "id": "f",
+            "text": "Stamp every feature with the time its inputs were known, and drop any known after the prediction"
+          },
+          {
+            "id": "lock",
+            "text": "Set aside the last period as a locked test set, and fix the search space in the log"
+          },
+          {
+            "id": "p",
+            "text": "Put every fitted step in a pipeline and tune it by walk-forward CV on the earlier years, logging every trial"
+          },
+          {
+            "id": "t",
+            "text": "Score the chosen model once on the locked test set"
+          },
+          {
+            "id": "r",
+            "text": "Report that score with the trial count and the haircut"
+          }
+        ],
+        "answer": [
+          "u",
+          "f",
+          "lock",
+          "p",
+          "t",
+          "r"
+        ]
+      },
+      "feedback": {
+        "correct": "Universe, features, lock, search, one test, report.",
+        "generic": "Not quite right. Data come first, then the lock, then the search, then the single test.",
+        "byKey": {
+          "t": "The locked test comes after the search, and only once.",
+          "lock": "Lock the test period before searching, or the search may peek."
+        }
+      },
+      "explain": {
+        "text": "Universe and features decide what data exist at each date. Locking the test period before the search keeps it clean; the log makes $N$ a count. One final score, reported with $N$, is what a reader can trust."
+      }
+    },
+    {
+      "id": "h-audit",
+      "difficulty": 5,
+      "skills": [
+        "vl-leakage",
+        "vl-overfit"
+      ],
+      "prose": "Turn the level into a checklist a desk can run on every backtest. The audit takes the feature timestamps, the pipeline, the universe settings and the research log, and names each leak by category.",
+      "question": "Write `leak_audit` so it returns the leaks found, by category, and the trial count.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def leak_audit(features, label_start, pipeline, universe, log):\n    \"\"\"features: {name: day its inputs are known}\n    label_start: day the prediction is made\n    pipeline: [(step, fit_on)], fit_on \"all\", \"train\" or \"none\"\n    universe: {\"members\": \"today\" or \"as_of\",\n               \"full_history_only\": bool,\n               \"delisting\": \"actual\" or \"zero\"}\n    log: [(action, config)] as in trials_log_count\n    Returns {\"target\": [...], \"transform\": [...],\n             \"survivorship\": [...], \"trials\": n}.\"\"\"\n    ...\n",
+        "solution": "def leak_audit(features, label_start, pipeline, universe, log):\n    \"\"\"features: {name: day its inputs are known}\n    label_start: day the prediction is made\n    pipeline: [(step, fit_on)], fit_on \"all\", \"train\" or \"none\"\n    universe: {\"members\": \"today\" or \"as_of\",\n               \"full_history_only\": bool,\n               \"delisting\": \"actual\" or \"zero\"}\n    log: [(action, config)] as in trials_log_count\n    Returns {\"target\": [...], \"transform\": [...],\n             \"survivorship\": [...], \"trials\": n}.\"\"\"\n    target = sorted(n for n, t in features.items() if t > label_start)\n    transform = [step for step, fit_on in pipeline if fit_on == \"all\"]\n    surv = []\n    if universe.get(\"members\") == \"today\":\n        surv.append(\"today's members\")\n    if universe.get(\"full_history_only\"):\n        surv.append(\"full history only\")\n    if universe.get(\"delisting\") == \"zero\":\n        surv.append(\"zero delisting return\")\n    trials = len({c for a, c in log if a in (\"fit\", \"look\")})\n    return {\"target\": target, \"transform\": transform,\n            \"survivorship\": surv, \"trials\": trials}\n",
+        "examples": [
+          {
+            "call": "leak_audit({\"mom\": 0, \"pe\": -2}, 0, [(\"log\", \"none\"), (\"scale\", \"train\")], {\"members\": \"as_of\", \"full_history_only\": False, \"delisting\": \"actual\"}, [(\"fit\", \"a\")])",
+            "expect": "{\"target\": [], \"transform\": [], \"survivorship\": [], \"trials\": 1}",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "leak_audit({\"mom\": 0, \"pe\": -2}, 0, [(\"log\", \"none\"), (\"scale\", \"train\")], {\"members\": \"as_of\", \"full_history_only\": False, \"delisting\": \"actual\"}, [(\"fit\", \"a\")])",
+            "expect": "{\"target\": [], \"transform\": [], \"survivorship\": [], \"trials\": 1}",
+            "compare": "equal"
+          },
+          {
+            "call": "leak_audit({\"mom\": 0, \"vol_c\": 10, \"vol_next\": 21}, 0, [(\"fill\", \"all\"), (\"scale\", \"train\"), (\"select\", \"all\")], {\"members\": \"today\", \"full_history_only\": True, \"delisting\": \"zero\"}, [(\"fit\", \"a\"), (\"look\", \"b\"), (\"fit\", \"a\"), (\"note\", \"c\")])",
+            "expect": "{\"target\": [\"vol_c\", \"vol_next\"], \"transform\": [\"fill\", \"select\"], \"survivorship\": [\"today's members\", \"full history only\", \"zero delisting return\"], \"trials\": 2}",
+            "compare": "equal"
+          },
+          {
+            "call": "leak_audit({\"x\": 5}, 5, [], {\"members\": \"as_of\", \"full_history_only\": False, \"delisting\": \"actual\"}, [])",
+            "expect": "{\"target\": [], \"transform\": [], \"survivorship\": [], \"trials\": 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "leak_audit({\"x\": 6, \"a\": 7}, 5, [], {\"members\": \"as_of\", \"full_history_only\": False, \"delisting\": \"actual\"}, [])",
+            "expect": "{\"target\": [\"a\", \"x\"], \"transform\": [], \"survivorship\": [], \"trials\": 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "leak_audit({}, 0, [(\"pca\", \"all\")], {\"members\": \"as_of\", \"full_history_only\": True, \"delisting\": \"actual\"}, [(\"drop\", \"z\")])",
+            "expect": "{\"target\": [], \"transform\": [\"pca\"], \"survivorship\": [\"full history only\"], \"trials\": 0}",
+            "compare": "equal"
+          },
+          {
+            "call": "leak_audit({}, 0, [(\"encode\", \"all\"), (\"log\", \"none\")], {\"members\": \"as_of\", \"full_history_only\": False, \"delisting\": \"zero\"}, [])",
+            "expect": "{\"target\": [], \"transform\": [\"encode\"], \"survivorship\": [\"zero delisting return\"], \"trials\": 0}",
+            "compare": "equal"
+          },
+          {
+            "setup": "log = [('look', f's{i}') for i in range(30)] + [('fit', 's1'), ('fit', 's2'), ('fit', 's3')]",
+            "call": "leak_audit({}, 0, [], {\"members\": \"today\", \"full_history_only\": False, \"delisting\": \"actual\"}, log)",
+            "expect": "{\"target\": [], \"transform\": [], \"survivorship\": [\"today's members\"], \"trials\": 30}",
+            "compare": "equal"
+          },
+          {
+            "call": "leak_audit({\"mom\": -21, \"rev\": 0}, 0, [(\"scale\", \"train\"), (\"winsor\", \"all\"), (\"model\", \"train\")], {\"members\": \"as_of\", \"full_history_only\": False, \"delisting\": \"actual\"}, [(\"fit\", \"w1\"), (\"fit\", \"w2\"), (\"drop\", \"w1\")])",
+            "expect": "{\"target\": [], \"transform\": [\"winsor\"], \"survivorship\": [], \"trials\": 2}",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on planted cases: a clean backtest, one with every leak, ties on the prediction day, and logs with looks and drops. Each compares your dict with ==: `target` sorted, `transform` in pipeline order, and `survivorship` in the order of the docstring's keys. Pure Python is enough."
+      },
+      "feedback": {
+        "correct": "Each category is one rule from the level.",
+        "generic": "Some tests failed. Target: known day after `label_start`. Transform: `fit_on == \"all\"`. Survivorship: one reason per bad setting. Trials: distinct fit or look configs.",
+        "byKey": {
+          "test-3": "A feature known on the prediction day is not a leak: use `>` for target leaks.",
+          "test-2": "Check every category on the all-leaks case: two target leaks, two transforms fitted on all rows, three survivorship reasons, two trials."
+        }
+      },
+      "explain": {
+        "text": "Each line of the audit is a rule from one lesson: known-at from Lesson 9, fit inside the fold from Lesson 10, point-in-time universe from Lesson 11, and the log count from Lesson 12. An audit that returns empty lists and a small, honest $N$ is a backtest worth reading."
+      }
+    },
+    {
+      "id": "h-review",
+      "difficulty": 5,
+      "skills": [
+        "vl-leakage",
+        "vl-overfit"
+      ],
+      "question": "Write the review.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A colleague's backtest note is below. Review it as you would for the desk's research meeting.\n\n**Backtest note: UK quality-momentum, 2016 to 2023.** Universe: today's FTSE 350 members. Monthly rebalance into the top decile. Features: 12-1 momentum; earnings revisions; `analyst_mentions`, the count of analyst notes on each share in the month after rebalancing; and sector, target-encoded by each sector's mean next-month return over 2016 to 2023. All features are z-scored over the full 2016 to 2023 panel before the walk-forward split. We tested 30 combinations of decile cut-off, lookback and weighting and report the best: Sharpe 1.4 over 8 years.\n\nName each leak and its category; for each, say which way it moves the Sharpe and roughly how much, with a number where you can. Estimate what selection among 30 alone could give, and say exactly what to rerun and how to report it.",
+        "model": "**1. Target leak: `analyst_mentions`.** It counts notes in the month after rebalancing, the label's own month. Analysts write more about shares that move, so it encodes the size and often the direction of the label. Direction: inflates. Size: large; in Lesson 9 ten days of overlap took a noise hit rate from 50% to 67%. Fix: use mentions in the month *before* rebalancing, stamped with the day each note was published.\n\n**2. Target encoding of sector over 2016 to 2023.** Each sector's mean next-month return includes every test month's label. Direction: inflates. Size: can be large, since it reads $y$; with few shares per sector the encoding nearly copies the label. Lesson 10's target-encoding leak added 0.45 to CV $R^2$ on noise. Fix: encode inside each walk-forward fold, from training months only.\n\n**3. Full-panel z-scores.** A mean and spread from 2016 to 2023 reach back into every earlier month. Direction: unclear. Size: small, as Lesson 10 found for scaling; but it is the same habit that made items 1 and 2 large. Fix: z-score cross-sectionally each month, or with expanding windows, inside the pipeline.\n\n**4. Survivorship and look-ahead in the universe.** Today's FTSE 350 holds firms that grew into it after 2016 and none that fell out or failed. Direction: inflates. Size: a few points a year is plausible; Lesson 11's panel showed 5.8 points, and fund databases show 1 to 2. Fix: membership as of each rebalance date, delisted firms kept with their real delisting returns.\n\n**5. Best of 30.** Over $T = 8$ years the mean best of 30 noise Sharpes is $2.04/\\sqrt 8 = 0.72$; the rule of thumb gives $\\sqrt{2\\ln 30}/\\sqrt 8 = 0.92$. Even if items 1 to 4 were clean, 1.4 would haircut to about 0.7, and the 30 combinations are likely correlated, so the effective $N$ is lower. Fix: log every trial, including any looks before the 30.\n\n**What to rerun.** Rebuild the universe point in time with delisting returns; lag `analyst_mentions`; move the encoder and the scaler inside a walk-forward pipeline; rerun the 30 combinations on 2016 to 2021 only; score the chosen one once on 2022 to 2023; report that score with $N = 30$ and the haircut. Expect the Sharpe to fall a long way; most of the 1.4 is likely leakage and selection.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Identifies `analyst_mentions` as a target leak (built from the label's month), says it inflates, likely by a lot, and gives the fix (lag it, timestamp notes)"
+          },
+          {
+            "points": 2,
+            "text": "Identifies the sector target encoding over the full period as a leak that reads $y$, says it can be large, and moves it inside the fold"
+          },
+          {
+            "points": 1,
+            "text": "Identifies full-panel z-scoring as a future-fitted transform, says it is usually small, and fixes it with cross-sectional or expanding scaling in the pipeline"
+          },
+          {
+            "points": 2,
+            "text": "Identifies today's FTSE 350 as survivorship and look-ahead, says it inflates by roughly points a year, and asks for point-in-time membership with delisting returns"
+          },
+          {
+            "points": 2,
+            "text": "Quantifies the best-of-30 selection: about 0.7 (simulated) to 0.9 (rule of thumb) from noise over 8 years, and notes correlated trials or an incomplete count"
+          },
+          {
+            "points": 1,
+            "text": "Gives a rerun plan: fixes, search on earlier years only, one score on a locked period, reported with $N$ and the haircut"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your review with the model answer and tick the rubric.",
+        "generic": "Compare your review with the model answer and tick the rubric."
+      },
+      "explain": {
+        "text": "The note has one of each leak: a feature built from the label's month, a target encoding and z-scores fitted on the whole panel, today's index as the universe, and the best of 30. Selection alone can give about 0.7 to 0.9 over 8 years. Most of the 1.4 is likely not skill."
+      }
+    }
+  ]
+}

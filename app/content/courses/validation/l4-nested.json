@@ -1,0 +1,1516 @@
+{
+  "id": "l4-nested",
+  "course": "validation",
+  "title": "Validation inside validation",
+  "minutes": 15,
+  "objectives": [
+    "Use nested cross-validation for an honest estimate after tuning."
+  ],
+  "skills": [
+    "vl-cv",
+    "vl-overfit"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The best of fifteen",
+      "prose": "We built 200 loans where 15 candidate signals are pure noise: none predicts spread. Each bar is the 5-fold CV MSE of a one-signal linear model. The dashed line is a model that predicts the average spread. Signal 15 scores 0.1647, below it.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s1",
+              "label": "1",
+              "value": 0.1691
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "value": 0.1713
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "value": 0.1687
+            },
+            {
+              "id": "s4",
+              "label": "4",
+              "value": 0.1686
+            },
+            {
+              "id": "s5",
+              "label": "5",
+              "value": 0.1722
+            },
+            {
+              "id": "s6",
+              "label": "6",
+              "value": 0.1703
+            },
+            {
+              "id": "s7",
+              "label": "7",
+              "value": 0.1665
+            },
+            {
+              "id": "s8",
+              "label": "8",
+              "value": 0.1719
+            },
+            {
+              "id": "s9",
+              "label": "9",
+              "value": 0.1674
+            },
+            {
+              "id": "s10",
+              "label": "10",
+              "value": 0.1717
+            },
+            {
+              "id": "s11",
+              "label": "11",
+              "value": 0.1702
+            },
+            {
+              "id": "s12",
+              "label": "12",
+              "value": 0.1694
+            },
+            {
+              "id": "s13",
+              "label": "13",
+              "value": 0.1701
+            },
+            {
+              "id": "s14",
+              "label": "14",
+              "value": 0.1687
+            },
+            {
+              "id": "s15",
+              "label": "15",
+              "value": 0.1647
+            }
+          ],
+          "xLabel": "Signal (all pure noise)",
+          "yLabel": "5-fold CV MSE",
+          "yMin": 0.16,
+          "yMax": 0.175,
+          "truncate": true,
+          "hlines": [
+            {
+              "id": "mean",
+              "y": 0.1684,
+              "label": "mean only 0.1684"
+            }
+          ]
+        },
+        "state": {
+          "caption": "The axis starts at 0.160."
+        }
+      },
+      "question": "On 5,000 new loans, how will signal 15 compare with predicting the average?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nobetter",
+            "text": "No better: its edge came from being the best of 15 noisy scores",
+            "correct": true
+          },
+          {
+            "id": "better",
+            "text": "About 2% better, as its CV score says",
+            "why": "You trusted the winner’s score. It won because its noise happened to help on these 200 loans; that luck does not repeat."
+          },
+          {
+            "id": "much",
+            "text": "Much better: CV already protects against overfitting",
+            "why": "CV protects one model’s score. Choosing the best of 15 scores is a new step, and CV did not see it coming."
+          },
+          {
+            "id": "worse",
+            "text": "Far worse, since noise signals always hurt",
+            "why": "A noise signal costs a little, not a lot: one useless slope adds only a small error."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every signal is noise. What made one of them win?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at how close all the bars are to the dashed line.",
+          "highlight": [
+            "s15",
+            "mean"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The lowest of 15 noisy scores is low partly by luck. New loans bring new luck."
+        }
+      ],
+      "feedback": {
+        "correct": "On 5,000 new loans signal 15 scores 0.2010 against 0.1971 for the average.",
+        "generic": "Not quite right. Ask why signal 15 won."
+      },
+      "explain": {
+        "text": "Fresh loans give 0.2010 for signal 15 and 0.1971 for the average, so the winner is slightly worse. Its CV score was honest for one model, but we read it after choosing among 15. The choice needs measuring too.",
+        "canvas": {
+          "highlight": [
+            "s15"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Folds inside folds",
+      "prose": "To measure a choice, make the choosing part of what is tested. Split the rows into outer folds. Inside each outer training set, run a whole CV of its own, the inner folds. Slide both counts.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "All rows",
+          "compact": true,
+          "orient": "tb",
+          "levels": [
+            {
+              "label": "Outer folds",
+              "branches": [
+                {
+                  "id": "o1",
+                  "label": "Outer 1"
+                },
+                {
+                  "id": "o2",
+                  "label": "Outer 2"
+                },
+                {
+                  "id": "o3",
+                  "label": "Outer 3"
+                },
+                {
+                  "id": "o4",
+                  "label": "Outer 4"
+                }
+              ]
+            },
+            {
+              "label": "Inner folds",
+              "branches": [
+                {
+                  "id": "i1",
+                  "label": "In 1"
+                },
+                {
+                  "id": "i2",
+                  "label": "In 2"
+                },
+                {
+                  "id": "i3",
+                  "label": "In 3"
+                },
+                {
+                  "id": "i4",
+                  "label": "In 4"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "branching": {
+            "0": 2,
+            "1": 2
+          },
+          "show": "none"
+        },
+        "derive": {
+          "caption": "{{branching['0']}} outer folds × {{branching['1']}} inner folds = {{branching['0'] * branching['1']}} inner fits per setting"
+        },
+        "controls": [
+          {
+            "bind": "branching.0",
+            "min": 2,
+            "max": 4,
+            "step": 1,
+            "start": 2,
+            "label": "Outer folds"
+          },
+          {
+            "bind": "branching.1",
+            "min": 2,
+            "max": 4,
+            "step": 1,
+            "start": 2,
+            "label": "Inner folds"
+          }
+        ]
+      },
+      "question": "With 4 outer folds and 3 inner folds, how many inner fits does each setting get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "label": "Inner fits per setting",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "outer",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the leaves of the tree."
+        },
+        {
+          "rung": "point",
+          "text": "Every outer fold carries its own set of inner folds.",
+          "highlight": [
+            "o1",
+            "o2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4 outer folds, each with 3 inner folds: 12 leaves."
+        }
+      ],
+      "feedback": {
+        "correct": "Twelve: the inner loop runs again inside every outer fold.",
+        "generic": "Not quite right. Count the bottom row of the tree.",
+        "byKey": {
+          "sum": "You added. Each of the 4 outer folds has 3 inner folds, so multiply.",
+          "outer": "That counts the outer folds only. Each holds 3 inner fits."
+        }
+      },
+      "explain": {
+        "text": "Each leaf is one inner fit: train on the inner training rows, score on the inner fold. Four outer folds with three inner folds give 12 per setting. The cost multiplies, which matters for big grids.",
+        "canvas": {
+          "branching": {
+            "0": 4,
+            "1": 3
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Two loops, two jobs",
+      "prose": "This is **nested cross-validation**. The **inner loop** runs inside one outer training set. The **outer loop** holds back one outer fold at a time, which the inner loop never sees.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "All rows",
+          "compact": true,
+          "orient": "tb",
+          "levels": [
+            {
+              "label": "Outer folds",
+              "branches": [
+                {
+                  "id": "o1",
+                  "label": "Outer 1"
+                },
+                {
+                  "id": "o2",
+                  "label": "Outer 2"
+                },
+                {
+                  "id": "o3",
+                  "label": "Outer 3"
+                },
+                {
+                  "id": "o4",
+                  "label": "Outer 4"
+                }
+              ]
+            },
+            {
+              "label": "Inner folds",
+              "branches": [
+                {
+                  "id": "i1",
+                  "label": "In 1"
+                },
+                {
+                  "id": "i2",
+                  "label": "In 2"
+                },
+                {
+                  "id": "i3",
+                  "label": "In 3"
+                },
+                {
+                  "id": "i4",
+                  "label": "In 4"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "branching": {
+            "0": 3,
+            "1": 3
+          },
+          "show": "none",
+          "highlight": [
+            "o2"
+          ]
+        }
+      },
+      "question": "Which loop chooses $\\alpha$, and which measures the choice?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The inner loop chooses $\\alpha$ on each outer training set; the outer fold then scores that choice once",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "The outer loop chooses $\\alpha$; the inner loop measures it",
+            "why": "You swapped the jobs. The outer test fold must stay unseen by the choice, so the choosing happens inside."
+          },
+          {
+            "id": "both",
+            "text": "Both loops choose $\\alpha$, and we average the two choices",
+            "why": "Only the inner loop chooses. The outer loop is the honest test of the whole recipe, choice included."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: $\\alpha$ is fixed in advance",
+            "why": "If $\\alpha$ were fixed, plain CV would do. Nested CV exists because $\\alpha$ is chosen from data."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows must the choice never see?"
+        },
+        {
+          "rung": "point",
+          "text": "The outer test fold plays the role of a test set.",
+          "highlight": [
+            "o2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inner folds pick $\\alpha$ using outer training rows only; the outer fold then scores the winner."
+        }
+      ],
+      "feedback": {
+        "correct": "Inner chooses, outer measures.",
+        "generic": "Not quite right. Ask which rows act as the test set for the choice."
+      },
+      "explain": {
+        "text": "In outer fold 2, the inner loop sees only the other outer folds and picks an $\\alpha$. That $\\alpha$ is refitted on those rows and scored on fold 2. Averaging over outer folds scores the recipe “tune, then fit”."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Counting the fits",
+      "prose": "A real run: 5 outer folds, 5 inner folds, a grid of 10 settings. After its inner loop, each outer fold refits the winning setting once on its whole training set.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "All rows",
+          "compact": true,
+          "orient": "tb",
+          "levels": [
+            {
+              "label": "Outer folds",
+              "branches": [
+                {
+                  "id": "o1",
+                  "label": "Outer 1"
+                },
+                {
+                  "id": "o2",
+                  "label": "Outer 2"
+                },
+                {
+                  "id": "o3",
+                  "label": "Outer 3"
+                },
+                {
+                  "id": "o4",
+                  "label": "Outer 4"
+                }
+              ]
+            },
+            {
+              "label": "Inner folds",
+              "branches": [
+                {
+                  "id": "i1",
+                  "label": "In 1"
+                },
+                {
+                  "id": "i2",
+                  "label": "In 2"
+                },
+                {
+                  "id": "i3",
+                  "label": "In 3"
+                },
+                {
+                  "id": "i4",
+                  "label": "In 4"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "branching": {
+            "0": 4,
+            "1": 4
+          },
+          "show": "none",
+          "caption": "Drawn with 4 × 4 to fit the page"
+        }
+      },
+      "question": "Fill in the number of fits.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Count",
+          "Fits"
+        ],
+        "rows": [
+          [
+            "Inner fits: outer × inner × settings",
+            {
+              "edit": true,
+              "answer": 250,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Refits of the winner, one per outer fold",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Total",
+            {
+              "edit": true,
+              "answer": 255,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the three counts for the inner fits."
+        },
+        {
+          "rung": "point",
+          "text": "$5 \\times 5 \\times 10 = 250$.",
+          "highlight": [
+            "o1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add one refit per outer fold: 250 + 5 = 255."
+        }
+      ],
+      "feedback": {
+        "correct": "250 inner fits and 5 refits: 255 in all.",
+        "generic": "Not quite right. Multiply outer, inner and settings, then add the refits."
+      },
+      "explain": {
+        "text": "Every setting is fitted in every inner fold of every outer fold: $5 \\times 5 \\times 10 = 250$. Each outer fold then refits its winner once, adding 5. Plain 5-fold tuning of the same grid needs 51."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The cost of choosing",
+      "prose": "Back to the 200 noise loans. For three searches we compare the **inner best**, the winning setting’s own CV score, with the **nested** score. The searches pick a ridge $\\alpha$ from 6 values, the best single signal from 15, and the best pair of signals from 105.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "ridge",
+              "label": "6 α values"
+            },
+            {
+              "id": "single",
+              "label": "15 signals"
+            },
+            {
+              "id": "pair",
+              "label": "105 pairs"
+            }
+          ],
+          "groups": [
+            {
+              "id": "inner",
+              "label": "Inner best"
+            },
+            {
+              "id": "nested",
+              "label": "Nested CV"
+            }
+          ],
+          "yLabel": "MSE",
+          "showValues": true,
+          "decimals": 4,
+          "yMin": 0.15,
+          "yMax": 0.19,
+          "truncate": true
+        },
+        "state": {
+          "values": {
+            "inner": {
+              "ridge": 0.1681,
+              "single": 0.1647,
+              "pair": 0.163
+            },
+            "nested": {
+              "ridge": 0.1721,
+              "single": 0.1719,
+              "pair": 0.1809
+            }
+          },
+          "caption": "The same 200 noise loans as the first screen. The axis starts at 0.150."
+        }
+      },
+      "question": "For the search over 105 pairs, how much higher is the nested MSE than the inner best?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0179,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Nested minus inner best",
+        "accept": "0.0179 ± 0.0005, that is 0.1809 − 0.1630",
+        "wrong": [
+          {
+            "id": "ridge",
+            "value": 0.004,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the two bars above “105 pairs”."
+        },
+        {
+          "rung": "point",
+          "text": "Inner best 0.1630, nested 0.1809.",
+          "highlight": [
+            "pair-inner",
+            "pair-nested"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.1809 − 0.1630 = 0.0179."
+        }
+      ],
+      "feedback": {
+        "correct": "0.0179: the pair search flatters itself by about 10%.",
+        "generic": "Not quite right. Subtract the inner best from the nested score for 105 pairs.",
+        "byKey": {
+          "ridge": "That is the gap for the 6 α values. Read the 105-pair bars."
+        }
+      },
+      "explain": {
+        "text": "The gap grows with the search: 0.0040 for 6 α values, 0.0072 for 15 signals, 0.0179 for 105 pairs. Over 20 datasets like this one the gaps average 1%, 4% and 6%. The inner best shrinks as we search more; the nested score does not.",
+        "canvas": {
+          "highlight": [
+            "pair-inner",
+            "pair-nested"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Nested CV in one line",
+      "prose": "A `GridSearchCV` is itself a model: `fit` tunes and refits. So `cross_val_score(search, X, y, cv=outer)` is nested CV. We give both `KFold`s the same seed. That is harmless: the inner `KFold` shuffles each smaller outer training set, so its folds differ from the outer ones.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "All rows",
+          "compact": true,
+          "orient": "tb",
+          "levels": [
+            {
+              "label": "Outer folds",
+              "branches": [
+                {
+                  "id": "o1",
+                  "label": "Outer 1"
+                },
+                {
+                  "id": "o2",
+                  "label": "Outer 2"
+                },
+                {
+                  "id": "o3",
+                  "label": "Outer 3"
+                },
+                {
+                  "id": "o4",
+                  "label": "Outer 4"
+                }
+              ]
+            },
+            {
+              "label": "Inner folds",
+              "branches": [
+                {
+                  "id": "i1",
+                  "label": "In 1"
+                },
+                {
+                  "id": "i2",
+                  "label": "In 2"
+                },
+                {
+                  "id": "i3",
+                  "label": "In 3"
+                },
+                {
+                  "id": "i4",
+                  "label": "In 4"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "branching": {
+            "0": 3,
+            "1": 3
+          },
+          "show": "none"
+        }
+      },
+      "question": "Complete `nested_cv_mse(X, y, alphas, k_outer, k_inner, seed)`: the mean outer MSE for ridge, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from sklearn.linear_model import Ridge\nfrom sklearn.model_selection import GridSearchCV, KFold, cross_val_score\n\ndef nested_cv_mse(X, y, alphas, k_outer, k_inner, seed):\n    inner = KFold(n_splits=k_inner, shuffle=True, random_state=seed)\n    outer = KFold(n_splits=k_outer, shuffle=True, random_state=seed)\n    search = ...\n    scores = ...\n    return round(float(-scores.mean()), 4)\n",
+        "solution": "from sklearn.linear_model import Ridge\nfrom sklearn.model_selection import GridSearchCV, KFold, cross_val_score\n\ndef nested_cv_mse(X, y, alphas, k_outer, k_inner, seed):\n    inner = KFold(n_splits=k_inner, shuffle=True, random_state=seed)\n    outer = KFold(n_splits=k_outer, shuffle=True, random_state=seed)\n    search = GridSearchCV(Ridge(), {'alpha': alphas}, cv=inner,\n                          scoring='neg_mean_squared_error')\n    scores = cross_val_score(search, X, y, cv=outer,\n                             scoring='neg_mean_squared_error')\n    return round(float(-scores.mean()), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(300, 10, 5)",
+            "call": "nested_cv_mse(X, y, [0.1, 1, 10, 100, 1000], 5, 5, 0)",
+            "expect": "0.2207",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(300, 10, 5)",
+            "call": "nested_cv_mse(X, y, [0.1, 1, 10, 100, 1000], 5, 5, 0)",
+            "expect": "0.2207",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "nested_cv_mse(X, y, [1, 3, 10, 30, 100], 5, 5, 0)",
+            "expect": "0.2002",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_noise(200, 15, 71)",
+            "call": "nested_cv_mse(X, y, [0.1, 1, 10, 100, 1000, 10000], 5, 5, 0)",
+            "expect": "0.1721",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 10, 5)",
+            "call": "nested_cv_mse(X, y, [1, 100], 3, 4, 2)",
+            "expect": "0.2252",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 10, 5)",
+            "call": "nested_cv_mse(X, y, [10], 5, 3, 0)",
+            "expect": "0.2183",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, up to 5 × 5 folds with 6 alphas on 300 loans, compared with math.isclose. Each takes a second or two. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n\ndef make_noise(n, p, seed):\n    \"\"\"Loans whose p signals are all pure noise: spread = 2.5 + noise sd 0.45, unrelated to X.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    y = (2.5 + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build the search with `cv=inner` and `scoring='neg_mean_squared_error'`."
+        },
+        {
+          "rung": "point",
+          "text": "Then pass the unfitted search to `cross_val_score` with `cv=outer`.",
+          "highlight": [
+            "o1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "search = GridSearchCV(Ridge(), {'alpha': alphas}, cv=inner, scoring='neg_mean_squared_error'); scores = cross_val_score(search, X, y, cv=outer, scoring='neg_mean_squared_error')"
+        }
+      ],
+      "feedback": {
+        "correct": "Your nested CV matches: 0.2207 on the 300 loans.",
+        "generic": "Some tests failed. For `make_loans(300, 10, 5)`, alphas 0.1 to 1000, 5 × 5 folds, seed 0, the answer is 0.2207.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the grid: `{'alpha': alphas}`."
+        }
+      },
+      "explain": {
+        "text": "`cross_val_score` clones the search for each outer fold, so every inner loop starts fresh on that fold’s training rows. The outer test fold is never seen by the tuning. That is the whole trick."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Which number goes in the report",
+      "prose": "On the 200 noise loans an analyst tunes ridge over 6 values of $\\alpha$, then runs nested CV. The console shows both numbers.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> search.fit(X, y)",
+            ">>> -search.best_score_",
+            "0.1681",
+            ">>> -cross_val_score(search, X, y, cv=outer).mean()",
+            "0.1721"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which number should the model card report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inner",
+            "text": "0.1681, the tuned model’s best CV score",
+            "why": "You reported the inner best. It is the score that chose $\\alpha$, so it carries the luck of the choice."
+          },
+          {
+            "id": "nested",
+            "text": "0.1721, the nested CV score",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "Their average, 0.1701",
+            "why": "Averaging an optimistic number with an honest one just gives a less optimistic one. Report the honest one."
+          },
+          {
+            "id": "size",
+            "text": "0.1681, because nested CV trains on fewer rows and is pessimistic",
+            "why": "Both numbers come from models trained on 160 of the 200 loans. The gap is the choice, not the training size."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which number was used to pick $\\alpha$?"
+        },
+        {
+          "rung": "point",
+          "text": "`best_score_` is the minimum over the grid."
+        },
+        {
+          "rung": "step",
+          "text": "The nested score tests the choosing on folds the choice never saw."
+        }
+      ],
+      "feedback": {
+        "correct": "The number you tuned on is not the number you report.",
+        "generic": "Not quite right. Ask which number did the choosing.",
+        "byKey": {
+          "inner": "You reported the inner best as the estimate. It was selected for being low, so it is biased low.",
+          "size": "With 5 outer and 5 inner folds, both scored models train on 160 loans. Size does not explain the gap."
+        }
+      },
+      "explain": {
+        "text": "`best_score_` is the lowest of six CV scores, so it is optimistic. The nested score measures the whole recipe, tuning included, on unseen folds. Report 0.1721; deploy the model `search` refitted on all 200 loans."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Measuring the gap",
+      "prose": "Return both numbers from the last screen. The inner best is `-search.best_score_` after fitting the search on all rows. The nested score is `cross_val_score` of the same search. Use one `KFold(n_splits=k, shuffle=True, random_state=seed)` for both loops. Round each to 4 places.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "ridge",
+              "label": "6 α values"
+            },
+            {
+              "id": "single",
+              "label": "15 signals"
+            },
+            {
+              "id": "pair",
+              "label": "105 pairs"
+            }
+          ],
+          "groups": [
+            {
+              "id": "inner",
+              "label": "Inner best"
+            },
+            {
+              "id": "nested",
+              "label": "Nested CV"
+            }
+          ],
+          "yLabel": "MSE",
+          "showValues": true,
+          "decimals": 4,
+          "yMin": 0.15,
+          "yMax": 0.19,
+          "truncate": true
+        },
+        "state": {
+          "values": {
+            "inner": {
+              "ridge": 0.1681,
+              "single": 0.1647,
+              "pair": 0.163
+            },
+            "nested": {
+              "ridge": 0.1721,
+              "single": 0.1719,
+              "pair": 0.1809
+            }
+          },
+          "caption": "The same 200 noise loans as the first screen. The axis starts at 0.150."
+        }
+      },
+      "question": "Complete `selection_gap(X, y, alphas, k, seed)`, returning `(inner_best_mean, nested_mean)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from sklearn.linear_model import Ridge\nfrom sklearn.model_selection import GridSearchCV, KFold, cross_val_score\n\ndef selection_gap(X, y, alphas, k, seed):\n    folds = KFold(n_splits=k, shuffle=True, random_state=seed)\n    search = GridSearchCV(Ridge(), {'alpha': alphas}, cv=folds,\n                          scoring='neg_mean_squared_error')\n    ...\n    return round(float(inner_best), 4), round(float(nested), 4)\n",
+        "solution": "from sklearn.linear_model import Ridge\nfrom sklearn.model_selection import GridSearchCV, KFold, cross_val_score\n\ndef selection_gap(X, y, alphas, k, seed):\n    folds = KFold(n_splits=k, shuffle=True, random_state=seed)\n    search = GridSearchCV(Ridge(), {'alpha': alphas}, cv=folds,\n                          scoring='neg_mean_squared_error')\n    search.fit(X, y)\n    inner_best = -search.best_score_\n    nested = -cross_val_score(search, X, y, cv=folds,\n                              scoring='neg_mean_squared_error').mean()\n    return round(float(inner_best), 4), round(float(nested), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_noise(200, 15, 71)",
+            "call": "selection_gap(X, y, [0.1, 1, 10, 100, 1000, 10000], 5, 0)",
+            "expect": "(0.1681, 0.1721)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_noise(200, 15, 71)",
+            "call": "selection_gap(X, y, [0.1, 1, 10, 100, 1000, 10000], 5, 0)",
+            "expect": "(0.1681, 0.1721)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "selection_gap(X, y, [1, 3, 10, 30, 100], 5, 0)",
+            "expect": "(0.201, 0.2002)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 10, 5)",
+            "call": "selection_gap(X, y, [0.1, 1, 10, 100, 1000], 5, 0)",
+            "expect": "(0.2183, 0.2207)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_noise(250, 12, 73)",
+            "call": "selection_gap(X, y, [0.1, 3, 100, 3000], 4, 1)",
+            "expect": "(0.2098, 0.2186)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests, on noise loans and real ones, compared with math.isclose; each takes a second or two. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n\ndef make_noise(n, p, seed):\n    \"\"\"Loans whose p signals are all pure noise: spread = 2.5 + noise sd 0.45, unrelated to X.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    y = (2.5 + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two calls: `search.fit(X, y)` and `cross_val_score(search, ...)`."
+        },
+        {
+          "rung": "point",
+          "text": "inner_best = -search.best_score_",
+          "highlight": [
+            "ridge-inner",
+            "ridge-nested"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "nested = -cross_val_score(search, X, y, cv=folds, scoring='neg_mean_squared_error').mean()"
+        }
+      ],
+      "feedback": {
+        "correct": "(0.1681, 0.1721) on the noise loans.",
+        "generic": "Some tests failed. For `make_noise(200, 15, 71)` with alphas 0.1 to 10000, 5 folds, seed 0, the answer is (0.1681, 0.1721).",
+        "byKey": {
+          "error": "Your code stopped with an error. Fit the search before reading `best_score_`."
+        }
+      },
+      "explain": {
+        "text": "On the noise loans the gap is 0.0040. On `make_loans(200, 15, 52)` it is −0.0008: with a real signal and a flat curve, choosing costs nothing measurable. The gap is a random quantity whose average is positive."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Edge case: every fold disagrees",
+      "prose": "Nested CV on 200 real loans, tuning $\\alpha$ over 1, 3, 10, 30, 100. Each outer fold’s inner loop picked its own $\\alpha$. Tuning on all 200 loans picks $\\alpha = 10$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Outer fold",
+            "α chosen inside",
+            "Outer MSE"
+          ],
+          "rows": [
+            [
+              "1",
+              "3",
+              "0.1572"
+            ],
+            [
+              "2",
+              "3",
+              "0.2304"
+            ],
+            [
+              "3",
+              "1",
+              "0.1813"
+            ],
+            [
+              "4",
+              "10",
+              "0.2100"
+            ],
+            [
+              "5",
+              "3",
+              "0.2220"
+            ],
+            [
+              "Mean",
+              "",
+              "0.2002"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What do you report, and which model do you deploy?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "proc",
+            "text": "Report 0.2002 for the recipe “tune α by 5-fold CV”; deploy the recipe run on all 200 loans, α = 10",
+            "correct": true
+          },
+          {
+            "id": "mode",
+            "text": "Report 0.2002 and deploy α = 3, the most common choice",
+            "why": "A vote over folds is not the recipe that was scored. Run the same tuning on all rows, which picks 10."
+          },
+          {
+            "id": "fail",
+            "text": "Report nothing: nested CV failed because the folds disagree",
+            "why": "Disagreement is normal when the curve is flat. The outer mean still scores the recipe, whatever it picks."
+          },
+          {
+            "id": "best",
+            "text": "Report fold 1’s 0.1572 with α = 3, the best fold",
+            "why": "You picked the luckiest fold. Report the mean over all outer folds."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What did nested CV score: one α, or a way of choosing α?"
+        },
+        {
+          "rung": "point",
+          "text": "Each outer fold applied the same recipe and got its own answer.",
+          "highlight": [
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The score belongs to the recipe; the final model is that recipe run on all the data."
+        }
+      ],
+      "feedback": {
+        "correct": "Nested CV scores the procedure; the final fit uses the procedure on everything.",
+        "generic": "Not quite right. Ask what each outer fold was testing."
+      },
+      "explain": {
+        "text": "Every outer fold ran the same recipe, so their mean, 0.2002, is the recipe’s score. Different picks just say the curve is flat between 1 and 10. Running the recipe on all 200 loans gives the model to ship, here $\\alpha = 10$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              5
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 3,
+      "title": "The nested estimate",
+      "prose": "Let $\\hat\\alpha_j$ be the setting the inner loop picks on outer training set $j$, and $m_j(\\hat\\alpha_j)$ its MSE on outer fold $j$. $$\\text{nested CV} = \\frac{1}{K}\\sum_{j=1}^{K} m_j(\\hat\\alpha_j), \\qquad \\text{fits} = K(K_{\\text{in}}G + 1).$$ The inner best uses the same rows to choose and to score, so on average it is lower.",
+      "question": "When is nested CV worth its cost?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "small",
+            "text": "Small data and a big search: say 300 loans and 40 settings",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "Large data and a small search: 50,000 loans and 3 settings",
+            "why": "There a locked test set of 10,000 loans measures the choice cheaply and precisely. The selection gap is tiny anyway."
+          },
+          {
+            "id": "always",
+            "text": "Always: it replaces the locked test set",
+            "why": "It costs $K$ times a normal search. With plenty of data, a locked test set does the same job for one extra score."
+          },
+          {
+            "id": "never",
+            "text": "Never: the gap is always about 1%",
+            "why": "The gap grows with the search and shrinks with the rows. Our 105-pair search on 200 loans flattered itself by 10%."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Small data cannot spare a test set, and big searches flatter themselves most.",
+        "generic": "Not quite right. Weigh the size of the search against the rows available."
+      },
+      "explain": {
+        "text": "Selection bias grows with the number of settings and shrinks with the data. With few rows, holding out a test set wastes data, and nested CV reuses every row. With many rows, one locked test set gives the same protection for one fit."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Budgeting the run",
+      "prose": "Before launching a nested run, count the fits. Use the total from the table: inner fits for every outer fold, inner fold and setting, plus one refit of the winner per outer fold.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "All rows",
+          "compact": true,
+          "orient": "tb",
+          "levels": [
+            {
+              "label": "Outer folds",
+              "branches": [
+                {
+                  "id": "o1",
+                  "label": "Outer 1"
+                },
+                {
+                  "id": "o2",
+                  "label": "Outer 2"
+                },
+                {
+                  "id": "o3",
+                  "label": "Outer 3"
+                },
+                {
+                  "id": "o4",
+                  "label": "Outer 4"
+                }
+              ]
+            },
+            {
+              "label": "Inner folds",
+              "branches": [
+                {
+                  "id": "i1",
+                  "label": "In 1"
+                },
+                {
+                  "id": "i2",
+                  "label": "In 2"
+                },
+                {
+                  "id": "i3",
+                  "label": "In 3"
+                },
+                {
+                  "id": "i4",
+                  "label": "In 4"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "branching": {
+            "0": 4,
+            "1": 4
+          },
+          "show": "none"
+        }
+      },
+      "question": "Complete `count_fits(k_outer, k_inner, grid_size)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_fits(k_outer, k_inner, grid_size):\n    ...\n",
+        "solution": "def count_fits(k_outer, k_inner, grid_size):\n    return k_outer * (k_inner * grid_size + 1)\n",
+        "examples": [
+          {
+            "call": "count_fits(5, 5, 10)",
+            "expect": "255",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_fits(5, 5, 10)",
+            "expect": "255",
+            "compare": "equal"
+          },
+          {
+            "call": "count_fits(3, 3, 4)",
+            "expect": "39",
+            "compare": "equal"
+          },
+          {
+            "call": "count_fits(10, 10, 20)",
+            "expect": "2010",
+            "compare": "equal"
+          },
+          {
+            "call": "count_fits(5, 5, 1)",
+            "expect": "30",
+            "compare": "equal"
+          },
+          {
+            "call": "count_fits(2, 2, 1)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "count_fits(5, 10, 15)",
+            "expect": "755",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, compared exactly with fit counts we recorded by counting the calls to `fit` in scikit-learn. Pure Python, so it runs at once."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Inner fits per outer fold: `k_inner * grid_size`."
+        },
+        {
+          "rung": "point",
+          "text": "Each outer fold adds one refit.",
+          "highlight": [
+            "o1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `k_outer * (k_inner * grid_size + 1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "255 for 5 × 5 × 10, and 2,010 for 10 × 10 × 20.",
+        "generic": "Some tests failed. `count_fits(5, 5, 10)` should give 255.",
+        "byKey": {
+          "test-1": "That is the 5 × 5 × 10 run. Include the 5 refits: 255."
+        }
+      },
+      "explain": {
+        "text": "A 10 × 10 × 20 nested run needs 2,010 fits, eight times the 5 × 5 × 10 run. Small folds and small grids keep nested CV affordable."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Fifteen per cent better",
+      "prose": "A 30-feature credit model on 300 loans is tuned over a 10-point $\\alpha$ grid. The grid’s best 5-fold CV MSE is 0.170. Nested CV on the same loans reports 0.200. The desk’s phrase: “the number you tuned on is not the number you report”.",
+      "question": "By what percentage of the nested score does the grid’s best number flatter the model?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.15,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "%",
+        "placeholder": "per cent",
+        "label": "Flattery",
+        "accept": "15%, that is (0.200 − 0.170) / 0.200",
+        "wrong": [
+          {
+            "id": "other",
+            "value": 0.1765,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "raw",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take the difference, then divide by the nested score."
+        },
+        {
+          "rung": "point",
+          "text": "The difference is 0.030."
+        },
+        {
+          "rung": "step",
+          "text": "0.030 / 0.200 = 15%."
+        }
+      ],
+      "feedback": {
+        "correct": "15% lower than the honest number.",
+        "generic": "Not quite right. Divide 0.030 by 0.200.",
+        "byKey": {
+          "other": "You divided by 0.170. Measured against the honest score, the flattery is 0.030 / 0.200 = 15%.",
+          "raw": "That is the gap in MSE units, 0.030. Express it as a share of 0.200."
+        }
+      },
+      "explain": {
+        "text": "$(0.200 - 0.170)/0.200 = 0.15$. A gap that large says the search had a lot of freedom for 300 rows. The model card reports 0.200, and the desk discounts any tuned number it is shown without one."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The best CV score after tuning is biased low: it was chosen for being low.",
+      "Nested CV tunes inside each outer training set and scores the choice on the outer fold, so it measures the whole recipe.",
+      "It costs $K(K_{\\text{in}}G + 1)$ fits; with plenty of data a locked test set does the same job."
+    ],
+    "formula": {
+      "name": "Nested cross-validation",
+      "tex": "\\text{nested CV} = \\frac{1}{K}\\sum_{j=1}^{K} m_j(\\hat\\alpha_j)",
+      "note": "$\\hat\\alpha_j$ is chosen without outer fold $j$."
+    },
+    "trap": "Reporting the inner best, `best_score_`, as the estimate of the tuned model’s error."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "An analyst runs `GridSearchCV` on all 400 loans, takes the best $\\alpha$, then runs 5-fold `cross_val_score` of `Ridge(alpha=best)` on the same 400 loans and reports it.",
+      "question": "What is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "leak",
+            "text": "Every fold’s test rows helped choose $\\alpha$, so the CV score still carries the choice",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: the second CV uses fresh folds",
+            "why": "New folds of the same rows are not fresh. All 400 loans chose $\\alpha$ before being used to score it."
+          },
+          {
+            "id": "double",
+            "text": "It fits too many models",
+            "why": "Cost is not the issue. The tuning saw every row, so no fold is a clean test of it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Tuning on all rows, then cross-validating the tuned model, is a leak.",
+        "generic": "Not quite right. Ask which rows chose $\\alpha$."
+      },
+      "explain": {
+        "text": "Once all rows have chosen $\\alpha$, every later fold has already influenced the model. Put the tuning inside the outer loop instead: `cross_val_score(GridSearchCV(...), X, y, cv=outer)`."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "A reviewer sees `KFold(5, shuffle=True, random_state=0)` used for both the inner and the outer loop and worries the folds coincide.",
+      "question": "What does the shared seed do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "harmless",
+            "text": "Nothing harmful: the inner KFold shuffles each smaller training set, so its folds differ from the outer ones",
+            "correct": true
+          },
+          {
+            "id": "leak",
+            "text": "It leaks: inner folds equal the outer folds",
+            "why": "The inner KFold splits only the outer training rows, a different, shorter list, so its folds cannot equal the outer ones."
+          },
+          {
+            "id": "bias",
+            "text": "It biases the estimate low",
+            "why": "A seed fixes which random folds are used; it does not tilt the score."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Harmless, if confusing to read.",
+        "generic": "Not quite right. Ask what list the inner KFold shuffles."
+      },
+      "explain": {
+        "text": "The outer KFold shuffles all $n$ row numbers; the inner one shuffles the $0.8n$ rows of an outer training set. Different lists give different folds. Distinct seeds read more clearly, but the result is just as valid."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "A team has 40,000 loans and tunes ridge over 5 values of $\\alpha$.",
+      "question": "What is the sensible way to report an honest score?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "locked",
+            "text": "Lock 8,000 loans as a test set, tune by CV on the rest, score once",
+            "correct": true
+          },
+          {
+            "id": "nested",
+            "text": "Nested CV with 10 × 10 folds",
+            "why": "It works, but costs 510 fits where one locked test set does the job with plenty of data."
+          },
+          {
+            "id": "inner",
+            "text": "The best CV score: with 40,000 loans the gap is negligible",
+            "why": "The gap is small here, but the best CV score is still selected. A locked set costs little and removes the doubt."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "With plenty of data, a locked test set does nested CV’s job cheaply.",
+        "generic": "Not quite right. Weigh cost against how much data there is."
+      },
+      "explain": {
+        "text": "Eight thousand test loans give a precise score, and tuning on 32,000 loses little. Nested CV earns its cost when data is scarce."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "A nested run uses 10 outer folds, 10 inner folds and 20 settings, with one refit per outer fold.",
+      "question": "How many fits does it need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2010,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "norefit",
+            "value": 2000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10 \\times (10 \\times 20 + 1) = 2010$.",
+        "generic": "Not quite right. Use $K(K_{\\text{in}}G + 1)$.",
+        "byKey": {
+          "norefit": "You left out the 10 refits, one per outer fold."
+        }
+      },
+      "explain": {
+        "text": "$10 \\times 10 \\times 20 = 2000$ inner fits, plus 10 refits. On a slow model that is the difference between minutes and hours."
+      }
+    }
+  ]
+}

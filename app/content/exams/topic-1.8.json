@@ -1,0 +1,2530 @@
+{
+  "id": "topic-1.8",
+  "topic": "1.8",
+  "name": "Data structures and algorithms topic exam",
+  "minutes": 60,
+  "pass": 0.7,
+  "skills": {
+    "at-complexity": "Complexity",
+    "at-recursion": "Recursion",
+    "at-search": "Binary search",
+    "at-sort": "Sorting",
+    "at-greedy": "Greedy methods",
+    "ds-arrays": "Arrays and strings",
+    "ds-hashing": "Hashing",
+    "ds-pointers": "Two pointers and windows",
+    "ds-stacks": "Stacks and queues",
+    "ds-lists": "Linked lists",
+    "ds-trees": "Trees and heaps",
+    "gd-graphs": "Graph representation",
+    "gd-traversal": "Graph traversal",
+    "gd-paths": "Shortest paths",
+    "gd-backtrack": "Backtracking",
+    "gd-dp": "Dynamic programming"
+  },
+  "items": [
+    {
+      "id": "e-tick-lookup",
+      "difficulty": 2,
+      "skills": [
+        "at-complexity",
+        "ds-hashing"
+      ],
+      "title": "Updating last prices",
+      "prose": "A feed sends 1,000,000 ticks a day across 5,000 tickers. Each tick updates that ticker's last price. Version A keeps a list of `(ticker, price)` pairs and scans it for the ticker. Version B keeps a dict keyed by ticker.",
+      "question": "Roughly how much work does each version do in a day?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A: about $2.5 \\times 10^9$ comparisons. B: about $10^6$ hash lookups.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "A: about $2.5 \\times 10^9$ comparisons. B: about the same, since a dict also searches its keys.",
+            "why": "You treated the dict as a scan. It hashes the ticker straight to a bucket, so a lookup costs $O(1)$ on average."
+          },
+          {
+            "id": "c",
+            "text": "A: about $10^6$ comparisons. B: about $10^6$ hash lookups.",
+            "why": "You counted one step per tick for the list. A scan reads about half of the 5,000 pairs on each tick."
+          },
+          {
+            "id": "d",
+            "text": "A: about $2.5 \\times 10^9$ comparisons. B: about $10^6 \\times \\log_2 5{,}000$ steps.",
+            "why": "You costed a sorted list or a tree. A hash map does no halving: one bucket per lookup on average."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The scan costs about 2,500 comparisons a tick; the dict about one lookup.",
+        "generic": "Count the work per tick for each version, then multiply by 1,000,000 ticks."
+      },
+      "explain": {
+        "text": "A scan finds a random ticker after about $5{,}000/2 = 2{,}500$ comparisons. Over $10^6$ ticks that is $2.5 \\times 10^9$. The dict hashes each ticker once, so the day costs about $10^6$ lookups."
+      }
+    },
+    {
+      "id": "e-bfs-next",
+      "difficulty": 2,
+      "skills": [
+        "gd-traversal",
+        "gd-graphs"
+      ],
+      "title": "Who is hit next",
+      "prose": "Each node is a bank, and each edge a large exposure between two banks. Bank A defaults. We run breadth-first search from A, adding neighbours in alphabetical order.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.33,
+              "y": 0.2
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.33,
+              "y": 0.8
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.62,
+              "y": 0.08
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.62,
+              "y": 0.45
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.62,
+              "y": 0.88
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.92,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "directed": false
+            },
+            {
+              "from": "A",
+              "to": "C",
+              "directed": false
+            },
+            {
+              "from": "B",
+              "to": "D",
+              "directed": false
+            },
+            {
+              "from": "B",
+              "to": "E",
+              "directed": false
+            },
+            {
+              "from": "C",
+              "to": "F",
+              "directed": false
+            },
+            {
+              "from": "D",
+              "to": "G",
+              "directed": false
+            },
+            {
+              "from": "F",
+              "to": "G",
+              "directed": false
+            }
+          ],
+          "height": 230
+        },
+        "state": {
+          "visited": [
+            "A",
+            "B"
+          ],
+          "caption": "Processed so far: A, then B"
+        }
+      },
+      "question": "Tap the bank that BFS processes next.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "C"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "feedback": {
+        "correct": "C joined the queue before D and E, so it comes out next.",
+        "generic": "A queue serves first come, first served. Which bank joined the queue first after B?",
+        "byKey": {
+          "D": "D was found from B, two edges from A. C, one edge from A, joined the queue earlier.",
+          "E": "E was found from B, two edges from A. C joined the queue earlier, from A.",
+          "F": "F is found only when C is processed. It is not in the queue yet.",
+          "G": "G is three edges from A. BFS finishes every closer bank first.",
+          "A": "A has already been processed. Its badge shows 1.",
+          "B": "B has already been processed. Its badge shows 2."
+        }
+      },
+      "explain": {
+        "text": "Processing A queued B and C. Processing B queued D and E behind C. So C comes out next: BFS finishes distance 1 before distance 2.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "C"
+          ],
+          "caption": "Queue now: D, E, F"
+        }
+      }
+    },
+    {
+      "id": "e-pointer-scan",
+      "difficulty": 2,
+      "skills": [
+        "ds-pointers"
+      ],
+      "title": "Netting two trades",
+      "prose": "We look for two trade sizes in this sorted list that add to 34 lots. `i` starts at the left end and `j` at the right. A sum that is too small moves `i` right; a sum that is too big moves `j` left.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            8,
+            11,
+            15,
+            19,
+            24,
+            30
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 0,
+              "label": "i"
+            },
+            {
+              "id": "j",
+              "at": 6,
+              "label": "j"
+            }
+          ]
+        }
+      },
+      "question": "Tap the two cells compared on the scan's fourth comparison.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2",
+          "c5"
+        ],
+        "max": 2,
+        "countWord": "cells",
+        "wrong": [
+          {
+            "id": "rule-swapped",
+            "set": [
+              "c0",
+              "c3"
+            ]
+          },
+          {
+            "id": "third",
+            "set": [
+              "c1",
+              "c5"
+            ]
+          },
+          {
+            "id": "final",
+            "set": [
+              "c3",
+              "c4"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The fourth comparison is $11 + 24 = 35$.",
+        "generic": "Write each sum and the pointer it moves: 33, then 38, then 32, then the fourth.",
+        "byKey": {
+          "rule-swapped": "You moved `j` when the sum was too small. A smaller sum needs a bigger left value, so `i` moves.",
+          "third": "That is the third comparison, $8 + 24 = 32$. It is too small, so `i` moves once more.",
+          "final": "That is the pair that nets, $15 + 19 = 34$, found on the sixth comparison."
+        }
+      },
+      "explain": {
+        "text": "$3 + 30 = 33$ is small, so `i` moves. $8 + 30 = 38$ is big, so `j` moves. $8 + 24 = 32$ is small, so the fourth sum is $11 + 24 = 35$.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 2,
+              "label": "i"
+            },
+            {
+              "id": "j",
+              "at": 5,
+              "label": "j"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-search-probes",
+      "difficulty": 2,
+      "skills": [
+        "at-search"
+      ],
+      "title": "Finding 14:30 in a day of ticks",
+      "prose": "A day's 1,000,000 ticks are sorted by timestamp. Binary search finds the first tick at or after 14:30:00. Each probe reads one tick and halves the range left.",
+      "question": "At most how many probes does it need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "probes",
+        "label": "Most probes",
+        "accept": "20: $2^{20} = 1{,}048{,}576$ is the first power of 2 above 1,000,000",
+        "wrong": [
+          {
+            "id": "floor",
+            "value": 19,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "log10",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 500000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "linear",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Twenty halvings cut a million ticks down to one place.",
+        "generic": "Find the smallest $k$ with $2^k$ at least the number of places the answer could be.",
+        "byKey": {
+          "floor": "$2^{19} = 524{,}288$ is short of a million places. One more halving is needed.",
+          "log10": "You used $\\log_{10}$. Each probe halves the range, so count powers of 2.",
+          "half": "That is a scan's average. Binary search halves the range on every probe.",
+          "linear": "That is a scan from the first tick. Binary search halves the range on every probe."
+        }
+      },
+      "explain": {
+        "text": "After $k$ probes about $10^6/2^k$ places remain. $2^{19} = 524{,}288$ is too few and $2^{20} = 1{,}048{,}576$ is enough. So 20 probes always suffice."
+      }
+    },
+    {
+      "id": "e-stack-top",
+      "difficulty": 2,
+      "skills": [
+        "ds-stacks"
+      ],
+      "title": "Undoing amendments",
+      "prose": "A trading screen keeps an undo stack of order ids. It holds 101, 102 and 103, with 103 on top. Then come: pop, push 104, pop, pop, push 105.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            101,
+            102,
+            103
+          ],
+          "mode": "stack"
+        },
+        "state": {
+          "caption": "Before the five operations"
+        }
+      },
+      "question": "Which ids are left, listed bottom first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "101, 105",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "104, 105",
+            "why": "You took ids off the bottom, as a queue does. A stack pops the newest id first."
+          },
+          {
+            "id": "c",
+            "text": "101, 102, 105",
+            "why": "You stopped after two pops. The third pop, after 104 goes, takes 102."
+          },
+          {
+            "id": "d",
+            "text": "105",
+            "why": "Five ids went in and three came out, so two remain. 101 never left the bottom."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The pops take 103, then 104, then 102.",
+        "generic": "Apply the operations one by one. Each pop removes the id on top."
+      },
+      "explain": {
+        "text": "Pop takes 103. Push 104, then pop takes 104 and the next pop takes 102. Push 105 leaves 101 and 105.",
+        "canvas": {
+          "cells": [
+            101,
+            105
+          ],
+          "caption": "After the five operations"
+        }
+      }
+    },
+    {
+      "id": "e-heap-sift",
+      "difficulty": 2,
+      "skills": [
+        "ds-trees"
+      ],
+      "title": "A new ask joins the heap",
+      "prose": "Ask prices in pence sit in a min-heap stored as a list. The parent of index $i$ is at index $(i - 1) // 2$. A new ask at 102p has just been appended at index 10.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            100,
+            103,
+            101,
+            107,
+            104,
+            105,
+            106,
+            109,
+            108,
+            110,
+            102
+          ]
+        },
+        "state": {
+          "highlight": [
+            "c10"
+          ],
+          "caption": "102 has just been appended at index 10"
+        }
+      },
+      "question": "After it sifts up, at which index does 102 rest?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "index",
+        "label": "Final index",
+        "accept": "Index 1",
+        "wrong": [
+          {
+            "id": "half-parent",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-swap",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-sift",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "root",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "102 swaps past 104 and 103, then stops below 100.",
+        "generic": "Compare 102 with its parent and swap while the parent is larger.",
+        "byKey": {
+          "half-parent": "You took the parent of $i$ as $i // 2$. With index 0 as the root, it is $(i - 1) // 2$.",
+          "one-swap": "You stopped after one swap. At index 4 its parent is 103 at index 1, still larger.",
+          "no-sift": "A push must restore the heap. 102 is smaller than its parent, 104, so it moves up.",
+          "root": "100 at the root is smaller than 102, so 102 stops just below it."
+        }
+      },
+      "explain": {
+        "text": "Index 10's parent is index 4, holding 104: swap. Index 4's parent is index 1, holding 103: swap. Index 1's parent holds 100, which is smaller, so 102 stays at index 1.",
+        "canvas": {
+          "cells": [
+            100,
+            102,
+            101,
+            107,
+            103,
+            105,
+            106,
+            109,
+            108,
+            110,
+            104
+          ],
+          "highlight": [
+            "c1"
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-loop-halving",
+      "difficulty": 3,
+      "skills": [
+        "at-complexity"
+      ],
+      "title": "A loop that doubles its step",
+      "prose": "This function sums some prices for every day of a list of $n$ prices.\n\n```python\ndef scan(prices):\n    n = len(prices)\n    total = 0\n    for i in range(n):\n        step = 1\n        while step < n:\n            total += prices[(i + step) % n]\n            step *= 2\n    return total\n```",
+      "question": "What is its running time in big O?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "nlogn",
+            "text": "$O(n \\log n)$",
+            "correct": true
+          },
+          {
+            "id": "n2",
+            "text": "$O(n^2)$",
+            "why": "You saw two nested loops. The inner one doubles `step`, so it runs about $\\log_2 n$ times, not $n$."
+          },
+          {
+            "id": "logn",
+            "text": "$O(\\log n)$",
+            "why": "You counted only the inner loop. The outer loop still runs it once for each of the $n$ days."
+          },
+          {
+            "id": "n",
+            "text": "$O(n)$",
+            "why": "The inner loop's count grows with $n$: about $\\log_2 n$ passes for each day."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$n$ outer passes, each with about $\\log_2 n$ inner steps.",
+        "generic": "Count how many values `step` takes before it reaches $n$, then multiply by the outer loop."
+      },
+      "explain": {
+        "text": "`step` runs through 1, 2, 4, and so on below $n$: about $\\log_2 n$ values. The outer loop repeats that $n$ times. For $n = 1{,}000$ that is 10,000 additions, not 1,000,000."
+      }
+    },
+    {
+      "id": "e-adj-memory",
+      "difficulty": 3,
+      "skills": [
+        "gd-graphs"
+      ],
+      "title": "Storing an exposure network",
+      "prose": "A counterparty network has 5,000 firms and 20,000 two-way exposures. As adjacency lists, each exposure appears in both firms' lists. As a matrix, there is one cell for every ordered pair of firms.",
+      "question": "How many times as many entries does the matrix hold as the lists?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 625,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "ratio",
+        "label": "Ratio",
+        "accept": "625: 25,000,000 cells against 40,000 list entries",
+        "wrong": [
+          {
+            "id": "once",
+            "value": 1250,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "upper",
+            "value": 312.5,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "nodes",
+            "value": 5000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "25,000,000 cells against 40,000 list entries.",
+        "generic": "Count the matrix cells, $n^2$. Then count the list entries: two per exposure.",
+        "byKey": {
+          "once": "You counted each exposure once. A two-way exposure sits in both firms' lists: 40,000 entries.",
+          "upper": "You kept only half the matrix. The question counts every ordered pair, all $5{,}000^2$ cells.",
+          "nodes": "You divided by the number of firms. Divide by the number of list entries."
+        }
+      },
+      "explain": {
+        "text": "The matrix has $5{,}000^2 = 25{,}000{,}000$ cells. The lists hold $2 \\times 20{,}000 = 40{,}000$ entries. The ratio is 625, so a sparse network belongs in lists."
+      }
+    },
+    {
+      "id": "e-front-insert",
+      "difficulty": 3,
+      "skills": [
+        "ds-arrays"
+      ],
+      "title": "Newest tick first",
+      "prose": "A script builds a list of 1,000 ticks, newest first, with `ticks.insert(0, t)` for each tick. Each insert shifts every value already in the list one place right.",
+      "question": "How many shifts do the 1,000 inserts make in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 499500,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "shifts",
+        "label": "Total shifts",
+        "accept": "499,500",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "plus-one",
+            "value": 500500,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-each",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0 + 1 + \\dots + 999 = 499{,}500$ shifts.",
+        "generic": "The $k$-th insert finds $k - 1$ values already there. Add those up.",
+        "byKey": {
+          "square": "You charged $n$ shifts to every insert. The list starts empty and grows by one each time.",
+          "plus-one": "You added 1 to 1,000. The first insert shifts nothing and the last shifts 999.",
+          "one-each": "Each insert shifts the whole list so far, not one value."
+        }
+      },
+      "explain": {
+        "text": "The inserts shift $0, 1, 2, \\dots, 999$ values. That sums to $999 \\times 1{,}000/2 = 499{,}500$: quadratic. Appending and reversing once, or `deque.appendleft`, is linear."
+      }
+    },
+    {
+      "id": "e-latency-order",
+      "difficulty": 3,
+      "skills": [
+        "gd-paths"
+      ],
+      "title": "Settling venues by latency",
+      "prose": "Edges are two-way links between data centres, labelled with their latency in milliseconds. Dijkstra's algorithm runs from LDN.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "LDN",
+              "label": "LDN",
+              "x": 0.07,
+              "y": 0.5
+            },
+            {
+              "id": "AMS",
+              "label": "AMS",
+              "x": 0.33,
+              "y": 0.1
+            },
+            {
+              "id": "PAR",
+              "label": "PAR",
+              "x": 0.33,
+              "y": 0.9
+            },
+            {
+              "id": "FRA",
+              "label": "FRA",
+              "x": 0.55,
+              "y": 0.5
+            },
+            {
+              "id": "ZRH",
+              "label": "ZRH",
+              "x": 0.8,
+              "y": 0.15
+            },
+            {
+              "id": "MIL",
+              "label": "MIL",
+              "x": 0.93,
+              "y": 0.85
+            }
+          ],
+          "edges": [
+            {
+              "from": "LDN",
+              "to": "FRA",
+              "w": 4,
+              "directed": false
+            },
+            {
+              "from": "LDN",
+              "to": "PAR",
+              "w": 3,
+              "directed": false
+            },
+            {
+              "from": "PAR",
+              "to": "FRA",
+              "w": 2,
+              "directed": false
+            },
+            {
+              "from": "FRA",
+              "to": "ZRH",
+              "w": 3,
+              "directed": false
+            },
+            {
+              "from": "PAR",
+              "to": "MIL",
+              "w": 7,
+              "directed": false
+            },
+            {
+              "from": "ZRH",
+              "to": "MIL",
+              "w": 2,
+              "directed": false
+            },
+            {
+              "from": "LDN",
+              "to": "AMS",
+              "w": 2,
+              "directed": false
+            },
+            {
+              "from": "AMS",
+              "to": "FRA",
+              "w": 5,
+              "directed": false
+            }
+          ],
+          "height": 240
+        },
+        "state": {}
+      },
+      "question": "Put the venues in the order Dijkstra settles them.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "LDN",
+            "text": "LDN"
+          },
+          {
+            "id": "AMS",
+            "text": "AMS"
+          },
+          {
+            "id": "PAR",
+            "text": "PAR"
+          },
+          {
+            "id": "FRA",
+            "text": "FRA"
+          },
+          {
+            "id": "ZRH",
+            "text": "ZRH"
+          },
+          {
+            "id": "MIL",
+            "text": "MIL"
+          }
+        ],
+        "answer": [
+          "LDN",
+          "AMS",
+          "PAR",
+          "FRA",
+          "ZRH",
+          "MIL"
+        ]
+      },
+      "feedback": {
+        "correct": "LDN 0, AMS 2, PAR 3, FRA 4, ZRH 7, MIL 9.",
+        "generic": "Each round settles the unsettled venue with the lowest known latency. Then update its neighbours.",
+        "byKey": {
+          "FRA": "FRA is one hop from LDN but 4 ms away. AMS at 2 ms and PAR at 3 ms settle first.",
+          "MIL": "MIL is 10 ms via PAR but 9 ms via FRA and ZRH. It settles last.",
+          "ZRH": "ZRH is reached only through FRA, at 4 + 3 = 7 ms."
+        }
+      },
+      "explain": {
+        "text": "From LDN the frontier is AMS 2, PAR 3 and FRA 4, settled in that order. FRA then offers ZRH at 7, and ZRH offers MIL at 9, beating 10 via PAR.",
+        "canvas": {
+          "visited": [
+            "LDN",
+            "AMS",
+            "PAR",
+            "FRA",
+            "ZRH",
+            "MIL"
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-two-sum-trace",
+      "difficulty": 3,
+      "skills": [
+        "ds-hashing"
+      ],
+      "title": "Two fills that make 30 lots",
+      "prose": "A client wants 30 lots matched by exactly two of these fills. One pass keeps a dict `seen` from size to index. At each fill it looks up `30 - size` in `seen`, then stores the fill if there is no match.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            12,
+            7,
+            25,
+            18,
+            5,
+            30
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in what each step looks up, and whether it finds it.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Index",
+          "Size",
+          "Looks up",
+          "Found?"
+        ],
+        "rows": [
+          [
+            "0",
+            "12",
+            {
+              "edit": true,
+              "answer": 18,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": "no",
+              "accept": [
+                "n",
+                "false",
+                "not found"
+              ]
+            }
+          ],
+          [
+            "1",
+            "7",
+            {
+              "edit": true,
+              "answer": 23,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": "no",
+              "accept": [
+                "n",
+                "false",
+                "not found"
+              ]
+            }
+          ],
+          [
+            "2",
+            "25",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": "no",
+              "accept": [
+                "n",
+                "false",
+                "not found"
+              ]
+            }
+          ],
+          [
+            "3",
+            "18",
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": "yes",
+              "accept": [
+                "y",
+                "true",
+                "found"
+              ]
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Index 3 finds 12 in `seen` and returns indices 0 and 3.",
+        "generic": "Look up first, then store. `seen` holds only the fills before the current one.",
+        "byKey": {
+          "r0c3": "`seen` is empty at index 0, so nothing can be found.",
+          "r2c3": "5 is in the list, but at index 4, after 25. At index 2, `seen` holds only 12 and 7.",
+          "r3c3": "At index 3 `seen` holds 12, 7 and 25. The lookup for 12 succeeds.",
+          "r2c2": "Look up $30 - 25 = 5$."
+        }
+      },
+      "explain": {
+        "text": "The lookups are 18, 23, 5 and 12. Only 12 is already stored, from index 0. The pass returns $(0, 3)$ before it ever reaches the pair 25 and 5.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c3"
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-quick-sorted",
+      "difficulty": 3,
+      "skills": [
+        "at-sort"
+      ],
+      "title": "Quicksort on sorted timestamps",
+      "prose": "A quicksort always takes the first element as its pivot. Each partition compares the pivot with every other element of its part. It is given 12 trade timestamps that are already in order.",
+      "question": "How many comparisons does it make in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 66,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "comparisons",
+        "label": "Comparisons",
+        "accept": "66 = 11 + 10 + ... + 1",
+        "wrong": [
+          {
+            "id": "nlogn",
+            "value": 43,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "square",
+            "value": 144,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "triangle",
+            "value": 78,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "double",
+            "value": 132,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$11 + 10 + \\dots + 1 = 66$, the worst case.",
+        "generic": "On sorted input the pivot is the smallest value. What is left for the next partition?",
+        "byKey": {
+          "nlogn": "$n \\log_2 n \\approx 43$ is the good case, with balanced splits. Sorted input with a first pivot splits off nothing.",
+          "square": "You charged 12 comparisons to each of 12 partitions. The parts shrink by one each time.",
+          "triangle": "You counted $12 + 11 + \\dots + 1$. A part of size $m$ needs $m - 1$ comparisons.",
+          "double": "You counted each comparison twice. The pivot meets each other element once."
+        }
+      },
+      "explain": {
+        "text": "The first pivot is the smallest, so the split is empty and 11. The parts shrink by one each round: $11 + 10 + \\dots + 1 = 66$. A random pivot makes this case unlikely."
+      }
+    },
+    {
+      "id": "e-kahn-ready",
+      "difficulty": 3,
+      "skills": [
+        "gd-traversal"
+      ],
+      "title": "The overnight risk run",
+      "prose": "An arrow from one job to another means the first must finish before the second starts. Kahn's algorithm has emitted its first round: prices, rates and positions.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "prices",
+              "label": "prices",
+              "x": 0.12,
+              "y": 0.12,
+              "shape": "pill"
+            },
+            {
+              "id": "rates",
+              "label": "rates",
+              "x": 0.12,
+              "y": 0.5,
+              "shape": "pill"
+            },
+            {
+              "id": "positions",
+              "label": "positions",
+              "x": 0.12,
+              "y": 0.88,
+              "shape": "pill"
+            },
+            {
+              "id": "curves",
+              "label": "curves",
+              "x": 0.45,
+              "y": 0.3,
+              "shape": "pill"
+            },
+            {
+              "id": "fx",
+              "label": "fx",
+              "x": 0.45,
+              "y": 0.66,
+              "shape": "pill"
+            },
+            {
+              "id": "greeks",
+              "label": "greeks",
+              "x": 0.72,
+              "y": 0.18,
+              "shape": "pill"
+            },
+            {
+              "id": "var",
+              "label": "VaR",
+              "x": 0.72,
+              "y": 0.82,
+              "shape": "pill"
+            },
+            {
+              "id": "report",
+              "label": "report",
+              "x": 0.92,
+              "y": 0.5,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "prices",
+              "to": "curves",
+              "directed": true
+            },
+            {
+              "from": "rates",
+              "to": "curves",
+              "directed": true
+            },
+            {
+              "from": "prices",
+              "to": "fx",
+              "directed": true
+            },
+            {
+              "from": "curves",
+              "to": "greeks",
+              "directed": true
+            },
+            {
+              "from": "positions",
+              "to": "greeks",
+              "directed": true
+            },
+            {
+              "from": "positions",
+              "to": "var",
+              "directed": true
+            },
+            {
+              "from": "fx",
+              "to": "var",
+              "directed": true
+            },
+            {
+              "from": "greeks",
+              "to": "report",
+              "directed": true
+            },
+            {
+              "from": "var",
+              "to": "report",
+              "directed": true
+            }
+          ],
+          "height": 260
+        },
+        "state": {
+          "visited": [
+            "prices",
+            "rates",
+            "positions"
+          ]
+        }
+      },
+      "question": "Tap every job that is ready to run now.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "curves",
+          "fx"
+        ],
+        "countWord": "jobs",
+        "wrong": [
+          {
+            "id": "one-parent",
+            "set": [
+              "curves",
+              "fx",
+              "greeks",
+              "var"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "curves and fx have nothing left to wait for.",
+        "generic": "A job is ready when every arrow into it starts at a job that has run.",
+        "byKey": {
+          "one-parent": "greeks and VaR each have one input done, not all. greeks waits for curves and VaR for fx.",
+          "greeks": "greeks still waits for curves, which has not run.",
+          "var": "VaR still waits for fx, which has not run.",
+          "report": "report waits for greeks and VaR. Neither has run.",
+          "prices": "prices has already run in the first round.",
+          "rates": "rates has already run in the first round.",
+          "positions": "positions has already run in the first round."
+        }
+      },
+      "explain": {
+        "text": "Removing the first round drops the in-degree of curves to 0 and of fx to 0. greeks and VaR each keep one arrow from a job not yet run. So the second round is curves and fx.",
+        "canvas": {
+          "visited": [
+            "prices",
+            "rates",
+            "positions",
+            "curves",
+            "fx"
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-window-losses",
+      "difficulty": 3,
+      "skills": [
+        "ds-pointers"
+      ],
+      "title": "A run with few losing days",
+      "prose": "These are a desk's daily P&L figures in £k. Risk wants the longest run of consecutive days with at most two losing days. A sliding window grows on the right and shrinks on the left when a third loss joins.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "+3",
+            "−1",
+            "+2",
+            "−4",
+            "−2",
+            "+5",
+            "+1",
+            "−3",
+            "+2",
+            "+4",
+            "−1",
+            "+6"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many days long is the longest such run?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "days",
+        "label": "Days",
+        "accept": "7 days: index 5 to index 11",
+        "wrong": [
+          {
+            "id": "restart",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-loss",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Days 5 to 11 hold seven days with two losses.",
+        "generic": "Move the left edge just past the oldest loss whenever a third loss enters.",
+        "byKey": {
+          "restart": "You restarted the window at each third loss. Drop only the oldest loss, so the other two can stay.",
+          "no-loss": "That is the longest run with no losses. Two losing days are allowed.",
+          "all": "The whole list has five losing days. Only two are allowed."
+        }
+      },
+      "explain": {
+        "text": "The losses fall at indices 1, 3, 4, 7 and 10. A window may hold two of them. The best spans from just after index 4 to the end: indices 5 to 11, seven days.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              5,
+              11
+            ],
+            "label": "7 days"
+          }
+        }
+      }
+    },
+    {
+      "id": "e-slice-recursion",
+      "difficulty": 3,
+      "skills": [
+        "at-recursion",
+        "at-complexity"
+      ],
+      "title": "A recursive P&L total",
+      "prose": "A colleague sums daily P&L recursively.\n\n```python\ndef total(pnl):\n    if not pnl:\n        return 0\n    return pnl[0] + total(pnl[1:])\n```\n\nPython's default recursion limit is 1,000 frames.",
+      "question": "Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "time",
+            "text": "For $n$ days it takes $O(n^2)$ time.",
+            "correct": true
+          },
+          {
+            "id": "deep",
+            "text": "On 5,000 days it raises `RecursionError`.",
+            "correct": true
+          },
+          {
+            "id": "base",
+            "text": "The base case is correct: an empty list sums to 0.",
+            "correct": true
+          },
+          {
+            "id": "space",
+            "text": "It needs only $O(1)$ extra memory.",
+            "why": "Each call holds a frame and a fresh slice. The frames alone are $O(n)$, and the live slices add up to $O(n^2)$."
+          },
+          {
+            "id": "cache",
+            "text": "Adding `@lru_cache` makes it $O(n)$.",
+            "why": "A list cannot be a cache key, so `lru_cache` raises `TypeError`. Nothing repeats here anyway."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Slices cost $O(n^2)$ copying, and the depth is one frame per day.",
+        "generic": "Count what `pnl[1:]` copies on each call, and how many frames are open at once."
+      },
+      "explain": {
+        "text": "`pnl[1:]` copies $n - 1$, then $n - 2$ values, and so on: about $n^2/2$ in all. Each call waits for the next, so 5,000 days need 5,000 frames. A loop, or `sum(pnl)`, fixes both."
+      }
+    },
+    {
+      "id": "e-knap-cells",
+      "difficulty": 3,
+      "skills": [
+        "gd-dp"
+      ],
+      "title": "Hedges under a margin budget",
+      "prose": "Three hedges use margin and cut risk. A: £2m margin, 3 units of risk cut. B: £3m, 4 units. C: £4m, 6 units. Each is taken whole or not at all. Cell (row, budget) holds the best cut using the hedges up to that row.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 7,
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0",
+              "0"
+            ],
+            [
+              "0",
+              "0",
+              "3",
+              "3",
+              "3",
+              "3",
+              "3"
+            ],
+            [
+              "0",
+              "0",
+              "3",
+              "4",
+              "4",
+              "7",
+              "7"
+            ],
+            [
+              "0",
+              "0",
+              "3",
+              "4",
+              "6",
+              "7",
+              "?"
+            ]
+          ],
+          "rowHeads": [
+            "none",
+            "+A",
+            "+B",
+            "+C"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          "rowLabel": "Hedges allowed",
+          "colLabel": "Margin budget (£m)"
+        },
+        "state": {
+          "outline": [
+            "r4c7"
+          ]
+        }
+      },
+      "question": "The cell marked ? is filled from two cells. Tap both.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3c7",
+          "r3c3"
+        ],
+        "max": 2,
+        "countWord": "cells",
+        "wrong": [
+          {
+            "id": "same-row",
+            "set": [
+              "r3c7",
+              "r4c3"
+            ]
+          },
+          {
+            "id": "minus-one",
+            "set": [
+              "r3c7",
+              "r3c6"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Skip C: 7. Take C: $3 + 6 = 9$. The cell is 9.",
+        "generic": "Either C is skipped, or it is taken and uses £4m of the £6m. Both read the row above.",
+        "byKey": {
+          "same-row": "You read row +C at budget 2. That row may already contain C, so C could be taken twice.",
+          "minus-one": "You stepped back one column. Taking C uses its £4m of margin, so step back 4.",
+          "r4c7": "That is the cell being filled. Tap the two it reads from.",
+          "r4c6": "That is in row +C, which may already hold C. Read the row above."
+        }
+      },
+      "explain": {
+        "text": "Skipping C leaves the best with A and B at £6m: 7. Taking C leaves £2m for A and B: $3 + 6 = 9$. The cell takes the larger, 9.",
+        "canvas": {
+          "cells": {
+            "r4c7": "9"
+          },
+          "shade": {
+            "from": [
+              "r3c7",
+              "r3c3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "e-cancel-list",
+      "difficulty": 3,
+      "skills": [
+        "ds-lists"
+      ],
+      "title": "Cancelling a resting order",
+      "prose": "One price level holds resting orders in time priority. The oldest fills first. Cancels arrive by order id, and each must cost $O(1)$.",
+      "question": "Which design keeps fills in order and makes every cancel $O(1)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "dll",
+            "text": "A doubly linked list of orders, plus a dict from order id to its node",
+            "correct": true
+          },
+          {
+            "id": "sll",
+            "text": "A singly linked list of orders, plus a dict from order id to its node",
+            "why": "Unlinking a node changes its predecessor's `next`. A singly linked node does not know its predecessor, so you walk from the head."
+          },
+          {
+            "id": "list",
+            "text": "A Python list in time order, with `orders.remove(order_id)`",
+            "why": "`remove` scans for the id and then shifts every later order left: $O(n)$."
+          },
+          {
+            "id": "heap",
+            "text": "A min-heap keyed by arrival time",
+            "why": "A heap finds the oldest order fast, but it cannot find an arbitrary id without a search."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The dict finds the node, and the node's two links unlink it.",
+        "generic": "A cancel must find the order and remove it, both without a scan."
+      },
+      "explain": {
+        "text": "The dict jumps to the node in $O(1)$ on average. The node knows both neighbours, so joining them unlinks it in $O(1)$. The head of the list is still the oldest order."
+      }
+    },
+    {
+      "id": "e-auction-greedy",
+      "difficulty": 3,
+      "skills": [
+        "at-greedy"
+      ],
+      "title": "Booking one execution slot",
+      "prose": "One execution algorithm can work one client order at a time. Each order needs it from its start to its end, in minutes after the open. An order may start at the minute another ends.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Order",
+            "Start",
+            "End"
+          ],
+          "rows": [
+            [
+              "O1",
+              "10",
+              "55"
+            ],
+            [
+              "O2",
+              "15",
+              "30"
+            ],
+            [
+              "O3",
+              "20",
+              "65"
+            ],
+            [
+              "O4",
+              "30",
+              "45"
+            ],
+            [
+              "O5",
+              "40",
+              "50"
+            ],
+            [
+              "O6",
+              "45",
+              "60"
+            ],
+            [
+              "O7",
+              "75",
+              "90"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "At most how many orders can the algorithm work?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "orders",
+        "label": "Orders",
+        "accept": "4: O2, O4, O6 and O7",
+        "wrong": [
+          {
+            "id": "earliest-start",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "shortest",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "O2, O4, O6 and O7, by earliest end first.",
+        "generic": "Take the order that ends first, drop every order it clashes with, and repeat.",
+        "byKey": {
+          "earliest-start": "You took the earliest start first. O1 starts first but runs 45 minutes and blocks three orders.",
+          "shortest": "You took the shortest first. O5 is short but sits across O4 and O6, which together beat it.",
+          "all": "Several orders overlap. The slot works one order at a time."
+        }
+      },
+      "explain": {
+        "text": "Earliest end first takes O2 (ends 30), O4 (30 to 45), O6 (45 to 60) and O7. Finishing first always leaves the most room for the rest. That is why this greedy rule is safe.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              3,
+              5,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "e-prune-tree",
+      "difficulty": 3,
+      "skills": [
+        "gd-backtrack"
+      ],
+      "title": "Cutting off dead hedges",
+      "prose": "A search picks hedges A (£4m), B (£3m) and C (£2m), taking or skipping each in turn. The budget is £5m. The search abandons a branch as soon as its cost passes £5m. Leaves show each full choice's cost.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "compact": true,
+          "levels": [
+            {
+              "label": "Hedge A, £4m",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take A"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Hedge B, £3m",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take B"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Hedge C, £2m",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take C"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "£9m",
+            "y-y-n": "£7m",
+            "y-n-y": "£6m",
+            "y-n-n": "£4m",
+            "n-y-y": "£5m",
+            "n-y-n": "£3m",
+            "n-n-y": "£2m",
+            "n-n-n": "£0m"
+          }
+        },
+        "state": {}
+      },
+      "question": "Tap every branch where the search stops because the cost has passed £5m.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "y-y",
+          "y-n-y"
+        ],
+        "countWord": "branches",
+        "wrong": [
+          {
+            "id": "leaves",
+            "set": [
+              "y-y-y",
+              "y-y-n",
+              "y-n-y"
+            ]
+          },
+          {
+            "id": "five",
+            "set": [
+              "y-y",
+              "y-n-y",
+              "n-y-y"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The search cuts at take A then take B, and at take A, skip B, take C.",
+        "generic": "Walk down each path adding costs. Stop at the first branch where the total passes £5m.",
+        "byKey": {
+          "leaves": "You marked the leaves over budget. The search stops at take A, take B, already £7m, and never reaches the two leaves below.",
+          "five": "Take B and take C cost exactly £5m. That is within budget, so the search goes on.",
+          "y-y-y": "The search never gets here. It stopped one level up, at £7m.",
+          "y-y-n": "The search never gets here. It stopped one level up, at £7m.",
+          "n-y-y": "£3m plus £2m is £5m, which is within budget."
+        }
+      },
+      "explain": {
+        "text": "Take A and take B is £7m, so the search cuts there and skips both leaves below. Take A, skip B, take C is £6m, another cut. Every other path stays at or under £5m.",
+        "canvas": {
+          "highlight": [
+            "y-y",
+            "y-n-y"
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-code-lifo",
+      "difficulty": 3,
+      "skills": [
+        "ds-stacks"
+      ],
+      "title": "LIFO realised P&L",
+      "prose": "A desk books realised P&L on a last-in, first-out basis. A sale closes the most recent open buys first, splitting a lot when needed. Prices are in pence, and a sale never exceeds the shares held.",
+      "question": "Complete `lifo_pnl(trades)` so it returns the realised P&L in pence.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def lifo_pnl(trades):\n    \"\"\"trades: (side, qty, price) tuples in time order.\n    side is \"B\" or \"S\"; price is in pence.\n    A sale closes the most recent open buys first.\n    Return the realised P&L in pence.\"\"\"\n    lots = []  # open buys as [qty, price], newest last\n    pnl = 0\n    for side, qty, price in trades:\n        ...\n    return pnl\n",
+        "solution": "def lifo_pnl(trades):\n    \"\"\"trades: (side, qty, price) tuples in time order.\n    side is \"B\" or \"S\"; price is in pence.\n    A sale closes the most recent open buys first.\n    Return the realised P&L in pence.\"\"\"\n    lots = []  # open buys as [qty, price], newest last\n    pnl = 0\n    for side, qty, price in trades:\n        if side == \"B\":\n            lots.append([qty, price])\n            continue\n        while qty > 0:\n            top = lots[-1]          # the newest open buy\n            take = min(qty, top[0])\n            pnl += take * (price - top[1])\n            top[0] -= take\n            qty -= take\n            if top[0] == 0:\n                lots.pop()\n    return pnl\n",
+        "examples": [
+          {
+            "call": "lifo_pnl([(\"B\", 100, 500), (\"B\", 100, 520), (\"S\", 100, 530)])",
+            "expect": "1000",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "lifo_pnl([(\"B\", 100, 500), (\"B\", 100, 520), (\"S\", 100, 530)])",
+            "expect": "1000",
+            "compare": "equal"
+          },
+          {
+            "call": "lifo_pnl([])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "lifo_pnl([(\"B\", 300, 1000), (\"B\", 200, 1010)])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "lifo_pnl([(\"B\", 100, 500), (\"B\", 100, 520), (\"S\", 150, 530)])",
+            "expect": "2500",
+            "compare": "equal"
+          },
+          {
+            "call": "lifo_pnl([(\"B\", 50, 200), (\"S\", 50, 190), (\"B\", 80, 210), (\"S\", 30, 230), (\"S\", 50, 200)])",
+            "expect": "-400",
+            "compare": "equal"
+          },
+          {
+            "call": "lifo_pnl([(\"B\", 100, 400), (\"B\", 100, 420), (\"B\", 100, 450), (\"S\", 250, 430)])",
+            "expect": "500",
+            "compare": "equal"
+          },
+          {
+            "call": "lifo_pnl([(\"B\", 10, 100), (\"B\", 20, 110), (\"S\", 5, 120), (\"B\", 30, 90), (\"S\", 40, 100), (\"S\", 15, 130)])",
+            "expect": "650",
+            "compare": "equal"
+          },
+          {
+            "call": "lifo_pnl([(\"B\", 1000, 2500), (\"S\", 400, 2490), (\"B\", 400, 2470), (\"S\", 1000, 2480)])",
+            "expect": "-12000",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, including partial lots, losses and a sale across three lots. Each answer must equal the expected whole number of pence. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "Your open lots behave as a stack: the newest buy closes first.",
+        "generic": "Some tests failed. A sale takes from `lots[-1]`, and splits it when the sale is smaller.",
+        "byKey": {
+          "test-1": "Selling 100 at 530p closes the buy at 520p, the newest: 1,000p, not 3,000p.",
+          "test-4": "A sale of 150 takes 100 at 520p, then 50 of the 500p lot.",
+          "test-6": "A sale of 250 takes the 450p and 420p lots whole, then 50 of the 400p lot.",
+          "error": "Your code stopped with an error. Read the last line of the message under the editor."
+        }
+      },
+      "explain": {
+        "text": "The open lots are a stack: a buy pushes, a sale takes from the top. A partial take shrinks the top lot and leaves it there. FIFO would use a queue instead and book a different P&L."
+      }
+    },
+    {
+      "id": "e-bisect-table",
+      "difficulty": 4,
+      "skills": [
+        "at-search"
+      ],
+      "title": "Counting fills in a time range",
+      "prose": "`ts` holds fill times in seconds, sorted. `bisect_left(ts, x)` is the first index whose value is at least `x`. `bisect_right(ts, x)` is the first index whose value is above `x`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            7,
+            7,
+            7,
+            12,
+            15,
+            15,
+            20
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in each value.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Expression",
+          "Value"
+        ],
+        "rows": [
+          [
+            "`bisect_left(ts, 7)`",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`bisect_right(ts, 7)`",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`bisect_left(ts, 15)`",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`bisect_right(ts, 15)`",
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Fills with $7 \\le t \\le 15$",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Fills with $8 \\le t < 15$",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Closed ranges use right minus left; half-open ones use left minus left.",
+        "generic": "Find each boundary index on the strip. A count is the difference of two boundaries.",
+        "byKey": {
+          "r0c1": "The first 7 sits at index 1.",
+          "r1c1": "The last 7 is at index 3, so the first value above 7 is at index 4.",
+          "r3c1": "Both 15s come before index 7, where 20 sits.",
+          "r4c1": "Count from the first 7, index 1, up to just past the last 15, index 7.",
+          "r5c1": "8 and 15 both start at boundaries found with `bisect_left`: 4 and 5. Only 12 lies between."
+        }
+      },
+      "explain": {
+        "text": "The 7s fill indices 1 to 3 and the 15s fill 5 and 6. Fills from 7 to 15 inclusive are $7 - 1 = 6$. From 8 up to but not including 15 there is only 12: $5 - 4 = 1$.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              1,
+              6
+            ],
+            "label": "7 to 15"
+          }
+        }
+      }
+    },
+    {
+      "id": "e-code-flat",
+      "difficulty": 4,
+      "skills": [
+        "ds-hashing",
+        "ds-arrays"
+      ],
+      "title": "The longest flat stretch",
+      "prose": "A desk's daily P&L is in whole pence. We want the longest run of consecutive days whose P&L sums to exactly zero. For `[5, -3, -2, 4, 1]` that is $-3, -2, 4, 1$: four days.",
+      "question": "Write `longest_flat(pnl)`: the length of the longest zero-sum run, or 0 if there is none.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def longest_flat(pnl):\n    \"\"\"pnl: daily P&L in whole pence.\n    Return the length of the longest run of consecutive\n    days that sums to exactly 0, or 0 if there is none.\"\"\"\n    ...\n",
+        "solution": "def longest_flat(pnl):\n    \"\"\"pnl: daily P&L in whole pence.\n    Return the length of the longest run of consecutive\n    days that sums to exactly 0, or 0 if there is none.\"\"\"\n    first = {0: -1}   # running total -> first day it was seen\n    total = 0\n    best = 0\n    for i, x in enumerate(pnl):\n        total += x\n        if total in first:\n            best = max(best, i - first[total])\n        else:\n            first[total] = i\n    return best\n",
+        "examples": [
+          {
+            "call": "longest_flat([5, -3, -2, 4, 1])",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "longest_flat([5, -3, -2, 4, 1])",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_flat([])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_flat([0])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_flat([1, 2, 3])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_flat([3, -3, 3, -3])",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_flat([4, -1, -3, 2, -2, 7, -7, 1])",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_flat([2, 5, -5, -2, 6, 1, -1, -6, 9])",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_flat(pnl)",
+            "expect": "106",
+            "compare": "equal",
+            "setup": "import random; random.seed(81); pnl = [random.randint(-40, 60) for _ in range(100000)]"
+          },
+          {
+            "call": "longest_flat(pnl)",
+            "expect": "0",
+            "compare": "equal",
+            "setup": "pnl = [1] * 100000"
+          },
+          {
+            "call": "longest_flat(pnl)",
+            "expect": "100000",
+            "compare": "equal",
+            "setup": "pnl = [7, -7] * 50000"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, compared with ==. Tests 8 to 10 have 100,000 days each, so trying every start and end is quadratic and runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "Two equal running totals bracket a zero-sum run, and the dict keeps the earliest.",
+        "generic": "Some tests failed. Store the first day each running total appears, and seed the dict with total 0 at day −1.",
+        "byKey": {
+          "test-3": "`[0]` is one flat day. A run starting at day 0 needs total 0 recorded before day 0.",
+          "test-5": "`[3, -3, 3, -3]` is flat over all four days. Keep the first index of each total, never a later one.",
+          "test-9": "No run of 1s sums to zero, so the answer is 0.",
+          "error": "If it stopped at the time limit, you try every start. Use running totals and a dict for one pass."
+        }
+      },
+      "explain": {
+        "text": "If the running total after day $j$ equals the total after day $i$, days $i + 1$ to $j$ sum to zero. A dict from total to its first day finds the longest such gap in one pass. Recording total 0 at day −1 covers runs that start on day 0."
+      }
+    },
+    {
+      "id": "e-recurrence",
+      "difficulty": 4,
+      "skills": [
+        "at-recursion",
+        "at-complexity"
+      ],
+      "title": "Three calls on halves",
+      "prose": "A risk routine splits $n$ positions in half and makes three recursive calls on halves. It then does $n$ steps of combining. So $T(n) = 3T(n/2) + n$, with $T(1) = 1$. A run on 1,024 positions takes 1 second.",
+      "question": "About how many seconds does a run on 4,096 positions take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0.25
+        },
+        "unit": "s",
+        "placeholder": "seconds",
+        "label": "Seconds",
+        "accept": "About 9 s (9.06 exactly from the recurrence)",
+        "wrong": [
+          {
+            "id": "nlogn",
+            "value": 4.8,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "square",
+            "value": 16,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "linear",
+            "value": 4,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Quadrupling $n$ multiplies the work by about $3^2 = 9$.",
+        "generic": "Draw the recursion tree. Which level costs most: the top, or the leaves?",
+        "byKey": {
+          "nlogn": "That is $n \\log n$ growth, from two calls on halves. Three calls make the leaves dominate.",
+          "square": "That is $n^2$ growth, from four calls on halves.",
+          "linear": "You scaled with the top level's $n$. Each level down costs 1.5 times the one above.",
+          "three": "You applied the factor 3 once. 4,096 is two halvings further than 1,024: $3 \\times 3$."
+        }
+      },
+      "explain": {
+        "text": "Level $k$ of the tree costs $(3/2)^k n$, so the $3^{\\log_2 n} = n^{\\log_2 3}$ leaves dominate. Two more halvings multiply the leaves by $3^2 = 9$. The exact ratio, $T(4096)/T(1024)$, is 9.06."
+      }
+    },
+    {
+      "id": "e-code-fee",
+      "difficulty": 4,
+      "skills": [
+        "gd-dp"
+      ],
+      "title": "Trading with a fee",
+      "prose": "You may hold at most one share and trade as often as you like. Each sale costs a fixed fee. Prices are daily closes in pence. For `[1, 3, 2, 8, 4, 9]` with fee 2, the best is buy 1, sell 8, buy 4, sell 9: 8p.",
+      "question": "Write `max_profit(prices, fee)`: the best total profit in pence, 0 if no trade pays.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def max_profit(prices, fee):\n    \"\"\"prices: daily closes in pence. Hold at most one share.\n    Buy and sell as often as you like; each sale pays fee pence.\n    Return the best total profit in pence, 0 if no trade pays.\"\"\"\n    ...\n",
+        "solution": "def max_profit(prices, fee):\n    \"\"\"prices: daily closes in pence. Hold at most one share.\n    Buy and sell as often as you like; each sale pays fee pence.\n    Return the best total profit in pence, 0 if no trade pays.\"\"\"\n    if not prices:\n        return 0\n    flat = 0              # best P&L so far, holding nothing\n    held = -prices[0]     # best P&L so far, holding one share\n    for p in prices[1:]:\n        flat, held = max(flat, held + p - fee), max(held, flat - p)\n    return flat\n",
+        "examples": [
+          {
+            "call": "max_profit([1, 3, 2, 8, 4, 9], 2)",
+            "expect": "8",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "max_profit([1, 3, 2, 8, 4, 9], 2)",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit([], 5)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit([500], 5)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit([900, 850, 800, 700], 1)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit([100, 103, 101, 106, 104, 110], 0)",
+            "expect": "14",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit([100, 103, 101, 106, 104, 110], 3)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit([100, 103, 101, 106, 104, 110], 20)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit([10, 14, 11, 18, 12, 30, 25, 29], 4)",
+            "expect": "18",
+            "compare": "equal"
+          },
+          {
+            "call": "max_profit(px, 30)",
+            "expect": "242618",
+            "compare": "equal",
+            "setup": "import random; random.seed(44); px = [10000]\nfor _ in range(99999): px.append(px[-1] + random.randint(-25, 25))"
+          },
+          {
+            "call": "max_profit(px, 0)",
+            "expect": "257142",
+            "compare": "equal",
+            "setup": "px = [100 + (i % 7) * 3 for i in range(100000)]"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, compared with ==. Tests 9 and 10 have 100,000 prices, so a table that tries every buy day for every sell day runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "Two running states, flat and holding, carry the whole history.",
+        "generic": "Some tests failed. Track the best P&L while flat and while holding, and update both each day.",
+        "byKey": {
+          "test-1": "Selling at every rise pays the fee too often. Here one trade from 1 to 8 beats three small ones.",
+          "test-5": "With no fee, every rise can be taken: the answer is the sum of the rises.",
+          "test-8": "Two trades, 10 to 18 and 12 to 30, beat any single trade.",
+          "error": "If it stopped at the time limit, you loop over every buy day for each sell day. Keep two running values instead."
+        }
+      },
+      "explain": {
+        "text": "Let `flat` be the best P&L holding nothing and `held` the best holding one share. Each day, `flat` may sell, `held + p - fee`, and `held` may buy, `flat - p`. One pass is $O(n)$ time and $O(1)$ space."
+      }
+    },
+    {
+      "id": "e-bst-delete",
+      "difficulty": 4,
+      "skills": [
+        "ds-trees"
+      ],
+      "title": "Deleting a price level",
+      "prose": "Price levels in pence sit in a binary search tree. We delete 50, which has two children. The code replaces a node like this with its in-order successor, then removes the successor from its old place.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "orient": "tb",
+          "rootLabel": "50",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "l",
+              "label": "30",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "20"
+                },
+                {
+                  "id": "r",
+                  "label": "40"
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "70",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "60",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "55",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "∅"
+                        },
+                        {
+                          "id": "r",
+                          "label": "57"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "r",
+                      "label": "65"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "80"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "∅ marks an empty link"
+        }
+      },
+      "question": "Tap the node that moves up to replace 50, and the node that takes the successor's old place.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r-l-l",
+          "r-l-l-r"
+        ],
+        "max": 2,
+        "countWord": "nodes",
+        "wrong": [
+          {
+            "id": "pred",
+            "set": [
+              "l-r",
+              "r-l-l-r"
+            ]
+          },
+          {
+            "id": "child",
+            "set": [
+              "r",
+              "r-l"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "55 moves up to the root, and 57 takes 55's old place under 60.",
+        "generic": "The successor is the smallest value in 50's right subtree: go right once, then left as far as you can.",
+        "byKey": {
+          "pred": "40 is the in-order predecessor. That also keeps the order, but this code uses the successor.",
+          "child": "70 and 60 are larger than 55. The successor is the leftmost node of the right subtree.",
+          "l-r": "40 is the in-order predecessor. This code uses the successor, the next value above 50.",
+          "r": "70 is the right child, not the smallest value on the right.",
+          "r-l": "60 is not the smallest on the right: 55 sits below it on the left.",
+          "r-l-l-l": "That is an empty link. 55's only child is 57, on its right."
+        }
+      },
+      "explain": {
+        "text": "Right of 50, then left as far as possible, reaches 55: the next value above 50. 55 moves to the root. Its one child, 57, moves up to become 60's left child, so the order still holds."
+      }
+    },
+    {
+      "id": "e-two-trades",
+      "difficulty": 5,
+      "skills": [
+        "gd-dp",
+        "at-greedy"
+      ],
+      "title": "At most two round trips",
+      "prose": "These are eight daily closes of one share, in £. You may make at most two round trips, each a buy then a later sale. You hold at most one share at a time, and a sale and a new buy may share a day.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            7,
+            8,
+            5,
+            9,
+            16,
+            13,
+            18,
+            13
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the largest total profit per share, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "£",
+        "placeholder": "pounds",
+        "label": "Profit",
+        "accept": "£16: buy 5, sell 16, buy 13, sell 18",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "greedy",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "unlimited",
+            "value": 17,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "moves",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Buy at 5, sell at 16, buy at 13, sell at 18: $11 + 5 = 16$.",
+        "generic": "Split the days at every point. Take the best single trade on each side and add them.",
+        "byKey": {
+          "one": "That is the best single trade, 5 to 18. A second trip can do better.",
+          "greedy": "You took the best single trade first, 5 to 18, then added 7 to 8. Splitting it at 16 does better.",
+          "unlimited": "That adds every rise: four trips. Only two are allowed.",
+          "moves": "You added the two largest one-day rises, 7 and 5. A trip can span several days."
+        }
+      },
+      "explain": {
+        "text": "Split the eight days at each point and add the best trade on each side. Splitting at the 16 gives $(16 - 5) + (18 - 13) = 16$. The greedy best trade, 5 to 18, blocks that better pair."
+      }
+    },
+    {
+      "id": "e-code-grid",
+      "difficulty": 5,
+      "skills": [
+        "gd-paths",
+        "ds-trees"
+      ],
+      "title": "The cheapest route across a cost grid",
+      "prose": "A desk rolls a hedge across a grid of option buckets. Each cell is the cost in bp of passing through that bucket. You may step up, down, left or right. The cheapest route may have to double back.",
+      "question": "Write `cheapest_route(costs)`: the cheapest total from the top-left cell to the bottom-right, counting every cell entered, the start too.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\n\n\ndef cheapest_route(costs):\n    \"\"\"costs: rows of positive whole numbers, the bp cost of each cell.\n    Moves go up, down, left or right, one cell at a time.\n    Return the cheapest total from the top-left cell to the\n    bottom-right cell. Every cell entered counts, the start too.\"\"\"\n    ...\n",
+        "solution": "import heapq\n\n\ndef cheapest_route(costs):\n    \"\"\"costs: rows of positive whole numbers, the bp cost of each cell.\n    Moves go up, down, left or right, one cell at a time.\n    Return the cheapest total from the top-left cell to the\n    bottom-right cell. Every cell entered counts, the start too.\"\"\"\n    rows, cols = len(costs), len(costs[0])\n    best = [[float(\"inf\")] * cols for _ in range(rows)]\n    best[0][0] = costs[0][0]\n    heap = [(costs[0][0], 0, 0)]\n    while heap:\n        d, r, c = heapq.heappop(heap)\n        if d > best[r][c]:\n            continue                # a stale entry\n        if (r, c) == (rows - 1, cols - 1):\n            return d\n        for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):\n            if 0 <= nr < rows and 0 <= nc < cols:\n                nd = d + costs[nr][nc]\n                if nd < best[nr][nc]:\n                    best[nr][nc] = nd\n                    heapq.heappush(heap, (nd, nr, nc))\n",
+        "examples": [
+          {
+            "call": "cheapest_route([[1, 3, 1], [1, 5, 1], [4, 2, 1]])",
+            "expect": "7",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "cheapest_route([[1, 3, 1], [1, 5, 1], [4, 2, 1]])",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_route([[7]])",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_route([[2, 3, 4]])",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_route([[2], [9], [1]])",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_route([[1, 1, 1, 1], [9, 9, 9, 1], [1, 1, 1, 1], [1, 9, 9, 9], [1, 1, 1, 1]])",
+            "expect": "14",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_route([[1, 9, 1, 1, 1], [1, 9, 1, 9, 1], [1, 1, 1, 9, 1]])",
+            "expect": "11",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_route([[5, 1, 1], [1, 9, 1], [1, 1, 5]])",
+            "expect": "13",
+            "compare": "equal"
+          },
+          {
+            "call": "cheapest_route(costs)",
+            "expect": "45850",
+            "compare": "equal",
+            "setup": "R = C = 300; costs = [[1] * C if r % 2 == 0 else [1 if c == (C - 1 if r % 4 == 1 else 0) else 1000 for c in range(C)] for r in range(R)]"
+          },
+          {
+            "call": "cheapest_route(costs)",
+            "expect": "1709",
+            "compare": "equal",
+            "setup": "import random; random.seed(18); costs = [[random.randint(1, 9) for _ in range(300)] for _ in range(300)]"
+          },
+          {
+            "call": "cheapest_route(costs)",
+            "expect": "997",
+            "compare": "equal",
+            "setup": "costs = [[1 + (r * 7 + c * 13) % 5 for c in range(250)] for r in range(250)]"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, compared with ==. Tests 5 and 6 need moves up or left. Tests 8 to 10 are grids of up to 300 by 300, so scanning every cell for the next one, or sweeping until nothing changes, runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "Dijkstra with a heap settles each cell once, cheapest first.",
+        "generic": "Some tests failed. Treat each cell as a node with up to four neighbours, and pop the cheapest with `heapq`.",
+        "byKey": {
+          "test-5": "This grid's cheap route snakes right, down, left and down again. A right-and-down table cannot follow it.",
+          "test-6": "The cheap route goes down, right, up and over the wall. Allow moves up and left.",
+          "test-2": "A single cell's route is just that cell: count the start.",
+          "error": "If it stopped at the time limit, push neighbours onto a heap instead of scanning every cell for the minimum."
+        }
+      },
+      "explain": {
+        "text": "Costs are positive, so Dijkstra applies: pop the cheapest open cell, then offer its four neighbours. Skip stale heap entries. A grid of $V$ cells costs $O(V \\log V)$, while a scan for the minimum costs $O(V^2)$."
+      }
+    },
+    {
+      "id": "e-book-design",
+      "difficulty": 5,
+      "skills": [
+        "ds-trees",
+        "ds-hashing",
+        "ds-lists",
+        "at-complexity"
+      ],
+      "title": "Designing an order book",
+      "kind": "longform",
+      "prompt": "Design the order book for one share on a venue. It must:\n\n1. add a limit order (id, side, price, quantity);\n2. cancel an order by id;\n3. report the best bid and the best ask;\n4. match an incoming market order in price-time priority.\n\nExpect 1,000,000 messages a day, about 90% of them adds and cancels. Each side has about 500 live price levels.\n\n(a) Choose the data structures for one side, and say what each one is for.\n\n(b) Give the cost of each of the four operations, and justify it.\n\n(c) Explain how cancels interact with finding the best price.\n\n(d) Prices always lie within 200 ticks of the mid. What would you change, and why?",
+      "model": "**(a)** For each side we keep three things.\n\n- A dict from price to a **level**. A level holds its orders in a doubly linked list, oldest at the head, and its total quantity.\n- A dict from order id to its list node. This finds any order without a search.\n- A heap of the side's live prices: a max-heap for bids (store $-p$) and a min-heap for asks. Its top is the best price.\n\nThe list gives time priority within a level. The heap gives price priority across levels.\n\n**(b)** Let $L$ be the live levels on a side, about 500.\n\n- *Add.* Find the level in the price dict, $O(1)$ on average. Append the node at the tail, $O(1)$. A new price also pushes onto the heap: $O(\\log L)$, about 9 steps.\n- *Cancel.* The id dict finds the node in $O(1)$. Its two links unlink it in $O(1)$, and the level's quantity drops. A singly linked list would need a walk to the predecessor.\n- *Best bid or ask.* Peek at the heap's top: $O(1)$, once dead levels are cleared (part c).\n- *Match.* Take from the best level's head, filling oldest first. Each fill is $O(1)$. An emptied level is popped from the heap in $O(\\log L)$. A market order that makes $k$ fills across $m$ levels costs $O(k + m \\log L)$.\n\nSo nearly every message is $O(1)$, and only level changes pay $O(\\log L)$. At a million messages a day that is trivial work.\n\n**(c)** A heap cannot delete an arbitrary price cheaply. When a cancel empties a level, we delete it from the price dict but leave its price in the heap. That is **lazy deletion**. Before reading the best price, we pop tops whose level is gone. Each dead price is popped once, so the cost is $O(\\log L)$ amortised per level ever created. A level that refills must not be pushed twice while still live, so we push only when the price dict lacks it.\n\n**(d)** With prices inside a 200-tick band, use an **array of 401 levels** indexed by tick offset from a base price. Add and cancel stay $O(1)$, with no hashing of prices. Keep an index of the best occupied tick. After a fill or cancel empties it, scan outwards to the next occupied tick. That scan is at most 400 steps and usually one or two. The array also gives depth at any price in $O(1)$ and is cache-friendly. If the band moves, re-centre the base, which costs $O(\\text{band})$ but is rare.\n\n**Summary.** Dicts give $O(1)$ lookup by price and by id. Doubly linked lists give FIFO fills and $O(1)$ unlinks. A heap with lazy deletion, or a bounded tick array, gives the best price.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Per price level, a FIFO structure (a doubly linked list or deque) giving time priority, with a total quantity."
+        },
+        {
+          "points": 2,
+          "text": "A dict from order id to node, and explains why a doubly linked node makes cancel $O(1)$."
+        },
+        {
+          "points": 2,
+          "text": "A heap (or balanced tree) of prices for the best bid and ask, with add $O(\\log L)$ for a new level and peek $O(1)$."
+        },
+        {
+          "points": 1,
+          "text": "Costs matching: $O(k + m \\log L)$ for $k$ fills over $m$ levels, oldest order first."
+        },
+        {
+          "points": 1,
+          "text": "Lazy deletion: dead prices stay in the heap and are popped before a read, amortised $O(\\log L)$."
+        },
+        {
+          "points": 2,
+          "text": "For a bounded band, an array indexed by tick with a best-tick index, and justifies $O(1)$ add and cancel."
+        }
+      ],
+      "explain": {
+        "text": "Each operation picks its own structure: dicts to find, linked lists to keep time order, a heap or array to keep price order. The design is judged by its worst common operation. Here that is the cancel, which must be $O(1)$."
+      }
+    }
+  ]
+}

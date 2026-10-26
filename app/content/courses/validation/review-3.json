@@ -1,0 +1,418 @@
+{
+  "id": "review-3",
+  "course": "validation",
+  "level": 3,
+  "items": [
+    {
+      "id": "r-surprise",
+      "difficulty": 2,
+      "skills": [
+        "vl-leakage",
+        "vl-time"
+      ],
+      "prose": "A model predicts each share's return over days 1 to 21 at the close of day 0. One feature is the size of the earnings surprise in the next quarterly report. For most shares that report lands around day 15.",
+      "question": "Can the feature be used?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: for most shares it is known only on about day 15",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: earnings are fundamental data, not prices",
+            "why": "The kind of data does not matter. What matters is when it was known, and here that is after day 0."
+          },
+          {
+            "id": "lag",
+            "text": "Yes, if it is lagged by one day",
+            "why": "A one-day lag still leaves it known around day 14, inside the label window."
+          },
+          {
+            "id": "some",
+            "text": "Yes, for shares reporting after day 21",
+            "why": "For those the surprise is not known yet either, so it cannot be computed on day 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Known on day 15, used on day 0: target leakage.",
+        "generic": "Not quite right. Compare when the surprise is known with day 0.",
+        "byKey": {
+          "yes": "Fundamental data leak as easily as prices. Ask when the value was known."
+        }
+      },
+      "explain": {
+        "text": "The surprise is known only when the report comes out, inside the label window. It also moves the price the label measures, so it would carry a large leak. Use the last surprise reported by day 0 instead."
+      }
+    },
+    {
+      "id": "r-noise-select",
+      "difficulty": 3,
+      "skills": [
+        "vl-leakage",
+        "vl-cv"
+      ],
+      "prose": "You have 150 rows and 2,000 candidate features, all noise. Each step below is fitted once on all rows, before 5-fold cross-validation.",
+      "question": "Which step inflates the CV score the most?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sel",
+            "text": "Keeping the 20 features most correlated with $y$",
+            "correct": true
+          },
+          {
+            "id": "scale",
+            "text": "Standardising every feature",
+            "why": "A scaler learns from $X$ only; its leak is close to 0. The large leaks read $y$."
+          },
+          {
+            "id": "pca",
+            "text": "PCA to 10 components",
+            "why": "PCA uses $X$ only. On the seeded data of Lesson 10 its leak rounded to 0.00."
+          },
+          {
+            "id": "log",
+            "text": "Taking logs of positive features",
+            "why": "A log has nothing to fit, so it cannot leak at all."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Selection reads the labels, test labels included.",
+        "generic": "Not quite right. Find the step that looks at $y$.",
+        "byKey": {
+          "pca": "PCA uses $X$ only. The large leaks come from steps fitted on $y$."
+        }
+      },
+      "explain": {
+        "text": "Choosing 20 of 2,000 by correlation with all labels picks columns that fit every fold's noise. In Lesson 10, 10 of 500 inflated CV $R^2$ by 0.74 on average. Put the selector inside the pipeline."
+      }
+    },
+    {
+      "id": "r-gap",
+      "difficulty": 3,
+      "skills": [
+        "vl-leakage"
+      ],
+      "prose": "A share database drops delisted firms. Over the period 20% of firms were delisted, and they returned 15 points a year less than the survivors.",
+      "question": "By the survivorship-gap formula, how far does the database overstate the average firm's return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.03,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Overstatement, percentage points a year",
+        "accept": "3 points: $0.20 \\times 15$.",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "fifteen",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "twenty",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.20 \\times 15 = 3$ points a year.",
+        "generic": "Not quite right. Multiply the share of firms delisted by how much worse they did.",
+        "byKey": {
+          "fifteen": "That is the gap between dead and alive firms. Only 20% died, so multiply by 0.20."
+        }
+      },
+      "explain": {
+        "text": "$P(S^c)\\,(E[R \\mid S] - E[R \\mid S^c]) = 0.20 \\times 15 = 3$ points a year. On Lesson 11's panel, 25% deaths gave 5.77 points."
+      }
+    },
+    {
+      "id": "r-thumb",
+      "difficulty": 3,
+      "skills": [
+        "vl-overfit"
+      ],
+      "prose": "A researcher tries 20 independent noise strategies on 4 years of data and keeps the best.",
+      "question": "By the rule of thumb $\\sqrt{2\\ln N}/\\sqrt T$, what Sharpe can the best reach from luck alone?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.22,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Best noise Sharpe",
+        "accept": "1.22: $\\sqrt{2 \\ln 20} / 2 = 2.448 / 2$.",
+        "wrong": [
+          {
+            "id": "nosqrt",
+            "value": 2.45,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "overT",
+            "value": 0.61,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2.448 / 2 = 1.22$.",
+        "generic": "Not quite right. Compute $\\sqrt{2 \\ln 20}$, then divide by $\\sqrt 4 = 2$.",
+        "byKey": {
+          "nosqrt": "You stopped at $\\sqrt{2\\ln 20}$. Divide by $\\sqrt 4$.",
+          "overT": "You divided by 4. The spread of a Sharpe falls with $\\sqrt T$, so divide by 2."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt{2 \\ln 20} = 2.448$, and over 4 years that is $2.448/2 = 1.22$. The simulated mean is lower, $1.8675/2 = 0.93$; the rule is a cautious ceiling."
+      }
+    },
+    {
+      "id": "r-overlap",
+      "difficulty": 2,
+      "skills": [
+        "vl-leakage",
+        "vl-time"
+      ],
+      "prose": "A weekly model predicts at the close of day 0 the return over days 1 to 5. By mistake the 5-day momentum feature ends on day 2 instead of day 0.",
+      "question": "How many days of the label does the feature contain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Days of overlap",
+        "accept": "2 exactly: days 1 and 2.",
+        "unit": "days",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Days 1 and 2.",
+        "generic": "Not quite right. List the days of the feature window after day 0.",
+        "byKey": {
+          "three": "You counted day 0. The label starts on day 1.",
+          "five": "The window ends on day 2, so only days 1 and 2 overlap."
+        }
+      },
+      "explain": {
+        "text": "The window covers days −2 to 2; days 1 and 2 are label days. In Lesson 9's noise simulation, 2 days of overlap on a 21-day label already gave 53%."
+      }
+    },
+    {
+      "id": "r-today-close",
+      "difficulty": 4,
+      "skills": [
+        "vl-leakage",
+        "vl-time"
+      ],
+      "prose": "At today's close you predict tomorrow's return. One feature z-scores the share's return over the last 60 days, today's return included, using those 60 days' mean and spread.",
+      "question": "Does it leak?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: every input is known at today's close",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: it uses today's return",
+            "why": "Today's return is known at today's close, when the prediction is made. Only data after the close leaks."
+          },
+          {
+            "id": "fit",
+            "text": "Yes: the z-score is fitted on data",
+            "why": "It is fitted, but only on the past 60 days. A fit leaks when it sees rows after the prediction."
+          },
+          {
+            "id": "cs",
+            "text": "Only if it is cross-sectional",
+            "why": "Across shares or across time, the test is the same: are all inputs known at the close?"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A rolling window that ends at the prediction time is safe.",
+        "generic": "Not quite right. Check whether each input exists at today's close.",
+        "byKey": {
+          "yes": "Today's return is known at today's close, the moment of prediction."
+        }
+      },
+      "explain": {
+        "text": "All 60 days, today's included, end at the prediction time, so known $\\le t$ holds. Had the label been today's return, the same feature would leak."
+      }
+    },
+    {
+      "id": "r-top100",
+      "difficulty": 4,
+      "skills": [
+        "vl-leakage"
+      ],
+      "prose": "Four ways to pick the universe for a 2010 to 2024 backtest of UK large caps.",
+      "question": "Which is free of look-ahead and survivorship?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pit",
+            "text": "The 100 largest shares as of each rebalance date, dead firms kept",
+            "correct": true
+          },
+          {
+            "id": "today",
+            "text": "Today's 100 largest shares",
+            "why": "Today's largest are the firms that grew after 2010. That is look-ahead in the choice of firms."
+          },
+          {
+            "id": "full",
+            "text": "Shares listed for all of 2010 to 2024",
+            "why": "A full-history filter drops every firm that died, as `dropna(axis=1)` did in Lesson 11."
+          },
+          {
+            "id": "2010drop",
+            "text": "The 100 largest of 2010, dropping any that later delisted",
+            "why": "Starting from 2010 is right; dropping later delistings brings survivorship back."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Point-in-time membership, dead firms kept.",
+        "generic": "Not quite right. Ask, for each option, whether it uses information from after the rebalance date.",
+        "byKey": {
+          "full": "That filter removes every firm that died before 2024."
+        }
+      },
+      "explain": {
+        "text": "Only the as-of list uses nothing after each date. Keep delisted firms and their delisting returns so the dead count too."
+      }
+    },
+    {
+      "id": "r-effective",
+      "difficulty": 4,
+      "skills": [
+        "vl-overfit"
+      ],
+      "prose": "A search tried 50 lookbacks of one trend rule, from 100 to 149 days, whose results move almost exactly together. It also tried 5 unrelated signals.",
+      "question": "About how many effective trials is that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "six",
+            "text": "About 6",
+            "correct": true
+          },
+          {
+            "id": "55",
+            "text": "55",
+            "why": "You counted every run. Lookbacks that move together are close to one trial."
+          },
+          {
+            "id": "five",
+            "text": "5",
+            "why": "The trend rule family is itself at least one trial."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "The 5 unrelated signals are separate chances to get lucky."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One trend family plus five signals: about 6.",
+        "generic": "Not quite right. Count groups of tries that move together as about one.",
+        "byKey": {
+          "55": "You counted raw runs. Nearly identical lookbacks add almost nothing to choose between."
+        }
+      },
+      "explain": {
+        "text": "Nearly perfectly correlated lookbacks behave as about one try, as in Lesson 12's correlated searches. With 5 unrelated signals, the effective $N$ is about 6; haircut with that, and keep the log of all 55."
+      }
+    },
+    {
+      "id": "r-peek",
+      "difficulty": 4,
+      "skills": [
+        "vl-overfit",
+        "vl-cv"
+      ],
+      "prose": "A team holds out 2023 as a test set. Over six months they score 15 versions of their model on it, fixing something after each look, and report the best.",
+      "question": "What is the 2023 score now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "search",
+            "text": "The best of 15 tries on 2023, so it carries selection inflation",
+            "correct": true
+          },
+          {
+            "id": "honest",
+            "text": "An honest test score: 2023 was never used for training",
+            "why": "No model was trained on 2023, but 2023 chose among 15 versions. That makes it part of the search."
+          },
+          {
+            "id": "valid",
+            "text": "A validation score, which is fine to report",
+            "why": "A validation score is fine as a choosing tool. Reported as the final score, it is inflated."
+          },
+          {
+            "id": "better",
+            "text": "More reliable, since it was checked 15 times",
+            "why": "Each look was a new try on the same year. More looks mean more inflation."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A test set used 15 times is a validation set.",
+        "generic": "Not quite right. Ask what 2023 was used for.",
+        "byKey": {
+          "honest": "No training, but 2023 still chose the winner among 15. Selection is a use."
+        }
+      },
+      "explain": {
+        "text": "Every look that led to a change was a trial on 2023. Lock a fresh period, such as 2024, and score the chosen model on it once."
+      }
+    }
+  ]
+}

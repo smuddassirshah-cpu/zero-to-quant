@@ -11,7 +11,7 @@
         "vl-time",
         "vl-leakage"
       ],
-      "prose": "Two features for a next-day volatility model: (a) the 20-day average volatility up to today; (b) a fresh random number each day. The target's lag-1 autocorrelation is 0.95. A 5-neighbour model is scored by shuffled 5-fold CV.",
+      "prose": "Two features for a next-day volatility model. (a) The 20-day average volatility up to today. (b) A fresh random number each day. The target's lag-1 autocorrelation is 0.95. A 5-neighbour model is scored by shuffled 5-fold CV.",
       "question": "With which feature does shuffling inflate the score more?",
       "widget": {
         "kind": "choice",
@@ -39,7 +39,7 @@
         "generic": "Not quite right. Ask which feature lets the model find yesterday and tomorrow."
       },
       "explain": {
-        "text": "With (a) a test day's nearest rows in feature space are its neighbours in time, whose targets nearly equal its own. With (b) the nearest rows are random days, so there is nothing to copy."
+        "text": "With (a) a test day's nearest rows in feature space are its neighbours in time. Their targets nearly equal its own. With (b) the nearest rows are random days, so there is nothing to copy."
       }
     },
     {
@@ -236,7 +236,7 @@
         "vl-leakage",
         "vl-cv"
       ],
-      "prose": "Build every fold of a purged k-fold, as López de Prado describes it: blocks in time, each with its own purge and embargo.",
+      "prose": "Build every fold of López de Prado's purged k-fold. The folds are blocks in time, each with its own purge and embargo.",
       "question": "Complete `purged_kfold_splits(n, n_splits, h, embargo)`.",
       "widget": {
         "kind": "code",
@@ -284,7 +284,7 @@
         "generic": "Some tests failed. For `(100, 5, 5, 0)` the first block is rows 0 to 19 and trains on 76 rows."
       },
       "explain": {
-        "text": "The block sizes follow `KFold`: the first `n % n_splits` blocks get one extra row. Each block then drops $h - 1$ rows on each side and the embargo after it, clipped at the ends of the data."
+        "text": "The block sizes follow `KFold`: the first `n % n_splits` blocks get one extra row. Each block then drops $h - 1$ rows on each side and the embargo after it. Both ends are clipped to the data."
       }
     },
     {
@@ -295,7 +295,7 @@
         "vl-leakage",
         "vl-cv"
       ],
-      "prose": "The full honest walk-forward. `make_hw(seed)` gives 1,200 days of returns with a slowly drifting mean: features are 5- and 20-day average returns, and `y` is the 5-day forward return.",
+      "prose": "The full honest walk-forward. `make_hw(seed)` gives 1,200 days of returns with a slowly drifting mean. Features are 5- and 20-day average returns; `y` is the 5-day forward return.",
       "question": "Complete `honest_walk_forward(X, y, h, n_splits, embargo)`.",
       "widget": {
         "kind": "code",
@@ -422,7 +422,7 @@
         "vl-cv"
       ],
       "kind": "longform",
-      "prompt": "A colleague's backtest note: \"Gradient-boosted trees on 2,000 days of one stock. Features: 5-, 20- and 60-day moving averages of returns and volume. Label: the 20-day forward return. Validation: `KFold(5, shuffle=True)`. Result: mean fold $R^2$ of 0.18 and hit rate 64%. Recommend trading.\"\n\nWrite the review you would send back. Say what is wrong, how large each inflation is likely to be and in which direction, and exactly what you would run instead and report.",
+      "prompt": "A colleague's backtest note: \"Gradient-boosted trees on 2,000 days of one stock. Features: 5-, 20- and 60-day moving averages of returns and volume. Label: the 20-day forward return. Validation: `KFold(5, shuffle=True)`. Result: mean fold $R^2$ of 0.18 and hit rate 64%. Recommend trading.\"\n\nWrite the review you would send back. Say what is wrong and how large, and in which direction, each inflation is likely to be. Then say exactly what you would run and report.",
       "model": "**What is wrong.**\n\n1. **Shuffled folds on autocorrelated data.** The features are moving averages, so neighbouring days look almost identical to the model, and trees can isolate them. A shuffled test day has its yesterday and tomorrow in training.\n2. **Overlapping labels with no purge.** A 20-day forward return on day $t$ shares 19 days with the label on day $t + 1$. Neighbouring labels are about 95% the same, so copying a neighbour's label nearly gives the answer. With shuffling this affects almost every test day, not just block edges.\n3. **Mean of fold scores.** Five shuffled folds are similar in size, so this is the smallest problem, but a walk-forward should report the joined out-of-sample series anyway.\n4. **No baseline.** A 64% hit rate means nothing without the share of up periods. A stock that rose over the sample can give 55% to 60% for always calling up.\n\n**How large.** The shuffle plus overlap leak is the big one. With 20-day overlapping labels a flexible model can reach a high $R^2$ from pure noise; on daily returns any honest $R^2$ above 0.01 would be remarkable, so 0.18 is almost certainly mostly leak. Expect the honest $R^2$ near 0 or negative and the hit rate near the base rate. In this level's volatility data, purging a 20-day label in blocked folds raised the error by about 40%; shuffling makes it worse.\n\n**What to run.** Walk forward with `TimeSeriesSplit(n_splits=..., gap=19)` (purge $h - 1 = 19$ rows; add an embargo if any feature uses future data), refitting the trees in each fold on past rows only. Join the out-of-sample predictions and report the $R^2$, the MSE, and the hit rate beside the base rate, for the whole period and the latest year. Show fold scores in time order and check for a break. If several models or settings were tried, say how many.",
       "rubric": [
         {
