@@ -55,3 +55,12 @@ Raised later (cpp-pricing level 3):
 - series canvas: x is the array index only, so time against n = 100, 200, 400, 800 is drawn on an "n ÷ 100" axis with markers placed by `y` (same need as stat-learning's `xValues` bullet).
 - grid canvas: `state.paths` draw their dots and lines through the cell centres, over the cell text, so a route across numbered cells hides the numbers it passes. l10 uses shaded sets instead. Paths could offset below the text, or the text could get a halo.
 - boxes canvas: with four `box` containers of three `card` items, card labels shrink until "→ row 0" shows as "row"; l10 uses "→0". A minimum label size (wrapping containers to a second row) would keep labels legible.
+
+Raised later (stat-learning level 3):
+
+- validator vs README-B: plane `heat` function entries (integration pass 5) are rejected like `contour` ("a function needs expr, ..."). l11 wanted the model's default probability as a heat map behind the moving decision boundary; it was dropped. Either accept `heat` (and `contour`) or remove them from README-B.
+- plane: no classified-region layer, so a k-NN decision region cannot be filled. l11 draws the 1-NN boundary as 335 marching-squares `segments` computed offline. Wanted: a grid layer (`cells: { x, y, values }`) or a `heat` whose expression can read a precomputed grid.
+- plane: a point with `on` can ride only a function, not a polyline of `segments` or a list of points, so the ROC point cannot be dragged along the empirical curve. l12 moves it with a slider over a threshold index and `derive` reading arrays in params. Wanted: `on` a points list (piecewise linear) or a `polyline` function entry.
+- controls: no categorical control. l13's model switch is a 0-to-1 slider whose readout shows "0" and "1", with the model's name only in a ternary caption. Wanted: `options: ["logistic", "k-NN, k = 3"]` on a control, binding the index.
+- series: lines cannot be shown or hidden by a control, and `reveal` applies to every series at once. l14's P&L explore wanted "toggle costs on" and "add the coin" steps. Wanted: `hide` bindable to a control (one more vote for the stat-learning level 1 request for plane points).
+- code widget (Python): `isclose` is fixed at rel 1e-9, so scikit-learn outputs are rounded to 4 places in each call and a value on a rounding boundary could fail across platforms (none did in Pyodide). One more vote for per-case `tol` (raised for C++ in cpp-pricing level 2).
