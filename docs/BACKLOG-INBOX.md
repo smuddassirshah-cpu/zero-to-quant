@@ -110,3 +110,13 @@ Raised later (validation level 2):
 - plane `segments` are not tap targets. The l7 overlap picture makes each row a tappable dot beside its label bar; tapping the bar itself (the label window) is the natural action. Wanted: segments (and polygons already are) in tap mode.
 - number-line has no zoom or scale break: a 5-row `gap` on a 0 to 1,000 axis draws as a dot between the train and test intervals (l6). Wanted: a zoom inset or `state.view` as plane has.
 - Python code widget: `isclose` is fixed at rel 1e-9, so scikit-learn scores are rounded to 4 places in the call and compared exactly; a platform difference in the fifth place would flip a rounding digit. Another vote for a per-case `tol`.
+
+Raised later (fin-ml level 3):
+
+- longform widget: rejected in lesson files ("longform belongs in homework and exams"), so l12's "draft the what-failed paragraph against a rubric" became a `multi` that picks good sentences. Wanted: a self-marked draft widget for lessons (free text, then the rubric and a model paragraph, ungraded for progress).
+- series canvas: series values are fixed arrays, so a cost slider cannot redraw cumulative net P&L live (net_t = gross_t − c·traded_t); l10 shows total net P&L against cost on a `plane` instead. Wanted: a series whose values are an expression over data arrays and params (`values: { "expr": "gross - c * traded", "data": {...} }`), or derive writing whole series.
+- plane canvas: no `xScale: "log"`, so the DSR against the number of trials could only be drawn for N = 2 to 30; N = 1 to 1,000 went to a `bars` chart. Wanted: log x on plane, as series and number-line already have.
+- curve formulas and derive: `Phi` exists but no inverse; l11's DSR and E[max] curves inline a 300-character Abramowitz-Stegun approximation (error about 4.5e-4). Wanted: `PhiInv(p)` (and `NormInv`) in curve formulas and derive.
+- table widget: `bind` reaches tree branches and grid cells only, so values a learner types (three Sharpe standard errors) cannot draw on a bars or plane canvas as they type. Wanted: `bind: "values.<category>"` for bars and `bind: "points.<id>.y"` for plane.
+- Python code widget: another vote for a per-case `tol`; the scikit-learn study is compared after rounding to 4 places with `isclose` at 1e-9, so a fifth-place platform difference would flip a digit.
+- graph canvas: rect nodes with labels of about 18 characters overlap at four per row in the 540 px column (labels are clipped, "dels and trial log"), and the frame does not widen or warn; l12 uses three per row. Wanted: node spacing checked against measured label widths, or automatic wrapping.
