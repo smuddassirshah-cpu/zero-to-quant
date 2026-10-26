@@ -91,3 +91,90 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Exit line: regression l12 and exam item 23 fit a regression in NumPy and match statsmodels to 4 to 6 places. Regression l7 explains each summary line, Omnibus, Jarque-Bera and Cond. No. included. The exam does not test the "explain every number" part (see the exam warning).
 - Thin spots against DeGroot and Schervish: Bayesian updating is one lesson with one conjugate family (no normal-normal update, no credible interval against a confidence interval). Sufficiency, Fisher information and the Cramér-Rao bound, and likelihood-ratio tests and the chi-square family, do not appear. None of these is named in the Cover line.
 - Skills map: all 13 exam skills are tested (rg-inference 5, ht-pvalue 4, es-intervals 4, ht-setup 3, ht-errors 3, ht-multiple 3, es-estimators 2, es-biasvar 2, es-mle 2, rg-fit 2, rg-diagnostics 2, rg-multiple 2, es-bayes 1), and each is taught by its course's lessons.
+
+## Fix pass
+
+I recomputed every corrected number before writing it (Python with numpy, scipy and statsmodels 0.15.0; the reviewer's seeds and the original generators in the scratchpad for the two unreproducible figures). After the edits, an interval-overlap check finds no overlap between an answer and a misconception, or between two misconceptions, in any topic 1.6 file. `sentcount.py` finds no explanation over three sentences, and `style.py` raises no American-spelling or bare-£ flag; its remaining long-sentence flags are sentences the counter joins (see lines 11, 12, 27 and 50). `node tools/validate.mjs`: 0 errors in topic 1.6 files. Every touched file passes the playthrough.
+
+The `unit: "%"` convention: every `%` widget now stores the fraction and keeps `unit: "%"`, so the learner types the number of per cent (0.25 for 0.25%). The surrounding prose already asks for answers "in %", and estimation and testing already worked this way. Fed through the engine's own `parseNum`, `within` and `matchWrong`, each of the 32 `%` widgets in topic 1.6 accepts its answer as a learner types it, and each distractor typed the same way returns its own key.
+
+Status: fixed 56, disputed 0, deferred 1. Four lines were fixed in part, with the rest disputed (11, 12, 27, 50). Where a fix differs from the proposal, the line says why.
+
+### estimation (13 fixed)
+
+1. l1 s1 `dropped-minus`: fixed, value 0.0082 → 0.0106 (7.4 + 3.2 = 10.6, so 1.06%).
+2. homework-2 hw2-code explain: fixed, "about 24 each" (the N(0, 0.01²) density at 0.01 is 24.2).
+3. l2 s2 `variance`: fixed. The distractor and its byKey line are dropped. The `over-n` line now says "or gave the variance $\sigma^2/n = 0.1$", since a typed 0.1 lands there.
+4. l3 s9 `points`: fixed, value 0.036 → 0.00036 (tolerance 0.00005), so a typed 0.036 gets the subtraction line. `other-way` tolerance 0.0002 → 0.00015, because it met the answer's band at 0.0255.
+5. l4 s1 explain: fixed, wording as proposed. Checked: the slope of $0.04w^2$ at $w = 1$ is 0.08, and the slope of $(1 - w)^2\mu^2$ is 0.
+6. l7 s8 explain: fixed, "Regression in Orthogonality and Least Squares".
+7. l11 s3 `rank24`: fixed, dropped. The table shows rank 24 as −0.295 too, so a 24th value cannot be given.
+8. l12 s3 `noprior`: fixed, "You added the prior's 2 heads but not its 2 tails: $9/12$."
+9. homework-1 h-pnl-se: fixed, "The SE is £12,000 over $\sqrt{64} = 8$, or £1,500."
+10. l3 s0 and l4 s6 explains: fixed, three sentences each.
+11. Over-20 sentences: fixed in homework-1 items[3] (now three sentences), l8 s10 and l11 s4 `how`. Disputed for l5 s5: Ana's sentence is 18 words. The counter joins it to the next sentence because it ends inside a closing quote.
+12. Eleven sentences of 21 to 24 words: fixed in l2 s8, l8 s1, l8 s9 (still three sentences), review-2 items[1], homework-1 items[6] and [7], and homework-3 rubric 6. Disputed for l1 s4, l2 s6 `sd`, l2 summary.trap and l10 s7. Each is under 20 words, and the counter joins it to a neighbour that starts with a digit or follows display maths.
+13. l9 quiz[1] "percent": fixed. All 19 uses of "percent" in topic 1.6 labels, placeholders and prose are now "per cent". Ids, `format` values and code are unchanged.
+
+### testing (15 fixed)
+
+14. l4 s0 table: fixed, Fund C 1.46 → 1.45. Fund B had the same fault: 1.12 → 1.13 (1.99/(5/√8) = 1.126). The $t$ column checks.
+15. l6 s9: fixed, "$6.18 \times 400 = 2{,}472$" in the feedback, explain and accept line. The graded answer stays 2,473 (rel 0.002), which accepts both.
+16. homework-3 h-sidak: fixed, "Šidák's bar is 2.6% larger than Bonferroni's 0.0005".
+17. l12 s0: fixed. The generator is now named: "independent normal months with sd 4% ... (Python `random`, seed 74)". Re-running the lesson's generator reproduces all 12 in-sample and out-of-sample Sharpe ratios.
+18. l9 grid caption: fixed, "(Python `random`, seed 30)".
+19. homework-2 items[0]: fixed with tolerance 0.25 on `alarms-only` and `all-trades`, not the proposed 0.3. With 0.3 the two bands still meet at 299.7.
+20. l2 quiz[0]: fixed, "£0.40 over $\sqrt{64} = 8$, or £0.05".
+21. homework-2 items[5] `one-minus-alpha`: fixed, byKey line added as proposed.
+22. review-2 items[6] `prior`: fixed, byKey line added as proposed.
+23. l6 quiz[0] `old` and quiz[2] `same`: fixed, byKey lines added. Each names the slip.
+24. homework-3 items 7 and 8, l11 s9, l12 s2 and l9 quiz[2]: fixed, three sentences each.
+25. `math.isclose`: fixed, in code formatting in all six. The two "needs only math" became `math`, and the full `math.isclose(...)` call is in code.
+26. l9 s9 and l10 quiz[0]: fixed, split.
+27. Ten sentences of 21 to 24 words: fixed in l3 s1 and s2, l8 s4, l12 s5, l12 s6 hint, homework-3 items[5], and rubric 2 and 5. l12 s6 prose also lost the inverted "Survivorship bias you met in". Disputed for l4 s2 and l6 s6: the sentence ends inside display maths, and the words outside it number under 20.
+28. "in percent": fixed, "in per cent" in all three.
+
+Also: homework-3 h-vendor had both `prose` and a longform `prompt`, so its task list never showed on screen (validator warning). The scenario now opens the prompt, and `prose` is gone.
+
+### regression (22 fixed)
+
+29. l8 s0, s2, s3, quiz[1] `%`: fixed. The fraction is stored and `unit: "%"` kept. Answers are 0.0025 (tolerance 0.0001), 0.03 (0.0005, so 3.04% still passes), 0.001667 (0.00003) and 0.002 (0.00005). Every distractor is divided by 100 the same way. A typed 0.25, 3, 0.1667 and 0.2 are accepted; a typed 25 now gets the generic line.
+30. l9 s10 `%`: fixed, answer 0.0088 (0.00005). Wrong values are 0.0109, 0.013 and 0.0087 (0.00003), and the accept line now reads "0.88%".
+31. review-2 r-raw-intercept `%`: fixed, answer −0.0015 (0.00005). Wrong values are 0.0015, 0 and 0.003, and the accept line now reads "$-0.15$%".
+32. l7 s3 `k`: fixed, value 0.1007 (1 − 0.8688 × 59/57), tolerance 0.0002. `by-n` tolerance is now 0.0002 (0.1012), so they no longer overlap.
+33. l9 s6 `over-n`: fixed, value 0.9388 (1 − 0.0204 × 6/2).
+34. l11 s5: fixed, $d = 1.81$ in the prose, hint and explain (the 60 plotted residuals give 1.8127).
+35. l12 q-f-r2 `n1`: fixed, value 4.778 ((0.25/3)/(0.75/43)).
+36. review-1 rv-flat: fixed. `median` is replaced by `zero`, value 14 (4 + 1 + 0 + 9), with the byKey line as proposed.
+37. homework-3 h-s2-trap `n1`: fixed, value 0.922 (√(17/20) = 0.9220).
+38. l5 s5: fixed. The prose now says to keep $s = 1.102$ from before, and that this draw happens to give 1.18. The answer, 0.0607, is unchanged.
+39. l10 s5 explain: fixed with different wording. The proposed vector depends on an $\mathbf{X}^T\mathbf{y}$ the screen never shows. Checked: on this $\mathbf{X}^T\mathbf{X}$ (det −7.0e−15) NumPy 2.5 returns finite answers without an error. The explain now says rounding can leave a tiny nonzero determinant, and `solve` then silently returns one arbitrary point on the line.
+40. l3 s8 hint: fixed with a wider change than proposed. p39 (1.42, 2.32) is a high signal then a rise, but p58 (−1.35, −3.92) really is a low signal then a fall. The hint now names both.
+41. l11 s6: fixed, $t = 1.70$ in the hint and feedback.
+42. l11 s2: fixed. The prose now names the model and the seed: $x \sim N(0, 1)$, noise sd $0.5(0.5 + |x|)$, NumPy seed 11. Re-running the lesson's simulation gives sd 0.1087, usual SE 0.0713 and HC SE 0.1050, with coverage of 80.3% and 93.8%.
+43. l12 s4: fixed, the normal $p$ is 0.0385 in the wrong value, feedback and explain.
+44. l12 s2 hint[1]: fixed another way. With the highlight dropped, the validator warns about a point hint with no highlight. The hint now highlights the three coefficient rows on this console and reads "$n$ less one for each of the three coefficients here".
+45. l8 s9 `se-only`: fixed, byKey line added as proposed.
+46. homework-3 h-vif-n `plus`: fixed, byKey line added, with "So $n$ grows 6.25 times."
+47. l12 s1 and l6 s0: fixed, three sentences each.
+48. `math.isclose`: fixed, in code formatting in all six.
+49. Over-20 sentences: fixed in l10 trap, l9 trap, l2 s6, l6 s6, l4 s8 `how`, l7 s8 `how` and l11 s4. l11 s7's inline five-point list is now a numbered list.
+50. Thirty-three sentences of 21 to 24 words: fixed in all except l2 s4 and l3 s3. Those two are disputed, because the counter joins them across display maths or an italic link and each is under 20 words. Where a split pushed an explanation to four sentences, it was rewritten in three (homework-1 items[1], l1 s7, l2 s6, l3 s6 and s8, l4 s4, l6 s1 and s6, l7 s6).
+
+Also: review-3 items[7] `raw` (0.343) and `swap` (0.333) met at 0.338. Both tolerances went from 0.005 to 0.004.
+
+### exam (6 fixed, 1 deferred)
+
+51. s-track-record model: fixed. The two escaped `\\n\\n` are now real paragraph breaks, so (c), (d) and (e) are separate paragraphs.
+52. s-hedge-ratio: fixed with different numbers from the ones proposed. Correlation 0.7 with sds 2.0% and 1.4% gives a slope of exactly 1.0, the same number as the one-for-one hedge slip. The item is now £5m of stock, sds 1.8% and 1.2%, correlation 0.6, so the slope is 0.9 and the answer is £4.5m. The distractors are £7.5m (no $r$), £2.0m (flipped, slope 0.4) and £3.0m ($r$ alone), and the explain and feedback were rewritten to match.
+53. Whole exam, summary-table line: fixed. A new item, s-summary-dw (difficulty 3, rg-diagnostics), comes after s-overlap-hac. It shows a statsmodels `summary()` of a fund holding illiquid loans: 60 months on market and credit factors, NumPy seed 3, AR(1) residuals with coefficient 0.6. The learner taps the line that says whether residuals repeat month to month: Durbin-Watson 0.788 on l16. Every number on the console is statsmodels' own. byKey lines cover Prob(Omnibus), Prob (F), Covariance Type, a coefficient row and Skew. The exam now has 27 items: 5, 14, 5 and 3 at difficulties 2 to 5, within the ramp.
+54. s-beta-posterior, a second Bayes item: deferred. The review rates it fine at 26 items, and it is not a wrong claim. Recorded here for the next exam pass.
+55. Items 22 and 23 `how`: fixed, `math.isclose` in code formatting. "numpy is available" now starts with a capital, "NumPy".
+56. s-welch: fixed, "a tenth of a per cent".
+57. Item 22 prose and `how`: fixed, split ("It reports four numbers. They are ...").
+
+### Notation (all three courses and the exam)
+
+`\mathrm{Var}` (82), `\mathrm{Cov}` (16) and `\text{Var}` (1) are now `\operatorname{Var}` and `\operatorname{Cov}`, as in topic 1.5. `\mathrm{SE}` and `\mathrm{MSE}` stay as they are.
+
+No `course.json` was changed, and none needs a change. The three topic 1.6 `course.json` files hold no `\mathrm{Var}`, "percent" or internal course id.

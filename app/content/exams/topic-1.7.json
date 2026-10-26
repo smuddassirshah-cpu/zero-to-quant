@@ -1437,36 +1437,36 @@
         "tp-multistep",
         "tp-riskneutral"
       ],
-      "title": "Calibrating a monthly tree",
-      "prose": "A CRR tree takes monthly steps, $\\Delta t = 1/12$ of a year. The share's volatility is 30%, so $u = e^{0.3\\sqrt{\\Delta t}}$ and $d = 1/u$. The rate is 4% a year, compounded continuously, so cash grows by $e^{r\\Delta t}$ per step.",
+      "title": "Calibrating a weekly tree",
+      "prose": "A CRR tree takes weekly steps, $\\Delta t = 1/52$ of a year. The share's volatility is 25%, so $u = e^{0.25\\sqrt{\\Delta t}}$ and $d = 1/u$. The rate is 5% a year, compounded continuously, so cash grows by $e^{r\\Delta t}$ per step.",
       "question": "What is the risk-neutral probability $q$ of an up step? Give four decimal places.",
       "widget": {
         "kind": "numeric",
-        "answer": 0.4976,
+        "answer": 0.5052,
         "tol": {
           "abs": 6e-05
         },
         "placeholder": "a decimal",
         "label": "q",
-        "accept": "$q = \\dfrac{e^{0.04/12} - 0.917042}{1.090463 - 0.917042} = 0.4976$",
+        "accept": "$q = \\dfrac{e^{0.05/52} - 0.965925}{1.035277 - 0.965925} = 0.5052$",
         "wrong": [
           {
             "id": "annual-growth",
-            "value": 0.7137,
+            "value": 1.2306,
             "tol": {
               "abs": 0.0005
             }
           },
           {
             "id": "annual-simple",
-            "value": 0.709,
+            "value": 1.2123,
             "tol": {
               "abs": 0.0005
             }
           },
           {
             "id": "no-growth",
-            "value": 0.4784,
+            "value": 0.4913,
             "tol": {
               "abs": 0.0002
             }
@@ -1474,16 +1474,60 @@
         ]
       },
       "feedback": {
-        "correct": "$u = 1.0905$, $d = 0.9170$ and $q = 0.4976$.",
+        "correct": "$u = 1.0353$, $d = 0.9659$ and $q = 0.5052$.",
         "generic": "Compute $u$, $d$ and $e^{r\\Delta t}$ for one month, then $q = \\dfrac{e^{r\\Delta t} - d}{u - d}$.",
         "byKey": {
-          "annual-growth": "You grew cash for a whole year in one step. One step is a month: use $e^{0.04/12}$.",
-          "annual-simple": "You used $1 + r = 1.04$ per step. A monthly step grows cash by $e^{0.04/12}$.",
+          "annual-growth": "You grew cash for a whole year in one step, and your $q$ is above 1. One step is a week: use $e^{0.05/52}$.",
+          "annual-simple": "You used $1 + r = 1.05$ per step, and your $q$ is above 1. A weekly step grows cash by $e^{0.05/52}$.",
           "no-growth": "You left interest out. Under $q$ the share must grow like cash, by $e^{r\\Delta t}$ a step."
         }
       },
       "explain": {
-        "text": "$u = e^{0.3 \\times 0.288675} = 1.090463$ and $d = 0.917042$. One month grows cash by $e^{0.04/12} = 1.003339$. So $q = (1.003339 - 0.917042)/(1.090463 - 0.917042) = 0.4976$."
+        "text": "$u = e^{0.25 \\times 0.138675} = 1.035277$ and $d = 0.965925$. One week grows cash by $e^{0.05/52} = 1.000962$. So $q = (1.000962 - 0.965925)/(1.035277 - 0.965925) = 0.5052$."
+      }
+    },
+    {
+      "id": "e-greek-signs",
+      "difficulty": 3,
+      "skills": [
+        "op-greeks"
+      ],
+      "title": "Signs of a short put",
+      "prose": "A trader has sold one European put on a share. Rates are 0.",
+      "question": "Which signs do her delta, gamma, vega and theta have?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Delta +, gamma −, vega −, theta +",
+            "correct": true
+          },
+          {
+            "id": "put-delta",
+            "text": "Delta −, gamma −, vega −, theta +",
+            "why": "You gave the short put a long put's delta. Selling flips it: a short put gains as the share rises."
+          },
+          {
+            "id": "delta-only",
+            "text": "Delta +, gamma +, vega +, theta −",
+            "why": "You flipped only delta. Selling flips gamma, vega and theta too."
+          },
+          {
+            "id": "long",
+            "text": "Delta −, gamma +, vega +, theta −",
+            "why": "Those are the long put's signs. Selling the put flips every one."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Every sign of the long put, flipped.",
+        "generic": "Write the long put's signs, then flip every one for the short side."
+      },
+      "explain": {
+        "text": "A long put has negative delta, positive gamma and vega, and negative theta at a rate of 0. The seller holds the mirror image. She gains if the share rises or time passes, and loses on big moves or rising volatility."
       }
     },
     {
@@ -1552,7 +1596,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 8 hidden tests. Each returned list is compared item by item with math.isclose; cash and P&L are rounded to 6 places. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+        "how": "Check runs 8 hidden tests. Each returned list is compared item by item with `math.isclose`; cash and P&L are rounded to 6 places. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
       },
       "feedback": {
         "correct": "Your quotes lean against your inventory, and the limit takes away one side.",
@@ -1919,6 +1963,62 @@
       }
     },
     {
+      "id": "e-split-impact",
+      "difficulty": 4,
+      "skills": [
+        "ms-costs"
+      ],
+      "title": "Splitting a large order",
+      "prose": "A fund must buy £6m of a share that trades £24m a day, with daily volatility 2%. Use the square-root model, impact $\\approx c\\,\\sigma\\sqrt{Q/V}$ with $c = 1$, as a fraction of the amount bought. Assume each day's impact fades overnight.",
+      "question": "Against one block, how much impact cost does splitting the order evenly over nine days save? Give whole pounds.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40000,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "£",
+        "placeholder": "a number of pounds",
+        "label": "Saving in pounds",
+        "accept": "£40,000: £60,000 in one block against £20,000 over nine days.",
+        "wrong": [
+          {
+            "id": "block",
+            "value": 60000,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "split",
+            "value": 20000,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "ninth",
+            "value": 53333,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The impact falls from £60,000 to £20,000, a saving of £40,000.",
+        "generic": "Price the one block, then one day's slice, and compare the totals.",
+        "byKey": {
+          "block": "That is the one-block impact. Subtract the cost of the nine slices.",
+          "split": "That is the cost of the nine slices. The question asks how much they save against one block.",
+          "ninth": "You divided the impact by 9. A slice a ninth of the size has impact $\\sqrt{1/9}$, a third, of the block's."
+        }
+      },
+      "explain": {
+        "text": "One block costs $0.02\\sqrt{6/24} = 0.01$ of £6m, or £60,000. Each day buys £0.667m, so impact is $0.02\\sqrt{1/36} = 0.0033$ of £6m in all, £20,000. The £40,000 saved is paid for with nine days of exposure to the price."
+      }
+    },
+    {
       "id": "e-code-put-pricer",
       "difficulty": 5,
       "skills": [
@@ -1982,7 +2082,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 8 hidden tests, from 1 to 500 steps. Each pair of prices, rounded to 6 places, is compared with math.isclose. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+        "how": "Check runs 8 hidden tests, from 1 to 500 steps. Each pair of prices, rounded to 6 places, is compared with `math.isclose`. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
       },
       "feedback": {
         "correct": "Your tree prices both puts, and the gap is the early-exercise premium.",

@@ -90,17 +90,41 @@ const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
 const CPP_TYPES = ['int', 'long long', 'double', 'bool', 'std::string', 'std::vector<int>', 'std::vector<double>', 'std::vector<std::string>', 'std::vector<std::vector<double>>'];
 const cppValue = (v) => (typeof v === 'number' && Number.isFinite(v)) || typeof v === 'boolean' || typeof v === 'string' || (Array.isArray(v) && v.every(cppValue));
 const cppNumbers = (v) => (typeof v === 'number' && Number.isFinite(v)) || (Array.isArray(v) && v.every(cppNumbers));
+/* items 378, 425, 464: a case's tol is { rel, abs } (either or both, numbers 0 or more), for isclose */
+const tolCase = (file, at, t) => {
+  if (t.tol == null) return;
+  if (!(isObj(t.tol) && (typeof t.tol.rel === 'number' || typeof t.tol.abs === 'number') && Object.values(t.tol).every(v => typeof v === 'number' && v >= 0))) err(file, `${at}.tol`, 'tol is { "rel": r } or { "abs": x } (or both), for compare: "isclose"');
+  else if (t.compare && t.compare !== 'isclose') warn(file, `${at}.tol`, 'tol only applies to compare: "isclose"');
+  if (t.budget != null && !(typeof t.budget === 'number' && t.budget >= 0 && t.budget <= 120000)) err(file, `${at}.budget`, 'a case budget is extra milliseconds for that case, 0 to 120000');
+};
 const cppCodeWidget = (file, where, w) => {
   if (!Array.isArray(w.tests) || w.tests.length < 3) err(file, `${where}.tests`, 'at least 3 tests');
   else if (w.tests.length > 15) err(file, `${where}.tests`, 'at most 15 tests');
   if (w.examples != null && !Array.isArray(w.examples)) err(file, `${where}.examples`, 'examples is a list of cases');
   const cases = [...(Array.isArray(w.tests) ? w.tests.map((t, i) => [t, `${where}.tests[${i}]`]) : []), ...(Array.isArray(w.examples) ? w.examples.map((t, i) => [t, `${where}.examples[${i}]`]) : [])];
-  const isOut = (t) => t.compare === 'stdout' || (t.call == null && t.expect != null && t.compare == null);
+  const isOut = (t) => t.compiles == null && (t.compare === 'stdout' || (t.call == null && t.expect != null && t.compare == null));
   const objs = cases.filter(([t]) => t && typeof t === 'object');
-  const script = objs.some(([t]) => isOut(t) || t.stdin != null || t.argv != null || (t.compare === 'raises' && t.call == null));
+  const script = objs.some(([t]) => t.compiles == null && (isOut(t) || t.stdin != null || t.argv != null || (t.compare === 'raises' && t.call == null)));
+  /* pass 7 (items 402, 403, 437, 438, 455): widget options */
+  const FLAG_OK = /^-(W[\w=+-]*|O[0-3sz]|D[A-Za-z_]\w*(=[\w.+-]*)?|U[A-Za-z_]\w*|f(no-)?fast-math|std=c\+\+(14|17|20))$/;
+  if (w.flags != null && !(Array.isArray(w.flags) && w.flags.every(f => typeof f === 'string'))) err(file, `${where}.flags`, 'flags is a list of compiler flags ("-Wall", "-O2", "-DNDEBUG")');
+  else (w.flags || []).forEach((f, k) => { if (!FLAG_OK.test(f)) err(file, `${where}.flags[${k}]`, `flag ${f} is not allowed: use -W..., -O0 to -O3, -Os, -DNAME[=v], -UNAME, -ffast-math or -std=c++14/17/20`); });
+  ['leakCheck', 'testkit'].forEach(k => { if (w[k] != null && typeof w[k] !== 'boolean') err(file, `${where}.${k}`, `${k} is true or false`); });
+  if (w.signature != null && !(typeof w.signature === 'string' && /^.+?\b[A-Za-z_]\w*\s*\([\s\S]*\)\s*$/.test(w.signature.trim()))) err(file, `${where}.signature`, 'signature is a declaration such as "double total(const std::vector<double>&)"');
+  if (w.files != null && !(isObj(w.files) && Object.entries(w.files).every(([k, v]) => /^[\w.-]+\.(cpp|cc|h|hpp)$/.test(k) && k !== 'main.cpp' && typeof v === 'string'))) err(file, `${where}.files`, 'files maps hidden file names (pricer.h, pricer.cpp) to C++ source');
   cases.forEach(([t, at]) => {
     if (!t || typeof t !== 'object') { err(file, at, 'each case is an object'); return; }
     if (t.compare && !['isclose', 'equal', 'stdout', 'raises'].includes(t.compare)) err(file, `${at}.compare`, 'a C++ case compares isclose, equal, stdout or raises');
+    tolCase(file, at, t);
+    if (t.defines != null && !(isObj(t.defines) && Object.entries(t.defines).every(([k, v]) => /^[A-Za-z_]\w*$/.test(k) && ['number', 'string', 'boolean'].includes(typeof v)))) err(file, `${at}.defines`, 'defines maps macro names to values ({ "BUGGY": 1 })');
+    if (t.compiles != null) { // item 474: a snippet that must (or must not) compile after the learner's code
+      if (typeof t.compiles !== 'string' || !t.compiles.trim()) err(file, `${at}.compiles`, 'compiles is C++ statements ("Connection b = a;")');
+      if (t.expect != null && typeof t.expect !== 'boolean') err(file, `${at}.expect`, 'a compile check expects true (it compiles) or false (it must not)');
+      if (t.call != null) err(file, `${at}.call`, 'a compile check has no call');
+      return;
+    }
+    if ((t.lines != null || t.match != null) && !isOut(t)) err(file, at, 'lines and match apply to a stdout case');
+    if (t.match != null) { try { new RegExp(String(t.match), 'm'); } catch (e) { err(file, `${at}.match`, `match is not a regular expression: ${e.message}`); } }
     if (t.stdin != null && typeof t.stdin !== 'string') err(file, `${at}.stdin`, 'stdin is a string, the text std::cin reads ("250\\n262.5\\n")');
     if (t.exact != null && typeof t.exact !== 'boolean') err(file, `${at}.exact`, 'exact is true or false');
     if (t.exact != null && !isOut(t)) warn(file, `${at}.exact`, 'exact only applies to compare: "stdout"');
@@ -111,14 +135,14 @@ const cppCodeWidget = (file, where, w) => {
     if (t.compare === 'raises') {
       if (t.expect != null && (typeof t.expect !== 'string' || !/^[A-Za-z_][\w:]*$/.test(t.expect.trim()))) err(file, `${at}.expect`, 'a raises case names the exception type ("std::invalid_argument"), or leaves expect out to accept any error exit');
     } else if (isOut(t)) {
-      if (typeof t.expect !== 'string') err(file, `${at}.expect`, 'a stdout case needs expect: the printed text, as a string ("Return: 5.00%\\n")');
+      if (typeof t.expect !== 'string' && t.match == null) err(file, `${at}.expect`, 'a stdout case needs expect: the printed text, as a string ("Return: 5.00%\\n")');
       if (t.call != null) err(file, `${at}.call`, 'a stdout case has no call (it compares what the whole program prints)');
     } else {
       if (typeof t.call !== 'string' || !t.call.trim()) err(file, `${at}.call`, 'a value case needs call: a C++ expression ("mean({1.0, 2.0})") or a function name with args');
       if (t.expect === undefined || t.expect === null) err(file, `${at}.expect`, 'a value case needs expect, a JSON value (2.5, true, "abc", [1, 2])');
       else if (!cppValue(t.expect)) err(file, `${at}.expect`, 'expect is a number, a boolean, a string or a list of those');
       else if (t.compare === 'isclose' && !cppNumbers(t.expect)) err(file, `${at}.expect`, 'isclose needs a number (or a list of numbers) as expect, not text: write 2.5, not "2.5"');
-      else if (typeof t.expect === 'string' && /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(t.expect.trim())) warn(file, `${at}.expect`, `expect is the text "${t.expect}"; C++ cases take JSON values, so a number is written without quotes`);
+      else if (typeof t.expect === 'string' && t.text !== true && /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(t.expect.trim())) warn(file, `${at}.expect`, `expect is the text "${t.expect}": is the call's result a std::string? If so add "text": true to this case; if it is a number, write it without quotes`); // item 472
       if (typeof t.expect === 'number' && !Number.isInteger(t.expect) && t.compare !== 'isclose') warn(file, `${at}.compare`, 'equal compares a double exactly; use compare: "isclose" for a computed double');
     }
     if (t.args != null) {
@@ -231,9 +255,13 @@ const regionIds = (canvas) => {
     range(1, R2).forEach(i => range(1, C2).forEach(j => ids.add(i >= 10 || j >= 10 ? `c${i}-${j}` : `c${i}${j}`)));
     return ids;
   }
-  if ((canvas.kind === 'number-line' || canvas.kind === 'plane') && Array.isArray((canvas.state || {}).points)) {
-    const ids = new Set(canvas.state.points.map(q => q && q.id).filter(Boolean)); // tap mode on points
-    if (canvas.kind === 'plane') { (canvas.state.segments || []).concat(canvas.state.vectors || [], canvas.state.vlines || [], canvas.state.hlines || [], (canvas.params || {}).functions || []).forEach(q => { if (isObj(q) && q.id) ids.add(q.id); }); ['tangent', 'area', 'riemann', 'target', 'sketch'].forEach(k => ids.add(k)); }
+  if ((canvas.kind === 'number-line' && Array.isArray((canvas.state || {}).points)) || canvas.kind === 'plane') {
+    const st = canvas.state || {}, pp = canvas.params || {}, en = canvas.enter || {};
+    const ids = new Set((Array.isArray(st.points) ? st.points : []).map(q => q && q.id).filter(Boolean)); // tap mode on points
+    /* item 413: number-line intervals are tap targets with tapIntervals (or tap: true) */
+    if (canvas.kind === 'number-line') (Array.isArray(st.intervals) ? st.intervals : []).forEach(q => { if (isObj(q) && q.id && (pp.tapIntervals || q.tap === true)) ids.add(q.id); });
+    /* item 467: polygons (tap targets since pass 5), angles, areas and riemann pieces by id, from state, enter or params */
+    if (canvas.kind === 'plane') { [st.segments, st.vectors, st.vlines, st.hlines, pp.vlines, pp.hlines, pp.functions, st.functions, st.polygons, pp.polygons, en.polygons, st.angles, pp.angles, en.points].forEach(L => (Array.isArray(L) ? L : []).forEach(q => { if (isObj(q) && q.id) ids.add(String(q.id)); })); [].concat(st.area || [], st.riemann || []).forEach(q => { if (isObj(q) && q.id) ids.add(String(q.id)); }); ['tangent', 'area', 'riemann', 'target', 'sketch'].forEach(k => ids.add(k)); }
     return ids;
   }
   if (canvas.kind === 'console' && (Array.isArray(p.lines) || typeof p.text === 'string')) { // one-based line ids
@@ -258,7 +286,7 @@ const PLAUSIBLE = {
   walk: /^(path\d+|barrier-up|barrier-down)$/,
   orderbook: /^(bid\d+|ask\d+|spread)$/,
   distribution: /^(mean|median|sd|prob|curve|cdf|rug|shade\d*|observed\d*|x-?[\d.]+|overlay\d+)$/,
-  scatter: /^(p\d+|line)$/,
+  scatter: /^(p\d+|line|line\d+|fit|r-p\d+|legend-.+|curve|[A-Za-z][\w-]*)$/, // item 351: the fit, curve ids and residuals r-p{i}
   circle: /^(angle|sin|cos|tan|pt|arc|radius)$/,
   bars: /^(exact-)?(x[A-Za-z0-9.-]+|b\d+)$/,
   array: /^(c\d+|[a-z][a-z0-9-]*)$/,
@@ -290,6 +318,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
   if (w.kind === 'place' && w.mode === 'boxes' && w.answer != null && (!isObj(w.answer) || Object.values(w.answer).some(v => !Array.isArray(v)))) badShape.push('answer');
   if (badShape.length) { badShape.forEach(f => err(file, `${where}.${f}`, f === 'answer' && w.kind === 'place' ? 'answer must map each container id to a list of item ids' : `${f} must be a list`)); keys.add('*'); return keys; }
   if (['options', 'tokens', 'slots', 'lines', 'points', 'wrong'].some(f => (w[f] || []).some(x => !isObj(x)))) { err(file, where, 'every entry of options, tokens, slots, lines, points and wrong is an object'); keys.add('*'); return keys; }
+  ['options', 'wrong'].forEach(f => (w[f] || []).forEach((x, i) => wholeCanvasPatch(file, `${where}.${f}[${i}].canvas`, x.canvas)));
   const ids = (arr, label) => { const seen = new Set(); (arr || []).forEach((x, i) => { if (!x || x.id == null) err(file, `${where}.${label}[${i}].id`, 'required field missing'); else if (seen.has(x.id)) err(file, `${where}.${label}[${i}].id`, `duplicate id "${x.id}"`); else seen.add(x.id); }); return seen; };
   const tol = (t, at) => { if (!isObj(t) || (typeof t.abs !== 'number' && typeof t.rel !== 'number')) err(file, at, 'tol must be { "abs": x } or { "rel": r }'); };
   const text = (s, at) => checkText(file, at, s);
@@ -366,6 +395,13 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       break;
     case 'place': {
+      if (w.mode === 'array') { // item 411: the cells of an array canvas dragged into order
+        if (!canvas || canvas.kind !== 'array') err(file, where, 'place mode "array" needs an array canvas');
+        const P0 = (canvas && canvas.params) || {}, n = Array.isArray(P0.cells) ? P0.cells.length : 0, from = P0.indexFrom ?? 0, ids0 = Array.from({ length: n }, (_, k) => 'c' + (k + from));
+        if (!Array.isArray(w.answer) || w.answer.length !== n || new Set(w.answer).size !== n || w.answer.some(id => !ids0.includes(id))) err(file, `${where}.answer`, `answer lists every cell id (${ids0.join(', ')}) once, in the order wanted`);
+        ids0.forEach(k => keys.add(k));
+        break;
+      }
       if (w.mode === 'boxes') {
         /* items dragged into the containers of a boxes canvas */
         if (!canvas || canvas.kind !== 'boxes') err(file, where, 'place mode "boxes" needs a boxes canvas');
@@ -395,6 +431,8 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
     }
     case 'tap-regions': {
       const countMode = w.count != null;
+      if (w.ordered != null && typeof w.ordered !== 'boolean') err(file, `${where}.ordered`, 'ordered is true or false');
+      if (w.ordered === true) { if (countMode) err(file, `${where}.ordered`, 'ordered grades the sequence of answer; it does not combine with count'); keys.add('order'); }
       if (countMode) {
         if (!Number.isInteger(w.count) || w.count < 1) err(file, `${where}.count`, 'count must be a whole number, at least 1');
         if (w.among != null && (!Array.isArray(w.among) || !w.among.length)) err(file, `${where}.among`, 'among must list region ids');
@@ -432,9 +470,9 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       const S = w.states || {};
       if (!isObj(S) || !S[w.start]) { err(file, `${where}.start`, 'start must name a state'); break; }
       if (!S[w.target]) { err(file, `${where}.target`, 'target must name a state'); break; }
-      Object.entries(S).forEach(([k, s]) => { keys.add(k); (s.ops || []).forEach((o, i) => { if (!S[o.to]) err(file, `${where}.states.${k}.ops[${i}].to`, `unknown state "${o.to}"`); text(o.label, `${where}.states.${k}.ops[${i}].label`); text(o.why, `${where}.states.${k}.ops[${i}].why`); }); });
+      Object.entries(S).forEach(([k, s]) => { keys.add(k); (s.ops || []).forEach((o, i) => { if (o && o.reject === true) { if (!o.why) err(file, `${where}.states.${k}.ops[${i}].why`, 'a refused step (reject: true) needs its why'); if (o.label != null) text(o.label, `${where}.states.${k}.ops[${i}].label`); return; } if (!S[o.to]) err(file, `${where}.states.${k}.ops[${i}].to`, `unknown state "${o.to}"`); text(o.label, `${where}.states.${k}.ops[${i}].label`); text(o.why, `${where}.states.${k}.ops[${i}].why`); }); });
       const seen = new Set([w.start]), q = [w.start];
-      while (q.length) { const k = q.shift(); (S[k].ops || []).forEach(o => { if (S[o.to] && !seen.has(o.to)) { seen.add(o.to); q.push(o.to); } }); }
+      while (q.length) { const k = q.shift(); (S[k].ops || []).forEach(o => { if (o && !o.reject && S[o.to] && !seen.has(o.to)) { seen.add(o.to); q.push(o.to); } }); }
       if (!seen.has(w.target)) err(file, `${where}.target`, 'target is not reachable from start');
       break;
     }
@@ -468,12 +506,15 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         if (!t || typeof t !== 'object') { err(file, at, 'each case is an object'); return; }
         const out = t.compare === 'stdout' || (t.call == null && t.expect != null && t.compare == null);
         if (t.compare && !['isclose', 'equal', 'fraction', 'stdout', 'raises'].includes(t.compare)) err(file, `${at}.compare`, 'compare is isclose, equal, fraction, stdout or raises');
+        tolCase(file, at, t);
+        if ((t.lines != null || t.match != null) && !out) err(file, at, 'lines and match apply to a stdout case');
+        if (t.match != null) { try { new RegExp(String(t.match)); } catch (e) { err(file, `${at}.match`, `match is not a regular expression: ${e.message}`); } }
         if (t.setup != null && typeof t.setup !== 'string') err(file, `${at}.setup`, 'setup is a line of Python run before call ("prices = [100, 90]")');
         if (t.compare === 'raises') {
           if (typeof t.expect !== 'string' || !/^[A-Za-z_][\w.]*$/.test(t.expect.trim())) err(file, `${at}.expect`, 'a raises case names the exception: "ValueError"');
           if (t.call != null && typeof t.call !== 'string') err(file, `${at}.call`, 'call is a Python expression');
         } else if (out) {
-          if (typeof t.expect !== 'string') err(file, `${at}.expect`, 'a stdout case needs expect: the printed text, as a string ("Return: 5.00%\\n")');
+          if (typeof t.expect !== 'string' && t.match == null) err(file, `${at}.expect`, 'a stdout case needs expect: the printed text, as a string ("Return: 5.00%\\n")');
           if (t.call != null) err(file, `${at}.call`, 'a stdout case has no call (it compares what the whole program prints)');
         } else if (t.call == null || t.expect == null) err(file, at, 'each test needs call and expect (or compare: "stdout" with expect)');
         if (t.stdin != null && typeof t.stdin !== 'string') err(file, `${at}.stdin`, 'stdin is a string, one line per input() call ("250\\n262.5\\n")');
@@ -493,6 +534,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       }
       ['prelude', 'postlude'].forEach(k => { if (w[k] != null && typeof w[k] !== 'string') err(file, `${where}.${k}`, `${k} is Python source, a string`); });
       if (w.budget != null && !(typeof w.budget === 'number' && w.budget >= 0 && w.budget <= 120000)) err(file, `${where}.budget`, 'budget is extra milliseconds for a run, 0 to 120000');
+      if (w.caseBudget != null && !(typeof w.caseBudget === 'number' && w.caseBudget >= 0 && w.caseBudget <= 120000)) err(file, `${where}.caseBudget`, 'caseBudget is extra milliseconds for each case, 0 to 120000');
       if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
       keys.add('*');
       break;
@@ -543,7 +585,15 @@ const checkCanvas = (file, where, c) => {
   if (c.kind === 'plane') {
     listOf(P.functions).forEach((f, i) => {
       if (!isObj(f)) return;
-      if (f.expr == null && !(f.x != null && f.y != null) && f.implicit == null) err(file, `${where}.params.functions[${i}]`, 'a function needs expr, or x and y (parametric, with t: [from, to]), or implicit (F(x, y) = 0)');
+      /* items 430, 459, 446, 461, 469, 460: contour, heat, exprs with index, points (a polyline), steps and cells are function entries too */
+      const fam = f.expr != null || (f.x != null && f.y != null) || f.implicit != null || f.contour != null || f.heat != null || Array.isArray(f.exprs) || Array.isArray(f.points) || f.steps != null || isObj(f.cells) || Array.isArray(f.pointsList);
+      if (!fam) err(file, `${where}.params.functions[${i}]`, 'a function needs expr (or exprs with index), x and y (parametric, with t: [from, to]), implicit, contour (with levels), heat, points (a polyline), steps or cells');
+      if (Array.isArray(f.exprs) && f.index == null) err(file, `${where}.params.functions[${i}].index`, 'exprs needs index: the param (or a number) that picks one');
+      if (Array.isArray(f.exprs)) f.exprs.forEach((e, k) => { if (typeof e !== 'string' && typeof e !== 'number') err(file, `${where}.params.functions[${i}].exprs[${k}]`, 'each entry of exprs is a formula'); });
+      if (Array.isArray(f.points) && !f.points.every(q => Array.isArray(q) && q.length === 2 && q.every(v => typeof v === 'number'))) err(file, `${where}.params.functions[${i}].points`, 'points is a list of [x, y] pairs');
+      if (f.steps != null && ![].concat(f.steps).every(q => isObj(q) && Array.isArray(q.levels) && (q.at == null || Array.isArray(q.at)) && (q.at || []).length + 1 === q.levels.length)) err(file, `${where}.params.functions[${i}].steps`, 'steps is { at: [breaks], levels: [one more than the breaks] } (or a list of them, with index)');
+      if (isObj(f.cells) && !(Array.isArray(f.cells.values) && f.cells.values.every(r => Array.isArray(r)))) err(file, `${where}.params.functions[${i}].cells`, 'cells is { x: [x0, x1], y: [y0, y1], values: [[...], ...] } with values[0] the bottom row');
+      if (f.contour != null && f.levels != null && !Array.isArray(f.levels)) err(file, `${where}.params.functions[${i}].levels`, 'levels is a list of numbers');
       if (f.holes != null && !(Array.isArray(f.holes) && f.holes.every(x => typeof x === 'number'))) err(file, `${where}.params.functions[${i}].holes`, 'holes is a list of x values');
       if (f.t != null && !(Array.isArray(f.t) && f.t.length === 2 && f.t.every(x => typeof x === 'number'))) err(file, `${where}.params.functions[${i}].t`, 't is [from, to]');
     });
@@ -576,12 +626,16 @@ const checkCanvas = (file, where, c) => {
     if (k.format != null && !['fraction', 'percent'].includes(k.format)) err(file, `${where}.controls[${i}].format`, 'format is "fraction" or "percent"');
     if (k.scale != null && k.scale !== 'log') err(file, `${where}.controls[${i}].scale`, 'scale is "log" (or leave it out for a linear slider)');
     if (k.scale === 'log' && !(+k.min > 0 && +k.max > +k.min)) err(file, `${where}.controls[${i}]`, 'a log slider needs 0 < min < max (stops at powers of ten from min)');
+    /* items 357, 462: stops (a list of values) and options (a categorical control binding the index) */
+    if (k.stops != null && !(Array.isArray(k.stops) && k.stops.length >= 2 && k.stops.every(v => typeof v === 'number'))) err(file, `${where}.controls[${i}].stops`, 'stops is a list of at least two numbers');
+    if (k.options != null && !(Array.isArray(k.options) && k.options.length >= 2 && k.options.every(v => typeof v === 'string' || typeof v === 'number'))) err(file, `${where}.controls[${i}].options`, 'options is a list of at least two labels; the control binds the index 0, 1, ...');
+    if (k.options != null && k.stops != null) err(file, `${where}.controls[${i}]`, 'a control has stops or options, not both');
   });
   if (c.maxHeight != null && !(typeof c.maxHeight === 'number' && c.maxHeight >= 120)) err(file, `${where}.maxHeight`, 'maxHeight is a number of pixels, 120 or more');
   /* item 326: a bars sim reads params and state.params by name; series sims read params */
   if (c.kind === 'bars' && isObj(P.sim)) checkSim(file, `${where}.params.sim`, P.sim, Object.keys({ ...(P.params || {}), ...(S.params || {}) }));
   if (c.kind === 'series') listOf(P.series).forEach((q, i) => { if (isObj(q) && isObj(q.sim)) checkSim(file, `${where}.params.series[${i}].sim`, q.sim, Object.keys(P.params || {})); });
-  if (c.kind === 'distribution' && P.family != null && !['binomial', 'geometric', 'poisson', 'uniform', 'exponential', 't', 'normal', 'hypergeometric', 'discrete', 'custom', 'lognormal'].includes(P.family)) err(file, `${where}.params.family`, 'family is binomial, geometric, poisson, hypergeometric, discrete, uniform, normal, lognormal, exponential or t');
+  if (c.kind === 'distribution' && P.family != null && !['binomial', 'geometric', 'poisson', 'uniform', 'exponential', 't', 'normal', 'hypergeometric', 'discrete', 'custom', 'lognormal', 'beta'].includes(P.family)) err(file, `${where}.params.family`, 'family is binomial, geometric, poisson, hypergeometric, discrete, uniform, normal, lognormal, beta, exponential or t');
   if (c.kind === 'distribution' && ['discrete', 'custom'].includes(P.family)) { const v = P.values ?? (P.params || {}).values, pr = P.probs ?? (P.params || {}).probs; if (!Array.isArray(v) || !v.length) err(file, `${where}.params.values`, 'a discrete family lists its values'); else if (Array.isArray(pr) && Math.abs(pr.reduce((t, x) => t + +x, 0) - 1) > 1e-6) warn(file, `${where}.params.probs`, 'the probabilities do not add to 1'); }
   if (c.kind === 'walk' && P.model === 'markov' && !(Array.isArray(P.states) && Array.isArray(P.P) && P.P.length === P.states.length)) err(file, `${where}.params`, 'a markov walk needs states and a P matrix with one row per state');
   if (c.kind === 'number-line' && P.scale != null && !['log', 'log-odds'].includes(P.scale)) err(file, `${where}.params.scale`, 'scale is "log" or "log-odds"');
@@ -615,7 +669,10 @@ const checkFeedback = (file, where, fb, keys, { requireByKey = false } = {}) => 
     if (sentences > 3) warn(file, `${where}.byKey.${k}`, 'at most three sentences');
   });
 };
+/* item 450: a patch (explain.canvas, a wrong answer's canvas) that holds a whole canvas is ignored by the engine */
+const wholeCanvasPatch = (file, where, p) => { if (isObj(p) && (p.kind != null || isObj(p.params))) warn(file, where, 'this is a state patch for the screen\'s canvas; it has kind or params, so it looks like a whole canvas and the Why? sheet will show the canvas unchanged. Give only the state keys to change ({ "shade": [...], "highlight": [...] })'); };
 const checkExplain = (file, where, ex, { required = false } = {}) => {
+  if (ex != null && isObj(ex)) wholeCanvasPatch(file, `${where}.canvas`, ex.canvas);
   if (ex == null) { if (required) warn(file, where, 'an explanation (explain.text) is expected'); return; }
   if (!ex.text) err(file, `${where}.text`, 'required field missing');
   checkText(file, `${where}.text`, ex.text);
@@ -706,7 +763,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     }
     if (s.type === 'explore') {
       if (!s.canvas) err(file, `${at}.canvas`, 'an explore screen needs a canvas');
-      else if (!(s.canvas.controls || []).length && !(s.widget && (CANVAS_BOUND.has(s.widget.kind) || (s.widget.kind === 'place' && s.widget.mode === 'boxes'))) && !authorMovable(s.canvas)) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
+      else if (!(s.canvas.controls || []).length && !(s.widget && (CANVAS_BOUND.has(s.widget.kind) || (s.widget.kind === 'place' && ['boxes', 'array'].includes(s.widget.mode)) || (s.widget.kind === 'manipulate' && isObj(s.widget.states) && Object.values(s.widget.states).some(q => isObj(q) && isObj(q.canvas))))) && !authorMovable(s.canvas)) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
       if (!s.widget) err(file, `${at}.widget`, 'an explore screen ends with one observation question');
       else checkFeedback(file, `${at}.feedback`, s.feedback, keys);
       checkHints(file, `${at}.hints`, s.hints, s.canvas, false);

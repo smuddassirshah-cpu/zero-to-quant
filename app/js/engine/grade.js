@@ -47,10 +47,12 @@
   const matchWrong = (value, wrong = [], fallbackTol) => (wrong || []).find(w => w && w.value != null && within(value, +w.value, w.tol ?? fallbackTol ?? { abs: 1e-9 })) || null;
   const sameSet = (a = [], b = []) => { const A = new Set(a), B = new Set(b); return A.size === B.size && [...A].every(x => B.has(x)); };
   const sameList = (a = [], b = []) => a.length === b.length && a.every((x, i) => x === b[i]);
+  /* item 426: ten significant figures, not six decimal places, so a tiny answer (9.5e-7) survives Show solution and the
+     test hook and passes its own tolerance; float noise (0.30000000000000004) still prints 0.3 */
   const fmtNum = (v) => {
     if (!Number.isFinite(v)) return '';
     if (Number.isInteger(v)) return String(v);
-    return String(+v.toFixed(6));
+    return String(+v.toPrecision(10));
   };
   /* Readout formats for sliders and explore controls: "fraction" (3/8), "percent" (0.375 -> 37.5%), else the number */
   /* decimals: fixed places for the plain and percent readouts (trailing zeros kept), whatever the step */
@@ -179,7 +181,7 @@
       const s = q.shift();
       if (s === target) break;
       const ops = ((S[s] || {}).ops || []).slice().sort((a, b) => (a.why ? 1 : 0) - (b.why ? 1 : 0));
-      for (const op of ops) if (!(op.to in prev)) { prev[op.to] = s; q.push(op.to); }
+      for (const op of ops) if (!op.reject && op.to != null && !(op.to in prev)) { prev[op.to] = s; q.push(op.to); }
     }
     if (!(target in prev)) return [start];
     const path = []; for (let s = target; s != null; s = prev[s]) path.unshift(s);
@@ -298,8 +300,19 @@
   /* item 178: Markdown lists. Lines starting "- " or "* " make a bulleted list and "1. " a numbered one; other lines
      around them stay paragraphs */
   const LI = /^\s*(?:([-*])|(\d+)[.)])\s+(.*)$/;
+  /* item 381: a Markdown table (| a | b | rows with a |---| separator line) in prose, item prompts and model answers */
+  const isTableRow = (l) => /^\s*\|.*\|\s*$/.test(l);
+  const cellsOf = (l) => l.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
+  const mdTable = (lines) => {
+    const sep = cellsOf(lines[1]), align = sep.map((c) => (/^:-+:$/.test(c) ? 'center' : /^-+:$/.test(c) ? 'right' : 'left'));
+    const head = cellsOf(lines[0]), body = lines.slice(2).map(cellsOf);
+    const td = (t, k, tag) => `<${tag}${align[k] && align[k] !== 'left' ? ` style="text-align:${align[k]}"` : ''}>${inline(t)}</${tag}>`;
+    return `<div class="lsn-mdtbl"><table><thead><tr>${head.map((t, k) => td(t, k, 'th')).join('')}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((t, k) => td(t, k, 'td')).join('')}</tr>`).join('')}</tbody></table></div>`;
+  };
   const block = (p, cls) => {
     const lines = p.split('\n');
+    { const ti = lines.findIndex((l, i) => isTableRow(l) && lines[i + 1] != null && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1]));
+      if (ti >= 0) { let te = ti + 2; while (te < lines.length && isTableRow(lines[te])) te++; const before = lines.slice(0, ti).join('\n').trim(), after = lines.slice(te).join('\n').trim(); return (before ? block(before, cls) : '') + mdTable(lines.slice(ti, te)) + (after ? block(after, cls) : ''); } }
     if (!lines.some(l => LI.test(l) && !/^\s*\*\*/.test(l))) return `<p class="${cls}">${inline(p, { br: true })}</p>`;
     let out = '', para = [], list = null;
     const flushP = () => { if (para.length) out += `<p class="${cls}">${inline(para.join('\n'), { br: true })}</p>`; para = []; };

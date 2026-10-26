@@ -134,7 +134,7 @@
 
     if (spec.title && type !== 'title') add(`<h2 class="t-h1 lsn-h">${G().inline(spec.title)}</h2>`);
     const proseSrc = spec.prose || (spec.kind === 'longform' ? spec.prompt : w && w.kind === 'longform' ? w.prompt || '' : ''); // a longform widget's prompt shows when there is no prose (item 297)
-    if (proseSrc) G().prose(proseSrc).split(/(?=<p class|<div class="lsn-code|<ul class="lsn-list|<ol class="lsn-list)/).filter(Boolean).forEach(h => add(h));
+    if (proseSrc) G().prose(proseSrc).split(/(?=<p class|<div class="lsn-code|<div class="lsn-mdtbl|<ul class="lsn-list|<ol class="lsn-list)/).filter(Boolean).forEach(h => add(h));
     const qLine = spec.question ? `<h2 class="t-h2 lsn-q">${G().inline(spec.question)}<span class="lsn-count tnum" aria-live="polite" hidden></span></h2>` : '';
     const tapHint = () => {
       const k = spec.canvas && spec.canvas.kind;
@@ -183,14 +183,23 @@
         /* item 213: scale "log" moves the slider in powers of ten (min and max positive): stops at each decade (1, 10, 100,
            1000), or `perDecade: n` stops between them, rounded to 3 significant figures; the readout shows the value */
         const isLog = (c) => c.scale === 'log' && +c.min > 0 && +c.max > 0;
+        /* item 357: stops: [1, 2, 4, 12, 52, 365] moves the slider through those values only; item 462: options: ["logistic",
+           "k-NN"] is a categorical control (a row of buttons) that binds the index 0, 1, ... */
+        const hasStops = (c) => Array.isArray(c.stops) && c.stops.length > 1;
+        const isOpts = (c) => Array.isArray(c.options) && c.options.length > 1;
         const lg = (c) => ({ min: Math.log10(+c.min), max: Math.log10(+c.max), step: 1 / Math.max(1, Math.round(+c.perDecade || 1)) });
-        const toVal = (c, p) => (isLog(c) ? +Number(10 ** +p).toPrecision(3) : +p), toPos = (c, v) => (isLog(c) ? Math.log10(Math.max(+c.min, v)) : v);
-        const vals = spec.canvas.controls.map((c) => (c.reseed ? 0 : opening(c)));
-        const rng3 = (c) => (isLog(c) ? lg(c) : { min: c.min ?? 0, max: c.max ?? 1, step: c.step ?? 0.01 });
+        const nearestStop = (c, v) => c.stops.reduce((b, x, i) => (Math.abs(+x - v) < Math.abs(+c.stops[b] - v) ? i : b), 0);
+        const toVal = (c, p) => (hasStops(c) ? +c.stops[Math.max(0, Math.min(c.stops.length - 1, Math.round(+p)))] : isLog(c) ? +Number(10 ** +p).toPrecision(3) : +p), toPos = (c, v) => (hasStops(c) ? nearestStop(c, v) : isLog(c) ? Math.log10(Math.max(+c.min, v)) : v);
+        const vals = spec.canvas.controls.map((c) => (c.reseed ? 0 : isOpts(c) ? Math.max(0, Math.min(c.options.length - 1, Math.round(c.start ?? c.value ?? boundValue(canvas, c.bind, spec.canvas) ?? 0) || 0)) : hasStops(c) && c.start == null && c.value == null ? (() => { const cur = boundValue(canvas, c.bind, spec.canvas); return +c.stops[Number.isFinite(cur) ? nearestStop(c, cur) : 0]; })() : opening(c)));
+        const rng3 = (c) => (hasStops(c) ? { min: 0, max: c.stops.length - 1, step: 1 } : isLog(c) ? lg(c) : { min: c.min ?? 0, max: c.max ?? 1, step: c.step ?? 0.01 });
         /* item 323: { "reseed": true, "label": "New paths" } is a button that draws a fresh seeded run (walk, bars sims) */
-        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => { if (c.reseed) return `<div class="lsn-ctl lsn-ctl-btn"><button type="button" class="btn secondary" data-reseed="${i}">${G().inline(c.label || 'New run')}</button></div>`; const q = rng3(c); return `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${q.min}" max="${q.max}" step="${q.step}" value="${toPos(c, vals[i])}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`; }).join('')}</div>`);
+        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => { if (c.reseed) return `<div class="lsn-ctl lsn-ctl-btn"><button type="button" class="btn secondary" data-reseed="${i}">${G().inline(c.label || 'New run')}</button></div>`;
+          if (isOpts(c)) return `<div class="lsn-ctl lsn-ctl-opts" role="radiogroup" aria-label="${Z.esc(String(c.label || c.bind).replace(/\$/g, ''))}"><span class="t-label">${G().inline(c.label || c.bind)}</span><div class="lsn-ctl-row">${c.options.map((o, k) => `<button type="button" class="chip lsn-ctl-opt${k === vals[i] ? ' is-on' : ''}" role="radio" aria-checked="${k === vals[i]}" data-ctl="${i}" data-k="${k}">${G().inline(String(o))}</button>`).join('')}</div></div>`; const q = rng3(c); return `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${q.min}" max="${q.max}" step="${q.step}" value="${toPos(c, vals[i])}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`; }).join('')}</div>`);
         spec.canvas.controls.forEach((c, i) => { if (!c.reseed && (c.start != null || c.value != null)) drive(c, vals[i]); });
-        ctl.addEventListener('click', (e) => { const b = e.target.closest('[data-reseed]'); if (!b || !canvas) return; try { if (typeof canvas.run === 'function' && canvas.run.length === 0) canvas.run(); else canvas.set({ run: Math.round((canvas.get().run || 0)) + 1 }); } catch (err) { console.error(err); } });
+        ctl.addEventListener('click', (e) => {
+          const ob = e.target.closest('[data-ctl]');
+          if (ob && canvas) { const i = +ob.dataset.ctl, k = +ob.dataset.k; ob.parentElement.querySelectorAll('[data-ctl]').forEach((n) => { const on = n === ob; n.classList.toggle('is-on', on); n.setAttribute('aria-checked', String(on)); }); drive(spec.canvas.controls[i], k); return; }
+          const b = e.target.closest('[data-reseed]'); if (!b || !canvas) return; try { if (typeof canvas.run === 'function' && canvas.run.length === 0) canvas.run(); else canvas.set({ run: Math.round((canvas.get().run || 0)) + 1 }); } catch (err) { console.error(err); } });
         ctl.addEventListener('input', (e) => {
           const r = e.target.closest('input'); if (!r || !canvas) return;
           const c = spec.canvas.controls[+r.dataset.i], v = toVal(c, r.value);

@@ -2,7 +2,9 @@
    The current equation sits large; each operation is a lipped chip. Tapping one animates the equation to the next
    state (old fades out over 120ms, new fades in and rises 8px over 200ms). A breadcrumb shows the path; Undo
    steps back. Any path that reaches target is correct. An op with "why" is a recorded misstep: its why becomes the
-   feedback line on the next Check if the target has not been reached; else the current state's why is used. */
+   feedback line on the next Check if the target has not been reached; else the current state's why is used.
+   Item 407: an op with reject: true (and a why, no to needed) is refused in place: the chip shakes, the why shows under
+   the chips and the state does not change, so a wrong step needs no dead-end state of its own. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -13,9 +15,11 @@
       <div class="wd-man-stage"><div class="wd-man-eq" aria-live="polite"></div></div>
       <ol class="wd-man-path" aria-label="Your steps"></ol>
       <div class="wd-man-ops" role="group" aria-label="Operations"></div>
+      <p class="t-caption wd-man-why" aria-live="polite" hidden></p>
       <div class="wd-man-foot"><button type="button" class="link-btn wd-man-undo" disabled>Undo</button></div>
     </div>`);
     host.append(el);
+    const whyEl = el.querySelector('.wd-man-why');
     const eq = el.querySelector('.wd-man-eq'), ops = el.querySelector('.wd-man-ops'), pathEl = el.querySelector('.wd-man-path'), undoBtn = el.querySelector('.wd-man-undo'), stage = el.querySelector('.wd-man-stage');
     let path = [spec.start], steps = [], locked = false;
     const cur = () => path[path.length - 1];
@@ -39,7 +43,8 @@
       if (synced || path.length > 1 || (S[spec.start] || {}).canvas) { syncCanvas(animate); synced = true; }
       const st = S[cur()] || {};
       const list = st.ops || [];
-      ops.innerHTML = list.length ? list.map((o, i) => `<button type="button" class="wd-chip wd-op" data-i="${i}">${Z.grade.inline(o.label)}</button>`).join('')
+      whyEl.hidden = true;
+      ops.innerHTML = list.length ? list.map((o, i) => `<button type="button" class="wd-chip wd-op${o.reject ? ' is-reject' : ''}" data-i="${i}">${Z.grade.inline(o.label)}</button>`).join('')
         : `<p class="t-caption wd-man-end">${cur() === spec.target ? 'No more steps. Check your answer.' : 'No steps from here. Undo to try another route.'}</p>`;
       ops.querySelectorAll('.wd-op').forEach(b => { b.disabled = locked; });
       pathEl.innerHTML = path.length > 1 ? path.map((id, i) => `<li class="${i === path.length - 1 ? 'cur' : ''}">${Z.tex(S[id]?.tex || id)}</li>`).join('') : '';
@@ -49,6 +54,14 @@
     const apply = (i) => {
       if (locked) return;
       const op = ((S[cur()] || {}).ops || [])[i];
+      if (op && op.reject) {
+        const b = ops.querySelector(`.wd-op[data-i="${i}"]`);
+        whyEl.innerHTML = Z.grade.inline(op.why || 'That step does not help here.'); whyEl.hidden = false;
+        if (b && !Z.reducedMotion()) b.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }], { duration: 240 });
+        if (b) b.classList.add('is-refused');
+        ctx.change && ctx.change({ path: path.slice(), refused: i });
+        return;
+      }
       if (!op || !S[op.to]) return;
       path.push(op.to); steps.push(op);
       Z.sound('tap');

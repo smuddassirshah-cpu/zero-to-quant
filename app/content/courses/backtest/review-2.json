@@ -1,0 +1,377 @@
+{
+ "id": "review-2",
+ "course": "backtest",
+ "level": 2,
+ "items": [
+  {
+   "id": "r2-gap",
+   "difficulty": 2,
+   "skills": [
+    "bt-execution"
+   ],
+   "prose": "At Thursday's close a rule decides to sell 500 shares. Friday opens at £48.30 and closes at £48.90.",
+   "question": "How much cash does the sale bring in, before costs, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 24150,
+    "tol": {
+     "abs": 0.5
+    },
+    "unit": "£",
+    "label": "Cash from the sale",
+    "accept": "£24,150: $500 \\times 48.30$, Friday's open.",
+    "wrong": [
+     {
+      "id": "close",
+      "value": 24450,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The sale fills at Friday's open.",
+    "generic": "Not quite right. Which price is the first after Thursday's close?",
+    "byKey": {
+     "close": "You filled at Friday's close. The order fills at the first price after it exists, Friday's open."
+    }
+   },
+   "explain": {
+    "text": "Thursday's order trades at Friday's open, £48.30, so it brings in £24,150. Friday's close comes after the fill."
+   }
+  },
+  {
+   "id": "r2-cost",
+   "difficulty": 2,
+   "skills": [
+    "bt-execution"
+   ],
+   "prose": "A buy of 800 shares at £60.00. Commission £0.005 a share, minimum £1; half spread 3 bp.",
+   "question": "What does the fill cost, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18.4,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Cost",
+    "accept": "£18.40: $4 + 48{,}000 \\times 0.0003$.",
+    "wrong": [
+     {
+      "id": "full",
+      "value": 32.8,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "min",
+      "value": 15.4,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£4.00 commission and £14.40 spread.",
+    "generic": "Not quite right. Commission per share, then 3 bp of the traded value.",
+    "byKey": {
+     "full": "You charged 6 bp, the whole spread. One fill crosses half of it.",
+     "min": "You charged the £1 minimum, but $800 \\times 0.005 = £4$ is above it."
+    }
+   },
+   "explain": {
+    "text": "Commission is $800 \\times 0.005 = £4$. The traded value is £48,000 and 3 bp of it is £14.40."
+   }
+  },
+  {
+   "id": "r2-impact",
+   "difficulty": 3,
+   "skills": [
+    "bt-execution"
+   ],
+   "prose": "An order of 50,000 shares in a share that trades 1,000,000 a day. Daily volatility is 2% and $c = 1$.",
+   "question": "What impact does the square-root model give, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 44.72,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "bp",
+    "label": "Impact",
+    "accept": "44.7 bp: $0.02 \\times \\sqrt{0.05} \\times 10^4$.",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 10,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "pct",
+      "value": 447.2,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 44.7 bp.",
+    "generic": "Not quite right. $Q/V = 0.05$; use its square root.",
+    "byKey": {
+     "linear": "You used $Q/V$ without the square root.",
+     "pct": "You used 5 for $Q/V$ instead of 0.05."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{0.05} = 0.2236$, and $0.02 \\times 0.2236 = 0.00447$, which is 44.7 bp."
+   }
+  },
+  {
+   "id": "r2-target",
+   "difficulty": 3,
+   "skills": [
+    "bt-bias",
+    "bt-execution"
+   ],
+   "prose": "An engine fills at the next open and returns targets, shares, cash and equity. Its signal secretly uses `close.shift(-1)`. A colleague's check compares only the equity of the cut run with the full run.",
+   "question": "Why does their check miss the leak?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fill",
+      "text": "The leaky target on the last row before the cut fills after the cut.",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "The leak is too small to move equity.",
+      "why": "You judged it by size. A `shift(-1)` signal is a huge leak; it reaches equity one row later."
+     },
+     {
+      "id": "noise",
+      "text": "Equity is noisy, so differences hide.",
+      "why": "You blamed noise. The runs are deterministic; any change would show to 1e-9."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "So the check compares every column, targets included.",
+    "generic": "Not quite right. On which row does a target become shares?"
+   },
+   "explain": {
+    "text": "A target decided on row $c - 1$ becomes shares on row $c$, outside the comparison. Only the target column differs before the cut."
+   }
+  },
+  {
+   "id": "r2-zero",
+   "difficulty": 2,
+   "skills": [
+    "bt-execution"
+   ],
+   "prose": "A slow rule keeps the same target on 200 of its 250 days.",
+   "question": "What do those 200 unchanged days cost in commission under our tariff (minimum £1)?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Commission on unchanged days",
+    "accept": "£0: an order of 0 shares is never sent.",
+    "wrong": [
+     {
+      "id": "min",
+      "value": 200,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No trade, no cost.",
+    "generic": "Not quite right. What order does an unchanged target make?",
+    "byKey": {
+     "min": "You charged the minimum on days with no order. Nothing is sent, so nothing is charged."
+    }
+   },
+   "explain": {
+    "text": "An unchanged target gives an order of 0. `trade_cost(0, p)` is 0, so the minimum never applies."
+   }
+  },
+  {
+   "id": "r2-cap",
+   "difficulty": 3,
+   "skills": [
+    "bt-execution"
+   ],
+   "prose": "A sale of 250,000 shares arrives on a day that trades 1,500,000. The engine caps fills at 10% of the day's volume.",
+   "question": "How many shares are still to sell after today?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100000,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "shares",
+    "label": "Shares left",
+    "accept": "100,000: 150,000 fill today.",
+    "wrong": [
+     {
+      "id": "filled",
+      "value": 150000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "none",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "150,000 sold today, 100,000 left.",
+    "generic": "Not quite right. The cap is 10% of 1,500,000.",
+    "byKey": {
+     "filled": "That is what fills today.",
+     "none": "You filled the whole sale; the cap stops at 150,000."
+    }
+   },
+   "explain": {
+    "text": "The cap is 150,000 shares. The rest, 100,000, waits for the next bar and its own volume."
+   }
+  },
+  {
+   "id": "r2-breakeven",
+   "difficulty": 4,
+   "skills": [
+    "bt-execution"
+   ],
+   "prose": "A rule made £120,000 gross over five years, paid £20,000 commission and traded £400m of shares.",
+   "question": "At what half spread, in bp, does it break even?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.5,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "bp",
+    "label": "Break-even half spread",
+    "accept": "2.5 bp: $(120{,}000 - 20{,}000) / 400{,}000{,}000 \\times 10^4$.",
+    "wrong": [
+     {
+      "id": "no-comm",
+      "value": 3,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "2.5 bp of edge per £ traded, after commission.",
+    "generic": "Not quite right. Take off the commission, then divide by the traded value.",
+    "byKey": {
+     "no-comm": "You left the commission in. It is paid whatever the spread."
+    }
+   },
+   "explain": {
+    "text": "After commission the rule kept £100,000 on £400m traded, 0.00025 of it, which is 2.5 bp. A wider half spread makes it lose."
+   }
+  },
+  {
+   "id": "r2-catch",
+   "difficulty": 4,
+   "skills": [
+    "bt-bias"
+   ],
+   "prose": "Four engines, four bugs.",
+   "question": "Which bugs does the look-ahead check catch? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "vol",
+      "text": "Positions scaled by `close.pct_change().std()` over the whole series",
+      "correct": true
+     },
+     {
+      "id": "centre",
+      "text": "A signal from a centred rolling mean",
+      "correct": true
+     },
+     {
+      "id": "cost",
+      "text": "Costs added to cash instead of taken off",
+      "why": "You treated a cost bug as look-ahead. It reads no later rows, so cutting the data changes nothing."
+     },
+     {
+      "id": "close",
+      "text": "Fills at the close of the signal bar",
+      "why": "You treated an optimistic fill as look-ahead. It reads only row $t$; l5's fill rule guards against it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The check catches reads of later rows, and nothing else.",
+    "generic": "Not quite right. Which bugs read rows after $t$?"
+   },
+   "explain": {
+    "text": "A full-sample vol and a centred window both read rows after $t$, so a cut changes earlier rows. The other two read nothing later; they need their own tests."
+   }
+  },
+  {
+   "id": "r2-shift",
+   "difficulty": 3,
+   "skills": [
+    "bt-bias",
+    "bt-execution"
+   ],
+   "prose": "On `make_bars()`, `signal.shift(1) * r` gives a Sharpe of 0.82 and `signal * r` gives 20.38. The engine, filling at the next open, gives 0.57 for the same rule.",
+   "question": "Why is the next-open figure lower than 0.82?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "overnight",
+      "text": "Half of each day's move happens overnight, and a next-open fill pays it instead of earning it.",
+      "correct": true
+     },
+     {
+      "id": "costs",
+      "text": "The engine charges costs.",
+      "why": "You blamed costs. These figures are all before costs."
+     },
+     {
+      "id": "leak",
+      "text": "The engine still leaks a little.",
+      "why": "You suspected a leak. The next-open fill is the most honest of the three; it is lower because it trades later."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Trading later gives up the part of the move that has already happened.",
+    "generic": "Not quite right. What happens between the close and the next open?"
+   },
+   "explain": {
+    "text": "In `make_bars()` half of each move is overnight. By the open the price has moved towards the next close, so the fill gives up that part: 0.82 falls to 0.57."
+   }
+  }
+ ]
+}

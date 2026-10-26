@@ -1,0 +1,1535 @@
+{
+ "id": "l6-tree-pricer",
+ "course": "opt-dash",
+ "title": "A binomial pricer for American options",
+ "minutes": 15,
+ "objectives": [
+  "Reuse the binomial tree to price American options.",
+  "Add a dividend yield to the tree and find the early-exercise boundary."
+ ],
+ "skills": [
+  "od-pricers"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Ten pence of choice",
+   "prose": "The trees course priced a six-month put on £100, struck at £95, with $\\sigma = 25\\%$ and $r = 4\\%$. With 500 steps: European £3.91, American £4.01. Here is the same put on four steps. Each node shows the share price, then the value of holding on.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "n00",
+       "label": "£100.00\n4.18",
+       "x": 0.06,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "n10",
+       "label": "£91.54\n7.14",
+       "x": 0.28,
+       "y": 0.615,
+       "shape": "rect"
+      },
+      {
+       "id": "n11",
+       "label": "£109.24\n1.33",
+       "x": 0.28,
+       "y": 0.385,
+       "shape": "rect"
+      },
+      {
+       "id": "n20",
+       "label": "£83.80\n11.76",
+       "x": 0.5,
+       "y": 0.73,
+       "shape": "rect"
+      },
+      {
+       "id": "n21",
+       "label": "£100.00\n2.70",
+       "x": 0.5,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "n22",
+       "label": "£119.34\n0.00",
+       "x": 0.5,
+       "y": 0.27,
+       "shape": "rect"
+      },
+      {
+       "id": "n30",
+       "label": "£76.71\n17.82",
+       "x": 0.72,
+       "y": 0.845,
+       "shape": "rect"
+      },
+      {
+       "id": "n31",
+       "label": "£91.54\n5.50",
+       "x": 0.72,
+       "y": 0.615,
+       "shape": "rect"
+      },
+      {
+       "id": "n32",
+       "label": "£109.24\n0.00",
+       "x": 0.72,
+       "y": 0.385,
+       "shape": "rect"
+      },
+      {
+       "id": "n33",
+       "label": "£130.36\n0.00",
+       "x": 0.72,
+       "y": 0.155,
+       "shape": "rect"
+      },
+      {
+       "id": "n40",
+       "label": "£70.22\n24.78",
+       "x": 0.94,
+       "y": 0.96,
+       "shape": "rect"
+      },
+      {
+       "id": "n41",
+       "label": "£83.80\n11.20",
+       "x": 0.94,
+       "y": 0.73,
+       "shape": "rect"
+      },
+      {
+       "id": "n42",
+       "label": "£100.00\n0.00",
+       "x": 0.94,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "n43",
+       "label": "£119.34\n0.00",
+       "x": 0.94,
+       "y": 0.27,
+       "shape": "rect"
+      },
+      {
+       "id": "n44",
+       "label": "£142.41\n0.00",
+       "x": 0.94,
+       "y": 0.04,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "n00",
+       "to": "n10"
+      },
+      {
+       "from": "n00",
+       "to": "n11"
+      },
+      {
+       "from": "n10",
+       "to": "n20"
+      },
+      {
+       "from": "n10",
+       "to": "n21"
+      },
+      {
+       "from": "n11",
+       "to": "n21"
+      },
+      {
+       "from": "n11",
+       "to": "n22"
+      },
+      {
+       "from": "n20",
+       "to": "n30"
+      },
+      {
+       "from": "n20",
+       "to": "n31"
+      },
+      {
+       "from": "n21",
+       "to": "n31"
+      },
+      {
+       "from": "n21",
+       "to": "n32"
+      },
+      {
+       "from": "n22",
+       "to": "n32"
+      },
+      {
+       "from": "n22",
+       "to": "n33"
+      },
+      {
+       "from": "n30",
+       "to": "n40"
+      },
+      {
+       "from": "n30",
+       "to": "n41"
+      },
+      {
+       "from": "n31",
+       "to": "n41"
+      },
+      {
+       "from": "n31",
+       "to": "n42"
+      },
+      {
+       "from": "n32",
+       "to": "n42"
+      },
+      {
+       "from": "n32",
+       "to": "n43"
+      },
+      {
+       "from": "n33",
+       "to": "n43"
+      },
+      {
+       "from": "n33",
+       "to": "n44"
+      }
+     ],
+     "height": 440,
+     "label": "Four-step tree of the six-month put"
+    },
+    "state": {
+     "caption": "Second line: hold value before expiry, payoff at expiry. Exercise pays $95 - S$."
+    }
+   },
+   "question": "Tap every node before expiry where exercising pays more than holding.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "n30"
+    ],
+    "only": [
+     "n00",
+     "n10",
+     "n11",
+     "n20",
+     "n21",
+     "n22",
+     "n30",
+     "n31",
+     "n32",
+     "n33"
+    ],
+    "countWord": "nodes",
+    "wrong": [
+     {
+      "id": "close",
+      "set": [
+       "n20",
+       "n30"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Exercising pays $95 - S$. Compare it with the second line at each node."
+    },
+    {
+     "rung": "point",
+     "text": "Look at the lowest node of each step.",
+     "highlight": [
+      "n10",
+      "n20",
+      "n30"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At £76.71, $95 - 76.71 = 18.29$ beats 17.82. At £83.80, $11.20$ loses to 11.76."
+    }
+   ],
+   "feedback": {
+    "correct": "One node: at £76.71 exercising pays £18.29 against £17.82 for holding.",
+    "generic": "Not quite right. At each node compare $95 - S$ with the hold value under the price.",
+    "byKey": {
+     "close": "At £83.80 exercising pays £11.20, but holding is worth £11.76. Two steps from expiry, waiting still wins.",
+     "n20": "At £83.80 exercising pays £11.20, but holding is worth £11.76. Two steps from expiry, waiting still wins.",
+     "n31": "At £91.54 exercising pays £3.46, while holding is worth £5.50.",
+     "n10": "At £91.54 after one step, exercising pays £3.46 against £7.14 for holding."
+    }
+   },
+   "explain": {
+    "text": "Only at £76.71, one step before expiry, does exercise win. That node lifts the four-step price from £4.12 European to £4.18 American. With 500 steps many nodes exercise, and the **early-exercise premium** is about 10p.",
+    "canvas": {
+     "highlight": [
+      "n30"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Odd and even steps",
+   "prose": "The trees course's call, $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, one year, priced on trees of 1 to 200 steps. The dashed line is Black-Scholes, £10.4506. Slide the marker along the steps.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "tree",
+       "label": "Tree price",
+       "values": [
+        12.1623,
+        9.5405,
+        11.0439,
+        9.9705,
+        10.8059,
+        10.1256,
+        10.7038,
+        10.2051,
+        10.6472,
+        10.2534,
+        10.6112,
+        10.2858,
+        10.5863,
+        10.3091,
+        10.5682,
+        10.3267,
+        10.5543,
+        10.3403,
+        10.5433,
+        10.3513,
+        10.5344,
+        10.3602,
+        10.5271,
+        10.3677,
+        10.521,
+        10.3741,
+        10.5157,
+        10.3795,
+        10.5112,
+        10.3842,
+        10.5073,
+        10.3883,
+        10.5039,
+        10.392,
+        10.5008,
+        10.3952,
+        10.4981,
+        10.3981,
+        10.4956,
+        10.4008,
+        10.4934,
+        10.4031,
+        10.4914,
+        10.4053,
+        10.4896,
+        10.4072,
+        10.488,
+        10.409,
+        10.4864,
+        10.4107,
+        10.485,
+        10.4122,
+        10.4837,
+        10.4136,
+        10.4825,
+        10.415,
+        10.4814,
+        10.4162,
+        10.4803,
+        10.4173,
+        10.4794,
+        10.4184,
+        10.4784,
+        10.4194,
+        10.4776,
+        10.4203,
+        10.4768,
+        10.4212,
+        10.476,
+        10.4221,
+        10.4753,
+        10.4229,
+        10.4746,
+        10.4236,
+        10.474,
+        10.4243,
+        10.4734,
+        10.425,
+        10.4728,
+        10.4256,
+        10.4722,
+        10.4262,
+        10.4717,
+        10.4268,
+        10.4712,
+        10.4274,
+        10.4708,
+        10.4279,
+        10.4703,
+        10.4284,
+        10.4699,
+        10.4289,
+        10.4695,
+        10.4293,
+        10.4691,
+        10.4298,
+        10.4687,
+        10.4302,
+        10.4683,
+        10.4306,
+        10.468,
+        10.431,
+        10.4676,
+        10.4314,
+        10.4673,
+        10.4317,
+        10.467,
+        10.4321,
+        10.4667,
+        10.4324,
+        10.4664,
+        10.4327,
+        10.4661,
+        10.4331,
+        10.4658,
+        10.4334,
+        10.4656,
+        10.4337,
+        10.4653,
+        10.4339,
+        10.4651,
+        10.4342,
+        10.4648,
+        10.4345,
+        10.4646,
+        10.4347,
+        10.4644,
+        10.435,
+        10.4642,
+        10.4352,
+        10.464,
+        10.4354,
+        10.4638,
+        10.4357,
+        10.4636,
+        10.4359,
+        10.4634,
+        10.4361,
+        10.4632,
+        10.4363,
+        10.463,
+        10.4365,
+        10.4628,
+        10.4367,
+        10.4627,
+        10.4369,
+        10.4625,
+        10.4371,
+        10.4624,
+        10.4373,
+        10.4622,
+        10.4374,
+        10.462,
+        10.4376,
+        10.4619,
+        10.4378,
+        10.4618,
+        10.4379,
+        10.4616,
+        10.4381,
+        10.4615,
+        10.4382,
+        10.4613,
+        10.4384,
+        10.4612,
+        10.4385,
+        10.4611,
+        10.4387,
+        10.461,
+        10.4388,
+        10.4608,
+        10.439,
+        10.4607,
+        10.4391,
+        10.4606,
+        10.4392,
+        10.4605,
+        10.4394,
+        10.4604,
+        10.4395,
+        10.4603,
+        10.4396,
+        10.4602,
+        10.4397,
+        10.4601,
+        10.4398,
+        10.46,
+        10.44,
+        10.4599,
+        10.4401,
+        10.4598,
+        10.4402,
+        10.4597,
+        10.4403,
+        10.4596,
+        10.4404,
+        10.4595,
+        10.4405,
+        10.4594,
+        10.4406
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "money": "£",
+     "decimals": 4,
+     "y": [
+      9.4,
+      12.3
+     ],
+     "xLabel": "Steps $n$",
+     "yLabel": "Call price (£)",
+     "hlines": [
+      {
+       "id": "bs",
+       "y": 10.4506,
+       "label": "Black-Scholes £10.4506"
+      }
+     ]
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "m",
+       "i": 0,
+       "series": "tree",
+       "label": "{value}"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "markers.m.i",
+      "min": 0,
+      "max": 199,
+      "step": 1,
+      "start": 0,
+      "label": "Marker (steps − 1)"
+     }
+    ]
+   },
+   "question": "Which trees land above £10.4506?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "odd",
+      "text": "Trees with an odd number of steps; even ones land below",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "Only the small trees; from about 50 steps on all are below",
+      "why": "Slide to 101 and 199 steps: £10.4680 and £10.4594, both above. The zig-zag never stops."
+     },
+     {
+      "id": "random",
+      "text": "No pattern: each tree misses by chance",
+      "why": "A tree has no randomness. Slide one step at a time: above, below, above."
+     },
+     {
+      "id": "even",
+      "text": "Trees with an even number of steps",
+      "why": "Read $n = 2$: £9.5405, below the line. $n = 1$ and $n = 3$ are above."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare $n = 1$, 2, 3 and 4 first."
+    },
+    {
+     "rung": "point",
+     "text": "Then jump to 100 and 101 steps.",
+     "highlight": [
+      "m"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$n = 100$ gives £10.4306, $n = 101$ gives £10.4680."
+    }
+   ],
+   "feedback": {
+    "correct": "Odd trees sit above, even trees below, and both close in.",
+    "generic": "Not quite right. Read a few neighbouring step counts, such as 100 and 101.",
+    "byKey": {
+     "small": "The zig-zag persists: 199 steps give £10.4594, still above.",
+     "random": "Each tree is exact arithmetic. The pattern is strict: odd above, even below, here.",
+     "even": "Even trees sit below: £9.5405 at two steps, £10.4306 at 100."
+    }
+   },
+   "explain": {
+    "text": "For an at-the-money call, an even tree puts a node exactly on the strike and an odd tree straddles it. So the errors alternate in sign and shrink like $1/n$. The average of 500 and 501 steps, £10.4503, is closer than either.",
+    "canvas": {
+     "markers": {
+      "m": {
+       "i": 99
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The tree with a yield",
+   "prose": "The dashboard's tree is the trees course's, with the yield added: $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$ and $$p = \\frac{e^{(r-q)\\Delta t} - d}{u - d},$$ discounting each step by $e^{-r\\Delta t}$. The yield slows the share's growth, so it lowers $p$. It does not touch the discount.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Step $\\Delta t$",
+       "0.25"
+      ],
+      [
+       "$u = e^{0.2\\sqrt{0.25}}$",
+       "1.105171"
+      ],
+      [
+       "$d = 1/u$",
+       "0.904837"
+      ],
+      [
+       "$r - q$",
+       "0.04"
+      ],
+      [
+       "$e^{0.04 \\times 0.25}$",
+       "1.010050"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "A four-step tree for the one-year call with $r = 5\\%$ and $q = 1\\%$. What is $p$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5252,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.5252: $(1.010050 - 0.904837)/(1.105171 - 0.904837)$.",
+    "label": "p",
+    "wrong": [
+     {
+      "id": "used-r",
+      "value": 0.5378,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Top: growth over one step minus $d$. Bottom: $u - d$."
+    },
+    {
+     "rung": "point",
+     "text": "Growth uses $r - q$: $e^{0.04 \\times 0.25} = 1.010050$.",
+     "highlight": [
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(1.010050 - 0.904837)/0.200334$."
+    }
+   ],
+   "feedback": {
+    "correct": "$p = 0.5252$, a little below the 0.5378 the tree would use with no yield.",
+    "generic": "Not quite right. $p = (e^{(r-q)\\Delta t} - d)/(u - d)$ with the numbers in the table.",
+    "byKey": {
+     "used-r": "You grew the share at $r = 5\\%$. The yield leaves the share, so it grows at $r - q = 4\\%$.",
+     "half": "$p$ is not a coin toss. It makes the share's expected growth over a step equal $e^{(r-q)\\Delta t}$."
+    }
+   },
+   "explain": {
+    "text": "$p$ is set so that $pu + (1-p)d = e^{(r-q)\\Delta t}$: the share grows at $r - q$ under the tree's probabilities. Discounting stays at $r$, because cash still earns $r$. That one change gives the tree a dividend yield."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The tree in code",
+   "prose": "Now the dashboard's tree. Hold one step's node values in a NumPy array `v`, fewest up moves first. One step back is one line: `p * v[1:] + (1 - p) * v[:-1]`, discounted. For an American option, compare each node with exercising there, using `np.maximum`.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "v[0]",
+      "v[1]",
+      "v[2]",
+      "v[3]",
+      "v[4]"
+     ],
+     "indexFrom": 0
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       1,
+       4
+      ]
+     },
+     "caption": "`v[1:]` is each node's up neighbour, `v[:-1]` its down neighbour."
+    }
+   },
+   "question": "Complete `crr_price`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef crr_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"CRR binomial price with n steps and dividend yield q.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = ...\n    if not 0 <= p <= 1:\n        raise ValueError(f\"p = {p:.4f} is outside [0, 1]: use more steps\")\n    disc = exp(-r * dt)\n\n    def payoff(s):\n        return np.maximum(s - K, 0.0) if kind == \"call\" else np.maximum(K - s, 0.0)\n\n    j = np.arange(n + 1)\n    v = ...                                        # the n + 1 leaves\n    for i in range(n - 1, -1, -1):                 # step back to today\n        v = ...\n        if american:                               # exercise at step i?\n            ...\n    return float(v[0])\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef crr_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"CRR binomial price with n steps and dividend yield q.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    if not 0 <= p <= 1:\n        raise ValueError(f\"p = {p:.4f} is outside [0, 1]: use more steps\")\n    disc = exp(-r * dt)\n\n    def payoff(s):\n        return np.maximum(s - K, 0.0) if kind == \"call\" else np.maximum(K - s, 0.0)\n\n    j = np.arange(n + 1)\n    v = payoff(S * u ** j * d ** (n - j))          # the n + 1 leaves\n    for i in range(n - 1, -1, -1):                 # step back to today\n        v = disc * (p * v[1:] + (1 - p) * v[:-1])\n        if american:                               # exercise at step i?\n            j = np.arange(i + 1)\n            v = np.maximum(v, payoff(S * u ** j * d ** (i - j)))\n    return float(v[0])\n",
+    "examples": [
+     {
+      "call": "round(crr_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\"), 2)",
+      "expect": "3.91",
+      "compare": "equal"
+     },
+     {
+      "call": "round(crr_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\", american=True), 2)",
+      "expect": "4.01",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(crr_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\"), 2)",
+      "expect": "3.91",
+      "compare": "equal"
+     },
+     {
+      "call": "round(crr_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\", american=True), 2)",
+      "expect": "4.01",
+      "compare": "equal"
+     },
+     {
+      "call": "round(crr_price(100, 100, 0.05, 0.2, 1, 500), 4)",
+      "expect": "10.4466",
+      "compare": "equal"
+     },
+     {
+      "call": "round(crr_price(100, 100, 0.05, 0.2, 1, 501), 4)",
+      "expect": "10.4541",
+      "compare": "equal"
+     },
+     {
+      "call": "crr_price(100, 100, 0.05, 0.2, 1, 1)",
+      "expect": "12.162284964623943",
+      "compare": "isclose"
+     },
+     {
+      "call": "crr_price(100, 100, 0.05, 0.2, 1, 1, \"put\")",
+      "expect": "7.285227414695337",
+      "compare": "isclose"
+     },
+     {
+      "call": "abs(crr_price(110, 100, 0.05, 0.3, 1, 200, \"call\", True) - crr_price(110, 100, 0.05, 0.3, 1, 200, \"call\")) < 1e-9",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(crr_price(130, 100, 0.05, 0.2, 1, 500, \"call\", True, 0.05), 2)",
+      "expect": "30.39",
+      "compare": "equal"
+     },
+     {
+      "call": "round(crr_price(130, 100, 0.05, 0.2, 1, 500, \"call\", False, 0.05), 2)",
+      "expect": "29.5",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(crr_price(100, 100, 0.05, 0.2, 1, 500, q=0.01) - bs_price(100, 100, 0.05, 0.2, 1, q=0.01)) < 0.005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "crr_price(100, 100, 0.05, 0.01, 1, 1)",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n",
+    "how": "Check runs 11 hidden tests: the trees course's £3.91 and £4.01, the 500 and 501-step calls to 4 places, one-step trees, an American call with and without a yield, agreement with `bs_price` (already defined) within half a penny at $q = 1\\%$, and a step too large. The first run loads NumPy, which takes 10 to 20 seconds; a pure Python loop passes too."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`p` uses `exp((r - q) * dt)`; the leaves are `payoff(S * u ** j * d ** (n - j))`."
+    },
+    {
+     "rung": "point",
+     "text": "After stepping back, step `i` has `i + 1` nodes: `S * u ** j * d ** (i - j)` for `j` in `np.arange(i + 1)`.",
+     "highlight": [
+      "c0",
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`v = disc * (p * v[1:] + (1 - p) * v[:-1])`, then `v = np.maximum(v, payoff(...))` when `american`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your tree gives £3.91 and £4.01, and the zig-zag 10.4466 and 10.4541.",
+    "generic": "Not quite right. Check `p`, the leaves and the one-line step back against the hints.",
+    "byKey": {
+     "test-2": "Your American put equals the European one. Compare with exercising at every step, not only at the leaves.",
+     "test-8": "Your American call with a 5% yield misses its premium. The share must grow at `r - q` in `p`.",
+     "test-10": "Your European call with $q = 1\\%$ is far from `bs_price`. Use `r - q` in `p` and `r` in the discount.",
+     "test-11": "A one-year step with $\\sigma = 1\\%$ gives $p > 1$. Raise `ValueError` before pricing."
+    }
+   },
+   "explain": {
+    "text": "Slicing does the whole step at once: `v[1:]` and `v[:-1]` line up each node with its two children. Deep in the money with a 5% yield, the American call is worth £30.39 against £29.50. With no yield the two calls agree to 1e-9."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What the steps cost",
+   "prose": "We timed the American six-month put in Pyodide. Pure Python loops over every node; NumPy does each step as one array operation. In Chrome, cpp-pricing l9's C++ tree took about 0.3 ms at 400 steps.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Steps",
+      "Pure Python (s)",
+      "NumPy (s)"
+     ],
+     "rows": [
+      [
+       "500",
+       "0.16",
+       "0.050"
+      ],
+      [
+       "2,000",
+       "2.42",
+       "0.158"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Four times the steps made pure Python about 15 times slower. Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "square",
+      "text": "Step $i$ updates $i + 1$ nodes, so a tree does about $n^2/2$ updates: 16 times as many",
+      "correct": true
+     },
+     {
+      "id": "memory",
+      "text": "Python runs out of memory at 2,000 steps and slows down",
+      "why": "You blamed memory. The tree keeps one array of at most 2,001 numbers, a few kilobytes."
+     },
+     {
+      "id": "linear",
+      "text": "The work grows like $n$, and the rest is noise",
+      "why": "Four times the steps would then cost four times the time. The 15 is close to $4^2 = 16$."
+     },
+     {
+      "id": "american",
+      "text": "The American check doubles the work at each step",
+      "why": "The check is there at both sizes, so it cannot explain the ratio between them."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the node updates in a tree of $n$ steps."
+    },
+    {
+     "rung": "point",
+     "text": "Step $i$ has $i + 1$ nodes; sum them from 0 to $n - 1$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$n(n+1)/2$, so four times $n$ is about 16 times the work."
+    }
+   ],
+   "feedback": {
+    "correct": "Work grows like $n^2$, and $2.42/0.16 = 15$.",
+    "generic": "Not quite right. Count how many node values a tree of $n$ steps computes.",
+    "byKey": {
+     "memory": "Memory is tiny here. The time is all in the updates.",
+     "linear": "The ratio, 15, is far from 4. Count the nodes per step.",
+     "american": "Both sizes do the check, so it cancels in the ratio."
+    }
+   },
+   "explain": {
+    "text": "A tree does $n(n+1)/2$ node updates, so the cost grows like $n^2$. NumPy grew only 3.2 times here: at these sizes each step's fixed overhead still dominates. The dashboard uses 500 steps, which costs 0.05 s a price."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The exercise boundary",
+   "prose": "At each step the put is exercised at every node below some price: the **early-exercise boundary**. The chart shows it for our put on 500 steps, every 10th step. Return the highest exercised price at each step, and `nan` where none is. At expiry it is the highest leaf below $K$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "b",
+       "label": "Boundary",
+       "values": [
+        null,
+        null,
+        null,
+        null,
+        74.05,
+        74.05,
+        74.05,
+        74.05,
+        74.05,
+        74.05,
+        74.05,
+        75.23,
+        75.23,
+        75.23,
+        75.23,
+        75.23,
+        75.23,
+        75.23,
+        76.43,
+        76.43,
+        76.43,
+        76.43,
+        76.43,
+        76.43,
+        77.65,
+        77.65,
+        77.65,
+        77.65,
+        77.65,
+        77.65,
+        78.89,
+        78.89,
+        78.89,
+        78.89,
+        80.14,
+        80.14,
+        80.14,
+        80.14,
+        81.42,
+        81.42,
+        81.42,
+        82.72,
+        82.72,
+        82.72,
+        84.04,
+        84.04,
+        85.38,
+        86.74,
+        88.12,
+        89.52,
+        93.87
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 0,
+     "money": "£",
+     "xLabel": "Step (×10) of 500",
+     "yLabel": "Share price (£)",
+     "y": [
+      70,
+      96
+     ],
+     "hlines": [
+      {
+       "id": "k",
+       "y": 95,
+       "label": "Strike £95"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `exercise_boundary`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef exercise_boundary(S, K, r, sigma, T, n, q=0.0):\n    \"\"\"Highest share price exercised at each step 0..n of an American put\n    (nan where no node is exercised). Exercise when K - s > hold value;\n    at expiry, every leaf with K - s > 0.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    disc = exp(-r * dt)\n    out = [float(\"nan\")] * (n + 1)\n    ...\n    return out\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\n\ndef exercise_boundary(S, K, r, sigma, T, n, q=0.0):\n    \"\"\"Highest share price exercised at each step 0..n of an American put\n    (nan where no node is exercised). Exercise when K - s > hold value;\n    at expiry, every leaf with K - s > 0.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    disc = exp(-r * dt)\n    out = [float(\"nan\")] * (n + 1)\n    j = np.arange(n + 1)\n    s = S * u ** j * d ** (n - j)\n    v = np.maximum(K - s, 0.0)\n    if (K - s > 0).any():\n        out[n] = float(s[K - s > 0].max())\n    for i in range(n - 1, -1, -1):\n        hold = disc * (p * v[1:] + (1 - p) * v[:-1])\n        j = np.arange(i + 1)\n        s = S * u ** j * d ** (i - j)\n        hit = K - s > hold                       # exercise beats holding\n        if hit.any():\n            out[i] = float(s[hit].max())\n        v = np.maximum(hold, K - s)\n    return out\n",
+    "examples": [
+     {
+      "call": "[None if x != x else round(x, 6) for x in exercise_boundary(100, 95, 0.04, 0.25, 0.5, 4)]",
+      "expect": "[None, None, None, 76.707934, 83.796689]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[None if x != x else round(x, 6) for x in exercise_boundary(100, 95, 0.04, 0.25, 0.5, 20)]",
+      "expect": "[None, None, None, None, None, None, None, 75.828248, 72.889341, 75.828248, 78.885652, 75.828248, 78.885652, 75.828248, 78.885652, 82.066331, 78.885652, 82.066331, 85.375255, 88.817595, 92.398731]",
+      "compare": "equal"
+     },
+     {
+      "call": "[None if x != x else round(x, 6) for x in exercise_boundary(100, 105, 0.05, 0.3, 1, 20, 0.01)]",
+      "expect": "[None, None, None, None, None, 71.504472, 66.865153, 71.504472, 76.465681, 71.504472, 76.465681, 71.504472, 76.465681, 71.504472, 76.465681, 81.771115, 76.465681, 81.771115, 87.444657, 93.511848, 100.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "[None if x != x else round(x, 6) for x in exercise_boundary(100, 95, 0.04, 0.25, 0.5, 4)]",
+      "expect": "[None, None, None, 76.707934, 83.796689]",
+      "compare": "equal"
+     },
+     {
+      "call": "[None if x != x else round(x, 6) for x in exercise_boundary(100, 95, 0.04, 0.25, 0.5, 1)]",
+      "expect": "[None, 83.796689]",
+      "compare": "equal"
+     },
+     {
+      "call": "len(exercise_boundary(100, 95, 0.04, 0.25, 0.5, 50))",
+      "expect": "51",
+      "compare": "equal"
+     },
+     {
+      "call": "all(x != x for x in exercise_boundary(100, 95, 0.0, 0.25, 0.5, 30)[:-1])",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests against a reference on 20-, 4- and 1-step trees, the list's length, and a zero rate, where no node before expiry is exercised. Prices are rounded to 6 places and `nan` shown as `None`, compared with ==. The first run loads NumPy."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Walk back from the leaves as `crr_price` does, but record where exercise wins."
+    },
+    {
+     "rung": "point",
+     "text": "At step `i`, `hit = K - s > hold` marks the exercised nodes; their highest price is `s[hit].max()`.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Record `out[i]` before `v = np.maximum(hold, K - s)`; at expiry use `K - s > 0`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your boundary matches the reference at every step.",
+    "generic": "Not quite right. The first failing case shows where your list differs from the reference.",
+    "byKey": {
+     "test-3": "On four steps only £76.71 is exercised before expiry, and £83.80 is the top leaf below £95.",
+     "test-6": "With $r = 0$ waiting costs nothing, so no node before expiry should be exercised."
+    }
+   },
+   "explain": {
+    "text": "The boundary rises towards the strike as expiry nears: less time left makes waiting worth less. It moves in steps because it can only sit on a node. Below it the American put is worth $K - S$; above it, more."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "American in name only",
+   "prose": "A colleague's tree takes $\\max(K - S, 0)$ at the leaves, steps back with $p$, and labels the result \"American put\". For our six-month put on 500 steps it prints £3.9057.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Colleague's tree",
+     "numbers": true,
+     "lines": [
+      "v = np.maximum(K - s, 0.0)          # leaves",
+      "for i in range(n - 1, -1, -1):",
+      "    v = disc * (p * v[1:] + (1 - p) * v[:-1])",
+      "return float(v[0])                  # \"American\""
+     ]
+    },
+    "state": {}
+   },
+   "question": "What has the code priced?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "euro",
+      "text": "The European put: it never compares holding with exercising before expiry",
+      "correct": true
+     },
+     {
+      "id": "american",
+      "text": "The American put: the max at the leaves covers early exercise",
+      "why": "You took the max at the leaves for the exercise check. It only sets the payoff; the 10p premium needs a check at every earlier node."
+     },
+     {
+      "id": "bs",
+      "text": "Black-Scholes, since 500 steps are as good as continuous",
+      "why": "500 steps bring the tree close to £3.9043, but it is still a European tree. The early-exercise check is missing, not the steps."
+     },
+     {
+      "id": "call",
+      "text": "The American call",
+      "why": "The payoff is $\\max(K - S, 0)$, a put's. Only the check is missing."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where in the loop could the holder choose to exercise?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 3 steps back; nothing after it looks at $K - S$.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Without `np.maximum(v, K - s)` inside the loop, the tree is European."
+    }
+   ],
+   "feedback": {
+    "correct": "That is the European put, £3.9057; the American one is £4.0053.",
+    "generic": "Not quite right. Look for a comparison with exercising inside the loop.",
+    "byKey": {
+     "american": "The leaves' max is the payoff at expiry. An American put also asks, at every earlier node, whether to exercise.",
+     "bs": "The tree is close to Black-Scholes because it is European. Add the check and it moves 10p above.",
+     "call": "The payoff is a put's. The missing piece is the exercise check."
+    }
+   },
+   "explain": {
+    "text": "Line 3 steps back without asking whether $K - S$ beats holding, so no node is ever exercised early. That is the European rule, £3.9057. One more line in the loop, `v = np.maximum(v, payoff(...))`, adds the 10p.",
+    "canvas": {
+     "highlight": [
+      "l3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A step too big",
+   "prose": "Your tree raises `ValueError` when $p$ leaves $[0, 1]$, as the trees course's `one_step` did. Take a one-step tree for a one-year option with $\\sigma = 1\\%$ and $r = 5\\%$, no yield.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Value"
+     ],
+     "rows": [
+      [
+       "$u = e^{0.01}$",
+       "1.010050"
+      ],
+      [
+       "$d = e^{-0.01}$",
+       "0.990050"
+      ],
+      [
+       "$e^{r\\Delta t} = e^{0.05}$",
+       "1.051271"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $p$ for this tree?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.061,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "3.061: $(1.051271 - 0.990050)/(1.010050 - 0.990050)$.",
+    "label": "p",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "swap",
+      "value": -2.061,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $p = (e^{r\\Delta t} - d)/(u - d)$."
+    },
+    {
+     "rung": "point",
+     "text": "The top is $1.051271 - 0.990050$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.061221/0.020000$."
+    }
+   ],
+   "feedback": {
+    "correct": "$p = 3.06$: not a probability, so the tree must refuse.",
+    "generic": "Not quite right. $p = (1.051271 - 0.990050)/(1.010050 - 0.990050)$.",
+    "byKey": {
+     "one": "You capped $p$ at 1. The formula gives 3.06, and the code should raise rather than clip.",
+     "swap": "You put $u - e^{r\\Delta t}$ on top, which is $1 - p$. $p$ itself is $3.06$."
+    }
+   },
+   "explain": {
+    "text": "Cash grows 5.1% in the step but the share can rise only 1.0%, so even the up node loses to cash. The weights would be 3.06 and −2.06: an arbitrage, not a price. The tree needs $\\sigma\\sqrt{\\Delta t} > (r - q)\\Delta t$, which more steps always give."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The American rule",
+   "prose": "Your tree, as rules. With $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$ and $p = \\frac{e^{(r-q)\\Delta t} - d}{u - d}$, each node keeps $$V = \\max\\left(e^{-r\\Delta t}\\left[pV_{\\text{up}} + (1-p)V_{\\text{down}}\\right],\\ \\text{exercise value}\\right).$$ Odd and even trees bracket the limit, and the error shrinks like $1/n$.",
+   "question": "On a share with no yield, when does the tree exercise an American call early?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "never",
+      "text": "Never: holding beats $S - K$ at every node, so the American call equals the European",
+      "correct": true
+     },
+     {
+      "id": "deep",
+      "text": "Deep in the money, as for the put",
+      "why": "You carried the put's rule over. A call's holder pays $K$ on exercise, and paying early only loses interest."
+     },
+     {
+      "id": "expiry",
+      "text": "One step before expiry, when little time is left",
+      "why": "Holding is worth at least $S - Ke^{-r\\Delta t}$, which beats $S - K$ while $r > 0$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With no yield the call is never exercised early: test 7 checked that.",
+    "generic": "Not quite right. Compare the hold value's floor, $S - Ke^{-r\\Delta t}$, with $S - K$."
+   },
+   "explain": {
+    "text": "A call's hold value is at least $S - Ke^{-r\\Delta t}$, more than $S - K$ when $r > 0$. A yield breaks this: the holder misses dividends while waiting. That is why the 5% yield gave the call a premium of 89p."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Vols from American quotes",
+   "prose": "Listed US single-stock options are American. Suppose our six-month 95 put trades at its American value, £4.0053, from a share whose true vol is 25%. A desk backs out the vol with `bs_price`, the European formula.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Pricer",
+      "Price at 25% (£)",
+      "Vol that gives £4.0053"
+     ],
+     "rows": [
+      [
+       "Tree, American",
+       "4.0053",
+       "0.2500"
+      ],
+      [
+       "Black-Scholes, European",
+       "3.9043",
+       "0.2540"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the European formula do to the vol?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "high",
+      "text": "Overstates it, by 0.4 vol points: it reads the early-exercise premium as extra volatility",
+      "correct": true
+     },
+     {
+      "id": "low",
+      "text": "Understates it, because the American price is higher",
+      "why": "A higher price needs a higher vol in Black-Scholes, not a lower one: 25.4%."
+     },
+     {
+      "id": "same",
+      "text": "Nothing: the premium is only 10p",
+      "why": "10p is about 0.4 vol points here. On a smile, that is as large as the skew between neighbouring strikes."
+     },
+     {
+      "id": "calls",
+      "text": "Nothing for puts; only calls carry a premium",
+      "why": "Without a yield it is the other way round: puts carry the premium and calls do not."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Black-Scholes must explain £4.0053 with volatility alone."
+    },
+    {
+     "rung": "point",
+     "text": "At 25% it gives only £3.9043.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It raises the vol until the price reaches £4.0053: 25.4%."
+    }
+   ],
+   "feedback": {
+    "correct": "25.4% instead of 25%: the premium hides inside the vol.",
+    "generic": "Not quite right. Ask what Black-Scholes must change to reach the higher American price.",
+    "byKey": {
+     "low": "Price rises with vol, so matching a higher price takes a higher vol.",
+     "same": "0.4 vol points is a real error on a surface, larger in the wings and for longer expiries.",
+     "calls": "With no yield the American call has no premium; the put does."
+    }
+   },
+   "explain": {
+    "text": "Black-Scholes has no early exercise, so it explains the extra 10p with volatility: 25.4%. A surface built this way is too high where the premium is large. Level 3's real-data note backs out vols with the tree, or uses out-of-the-money options, where the premium is small.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`crr_price` grows the share at $r - q$ in $p$, discounts at $r$, and for American options keeps $\\max(\\text{hold}, \\text{exercise})$ at every node.",
+   "Odd and even trees bracket Black-Scholes: 500 and 501 steps give £10.4466 and £10.4541 for the £10.4506 call, and their average £10.4503.",
+   "The six-month 95 put is worth £3.91 European and £4.01 American; a yield gives deep in-the-money calls a premium too (£30.39 against £29.50 at 5%)."
+  ],
+  "formula": {
+   "name": "CRR step with a yield",
+   "tex": "p = \\dfrac{e^{(r-q)\\Delta t} - d}{u - d},\\quad V = \\max\\left(e^{-r\\Delta t}[pV_{u} + (1-p)V_{d}],\\ \\text{exercise}\\right)",
+   "note": "$u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$; raise when $p \\notin [0, 1]$."
+  },
+  "trap": "Taking the max only at the leaves prices the European option, whatever the label says."
+ },
+ "quiz": [
+  {
+   "id": "q-one-step",
+   "difficulty": 2,
+   "prose": "A one-step tree for the one-year call ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$): $u = 1.2214$, $d = 0.8187$ and $p = 0.5775$. The up node pays £22.14.",
+   "question": "What is the call worth today, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12.16,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£12.16: $e^{-0.05} \\times 0.5775 \\times 22.14$.",
+    "unit": "£",
+    "label": "Price",
+    "wrong": [
+     {
+      "id": "nodisc",
+      "value": 12.79,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "half",
+      "value": 11.07,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£12.16, the trees course's one-step price.",
+    "generic": "Not quite right. Weight the up payoff by $p$, then discount one year.",
+    "byKey": {
+     "nodisc": "You forgot to discount: $0.5775 \\times 22.14 = 12.79$ is paid in a year.",
+     "half": "You used $p = 0.5$. The tree's $p$ is 0.5775."
+    }
+   },
+   "explain": {
+    "text": "The down node pays 0, so the call is $e^{-0.05} \\times 0.5775 \\times 22.14 = 12.16$. One step is far from £10.45; 500 steps get within half a penny."
+   }
+  },
+  {
+   "id": "q-average",
+   "difficulty": 2,
+   "prose": "For the one-year call, 500 steps give £10.4466 and 501 steps give £10.4541.",
+   "question": "What is the average of the two, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.4503,
+    "tol": {
+     "abs": 0.0002
+    },
+    "accept": "£10.4503, within 0.03p of £10.4506.",
+    "unit": "£",
+    "label": "Average",
+    "wrong": [
+     {
+      "id": "diff",
+      "value": 0.0075,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£10.4503: the errors of opposite sign mostly cancel.",
+    "generic": "Not quite right. Add the two prices and halve.",
+    "byKey": {
+     "diff": "That is the gap between them. The average is their sum over two."
+    }
+   },
+   "explain": {
+    "text": "500 steps miss by −0.40p and 501 by +0.35p. Their average misses by −0.03p, better than either tree alone."
+   }
+  },
+  {
+   "id": "q-r-not-rq",
+   "difficulty": 3,
+   "prose": "A colleague's tree uses $e^{r\\Delta t}$ in $p$ instead of $e^{(r-q)\\Delta t}$. Everything else is right. They price the one-year at-the-money call with $q = 1\\%$ on 500 steps.",
+   "question": "What do they get?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "q0",
+      "text": "£10.4466, the price with no yield",
+      "correct": true
+     },
+     {
+      "id": "right",
+      "text": "£9.8224, the right price, since $q$ is small",
+      "why": "You expected a small yield to wash out. It moves the call by 62p."
+     },
+     {
+      "id": "raise",
+      "text": "A `ValueError`, because $p$ leaves $[0, 1]$",
+      "why": "$p$ moves from 0.5252 to 0.5378 per quarter here, still inside $[0, 1]$. The bug is silent."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The yield vanishes from the tree, so it prices the share as if it paid nothing.",
+    "generic": "Not quite right. Ask where else $q$ enters the tree."
+   },
+   "explain": {
+    "text": "$q$ enters the tree only through $p$. Using $r$ there prices a share with no yield: £10.4466 instead of £9.8224. Comparing the European tree with `bs_price(..., q=0.01)` catches it."
+   }
+  },
+  {
+   "id": "q-boundary",
+   "difficulty": 3,
+   "prose": "Our six-month put's early-exercise boundary on 500 steps.",
+   "question": "How does the boundary move as expiry nears?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "up",
+      "text": "It rises towards the strike, £95",
+      "correct": true
+     },
+     {
+      "id": "down",
+      "text": "It falls, because the put is worth less near expiry",
+      "why": "You tracked the put's value, not the boundary. With less time, waiting is worth less, so exercise starts at higher prices."
+     },
+     {
+      "id": "flat",
+      "text": "It stays flat, since $K$ does not change",
+      "why": "The boundary depends on time left. It runs from about £74 to £94 in the chart."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "It climbs from about £74 to just under £95.",
+    "generic": "Not quite right. Think about how much waiting is worth with less time left."
+   },
+   "explain": {
+    "text": "Holding is worth the chance of a further fall plus the interest given up. Both shrink as expiry nears, so exercise wins at ever higher prices. At expiry every price below £95 is exercised."
+   }
+  }
+ ]
+}

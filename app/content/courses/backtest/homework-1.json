@@ -1,0 +1,471 @@
+{
+  "id": "homework-1",
+  "course": "backtest",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-loop-portfolio",
+      "difficulty": 5,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "Join the level's pieces into one engine. At each bar, `decide` sees bars 0 to $t$ and returns a target in shares. Trade to it at that bar's close, for now (lesson 5 moves the fill to the next open), paying `fee` on any non-zero order. Mark equity at the close. `Portfolio` and `run_loop` are already defined.",
+      "question": "Complete `run_loop_with_portfolio(bars, decide, cash0, fee=0.0)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def run_loop_with_portfolio(bars, decide, cash0, fee=0.0):\n    \"\"\"Equity at each close. Each bar: decide on bars 0..t, trade to the target\n    at this bar's close (for now), pay fee on any non-zero order, mark at the close.\"\"\"\n    p = Portfolio(cash0)\n    equity = []\n    for t in range(len(bars)):\n        ...\n    return equity\n",
+        "solution": "def run_loop_with_portfolio(bars, decide, cash0, fee=0.0):\n    \"\"\"Equity at each close. Each bar: decide on bars 0..t, trade to the target\n    at this bar's close (for now), pay fee on any non-zero order, mark at the close.\"\"\"\n    p = Portfolio(cash0)\n    equity = []\n    for t in range(len(bars)):\n        target = decide(bars.iloc[: t + 1])\n        price = bars[\"close\"].iloc[t]\n        order = target - p.shares\n        p.fill(order, price, fee if order != 0 else 0.0)\n        equity.append(p.equity(price))\n    return equity\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    \"\"\"Five hand-made daily bars, Monday 4 to Friday 8 March 2024.\"\"\"\n    idx = pd.bdate_range(\"2024-03-04\", periods=5)\n    return pd.DataFrame({\"open\": [99.5, 100.4, 102.2, 100.6, 99.4],\n                         \"high\": [100.6, 102.5, 102.4, 101.0, 103.3],\n                         \"low\": [99.2, 100.1, 100.7, 98.8, 99.1],\n                         \"close\": [100.0, 102.0, 101.0, 99.0, 103.0],\n                         \"volume\": [2.1e6, 1.8e6, 2.4e6, 2.0e6, 1.9e6]}, index=idx)\n\ndef up_day(history):\n    \"\"\"The first rule: long 1 when today's close beats yesterday's, else 0.\"\"\"\n    c = history[\"close\"]\n    return 1 if len(c) > 1 and c.iloc[-1] > c.iloc[-2] else 0\n\ndef decide_mom(history, lookback):\n    \"\"\"The sign of the lookback-day return, seen from the last bar of history.\"\"\"\n    c = history[\"close\"]\n    if len(c) <= lookback:\n        return 0\n    return int(np.sign(c.iloc[-1] / c.iloc[-1 - lookback] - 1))\n\nclass Spy:\n    \"\"\"A decide() that records what it was shown and always returns 0.\"\"\"\n    def __init__(self):\n        self.lens, self.last = [], []\n    def __call__(self, history):\n        self.lens.append(len(history))\n        self.last.append(str(history.index[-1].date()))\n        return 0\n\ndef run_loop(bars, decide):\n    targets = []\n    for t in range(len(bars)):\n        history = bars.iloc[: t + 1]\n        targets.append(decide(history))\n    return targets\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        if qty == 0:\n            return\n        self.cash -= qty * price + cost\n        self.shares += qty\n\n    def equity(self, price):\n        return self.cash + self.shares * price\n\ndef identity_holds(fn, bars, decide, cash0, fee):\n    \"\"\"Equity change each bar = shares held into the bar x price change - fee on a trade.\"\"\"\n    eq = fn(bars, decide, cash0, fee)\n    tg = run_loop(bars, decide)\n    c = bars[\"close\"].tolist()\n    prev_t, prev_e, prev_c = 0, cash0, c[0]\n    for t in range(len(bars)):\n        want = prev_t * (c[t] - prev_c) - (fee if tg[t] != prev_t else 0.0)\n        if abs((eq[t] - prev_e) - want) > 1e-6:\n            return False\n        prev_t, prev_e, prev_c = tg[t], eq[t], c[t]\n    return True\n",
+        "examples": [
+          {
+            "call": "[round(x, 2) for x in run_loop_with_portfolio(hand_bars(), lambda h: 100 * up_day(h), 20_000)]",
+            "expect": "[20000.0, 20000.0, 19900.0, 19900.0, 19900.0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(x, 2) for x in run_loop_with_portfolio(hand_bars(), lambda h: 100 * up_day(h), 20_000)]",
+            "expect": "[20000.0, 20000.0, 19900.0, 19900.0, 19900.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(x, 2) for x in run_loop_with_portfolio(hand_bars(), lambda h: 100 * up_day(h), 20_000, 1.0)]",
+            "expect": "[20000.0, 19999.0, 19898.0, 19898.0, 19897.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(x, 2) for x in run_loop_with_portfolio(hand_bars(), lambda h: 0, 5_000, 1.0)]",
+            "expect": "[5000.0, 5000.0, 5000.0, 5000.0, 5000.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "spy = Spy(); run_loop_with_portfolio(hand_bars(), spy, 1_000)",
+            "call": "spy.lens",
+            "expect": "[1, 2, 3, 4, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "round(run_loop_with_portfolio(make_bars(60), lambda h: 100 * decide_mom(h, 3), 10_000)[-1], 2)",
+            "expect": "10495.02",
+            "compare": "equal"
+          },
+          {
+            "call": "round(run_loop_with_portfolio(make_bars(60), lambda h: 100 * decide_mom(h, 3), 10_000, 1.0)[-1], 2)",
+            "expect": "10481.02",
+            "compare": "equal"
+          },
+          {
+            "call": "identity_holds(run_loop_with_portfolio, make_bars(80), lambda h: 50 * decide_mom(h, 5), 10_000, 2.0)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "len(run_loop_with_portfolio(make_bars(30), lambda h: 0, 1_000))",
+            "expect": "30",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: `hand_bars()` with the up-day rule (with and without a fee), a rule that never trades, a spy that fails if any call sees a bar after `t`, the 3-day momentum rule at 100 shares on `make_bars(60)` (final equity to 2 places, with and without a £1 fee), and `identity_holds`: every bar's change in equity must equal the shares held into it times the price change, less the fee on a trade. All helpers are already defined. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "feedback": {
+        "correct": "The level's engine: 14 trades on `make_bars(60)`, each £1 dearer with the fee.",
+        "generic": "Not quite right. Each bar: target from `decide(bars.iloc[: t + 1])`, order = target − shares, fill at the close with the fee only when the order is not 0, then mark.",
+        "byKey": {
+          "test-2": "With a fee, only bars that trade pay it. Days with an order of 0 must not be charged.",
+          "test-7": "Some bar's equity change does not match the holding times the price move, less the fee. Check that you mark at this bar's close after the fill."
+        }
+      },
+      "explain": {
+        "text": "Each bar does four things in order: decide on the history, compute the order, fill and pay, then mark. With fills at the close and no fee, a trade never changes equity, so the P&L comes only from the shares held into each bar. On `make_bars(60)` the rule trades 14 times, so the £1 fee costs exactly £14."
+      }
+    },
+    {
+      "id": "h-repair",
+      "difficulty": 4,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "Some problems `validate_bars` finds can be repaired safely. Sort by date (with a stable sort), drop repeated dates keeping the last row, the later print, and fill a missing close from the day before, but only when it is a lone gap between two known closes. A run of two or more stays missing. Return the repaired copy and the list of actions taken, in that order, without changing the input.",
+      "question": "Complete `validate_and_repair(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef validate_and_repair(df):\n    \"\"\"Return (repaired copy, list of actions taken, in order).\"\"\"\n    out = df.copy()\n    actions = []\n    ...   # \"sorted\": sort by date if needed, keeping duplicates in their order\n    ...   # \"dropped-duplicates\": keep the last row of each repeated date\n    ...   # \"filled-close\": fill a lone missing close from the day before\n    return out, actions\n",
+        "solution": "import pandas as pd\n\ndef validate_and_repair(df):\n    \"\"\"Return (repaired copy, list of actions taken, in order).\"\"\"\n    out = df.copy()\n    actions = []\n    if not out.index.is_monotonic_increasing:\n        out = out.sort_index(kind=\"stable\")\n        actions.append(\"sorted\")\n    dup = out.index.duplicated(keep=\"last\")\n    if dup.any():\n        out = out[~dup]\n        actions.append(\"dropped-duplicates\")\n    c = out[\"close\"]\n    lone = c.isna() & c.shift(1).notna() & c.shift(-1).notna()\n    if lone.any():\n        out.loc[lone, \"close\"] = c.shift(1)[lone]\n        actions.append(\"filled-close\")\n    return out, actions\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef messy(*kinds, n=12):\n    \"\"\"make_bars(n) with planted problems: \"unsorted\", \"duplicate\", \"lone-nan\", \"two-nan\".\"\"\"\n    df = make_bars(n)\n    if \"lone-nan\" in kinds:\n        df.iloc[4, df.columns.get_loc(\"close\")] = np.nan\n    if \"two-nan\" in kinds:\n        df.iloc[7:9, df.columns.get_loc(\"close\")] = np.nan\n    if \"duplicate\" in kinds:\n        extra = df.iloc[[2]].copy()\n        extra[\"close\"] = 123.45            # the later, corrected print of the same day\n        df = pd.concat([df, extra])\n    if \"unsorted\" in kinds:\n        df = df.iloc[[1, 0] + list(range(2, len(df)))]\n    return df\n",
+        "examples": [
+          {
+            "call": "validate_and_repair(make_bars(12))[1]",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "validate_and_repair(make_bars(12))[1]",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_and_repair(messy('unsorted'))[1]",
+            "expect": "['sorted']",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_and_repair(messy('duplicate'))[1]",
+            "expect": "['sorted', 'dropped-duplicates']",
+            "compare": "equal"
+          },
+          {
+            "setup": "out, acts = validate_and_repair(messy('duplicate'))",
+            "call": "(len(out), round(float(out['close'].iloc[2]), 2))",
+            "expect": "(12, 123.45)",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_and_repair(messy('lone-nan'))[1]",
+            "expect": "['filled-close']",
+            "compare": "equal"
+          },
+          {
+            "setup": "out, acts = validate_and_repair(messy('lone-nan'))",
+            "call": "round(float(out['close'].iloc[4]), 6) == round(float(out['close'].iloc[3]), 6)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "out, acts = validate_and_repair(messy('two-nan'))",
+            "call": "(acts, int(out['close'].isna().sum()))",
+            "expect": "([], 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "validate_and_repair(messy('unsorted', 'duplicate', 'lone-nan'))[1]",
+            "expect": "['sorted', 'dropped-duplicates', 'filled-close']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = messy('lone-nan'); validate_and_repair(df)",
+            "call": "int(df['close'].isna().sum())",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "out, acts = validate_and_repair(messy('unsorted', 'duplicate', 'lone-nan', 'two-nan'))",
+            "call": "bool(out.index.is_monotonic_increasing and out.index.is_unique)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests on `messy(...)`, which is already defined: copies of `make_bars(12)` with rows out of order, a repeated date whose later print has close 123.45, a lone missing close and a run of two. The tests read the actions list, the repaired values and the input frame, which must be left as it was. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "feedback": {
+        "correct": "Three repairs, each recorded, and the input untouched.",
+        "generic": "Not quite right. Sort stably, drop duplicates with `keep=\"last\"`, then fill only closes whose neighbours are both known.",
+        "byKey": {
+          "test-4": "The repeated date kept the wrong row. Sort with `kind=\"stable\"` and use `duplicated(keep=\"last\")`, so the later print survives.",
+          "test-7": "A run of two missing closes was filled. Only a lone gap may be filled; a longer one stays missing for `validate_bars` to flag.",
+          "test-9": "The input frame changed. Work on `df.copy()`."
+        }
+      },
+      "explain": {
+        "text": "Each repair is safe only within limits: a stable sort keeps the later print later, and one day's missing close can borrow yesterday's without inventing a trend. A longer gap is left for a person to look at. The actions list goes into the results note's Data section."
+      }
+    },
+    {
+      "id": "h-order-bar",
+      "difficulty": 3,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "You are writing the engine's README. It describes what happens on one bar of the event loop, from the bar arriving to the books being marked.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Receive bar $t$ and append it to the history"
+          },
+          {
+            "id": "s2",
+            "text": "Call `decide(bars.iloc[: t + 1])` for the signal"
+          },
+          {
+            "id": "s3",
+            "text": "Size the signal into a target in whole shares, with limits"
+          },
+          {
+            "id": "s4",
+            "text": "Order = target − shares held"
+          },
+          {
+            "id": "s5",
+            "text": "Fill the order and pay its cost (at the next open, from lesson 5)"
+          },
+          {
+            "id": "s6",
+            "text": "Update cash and shares, then mark equity at the close"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ]
+      },
+      "feedback": {
+        "correct": "Bar, signal, target, order, fill, mark.",
+        "generic": "Not quite right. Each step needs the output of the one before."
+      },
+      "explain": {
+        "text": "Nothing can decide before the bar exists, size before there is a signal, or trade before there is a target. Marking comes last because it needs both the fill and the close. This list is the README's \"how it works\" paragraph."
+      }
+    },
+    {
+      "id": "h-traded",
+      "difficulty": 4,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "`max_units = 5_000`. Signals over seven days, starting flat: NaN, NaN, 0.4, 0.4, −0.6, 1.3, 0.",
+      "question": "How many shares are traded in total, buys and sales together?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "20,000: targets 0, 0, 2,000, 2,000, −3,000, 5,000, 0; orders 2,000, −5,000, +8,000, −5,000.",
+        "wrong": [
+          {
+            "id": "noclip",
+            "value": 23000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "signed",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "noflip",
+            "value": 17000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "20,000 shares across four orders.",
+        "generic": "Not quite right. Turn each signal into a target (NaN is 0, cap at ±1), then add the sizes of the orders.",
+        "byKey": {
+          "noclip": "You sized 1.3 as 6,500 shares. The target is capped at 5,000.",
+          "signed": "That adds the orders with their signs, which gives the final holding of 0.",
+          "noflip": "A move from −3,000 to +5,000 is a buy of 8,000, not 5,000."
+        }
+      },
+      "explain": {
+        "text": "The targets are 0, 0, 2,000, 2,000, −3,000, 5,000 and 0, with 1.3 capped at 5,000. The orders are 2,000, 0, −5,000, +8,000 and −5,000. Their sizes add to 20,000 shares, which is what costs will be charged on."
+      }
+    },
+    {
+      "id": "h-peek-multi",
+      "difficulty": 4,
+      "skills": [
+        "bt-design",
+        "bt-bias"
+      ],
+      "prose": "Six columns a colleague computed from `close` for a daily rule.",
+      "question": "Which use data from after bar $t$ in their value at bar $t$? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "centre",
+            "text": "`close.rolling(20, center=True).mean()`",
+            "correct": true
+          },
+          {
+            "id": "shift",
+            "text": "`close.pct_change().shift(-1)`",
+            "correct": true
+          },
+          {
+            "id": "z",
+            "text": "`(close - close.mean()) / close.std()`",
+            "correct": true
+          },
+          {
+            "id": "ewm",
+            "text": "`close.ewm(span=10).mean()`",
+            "why": "An exponential average weights bars 0 to $t$ only. It looks back."
+          },
+          {
+            "id": "pct",
+            "text": "`close.pct_change(5)`",
+            "why": "The 5-day return ends at bar $t$. It is the signal you built."
+          },
+          {
+            "id": "max",
+            "text": "`close.expanding().max()`",
+            "why": "The running maximum covers bars 0 to $t$, everything so far and nothing after."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A centred window, a negative shift and a full-sample statistic.",
+        "generic": "Not quite right. For each column, ask whether bar $t$'s value could change if a later bar changed."
+      },
+      "explain": {
+        "text": "The centred window reads ten bars ahead and `shift(-1)` reads one. The z-score uses the mean and sd of the whole series, including every future bar. Lesson 8 builds a test that catches all three."
+      }
+    },
+    {
+      "id": "h-ledger",
+      "difficulty": 3,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "A £25,000 account. Day 1: buy 300 shares at £40.20, £2 fee; close £40.50. Day 2: sell 500 at £41.00, £2 fee; close £40.60.",
+      "question": "What is the equity at the end of day 2, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25316,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "2 decimal places",
+        "accept": "£25,316.00: cash 33,436 and −200 shares at £40.60.",
+        "wrong": [
+          {
+            "id": "cash",
+            "value": 33436,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "fill",
+            "value": 25236,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "long",
+            "value": 41556,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£25,316: the sale crossed through zero into a 200-share short.",
+        "generic": "Not quite right. Day 1 cash 12,938; day 2 adds 20,500 and takes the £2 fee, and shares go to −200.",
+        "byKey": {
+          "cash": "That is the cash. The account is short 200 shares, worth −£8,120 at the close.",
+          "fill": "That marks the short at the fill price, £41.00. Use the close, £40.60.",
+          "long": "You added the 200 shares instead of subtracting them: the account owes them."
+        }
+      },
+      "explain": {
+        "text": "Day 1 cash: 25,000 − 12,060 − 2 = 12,938. Day 2 cash: 12,938 + 20,500 − 2 = 33,436, with shares 300 − 500 = −200. Equity is 33,436 − 200 × 40.60 = £25,316."
+      }
+    },
+    {
+      "id": "h-longform",
+      "difficulty": 5,
+      "skills": [
+        "bt-design",
+        "bt-bias"
+      ],
+      "kind": "longform",
+      "prompt": "A colleague's notebook computes positions with\n\n```python\npos = (df[\"close\"].pct_change().shift(-1) > 0).astype(int)\nstrat = pos * df[\"close\"].pct_change().shift(-1)\n```\n\nand reports an annualised Sharpe of 9 for a long-or-flat daily rule. Write them a short note: what is wrong, which layer of the engine the bug is in, the test that would have caught it, and the one sentence you would add to the README.",
+      "model": "**What is wrong.** `df[\"close\"].pct_change().shift(-1)` at row $t$ is the return from $t$ to $t + 1$: tomorrow's return, not known at $t$'s close. So `pos` is 1 exactly on the days before the price rises, and `strat` collects only up days. It is perfect foresight, and a Sharpe of 9 for a simple daily rule says so; the course treats any simple rule above 2 as a bug until proved otherwise.\n\n**Which layer.** The signal layer. The data are fine and the sizing and orders follow mechanically; the opinion itself is built from a future value. The P&L line is consistent with it, which is why the result looks clean.\n\n**The test.** Run the same rule through the event loop, where `decide` sees only `bars.iloc[: t + 1]`, and assert that the targets match the vectorised ones bar for bar. Here the loop cannot compute tomorrow's return at all, and the targets disagree on hundreds of days. A second check: compute the positions on the data up to a cut date and on the full data; an honest rule gives the same positions before the cut. With `shift(-1)` the last row before the cut changes.\n\n**The README sentence.** \"Every position at bar $t$ uses only bars 0 to $t$; `tests/test_no_peek.py` checks that the vectorised positions equal the event loop's and do not change when later bars are removed.\"\n\n**The honest version.** `pos = (df[\"close\"].pct_change() > 0).astype(int)` held over the next day, `strat = pos.shift(1) * df[\"close\"].pct_change()`. On the course's seeded data the honest sign rule has a Sharpe below 1.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Says that `shift(-1)` puts tomorrow's return into today's position: the rule trades on the answer"
+        },
+        {
+          "points": 1,
+          "text": "Treats a Sharpe of 9 for a simple daily rule as a sign of a bug, not of skill"
+        },
+        {
+          "points": 2,
+          "text": "Places the bug in the signal layer and says the other layers only pass it on"
+        },
+        {
+          "points": 2,
+          "text": "Names an agreement test against the event loop, or a truncation test, that would fail on this code"
+        },
+        {
+          "points": 2,
+          "text": "Gives a README sentence stating that positions use only bars up to $t$ and naming the test"
+        },
+        {
+          "points": 1,
+          "text": "Gives the corrected code, with the position applied to the next day's return"
+        }
+      ]
+    },
+    {
+      "id": "h-cache-key",
+      "difficulty": 3,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "Your dated cache writes `AAPL_2019-01-02_2023-10-31.csv`. A colleague now downloads with `auto_adjust=True` some days and `auto_adjust=False` on others, into the same folder.",
+      "question": "What should change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Add the adjust setting to the key, so raw and adjusted prices get separate files",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: ticker and dates already identify the data",
+            "why": "The same ticker and dates return different prices with and without adjustment. A key must name every input that changes the answer."
+          },
+          {
+            "id": "time",
+            "text": "Add today's date to the key",
+            "why": "Then no later run finds its file, and the cache never hits."
+          },
+          {
+            "id": "clear",
+            "text": "Clear the cache before every run",
+            "why": "That throws the cache away and brings back the rate limits."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every input that changes the data goes in the key.",
+        "generic": "Not quite right. Ask what makes two requests return different prices."
+      },
+      "explain": {
+        "text": "Raw and adjusted closes differ by every dividend and split since, so they are different data. With `auto_adjust` in the key each version gets its own file. Too little in the key serves the wrong prices silently."
+      }
+    }
+  ]
+}

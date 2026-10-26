@@ -108,7 +108,7 @@ let queue = Promise.resolve();
 const pchs = new Map(); // head text -> Uint8Array, most recent last, at most 4
 const serial = (fn) => { const p = queue.then(fn, fn); queue = p.catch(() => {}); return p; };
 const dec = new TextDecoder();
-const collector = () => { const parts = []; return { write: (b) => { if (b && b.length) parts.push(dec.decode(b, { stream: true })); }, text: () => parts.join('') + dec.decode() }; };
+const collector = () => { const parts = []; return { write: (b) => { if (b && b.length) parts.push(dec.decode(b, { stream: true })); }, text: () => parts.join('') + dec.decode(), peek: () => parts.join('') }; };
 
 /* The package's virtual file system copies the whole file on every write, so writing a 13 MB precompiled header
    takes seconds of copying. For the pinned version the write is replaced, at load, by one that grows a buffer
@@ -163,13 +163,31 @@ const buildPch = async (head) => {
   return r.ok && r.files['zq_pch.h.pch'] instanceof Uint8Array ? r.files['zq_pch.h.pch'] : null;
 };
 
+/* Pass 7: flags from the page (items 402, 452, 476: -W..., -O0 to -O3, -D, -U, -ffast-math, -std), checked again here;
+   extra source files (item 403) compiled and linked with main.cpp; a precompiled-header compile that fails because a
+   header cannot be opened is retried without the header (item 471) */
+const FLAG_OK = /^-(W[\w=+-]*|O[0-3sz]|D[A-Za-z_]\w*(=[\w.+-]*)?|U[A-Za-z_]\w*|f(no-)?fast-math|std=c\+\+(14|17|20))$/;
+const argsFor = (flags) => {
+  const extra = (flags || []).map(String).filter((f) => FLAG_OK.test(f));
+  let base = [...FLAGS];
+  const o = extra.filter((f) => /^-O/.test(f)).pop(), std = extra.filter((f) => /^-std=/.test(f)).pop();
+  if (o) base = base.map((f) => (/^-O/.test(f) ? o : f));
+  if (std) base = base.map((f) => (/^-std=/.test(f) ? std : f));
+  return [...base, ...extra.filter((f) => !/^-O|^-std=/.test(f))];
+};
 const compile = async (m) => {
   const t0 = performance.now();
-  const pch = m.head ? pchs.get(m.head) : null;
-  const files = { 'main.cpp': pch ? m.srcPch : m.src, 'zq_rt.o': rtObj };
-  const args = [...FLAGS];
-  if (pch) { files['zq_pch.h'] = m.head; files['zq_pch.h.pch'] = pch; args.push('-include-pch', 'zq_pch.h.pch'); }
-  const r = await cc([...args, 'main.cpp', 'zq_rt.o', '-o', 'main.wasm', ...LINK], files);
+  const extraFiles = m.files && typeof m.files === 'object' ? Object.entries(m.files).filter(([k]) => /^[\w.-]+\.(cpp|cc|h|hpp)$/.test(k) && k !== 'main.cpp') : [];
+  let pch = m.head ? pchs.get(m.head) : null;
+  const run = async (usePch) => {
+    const files = { 'main.cpp': usePch ? m.srcPch : m.src, 'zq_rt.o': rtObj };
+    extraFiles.forEach(([k, v]) => { files[k] = String(v); });
+    const args = argsFor(m.flags);
+    if (usePch) { files['zq_pch.h'] = m.head; files['zq_pch.h.pch'] = usePch; args.push('-include-pch', 'zq_pch.h.pch'); }
+    return cc([...args, 'main.cpp', ...extraFiles.filter(([k]) => /\.(cpp|cc)$/.test(k)).map(([k]) => k), 'zq_rt.o', '-o', 'main.wasm', ...LINK], files);
+  };
+  let r = await run(pch);
+  if (pch && !r.ok && /cannot open file|Out of memory/.test(r.diag || '')) { pchs.delete(m.head); pch = null; r = await run(null); }
   const wasm = r.ok ? r.files['main.wasm'] : null;
   const ms = Math.round(performance.now() - t0);
   if (wasm instanceof Uint8Array) {
@@ -181,7 +199,7 @@ const compile = async (m) => {
 /* ---------- Runner: a minimal WASI preview 1 ---------- */
 class WasiExit { constructor(code) { this.code = code; } }
 const CAP = 200000;
-const runOne = (mod, argv, stdin) => {
+const runOne = (mod, argv, stdin, live) => {
   const enc = new TextEncoder();
   const input = enc.encode(stdin || '');
   let inPos = 0, mem = null;
@@ -202,7 +220,7 @@ const runOne = (mod, argv, stdin) => {
       const m8 = u8();
       const total = iov(ptr, n, (p, len) => {
         const chunk = m8.slice(p, p + len);
-        if (fd === 1) { if (outN < CAP) out.write(chunk.subarray(0, Math.max(0, CAP - outN))); outN += len; } else { if (errN < CAP) err.write(chunk.subarray(0, Math.max(0, CAP - errN))); errN += len; }
+        if (fd === 1) { if (outN < CAP) out.write(chunk.subarray(0, Math.max(0, CAP - outN))); outN += len; if (live) live(out); } else { if (errN < CAP) err.write(chunk.subarray(0, Math.max(0, CAP - errN))); errN += len; }
         return len;
       });
       dv().setUint32(nw, total, true); return 0;
@@ -305,7 +323,10 @@ self.onmessage = async (e) => {
       const mod = await WebAssembly.compile(m.wasm);
       (m.cases || []).forEach((c, i) => {
         self.postMessage({ type: 'case', id: m.id, i, phase: 'start' });
-        const r = runOne(mod, ['main', ...(c.argv || []).map(String)], c.stdin == null ? '' : String(c.stdin));
+        /* item 369: what the case has printed so far is posted every 100 ms, so a timeout can still show it */
+        let last = 0;
+        const live = (col) => { const t = performance.now(); if (t - last < 100) return; last = t; self.postMessage({ type: 'case', id: m.id, i, phase: 'out', out: col.peek().slice(-20000) }); };
+        const r = runOne(mod, ['main', ...(c.argv || []).map(String)], c.stdin == null ? '' : String(c.stdin), live);
         self.postMessage({ type: 'case', id: m.id, i, phase: 'end', ...r });
       });
     } catch (err) {

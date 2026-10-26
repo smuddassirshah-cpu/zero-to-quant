@@ -118,35 +118,35 @@
         "rg-fit"
       ],
       "title": "A hedge ratio",
-      "prose": "A desk holds £2m of a stock and hedges it with index futures. In daily returns, the stock's sd is 1.5%, the index's 1.0%, and their correlation 0.8.",
+      "prose": "A desk holds £5m of a stock and hedges it with index futures. In daily returns, the stock's sd is 1.8%, the index's 1.2%, and their correlation 0.6.",
       "question": "The hedge ratio is the slope of the stock's returns on the index's. How much of the future should the desk sell, in £m?",
       "widget": {
         "kind": "numeric",
-        "answer": 2.4,
+        "answer": 4.5,
         "tol": {
           "abs": 0.01
         },
         "unit": "£m",
         "label": "Futures to sell in £ millions",
-        "accept": "£2.4m: slope $0.8 \\times 1.5/1.0 = 1.2$, times £2m",
+        "accept": "£4.5m: slope $0.6 \\times 1.8/1.2 = 0.9$, times £5m",
         "wrong": [
           {
             "id": "no-r",
-            "value": 3.0,
+            "value": 7.5,
             "tol": {
               "abs": 0.01
             }
           },
           {
             "id": "flipped",
-            "value": 1.0667,
+            "value": 2.0,
             "tol": {
-              "abs": 0.005
+              "abs": 0.01
             }
           },
           {
             "id": "r-only",
-            "value": 1.6,
+            "value": 3.0,
             "tol": {
               "abs": 0.01
             }
@@ -154,16 +154,16 @@
         ]
       },
       "feedback": {
-        "correct": "Each 1% index move comes with 1.2% in the stock on average. So sell 1.2 times £2m.",
+        "correct": "Each 1% index move comes with 0.9% in the stock on average. So sell 0.9 times £5m.",
         "generic": "The least squares slope is $b = r\\,s_y/s_x$. Multiply the position by it.",
         "byKey": {
           "no-r": "You used the ratio of the sds, 1.5. The slope also needs the correlation: $r\\,s_y/s_x$.",
-          "flipped": "You divided the index's sd by the stock's. That is the slope of the index on the stock.",
+          "flipped": "You divided the index's sd by the stock's, giving 0.4. That is the slope of the index on the stock.",
           "r-only": "You used the correlation alone. It has no units; the slope rescales it by $s_y/s_x$."
         }
       },
       "explain": {
-        "text": "The slope is $b = r\\,s_y/s_x = 0.8 \\times 1.5/1.0 = 1.2$. So £2m of stock moves like £2.4m of index. Selling £2.4m of futures cancels that market exposure."
+        "text": "The slope is $b = r\\,s_y/s_x = 0.6 \\times 1.8/1.2 = 0.9$. So £5m of stock moves like £4.5m of index, despite its larger sd. Selling £4.5m of futures cancels that market exposure."
       }
     },
     {
@@ -215,7 +215,7 @@
       },
       "feedback": {
         "correct": "$(-1.5)^2 + 2^2 = 6.25$, well below A's 16. A little bias bought a large cut in variance.",
-        "generic": "MSE is variance plus squared bias: $E[(\\hat\\theta - \\theta)^2] = \\mathrm{Var}(\\hat\\theta) + \\mathrm{bias}^2$.",
+        "generic": "MSE is variance plus squared bias: $E[(\\hat\\theta - \\theta)^2] = \\operatorname{Var}(\\hat\\theta) + \\mathrm{bias}^2$.",
         "byKey": {
           "var-only": "You kept only the variance, $2^2 = 4$. The MSE adds the squared bias too.",
           "bias-only": "You kept only the squared bias. B's own spread, $2^2$, counts as well.",
@@ -1187,7 +1187,7 @@
         }
       },
       "explain": {
-        "text": "The gap is 0.10% a day, and its standard error is 0.1235. So $t = 0.81$: no evidence that A beats B. A gap of a tenth of a percent is small beside daily sds of 1% to 1.5%."
+        "text": "The gap is 0.10% a day, and its standard error is 0.1235. So $t = 0.81$: no evidence that A beats B. A gap of a tenth of a per cent is small beside daily sds of 1% to 1.5%."
       }
     },
     {
@@ -1233,6 +1233,77 @@
       },
       "explain": {
         "text": "Each window shares 11 of its 12 months with the next, and $d \\approx 2(1 - \\hat\\rho)$ gives $\\hat\\rho \\approx 0.93$. Usual and HC1 errors assume independence, so they come out too small. HAC errors with 11 or more lags, or 30 non-overlapping years, give an honest $t$."
+      }
+    },
+    {
+      "id": "s-summary-dw",
+      "difficulty": 3,
+      "skills": [
+        "rg-diagnostics"
+      ],
+      "title": "Reading the summary",
+      "prose": "A fund holds illiquid loans and marks them once a month. Its 60 monthly returns, in %, are regressed on the market and a credit factor. This is the `summary()`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "res.summary(), fund on mkt and credit (narrowed to fit)",
+          "lines": [
+            "                   OLS Regression Results",
+            "============================================================",
+            "Dep. Variable:             fund  R-squared:            0.635",
+            "Model:                      OLS  Adj. R-squared:       0.622",
+            "Method:           Least Squares  F-statistic:          49.56",
+            "No. Observations:            60  Prob (F-statistic): 3.38e-13",
+            "Df Residuals:                57  Log-Likelihood:     -94.381",
+            "Df Model:                     2  AIC:                  194.8",
+            "Covariance Type:      nonrobust  BIC:                  201.0",
+            "============================================================",
+            "           coef  std err       t  P>|t|   [0.025  0.975]",
+            "const    0.6507    0.156   4.175  0.000    0.339   0.963",
+            "mkt      0.3410    0.036   9.360  0.000    0.268   0.414",
+            "credit   0.4456    0.095   4.701  0.000    0.256   0.635",
+            "============================================================",
+            "Omnibus:                  3.646  Durbin-Watson:        0.788",
+            "Prob(Omnibus):            0.162  Jarque-Bera (JB):     1.897",
+            "Skew:                     0.114  Prob(JB):             0.387",
+            "Kurtosis:                 2.159  Cond. No.              4.37",
+            "============================================================"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the line that tells you whether one month's residual tends to repeat the last.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l16"
+        ],
+        "max": 1,
+        "countWord": "lines"
+      },
+      "feedback": {
+        "correct": "Durbin-Watson is 0.788, far below 2: the residuals echo from month to month.",
+        "generic": "Not quite right. Find the statistic that compares each residual with the one before it.",
+        "byKey": {
+          "l17": "Prob(Omnibus) and Jarque-Bera test whether the residuals look normal. They say nothing about order in time.",
+          "l6": "Prob (F-statistic) tests whether the factors matter jointly. It assumes independent months; it does not check them.",
+          "l9": "Covariance Type says these errors assume independent months. It states the assumption but does not test it.",
+          "l13": "That row tests the market's coefficient. It does not check how the residuals run in time.",
+          "l18": "Skew and Prob(JB) describe the shape of the residuals, not how one month follows the last."
+        }
+      },
+      "explain": {
+        "text": "Durbin-Watson is about $2(1 - \\rho)$, so $d = 0.788$ means a residual autocorrelation near 0.6. Smoothed marks on illiquid loans do exactly this. The nonrobust errors assume independent months, so refit with HAC errors before trusting any $t$.",
+        "canvas": {
+          "shade": {
+            "dw": [
+              "l16"
+            ]
+          },
+          "tone": {
+            "l9": "muted"
+          }
+        }
       }
     },
     {
@@ -1553,7 +1624,7 @@
         "ht-multiple"
       ],
       "title": "A Sharpe ratio, tested and deflated",
-      "prose": "A due-diligence tool takes a fund's monthly returns, in %, and the number of strategies tried, $N$. It reports four numbers: the annualised Sharpe ratio, its $t = \\mathrm{SR}\\sqrt T$ with $T$ in years, the one-sided p-value, and the Bonferroni p-value $\\min(1, Np)$.",
+      "prose": "A due-diligence tool takes a fund's monthly returns, in %, and the number of strategies tried, $N$. It reports four numbers. They are the annualised Sharpe ratio, its $t = \\mathrm{SR}\\sqrt T$ with $T$ in years, the one-sided p-value, and the Bonferroni p-value $\\min(1, Np)$.",
       "question": "Complete `sharpe_report` so it returns the four numbers, each rounded to 6 places.",
       "widget": {
         "kind": "code",
@@ -1620,7 +1691,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 8 hidden tests. Each list is rounded to 6 places and compared with math.isclose. numpy is available but loads slowly; pure Python with `math.erf` is enough here."
+        "how": "Check runs 8 hidden tests. Each list is rounded to 6 places and compared with `math.isclose`. NumPy is available but loads slowly; pure Python with `math.erf` is enough here."
       },
       "feedback": {
         "correct": "Sharpe from the monthly mean and sd, $t$ from the record's length, then the tail and its Bonferroni penalty.",
@@ -1700,7 +1771,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 6 hidden tests. Each list is rounded to 6 places and compared with values from statsmodels, using math.isclose. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 6 hidden tests. Each list is rounded to 6 places and compared with values from statsmodels, using `math.isclose`. The first run loads NumPy, which takes a few seconds."
       },
       "feedback": {
         "correct": "Coefficients from the normal equations, errors from $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$, and $\\bar R^2$ charged for each factor.",
@@ -1790,7 +1861,7 @@
       "title": "Judging a track record",
       "kind": "longform",
       "prompt": "A manager pitches her fund to your investment committee. Over 36 months its returns averaged 1.0% a month, with sample sd 3.0%. A regression on the market gives a monthly alpha of 0.6%, standard error 0.4%, and a beta of 0.9. Late in the meeting she mentions it was the best of 12 strategies her firm ran over that period.\n\n(a) Find the annualised Sharpe ratio and its $t$ statistic. Give the one-sided p-value.\n\n(b) Find the alpha's $t$ statistic and an approximate 95% interval for the monthly alpha. Say what each means.\n\n(c) Allow for the 12 strategies. The one-sided Bonferroni bar is $z_{1 - 0.05/12} = 2.64$.\n\n(d) If the Sharpe ratio held, how long a record would clear that bar?\n\n(e) Say what you would ask for before investing, and why.\n\nYou may use $\\Phi(2) = 0.9772$ and the 5% two-sided $t$ cut-off of 2.03 for 34 degrees of freedom.",
-      "model": "**(a)** The monthly Sharpe ratio is $1.0/3.0 = 0.333$. Annualised, it is $0.333\\sqrt{12} = 1.15$. The record is $T = 3$ years, so $t = 1.15\\sqrt 3 = 2.00$. That equals $\\bar r/(s/\\sqrt n) = 1.0/(3.0/6)$, as it should. The one-sided p-value is $1 - \\Phi(2) = 0.023$. This assumes independent monthly returns and uses the normal approximation.\n\n**(b)** $t_\\alpha = 0.6/0.4 = 1.5$. The 95% interval is $0.6 \\pm 2.03 \\times 0.4$, about $-0.21\\%$ to $1.41\\%$ a month. It contains 0, so the data cannot rule out zero alpha. Much of the 1% a month is market exposure, with beta 0.9. Not significant is not the same as no skill: 36 months give the test little power.\n\n**(c)** Picking the best of 12 inflates the evidence. The Bonferroni p-value is $12 \\times 0.023 = 0.27$. Equivalently, $t = 2.00$ falls short of the bar of 2.64. If all 12 had no edge, the chance that at least one reached $p \\le 0.023$ is $1 - 0.977^{12} = 0.24$. The rule of thumb for the best of $N$ noise strategies, $\\sqrt{2\\ln N}/\\sqrt T = \\sqrt{2\\ln 12}/\\sqrt 3 = 1.29$, is above her 1.15. Luck alone explains this record.\\n\\n**(d)** We need $1.15\\sqrt T \\ge 2.64$, so $T \\ge (2.64/1.15)^2 = 5.2$ years. That is about two more years of the same Sharpe ratio.\\n\\n**(e)** Ask for:\n- the full records of all 12 strategies, and any that were closed, to see the whole search;\n- the live record since the fund was chosen, which is out of sample;\n- audited returns net of fees and costs, since the pitch figures may be gross;\n- how many parameters were tuned, which adds to the hidden number of tries;\n- a regression on more factors, such as size, value and momentum, to see if the alpha survives;\n- the residuals' autocorrelation, since smoothed marks on illiquid assets inflate the Sharpe ratio and need HAC errors.\n\nVerdict: interesting but unproven. The record is consistent with luck once the search is counted.",
+      "model": "**(a)** The monthly Sharpe ratio is $1.0/3.0 = 0.333$. Annualised, it is $0.333\\sqrt{12} = 1.15$. The record is $T = 3$ years, so $t = 1.15\\sqrt 3 = 2.00$. That equals $\\bar r/(s/\\sqrt n) = 1.0/(3.0/6)$, as it should. The one-sided p-value is $1 - \\Phi(2) = 0.023$. This assumes independent monthly returns and uses the normal approximation.\n\n**(b)** $t_\\alpha = 0.6/0.4 = 1.5$. The 95% interval is $0.6 \\pm 2.03 \\times 0.4$, about $-0.21\\%$ to $1.41\\%$ a month. It contains 0, so the data cannot rule out zero alpha. Much of the 1% a month is market exposure, with beta 0.9. Not significant is not the same as no skill: 36 months give the test little power.\n\n**(c)** Picking the best of 12 inflates the evidence. The Bonferroni p-value is $12 \\times 0.023 = 0.27$. Equivalently, $t = 2.00$ falls short of the bar of 2.64. If all 12 had no edge, the chance that at least one reached $p \\le 0.023$ is $1 - 0.977^{12} = 0.24$. The rule of thumb for the best of $N$ noise strategies, $\\sqrt{2\\ln N}/\\sqrt T = \\sqrt{2\\ln 12}/\\sqrt 3 = 1.29$, is above her 1.15. Luck alone explains this record.\n\n**(d)** We need $1.15\\sqrt T \\ge 2.64$, so $T \\ge (2.64/1.15)^2 = 5.2$ years. That is about two more years of the same Sharpe ratio.\n\n**(e)** Ask for:\n- the full records of all 12 strategies, and any that were closed, to see the whole search;\n- the live record since the fund was chosen, which is out of sample;\n- audited returns net of fees and costs, since the pitch figures may be gross;\n- how many parameters were tuned, which adds to the hidden number of tries;\n- a regression on more factors, such as size, value and momentum, to see if the alpha survives;\n- the residuals' autocorrelation, since smoothed marks on illiquid assets inflate the Sharpe ratio and need HAC errors.\n\nVerdict: interesting but unproven. The record is consistent with luck once the search is counted.",
       "rubric": [
         {
           "points": 2,

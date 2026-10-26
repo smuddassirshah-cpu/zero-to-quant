@@ -1,0 +1,1409 @@
+{
+  "id": "l4-which-price",
+  "course": "opt-dash",
+  "title": "Which price to use",
+  "minutes": 15,
+  "objectives": [
+    "Decide between mid prices and the bid-ask range for calibration.",
+    "Keep out-of-the-money quotes and convert each quote into a band of implied vols.",
+    "Write `otm_quotes` and `iv_from_quotes` for the dashboard."
+  ],
+  "skills": [
+    "od-data"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One quote, three prices",
+      "prose": "The three-month 100 call is bid at £4.37 and offered at £4.64. Its value is somewhere in between. A volatility fit needs one number, or a range.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 4.3,
+          "max": 4.7,
+          "step": 0.05,
+          "snap": 0.005
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b",
+              "x": 4.37,
+              "label": "bid"
+            },
+            {
+              "id": "a",
+              "x": 4.64,
+              "label": "ask"
+            },
+            {
+              "id": "m",
+              "x": 4.45,
+              "label": "mid?",
+              "drag": true
+            }
+          ],
+          "caption": "The three-month 100 call, in £"
+        }
+      },
+      "question": "Drag the dot to the mid.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "m",
+            "target": 4.505,
+            "tol": 0.006
+          }
+        ],
+        "wrong": [
+          {
+            "id": "at-bid",
+            "region": {
+              "x": [
+                4.36,
+                4.38
+              ]
+            }
+          },
+          {
+            "id": "at-ask",
+            "region": {
+              "x": [
+                4.63,
+                4.65
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Halfway between bid and ask."
+        },
+        {
+          "rung": "point",
+          "text": "The spread is £0.27, so half of it is £0.135.",
+          "highlight": [
+            "b",
+            "a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$4.37 + 0.135 = 4.505$."
+        }
+      ],
+      "feedback": {
+        "correct": "£4.505, halfway.",
+        "generic": "Not quite right. Find the point halfway between bid and ask.",
+        "byKey": {
+          "at-bid": "That is the bid. The mid is halfway to the ask.",
+          "at-ask": "That is the ask. The mid is halfway to the bid.",
+          "m": "Not halfway yet. The mid is $(4.37 + 4.64)/2$."
+        }
+      },
+      "explain": {
+        "text": "The mid is £4.505. But any price in the band is consistent with the market. So rather than one price, we can ask which volatilities fit the whole band.",
+        "canvas": {
+          "intervals": [
+            {
+              "id": "band",
+              "from": 4.37,
+              "to": 4.64,
+              "label": "consistent with the market"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Prices into vols",
+      "prose": "The curve is this call's Black-Scholes price at each volatility, with $S = K = 100$, $r = 5\\%$, $q = 1\\%$, $T = 0.25$. The dashed lines are the bid and the ask. Drag the point along the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.1,
+            0.3
+          ],
+          "y": [
+            2.5,
+            6.5
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.05,
+          "yStep": 0.5,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "S*exp(-q*T)*Phi((ln(S/K)+(r-q+x^2/2)*T)/(x*sqrt(T))) - K*exp(-r*T)*Phi((ln(S/K)+(r-q-x^2/2)*T)/(x*sqrt(T)))",
+              "label": "price",
+              "domain": [
+                0.1,
+                0.3
+              ],
+              "labelAt": 0.27
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "q": 0.01,
+            "T": 0.25
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "bid",
+              "y": 4.37,
+              "label": "bid 4.37"
+            },
+            {
+              "id": "ask",
+              "y": 4.64,
+              "label": "ask 4.64"
+            }
+          ],
+          "points": [
+            {
+              "id": "P",
+              "x": 0.17,
+              "y": 3.8842,
+              "on": "f",
+              "drag": true
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$\\sigma$ = {{fixed(P.x * 100, 2)}}%, price £{{fixed(P.y, 3)}}"
+        }
+      },
+      "question": "Which volatility reprices the ask, £4.64?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2084,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "%",
+        "label": "Volatility in percent",
+        "accept": "About 20.84%",
+        "wrong": [
+          {
+            "id": "bid",
+            "value": 0.1947115866202765,
+            "tol": {
+              "abs": 0.0015
+            }
+          },
+          {
+            "id": "mid",
+            "value": 0.2015736832256827,
+            "tol": {
+              "abs": 0.0015
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag until the caption's price reads £4.64."
+        },
+        {
+          "rung": "point",
+          "text": "The point should sit where the curve crosses the ask line.",
+          "highlight": [
+            "ask"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That happens near $\\sigma = 0.208$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 20.8%.",
+        "generic": "Not quite right. Slide the point to the ask line and read $\\sigma$.",
+        "byKey": {
+          "bid": "That vol reprices the bid, £4.37. Move up to the ask line.",
+          "mid": "That vol reprices the mid. Move up to the ask line."
+        }
+      },
+      "explain": {
+        "text": "The bid needs 19.47% and the ask 20.84%. So a band of prices is a band of vols. Every vol in between fits the market.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "vb",
+              "x": 0.1947,
+              "label": "bid vol"
+            },
+            {
+              "id": "va",
+              "x": 0.2084,
+              "label": "ask vol"
+            }
+          ],
+          "points": {
+            "P": {
+              "x": 0.2084,
+              "y": 4.64
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The vol band",
+      "prose": "Each price in a quote has its implied vol. Where the band of vols is narrow we **calibrate** to the mid's vol. Where it is wide we carry the bid and ask vols as an error band, so the fit knows how loose each point is.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "price (£)",
+            "implied vol"
+          ],
+          "rows": [
+            [
+              "bid",
+              "4.37",
+              "19.47%"
+            ],
+            [
+              "mid",
+              "4.505",
+              "20.16%"
+            ],
+            [
+              "ask",
+              "4.64",
+              "20.84%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How wide is this quote's band, in vol points?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.01372,
+        "tol": {
+          "abs": 0.0003
+        },
+        "unit": "%",
+        "label": "Band width in percentage points",
+        "accept": "1.37 points: 20.84% − 19.47%",
+        "wrong": [
+          {
+            "id": "price",
+            "value": 0.0027,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.006861242241911036,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the bid vol from the ask vol."
+        },
+        {
+          "rung": "point",
+          "text": "20.84% minus 19.47%.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Give the answer in percentage points."
+        }
+      ],
+      "feedback": {
+        "correct": "1.37 vol points.",
+        "generic": "Not quite right. Take the ask vol minus the bid vol.",
+        "byKey": {
+          "price": "You used the price spread, £0.27. Convert each end to a vol first.",
+          "half": "That is half the band. The band runs from the bid vol to the ask vol."
+        }
+      },
+      "explain": {
+        "text": "The band is 1.37 vol points wide, centred near the mid's 20.16%. For an at-the-money quote that is tight enough to fit the mid. Wing and short-dated quotes are another matter."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Where bands are wide",
+      "prose": "Bands from six quotes of the cleaned chain. Every quote's price spread is about 3% of its mid. Vol bands differ because a price gap converts to a vol gap through vega, the price change per unit of vol.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "expiry",
+            "quote",
+            "bid vol",
+            "ask vol",
+            "band (points)"
+          ],
+          "rows": [
+            [
+              "1 year",
+              "80 put",
+              "24.41%",
+              "24.87%",
+              "0.46"
+            ],
+            [
+              "3 months",
+              "100 put",
+              "19.79%",
+              "20.86%",
+              "1.07"
+            ],
+            [
+              "1 month",
+              "90 put",
+              "21.72%",
+              "23.55%",
+              "1.83"
+            ],
+            [
+              "3 months",
+              "110 call",
+              "18.74%",
+              "19.17%",
+              "0.43"
+            ],
+            [
+              "3 months",
+              "80 put",
+              "25.50%",
+              "26.88%",
+              "1.38"
+            ],
+            [
+              "1 year",
+              "130 call",
+              "20.34%",
+              "20.71%",
+              "0.37"
+            ]
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap the quote with the widest vol band.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2"
+        ],
+        "max": 1,
+        "countWord": "quotes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the last column."
+        },
+        {
+          "rung": "point",
+          "text": "Short expiries have little vega.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The one-month 90 put's band is the widest."
+        }
+      ],
+      "feedback": {
+        "correct": "The one-month 90 put: short-dated and out of the money.",
+        "generic": "Not quite right. Compare the band column.",
+        "byKey": {
+          "r4": "1.38 points is wide, but the one-month 90 put's band is wider still. Short expiries have the least vega.",
+          "r1": "The at-the-money band is about one point. Look for a short-dated quote away from the money.",
+          "r0": "One year has plenty of vega, so its bands are narrow.",
+          "r5": "One year has plenty of vega, so its bands are narrow."
+        }
+      },
+      "explain": {
+        "text": "Little vega means a small price gap is a big vol gap. Vega is smallest at short expiries and away from the money. So the wings and the short end of the surface are the least certain.",
+        "canvas": {
+          "highlight": [
+            "r2",
+            "r4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Out of the money only",
+      "prose": "In-the-money options trade less and their spreads are wider. Parity turns each one into its out-of-the-money twin, so it adds nothing. A fit uses **out-of-the-money** quotes: puts below the forward, calls at or above it. The three-month forward is £101.00.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Call mid",
+            "Strike",
+            "Put mid"
+          ],
+          "rows": [
+            [
+              "30.730",
+              "70",
+              "dropped"
+            ],
+            [
+              "25.660",
+              "75",
+              "dropped"
+            ],
+            [
+              "20.845",
+              "80",
+              "0.175"
+            ],
+            [
+              "16.235",
+              "85",
+              "0.365"
+            ],
+            [
+              "11.735",
+              "90",
+              "0.835"
+            ],
+            [
+              "dropped",
+              "95",
+              "1.785"
+            ],
+            [
+              "4.505",
+              "100",
+              "3.545"
+            ],
+            [
+              "2.270",
+              "105",
+              "6.260"
+            ],
+            [
+              "0.990",
+              "110",
+              "9.765"
+            ],
+            [
+              "0.365",
+              "115",
+              "14.265"
+            ],
+            [
+              "0.125",
+              "120",
+              "18.555"
+            ],
+            [
+              "dropped",
+              "125",
+              "23.805"
+            ],
+            [
+              "dropped",
+              "130",
+              "28.600"
+            ]
+          ],
+          "align": [
+            "right",
+            "center",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The cleaned three-month chain: dropped quotes are marked"
+        }
+      },
+      "question": "Tap the 9 quotes the fit uses.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c2",
+          "r3c2",
+          "r4c2",
+          "r5c2",
+          "r6c2",
+          "r7c0",
+          "r8c0",
+          "r9c0",
+          "r10c0"
+        ],
+        "countWord": "quotes",
+        "wrong": [
+          {
+            "id": "itm",
+            "set": [
+              "r0c0",
+              "r1c0",
+              "r2c0",
+              "r3c0",
+              "r4c0",
+              "r6c0",
+              "r7c2",
+              "r8c2",
+              "r9c2",
+              "r10c2",
+              "r11c2",
+              "r12c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Below £101.00 take the put; above it take the call."
+        },
+        {
+          "rung": "point",
+          "text": "The 100 strike is below the forward, so take its put.",
+          "highlight": [
+            "r6c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Puts at 80 to 100, calls at 105 to 120."
+        }
+      ],
+      "feedback": {
+        "correct": "Five puts below the forward, four calls above it.",
+        "generic": "Not quite right. Below the forward use the put, above it the call, and skip dropped quotes.",
+        "byKey": {
+          "itm": "You picked the in-the-money side at every strike. Those are the less liquid quotes; take the other side.",
+          "r6c0": "The 100 strike is below the forward of £101.00, so its call is in the money. Take the put.",
+          "r7c2": "The 105 put is in the money, as 105 is above the forward. Take the call.",
+          "r0c2": "The 70 put was dropped in cleaning, as its spread was too wide.",
+          "r1c2": "The 75 put was dropped in cleaning, as its spread was too wide."
+        }
+      },
+      "explain": {
+        "text": "Five puts struck 80 to 100 sit below the forward, and four calls struck 105 to 120 above it. The 70 and 75 puts and the 125 and 130 calls were dropped in cleaning. Lesson 10's smile is drawn from exactly these nine.",
+        "canvas": {
+          "highlight": [
+            "r2c2",
+            "r3c2",
+            "r4c2",
+            "r5c2",
+            "r6c2",
+            "r7c0",
+            "r8c0",
+            "r9c0",
+            "r10c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A price no vol can reach",
+      "prose": "The fit skips in-the-money quotes for another reason. Take the three-month 120 put, deep in the money, quoted 17.99 / 19.12. A European put is worth at least $Ke^{-rT} - Se^{-qT}$, whatever the volatility.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 17.5,
+          "max": 20.5,
+          "step": 0.5
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b",
+              "x": 17.99,
+              "label": "bid"
+            },
+            {
+              "id": "m",
+              "x": 18.555,
+              "label": "mid"
+            },
+            {
+              "id": "a",
+              "x": 19.12,
+              "label": "ask"
+            }
+          ],
+          "caption": "The three-month 120 put, in £"
+        }
+      },
+      "question": "What is the put's lower bound, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18.759,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Lower bound in pounds",
+        "accept": "£18.76: $120e^{-0.0125} - 100e^{-0.0025}$",
+        "wrong": [
+          {
+            "id": "intrinsic",
+            "value": 20,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "no-q",
+            "value": 18.509336059265777,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Discount the strike at $r$ and the share at $q$."
+        },
+        {
+          "rung": "point",
+          "text": "$120e^{-0.05 \\times 0.25} = 118.509$ and $100e^{-0.01 \\times 0.25} = 99.750$.",
+          "highlight": [
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Subtract."
+        }
+      ],
+      "feedback": {
+        "correct": "£18.76: the bid and the mid are below it.",
+        "generic": "Not quite right. Compute $Ke^{-rT} - Se^{-qT}$.",
+        "byKey": {
+          "intrinsic": "That is $K - S$, the value of exercising now. A European put cannot be exercised early, so its floor uses the discounted strike.",
+          "no-q": "You left out the dividend. The share is worth $Se^{-qT}$ to a holder who gives up its dividends."
+        }
+      },
+      "explain": {
+        "text": "The bound is £18.76, so the bid and the mid lie below every Black-Scholes price. No volatility fits them, and the solver returns NaN. Only the ask has a vol, 22.9%.",
+        "canvas": {
+          "intervals": [
+            {
+              "id": "lb",
+              "from": 18.759,
+              "to": null,
+              "label": "reachable by some vol"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The mid vol",
+      "prose": "A wing quote before cleaning: the one-month 85 put, 0.01 / 0.06. Its bid vol is 22.47% and its ask vol 28.39%. A colleague averages them and calls 25.43% the mid vol. The curve is this put's price against volatility.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.2,
+            0.3
+          ],
+          "y": [
+            0,
+            0.08
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Put price (£)",
+          "xStep": 0.02,
+          "yStep": 0.02,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "K*exp(-r*T)*Phi(-(ln(S/K)+(r-q-x^2/2)*T)/(x*sqrt(T))) - S*exp(-q*T)*Phi(-(ln(S/K)+(r-q+x^2/2)*T)/(x*sqrt(T)))",
+              "label": "price",
+              "domain": [
+                0.2,
+                0.3
+              ],
+              "labelAt": 0.29
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 85,
+            "r": 0.05,
+            "q": 0.01,
+            "T": 0.083333
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "bid",
+              "y": 0.01,
+              "label": "bid"
+            },
+            {
+              "id": "mid",
+              "y": 0.035,
+              "label": "mid 0.035"
+            },
+            {
+              "id": "ask",
+              "y": 0.06,
+              "label": "ask"
+            }
+          ]
+        }
+      },
+      "question": "What is the implied vol of the mid price, £0.035?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "avg",
+            "text": "25.43%",
+            "why": "You averaged the two vols. The curve bends upwards here, so the mid price sits at a higher vol than the average.",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "avg",
+                  "x": 0.2543,
+                  "label": "average"
+                }
+              ]
+            }
+          },
+          {
+            "id": "right",
+            "text": "26.23%",
+            "correct": true
+          },
+          {
+            "id": "bid",
+            "text": "22.47%",
+            "why": "That is the bid's vol. The mid price is higher, so its vol is higher."
+          },
+          {
+            "id": "ask",
+            "text": "28.39%",
+            "why": "That is the ask's vol. The mid price is lower, so its vol is lower."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find where the mid line crosses the curve."
+        },
+        {
+          "rung": "point",
+          "text": "Read $\\sigma$ below the crossing of the curve and the mid line.",
+          "highlight": [
+            "mid"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It is to the right of the halfway point between the bid and ask vols."
+        }
+      ],
+      "feedback": {
+        "correct": "26.23%: not the 25.43% average.",
+        "generic": "Not quite right. Read the vol where the mid line meets the curve.",
+        "byKey": {
+          "avg": "You averaged the bid and ask vols. Price is not a straight line in vol, so the vol of the mid price is 26.23%, not the average."
+        }
+      },
+      "explain": {
+        "text": "The curve bends upwards, so the halfway price sits at a vol above the halfway vol: 26.23% against 25.43%. The gap is 0.8 points here. Near the money the curve is almost straight and the two agree.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "vm",
+              "x": 0.2623,
+              "label": "mid vol"
+            },
+            {
+              "id": "avg",
+              "x": 0.2543,
+              "label": "average",
+              "dashed": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Which price, which weight",
+      "prose": "You chose out-of-the-money quotes, read their vol bands and saw where bands widen. A fit targets each mid's vol, weighted by $w = 1/(\\sigma_{\\text{ask}} - \\sigma_{\\text{bid}})$, so loose quotes count less:\n\n```python\notm = otm_quotes(df_T, F)\nivs = iv_from_quotes(otm, S, r, T, q)\nw = 1 / (ivs[\"iv_ask\"] - ivs[\"iv_bid\"])\n```",
+      "question": "The three-month 90 put's band is 0.45 points and the 80 put's 1.38. Which counts more in the fit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "p90",
+            "text": "The 90 put, about 3.1 times as much",
+            "correct": true
+          },
+          {
+            "id": "p80",
+            "text": "The 80 put, as its band is wider",
+            "why": "A wide band means the market pins that vol loosely. The weight is one over the band, so it counts less."
+          },
+          {
+            "id": "same",
+            "text": "Both the same: each is one quote",
+            "why": "Equal weights let loose wing quotes pull the fit as hard as tight ones."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Tighter band, bigger weight.",
+        "generic": "Not quite right. The weight is one over the band width."
+      },
+      "explain": {
+        "text": "The weights are 221 and 72, a ratio of 3.1. Level 3 fits the smile to mid vols of out-of-the-money quotes. These weights are one sentence of its method."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "otm_quotes",
+      "prose": "Write the selector. From one expiry's quotes, keep puts struck below `F` and calls struck at or above it. Return them sorted by strike, with a fresh index. A strike exactly at the forward takes the call.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> three = clean[np.isclose(clean['T'], 0.25)]",
+            ">>> otm_quotes(three, 101.005)['strike'].tolist()",
+            "[80, 85, 90, 95, 100, 105, 110, 115, 120]"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `otm_quotes(df_T, F)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\n# clean = clean_quotes(make_chain()) is loaded.\n\ndef otm_quotes(df_T, F):\n    \"\"\"Puts struck below F and calls struck at or above F, by strike.\"\"\"\n    keep = ...\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\n# clean = clean_quotes(make_chain()) is loaded.\n\ndef otm_quotes(df_T, F):\n    \"\"\"Puts struck below F and calls struck at or above F, by strike.\"\"\"\n    keep = (((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F))\n            | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F)))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef quotes(rows):\n    \"\"\"A hand-made chain: rows of [T, strike, type, bid, ask, volume, age_min].\"\"\"\n    return pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n\nchain = make_chain()\nclean = clean_quotes(chain)\n",
+        "examples": [
+          {
+            "setup": "h = quotes([[0.25, K, t, 1.0, 1.1, 1, 0.0] for K in (95, 100, 105) for t in ('call', 'put')])",
+            "call": "[(K, t) for K, t in zip(otm_quotes(h, 101.0)['strike'], otm_quotes(h, 101.0)['type'])]",
+            "expect": "[(95, 'put'), (100, 'put'), (105, 'call')]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "h = quotes([[0.25, K, t, 1.0, 1.1, 1, 0.0] for K in (95, 100, 105) for t in ('call', 'put')])",
+            "call": "[(K, t) for K, t in zip(otm_quotes(h, 101.0)['strike'], otm_quotes(h, 101.0)['type'])]",
+            "expect": "[(95, 'put'), (100, 'put'), (105, 'call')]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.25, K, t, 1.0, 1.1, 1, 0.0] for K in (95, 100, 105) for t in ('call', 'put')])",
+            "call": "[(K, t) for K, t in zip(otm_quotes(h, 100.0)['strike'], otm_quotes(h, 100.0)['type'])]",
+            "expect": "[(95, 'put'), (100, 'call'), (105, 'call')]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.25, K, t, 1.0, 1.1, 1, 0.0] for K in (110, 90, 100) for t in ('put', 'call')])",
+            "call": "otm_quotes(h, 99.0)['strike'].tolist()",
+            "expect": "[90, 100, 110]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.25, K, t, 1.0, 1.1, 1, 0.0] for K in (110, 90, 100) for t in ('put', 'call')])",
+            "call": "otm_quotes(h, 99.0).index.tolist()",
+            "expect": "[0, 1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "otm_quotes(clean[np.isclose(clean['T'], 0.25)], 101.005)['strike'].tolist()",
+            "expect": "[80, 85, 90, 95, 100, 105, 110, 115, 120]",
+            "compare": "equal"
+          },
+          {
+            "call": "otm_quotes(clean[np.isclose(clean['T'], 0.25)], 101.005)['type'].tolist()",
+            "expect": "['put', 'put', 'put', 'put', 'put', 'call', 'call', 'call', 'call']",
+            "compare": "equal"
+          },
+          {
+            "call": "len(otm_quotes(clean[np.isclose(clean['T'], 1.0)], 104.08))",
+            "expect": "11",
+            "compare": "equal"
+          },
+          {
+            "call": "otm_quotes(clean[np.isclose(clean['T'], 0.25)], 101.005).columns.tolist() == clean.columns.tolist()",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "len(otm_quotes(clean.iloc[:0], 100.0))",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "how": "`clean = clean_quotes(make_chain())` is loaded, and `quotes(rows)` builds a hand-made frame. Check runs 9 hidden tests; strike lists, types and lengths must match exactly. The first run loads numpy and pandas, which can take ten seconds or more."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two conditions, joined by `|`."
+        },
+        {
+          "rung": "point",
+          "text": "Puts: `(df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F)`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Calls: the same with `\"call\"` and `>= F`; join the two with `|`."
+        }
+      ],
+      "feedback": {
+        "correct": "One quote per strike, from the liquid side.",
+        "generic": "Some tests failed. Check `<` for puts, `>=` for calls, the sort and the index."
+      },
+      "explain": {
+        "text": "`|` keeps a row passing either test, and each side needs brackets. Sorting by strike lays the quotes out left to right for the smile. A strike at the forward goes to the calls, so no strike appears twice."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "iv_from_quotes",
+      "prose": "Write the band builder. For each quote return its strike, type and three vols: at the bid, at the mid and at the ask. `implied_vol` is loaded for now and returns NaN where no vol fits; level 3 has you write your own.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "strike",
+            "type",
+            "iv_bid",
+            "iv_mid",
+            "iv_ask"
+          ],
+          "rows": [
+            [
+              "100",
+              "call",
+              "0.1947",
+              "0.2016",
+              "0.2084"
+            ],
+            [
+              "120",
+              "put",
+              "NaN",
+              "NaN",
+              "0.2291"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Two three-month quotes: the 100 call and the 120 put"
+        }
+      },
+      "question": "Complete `iv_from_quotes(df_T, S, r, T, q)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\n# implied_vol(price, S, K, r, T, kind, q) is loaded: NaN when no vol fits.\n# mid(df) is loaded too.\n\ndef iv_from_quotes(df_T, S, r, T, q):\n    \"\"\"Implied vols at the bid, the mid and the ask, one row per quote.\"\"\"\n    rows = []\n    for K, kind, b, m, a in zip(df_T[\"strike\"], df_T[\"type\"], df_T[\"bid\"],\n                                mid(df_T), df_T[\"ask\"]):\n        rows.append([K, kind, ..., ..., ...])\n    return pd.DataFrame(rows, columns=[\"strike\", \"type\", \"iv_bid\", \"iv_mid\", \"iv_ask\"])\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\n# implied_vol(price, S, K, r, T, kind, q) is loaded: NaN when no vol fits.\n# mid(df) is loaded too.\n\ndef iv_from_quotes(df_T, S, r, T, q):\n    \"\"\"Implied vols at the bid, the mid and the ask, one row per quote.\"\"\"\n    rows = []\n    for K, kind, b, m, a in zip(df_T[\"strike\"], df_T[\"type\"], df_T[\"bid\"],\n                                mid(df_T), df_T[\"ask\"]):\n        rows.append([K, kind,\n                     implied_vol(b, S, K, r, T, kind, q),\n                     implied_vol(m, S, K, r, T, kind, q),\n                     implied_vol(a, S, K, r, T, kind, q)])\n    return pd.DataFrame(rows, columns=[\"strike\", \"type\", \"iv_bid\", \"iv_mid\", \"iv_ask\"])\n",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price; NaN when none fits.\"\"\"\n    if kind == \"call\":\n        lo_b, hi_b = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    else:\n        lo_b, hi_b = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    if not (lo_b < price < hi_b):\n        return float(\"nan\")\n    lo, hi = 1e-4, 5.0\n    for _ in range(100):\n        m = (lo + hi) / 2\n        if bs_price(S, K, r, m, T, kind, q) > price:\n            hi = m\n        else:\n            lo = m\n    return (lo + hi) / 2\n\ndef quotes(rows):\n    \"\"\"A hand-made chain: rows of [T, strike, type, bid, ask, volume, age_min].\"\"\"\n    return pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n\ndef vol_quotes(S, r, q, T, strikes, kinds, vol_bid, vol_ask):\n    \"\"\"A chain whose bid and ask are bs_price at two known vols.\"\"\"\n    rows = [[T, K, k, bs_price(S, K, r, vol_bid, T, k, q), bs_price(S, K, r, vol_ask, T, k, q), 1, 0.0]\n            for K, k in zip(strikes, kinds)]\n    return quotes(rows)\n\ndef otm_quotes(df_T, F):\n    keep = (((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F))\n            | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F)))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\nchain = make_chain()\nclean = clean_quotes(chain)\n",
+        "examples": [
+          {
+            "call": "iv_from_quotes(chain.iloc[[64]], 100, 0.05, 0.25, 0.01).round(4).iloc[0, 2:].tolist()",
+            "expect": "[0.1947, 0.2016, 0.2084]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(iv_from_quotes(vol_quotes(100, 0.05, 0.02, 0.5, [90, 100, 110], ['put', 'call', 'call'], 0.19, 0.21), 100, 0.05, 0.5, 0.02)['iv_bid'], 6).tolist()",
+            "expect": "[0.19, 0.19, 0.19]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.round(iv_from_quotes(vol_quotes(100, 0.05, 0.02, 0.5, [90, 100, 110], ['put', 'call', 'call'], 0.19, 0.21), 100, 0.05, 0.5, 0.02)['iv_ask'], 6).tolist()",
+            "expect": "[0.21, 0.21, 0.21]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "out = iv_from_quotes(vol_quotes(100, 0.05, 0.02, 0.5, [90, 100, 110], ['put', 'call', 'call'], 0.19, 0.21), 100, 0.05, 0.5, 0.02)",
+            "call": "bool(((out['iv_mid'] > 0.19) & (out['iv_mid'] < 0.21)).all())",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "iv_from_quotes(vol_quotes(100, 0.05, 0.02, 0.5, [90, 100, 110], ['put', 'call', 'call'], 0.19, 0.21), 100, 0.05, 0.5, 0.02).columns.tolist()",
+            "expect": "['strike', 'type', 'iv_bid', 'iv_mid', 'iv_ask']",
+            "compare": "equal"
+          },
+          {
+            "call": "iv_from_quotes(chain.iloc[[64]], 100, 0.05, 0.25, 0.01).round(4).iloc[0, 2:].tolist()",
+            "expect": "[0.1947, 0.2016, 0.2084]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "three = otm_quotes(clean[np.isclose(clean['T'], 0.25)], 101.005)",
+            "call": "np.round(iv_from_quotes(three, 100, 0.05, 0.25, 0.01)['iv_mid'], 4).tolist()",
+            "expect": "[0.2622, 0.2392, 0.2246, 0.2117, 0.2032, 0.1939, 0.1896, 0.1858, 0.1857]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "out = iv_from_quotes(chain.iloc[[73]], 100, 0.05, 0.25, 0.01)",
+            "call": "[bool(np.isnan(out.loc[0, 'iv_bid'])), bool(np.isnan(out.loc[0, 'iv_mid'])), round(float(out.loc[0, 'iv_ask']), 4)]",
+            "expect": "[True, True, 0.2291]",
+            "compare": "equal"
+          },
+          {
+            "setup": "out = iv_from_quotes(chain.iloc[[76]], 100, 0.05, 0.25, 0.01)",
+            "call": "[bool(np.isnan(out.loc[0, 'iv_bid'])), bool(np.isnan(out.loc[0, 'iv_mid'])), round(float(out.loc[0, 'iv_ask']), 4)]",
+            "expect": "[True, True, 0.2159]",
+            "compare": "equal"
+          },
+          {
+            "call": "iv_from_quotes(vol_quotes(100, 0.05, 0.02, 0.5, [90, 100, 110], ['put', 'call', 'call'], 0.19, 0.21), 100, 0.05, 0.5, 0.02)['type'].tolist()",
+            "expect": "['put', 'call', 'call']",
+            "compare": "equal"
+          }
+        ],
+        "how": "`implied_vol`, `mid`, `otm_quotes` and `clean = clean_quotes(make_chain())` are loaded. `vol_quotes(...)` builds quotes whose bid and ask are priced at two known vols. Check runs 9 hidden tests: round trips to 6 places, the seeded chain to 4, NaN checks exactly. The first run loads numpy and pandas."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Call the solver three times per quote."
+        },
+        {
+          "rung": "point",
+          "text": "`implied_vol(b, S, K, r, T, kind, q)` for the bid; the same with `m` and `a`.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Your `mid` gives NaN for a zero bid, and `implied_vol(NaN, ...)` returns NaN, so no special case is needed."
+        }
+      ],
+      "feedback": {
+        "correct": "Every quote becomes a band of vols, NaN where none fits.",
+        "generic": "Some tests failed. Check the order of arguments in each `implied_vol` call."
+      },
+      "explain": {
+        "text": "The solver's NaN carries through, so the 120 put keeps only its ask vol. The zero-bid 130 call gets NaN at the bid and the mid. Downstream, the fit drops NaN mids and uses the band only where both ends exist."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Quoting in vol",
+      "prose": "Over the phone a vol trader quotes the three-month 100 call in vol points: \"21.5 bid, 22.5 offered\". Her desk converts each vol to a price with Black-Scholes, $S = 100$, $r = 5\\%$, $q = 1\\%$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.2,
+            0.24
+          ],
+          "y": [
+            4.6,
+            5.1
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.01,
+          "yStep": 0.1,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "S*exp(-q*T)*Phi((ln(S/K)+(r-q+x^2/2)*T)/(x*sqrt(T))) - K*exp(-r*T)*Phi((ln(S/K)+(r-q-x^2/2)*T)/(x*sqrt(T)))",
+              "label": "price",
+              "domain": [
+                0.2,
+                0.24
+              ],
+              "labelAt": 0.235
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "q": 0.01,
+            "T": 0.25
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "vb",
+              "x": 0.215,
+              "label": "21.5"
+            },
+            {
+              "id": "va",
+              "x": 0.225,
+              "label": "22.5"
+            }
+          ]
+        }
+      },
+      "question": "How wide is her quote in pounds per share?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1969,
+        "tol": {
+          "abs": 0.003
+        },
+        "unit": "£",
+        "label": "Width in pounds",
+        "accept": "About £0.197: one vol point times vega, about £0.197",
+        "wrong": [
+          {
+            "id": "points",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "screen",
+            "value": 0.27,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The width is the price at 22.5% minus the price at 21.5%."
+        },
+        {
+          "rung": "point",
+          "text": "One vol point times vega, the slope of the curve.",
+          "highlight": [
+            "vb",
+            "va"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Read the two prices off the curve where it meets the dashed lines."
+        }
+      ],
+      "feedback": {
+        "correct": "About £0.20, tighter than the screen's £0.27.",
+        "generic": "Not quite right. Price both vols and subtract.",
+        "byKey": {
+          "points": "You read one vol point as one pound. Vega converts it: about £0.20 per point here.",
+          "screen": "That is the screen's price spread. Hers is set in vol, so convert it."
+        }
+      },
+      "explain": {
+        "text": "One vol point is worth about £0.197 on this call, so her quote is £0.20 wide. In vol, quotes at every strike and expiry compare directly. A desk calibrates to such bands, not one number: any surface inside every band is consistent with the market."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A quote's bid and ask are a band of prices, so they are a band of vols. Calibrate to the mid where the band is tight; carry the band where it is wide.",
+      "Use out-of-the-money quotes only: puts below the forward, calls at or above it. In-the-money ones add nothing parity does not give, and can sit below the no-arbitrage bound.",
+      "Vol bands widen where vega is small: short expiries and the wings. Weight each quote by one over its band."
+    ],
+    "formula": {
+      "name": "Fit weight",
+      "tex": "w = \\dfrac{1}{\\sigma_{\\text{ask}} - \\sigma_{\\text{bid}}}",
+      "note": "A loose quote counts less."
+    },
+    "trap": "The average of the bid and ask vols is not the vol of the mid price. Price bends against vol in the wings."
+  },
+  "quiz": [
+    {
+      "id": "q-otm-1y",
+      "difficulty": 2,
+      "prose": "At one year the forward is £104.08.",
+      "question": "Which quotes does the fit use at strikes 100 and 105?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The 100 put and the 105 call",
+            "correct": true
+          },
+          {
+            "id": "spot",
+            "text": "The 100 call and the 105 call",
+            "why": "You split at the spot. The split is at the forward, £104.08, so 100 is below it and takes the put."
+          },
+          {
+            "id": "itm",
+            "text": "The 100 call and the 105 put",
+            "why": "Those are the in-the-money sides, the less liquid ones."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Put below the forward, call above.",
+        "generic": "Not quite right. Compare each strike with £104.08."
+      },
+      "explain": {
+        "text": "100 is below £104.08, so the 100 put is out of the money; 105 is above it, so the 105 call is."
+      }
+    },
+    {
+      "id": "q-nan",
+      "difficulty": 2,
+      "prose": "`iv_from_quotes` returns NaN for the bid vol of the three-month 120 put, bid 17.99.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "17.99 is below the put's lower bound, £18.76, so no volatility gives that price",
+            "correct": true
+          },
+          {
+            "id": "solver",
+            "text": "The solver failed to converge",
+            "why": "Bisection always converges inside the bounds. The price is outside them, so there is nothing to converge to."
+          },
+          {
+            "id": "zero",
+            "text": "Its bid is zero",
+            "why": "Its bid is £17.99. The trouble is that £17.99 is below every Black-Scholes price."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Below the bound, no vol exists.",
+        "generic": "Not quite right. Compare 17.99 with $Ke^{-rT} - Se^{-qT}$."
+      },
+      "explain": {
+        "text": "Every Black-Scholes put price is at least £18.76. A bid of 17.99 is below that, so the solver returns NaN instead of a made-up vol."
+      }
+    },
+    {
+      "id": "q-weight",
+      "difficulty": 3,
+      "prose": "Three-month bands: the 90 put 0.45 points, the 80 put 1.38 points. Weights are one over the band.",
+      "question": "How many times the 80 put's weight does the 90 put get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.055,
+        "tol": {
+          "abs": 0.05
+        },
+        "label": "Ratio of weights",
+        "accept": "About 3.05",
+        "wrong": [
+          {
+            "id": "inverse",
+            "value": 0.32735777289906975,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 3.1 times.",
+        "generic": "Not quite right. Divide the wider band by the narrower one.",
+        "byKey": {
+          "inverse": "You divided the narrow band by the wide one. The tighter quote gets the bigger weight."
+        }
+      },
+      "explain": {
+        "text": "The ratio of weights is the inverse ratio of bands: $1.38/0.45 \\approx 3.05$."
+      }
+    },
+    {
+      "id": "q-atm-avg",
+      "difficulty": 3,
+      "prose": "For the three-month 100 call the bid vol is 19.47% and the ask vol 20.84%. Their average is 20.16%.",
+      "question": "How does the vol of the mid price compare?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Almost the same: near the money price is nearly a straight line in vol",
+            "correct": true
+          },
+          {
+            "id": "much",
+            "text": "About a point higher, as in the wings",
+            "why": "In the wings the curve bends. At the money it is nearly straight, so the two agree closely."
+          },
+          {
+            "id": "lower",
+            "text": "Clearly lower",
+            "why": "Where the curve bends at all, the mid vol sits above the average, not below."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "20.16%, within a hundredth of a point.",
+        "generic": "Not quite right. How curved is price against vol at the money?"
+      },
+      "explain": {
+        "text": "The mid's vol is 20.16%. At the money the price curve is almost straight, so averaging vols is harmless there. In the wings it is not."
+      }
+    }
+  ]
+}

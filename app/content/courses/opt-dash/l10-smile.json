@@ -1,0 +1,1542 @@
+{
+ "id": "l10-smile",
+ "course": "opt-dash",
+ "title": "The volatility smile",
+ "minutes": 15,
+ "objectives": [
+  "Plot implied volatility across strikes and describe the smile.",
+  "Fit a quadratic smile in standardised moneyness and read its skew and curvature."
+ ],
+ "skills": [
+  "od-iv",
+  "od-surface"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One vol per strike",
+   "prose": "Black-Scholes assumes one $\\sigma$ for every strike. Here is what the market says. Each dot is the implied vol of an out-of-the-money mid from `make_chain()`'s three-month expiry: puts below the forward, calls above it.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       80,
+       0.2622
+      ],
+      [
+       85,
+       0.2392
+      ],
+      [
+       90,
+       0.2246
+      ],
+      [
+       95,
+       0.2117
+      ],
+      [
+       100,
+       0.2032
+      ],
+      [
+       105,
+       0.1939
+      ],
+      [
+       110,
+       0.1896
+      ],
+      [
+       115,
+       0.1858
+      ],
+      [
+       120,
+       0.1857
+      ]
+     ],
+     "x": "Strike (£)",
+     "y": "Implied vol",
+     "xRange": [
+      75,
+      125
+     ],
+     "yRange": [
+      0.17,
+      0.28
+     ]
+    },
+    "state": {}
+   },
+   "question": "What shape do the vols make?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "skew",
+      "text": "High at low strikes, falling, then flattening at high strikes",
+      "correct": true
+     },
+     {
+      "id": "flat",
+      "text": "Flat, as Black-Scholes assumes",
+      "why": "The 80 put is at 26.2% and the 120 call at 18.6%. That is 7.6 vol points apart, far more than the noise."
+     },
+     {
+      "id": "v",
+      "text": "A V with its lowest point at 100",
+      "why": "You expected the lowest vol at the money. The vols keep falling past 100 and bottom out near 115 to 120."
+     },
+     {
+      "id": "rise",
+      "text": "Rising from left to right",
+      "why": "You read the chart the wrong way round. The left end, the low strikes, is the highest."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the dot at 80 with the dot at 120."
+    },
+    {
+     "rung": "point",
+     "text": "The left dots are highest.",
+     "highlight": [
+      "p0",
+      "p8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The vols fall fast on the left and level off on the right: a lopsided curve."
+    }
+   ],
+   "feedback": {
+    "correct": "A lopsided curve: steep on the left, flat on the right.",
+    "generic": "Not quite right. Read the vol at each end and in the middle."
+   },
+   "explain": {
+    "text": "The 80 put costs 26.2% vol, the 100 put 20.3% and the 120 call 18.6%. The curve falls steeply, then flattens. One $\\sigma$ cannot price all of these at once.",
+    "canvas": {
+     "highlight": [
+      "p0",
+      "p4",
+      "p8"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Through the expiries",
+   "prose": "The curve is the vol surface planted in `make_chain()`, at one expiry. The slider moves the expiry from one month to one year.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      70,
+      130
+     ],
+     "y": [
+      0.15,
+      0.46
+     ],
+     "xLabel": "Strike $K$ (£)",
+     "yLabel": "Implied vol",
+     "xStep": 10,
+     "functions": [
+      {
+       "id": "s",
+       "expr": "0.22-0.045*exp(-T/0.3)-0.08*(ln(x/(100*exp(0.04*T)))/sqrt(T))+0.10*(ln(x/(100*exp(0.04*T)))/sqrt(T))^2",
+       "domain": [
+        70,
+        130
+       ],
+       "label": "implied vol",
+       "labelAt": 120
+      }
+     ],
+     "params": {
+      "T": 0.0833
+     }
+    },
+    "state": {
+     "params": {
+      "T": 0.0833
+     }
+    },
+    "derive": {
+     "let": {
+      "a0": "0.22 - 0.045*exp(-T/0.3)",
+      "f": "100*exp(0.04*T)",
+      "m70": "ln(70/f)/sqrt(T)",
+      "m100": "ln(100/f)/sqrt(T)",
+      "m130": "ln(130/f)/sqrt(T)"
+     },
+     "caption": "{{round(T*12)}} months: IV(70) = {{fixed(a0 - 0.08*m70 + 0.1*m70*m70, 3)}}, IV(100) = {{fixed(a0 - 0.08*m100 + 0.1*m100*m100, 3)}}, IV(130) = {{fixed(a0 - 0.08*m130 + 0.1*m130*m130, 3)}}"
+    },
+    "controls": [
+     {
+      "bind": "T",
+      "min": 0.0833,
+      "max": 1,
+      "step": 0.0833,
+      "start": 0.0833,
+      "label": "Expiry $T$ (years)",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "Slide from one month to one year. What happens to the curve?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "flatten",
+      "text": "It flattens: low-strike vols fall and the at-the-money vol rises",
+      "correct": true
+     },
+     {
+      "id": "shift",
+      "text": "It keeps its shape and moves up",
+      "why": "Watch the left end: IV(70) falls from 0.441 to 0.266 while IV(100) rises."
+     },
+     {
+      "id": "steepen",
+      "text": "It gets steeper",
+      "why": "You may have slid the wrong way. At one year IV(70) − IV(130) is 0.06, against 0.25 at one month."
+     },
+     {
+      "id": "same",
+      "text": "Nothing: implied vol does not depend on expiry",
+      "why": "The caption changes as you slide. IV(100) goes from 0.187 to 0.222."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the three numbers in the caption at each end of the slider."
+    }
+   ],
+   "feedback": {
+    "correct": "The smile flattens with expiry, while its middle rises.",
+    "generic": "Not quite right. Compare the caption at one month and at one year."
+   },
+   "explain": {
+    "text": "At one month IV(70) is 0.441 and IV(100) 0.187; at one year they are 0.266 and 0.222. Short expiries have steep smiles, long ones gentle smiles. We will see that most of this is a change of units.",
+    "canvas": {
+     "params": {
+      "T": 1
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Fit the smile",
+   "prose": "Measure each strike by **standardised moneyness** $m = \\ln(K/F)/\\sqrt{T}$, its distance from the forward. Vol against $m$ is the **smile**. Its slope $b$ is the **skew** and its bend $c$ the **curvature**: $\\sigma(m) = a + bm + cm^2$. The level $a$ is fixed at 0.2001.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.55,
+      0.45
+     ],
+     "y": [
+      0.17,
+      0.28
+     ],
+     "xLabel": "Standardised moneyness $m$",
+     "yLabel": "Implied vol",
+     "xStep": 0.1,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "a + b*x + c*x^2",
+       "domain": [
+        -0.55,
+        0.45
+       ],
+       "label": "fit",
+       "labelAt": 0.4
+      }
+     ],
+     "params": {
+      "a": 0.2001,
+      "b": 0,
+      "c": 0
+     }
+    },
+    "state": {
+     "params": {
+      "b": 0,
+      "c": 0
+     },
+     "points": [
+      {
+       "id": "p0",
+       "x": -0.4663,
+       "y": 0.2622,
+       "tap": false
+      },
+      {
+       "id": "p1",
+       "x": -0.345,
+       "y": 0.2392,
+       "tap": false
+      },
+      {
+       "id": "p2",
+       "x": -0.2307,
+       "y": 0.2246,
+       "tap": false
+      },
+      {
+       "id": "p3",
+       "x": -0.1226,
+       "y": 0.2117,
+       "tap": false
+      },
+      {
+       "id": "p4",
+       "x": -0.02,
+       "y": 0.2032,
+       "tap": false
+      },
+      {
+       "id": "p5",
+       "x": 0.0776,
+       "y": 0.1939,
+       "tap": false
+      },
+      {
+       "id": "p6",
+       "x": 0.1706,
+       "y": 0.1896,
+       "tap": false
+      },
+      {
+       "id": "p7",
+       "x": 0.2595,
+       "y": 0.1858,
+       "tap": false
+      },
+      {
+       "id": "p8",
+       "x": 0.3446,
+       "y": 0.1857,
+       "tap": false
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Typical miss: {{fixed(sqrt((pow(0.2622 - (a + b*(-0.4663) + c*(-0.4663)*(-0.4663)), 2) + pow(0.2392 - (a + b*(-0.345) + c*(-0.345)*(-0.345)), 2) + pow(0.2246 - (a + b*(-0.2307) + c*(-0.2307)*(-0.2307)), 2) + pow(0.2117 - (a + b*(-0.1226) + c*(-0.1226)*(-0.1226)), 2) + pow(0.2032 - (a + b*(-0.02) + c*(-0.02)*(-0.02)), 2) + pow(0.1939 - (a + b*(0.0776) + c*(0.0776)*(0.0776)), 2) + pow(0.1896 - (a + b*(0.1706) + c*(0.1706)*(0.1706)), 2) + pow(0.1858 - (a + b*(0.2595) + c*(0.2595)*(0.2595)), 2) + pow(0.1857 - (a + b*(0.3446) + c*(0.3446)*(0.3446)), 2))/9)*100, 2)}} vol points"
+    }
+   },
+   "question": "Set the skew $b$ and the curvature $c$ so the curve runs through the dots.",
+   "widget": {
+    "kind": "sliders",
+    "sliders": [
+     {
+      "id": "b",
+      "bind": "b",
+      "min": -0.2,
+      "max": 0.1,
+      "step": 0.005,
+      "label": "skew $b$"
+     },
+     {
+      "id": "c",
+      "bind": "c",
+      "min": -0.1,
+      "max": 0.3,
+      "step": 0.01,
+      "label": "curvature $c$"
+     }
+    ],
+    "answer": {
+     "b": -0.08,
+     "c": 0.11
+    },
+    "tol": {
+     "b": 0.015,
+     "c": 0.05
+    },
+    "wrong": [
+     {
+      "id": "sign",
+      "check": "b > 0"
+     },
+     {
+      "id": "nocurve",
+      "check": "c < 0.03"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Get the slope right first, then bend the curve."
+    },
+    {
+     "rung": "point",
+     "text": "From $m = -0.47$ to $m = 0.34$ the vol falls by about 0.08.",
+     "highlight": [
+      "p0",
+      "p8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The slope is near $-0.08$. Then raise $c$ until the right end flattens: about 0.11."
+    }
+   ],
+   "feedback": {
+    "correct": "Your curve runs through the dots to within a tenth of a vol point.",
+    "generic": "Not quite right. Watch the caption's miss and push it below half a vol point.",
+    "byKey": {
+     "sign": "Your skew is positive, so the curve rises to the right. The dots fall: $b$ must be negative.",
+     "nocurve": "A straight line misses both ends. Add curvature so the right end flattens.",
+     "b": "Your slope is off. Line the curve up with the dots near $m = 0$ first.",
+     "c": "The bend is off. Raise or lower $c$ until both ends meet the dots."
+    }
+   },
+   "explain": {
+    "text": "Least squares gives $b = -0.0805$ and $c = 0.109$, a typical miss of 0.09 vol points. The skew says vol falls 0.08 per unit of $m$; the curvature lifts both wings. Low strikes are dear because buyers pay for crash protection.",
+    "canvas": {
+     "params": {
+      "b": -0.0805,
+      "c": 0.109
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Five expiries, one shape",
+   "prose": "The same least squares fit, run on every expiry of the cleaned chain. The one-month smile has only four clean out-of-the-money quotes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expiry",
+      "Quotes",
+      "$a$",
+      "$b$",
+      "$c$"
+     ],
+     "rows": [
+      [
+       "1 month",
+       "4",
+       "0.1854",
+       "−0.0767",
+       "0.0903"
+      ],
+      [
+       "2 months",
+       "7",
+       "0.1943",
+       "−0.0787",
+       "0.0954"
+      ],
+      [
+       "3 months",
+       "9",
+       "0.2001",
+       "−0.0805",
+       "0.1090"
+      ],
+      [
+       "6 months",
+       "11",
+       "0.2115",
+       "−0.0815",
+       "0.1020"
+      ],
+      [
+       "1 year",
+       "11",
+       "0.2185",
+       "−0.0799",
+       "0.0978"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which coefficient changes with expiry?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "$a$, the level",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$b$, the skew",
+      "why": "$b$ stays between $-0.077$ and $-0.082$: the same skew in units of $m$."
+     },
+     {
+      "id": "c",
+      "text": "$c$, the curvature",
+      "why": "$c$ wanders between 0.09 and 0.11 with the quote noise, and shows no trend."
+     },
+     {
+      "id": "all",
+      "text": "All three",
+      "why": "Only $a$ moves steadily, from 0.185 to 0.219. The others scatter around fixed values."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read each column from top to bottom."
+    },
+    {
+     "rung": "point",
+     "text": "Look for a column that climbs steadily.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$a$ rises from 0.1854 to 0.2185; $b$ and $c$ stay put."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the level moves; the shape in $m$ is the same.",
+    "generic": "Not quite right. Find the column with a trend, not just noise."
+   },
+   "explain": {
+    "text": "The generator planted $\\sigma(m) = a(T) - 0.08\\,m + 0.10\\,m^2$, with $a(T) = 0.22 - 0.045\\,e^{-T/0.3}$. The fits recover $-0.08$ and $0.10$ to within the noise. With four quotes and three coefficients, the one-month fit has almost no spare evidence.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Skew in strike terms",
+   "prose": "Desks often quote skew in strike terms: IV(90) − IV(110), the 90 strike's vol less the 110's. Here it is for each expiry of the planted surface.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expiry",
+      "IV(90) − IV(110)"
+     ],
+     "rows": [
+      [
+       "1 month",
+       "0.0596"
+      ],
+      [
+       "2 months",
+       "0.0421"
+      ],
+      [
+       "3 months",
+       "0.0345"
+      ],
+      [
+       "6 months",
+       "0.0247"
+      ],
+      [
+       "1 year",
+       "0.0179"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many times the one-year skew is the one-month skew?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.33,
+    "tol": {
+     "abs": 0.03
+    },
+    "label": "Ratio",
+    "placeholder": "a number such as 2.5",
+    "accept": "3.33: $0.0596 / 0.0179$",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "diff",
+      "value": 0.0417,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the first row by the last."
+    },
+    {
+     "rung": "point",
+     "text": "One month: 0.0596. One year: 0.0179.",
+     "highlight": [
+      "r0",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.0596 / 0.0179 = 3.33$."
+    }
+   ],
+   "feedback": {
+    "correct": "The one-month skew is 3.3 times the one-year skew in strike terms.",
+    "generic": "Not quite right. Divide the one-month value by the one-year value.",
+    "byKey": {
+     "inv": "You divided the one-year value by the one-month value. Turn the fraction over.",
+     "diff": "That is the difference. The question asks for the ratio."
+    }
+   },
+   "explain": {
+    "text": "$0.0596/0.0179 = 3.33$. Compare $\\sqrt{12} = 3.46$: a £10 gap in strike is $\\sqrt{12}$ times more $m$ at one month than at one year. Most of the steepness is the unit, not the market.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A steeper skew",
+   "prose": "A colleague plots both smiles against strike. \"The one-month skew is 3.3 times the one-year skew. Short-dated puts are overpriced: sell them.\"",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      120
+     ],
+     "y": [
+      0.15,
+      0.32
+     ],
+     "xLabel": "Strike $K$ (£)",
+     "yLabel": "Implied vol",
+     "xStep": 10,
+     "functions": [
+      {
+       "id": "m1",
+       "expr": "0.22-0.045*exp(-0.0833/0.3)-0.08*(ln(x/(100*exp(0.04*0.0833)))/sqrt(0.0833))+0.10*(ln(x/(100*exp(0.04*0.0833)))/sqrt(0.0833))^2",
+       "domain": [
+        80,
+        120
+       ],
+       "label": "one month",
+       "labelAt": 84
+      },
+      {
+       "id": "y1",
+       "expr": "0.22-0.045*exp(-1/0.3)-0.08*(ln(x/(100*exp(0.04*1)))/sqrt(1))+0.10*(ln(x/(100*exp(0.04*1)))/sqrt(1))^2",
+       "domain": [
+        80,
+        120
+       ],
+       "label": "one year",
+       "labelAt": 112,
+       "labelSide": "above"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the fit in $m$ say about the colleague's claim?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "units",
+      "text": "Both skews are about $-0.08$ per unit of $m$: the 3.3 is mostly $\\sqrt{12}$",
+      "correct": true
+     },
+     {
+      "id": "real",
+      "text": "It is right: the one-month skew really is 3.3 times steeper",
+      "why": "You compared slopes per £ of strike. £10 is 0.33 of $m$ at one month and only 0.10 at one year."
+     },
+     {
+      "id": "itm",
+      "text": "Add the in-the-money quotes to steady the one-month fit",
+      "why": "In-the-money vols are noisier: 1.4 vol points off on average at three months, against 0.08 out of the money."
+     },
+     {
+      "id": "level",
+      "text": "The one-year level $a$ is higher, so its skew must be lower",
+      "why": "The level and the skew are separate coefficients. The skew in $m$ is the same at both expiries."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Recall the $b$ column of the fit table."
+    },
+    {
+     "rung": "point",
+     "text": "A strike gap counts for more $m$ when $T$ is short.",
+     "highlight": [
+      "m1",
+      "y1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$m = \\ln(K/F)/\\sqrt{T}$, so slopes per £ scale with $1/\\sqrt{T}$."
+    }
+   ],
+   "feedback": {
+    "correct": "In units of $m$ the skew has not changed.",
+    "generic": "Not quite right. Compare the skews in units of $m$, not pounds of strike.",
+    "byKey": {
+     "real": "You compared slopes in strike units across expiries. In $m$ both are near $-0.08$; the gap is the $1/\\sqrt{T}$ in $m$."
+    }
+   },
+   "explain": {
+    "text": "The one-month curve is steeper per £ because $m$ divides by $\\sqrt{T}$. In $m$, both fits give a skew of about $-0.08$. Comparing expiries in strike terms invents a trade.",
+    "canvas": {
+     "highlight": [
+      "m1",
+      "y1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The fit as a rule",
+   "prose": "For one expiry, put each out-of-the-money mid's vol $\\sigma_i$ at $m_i = \\ln(K_i/F)/\\sqrt{T}$, and choose $a, b, c$ to minimise $$\\sum_i w_i\\,(\\sigma_i - a - b\\,m_i - c\\,m_i^2)^2.$$ The weight $w_i$ is 1, or $1/(\\sigma^{\\text{ask}}_i - \\sigma^{\\text{bid}}_i)$ where the bid and ask vols exist.",
+   "question": "With weights from the bid-ask band, which quote counts most?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tight",
+      "text": "The one with the narrowest band in vol terms",
+      "correct": true
+     },
+     {
+      "id": "wide",
+      "text": "The one with the widest band",
+      "why": "A wide band means the market is unsure. Dividing by the band gives it less weight, not more."
+     },
+     {
+      "id": "deep",
+      "text": "The deepest out-of-the-money one",
+      "why": "Deep wings often have the widest bands: 1.4 vol points at the three-month 80 put, against 0.45 at the 90."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A tight band is a confident price, so it pulls the fit hardest.",
+    "generic": "Not quite right. Weight is one over the band's width."
+   },
+   "explain": {
+    "text": "At three months the 90 put's band is 0.45 vol points and the 80 put's 1.38. Weighted by the inverse, the 90 put counts three times as much. Level 3 fits with $w_i = 1$ on mids; the weights are the dashboard's next step."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A smile from the chain",
+   "prose": "The first piece: one expiry's smile. Keep the out-of-the-money quotes relative to the forward $F = S e^{(r-q)T}$, solve each mid, and record $m$. A quote no vol fits gets NaN. `otm_quotes`, `implied_vol` and `clean` are loaded.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "strike",
+      "m",
+      "iv"
+     ],
+     "rows": [
+      [
+       "80",
+       "−0.4663",
+       "0.2622"
+      ],
+      [
+       "85",
+       "−0.3450",
+       "0.2392"
+      ],
+      [
+       "90",
+       "−0.2307",
+       "0.2246"
+      ],
+      [
+       "95",
+       "−0.1226",
+       "0.2117"
+      ],
+      [
+       "100",
+       "−0.0200",
+       "0.2032"
+      ],
+      [
+       "105",
+       "0.0776",
+       "0.1939"
+      ],
+      [
+       "110",
+       "0.1706",
+       "0.1896"
+      ],
+      [
+       "115",
+       "0.2595",
+       "0.1858"
+      ],
+      [
+       "120",
+       "0.3446",
+       "0.1857"
+      ]
+     ]
+    },
+    "state": {},
+    "maxHeight": 220
+   },
+   "question": "Complete `smile(clean, T, S, r, q)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    if \"call\" not in w or \"put\" not in w:\n        return float(\"nan\")\n    w = w.dropna(subset=[\"call\", \"put\"])\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n\ndef otm_quotes(df_T, F):\n    keep = ((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F)) | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\nfrom math import pi\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price, by Newton's method with a bisection fallback.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma            # price too high: the answer is below sigma\n        else:\n            lo = sigma            # price too low: the answer is above sigma\n        v = bs_vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else hi + 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2   # Newton left the bracket: bisect instead\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n\nclean = clean_quotes(make_chain())\n",
+    "starter": "import numpy as np\nimport pandas as pd\nfrom math import exp, log, sqrt\n\n# otm_quotes(df_T, F) and implied_vol(...) are loaded.\n\ndef smile(clean, T, S, r, q):\n    \"\"\"OTM quotes of one expiry: strike, m and the vol of the mid.\"\"\"\n    df_T = clean[np.isclose(clean[\"T\"], T)]\n    F = ...  # the forward\n    otm = otm_quotes(df_T, F)\n    rows = []\n    for K, kind, b, a in zip(otm[\"strike\"], otm[\"type\"], otm[\"bid\"], otm[\"ask\"]):\n        ...  # iv of the mid (NaN on ValueError) and m\n        rows.append([K, m, iv])\n    return pd.DataFrame(rows, columns=[\"strike\", \"m\", \"iv\"])\n",
+    "solution": "import numpy as np\nimport pandas as pd\nfrom math import exp, log, sqrt\n\n# otm_quotes(df_T, F) and implied_vol(...) are loaded.\n\ndef smile(clean, T, S, r, q):\n    \"\"\"OTM quotes of one expiry: strike, m and the vol of the mid.\"\"\"\n    df_T = clean[np.isclose(clean[\"T\"], T)]\n    F = S * exp((r - q) * T)\n    otm = otm_quotes(df_T, F)\n    rows = []\n    for K, kind, b, a in zip(otm[\"strike\"], otm[\"type\"], otm[\"bid\"], otm[\"ask\"]):\n        try:\n            iv = implied_vol((b + a) / 2, S, K, r, T, kind, q)\n        except ValueError:\n            iv = float(\"nan\")\n        m = log(K / F) / sqrt(T)        # standardised moneyness\n        rows.append([K, m, iv])\n    return pd.DataFrame(rows, columns=[\"strike\", \"m\", \"iv\"])\n",
+    "examples": [
+     {
+      "call": "len(smile(clean, 0.25, 100.0, 0.05, 0.01))",
+      "expect": "9"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "vol = lambda K: 0.30 - 0.002 * (K - 80); hand = pd.DataFrame([[0.5, K, k, bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), 1, 0.0] for K in (80, 90, 100, 110, 120) for k in ('call', 'put')], columns=['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min'])",
+      "call": "list(smile(hand, 0.5, 100.0, 0.05, 0.01).columns)",
+      "expect": "['strike', 'm', 'iv']"
+     },
+     {
+      "setup": "vol = lambda K: 0.30 - 0.002 * (K - 80); hand = pd.DataFrame([[0.5, K, k, bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), 1, 0.0] for K in (80, 90, 100, 110, 120) for k in ('call', 'put')], columns=['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min'])",
+      "call": "list(smile(hand, 0.5, 100.0, 0.05, 0.01)['strike'])",
+      "expect": "[80, 90, 100, 110, 120]"
+     },
+     {
+      "setup": "vol = lambda K: 0.30 - 0.002 * (K - 80); hand = pd.DataFrame([[0.5, K, k, bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), 1, 0.0] for K in (80, 90, 100, 110, 120) for k in ('call', 'put')], columns=['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min'])",
+      "call": "[round(v, 6) for v in smile(hand, 0.5, 100.0, 0.05, 0.01)['iv']]",
+      "expect": "[0.3, 0.28, 0.26, 0.24, 0.22]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "vol = lambda K: 0.30 - 0.002 * (K - 80); hand = pd.DataFrame([[0.5, K, k, bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), bs_price(100, K, 0.05, vol(K), 0.5, k, 0.01), 1, 0.0] for K in (80, 90, 100, 110, 120) for k in ('call', 'put')], columns=['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min'])",
+      "call": "[round(v, 6) for v in smile(hand, 0.5, 100.0, 0.05, 0.01)['m']]",
+      "expect": "[round(log(K / (100 * exp(0.02))) / sqrt(0.5), 6) for K in (80, 90, 100, 110, 120)]",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(smile(clean, 0.25, 100.0, 0.05, 0.01)), len(smile(clean, 1/12, 100.0, 0.05, 0.01))",
+      "expect": "(9, 4)"
+     },
+     {
+      "call": "round(float(smile(clean, 0.25, 100.0, 0.05, 0.01)['iv'][4]), 4)",
+      "expect": "0.2032",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(smile(clean, 0.25, 100.0, 0.05, 0.01)['m'][0]), 4)",
+      "expect": "-0.4663",
+      "compare": "isclose"
+     },
+     {
+      "setup": "bad = pd.DataFrame([[0.5, 110, 'call', 150.0, 150.0, 1, 0.0]], columns=['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min'])",
+      "call": "bool(smile(bad, 0.5, 100.0, 0.05, 0.01)['iv'].isna()[0])",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 8 hidden tests: a hand chain priced from known vols, the seeded chain, and a quote no vol fits. The first run loads numpy and pandas, about 15 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The forward is `S * exp((r - q) * T)`."
+    },
+    {
+     "rung": "point",
+     "text": "Catch `ValueError` from `implied_vol` and use NaN.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`m = log(K / F) / sqrt(T)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Nine quotes at three months, four at one month.",
+    "generic": "Not quite right. Check the forward: at three months the 100 strike must be the put."
+   },
+   "explain": {
+    "text": "At three months $F = £101.01$, so the 100 strike is below it and we take the put. Its vol, 0.2032, sits on the curve; the call's 0.2016 would be in-the-money noise. Measuring from $F$, not $S$, puts $m = 0$ at the smile's centre."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The fit in code",
+   "prose": "Now the least squares fit. Drop rows where `m`, `iv` or the weight is NaN; raise `ValueError` if fewer than three remain. Multiply each row of the design matrix and each vol by $\\sqrt{w_i}$, then use `np.linalg.lstsq`. Round the coefficients to 4 places.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expiry",
+      "$a$",
+      "$b$",
+      "$c$"
+     ],
+     "rows": [
+      [
+       "1 month",
+       "0.1854",
+       "−0.0767",
+       "0.0903"
+      ],
+      [
+       "2 months",
+       "0.1943",
+       "−0.0787",
+       "0.0954"
+      ],
+      [
+       "3 months",
+       "0.2001",
+       "−0.0805",
+       "0.1090"
+      ],
+      [
+       "6 months",
+       "0.2115",
+       "−0.0815",
+       "0.1020"
+      ],
+      [
+       "1 year",
+       "0.2185",
+       "−0.0799",
+       "0.0978"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `fit_smile(m, iv, weights=None)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    if \"call\" not in w or \"put\" not in w:\n        return float(\"nan\")\n    w = w.dropna(subset=[\"call\", \"put\"])\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n\ndef otm_quotes(df_T, F):\n    keep = ((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F)) | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\nfrom math import pi\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price, by Newton's method with a bisection fallback.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma            # price too high: the answer is below sigma\n        else:\n            lo = sigma            # price too low: the answer is above sigma\n        v = bs_vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else hi + 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2   # Newton left the bracket: bisect instead\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n\ndef smile(clean, T, S, r, q):\n    \"\"\"OTM quotes of one expiry with standardised moneyness m and the implied vol of the mid.\"\"\"\n    df_T = clean[np.isclose(clean[\"T\"], T)]\n    F = S * exp((r - q) * T)\n    otm = otm_quotes(df_T, F)\n    rows = []\n    for K, kind, b, a in zip(otm[\"strike\"], otm[\"type\"], otm[\"bid\"], otm[\"ask\"]):\n        try:\n            iv = implied_vol((b + a) / 2, S, K, r, T, kind, q)\n        except ValueError:\n            iv = float(\"nan\")\n        rows.append([K, log(K / F) / sqrt(T), iv])\n    return pd.DataFrame(rows, columns=[\"strike\", \"m\", \"iv\"])\n\nclean = clean_quotes(make_chain())\n",
+    "starter": "import numpy as np\n\ndef fit_smile(m, iv, weights=None):\n    \"\"\"Least squares iv = a + b m + c m^2; weights multiply the squared residuals.\"\"\"\n    m = np.asarray(m, dtype=float)\n    iv = np.asarray(iv, dtype=float)\n    w = np.ones_like(m) if weights is None else np.asarray(weights, dtype=float)\n    ...  # drop NaN rows; ValueError below three quotes\n    X = np.column_stack([np.ones_like(m), m, m * m])\n    ...  # solve the weighted least squares problem\n    return tuple(round(float(c), 4) for c in coef)\n",
+    "solution": "import numpy as np\n\ndef fit_smile(m, iv, weights=None):\n    \"\"\"Least squares iv = a + b m + c m^2; weights multiply the squared residuals.\"\"\"\n    m = np.asarray(m, dtype=float)\n    iv = np.asarray(iv, dtype=float)\n    w = np.ones_like(m) if weights is None else np.asarray(weights, dtype=float)\n    ok = ~(np.isnan(m) | np.isnan(iv) | np.isnan(w))\n    m, iv, w = m[ok], iv[ok], w[ok]\n    if len(m) < 3:\n        raise ValueError(\"a quadratic needs at least three quotes\")\n    X = np.column_stack([np.ones_like(m), m, m * m]) * np.sqrt(w)[:, None]\n    coef = np.linalg.lstsq(X, iv * np.sqrt(w), rcond=None)[0]\n    return tuple(round(float(c), 4) for c in coef)\n",
+    "examples": [
+     {
+      "setup": "ms = np.linspace(-0.5, 0.5, 9)",
+      "call": "list(fit_smile(ms, 0.21 - 0.08 * ms + 0.10 * ms ** 2))",
+      "expect": "[0.21, -0.08, 0.1]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "ms = np.linspace(-0.5, 0.5, 9)",
+      "call": "list(fit_smile(ms, 0.21 - 0.08 * ms + 0.10 * ms ** 2))",
+      "expect": "[0.21, -0.08, 0.1]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "ms = np.linspace(-0.5, 0.5, 9)",
+      "call": "isinstance(fit_smile(ms, 0.21 - 0.08 * ms + 0.10 * ms ** 2), tuple)",
+      "expect": "True"
+     },
+     {
+      "call": "list(fit_smile([-0.4, -0.2, 0.0, 0.2, float('nan')], [0.26, 0.23, 0.2, 0.2, 0.25]))",
+      "expect": "list(fit_smile([-0.4, -0.2, 0.0, 0.2], [0.26, 0.23, 0.2, 0.2]))",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_smile([-0.4, -0.2, 0.0, 0.2, 0.4], [0.26, 0.23, 0.2, 0.2, 0.25], weights=[1, 1, 1, 1, 0]))",
+      "expect": "list(fit_smile([-0.4, -0.2, 0.0, 0.2], [0.26, 0.23, 0.2, 0.2]))",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_smile([-0.4, -0.2, 0.0, 0.2, 0.4], [0.26, 0.23, 0.2, 0.2, 0.25], weights=[1, 4, 9, 4, 1]))",
+      "expect": "[0.2007, -0.0975, 0.2366]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(fit_smile([-0.3, 0.0, 0.3], [0.25, 0.2, 0.19]))",
+      "expect": "[0.2, -0.1, 0.3889]",
+      "compare": "isclose"
+     },
+     {
+      "call": "fit_smile([0.0, 0.1], [0.2, 0.19])",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "setup": "sm = smile(clean, 0.25, 100.0, 0.05, 0.01)",
+      "call": "list(fit_smile(sm['m'], sm['iv']))",
+      "expect": "[0.2001, -0.0805, 0.109]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "sm = smile(clean, 1.0, 100.0, 0.05, 0.01)",
+      "call": "list(fit_smile(sm['m'], sm['iv']))",
+      "expect": "[0.2185, -0.0799, 0.0978]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 9 hidden tests: noise-free data, NaN and weights, exactly three quotes, too few, and two seeded expiries. Coefficients are compared to 4 places. The first run loads numpy and pandas, about 15 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`ok = ~(np.isnan(m) | np.isnan(iv) | np.isnan(w))` keeps the good rows."
+    },
+    {
+     "rung": "point",
+     "text": "Scale by `np.sqrt(w)`: rows of `X` and entries of `iv`.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`coef = np.linalg.lstsq(X * sw[:, None], iv * sw, rcond=None)[0]` with `sw = np.sqrt(w)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your fit recovers the table, and three quotes fit exactly.",
+    "generic": "Not quite right. Check that NaN rows are dropped before the fit, and weights enter as square roots."
+   },
+   "explain": {
+    "text": "Scaling a row by $\\sqrt{w_i}$ multiplies its squared residual by $w_i$, so plain least squares does the weighting. With exactly three quotes the quadratic passes through all of them: zero residual, and no evidence that the shape is right."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Drawing the smile",
+   "prose": "The dashboard's smile panel: dots for the quotes, a line for the fit. Return the `Axes`; the tests read its two lines. The app draws the same picture on the plane above.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.55,
+      0.45
+     ],
+     "y": [
+      0.17,
+      0.28
+     ],
+     "xLabel": "$m$",
+     "yLabel": "Implied vol",
+     "xStep": 0.1,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "0.2001 - 0.0805*x + 0.109*x^2",
+       "domain": [
+        -0.4663,
+        0.3446
+       ],
+       "label": "fit"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p0",
+       "x": -0.4663,
+       "y": 0.2622,
+       "tap": false
+      },
+      {
+       "id": "p1",
+       "x": -0.345,
+       "y": 0.2392,
+       "tap": false
+      },
+      {
+       "id": "p2",
+       "x": -0.2307,
+       "y": 0.2246,
+       "tap": false
+      },
+      {
+       "id": "p3",
+       "x": -0.1226,
+       "y": 0.2117,
+       "tap": false
+      },
+      {
+       "id": "p4",
+       "x": -0.02,
+       "y": 0.2032,
+       "tap": false
+      },
+      {
+       "id": "p5",
+       "x": 0.0776,
+       "y": 0.1939,
+       "tap": false
+      },
+      {
+       "id": "p6",
+       "x": 0.1706,
+       "y": 0.1896,
+       "tap": false
+      },
+      {
+       "id": "p7",
+       "x": 0.2595,
+       "y": 0.1858,
+       "tap": false
+      },
+      {
+       "id": "p8",
+       "x": 0.3446,
+       "y": 0.1857,
+       "tap": false
+      }
+     ]
+    },
+    "maxHeight": 240
+   },
+   "question": "Complete `plot_smile(smile_df, coeffs)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    if \"call\" not in w or \"put\" not in w:\n        return float(\"nan\")\n    w = w.dropna(subset=[\"call\", \"put\"])\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n\ndef otm_quotes(df_T, F):\n    keep = ((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F)) | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\nfrom math import pi\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price, by Newton's method with a bisection fallback.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma            # price too high: the answer is below sigma\n        else:\n            lo = sigma            # price too low: the answer is above sigma\n        v = bs_vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else hi + 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2   # Newton left the bracket: bisect instead\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n\ndef smile(clean, T, S, r, q):\n    \"\"\"OTM quotes of one expiry with standardised moneyness m and the implied vol of the mid.\"\"\"\n    df_T = clean[np.isclose(clean[\"T\"], T)]\n    F = S * exp((r - q) * T)\n    otm = otm_quotes(df_T, F)\n    rows = []\n    for K, kind, b, a in zip(otm[\"strike\"], otm[\"type\"], otm[\"bid\"], otm[\"ask\"]):\n        try:\n            iv = implied_vol((b + a) / 2, S, K, r, T, kind, q)\n        except ValueError:\n            iv = float(\"nan\")\n        rows.append([K, log(K / F) / sqrt(T), iv])\n    return pd.DataFrame(rows, columns=[\"strike\", \"m\", \"iv\"])\n\ndef fit_smile(m, iv, weights=None):\n    \"\"\"Least squares iv = a + b m + c m^2; weights multiply the squared residuals.\"\"\"\n    m = np.asarray(m, dtype=float)\n    iv = np.asarray(iv, dtype=float)\n    w = np.ones_like(m) if weights is None else np.asarray(weights, dtype=float)\n    ok = ~(np.isnan(m) | np.isnan(iv) | np.isnan(w))\n    m, iv, w = m[ok], iv[ok], w[ok]\n    if len(m) < 3:\n        raise ValueError(\"a quadratic needs at least three quotes\")\n    X = np.column_stack([np.ones_like(m), m, m * m]) * np.sqrt(w)[:, None]\n    coef = np.linalg.lstsq(X, iv * np.sqrt(w), rcond=None)[0]\n    return tuple(round(float(c), 4) for c in coef)\n\nclean = clean_quotes(make_chain())\n",
+    "starter": "import numpy as np\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef plot_smile(smile_df, coeffs):\n    \"\"\"The quotes as dots and the fitted quadratic as a line.\"\"\"\n    a, b, c = coeffs\n    fig, ax = plt.subplots()\n    ...  # dots: smile_df[\"m\"] against smile_df[\"iv\"], marker \"o\", no line\n    ms = ...  # 50 points from the smallest m to the largest\n    ...  # the fitted curve through ms\n    ax.set_xlabel(\"m\")\n    ax.set_ylabel(\"Implied vol\")\n    ax.set_title(\"Implied volatility smile\")\n    return ax\n",
+    "solution": "import numpy as np\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef plot_smile(smile_df, coeffs):\n    \"\"\"The quotes as dots and the fitted quadratic as a line.\"\"\"\n    a, b, c = coeffs\n    fig, ax = plt.subplots()\n    ax.plot(smile_df[\"m\"], smile_df[\"iv\"], \"o\")\n    ms = np.linspace(smile_df[\"m\"].min(), smile_df[\"m\"].max(), 50)\n    ax.plot(ms, a + b * ms + c * ms ** 2)\n    ax.set_xlabel(\"m\")\n    ax.set_ylabel(\"Implied vol\")\n    ax.set_title(\"Implied volatility smile\")\n    return ax\n",
+    "examples": [
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "len(ax.lines)",
+      "expect": "2"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "len(ax.lines)",
+      "expect": "2"
+     },
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "[round(float(v), 4) for v in ax.lines[0].get_ydata()]",
+      "expect": "[round(float(v), 4) for v in sm['iv']]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "ax.lines[0].get_linestyle(), ax.lines[0].get_marker()",
+      "expect": "('None', 'o')"
+     },
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "len(ax.lines[1].get_xdata())",
+      "expect": "50"
+     },
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "round(float(ax.lines[1].get_ydata()[0]), 6)",
+      "expect": "round(co[0] + co[1] * sm['m'].min() + co[2] * sm['m'].min() ** 2, 6)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "round(float(ax.lines[1].get_xdata()[-1]), 6)",
+      "expect": "round(float(sm['m'].max()), 6)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "plt.close('all'); sm = smile(clean, 0.25, 100.0, 0.05, 0.01); co = fit_smile(sm['m'], sm['iv']); ax = plot_smile(sm, co)",
+      "call": "ax.get_title(), ax.get_xlabel()",
+      "expect": "('Implied volatility smile', 'm')"
+     }
+    ],
+    "how": "Check runs 7 hidden tests on the axes your function returns, for the seeded three-month smile. The first run loads numpy, pandas and matplotlib, which are large: allow 20 to 30 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`ax.plot(x, y, \"o\")` draws dots with no joining line."
+    },
+    {
+     "rung": "point",
+     "text": "The curve's x values: `np.linspace(smile_df[\"m\"].min(), smile_df[\"m\"].max(), 50)`.",
+     "highlight": [
+      "f"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then `ax.plot(ms, a + b * ms + c * ms ** 2)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Two lines: the quotes and the fit.",
+    "generic": "Not quite right. Plot the dots first, then the 50-point curve."
+   },
+   "explain": {
+    "text": "The order matters to the tests: dots are line 0, the fit line 1. The curve spans only the quoted range of $m$, so the picture never shows an extrapolated wing as if it were data."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The morning smile check",
+   "prose": "Each morning a vol desk checks the smile before quoting. A client wants to sell the three-month 90 put and buy the 110 call: a **risk reversal**. From the chain, the 90 put's mid vol is 22.46% and the 110 call's 18.96%.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       80,
+       0.2622
+      ],
+      [
+       85,
+       0.2392
+      ],
+      [
+       90,
+       0.2246
+      ],
+      [
+       95,
+       0.2117
+      ],
+      [
+       100,
+       0.2032
+      ],
+      [
+       105,
+       0.1939
+      ],
+      [
+       110,
+       0.1896
+      ],
+      [
+       115,
+       0.1858
+      ],
+      [
+       120,
+       0.1857
+      ]
+     ],
+     "x": "Strike (£)",
+     "y": "Implied vol",
+     "xRange": [
+      75,
+      125
+     ],
+     "yRange": [
+      0.17,
+      0.28
+     ]
+    },
+    "state": {
+     "highlight": [
+      "p2",
+      "p6"
+     ]
+    }
+   },
+   "question": "By how many vol points is the put richer than the call?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "vol points",
+    "label": "Vol points",
+    "placeholder": "vol points, such as 2.1",
+    "accept": "3.50: $22.46 - 18.96$",
+    "wrong": [
+     {
+      "id": "frac",
+      "value": 0.035,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "neg",
+      "value": -3.5,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the call's vol from the put's."
+    },
+    {
+     "rung": "point",
+     "text": "22.46 and 18.96.",
+     "highlight": [
+      "p2",
+      "p6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$22.46 - 18.96 = 3.50$."
+    }
+   ],
+   "feedback": {
+    "correct": "The put is 3.5 vol points richer: the skew, priced.",
+    "generic": "Not quite right. Take the difference of the two vols in percentage points.",
+    "byKey": {
+     "frac": "0.035 is the difference as a fraction. Quote it in vol points: 3.5.",
+     "neg": "That is the call less the put. The question asks how much richer the put is."
+    }
+   },
+   "explain": {
+    "text": "Selling the put and buying the call collects 3.5 vol points of skew. That premium pays for crash risk. If the share falls 15%, the short put loses far more than the skew earned."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Implied vols vary by strike: high at low strikes, falling, then flattening. This is the smile, and its slope is the skew.",
+   "Measure strikes by $m = \\ln(K/F)/\\sqrt{T}$ and fit $\\sigma = a + bm + cm^2$ to out-of-the-money mids. The seeded chain gives $b \\approx -0.08$, $c \\approx 0.10$ at every expiry.",
+   "Skew in strike terms falls with expiry only because $m$ scales with $1/\\sqrt{T}$. In-the-money quotes and three-quote fits carry little evidence."
+  ],
+  "formula": {
+   "name": "Quadratic smile",
+   "tex": "\\sigma(m) = a + b\\,m + c\\,m^2, \\qquad m = \\frac{\\ln(K/F)}{\\sqrt{T}}",
+   "note": "Fit by least squares to OTM mids, optionally weighted by $1/(\\sigma^{\\text{ask}} - \\sigma^{\\text{bid}})$."
+  },
+  "trap": "A one-month skew 3.3 times the one-year skew in strike terms is the same skew in $m$: $\\sqrt{12} = 3.46$."
+ },
+ "quiz": [
+  {
+   "id": "q-three",
+   "difficulty": 2,
+   "prose": "After cleaning, one expiry has only three out-of-the-money quotes. The quadratic fit passes through all three with zero residual.",
+   "question": "What does the zero residual tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "none",
+      "text": "Nothing about the fit's quality: three points always fit a quadratic exactly",
+      "correct": true
+     },
+     {
+      "id": "good",
+      "text": "The smile is measured perfectly",
+      "why": "Three coefficients and three quotes leave no spare data. Any three points give zero residual."
+     },
+     {
+      "id": "noise",
+      "text": "These quotes have no noise",
+      "why": "The noise is still there; the curve simply absorbs it."
+     },
+     {
+      "id": "arb",
+      "text": "The expiry is free of arbitrage",
+      "why": "Fit quality and arbitrage are separate checks; level 4 tests arbitrage."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With no spare quotes, the residual cannot test the shape.",
+    "generic": "Not quite right. Count the coefficients and the quotes."
+   },
+   "explain": {
+    "text": "A quadratic has three coefficients, so it can pass through any three points. Zero residual is guaranteed, not earned. Flag such an expiry in the results note, or borrow the skew and curvature from its neighbours."
+   }
+  },
+  {
+   "id": "q-m",
+   "difficulty": 3,
+   "prose": "Three-month expiry, $S = 100$, $r = 5\\%$, $q = 1\\%$, so $F = 100e^{0.01} = 101.005$.",
+   "question": "What is $m$ for the 110 strike?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1706,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "m",
+    "accept": "0.1706: $\\ln(110/101.005)/\\sqrt{0.25}$",
+    "wrong": [
+     {
+      "id": "spot",
+      "value": 0.1906,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.0853,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$m = 0.0853/0.5 = 0.1706$.",
+    "generic": "Not quite right. Take $\\ln(K/F)$ and divide by $\\sqrt{T}$.",
+    "byKey": {
+     "spot": "You measured from the spot, $\\ln(110/100)$. Use the forward, £101.005.",
+     "nosqrt": "You forgot to divide by $\\sqrt{T} = 0.5$."
+    }
+   },
+   "explain": {
+    "text": "$\\ln(110/101.005) = 0.0853$, and dividing by $\\sqrt{0.25} = 0.5$ gives 0.1706. That is the 110 call's dot on the three-month smile."
+   }
+  },
+  {
+   "id": "q-nan",
+   "difficulty": 2,
+   "prose": "One out-of-the-money quote in an expiry has `iv` NaN: no vol fits its mid.",
+   "question": "What should `fit_smile` do with it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "drop",
+      "text": "Drop the row, and fit the rest if at least three remain",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Set its vol to 0 and fit",
+      "why": "A vol of 0 is a real number the fit would chase. It drags the curve down at that strike."
+     },
+     {
+      "id": "fail",
+      "text": "Raise an error for the whole expiry",
+      "why": "One bad quote should not cost the dashboard a whole smile."
+     },
+     {
+      "id": "mean",
+      "text": "Replace it with the mean of the other vols",
+      "why": "That invents a quote at the average level, flattening the smile."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A missing vol is missing data, not a zero.",
+    "generic": "Not quite right. Ask what NaN means here."
+   },
+   "explain": {
+    "text": "NaN means no vol fits that price, so the quote carries no information. Dropping it keeps the fit honest; NumPy's `lstsq` would return NaN coefficients if one slipped through."
+   }
+  },
+  {
+   "id": "q-itm",
+   "difficulty": 3,
+   "prose": "At three months the in-the-money mids' vols miss the planted surface by 1.4 vol points on average; the out-of-the-money mids by 0.08.",
+   "question": "Why are in-the-money vols so much noisier?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "price",
+      "text": "Their prices are mostly intrinsic value, so a few pence of quote noise is many vol points",
+      "correct": true
+     },
+     {
+      "id": "model",
+      "text": "Black-Scholes is wrong in the money",
+      "why": "The chain was priced with Black-Scholes at every strike. The model is not the problem here."
+     },
+     {
+      "id": "solver",
+      "text": "The solver fails in the money",
+      "why": "The solver converges there too. It faithfully turns noisy prices into noisy vols."
+     },
+     {
+      "id": "fwd",
+      "text": "They sit too far from the forward",
+      "why": "Out-of-the-money quotes at the same strikes are just as far, and they are accurate."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Little time value means little vega relative to the price noise.",
+    "generic": "Not quite right. Compare an in-the-money price with its intrinsic value."
+   },
+   "explain": {
+    "text": "The three-month 125 put is worth about £23.80, of which £24.63 less carry is intrinsic. Its time value is pennies, so a 5p noise moves the vol by points. Out-of-the-money prices are all time value."
+   }
+  }
+ ]
+}

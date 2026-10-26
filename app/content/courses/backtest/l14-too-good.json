@@ -1,0 +1,1109 @@
+{
+ "id": "l14-too-good",
+ "course": "backtest",
+ "title": "A Sharpe above 2 is a bug",
+ "minutes": 15,
+ "objectives": [
+  "Hunt for bugs in a backtest that looks too good.",
+  "Combine the look-ahead check with tests for costs, fills, selection and capacity."
+ ],
+ "skills": [
+  "bt-bias",
+  "bt-metrics"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Five engines",
+   "prose": "The course's rule for this project: \"Treat any simple rule that backtests to a Sharpe above 2 as a bug until you have proved otherwise.\" A colleague hands you five engines, `a` to `e`. Each runs a one-day rule on `make_bars()` at 2.5 bp a trade.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Engine",
+      "Net Sharpe"
+     ],
+     "rows": [
+      [
+       "a",
+       "19.82"
+      ],
+      [
+       "b",
+       "0.99"
+      ],
+      [
+       "c",
+       "7.81"
+      ],
+      [
+       "d",
+       "0.15"
+      ],
+      [
+       "e",
+       "0.15"
+      ]
+     ],
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "Tap every engine the rule says to treat as a bug.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r0",
+     "r2"
+    ],
+    "countWord": "engines"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each Sharpe with 2."
+    },
+    {
+     "rung": "point",
+     "text": "Two of the five are far above 2.",
+     "highlight": [
+      "r0",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Engines `a` (19.82) and `c` (7.81) break the rule. The others are below 2, which proves nothing yet."
+    }
+   ],
+   "feedback": {
+    "correct": "Two engines are presumed broken until proved otherwise.",
+    "generic": "Not quite right. Tap only the engines whose Sharpe is above 2.",
+    "byKey": {
+     "r1": "Engine b's 0.99 is below 2, so the rule does not flag it. Hold that thought.",
+     "r3": "Engine d's 0.15 is ordinary. The rule does not flag it.",
+     "r4": "Engine e's 0.15 is ordinary. The rule does not flag it."
+    }
+   },
+   "explain": {
+    "text": "You flagged `a` at 19.82 and `c` at 7.81. A one-day rule on daily bars does not earn that. Below 2 is not a clean bill of health, as `b` and `d` will show.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Why 2?",
+   "prose": "Picture a rule that is always in the market and each day gains or loses the same amount. Its Sharpe depends only on how often it is right. Drag the dot to change the hit rate and read the Sharpe.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0.5,
+     "max": 0.62,
+     "step": 0.01,
+     "labels": 2
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 0.51,
+       "label": "hit rate",
+       "drag": true
+      }
+     ],
+     "caption": "Right on 51% of days: Sharpe 0.32"
+    },
+    "derive": {
+     "caption": "Right on {{round(p.x * 100)}}% of days: Sharpe {{fixed(sqrt(252) * (2 * p.x - 1) / sqrt(1 - pow(2 * p.x - 1, 2)), 2)}}"
+    }
+   },
+   "question": "What is the lowest hit rate, in whole per cent, with a Sharpe above 2?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.57,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "%",
+    "accept": "57%: 56% gives 1.92 and 57% gives 2.24.",
+    "wrong": [
+     {
+      "id": "56",
+      "value": 0.56,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "60",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ],
+    "label": "Hit rate"
+   },
+   "feedback": {
+    "correct": "Right on 57 days in 100, every year, after costs.",
+    "generic": "Not quite right. Drag until the caption first passes 2.",
+    "byKey": {
+     "56": "56% gives 1.92, just short of 2. Try one more step.",
+     "60": "60% gives 3.24, well past 2. Step back until it first passes."
+    }
+   },
+   "explain": {
+    "text": "With equal-sized moves, Sharpe $= \\sqrt{252}\\,(2p - 1)/\\sqrt{1 - (2p - 1)^2}$. A Sharpe of 2 needs $p$ above 0.5625, every day for years, net of costs. Simple daily rules rarely hold even 1 after costs, so 2 is where suspicion starts.",
+    "canvas": {
+     "points": {
+      "p": {
+       "x": 0.57
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Run the look-ahead check",
+   "prose": "From l8, `lookahead_check(run, bars, cut)` compares a run on the data up to `cut` with the full run. Then it scrambles every row after `cut`. It is True only if nothing before the cut moves. Here it is, run on each engine at three cuts.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ python check_engines.py",
+      "cuts at bars 315, 630, 945",
+      "engine a:  FAIL  FAIL  FAIL    Sharpe 19.82",
+      "engine b:  pass  pass  pass    Sharpe 0.99",
+      "engine c:  FAIL  FAIL  FAIL    Sharpe 7.81",
+      "engine d:  FAIL  FAIL  FAIL    Sharpe 0.15",
+      "engine e:  pass  pass  pass    Sharpe 0.15"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l3": "err",
+      "l4": "ok",
+      "l5": "err",
+      "l6": "err",
+      "l7": "ok"
+     }
+    }
+   },
+   "question": "Select all that apply: the engines that pass at every cut.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "a",
+      "text": "a",
+      "why": "Engine a fails at every cut: its early rows change when later rows change."
+     },
+     {
+      "id": "b",
+      "text": "b",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "c",
+      "why": "Engine c fails: a centred average reads two bars ahead."
+     },
+     {
+      "id": "d",
+      "text": "d",
+      "why": "Engine d fails, though its Sharpe looks ordinary. Look again at its row."
+     },
+     {
+      "id": "e",
+      "text": "e",
+      "correct": true
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read each engine's three results."
+    },
+    {
+     "rung": "point",
+     "text": "Only rows with three passes count.",
+     "highlight": [
+      "l4",
+      "l7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Engines b and e pass at every cut; a, c and d fail at all three."
+    }
+   ],
+   "feedback": {
+    "correct": "Two pass: b and e.",
+    "generic": "Not quite right. Pick the engines whose line reads pass three times."
+   },
+   "explain": {
+    "text": "Engines a, c and d read the future, so their past changes when the future does. Engine d fails with a Sharpe of 0.15: a leak need not look too good. Engine b passes, with a Sharpe nearly seven times e's.",
+    "canvas": {
+     "highlight": [
+      "l4",
+      "l7"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A leak with an ordinary Sharpe",
+   "prose": "Engine d has the same Sharpe as the honest engine e, 0.15, yet it failed the check at every cut. Here is its code. `_book` fills each position at the next open, exactly as engine e does.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "def engine_d(bars, cost_bp=2.5):",
+      "    r = bars[\"close\"].pct_change()",
+      "    pos = (np.sign(r) * 0.01 / r.std()).fillna(0.0)",
+      "    return _book(bars, pos, cost_bp)"
+     ],
+     "numbers": true,
+     "title": "engine_d"
+    },
+    "state": {
+     "shade": {
+      "leak": [
+       "l3"
+      ]
+     }
+    }
+   },
+   "question": "What does engine d know that it should not?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "std",
+      "text": "The volatility of the whole sample, future days included, through `r.std()`",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "Nothing: its Sharpe equals the honest engine's",
+      "why": "Equal Sharpes say nothing about timing. Scaling every position by one number leaves the Sharpe unchanged, leak or not."
+     },
+     {
+      "id": "sign",
+      "text": "Tomorrow's return, through `np.sign(r)`",
+      "why": "`r` on day t is today's return, known at today's close. The sign is fine."
+     },
+     {
+      "id": "fill",
+      "text": "The fill price",
+      "why": "`_book` fills at the next open, the same as engine e."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which value on line 3 depends on every row of the data?"
+    },
+    {
+     "rung": "point",
+     "text": "`r.std()` is one number computed from all 1,260 returns.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "On day 10, the position already uses the volatility of 2023. That is a full-sample statistic (validation, scaling with future data)."
+    }
+   ],
+   "feedback": {
+    "correct": "A full-sample number, used from day one.",
+    "generic": "Not quite right. Look for a value that uses data from after day t.",
+    "byKey": {
+     "none": "You trusted the Sharpe. This leak scales every day by the same constant, so the Sharpe cannot see it."
+    }
+   },
+   "explain": {
+    "text": "`r.std()` uses all five years, so the size of day 10's position depends on 2023. The fix is a trailing window, such as `r.rolling(60).std().shift(1)`. The check caught it; a Sharpe sanity check never would."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "It passed, so it is real?",
+   "prose": "Engine b passed the look-ahead check at every cut, and its Sharpe of 0.99 is below 2. Your colleague says that settles it. You sum each engine's `cost` column, the fraction of the book paid in costs.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ python -c \"print(engine_b(BARS)['cost'].sum())\"",
+      "−0.31",
+      "$ python -c \"print(engine_e(BARS)['cost'].sum())\"",
+      "0.31"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l2": "err"
+     }
+    }
+   },
+   "question": "What do you conclude about engine b?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "real",
+      "text": "It is real: it passed the look-ahead check and is below 2",
+      "why": "You took one passed test as a clean bill of health. The check looks only for future data, and costs are not data."
+     },
+     {
+      "id": "costs",
+      "text": "Its costs have the wrong sign: it is paid to trade, which turns 0.15 into 0.99",
+      "correct": true
+     },
+     {
+      "id": "cuts",
+      "text": "Run the look-ahead check at more cuts",
+      "why": "Engine b reads no future row, so every cut will pass. The bug is elsewhere."
+     },
+     {
+      "id": "lucky",
+      "text": "It is lucky: the same rule with a better year",
+      "why": "Engines b and e trade identically. Only the cost line differs."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A cost should make the book smaller. What sign should its total have?"
+    },
+    {
+     "rung": "point",
+     "text": "Engine b's total is negative; engine e's is positive.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Engine b adds each cost instead of subtracting it. Same trades as e, so the gap from 0.15 to 0.99 is all costs."
+    }
+   ],
+   "feedback": {
+    "correct": "Passing one test is not passing the checklist.",
+    "generic": "Not quite right. Compare the signs of the two totals.",
+    "byKey": {
+     "real": "That is the trap: \"it passed the look-ahead test, so it is real\". The check cannot see a cost charged with the wrong sign."
+    }
+   },
+   "explain": {
+    "text": "Engine b's costs total −0.31 of the book: it is paid 2.5 bp on every trade. That lifts e's 0.15 to 0.99 without breaking any timing rule. So the checklist needs more than one test."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The rest of the checklist",
+   "prose": "Bugs that no engine test can see live in the choices around the engine. Here are five lines from a colleague's research notes on a different study.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Note"
+     ],
+     "rows": [
+      [
+       "1",
+       "Chose the share because it rose most of 500 over 2019 to 2023."
+      ],
+      [
+       "2",
+       "Prices not adjusted for a 2-for-1 split in 2021."
+      ],
+      [
+       "3",
+       "Opened the held-out year twice, after one change."
+      ],
+      [
+       "4",
+       "Orders fill at the next bar's open."
+      ],
+      [
+       "5",
+       "Costs: 2.5 bp of the traded value, on every trade."
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: the notes that describe a bug.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "n1",
+      "text": "1",
+      "correct": true
+     },
+     {
+      "id": "n2",
+      "text": "2",
+      "correct": true
+     },
+     {
+      "id": "n3",
+      "text": "3",
+      "correct": true
+     },
+     {
+      "id": "n4",
+      "text": "4",
+      "why": "That is the course's honest fill: a price the rule could really get."
+     },
+     {
+      "id": "n5",
+      "text": "5",
+      "why": "A cost in bp of traded value on every trade is the course's model, charged the right way."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask of each note: could a trader in 2019 have done this?"
+    },
+    {
+     "rung": "point",
+     "text": "Note 1 used 2023's winners to pick a 2019 share; note 2 leaves a fake 50% drop in the prices.",
+     "highlight": [
+      "r0",
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Notes 1, 2 and 3 are bugs: survivorship, unadjusted prices, a spent held-out year. Notes 4 and 5 are the course's practice."
+    }
+   ],
+   "feedback": {
+    "correct": "Three bugs that live outside the engine.",
+    "generic": "Not quite right. Three notes describe something no trader could have done, or a test already spent."
+   },
+   "explain": {
+    "text": "Picking the share that rose most is survivorship: the choice knew the answer (validation, dead companies). An unadjusted split looks like a one-day crash to a momentum rule. A twice-opened held-out year is research (l13).",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Real, but tiny",
+   "prose": "Edge case. A rule shows Sharpe 2.4 on a small share that trades only £50,000 a day, with daily volatility 1.2%. It is honest, with no bug. From l7, impact in bp is about $c\\,\\sigma\\sqrt{Q/V} \\times 10^4$, with $c = 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Input",
+      "Value"
+     ],
+     "rows": [
+      [
+       "$\\sigma$",
+       "0.012"
+      ],
+      [
+       "Order $Q$",
+       "£100,000"
+      ],
+      [
+       "Daily volume $V$",
+       "£50,000"
+      ],
+      [
+       "$c$",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the impact of one £100,000 order, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 169.7,
+    "tol": {
+     "abs": 1
+    },
+    "unit": "bp",
+    "accept": "About 170 bp: $0.012 \\times \\sqrt{2} \\times 10^4 = 169.7$.",
+    "wrong": [
+     {
+      "id": "noroot",
+      "value": 240,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "flip",
+      "value": 84.9,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ],
+    "label": "Impact"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$Q/V = 100{,}000/50{,}000$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{2} = 1.414$.",
+     "highlight": [
+      "r1c1",
+      "r2c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.012 \\times 1.414 = 0.01697$, which is 169.7 bp."
+    }
+   ],
+   "feedback": {
+    "correct": "About 1.7% a trade.",
+    "generic": "Not quite right. Use $Q/V = 2$ under the square root.",
+    "byKey": {
+     "noroot": "You used $Q/V$ without the square root.",
+     "flip": "You used $V/Q$. The order is twice the day's volume."
+    }
+   },
+   "explain": {
+    "text": "Each £100,000 trade costs about 1.7%, far more than a daily rule earns per trade. The Sharpe of 2.4 is real only at a few thousand pounds. The note says the capacity plainly: a real Sharpe at no useful size."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The checklist",
+   "prose": "The hunt you just ran, as a list. A one-day rule with $p$ near 0.5 has Sharpe $\\approx \\sqrt{252}\\,(2p - 1)$, so above 2 means $p > 0.56$: suspect it.\n\n```text\n1. look-ahead check at several cuts    (a, c, d)\n2. fills at a price you could get       (l5)\n3. total costs positive                 (b)\n4. no survivors, prices adjusted\n5. held-out year opened once            (l13)\n6. capacity at the size you mean\n```",
+   "question": "Which item would have caught engine b on its own?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "costs",
+      "text": "Item 3: total costs positive",
+      "correct": true
+     },
+     {
+      "id": "look",
+      "text": "Item 1: the look-ahead check",
+      "why": "Engine b passed it at every cut: it reads no future data."
+     },
+     {
+      "id": "fills",
+      "text": "Item 2: fills at a price you could get",
+      "why": "Engine b fills at the next open, like the honest engine."
+     },
+     {
+      "id": "cap",
+      "text": "Item 6: capacity",
+      "why": "Capacity asks about size. Engine b is wrong at any size."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each bug needs its own test.",
+    "generic": "Not quite right. What exactly was wrong with engine b?"
+   },
+   "explain": {
+    "text": "Engine b's only fault was the sign of its costs, so only item 3 sees it. That is why the list has six items, not one. A Sharpe above 2 starts the hunt; the list finishes it."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Flags in code",
+   "prose": "The automatic part of the checklist, run on every backtest. It takes the `metrics` dict and the number of days. Flag a Sharpe above 2 and a maximum drawdown above −1% (`\"no-drawdown\"`). Also flag zero turnover, fewer than 252 days and a hit rate above 0.6. Return the flags sorted.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "sanity_flags({... 'sharpe': 19.82 ...}, 1008)",
+      "  -> ['sharpe-above-2']",
+      "flags: hit-rate-above-0.6  no-drawdown  sharpe-above-2",
+      "       too-short  turnover-zero"
+     ],
+     "title": "Expected"
+    },
+    "state": {}
+   },
+   "question": "Complete `sanity_flags(m, n_days)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def sanity_flags(m, n_days):\n    # m is the metrics dict from l12; return the sorted list of flags\n    flags = []\n    if m[\"sharpe\"] > 2:\n        flags.append(\"sharpe-above-2\")\n    ...\n    return sorted(flags)\n",
+    "solution": "def sanity_flags(m, n_days):\n    flags = []\n    if m[\"sharpe\"] > 2:\n        flags.append(\"sharpe-above-2\")\n    if m[\"max_drawdown\"] > -0.01:\n        flags.append(\"no-drawdown\")\n    if m[\"turnover\"] == 0:\n        flags.append(\"turnover-zero\")\n    if n_days < 252:\n        flags.append(\"too-short\")\n    if m[\"hit_rate\"] > 0.6:\n        flags.append(\"hit-rate-above-0.6\")\n    return sorted(flags)\n",
+    "examples": [
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}",
+      "call": "sanity_flags(m, 1008)",
+      "expect": "[]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}",
+      "call": "sanity_flags(m, 1008)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}; m['sharpe'] = 19.82",
+      "call": "sanity_flags(m, 1008)",
+      "expect": "['sharpe-above-2']",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}; m['sharpe'] = 2.0",
+      "call": "sanity_flags(m, 1008)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}; m['max_drawdown'] = -0.004",
+      "call": "sanity_flags(m, 1008)",
+      "expect": "['no-drawdown']",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}; m['max_drawdown'] = 0.0; m['turnover'] = 0.0",
+      "call": "sanity_flags(m, 1008)",
+      "expect": "['no-drawdown', 'turnover-zero']",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}",
+      "call": "sanity_flags(m, 180)",
+      "expect": "['too-short']",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}; m['hit_rate'] = 0.64; m['sharpe'] = 3.1",
+      "call": "sanity_flags(m, 200)",
+      "expect": "['hit-rate-above-0.6', 'sharpe-above-2', 'too-short']",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}; m['hit_rate'] = float('nan')",
+      "call": "sanity_flags(m, 252)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "setup": "m = {'ann_return': 0.08, 'ann_vol': 0.17, 'sharpe': 0.55, 'max_drawdown': -0.22, 'calmar': 0.37, 'turnover': 0.61, 'hit_rate': 0.5, 'beta': 0.0}; m['hit_rate'] = 0.6; m['max_drawdown'] = -0.01",
+      "call": "sanity_flags(m, 252)",
+      "expect": "[]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests on planted dicts: each flag alone, several together, values exactly at each threshold (not flagged) and a hit rate of NaN (not flagged). Lists compared exactly. Pure Python: nothing to load."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each flag is one `if`, with a strict comparison."
+    },
+    {
+     "rung": "point",
+     "text": "A drawdown is negative, so \"no drawdown\" is `m[\"max_drawdown\"] > -0.01`."
+    },
+    {
+     "rung": "step",
+     "text": "Add `turnover == 0`, `n_days < 252` and `hit_rate > 0.6`; NaN fails every comparison, so it is never flagged."
+    }
+   ],
+   "feedback": {
+    "correct": "The flags run on every result, unasked.",
+    "generic": "Not quite right. Use strict comparisons, and remember drawdowns are negative."
+   },
+   "explain": {
+    "text": "Strict comparisons leave a Sharpe of exactly 2 unflagged, as the rule says above 2. A NaN hit rate, from a strategy that never trades, fails every comparison and raises no flag. A flag is a reason to look, not a verdict."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Hunt in code",
+   "prose": "Now the hunt itself. `engines` maps a name to a function `run(bars)` returning a frame with columns `position`, `ret` and `cost`. `lookahead_check` from l8 and the five engines (`ENGINES`) are defined. Return, sorted, the engines that fail the check at any of three cuts. Add those whose costs total below zero.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "find_the_bug(ENGINES, BARS)",
+      "  -> a sorted list of names"
+     ],
+     "title": "Expected shape"
+    },
+    "state": {}
+   },
+   "question": "Complete `find_the_bug(engines, bars)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def find_the_bug(engines, bars):\n    n = len(bars)\n    cuts = [n // 4, n // 2, 3 * n // 4]\n    bad = []\n    for name, run in engines.items():\n        ...\n    return sorted(bad)\n",
+    "solution": "def find_the_bug(engines, bars):\n    n = len(bars)\n    cuts = [n // 4, n // 2, 3 * n // 4]\n    bad = []\n    for name, run in engines.items():\n        leaks = not all(lookahead_check(run, bars, cut) for cut in cuts)\n        paid = run(bars)[\"cost\"].sum() < 0          # costs credited, not charged\n        if leaks or paid:\n            bad.append(name)\n    return sorted(bad)\n",
+    "prelude": "import math\nimport numpy as np\nimport pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef lookahead_check(run, bars, cut):\n    full = run(bars).to_numpy(dtype=float)[:cut]\n    part = run(bars.iloc[:cut]).to_numpy(dtype=float)\n    if part.shape != full.shape or not np.allclose(part, full, rtol=0, atol=1e-9, equal_nan=True):\n        return False\n    noisy = bars.copy()\n    rng = np.random.default_rng(0)\n    noisy.iloc[cut:] = noisy.iloc[cut:].to_numpy() * rng.uniform(0.5, 1.5, (len(bars) - cut, bars.shape[1]))\n    again = run(noisy).to_numpy(dtype=float)[:cut]\n    return bool(np.allclose(again, full, rtol=0, atol=1e-9, equal_nan=True))\n\n# ---- the colleague's five engines: lookback 1, 2.5 bp a unit traded ----\ndef _book(bars, pos, cost_bp):\n    # pos[t] is decided at close t and filled at open t + 1\n    o, c = bars[\"open\"], bars[\"close\"]\n    old = pos.shift(2).fillna(0.0)\n    new = pos.shift(1).fillna(0.0)\n    gross = old * (o / c.shift(1) - 1).fillna(0.0) + new * (c / o - 1)\n    cost = (new - old).abs() * cost_bp / 10_000\n    return pd.DataFrame({\"position\": new, \"ret\": gross - cost, \"cost\": cost})\n\ndef engine_a(bars, cost_bp=2.5):\n    fwd = bars[\"close\"].pct_change().shift(-1)\n    pos = np.sign(fwd).fillna(0.0)\n    cost = pos.diff().abs().fillna(pos.abs()) * cost_bp / 10_000\n    return pd.DataFrame({\"position\": pos, \"ret\": (pos * fwd).fillna(0.0) - cost, \"cost\": cost})\n\ndef engine_b(bars, cost_bp=2.5):\n    pos = np.sign(bars[\"close\"].pct_change()).fillna(0.0)\n    out = _book(bars, pos, cost_bp)\n    out[\"ret\"] = out[\"ret\"] + 2 * out[\"cost\"]\n    out[\"cost\"] = -out[\"cost\"]\n    return out\n\ndef engine_c(bars, cost_bp=2.5):\n    c = bars[\"close\"]\n    pos = np.sign(c.rolling(5, center=True).mean() - c).fillna(0.0)\n    return _book(bars, pos, cost_bp)\n\ndef engine_d(bars, cost_bp=2.5):\n    r = bars[\"close\"].pct_change()\n    pos = (np.sign(r) * 0.01 / r.std()).fillna(0.0)\n    return _book(bars, pos, cost_bp)\n\ndef engine_e(bars, cost_bp=2.5):\n    pos = np.sign(bars[\"close\"].pct_change()).fillna(0.0)\n    return _book(bars, pos, cost_bp)\n\nENGINES = {\"a\": engine_a, \"b\": engine_b, \"c\": engine_c, \"d\": engine_d, \"e\": engine_e}\n\nBARS = make_bars()\nSMALL = make_bars(300)\n",
+    "examples": [
+     {
+      "call": "find_the_bug(ENGINES, BARS)",
+      "expect": "['a', 'b', 'c', 'd']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "find_the_bug(ENGINES, BARS)",
+      "expect": "['a', 'b', 'c', 'd']",
+      "compare": "equal"
+     },
+     {
+      "call": "find_the_bug({'e': engine_e}, BARS)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_the_bug({'b': engine_b, 'e': engine_e}, BARS)",
+      "expect": "['b']",
+      "compare": "equal"
+     },
+     {
+      "call": "find_the_bug({'d': engine_d}, BARS)",
+      "expect": "['d']",
+      "compare": "equal"
+     },
+     {
+      "call": "find_the_bug({'x': engine_c, 'y': engine_e}, SMALL)",
+      "expect": "['x']",
+      "compare": "equal"
+     },
+     {
+      "setup": "late = lambda bars: engine_e(bars).assign(position=lambda f: f['position'] * (1 + (len(bars) > 900)))",
+      "call": "find_the_bug({'late': late, 'e': engine_e}, BARS)",
+      "expect": "['late']",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: all five engines, e alone, b with e, d alone and renamed engines on 300 bars. One engine leaks only at some cuts. Lists compared exactly. The first run loads NumPy and pandas, which takes about 15 seconds; later runs are quick.",
+    "budget": 45000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two tests per engine: the look-ahead check at every cut, and the sign of the total cost."
+    },
+    {
+     "rung": "point",
+     "text": "`all(lookahead_check(run, bars, cut) for cut in cuts)` is True only for an engine that passes everywhere."
+    },
+    {
+     "rung": "step",
+     "text": "Append the name when that is False, or when `run(bars)[\"cost\"].sum() < 0`."
+    }
+   ],
+   "feedback": {
+    "correct": "Four of five engines caught, and the honest one left alone.",
+    "generic": "Not quite right. An engine fails if any cut fails, or if its costs sum below zero."
+   },
+   "explain": {
+    "text": "On the five engines the function returns a, b, c and d. The honest e survives both tests. A real hunt adds the other checklist items by hand: the fills, the universe, the prices and the held-out log."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The pitch",
+   "prose": "A junior researcher pitches a daily rule on one share: Sharpe 3.4 over three years, after costs. A senior reviewer has a few minutes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Pitch",
+      ""
+     ],
+     "rows": [
+      [
+       "Rule",
+       "two-day reversal, one share"
+      ],
+      [
+       "Sharpe, net",
+       "3.4"
+      ],
+      [
+       "Period",
+       "three years, daily"
+      ],
+      [
+       "Costs",
+       "\"included\""
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: the questions the senior should ask first.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "fill",
+      "text": "At what price does each order fill, and when was the signal known?",
+      "correct": true
+     },
+     {
+      "id": "cost",
+      "text": "What does each trade cost, and did the total cost come out positive?",
+      "correct": true
+     },
+     {
+      "id": "trials",
+      "text": "How many rules and settings were tried, and was any held-out period opened once?",
+      "correct": true
+     },
+     {
+      "id": "lever",
+      "text": "Can it be levered three times?",
+      "why": "Leverage scales a result. First find out whether the result is real."
+     },
+     {
+      "id": "shorter",
+      "text": "Would a one-day reversal do even better?",
+      "why": "More tuning raises the number of trials, the opposite of what the pitch needs."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which checklist items does a 3.4 most often fail?"
+    },
+    {
+     "rung": "point",
+     "text": "Timing, costs and selection.",
+     "highlight": [
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Ask about fills, costs with their sign, and the number of trials with the held-out log."
+    }
+   ],
+   "feedback": {
+    "correct": "Timing, costs, trials: the three places a 3.4 usually comes from.",
+    "generic": "Not quite right. Choose the questions that test whether 3.4 is real."
+   },
+   "explain": {
+    "text": "A 3.4 from a simple rule is presumed a bug. The note then says: \"The first backtest showed 3.4; it came from a fill at the signal's close. Fixed, the net Sharpe is 0.4.\" Saying the bug aloud is what makes the corrected number believable."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A simple daily rule with a Sharpe above 2 must be right on more than 56% of days for years: presume a bug.",
+   "The look-ahead check catches future data; it cannot see a cost with the wrong sign, a survivor or an unadjusted split.",
+   "Some high Sharpes are real but tiny: check capacity at the size you mean to trade."
+  ],
+  "formula": {
+   "name": "Hit rate and Sharpe",
+   "tex": "SR \\approx \\sqrt{252}\\,\\dfrac{2p - 1}{\\sqrt{1 - (2p - 1)^2}}",
+   "note": "Equal-sized daily moves, always in the market. $SR = 2$ needs $p > 0.5625$."
+  },
+  "trap": "It passed the look-ahead test, so it is real. One test sees one kind of bug."
+ },
+ "quiz": [
+  {
+   "id": "q-flags",
+   "difficulty": 2,
+   "prose": "A backtest reports: Sharpe 2.6, maximum drawdown −3%, turnover 0.8, hit rate 0.58, over 180 days.",
+   "question": "Which flags does `sanity_flags` raise?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "two",
+      "text": "`sharpe-above-2` and `too-short`",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "`sharpe-above-2`, `too-short` and `no-drawdown`",
+      "why": "A drawdown of −3% is below −1%, so it is not flagged."
+     },
+     {
+      "id": "hit",
+      "text": "`sharpe-above-2`, `too-short` and `hit-rate-above-0.6`",
+      "why": "0.58 is below 0.6."
+     },
+     {
+      "id": "one",
+      "text": "`sharpe-above-2` only",
+      "why": "180 days is fewer than 252."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two flags.",
+    "generic": "Not quite right. Check each threshold in turn."
+   },
+   "explain": {
+    "text": "2.6 is above 2 and 180 days is under a year. The drawdown of −3% and the hit rate of 0.58 are inside their limits."
+   }
+  },
+  {
+   "id": "q-53",
+   "difficulty": 2,
+   "prose": "A rule is always in the market, and its daily gains and losses are the same size. It is right on 53% of days.",
+   "question": "What is its annualised Sharpe? Use $\\sqrt{252}\\,(2p - 1)/\\sqrt{1 - (2p - 1)^2}$ and give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.95,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "",
+    "accept": "0.95: $15.87 \\times 0.06 / 0.998$.",
+    "wrong": [
+     {
+      "id": "noroot",
+      "value": 15.17,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 0.95.",
+    "generic": "Not quite right. $2p - 1 = 0.06$ here.",
+    "byKey": {
+     "noroot": "You multiplied by 252, not $\\sqrt{252} = 15.87$."
+    }
+   },
+   "explain": {
+    "text": "$2p - 1 = 0.06$, so the Sharpe is $15.87 \\times 0.06/\\sqrt{0.9964} = 0.95$. Being right 53% of the time is already a good daily rule."
+   }
+  },
+  {
+   "id": "q-why-pass",
+   "difficulty": 3,
+   "prose": "An engine charges costs with the wrong sign. It passes the look-ahead check at every cut.",
+   "question": "Why does the check not catch it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "future",
+      "text": "The check finds only results that depend on later rows, and this bug uses none",
+      "correct": true
+     },
+     {
+      "id": "cuts",
+      "text": "Too few cuts were tried",
+      "why": "No cut can catch it: the bug changes no row's dependence on the future."
+     },
+     {
+      "id": "small",
+      "text": "The bug is too small to see",
+      "why": "The check compares to 1e-9. Size does not matter; what it reads does."
+     },
+     {
+      "id": "noise",
+      "text": "The noise replacement hides it",
+      "why": "The noise only touches rows after the cut."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each test sees one kind of bug.",
+    "generic": "Not quite right. What does the check compare?"
+   },
+   "explain": {
+    "text": "The check asks whether the past changes when the future does. A cost with the wrong sign uses only the current trade. It needs its own test: the total cost must be positive."
+   }
+  },
+  {
+   "id": "q-same",
+   "difficulty": 3,
+   "prose": "Engine d scales every position by `0.01 / r.std()`, using the whole sample. Its Sharpe equals the honest engine's exactly.",
+   "question": "Why are the two Sharpes equal?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "const",
+      "text": "One constant multiplies every day's return and cost, and a Sharpe ignores a constant scale",
+      "correct": true
+     },
+     {
+      "id": "honest",
+      "text": "Because engine d is honest after all",
+      "why": "It failed the look-ahead check: its positions depend on future data."
+     },
+     {
+      "id": "luck",
+      "text": "By chance in this sample",
+      "why": "It is exact: scaling a series by $k > 0$ scales its mean and sd by $k$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Scale cancels in mean over sd.",
+    "generic": "Not quite right. What happens to a mean and an sd when every value is multiplied by $k$?"
+   },
+   "explain": {
+    "text": "Multiplying every return by $k > 0$ multiplies the mean and the sd by $k$, so the Sharpe is unchanged. That is why this leak is invisible in the Sharpe and visible to the check."
+   }
+  }
+ ]
+}

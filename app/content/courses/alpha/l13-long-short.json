@@ -1,0 +1,1274 @@
+{
+ "id": "l13-long-short",
+ "course": "alpha",
+ "title": "A long-short portfolio",
+ "minutes": 14,
+ "objectives": [
+  "Build a dollar-neutral long-short portfolio from a signal.",
+  "Hold each rebalance's weights from the next day and compute the book's daily return."
+ ],
+ "skills": [
+  "al-portfolio"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "From quintiles to money",
+   "prose": "This level turns the signal into a strategy and writes it up. Every number uses the research period: the first 1,008 days. The last 252 stay locked until lesson 15. First, money: £1m long the top momentum quintile, £1m short the bottom.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Side",
+      "Shares",
+      "Position (£k)"
+     ],
+     "rows": [
+      [
+       "Long: top quintile",
+       "34",
+       "1,000"
+      ],
+      [
+       "Middle three quintiles",
+       "102",
+       "0"
+      ],
+      [
+       "Short: bottom quintile",
+       "34",
+       "−1,000"
+      ]
+     ]
+    }
+   },
+   "question": "What is the book's net exposure, in £k?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "£k",
+    "label": "Net exposure",
+    "placeholder": "£k",
+    "accept": "0: the long £1,000k and the short −£1,000k cancel.",
+    "wrong": [
+     {
+      "id": "gross",
+      "value": 2000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "long",
+      "value": 1000,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the positions with their signs."
+    },
+    {
+     "rung": "point",
+     "text": "The short is a negative position.",
+     "highlight": [
+      "r0c2",
+      "r2c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "£1,000k plus −£1,000k."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Net zero: the book is **dollar neutral**.",
+    "generic": "Not quite. Add the three positions, keeping the minus sign on the short.",
+    "byKey": {
+     "gross": "You added the sizes of both sides. That is the gross, £2,000k; net keeps the signs.",
+     "long": "You counted only the long side. The short side is −£1,000k."
+    }
+   },
+   "explain": {
+    "text": "Net exposure adds positions with their signs: £1,000k − £1,000k = 0. The gross adds their sizes: £2,000k. The course states returns per £ of gross, so this book is +0.5 long and −0.5 short.",
+    "canvas": {
+     "highlight": {
+      "cells": [
+       "r0c2",
+       "r2c2"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Weights from ranks",
+   "prose": "Eight shares' momentum on one date. Each weight is the share's rank minus the middle rank, 4.5, over 16. Slide H's momentum and watch the bars. Then give H a takeover: +180%.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H"
+     ],
+     "yLabel": "Weight",
+     "yMin": -0.25,
+     "yMax": 0.25,
+     "showValues": true,
+     "decimals": 3
+    },
+    "state": {
+     "values": {
+      "A": -0.21875,
+      "B": -0.15625,
+      "C": -0.09375,
+      "D": -0.03125,
+      "E": 0.09375,
+      "F": 0.15625,
+      "G": 0.21875,
+      "H": 0.03125
+     },
+     "params": {
+      "h": 0.05
+     }
+    },
+    "derive": {
+     "values.A": "(1 + (h < -0.215 ? 1 : 0) - 4.5) / 16",
+     "values.B": "(2 + (h < -0.105 ? 1 : 0) - 4.5) / 16",
+     "values.C": "(3 + (h < -0.045 ? 1 : 0) - 4.5) / 16",
+     "values.D": "(4 + (h < 0.025 ? 1 : 0) - 4.5) / 16",
+     "values.E": "(5 + (h < 0.085 ? 1 : 0) - 4.5) / 16",
+     "values.F": "(6 + (h < 0.155 ? 1 : 0) - 4.5) / 16",
+     "values.G": "(7 + (h < 0.315 ? 1 : 0) - 4.5) / 16",
+     "values.H": "(1 + (h > -0.215 ? 1 : 0) + (h > -0.105 ? 1 : 0) + (h > -0.045 ? 1 : 0) + (h > 0.025 ? 1 : 0) + (h > 0.085 ? 1 : 0) + (h > 0.155 ? 1 : 0) + (h > 0.315 ? 1 : 0) - 4.5) / 16",
+     "caption": "H's momentum {{fixed(h * 100, 0)}}%: weight {{fixed(values.H, 4)}}. The longs always sum to 0.5."
+    },
+    "controls": [
+     {
+      "bind": "h",
+      "min": -0.4,
+      "max": 2.0,
+      "step": 0.01,
+      "start": 0.05,
+      "label": "H's momentum",
+      "format": "percent"
+     }
+    ]
+   },
+   "question": "With H at +180%, what weight does H get? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2188,
+    "tol": {
+     "abs": 0.0006
+    },
+    "label": "H's weight",
+    "placeholder": "decimal",
+    "accept": "0.2188: H ranks 8th, (8 − 4.5)/16.",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.4804,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Once H is the largest, does raising it further change its rank?"
+    },
+    {
+     "rung": "point",
+     "text": "H ranks 8th of 8.",
+     "highlight": [
+      "xH"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "(8 − 4.5)/16 = 0.2188."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The takeover is capped at the top rank.",
+    "generic": "Not quite. Read H's bar with the slider at 180%.",
+    "byKey": {
+     "raw": "You weighted by the raw signal. Then H would take 0.48 of the 0.5 long side alone.",
+     "half": "You gave H the whole long side. Rank weights spread it over the four top shares."
+    }
+   },
+   "explain": {
+    "text": "Above +31.5% H is already first, so its weight stops at 3.5/16 = 0.2188. Ranks ignore how far ahead the leader is. A raw-signal weighting would have put 0.48 of the 0.5 long side in H.",
+    "canvas": {
+     "params": {
+      "h": 1.8
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Rank weights",
+   "prose": "What you just did has a name: **rank weights**. On each rebalance date, rank the shares, subtract the mean rank, and scale so the longs sum to +0.5 and the shorts to −0.5. Gross is 1, so returns are per £ of gross. Five shares here.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z"
+     ],
+     "yLabel": "Momentum",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "V": -0.31,
+      "W": -0.08,
+      "X": 0.04,
+      "Y": 0.12,
+      "Z": 0.45
+     }
+    }
+   },
+   "question": "Fill in each weight to 4 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Share",
+     "Rank",
+     "Rank − 3",
+     "Weight"
+    ],
+    "rows": [
+     [
+      "V",
+      "1",
+      "−2",
+      {
+       "edit": true,
+       "answer": -0.3333,
+       "tol": {
+        "abs": 0.0006
+       }
+      }
+     ],
+     [
+      "W",
+      "2",
+      "−1",
+      {
+       "edit": true,
+       "answer": -0.1667,
+       "tol": {
+        "abs": 0.0006
+       }
+      }
+     ],
+     [
+      "X",
+      "3",
+      "0",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.0006
+       }
+      }
+     ],
+     [
+      "Y",
+      "4",
+      "1",
+      {
+       "edit": true,
+       "answer": 0.1667,
+       "tol": {
+        "abs": 0.0006
+       }
+      }
+     ],
+     [
+      "Z",
+      "5",
+      "2",
+      {
+       "edit": true,
+       "answer": 0.3333,
+       "tol": {
+        "abs": 0.0006
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The absolute values of the last column add to 6."
+    },
+    {
+     "rung": "point",
+     "text": "Each weight is (rank − 3)/6.",
+     "highlight": [
+      "xZ",
+      "xY"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Z: 2/6 = 0.3333; Y: 1/6 = 0.1667; X: 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Longs 0.1667 + 0.3333 = 0.5, shorts −0.5.",
+    "generic": "Not quite. Divide each rank minus 3 by 6, the sum of their absolute values."
+   },
+   "explain": {
+    "text": "The sizes of rank − 3 add to 2 + 1 + 0 + 1 + 2 = 6. Dividing by 6 makes the longs sum to +0.5 and the shorts to −0.5. The middle share gets nothing.",
+    "canvas": {
+     "highlight": [
+      "xV",
+      "xZ"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Quintiles or ranks",
+   "prose": "Two momentum books on the seeded panel, rebalanced monthly from 2019-12. The quintile book holds the top and bottom fifths equally weighted; the rank book holds every share. Costs come in the next lesson, but here is a preview at a £100m book.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Quintile book",
+      "Rank book"
+     ],
+     "rows": [
+      [
+       "Names held",
+       "69",
+       "170"
+      ],
+      [
+       "Gross return a year",
+       "7.23%",
+       "5.24%"
+      ],
+      [
+       "Volatility a year",
+       "3.72%",
+       "2.87%"
+      ],
+      [
+       "Gross Sharpe",
+       "1.94",
+       "1.82"
+      ],
+      [
+       "Turnover a year",
+       "2.86",
+       "2.34"
+      ],
+      [
+       "Net Sharpe at £100m",
+       "0.94",
+       "1.23"
+      ]
+     ]
+    }
+   },
+   "question": "Which statement does the table support?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The quintile book bets harder on the extremes: more return and more risk, and its bigger trades cost more.",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The quintile book is better: its gross Sharpe is higher.",
+      "why": "You compared gross Sharpes. After costs at £100m the rank book is ahead."
+     },
+     {
+      "id": "c",
+      "text": "The rank book wastes money on the middle shares, so it earns less per unit of risk.",
+      "why": "Its Sharpe is close: the middle shares add little return but spread the risk."
+     },
+     {
+      "id": "d",
+      "text": "The two books are the same bet, so the numbers should match.",
+      "why": "They hold different shares in different sizes: 69 names against 170."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare return and volatility, then turnover."
+    },
+    {
+     "rung": "point",
+     "text": "Fewer names means larger positions and larger trades.",
+     "highlight": [
+      "r0",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Larger trades pay more impact per £, so net Sharpe falls further."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Concentration buys return and costs more to trade.",
+    "generic": "Not quite. Read the gross rows, then the net row.",
+    "byKey": {
+     "b": "You stopped at the gross Sharpe. The net row reverses the order."
+    }
+   },
+   "explain": {
+    "text": "The quintile book earns 7.2% with 3.7% volatility; the rank book 5.2% with 2.9%. Fewer names means bigger trades, and impact grows faster than trade size. After costs the rank book wins, 1.23 against 0.94.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       4,
+       5
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Dollar neutral is not beta neutral",
+   "prose": "On 2020-03-31 the momentum book's long side has average beta 0.957 and its short side 1.073, each side £0.50 per £ of gross. A book's beta is the long weight times its beta, plus the short weight times its beta.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Side",
+      "Weight",
+      "Average beta"
+     ],
+     "rows": [
+      [
+       "Long",
+       "+0.5",
+       "0.957"
+      ],
+      [
+       "Short",
+       "−0.5",
+       "1.073"
+      ]
+     ]
+    }
+   },
+   "question": "What is the book's beta? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.058,
+    "tol": {
+     "abs": 0.0015
+    },
+    "label": "Book beta",
+    "placeholder": "decimal",
+    "accept": "-0.058: 0.5 × 0.957 − 0.5 × 1.073.",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "noscale",
+      "value": -0.116,
+      "tol": {
+       "abs": 0.0015
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply each side's weight by its beta."
+    },
+    {
+     "rung": "point",
+     "text": "0.5 × 0.957 and −0.5 × 1.073.",
+     "highlight": [
+      "r0c2",
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.478 − 0.536 = −0.058."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A small net short of the market.",
+    "generic": "Not quite. Add weight times beta over the two sides.",
+    "byKey": {
+     "zero": "You assumed a dollar-neutral book has no market exposure. The shorts here are higher beta than the longs.",
+     "noscale": "You took the difference of the betas without the 0.5 weights."
+    }
+   },
+   "explain": {
+    "text": "0.5 × 0.957 − 0.5 × 1.073 = -0.058, so a 10% market fall earns the book about 0.6%. Over the research period the regression beta on the equal-weighted index is -0.01. The planted drift ignores beta; real momentum books can load on it after big moves, and lesson 8's neutralising removes it.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A share dies while held",
+   "prose": "Edge case. On 30 April 2021 the book is short S010 with weight -0.01135. On 19 May it delists, and its last return is -61.82%. The delisting return stays in the panel; after it, the share's NaN returns count as 0.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Date",
+      "S010 weight",
+      "S010 return"
+     ],
+     "rows": [
+      [
+       "2021-05-18",
+       "-0.01135",
+       "…"
+      ],
+      [
+       "2021-05-19",
+       "-0.01135",
+       "-0.6182"
+      ],
+      [
+       "2021-05-20",
+       "-0.01135",
+       "NaN"
+      ]
+     ]
+    }
+   },
+   "question": "What does S010 add to the book's return on 19 May, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 70.2,
+    "tol": {
+     "abs": 0.6
+    },
+    "unit": "bp",
+    "label": "Contribution",
+    "placeholder": "bp",
+    "accept": "70.2 bp: weight times return, -0.01135 × -0.6182.",
+    "wrong": [
+     {
+      "id": "dropped",
+      "value": 0,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "sign",
+      "value": -70.2,
+      "tol": {
+       "abs": 0.6
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Weight times return, then times 10,000 for bp."
+    },
+    {
+     "rung": "point",
+     "text": "A short position gains when the share falls.",
+     "highlight": [
+      "r1c1",
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "-0.01135 × -0.6182 = 0.00702."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The short side gains from the death.",
+    "generic": "Not quite. Multiply the weight by the last return, keeping both signs.",
+    "byKey": {
+     "dropped": "You left out the delisting return. Dropping it is survivorship bias in the P&L.",
+     "sign": "You lost a sign. A negative weight times a negative return is a gain."
+    }
+   },
+   "explain": {
+    "text": "−0.01135 × −0.6182 = +0.0070, or 70 bp in one day. The long side pays when its holdings die: S181, weight 0.00544, fell -54.9% on 6 August 2020 and cost -30 bp. At the next rebalance the dead share has no signal and weight 0.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Same-day returns",
+   "prose": "Reversal rank weights, rebalanced daily, over the research period. A colleague skips `portfolio_returns` and writes the second line.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> sharpe(portfolio_returns(w, ret, \"D\"), 252)",
+      "3.417",
+      ">>> sharpe((w * ret.fillna(0)).sum(axis=1), 252)",
+      "-76.25"
+     ],
+     "title": "Python"
+    }
+   },
+   "question": "What does the second line do wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "It pays day $t$'s return to weights built from day $t$'s return: look-ahead.",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "It leaves out the trading costs.",
+      "why": "Neither line charges costs. That cannot explain the gap."
+     },
+     {
+      "id": "c",
+      "text": "It rebalances less often than daily.",
+      "why": "Both use the same daily weights. Only the alignment differs."
+     },
+     {
+      "id": "d",
+      "text": "Nothing: reversal simply failed in that version.",
+      "why": "You read −76 as a weak signal. A Sharpe that size is a bug in either direction."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which day's return does row $t$ of `w * ret` use?"
+    },
+    {
+     "rung": "point",
+     "text": "Reversal at $t$ is minus the last five returns, including day $t$'s.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Weights at $t$ must earn from $t + 1$: hold them a day first."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The weights already know the return they are paid.",
+    "generic": "Not quite. Compare the day each line's weights are built with the day they earn.",
+    "byKey": {
+     "d": "You took −76 as a result. Reversal shorts today's winners, so same-day returns flip it hugely negative; a momentum signal would jump up instead.",
+     "b": "You blamed costs. Neither line has any, so the gap is the alignment."
+    }
+   },
+   "explain": {
+    "text": "Reversal at $t$ is minus a sum that includes day $t$'s return, so pairing it with day $t$'s return makes the book short exactly what just rose. The honest version holds the weights from $t + 1$. Any Sharpe beyond ±2 on a simple rule is a bug until proved otherwise.",
+    "canvas": {
+     "tone": {
+      "l4": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The book's return",
+   "prose": "Weights $w_{i,t}$ set on rebalance date $t$ are held, unchanged, until the next rebalance $t'$. On each day $s$ between them the book earns $$r^{\\text{book}}_s = \\sum_i w_{i,t}\\, r_{i,s}, \\qquad t < s \\le t',$$ with $\\sum_i \\max(w_{i,t}, 0) = 0.5$ and $\\sum_i \\min(w_{i,t}, 0) = -0.5$. Holding weights fixed between rebalances is a simplification: real weights drift with prices.",
+   "question": "Weights are set at the close on Friday 31 January 2020, a monthly rebalance. Which day's return do they earn first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Monday 3 February",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Friday 31 January",
+      "why": "That return was known when the weights were set: look-ahead."
+     },
+     {
+      "id": "c",
+      "text": "Friday 28 February",
+      "why": "That is the next rebalance. The weights earn every day up to it, from the first trading day after 31 January."
+     },
+     {
+      "id": "d",
+      "text": "Saturday 1 February",
+      "why": "There is no trading on a Saturday; the index holds business days only."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. The first trading day after the rebalance.",
+    "generic": "Not quite. Weights at $t$ earn from the next trading day."
+   },
+   "explain": {
+    "text": "The rule is $t < s$: the first day after the rebalance date that is in the index. Here that is Monday 3 February, and the weights then earn every day through 28 February."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Rank weights in code",
+   "prose": "Now the pipeline's piece. `signal` is a date-by-share frame. On each row: rank, subtract the mean rank, divide by the sum of absolute differences. NaN shares get 0. A row with fewer than `min_names` shares, or with every rank equal, is all 0: the book sits in cash that day.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> long_short_weights(pd.DataFrame([[1, 2, 3, 4]]), min_names=4)",
+      "          0         1         2         3",
+      "0 -0.375000 -0.125000  0.125000  0.375000"
+     ],
+     "title": "Expected"
+    }
+   },
+   "question": "Complete `long_short_weights(signal, min_names=10)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef long_short_weights(signal, min_names=10):\n    r = signal.rank(axis=1)              # average ranks; NaN stays NaN\n    d = ...                              # rank minus the row's mean rank\n    gross = ...                          # sum of |d| in each row\n    n = signal.notna().sum(axis=1)       # shares with a signal\n    ...                                  # d / gross, cash where needed, NaN -> 0\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef long_short_weights(signal, min_names=10):\n    r = signal.rank(axis=1)\n    d = r.sub(r.mean(axis=1), axis=0)\n    gross = d.abs().sum(axis=1)\n    n = signal.notna().sum(axis=1)\n    w = d.div(gross.where((gross > 0) & (n >= min_names)), axis=0)\n    return w.fillna(0.0)\n",
+    "examples": [
+     {
+      "call": "np.round(long_short_weights(pd.DataFrame([[1, 2, 3, 4]]), min_names=4), 6).values.tolist()",
+      "expect": "[[-0.375, -0.125, 0.125, 0.375]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(long_short_weights(pd.DataFrame([list(range(1, 11))])), 6).values.tolist()",
+      "expect": "[[-0.18, -0.14, -0.1, -0.06, -0.02, 0.02, 0.06, 0.1, 0.14, 0.18]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(1); S = pd.DataFrame(rng.standard_normal((6, 40))); S[S > 1.2] = np.nan; W = long_short_weights(S)",
+      "call": "round(float(W.clip(lower=0).sum(axis=1).min()), 9), round(float(W.clip(lower=0).sum(axis=1).max()), 9)",
+      "expect": "(0.5, 0.5)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "rng = np.random.default_rng(1); S = pd.DataFrame(rng.standard_normal((6, 40))); S[S > 1.2] = np.nan; W = long_short_weights(S)",
+      "call": "round(float(W.clip(upper=0).sum(axis=1).min()), 9), round(float(W.clip(upper=0).sum(axis=1).max()), 9)",
+      "expect": "(-0.5, -0.5)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "rng = np.random.default_rng(1); S = pd.DataFrame(rng.standard_normal((6, 40))); S[S > 1.2] = np.nan; W = long_short_weights(S)",
+      "call": "int(W[S.isna()].abs().sum().sum() == 0), int(W.isna().sum().sum())",
+      "expect": "(1, 0)",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(long_short_weights(pd.DataFrame([[3, 3, 1, 2, 5, 5, 5, 0, 4, 4]])), 6).values.tolist()",
+      "expect": "[[-0.04, -0.04, -0.14, -0.1, 0.14, 0.14, 0.14, -0.18, 0.04, 0.04]]",
+      "compare": "equal"
+     },
+     {
+      "call": "float(long_short_weights(pd.DataFrame([list(range(9))])).abs().sum().sum())",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "float(long_short_weights(pd.DataFrame([[0.2] * 12])).abs().sum().sum())",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(long_short_weights(pd.DataFrame([[1, 2, 3, 4]]), min_names=4), 6).values.tolist()",
+      "expect": "[[-0.375, -0.125, 0.125, 0.375]]",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(long_short_weights(pd.DataFrame([[np.nan, 2.0, 1.0, np.nan] + list(range(3, 11))])).iloc[0, 1]), 6)",
+      "expect": "-0.14",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 9 hidden tests: one row of 10, longs and shorts summing to ±0.5 on a seeded frame with NaN, ties, a row of 9 shares, a row of equal values, `min_names`, and a NaN share. Lists are compared exactly after rounding to 6 places. The first run loads NumPy and pandas, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`r.sub(r.mean(axis=1), axis=0)` subtracts each row's mean."
+    },
+    {
+     "rung": "point",
+     "text": "`gross = d.abs().sum(axis=1)`; divide with `d.div(..., axis=0)`.",
+     "highlight": [
+      "l2",
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide by `gross.where((gross > 0) & (n >= min_names))`, so cash rows become NaN, then `fillna(0.0)`."
+    }
+   ],
+   "feedback": {
+    "correct": "All tests pass. The pipeline has its weights.",
+    "generic": "Not quite. Check the rows that should be cash, and that NaN shares end up 0."
+   },
+   "explain": {
+    "text": "Dividing by a gross that is NaN on cash rows makes the whole row NaN, and one `fillna(0.0)` then handles cash rows and missing shares together. Ties take average ranks, so tied shares get equal weights."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The book's return in code",
+   "prose": "`rebalance_dates(index, rebalance)` is defined: it returns the last day of each week (`\"W\"`) or month (`\"M\"`) in the index, or every day (`\"D\"`). Hold each rebalance's weights from the next day until the next rebalance. A NaN return counts as 0. Start on the first day a non-empty book is held.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "ix = 2024-01-01 .. 2024-01-04, shares a and b",
+      "weights  [0.5, -0.5] [0.5, -0.5] [-0.5, 0.5] [0, 0]",
+      "returns  [.01, .02]  [.03, -.01]  [.02, 0]    [.01, .01]",
+      "",
+      "portfolio_returns(W, Rt, \"D\")",
+      "2024-01-02    0.02",
+      "2024-01-03    0.01",
+      "2024-01-04    0.00"
+     ],
+     "title": "Expected"
+    }
+   },
+   "question": "Complete `portfolio_returns(weights, ret, rebalance=\"M\")`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef rebalance_dates(index, rebalance=\"M\"):\n    \"\"\"The last day of each day (\"D\"), week (\"W\") or month (\"M\") in the index.\"\"\"\n    if rebalance == \"D\":\n        return index\n    per = index.to_period(rebalance)\n    last = np.append(per[:-1] != per[1:], True)\n    return index[last]\n\ndef reversal_5d(ret):\n    logret = np.log1p(ret)\n    past5 = logret.rolling(5, min_periods=5).sum()\n    return -past5\n\n\ndef long_short_weights_ref(signal, min_names=10):\n    r = signal.rank(axis=1)\n    d = r.sub(r.mean(axis=1), axis=0)\n    gross = d.abs().sum(axis=1)\n    n = signal.notna().sum(axis=1)\n    w = d.div(gross.where((gross > 0) & (n >= min_names)), axis=0)\n    return w.fillna(0.0)\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef portfolio_returns(weights, ret, rebalance=\"M\"):\n    dates = rebalance_dates(weights.index, rebalance)\n    held = ...         # each day: the weights of the last rebalance before it\n    r = ret.reindex(index=weights.index, columns=weights.columns).fillna(0.0)\n    out = ...          # the book's return each day\n    ...                # start on the first day a non-empty book is held\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef portfolio_returns(weights, ret, rebalance=\"M\"):\n    dates = rebalance_dates(weights.index, rebalance)\n    held = weights.loc[dates].reindex(weights.index).ffill().shift(1)\n    r = ret.reindex(index=weights.index, columns=weights.columns).fillna(0.0)\n    out = (held.fillna(0.0) * r).sum(axis=1)\n    live = held.abs().sum(axis=1) > 0\n    if not live.any():\n        return out.iloc[0:0]\n    return out.loc[live.idxmax():]\n",
+    "examples": [
+     {
+      "setup": "ix = pd.bdate_range('2024-01-01', periods=4); W = pd.DataFrame([[0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.0, 0.0]], index=ix, columns=['a', 'b']); Rt = pd.DataFrame([[0.01, 0.02], [0.03, -0.01], [0.02, 0.0], [0.01, 0.01]], index=ix, columns=['a', 'b'])",
+      "call": "np.round(portfolio_returns(W, Rt, 'D'), 6).tolist()",
+      "expect": "[0.02, 0.01, 0.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "ix = pd.bdate_range('2024-01-01', periods=4); W = pd.DataFrame([[0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.0, 0.0]], index=ix, columns=['a', 'b']); Rt = pd.DataFrame([[0.01, 0.02], [0.03, -0.01], [0.02, 0.0], [0.01, 0.01]], index=ix, columns=['a', 'b'])",
+      "call": "np.round(portfolio_returns(W, Rt, 'D'), 6).tolist()",
+      "expect": "[0.02, 0.01, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "ix = pd.bdate_range('2024-01-01', periods=4); W = pd.DataFrame([[0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.0, 0.0]], index=ix, columns=['a', 'b']); Rt = pd.DataFrame([[0.01, 0.02], [0.03, -0.01], [0.02, 0.0], [0.01, 0.01]], index=ix, columns=['a', 'b'])",
+      "call": "str(portfolio_returns(W, Rt, 'D').index[0].date())",
+      "expect": "'2024-01-02'",
+      "compare": "equal"
+     },
+     {
+      "setup": "ix = pd.bdate_range('2024-01-25', '2024-02-06'); W = pd.DataFrame(0.0, index=ix, columns=['a', 'b']); W.loc[:, 'a'] = 0.5; W.loc[:, 'b'] = -0.5; W.loc['2024-02-01':, :] = [[-0.5, 0.5]] * 4; Rt = pd.DataFrame({'a': np.linspace(0.01, 0.02, len(ix)), 'b': 0.0}, index=ix)",
+      "call": "np.round(portfolio_returns(W, Rt, 'M'), 6).tolist()",
+      "expect": "[0.008125, 0.00875, 0.009375, 0.01]",
+      "compare": "equal"
+     },
+     {
+      "setup": "ix = pd.bdate_range('2024-01-25', '2024-02-06'); W = pd.DataFrame(0.0, index=ix, columns=['a', 'b']); W.loc[:, 'a'] = 0.5; W.loc[:, 'b'] = -0.5; W.loc['2024-02-01':, :] = [[-0.5, 0.5]] * 4; Rt = pd.DataFrame({'a': np.linspace(0.01, 0.02, len(ix)), 'b': 0.0}, index=ix)",
+      "call": "[str(d.date()) for d in portfolio_returns(W, Rt, 'M').index[:2]]",
+      "expect": "['2024-02-01', '2024-02-02']",
+      "compare": "equal"
+     },
+     {
+      "setup": "ix = pd.bdate_range('2024-01-01', periods=4); W = pd.DataFrame([[0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.0, 0.0]], index=ix, columns=['a', 'b']); Rt = pd.DataFrame([[0.01, 0.02], [0.03, -0.01], [0.02, 0.0], [0.01, 0.01]], index=ix, columns=['a', 'b']); Rn = Rt.copy(); Rn.iloc[1, 1] = np.nan",
+      "call": "np.round(portfolio_returns(W, Rn, 'D'), 6).tolist()",
+      "expect": "[0.015, 0.01, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights_ref(reversal_5d(P['ret'])); a = portfolio_returns(Wt, P['ret'], 'W'); W2 = Wt.copy(); t = rebalance_dates(Wt.index, 'W')[20]; W2.loc[t:] = -W2.loc[t:]; b = portfolio_returns(W2, P['ret'], 'W')",
+      "call": "bool(np.allclose(a.loc[:t], b.loc[:t])), bool(np.allclose(a.loc[t:].iloc[1:], b.loc[t:].iloc[1:]))",
+      "expect": "(True, False)",
+      "compare": "equal"
+     },
+     {
+      "setup": "P = make_panel(30, 300, 5); out = portfolio_returns(long_short_weights_ref(reversal_5d(P['ret'])), P['ret'], 'W')",
+      "call": "len(out), round(float(out.sum()), 6), str(out.index[0].date())",
+      "expect": "(292, 0.126333, '2019-01-14')",
+      "compare": "isclose"
+     },
+     {
+      "setup": "ix = pd.bdate_range('2024-01-01', periods=4); W = pd.DataFrame([[0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.0, 0.0]], index=ix, columns=['a', 'b']); Rt = pd.DataFrame([[0.01, 0.02], [0.03, -0.01], [0.02, 0.0], [0.01, 0.01]], index=ix, columns=['a', 'b'])",
+      "call": "len(portfolio_returns(W * 0, Rt, 'D'))",
+      "expect": "0",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 8 hidden tests: the hand panel above, a month end inside a short panel, a NaN return, a spy that flips every weight from a rebalance date on and checks that nothing up to that date moves, a seeded weekly reversal book on `make_panel(30, 300, 5)`, and an all-cash book (an empty series). The first run loads NumPy and pandas, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`weights.loc[dates]` keeps the rebalance rows; `reindex(weights.index).ffill()` carries them forward."
+    },
+    {
+     "rung": "point",
+     "text": "Then `.shift(1)`: weights set at $t$ first earn on the next day.",
+     "highlight": [
+      "l2",
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`out = (held.fillna(0.0) * r).sum(axis=1)`; keep it from the first day where `held.abs().sum(axis=1) > 0`."
+    }
+   ],
+   "feedback": {
+    "correct": "All tests pass, the spy included.",
+    "generic": "Not quite. Check the shift: weights set at $t$ must not earn day $t$'s return."
+   },
+   "explain": {
+    "text": "`reindex` then `ffill` holds each rebalance's weights until the next one, and `shift(1)` moves them a day later, which is the whole of the alignment. The spy flips the weights from a rebalance date on: an honest book cannot change on or before that date."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A market-neutral fund",
+   "prose": "A market-neutral equity fund runs £500m gross: £250m long and £250m short across 400 names, with a beta target of 0 ± 0.1. Its prime broker lends the shares it shorts for a fee of 0.5% a year on the short value. Our course ignores this cost, so the note must say so.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "£m"
+     ],
+     "rows": [
+      [
+       "Long",
+       "250"
+      ],
+      [
+       "Short",
+       "−250"
+      ],
+      [
+       "Gross",
+       "500"
+      ],
+      [
+       "Net",
+       "0"
+      ]
+     ]
+    }
+   },
+   "question": "What does borrowing cost a year, in bp of the gross book?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 25,
+    "tol": {
+     "abs": 0.5
+    },
+    "unit": "bp",
+    "label": "Borrow cost",
+    "placeholder": "bp",
+    "accept": "25 bp: 0.5% of £250m is £1.25m, which is 0.25% of £500m.",
+    "wrong": [
+     {
+      "id": "gross",
+      "value": 50,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "short",
+      "value": 12.5,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The fee is charged on the short side only."
+    },
+    {
+     "rung": "point",
+     "text": "0.5% of £250m.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "£1.25m out of £500m gross is 0.25%."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A quarter of a percent of gross a year.",
+    "generic": "Not quite. Charge 0.5% on the £250m short, then divide by the £500m gross.",
+    "byKey": {
+     "gross": "You charged the fee on the whole gross. Only borrowed shares pay it.",
+     "short": "You halved twice. £1.25m over £500m is 25 bp."
+    }
+   },
+   "explain": {
+    "text": "£250m × 0.5% = £1.25m a year, or 25 bp of gross. Hard-to-borrow names can cost several percent a year, often the very shares a short signal likes. The note's Costs section lists borrow as excluded.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1,
+       2
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Rank weights: rank minus the mean rank, scaled so longs sum to +0.5 and shorts to −0.5; returns are per £ of gross.",
+   "Weights set on rebalance date $t$ earn from the next day until the next rebalance; delisting returns count.",
+   "Dollar neutral is not beta neutral: a book's beta is the sum of weight times beta."
+  ],
+  "formula": {
+   "name": "The book's daily return",
+   "tex": "r^{\\text{book}}_s = \\sum_i w_{i,t}\\, r_{i,s}, \\quad t < s \\le t'",
+   "note": "$t$ is the last rebalance before day $s$, $t'$ the next."
+  },
+  "trap": "Paying day $t$'s return to weights built from day $t$'s data: the Sharpe explodes, up or down."
+ },
+ "quiz": [
+  {
+   "id": "q-weights",
+   "difficulty": 2,
+   "prose": "Four shares have momentum ranks 1, 2, 3 and 4 on a rebalance date.",
+   "question": "What rank weight does the top share get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.375,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Weight",
+    "placeholder": "decimal",
+    "accept": "0.375: (4 − 2.5)/4, since the sizes of rank − 2.5 add to 4.",
+    "wrong": [
+     {
+      "id": "share",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Subtract the mean rank, 2.5, then divide by the sum of absolute values, 4.",
+    "byKey": {
+     "share": "You used rank over the sum of ranks, 4/10. Rank weights subtract the mean rank first.",
+     "half": "You split the long side equally. Rank weights give the top share more than the second."
+    }
+   },
+   "explain": {
+    "text": "Rank minus 2.5 gives −1.5, −0.5, 0.5, 1.5, whose sizes add to 4. The top weight is 1.5/4 = 0.375 and the longs sum to 0.5."
+   }
+  },
+  {
+   "id": "q-beta",
+   "difficulty": 2,
+   "prose": "A dollar-neutral book holds +0.5 in longs with average beta 1.2 and −0.5 in shorts with average beta 0.8.",
+   "question": "What is the book's beta?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Beta",
+    "placeholder": "decimal",
+    "accept": "0.2: 0.5 × 1.2 − 0.5 × 0.8.",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "noscale",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. The book is long the market.",
+    "generic": "Not quite. Add weight times beta for each side.",
+    "byKey": {
+     "zero": "Dollar neutral is not beta neutral. The longs move more with the market than the shorts.",
+     "noscale": "You took 1.2 − 0.8 without the 0.5 weights."
+    }
+   },
+   "explain": {
+    "text": "0.6 − 0.4 = 0.2. If the market falls 5%, the book loses about 1%, whatever the signal does."
+   }
+  },
+  {
+   "id": "q-day",
+   "difficulty": 2,
+   "prose": "A weekly book rebalances at the close on Wednesday, the last trading day of a short holiday week.",
+   "question": "Which return do the new weights earn first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The next trading day's",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Wednesday's",
+      "why": "Wednesday's return was known when the weights were set."
+     },
+     {
+      "id": "c",
+      "text": "The following Wednesday's",
+      "why": "That is the next rebalance; the weights earn every day before it too."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Weights set at $t$ earn from the next trading day."
+   },
+   "explain": {
+    "text": "The rule is the same at any frequency: weights set at $t$ earn returns on days after $t$, up to the next rebalance."
+   }
+  },
+  {
+   "id": "q-cash",
+   "difficulty": 3,
+   "prose": "Edge case. On one rebalance date only 8 shares pass the universe filter, and the course's minimum is 10.",
+   "question": "What does the book hold until the next rebalance?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Nothing: cash, earning 0",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The previous rebalance's weights",
+      "why": "Those were replaced at this rebalance. Keeping them would trade on a stale signal."
+     },
+     {
+      "id": "c",
+      "text": "Rank weights on the 8 shares",
+      "why": "That is below the minimum the course set for a cross-section worth ranking."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Fewer shares than the minimum gives an all-zero row."
+   },
+   "explain": {
+    "text": "Below the minimum, every weight is 0, so the book earns 0 until the next rebalance and the selling is charged as a trade. It is rare here: the universe holds 165 shares or more after its first 60 days."
+   }
+  }
+ ]
+}

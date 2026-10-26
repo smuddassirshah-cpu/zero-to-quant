@@ -1,0 +1,1658 @@
+{
+  "id": "l2-cleaning-quotes",
+  "course": "opt-dash",
+  "title": "Cleaning quotes",
+  "minutes": 14,
+  "objectives": [
+    "Filter out stale, crossed and zero-bid quotes.",
+    "Drop quotes whose spread is too wide relative to their mid.",
+    "Write `clean_quotes` and `drop_report` for the dashboard."
+  ],
+  "skills": [
+    "od-data"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Quotes you would not trust",
+      "prose": "Nine quotes from a vendor file, one of them added by hand. The share is at £100 and was last updated a minute ago. Five of these quotes would mislead a volatility fit.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "T",
+            "strike",
+            "type",
+            "bid",
+            "ask",
+            "age (min)"
+          ],
+          "rows": [
+            [
+              "0.25",
+              "100",
+              "call",
+              "4.37",
+              "4.64",
+              "0"
+            ],
+            [
+              "0.25",
+              "95",
+              "call",
+              "0.00",
+              "7.97",
+              "0"
+            ],
+            [
+              "0.50",
+              "90",
+              "put",
+              "2.01",
+              "1.96",
+              "0"
+            ],
+            [
+              "1.00",
+              "100",
+              "put",
+              "6.54",
+              "6.94",
+              "0"
+            ],
+            [
+              "1.00",
+              "95",
+              "call",
+              "13.11",
+              "13.92",
+              "240"
+            ],
+            [
+              "0.50",
+              "105",
+              "call",
+              "4.48",
+              "7.60",
+              "0"
+            ],
+            [
+              "0.25",
+              "80",
+              "call",
+              "18.90",
+              "19.40",
+              "0"
+            ],
+            [
+              "0.50",
+              "100",
+              "call",
+              "6.77",
+              "7.18",
+              "0"
+            ],
+            [
+              "0.25",
+              "110",
+              "put",
+              "9.47",
+              "10.06",
+              "0"
+            ]
+          ],
+          "tap": "rows",
+          "align": [
+            "right",
+            "right",
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Tap whole rows. Age is minutes since the quote last changed."
+        }
+      },
+      "question": "Tap the five quotes you would not trust.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1",
+          "r2",
+          "r4",
+          "r5",
+          "r6"
+        ],
+        "countWord": "quotes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check each row for a missing buyer, a backwards quote, an old quote, a gaping spread and an impossible price."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2's bid is above its ask, and row 4 is four hours old.",
+          "highlight": [
+            "r2",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows 1, 2, 4, 5 and 6: zero bid, crossed, stale, wide, and a call priced below $S - K$."
+        }
+      ],
+      "feedback": {
+        "correct": "Zero bid, crossed, stale, wide, and below the lower bound.",
+        "generic": "Not quite right. Look for five different faults, one per row.",
+        "byKey": {
+          "r0": "Row 0 is healthy: a positive bid below the ask, fresh, with a spread of 6% of the mid.",
+          "r3": "Row 3 is healthy: fresh, and its spread is 6% of the mid.",
+          "r7": "Row 7 is healthy: fresh, and its spread is 6% of the mid.",
+          "r8": "Row 8 is healthy: fresh, and its spread is 6% of the mid.",
+          "r1": "You kept row 1. Its bid is 0: nobody will buy, so there is no two-sided price.",
+          "r2": "You kept row 2. Its bid, 2.01, is above its ask, 1.96: a crossed quote is an error or a stale side.",
+          "r4": "You kept row 4. It is 240 minutes old, so it priced a different share price.",
+          "r5": "You kept row 5. Its spread, £3.12, is over half its mid.",
+          "r6": "You kept row 6. An 80 call cannot be offered below $S - K = \\text{£}20$: buy it, sell the share, and lock in profit."
+        }
+      },
+      "explain": {
+        "text": "Row 1 has no buyer, row 2 is crossed and row 4 is four hours old. Row 5's spread is over half its mid. Row 6 asks £19.40 for a call whose lower bound is £20.74, an arbitrage.",
+        "canvas": {
+          "highlight": [
+            "r1",
+            "r2",
+            "r4",
+            "r5",
+            "r6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where spreads are wide",
+      "prose": "Every quote in `make_chain()` with a positive bid, plotted by moneyness $K/S$ and its spread as a fraction of its mid. Slide the cut line up and down.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0.7,
+              0.0599
+            ],
+            [
+              0.75,
+              0.0596
+            ],
+            [
+              0.8,
+              0.5187
+            ],
+            [
+              0.85,
+              0.0601
+            ],
+            [
+              0.85,
+              1.4286
+            ],
+            [
+              0.9,
+              0.059
+            ],
+            [
+              0.9,
+              0.4
+            ],
+            [
+              0.95,
+              0.0603
+            ],
+            [
+              0.95,
+              0.0917
+            ],
+            [
+              1.0,
+              0.0606
+            ],
+            [
+              1.0,
+              0.0609
+            ],
+            [
+              1.05,
+              0.0952
+            ],
+            [
+              1.05,
+              0.0601
+            ],
+            [
+              1.1,
+              0.7692
+            ],
+            [
+              1.1,
+              0.0608
+            ],
+            [
+              1.15,
+              0.06
+            ],
+            [
+              1.2,
+              0.0599
+            ],
+            [
+              1.25,
+              -0.002
+            ],
+            [
+              1.3,
+              0.0604
+            ],
+            [
+              0.7,
+              0.0599
+            ],
+            [
+              0.75,
+              0.0598
+            ],
+            [
+              0.75,
+              1.4286
+            ],
+            [
+              0.8,
+              0.0605
+            ],
+            [
+              0.8,
+              0.7692
+            ],
+            [
+              0.85,
+              0.0592
+            ],
+            [
+              0.85,
+              0.303
+            ],
+            [
+              0.9,
+              0.0601
+            ],
+            [
+              0.9,
+              0.1099
+            ],
+            [
+              0.95,
+              0.0606
+            ],
+            [
+              0.95,
+              0.0586
+            ],
+            [
+              1.0,
+              0.0629
+            ],
+            [
+              1.0,
+              0.0595
+            ],
+            [
+              1.05,
+              0.0632
+            ],
+            [
+              1.05,
+              0.0615
+            ],
+            [
+              1.1,
+              0.1149
+            ],
+            [
+              1.1,
+              0.06
+            ],
+            [
+              1.15,
+              0.4762
+            ],
+            [
+              1.15,
+              0.0592
+            ],
+            [
+              1.2,
+              0.0601
+            ],
+            [
+              1.25,
+              0.0596
+            ],
+            [
+              1.3,
+              0.0597
+            ],
+            [
+              0.7,
+              0.0599
+            ],
+            [
+              0.7,
+              1.1111
+            ],
+            [
+              0.75,
+              0.06
+            ],
+            [
+              0.75,
+              0.6667
+            ],
+            [
+              0.8,
+              0.06
+            ],
+            [
+              0.8,
+              0.2857
+            ],
+            [
+              0.85,
+              0.0597
+            ],
+            [
+              0.85,
+              0.137
+            ],
+            [
+              0.9,
+              0.0605
+            ],
+            [
+              0.9,
+              0.0599
+            ],
+            [
+              0.95,
+              0.0616
+            ],
+            [
+              1.0,
+              0.0599
+            ],
+            [
+              1.0,
+              0.0592
+            ],
+            [
+              1.05,
+              0.0617
+            ],
+            [
+              1.05,
+              0.0607
+            ],
+            [
+              1.1,
+              0.0606
+            ],
+            [
+              1.1,
+              0.0604
+            ],
+            [
+              1.15,
+              0.137
+            ],
+            [
+              1.15,
+              0.0596
+            ],
+            [
+              1.2,
+              0.4
+            ],
+            [
+              1.2,
+              0.0609
+            ],
+            [
+              1.25,
+              1.4286
+            ],
+            [
+              1.25,
+              0.0601
+            ],
+            [
+              1.3,
+              0.0601
+            ],
+            [
+              0.7,
+              0.0597
+            ],
+            [
+              0.7,
+              0.2564
+            ],
+            [
+              0.75,
+              0.0604
+            ],
+            [
+              0.75,
+              0.1449
+            ],
+            [
+              0.8,
+              0.0602
+            ],
+            [
+              0.8,
+              0.0826
+            ],
+            [
+              0.85,
+              0.0596
+            ],
+            [
+              0.85,
+              0.0639
+            ],
+            [
+              0.9,
+              0.0595
+            ],
+            [
+              0.9,
+              -0.0252
+            ],
+            [
+              0.95,
+              0.0601
+            ],
+            [
+              0.95,
+              0.0602
+            ],
+            [
+              1.0,
+              0.0588
+            ],
+            [
+              1.0,
+              0.0598
+            ],
+            [
+              1.05,
+              0.5166
+            ],
+            [
+              1.05,
+              0.0604
+            ],
+            [
+              1.1,
+              0.0598
+            ],
+            [
+              1.1,
+              0.0598
+            ],
+            [
+              1.15,
+              0.0599
+            ],
+            [
+              1.15,
+              0.0604
+            ],
+            [
+              1.2,
+              0.0645
+            ],
+            [
+              1.2,
+              0.0599
+            ],
+            [
+              1.25,
+              0.1031
+            ],
+            [
+              1.25,
+              0.0598
+            ],
+            [
+              1.3,
+              0.2041
+            ],
+            [
+              1.3,
+              0.0601
+            ],
+            [
+              0.7,
+              0.0598
+            ],
+            [
+              0.7,
+              0.0787
+            ],
+            [
+              0.75,
+              0.06
+            ],
+            [
+              0.75,
+              0.0594
+            ],
+            [
+              0.8,
+              0.0604
+            ],
+            [
+              0.8,
+              0.0579
+            ],
+            [
+              0.85,
+              0.0602
+            ],
+            [
+              0.9,
+              0.0599
+            ],
+            [
+              0.9,
+              0.0611
+            ],
+            [
+              0.95,
+              0.0599
+            ],
+            [
+              0.95,
+              0.0594
+            ],
+            [
+              1.0,
+              0.0604
+            ],
+            [
+              1.0,
+              0.0593
+            ],
+            [
+              1.05,
+              0.0606
+            ],
+            [
+              1.05,
+              0.0597
+            ],
+            [
+              1.1,
+              0.0611
+            ],
+            [
+              1.15,
+              0.0595
+            ],
+            [
+              1.15,
+              0.0597
+            ],
+            [
+              1.2,
+              0.058
+            ],
+            [
+              1.2,
+              0.0606
+            ],
+            [
+              1.25,
+              0.0603
+            ],
+            [
+              1.25,
+              0.0601
+            ],
+            [
+              1.3,
+              0.0561
+            ],
+            [
+              1.3,
+              0.0603
+            ]
+          ],
+          "xLabel": "Moneyness $K/S$",
+          "yLabel": "Spread / mid",
+          "xRange": [
+            0.65,
+            1.35
+          ],
+          "yRange": [
+            -0.1,
+            1.6
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 0,
+            "b": 0.5,
+            "label": "cut"
+          },
+          "caption": "115 quotes with a positive bid"
+        },
+        "controls": [
+          {
+            "bind": "line.b",
+            "min": 0.1,
+            "max": 1.5,
+            "step": 0.05,
+            "start": 0.5,
+            "label": "Cut",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Set the cut at 0.5. Where do most quotes above it sit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "wings",
+            "text": "Far from the money, in the wings",
+            "correct": true
+          },
+          {
+            "id": "atm",
+            "text": "Near the money, around $K/S = 1$",
+            "why": "Near $K/S = 1$ the spreads are about 6% of the mid. Look at the far left and right."
+          },
+          {
+            "id": "even",
+            "text": "Evenly across all strikes",
+            "why": "Most quotes cluster near 0.06. The few above the cut sit at the ends."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Most dots hug the bottom. Which ones float up?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at $K/S$ below 0.85 and above 1.1.",
+          "highlight": [
+            "line"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The high dots sit at the ends: options worth pennies with spreads of £0.05."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven of the nine are wing quotes worth pennies.",
+        "generic": "Not quite right. Find the dots above the line and read their $K/S$."
+      },
+      "explain": {
+        "text": "Seven of the nine quotes above 0.5 are wing options worth pennies, with spreads of £0.05. Some desks keep any spread under £0.10; the course keeps the plain rule, since such quotes pin a vol only loosely. The other two are planted wide quotes.",
+        "canvas": {
+          "line": {
+            "m": 0,
+            "b": 0.5
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Four rules",
+      "prose": "Written as rules, a quote is kept when its bid is positive, its bid is at most its ask, it is at most 30 minutes old, and its **relative spread** $(a - b)/m$ is below 0.5, where $m$ is the mid.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 4,
+          "max": 8,
+          "step": 0.5
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b",
+              "x": 4.48,
+              "label": "bid"
+            },
+            {
+              "id": "m",
+              "x": 6.04,
+              "label": "mid",
+              "colour": 2
+            },
+            {
+              "id": "a",
+              "x": 7.6,
+              "label": "ask"
+            }
+          ],
+          "intervals": [
+            {
+              "id": "sp",
+              "from": 4.48,
+              "to": 7.6,
+              "label": "spread"
+            }
+          ],
+          "caption": "The six-month 105 call, in £"
+        }
+      },
+      "question": "What is the relative spread of the six-month 105 call, 4.48 / 7.60?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5166,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Relative spread",
+        "placeholder": "decimal",
+        "accept": "0.5166: 3.12 / 6.04",
+        "wrong": [
+          {
+            "id": "abs",
+            "value": 3.12,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "bid",
+            "value": 0.6964285714285714,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "ask",
+            "value": 0.41052631578947374,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Spread first, then mid."
+        },
+        {
+          "rung": "point",
+          "text": "The spread is $7.60 - 4.48 = 3.12$ and the mid is 6.04.",
+          "highlight": [
+            "sp"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3.12 / 6.04$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.517: over the 0.5 cut, so it is dropped.",
+        "generic": "Not quite right. Divide the spread by the mid.",
+        "byKey": {
+          "abs": "You stopped at ask minus bid. Divide by the mid to make it relative.",
+          "bid": "You divided by the bid. The rule divides by the mid, 6.04.",
+          "ask": "You divided by the ask. The rule divides by the mid, 6.04."
+        }
+      },
+      "explain": {
+        "text": "The spread, £3.12, is 0.517 of the mid, £6.04. That is over the 0.5 cut, so the rule drops it. Its neighbours at six months have relative spreads near 0.06."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Does the order matter?",
+      "prose": "Applied in this order to the 130 quotes of `make_chain()`, the rules drop 15, 2, 2 and 9 rows, leaving 102. A zero-bid quote has mid $a/2$, so its relative spread is $a/(a/2) = 2$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "rule, in order",
+            "rows dropped"
+          ],
+          "rows": [
+            [
+              "bid is 0",
+              "15"
+            ],
+            [
+              "bid above ask",
+              "2"
+            ],
+            [
+              "older than 30 min",
+              "2"
+            ],
+            [
+              "spread / mid ≥ 0.5",
+              "9"
+            ],
+            [
+              "kept",
+              "102"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Apply the wide-spread rule first instead. How many rows does it drop?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows dropped by the wide rule",
+        "accept": "24 exactly: the 9 wide quotes plus all 15 zero bids",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 28,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which other rows have a relative spread of at least 0.5?"
+        },
+        {
+          "rung": "point",
+          "text": "Every zero-bid quote has relative spread 2.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$9 + 15$."
+        }
+      ],
+      "feedback": {
+        "correct": "24: the wide rule now also catches every zero bid.",
+        "generic": "Not quite right. Count the wide quotes plus any others with a relative spread of 0.5 or more.",
+        "byKey": {
+          "same": "You kept the count from the first order. Every zero bid also fails the spread rule, since its relative spread is 2.",
+          "all": "Crossed and stale quotes pass the spread rule: a crossed spread is negative. Only zero bids join the wide ones."
+        }
+      },
+      "explain": {
+        "text": "First, the wide rule drops 24 rows and the zero-bid rule then finds none. The kept set is the same 102, as a row survives only if it passes all four. Only the labels move, so log each row's first failing reason in a fixed order.",
+        "canvas": {
+          "highlight": [
+            "r0",
+            "r3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A locked market",
+      "prose": "A quote whose bid equals its ask is **locked**: a buyer and a seller agree on the price but have not yet traded. Here is one, fresh, on the three-month 105 call.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "T",
+            "strike",
+            "type",
+            "bid",
+            "ask",
+            "age (min)"
+          ],
+          "rows": [
+            [
+              "0.25",
+              "105",
+              "call",
+              "2.15",
+              "2.15",
+              "0"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Do our four rules keep it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "keep",
+            "text": "Yes: the bid is positive and at most the ask, and the spread is 0",
+            "correct": true
+          },
+          {
+            "id": "crossed",
+            "text": "No: it fails the bid-at-most-ask rule",
+            "why": "You tested bid below ask. The rule is bid at most ask, and 2.15 ≤ 2.15 holds; crossed means bid above ask."
+          },
+          {
+            "id": "wide",
+            "text": "No: a zero spread is suspicious, so the spread rule drops it",
+            "why": "The spread rule drops wide quotes. A zero spread is the tightest possible."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Test each rule on 2.15 / 2.15."
+        },
+        {
+          "rung": "point",
+          "text": "Is $2.15 \\le 2.15$?",
+          "highlight": [
+            "r0c3",
+            "r0c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "All four rules pass, so the quote stays."
+        }
+      ],
+      "feedback": {
+        "correct": "Kept: a locked quote is a real price.",
+        "generic": "Not quite right. Test each of the four rules in turn."
+      },
+      "explain": {
+        "text": "Bid 2.15 is positive and at most the ask, the quote is fresh, and its relative spread is 0. All four rules pass. In code that is `bid <= ask`, not `bid < ask`.",
+        "canvas": {
+          "highlight": [
+            "r0c3",
+            "r0c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Filling a zero bid",
+      "prose": "A colleague hates losing rows. He fills every zero bid with £0.01 and keeps the quote. Take the three-month 95 call, quoted 0.00 / 7.97. Its lower bound is $Se^{-qT} - Ke^{-rT} = \\text{£}5.93$.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 9,
+          "step": 1
+        },
+        "state": {
+          "points": [
+            {
+              "id": "fill",
+              "x": 0.01,
+              "label": "filled bid"
+            },
+            {
+              "id": "a",
+              "x": 7.97,
+              "label": "ask"
+            }
+          ],
+          "intervals": [
+            {
+              "id": "lb",
+              "from": 5.93,
+              "to": null,
+              "label": "above the lower bound"
+            }
+          ],
+          "caption": "The three-month 95 call, in £"
+        }
+      },
+      "question": "Is his filled quote a price we can fit a volatility to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "keep",
+            "text": "Yes: with the gap filled it is a quote like any other",
+            "why": "You trusted the invented bid. Its mid, £3.99, is below the lower bound of £5.93, where no volatility exists."
+          },
+          {
+            "id": "right",
+            "text": "No: its mid, £3.99, is below the lower bound, so no volatility fits",
+            "correct": true
+          },
+          {
+            "id": "ask",
+            "text": "Yes, if we use the ask, £7.97, as the price",
+            "why": "The ask alone is only an upper limit on value. Treating it as the price biases every one-sided quote upwards."
+          },
+          {
+            "id": "wide-ok",
+            "text": "Yes: the spread rule will catch it anyway",
+            "why": "It would here, with relative spread near 2. But a filled wing quote such as 0.01 / 0.03 passes the spread rule and fakes a vol."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out the filled mid and compare it with the bound."
+        },
+        {
+          "rung": "point",
+          "text": "$(0.01 + 7.97)/2 = 3.99$.",
+          "highlight": [
+            "lb"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£3.99 is below £5.93, so no volatility prices it."
+        }
+      ],
+      "feedback": {
+        "correct": "The filled mid lies below the lower bound: no vol fits.",
+        "generic": "Not quite right. Compute the filled mid and set it against £5.93.",
+        "byKey": {
+          "keep": "You kept a quote with an invented bid. The £0.01 is made up, so its mid of £3.99 is half the ask, not a price."
+        }
+      },
+      "explain": {
+        "text": "The £0.01 is invented, so the mid is just half the ask, £3.99. Here that lands below the lower bound, where no volatility exists. In the wings it fakes a low vol instead, so drop zero bids and count them in the log.",
+        "canvas": {
+          "points": {
+            "m": {
+              "x": 3.99,
+              "label": "filled mid",
+              "colour": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The cleaning mask",
+      "prose": "Each rule you applied is a test on one row, so the four combine with *and*: keep iff $b > 0$, $b \\le a$, $\\text{age} \\le 30$ and $(a - b)/m < 0.5$.\n\n```python\nm = (df[\"bid\"] + df[\"ask\"]) / 2\nkeep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n        & (df[\"age_min\"] <= 30)\n        & ((df[\"ask\"] - df[\"bid\"]) / m < 0.5))\n```",
+      "question": "Which test keeps the locked quote 2.15 / 2.15 but drops 2.20 / 2.15?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "le",
+            "text": "`bid <= ask`",
+            "correct": true
+          },
+          {
+            "id": "lt",
+            "text": "`bid < ask`",
+            "why": "That drops the locked quote too, since 2.15 < 2.15 is false."
+          },
+          {
+            "id": "ne",
+            "text": "`bid != ask`",
+            "why": "That drops the locked quote and keeps the crossed one."
+          },
+          {
+            "id": "ge",
+            "text": "`bid >= ask`",
+            "why": "That keeps only locked and crossed quotes: the opposite of what we want."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`<=` keeps equality and drops bid above ask.",
+        "generic": "Not quite right. Try both quotes in each test."
+      },
+      "explain": {
+        "text": "`bid <= ask` is true for 2.15 / 2.15 and false for 2.20 / 2.15. The mask is a Series of booleans, so `df[keep]` keeps the rows that pass all four."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "clean_quotes",
+      "prose": "Write the dashboard's cleaner. Return the rows that pass all four rules, with a fresh index from 0, and leave the input frame unchanged. The age and spread limits are arguments, so the results note can report what changes with them.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> len(chain), len(clean_quotes(chain))",
+            "(130, 102)",
+            ">>> len(clean_quotes(chain, max_age_min=300))",
+            "104"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `clean_quotes`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\n# make_chain() is loaded as chain.\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    \"\"\"Keep two-sided, uncrossed, fresh, tight quotes.\"\"\"\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ...\n    return df[keep]\n",
+        "solution": "import pandas as pd\n\n# make_chain() is loaded as chain.\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    \"\"\"Keep two-sided, uncrossed, fresh, tight quotes.\"\"\"\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef quotes(rows):\n    \"\"\"A hand-made chain: rows of [T, strike, type, bid, ask, volume, age_min].\"\"\"\n    return pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n\nchain = make_chain()\n",
+        "examples": [
+          {
+            "call": "len(clean_quotes(chain))",
+            "expect": "102",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "h = quotes([[0.25, 100, 'call', 4.37, 4.64, 250, 0.0], [0.25, 95, 'call', 0.0, 7.97, 1101, 0.0]])",
+            "call": "clean_quotes(h)['strike'].tolist()",
+            "expect": "[100]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.5, 90, 'put', 2.01, 1.96, 3549, 0.0], [0.5, 95, 'put', 2.95, 3.12, 10, 0.0]])",
+            "call": "clean_quotes(h)['strike'].tolist()",
+            "expect": "[95]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[1.0, 95, 'call', 13.11, 13.92, 2009, 240.0], [1.0, 100, 'call', 10.28, 10.92, 406, 30.0], [1.0, 105, 'call', 8.0, 8.5, 12, 31.0]])",
+            "call": "clean_quotes(h)['strike'].tolist()",
+            "expect": "[100]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.5, 105, 'call', 4.48, 7.60, 3714, 0.0], [0.25, 70, 'put', 0.02, 0.07, 1493, 0.0], [0.25, 110, 'call', 0.96, 1.02, 3348, 0.0]])",
+            "call": "clean_quotes(h)['strike'].tolist()",
+            "expect": "[110]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.25, 105, 'call', 2.15, 2.15, 40, 0.0]])",
+            "call": "len(clean_quotes(h))",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.25, 95, 'call', 0.0, 7.97, 1, 0.0], [0.25, 100, 'call', 4.37, 4.64, 2, 0.0], [0.25, 105, 'call', 2.20, 2.34, 3, 0.0]])",
+            "call": "clean_quotes(h).index.tolist()",
+            "expect": "[0, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(clean_quotes(chain))",
+            "expect": "102",
+            "compare": "equal"
+          },
+          {
+            "call": "len(clean_quotes(chain, max_age_min=300))",
+            "expect": "104",
+            "compare": "equal"
+          },
+          {
+            "call": "len(clean_quotes(chain, max_rel_spread=0.2))",
+            "expect": "95",
+            "compare": "equal"
+          },
+          {
+            "call": "clean_quotes(chain).columns.tolist() == chain.columns.tolist()",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "len(chain)",
+            "expect": "130",
+            "compare": "equal"
+          }
+        ],
+        "how": "`make_chain()` is loaded as `chain`, and `quotes(rows)` builds a hand-made frame from rows of `[T, strike, type, bid, ask, volume, age_min]`. Check runs 11 hidden tests, one per rule and a locked quote, then row counts on the chain, all compared exactly. The first run loads numpy and pandas, which can take ten seconds or more."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build one boolean Series with `&`, each test in brackets."
+        },
+        {
+          "rung": "point",
+          "text": "The age test uses the argument: `df[\"age_min\"] <= max_age_min`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then `return df[keep].reset_index(drop=True)`."
+        }
+      ],
+      "feedback": {
+        "correct": "102 of 130 survive, with a fresh index.",
+        "generic": "Some tests failed. Check each rule's comparison, the arguments and the reset index."
+      },
+      "explain": {
+        "text": "Each comparison gives a boolean Series and `&` combines them row by row. Brackets matter, because `&` binds tighter than `<=`. `reset_index(drop=True)` numbers the survivors from 0 without keeping the old index as a column."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "drop_report",
+      "prose": "The results note must say what was dropped and why. Count each dropped row under the first rule it fails, in the order zero bid, crossed, stale, wide, and add the number kept. The four counts and `kept` always sum to the rows in.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "rule, in order",
+            "rows dropped"
+          ],
+          "rows": [
+            [
+              "bid is 0",
+              "15"
+            ],
+            [
+              "bid above ask",
+              "2"
+            ],
+            [
+              "older than 30 min",
+              "2"
+            ],
+            [
+              "spread / mid ≥ 0.5",
+              "9"
+            ],
+            [
+              "kept",
+              "102"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "What `drop_report(chain)` should find"
+        }
+      },
+      "question": "Finish the loop in `drop_report`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\n# make_chain() is loaded as chain.\n\ndef drop_report(df, max_age_min=30, max_rel_spread=0.5):\n    \"\"\"Rows dropped per reason, each under its first failing rule.\"\"\"\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    rules = [(\"zero_bid\", df[\"bid\"] <= 0),\n             (\"crossed\", df[\"bid\"] > df[\"ask\"]),\n             (\"stale\", df[\"age_min\"] > max_age_min),\n             (\"wide\", (df[\"ask\"] - df[\"bid\"]) / m >= max_rel_spread)]\n    left = pd.Series(True, index=df.index)   # not yet dropped\n    report = {}\n    for name, bad in rules:\n        ...\n    report[\"kept\"] = int(left.sum())\n    return report\n",
+        "solution": "import pandas as pd\n\n# make_chain() is loaded as chain.\n\ndef drop_report(df, max_age_min=30, max_rel_spread=0.5):\n    \"\"\"Rows dropped per reason, each under its first failing rule.\"\"\"\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    rules = [(\"zero_bid\", df[\"bid\"] <= 0),\n             (\"crossed\", df[\"bid\"] > df[\"ask\"]),\n             (\"stale\", df[\"age_min\"] > max_age_min),\n             (\"wide\", (df[\"ask\"] - df[\"bid\"]) / m >= max_rel_spread)]\n    left = pd.Series(True, index=df.index)   # not yet dropped\n    report = {}\n    for name, bad in rules:\n        report[name] = int((left & bad).sum())\n        left = left & ~bad\n    report[\"kept\"] = int(left.sum())\n    return report\n",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef quotes(rows):\n    \"\"\"A hand-made chain: rows of [T, strike, type, bid, ask, volume, age_min].\"\"\"\n    return pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n\nchain = make_chain()\n",
+        "examples": [
+          {
+            "call": "drop_report(chain)",
+            "expect": "{'zero_bid': 15, 'crossed': 2, 'stale': 2, 'wide': 9, 'kept': 102}",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "drop_report(chain)",
+            "expect": "{'zero_bid': 15, 'crossed': 2, 'stale': 2, 'wide': 9, 'kept': 102}",
+            "compare": "equal"
+          },
+          {
+            "call": "drop_report(chain, max_age_min=300)",
+            "expect": "{'zero_bid': 15, 'crossed': 2, 'stale': 0, 'wide': 9, 'kept': 104}",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.25, 95, 'call', 0.0, 7.97, 1, 300.0], [0.25, 100, 'call', 4.37, 4.64, 2, 0.0]])",
+            "call": "drop_report(h)",
+            "expect": "{'zero_bid': 1, 'crossed': 0, 'stale': 0, 'wide': 0, 'kept': 1}",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.5, 90, 'put', 2.01, 1.96, 1, 45.0], [0.5, 105, 'call', 4.48, 7.60, 2, 45.0], [0.5, 100, 'call', 6.77, 7.18, 3, 45.0]])",
+            "call": "drop_report(h)",
+            "expect": "{'zero_bid': 0, 'crossed': 1, 'stale': 2, 'wide': 0, 'kept': 0}",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = quotes([[0.25, 105, 'call', 2.15, 2.15, 1, 0.0], [0.25, 70, 'put', 0.02, 0.07, 2, 0.0]])",
+            "call": "drop_report(h)",
+            "expect": "{'zero_bid': 0, 'crossed': 0, 'stale': 0, 'wide': 1, 'kept': 1}",
+            "compare": "equal"
+          },
+          {
+            "call": "list(drop_report(chain))",
+            "expect": "['zero_bid', 'crossed', 'stale', 'wide', 'kept']",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(drop_report(chain).values())",
+            "expect": "130",
+            "compare": "equal"
+          }
+        ],
+        "how": "`make_chain()` is loaded as `chain`, and `quotes(rows)` builds a hand-made frame. Check runs 7 hidden tests; each dict must match exactly, keys in order. The first run loads numpy and pandas, which can take ten seconds or more."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A row counts under a rule only if no earlier rule dropped it."
+        },
+        {
+          "rung": "point",
+          "text": "`left & bad` marks rows still in play that fail this rule.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`report[name] = int((left & bad).sum())`, then `left = left & ~bad`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every row counted once, under its first failing rule.",
+        "generic": "Some tests failed. Count only rows still in play, then remove them."
+      },
+      "explain": {
+        "text": "`left` starts all true and loses each rule's failures in turn. So a zero-bid quote that is also wide counts once, as a zero bid. `int(...)` turns NumPy counts into plain integers for the note."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A stale quote in a book",
+      "prose": "A vol desk logs every dropped quote. Suppose the stale one-year 95 call had slipped through. It was set when the share stood at £102, so at today's £100 it implies 26.7% instead of 22.7%. The desk is short 500 of these calls, with vega £34.57 per contract per vol point.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "vol",
+            "source"
+          ],
+          "rows": [
+            [
+              "true",
+              "22.65%",
+              "fresh quotes"
+            ],
+            [
+              "fitted",
+              "26.69%",
+              "stale quote at £102"
+            ],
+            [
+              "gap",
+              "4.03 points",
+              ""
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Marked on that surface, how much does the short book appear to lose?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 69659.0,
+        "tol": {
+          "rel": 0.015
+        },
+        "unit": "£",
+        "label": "Apparent loss in pounds",
+        "accept": "About £69,700: 500 × £34.57 × 4.03",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 139.3171,
+            "tol": {
+              "rel": 0.02
+            }
+          },
+          {
+            "id": "per-share",
+            "value": 696.5855,
+            "tol": {
+              "rel": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Vega converts vol points to pounds."
+        },
+        {
+          "rung": "point",
+          "text": "Each contract loses about $34.57 \\times 4.03$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Multiply by 500 contracts."
+        }
+      ],
+      "feedback": {
+        "correct": "About £69,700 of loss that is not real.",
+        "generic": "Not quite right. Multiply vega by the vol gap and by the number of contracts.",
+        "byKey": {
+          "one": "That is one contract. The book is short 500.",
+          "per-share": "You used vega per share. The £34.57 already covers the 100 shares of a contract."
+        }
+      },
+      "explain": {
+        "text": "One stale quote moves the 95 vol by 4 points and marks the book down about £69,700. Its Greeks shift too, so the hedges would be wrong. That is why a desk logs every quote it drops or keeps."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Keep a quote when its bid is positive, its bid is at most its ask, it is at most 30 minutes old, and its relative spread is below 0.5. On `make_chain()` that keeps 102 of 130.",
+      "The kept set does not depend on the order of the rules; the reason logged for each dropped row does. Log it in a fixed order.",
+      "Never invent a bid. A zero bid, a crossed quote or a stale quote is dropped and counted, not repaired."
+    ],
+    "formula": {
+      "name": "Relative spread",
+      "tex": "\\dfrac{a - b}{m}, \\qquad m = \\tfrac{1}{2}(a + b)",
+      "note": "Dropped at 0.5 or more; a zero bid gives exactly 2."
+    },
+    "trap": "Filling a zero bid with £0.01 makes the mid half the ask: an invented price, sometimes below the no-arbitrage bound."
+  },
+  "quiz": [
+    {
+      "id": "q-rel-spread",
+      "difficulty": 2,
+      "prose": "The one-year 100 call is quoted 10.28 / 10.92.",
+      "question": "What is its relative spread?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0604,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Relative spread",
+        "accept": "0.0604: 0.64 / 10.60",
+        "wrong": [
+          {
+            "id": "abs",
+            "value": 0.64,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "bid",
+            "value": 0.06225680933852141,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 6% of the mid: well inside the cut.",
+        "generic": "Not quite right. Divide ask minus bid by the mid.",
+        "byKey": {
+          "abs": "That is the spread in pounds. Divide it by the mid, 10.60.",
+          "bid": "You divided by the bid. The rule divides by the mid."
+        }
+      },
+      "explain": {
+        "text": "The spread is £0.64 and the mid £10.60, so the relative spread is 0.060. The quote stays."
+      }
+    },
+    {
+      "id": "q-age-30",
+      "difficulty": 2,
+      "prose": "A quote is exactly 30 minutes old. Its bid is positive, below its ask, and its relative spread is 0.08.",
+      "question": "Does `clean_quotes` with its defaults keep it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No",
+            "why": "You read the age rule as strictly under 30. It is `age_min <= max_age_min`, so 30 minutes passes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At most 30 minutes old passes.",
+        "generic": "Not quite right. Read the age test's comparison."
+      },
+      "explain": {
+        "text": "The rule is `age_min <= 30`. A quote exactly 30 minutes old passes, as do the other three tests."
+      }
+    },
+    {
+      "id": "q-empty-expiry",
+      "difficulty": 2,
+      "prose": "On a quiet morning, cleaning removes every quote at the one-month expiry.",
+      "question": "What should the dashboard do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "skip",
+            "text": "Report the expiry as empty in the log and build the surface from the others",
+            "correct": true
+          },
+          {
+            "id": "loosen",
+            "text": "Loosen the rules until a few one-month quotes survive",
+            "why": "That lets bad quotes in to fill a hole. A rule that bends to the data no longer cleans it."
+          },
+          {
+            "id": "old",
+            "text": "Reuse yesterday's one-month quotes",
+            "why": "Those are the stalest quotes of all. They priced yesterday's share."
+          },
+          {
+            "id": "fill",
+            "text": "Fill the zero bids with £0.01 for that expiry only",
+            "why": "That invents prices, the trap from this lesson."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An empty expiry is a finding, not a gap to fill.",
+        "generic": "Not quite right. Which choice keeps every surviving quote trustworthy?"
+      },
+      "explain": {
+        "text": "The rules are what make the quotes trustworthy, so they stay fixed. The dashboard skips the empty expiry and the results note says so."
+      }
+    },
+    {
+      "id": "q-report",
+      "difficulty": 3,
+      "prose": "Four quotes, age in minutes:\n\n- 0.00 / 0.04, age 50\n- 1.20 / 1.15, age 5\n- 3.10 / 3.30, age 45\n- 2.00 / 2.10, age 2",
+      "question": "What does `drop_report` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`{'zero_bid': 1, 'crossed': 1, 'stale': 1, 'wide': 0, 'kept': 1}`",
+            "correct": true
+          },
+          {
+            "id": "double",
+            "text": "`{'zero_bid': 1, 'crossed': 1, 'stale': 2, 'wide': 1, 'kept': 1}`",
+            "why": "You counted the first quote under every rule it fails. Each row counts once, under its first failing rule."
+          },
+          {
+            "id": "noorder",
+            "text": "`{'zero_bid': 0, 'crossed': 1, 'stale': 2, 'wide': 0, 'kept': 1}`",
+            "why": "You checked age before the bid. The order is zero bid, crossed, stale, wide."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row per reason, and one kept.",
+        "generic": "Not quite right. Take each quote through the rules in order and stop at the first failure."
+      },
+      "explain": {
+        "text": "The first quote fails the zero-bid rule first, the second is crossed, the third is stale and the fourth passes. Each row counts once, so the counts sum to 4."
+      }
+    }
+  ]
+}

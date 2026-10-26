@@ -1,0 +1,392 @@
+{
+  "id": "review-1",
+  "course": "backtest",
+  "level": 1,
+  "items": [
+    {
+      "id": "r-calls",
+      "difficulty": 3,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "`run_loop` runs over 250 daily bars. At each bar it hands `decide` the history `bars.iloc[: t + 1]`.",
+      "question": "How many rows does it hand over in total, across all 250 calls?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 31375,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "31,375: 1 + 2 + ... + 250 = 250 × 251 / 2.",
+        "wrong": [
+          {
+            "id": "n",
+            "value": 250,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sq",
+            "value": 62500,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "off",
+            "value": 31125,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "31,375 rows: the loop's work grows with the square of the history.",
+        "generic": "Not quite right. Call $t$ hands over $t + 1$ rows; add them up.",
+        "byKey": {
+          "n": "250 is the number of calls. Each call hands over more rows than the last.",
+          "sq": "That counts 250 rows on every call. The first call sees 1 row, the last 250.",
+          "off": "That adds 0 to 249. Bar $t$'s history includes bar $t$, so the counts run 1 to 250."
+        }
+      },
+      "explain": {
+        "text": "The sizes are 1, 2, ..., 250, which sum to $250 \\times 251 / 2 = 31{,}375$. That is why the loop is slow on long histories and the vectorised path exists. The loop stays as the reference the fast path must match."
+      }
+    },
+    {
+      "id": "r-vector",
+      "difficulty": 2,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "Four candidate vectorised momentum rules with a 5-day lookback, meant to match the event loop.",
+      "question": "Which one agrees with `run_loop` on every bar?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`np.sign(close.pct_change(5)).fillna(0)`",
+            "correct": true
+          },
+          {
+            "id": "shift",
+            "text": "`np.sign(close.pct_change(5).shift(-1)).fillna(0)`",
+            "why": "`shift(-1)` moves tomorrow's value up to today. The loop cannot see tomorrow, so the two disagree wherever the sign changes."
+          },
+          {
+            "id": "neg",
+            "text": "`np.sign(close.pct_change(-5)).fillna(0)`",
+            "why": "A negative period compares today with five bars ahead. That is the future return, not the past one."
+          },
+          {
+            "id": "nan",
+            "text": "`np.sign(close.pct_change(5))`",
+            "why": "Without `fillna(0)` the first five targets are NaN, where the loop returns 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A trailing return, NaN filled with 0.",
+        "generic": "Not quite right. Find the rule that uses only bars up to $t$ and has no NaN."
+      },
+      "explain": {
+        "text": "Only the first uses bars $t - 5$ to $t$ and fills the warm-up with 0. Two of the others read the future and one leaves NaN targets. Your agreement test would catch all three."
+      }
+    },
+    {
+      "id": "r-known",
+      "difficulty": 3,
+      "skills": [
+        "bt-design",
+        "bt-bias"
+      ],
+      "prose": "A rule runs after the close on Thursday 14 May. It may use a company's quarterly sales, published on 30 April, and a monthly survey for May, published on 1 June.",
+      "question": "Which inputs can `decide` use on 14 May?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Thursday's bar and the quarterly sales, but not the May survey",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "All three: the May survey describes a month that has started",
+            "why": "You went by the period the survey covers. It is not published until 1 June, so on 14 May nobody could read it."
+          },
+          {
+            "id": "bar",
+            "text": "Only Thursday's bar",
+            "why": "The quarterly sales were published on 30 April, two weeks earlier. They are known on 14 May."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Known by then is what counts.",
+        "generic": "Not quite right. For each input, ask when it was published."
+      },
+      "explain": {
+        "text": "A value is usable when it is published, not when the period it describes happens. The sales came out on 30 April, so they are known. The survey exists only from 1 June."
+      }
+    },
+    {
+      "id": "r-code",
+      "difficulty": 2,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "A bar from a download: open 101.50, high 101.20, low 100.40, close 100.90, volume 1,850,000.",
+      "question": "Which code does `validate_bars` report for it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`\"high-below-body\"`",
+            "correct": true
+          },
+          {
+            "id": "low",
+            "text": "`\"low-above-body\"`",
+            "why": "The low, 100.40, is below both the open and the close. It passes."
+          },
+          {
+            "id": "none",
+            "text": "None: the high is above the close",
+            "why": "You compared the high with the close only. The open, 101.50, is above the high, which no trade can do."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The open is above the high.",
+        "generic": "Not quite right. Compare the high with both the open and the close."
+      },
+      "explain": {
+        "text": "The body runs from 100.90 to 101.50. A high of 101.20 sits inside it, so the bar is impossible. Checking against the close alone would miss it."
+      }
+    },
+    {
+      "id": "r-key",
+      "difficulty": 3,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "A cache keyed by ticker only starts empty. Requests, in order: AAPL 2019 to 2021, AAPL 2019 to 2023, MSFT 2019 to 2023.",
+      "question": "What does the second request return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The 2019 to 2021 file, with no download",
+            "correct": true
+          },
+          {
+            "id": "fresh",
+            "text": "A fresh 2019 to 2023 download",
+            "why": "The cache finds `AAPL.csv` and returns it before the network is asked. Dates are not in the key."
+          },
+          {
+            "id": "error",
+            "text": "An error, because the dates do not match",
+            "why": "Nothing compares the dates: the file name matched, so it is served silently."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A stale file answers the new question.",
+        "generic": "Not quite right. Ask what the file name holds."
+      },
+      "explain": {
+        "text": "Keyed by ticker alone, `AAPL.csv` answers every AAPL request with whatever range was cached first. Nothing fails, so the bug is silent. Putting start and end in the key fixes it."
+      }
+    },
+    {
+      "id": "r-order",
+      "difficulty": 2,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "A signal of −0.25 with `max_units = 8_000`. The engine holds 1,000 shares.",
+      "question": "What order does it send? Give a sale as a negative number.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -3000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "−3,000: target −2,000 minus the 1,000 held.",
+        "wrong": [
+          {
+            "id": "target",
+            "value": -2000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "add",
+            "value": -1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Sell 3,000: close the long and open a 2,000 short.",
+        "generic": "Not quite right. Find the target, then subtract the holding.",
+        "byKey": {
+          "target": "−2,000 is the target. The 1,000 long must be sold too.",
+          "add": "You added the holding to the target. Subtract it."
+        }
+      },
+      "explain": {
+        "text": "The target is $-0.25 \\times 8{,}000 = -2{,}000$ shares. The order is $-2{,}000 - 1{,}000 = -3{,}000$."
+      }
+    },
+    {
+      "id": "r-layer",
+      "difficulty": 3,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "A desk adds a rule: halve every position on days when the market's volatility is above 30%. Research's signal is unchanged.",
+      "question": "Where does the rule belong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "In the target layer, between the signal and the order",
+            "correct": true
+          },
+          {
+            "id": "signal",
+            "text": "Inside `momentum_signal`",
+            "why": "That mixes a risk rule into research's opinion. The research log would then show a view nobody holds."
+          },
+          {
+            "id": "order",
+            "text": "In `orders_from_targets`, by halving each order",
+            "why": "Halving orders does not halve the holding: over several days the position still reaches the full target."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Sizing and limits edit the target.",
+        "generic": "Not quite right. Ask which layer says how much we hold."
+      },
+      "explain": {
+        "text": "A rule about how much to hold edits the target. The signal stays research's view, and the order layer still trades the difference. Each layer can then be tested and logged on its own."
+      }
+    },
+    {
+      "id": "r-short",
+      "difficulty": 3,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "A flat account with £12,000 cash sells short 150 shares at £40.00 with a £1.50 fee. The day closes at £39.20.",
+      "question": "What is the closing equity, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12118.5,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "2 decimal places",
+        "accept": "£12,118.50: cash 17,998.50 minus 150 × 39.20.",
+        "wrong": [
+          {
+            "id": "cash",
+            "value": 17998.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "long",
+            "value": 23878.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "fill",
+            "value": 11998.5,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£12,118.50: the 80p fall made the short £120, less the fee.",
+        "generic": "Not quite right. Cash = 12,000 + 6,000 − 1.50; then add −150 × 39.20.",
+        "byKey": {
+          "cash": "That is the cash alone. The account owes 150 shares, worth −£5,880 at the close.",
+          "long": "You added the shares owed to the cash. A short owes 150 shares, so they count as −£5,880.",
+          "fill": "That marks at the fill price. The day's equity uses the close, £39.20."
+        }
+      },
+      "explain": {
+        "text": "Cash rises to £17,998.50 and shares go to −150. At £39.20 the shares owed are worth −£5,880, so equity is £12,118.50. That is £12,000 plus 150 × 80p minus the £1.50 fee."
+      }
+    },
+    {
+      "id": "r-drift",
+      "difficulty": 4,
+      "skills": [
+        "bt-design"
+      ],
+      "prose": "An engine's equity curve tracks the broker's closely, but sits £3 higher after every trade, and the gap only ever grows. The engine charges a £3 fee in `trade_cost` and fills at the right prices.",
+      "question": "Which line of `Portfolio.fill` is the likeliest culprit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`self.cash -= qty * price`, with the cost left out",
+            "correct": true
+          },
+          {
+            "id": "sign",
+            "text": "`self.cash += qty * price + cost`",
+            "why": "A wrong sign on the trade would move cash by twice the trade's value, thousands of pounds, not £3."
+          },
+          {
+            "id": "shares",
+            "text": "`self.shares += qty`",
+            "why": "A wrong share count would show up as P&L that follows the price, not a steady £3 a trade."
+          },
+          {
+            "id": "mark",
+            "text": "`return self.cash + self.shares * price`",
+            "why": "Marking is the same with or without fees. The gap appears only when a trade happens."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The cost never reaches cash.",
+        "generic": "Not quite right. The gap is exactly one fee per trade."
+      },
+      "explain": {
+        "text": "A gap of exactly one fee per trade means the cost is computed but never taken from cash. The curve looks right in shape and in Sharpe, so only a reconciliation or the conservation test catches it."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1469 @@
+{
+ "id": "l10-combining",
+ "course": "arma",
+ "title": "Combining AR and MA",
+ "minutes": 15,
+ "objectives": [
+  "Fit an ARMA model and choose its orders by AIC",
+  "Judge the chosen model by its residuals and out-of-sample error"
+ ],
+ "skills": [
+  "ts-models"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Neither rule fits",
+   "prose": "A new seeded series of 500 days, `make_arma([0.7], [0.4], 500, 33)`. Top: its ACF. Bottom: its PACF. The band is $\\pm 0.0877$ in both.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "bars",
+     "params": {
+      "categories": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "xLabel": "Lag",
+      "yLabel": "ACF",
+      "yMin": -0.4,
+      "yMax": 1,
+      "height": 170,
+      "hlines": [
+       {
+        "id": "up",
+        "y": 0.0877,
+        "label": "band"
+       },
+       {
+        "id": "dn",
+        "y": -0.0877,
+        "label": ""
+       }
+      ]
+     },
+     "state": {
+      "values": {
+       "1": 0.8367,
+       "2": 0.605,
+       "3": 0.432,
+       "4": 0.3225,
+       "5": 0.242,
+       "6": 0.1841,
+       "7": 0.1461,
+       "8": 0.1203,
+       "9": 0.0944,
+       "10": 0.0571
+      }
+     }
+    },
+    "right": {
+     "kind": "bars",
+     "params": {
+      "categories": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "xLabel": "Lag",
+      "yLabel": "PACF",
+      "yMin": -0.4,
+      "yMax": 1,
+      "height": 170,
+      "hlines": [
+       {
+        "id": "up",
+        "y": 0.0877,
+        "label": "band"
+       },
+       {
+        "id": "dn",
+        "y": -0.0877,
+        "label": ""
+       }
+      ]
+     },
+     "state": {
+      "values": {
+       "1": 0.8384,
+       "2": -0.3216,
+       "3": 0.1173,
+       "4": 0.0114,
+       "5": -0.0244,
+       "6": 0.026,
+       "7": 0.0111,
+       "8": 0.0042,
+       "9": -0.0181,
+       "10": -0.0488
+      }
+     }
+    }
+   },
+   "question": "Which cut-off rule from lessons 8 and 9 names the model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neither",
+      "text": "Neither: the ACF and the PACF both tail off",
+      "correct": true
+     },
+     {
+      "id": "ma",
+      "text": "MA(1): the biggest ACF bar is at lag 1",
+      "why": "An MA(1) ACF drops into the band after lag 1. Here lag 2 is 0.605 and lag 6 is still 0.1841.",
+      "canvas": {
+       "highlight": [
+        "left:x2"
+       ]
+      }
+     },
+     {
+      "id": "ar",
+      "text": "AR(1): the biggest PACF bar is at lag 1",
+      "why": "An AR(1) PACF drops into the band after lag 1. Here lags 2 and 3 are −0.3216 and 0.1173, outside it.",
+      "canvas": {
+       "highlight": [
+        "right:x2",
+        "right:x3"
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A cut-off means the bars fall into the band and stay there."
+    },
+    {
+     "rung": "point",
+     "text": "Look at lags 2 and 3 in each panel.",
+     "highlight": [
+      "left:x2",
+      "right:x2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The ACF is still outside the band at lag 8; the PACF is outside at lags 2 and 3."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Both decay, so neither rule gives the order.",
+    "generic": "Not quite right. Check whether either panel falls into the band after one lag and stays."
+   },
+   "explain": {
+    "text": "The ACF decays slowly (0.8367, 0.605, 0.432, ...) and the PACF decays with alternating sign (0.8384, −0.3216, 0.1173). An AR alone would cut the PACF; an MA alone would cut the ACF. This series has both an AR part and an MA part.",
+    "canvas": {
+     "highlight": [
+      "left:x2",
+      "right:x3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two dials",
+   "prose": "The green bars are the theoretical ACF of $x_t = \\phi x_{t-1} + \\varepsilon_t + \\theta\\varepsilon_{t-1}$. With $\\theta = 0$ it is an AR(1); with $\\phi = 0$ an MA(1). Move both sliders until the green bars match the blue.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "Lag",
+     "yLabel": "ACF",
+     "yMin": -0.4,
+     "yMax": 1,
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877,
+       "label": ""
+      }
+     ],
+     "groups": [
+      {
+       "id": "sample",
+       "label": "sample",
+       "colour": 1
+      },
+      {
+       "id": "theory",
+       "label": "theory",
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "sample": {
+       "1": 0.8367,
+       "2": 0.605,
+       "3": 0.432,
+       "4": 0.3225,
+       "5": 0.242,
+       "6": 0.1841,
+       "7": 0.1461,
+       "8": 0.1203,
+       "9": 0.0944,
+       "10": 0.0571
+      },
+      "theory": {
+       "1": 0,
+       "2": 0,
+       "3": 0,
+       "4": 0,
+       "5": 0,
+       "6": 0,
+       "7": 0,
+       "8": 0,
+       "9": 0,
+       "10": 0
+      }
+     }
+    },
+    "derive": {
+     "let": {
+      "r1": "(1 + phi * theta) * (phi + theta) / (1 + 2 * phi * theta + theta * theta)"
+     },
+     "values.theory.1": "pow(phi, 0) * r1",
+     "values.theory.2": "pow(phi, 1) * r1",
+     "values.theory.3": "pow(phi, 2) * r1",
+     "values.theory.4": "pow(phi, 3) * r1",
+     "values.theory.5": "pow(phi, 4) * r1",
+     "values.theory.6": "pow(phi, 5) * r1",
+     "values.theory.7": "pow(phi, 6) * r1",
+     "values.theory.8": "pow(phi, 7) * r1",
+     "values.theory.9": "pow(phi, 8) * r1",
+     "values.theory.10": "pow(phi, 9) * r1",
+     "caption": "Theory at $\\phi$ = {{fixed(phi, 2)}}, $\\theta$ = {{fixed(theta, 2)}}: lag 1 = {{fixed(r1, 3)}}, lag 2 = {{fixed(phi * r1, 3)}}."
+    },
+    "controls": [
+     {
+      "bind": "phi",
+      "min": -0.9,
+      "max": 0.95,
+      "step": 0.05,
+      "start": 0.5,
+      "label": "$\\phi$",
+      "decimals": 2
+     },
+     {
+      "bind": "theta",
+      "min": -0.9,
+      "max": 0.9,
+      "step": 0.05,
+      "start": 0,
+      "label": "$\\theta$",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "Which setting matches the sample best?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "$\\phi \\approx 0.7$, $\\theta \\approx 0.4$",
+      "correct": true
+     },
+     {
+      "id": "ar",
+      "text": "$\\phi \\approx 0.84$, $\\theta = 0$",
+      "why": "You matched lag 1 with an AR(1). Then lag 2 is $0.84^2 \\approx 0.70$, above the sample 0.605, and the tail stays too high.",
+      "canvas": {
+       "params": {
+        "phi": 0.84,
+        "theta": 0
+       }
+      }
+     },
+     {
+      "id": "ma",
+      "text": "$\\phi = 0$, $\\theta \\approx 0.9$",
+      "why": "An MA(1) cannot pass 0.5 at lag 1, and it has nothing at lag 2.",
+      "canvas": {
+       "params": {
+        "phi": 0,
+        "theta": 0.9
+       }
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Both parts are needed.",
+    "generic": "Not quite right. Try matching lag 1 and lag 2 together."
+   },
+   "explain": {
+    "text": "At $\\phi = 0.7$, $\\theta = 0.4$ the theory gives 0.819 at lag 1, then each lag is 0.7 times the one before. The MA part sets the first step; the AR part sets the decay after it. That is the true model of this seed.",
+    "canvas": {
+     "params": {
+      "phi": 0.7,
+      "theta": 0.4
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "ARMA(1, 1)",
+   "prose": "The model you just tuned is an **ARMA(1, 1)**: one autoregressive term and one moving-average term, $$x_t = c + \\phi x_{t-1} + \\varepsilon_t + \\theta\\varepsilon_{t-1}.$$ After lag 1 the shock term is spent, so each lag is a fixed multiple of the one before.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "Lag",
+     "yLabel": "ACF",
+     "yMin": -0.4,
+     "yMax": 1,
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877,
+       "label": ""
+      }
+     ],
+     "groups": [
+      {
+       "id": "sample",
+       "label": "sample",
+       "colour": 1
+      },
+      {
+       "id": "theory",
+       "label": "theory",
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "sample": {
+       "1": 0.8367,
+       "2": 0.605,
+       "3": 0.432,
+       "4": 0.3225,
+       "5": 0.242,
+       "6": 0.1841,
+       "7": 0.1461,
+       "8": 0.1203,
+       "9": 0.0944,
+       "10": 0.0571
+      },
+      "theory": {
+       "1": 0,
+       "2": 0,
+       "3": 0,
+       "4": 0,
+       "5": 0,
+       "6": 0,
+       "7": 0,
+       "8": 0,
+       "9": 0,
+       "10": 0
+      }
+     },
+     "params": {
+      "phi": 0.7,
+      "theta": 0.4
+     }
+    },
+    "derive": {
+     "let": {
+      "r1": "(1 + phi * theta) * (phi + theta) / (1 + 2 * phi * theta + theta * theta)"
+     },
+     "values.theory.1": "pow(phi, 0) * r1",
+     "values.theory.2": "pow(phi, 1) * r1",
+     "values.theory.3": "pow(phi, 2) * r1",
+     "values.theory.4": "pow(phi, 3) * r1",
+     "values.theory.5": "pow(phi, 4) * r1",
+     "values.theory.6": "pow(phi, 5) * r1",
+     "values.theory.7": "pow(phi, 6) * r1",
+     "values.theory.8": "pow(phi, 7) * r1",
+     "values.theory.9": "pow(phi, 8) * r1",
+     "values.theory.10": "pow(phi, 9) * r1",
+     "caption": "Theory at $\\phi$ = {{fixed(phi, 2)}}, $\\theta$ = {{fixed(theta, 2)}}: lag 1 = {{fixed(r1, 3)}}, lag 2 = {{fixed(phi * r1, 3)}}."
+    }
+   },
+   "question": "With $\\phi = 0.7$ and $\\theta = 0.4$, what is $\\rho_2 / \\rho_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "accept": "$\\phi = 0.7$, ± 0.005",
+    "wrong": [
+     {
+      "id": "theta",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "prod",
+      "value": 0.28,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "sum",
+      "value": 1.1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption: lag 2 over lag 1."
+    },
+    {
+     "rung": "point",
+     "text": "Compare the green bars at lags 1 and 2.",
+     "highlight": [
+      "x1-theory",
+      "x2-theory"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.573 / 0.819 = 0.7$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The decay ratio is $\\phi$.",
+    "generic": "Not quite right. Divide the lag-2 theory bar by the lag-1 bar.",
+    "byKey": {
+     "theta": "You used $\\theta$. The MA term only reaches one lag; the decay from lag 1 on is the AR part.",
+     "prod": "You multiplied $\\phi\\theta$. The ratio between later lags is $\\phi$ alone.",
+     "sum": "You added the two coefficients. A ratio above 1 would make the ACF grow."
+    }
+   },
+   "explain": {
+    "text": "From lag 2 on, $\\rho_k = \\phi\\rho_{k-1}$, as in an AR(1). The MA term only changes where the decay starts: $\\rho_1 = 0.819$ instead of $0.7$. So the ACF tails off like an AR, and the PACF tails off like an MA.",
+    "canvas": {
+     "highlight": [
+      "x1-theory",
+      "x2-theory"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Scoring the candidates",
+   "prose": "We fit every ARMA($p$, $q$) with $p, q \\le 2$ by maximum likelihood and score each with $$\\text{AIC} = 2k - 2\\ell,$$ where $\\ell$ is the maximised log-likelihood and $k$ counts every estimated parameter: the constant, the $\\phi$s, the $\\theta$s and $\\sigma^2$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "model",
+      "$k$",
+      "$\\ell$"
+     ],
+     "rows": [
+      [
+       "ARMA(1, 1)",
+       "4",
+       "−710.224"
+      ],
+      [
+       "ARMA(2, 2)",
+       "6",
+       "−709.303"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the two missing AICs, to 2 places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "AIC",
+     "$q = 0$",
+     "$q = 1$",
+     "$q = 2$"
+    ],
+    "rows": [
+     [
+      "$p = 0$",
+      "2084.73",
+      "1671.22",
+      "1506.98"
+     ],
+     [
+      "$p = 1$",
+      "1483.49",
+      {
+       "edit": true,
+       "answer": 1428.45,
+       "tol": {
+        "abs": 0.02
+       }
+      },
+      "1429.20"
+     ],
+     [
+      "$p = 2$",
+      "1433.57",
+      "1429.55",
+      {
+       "edit": true,
+       "answer": 1430.61,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$2k - 2\\ell$, and $\\ell$ is negative."
+    },
+    {
+     "rung": "point",
+     "text": "ARMA(1, 1) has $k = 4$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$8 + 2 \\times 710.224 = 1428.45$ and $12 + 2 \\times 709.303 = 1430.61$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Lower AIC is better.",
+    "generic": "Not quite right. Compute $2k - 2\\ell$ with $k = 4$ and $k = 6$.",
+    "byKey": {
+     "r1c2": "Check the ARMA(1, 1) cell: $2 \\times 4 - 2 \\times (-710.224)$. Count $\\sigma^2$ and the constant in $k$.",
+     "r2c3": "Check the ARMA(2, 2) cell: $2 \\times 6 - 2 \\times (-709.303)$."
+    }
+   },
+   "explain": {
+    "text": "ARMA(1, 1): $8 + 1420.448 = 1428.45$. ARMA(2, 2) has a slightly higher $\\ell$, but two more parameters cost 4 points, so its AIC is 1430.61. The penalty $2k$ charges each parameter for the fit it buys."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Within two points",
+   "prose": "A rule of thumb: AIC differences below 2 do not separate two models. Here is the whole grid for seed 33. These values agree between desktop statsmodels and the one in your browser.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "AIC",
+      "$q = 0$",
+      "$q = 1$",
+      "$q = 2$"
+     ],
+     "rows": [
+      [
+       "$p = 0$",
+       "2084.73",
+       "1671.22",
+       "1506.98"
+      ],
+      [
+       "$p = 1$",
+       "1483.49",
+       "1428.45",
+       "1429.20"
+      ],
+      [
+       "$p = 2$",
+       "1433.57",
+       "1429.55",
+       "1430.61"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Tap every model within 2 of the smallest AIC, the smallest included.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1c2",
+     "r1c3",
+     "r2c2"
+    ],
+    "countWord": "models",
+    "only": [
+     "r0c1",
+     "r0c2",
+     "r0c3",
+     "r1c1",
+     "r1c2",
+     "r1c3",
+     "r2c1",
+     "r2c2",
+     "r2c3"
+    ],
+    "wrong": [
+     {
+      "id": "with22",
+      "set": [
+       "r1c2",
+       "r1c3",
+       "r2c2",
+       "r2c3"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the smallest number first."
+    },
+    {
+     "rung": "point",
+     "text": "The smallest is ARMA(1, 1), 1428.45.",
+     "highlight": [
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Anything up to 1430.45 counts: 1429.20 and 1429.55 do, 1430.61 does not."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Three models tie; we keep the smallest, ARMA(1, 1).",
+    "generic": "Not quite right. Keep the models with AIC at most 1430.45.",
+    "byKey": {
+     "with22": "ARMA(2, 2) is 1430.61, which is 2.16 above the best: just outside the tie.",
+     "r2c1": "ARMA(2, 0) is 1433.57, more than 5 points worse.",
+     "r1c1": "ARMA(1, 0) is 1483.49, far behind."
+    }
+   },
+   "explain": {
+    "text": "ARMA(1, 2) and ARMA(2, 1) sit within 1.1 of ARMA(1, 1), so the data cannot tell them apart. Parsimony breaks the tie: take the model with fewest parameters, ARMA(1, 1). It is also the true model.",
+    "canvas": {
+     "highlight": {
+      "cells": [
+       "r1c2",
+       "r1c3",
+       "r2c2"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The grid in code",
+   "prose": "`ARIMA(x, order=(p, 0, q)).fit()` fits an ARMA($p$, $q$) with a constant (the 0 in the middle means no differencing). The fitted result has `.aic`, `.bic`, `.llf` and `.params`. Each fit takes about half a second here.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "AIC",
+      "$q = 0$",
+      "$q = 1$",
+      "$q = 2$"
+     ],
+     "rows": [
+      [
+       "$p = 0$",
+       "2084.73",
+       "1671.22",
+       "1506.98"
+      ],
+      [
+       "$p = 1$",
+       "1483.49",
+       "1428.45",
+       "1429.20"
+      ],
+      [
+       "$p = 2$",
+       "1433.57",
+       "1429.55",
+       "1430.61"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `aic_grid(x, max_p, max_q)`: a dict from $(p, q)$ to AIC.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import warnings\nimport numpy as np\nfrom statsmodels.tsa.arima.model import ARIMA\nwarnings.filterwarnings(\"ignore\")\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_walk(seed, n=500, drift=0.0):\n    \"\"\"Seeded random walk from 0: x_t = x_{t-1} + drift + e_t, e_t ~ N(0, 1).\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    return np.cumsum(drift + e)\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n\ndef make_arma(phis, thetas, n, seed, burn=200):\n    \"\"\"Seeded ARMA: x_t = e_t + sum_i phi_i x_{t-i} + sum_j theta_j e_{t-j},\n    e_t ~ N(0, 1); the first burn values are dropped.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n + burn)\n    x = np.zeros(n + burn)\n    for t in range(n + burn):\n        v = e[t]\n        for i, phi in enumerate(phis, start=1):\n            if t - i >= 0:\n                v += phi * x[t - i]\n        for j, theta in enumerate(thetas, start=1):\n            if t - j >= 0:\n                v += theta * e[t - j]\n        x[t] = v\n    return x[burn:]\n",
+    "starter": "from statsmodels.tsa.arima.model import ARIMA\n\ndef aic_grid(x, max_p, max_q):\n    grid = {}\n    for p in range(max_p + 1):\n        for q in range(max_q + 1):\n            ...     # fit ARMA(p, q) with a constant; store its AIC, 2 places\n    return grid\n",
+    "solution": "from statsmodels.tsa.arima.model import ARIMA\n\ndef aic_grid(x, max_p, max_q):\n    grid = {}\n    for p in range(max_p + 1):\n        for q in range(max_q + 1):\n            res = ARIMA(x, order=(p, 0, q)).fit()\n            grid[(p, q)] = round(res.aic, 2)\n    return grid\n",
+    "examples": [
+     {
+      "setup": "g = aic_grid(make_arma([0.7], [0.4], 500, 33), 1, 1)",
+      "call": "g[(1, 1)]",
+      "expect": "1428.45",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "g = aic_grid(make_arma([0.7], [0.4], 500, 33), 1, 1)",
+      "call": "[g[k] for k in [(0, 0), (0, 1), (1, 0), (1, 1)]]",
+      "expect": "[2084.73, 1671.22, 1483.49, 1428.45]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "g = aic_grid(make_arma([0.7], [0.4], 500, 33), 1, 1)",
+      "call": "sorted(g)",
+      "expect": "[(0, 0), (0, 1), (1, 0), (1, 1)]",
+      "compare": "equal"
+     },
+     {
+      "setup": "g = aic_grid(make_wn(5), 1, 1)",
+      "call": "[g[k] for k in [(0, 0), (0, 1), (1, 0), (1, 1)]]",
+      "expect": "[1380.96, 1381.57, 1381.75, 1380.66]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "g = aic_grid(make_ar1(0.6, 300, 5), 2, 0)",
+      "call": "[g[(0, 0)], g[(1, 0)], g[(2, 0)]]",
+      "expect": "[965.91, 832.52, 834.51]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 4 hidden tests: the seed-33 ARMA(1, 1) and white noise from `make_wn(5)` with $p, q \\le 1$, and an AR(1) with $p \\le 2$, $q = 0$. AICs are rounded to 2 places. `make_arma`, `make_ar1` and `make_wn` are already defined. The first run loads statsmodels with NumPy, SciPy and pandas, which takes 20 to 40 seconds; later runs are quick.",
+    "budget": 20000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One fit per cell of the grid."
+    },
+    {
+     "rung": "point",
+     "text": "The dict key is the tuple `(p, q)`.",
+     "highlight": [
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`grid[(p, q)] = round(ARIMA(x, order=(p, 0, q)).fit().aic, 2)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. One fit per cell.",
+    "generic": "Some tests failed. Fit `order=(p, 0, q)` and store `round(res.aic, 2)` under `(p, q)`."
+   },
+   "explain": {
+    "text": "On white noise from seed 5 the four AICs are 1380.96, 1381.57, 1381.75 and 1380.66: all within 1.1 of each other. There is nothing to find, so noise decides the order. That is why the tie rule and parsimony matter."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A heavier penalty",
+   "prose": "The **BIC** charges $\\ln n$ per parameter instead of 2: $$\\text{BIC} = k\\ln n - 2\\ell.$$ With $n = 500$, $\\ln n = 6.215$, so each parameter costs about three times as much. Here is the ARMA(1, 1) fit.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "parameter",
+      "estimate",
+      "true"
+     ],
+     "rows": [
+      [
+       "`const`",
+       "−0.0742",
+       "0"
+      ],
+      [
+       "`ar.L1`",
+       "0.7354",
+       "0.7"
+      ],
+      [
+       "`ma.L1`",
+       "0.3866",
+       "0.4"
+      ],
+      [
+       "`sigma2`",
+       "1.0001",
+       "1"
+      ],
+      [
+       "log-likelihood $\\ell$",
+       "−710.224",
+       ""
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the BIC of the ARMA(1, 1), to 2 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1445.31,
+    "tol": {
+     "abs": 0.02
+    },
+    "placeholder": "a decimal",
+    "accept": "$4 \\ln 500 + 2 \\times 710.224 = 1445.31$, ± 0.02",
+    "wrong": [
+     {
+      "id": "aic",
+      "value": 1428.45,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "k3",
+      "value": 1439.09,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "log10",
+      "value": 1431.24,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count $k$ from the table, leaving out the log-likelihood row."
+    },
+    {
+     "rung": "point",
+     "text": "Four parameters: rows 1 to 4.",
+     "highlight": [
+      "r0",
+      "r1",
+      "r2",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4 \\times 6.2146 + 1420.448$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. BIC 1445.31.",
+    "generic": "Not quite right. Use $k = 4$, the natural log of 500, and $-2\\ell$.",
+    "byKey": {
+     "aic": "That is the AIC, with 2 per parameter. The BIC uses $\\ln 500 \\approx 6.215$ per parameter.",
+     "k3": "You left out $\\sigma^2$. It is estimated too, so $k = 4$.",
+     "log10": "You used $\\log_{10}$. BIC uses the natural log."
+    }
+   },
+   "explain": {
+    "text": "BIC 1445.31 is the lowest in the grid too, so both criteria agree here. The estimates sit near the truth: 0.7354 for 0.7 and 0.3866 for 0.4. Its residuals pass Ljung-Box with 2 degrees of freedom used up, `acorr_ljungbox(res.resid, lags=[10], model_df=2)` giving Q = 3.6617, p = 0.8863; a QQ plot of them is the next check, met in the `garch` course.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Choosing by a criterion",
+   "prose": "Seed 32 is the same model with different shocks. Its grid disagrees with itself: AIC prefers ARMA(2, 2) by 7.98 points, while BIC prefers ARMA(1, 1). Write the chooser and see both.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "seed 32",
+      "AIC",
+      "BIC"
+     ],
+     "rows": [
+      [
+       "ARMA(1, 1)",
+       "1401.19",
+       "1418.05"
+      ],
+      [
+       "ARMA(2, 2)",
+       "1393.21",
+       "1418.49"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `best_order(x, max_p, max_q, criterion=\"aic\")`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import warnings\nimport numpy as np\nfrom statsmodels.tsa.arima.model import ARIMA\nwarnings.filterwarnings(\"ignore\")\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_walk(seed, n=500, drift=0.0):\n    \"\"\"Seeded random walk from 0: x_t = x_{t-1} + drift + e_t, e_t ~ N(0, 1).\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    return np.cumsum(drift + e)\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n\ndef make_arma(phis, thetas, n, seed, burn=200):\n    \"\"\"Seeded ARMA: x_t = e_t + sum_i phi_i x_{t-i} + sum_j theta_j e_{t-j},\n    e_t ~ N(0, 1); the first burn values are dropped.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n + burn)\n    x = np.zeros(n + burn)\n    for t in range(n + burn):\n        v = e[t]\n        for i, phi in enumerate(phis, start=1):\n            if t - i >= 0:\n                v += phi * x[t - i]\n        for j, theta in enumerate(thetas, start=1):\n            if t - j >= 0:\n                v += theta * e[t - j]\n        x[t] = v\n    return x[burn:]\n",
+    "starter": "from statsmodels.tsa.arima.model import ARIMA\n\ndef best_order(x, max_p, max_q, criterion=\"aic\"):\n    best, best_score = None, float(\"inf\")\n    for p in range(max_p + 1):\n        for q in range(max_q + 1):\n            res = ARIMA(x, order=(p, 0, q)).fit()\n            score = ...       # res.aic or res.bic\n            ...               # keep the lowest\n    return best\n",
+    "solution": "from statsmodels.tsa.arima.model import ARIMA\n\ndef best_order(x, max_p, max_q, criterion=\"aic\"):\n    best, best_score = None, float(\"inf\")\n    for p in range(max_p + 1):\n        for q in range(max_q + 1):\n            res = ARIMA(x, order=(p, 0, q)).fit()\n            score = res.aic if criterion == \"aic\" else res.bic\n            if score < best_score:\n                best, best_score = (p, q), score\n    return best\n",
+    "examples": [
+     {
+      "call": "best_order(make_arma([0.7], [0.4], 500, 33), 1, 1)",
+      "expect": "(1, 1)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "best_order(make_arma([0.7], [0.4], 500, 33), 2, 2)",
+      "expect": "(1, 1)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_order(make_arma([0.7], [0.4], 500, 32), 2, 2)",
+      "expect": "(2, 2)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_order(make_arma([0.7], [0.4], 500, 32), 2, 2, criterion=\"bic\")",
+      "expect": "(1, 1)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_order(make_ar1(0.6, 300, 5), 2, 0, criterion=\"bic\")",
+      "expect": "(1, 0)",
+      "compare": "equal"
+     },
+     {
+      "call": "best_order(make_wn(5), 1, 1, criterion=\"bic\")",
+      "expect": "(0, 0)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on planted series: seeds 33 and 32 of the ARMA(1, 1) by AIC and by BIC, an AR(1), and white noise. Each must return the exact tuple. A full grid takes a few seconds. The first run loads statsmodels with NumPy, SciPy and pandas, which takes 20 to 40 seconds; later runs are quick.",
+    "budget": 20000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Pick the score by the criterion, then keep the lowest."
+    },
+    {
+     "rung": "point",
+     "text": "Seed 32 is the test where the two criteria differ.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`score = res.aic if criterion == \"aic\" else res.bic`, then update `best` when `score < best_score`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The criterion can change the answer.",
+    "generic": "Some tests failed. Compare `score` with `best_score` and keep the `(p, q)` with the lowest."
+   },
+   "explain": {
+    "text": "On seed 32 AIC buys two extra parameters for 7.98 points; BIC charges 6.2 per parameter and declines. On white noise from seed 5, AIC would pick ARMA(1, 1) by 0.30 points, but BIC keeps (0, 0). Which to believe is a question for data the model has not seen.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Scored on the data that chose it",
+   "prose": "We fit both models on the first 400 days of seed 32 and keep the last 100 untouched. On the training days ARMA(2, 2) wins on AIC and on one-step error. Next we forecast each of the last 100 days one step ahead with the trained parameters.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "seed 32, first 400 days",
+      "AIC",
+      "in-sample MSE",
+      "MSE, last 100 days"
+     ],
+     "rows": [
+      [
+       "ARMA(1, 1)",
+       "1107.64",
+       "0.9126",
+       "?"
+      ],
+      [
+       "ARMA(2, 2)",
+       "1099.26",
+       "0.8845",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which model will have the lower one-step MSE on the last 100 days?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "22",
+      "text": "ARMA(2, 2): it is better on both training scores",
+      "why": "You trusted the training scores. They were measured on the days the parameters were fitted to.",
+      "canvas": {
+       "values": {
+        "r0c3": "1.1122",
+        "r1c3": "1.1244"
+       }
+      }
+     },
+     {
+      "id": "11",
+      "text": "ARMA(1, 1)",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "They tie exactly: both are fitted to the same days",
+      "why": "Different parameters give different forecasts, so the errors differ.",
+      "canvas": {
+       "values": {
+        "r0c3": "1.1122",
+        "r1c3": "1.1244"
+       }
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which score was earned on days the model never saw?"
+    },
+    {
+     "rung": "point",
+     "text": "The last column is empty for a reason.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Extra parameters fit the training noise, which does not repeat."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Out of sample ARMA(1, 1) scores 1.1122 against 1.1244.",
+    "generic": "Not quite right. Training scores reward fitting the noise in those 400 days.",
+    "byKey": {
+     "22": "You trusted the training scores. ARMA(2, 2)'s in-sample edge, 0.9126 to 0.8845, reverses on new days: 1.1122 to 1.1244."
+    }
+   },
+   "explain": {
+    "text": "In sample ARMA(2, 2) led by 0.0281; out of sample it trails by 0.0122. Choosing a model by AIC and then quoting its error on the same data double-counts the fit, the same lie as training error in `stat-learning`. The honest comparison scores each model on days it never saw.",
+    "canvas": {
+     "values": {
+      "r0c3": "1.1122",
+      "r1c3": "1.1244"
+     },
+     "highlight": {
+      "cols": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "An honest score",
+   "prose": "`res.apply(x)` runs the trained model over the whole series without refitting: its `fittedvalues` are one-step forecasts, each using only the days before it. As in the walk-forward lesson of `validation`, the test days never touch the parameters.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "seed 32, first 400 days",
+      "AIC",
+      "in-sample MSE",
+      "MSE, last 100 days"
+     ],
+     "rows": [
+      [
+       "ARMA(1, 1)",
+       "1107.64",
+       "0.9126",
+       "?"
+      ],
+      [
+       "ARMA(2, 2)",
+       "1099.26",
+       "0.8845",
+       "?"
+      ]
+     ]
+    },
+    "state": {
+     "values": {
+      "r0c3": "1.1122",
+      "r1c3": "1.1244"
+     }
+    }
+   },
+   "question": "Complete `oos_mse(x, order, n_train)`, rounded to 3 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import warnings\nimport numpy as np\nfrom statsmodels.tsa.arima.model import ARIMA\nwarnings.filterwarnings(\"ignore\")\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_walk(seed, n=500, drift=0.0):\n    \"\"\"Seeded random walk from 0: x_t = x_{t-1} + drift + e_t, e_t ~ N(0, 1).\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    return np.cumsum(drift + e)\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n\ndef make_arma(phis, thetas, n, seed, burn=200):\n    \"\"\"Seeded ARMA: x_t = e_t + sum_i phi_i x_{t-i} + sum_j theta_j e_{t-j},\n    e_t ~ N(0, 1); the first burn values are dropped.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n + burn)\n    x = np.zeros(n + burn)\n    for t in range(n + burn):\n        v = e[t]\n        for i, phi in enumerate(phis, start=1):\n            if t - i >= 0:\n                v += phi * x[t - i]\n        for j, theta in enumerate(thetas, start=1):\n            if t - j >= 0:\n                v += theta * e[t - j]\n        x[t] = v\n    return x[burn:]\n",
+    "starter": "import numpy as np\nfrom statsmodels.tsa.arima.model import ARIMA\n\ndef oos_mse(x, order, n_train):\n    x = np.asarray(x, dtype=float)\n    res = ARIMA(x[:n_train], order=order).fit()      # parameters from training days only\n    pred = ...                                       # one-step forecasts of x[n_train:]\n    return ...\n",
+    "solution": "import numpy as np\nfrom statsmodels.tsa.arima.model import ARIMA\n\ndef oos_mse(x, order, n_train):\n    x = np.asarray(x, dtype=float)\n    res = ARIMA(x[:n_train], order=order).fit()      # parameters from training days only\n    pred = res.apply(x).fittedvalues[n_train:]       # one-step forecasts, no refit\n    return round(float(np.mean((x[n_train:] - pred) ** 2)), 3)\n",
+    "examples": [
+     {
+      "call": "oos_mse(make_arma([0.7], [0.4], 500, 32), (1, 0, 1), 400)",
+      "expect": "1.112",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "oos_mse(make_arma([0.7], [0.4], 500, 32), (1, 0, 1), 400)",
+      "expect": "1.112",
+      "compare": "isclose"
+     },
+     {
+      "call": "oos_mse(make_arma([0.7], [0.4], 500, 32), (2, 0, 2), 400)",
+      "expect": "1.124",
+      "compare": "isclose"
+     },
+     {
+      "call": "oos_mse(make_arma([0.7], [0.4], 500, 33), (1, 0, 1), 400)",
+      "expect": "1.314",
+      "compare": "isclose"
+     },
+     {
+      "call": "oos_mse(make_wn(5), (0, 0, 0), 400)",
+      "expect": "0.9",
+      "compare": "isclose"
+     },
+     {
+      "call": "0.8 < oos_mse(make_ar1(0.6, 300, 5), (1, 0, 0), 200) < 1.3",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests: the trap's two models on seed 32, ARMA(1, 1) on seed 33, white noise, and an AR(1) whose answer must lie between 0.8 and 1.3. MSEs are rounded to 3 places. The first run loads statsmodels with NumPy, SciPy and pandas, which takes 20 to 40 seconds; later runs are quick.",
+    "budget": 20000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Filter the full series with the trained parameters."
+    },
+    {
+     "rung": "point",
+     "text": "Keep the predictions from index `n_train` on.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`pred = res.apply(x).fittedvalues[n_train:]` and return the mean squared difference."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Train on the past, score on the future.",
+    "generic": "Some tests failed. Use `res.apply(x).fittedvalues[n_train:]` as the forecasts of `x[n_train:]`."
+   },
+   "explain": {
+    "text": "The tests reproduce the trap: 1.112 for ARMA(1, 1) and 1.124 for ARMA(2, 2). Fitting the larger model on all 500 days would let the test days shape its parameters and flatter it."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "ARMA($p$, $q$)",
+   "prose": "The general model has $p$ AR terms and $q$ MA terms: $$x_t = c + \\sum_{i=1}^{p}\\phi_i x_{t-i} + \\varepsilon_t + \\sum_{j=1}^{q}\\theta_j\\varepsilon_{t-j}.$$ Choose the orders with $\\text{AIC} = 2k - 2\\ell$ or $\\text{BIC} = k\\ln n - 2\\ell$, break ties towards fewer parameters, then check residuals and out-of-sample error.",
+   "question": "How many parameters $k$ does an ARMA(2, 1) with a constant have?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "5",
+      "text": "5",
+      "correct": true
+     },
+     {
+      "id": "3",
+      "text": "3",
+      "why": "You counted the $\\phi$s and $\\theta$ only. The constant and $\\sigma^2$ are estimated too."
+     },
+     {
+      "id": "4",
+      "text": "4",
+      "why": "You left out one of the constant or $\\sigma^2$. Both count."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $c$, $\\phi_1$, $\\phi_2$, $\\theta_1$ and $\\sigma^2$.",
+    "generic": "Not quite right. Count every number the fit estimates."
+   },
+   "explain": {
+    "text": "$k = p + q + 2$ with a constant: here $2 + 1 + 2 = 5$, as statsmodels counts it."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The interview question",
+   "prose": "An interviewer: \"Your ARMA(4, 3) has the best AIC on two years of daily log volume for a FTSE stock. Would you put it into the desk's execution model?\"",
+   "question": "Which answer is strongest?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "check",
+      "text": "Not yet: check smaller models within 2 AIC, the residuals with Ljung-Box, and the out-of-sample error; take the smallest model that passes",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: the best AIC already includes a penalty for its 9 parameters",
+      "why": "You treated the AIC penalty as the whole check. AIC is measured in sample; with 9 parameters it can still fit noise, as seed 32 showed."
+     },
+     {
+      "id": "bic",
+      "text": "No: switch to BIC and use whatever it picks",
+      "why": "You swapped one in-sample score for another. BIC is a useful second opinion, but neither replaces out-of-sample error."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What has the AIC not been tested on?"
+    },
+    {
+     "rung": "point",
+     "text": "Think of the three checks in this lesson."
+    },
+    {
+     "rung": "step",
+     "text": "Parsimony, residuals, out-of-sample error."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. That is the full modelling cycle.",
+    "generic": "Not quite right. An in-sample score is where checking starts, not where it ends."
+   },
+   "explain": {
+    "text": "Log volume is a good ARMA candidate: it is stationary and persistent within the day. But an ARMA(4, 3) has 9 parameters with the constant and $\\sigma^2$, and AR and MA roots can nearly cancel. Prefer the smallest model whose residuals are white and whose walk-forward error is no worse."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "When neither the ACF nor the PACF cuts off, the series needs both parts: ARMA($p$, $q$).",
+   "Fit a small grid and score it with AIC $= 2k - 2\\ell$ or BIC $= k\\ln n - 2\\ell$; models within 2 AIC tie, so take the smallest.",
+   "Check the winner: white residuals by Ljung-Box, and one-step error on days the fit never saw."
+  ],
+  "formula": {
+   "name": "ARMA($p$, $q$)",
+   "tex": "x_t = c + \\sum_{i=1}^{p}\\phi_i x_{t-i} + \\varepsilon_t + \\sum_{j=1}^{q}\\theta_j\\varepsilon_{t-j}",
+   "note": "$k = p + q + 2$ with a constant and $\\sigma^2$."
+  },
+  "trap": "Choosing by AIC and quoting the error on the same days flatters the bigger model; score it out of sample."
+ },
+ "quiz": [
+  {
+   "id": "q-overfit",
+   "difficulty": 3,
+   "prose": "On the first 400 days of seed 32, an ARMA(5, 5) reaches $\\ell = -540.82$, above ARMA(1, 1)'s $-549.82$.",
+   "question": "What does the higher log-likelihood tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing",
+      "text": "Little: a bigger model never fits the training days worse",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "The ARMA(5, 5) forecasts better",
+      "why": "You read in-sample fit as forecasting skill. On the last 100 days ARMA(5, 5) scores 1.149 against 1.112."
+     },
+     {
+      "id": "real",
+      "text": "It has found structure that ARMA(1, 1) missed",
+      "why": "You read the gain as signal. The data are a true ARMA(1, 1); the 8 extra coefficients fit noise, and its AIC is only 2.0 lower."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. The likelihood can only rise as terms are added.",
+    "generic": "Not quite right. Ask whether extra terms can ever lower the training fit."
+   },
+   "explain": {
+    "text": "Nested models: the ARMA(5, 5) can always set its extra terms to 0, so $\\ell$ never falls. Its out-of-sample MSE is 1.149, the worst of the candidates."
+   }
+  },
+  {
+   "id": "q-cancel",
+   "difficulty": 3,
+   "prose": "Simulate $x_t = 0.5x_{t-1} + \\varepsilon_t - 0.5\\varepsilon_{t-1}$ with `make_arma([0.5], [-0.5], 500, 7)`.",
+   "question": "What is this series?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "wn",
+      "text": "White noise: the AR and MA parts cancel",
+      "correct": true
+     },
+     {
+      "id": "arma",
+      "text": "An ARMA(1, 1) that the fit will recover as 0.5 and −0.5",
+      "why": "You expected the fit to find the coefficients. They cancel, so any equal pair fits; statsmodels returns −0.1667 and 0.2265."
+     },
+     {
+      "id": "ar",
+      "text": "An AR(1) with $\\phi = 0.5$",
+      "why": "The MA term undoes the AR term exactly. Write both with the lag operator."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $(1 - 0.5L)x_t = (1 - 0.5L)\\varepsilon_t$, so $x_t = \\varepsilon_t$.",
+    "generic": "Not quite right. Write both sides with the lag operator $L$."
+   },
+   "explain": {
+    "text": "The common factor $(1 - 0.5L)$ cancels, leaving $x_t = \\varepsilon_t$. AIC picks (0, 0) at 1376.23 against 1378.41 for (1, 1), whose fitted coefficients are unstable. When $\\hat\\phi \\approx -\\hat\\theta$, drop both."
+   }
+  },
+  {
+   "id": "q-bic-small",
+   "difficulty": 2,
+   "prose": "On $n = 500$ days, two models differ by one parameter.",
+   "question": "How many points of $-2\\ell$ must the bigger model gain to win on BIC?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.215,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "a decimal",
+    "accept": "$\\ln 500 = 6.215$, ± 0.01",
+    "wrong": [
+     {
+      "id": "aic",
+      "value": 2,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "log10",
+      "value": 2.699,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $\\ln 500 \\approx 6.215$.",
+    "generic": "Not quite right. BIC charges $\\ln n$ per parameter.",
+    "byKey": {
+     "aic": "That is the AIC price. BIC charges $\\ln n$.",
+     "log10": "You used $\\log_{10}$. BIC uses the natural log."
+    }
+   },
+   "explain": {
+    "text": "Each parameter costs $\\ln 500 = 6.215$ on BIC and 2 on AIC, so BIC picks smaller models once $n > e^2 \\approx 7.4$."
+   }
+  }
+ ]
+}

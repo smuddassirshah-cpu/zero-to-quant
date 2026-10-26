@@ -1,0 +1,1452 @@
+{
+ "id": "l4-returns-panel",
+ "course": "alpha",
+ "title": "A panel of returns",
+ "minutes": 15,
+ "objectives": [
+  "Build a date-by-stock panel of returns.",
+  "Align forward returns so row $t$ covers days $t + 1$ to $t + h$, and move between wide and long form."
+ ],
+ "skills": [
+  "al-universe"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Wide or long",
+   "prose": "Step 3 of the pipeline is returns, stored as a panel. The same returns can be laid out wide (one row per date, one column per share) or long (one row per date and share). The next level ranks the shares against each other on every date.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "table",
+     "params": {
+      "columns": [
+       "date",
+       "S000",
+       "S001",
+       "S002"
+      ],
+      "rows": [
+       [
+        "2 Jan",
+        "0.020",
+        "0.002",
+        "0.003"
+       ],
+       [
+        "3 Jan",
+        "−0.011",
+        "0.007",
+        "NaN"
+       ],
+       [
+        "4 Jan",
+        "0.004",
+        "−0.015",
+        "0.009"
+       ]
+      ]
+     },
+     "state": {
+      "caption": "Wide: dates by shares."
+     }
+    },
+    "right": {
+     "kind": "table",
+     "params": {
+      "columns": [
+       "date",
+       "name",
+       "value"
+      ],
+      "rows": [
+       [
+        "2 Jan",
+        "S000",
+        "0.020"
+       ],
+       [
+        "2 Jan",
+        "S001",
+        "0.002"
+       ],
+       [
+        "2 Jan",
+        "S002",
+        "0.003"
+       ],
+       [
+        "3 Jan",
+        "S000",
+        "−0.011"
+       ],
+       [
+        "3 Jan",
+        "S001",
+        "0.007"
+       ],
+       [
+        "4 Jan",
+        "S000",
+        "0.004"
+       ],
+       [
+        "…",
+        "…",
+        "…"
+       ]
+      ]
+     },
+     "state": {
+      "caption": "Long: one row per date and share, no NaN rows."
+     }
+    }
+   },
+   "question": "In which layout is \"rank the shares on each date\" one method call, with no grouping?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "wide",
+      "text": "Wide: `ret.rank(axis=1)` ranks along each row",
+      "correct": true
+     },
+     {
+      "id": "long",
+      "text": "Long: `long[\"value\"].rank()`",
+      "why": "You ranked the whole column. That mixes every date together; long form needs `groupby(\"date\")` first."
+     },
+     {
+      "id": "both",
+      "text": "Both, with the same call",
+      "why": "The long table has no row per date, so the same call cannot rank within a date."
+     },
+     {
+      "id": "neither",
+      "text": "Neither: ranking needs a loop over dates",
+      "why": "Wide form already holds each date in a row, so `rank(axis=1)` does every date at once."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where do one date's shares sit in each table?"
+    },
+    {
+     "rung": "point",
+     "text": "In the wide table, one date is one row.",
+     "highlight": [
+      "left:r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`rank(axis=1)` ranks across each row, so every date at once."
+    }
+   ],
+   "feedback": {
+    "correct": "Wide form makes cross-sectional work one call.",
+    "generic": "Not quite right. Find the table where one date's shares sit together in one row.",
+    "byKey": {
+     "long": "Ranking the whole value column compares 3 January with 2 January. Group by date first.",
+     "both": "Only the wide table has one row per date.",
+     "neither": "No loop is needed in wide form."
+    }
+   },
+   "explain": {
+    "text": "In wide form each row is one date's cross-section, so ranks, z-scores and means across shares are one call with `axis=1`. Long form suits joins and regressions. The pipeline keeps wide frames and converts when it needs to.",
+    "canvas": {
+     "left": {
+      "highlight": {
+       "rows": [
+        0
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "The return that comes next",
+   "prose": "A signal on day $t$ is built from data up to its close. What it predicts is the return after: from the close of $t$ to the close of $t + h$. Move $t$ and $h$; the shaded window is the forward return.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "x": "index",
+     "xLabel": "Day",
+     "money": "£",
+     "series": [
+      {
+       "id": "px",
+       "label": "price",
+       "values": [
+        100,
+        101,
+        99.5,
+        102,
+        103.5,
+        101,
+        104,
+        106,
+        105,
+        107.5,
+        108,
+        110
+       ]
+      }
+     ],
+     "params": {
+      "P": [
+       100,
+       101,
+       99.5,
+       102,
+       103.5,
+       101,
+       104,
+       106,
+       105,
+       107.5,
+       108,
+       110
+      ]
+     }
+    },
+    "state": {
+     "params": {
+      "t": 3,
+      "h": 1
+     },
+     "window": {
+      "from": 3,
+      "to": 4
+     },
+     "markers": [
+      {
+       "id": "now",
+       "i": 3,
+       "label": "day t"
+      }
+     ]
+    },
+    "derive": {
+     "window.from": "t",
+     "window.to": "t + h",
+     "now.i": "t",
+     "caption": "Row {{t}}: days {{t + 1}} to {{t + h}}, return £{{fixed(P[t], 2)}} → £{{fixed(P[t + h], 2)}} = {{fixed(100 * (P[t + h] / P[t] - 1), 2)}}%"
+    },
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 6,
+      "step": 1,
+      "start": 3,
+      "label": "$t$"
+     },
+     {
+      "bind": "h",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "start": 1,
+      "label": "$h$"
+     }
+    ]
+   },
+   "question": "With $t = 3$ and $h = 5$, what is the forward return, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.029412,
+    "tol": {
+     "abs": 6e-05
+    },
+    "label": "Forward return",
+    "accept": "2.94%: $105 / 102 - 1$.",
+    "placeholder": "decimal",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "from4",
+      "value": 0.014706,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $t = 3$ and $h = 5$ and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "The window runs from the close of day 3 to the close of day 8.",
+     "highlight": [
+      "now"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$105 / 102 - 1 = 0.0294$."
+    }
+   ],
+   "feedback": {
+    "correct": "2.94%, earned on days 4 to 8.",
+    "generic": "Not quite right. Divide the close of day $t + h$ by the close of day $t$.",
+    "byKey": {
+     "from4": "That is $h = 1$. Slide $h$ to 5."
+    }
+   },
+   "explain": {
+    "text": "The forward return starts at the close of $t$, where the signal is known, so day $t$'s own return is not in it. Stored on row $t$, it sits beside the signal it is meant to test.",
+    "canvas": {
+     "params": {
+      "t": 3,
+      "h": 5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "One day ahead",
+   "prose": "The **panel** conventions: wide frames with dates as the index, NaN where a share is not in the universe, and a forward return on row $t$ that covers days $t + 1$ to $t + h$. With $h = 1$, row $t$ holds tomorrow's return.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "d1",
+       "label": "1"
+      },
+      {
+       "id": "d2",
+       "label": "2"
+      },
+      {
+       "id": "d3",
+       "label": "3"
+      },
+      {
+       "id": "d4",
+       "label": "4"
+      },
+      {
+       "id": "d5",
+       "label": "5"
+      }
+     ],
+     "xLabel": "Day",
+     "yLabel": "ret (A)",
+     "showValues": true,
+     "decimals": 3,
+     "yMin": -0.03,
+     "yMax": 0.04,
+     "height": 160
+    },
+    "state": {
+     "values": {
+      "d1": 0.01,
+      "d2": -0.02,
+      "d3": 0.03,
+      "d4": 0.0,
+      "d5": 0.015
+     }
+    }
+   },
+   "question": "Fill in `forward_returns(ret, 1)` for share A. Write NaN where there is none.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Day",
+     "ret (A)",
+     "fwd, $h = 1$"
+    ],
+    "rows": [
+     [
+      "1",
+      "0.010",
+      {
+       "edit": true,
+       "answer": -0.02,
+       "tol": {
+        "abs": 0.0001
+       }
+      }
+     ],
+     [
+      "2",
+      "−0.020",
+      {
+       "edit": true,
+       "answer": 0.03,
+       "tol": {
+        "abs": 0.0001
+       }
+      }
+     ],
+     [
+      "3",
+      "0.030",
+      {
+       "edit": true,
+       "answer": 0.0,
+       "tol": {
+        "abs": 0.0001
+       }
+      }
+     ],
+     [
+      "4",
+      "0.000",
+      {
+       "edit": true,
+       "answer": 0.015,
+       "tol": {
+        "abs": 0.0001
+       }
+      }
+     ],
+     [
+      "5",
+      "0.015",
+      {
+       "edit": true,
+       "answer": "NaN",
+       "accept": [
+        "nan",
+        "none",
+        "-",
+        "—",
+        "n/a"
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row $t$ holds the return of day $t + 1$."
+    },
+    {
+     "rung": "point",
+     "text": "Day 1's forward return is day 2's return, −0.020.",
+     "highlight": [
+      "d2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "−0.020, 0.030, 0.000, 0.015, and NaN for day 5: there is no day 6."
+    }
+   ],
+   "feedback": {
+    "correct": "The column moves up one row, and the last row is NaN.",
+    "generic": "Not quite right. Each row takes the next day's return; the last row has none."
+   },
+   "explain": {
+    "text": "For $h = 1$ the forward return is `ret.shift(-1)`: each value moves up a row. Day 5 is NaN because day 6 is not in the data yet."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Five days ahead",
+   "prose": "With $h = 5$, simple returns compound: $$1 + R^{\\text{fwd}}_t = \\prod_{s=t+1}^{t+5} (1 + r_s).$$ A window that runs past the last day is NaN. Give 4 decimal places.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "d1",
+       "label": "1"
+      },
+      {
+       "id": "d2",
+       "label": "2"
+      },
+      {
+       "id": "d3",
+       "label": "3"
+      },
+      {
+       "id": "d4",
+       "label": "4"
+      },
+      {
+       "id": "d5",
+       "label": "5"
+      },
+      {
+       "id": "d6",
+       "label": "6"
+      },
+      {
+       "id": "d7",
+       "label": "7"
+      }
+     ],
+     "xLabel": "Day",
+     "yLabel": "ret (B)",
+     "showValues": true,
+     "decimals": 2,
+     "yMin": -0.03,
+     "yMax": 0.04,
+     "height": 160
+    },
+    "state": {
+     "values": {
+      "d1": 0.01,
+      "d2": 0.02,
+      "d3": -0.01,
+      "d4": 0.03,
+      "d5": 0.0,
+      "d6": 0.01,
+      "d7": -0.02
+     },
+     "highlight": [
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6"
+     ],
+     "caption": "Day 1's window: days 2 to 6."
+    }
+   },
+   "question": "Fill in `forward_returns(ret, 5)` for share B.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Day",
+     "ret (B)",
+     "fwd, $h = 5$"
+    ],
+    "rows": [
+     [
+      "1",
+      "0.01",
+      {
+       "edit": true,
+       "answer": 0.050495,
+       "tol": {
+        "abs": 6e-05
+       }
+      }
+     ],
+     [
+      "2",
+      "0.02",
+      {
+       "edit": true,
+       "answer": 0.009299,
+       "tol": {
+        "abs": 6e-05
+       }
+      }
+     ],
+     [
+      "3",
+      "−0.01",
+      {
+       "edit": true,
+       "answer": "NaN",
+       "accept": [
+        "nan",
+        "none",
+        "-",
+        "—",
+        "n/a"
+       ]
+      }
+     ],
+     [
+      "4",
+      "0.03",
+      {
+       "edit": true,
+       "answer": "NaN",
+       "accept": [
+        "nan",
+        "none",
+        "-",
+        "—",
+        "n/a"
+       ]
+      }
+     ],
+     [
+      "5",
+      "0.00",
+      {
+       "edit": true,
+       "answer": "NaN",
+       "accept": [
+        "nan",
+        "none",
+        "-",
+        "—",
+        "n/a"
+       ]
+      }
+     ],
+     [
+      "6",
+      "0.01",
+      {
+       "edit": true,
+       "answer": "NaN",
+       "accept": [
+        "nan",
+        "none",
+        "-",
+        "—",
+        "n/a"
+       ]
+      }
+     ],
+     [
+      "7",
+      "−0.02",
+      {
+       "edit": true,
+       "answer": "NaN",
+       "accept": [
+        "nan",
+        "none",
+        "-",
+        "—",
+        "n/a"
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Day 1 uses days 2 to 6."
+    },
+    {
+     "rung": "point",
+     "text": "$1.02 \\times 0.99 \\times 1.03 \\times 1.00 \\times 1.01 - 1$.",
+     "highlight": [
+      "d2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.0505 and 0.0093; days 3 to 7 need days past 7, so NaN."
+    }
+   ],
+   "feedback": {
+    "correct": "Two forward returns and five NaN.",
+    "generic": "Not quite right. Multiply the five growth factors after each day; rows whose window passes day 7 are NaN."
+   },
+   "explain": {
+    "text": "Day 1 compounds to 5.05%; adding the returns gives 5.00%, slightly off. The last five rows are NaN: those returns have not happened. A panel's last $h$ rows always are.",
+    "canvas": {
+     "highlight": [
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+     ],
+     "caption": "Day 2's window: days 3 to 7."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A death inside the window",
+   "prose": "Edge case. Share D's returns after day $t$ are +2%, then −60% on its last day, then NaN. The course's convention: compound the days that exist; NaN only when none does. The window is $h = 5$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "$t+1$",
+      "$t+2$",
+      "$t+3$",
+      "$t+4$",
+      "$t+5$"
+     ],
+     "rows": [
+      [
+       "ret (D)",
+       "0.02",
+       "−0.60",
+       "NaN",
+       "NaN",
+       "NaN"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "cells": [
+       "r0c2"
+      ]
+     }
+    }
+   },
+   "question": "What is D's five-day forward return on row $t$, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.592,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Forward return",
+    "accept": "−59.2%: $1.02 \\times 0.40 - 1$.",
+    "placeholder": "decimal",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "nan",
+      "value": 0,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "last",
+      "value": -0.6,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sum",
+      "value": -0.58,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Only two days exist in the window."
+    },
+    {
+     "rung": "point",
+     "text": "$1.02 \\times (1 - 0.60)$.",
+     "highlight": [
+      "r0c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1.02 \\times 0.40 - 1 = -0.592$."
+    }
+   ],
+   "feedback": {
+    "correct": "−59.2%: the holder took the loss.",
+    "generic": "Not quite right. Compound the two days that exist.",
+    "byKey": {
+     "nan": "A NaN or 0 here would hide the loss from every study that holds D on row $t$.",
+     "last": "You took only the last day. Day $t + 1$ gained 2% first.",
+     "sum": "You added the returns. Simple returns compound: $1.02 \\times 0.40$."
+    }
+   },
+   "explain": {
+    "text": "A portfolio that buys D on row $t$ owns it into its death, so the forward return must carry the −60%. Treating it as NaN would bring back the survivorship bias of lesson 3, one window at a time."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Long and back",
+   "prose": "`ret.stack()` turns the wide frame into a long one (one row per date and share) and drops NaN cells. `unstack()` turns it back. A share that died has no long rows after its last day.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> long = ret.stack()       # NaN cells dropped",
+      ">>> long.shape",
+      "(235497,)",
+      ">>> wide = long.unstack()",
+      ">>> wide.loc[\"2023-10-03\", \"S007\"]   # S007 died on 2 October",
+      "?"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the last line print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nan",
+      "text": "nan: the cell is empty again, as it was before stacking",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "0.0: unstack fills gaps with zeros",
+      "why": "`unstack` fills missing cells with NaN unless you pass `fill_value`."
+     },
+     {
+      "id": "last",
+      "text": "−0.9352, S007's last return",
+      "why": "That is on 2 October. On 3 October S007 has no row in the long frame."
+     },
+     {
+      "id": "error",
+      "text": "A KeyError, because S007 has no row on that date",
+      "why": "The wide frame has every date and share, so the cell exists; it is NaN."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did `stack()` do with S007 after 2 October?"
+    },
+    {
+     "rung": "point",
+     "text": "There is no long row for S007 on 3 October.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`unstack()` leaves that cell missing, which is NaN."
+    }
+   ],
+   "feedback": {
+    "correct": "The round trip gives back the same frame, NaN included.",
+    "generic": "Not quite right. Think about what `unstack` puts where the long frame has no row."
+   },
+   "explain": {
+    "text": "Long form simply has no row where wide form has NaN, so 235,497 rows equal the listed cells. Unstacking restores the NaN. In pandas 3, `stack()` keeps NaN cells unless you drop them, so `to_long` drops them itself.",
+    "canvas": {
+     "lines": [
+      ">>> long = ret.stack()       # NaN cells dropped",
+      ">>> long.shape",
+      "(235497,)",
+      ">>> wide = long.unstack()",
+      ">>> wide.loc[\"2023-10-03\", \"S007\"]   # S007 died on 2 October",
+      "nan"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Forward returns in code",
+   "prose": "`ret.shift(-k)` puts the return $k$ days after each row onto that row. Multiply the growth factors with NaN treated as 1, track whether any day existed, then blank the last $h$ rows. `make_panel`, `small`, a slow checker `_loop_fwd` and the spy `spy_ret` are already defined.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> forward_returns(rb, 5)[\"B\"].round(4).tolist()",
+      "[0.0505, 0.0093, nan, nan, nan, nan, nan]",
+      ">>> forward_returns(rd, 5)[\"D\"].round(4).tolist()[0]",
+      "-0.592"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `forward_returns(ret, h)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef forward_returns(ret, h):\n    \"\"\"Row t holds prod(1 + r) - 1 over days t+1 .. t+h, compounding\n    the days that exist; NaN if none does, and NaN on the last h rows.\n    h must be at least 1.\"\"\"\n    if h < 1:\n        raise ValueError(\"h must be at least 1\")\n    growth = pd.DataFrame(1.0, index=ret.index, columns=ret.columns)\n    seen = pd.DataFrame(False, index=ret.index, columns=ret.columns)\n    for k in range(1, h + 1):\n        r = ...   # the return k days after each row\n        ...\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef forward_returns(ret, h):\n    if h < 1:\n        raise ValueError(\"a forward return starts the day after: h must be at least 1\")\n    growth = pd.DataFrame(1.0, index=ret.index, columns=ret.columns)\n    seen = pd.DataFrame(False, index=ret.index, columns=ret.columns)\n    for k in range(1, h + 1):\n        r = ret.shift(-k)                 # the return k days after each row\n        growth = growth * (1 + r.fillna(0.0))\n        seen = seen | r.notna()\n    fwd = (growth - 1).where(seen)\n    fwd.iloc[max(len(ret) - h, 0):] = np.nan   # the window runs past the data\n    return fwd\n",
+    "examples": [
+     {
+      "call": "forward_returns(rb, 1).round(6).fillna(-9)[\"B\"].tolist()",
+      "expect": "[0.02, -0.01, 0.03, 0.0, 0.01, -0.02, -9.0]",
+      "compare": "equal",
+      "setup": "rb = pd.DataFrame({\"B\": [0.01, 0.02, -0.01, 0.03, 0.0, 0.01, -0.02]})"
+     }
+    ],
+    "tests": [
+     {
+      "call": "forward_returns(rb, 1).round(6).fillna(-9)[\"B\"].tolist()",
+      "expect": "[0.02, -0.01, 0.03, 0.0, 0.01, -0.02, -9.0]",
+      "compare": "equal",
+      "setup": "rb = pd.DataFrame({\"B\": [0.01, 0.02, -0.01, 0.03, 0.0, 0.01, -0.02]})"
+     },
+     {
+      "call": "forward_returns(rb, 5).round(6).fillna(-9)[\"B\"].tolist()",
+      "expect": "[0.050495, 0.009299, -9.0, -9.0, -9.0, -9.0, -9.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "forward_returns(rd, 5).round(6).fillna(-9)[\"D\"].tolist()",
+      "expect": "[-0.592, -0.6, -9.0, -9.0, -9.0, -9.0, -9.0]",
+      "compare": "equal",
+      "setup": "rd = pd.DataFrame({\"D\": [0.0, 0.02, -0.6, None, None, None, None]}, dtype=float)"
+     },
+     {
+      "call": "forward_returns(rb, 0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "float((forward_returns(small[\"ret\"], 5) - _loop_fwd(small[\"ret\"], 5)).abs().max().max()) < 1e-12",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "bool((forward_returns(small[\"ret\"], 5).isna() == _loop_fwd(small[\"ret\"], 5).isna()).all().all())",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "forward_returns(spy_ret(small[\"ret\"], 100, 0.5), 5).iloc[100:].equals(forward_returns(small[\"ret\"], 5).iloc[100:])",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "int(forward_returns(small[\"ret\"], 21).iloc[-21:].notna().sum().sum())",
+      "expect": "0",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 8 hidden tests: share B with $h = 1$ and 5, the death inside the window, `ValueError` for $h = 0$, agreement with a slow loop on `small` (values and NaN), a spy that rewrites every return up to row 100 (rows from 100 on must not move), and the empty tail for $h = 21$. NaN is compared as −9. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
+    "prelude": "import numpy as np\nimport pandas as pd\n\nimport numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef _loop_fwd(ret, h):\n    \"\"\"A slow, direct forward return, for checking.\"\"\"\n    out = pd.DataFrame(np.nan, index=ret.index, columns=ret.columns)\n    for j, c in enumerate(ret.columns):\n        x = ret[c].values\n        for t in range(len(x) - h):\n            w = x[t + 1:t + h + 1]\n            w = w[~np.isnan(w)]\n            if len(w):\n                out.iloc[t, j] = np.prod(1 + w) - 1\n    return out\n\ndef spy_ret(ret, cut, value):\n    \"\"\"A copy of ret with every return up to and including row cut set to value.\"\"\"\n    q = ret.copy()\n    q.iloc[:cut + 1] = value\n    return q\n\nsmall = make_panel(30, 300, 5)\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Inside the loop: `r = ret.shift(-k)`."
+    },
+    {
+     "rung": "point",
+     "text": "`growth = growth * (1 + r.fillna(0.0))` and `seen = seen | r.notna()`.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "After the loop: `fwd = (growth - 1).where(seen)`, then `fwd.iloc[max(len(ret) - h, 0):] = np.nan` and `return fwd`."
+    }
+   ],
+   "feedback": {
+    "correct": "Forward returns that start the day after, and carry deaths.",
+    "generic": "Some tests failed. Use `shift(-k)` for $k = 1$ to $h$, compound with NaN as 1, and blank the last $h$ rows.",
+    "byKey": {
+     "test-3": "D dies inside the window: compound $1.02 \\times 0.40 - 1$, do not return NaN.",
+     "test-7": "Your forward return on row 100 moved when returns up to row 100 changed. It must start on row 101.",
+     "test-8": "The last 21 rows must be NaN: their windows run past the data."
+    }
+   },
+   "explain": {
+    "text": "The spy proves the key property: rewriting every return up to row 100 leaves row 100's forward return alone, because it starts on row 101. The slow loop agrees to $10^{-12}$. A death compounds into the window; the end of the data does not."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A long frame in code",
+   "prose": "Joins with sector data and regressions in later levels want long form. `melt` turns columns into rows; it keeps NaN cells, so drop them. Sort by date, then name, and number the rows from 0.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> to_long(wl)",
+      "        date  name  value",
+      "0 2019-01-02  S000  0.020",
+      "1 2019-01-02  S001  0.002",
+      "2 2019-01-03  S001  0.007"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `to_long(panel)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def to_long(panel):\n    \"\"\"A long frame with columns date, name, value: one row per\n    non-NaN cell, sorted by date then name, index 0, 1, 2, ...\"\"\"\n    wide = panel.rename_axis(index=\"date\", columns=\"name\")\n    long = wide.reset_index().melt(id_vars=\"date\", var_name=\"name\", value_name=\"value\")\n    ...\n",
+    "solution": "def to_long(panel):\n    wide = panel.rename_axis(index=\"date\", columns=\"name\")\n    long = wide.reset_index().melt(id_vars=\"date\", var_name=\"name\", value_name=\"value\")\n    long = long.dropna(subset=[\"value\"])\n    return long.sort_values([\"date\", \"name\"]).reset_index(drop=True)\n",
+    "examples": [
+     {
+      "call": "[(d.strftime(\"%Y-%m-%d\"), n, round(v, 6)) for d, n, v in to_long(wl).itertuples(index=False)]",
+      "expect": "[('2019-01-02', 'S000', 0.02), ('2019-01-02', 'S001', 0.002), ('2019-01-03', 'S001', 0.007)]",
+      "compare": "equal",
+      "setup": "wl = pd.DataFrame({\"S001\": [0.002, 0.007], \"S000\": [0.02, None]}, index=pd.to_datetime([\"2019-01-02\", \"2019-01-03\"]), dtype=float)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[(d.strftime(\"%Y-%m-%d\"), n, round(v, 6)) for d, n, v in to_long(wl).itertuples(index=False)]",
+      "expect": "[('2019-01-02', 'S000', 0.02), ('2019-01-02', 'S001', 0.002), ('2019-01-03', 'S001', 0.007)]",
+      "compare": "equal",
+      "setup": "wl = pd.DataFrame({\"S001\": [0.002, 0.007], \"S000\": [0.02, None]}, index=pd.to_datetime([\"2019-01-02\", \"2019-01-03\"]), dtype=float)"
+     },
+     {
+      "call": "to_long(wl).columns.tolist()",
+      "expect": "['date', 'name', 'value']",
+      "compare": "equal"
+     },
+     {
+      "call": "to_long(wl).index.tolist()",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "to_long(small[\"ret\"]).shape",
+      "expect": "(8239, 3)",
+      "compare": "equal"
+     },
+     {
+      "call": "int(to_long(small[\"ret\"])[\"value\"].isna().sum())",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "[(d.strftime(\"%Y-%m-%d\"), n) for d, n in to_long(small[\"ret\"])[[\"date\", \"name\"]].head(3).itertuples(index=False)]",
+      "expect": "[('2019-01-02', 'S000'), ('2019-01-02', 'S001'), ('2019-01-02', 'S002')]",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(to_long(small[\"ret\"]).pivot(index=\"date\", columns=\"name\", values=\"value\").reindex(index=small[\"ret\"].index, columns=small[\"ret\"].columns).fillna(-9).equals(small[\"ret\"].fillna(-9)))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: the frame shown (rows, columns and index), the shape of `small` in long form, no NaN values, its first rows as ISO dates, and a round trip back to wide form with `pivot`. Compared with ==. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
+    "prelude": "import numpy as np\nimport pandas as pd\n\nimport numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef _loop_fwd(ret, h):\n    \"\"\"A slow, direct forward return, for checking.\"\"\"\n    out = pd.DataFrame(np.nan, index=ret.index, columns=ret.columns)\n    for j, c in enumerate(ret.columns):\n        x = ret[c].values\n        for t in range(len(x) - h):\n            w = x[t + 1:t + h + 1]\n            w = w[~np.isnan(w)]\n            if len(w):\n                out.iloc[t, j] = np.prod(1 + w) - 1\n    return out\n\ndef spy_ret(ret, cut, value):\n    \"\"\"A copy of ret with every return up to and including row cut set to value.\"\"\"\n    q = ret.copy()\n    q.iloc[:cut + 1] = value\n    return q\n\nsmall = make_panel(30, 300, 5)\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drop the rows whose value is NaN."
+    },
+    {
+     "rung": "point",
+     "text": "`long = long.dropna(subset=[\"value\"])`.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return long.sort_values([\"date\", \"name\"]).reset_index(drop=True)`."
+    }
+   ],
+   "feedback": {
+    "correct": "One row per listed cell, and back again.",
+    "generic": "Some tests failed. Drop NaN values, sort by date then name, and reset the index.",
+    "byKey": {
+     "test-1": "Sort by date, then name: S000 comes before S001 on 2 January.",
+     "test-3": "Number the rows from 0 with `reset_index(drop=True)`."
+    }
+   },
+   "explain": {
+    "text": "`small` has 8,239 listed cells and so 8,239 long rows. `pivot` rebuilds the wide frame exactly. Each layout holds the same numbers; pick the one that makes the next step one line."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "One day too early",
+   "prose": "Two versions of a five-day forward return, tested with a signal made from each share's past five-day return. On 249 weekly dates the rank IC (lesson 9) is −0.0243 with one version and +0.1697 with the other: a t statistic of 32.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      "a = forward_returns(ret, 5)",
+      "b = (1 + ret).rolling(5).apply(np.prod).shift(-4) - 1",
+      "",
+      "IC with a: -0.0243   t = -4.5",
+      "IC with b:  0.1697   t = 32.4"
+     ]
+    },
+    "state": {
+     "tone": {
+      "l5": "err"
+     }
+    }
+   },
+   "question": "Why is version b's IC so high?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "overlap",
+      "text": "`shift(-4)` makes row $t$ cover days $t$ to $t + 4$, so it contains day $t$'s return, which the signal already uses",
+      "correct": true
+     },
+     {
+      "id": "good",
+      "text": "Version b is right and the signal is strong",
+      "why": "A t statistic of 32 from a five-day return is not a discovery. Row $t$ of b contains day $t$, which the signal also contains."
+     },
+     {
+      "id": "prod",
+      "text": "Using `np.prod` instead of a log sum",
+      "why": "Both compound the same returns. The difference is which five days they cover."
+     },
+     {
+      "id": "rolling",
+      "text": "`rolling` reads the future",
+      "why": "A rolling window ends on its row. The `shift(-4)` moves it four rows, one short of five."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which days does row $t$ of b cover?"
+    },
+    {
+     "rung": "point",
+     "text": "`rolling(5)` on row $t + 4$ covers $t$ to $t + 4$; `shift(-4)` moves it to row $t$.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Row $t$ includes day $t$, which is also the last day of the signal's window."
+    }
+   ],
+   "feedback": {
+    "correct": "One shared day is enough to fake a strong signal.",
+    "generic": "Not quite right. List the days row $t$ covers in each version.",
+    "byKey": {
+     "good": "The true IC is −0.0243: past winners slightly reverse. The +0.17 comes from sharing day $t$.",
+     "prod": "The product is fine. The window is off by one day.",
+     "rolling": "The rolling window is trailing; the shift is one day short."
+    }
+   },
+   "explain": {
+    "text": "Version b overlaps the signal on day $t$, so the IC jumps from −0.02 to +0.17. The lesson's spy catches it: rewrite returns up to row $t$ and row $t$'s forward return must not move. Momentum leaks less this way, 0.0334 against 0.0366, because it skips the last month.",
+    "canvas": {
+     "tone": {
+      "l2": "err",
+      "l5": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Sum over time, average across shares",
+   "prose": "Over time, growth factors multiply, so log returns add: $$\\ln(1 + R_{t+1:t+h}) = \\sum_{s=t+1}^{t+h} \\ln(1 + r_s).$$ Across shares on one day, a portfolio's simple return is the weighted average: $r_p = \\sum_i w_i r_i$. Log returns do not average this way.",
+   "question": "Half a book is in a share that returns +10%, half in one that returns −10%. What is the book's return that day, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 5e-05
+    },
+    "label": "Book return",
+    "accept": "0%: $0.5 \\times 0.10 + 0.5 \\times (-0.10) = 0$.",
+    "placeholder": "decimal",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "log",
+      "value": -0.005,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Simple returns average across shares."
+    },
+    {
+     "rung": "point",
+     "text": "$0.5 \\times 10\\% + 0.5 \\times (-10\\%)$.",
+     "highlight": []
+    },
+    {
+     "rung": "step",
+     "text": "The book returns 0%."
+    }
+   ],
+   "feedback": {
+    "correct": "0%: £50 becomes £55 and £50 becomes £45.",
+    "generic": "Not quite right. Weight each share's simple return by half.",
+    "byKey": {
+     "log": "You averaged log returns: $(\\ln 1.1 + \\ln 0.9)/2 = -0.50\\%$. Across shares, average simple returns."
+    }
+   },
+   "explain": {
+    "text": "£100 split in half ends as £55 and £45, so the book is flat. Averaging log returns gives −0.50%, which no one lost. Keep simple returns in the panel; take logs only to add along time."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The team's returns panel",
+   "prose": "A research team keeps one shared returns panel that every signal study reads. A new hire changed the forward-return code last week. Before any result is trusted, the panel's test suite runs. One test guards the property this lesson built.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "tests/test_panel.py",
+     "lines": [
+      "def test_forward_return_starts_tomorrow():",
+      "    ...",
+      "",
+      "$ pytest -q tests/test_panel.py",
+      "?"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should that test check?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "spy",
+      "text": "Rewrite every return on or before a date $t$; forward returns on $t$ and after must not change",
+      "correct": true
+     },
+     {
+      "id": "ic",
+      "text": "The IC of a known signal stays below 0.1",
+      "why": "A leak can produce an ordinary-looking IC, and a real signal could exceed 0.1. Test the property, not a number."
+     },
+     {
+      "id": "nan",
+      "text": "The panel has no NaN values",
+      "why": "NaN is correct where a share is not listed and in the last $h$ rows."
+     },
+     {
+      "id": "shape",
+      "text": "The forward-return frame has the same shape as `ret`",
+      "why": "The shape is the same for the leaky version too."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What must row $t$'s forward return never depend on?"
+    },
+    {
+     "rung": "point",
+     "text": "Returns on day $t$ or before.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Change them and check row $t$ onwards does not move: the spy from the code screen."
+    }
+   ],
+   "feedback": {
+    "correct": "The spy test, in the suite, on every change.",
+    "generic": "Not quite right. Pick the test that fails for the off-by-one version and passes for the right one.",
+    "byKey": {
+     "ic": "A threshold on IC misses small leaks and flags strong real signals.",
+     "nan": "Some NaN are required by the conventions.",
+     "shape": "Both versions pass a shape test."
+    }
+   },
+   "explain": {
+    "text": "The spy test fails for `shift(-4)` and passes for the correct code, whatever the data. It runs in seconds, so it belongs in the suite that guards the shared panel. Level 4's research note lists it among the tests that ran."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The panel is wide: dates as the index, shares as columns, NaN where a share is not in the universe.",
+   "Row $t$ of a forward return covers days $t + 1$ to $t + h$; the last $h$ rows are NaN, and a death compounds into the window.",
+   "Log returns add over time; simple returns average across shares."
+  ],
+  "formula": {
+   "name": "Forward return",
+   "tex": "1 + R^{\\text{fwd}}_t = \\prod_{s=t+1}^{t+h} (1 + r_s)",
+   "note": "Starts the day after the signal. Test it with a spy."
+  },
+  "trap": "A forward return that includes day $t$: one shared day turned an IC of −0.02 into +0.17."
+ },
+ "quiz": [
+  {
+   "id": "q-tail",
+   "difficulty": 2,
+   "prose": "A panel has 1,260 rows. You compute `forward_returns(ret, 21)`.",
+   "question": "How many rows at the end are NaN for every share?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 21,
+    "tol": {
+     "abs": 0
+    },
+    "label": "NaN rows",
+    "accept": "21: their windows run past the last day.",
+    "placeholder": "whole number",
+    "wrong": [
+     {
+      "id": "twenty",
+      "value": 20,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The last 21 rows.",
+    "generic": "Not quite right. Row $t$ needs days $t + 1$ to $t + 21$.",
+    "byKey": {
+     "twenty": "Row 1,239 (the 21st from the end) needs day 1,260, which does not exist: 21 rows.",
+     "one": "Every row whose window passes the last day is NaN, not just the last row."
+    }
+   },
+   "explain": {
+    "text": "Row $t$ needs 21 later days. The last 21 rows do not have them, so they are NaN for every share."
+   }
+  },
+  {
+   "id": "q-comp",
+   "difficulty": 2,
+   "prose": "A share returns +5% and then +5% on the two days after $t$.",
+   "question": "What is its two-day forward return on row $t$, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1025,
+    "tol": {
+     "abs": 5e-05
+    },
+    "label": "Forward return",
+    "accept": "10.25%: $1.05^2 - 1$.",
+    "placeholder": "decimal",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 0.1,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "10.25%: the second 5% is earned on a larger sum.",
+    "generic": "Not quite right. Compound: $1.05 \\times 1.05 - 1$.",
+    "byKey": {
+     "sum": "You added the returns. Simple returns compound over time."
+    }
+   },
+   "explain": {
+    "text": "£100 becomes £105, then £110.25. Adding gives 10%, compounding gives 10.25%."
+   }
+  },
+  {
+   "id": "q-align",
+   "difficulty": 3,
+   "prose": "A signal on row $t$ uses closes up to day $t$. A colleague stores the next-day return as `ret.shift(1)`.",
+   "question": "What does row $t$ of that column hold?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "past",
+      "text": "Day $t - 1$'s return: a past return, not a forward one",
+      "correct": true
+     },
+     {
+      "id": "fwd",
+      "text": "Day $t + 1$'s return",
+      "why": "`shift(1)` moves values down a row, so row $t$ gets day $t - 1$. The forward one is `shift(-1)`."
+     },
+     {
+      "id": "same",
+      "text": "Day $t$'s return",
+      "why": "That would be `ret` itself."
+     },
+     {
+      "id": "nan",
+      "text": "NaN everywhere",
+      "why": "Only the first row becomes NaN."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`shift(1)` looks back; `shift(-1)` looks ahead.",
+    "generic": "Not quite right. Think about which way `shift(1)` moves values."
+   },
+   "explain": {
+    "text": "`shift(1)` moves each value down one row, so row $t$ holds yesterday's return. Testing a signal against it measures nothing about the future."
+   }
+  },
+  {
+   "id": "q-long",
+   "difficulty": 2,
+   "prose": "A wide panel has 1,260 dates and 200 shares, with 16,503 NaN cells.",
+   "question": "How many rows does `to_long` return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 235497,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Rows",
+    "accept": "235,497: $1260 \\times 200 - 16503$.",
+    "placeholder": "whole number",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 252000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One row per listed cell.",
+    "generic": "Not quite right. Count the cells, minus the NaN ones.",
+    "byKey": {
+     "all": "You kept the NaN cells. `to_long` drops them."
+    }
+   },
+   "explain": {
+    "text": "$1{,}260 \\times 200 = 252{,}000$ cells, of which 16,503 are NaN. The long frame has the other 235,497."
+   }
+  }
+ ]
+}

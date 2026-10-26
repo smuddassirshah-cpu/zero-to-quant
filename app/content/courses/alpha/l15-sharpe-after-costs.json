@@ -1,0 +1,1726 @@
+{
+ "id": "l15-sharpe-after-costs",
+ "course": "alpha",
+ "title": "Sharpe after costs",
+ "minutes": 15,
+ "objectives": [
+  "Report the Sharpe ratio after costs with a confidence interval.",
+  "Count the variants tried and deflate the best Sharpe."
+ ],
+ "skills": [
+  "al-costs",
+  "al-portfolio"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which signal is better?",
+   "prose": "First, a lock. The last 252 days, 14 November 2022 to 31 October 2023, are the held-out year: we open them once, on this lesson's last screen. Now a puzzle: two signals, five years of monthly net returns each. A's net Sharpe is 0.9; B's is 0.6.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.4,
+      2.6
+     ],
+     "y": [
+      -0.6,
+      2.0
+     ],
+     "xLabel": "Signal",
+     "yLabel": "Net Sharpe",
+     "grid": true,
+     "xTicks": "integer"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "A",
+       "x": 1,
+       "y": 0.9,
+       "label": "A 0.9",
+       "tap": false
+      },
+      {
+       "id": "B",
+       "x": 2,
+       "y": 0.6,
+       "label": "B 0.6",
+       "tap": false
+      }
+     ],
+     "hlines": [
+      {
+       "id": "zero",
+       "y": 0
+      }
+     ]
+    }
+   },
+   "question": "Is A's signal better than B's?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "We cannot tell from five years: each Sharpe is uncertain by about ±0.9",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Yes: 0.9 is 50% higher than 0.6",
+      "why": "You compared the two estimates as if they were exact. Five years cannot pin a Sharpe that closely."
+     },
+     {
+      "id": "c",
+      "text": "Yes: any positive difference counts",
+      "why": "A difference of 0.3 is well inside the noise of two five-year estimates."
+     },
+     {
+      "id": "d",
+      "text": "No: B must have taken less risk",
+      "why": "A Sharpe already divides by risk, so risk cannot settle it."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How precisely can 60 months measure a Sharpe?"
+    },
+    {
+     "rung": "point",
+     "text": "The standard error of each is about 0.45.",
+     "highlight": [
+      "A",
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each interval runs about 0.9 either side of its estimate."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The intervals overlap almost entirely.",
+    "generic": "Not quite. Think about how noisy a five-year Sharpe is.",
+    "byKey": {
+     "b": "You treated 0.9 and 0.6 as exact. Their intervals are each about 1.8 wide."
+    }
+   },
+   "explain": {
+    "text": "A's 95% interval runs from 0.01 to 1.79, and B's from -0.28 to 1.48. They overlap almost entirely. This lesson puts an interval on every Sharpe.",
+    "canvas": {
+     "segments": [
+      {
+       "id": "ia",
+       "from": [
+        1,
+        0.009
+       ],
+       "to": [
+        1,
+        1.791
+       ],
+       "colour": 1
+      },
+      {
+       "id": "ib",
+       "from": [
+        2,
+        -0.283
+       ],
+       "to": [
+        2,
+        1.483
+       ],
+       "colour": 2
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "How many years?",
+   "prose": "The curve is where a measured Sharpe lands when the true one is 0.9, from monthly returns. The shading is its 95% interval. Slide the years of data and watch the interval narrow.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 0.9,
+      "sigma": 1.0167
+     },
+     "x": [
+      -3,
+      5
+     ],
+     "xLabel": "Measured Sharpe",
+     "showMean": true
+    },
+    "state": {
+     "shade": {
+      "from": "mu - 1.96 * sigma",
+      "to": "mu + 1.96 * sigma"
+     },
+     "observed": {
+      "x": 0,
+      "label": "0"
+     },
+     "params": {
+      "years": 1
+     }
+    },
+    "derive": {
+     "params.sigma": "sqrt(1.03375 / years)",
+     "caption": "{{years}} years: interval {{fixed(0.9 - 1.96 * sqrt(1.03375 / years), 2)}} to {{fixed(0.9 + 1.96 * sqrt(1.03375 / years), 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "years",
+      "min": 1,
+      "max": 20,
+      "step": 1,
+      "start": 1,
+      "label": "Years"
+     }
+    ]
+   },
+   "question": "How many whole years of monthly data before the interval no longer contains 0?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "years",
+    "label": "Years",
+    "placeholder": "whole years",
+    "accept": "5: at 4 years the interval starts at −0.10, at 5 years at 0.01.",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide until the left edge of the shading passes 0."
+    },
+    {
+     "rung": "point",
+     "text": "Watch the caption's lower end.",
+     "highlight": [
+      "shade",
+      "observed"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It turns positive between 4 and 5 years."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Five years, only just.",
+    "generic": "Not quite. Find the first whole year whose lower end is above 0.",
+    "byKey": {
+     "four": "At 4 years the lower end is still −0.10.",
+     "one": "One year gives an interval of about ±2."
+    }
+   },
+   "explain": {
+    "text": "The standard error falls with the square root of the years, so halving the interval takes four times the data. At 5 years the interval is 0.01 to 1.79: a Sharpe of 0.9 is only just distinguishable from 0.",
+    "canvas": {
+     "params": {
+      "years": 5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Our Sharpe's interval",
+   "prose": "Lo (2002) gives the standard error of a Sharpe from $n$ returns, for returns that are independent from day to day: $$SE = \\sqrt{\\frac{1 + SR_p^2/2}{n}}\\,\\sqrt{P},$$ with $P$ periods a year and $SR_p = SR/\\sqrt P$. Monthly momentum's net Sharpe is 1.2261 over $n = 770$ days.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": -1,
+     "max": 3,
+     "step": 0.5,
+     "labels": [
+      -1,
+      0,
+      1,
+      2,
+      3
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "sr",
+       "x": 1.226,
+       "label": "net Sharpe"
+      }
+     ]
+    }
+   },
+   "question": "What is the lower end of the 95% interval? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1,
+    "tol": {
+     "abs": 0.012
+    },
+    "label": "Lower end",
+    "placeholder": "decimal",
+    "accept": "0.10: SE = 0.5729, and 1.2261 − 1.96 × SE.",
+    "wrong": [
+     {
+      "id": "noannual",
+      "value": 1.16,
+      "tol": {
+       "abs": 0.012
+      }
+     },
+     {
+      "id": "onese",
+      "value": 0.65,
+      "tol": {
+       "abs": 0.012
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$SR_p = 1.2261/\\sqrt{252} = 0.0772$."
+    },
+    {
+     "rung": "point",
+     "text": "$SE = \\sqrt{(1 + 0.0772^2/2)/770} \\times \\sqrt{252}$.",
+     "highlight": [
+      "sr"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "SE = 0.5729; subtract 1.96 of them."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The interval only just clears zero.",
+    "generic": "Not quite. Compute the daily SE, annualise it with √252, then subtract 1.96 SE.",
+    "byKey": {
+     "noannual": "You left the SE per day. Multiply by √252 to match the annual Sharpe.",
+     "onese": "You subtracted one SE. A 95% interval is 1.96 SE either side."
+    }
+   },
+   "explain": {
+    "text": "SE = 0.573, so the interval is 0.10 to 2.35. Three years of daily data show momentum is probably positive after costs, and little more. A Sharpe without its interval says less than it seems to.",
+    "canvas": {
+     "intervals": [
+      {
+       "id": "ci",
+       "from": 0.103,
+       "to": 2.349,
+       "row": 1
+      }
+     ],
+     "highlight": [
+      "ci"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Daily or monthly returns",
+   "prose": "The same book measured two ways: from its 770 daily net returns, and from 36 monthly ones (the first and last months are part months). The daily sample has 21 times as many observations.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Returns",
+      "n",
+      "Net Sharpe",
+      "95% interval"
+     ],
+     "rows": [
+      [
+       "Daily",
+       "770",
+       "1.23",
+       "0.10 to 2.35"
+      ],
+      [
+       "Monthly",
+       "36",
+       "1.27",
+       "0.10 to 2.44"
+      ]
+     ]
+    }
+   },
+   "question": "Why is the daily interval no narrower?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Precision comes from years of data, not from how often we sample them",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Daily returns are noisier, so they need more of them",
+      "why": "That is true per day, but annualising cancels it exactly. What remains is the number of years."
+     },
+     {
+      "id": "c",
+      "text": "The monthly Sharpe is higher, which widens its interval",
+      "why": "A higher Sharpe widens the interval only slightly, through $SR_p^2/2$."
+     },
+     {
+      "id": "d",
+      "text": "The daily interval is wrong: 770 returns should give a far tighter one",
+      "why": "You counted observations as if each day were a separate year of evidence."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write SE in terms of $n/P$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{P/n}$ is $1/\\sqrt{\\text{years}}$.",
+     "highlight": [
+      "r0c3",
+      "r1c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Both samples cover the same three years."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Three years is three years.",
+    "generic": "Not quite. Rewrite $SE$ using $n/P$, the number of years."
+   },
+   "explain": {
+    "text": "$SE = \\sqrt{(1 + SR_p^2/2)\\,P/n}$ and $n/P$ is the number of years, so the frequency drops out. Sampling more often cannot buy precision. Only a longer history can.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A bootstrap check",
+   "prose": "Lo's formula assumes independent returns. A **block bootstrap** does not: it rebuilds the 770-day series from random 21-day blocks, 1,000 times (`np.random.default_rng(0)`), and takes the middle 95% of the Sharpes. Single days instead of blocks would break any autocorrelation.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "95% interval"
+     ],
+     "rows": [
+      [
+       "Lo's formula",
+       "0.10 to 2.35"
+      ],
+      [
+       "Bootstrap, 21-day blocks",
+       "0.13 to 2.36"
+      ],
+      [
+       "Bootstrap, 1-day blocks",
+       "0.10 to 2.36"
+      ],
+      [
+       "Lag-1 autocorrelation of daily net returns",
+       "-0.015"
+      ]
+     ]
+    }
+   },
+   "question": "What does the agreement tell us?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The daily returns are close to independent, so Lo's formula is fair here",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The bootstrap proves the edge is real",
+      "why": "It measures the same sampling noise in another way. It cannot tell skill from luck in the search."
+     },
+     {
+      "id": "c",
+      "text": "Blocks never matter",
+      "why": "With autocorrelated returns, single days would give an interval that is too narrow."
+     },
+     {
+      "id": "d",
+      "text": "The bootstrap is more accurate, so report only it",
+      "why": "It is a check on the formula's assumption. Report one and say the other agrees."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When do blocks and single days differ?"
+    },
+    {
+     "rung": "point",
+     "text": "When neighbouring returns are correlated.",
+     "highlight": [
+      "r3c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Here the lag-1 autocorrelation is -0.015."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The assumption holds well enough here.",
+    "generic": "Not quite. Ask what the bootstrap's blocks are for."
+   },
+   "explain": {
+    "text": "With autocorrelation near 0 (-0.015), blocks and single days give nearly the same interval, and both match Lo's. A smoothed or illiquid strategy would show positive autocorrelation, and only the blocks would widen its interval honestly.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Count what you tried",
+   "prose": "Since lesson 5 we have measured many versions on the same research period. The trial log records each configuration whose Sharpe we looked at: every signal with every neutralisation and rebalance, all as rank books, plus lesson 13's one quintile book.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Choice",
+      "Versions tried",
+      "Count"
+     ],
+     "rows": [
+      [
+       "Signal",
+       "12−1 and 12−0 momentum; reversal 1, 5, 21 days; 50/50 combination",
+       "6"
+      ],
+      [
+       "Neutralisation",
+       "none; sector demeaned",
+       "2"
+      ],
+      [
+       "Rebalance",
+       "daily, weekly, monthly",
+       "3"
+      ],
+      [
+       "Extra",
+       "the quintile book in lesson 13",
+       "1"
+      ]
+     ]
+    }
+   },
+   "question": "How many variants has the study tried, $N$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 37,
+    "tol": {
+     "abs": 0
+    },
+    "label": "N",
+    "placeholder": "whole number",
+    "accept": "37: 6 × 2 × 3 = 36 rank books, plus the quintile book.",
+    "wrong": [
+     {
+      "id": "grid",
+      "value": 36,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sum",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "signals",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every signal was tried with every neutralisation and rebalance."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply the first three counts.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "36, plus the extra book."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Thirty-seven chances to get lucky.",
+    "generic": "Not quite. Multiply the combinations, then add the extra one.",
+    "byKey": {
+     "grid": "You left out the quintile book. It was tried on the same data, so it counts.",
+     "sum": "You added the choices. Each signal ran with each setting: multiply.",
+     "signals": "You counted signals only. Each setting gave its own Sharpe."
+    }
+   },
+   "explain": {
+    "text": "Each of 6 signals ran with 2 neutralisations and 3 rebalances: 36, plus the quintile book, 37. The log must exist before the first run, because memory forgets the dead ends. Correlated variants count for somewhat fewer than $N$; we keep 37 as the honest upper figure.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The best of 37 by luck",
+   "prose": "With no skill, a Sharpe measured over $n$ days scatters with sd $\\sqrt{252/(n - 1)}$ a year: 0.572 for $n = 770$. From the fin-ml course (The deflated Sharpe ratio), the best of $N$ such trials is expected near $$0.572\\Big[(1-\\gamma)\\,\\Phi^{-1}(1 - \\tfrac1N) + \\gamma\\,\\Phi^{-1}(1 - \\tfrac1{Ne})\\Big],$$ with $\\gamma = 0.5772$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "N = 37"
+     ],
+     "rows": [
+      [
+       "$\\Phi^{-1}(1 - 1/N)$",
+       "1.9264"
+      ],
+      [
+       "$\\Phi^{-1}(1 - 1/(Ne))$",
+       "2.3285"
+      ],
+      [
+       "Our net Sharpe",
+       "1.2261"
+      ]
+     ]
+    }
+   },
+   "question": "What is the expected best net Sharpe of 37 trials with no skill? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.24,
+    "tol": {
+     "abs": 0.011
+    },
+    "label": "Expected best",
+    "placeholder": "decimal",
+    "accept": "1.24: 0.5724 × (0.4228 × 1.9264 + 0.5772 × 2.3285).",
+    "wrong": [
+     {
+      "id": "nosd",
+      "value": 2.16,
+      "tol": {
+       "abs": 0.011
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Weight the two quantiles by $1 - \\gamma$ and $\\gamma$."
+    },
+    {
+     "rung": "point",
+     "text": "0.4228 × 1.9264 + 0.5772 × 2.3285 = 2.1584.",
+     "highlight": [
+      "r0c1",
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Times 0.5724."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Luck alone would show a best near 1.24.",
+    "generic": "Not quite. Weight the quantiles, add them, then multiply by the sd.",
+    "byKey": {
+     "nosd": "You stopped at the bracket. Multiply by the sd of a no-skill Sharpe, 0.572."
+    }
+   },
+   "explain": {
+    "text": "The bar is 1.24, and our 1.23 is below it: the deflated Sharpe ratio is 0.49, far from 0.95, so the deflated check fails. Harvey, Liu and Zhu (2016) say the same for factor research: after hundreds of factors tried, a new one needs a t statistic above 3, not 2.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The best variant, alone",
+   "prose": "A colleague's draft reads: \"Best variant: 12−0 momentum, monthly, no neutralisation. Net Sharpe 1.24, 95% interval 0.13 to 2.35.\" It is the highest of the 37 in the trial log, and the draft names no other.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Line in the draft",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Net Sharpe",
+       "1.24"
+      ],
+      [
+       "95% interval",
+       "0.13 to 2.35"
+      ],
+      [
+       "Variants tried",
+       "not stated"
+      ]
+     ]
+    }
+   },
+   "question": "What is wrong with the draft?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "It quotes the best of 37 as if it were the only one: luck alone would give a best near 1.24",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Nothing: the interval excludes 0",
+      "why": "You trusted an interval built for one strategy fixed in advance. The best of 37 needs a higher bar."
+     },
+     {
+      "id": "c",
+      "text": "12−0 momentum uses the future",
+      "why": "It includes the last month, up to today, so it is a different signal, not look-ahead."
+     },
+     {
+      "id": "d",
+      "text": "The interval should be narrower for the best variant",
+      "why": "Selection does not shrink noise; it adds a bias upwards."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How was this variant chosen?"
+    },
+    {
+     "rung": "point",
+     "text": "It won a contest of 37 on the same data.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare 1.24 with the expected best of 37 under no skill."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. State $N$ and deflate.",
+    "generic": "Not quite. Think about how the variant was picked.",
+    "byKey": {
+     "b": "You read the interval as proof. It ignores the 36 other tries, and the best of 37 noise trials is expected near 1.24."
+    }
+   },
+   "explain": {
+    "text": "1.24 against an expected best of 1.24 under no skill: the winner is what luck predicts. The honest line gives $N = 37$, the deflated check, and the variant chosen before looking, 12−1 momentum.",
+    "canvas": {
+     "values": {
+      "r2c1": "37 (deflated check: failed)"
+     },
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "What a Sharpe line carries",
+   "prose": "Every Sharpe we report carries three things: the net value, its 95% interval $$SR \\pm 1.96\\sqrt{\\frac{1 + SR_p^2/2}{\\text{years}}},$$ and $N$ with the deflated check against $E[\\max_N]$. A gross Sharpe, or a net one alone, is not a result.",
+   "question": "The same book with four years of daily data instead of three. By what factor does its interval's width change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "$\\sqrt{3/4} \\approx 0.87$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$3/4$",
+      "why": "The width falls with the square root of the years, not the years."
+     },
+     {
+      "id": "c",
+      "text": "$1$",
+      "why": "More years do narrow it; only the sampling frequency drops out."
+     },
+     {
+      "id": "d",
+      "text": "$\\sqrt{252 \\times 3 / 4}$",
+      "why": "You mixed in the daily count. Only years matter."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. The width goes as $1/\\sqrt{\\text{years}}$."
+   },
+   "explain": {
+    "text": "Width goes as $1/\\sqrt{\\text{years}}$: from 3 to 4 years it shrinks by $\\sqrt{3/4} = 0.87$. A third more data buys only 13% more precision."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Sharpe and its interval in code",
+   "prose": "`sharpe` follows the fin-ml convention: $\\sqrt{P}$ times mean over sample sd (`ddof = 1`), NaN dropped, 0.0 for fewer than two returns or no spread. `sharpe_ci` returns `(sr, lo, hi)` by Lo's formula, with the quantile from `NormalDist().inv_cdf(0.5 + level / 2)`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> sharpe_ci([0.01, -0.01] * 126, 252)",
+      "(0.0, -1.96, 1.96)",
+      ">>> sharpe([0.01, 0.01, 0.01], 252)",
+      "0.0"
+     ],
+     "title": "Expected"
+    }
+   },
+   "question": "Complete `sharpe(returns, periods)` and `sharpe_ci(returns, periods, level=0.95)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\n",
+    "starter": "import math\nfrom statistics import NormalDist\nimport pandas as pd\n\ndef sharpe(returns, periods):\n    \"\"\"sqrt(periods) * mean / sd (ddof = 1); 0.0 with no spread.\"\"\"\n    x = pd.Series(returns, dtype=float).dropna()\n    ...\n\ndef sharpe_ci(returns, periods, level=0.95):\n    \"\"\"(sr, lo, hi) by Lo's formula, each rounded to 4 places.\"\"\"\n    ...\n",
+    "solution": "import math\nfrom statistics import NormalDist\nimport pandas as pd\n\ndef sharpe(returns, periods):\n    x = pd.Series(returns, dtype=float).dropna()\n    if len(x) < 2:\n        return 0.0\n    s = x.std(ddof=1)\n    if not s > 0:\n        return 0.0\n    return float(math.sqrt(periods) * x.mean() / s)\n\ndef sharpe_ci(returns, periods, level=0.95):\n    x = pd.Series(returns, dtype=float).dropna()\n    n = len(x)\n    sr = sharpe(x, periods)\n    per = sr / math.sqrt(periods)                       # Sharpe per period\n    se = math.sqrt((1 + per ** 2 / 2) / n) * math.sqrt(periods)\n    z = NormalDist().inv_cdf(0.5 + level / 2)\n    return (round(sr, 4), round(sr - z * se, 4), round(sr + z * se, 4))\n",
+    "examples": [
+     {
+      "call": "sharpe_ci([0.01, -0.01] * 126, 252)",
+      "expect": "(0.0, -1.96, 1.96)",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(sharpe([0.01, 0.02, -0.01, 0.0], 252), 6)",
+      "expect": "6.14817",
+      "compare": "isclose"
+     },
+     {
+      "call": "sharpe([0.01, 0.01, 0.01], 252)",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "sharpe([0.02], 12)",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(sharpe([0.01, None, 0.03, -0.01], 12), 6)",
+      "expect": "1.732051",
+      "compare": "isclose"
+     },
+     {
+      "call": "sharpe_ci([0.01, -0.01] * 126, 252)",
+      "expect": "(0.0, -1.96, 1.96)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "rng = __import__('numpy').random.default_rng(4); x = list(0.0004 + 0.01 * rng.standard_normal(500))",
+      "call": "sharpe_ci(x, 252)",
+      "expect": "(0.687, -0.7051, 2.0791)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "rng = __import__('numpy').random.default_rng(4); x = list(0.0004 + 0.01 * rng.standard_normal(500))",
+      "call": "sharpe_ci(x, 252, level=0.9)",
+      "expect": "(0.687, -0.4813, 1.8553)",
+      "compare": "isclose"
+     },
+     {
+      "call": "sharpe_ci([0.03, 0.01, 0.02, -0.01, 0.04, 0.0] * 10, 12)",
+      "expect": "(3.0171, 1.9877, 4.0465)",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 8 hidden tests: a hand series, no spread, one return, a missing value, a Sharpe of exactly 0 over one year of days, a seeded series at 95% and 90%, and a monthly series. Compared with math.isclose. pandas loads on the first run, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`s = x.std(ddof=1)`; return 0.0 unless `s > 0` and `len(x) >= 2`."
+    },
+    {
+     "rung": "point",
+     "text": "Per period: `per = sr / math.sqrt(periods)`.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`se = math.sqrt((1 + per ** 2 / 2) / n) * math.sqrt(periods)`, then `sr ± z * se`."
+    }
+   ],
+   "feedback": {
+    "correct": "All tests pass.",
+    "generic": "Not quite. Check the annualising of the SE and the rounding of all three values."
+   },
+   "explain": {
+    "text": "A Sharpe of 0 over 252 days has SE exactly 1, so the interval is ±1.96: a year of data cannot tell a good strategy from a coin. The `level` argument only changes $z$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Bootstrap and deflation in code",
+   "prose": "The bootstrap: each row of `starts` begins $k$ blocks; add `np.arange(block)`, flatten each row, keep its first $n$ positions, take the Sharpes, and return the 2.5 and 97.5 percentiles (`np.percentile`) rounded to 2 places. The check: $E[\\max_N]$ as on the earlier screen (0.0 for one trial), and passes when the DSR is at least 0.95.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "DSR = Phi( (SR_p - E_p) * sqrt(n_obs - 1) / sqrt(1 + SR_p**2 / 2) )",
+      "SR_p, E_p: the Sharpe and E[max] divided by sqrt(periods)",
+      "",
+      ">>> deflated_sharpe_check(1.2261, 37, 0.5724, 770)",
+      "(1.2356, False)"
+     ],
+     "title": "Expected"
+    }
+   },
+   "question": "Complete `block_bootstrap_ci(returns, periods, block, n_boot=1000, seed=0)` and `deflated_sharpe_check(sr, n_trials, sr_sd, n_obs, periods=252)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\n",
+    "starter": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\ndef block_bootstrap_ci(returns, periods, block, n_boot=1000, seed=0):\n    x = pd.Series(returns, dtype=float).dropna().to_numpy()\n    n = len(x)\n    k = -(-n // block)                     # blocks per resample, rounded up\n    rng = np.random.default_rng(seed)\n    starts = rng.integers(0, n - block + 1, size=(n_boot, k))\n    ...                                    # rows of n returns, Sharpes, 2.5 and 97.5 percentiles\n\nEULER_GAMMA = 0.5772156649015329\n\ndef deflated_sharpe_check(sr, n_trials, sr_sd, n_obs, periods=252):\n    \"\"\"(expected best Sharpe of n_trials with no skill, passes).\"\"\"\n    ...\n",
+    "solution": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\ndef block_bootstrap_ci(returns, periods, block, n_boot=1000, seed=0):\n    x = pd.Series(returns, dtype=float).dropna().to_numpy()\n    n = len(x)\n    k = -(-n // block)                                  # blocks per resample\n    rng = np.random.default_rng(seed)\n    starts = rng.integers(0, n - block + 1, size=(n_boot, k))\n    idx = (starts[:, :, None] + np.arange(block)).reshape(n_boot, -1)[:, :n]\n    s = x[idx]\n    sr = math.sqrt(periods) * s.mean(axis=1) / s.std(axis=1, ddof=1)\n    lo, hi = np.percentile(sr, [2.5, 97.5])\n    return (round(float(lo), 2), round(float(hi), 2))\n\nEULER_GAMMA = 0.5772156649015329\n\ndef deflated_sharpe_check(sr, n_trials, sr_sd, n_obs, periods=252):\n    inv = NormalDist().inv_cdf\n    if n_trials <= 1:\n        emax = 0.0\n    else:\n        g = EULER_GAMMA\n        emax = sr_sd * ((1 - g) * inv(1 - 1 / n_trials) + g * inv(1 - 1 / (n_trials * math.e)))\n    per, eper = sr / math.sqrt(periods), emax / math.sqrt(periods)\n    z = (per - eper) * math.sqrt(n_obs - 1) / math.sqrt(1 + per ** 2 / 2)\n    return (round(emax, 4), NormalDist().cdf(z) >= 0.95)\n",
+    "examples": [
+     {
+      "call": "deflated_sharpe_check(1.2261, 37, 0.5724, 770)",
+      "expect": "(1.2355, False)",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(3); x = 0.0005 + 0.01 * rng.standard_normal(500)",
+      "call": "block_bootstrap_ci(x, 252, 10)",
+      "expect": "(0.32, 3.19)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "rng = np.random.default_rng(3); x = 0.0005 + 0.01 * rng.standard_normal(500)",
+      "call": "block_bootstrap_ci(x, 252, 1)",
+      "expect": "(0.35, 3.06)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "rng = np.random.default_rng(3); x = 0.0005 + 0.01 * rng.standard_normal(500)",
+      "call": "block_bootstrap_ci(x, 252, 21, n_boot=500, seed=7)",
+      "expect": "(0.21, 3.15)",
+      "compare": "isclose"
+     },
+     {
+      "call": "deflated_sharpe_check(1.2261, 37, 0.5724, 770)",
+      "expect": "(1.2355, False)",
+      "compare": "isclose"
+     },
+     {
+      "call": "deflated_sharpe_check(1.2261, 1, 0.5724, 770)",
+      "expect": "(0.0, True)",
+      "compare": "isclose"
+     },
+     {
+      "call": "deflated_sharpe_check(0.3, 1, 0.5724, 770)",
+      "expect": "(0.0, False)",
+      "compare": "isclose"
+     },
+     {
+      "call": "deflated_sharpe_check(2.5, 10, 0.5, 756)",
+      "expect": "(0.7873, True)",
+      "compare": "isclose"
+     },
+     {
+      "call": "deflated_sharpe_check(0.9, 20, 0.45, 60, periods=12)",
+      "expect": "(0.8553, False)",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 8 hidden tests: three seeded bootstraps (blocks of 10, 1 and 21) and five checks, including one trial, a monthly study and a strong Sharpe. Compared with math.isclose. NumPy and pandas load on the first run, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`idx = (starts[:, :, None] + np.arange(block)).reshape(n_boot, -1)[:, :n]`, then `s = x[idx]`."
+    },
+    {
+     "rung": "point",
+     "text": "Sharpes per row: `math.sqrt(periods) * s.mean(axis=1) / s.std(axis=1, ddof=1)`.",
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the check: `z = (per - eper) * math.sqrt(n_obs - 1) / math.sqrt(1 + per ** 2 / 2)` and `NormalDist().cdf(z) >= 0.95`."
+    }
+   ],
+   "feedback": {
+    "correct": "All tests pass. The pipeline can deflate its own result.",
+    "generic": "Not quite. Check the order of the random draws and that `E[max]` is in annual units."
+   },
+   "explain": {
+    "text": "One `integers` call draws every block start, so the same seed gives the same interval anywhere. The DSR is the probabilistic Sharpe with the bar raised to $E[\\max_N]$; with one trial the bar is 0."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Opening the held-out year",
+   "prose": "The rule is frozen: 12−1 momentum, rank weights, monthly, £100m. We open the held-out year once. Its net Sharpe is -0.49, interval -2.45 to 1.47 (gross -0.01). The research period gave 1.23, interval 0.10 to 2.35.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "net",
+       "label": "Net, £1 at the start",
+       "values": [
+        0.9963,
+        1.0044,
+        1.0021,
+        1.0039,
+        1.0056,
+        1.0057,
+        1.0066,
+        1.0047,
+        1.0017,
+        1.0,
+        0.9966,
+        0.9988,
+        0.9996,
+        0.9956,
+        0.9977,
+        0.9998,
+        1.0068,
+        1.0084,
+        1.0038,
+        0.9983,
+        0.9993,
+        0.9904,
+        0.9933,
+        0.9872,
+        0.9916,
+        0.9881,
+        0.9828,
+        0.9845,
+        0.9833,
+        0.9808,
+        0.9768,
+        0.9783,
+        0.9815,
+        0.9769,
+        0.9808,
+        0.9751,
+        0.9744,
+        0.9786,
+        0.9829,
+        0.9826,
+        0.9869,
+        0.9976,
+        0.9915,
+        0.9907,
+        0.9904,
+        0.9913,
+        0.9925,
+        0.9927,
+        0.9895,
+        0.987,
+        0.9789,
+        0.9756,
+        0.9763,
+        0.9762,
+        0.9809,
+        0.985,
+        0.9799,
+        0.9789,
+        0.9809,
+        0.9824,
+        0.9912,
+        0.9887,
+        0.988,
+        0.9858,
+        0.9903,
+        0.9869,
+        0.99,
+        0.99,
+        0.9904,
+        0.9995,
+        0.9998,
+        1.0009,
+        0.9993,
+        1.0049,
+        1.0027,
+        1.005,
+        1.0055,
+        1.0136,
+        1.0132,
+        1.0207,
+        1.0183,
+        1.0202,
+        1.0245,
+        1.0298,
+        1.0307,
+        1.0351,
+        1.0384,
+        1.0433,
+        1.0348,
+        1.034,
+        1.0318,
+        1.0357,
+        1.0318,
+        1.0349,
+        1.0312,
+        1.0353,
+        1.0336,
+        1.0248,
+        1.0288,
+        1.0312,
+        1.0352,
+        1.0394,
+        1.0401,
+        1.0451,
+        1.0431,
+        1.0396,
+        1.0376,
+        1.0316,
+        1.0372,
+        1.0335,
+        1.0253,
+        1.0283,
+        1.032,
+        1.0371,
+        1.0347,
+        1.0365,
+        1.0368,
+        1.0416,
+        1.0466,
+        1.0475,
+        1.0444,
+        1.0448,
+        1.0473,
+        1.0447,
+        1.0468,
+        1.047,
+        1.049,
+        1.0557,
+        1.0529,
+        1.0585,
+        1.0627,
+        1.0659,
+        1.0685,
+        1.0717,
+        1.077,
+        1.0753,
+        1.0779,
+        1.0844,
+        1.0858,
+        1.0907,
+        1.0926,
+        1.0945,
+        1.0919,
+        1.0898,
+        1.0928,
+        1.0965,
+        1.0962,
+        1.0938,
+        1.0945,
+        1.1062,
+        1.1122,
+        1.1159,
+        1.1134,
+        1.116,
+        1.1183,
+        1.1208,
+        1.12,
+        1.1197,
+        1.1229,
+        1.1275,
+        1.1354,
+        1.1348,
+        1.1295,
+        1.134,
+        1.1316,
+        1.1309,
+        1.1316,
+        1.1386,
+        1.1345,
+        1.1287,
+        1.1293,
+        1.1297,
+        1.1308,
+        1.1358,
+        1.1356,
+        1.1312,
+        1.124,
+        1.1227,
+        1.1182,
+        1.1168,
+        1.1202,
+        1.1159,
+        1.1129,
+        1.1054,
+        1.1032,
+        1.1047,
+        1.1007,
+        1.0998,
+        1.101,
+        1.1033,
+        1.1008,
+        1.1014,
+        1.1057,
+        1.1134,
+        1.1068,
+        1.1102,
+        1.1044,
+        1.111,
+        1.1108,
+        1.1089,
+        1.097,
+        1.1007,
+        1.0982,
+        1.1012,
+        1.0985
+       ]
+      }
+     ],
+     "x": "dates",
+     "dates": [
+      "2019-12-02",
+      "2019-12-09",
+      "2019-12-16",
+      "2019-12-23",
+      "2019-12-30",
+      "2020-01-06",
+      "2020-01-13",
+      "2020-01-20",
+      "2020-01-27",
+      "2020-02-03",
+      "2020-02-10",
+      "2020-02-17",
+      "2020-02-24",
+      "2020-03-02",
+      "2020-03-09",
+      "2020-03-16",
+      "2020-03-23",
+      "2020-03-30",
+      "2020-04-06",
+      "2020-04-13",
+      "2020-04-20",
+      "2020-04-27",
+      "2020-05-04",
+      "2020-05-11",
+      "2020-05-18",
+      "2020-05-25",
+      "2020-06-01",
+      "2020-06-08",
+      "2020-06-15",
+      "2020-06-22",
+      "2020-06-29",
+      "2020-07-06",
+      "2020-07-13",
+      "2020-07-20",
+      "2020-07-27",
+      "2020-08-03",
+      "2020-08-10",
+      "2020-08-17",
+      "2020-08-24",
+      "2020-08-31",
+      "2020-09-07",
+      "2020-09-14",
+      "2020-09-21",
+      "2020-09-28",
+      "2020-10-05",
+      "2020-10-12",
+      "2020-10-19",
+      "2020-10-26",
+      "2020-11-02",
+      "2020-11-09",
+      "2020-11-16",
+      "2020-11-23",
+      "2020-11-30",
+      "2020-12-07",
+      "2020-12-14",
+      "2020-12-21",
+      "2020-12-28",
+      "2021-01-04",
+      "2021-01-11",
+      "2021-01-18",
+      "2021-01-25",
+      "2021-02-01",
+      "2021-02-08",
+      "2021-02-15",
+      "2021-02-22",
+      "2021-03-01",
+      "2021-03-08",
+      "2021-03-15",
+      "2021-03-22",
+      "2021-03-29",
+      "2021-04-05",
+      "2021-04-12",
+      "2021-04-19",
+      "2021-04-26",
+      "2021-05-03",
+      "2021-05-10",
+      "2021-05-17",
+      "2021-05-24",
+      "2021-05-31",
+      "2021-06-07",
+      "2021-06-14",
+      "2021-06-21",
+      "2021-06-28",
+      "2021-07-05",
+      "2021-07-12",
+      "2021-07-19",
+      "2021-07-26",
+      "2021-08-02",
+      "2021-08-09",
+      "2021-08-16",
+      "2021-08-23",
+      "2021-08-30",
+      "2021-09-06",
+      "2021-09-13",
+      "2021-09-20",
+      "2021-09-27",
+      "2021-10-04",
+      "2021-10-11",
+      "2021-10-18",
+      "2021-10-25",
+      "2021-11-01",
+      "2021-11-08",
+      "2021-11-15",
+      "2021-11-22",
+      "2021-11-29",
+      "2021-12-06",
+      "2021-12-13",
+      "2021-12-20",
+      "2021-12-27",
+      "2022-01-03",
+      "2022-01-10",
+      "2022-01-17",
+      "2022-01-24",
+      "2022-01-31",
+      "2022-02-07",
+      "2022-02-14",
+      "2022-02-21",
+      "2022-02-28",
+      "2022-03-07",
+      "2022-03-14",
+      "2022-03-21",
+      "2022-03-28",
+      "2022-04-04",
+      "2022-04-11",
+      "2022-04-18",
+      "2022-04-25",
+      "2022-05-02",
+      "2022-05-09",
+      "2022-05-16",
+      "2022-05-23",
+      "2022-05-30",
+      "2022-06-06",
+      "2022-06-13",
+      "2022-06-20",
+      "2022-06-27",
+      "2022-07-04",
+      "2022-07-11",
+      "2022-07-18",
+      "2022-07-25",
+      "2022-08-01",
+      "2022-08-08",
+      "2022-08-15",
+      "2022-08-22",
+      "2022-08-29",
+      "2022-09-05",
+      "2022-09-12",
+      "2022-09-19",
+      "2022-09-26",
+      "2022-10-03",
+      "2022-10-10",
+      "2022-10-17",
+      "2022-10-24",
+      "2022-10-31",
+      "2022-11-07",
+      "2022-11-14",
+      "2022-11-21",
+      "2022-11-28",
+      "2022-12-05",
+      "2022-12-12",
+      "2022-12-19",
+      "2022-12-26",
+      "2023-01-02",
+      "2023-01-09",
+      "2023-01-16",
+      "2023-01-23",
+      "2023-01-30",
+      "2023-02-06",
+      "2023-02-13",
+      "2023-02-20",
+      "2023-02-27",
+      "2023-03-06",
+      "2023-03-13",
+      "2023-03-20",
+      "2023-03-27",
+      "2023-04-03",
+      "2023-04-10",
+      "2023-04-17",
+      "2023-04-24",
+      "2023-05-01",
+      "2023-05-08",
+      "2023-05-15",
+      "2023-05-22",
+      "2023-05-29",
+      "2023-06-05",
+      "2023-06-12",
+      "2023-06-19",
+      "2023-06-26",
+      "2023-07-03",
+      "2023-07-10",
+      "2023-07-17",
+      "2023-07-24",
+      "2023-07-31",
+      "2023-08-07",
+      "2023-08-14",
+      "2023-08-21",
+      "2023-08-28",
+      "2023-09-04",
+      "2023-09-11",
+      "2023-09-18",
+      "2023-09-25",
+      "2023-10-02",
+      "2023-10-09",
+      "2023-10-16",
+      "2023-10-23",
+      "2023-10-30"
+     ],
+     "dateFormat": "%b %Y",
+     "decimals": 2
+    },
+    "state": {
+     "shade": [
+      {
+       "id": "ho",
+       "from": 154,
+       "to": 204,
+       "label": "held out",
+       "tone": "neutral"
+      }
+     ]
+    }
+   },
+   "question": "What does the held-out year say about the research result?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Little either way: its interval contains the research Sharpe, and one year cannot separate them. Report both.",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Momentum is dead: drop it and try another signal",
+      "why": "One year's Sharpe is uncertain by about ±2. Rejecting on it is as hasty as accepting on it."
+     },
+     {
+      "id": "c",
+      "text": "The year is bad, so tune the lookback and open it again",
+      "why": "Then the held-out year becomes research data, and its result means nothing."
+     },
+     {
+      "id": "d",
+      "text": "Report the research Sharpe only, since the held-out year is noise",
+      "why": "The held-out year is the only result not chosen by search. It must be in the note."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How wide is a one-year interval?"
+    },
+    {
+     "rung": "point",
+     "text": "About ±2 around the estimate.",
+     "highlight": [
+      "ho"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Is 1.23 inside -2.45 to 1.47?"
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Both numbers go in the note.",
+    "generic": "Not quite. Compare the research Sharpe with the held-out interval.",
+    "byKey": {
+     "c": "You reopened the vault. Once tuned on, the year is no longer held out."
+    }
+   },
+   "explain": {
+    "text": "The held-out net Sharpe of -0.49 is disappointing, but its interval easily holds 1.23. An allocator reads the study as: positive after costs in research, unconfirmed out of sample, fails deflation at $N = 37$. That goes in the note's What failed section.",
+    "canvas": {
+     "highlight": [
+      "ho"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A Sharpe's standard error is about $\\sqrt{(1 + SR_p^2/2)/\\text{years}}$: only years of data narrow it, not sampling more often.",
+   "Count every variant tried, $N$, and compare the result with $E[\\max_N]$, the best that luck alone would give.",
+   "Hold out the last year, open it once, and report it beside the research result."
+  ],
+  "formula": {
+   "name": "Lo's standard error",
+   "tex": "SE(SR) \\approx \\sqrt{\\dfrac{1 + SR_p^2/2}{n}}\\,\\sqrt{P}",
+   "note": "$SR_p = SR/\\sqrt P$ per period; $n$ returns, $P$ a year."
+  },
+  "trap": "Quoting the best of $N$ variants as if it were the only one tried."
+ },
+ "quiz": [
+  {
+   "id": "q-zero",
+   "difficulty": 2,
+   "prose": "Edge case. A strategy's net Sharpe over exactly one year of daily returns is 0.",
+   "question": "How far either side of 0 does its 95% interval reach?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.96,
+    "tol": {
+     "abs": 0.005
+    },
+    "label": "Half-width",
+    "placeholder": "decimal",
+    "accept": "1.96: with SR = 0 the SE is √(1/252) × √252 = 1.",
+    "wrong": [
+     {
+      "id": "daily",
+      "value": 0.1235,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. A year cannot tell 0 from 2.",
+    "generic": "Not quite. With $SR = 0$, $SE = \\sqrt{1/n}\\,\\sqrt{252}$.",
+    "byKey": {
+     "daily": "You left the interval per day. Annualise the SE with √252."
+    }
+   },
+   "explain": {
+    "text": "With $SR = 0$ the interval is symmetric: $\\pm 1.96 \\times 1$. A shorter sample is worse still: three months gives about ±3.9, wider than almost any estimate."
+   }
+  },
+  {
+   "id": "q-alloc",
+   "difficulty": 3,
+   "prose": "An allocator is pitched a strategy with net Sharpe 0.8, 95% interval −0.1 to 1.7, from four years of data. The manager tried 30 variants.",
+   "question": "What is the allocator's fair reading?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Not yet shown to beat zero, and below what the best of 30 noise trials would show",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "A solid 0.8 strategy",
+      "why": "You took the estimate as exact. The interval runs past zero."
+     },
+     {
+      "id": "c",
+      "text": "Probably 1.7, the top of the interval",
+      "why": "The top of the interval is as likely as the bottom; selection pushes the truth lower, not higher."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Use both the interval and the 30 trials."
+   },
+   "explain": {
+    "text": "The interval includes 0, and with 30 variants tried the expected best under no skill is near 1.0 over four years. The pitch needs a longer record or a live track record."
+   }
+  },
+  {
+   "id": "q-hlz",
+   "difficulty": 2,
+   "prose": "Harvey, Liu and Zhu (2016) studied hundreds of published factors.",
+   "question": "What hurdle do they suggest for a new factor's t statistic?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "About 3",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "About 2",
+      "why": "That is the single-test hurdle. With hundreds of factors tried, it lets in too many false ones."
+     },
+     {
+      "id": "c",
+      "text": "About 1",
+      "why": "A t of 1 is well within noise even for one test."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Many tests raise the bar above 2."
+   },
+   "explain": {
+    "text": "Many tries on the same data raise the bar. Their answer for factor research is a t of about 3; the deflated Sharpe ratio does the same job for a strategy search."
+   }
+  },
+  {
+   "id": "q-one",
+   "difficulty": 2,
+   "prose": "A researcher fixed one rule in advance and ran nothing else.",
+   "question": "What is $E[\\max_N]$, the expected best Sharpe under no skill?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Expected best",
+    "placeholder": "decimal",
+    "accept": "0: one trial, nothing to select from.",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.57,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. No search, no deflation.",
+    "generic": "Not quite. With one trial there is no maximum to take.",
+    "byKey": {
+     "sd": "You used the sd of a no-skill Sharpe. With one trial its expected value, 0, is the bar."
+    }
+   },
+   "explain": {
+    "text": "With $N = 1$ the bar is the expected Sharpe of one no-skill trial, 0. The DSR is then the probability that the Sharpe is above 0."
+   }
+  }
+ ]
+}

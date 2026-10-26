@@ -1,0 +1,1422 @@
+{
+ "id": "l9-iv-solver",
+ "course": "opt-dash",
+ "title": "Solving for implied volatility",
+ "minutes": 14,
+ "objectives": [
+  "Implement a robust implied volatility solver.",
+  "Explain why Newton's method needs a bracket and a convergence test."
+ ],
+ "skills": [
+  "od-iv"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Follow the tangent",
+   "prose": "The market quotes our one-year call ($S = K = 100$, $r = 5\\%$) at £12.00. In `trees` we bisected for its volatility, which took 43 halvings. The straight line is the price curve's tangent at $\\sigma = 0.2$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      0.6
+     ],
+     "y": [
+      0,
+      28
+     ],
+     "xLabel": "Volatility $\\sigma$",
+     "yLabel": "Call price (£)",
+     "xStep": 0.1,
+     "functions": [
+      {
+       "id": "c",
+       "expr": "S*Phi((ln(S/K)+(r+x^2/2)*T)/(x*sqrt(T)))-K*exp(-r*T)*Phi((ln(S/K)+(r-x^2/2)*T)/(x*sqrt(T)))",
+       "domain": [
+        0.005,
+        0.6
+       ],
+       "label": "Black-Scholes price",
+       "labelAt": 0.5
+      }
+     ],
+     "params": {
+      "S": 100,
+      "K": 100,
+      "r": 0.05,
+      "T": 1
+     }
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "mkt",
+       "y": 12,
+       "label": "market £12.00"
+      }
+     ],
+     "tangent": {
+      "f": "c",
+      "x": 0.2,
+      "length": 0.22
+     },
+     "points": [
+      {
+       "id": "s0",
+       "x": 0.2,
+       "y": 10.4506,
+       "label": "$\\sigma_0$",
+       "tap": false
+      },
+      {
+       "id": "g",
+       "x": 0.45,
+       "y": 12,
+       "drag": true,
+       "lockY": true
+      }
+     ],
+     "caption": "Your dot: $\\sigma$ = 0.4500"
+    },
+    "derive": {
+     "caption": "Your dot: $\\sigma$ = {{fixed(g.x, 4)}}"
+    }
+   },
+   "question": "Drag the dot along the £12.00 line to where the tangent crosses it.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "g",
+      "target": [
+       0.2413,
+       12
+      ],
+      "tol": [
+       0.003,
+       0.5
+      ]
+     }
+    ],
+    "wrong": [
+     {
+      "id": "start",
+      "region": {
+       "x": [
+        0.17,
+        0.225
+       ],
+       "y": [
+        10,
+        14
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow the straight line, not the curve, up to the dashed line."
+    },
+    {
+     "rung": "point",
+     "text": "The tangent starts at £10.45 and climbs 37.52 per unit of $\\sigma$.",
+     "highlight": [
+      "tangent",
+      "mkt"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It needs £1.55 more: $1.5494 / 37.52 = 0.0413$, so it crosses at about 0.2413."
+    }
+   ],
+   "feedback": {
+    "correct": "The tangent meets £12.00 at $\\sigma_1 \\approx 0.2413$.",
+    "generic": "Not quite right. Slide the dot until it sits where the straight line crosses £12.00.",
+    "byKey": {
+     "start": "You left the dot near 0.2, the starting guess. Follow the straight line up to £12.00.",
+     "g": "Your dot is off the crossing. Find where the straight line, not the curve, meets £12.00."
+    }
+   },
+   "explain": {
+    "text": "The tangent climbs 37.52 per unit of $\\sigma$, the curve's slope at 0.2. It needs $12 - 10.4506 = 1.5494$ more, so it crosses at $0.2 + 1.5494/37.52 = 0.2413$. The true answer is 0.2411: one step gave three correct digits.",
+    "canvas": {
+     "points": {
+      "g": {
+       "x": 0.2413,
+       "label": "$\\sigma_1$"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Any starting guess",
+   "prose": "The slider moves the starting guess $\\sigma_0$. The tangent follows it, and the dot marks where the tangent meets £12.00: the next guess $\\sigma_1$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      0.6
+     ],
+     "y": [
+      0,
+      28
+     ],
+     "xLabel": "Volatility $\\sigma$",
+     "yLabel": "Call price (£)",
+     "xStep": 0.1,
+     "functions": [
+      {
+       "id": "c",
+       "expr": "S*Phi((ln(S/K)+(r+x^2/2)*T)/(x*sqrt(T)))-K*exp(-r*T)*Phi((ln(S/K)+(r-x^2/2)*T)/(x*sqrt(T)))",
+       "domain": [
+        0.005,
+        0.6
+       ],
+       "label": "Black-Scholes price",
+       "labelAt": 0.5
+      }
+     ],
+     "params": {
+      "S": 100,
+      "K": 100,
+      "r": 0.05,
+      "T": 1
+     }
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "mkt",
+       "y": 12,
+       "label": "market £12.00"
+      }
+     ],
+     "params": {
+      "s0": 0.2
+     },
+     "points": [
+      {
+       "id": "p0",
+       "x": 0.2,
+       "y": 10.4506,
+       "label": "$\\sigma_0$",
+       "labelPos": "se",
+       "tap": false
+      },
+      {
+       "id": "n1",
+       "x": 0.2413,
+       "y": 12,
+       "label": "$\\sigma_1$",
+       "tap": false
+      }
+     ],
+     "tangent": {
+      "f": "c",
+      "x": "p0",
+      "length": 0.3
+     }
+    },
+    "derive": {
+     "let": {
+      "c0": "100*Phi((0.05+s0*s0/2)/s0) - 100*exp(-0.05)*Phi((0.05-s0*s0/2)/s0)",
+      "v0": "100*normpdf((0.05+s0*s0/2)/s0)",
+      "s1": "s0 - (c0 - 12)/v0"
+     },
+     "p0.x": "s0",
+     "p0.y": "c0",
+     "n1.x": "s1",
+     "caption": "$\\sigma_0$ = {{fixed(s0, 2)}}: price £{{fixed(c0, 2)}}, vega {{fixed(v0, 1)}}, so $\\sigma_1$ = {{fixed(s1, 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "s0",
+      "min": 0.05,
+      "max": 0.6,
+      "step": 0.01,
+      "start": 0.2,
+      "label": "Starting guess $\\sigma_0$",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "Set $\\sigma_0 = 0.05$. Where does the first step land?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3347,
+    "tol": {
+     "abs": 0.003
+    },
+    "label": "sigma 1",
+    "placeholder": "a decimal such as 0.25",
+    "accept": "0.3347 ± 0.003: $0.05 - (5.28 - 12)/23.59$",
+    "wrong": [
+     {
+      "id": "answer",
+      "value": 0.2411,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "stay",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag the slider to its left end and read the caption."
+    }
+   ],
+   "feedback": {
+    "correct": "From 0.05 the first step lands near 0.335, past the answer.",
+    "generic": "Not quite right. Move the slider to 0.05 and read $\\sigma_1$ in the caption.",
+    "byKey": {
+     "answer": "0.2411 is where the curve meets £12.00. Newton follows the tangent at 0.05, which is flatter, so it overshoots.",
+     "stay": "0.05 is the starting guess. The next guess is where its tangent meets £12.00."
+    }
+   },
+   "explain": {
+    "text": "At 0.05 the call is worth £5.28 and vega is only 23.6, so the step is $(12 - 5.28)/23.6 = 0.285$. The curve bends there, so the flat tangent overshoots to 0.335. From 0.2 up to 0.6 the curve is nearly straight, and one step lands within 0.006 of 0.2411.",
+    "canvas": {
+     "params": {
+      "s0": 0.05
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Newton's method",
+   "prose": "Following the tangent and repeating is **Newton's method**: $$\\sigma_{k+1} = \\sigma_k - \\frac{BS(\\sigma_k) - P}{\\text{vega}(\\sigma_k)}.$$ The slope, **vega**, returns in l13. Here it runs from 0.2 for the £12.00 call.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$k$",
+      "$\\sigma_k$",
+      "Price (£)",
+      "Gap (£)",
+      "Error in $\\sigma$"
+     ],
+     "rows": [
+      [
+       "0",
+       "0.2",
+       "10.4506",
+       "−1.5494",
+       "−4.1 × 10⁻²"
+      ],
+      [
+       "1",
+       "0.241291",
+       "12.006594",
+       "6.6 × 10⁻³",
+       "1.7 × 10⁻⁴"
+      ],
+      [
+       "2",
+       "0.24111690",
+       "12.00000007",
+       "6.8 × 10⁻⁸",
+       "1.8 × 10⁻⁹"
+      ],
+      [
+       "3",
+       "0.2411168937",
+       "12.0000000000",
+       "7 × 10⁻¹⁵",
+       "2 × 10⁻¹⁶"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How does the error in $\\sigma$ shrink from one step to the next?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "square",
+      "text": "It is roughly squared each step, so the correct digits double",
+      "correct": true
+     },
+     {
+      "id": "half",
+      "text": "It halves each step",
+      "why": "Halving is bisection's rate. Here $4 \\times 10^{-2}$ became $1.7 \\times 10^{-4}$, then $1.8 \\times 10^{-9}$."
+     },
+     {
+      "id": "ten",
+      "text": "It falls by a factor of 10 each step",
+      "why": "You compared the gaps loosely. From $1.7 \\times 10^{-4}$ to $1.8 \\times 10^{-9}$ is a factor of about 100,000."
+     },
+     {
+      "id": "stall",
+      "text": "It stops improving after the first step",
+      "why": "You read the rounded $\\sigma$ column. The error column keeps falling, to $2 \\times 10^{-16}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the exponents in the last column, row by row."
+    },
+    {
+     "rung": "point",
+     "text": "The exponents go −2, −4, −9, −16.",
+     "highlight": [
+      "c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each exponent is about double the one before: the error is squared, times a constant."
+    }
+   ],
+   "feedback": {
+    "correct": "The error is roughly squared each step.",
+    "generic": "Not quite right. Read the error column's powers of ten from row to row.",
+    "byKey": {
+     "half": "You assumed bisection's rate. Newton's error falls far faster: compare $10^{-4}$ with $10^{-9}$."
+    }
+   },
+   "explain": {
+    "text": "The error went $4 \\times 10^{-2}$, $1.7 \\times 10^{-4}$, $1.8 \\times 10^{-9}$: each about the square of the last, times a constant. That is quadratic convergence. Three steps reach the $10^{-12}$ that bisection needed 43 halvings for.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A put quote",
+   "prose": "The three-month 100 put from `make_chain()` is £3.44 bid, £3.65 ask: mid £3.545, with $S = 100$, $r = 5\\%$, $q = 1\\%$. We can solve the put formula directly, or turn the put into a call by parity: $C = P + S e^{-qT} - K e^{-rT}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Three-month 100",
+      "Bid (£)",
+      "Ask (£)",
+      "Mid (£)"
+     ],
+     "rows": [
+      [
+       "call",
+       "4.37",
+       "4.64",
+       "4.505"
+      ],
+      [
+       "put",
+       "3.44",
+       "3.65",
+       "3.545"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   },
+   "question": "What call price has the same implied vol as the put's mid?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.5375,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "£",
+    "label": "Call price in pounds",
+    "placeholder": "pounds, such as 4.21",
+    "accept": "£4.5375 ± 0.005: $3.545 + 99.7503 - 98.7578$",
+    "wrong": [
+     {
+      "id": "noq",
+      "value": 4.7872,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "nodisc",
+      "value": 3.545,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "callmid",
+      "value": 4.505,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $S e^{-qT}$ and $K e^{-rT}$ with $T = 0.25$."
+    },
+    {
+     "rung": "point",
+     "text": "$100 e^{-0.0025} = 99.7503$ and $100 e^{-0.0125} = 98.7578$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$C = 3.545 + 99.7503 - 98.7578$."
+    }
+   ],
+   "feedback": {
+    "correct": "£4.5375: a call with the put's volatility.",
+    "generic": "Not quite right. Add $S e^{-qT}$ to the put's mid and subtract $K e^{-rT}$.",
+    "byKey": {
+     "noq": "You used $S$ instead of $S e^{-qT}$. The dividend yield takes about £0.25 off the call here.",
+     "nodisc": "You took $S - K = 0$, as if nothing were discounted. The two terms are discounted differently, so they do not cancel.",
+     "callmid": "£4.505 is the market's own call mid. Parity gives the call that matches the put's vol, which differs by quote noise."
+    }
+   },
+   "explain": {
+    "text": "$3.545 + 99.7503 - 98.7578 = 4.5375$, and both routes give a vol of 0.2032. The call's own mid, £4.505, gives 0.2016: the 3p gap is quote noise. So the dashboard solves every quote directly, with its own formula.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A step off the chart",
+   "prose": "Now the one-month 75 put, offered at £0.04. At $\\sigma_0 = 0.2$ it is worth £0.0000002 and vega is 0.00003, so Newton jumps to $\\sigma_1 = 1323$. A safe solver keeps a **bracket** $[lo, hi]$ that holds the answer, and bisects whenever Newton leaves it.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "br",
+       "from": 0.2,
+       "to": 5,
+       "label": "bracket after one price",
+       "labelPos": "above",
+       "colour": 2
+      }
+     ],
+     "points": [
+      {
+       "id": "s0",
+       "x": 0.2,
+       "label": "$\\sigma_0$",
+       "labelPos": "below"
+      },
+      {
+       "id": "nx",
+       "x": 4.2,
+       "label": "next guess"
+      }
+     ]
+    }
+   },
+   "question": "The price at 0.2 is too low, so the answer lies above 0.2. Drag the next guess to where the safe solver puts it.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "nx",
+      "target": 2.6,
+      "tol": 0.05
+     }
+    ],
+    "wrong": [
+     {
+      "id": "old",
+      "region": {
+       "x": [
+        2.45,
+        2.55
+       ]
+      }
+     },
+     {
+      "id": "edge",
+      "region": {
+       "x": [
+        4.85,
+        5
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Newton's 1323 is outside $[0.2, 5]$, so the solver throws it away."
+    },
+    {
+     "rung": "point",
+     "text": "The fallback is the midpoint of the current bracket.",
+     "highlight": [
+      "br"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(0.2 + 5)/2 = 2.6$."
+    }
+   ],
+   "feedback": {
+    "correct": "The bracket is now $[0.2, 5]$, so the fallback guess is its midpoint, 2.6.",
+    "generic": "Not quite right. Bisect the bracket that is left after the first price.",
+    "byKey": {
+     "old": "You bisected the starting bracket $[0.0001, 5]$. The first price showed the answer is above 0.2, so the bracket is $[0.2, 5]$.",
+     "edge": "You followed Newton towards 1323 and stopped at the edge. A step outside the bracket is thrown away, not clipped.",
+     "nx": "Your guess is not the midpoint of $[0.2, 5]$. Halve the bracket."
+    }
+   },
+   "explain": {
+    "text": "From 2.6 the curve is steep enough again, and Newton finishes in eight more steps: 0.893, 0.626, 0.510 and on to 0.4384. That is ten price calls in all. Plain Newton never recovers: at 1323 vega is exactly 0, and the next step divides by zero.",
+    "canvas": {
+     "points": {
+      "nx": {
+       "x": 2.6,
+       "label": "2.6"
+      },
+      "ans": {
+       "x": 0.4384,
+       "label": "0.4384",
+       "labelPos": "below",
+       "colour": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "No volatility fits",
+   "prose": "Our one-year call again, now with $q = 1\\%$. As $\\sigma \\to 0$ its price falls to $S e^{-qT} - K e^{-rT} = £3.88$. As $\\sigma \\to \\infty$ it rises to $S e^{-qT} = £99.00$. Five quotes arrive.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 100,
+     "step": 10
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "band",
+       "from": 3.882,
+       "to": 99.005,
+       "open": [
+        true,
+        true
+       ],
+       "label": "a volatility fits",
+       "labelPos": "above",
+       "colour": 2
+      }
+     ],
+     "points": [
+      {
+       "id": "q1",
+       "x": 3.5,
+       "label": "£3.50",
+       "labelPos": "below"
+      },
+      {
+       "id": "q2",
+       "x": 3.88,
+       "label": "£3.88"
+      },
+      {
+       "id": "q3",
+       "x": 12,
+       "label": "£12"
+      },
+      {
+       "id": "q4",
+       "x": 60,
+       "label": "£60"
+      },
+      {
+       "id": "q5",
+       "x": 99.5,
+       "label": "£99.50",
+       "labelPos": "below"
+      }
+     ]
+    }
+   },
+   "question": "Tap every quote for which no volatility fits.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "q1",
+     "q2",
+     "q5"
+    ],
+    "countWord": "selected",
+    "wrong": [
+     {
+      "id": "edge",
+      "set": [
+       "q1",
+       "q5"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A volatility fits only strictly inside the band."
+    },
+    {
+     "rung": "point",
+     "text": "£3.50 and £99.50 are outside it. Look closely at £3.88.",
+     "highlight": [
+      "band"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "£3.88 is the price at zero vol. Our solver refuses a price at the bound too."
+    }
+   ],
+   "feedback": {
+    "correct": "£3.50, £3.88 and £99.50 have no positive volatility.",
+    "generic": "Not quite right. Keep only quotes strictly inside the band.",
+    "byKey": {
+     "edge": "You kept £3.88. At the lower bound only $\\sigma = 0$ fits, and our solver refuses it with `ValueError`.",
+     "q3": "£12 is inside the band: 24.1% vol fits it, as we found.",
+     "q4": "£60 is inside the band. A very high vol, about 1.7, fits it.",
+     "q1": "You missed £3.50. It is below the price at zero vol, so no vol fits.",
+     "q2": "You missed £3.88. At the bound only zero vol fits, which we refuse.",
+     "q5": "You missed £99.50. No call is worth more than the share it delivers, less dividends: £99.00."
+    }
+   },
+   "explain": {
+    "text": "£3.50 is below the price at zero vol, and £99.50 above the price at infinite vol. £3.88 sits on the lower bound, which only $\\sigma = 0$ reaches. The scalar solver raises `ValueError` for all three; the frame function will write NaN.",
+    "canvas": {
+     "highlight": [
+      "q1",
+      "q2",
+      "q5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Five steps and done",
+   "prose": "A colleague's solver runs five Newton steps from 0.2 and returns the last one. On the one-month 80 put offered at £0.04 it makes the steps below, then returns 0.497 with no warning.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step",
+      "$\\sigma$"
+     ],
+     "rows": [
+      [
+       "0",
+       "0.2"
+      ],
+      [
+       "1",
+       "8.736"
+      ],
+      [
+       "2",
+       "−4.501"
+      ],
+      [
+       "3",
+       "2.113"
+      ],
+      [
+       "4",
+       "0.719"
+      ],
+      [
+       "5",
+       "0.497"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is wrong with the colleague's solver?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "It never checks the price gap and lets steps leave $[0.0001, 5]$; the answer is 0.351",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "Five steps are too few; fifty would fix it",
+      "why": "You trusted a fixed count. More steps happen to land here, but nothing tells the solver when it is done, or stops a negative $\\sigma$."
+     },
+     {
+      "id": "inside",
+      "text": "Nothing: 0.497 is inside the bracket, so it is a valid vol",
+      "why": "Inside the bracket is not solved. At 0.497 the put is worth £0.31, not £0.04."
+     },
+     {
+      "id": "formula",
+      "text": "It should solve the put with the call formula",
+      "why": "A put quote needs the put formula, or parity first. The fault here is the stopping rule."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What price does $\\sigma = 0.497$ give?"
+    },
+    {
+     "rung": "point",
+     "text": "Step 2 is negative, which no volatility can be.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The solver must stop on a small price gap, not after a set number of steps, and keep each guess in a bracket."
+    }
+   ],
+   "feedback": {
+    "correct": "A fixed step count with no check returns whatever it has.",
+    "generic": "Not quite right. Ask whether the solver ever checks that it has solved anything.",
+    "byKey": {
+     "more": "Running more steps is the same trap with a bigger number. A solver needs a convergence test and a bracket, not a longer loop."
+    }
+   },
+   "explain": {
+    "text": "Step 2 went negative and the loop carried on. At 0.497 the put is worth £0.31, eight times the quote. Our safe solver returns 0.3511 after ten price calls.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2,
+       5
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The safe solver",
+   "prose": "As a rule: keep a bracket $[lo, hi]$ that holds the answer. Price each guess once, and move $lo$ or $hi$ to it. Take the Newton step $$\\sigma_{k+1} = \\sigma_k - \\frac{BS(\\sigma_k) - P}{\\text{vega}(\\sigma_k)}$$ if it lands inside the bracket; otherwise bisect. Stop when $|BS(\\sigma_k) - P| < 10^{-12}$.",
+   "question": "Why can this solver never run off to 1323 or go negative?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bracket",
+      "text": "Every guess lies inside a bracket that only shrinks",
+      "correct": true
+     },
+     {
+      "id": "vega",
+      "text": "Vega is never zero",
+      "why": "Vega was 0.00003 for the 75 put at 0.2, and exactly 0 at 1323. The bracket, not vega, keeps guesses in range."
+     },
+     {
+      "id": "start",
+      "text": "Newton always converges from 0.2",
+      "why": "It did not for the 75 put or the 80 put. The fallback exists because it does not."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The bracket starts at $[0.0001, 5]$ and only shrinks, so no guess leaves it.",
+    "generic": "Not quite right. Look at what happens to a step that lands outside $[lo, hi]$."
+   },
+   "explain": {
+    "text": "A Newton step outside $[lo, hi]$ is replaced by the midpoint, and each price moves one end inwards. Near the answer Newton's steps stay inside, so we keep its speed. Far away, bisection's halving keeps us safe."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The solver in code",
+   "prose": "`bs_price(S, K, r, sigma, T, kind, q)` and `bs_vega(S, K, r, sigma, T, q)` are loaded. Write the dashboard's solver. Raise `ValueError` for an unknown `kind`, and for a price at or outside the bounds. A hidden counter allows at most 50 price calls per solve.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> implied_vol(12.0, 100, 100, 0.05, 1)",
+      "0.2411168936821648",
+      ">>> implied_vol(0.04, 100, 75, 0.05, 1/12, 'put', 0.01)",
+      "0.4383682594142301",
+      ">>> implied_vol(3.50, 100, 100, 0.05, 1, 'call', 0.01)",
+      "ValueError: no volatility fits this price"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `implied_vol(price, S, K, r, T, kind=\"call\", q=0.0)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from math import erf, exp, log, sqrt, pi\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n_calls = [0]\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    _calls[0] += 1\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef price_calls(f):\n    _calls[0] = 0\n    f()\n    return _calls[0]\n",
+    "starter": "from math import exp\n\n# bs_price(...) and bs_vega(...) are loaded.\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = ..., ...\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if ...:  # the price is at or outside the bounds\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        ...  # move lo or hi to sigma\n        new = ...  # the Newton step\n        if not lo < new < hi:\n            new = ...  # bisect instead\n        sigma = new\n    return sigma\n",
+    "solution": "from math import exp\n\n# bs_price(...) and bs_vega(...) are loaded.\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price, by Newton's method with a bisection fallback.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma            # price too high: the answer is below sigma\n        else:\n            lo = sigma            # price too low: the answer is above sigma\n        v = bs_vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else hi + 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2   # Newton left the bracket: bisect instead\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n",
+    "examples": [
+     {
+      "call": "round(implied_vol(12.0, 100, 100, 0.05, 1), 6)",
+      "expect": "0.241117",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(implied_vol(0.04, 100, 75, 0.05, 1/12, 'put', 0.01), 6)",
+      "expect": "0.438368",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "abs(implied_vol(12.0, 100, 100, 0.05, 1) - 0.2411168936821646) < 1e-6",
+      "expect": "True"
+     },
+     {
+      "setup": "cases = [(100, 100, 0.05, 0.10, 1, 'call', 0.0), (100, 80, 0.05, 0.35, 0.25, 'put', 0.01), (100, 120, 0.03, 0.25, 0.5, 'call', 0.02), (100, 95, 0.04, 0.25, 0.5, 'put', 0.0), (50, 55, 0.05, 0.6, 2, 'call', 0.0), (100, 110, 0.05, 0.18, 1/12, 'put', 0.01)]",
+      "call": "max(abs(implied_vol(bs_price(S, K, r, s, T, k, q), S, K, r, T, k, q) - s) for S, K, r, s, T, k, q in cases) < 1e-8",
+      "expect": "True"
+     },
+     {
+      "call": "round(implied_vol(3.545, 100, 100, 0.05, 0.25, 'put', 0.01), 6)",
+      "expect": "0.203227",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(implied_vol(0.04, 100, 75, 0.05, 1/12, 'put', 0.01), 6)",
+      "expect": "0.438368",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(implied_vol(0.04, 100, 80, 0.05, 1/12, 'put', 0.01), 6)",
+      "expect": "0.351104",
+      "compare": "isclose"
+     },
+     {
+      "call": "implied_vol(3.50, 100, 100, 0.05, 1, 'call', 0.01)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "implied_vol(99.50, 100, 100, 0.05, 1, 'call', 0.01)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "implied_vol(100 * exp(-0.01) - 100 * exp(-0.05), 100, 100, 0.05, 1, 'call', 0.01)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "implied_vol(96.0, 100, 100, 0.05, 1, 'put')",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "implied_vol(5.0, 100, 100, 0.05, 1, 'straddle')",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "price_calls(lambda: implied_vol(0.04, 100, 75, 0.05, 1/12, 'put', 0.01)) <= 50 and price_calls(lambda: implied_vol(12.0, 100, 100, 0.05, 1)) <= 50",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 11 hidden tests. Pure Python: nothing to load. Vols are compared to 6 places or within 1e-8, the bounds by `ValueError`, and a hidden counter allows at most 50 price calls per solve."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A put's bounds are $\\max(K e^{-rT} - S e^{-qT}, 0)$ and $K e^{-rT}$."
+    },
+    {
+     "rung": "point",
+     "text": "If `diff > 0` the guess is too high, so set `hi = sigma`; otherwise `lo = sigma`.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`new = sigma - diff / bs_vega(S, K, r, sigma, T, q)`, and the fallback is `(lo + hi) / 2`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your solver is fast on good quotes and safe on bad ones.",
+    "generic": "Not quite right. Read the first failing test: is it a bound, a put, or a deep out-of-the-money quote?"
+   },
+   "explain": {
+    "text": "The bounds check comes first, so a bad quote never reaches the loop. Moving `lo` or `hi` after each price keeps the bracket true. The midpoint fallback catches the deep out-of-the-money steps that plain Newton throws away."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Every quote in the chain",
+   "prose": "Now the whole cleaned chain. Add an `iv` column: the vol of each quote's mid, with $q$ from `q_of_T(T)`. Where no vol fits, write NaN. One bad quote must not stop the dashboard.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "T",
+      "Strike",
+      "Type",
+      "Bid (£)",
+      "Ask (£)",
+      "iv"
+     ],
+     "rows": [
+      [
+       "1/12",
+       "70",
+       "call",
+       "29.30",
+       "31.11",
+       "NaN"
+      ],
+      [
+       "1/12",
+       "100",
+       "call",
+       "2.24",
+       "2.38",
+       "0.1863"
+      ],
+      [
+       "3/12",
+       "100",
+       "call",
+       "4.37",
+       "4.64",
+       "0.2016"
+      ],
+      [
+       "6/12",
+       "80",
+       "call",
+       "21.28",
+       "22.60",
+       "0.2348"
+      ],
+      [
+       "1",
+       "130",
+       "put",
+       "25.43",
+       "27.01",
+       "0.2036"
+      ]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   },
+   "question": "Complete `iv_frame(clean, S, r, q_of_T)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    if \"call\" not in w or \"put\" not in w:\n        return float(\"nan\")\n    w = w.dropna(subset=[\"call\", \"put\"])\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n\ndef otm_quotes(df_T, F):\n    keep = ((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F)) | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\nfrom math import pi\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price, by Newton's method with a bisection fallback.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma            # price too high: the answer is below sigma\n        else:\n            lo = sigma            # price too low: the answer is above sigma\n        v = bs_vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else hi + 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2   # Newton left the bracket: bisect instead\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n\nclean = clean_quotes(make_chain())\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\n# make_chain(), clean_quotes(df) and your implied_vol\n# are loaded; clean = clean_quotes(make_chain()).\n\ndef iv_frame(clean, S, r, q_of_T):\n    \"\"\"A copy of clean with an iv column: the vol of each mid, NaN where none fits.\"\"\"\n    out = clean.copy()\n    ivs = []\n    for T, K, kind, b, a in zip(out[\"T\"], out[\"strike\"], out[\"type\"], out[\"bid\"], out[\"ask\"]):\n        ...  # solve the mid; append NaN on ValueError\n    out[\"iv\"] = ivs\n    return out\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\n# make_chain(), clean_quotes(df) and your implied_vol\n# are loaded; clean = clean_quotes(make_chain()).\n\ndef iv_frame(clean, S, r, q_of_T):\n    \"\"\"A copy of clean with an iv column: the vol of each mid, NaN where none fits.\"\"\"\n    out = clean.copy()\n    ivs = []\n    for T, K, kind, b, a in zip(out[\"T\"], out[\"strike\"], out[\"type\"], out[\"bid\"], out[\"ask\"]):\n        try:\n            ivs.append(implied_vol((b + a) / 2, S, K, r, T, kind, q_of_T(T)))\n        except ValueError:          # mid outside the bounds: no vol fits\n            ivs.append(float(\"nan\"))\n    out[\"iv\"] = ivs\n    return out\n",
+    "examples": [
+     {
+      "call": "len(iv_frame(clean, 100.0, 0.05, lambda T: 0.01))",
+      "expect": "102"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(iv_frame(clean, 100.0, 0.05, lambda T: 0.01))",
+      "expect": "102"
+     },
+     {
+      "call": "list(iv_frame(clean, 100.0, 0.05, lambda T: 0.01).columns)",
+      "expect": "['T', 'strike', 'type', 'bid', 'ask', 'volume', 'age_min', 'iv']"
+     },
+     {
+      "call": "int(iv_frame(clean, 100.0, 0.05, lambda T: 0.01)['iv'].isna().sum())",
+      "expect": "8"
+     },
+     {
+      "call": "round(float(iv_frame(clean, 100.0, 0.05, lambda T: 0.01)['iv'][44]), 4)",
+      "expect": "0.2016",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(iv_frame(clean, 100.0, 0.05, lambda T: 0.01)['iv'][60]), 4)",
+      "expect": "0.2348",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(iv_frame(clean, 100.0, 0.05, lambda T: 0.01)['iv'][101]), 4)",
+      "expect": "0.2036",
+      "compare": "isclose"
+     },
+     {
+      "setup": "hand = pd.DataFrame({'T': [0.5, 0.5, 0.5], 'strike': [100, 120, 120], 'type': ['call', 'put', 'call'], 'bid': [bs_price(100, 100, 0.05, 0.25, 0.5, 'call', 0.02), 15.0, 99.5], 'ask': [bs_price(100, 100, 0.05, 0.25, 0.5, 'call', 0.02), 15.0, 99.5], 'volume': [1, 1, 1], 'age_min': [0.0, 0.0, 0.0]})",
+      "call": "[round(v, 6) if v == v else 'nan' for v in iv_frame(hand, 100.0, 0.05, lambda T: 0.02)['iv']]",
+      "expect": "[0.25, 'nan', 'nan']"
+     },
+     {
+      "setup": "iv_frame(clean, 100.0, 0.05, lambda T: 0.01)",
+      "call": "'iv' in clean.columns",
+      "expect": "False"
+     }
+    ],
+    "how": "Check runs 8 hidden tests on the seeded chain (102 clean quotes) and on a hand frame. The first run loads numpy and pandas, about 15 seconds; later runs take a second."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Call `implied_vol` on `(b + a) / 2` for each row."
+    },
+    {
+     "rung": "point",
+     "text": "Wrap the call in `try` and catch `ValueError`.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "In the `except ValueError:` branch, append `float(\"nan\")`."
+    }
+   ],
+   "feedback": {
+    "correct": "102 quotes solved; 8 get NaN because their mids sit below intrinsic value.",
+    "generic": "Not quite right. Check that every row gets a value, NaN included, and that `clean` itself is unchanged."
+   },
+   "explain": {
+    "text": "The 8 NaN rows are deep in-the-money quotes whose mid falls below the lower bound. The one-month 70 call's mid, £30.205, is 0.3p under its bound of £30.208. The smile in l10 uses out-of-the-money quotes, so it loses none of them.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Quoting in vol, all day",
+   "prose": "A desk streams 2,000 options and reprices each on every quote update, 20 times a second. One price or vega call costs 2 microseconds. Bisection needs 43 price calls per solve; our solver needs about 4 prices and 4 vegas.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Solver",
+      "Calls per solve",
+      "Solves per second"
+     ],
+     "rows": [
+      [
+       "Bisection",
+       "43",
+       "40,000"
+      ],
+      [
+       "Newton with fallback",
+       "8",
+       "40,000"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many seconds of computing does bisection need for each second of quotes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.44,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "seconds",
+    "label": "Seconds of computing",
+    "placeholder": "seconds",
+    "accept": "3.44 s: $2000 \\times 20 \\times 43 \\times 2\\,\\mu\\text{s}$",
+    "wrong": [
+     {
+      "id": "newton",
+      "value": 0.64,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "persolve",
+      "value": 8.6e-05,
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the price calls per second first."
+    },
+    {
+     "rung": "point",
+     "text": "$2000 \\times 20 = 40{,}000$ solves a second.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$40{,}000 \\times 43 = 1{,}720{,}000$ calls, at 2 microseconds each."
+    }
+   ],
+   "feedback": {
+    "correct": "3.44 s of work for every second: bisection cannot keep up on one core.",
+    "generic": "Not quite right. Multiply solves per second by calls per solve by the time per call.",
+    "byKey": {
+     "newton": "0.64 s is our solver's figure. The question asks about bisection's 43 calls.",
+     "persolve": "That is one solve. The desk runs 40,000 solves every second."
+    }
+   },
+   "explain": {
+    "text": "$2000 \\times 20 \\times 43 \\times 2\\,\\mu\\text{s} = 3.44$ s, while Newton with a fallback needs 0.64 s. Desks quote in vol and solve on every tick, so speed matters. Robustness matters as much: one bad quote must give NaN, not a crash."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Newton's method follows the tangent: from 0.2 it solves the £12.00 call to $10^{-12}$ in three steps, where bisection takes 43.",
+   "Far out of the money vega is tiny, so a Newton step can land at 1323. Keep a bracket and bisect whenever a step leaves it.",
+   "Stop on the price gap, not a step count. Refuse prices at or outside the bounds: `ValueError` in the solver, NaN in the frame."
+  ],
+  "formula": {
+   "name": "Newton step for implied vol",
+   "tex": "\\sigma_{k+1} = \\sigma_k - \\frac{BS(\\sigma_k) - P}{\\text{vega}(\\sigma_k)}, \\quad \\text{vega} = S e^{-qT}\\sqrt{T}\\,\\varphi(d_1)",
+   "note": "Bisect $[lo, hi]$ when the step leaves it; stop when $|BS - P| < 10^{-12}$."
+  },
+  "trap": "A solver that runs a fixed number of Newton steps returns 0.497 for a put whose vol is 0.351, with no warning."
+ },
+ "quiz": [
+  {
+   "id": "q-step",
+   "difficulty": 2,
+   "prose": "A call trades at £8.00. At $\\sigma_0 = 0.25$ the model gives £8.90, and vega is 18.",
+   "question": "What is Newton's next guess $\\sigma_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "sigma 1",
+    "accept": "0.20: $0.25 - 0.90/18$",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.25 - 0.90/18 = 0.20$.",
+    "generic": "Not quite right. Subtract the price gap divided by vega.",
+    "byKey": {
+     "sign": "You added the step. The model price is too high, so $\\sigma$ must fall."
+    }
+   },
+   "explain": {
+    "text": "The gap is $8.90 - 8.00 = 0.90$, and $0.90/18 = 0.05$. The price is too high, so $\\sigma$ falls to 0.20."
+   }
+  },
+  {
+   "id": "q-putcall",
+   "difficulty": 3,
+   "prose": "Your dashboard shows the three-month 100 call at 20.2% vol and the put at the same strike at 15.3%. The put's mid is £3.545.",
+   "question": "What is the most likely bug?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "formula",
+      "text": "The put's mid went into the call formula",
+      "correct": true
+     },
+     {
+      "id": "cheap",
+      "text": "None: puts trade at lower vols than calls",
+      "why": "Parity ties a put and a call at one strike to the same vol. A 5-point gap is a bug, not a market."
+     },
+     {
+      "id": "div",
+      "text": "The dividend yield was left out of the put",
+      "why": "Dropping $q = 1\\%$ moves a three-month vol by well under a point, not five."
+     },
+     {
+      "id": "newton",
+      "text": "Newton diverged on the put",
+      "why": "A near-the-money three-month put has plenty of vega. Newton converges on it in three steps."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Solving £3.545 as a call gives 0.153; as a put it gives 0.203.",
+    "generic": "Not quite right. At one strike, parity says the call and put share one vol."
+   },
+   "explain": {
+    "text": "A call worth £3.545 needs less vol than the put's formula would say, because the call carries more forward value. The call formula gives 0.153; the put formula gives 0.2032, next to the call's 0.2016."
+   }
+  },
+  {
+   "id": "q-upper",
+   "difficulty": 2,
+   "prose": "A one-year call on a £100 share ($r = 5\\%$, $q = 1\\%$) is offered at £99.20.",
+   "question": "What should `implied_vol` do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "raise",
+      "text": "Raise `ValueError`: the price is above $S e^{-qT} = £99.00$",
+      "correct": true
+     },
+     {
+      "id": "five",
+      "text": "Return 5, the top of the bracket",
+      "why": "Even infinite vol prices the call at only £99.00. Returning 5 would invent a vol."
+     },
+     {
+      "id": "newton",
+      "text": "Run Newton from a higher start",
+      "why": "No start helps: the curve never reaches £99.20."
+     },
+     {
+      "id": "nan",
+      "text": "Return 0",
+      "why": "Zero vol gives the lowest price, £3.88. This quote is above the highest."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "No call is worth more than the share it delivers, less dividends.",
+    "generic": "Not quite right. Compare £99.20 with the price at infinite volatility."
+   },
+   "explain": {
+    "text": "As $\\sigma \\to \\infty$ the call tends to $S e^{-qT} = 100 e^{-0.01} = 99.00$. A quote above that is an error in the data. The scalar solver raises; `iv_frame` writes NaN."
+   }
+  },
+  {
+   "id": "q-guess",
+   "difficulty": 3,
+   "prose": "A quick starting guess, $\\sigma_0 \\approx \\sqrt{2\\pi/T}\\,P/S$, gives 0.301 for the £12.00 call. That is further from 0.2411 than our plain 0.2.",
+   "question": "Why is the guess poor here?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "fwd",
+      "text": "It assumes the strike sits at the forward; this strike is £5 below it",
+      "correct": true
+     },
+     {
+      "id": "long",
+      "text": "It only works for expiries under a month",
+      "why": "Time enters through $\\sqrt{T}$ and is handled. The problem is where the strike sits."
+     },
+     {
+      "id": "call",
+      "text": "It is for puts only",
+      "why": "At the forward a call and a put cost the same, so the guess serves both there."
+     },
+     {
+      "id": "vega",
+      "text": "Vega is too small at the money",
+      "why": "At the money vega is at its largest, 37.5 here."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Away from the forward, the price carries value the guess reads as volatility.",
+    "generic": "Not quite right. The guess comes from the at-the-forward price $0.4\\,S\\sigma\\sqrt{T}$."
+   },
+   "explain": {
+    "text": "At the forward a call is worth about $0.4\\,S\\sigma\\sqrt{T}$, which the guess inverts. The forward here is £105.13, so the £100 call carries about £4.88 of forward value. The guess reads that as extra vol."
+   }
+  }
+ ]
+}

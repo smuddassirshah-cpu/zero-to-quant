@@ -1,0 +1,1178 @@
+{
+ "id": "l7-ranks-and-z",
+ "course": "alpha",
+ "title": "Ranks and z-scores",
+ "minutes": 14,
+ "objectives": [
+  "Normalise a signal across stocks on each date.",
+  "Choose between rank scores and clipped z-scores."
+ ],
+ "skills": [
+  "al-signal"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One takeover",
+   "prose": "Eight shares' momentum on one date. Hale received a takeover bid and is up 180%. A book weights each share by its momentum minus the average of the eight: positive means long, negative means short.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Share",
+      "Momentum"
+     ],
+     "rows": [
+      [
+       "Avon",
+       "+12%"
+      ],
+      [
+       "Brent",
+       "+8%"
+      ],
+      [
+       "Clyde",
+       "+5%"
+      ],
+      [
+       "Hale",
+       "+180%"
+      ],
+      [
+       "Dee",
+       "+2%"
+      ],
+      [
+       "Esk",
+       "−3%"
+      ],
+      [
+       "Forth",
+       "−6%"
+      ],
+      [
+       "Glen",
+       "−10%"
+      ]
+     ],
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "Tap every share the book holds long.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r3"
+    ],
+    "countWord": "shares",
+    "wrong": [
+     {
+      "id": "positive",
+      "set": [
+       "r0",
+       "r1",
+       "r2",
+       "r3",
+       "r4"
+      ]
+     },
+     {
+      "id": "top",
+      "set": [
+       "r0",
+       "r1",
+       "r2",
+       "r3"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out the average of the eight first."
+    },
+    {
+     "rung": "point",
+     "text": "The eight add to 188%, so the average is 23.5%.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only one share is above 23.5%."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Hale alone is long; the other seven are short.",
+    "generic": "Not quite. Long means above the average of 23.5%.",
+    "byKey": {
+     "positive": "You picked every positive momentum. The book is long only what beats the average, 23.5%.",
+     "top": "You took the top half. With raw weights the dividing line is the average, 23.5%, not the median.",
+     "r0": "Avon's 12% is below the average of 23.5%, so it is short."
+    }
+   },
+   "explain": {
+    "text": "The average is $188/8 = 23.5\\%$, and only Hale beats it. So all the long money sits in one takeover target, and Avon, a genuine winner, is short. One outlier has taken over the signal.",
+    "canvas": {
+     "highlight": [
+      "r3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two ways to tame it",
+   "prose": "The dots are the eight shares' momentum in %. Drag Hale. The caption shows two scores computed across the eight shares on this date: a **rank score** and a **z-score**.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": -20,
+     "max": 200,
+     "step": 20,
+     "labels": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "o0",
+       "x": 12
+      },
+      {
+       "id": "o1",
+       "x": 8
+      },
+      {
+       "id": "o2",
+       "x": 5
+      },
+      {
+       "id": "o3",
+       "x": 2
+      },
+      {
+       "id": "o4",
+       "x": -3
+      },
+      {
+       "id": "o5",
+       "x": -6
+      },
+      {
+       "id": "o6",
+       "x": -10
+      },
+      {
+       "id": "H",
+       "x": 180,
+       "label": "Hale",
+       "drag": true
+      }
+     ]
+    },
+    "derive": {
+     "let": {
+      "mu": "(8 + H.x) / 8",
+      "sd": "sqrt((382 + H.x * H.x - 8 * mu * mu) / 7)"
+     },
+     "caption": "Hale at {{fixed(H.x, 0)}}%: rank score {{fixed(((H.x > 12) + (H.x > 8) + (H.x > 5) + (H.x > 2) + (H.x > -3) + (H.x > -6) + (H.x > -10)) / 7 - 0.5, 3)}}, z-score {{fixed((H.x - mu) / sd, 2)}}"
+    }
+   },
+   "question": "Drag Hale from 180% down to 20%. What happens to its two scores?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "The rank score stays at 0.5; the z-score falls from 2.46 to 1.67",
+      "correct": true
+     },
+     {
+      "id": "rank",
+      "text": "Both fall in step",
+      "why": "Drag again and watch the rank score: it moves only when Hale passes another share."
+     },
+     {
+      "id": "zfix",
+      "text": "The z-score stays put; the rank score falls",
+      "why": "It is the other way round. The rank only knows the order, which does not change above 12%."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption at 180% and at 20%."
+    },
+    {
+     "rung": "point",
+     "text": "Is Hale still the top share at 20%?",
+     "highlight": [
+      "H"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Above 12% Hale stays first, so its rank score stays 0.5; the z-score depends on the distance."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The rank knows only the order; the z-score knows the distance.",
+    "generic": "Not quite. Drag Hale and read both numbers in the caption."
+   },
+   "explain": {
+    "text": "Hale stays first anywhere above Avon's 12%, so its rank score never moves. The z-score measures distance from the average in standard deviations, so it falls as Hale comes back. Ranks ignore how big a gap is; z-scores keep it.",
+    "canvas": {
+     "points": {
+      "H": {
+       "x": 20
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Scores from −0.5 to 0.5",
+   "prose": "Our **rank score** on each date: rank the $n$ shares present from 1 (lowest) to $n$, then $$\\text{score} = \\frac{\\text{rank} - 1}{n - 1} - 0.5.$$ It is fin-ml's percentile rank, moved to centre on 0. The lowest share scores −0.5 and the highest 0.5.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Share",
+      "Momentum"
+     ],
+     "rows": [
+      [
+       "Avon",
+       "+12%"
+      ],
+      [
+       "Brent",
+       "+8%"
+      ],
+      [
+       "Clyde",
+       "+5%"
+      ],
+      [
+       "Hale",
+       "+180%"
+      ],
+      [
+       "Dee",
+       "+2%"
+      ],
+      [
+       "Esk",
+       "−3%"
+      ],
+      [
+       "Forth",
+       "−6%"
+      ],
+      [
+       "Glen",
+       "−10%"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in four of the rank scores, to three places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Share",
+     "Rank score"
+    ],
+    "rows": [
+     [
+      "Glen",
+      {
+       "edit": true,
+       "answer": -0.5,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Dee",
+      {
+       "edit": true,
+       "answer": -0.071,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Avon",
+      {
+       "edit": true,
+       "answer": 0.357,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Hale",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Order the eight from lowest: Glen is rank 1."
+    },
+    {
+     "rung": "point",
+     "text": "Dee is rank 4 and Avon rank 7, so the step is $1/7$.",
+     "highlight": [
+      "r0",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Dee: $3/7 - 0.5 = -0.071$. Avon: $6/7 - 0.5 = 0.357$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The eight scores step by $1/7$ from −0.5 to 0.5.",
+    "generic": "Not quite. Rank from lowest, subtract 1, divide by 7, subtract 0.5."
+   },
+   "explain": {
+    "text": "Sorted: Glen, Forth, Esk, Dee, Clyde, Brent, Avon, Hale, ranks 1 to 8. The scores are $(r - 1)/7 - 0.5$: −0.5, −0.357, −0.214, −0.071, 0.071, 0.214, 0.357, 0.5. Hale gets 0.5 whether it rose 13% or 180%."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A tie and a gap",
+   "prose": "Another date. Kerr is not listed yet, so its momentum is NaN. Jura and Lune tie: tied shares share the average of the ranks they cover. $n$ counts the shares present.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Share",
+      "Momentum"
+     ],
+     "rows": [
+      [
+       "Ives",
+       "0.10"
+      ],
+      [
+       "Jura",
+       "0.04"
+      ],
+      [
+       "Kerr",
+       "NaN"
+      ],
+      [
+       "Lune",
+       "0.04"
+      ],
+      [
+       "Mull",
+       "−0.02"
+      ],
+      [
+       "Nith",
+       "0.07"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in every rank score. Type NaN where there is none.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Share",
+     "Rank score"
+    ],
+    "rows": [
+     [
+      "Ives",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Jura",
+      {
+       "edit": true,
+       "answer": -0.125,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Kerr",
+      {
+       "edit": true,
+       "answer": "NaN",
+       "accept": [
+        "nan",
+        "none",
+        "-",
+        "blank"
+       ]
+      }
+     ],
+     [
+      "Lune",
+      {
+       "edit": true,
+       "answer": -0.125,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Mull",
+      {
+       "edit": true,
+       "answer": -0.5,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Nith",
+      {
+       "edit": true,
+       "answer": 0.25,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Five shares are present, so $n = 5$ and the step is $1/4$."
+    },
+    {
+     "rung": "point",
+     "text": "Jura and Lune cover ranks 2 and 3, so each gets 2.5.",
+     "highlight": [
+      "r1",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Jura and Lune: $1.5/4 - 0.5 = -0.125$. Nith is rank 4: $0.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The tie shares rank 2.5, and Kerr stays NaN.",
+    "generic": "Not quite. Use $n = 5$, average the tied ranks, and leave Kerr out."
+   },
+   "explain": {
+    "text": "Without Kerr, $n = 5$: Mull 1, Jura and Lune 2.5 each, Nith 4, Ives 5. The scores are $(r - 1)/4 - 0.5$. Averaging ties keeps the date's scores summing to 0."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Ranks in code",
+   "prose": "The same rule on a date-by-share frame, one row per date. `rank(axis=1)` ranks across the columns of each row and averages ties. A date with one share gives $0/0$, so we set its score to 0, the middle.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Row of `signal`",
+      "Row of `cs_rank(signal)`"
+     ],
+     "rows": [
+      [
+       "0.10, 0.04, NaN, 0.04, −0.02, 0.07",
+       "0.5, −0.125, NaN, −0.125, −0.5, 0.25"
+      ],
+      [
+       "3.0, NaN, NaN",
+       "0.0, NaN, NaN"
+      ],
+      [
+       "2.0, 2.0, 2.0",
+       "0.0, 0.0, 0.0"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `cs_rank(signal)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef momentum_12_1(ret, lookback=252, skip=21, min_periods=200):\n    total = np.log1p(ret).rolling(lookback - skip, min_periods=min_periods).sum()\n    return total.shift(skip).where(ret.notna())\n",
+    "starter": "import pandas as pd\n\ndef cs_rank(signal):\n    r = signal.rank(axis=1)              # 1..n across shares, ties averaged, NaN kept\n    n = signal.notna().sum(axis=1)       # shares present on each date\n    score = ...                          # (r - 1) / (n - 1) - 0.5, row by row\n    score.loc[n == 1] = 0.0              # one share: the middle\n    return score.where(signal.notna())\n",
+    "solution": "import pandas as pd\n\ndef cs_rank(signal):\n    r = signal.rank(axis=1)              # 1..n across shares, ties averaged, NaN kept\n    n = signal.notna().sum(axis=1)       # shares present on each date\n    score = r.sub(1).div(n - 1, axis=0) - 0.5\n    score.loc[n == 1] = 0.0              # one share: the middle\n    return score.where(signal.notna())\n",
+    "examples": [
+     {
+      "setup": "s = pd.DataFrame([[0.10, 0.04, np.nan, 0.04, -0.02, 0.07]], columns=list('IJKLMN'))",
+      "call": "np.round(cs_rank(s).iloc[0], 6).fillna(99).tolist()",
+      "expect": "[0.5, -0.125, 99.0, -0.125, -0.5, 0.25]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "s = pd.DataFrame([[0.10, 0.04, np.nan, 0.04, -0.02, 0.07]], columns=list('IJKLMN'))",
+      "call": "np.round(cs_rank(s).iloc[0], 6).fillna(99).tolist()",
+      "expect": "[0.5, -0.125, 99.0, -0.125, -0.5, 0.25]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[3.0, np.nan, np.nan], [2.0, 2.0, 2.0], [np.nan, np.nan, np.nan], [1.0, 5.0, 3.0]])",
+      "call": "np.round(cs_rank(s), 6).fillna(99).values.tolist()",
+      "expect": "[[0.0, 99.0, 99.0], [0.0, 0.0, 0.0], [99.0, 99.0, 99.0], [-0.5, 0.5, 0.0]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[12, 8, 5, 180, 2, -3, -6, -10]], dtype=float)",
+      "call": "np.round(cs_rank(s).iloc[0], 6).tolist()",
+      "expect": "[0.357143, 0.214286, 0.071429, 0.5, -0.071429, -0.214286, -0.357143, -0.5]",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 300, 5); m = momentum_12_1(p['ret'], 100, 21, 60)",
+      "call": "(round(float(cs_rank(m).max().max()), 6), round(float(cs_rank(m).min().min()), 6))",
+      "expect": "(0.5, -0.5)",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 300, 5); m = momentum_12_1(p['ret'], 100, 21, 60)",
+      "call": "round(float(cs_rank(m).sum(axis=1).abs().max()), 9)",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "p = make_panel(30, 300, 5); m = momentum_12_1(p['ret'], 100, 21, 60)",
+      "call": "bool((cs_rank(m).isna() == m.isna()).all().all())",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: the lesson's dates, a one-share date, a date of equal values, an empty date, and checks on momentum from `make_panel(30, 300, 5)`, already defined, with `momentum_12_1`. NaN prints as 99 in the tests. The first run loads NumPy and pandas, which takes about 15 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`r` and `n` are already per row; divide each row by its own $n - 1$."
+    },
+    {
+     "rung": "point",
+     "text": "`r.sub(1).div(n - 1, axis=0)` divides row by row.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`score = r.sub(1).div(n - 1, axis=0) - 0.5`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Every date runs from −0.5 to 0.5 and sums to 0.",
+    "generic": "Some tests failed. Divide each row by its own $n - 1$, with `axis=0`."
+   },
+   "explain": {
+    "text": "`div(n - 1, axis=0)` lines the Series `n` up with the rows, so each date uses its own count. A date of equal values ties every share at the middle rank, so all score 0. Scores sum to 0 on every date, which level 4's long-short weights rely on."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Clipped z-scores in code",
+   "prose": "The z-score subtracts the date's mean across shares and divides by its sample sd (`ddof=1`). A date with one share, or with every value equal, has no sd: NaN. Then we clip at $\\pm 3$ so one extreme share cannot dominate.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Row of `signal`",
+      "Row of `cs_zscore(signal)`"
+     ],
+     "rows": [
+      [
+       "1, 2, 3",
+       "−1, 0, 1"
+      ],
+      [
+       "eleven 0s and one 1",
+       "−0.289 eleven times, then 3 (clipped from 3.175)"
+      ],
+      [
+       "2, 2, 2",
+       "NaN, NaN, NaN"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `cs_zscore(signal, clip=3.0)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef momentum_12_1(ret, lookback=252, skip=21, min_periods=200):\n    total = np.log1p(ret).rolling(lookback - skip, min_periods=min_periods).sum()\n    return total.shift(skip).where(ret.notna())\n",
+    "starter": "import pandas as pd\n\ndef cs_zscore(signal, clip=3.0):\n    mean = signal.mean(axis=1)              # across shares, NaN skipped\n    sd = signal.std(axis=1, ddof=1)         # NaN with one share\n    sd = sd.where(sd > 0)                   # all equal: undefined, not infinite\n    z = ...                                 # (x - mean) / sd, row by row\n    return z.clip(-clip, clip)\n",
+    "solution": "import pandas as pd\n\ndef cs_zscore(signal, clip=3.0):\n    mean = signal.mean(axis=1)              # across shares, NaN skipped\n    sd = signal.std(axis=1, ddof=1)         # NaN with one share\n    sd = sd.where(sd > 0)                   # all equal: undefined, not infinite\n    z = signal.sub(mean, axis=0).div(sd, axis=0)\n    return z.clip(-clip, clip)\n",
+    "examples": [
+     {
+      "setup": "s = pd.DataFrame([[1.0, 2.0, 3.0], [4.0, 0.0, 2.0]])",
+      "call": "np.round(cs_zscore(s), 6).values.tolist()",
+      "expect": "[[-1.0, 0.0, 1.0], [1.0, -1.0, 0.0]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "s = pd.DataFrame([[1.0, 2.0, 3.0], [4.0, 0.0, 2.0]])",
+      "call": "np.round(cs_zscore(s), 6).values.tolist()",
+      "expect": "[[-1.0, 0.0, 1.0], [1.0, -1.0, 0.0]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[0.0] * 11 + [1.0]])",
+      "call": "np.round(cs_zscore(s).iloc[0], 6).tolist()",
+      "expect": "[-0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, 3.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[0.0] * 11 + [1.0]])",
+      "call": "np.round(cs_zscore(s, clip=10).iloc[0], 6).tolist()",
+      "expect": "[-0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, -0.288675, 3.175426]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[2.0, 2.0, 2.0], [5.0, np.nan, np.nan], [1.0, np.nan, 3.0]])",
+      "call": "cs_zscore(s).isna().values.tolist()",
+      "expect": "[[True, True, True], [True, True, True], [False, True, False]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[12, 8, 5, 180, 2, -3, -6, -10]], dtype=float)",
+      "call": "np.round(cs_zscore(s).iloc[0], 6).tolist()",
+      "expect": "[-0.18066, -0.243499, -0.290628, 2.458553, -0.337757, -0.416305, -0.463433, -0.526272]",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 300, 5); z = cs_zscore(momentum_12_1(p['ret'], 100, 21, 60), clip=100)",
+      "call": "(round(float(z.mean(axis=1).abs().max()), 9), round(float(z.std(axis=1).max()), 6))",
+      "expect": "(0.0, 1.0)",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: hand rows, a row that needs clipping, a wider clip, rows with one share or equal values, the takeover date, and mean 0 and sd 1 on `make_panel(30, 300, 5)` momentum. The first run loads NumPy and pandas, which takes about 15 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the row mean, then divide by the row sd."
+    },
+    {
+     "rung": "point",
+     "text": "Both `mean` and `sd` are Series indexed by date: use `axis=0`.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`z = signal.sub(mean, axis=0).div(sd, axis=0)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Before clipping every date has mean 0 and sd 1.",
+    "generic": "Some tests failed. Subtract and divide row by row with `axis=0`."
+   },
+   "explain": {
+    "text": "With eleven 0s and one 1, the 1 sits 3.175 sds above the mean and is clipped to 3. With eight shares no z can pass $7/\\sqrt 8 = 2.47$, so Hale's 2.46 is near the most eight shares allow. Clipping matters on wide universes."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Normalised the wrong way",
+   "prose": "A colleague normalises the momentum frame in one line and reports a lovely flat chart of scores between −3 and 3.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Notebook",
+     "lines": [
+      ">>> z = (mom - mom.mean()) / mom.std()",
+      ">>> z.loc['2020-03-02', ['S001', 'S002', 'S003']]",
+      "S001    0.41",
+      "S002   -1.37",
+      "S003    2.08"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is wrong with `(mom - mom.mean()) / mom.std()`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "time",
+      "text": "`mean()` runs down each column, so each share is compared with its own whole history, future dates included",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: pandas works across the shares by default",
+      "why": "On a DataFrame `mean()` averages each column, one share over all dates. Across shares needs `axis=1`."
+     },
+     {
+      "id": "trail",
+      "text": "Only the look-ahead; a trailing mean would make it right",
+      "why": "A trailing mean fixes the look-ahead, but it still asks whether the share is high for itself, not against other shares today."
+     },
+     {
+      "id": "pool",
+      "text": "It should z-score the whole panel at once, every date and share together",
+      "why": "Pooling mixes dates: after a rally year nearly every share in that year scores high."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which axis does `DataFrame.mean()` use by default?"
+    },
+    {
+     "rung": "point",
+     "text": "The default is `axis=0`: down the rows, so one value per column, per share.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each share's mean uses all its dates, 2023 included, and ignores what other shares did that day."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Two errors: a look-ahead and the wrong comparison.",
+    "generic": "Not quite. Check which axis the mean and sd run along.",
+    "byKey": {
+     "fine": "You assumed pandas works across columns. The default is down each column: a time-series normalisation.",
+     "trail": "You fixed only the look-ahead. The comparison is still a share against itself, not against the other shares on the date."
+    }
+   },
+   "explain": {
+    "text": "`mom.mean()` gives one number per share, averaged over every date, future ones too. So the 2020 score knows the 2023 values, and it compares a share with itself. The cross-sectional version is `cs_zscore`, which works along `axis=1`.",
+    "canvas": {
+     "highlight": [
+      "l1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Does ranking change the IC?",
+   "prose": "Level 3 measures a signal by its rank IC: on each date, the correlation between the ranks of the signal and the ranks of the next month's returns. Raw momentum has a mean rank IC of 0.0325 on our panel.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "raw",
+       "label": "Raw"
+      },
+      {
+       "id": "rank",
+       "label": "cs_rank"
+      },
+      {
+       "id": "z",
+       "label": "cs_zscore"
+      }
+     ],
+     "yLabel": "Mean monthly rank IC",
+     "showValues": true,
+     "decimals": 4,
+     "yMin": 0,
+     "yMax": 0.04,
+     "height": 190
+    },
+    "state": {
+     "values": {
+      "raw": 0.0325,
+      "rank": 0,
+      "z": 0
+     },
+     "caption": "Predict, then see the explanation"
+    }
+   },
+   "question": "What is the rank IC of `cs_rank(momentum)`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "Exactly 0.0325: ranking keeps the order, and the rank IC only reads the order",
+      "correct": true
+     },
+     {
+      "id": "up",
+      "text": "Higher, since the outliers are tamed",
+      "why": "Ranks of ranks are the same ranks. The rank IC never saw the outliers' size."
+     },
+     {
+      "id": "down",
+      "text": "Lower, since ranking throws away the size of the gaps",
+      "why": "The rank IC already ignored the gaps, so nothing it uses is lost."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does ranking the signal do to its order?"
+    },
+    {
+     "rung": "point",
+     "text": "Rank a list, then rank the ranks.",
+     "highlight": [
+      "rank"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The order is unchanged, so the rank IC is unchanged."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Any transform that keeps the order keeps the rank IC.",
+    "generic": "Not quite. The rank IC uses only the order of the signal."
+   },
+   "explain": {
+    "text": "Ranking and z-scoring keep each date's order, so the rank IC stays 0.0325 for both. Clipping can tie shares at $\\pm 3$, but here it touched 690 of 191,497 values and the IC still rounds to 0.0325. The choice of normalisation matters for weights, not for the rank IC.",
+    "canvas": {
+     "values": {
+      "rank": 0.0325,
+      "z": 0.0325
+     },
+     "caption": "All three: 0.0325"
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rule",
+   "prose": "On each date, across the $n$ shares present: $$\\text{rank score} = \\frac{\\text{rank} - 1}{n - 1} - 0.5, \\qquad z = \\operatorname{clip}\\left(\\frac{x - \\bar x}{s}, -3, 3\\right).$$ Ranks are bounded and ignore gap sizes; z-scores keep gaps and need clipping.",
+   "question": "A signal's large values are real information, such as a genuine earnings surprise. Which do we use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "z",
+      "text": "A clipped z-score: it keeps the gap sizes and caps the extremes",
+      "correct": true
+     },
+     {
+      "id": "rank",
+      "text": "A rank score, always",
+      "why": "Ranks throw away how far apart shares are. When the size carries information, that is a loss."
+     },
+     {
+      "id": "raw",
+      "text": "The raw signal",
+      "why": "Raw values change scale from date to date, and one extreme value can take the whole book."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Keep the sizes, cap the tail.",
+    "generic": "Not quite. Which one keeps information about gap sizes?"
+   },
+   "explain": {
+    "text": "A rank treats a 5% surprise and a 50% surprise alike if they are neighbours. A clipped z-score keeps that difference but stops one share passing 3. Momentum, where outliers are often takeovers, is usually ranked."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A takeover in a 200-share book",
+   "prose": "Our momentum book ranks 200 shares and weights the long side in proportion to the positive rank scores. A takeover target tops the ranking at +180%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Weighting",
+      "Takeover target's share of the long side"
+     ],
+     "rows": [
+      [
+       "Raw, demeaned (8 shares)",
+       "100%"
+      ],
+      [
+       "Rank scores (8 shares)",
+       "43.75%"
+      ],
+      [
+       "Rank scores (200 shares)",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What fraction of the long side does the takeover target hold in the 200-share book?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0199,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "%",
+    "accept": "1.99%, from $0.5 / (5000/199)$",
+    "wrong": [
+     {
+      "id": "equal",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.005,
+      "tol": {
+       "abs": 0.0003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The top share scores 0.5. Add up all positive scores."
+    },
+    {
+     "rung": "point",
+     "text": "Positive scores are $(j + 0.5)/199$ for $j = 0, \\dots, 99$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "They sum to $5000/199 = 25.13$, so the share is $0.5/25.13$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. About 1.99%, the same as any top-ranked share.",
+    "generic": "Not quite. Divide 0.5 by the sum of the positive scores.",
+    "byKey": {
+     "equal": "You gave every long share the same weight. Rank weights give the top share about twice the average.",
+     "half": "You divided 0.5 by the 100 long shares. Divide by the sum of their scores, 25.13."
+    }
+   },
+   "explain": {
+    "text": "The positive scores run from $0.5/199$ to $99.5/199$ and sum to $5000/199 = 25.13$. The top share holds $0.5/25.13 = 1.99\\%$ of the long side, whatever its return. Factor models normalise each signal across shares like this before combining them."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Raw signals change scale by date and let one outlier, such as a takeover, take the whole book.",
+   "The rank score $(r - 1)/(n - 1) - 0.5$ runs from −0.5 to 0.5 on every date; the z-score keeps gap sizes and is clipped at ±3.",
+   "Both keep each date's order, so the rank IC is unchanged; they change the weights, not the measurement."
+  ],
+  "formula": {
+   "name": "Rank score",
+   "tex": "\\text{score}_{i,t} = \\dfrac{\\operatorname{rank}_t(x_{i,t}) - 1}{n_t - 1} - 0.5",
+   "note": "Ties averaged, NaN excluded, a lone share scores 0; z-scores use `ddof=1` and NaN when undefined."
+  },
+  "trap": "`(mom - mom.mean()) / mom.std()` normalises each share over its own whole history: a look-ahead and the wrong comparison."
+ },
+ "quiz": [
+  {
+   "id": "q1",
+   "difficulty": 2,
+   "prose": "On one date only one share has a momentum value.",
+   "question": "What do `cs_rank` and `cs_zscore` give it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Rank score 0; z-score NaN",
+      "correct": true
+     },
+     {
+      "id": "both0",
+      "text": "0 for both",
+      "why": "The z-score divides by a sample sd, which needs two shares. Our rule makes it NaN."
+     },
+     {
+      "id": "both",
+      "text": "NaN for both",
+      "why": "The rank score of a lone share is $0/0$, and our rule sets it to 0, the middle."
+     },
+     {
+      "id": "half",
+      "text": "Rank score 0.5; z-score 0",
+      "why": "0.5 is fin-ml's centre on its 0-to-1 scale. Ours is centred on 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. A lone share sits in the middle of the ranking, and its z-score is undefined.",
+    "generic": "Not quite. Try both formulas with $n = 1$."
+   },
+   "explain": {
+    "text": "With $n = 1$ the rank score is $0/0$, which we set to 0. The sample sd of one value is undefined, so the z-score is NaN."
+   }
+  },
+  {
+   "id": "q2",
+   "difficulty": 2,
+   "prose": "Five shares present. Their momentum: 0.3, 0.1, 0.5, 0.1, 0.2.",
+   "question": "What is the rank score of a share with 0.1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.375,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "−0.375",
+    "wrong": [
+     {
+      "id": "notie",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "notie2",
+      "value": -0.25,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. The tie shares ranks 1 and 2: rank 1.5, score $0.5/4 - 0.5$.",
+    "generic": "Not quite. Average the tied ranks first.",
+    "byKey": {
+     "notie": "You gave both tied shares rank 1. They share ranks 1 and 2, so each gets 1.5.",
+     "notie2": "You gave one of them rank 2. Ties take the average, 1.5."
+    }
+   },
+   "explain": {
+    "text": "The two 0.1s cover ranks 1 and 2, so each takes 1.5. The score is $(1.5 - 1)/4 - 0.5 = -0.375$."
+   }
+  },
+  {
+   "id": "q3",
+   "difficulty": 3,
+   "prose": "A colleague ranks momentum with `mom.stack().rank(pct=True)`: every date and share in one ranking.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dates",
+      "text": "Dates mix: after a rally year, most shares that year rank high, so the book's balance swings with the market",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing, it is a bigger sample",
+      "why": "A bigger pool is the problem. Shares should compete only with others on the same date."
+     },
+     {
+      "id": "slow",
+      "text": "It is only slower",
+      "why": "The speed is fine. The comparison is wrong."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. A cross-sectional rank stays within each date.",
+    "generic": "Not quite. Ask which shares each value competes with."
+   },
+   "explain": {
+    "text": "Pooling compares a share in 2021 with shares in 2023. In a strong year most scores are high, so the long side swells. `rank(axis=1)` keeps the competition inside each date."
+   }
+  },
+  {
+   "id": "q4",
+   "difficulty": 3,
+   "prose": "Eight shares on a date. Seven have momentum 0 and one has 1.",
+   "question": "What is the outlier's z-score before clipping?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.4749,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "2.475, from $7/\\sqrt 8$",
+    "wrong": [
+     {
+      "id": "pop",
+      "value": 2.6458,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $7/\\sqrt 8 = 2.47$: below the clip.",
+    "generic": "Not quite. The mean is $1/8$ and the sample sd uses $n - 1 = 7$.",
+    "byKey": {
+     "pop": "You used the population sd, dividing by 8. Our z-score uses `ddof=1`."
+    }
+   },
+   "explain": {
+    "text": "The mean is $0.125$. The sample sd is $\\sqrt{(7 \\times 0.125^2 + 0.875^2)/7} = 0.3536$. So $z = 0.875/0.3536 = 2.47$; with eight shares no clip at 3 can bite."
+   }
+  }
+ ]
+}

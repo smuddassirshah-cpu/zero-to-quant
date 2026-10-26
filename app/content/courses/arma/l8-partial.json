@@ -1,0 +1,1575 @@
+{
+ "id": "l8-partial",
+ "course": "arma",
+ "title": "Partial autocorrelation",
+ "minutes": 14,
+ "objectives": [
+  "Compute the partial autocorrelation by regression and read a PACF",
+  "Choose an AR order from the PACF, AIC or BIC, and a residual check"
+ ],
+ "skills": [
+  "ts-models",
+  "ts-acf"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "How many lags does each use?",
+   "prose": "Two seeded series of 500 days. One is the AR(1) of lesson 7, $x_t = 0.6\\,x_{t-1} + \\varepsilon_t$. The other is built from two lags: $x_t = 0.5\\,x_{t-1} + 0.3\\,x_{t-2} + \\varepsilon_t$. Here are their correlograms.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "$\\hat\\rho_k$",
+     "height": 240,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877
+      }
+     ],
+     "yMin": -0.1,
+     "yMax": 0.7,
+     "groups": [
+      {
+       "id": "a",
+       "label": "Series A"
+      },
+      {
+       "id": "b",
+       "label": "Series B"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "a": {
+       "1": 0.6314,
+       "2": 0.3822,
+       "3": 0.292,
+       "4": 0.1997,
+       "5": 0.123,
+       "6": 0.0411,
+       "7": 0.0109,
+       "8": 0.0278,
+       "9": -0.0128,
+       "10": -0.0031
+      },
+      "b": {
+       "1": 0.6079,
+       "2": 0.5264,
+       "3": 0.4165,
+       "4": 0.2886,
+       "5": 0.2406,
+       "6": 0.2236,
+       "7": 0.1692,
+       "8": 0.1282,
+       "9": 0.074,
+       "10": 0.0222
+      }
+     }
+    }
+   },
+   "question": "Can the correlograms tell you which series uses two lags?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "Not reliably: both start near 0.6 and decay, because memory passes on from lag to lag",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "Yes: A uses two lags, since it falls faster",
+      "why": "A is the AR(1). Fast decay does not count lags; both curves decay whatever the order."
+     },
+     {
+      "id": "b",
+      "text": "Yes: B uses two lags, since its bars stay higher",
+      "why": "B is the two-lag series, but a single-lag AR(1) with a larger $\\phi$ would also stay higher. Height does not count lags."
+     },
+     {
+      "id": "two",
+      "text": "Yes: count the bars outside the band",
+      "why": "A has 5 bars outside and B has 8, yet they use 1 and 2 lags. An AR(1) puts every lag outside for a while."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does an AR(1) have autocorrelation only at lag 1?"
+    },
+    {
+     "rung": "point",
+     "text": "Lag 2 of an AR(1) is $\\phi^2$: memory passed on twice.",
+     "highlight": [
+      "x2-a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Every AR model passes its memory along, so its ACF decays over many lags. The ACF cannot count the lags the model uses."
+    }
+   ],
+   "feedback": {
+    "correct": "That's it. The ACF cannot count lags.",
+    "generic": "Not quite right. Recall that an AR(1)'s ACF is $\\phi^k$, non-zero at every lag."
+   },
+   "explain": {
+    "text": "An AR(1)'s lag-2 autocorrelation is $\\phi^2$, memory relayed through lag 1, so both correlograms decay smoothly. To count lags we need the link at lag $k$ *after* the shorter lags are accounted for. That is the next screen."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Add one lag at a time",
+   "prose": "Regress today on the last $k$ days at once: $x_t = a + b_1 x_{t-1} + \\dots + b_k x_{t-k} + e_t$. The table shows the fitted $b_j$ for both series. Slide $k$ and watch the newest coefficient each time.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lag $j$",
+      "A: coefficient",
+      "B: coefficient"
+     ],
+     "rows": [
+      [
+       "1",
+       "—",
+       "—"
+      ],
+      [
+       "2",
+       "—",
+       "—"
+      ],
+      [
+       "3",
+       "—",
+       "—"
+      ],
+      [
+       "4",
+       "—",
+       "—"
+      ]
+     ],
+     "params": {
+      "C1": [
+       [
+        0.631
+       ],
+       [
+        0.647,
+        -0.027
+       ],
+       [
+        0.649,
+        -0.093,
+        0.103
+       ],
+       [
+        0.653,
+        -0.095,
+        0.124,
+        -0.033
+       ]
+      ],
+      "C2": [
+       [
+        0.615
+       ],
+       [
+        0.46,
+        0.252
+       ],
+       [
+        0.451,
+        0.233,
+        0.041
+       ],
+       [
+        0.453,
+        0.253,
+        0.073,
+        -0.074
+       ]
+      ]
+     }
+    },
+    "state": {
+     "values": {
+      "r0c1": "0.631",
+      "r0c2": "0.615",
+      "r1c1": "—",
+      "r1c2": "—",
+      "r2c1": "—",
+      "r2c2": "—",
+      "r3c1": "—",
+      "r3c2": "—"
+     },
+     "params": {
+      "k": 1
+     }
+    },
+    "derive": {
+     "values.r0c1": "k >= 1 ? fixed(C1[k - 1][0], 3) : '—'",
+     "values.r0c2": "k >= 1 ? fixed(C2[k - 1][0], 3) : '—'",
+     "values.r1c1": "k >= 2 ? fixed(C1[k - 1][1], 3) : '—'",
+     "values.r1c2": "k >= 2 ? fixed(C2[k - 1][1], 3) : '—'",
+     "values.r2c1": "k >= 3 ? fixed(C1[k - 1][2], 3) : '—'",
+     "values.r2c2": "k >= 3 ? fixed(C2[k - 1][2], 3) : '—'",
+     "values.r3c1": "k >= 4 ? fixed(C1[k - 1][3], 3) : '—'",
+     "values.r3c2": "k >= 4 ? fixed(C2[k - 1][3], 3) : '—'",
+     "caption": "Regression of $x_t$ on its last {{k}} values; the bottom filled row is the newest lag"
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "start": 1,
+      "label": "Lags in the regression"
+     }
+    ]
+   },
+   "question": "Set $k = 2$. What is the lag-2 coefficient $b_2$ for each series?",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Series",
+     "$b_2$ with $k = 2$"
+    ],
+    "rows": [
+     [
+      "A",
+      {
+       "edit": true,
+       "answer": -0.027,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "B",
+      {
+       "edit": true,
+       "answer": 0.252,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to 2, then read the second row."
+    },
+    {
+     "rung": "point",
+     "text": "Row 2 holds $b_2$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A: −0.027. B: 0.252."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A's lag 2 adds nothing; B's adds 0.25.",
+    "generic": "Not quite right. Set the slider to 2 and read row 2 of each column."
+   },
+   "explain": {
+    "text": "Once yesterday is in the regression, A's lag 2 adds almost nothing: $−0.027$. B's adds 0.252, near its true 0.3. At $k = 3$ both newest coefficients are small. The newest coefficient counts the lags.",
+    "canvas": {
+     "values": {
+      "r0c1": "0.647",
+      "r1c1": "-0.027",
+      "r0c2": "0.460",
+      "r1c2": "0.252"
+     },
+     "params": {
+      "k": 2
+     },
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Partial autocorrelation",
+   "prose": "The newest coefficient in the regression on $k$ lags is the **partial autocorrelation** at lag $k$, $\\hat\\alpha_k$: the link with $k$ days ago once days 1 to $k - 1$ are accounted for. For series A at lag 2 the two measures disagree sharply.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Series A, lag 2",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Autocorrelation $\\hat\\rho_2$",
+       "0.382"
+      ],
+      [
+       "Partial autocorrelation $\\hat\\alpha_2$",
+       "−0.027"
+      ],
+      [
+       "$\\hat\\rho_1^2$",
+       "0.399"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why is $\\hat\\rho_2$ large when $\\hat\\alpha_2$ is near 0?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "relay",
+      "text": "Lag 2's correlation is lag 1's memory passed on twice; nothing new arrives at lag 2",
+      "correct": true
+     },
+     {
+      "id": "err",
+      "text": "One of the two numbers is miscalculated",
+      "why": "Both are right. They answer different questions: total link against new link."
+     },
+     {
+      "id": "neg",
+      "text": "Day $t - 2$ pushes today down",
+      "why": "$\\hat\\alpha_2 = −0.027$ is too small to read a sign into. Lag 2 adds nothing."
+     },
+     {
+      "id": "ar2",
+      "text": "A must really be an AR(2)",
+      "why": "If lag 2 mattered, $\\hat\\alpha_2$ would be clearly non-zero, as B's 0.25 is."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare $\\hat\\rho_2$ with $\\hat\\rho_1^2$."
+    },
+    {
+     "rung": "point",
+     "text": "The last row is $\\hat\\rho_1$ squared.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.631^2 = 0.399$, close to $\\hat\\rho_2 = 0.382$: the lag-2 link is lag 1 twice over."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The ACF counts relayed memory; the PACF only new memory.",
+    "generic": "Not quite right. Compare $\\hat\\rho_2$ with $\\hat\\rho_1^2$."
+   },
+   "explain": {
+    "text": "For an AR(1), $\\rho_2 = \\phi^2$: lag 1 relayed twice, and $\\hat\\rho_1^2 = 0.399$ is close to $\\hat\\rho_2 = 0.382$. The PACF strips that relay out, so it is near 0. statsmodels' `pacf(x, nlags)` uses the Yule-Walker equations; `method=\"ols\"` runs exactly your regressions.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The PACF of an AR(1)",
+   "prose": "`pacf(x, nlags=20)` for series A, the AR(1) with $\\phi = 0.6$, against the same band of $\\pm 0.088$. Lesson 7 says only lag 1 should carry new memory.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "$\\hat\\alpha_k$",
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877
+      }
+     ],
+     "yMin": -0.15,
+     "yMax": 0.7
+    },
+    "state": {
+     "values": {
+      "1": 0.6327,
+      "2": -0.0276,
+      "3": 0.1032,
+      "4": -0.0328,
+      "5": -0.0104,
+      "6": -0.0679,
+      "7": 0.0151,
+      "8": 0.0431,
+      "9": -0.0653,
+      "10": 0.054,
+      "11": -0.0097,
+      "12": 0.0477,
+      "13": -0.0287,
+      "14": 0.0503,
+      "15": 0.0844,
+      "16": -0.0148,
+      "17": 0.027,
+      "18": -0.007,
+      "19": -0.0531,
+      "20": -0.0317
+     }
+    }
+   },
+   "question": "Tap every lag whose bar is outside the band.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "x1",
+     "x3"
+    ],
+    "countWord": "lags",
+    "wrong": [
+     {
+      "id": "one",
+      "set": [
+       "x1"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One bar is obvious. Look closely at the small ones too."
+    },
+    {
+     "rung": "point",
+     "text": "Lag 3 reaches just above the band.",
+     "highlight": [
+      "x3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Lag 1 is 0.633 and lag 3 is 0.103, just outside 0.088. Everything else is inside."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Lag 1, and lag 3 just outside.",
+    "generic": "Not quite right. Compare every bar with the dashed line, including lag 3.",
+    "byKey": {
+     "one": "You found lag 1. Lag 3, at 0.103, is also just outside 0.088; hold on to it for the trap."
+    }
+   },
+   "explain": {
+    "text": "Lag 1 is 0.633; then the PACF drops into the band, which is how an AR(1) looks: it **cuts off** after lag 1. Lag 3 at 0.103 is just outside, one bar in twenty, as noise allows. We return to it in the trap.",
+    "canvas": {
+     "highlight": [
+      "x1",
+      "x3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The PACF of an AR(2)",
+   "prose": "Series B, `make_arma([0.5, 0.3], [], 500, 11)`, with its ACF and PACF side by side at lags 1 to 20. Its ACF decays slowly. Its PACF is 0.609, 0.25, then 0.043, −0.075, 0.023, ...",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "$\\hat\\rho_k$",
+     "height": 240,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877
+      }
+     ],
+     "yMin": -0.15,
+     "yMax": 0.7,
+     "groups": [
+      {
+       "id": "acf",
+       "label": "ACF"
+      },
+      {
+       "id": "pacf",
+       "label": "PACF"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "acf": {
+       "1": 0.6079,
+       "2": 0.5264,
+       "3": 0.4165,
+       "4": 0.2886,
+       "5": 0.2406,
+       "6": 0.2236,
+       "7": 0.1692,
+       "8": 0.1282,
+       "9": 0.074,
+       "10": 0.0222,
+       "11": -0.0599,
+       "12": -0.0282,
+       "13": -0.0624,
+       "14": -0.0656,
+       "15": -0.0627,
+       "16": -0.073,
+       "17": -0.0668,
+       "18": -0.0942,
+       "19": -0.1052,
+       "20": -0.0999
+      },
+      "pacf": {
+       "1": 0.6091,
+       "2": 0.2504,
+       "3": 0.0427,
+       "4": -0.0747,
+       "5": 0.0234,
+       "6": 0.0795,
+       "7": -0.0141,
+       "8": -0.0386,
+       "9": -0.0544,
+       "10": -0.0415,
+       "11": -0.1073,
+       "12": 0.0738,
+       "13": -0.0189,
+       "14": -0.0154,
+       "15": -0.0133,
+       "16": -0.0058,
+       "17": 0.0198,
+       "18": -0.0611,
+       "19": -0.0345,
+       "20": -0.0017
+      }
+     }
+    }
+   },
+   "question": "What AR order does the PACF point to?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "2",
+      "text": "2",
+      "correct": true
+     },
+     {
+      "id": "1",
+      "text": "1",
+      "why": "You stopped at the first bar. Lag 2 is 0.250, almost three times the band."
+     },
+     {
+      "id": "11",
+      "text": "11",
+      "why": "Lag 11 at −0.107 is one stray bar after nine inside the band. A real AR(11) would not leave lags 3 to 10 empty."
+     },
+     {
+      "id": "many",
+      "text": "Many: the ACF is outside the band for 8 lags",
+      "why": "You read the ACF. For an AR model it decays whatever the order; the PACF counts."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the PACF bars, not the ACF."
+    },
+    {
+     "rung": "point",
+     "text": "Lags 1 and 2 of the PACF.",
+     "highlight": [
+      "x1-pacf",
+      "x2-pacf"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The PACF is 0.609 and 0.250, then inside the band until a stray bar at lag 11: order 2."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The PACF cuts off after lag 2.",
+    "generic": "Not quite right. Find where the PACF drops into the band and stays there.",
+    "byKey": {
+     "many": "You counted ACF bars. An AR(p)'s ACF decays slowly; its PACF cuts off after $p$."
+    }
+   },
+   "explain": {
+    "text": "The rule: an AR($p$) has an ACF that decays and a PACF that cuts off after lag $p$. Here that is 2, and lag 11 is a stray, as 1 in 20 is. Level 3 meets the mirror image: an MA($q$) has an ACF that cuts off and a PACF that decays.",
+    "canvas": {
+     "highlight": [
+      "x1-pacf",
+      "x2-pacf"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The PACF in code",
+   "prose": "Your explore table, as a function: for each $k$, regress today on the last $k$ days and keep the newest coefficient. It reproduces statsmodels' `pacf(x, nlags, method=\"ols\")`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Lag",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "rows": [
+      [
+       "A, `method=\"ols\"`",
+       "0.6315",
+       "−0.0267",
+       "0.1029",
+       "−0.0327",
+       "−0.0129"
+      ],
+      [
+       "B, `method=\"ols\"`",
+       "0.6152",
+       "0.2517",
+       "0.0413",
+       "−0.0741",
+       "0.0259"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `pacf_by_regression(x, nlags)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n\ndef make_arma(phis, thetas, n, seed, burn=200):\n    \"\"\"Seeded ARMA: x_t = e_t + sum phi_i x_{t-i} + sum theta_j e_{t-j},\n    e_t ~ N(0, 1); the first burn values are dropped.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n + burn)\n    x = np.zeros(n + burn)\n    for t in range(n + burn):\n        v = e[t]\n        for i, ph in enumerate(phis, 1):\n            if t - i >= 0:\n                v += ph * x[t - i]\n        for j, th in enumerate(thetas, 1):\n            if t - j >= 0:\n                v += th * e[t - j]\n        x[t] = v\n    return x[burn:]\n",
+    "starter": "import numpy as np\n\ndef pacf_by_regression(x, nlags):\n    x = np.asarray(x, dtype=float)\n    n = len(x)\n    out = []\n    for k in range(1, nlags + 1):\n        y = x[k:]                                       # today, for t = k .. n - 1\n        lags = [x[k - j:n - j] for j in range(1, k + 1)]  # x_{t-1}, ..., x_{t-k}\n        X = np.column_stack([np.ones(n - k)] + lags)\n        b = np.linalg.lstsq(X, y, rcond=None)[0]\n        out.append(...)                                 # the newest coefficient\n    return np.array(out)\n",
+    "solution": "import numpy as np\n\ndef pacf_by_regression(x, nlags):\n    x = np.asarray(x, dtype=float)\n    n = len(x)\n    out = []\n    for k in range(1, nlags + 1):\n        y = x[k:]                                       # today, for t = k .. n - 1\n        lags = [x[k - j:n - j] for j in range(1, k + 1)]  # x_{t-1}, ..., x_{t-k}\n        X = np.column_stack([np.ones(n - k)] + lags)\n        b = np.linalg.lstsq(X, y, rcond=None)[0]\n        out.append(b[-1])                               # the newest coefficient\n    return np.array(out)\n",
+    "examples": [
+     {
+      "call": "np.round(pacf_by_regression(make_ar1(0.6, 500, 5), 3), 6).tolist()",
+      "expect": "[0.631481, -0.026736, 0.102905]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(pacf_by_regression(make_ar1(0.6, 500, 5), 5), 6).tolist()",
+      "expect": "[0.631481, -0.026736, 0.102905, -0.032731, -0.012853]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(pacf_by_regression(make_arma([0.5, 0.3], [], 500, 11), 6), 6).tolist()",
+      "expect": "[0.615156, 0.251673, 0.041272, -0.07407, 0.025859, 0.079727]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x = make_ar1(0.6, 500, 5)",
+      "call": "round(float(pacf_by_regression(x, 1)[0]), 6) == round(float(np.polyfit(x[:-1], x[1:], 1)[0]), 6)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "len(pacf_by_regression(make_wn(3), 10))",
+      "expect": "10",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.all(np.abs(pacf_by_regression(make_wn(3), 10)) < 0.0877))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests: seeded series from `make_ar1`, `make_arma` and `make_wn` (already defined) against statsmodels' `pacf(x, nlags, method=\"ols\")` to 6 places, and lag 1 against the lesson 7 slope. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`b` holds the constant first, then $b_1$ to $b_k$."
+    },
+    {
+     "rung": "point",
+     "text": "The first row is what series A must give.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`out.append(b[-1])`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Your PACF matches statsmodels' OLS method.",
+    "generic": "Some tests failed. Keep the last entry of `b`, the coefficient on $x_{t-k}$."
+   },
+   "explain": {
+    "text": "At lag 1 the regression is lesson 7's: $\\hat\\alpha_1$ is the AR(1) slope, 0.6315. The default Yule-Walker method gives nearly the same numbers (0.6327 at lag 1) from the ACF alone, without refitting."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A second opinion: AIC",
+   "prose": "Fit `ARIMA(x, order=(p, 0, 0))` to series B for $p = 0$ to 4 and read `.aic`, Akaike's criterion: $\\text{AIC} = 2k - 2\\ln L$, a fit score with a penalty for each parameter. Lower is better.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$p$",
+      "AIC",
+      "BIC"
+     ],
+     "rows": [
+      [
+       "0",
+       "1697.37",
+       "1705.79"
+      ],
+      [
+       "1",
+       "1465.61",
+       "1478.25"
+      ],
+      [
+       "2",
+       "1435.31",
+       "1452.17"
+      ],
+      [
+       "3",
+       "1436.47",
+       "1457.55"
+      ],
+      [
+       "4",
+       "1435.76",
+       "1461.05"
+      ]
+     ],
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "Tap the order with the lowest AIC.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r2"
+    ],
+    "max": 1,
+    "countWord": "orders",
+    "wrong": [
+     {
+      "id": "four",
+      "set": [
+       "r4"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the smallest number in the AIC column."
+    },
+    {
+     "rung": "point",
+     "text": "Two rows are close.",
+     "highlight": [
+      "r2",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$p = 2$ gives 1435.31; $p = 4$ gives 1435.76, only 0.45 higher."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. $p = 2$, agreeing with the PACF.",
+    "generic": "Not quite right. Compare the AIC values row by row.",
+    "byKey": {
+     "four": "You picked $p = 4$, 1435.76, which is higher than $p = 2$'s 1435.31. Close, but not the lowest."
+    }
+   },
+   "explain": {
+    "text": "AIC is lowest at $p = 2$, with $p = 4$ only 0.45 behind. AIC differences below about 2 do not separate models, so take the smaller one. BIC, $k\\ln n - 2\\ln L$, penalises more and prefers $p = 2$ by 5.4.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The bar at lag 3",
+   "prose": "Back to series A. A colleague sees its PACF bar at lag 3, 0.103, outside the band and fits an AR(3). \"The data say three lags.\" The checks: AIC 1382.37 for $p = 1$ and 1380.72 for $p = 3$; BIC 1395.01 and 1401.80; the AR(1)'s residuals give Ljung-Box $Q(10) = 12.80$, p = 0.17.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Check",
+      "$p = 1$",
+      "$p = 3$"
+     ],
+     "rows": [
+      [
+       "AIC",
+       "1382.37",
+       "1380.72"
+      ],
+      [
+       "BIC",
+       "1395.01",
+       "1401.80"
+      ],
+      [
+       "Residual Ljung-Box p",
+       "0.17",
+       "—"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which order should we use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "$p = 1$: one bar in twenty strays by chance, the AIC gap is under 2, BIC prefers 1, and its residuals pass",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "$p = 3$: the PACF bar is outside the band and AIC is lower",
+      "why": "You trusted one bar and a 1.65-point AIC edge. Noise puts a bar outside 1 time in 20, and gaps under 2 do not separate models."
+     },
+     {
+      "id": "two",
+      "text": "$p = 2$, as a compromise",
+      "why": "Lag 2's PACF is −0.03, inside the band, and no check favours $p = 2$."
+     },
+     {
+      "id": "zero",
+      "text": "$p = 0$: the bars are mostly inside the band",
+      "why": "Lag 1 is 0.63, far outside the band. The series clearly has memory."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How often does noise alone put a bar outside the band?"
+    },
+    {
+     "rung": "point",
+     "text": "Compare the two AIC values, then the two BIC values.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "AIC prefers 3 by only 1.65, BIC prefers 1 by 6.8, and the AR(1) leaves white-noise residuals. Take $p = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "That's it. One stray bar is not a lag.",
+    "generic": "Not quite right. Weigh the one bar against the AIC gap, BIC and the residual test.",
+    "byKey": {
+     "three": "You read one bar just outside the band as a real lag. With 20 bars, one stray is expected; the series is a seeded AR(1)."
+    }
+   },
+   "explain": {
+    "text": "Series A is a seeded AR(1), so the lag-3 bar is chance, as lesson 6 predicted. AIC's edge of 1.65 is inside the no-difference zone, BIC prefers $p = 1$, and the AR(1) residuals look like white noise. When the checks disagree, take the smallest model that passes."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A naive order rule",
+   "prose": "Automate the eye: take the largest lag, up to `max_p`, whose PACF bar is outside the band. One test expects this rule to fail. On series A with `max_p = 5` it must return 3, the colleague's mistake.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "$\\hat\\alpha_k$",
+     "height": 190,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877
+      }
+     ],
+     "yMin": -0.15,
+     "yMax": 0.7
+    },
+    "state": {
+     "values": {
+      "1": 0.6315,
+      "2": -0.0267,
+      "3": 0.1029,
+      "4": -0.0327,
+      "5": -0.0129
+     }
+    }
+   },
+   "question": "Complete `choose_ar_order(x, max_p)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n\ndef make_arma(phis, thetas, n, seed, burn=200):\n    \"\"\"Seeded ARMA: x_t = e_t + sum phi_i x_{t-i} + sum theta_j e_{t-j},\n    e_t ~ N(0, 1); the first burn values are dropped.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n + burn)\n    x = np.zeros(n + burn)\n    for t in range(n + burn):\n        v = e[t]\n        for i, ph in enumerate(phis, 1):\n            if t - i >= 0:\n                v += ph * x[t - i]\n        for j, th in enumerate(thetas, 1):\n            if t - j >= 0:\n                v += th * e[t - j]\n        x[t] = v\n    return x[burn:]\n\ndef pacf_by_regression(x, nlags):\n    x = np.asarray(x, dtype=float)\n    n = len(x)\n    out = []\n    for k in range(1, nlags + 1):\n        y = x[k:]                                       # today, for t = k .. n - 1\n        lags = [x[k - j:n - j] for j in range(1, k + 1)]  # x_{t-1}, ..., x_{t-k}\n        X = np.column_stack([np.ones(n - k)] + lags)\n        b = np.linalg.lstsq(X, y, rcond=None)[0]\n        out.append(b[-1])                               # the newest coefficient\n    return np.array(out)\n",
+    "starter": "import numpy as np\n\ndef choose_ar_order(x, max_p):\n    a = pacf_by_regression(x, max_p)    # lags 1 .. max_p; defined for you\n    band = 1.96 / np.sqrt(len(x))\n    outside = ...                       # the lags k (1-based) with |a[k - 1]| > band\n    return ...                          # the largest such lag, or 0 if none\n",
+    "solution": "import numpy as np\n\ndef choose_ar_order(x, max_p):\n    a = pacf_by_regression(x, max_p)\n    band = 1.96 / np.sqrt(len(x))\n    outside = [k for k in range(1, max_p + 1) if abs(a[k - 1]) > band]\n    return max(outside) if outside else 0\n",
+    "examples": [
+     {
+      "call": "choose_ar_order(make_ar1(0.6, 500, 5), 2)",
+      "expect": "1",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "choose_ar_order(make_ar1(0.6, 500, 5), 2)",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "choose_ar_order(make_arma([0.5, 0.3], [], 500, 11), 5)",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "choose_ar_order(make_wn(3), 10)",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "choose_ar_order(make_ar1(0.6, 500, 5), 5)",
+      "expect": "3",
+      "compare": "equal"
+     },
+     {
+      "call": "choose_ar_order(make_ar1(0.6, 500, 5), 1)",
+      "expect": "1",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on seeded series. `pacf_by_regression` from the last code screen is already defined. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List the lags outside the band first, then take the largest."
+    },
+    {
+     "rung": "point",
+     "text": "Lag 3 of series A is outside, so `max_p = 5` returns 3.",
+     "highlight": [
+      "x3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`outside = [k for k in range(1, max_p + 1) if abs(a[k - 1]) > band]` and `return max(outside) if outside else 0`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. And it falls for the lag-3 bar, as planned.",
+    "generic": "Some tests failed. Compare each $|\\hat\\alpha_k|$ with the band and return the largest lag outside it, or 0."
+   },
+   "explain": {
+    "text": "The rule is right on B and on white noise, and fooled by A once it may look past lag 2. A wider search finds more stray bars: that is lesson 6's twenty tests again. So the PACF proposes and AIC, BIC and the residuals decide.",
+    "canvas": {
+     "highlight": [
+      "x3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Choosing $p$ by AIC",
+   "prose": "Fit $p = 0$ to `max_p` and return the order with the least AIC. Add the rule of thumb as `tol`: among orders within `tol` of the best AIC, return the smallest. With `tol=0` the function is the plain minimum.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$p$",
+      "A: AIC",
+      "B: AIC"
+     ],
+     "rows": [
+      [
+       "0",
+       "1634.49",
+       "1697.37"
+      ],
+      [
+       "1",
+       "1382.37",
+       "1465.61"
+      ],
+      [
+       "2",
+       "1384.01",
+       "1435.31"
+      ],
+      [
+       "3",
+       "1380.72",
+       "1436.47"
+      ],
+      [
+       "4",
+       "1382.19",
+       "1435.76"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `aic_order(x, max_p, tol)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_wn(seed, n=500):\n    \"\"\"Seeded white noise: n independent N(0, 1) draws.\"\"\"\n    return np.random.default_rng(seed).standard_normal(n)\n\ndef make_arma(phis, thetas, n, seed, burn=200):\n    \"\"\"Seeded ARMA: x_t = e_t + sum phi_i x_{t-i} + sum theta_j e_{t-j},\n    e_t ~ N(0, 1); the first burn values are dropped.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n + burn)\n    x = np.zeros(n + burn)\n    for t in range(n + burn):\n        v = e[t]\n        for i, ph in enumerate(phis, 1):\n            if t - i >= 0:\n                v += ph * x[t - i]\n        for j, th in enumerate(thetas, 1):\n            if t - j >= 0:\n                v += th * e[t - j]\n        x[t] = v\n    return x[burn:]\n\nimport warnings\nwarnings.filterwarnings(\"ignore\")\n",
+    "starter": "from statsmodels.tsa.arima.model import ARIMA\n\ndef aic_order(x, max_p, tol=0.0):\n    aics = [ARIMA(x, order=(p, 0, 0)).fit().aic for p in range(max_p + 1)]\n    best = min(aics)\n    return ...      # the smallest p whose AIC is within tol of best\n",
+    "solution": "from statsmodels.tsa.arima.model import ARIMA\n\ndef aic_order(x, max_p, tol=0.0):\n    aics = [ARIMA(x, order=(p, 0, 0)).fit().aic for p in range(max_p + 1)]\n    best = min(aics)\n    return min(p for p in range(max_p + 1) if aics[p] <= best + tol)\n",
+    "examples": [
+     {
+      "call": "aic_order(make_wn(3), 1)",
+      "expect": "0",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "aic_order(make_arma([0.5, 0.3], [], 500, 11), 4)",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "aic_order(make_ar1(0.6, 500, 5), 4)",
+      "expect": "3",
+      "compare": "equal"
+     },
+     {
+      "call": "aic_order(make_ar1(0.6, 500, 5), 4, tol=2.0)",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "aic_order(make_wn(3), 2)",
+      "expect": "0",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 4 hidden tests, fitting 18 models on seeded series of 500 days (about 10 seconds). The first run loads statsmodels with NumPy, SciPy and pandas, which takes 20 to 40 seconds; later runs are quick.",
+    "budget": 30000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First find the best AIC, then scan the orders from 0 upwards."
+    },
+    {
+     "rung": "point",
+     "text": "On A, $p = 3$ is lowest, but $p = 1$ is within 2 of it.",
+     "highlight": [
+      "r1",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return min(p for p in range(max_p + 1) if aics[p] <= best + tol)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Plain AIC picks 3 on A; with `tol=2` it picks 1.",
+    "generic": "Some tests failed. Return the smallest order whose AIC is at most the best plus `tol`."
+   },
+   "explain": {
+    "text": "Plain AIC takes series A to $p = 3$, by 1.65 points. With the parsimony tolerance it returns 1, which BIC and the residual test support. On B both versions agree on 2.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1,
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Choosing an AR order",
+   "prose": "You read the order from the newest coefficient. The PACF at lag $k$ is $b_k$ in $$x_t = a + b_1 x_{t-1} + \\dots + b_k x_{t-k} + e_t.$$ For an AR($p$) the ACF decays and the PACF cuts off after lag $p$. Then compare AIC or BIC near that order, and check the residuals are white noise.",
+   "question": "A PACF is 0.45, −0.30, 0.25, then inside the band. The ACF decays with alternating signs. What order?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "3",
+      "text": "AR(3)",
+      "correct": true
+     },
+     {
+      "id": "1",
+      "text": "AR(1)",
+      "why": "You stopped at the first bar. Lags 2 and 3 are well outside the band too."
+     },
+     {
+      "id": "ma",
+      "text": "None: alternating signs rule out an AR model",
+      "why": "An AR with a negative coefficient can alternate. The PACF still cuts off after its order."
+     },
+     {
+      "id": "acf",
+      "text": "Count the ACF bars outside the band",
+      "why": "An AR's ACF decays over many lags whatever its order. The PACF counts."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Three bars, then nothing.",
+    "generic": "Not quite right. Find the last PACF bar outside the band."
+   },
+   "explain": {
+    "text": "The PACF cuts off after lag 3, so the proposal is AR(3); then AIC and the residuals confirm or trim it."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Forecasting order flow",
+   "prose": "An execution desk models a share's order-flow imbalance, buys minus sells per minute, scaled to sd near 1. It forecasts the next minute to time its child orders. 600 seeded minutes give the ACF and PACF below; AIC for $p = 0$ to 4 is 1976.7, 1753.2, 1709.5, 1711.3, 1713.0.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "$\\hat\\rho_k$",
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.08,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.08
+      }
+     ],
+     "yMin": -0.15,
+     "yMax": 0.7,
+     "groups": [
+      {
+       "id": "acf",
+       "label": "ACF"
+      },
+      {
+       "id": "pacf",
+       "label": "PACF"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "acf": {
+       "1": 0.5592,
+       "2": 0.4966,
+       "3": 0.3647,
+       "4": 0.2731,
+       "5": 0.2023,
+       "6": 0.1917,
+       "7": 0.1673,
+       "8": 0.122,
+       "9": 0.1257,
+       "10": 0.0926,
+       "11": 0.0669,
+       "12": 0.0779
+      },
+      "pacf": {
+       "1": 0.5602,
+       "2": 0.2688,
+       "3": 0.0186,
+       "4": -0.0219,
+       "5": -0.0104,
+       "6": 0.0647,
+       "7": 0.0365,
+       "8": -0.0335,
+       "9": 0.0294,
+       "10": -0.0074,
+       "11": -0.02,
+       "12": 0.0381
+      }
+     }
+    }
+   },
+   "question": "Which AR order should the desk fit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "2",
+      "text": "AR(2): the PACF cuts off after lag 2 and AIC agrees",
+      "correct": true
+     },
+     {
+      "id": "1",
+      "text": "AR(1): yesterday, here last minute, is enough",
+      "why": "Lag 2 of the PACF is 0.269, three times the band of 0.080."
+     },
+     {
+      "id": "12",
+      "text": "AR(12): the ACF is outside the band for many lags",
+      "why": "You counted ACF bars. Order flow passes its memory along; the PACF counts the lags."
+     },
+     {
+      "id": "0",
+      "text": "None: order flow is unpredictable",
+      "why": "The first two PACF bars are far outside the band. The flow has memory."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the PACF bars."
+    },
+    {
+     "rung": "point",
+     "text": "The first two PACF bars.",
+     "highlight": [
+      "x1-pacf",
+      "x2-pacf"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "PACF 0.56 and 0.269, then inside the band; AIC is lowest at $p = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. AR(2).",
+    "generic": "Not quite right. Find where the PACF drops into the band."
+   },
+   "explain": {
+    "text": "Order flow is persistent: big parents are sliced into many child orders, so buying follows buying. The PACF cuts off after 2 and AIC is lowest at $p = 2$. In an interview: PACF cut-off, then AIC or BIC, then a residual check.",
+    "canvas": {
+     "highlight": [
+      "x1-pacf",
+      "x2-pacf"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The PACF at lag $k$ is the newest coefficient when today is regressed on the last $k$ days: the link with day $t - k$ after the shorter lags are accounted for.",
+   "An AR($p$) has an ACF that decays and a PACF that cuts off after lag $p$. One stray bar in twenty is chance.",
+   "Let the PACF propose an order, AIC or BIC compare nearby orders (gaps under 2 do not separate), and the residuals confirm it."
+  ],
+  "formula": {
+   "name": "Partial autocorrelation",
+   "tex": "x_t = a + b_1 x_{t-1} + \\dots + b_k x_{t-k} + e_t, \\qquad \\hat\\alpha_k = \\hat b_k",
+   "note": "`pacf(x, nlags, method=\"ols\")` is this regression; the default Yule-Walker method is close."
+  },
+  "trap": "One PACF bar just outside the band is not a lag. Check AIC, BIC and the residuals before adding it."
+ },
+ "quiz": [
+  {
+   "id": "q-interview",
+   "difficulty": 2,
+   "prose": "An interviewer asks: \"How do you choose the order of an AR model?\"",
+   "question": "Which answer is best?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "full",
+      "text": "Read where the PACF cuts off, compare AIC or BIC near it, then check the residuals are white noise",
+      "correct": true
+     },
+     {
+      "id": "acf",
+      "text": "Count the ACF bars outside the band",
+      "why": "An AR's ACF decays over many lags. It cannot count the order."
+     },
+     {
+      "id": "aic",
+      "text": "Fit up to $p = 20$ and take the lowest AIC",
+      "why": "Plain AIC can take a stray lag, as on series A, and a long search invites it. Check parsimony and residuals."
+     },
+     {
+      "id": "r2",
+      "text": "Take the order with the highest $R^2$",
+      "why": "$R^2$ never falls as lags are added, so it always picks the biggest model."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. The answer has three steps."
+   },
+   "explain": {
+    "text": "PACF to propose, an information criterion to compare, residual Ljung-Box to confirm. Prefer the smallest model that passes."
+   }
+  },
+  {
+   "id": "q-wn",
+   "difficulty": 2,
+   "prose": "A series has every ACF and every PACF bar inside the band, and Ljung-Box gives p = 0.62.",
+   "question": "What AR order fits it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "0",
+      "text": "0: it looks like white noise",
+      "correct": true
+     },
+     {
+      "id": "1",
+      "text": "1: start with the simplest AR",
+      "why": "The simplest model is no AR terms at all. Nothing in the data calls for lag 1."
+     },
+     {
+      "id": "20",
+      "text": "Unknown until we try $p$ up to 20",
+      "why": "Every check already says there is no memory. More lags only fit noise."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Order 0.",
+    "generic": "Not quite right. What do in-band bars and a large p-value say?"
+   },
+   "explain": {
+    "text": "No bar outside the band and a large Ljung-Box p-value: no linear memory, so $p = 0$, a constant mean."
+   }
+  },
+  {
+   "id": "q-neg",
+   "difficulty": 3,
+   "prose": "500 seeded days of $x_t = 0.5\\,x_{t-1} - 0.6\\,x_{t-2} + \\varepsilon_t$ give an ACF of 0.3, −0.43, −0.4, −0.04, 0.19 that swings in sign.",
+   "question": "What should the PACF look like?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cut",
+      "text": "Two clear bars, about 0.3 and −0.57, then inside the band",
+      "correct": true
+     },
+     {
+      "id": "swing",
+      "text": "Swinging in sign for many lags, like the ACF",
+      "why": "That is the ACF's shape. The PACF of an AR(2) cuts off after lag 2."
+     },
+     {
+      "id": "none",
+      "text": "All inside the band, since the coefficients partly cancel",
+      "why": "They do not cancel: lag 2's −0.6 is a strong new link."
+     },
+     {
+      "id": "one",
+      "text": "One bar at lag 1 only",
+      "why": "Lag 2 carries its own coefficient, −0.6, so its PACF bar is large."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. The seeded PACF is 0.3, −0.57, then small.",
+    "generic": "Not quite right. Recall the AR($p$) rule for the PACF."
+   },
+   "explain": {
+    "text": "A negative $\\phi_2$ makes the ACF oscillate, but the PACF still cuts off after lag 2: here 0.302 and −0.574, then inside the band."
+   }
+  },
+  {
+   "id": "q-bic",
+   "difficulty": 3,
+   "prose": "On 500 days, AIC picks AR(4) and BIC picks AR(2). The AR(2)'s residuals pass Ljung-Box.",
+   "question": "Why might the two disagree?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pen",
+      "text": "BIC charges $\\ln 500 \\approx 6.2$ per parameter against AIC's 2, so it prefers smaller models",
+      "correct": true
+     },
+     {
+      "id": "bug",
+      "text": "One of them is computed wrongly",
+      "why": "Both are right; they weigh complexity differently."
+     },
+     {
+      "id": "same",
+      "text": "They measure fit the same way, so the data must be non-stationary",
+      "why": "They share $-2\\ln L$ and differ only in the penalty."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Different penalties.",
+    "generic": "Not quite right. Compare $2k$ with $k\\ln n$."
+   },
+   "explain": {
+    "text": "AIC adds $2k$, BIC adds $k\\ln n$; with $n = 500$ each parameter costs 6.2 under BIC. With white-noise residuals, the AR(2) is the better choice."
+   }
+  }
+ ]
+}

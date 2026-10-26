@@ -1,0 +1,451 @@
+{
+ "id": "homework-2",
+ "course": "alpha",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-rolling-beta",
+   "difficulty": 5,
+   "skills": [
+    "al-signal"
+   ],
+   "title": "Betas from trailing returns",
+   "prose": "Real data has no true beta. Estimate it from each share's trailing returns against the market, here the equal-weighted mean return of the listed shares. Then neutralise momentum on chosen dates with each date's estimated betas. `make_panel`, `momentum_12_1` and `neutralise` are already defined.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Piece",
+      "Rule"
+     ],
+     "rows": [
+      [
+       "`rolling_beta`",
+       "$\\hat\\beta_{i,t} = \\dfrac{\\overline{r_i m} - \\bar r_i \\bar m}{\\overline{m^2} - \\bar m^2}$ over days $t - 251$ to $t$, on days share $i$ has a return; NaN under 126 days"
+      ],
+      [
+       "`neutral_momentum`",
+       "`neutralise` each date in `dates` with that row of $\\hat\\beta$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `rolling_beta` and `neutral_momentum`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef momentum_12_1(ret, lookback=252, skip=21, min_periods=200):\n    total = np.log1p(ret).rolling(lookback - skip, min_periods=min_periods).sum()\n    return total.shift(skip).where(ret.notna())\n\ndef demean_by_group(signal, sector):\n    groups = sector.reindex(signal.columns)\n    means = signal.T.groupby(groups).transform('mean').T\n    return signal - means\n\ndef neutralise(signal, beta, sector):\n    cols = signal.columns\n    b = beta.reindex(cols).to_numpy(float)\n    D = pd.get_dummies(sector.reindex(cols)).to_numpy(float)\n    out = pd.DataFrame(np.nan, index=signal.index, columns=cols)\n    for date, row in signal.iterrows():\n        y = row.to_numpy(float)\n        ok = ~np.isnan(y)\n        X = np.column_stack([np.ones(ok.sum()), b[ok], D[ok]])\n        if ok.sum() == 0 or ok.sum() <= np.linalg.matrix_rank(X):\n            continue\n        coef = np.linalg.lstsq(X, y[ok], rcond=None)[0]\n        res = np.full(len(y), np.nan)\n        res[ok] = y[ok] - X @ coef\n        out.loc[date] = res\n    return out\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef rolling_beta(ret, market, window=252, min_periods=126):\n    # the market on the days each share has a return\n    m = pd.DataFrame({c: market for c in ret.columns}).where(ret.notna())\n    mean = lambda x: x.rolling(window, min_periods=min_periods).mean()\n    cov = ...     # mean of the product minus the product of the means\n    var = ...     # the same for the market with itself\n    return cov / var\n\ndef neutral_momentum(p, dates, window=252):\n    ret = p['ret']\n    market = ret.mean(axis=1)       # equal-weighted, listed shares\n    beta_t = rolling_beta(ret, market, window)\n    mom = momentum_12_1(ret).where(beta_t.notna())\n    out = []\n    for d in dates:\n        out.append(...)             # neutralise date d with that date's betas\n    return pd.concat(out)\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef rolling_beta(ret, market, window=252, min_periods=126):\n    # the market on the days each share has a return\n    m = pd.DataFrame({c: market for c in ret.columns}).where(ret.notna())\n    mean = lambda x: x.rolling(window, min_periods=min_periods).mean()\n    cov = mean(ret * m) - mean(ret) * mean(m)\n    var = mean(m * m) - mean(m) ** 2\n    return cov / var\n\ndef neutral_momentum(p, dates, window=252):\n    ret = p['ret']\n    market = ret.mean(axis=1)       # equal-weighted, listed shares\n    beta_t = rolling_beta(ret, market, window)\n    mom = momentum_12_1(ret).where(beta_t.notna())\n    out = []\n    for d in dates:\n        out.append(neutralise(mom.loc[[d]], beta_t.loc[d], p['sector']))\n    return pd.concat(out)\n",
+    "examples": [
+     {
+      "setup": "mk = pd.Series([0.01, -0.02, 0.03, 0.0, -0.01, 0.02]); r = pd.DataFrame({'A': 2 * mk, 'B': 0.5 * mk + 0.001, 'C': [np.nan, np.nan] + list(1.5 * mk[2:])})",
+      "call": "np.round(rolling_beta(r, mk, 4, 3), 6).fillna(99).values.tolist()",
+      "expect": "[[99.0, 99.0, 99.0], [99.0, 99.0, 99.0], [2.0, 0.5, 99.0], [2.0, 0.5, 99.0], [2.0, 0.5, 1.5], [2.0, 0.5, 1.5]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "mk = pd.Series([0.01, -0.02, 0.03, 0.0, -0.01, 0.02]); r = pd.DataFrame({'A': 2 * mk, 'B': 0.5 * mk + 0.001, 'C': [np.nan, np.nan] + list(1.5 * mk[2:])})",
+      "call": "np.round(rolling_beta(r, mk, 4, 3), 6).fillna(99).values.tolist()",
+      "expect": "[[99.0, 99.0, 99.0], [99.0, 99.0, 99.0], [2.0, 0.5, 99.0], [2.0, 0.5, 99.0], [2.0, 0.5, 1.5], [2.0, 0.5, 1.5]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); r = p['ret']; b = rolling_beta(r, r.mean(axis=1))",
+      "call": "(int(b.iloc[-1].notna().sum()), bool(np.corrcoef(b.iloc[-1].dropna(), p['beta'][b.iloc[-1].dropna().index])[0, 1] > 0.7))",
+      "expect": "(27, True)",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); r = p['ret']; b = rolling_beta(r, r.mean(axis=1))",
+      "call": "round(float(b.iloc[-1].dropna().sub(p['beta']).abs().mean()), 4)",
+      "expect": "0.0993",
+      "compare": "isclose"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); r = p['ret']; b = rolling_beta(r, r.mean(axis=1)); r2 = r.copy(); r2.iloc[400:] = r2.iloc[400:] + 0.03; b2 = rolling_beta(r2, r2.mean(axis=1))",
+      "call": "bool(np.allclose(b.iloc[399].dropna(), b2.iloc[399].dropna())) and not np.allclose(b.iloc[450].dropna(), b2.iloc[450].dropna())",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); r = p['ret']; b = rolling_beta(r, r.mean(axis=1))",
+      "call": "int(b.notna().any(axis=1).values.argmax())",
+      "expect": "125",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); e = neutral_momentum(p, p['ret'].index[252::21])",
+      "call": "e.shape",
+      "expect": "(17, 30)",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); e = neutral_momentum(p, p['ret'].index[252::21]); bt = rolling_beta(p['ret'], p['ret'].mean(axis=1))",
+      "call": "round(float(np.nanmax(np.abs((e * bt.loc[e.index]).sum(axis=1)))), 9)",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); e = neutral_momentum(p, p['ret'].index[252::21])",
+      "call": "round(float(e.T.groupby(p['sector']).sum().T.abs().max().max()), 9)",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "p = make_panel(30, 600, 5); e = neutral_momentum(p, p['ret'].index[252::21])",
+      "call": "np.round(e.std(axis=1), 4).tolist()[:4]",
+      "expect": "[0.2256, 0.2188, 0.2314, 0.2496]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests: hand-made shares with betas 2, 0.5 and a late listing at 1.5; estimated against true betas on `make_panel(30, 600, 5)` (correlation above 0.7, mean error to 4 places); a spy that changes returns from row 400 and checks the betas on row 399 do not move; and the neutralised signal on monthly dates: no beta or sector left, sds to 4 places. NaN prints as 99. The first run loads NumPy and pandas, which takes about 15 seconds."
+   },
+   "feedback": {
+    "correct": "Correct. The estimates track the true betas (correlation 0.83 on the last date) and use only past returns.",
+    "generic": "Some tests failed. Use rolling means of the products for the covariance and the variance, then pass each date's row of betas to `neutralise`."
+   },
+   "explain": {
+    "text": "Covariance is the mean of the product minus the product of the means; the population factors cancel in the ratio. Masking the market to each share's listed days keeps a late listing's beta honest. With 30 shares and noisy idiosyncratic returns the estimates miss the true betas by 0.10 on average, which is why real neutralising is never perfect."
+   }
+  },
+  {
+   "id": "h-winsorise",
+   "difficulty": 4,
+   "skills": [
+    "al-signal"
+   ],
+   "title": "Winsorising per date",
+   "prose": "Winsorising caps a signal at its own quantiles on each date, instead of at a fixed number of sds. `make_panel` and `momentum_12_1` are already defined.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Row",
+      "`winsorise(row, 0.25, 0.75)`"
+     ],
+     "rows": [
+      [
+       "1, 2, 3, 4, 100",
+       "2, 2, 3, 4, 4"
+      ],
+      [
+       "5, NaN, 1, 3, NaN",
+       "4, NaN, 2, 3, NaN"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `winsorise(signal, lower=0.01, upper=0.99)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef momentum_12_1(ret, lookback=252, skip=21, min_periods=200):\n    total = np.log1p(ret).rolling(lookback - skip, min_periods=min_periods).sum()\n    return total.shift(skip).where(ret.notna())\n",
+    "starter": "import pandas as pd\n\ndef winsorise(signal, lower=0.01, upper=0.99):\n    lo = signal.quantile(lower, axis=1)   # each date's own cut points\n    hi = ...\n    return ...                            # clip each row between its own lo and hi\n",
+    "solution": "import pandas as pd\n\ndef winsorise(signal, lower=0.01, upper=0.99):\n    lo = signal.quantile(lower, axis=1)   # each date's own cut points\n    hi = signal.quantile(upper, axis=1)\n    return signal.clip(lo, hi, axis=0)\n",
+    "examples": [
+     {
+      "setup": "s = pd.DataFrame([[1.0, 2.0, 3.0, 4.0, 100.0], [5.0, np.nan, 1.0, 3.0, np.nan]])",
+      "call": "np.round(winsorise(s, 0.25, 0.75), 6).fillna(99).values.tolist()",
+      "expect": "[[2.0, 2.0, 3.0, 4.0, 4.0], [4.0, 99.0, 2.0, 3.0, 99.0]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "s = pd.DataFrame([list(range(1, 101))], dtype=float)",
+      "call": "np.round(winsorise(s, 0.05, 0.95).iloc[0], 6).tolist()[:3] + np.round(winsorise(s, 0.05, 0.95).iloc[0], 6).tolist()[-3:]",
+      "expect": "[5.95, 5.95, 5.95, 95.05, 95.05, 95.05]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[1.0, 2.0, 3.0, 4.0, 100.0], [5.0, np.nan, 1.0, 3.0, np.nan]])",
+      "call": "np.round(winsorise(s, 0.25, 0.75), 6).fillna(99).values.tolist()",
+      "expect": "[[2.0, 2.0, 3.0, 4.0, 4.0], [4.0, 99.0, 2.0, 3.0, 99.0]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = pd.DataFrame([[7.0, np.nan, np.nan]])",
+      "call": "winsorise(s).fillna(99).values.tolist()",
+      "expect": "[[7.0, 99.0, 99.0]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 300, 5); m = momentum_12_1(p['ret'], 100, 21, 60); w = winsorise(m)",
+      "call": "bool(((w.max(axis=1) - m.quantile(0.99, axis=1)).dropna() <= 1e-12).all() and ((m.quantile(0.01, axis=1) - w.min(axis=1)).dropna() <= 1e-12).all() and not w.equals(m))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "p = make_panel(30, 300, 5); m = momentum_12_1(p['ret'], 100, 21, 60); w = winsorise(m, 0.1, 0.9)",
+      "call": "round(float(w.iloc[-1].max()), 6)",
+      "expect": "0.098039",
+      "compare": "isclose"
+     },
+     {
+      "setup": "p = make_panel(30, 300, 5); m = momentum_12_1(p['ret'], 100, 21, 60); w = winsorise(m, 0.1, 0.9)",
+      "call": "bool((w.isna() == m.isna()).all().all())",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: a row of 1 to 100, rows with NaN, a one-share row, and per-date bounds on `make_panel(30, 300, 5)` momentum. pandas' quantile interpolates linearly. NaN prints as 99. The first run loads NumPy and pandas, which takes about 15 seconds."
+   },
+   "feedback": {
+    "correct": "Correct. Each date is capped at its own quantiles.",
+    "generic": "Some tests failed. Take the upper quantile across each row, then `clip(lo, hi, axis=0)`."
+   },
+   "explain": {
+    "text": "`quantile(q, axis=1)` gives one cut point per date, and `clip(..., axis=0)` lines them up with the rows. Quantiles from the whole panel would mix dates, as pooled ranks do. Unlike the z-score clip, winsorising bites on every date, whatever the number of shares."
+   }
+  },
+  {
+   "id": "h-order",
+   "difficulty": 3,
+   "skills": [
+    "al-signal"
+   ],
+   "prose": "From a vendor's raw prices to a neutralised, z-scored momentum signal.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Build total returns from raw closes, splits and dividends"
+     },
+     {
+      "id": "o2",
+      "text": "Keep the point-in-time universe, with delisting returns kept"
+     },
+     {
+      "id": "o3",
+      "text": "Sum log returns from $t - 251$ to $t - 21$; NaN under 200 returns"
+     },
+     {
+      "id": "o4",
+      "text": "Estimate each share's beta from its trailing 252 days"
+     },
+     {
+      "id": "o5",
+      "text": "On each date, regress across shares on beta and sector dummies and keep the residual"
+     },
+     {
+      "id": "o6",
+      "text": "On each date, z-score the residual across shares and clip at ±3"
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5",
+     "o6"
+    ],
+    "same": [
+     [
+      "o3",
+      "o4"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Data first, then the signal and betas, then neutralise, then normalise.",
+    "generic": "Not quite. Each step needs the output of the one before.",
+    "byKey": {
+     "o5": "The regression needs both the signal and the betas first.",
+     "o6": "Z-scoring before neutralising would leave the residual unscaled; normalise last."
+    }
+   },
+   "explain": {
+    "text": "Clean returns come first, since every later step uses them. The signal and the betas can be built in either order. Neutralise, then z-score, so the final scores have mean 0 and sd 1 on every date."
+   }
+  },
+  {
+   "id": "h-long-review",
+   "difficulty": 4,
+   "skills": [
+    "al-signal"
+   ],
+   "title": "A reversal signal that is too good",
+   "kind": "longform",
+   "prompt": "A colleague builds a weekly reversal signal on a few hundred shares. She computes daily returns from **raw closing prices**, takes minus the past five-day return, then normalises with `z = (sig - sig.mean()) / sig.std()`. Against next week's return the mean rank IC is **0.15**.\n\nFind each error, say which way it pushes the IC, and describe the corrected pipeline step by step. Say what IC you would expect after the fixes and why.",
+   "model": "**Error 1: raw closes.** The returns come from raw closes, so every two-for-one split shows as a −50% day. The reversal signal reads about $0.69$ on that share for five days and ranks it first. The real return that day is near 0, so the forecast fails and the fake losers simply sit in the book. Splits are rare, so this mainly adds noise and a few large wrong bets; it can bias the IC either way, and it biases any study of the largest scores towards nonsense. **Fix:** total returns from level 1, $1 + R_t = \\text{split}_t (P_t + D_t)/P_{t-1}$.\n\n**Error 2: z-scored across time per share.** `(sig - sig.mean()) / sig.std()` works down each column. Each share's mean and sd use its whole history, future dates included: a look-ahead. It also asks whether this week is extreme *for that share*, not against other shares this week, so it is a different, time-series signal.\n\n**Which way does it push the IC?** The look-ahead pushes it **up**. Over the whole sample a share's mean five-day return includes its future drift and the overshoots still to come; centring on it uses information the forward return also contains. A per-share normalisation also mixes dates, so the score's level moves with the market.\n\n**Error 3: an IC of 0.15 is a red flag.** On our panel the honest 5-day reversal has a weekly IC of 0.0243 (t 4.52). A simple signal six times better than a planted effect is a bug until proved otherwise. Check also that the IC used non-overlapping weekly dates and that the forward return starts the day after the signal.\n\n**Corrected pipeline.**\n1. Total returns from split- and dividend-adjusted prices, delisting returns kept, on the point-in-time universe.\n2. `reversal_5d`: $v_{i,t} = -\\sum_{s=t-4}^{t} \\ln(1 + r_{i,s})$, NaN unless five returns exist.\n3. Normalise across shares on each date: `cs_zscore` (sd with `ddof=1`, clipped at ±3) or `cs_rank`.\n4. Optionally neutralise to beta (trailing estimate) and sector.\n5. Rank IC against the return from $t+1$ to $t+5$, on dates five days apart; report mean, t and the number of dates.\n6. Run the spy test: change returns after a date and confirm the signal on that date does not move.\n\nExpect an IC of a few hundredths, not 0.15.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Raw closes: splits become fake −50% days that the signal buys; fix with split- and dividend-adjusted total returns"
+    },
+    {
+     "points": 2,
+     "text": "The z-score runs down each column: whole-history mean and sd per share, a look-ahead"
+    },
+    {
+     "points": 1,
+     "text": "Also names it the wrong comparison: a share against its own history, not across shares on the date"
+    },
+    {
+     "points": 1,
+     "text": "Says the look-ahead pushes the IC up and the split errors add noise or wrong large bets"
+    },
+    {
+     "points": 1,
+     "text": "Treats 0.15 as a red flag against an honest value of a few hundredths"
+    },
+    {
+     "points": 2,
+     "text": "Corrected pipeline in order: total returns, `reversal_5d`, cross-sectional `cs_zscore` or `cs_rank` per date, IC on non-overlapping weekly dates"
+    },
+    {
+     "points": 1,
+     "text": "Adds a check: the spy test, or the forward return starting the day after the signal"
+    }
+   ]
+  },
+  {
+   "id": "h-resid",
+   "difficulty": 4,
+   "skills": [
+    "al-signal"
+   ],
+   "prose": "Four shares on one date. Signal: 0.10, 0.04, 0.07, −0.01. Beta: 1.2, 0.8, 1.0, 1.0. We regress the signal on a constant and beta only.",
+   "question": "What is the first share's residual?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.02,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0.02: slope 0.15, intercept −0.10, fitted 0.08",
+    "wrong": [
+     {
+      "id": "demean",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "noint",
+      "value": 0.0376,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Fitted $-0.10 + 0.15 \\times 1.2 = 0.08$, so the residual is 0.02.",
+    "generic": "Not quite. Fit the slope from deviations from the means first.",
+    "byKey": {
+     "demean": "You only subtracted the mean signal, 0.05. The beta part, $0.15 \\times 0.2$, comes off too.",
+     "noint": "You fitted a line through the origin. Our regression has a constant."
+    }
+   },
+   "explain": {
+    "text": "Deviations of beta are 0.2, −0.2, 0, 0 and of the signal 0.05, −0.01, 0.02, −0.06. The slope is $0.012/0.08 = 0.15$ and the intercept $0.05 - 0.15 = -0.10$. The first share's fit is $0.08$, leaving $0.02$."
+   }
+  },
+  {
+   "id": "h-cost-of-neutral",
+   "difficulty": 4,
+   "skills": [
+    "al-signal"
+   ],
+   "prose": "On our panel raw momentum's mean IC is 0.0325 and the beta-and-sector neutral version's is 0.0255. A colleague says neutralising \"threw away 22% of the alpha\" and should be skipped.",
+   "question": "What is the best reply?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "keep",
+      "text": "The lost part came from sector and beta tilts the panel does not reward reliably; keep the neutral signal and report both ICs",
+      "correct": true
+     },
+     {
+      "id": "agree",
+      "text": "Agree: a higher IC is always better",
+      "why": "The raw IC includes sector bets that paid by chance in this sample. A book that holds them carries risks the signal is not about."
+     },
+     {
+      "id": "half",
+      "text": "Neutralise only half the time",
+      "why": "Switching by results is choosing after the fact: another variant tried, which level 4 counts."
+     },
+     {
+      "id": "noise",
+      "text": "The difference is noise, so it does not matter",
+      "why": "It may be partly noise, but the tilts are real exposures in the book. That matters for risk whatever the IC."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Report both, trade the neutral one.",
+    "generic": "Not quite. Ask what the extra IC was paid for."
+   },
+   "explain": {
+    "text": "Our panel's sector returns do not persist, so IC from sector tilts is luck in this sample. Neutral scores give a book whose return comes from the stock-specific drift. Reporting both lets a reader see what neutralising cost."
+   }
+  },
+  {
+   "id": "h-first-score",
+   "difficulty": 3,
+   "skills": [
+    "al-signal"
+   ],
+   "prose": "A share lists and has its first daily return on day $L$. Our rule needs 200 returns in the window $t - 251$ to $t - 21$.",
+   "question": "How many trading days after day $L$ does it first get a 12-minus-1 score?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 220,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "days",
+    "accept": "220: we need $t - 21 - L + 1 \\ge 200$",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 200,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "off",
+      "value": 221,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "full",
+      "value": 252,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. At $t = L + 220$ the window holds days $L$ to $L + 199$.",
+    "generic": "Not quite. Count its returns from $L$ to $t - 21$.",
+    "byKey": {
+     "two": "You forgot the skip. The window ends 21 days before $t$.",
+     "off": "One too many: both ends of $L$ to $t - 21$ count.",
+     "full": "That would need the full 231 returns plus the skip. The rule asks for 200."
+    }
+   },
+   "explain": {
+    "text": "Returns from $L$ to $t - 21$ number $t - 21 - L + 1$. Setting that to 200 gives $t = L + 220$. Until then the share is listed but unranked."
+   }
+  }
+ ]
+}

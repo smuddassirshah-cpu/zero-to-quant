@@ -404,7 +404,7 @@
       "type": "problem",
       "difficulty": 2,
       "title": "What the funnel breaks",
-      "prose": "We simulated 10,000 samples of 100 days from a funnel model with true slope 1.2. Each bar is measured across the 10,000 fits. The average slope came out at 1.200.",
+      "prose": "We simulated 10,000 samples of 100 days with true slope 1.2 and $x \\sim N(0, 1)$. The noise sd was $0.5(0.5 + |x|)$, a funnel (NumPy, seed 11). Each bar is measured across the 10,000 fits. The average slope came out at 1.200.",
       "canvas": {
         "kind": "bars",
         "params": {
@@ -490,7 +490,7 @@
         }
       },
       "explain": {
-        "text": "Changing variance is **heteroscedasticity**. The slope stays unbiased, but the usual SE assumes one variance for every day and comes out 35% too small. **Robust** (White, or HC) standard errors measure the spread from the residuals themselves: 0.105 against the true 0.109.",
+        "text": "Changing variance is **heteroscedasticity**. The slope stays unbiased, but the usual SE assumes one variance for every day. It comes out 35% too small. **Robust** (White, or HC) standard errors measure the spread from the residuals themselves: 0.105 against the true 0.109.",
         "canvas": {
           "highlight": [
             "naive",
@@ -652,7 +652,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Robust errors in statsmodels",
-      "prose": "A slow signal `sig` predicts a return series `ret` over 120 days; the residuals are drawn below ($d = 0.38$). statsmodels swaps the standard error formula through `fit`: `cov_type=\"HC1\"` for a funnel, `cov_type=\"HAC\"` with `cov_kwds={\"maxlags\": 5}` for autocorrelation too.",
+      "prose": "A slow signal `sig` predicts a return series `ret` over 120 days. The residuals are drawn below ($d = 0.38$). statsmodels swaps the standard error formula through `fit`: `cov_type=\"HC1\"` for a funnel, `cov_type=\"HAC\"` with `cov_kwds={\"maxlags\": 5}` for autocorrelation too.",
       "canvas": {
         "kind": "series",
         "params": {
@@ -828,7 +828,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 4 hidden tests on the lists `sig`, `ret`, `mkt` and `stk`, which are already defined. Each result is rounded to 4 places. statsmodels is large: the first run loads NumPy, SciPy, pandas and statsmodels, which takes 15 to 30 seconds."
+        "how": "Check runs 4 hidden tests on the lists `sig`, `ret`, `mkt` and `stk`, which are already defined. Each result is rounded to 4 places. statsmodels is large. The first run loads NumPy, SciPy, pandas and statsmodels, which takes 15 to 30 seconds."
       },
       "hints": [
         {
@@ -863,7 +863,7 @@
       "type": "ladder",
       "difficulty": 3,
       "title": "One return per month",
-      "prose": "A fund's monthly return is regressed on the market's, over 60 months. Each month's return covers its own days, with no overlap. The residuals are below, $d = 1.87$.",
+      "prose": "A fund's monthly return is regressed on the market's, over 60 months. Each month's return covers its own days, with no overlap. The residuals are below, $d = 1.81$.",
       "canvas": {
         "kind": "series",
         "params": {
@@ -985,7 +985,7 @@
         },
         {
           "rung": "step",
-          "text": "$d = 1.87$ is close to 2, and no two months share a day."
+          "text": "$d = 1.81$ is close to 2, and no two months share a day."
         }
       ],
       "feedback": {
@@ -997,7 +997,7 @@
         }
       },
       "explain": {
-        "text": "Non-overlapping returns share no days, and efficient prices make them close to independent. $d = 1.87$ agrees. HAC would cost precision here and fix nothing."
+        "text": "Non-overlapping returns share no days, and efficient prices make them close to independent. $d = 1.81$ agrees. HAC would cost precision here and fix nothing."
       }
     },
     {
@@ -1073,11 +1073,11 @@
         },
         {
           "rung": "step",
-          "text": "With HAC errors over 10 lags the SE rises to 0.116, so $t = 1.69$ and $p = 0.09$."
+          "text": "With HAC errors over 10 lags the SE rises to 0.116, so $t = 1.70$ and $p = 0.09$."
         }
       ],
       "feedback": {
-        "correct": "With HAC errors the SE is 0.116, $t = 1.69$ and $p = 0.09$.",
+        "correct": "With HAC errors the SE is 0.116, $t = 1.70$ and $p = 0.09$.",
         "generic": "Not quite right. Find the line that checks for autocorrelation.",
         "byKey": {
           "lots": "You trusted a $p$-value from autocorrelated daily data. Levels like implied volatility drift, so days are far from independent.",
@@ -1102,7 +1102,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "The assumptions, and what each buys",
-      "prose": "Least squares assumes: 1. a linear model with errors averaging zero; 2. no perfect collinearity; 3. independent errors; 4. constant variance; 5. normal errors. 1 and 2 make $\\hat{\\boldsymbol\\beta}$ unbiased. 3 and 4 make $\\sigma^2(\\mathbf{X}^T\\mathbf{X})^{-1}$ right; robust errors replace them. 5 matters only for exact $t$ and $F$ tests in small samples.",
+      "prose": "Least squares assumes:\n1. a linear model with errors averaging zero\n2. no perfect collinearity\n3. independent errors\n4. constant variance\n5. normal errors\n\n1 and 2 make $\\hat{\\boldsymbol\\beta}$ unbiased. 3 and 4 make $\\sigma^2(\\mathbf{X}^T\\mathbf{X})^{-1}$ right; robust errors replace them. 5 matters only for exact $t$ and $F$ tests in small samples.",
       "question": "A beta regression over 2,000 days has fat-tailed residuals that are independent with constant variance. What breaks?",
       "widget": {
         "kind": "choice",
@@ -1168,15 +1168,15 @@
           },
           {
             "id": "var",
-            "text": "$\\mathrm{Var}(\\hat{\\boldsymbol\\beta}) = (\\mathbf{X}^T\\mathbf{X})^{-1}\\mathbf{X}^T\\,\\mathrm{Var}(\\boldsymbol\\varepsilon)\\,\\mathbf{X}(\\mathbf{X}^T\\mathbf{X})^{-1}$, since $\\mathrm{Var}(\\mathbf{A}\\boldsymbol\\varepsilon) = \\mathbf{A}\\,\\mathrm{Var}(\\boldsymbol\\varepsilon)\\mathbf{A}^T$"
+            "text": "$\\operatorname{Var}(\\hat{\\boldsymbol\\beta}) = (\\mathbf{X}^T\\mathbf{X})^{-1}\\mathbf{X}^T\\,\\operatorname{Var}(\\boldsymbol\\varepsilon)\\,\\mathbf{X}(\\mathbf{X}^T\\mathbf{X})^{-1}$, since $\\operatorname{Var}(\\mathbf{A}\\boldsymbol\\varepsilon) = \\mathbf{A}\\,\\operatorname{Var}(\\boldsymbol\\varepsilon)\\mathbf{A}^T$"
           },
           {
             "id": "usual",
-            "text": "If $\\mathrm{Var}(\\boldsymbol\\varepsilon) = \\sigma^2\\mathbf{I}$, the middle cancels one $(\\mathbf{X}^T\\mathbf{X})^{-1}$: $\\sigma^2(\\mathbf{X}^T\\mathbf{X})^{-1}$"
+            "text": "If $\\operatorname{Var}(\\boldsymbol\\varepsilon) = \\sigma^2\\mathbf{I}$, the middle cancels one $(\\mathbf{X}^T\\mathbf{X})^{-1}$: $\\sigma^2(\\mathbf{X}^T\\mathbf{X})^{-1}$"
           },
           {
             "id": "white",
-            "text": "With a funnel, $\\mathrm{Var}(\\boldsymbol\\varepsilon)$ is diagonal with unequal entries; White estimates each by $e_i^2$: $(\\mathbf{X}^T\\mathbf{X})^{-1}\\left(\\sum e_i^2\\mathbf{x}_i\\mathbf{x}_i^T\\right)(\\mathbf{X}^T\\mathbf{X})^{-1}$"
+            "text": "With a funnel, $\\operatorname{Var}(\\boldsymbol\\varepsilon)$ is diagonal with unequal entries; White estimates each by $e_i^2$: $(\\mathbf{X}^T\\mathbf{X})^{-1}\\left(\\sum e_i^2\\mathbf{x}_i\\mathbf{x}_i^T\\right)(\\mathbf{X}^T\\mathbf{X})^{-1}$"
           }
         ],
         "answer": [
@@ -1326,10 +1326,10 @@
     ],
     "formula": {
       "name": "Robust (sandwich) covariance",
-      "tex": "\\widehat{\\mathrm{Var}}(\\hat{\\boldsymbol\\beta}) = (\\mathbf{X}^T\\mathbf{X})^{-1}\\Big(\\textstyle\\sum_i e_i^2\\,\\mathbf{x}_i\\mathbf{x}_i^T\\Big)(\\mathbf{X}^T\\mathbf{X})^{-1}",
+      "tex": "\\widehat{\\operatorname{Var}}(\\hat{\\boldsymbol\\beta}) = (\\mathbf{X}^T\\mathbf{X})^{-1}\\Big(\\textstyle\\sum_i e_i^2\\,\\mathbf{x}_i\\mathbf{x}_i^T\\Big)(\\mathbf{X}^T\\mathbf{X})^{-1}",
       "note": "With constant variance it reduces to $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$."
     },
-    "trap": "A $p$-value of 0.000 from daily levels or overlapping returns can be pure autocorrelation: check $d$ and use HAC errors before believing it."
+    "trap": "A $p$-value of 0.000 from daily levels or overlapping returns can be pure autocorrelation. Check $d$ and use HAC errors before believing it."
   },
   "quiz": [
     {
@@ -1450,7 +1450,7 @@
     {
       "id": "q-clustering",
       "difficulty": 3,
-      "prose": "A stock's beta regression on daily returns: residuals are independent from day to day, but their size grows on volatile market days.",
+      "prose": "A stock's beta regression on daily returns has residuals that are independent from day to day. Their size grows on volatile market days.",
       "question": "Which standard errors should we report?",
       "widget": {
         "kind": "choice",

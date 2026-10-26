@@ -1,0 +1,1271 @@
+{
+ "id": "l11-turnover",
+ "course": "backtest",
+ "title": "Turnover and capacity",
+ "minutes": 14,
+ "objectives": [
+  "Measure turnover and estimate what it costs.",
+  "Estimate how large a book a rule can run before impact erases its edge."
+ ],
+ "skills": [
+  "bt-metrics",
+  "bt-execution"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Two rules have the same gross Sharpe ratio, 1.0, and the same volatility, 15% a year. Rule D changes its whole position about once a day. Rule M rebalances monthly and trades about 5% of the book a day. Every unit of the book traded costs 5 bp.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Rule",
+      "Gross Sharpe",
+      "Volatility",
+      "Traded a day"
+     ],
+     "rows": [
+      [
+       "D (daily)",
+       "1.0",
+       "15%",
+       "1.00 × book"
+      ],
+      [
+       "M (monthly)",
+       "1.0",
+       "15%",
+       "0.05 × book"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which rule still has a Sharpe ratio above 0.5 after costs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "m",
+      "text": "Only M",
+      "correct": true
+     },
+     {
+      "id": "d",
+      "text": "Only D",
+      "why": "D trades twenty times as much, so it pays twenty times the cost on the same gross edge."
+     },
+     {
+      "id": "both",
+      "text": "Both: 5 bp is tiny",
+      "why": "5 bp a day on the whole book is 12.6% a year for D, almost its whole 15% of gross return."
+     },
+     {
+      "id": "neither",
+      "text": "Neither",
+      "why": "M pays only 0.63% a year in costs, which barely dents a 15% gross return."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Yearly cost = traded a day × 252 × 5 bp."
+    },
+    {
+     "rung": "point",
+     "text": "Compare the last column.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "D: $1 \\times 252 \\times 0.0005 = 12.6\\%$ a year. M: 0.63%. Divide each by 15%."
+    }
+   ],
+   "feedback": {
+    "correct": "M keeps 0.96; D falls to 0.16.",
+    "generic": "Not quite right. Work out each rule's yearly cost and take it off a 15% return."
+   },
+   "explain": {
+    "text": "D pays $1.00 \\times 252 \\times 5\\text{ bp} = 12.6\\%$ a year, cutting its Sharpe by $12.6/15 = 0.84$ to 0.16. M pays 0.63% and keeps 0.96. Same gross edge; trading volume decides what survives.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "The vectorised path from l1 on `make_bars()`: momentum with lookbacks 1, 5 and 20, fills at the next open, cost charged on every unit traded. Each line is net Sharpe against cost. Drag the point along the lookback-1 line.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      10
+     ],
+     "y": [
+      -1.6,
+      0.8
+     ],
+     "xLabel": "Cost per unit traded (bp)",
+     "yLabel": "Net Sharpe",
+     "xStep": 1,
+     "functions": [
+      {
+       "id": "f1",
+       "expr": "0.5658 - 0.16438*x",
+       "label": "lookback 1"
+      },
+      {
+       "id": "f5",
+       "expr": "-0.6596 - 0.06959*x",
+       "label": "lookback 5",
+       "labelSide": "below"
+      },
+      {
+       "id": "f20",
+       "expr": "-0.1601 - 0.03368*x",
+       "label": "lookback 20"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 1,
+       "y": 0.4014,
+       "drag": true,
+       "on": "f1",
+       "label": "drag me"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Lookback 1 at {{fixed(p.x, 2)}} bp: net Sharpe {{fixed(p.y, 3)}}"
+    }
+   },
+   "question": "At what cost per unit traded does lookback 1's net Sharpe reach 0? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.439,
+    "tol": {
+     "abs": 0.15
+    },
+    "unit": "bp",
+    "label": "Break-even cost in bp",
+    "accept": "3.4 bp, within 0.15",
+    "wrong": [
+     {
+      "id": "gross",
+      "value": 3.33,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag until the caption's Sharpe changes sign."
+    },
+    {
+     "rung": "point",
+     "text": "Watch where the lookback-1 line crosses 0.",
+     "highlight": [
+      "f1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Between 3 and 4 bp: about 3.4."
+    }
+   ],
+   "feedback": {
+    "correct": "About 3.4 bp: the **break-even cost**.",
+    "generic": "Not quite right. Find where the lookback-1 line crosses the zero line.",
+    "byKey": {
+     "gross": "That is the gross edge per day in bp. Divide it by the units traded a day to get the cost that wipes it out."
+    }
+   },
+   "explain": {
+    "text": "Lookback 1 earns 3.33 bp a day gross and trades 0.97 of the book a day, so it breaks even at $3.33/0.97 = 3.44$ bp. The steeper the line, the more the rule trades. Lookbacks 5 and 20 lose money even before costs here.",
+    "canvas": {
+     "points": {
+      "p": {
+       "x": 3.44,
+       "y": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The slope of each line is set by how much the rule trades: its **turnover**, the mean absolute daily change in position, as a fraction of equity. The position before day 1 is 0, so the entry counts. Lookback 1's is 0.97.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "xLabel": "Day",
+     "yLabel": "Position (fraction of equity)",
+     "yMin": -1.2,
+     "yMax": 1.2,
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "1": 0,
+      "2": 1,
+      "3": 1,
+      "4": -1,
+      "5": -1,
+      "6": 0
+     }
+    }
+   },
+   "question": "What is the turnover of these six days of positions? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.002
+    },
+    "label": "Turnover per day",
+    "accept": "0.667 ($4/6$)",
+    "wrong": [
+     {
+      "id": "flip-one",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "n-1",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List $|w_t - w_{t-1}|$ for each day, with $w_0 = 0$ before day 1."
+    },
+    {
+     "rung": "point",
+     "text": "The flip on day 4 moves the position by 2.",
+     "highlight": [
+      "x4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Changes 0, 1, 0, 2, 0, 1: total 4 over 6 days."
+    }
+   ],
+   "feedback": {
+    "correct": "4 units over 6 days: 0.667.",
+    "generic": "Not quite right. Add the absolute changes, the flip counting 2, and divide by 6.",
+    "byKey": {
+     "flip-one": "You counted the flip from +1 to −1 as one unit. It sells 1 to get flat and 1 more to go short: 2.",
+     "n-1": "You divided by 5 changes. The course divides by all 6 days, the entry counted from 0."
+    }
+   },
+   "explain": {
+    "text": "From 0: +1 on day 2, −2 on day 4, +1 on day 6. That is 4 units traded over 6 days, so 0.667. fin-ml's `turnover` divided by the $n - 1$ changes instead; ours counts the entry, as its cost bill did.",
+    "canvas": {
+     "highlight": [
+      "x2",
+      "x4",
+      "x6"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "A long-only book never goes short; it rebalances between levels of exposure. Here it starts flat and holds these fractions of equity over five days.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "xLabel": "Day",
+     "yLabel": "Position (fraction of equity)",
+     "yMin": 0,
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "1": 0.5,
+      "2": 0.6,
+      "3": 0.6,
+      "4": 0.4,
+      "5": 0.5
+     }
+    }
+   },
+   "question": "What is its turnover per day?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.18,
+    "tol": {
+     "abs": 0.002
+    },
+    "label": "Turnover per day",
+    "accept": "0.18 ($0.9/5$)",
+    "wrong": [
+     {
+      "id": "no-entry",
+      "value": 0.08,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "mean-pos",
+      "value": 0.52,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from 0 before day 1."
+    },
+    {
+     "rung": "point",
+     "text": "Day 1's entry is 0.5 on its own.",
+     "highlight": [
+      "x1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Changes 0.5, 0.1, 0, 0.2, 0.1: total 0.9."
+    }
+   ],
+   "feedback": {
+    "correct": "0.9 over 5 days: 0.18.",
+    "generic": "Not quite right. Add the absolute daily changes, entry included, and divide by 5.",
+    "byKey": {
+     "no-entry": "You left out the entry on day 1. Buying 0.5 of the book costs money too.",
+     "mean-pos": "That is the average position, not the average change."
+    }
+   },
+   "explain": {
+    "text": "Changes of 0.5, 0.1, 0, 0.2 and 0.1 add to 0.9, so turnover is 0.18 a day. Most of it is the entry; over a long sample the entry fades and the rebalances dominate.",
+    "canvas": {
+     "highlight": [
+      "x1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Cost drag is the yearly cost of trading: turnover × 252 × cost per unit traded. A rule flips from +1 to −1 and back every day. It pays 2.5 bp per unit traded.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "xLabel": "Day",
+     "yLabel": "Position (fraction of equity)",
+     "yMin": -1.2,
+     "yMax": 1.2,
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "1": 1,
+      "2": -1,
+      "3": 1,
+      "4": -1,
+      "5": 1,
+      "6": -1,
+      "7": 1,
+      "8": -1
+     }
+    }
+   },
+   "question": "What is its cost drag per year, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.126,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "%",
+    "label": "Cost drag per year in %",
+    "accept": "12.6% ($2 \\times 252 \\times 0.00025$)",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.063,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "daily",
+      "value": 0.0005,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the turnover when every day is a flip?"
+    },
+    {
+     "rung": "point",
+     "text": "Each flip moves the position by 2.",
+     "highlight": [
+      "x2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times 252 \\times 2.5 / 10{,}000 = 0.126$."
+    }
+   ],
+   "feedback": {
+    "correct": "12.6% a year, at only 2.5 bp a trade.",
+    "generic": "Not quite right. Turnover is 2 a day; multiply by 252 and by 0.00025.",
+    "byKey": {
+     "one": "You counted each flip as one unit. Each moves the position by 2.",
+     "daily": "That is one day's cost. Multiply by 252 for the year."
+    }
+   },
+   "explain": {
+    "text": "Turnover is 2 a day, so the drag is $2 \\times 252 \\times 0.00025 = 0.126$: 12.6% a year. A rule needs a 12.6% gross return just to stand still.",
+    "canvas": {
+     "caption": "Turnover 2 a day: 504 units of the book a year"
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "Lookback 1 on `make_bars()` holds +1 or −1 of the book. It changes position on 48.5% of days, and every change is a flip. A colleague reports its turnover as 0.49: \"it trades about every other day\".",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Measure",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Days with a trade",
+       "48.5%"
+      ],
+      [
+       "Size of each trade",
+       "2 units"
+      ],
+      [
+       "Book",
+       "£1m, about 10,000 shares"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the course's turnover for lookback 1?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "0.97",
+      "correct": true
+     },
+     {
+      "id": "flips",
+      "text": "0.49",
+      "why": "You counted each flip as one trade of one unit. A flip moves the position by 2."
+     },
+     {
+      "id": "shares",
+      "text": "9,698 shares",
+      "why": "Shares depend on the book and the price. Turnover as a fraction of equity compares across both."
+     },
+     {
+      "id": "yearly",
+      "text": "244",
+      "why": "That is units traded in a year. The course reports turnover per day."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many units does one flip trade?"
+    },
+    {
+     "rung": "point",
+     "text": "Combine the first two rows.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.485 \\times 2 \\approx 0.97$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.97 of the book a day.",
+    "generic": "Not quite right. Days with a trade times the size of each trade.",
+    "byKey": {
+     "flips": "That is the trap: it halves the cost drag. At 2.5 bp the true drag is 6.1% a year, not 3.1%."
+    }
+   },
+   "explain": {
+    "text": "Trades on 48.5% of days, each of 2 units, give 0.97 a day. Counting flips as one unit halves every cost estimate. Some desks quote one-sided turnover, half of ours: always say which.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Edge cases. A rule that never trades has turnover 0 and no cost drag. Buy and hold trades once: it buys the whole book on day 1 and holds for all 1,260 days.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 1,
+     "step": 0.25,
+     "labels": true
+    },
+    "state": {
+     "points": [
+      {
+       "id": "never",
+       "x": 0,
+       "label": "never trades"
+      },
+      {
+       "id": "bh",
+       "x": 0.0008,
+       "label": "buy and hold",
+       "labelPos": "below"
+      },
+      {
+       "id": "lb1",
+       "x": 0.97,
+       "label": "lookback 1"
+      }
+     ]
+    }
+   },
+   "question": "What is buy and hold's cost drag per year at 2.5 bp, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "bp",
+    "label": "Cost drag per year in bp",
+    "accept": "0.5 bp ($\\tfrac{1}{1260} \\times 252 \\times 2.5$)",
+    "wrong": [
+     {
+      "id": "whole",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "daily-all",
+      "value": 630,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Turnover is one unit over 1,260 days."
+    },
+    {
+     "rung": "point",
+     "text": "The buy-and-hold point sits almost at 0.",
+     "highlight": [
+      "bh"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1}{1260} \\times 252 \\times 2.5 = 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Half a basis point a year: the entry, spread over five years.",
+    "generic": "Not quite right. Turnover is $1/1260$; multiply by 252 and by 2.5 bp.",
+    "byKey": {
+     "whole": "That is the whole entry cost, paid once. Per year over five years it is a fifth of that.",
+     "daily-all": "That charges the full book every day. Buy and hold trades only once."
+    }
+   },
+   "explain": {
+    "text": "Buying once costs 2.5 bp in total, which is 0.5 bp a year over five years. The benchmark's costs are tiny but not zero, and it must still pay them."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "What you computed, as formulas, for positions $w_t$ as fractions of equity with $w_0 = 0$: $$\\tau = \\frac{1}{n}\\sum_{t=1}^{n} |w_t - w_{t-1}|, \\qquad \\text{drag} = 252\\,\\tau\\,c, \\qquad c^* = \\frac{\\bar g}{\\tau}.$$ Here $c$ is the cost per unit traded and $\\bar g$ the gross return per day. fin-ml's signal: $7.31/0.927 = 7.9$ bp.",
+   "question": "Lookback 2 on `make_bars()` earns 3.54 bp a day gross with turnover 0.61. What is its break-even cost?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "5.8 bp",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "2.2 bp",
+      "why": "You multiplied: $3.54 \\times 0.61$. Break-even divides the edge by the turnover."
+     },
+     {
+      "id": "c",
+      "text": "0.17 bp",
+      "why": "You divided the turnover by the edge: the ratio is upside down."
+     },
+     {
+      "id": "d",
+      "text": "3.54 bp",
+      "why": "That ignores how much it trades. Each unit traded pays the cost."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$3.54/0.61 = 5.8$ bp: more room than lookback 1's 3.4.",
+    "generic": "Not quite right. Edge per day over units traded per day."
+   },
+   "explain": {
+    "text": "$c^* = 3.54/0.61 = 5.8$ bp. Lookback 2 earns about the same per day as lookback 1 but trades a third less, so it survives higher costs."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "`turnover(positions)` takes positions as fractions of equity (a list or a Series) and returns the mean absolute daily change, counting the entry from 0; return 0.0 for no positions. `cost_drag(turnover_per_day, cost_bp, periods=252)` returns the yearly cost as a fraction.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> turnover([0, 1, 1, -1, -1, 0])",
+      "0.6666666666666666",
+      ">>> cost_drag(2.0, 2.5)",
+      "0.126"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `turnover(positions)` and `cost_drag(turnover_per_day, cost_bp, periods=252)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\nimport pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef momentum_signal(close, lookback):\n    return np.sign(close.pct_change(lookback)).fillna(0.0)\n\ndef target_positions(signal, max_units):\n    return np.round(signal.fillna(0.0).clip(-1, 1) * max_units)\n\ndef orders_from_targets(targets):\n    return targets.diff().fillna(targets.iloc[0])\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n    def fill(self, qty, price, cost=0.0):\n        self.cash -= qty * price + cost\n        self.shares += qty\n    def equity(self, price):\n        return self.cash + self.shares * price\n\ndef trade_cost(qty, price, per_share=0.005, minimum=1.0, half_spread_bp=2.0):\n    if qty == 0:\n        return 0.0\n    q = abs(qty)\n    return max(per_share * q, minimum) + q * price * half_spread_bp / 10_000\n\ndef slippage_bp(qty, adv_shares, sigma, c=1.0):\n    return c * sigma * math.sqrt(abs(qty) / adv_shares) * 10_000\n\ndef backtest(bars, targets, cash0=1_000_000, costs=None):\n    orders = orders_from_targets(targets).values\n    o, c = bars[\"open\"].values, bars[\"close\"].values\n    pf, rows = Portfolio(cash0), []\n    for t in range(len(bars)):\n        if t > 0 and orders[t - 1] != 0:          # day t-1's order fills at day t's open\n            q = orders[t - 1]\n            pf.fill(q, o[t], costs(q, o[t]) if costs else 0.0)\n        rows.append((pf.shares, pf.cash, pf.equity(c[t])))\n    return pd.DataFrame(rows, index=bars.index, columns=[\"shares\", \"cash\", \"equity\"])\n\nbars = make_bars()\nrun_a = backtest(bars, target_positions(momentum_signal(bars[\"close\"], 1), 10_000), costs=trade_cost)\nequity_a = run_a[\"equity\"]\n",
+    "starter": "def turnover(positions):\n    \"\"\"Mean |change in position| per day, as a fraction of equity.\n    The position before the first day is 0, so the entry counts.\"\"\"\n    prev, total, n = 0.0, 0.0, 0\n    for p in positions:\n        ...\n    ...\n\ndef cost_drag(turnover_per_day, cost_bp, periods=252):\n    ...\n",
+    "solution": "def turnover(positions):\n    \"\"\"Mean |change in position| per day, as a fraction of equity.\n    The position before the first day is 0, so the entry counts.\"\"\"\n    prev, total, n = 0.0, 0.0, 0\n    for p in positions:\n        total += abs(p - prev)\n        prev, n = p, n + 1\n    return total / n if n else 0.0\n\ndef cost_drag(turnover_per_day, cost_bp, periods=252):\n    return turnover_per_day * periods * cost_bp / 10_000\n",
+    "examples": [
+     {
+      "call": "round(turnover([0, 1, 1, -1, -1, 0]), 6)",
+      "expect": "0.666667",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(turnover([0, 1, 1, -1, -1, 0]), 6)",
+      "expect": "0.666667",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(turnover([0.5, 0.6, 0.6, 0.4, 0.5]), 6)",
+      "expect": "0.18",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(turnover([1, -1, 1, -1]), 6)",
+      "expect": "1.75",
+      "compare": "isclose"
+     },
+     {
+      "call": "turnover([0, 0, 0, 0])",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(turnover([1.0] * 1260), 9)",
+      "expect": "0.000793651",
+      "compare": "isclose"
+     },
+     {
+      "call": "turnover([])",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(turnover(pd.Series([0.2, -0.2, 0.0])), 6)",
+      "expect": "0.266667",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(cost_drag(2.0, 2.5), 6)",
+      "expect": "0.126",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(cost_drag(0.05, 5), 6)",
+      "expect": "0.0063",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(cost_drag(0.97, 10, periods=252), 6)",
+      "expect": "0.24444",
+      "compare": "isclose"
+     },
+     {
+      "call": "cost_drag(0.0, 20)",
+      "expect": "0.0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 11 hidden tests: seven turnovers (a flip, a long-only book, daily flips, no trading, buy and hold over 1,260 days, an empty list, a Series) and four cost drags. Values are rounded and accepted when math.isclose holds. Pure Python: the engine in the hidden code loads NumPy and pandas on the first run, about 15 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add `abs(p - prev)` each day, then move `prev` on."
+    },
+    {
+     "rung": "point",
+     "text": "Divide by the number of days, not of changes.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`cost_drag` is `turnover_per_day * periods * cost_bp / 10_000`."
+    }
+   ],
+   "feedback": {
+    "correct": "Turnover and drag, in the course's convention.",
+    "generic": "Not quite right. Check the entry from 0 and the division by $n$."
+   },
+   "explain": {
+    "text": "Starting `prev` at 0 makes the entry count. Buy and hold over 1,260 days gets $1/1260$, and a rule that never trades gets 0, so it pays nothing."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Impact grows with size: $c\\,\\sigma\\sqrt{Q/V}$ from l7, with $\\sigma = 1.2\\%$ and $V$ the 20-day average volume, about 2m shares. The table is lookback 2's net Sharpe on `make_bars()` at five book sizes, paying a 2 bp half spread plus impact. With the spread alone it is 0.394.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Book",
+      "Net Sharpe, c = 1",
+      "Net Sharpe, c = 0.25"
+     ],
+     "rows": [
+      [
+       "£10,000",
+       "0.278",
+       "0.365"
+      ],
+      [
+       "£100,000",
+       "0.026",
+       "0.302"
+      ],
+      [
+       "£1,000,000",
+       "-0.766",
+       "0.103"
+      ],
+      [
+       "£10,000,000",
+       "-3.125",
+       "-0.524"
+      ],
+      [
+       "£100,000,000",
+       "-7.635",
+       "-2.439"
+      ]
+     ],
+     "tap": "rows"
+    },
+    "state": {}
+   },
+   "question": "With $c = 1$, tap every book size at which net Sharpe is still at least half the spread-only value.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r0"
+    ],
+    "countWord": "rows",
+    "wrong": [
+     {
+      "id": "c25",
+      "set": [
+       "r0",
+       "r1"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Half of 0.394 is 0.197."
+    },
+    {
+     "rung": "point",
+     "text": "Read the $c = 1$ column.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only rows at or above 0.197 count."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the smallest book. This edge has almost no capacity.",
+    "generic": "Not quite right. Keep rows whose $c = 1$ value is at least 0.197.",
+    "byKey": {
+     "c25": "You read the $c = 1/4$ column. With the course's $c = 1$, the £100,000 book is already below half.",
+     "r2": "At £1m the net Sharpe is negative."
+    }
+   },
+   "explain": {
+    "text": "Impact grows like $\\sqrt{\\text{book}}$, so net Sharpe falls faster and faster with size. With $c = 1$ only the £10,000 book keeps half its edge. The answer depends heavily on $c$, so a capacity estimate must state it.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Now the table in code. `unit_positions(bars, lookback)`, `open_returns(bars)`, `adv_shares(bars)` and `sharpe` are already defined. Each day trades `dp` units of the book, which is `dp * book / open` shares; charge `(half_spread_bp + impact) / 10_000` per unit. Drop the last day, which has no return.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> capacity_table(bars, 2, [1e4, 1e6], 1.0)",
+      "[0.278, -0.766]"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `capacity_table(bars, lookback, book_sizes, c=1.0, half_spread_bp=2.0, sigma=0.012)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\nimport pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef momentum_signal(close, lookback):\n    return np.sign(close.pct_change(lookback)).fillna(0.0)\n\ndef target_positions(signal, max_units):\n    return np.round(signal.fillna(0.0).clip(-1, 1) * max_units)\n\ndef orders_from_targets(targets):\n    return targets.diff().fillna(targets.iloc[0])\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n    def fill(self, qty, price, cost=0.0):\n        self.cash -= qty * price + cost\n        self.shares += qty\n    def equity(self, price):\n        return self.cash + self.shares * price\n\ndef trade_cost(qty, price, per_share=0.005, minimum=1.0, half_spread_bp=2.0):\n    if qty == 0:\n        return 0.0\n    q = abs(qty)\n    return max(per_share * q, minimum) + q * price * half_spread_bp / 10_000\n\ndef slippage_bp(qty, adv_shares, sigma, c=1.0):\n    return c * sigma * math.sqrt(abs(qty) / adv_shares) * 10_000\n\ndef backtest(bars, targets, cash0=1_000_000, costs=None):\n    orders = orders_from_targets(targets).values\n    o, c = bars[\"open\"].values, bars[\"close\"].values\n    pf, rows = Portfolio(cash0), []\n    for t in range(len(bars)):\n        if t > 0 and orders[t - 1] != 0:          # day t-1's order fills at day t's open\n            q = orders[t - 1]\n            pf.fill(q, o[t], costs(q, o[t]) if costs else 0.0)\n        rows.append((pf.shares, pf.cash, pf.equity(c[t])))\n    return pd.DataFrame(rows, index=bars.index, columns=[\"shares\", \"cash\", \"equity\"])\n\nbars = make_bars()\nrun_a = backtest(bars, target_positions(momentum_signal(bars[\"close\"], 1), 10_000), costs=trade_cost)\nequity_a = run_a[\"equity\"]\nimport math\nimport pandas as pd\n\ndef sharpe(returns, periods=252):\n    \"\"\"Annualised Sharpe ratio: sqrt(periods) * mean / sample sd.\"\"\"\n    r = pd.Series(returns, dtype=float).dropna()\n    if len(r) < 2:\n        return 0.0\n    sd = r.std(ddof=1)\n    if sd < 1e-12:                # no spread: rounding noise is not risk\n        return 0.0\n    return float(math.sqrt(periods) * r.mean() / sd)\n\ndef unit_positions(bars, lookback):\n    \"\"\"+1, 0 or -1, decided at close t - 1 and held from open t to open t + 1.\"\"\"\n    return momentum_signal(bars[\"close\"], lookback).shift(1).fillna(0.0)\n\ndef open_returns(bars):\n    \"\"\"Return from open t to open t + 1 (NaN on the last bar).\"\"\"\n    return bars[\"open\"].shift(-1) / bars[\"open\"] - 1\n\ndef adv_shares(bars, days=20):\n    \"\"\"Average daily volume over the previous `days` bars: known before the open.\"\"\"\n    return bars[\"volume\"].rolling(days, min_periods=1).mean().shift(1).bfill()\n",
+    "starter": "import numpy as np\n\ndef capacity_table(bars, lookback, book_sizes, c=1.0, half_spread_bp=2.0, sigma=0.012):\n    p = unit_positions(bars, lookback)\n    dp = p.diff().fillna(p.iloc[0]).abs()        # units of the book traded each day\n    r = open_returns(bars)\n    adv = adv_shares(bars)\n    out = []\n    for book in book_sizes:\n        ...\n    return out\n",
+    "solution": "import numpy as np\n\ndef capacity_table(bars, lookback, book_sizes, c=1.0, half_spread_bp=2.0, sigma=0.012):\n    p = unit_positions(bars, lookback)\n    dp = p.diff().fillna(p.iloc[0]).abs()        # units of the book traded each day\n    r = open_returns(bars)\n    adv = adv_shares(bars)\n    out = []\n    for book in book_sizes:\n        q = dp * book / bars[\"open\"]             # shares traded\n        impact = c * sigma * np.sqrt(q / adv) * 10_000\n        net = p * r - dp * (half_spread_bp + impact) / 10_000\n        out.append(round(sharpe(net.iloc[:-1]), 3))\n    return out\n",
+    "examples": [
+     {
+      "call": "capacity_table(bars, 2, [1e4, 1e6], 1.0)",
+      "expect": "[0.278, -0.766]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "capacity_table(bars, 2, [1e4, 1e6], 1.0)",
+      "expect": "[0.278, -0.766]",
+      "compare": "isclose"
+     },
+     {
+      "call": "capacity_table(bars, 2, [1e4, 1e6], 0.0)",
+      "expect": "[0.394, 0.394]",
+      "compare": "isclose"
+     },
+     {
+      "call": "capacity_table(bars, 1, [1e5, 1e7], 1.0)",
+      "expect": "[-0.345, -5.247]",
+      "compare": "isclose"
+     },
+     {
+      "call": "capacity_table(bars, 2, [1e5], 0.25)",
+      "expect": "[0.302]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "small = make_bars(250)",
+      "call": "capacity_table(small, 1, [1e4, 1e6, 1e8], 1.0)",
+      "expect": "[-0.923, -2.71, -12.943]",
+      "compare": "isclose"
+     },
+     {
+      "call": "capacity_table(bars, 2, [], 1.0)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "(lambda v: v == sorted(v, reverse=True))(capacity_table(bars, 2, [1e4, 1e5, 1e6, 1e7], 1.0))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests on `bars = make_bars()` and on `make_bars(250)`, at lookbacks 1 and 2, with $c$ = 1, 0.25 and 0 (no impact), an empty list of books, and a check that net Sharpe never rises with size. Lists of Sharpes rounded to 3 places are accepted when math.isclose holds. The first run loads NumPy and pandas, which takes about 15 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Shares traded: `q = dp * book / bars[\"open\"]`."
+    },
+    {
+     "rung": "point",
+     "text": "Impact in bp: `c * sigma * np.sqrt(q / adv) * 10_000`.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`net = p * r - dp * (half_spread_bp + impact) / 10_000`, then `round(sharpe(net.iloc[:-1]), 3)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Net Sharpe by book size, from the same vectorised path.",
+    "generic": "Not quite right. Check the units: impact in bp per unit traded, divided by 10,000."
+   },
+   "explain": {
+    "text": "With $c = 0$ every book gives the spread-only Sharpe, which is a good self-check. Impact is charged per unit traded, so a day with no trade pays nothing."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A portfolio manager reads your study of lookback 2 and asks: \"How much can this run before it stops working?\" Your table says net Sharpe 0.28 at £10k, 0.03 at £100k and −0.77 at £1m, with $c = 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Book",
+      "Net Sharpe, c = 1"
+     ],
+     "rows": [
+      [
+       "£10,000",
+       "0.278"
+      ],
+      [
+       "£100,000",
+       "0.026"
+      ],
+      [
+       "£1,000,000",
+       "-0.766"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which line belongs in the results note?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "honest",
+      "text": "Capacity is under about £100k at $c = 1$: impact erases the edge beyond that, so it is not a product.",
+      "correct": true
+     },
+     {
+      "id": "gross",
+      "text": "It can run £100m: the gross Sharpe does not depend on size.",
+      "why": "Gross Sharpe ignores cost, and cost grows with size. The PM asked about money that trades."
+     },
+     {
+      "id": "c25",
+      "text": "It can run £1m, using $c = 0.25$.",
+      "why": "Choosing the friendliest impact constant to get a bigger number is the bias the note should avoid."
+     },
+     {
+      "id": "none",
+      "text": "Capacity is not something a backtest can say.",
+      "why": "A backtest with an impact model can give an estimate. State the model and its constant."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which book sizes still have a positive edge?"
+    },
+    {
+     "rung": "point",
+     "text": "Look at the £1m row.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Say the size, the impact model and its constant in one line."
+    }
+   ],
+   "feedback": {
+    "correct": "A number, the model behind it and a verdict.",
+    "generic": "Not quite right. Answer with a size, at the stated cost model."
+   },
+   "explain": {
+    "text": "The honest line names a size, the model and the constant. Here the edge survives only at toy sizes. Saying so is the result, not a failure of the note."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Turnover is the mean absolute daily change in position as a fraction of equity, the entry counted from 0; a flip counts 2.",
+   "Cost drag is $252 \\times$ turnover $\\times$ cost per unit; the break-even cost is gross return per day over turnover.",
+   "Impact grows with the square root of size, so net Sharpe falls with the book: capacity is where it stops being worth it."
+  ],
+  "formula": {
+   "name": "Turnover, drag and break-even",
+   "tex": "\\tau = \\frac{1}{n}\\sum_{t=1}^{n}|w_t - w_{t-1}|, \\quad \\text{drag} = 252\\,\\tau\\,c, \\quad c^* = \\frac{\\bar g}{\\tau}",
+   "note": "Two-sided turnover, with $w_0 = 0$; one-sided turnover is half of it."
+  },
+  "trap": "Counting a flip from +1 to −1 as one unit halves the turnover and every cost estimate built on it."
+ },
+ "quiz": [
+  {
+   "id": "q-turnover",
+   "difficulty": 2,
+   "prose": "From flat, a book holds 1, 1, 0, 0 of equity over four days.",
+   "question": "What is its turnover per day?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.002
+    },
+    "label": "Turnover per day",
+    "accept": "0.5 ($2/4$)",
+    "wrong": [
+     {
+      "id": "no-entry",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "n-1",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Buy 1, sell 1: 2 units over 4 days.",
+    "generic": "Not quite right. Count the entry from 0 and the exit.",
+    "byKey": {
+     "no-entry": "You missed the entry on day 1.",
+     "n-1": "You divided by 3 changes. Divide by the 4 days."
+    }
+   },
+   "explain": {
+    "text": "Changes 1, 0, 1, 0 from a flat start: 2 units over 4 days, 0.5 a day."
+   }
+  },
+  {
+   "id": "q-drag",
+   "difficulty": 2,
+   "prose": "A rule has turnover 0.4 a day and pays 5 bp per unit traded.",
+   "question": "What is its cost drag per year?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "5.04%",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "0.02%",
+      "why": "That is one day's cost. Multiply by 252."
+     },
+     {
+      "id": "c",
+      "text": "2.52%",
+      "why": "You halved it. The 0.4 is already two-sided turnover."
+     },
+     {
+      "id": "d",
+      "text": "50.4%",
+      "why": "You used 50 bp. 5 bp is 0.0005."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.4 \\times 252 \\times 0.0005 = 0.0504$.",
+    "generic": "Not quite right. Turnover × 252 × cost."
+   },
+   "explain": {
+    "text": "$0.4 \\times 252 = 100.8$ units a year, each costing 0.05%: 5.04% a year."
+   }
+  },
+  {
+   "id": "q-breakeven",
+   "difficulty": 3,
+   "prose": "A signal earns 2 bp a day gross with turnover 0.25.",
+   "question": "What is its break-even cost per unit traded, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "bp",
+    "label": "Break-even cost in bp",
+    "accept": "8 bp ($2/0.25$)",
+    "wrong": [
+     {
+      "id": "mult",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "8 bp.",
+    "generic": "Not quite right. Gross per day over turnover.",
+    "byKey": {
+     "mult": "You multiplied. Divide the edge by the turnover."
+    }
+   },
+   "explain": {
+    "text": "Each day it trades a quarter of the book, so each unit traded carries $2/0.25 = 8$ bp of edge."
+   }
+  },
+  {
+   "id": "q-capacity",
+   "difficulty": 3,
+   "prose": "Under the square-root impact model, a rule's impact cost per unit traded is 4 bp on a £10m book.",
+   "question": "What is it on a £40m book, trading the same fractions of the book?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "8 bp",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "16 bp",
+      "why": "That is linear in size. Impact grows with the square root."
+     },
+     {
+      "id": "c",
+      "text": "4 bp",
+      "why": "Bigger orders move the price more."
+     },
+     {
+      "id": "d",
+      "text": "2 bp",
+      "why": "Impact rises with size, not falls."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4 \\times \\sqrt{4} = 8$ bp.",
+    "generic": "Not quite right. Four times the size, square root."
+   },
+   "explain": {
+    "text": "Order sizes scale by 4, so $\\sqrt{Q/V}$ scales by 2: 8 bp per unit traded."
+   }
+  }
+ ]
+}

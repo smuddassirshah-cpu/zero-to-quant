@@ -14,7 +14,12 @@
    or a raises case without call): the learner's program is compiled as it is and run once per case with that
    case's stdin. Hidden prelude and postlude code sit before and after the learner's code; #line directives keep the
    learner's line numbers (main.cpp), and a case's call is reported as "test N". Compile time is not charged to the
-   cases: each case has its own limit (5 s, plus spec.budget). */
+   cases: each case has its own limit (5 s, plus spec.budget).
+   Pass 7: a case's tol { rel, abs } (items 425, 442); spec.flags (["-Wall"], "-O2", "-DNDEBUG", "-ffast-math") (items
+   402, 452, 476); a case's defines { NAME: value } compiled once per distinct set (item 454); a case { compiles:
+   "snippet", expect: false } that must not compile (item 474); stdout cases with lines: true or match: "regex" (item
+   451); what a case printed before a timeout (item 369); spec.leakCheck, spec.testkit, spec.signature (items 437, 455,
+   438); spec.files, hidden extra source files compiled and linked with main.cpp (item 403, in part). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -97,19 +102,21 @@
     /* The starter's headers are precompiled while the learner reads the question */
     const warm = (head) => { if (!head) return; wanted.add(head); if (status === 'ready') want(head); };
     const compile = (u) => new Promise((resolve) => {
-      const hit = cache.get(u.src);
+      const ck = (u.flags || []).join(' ') + '\n' + JSON.stringify(u.files || null) + '\n' + u.src;
+      const hit = cache.get(ck);
       if (hit) { resolve(hit); return; }
       if (status !== 'ready' || !cw) { resolve({ ok: false, notReady: true }); return; }
       const id = ++seq;
       const timer = setTimeout(() => { pend.delete(id); resolve({ ok: false, diag: 'The compiler took more than ' + COMPILE_MS / 1000 + ' seconds, so it was stopped and restarted. Try again.' }); start(true); }, COMPILE_MS);
-      pend.set(id, { resolve: (m) => { if (m.ok || (m.diag && !m.crashed)) { cache.set(u.src, m); while (cache.size > 8) cache.delete(cache.keys().next().value); } resolve(m); }, timer });
-      cw.postMessage({ type: 'compile', id, src: u.src, srcPch: u.srcPch, head: u.head });
-      want(u.head);
+      pend.set(id, { resolve: (m) => { if (m.ok || (m.diag && !m.crashed)) { cache.set(ck, m); while (cache.size > 8) cache.delete(cache.keys().next().value); } resolve(m); }, timer });
+      const plain = !(u.flags || []).some((f) => !/^-W/.test(f)) && !u.files;
+      cw.postMessage({ type: 'compile', id, src: u.src, srcPch: u.srcPch, head: plain ? u.head : '', flags: u.flags || [], files: u.files || null });
+      if (plain) want(u.head);
     });
     /* Runs the module once per case; resolves to { results: [..], timeout: index or null, crash } */
     const run = (wasm, cases, limit) => new Promise((resolve) => {
       if (!rw) { try { rw = new Worker(url(), { type: 'module' }); } catch (err) { resolve({ results: [], timeout: null, crash: String((err && err.message) || err) }); return; } }
-      const w = rw, id = ++seq, results = new Array(cases.length).fill(null);
+      const w = rw, id = ++seq, results = new Array(cases.length).fill(null), partial = new Array(cases.length).fill('');
       let timer = 0, crash = null, done = false;
       const guard = () => { clearTimeout(timer); timer = setTimeout(() => fin({ timeout: null, crash: 'The program runner did not respond.' }, true), 20000); };
       const fin = (extra, kill) => {
@@ -121,7 +128,8 @@
       w.onmessage = (e) => {
         const m = e.data || {};
         if (m.id !== id) return;
-        if (m.type === 'case' && m.phase === 'start') { clearTimeout(timer); timer = setTimeout(() => fin({ timeout: m.i }, true), limit); }
+        if (m.type === 'case' && m.phase === 'start') { clearTimeout(timer); timer = setTimeout(() => fin({ timeout: m.i, partial }, true), limit); }
+        else if (m.type === 'case' && m.phase === 'out') partial[m.i] = String(m.out || '');
         else if (m.type === 'case') { results[m.i] = m; guard(); }
         else if (m.type === 'crash') crash = m.message;
         else if (m.type === 'done') fin({ crash });
@@ -276,12 +284,54 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
 }
 `;
   /* In function mode a main the learner wrote (to try things out) is renamed, so it does not clash with the harness */
-  const unit = (spec, src, cases, script) => {
-    const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
+  const LEAK = String.raw`#include <cstdio>
+#include <cstdlib>
+#include <cstddef>
+#include <new>
+namespace zq_leak {
+inline bool& on() { static bool v = false; return v; }
+inline long* counts() { static long c[3] = { 0, 0, 0 }; return c; }
+inline void* get(std::size_t n, unsigned kind) { void* raw = std::malloc(n + 16); if (!raw) std::abort(); unsigned* h = static_cast<unsigned*>(raw); h[0] = on() ? 0x5a514c4bu : 0u; h[1] = kind; if (on()) ++counts()[kind]; return static_cast<char*>(raw) + 16; }
+inline void put(void* p, unsigned kind) { if (!p) return; char* raw = static_cast<char*>(p) - 16; unsigned* h = reinterpret_cast<unsigned*>(raw); if (h[0] == 0x5a514c4bu) { if (h[1] != kind) ++counts()[2]; --counts()[h[1] ? 1 : 0]; h[0] = 0; } std::free(raw); }
+struct Check { Check() { on() = true; } ~Check() { on() = false; long* c = counts(); if (c[0] > 0 || c[1] > 0 || c[2] > 0) { std::fflush(stdout); if (c[2]) std::fprintf(stderr, "Memory error: %ld block(s) were freed with the wrong form of delete (delete on new[] memory, or delete[] on new).\n", c[2]); if (c[0] > 0 || c[1] > 0) std::fprintf(stderr, "Memory leak: %ld block(s) from new and %ld from new[] were never deleted.\n", c[0] > 0 ? c[0] : 0, c[1] > 0 ? c[1] : 0); std::_Exit(1); } } };
+static Check check;
+}
+void* operator new(std::size_t n) { return zq_leak::get(n, 0); }
+void* operator new[](std::size_t n) { return zq_leak::get(n, 1); }
+void operator delete(void* p) noexcept { zq_leak::put(p, 0); }
+void operator delete[](void* p) noexcept { zq_leak::put(p, 1); }
+void operator delete(void* p, std::size_t) noexcept { zq_leak::put(p, 0); }
+void operator delete[](void* p, std::size_t) noexcept { zq_leak::put(p, 1); }
+`;
+  const TESTKIT = String.raw`#include <cmath>
+#include <cstdio>
+#include <vector>
+namespace zq_tk {
+struct T { const char* name; void (*fn)(); };
+inline std::vector<T>& all() { static std::vector<T> v; return v; }
+inline int& fails() { static int f = 0; return f; }
+inline const char*& cur() { static const char* c = ""; return c; }
+struct Reg { Reg(const char* n, void (*f)()) { all().push_back({ n, f }); } };
+}
+#define TEST(name) static void name(); static zq_tk::Reg zq_reg_##name(#name, name); static void name()
+#define CHECK(cond) do { if (!(cond)) { ++zq_tk::fails(); std::printf("FAILED %s: CHECK(%s), line %d\n", zq_tk::cur(), #cond, __LINE__); } } while (0)
+#define CHECK_CLOSE(a, b, tol) do { double zq_a_ = (a), zq_b_ = (b); if (!(std::fabs(zq_a_ - zq_b_) <= (tol))) { ++zq_tk::fails(); std::printf("FAILED %s: CHECK_CLOSE(%s, %s) got %.10g and %.10g, line %d\n", zq_tk::cur(), #a, #b, zq_a_, zq_b_, __LINE__); } } while (0)
+inline int run_tests() { int bad = 0; for (auto& t : zq_tk::all()) { int before = zq_tk::fails(); zq_tk::cur() = t.name; t.fn(); if (zq_tk::fails() > before) ++bad; } std::printf("%d of %d tests passed\n", (int)zq_tk::all().size() - bad, (int)zq_tk::all().size()); return bad; }
+inline int test_count() { return (int)zq_tk::all().size(); }
+`;
+  /* signature: "double total_value(const std::vector<double>&, const std::vector<double>&)" checked by a cast */
+  const sigCheck = (sig) => { const m = String(sig || '').trim().match(/^(.+?)\s*\b([A-Za-z_]\w*)\s*\(([\s\S]*)\)\s*$/); return m ? `\n#line 1 "signature check"\n[[maybe_unused]] static auto zq_sig_check = static_cast<${m[1].trim()} (*)(${m[3]})>(&${m[2]});\n` : ''; };
+  const FLAG_OK = /^-(W[\w=+-]*|O[0-3sz]|D[A-Za-z_]\w*(=[\w.+-]*)?|U[A-Za-z_]\w*|f(no-)?fast-math|std=c\+\+(14|17|20))$/;
+  const flagsOf = (spec) => [].concat(spec.flags || []).map(String).filter((f) => FLAG_OK.test(f));
+  const unit = (spec, src, cases, script, extra = {}) => {
+    const defs = extra.defines && typeof extra.defines === 'object' ? Object.entries(extra.defines).filter(([k]) => /^[A-Za-z_]\w*$/.test(k)).map(([k, v]) => `#define ${k} ${v === true ? 1 : String(v)}`).join('\n') : '';
+    const pre = (spec.leakCheck ? LEAK : '') + (spec.testkit ? TESTKIT : '') + (defs ? defs + '\n' : '') + String(spec.prelude || ''); // defines come first, so a hidden prelude can #ifdef on them
+    const post = String(spec.postlude || '') + sigCheck(spec.signature) + (extra.probe != null ? `\n#line 1 "compile check"\n[[maybe_unused]] static void zq_compile_probe() {\n${extra.probeSetup || ''}\n${extra.probe}\n}\n` : '');
     const P = splitHead(pre), L = splitHead(src);
     const head = [...new Set([...P.head, ...L.head])].join('\n');
     const build = (p, s) => (p.trim() ? `#line 1 "prelude.cpp"\n${p}\n` : '') + (script ? '' : '#define main zq_learner_main\n') + `#line 1 "main.cpp"\n${s}\n` + (script ? '' : '#undef main\n') + (post.trim() ? `#line 1 "postlude.cpp"\n${post}\n` : '') + (script ? '' : harness(cases));
-    return { src: build(pre, src), srcPch: build(P.blank, L.blank), head: head ? head + '\n' : '' };
+    const files = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? Object.fromEntries(Object.entries(spec.files).filter(([k]) => /^[\w.-]+\.(cpp|cc|h|hpp)$/.test(k) && k !== 'main.cpp').map(([k, v]) => [k, String(v)])) : null;
+    return { src: build(pre, src), srcPch: build(P.blank, L.blank), head: head ? head + '\n' : '', flags: flagsOf(spec), files };
   };
 
   /* ---------- Reading results ---------- */
@@ -319,10 +369,11 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
     if (v && typeof v === 'object' && v.$unprintable) return '(a value the tests cannot print)';
     return String(v);
   };
-  const close = (a, e) => a === e || (isFinite(a) && isFinite(e) && Math.abs(a - e) <= Math.max(1e-9 * Math.max(Math.abs(a), Math.abs(e)), 1e-12));
-  const same = (a, e, mode) => {
-    if (Array.isArray(e)) return Array.isArray(a) && a.length === e.length && a.every((x, i) => same(x, e[i], mode));
-    if (typeof e === 'number') return typeof a === 'number' && (mode === 'isclose' ? close(a, e) : a === e);
+  const close = (a, e, tol) => a === e || (isFinite(a) && isFinite(e) && Math.abs(a - e) <= (tol ? Math.max(tol[0] * Math.max(Math.abs(a), Math.abs(e)), tol[1]) : Math.max(1e-9 * Math.max(Math.abs(a), Math.abs(e)), 1e-12)));
+  const tolOf = (c) => (c && c.tol && typeof c.tol === 'object' && (Number.isFinite(+c.tol.rel) || Number.isFinite(+c.tol.abs)) ? [Math.max(0, +c.tol.rel || 0), Math.max(0, +c.tol.abs || 0)] : c && typeof c.tol === 'number' && c.tol >= 0 ? [0, c.tol] : null);
+  const same = (a, e, mode, tol) => {
+    if (Array.isArray(e)) return Array.isArray(a) && a.length === e.length && a.every((x, i) => same(x, e[i], mode, tol));
+    if (typeof e === 'number') return typeof a === 'number' && (mode === 'isclose' ? close(a, e, tol) : a === e);
     return a === e;
   };
   const norm = (t) => { const ls = String(t).replace(/\r\n/g, '\n').split('\n').map(l => l.replace(/\s+$/, '')); while (ls.length && !ls[0]) ls.shift(); while (ls.length && !ls[ls.length - 1]) ls.pop(); return ls.join('\n'); };
@@ -337,8 +388,8 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
     row.ok = false;
     row.actual = row.hasValue ? 'no error, the value was ' + fmt(row.value) : 'no error: the program ran to the end';
   };
-  const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null && c.compare == null);
-  const scriptMode = (cases) => cases.some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
+  const isOut = (c) => c.compiles == null && (c.compare === 'stdout' || (c.call == null && c.expect != null && c.compare == null));
+  const scriptMode = (cases) => cases.some(c => c.compiles == null && (isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null)));
   /* Compiler output for the learner: the generated harness's notes are dropped, test N keeps no line number, the
      linker's temporary file names and libc++'s inline namespace go */
   const cleanDiag = (d) => {
@@ -506,7 +557,7 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
     sync();
 
     const pre = (t, cls = 'wd-res-out') => `<pre class="${cls} t-code">${Z.esc(t)}</pre>`;
-    const label = (r) => r.out ? (r.stdin ? 'what it prints with this input' : 'what it prints') : r.call ? `${r.setup ? `<code class="lsn-ic">${Z.esc(r.setup)}</code> then ` : ''}<code class="lsn-ic">${Z.esc(r.call)}</code>` : 'the whole program';
+    const label = (r) => r.compiles != null ? `does <code class="lsn-ic">${Z.esc(r.compiles)}</code> compile?` : r.out ? (r.stdin ? 'what it prints with this input' : 'what it prints') : r.call ? `${r.setup ? `<code class="lsn-ic">${Z.esc(r.setup)}</code> then ` : ''}<code class="lsn-ic">${Z.esc(r.call)}</code>` : 'the whole program';
     const outRow = (r) => {
       const said = r.stdout.trim() ? pre(r.stdout) : '<div class="t-caption">Your program printed nothing.</div>';
       const input = (r.argv && r.argv.length ? `<div class="t-caption">Run as</div>${pre('./main ' + r.argv.map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' '), 'wd-res-out wd-res-in')}` : '') + (r.stdin ? `<div class="t-caption">Input</div>${pre(r.stdin.replace(/\n$/, ''), 'wd-res-out wd-res-in')}` : '');
@@ -516,7 +567,7 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
     };
     const valRow = (r) => {
       if (r.error) return pre(r.error, 'wd-res-err') + (r.stdout ? `<div class="t-caption">Printed before the error</div>${pre(r.stdout)}` : '');
-      const exp = r.raises ? (r.expect ? `Expected it to throw <code class="lsn-ic">${Z.esc(r.expect)}</code>` : 'Expected it to stop with an error') : `Expected <code class="lsn-ic">${Z.esc(fmt(r.expect))}</code>`;
+      const exp = r.compiles != null ? (r.expect === false || r.expect === 'false' ? 'Expected it not to compile' : 'Expected it to compile') : r.raises ? (r.expect ? `Expected it to throw <code class="lsn-ic">${Z.esc(r.expect)}</code>` : 'Expected it to stop with an error') : `Expected <code class="lsn-ic">${Z.esc(fmt(r.expect))}</code>${r.tol ? ` (within ${[r.tol[0] ? 'relative ' + r.tol[0] : '', r.tol[1] ? 'absolute ' + r.tol[1] : ''].filter(Boolean).join(' or ')})` : ''}`;
       const got = r.actual == null ? 'nothing' : r.actual;
       const ty = !r.raises && !r.ok && r.type && r.type !== 'void' ? ` <span class="muted">(${Z.esc(r.type)})</span>` : '';
       return `<div class="t-caption">${exp}, got <code class="lsn-ic">${Z.esc(got)}</code>${ty}</div>${r.detail ? pre(r.detail, 'wd-res-err') : ''}${r.stdout ? pre(r.stdout) : ''}`;
@@ -530,60 +581,91 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
     };
     const progressNote = (t) => { if (alive) res.innerHTML = `<p class="t-caption wd-res-load" aria-live="polite">${Z.esc(t)}</p>`; };
 
-    /* Compile once, run every case; resolves to { rows, error, compileError, warnings, ms } */
+    /* Compile once per distinct set of defines, run every case; compile-check cases compile a snippet of their own.
+       Resolves to { rows, error, compileError, warnings, ms } */
+    const firstErr = (d) => { const L = cleanDiag(d).split('\n'); const k = L.findIndex((l) => /error:/.test(l)); return k < 0 ? L.slice(0, 3).join('\n') : L.slice(k, k + 3).join('\n'); };
     const runCases = async (cases) => {
       const rows = cases.map(c => {
         let call = '';
         try { call = c.call == null ? '' : callOf(c); } catch (e) { call = String(c.call); }
-        return { argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call, raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: c.expect, out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, type: '', error: null, stdout: '', detail: '' };
+        return { argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call, raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: c.expect, out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, type: '', error: null, stdout: '', detail: '', tol: tolOf(c), compiles: c.compiles != null ? String(c.compiles) : null };
       });
       if (Cpp.status !== 'ready') return { rows, error: Cpp.status === 'unavailable' ? 'The C++ compiler could not load: ' + Cpp.reason : 'The C++ compiler is still loading. Try again in a moment.' };
-      let u;
-      try { u = unit(spec, ed.value, cases, script); } catch (e) { return { rows, error: 'This exercise has a case the tests cannot write in C++: ' + e.message }; }
-      busy = 'Compiling'; sync(); progressNote('Compiling...');
-      const t0 = performance.now();
-      const c = await Cpp.compile(u);
-      const compileMs = Math.round(performance.now() - t0);
-      if (!c.ok) {
-        busy = false; sync();
-        if (c.notReady) return { rows, error: 'The C++ compiler is still loading. Try again in a moment.' };
-        return { rows, error: cleanDiag(c.diag), compileError: true, compileMs };
-      }
-      busy = 'Running'; sync(); progressNote('Running...');
+      const runIdx = cases.map((c, i) => (c.compiles == null ? i : -1)).filter((i) => i >= 0), probeIdx = cases.map((c, i) => (c.compiles != null ? i : -1)).filter((i) => i >= 0);
+      const keyOf = (c) => JSON.stringify(c && c.defines && typeof c.defines === 'object' ? c.defines : {});
+      const groups = new Map(); runIdx.forEach((i) => { const k = keyOf(cases[i]); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(i); });
+      if (!groups.size) groups.set('{}', []);
+      let warnings = '', compileMs = 0, msC = 0, error = null, runMs = 0, pchUsed = false;
       const limit = TEST_MS + (spec.budget != null ? Math.max(0, +spec.budget || 0) : 0);
-      const runs = await Cpp.run(c.wasm, cases.map((cs, i) => (script ? { argv: cs.argv || [], stdin: cs.stdin == null ? '' : String(cs.stdin) } : { argv: [String(i)], stdin: '' })), limit);
-      busy = false; sync();
-      stats.last = { compileWallMs: compileMs, compileMs: c.ms, pch: !!c.pch, runMs: Math.round(runs.results.reduce((a, r) => a + (r ? r.ms : 0), 0) * 10) / 10, cases: cases.length };
-      runs.results.forEach((r, i) => {
-        const row = rows[i];
-        if (!r) return;
-        const e = parseErr(r.err);
-        const k = script ? -1 : r.out.lastIndexOf(OUT);
-        row.stdout = k >= 0 ? r.out.slice(0, k) : r.out;
-        if (!row.out) row.stdout = row.stdout.replace(/\n+$/, '');
-        if (k >= 0) {
-          const line = r.out.slice(k + OUT.length).replace(/\n$/, ''), j = line.indexOf(SEP);
-          row.type = cleanType(line.slice(0, j));
-          try { row.value = JSON.parse(line.slice(j + 1), revive); row.hasValue = true; } catch { row.value = undefined; }
+      for (const [k, idxs] of groups) {
+        const sub = idxs.map((i) => cases[i]);
+        let u;
+        try { u = unit(spec, ed.value, sub, script, { defines: JSON.parse(k) }); } catch (e) { return { rows, error: 'This exercise has a case the tests cannot write in C++: ' + e.message }; }
+        busy = 'Compiling'; sync(); progressNote('Compiling...');
+        const t0 = performance.now();
+        const c = await Cpp.compile(u);
+        compileMs += Math.round(performance.now() - t0); msC += c.ms || 0; pchUsed = pchUsed || !!c.pch;
+        if (!c.ok) {
+          busy = false; sync();
+          if (c.notReady) return { rows, error: 'The C++ compiler is still loading. Try again in a moment.' };
+          /* item 438: a signature that does not match gets a plain sentence before clang's message */
+          const sigFail = spec.signature && /signature check:/.test(c.diag || '') && !/main\.cpp:\d+:\d+: error/.test(c.diag || '');
+          return { rows, error: (sigFail ? `Your function does not have the signature this exercise asks for: ${spec.signature}\n\n` : '') + cleanDiag(c.diag), compileError: true, compileMs };
         }
-        if (row.raises) { raisesRow(row, r, e); return; }
-        const err = runError(r, e);
-        if (row.out) {
-          if (err) { row.error = err; return; }
-          row.ok = cases[i].exact ? row.stdout === String(row.expect) : norm(row.stdout) === norm(row.expect);
-          return;
-        }
-        if (err || !row.hasValue) { row.error = err || 'The test did not report a value.'; return; }
-        row.actual = row.type === 'void' ? 'nothing (void)' : fmt(row.value);
-        row.ok = same(row.value, cases[i].expect, cases[i].compare === 'isclose' ? 'isclose' : 'equal');
-      });
-      let error = null;
-      if (runs.timeout != null) {
-        const r = rows[runs.timeout];
-        if (r) r.error = `Stopped after ${limit / 1000} s. Look for a loop that never ends${script ? ', or a read from std::cin waiting for input the test does not give' : ''}.`;
-        rows.forEach((x, i) => { if (i > runs.timeout && !runs.results[i]) x.error = 'Not run: an earlier test went past the time limit.'; });
-      } else if (runs.crash) error = 'The program runner stopped: ' + runs.crash;
-      return { rows, error, warnings: learnerWarnings(c.diag), compileMs, ms: c.ms };
+        if (!warnings) warnings = learnerWarnings(c.diag);
+        if (!sub.length) continue;
+        busy = 'Running'; sync(); progressNote('Running...');
+        const runs = await Cpp.run(c.wasm, sub.map((cs, j) => (script ? { argv: cs.argv || [], stdin: cs.stdin == null ? '' : String(cs.stdin) } : { argv: [String(j)], stdin: '' })), limit);
+        busy = false; sync();
+        runMs += runs.results.reduce((a, r) => a + (r ? r.ms : 0), 0);
+        runs.results.forEach((r, j) => {
+          const i = idxs[j], row = rows[i];
+          if (!r) return;
+          const e = parseErr(r.err);
+          const kk = script ? -1 : r.out.lastIndexOf(OUT);
+          row.stdout = kk >= 0 ? r.out.slice(0, kk) : r.out;
+          if (!row.out) row.stdout = row.stdout.replace(/\n+$/, '');
+          if (kk >= 0) {
+            const line = r.out.slice(kk + OUT.length).replace(/\n$/, ''), q = line.indexOf(SEP);
+            row.type = cleanType(line.slice(0, q));
+            try { row.value = JSON.parse(line.slice(q + 1), revive); row.hasValue = true; } catch { row.value = undefined; }
+          }
+          if (row.raises) { raisesRow(row, r, e); return; }
+          const err = runError(r, e);
+          if (row.out) {
+            if (err) { row.error = err; return; }
+            const cs = cases[i];
+            /* item 451: match: "regex" or lines: true (every expected line, in order, among the printed ones) */
+            if (cs.match != null) { let re = null; try { re = new RegExp(String(cs.match), 'm'); } catch { re = null; } row.ok = !!re && re.test(row.stdout); return; }
+            if (cs.lines) { const want = norm(row.expect).split('\n'), have = norm(row.stdout).split('\n'); let q = 0; have.forEach((l) => { if (q < want.length && l === want[q]) q++; }); row.ok = q === want.length; return; }
+            row.ok = cs.exact ? row.stdout === String(row.expect) : norm(row.stdout) === norm(row.expect);
+            return;
+          }
+          if (err || !row.hasValue) { row.error = err || 'The test did not report a value.'; return; }
+          row.actual = row.type === 'void' ? 'nothing (void)' : fmt(row.value);
+          row.ok = same(row.value, cases[i].expect, cases[i].compare === 'isclose' ? 'isclose' : 'equal', row.tol);
+        });
+        if (runs.timeout != null) {
+          const r = rows[idxs[runs.timeout]];
+          if (r) { r.error = `Stopped after ${limit / 1000} s. Look for a loop that never ends${script ? ', or a read from std::cin waiting for input the test does not give' : ''}.`; if (runs.partial && runs.partial[runs.timeout]) r.stdout = String(runs.partial[runs.timeout]).replace(new RegExp(OUT + '[\\s\\S]*$'), ''); } // item 369
+          idxs.forEach((i, j) => { if (j > runs.timeout && !runs.results[j]) rows[i].error = 'Not run: an earlier test went past the time limit.'; });
+        } else if (runs.crash) error = 'The program runner stopped: ' + runs.crash;
+      }
+      /* item 474: compile checks: { compiles: "Connection b = a;", setup, expect: false } after the learner's code */
+      for (const i of probeIdx) {
+        const cs = cases[i], row = rows[i];
+        busy = 'Compiling'; sync(); progressNote('Checking what compiles...');
+        let u; try { u = unit(spec, ed.value, [], false, { defines: cs.defines, probe: String(cs.compiles), probeSetup: cs.setup == null ? '' : String(cs.setup) }); } catch (e) { row.error = e.message; continue; }
+        const c = await Cpp.compile(u);
+        busy = false; sync();
+        if (c.notReady) { error = 'The C++ compiler is still loading. Try again in a moment.'; break; }
+        const want = cs.expect !== false && cs.expect !== 'false';
+        row.ok = !!c.ok === want;
+        row.actual = c.ok ? 'it compiled' : 'it did not compile';
+        row.detail = c.ok ? '' : firstErr(c.diag);
+      }
+      stats.last = { compileWallMs: compileMs, compileMs: msC, pch: pchUsed, runMs: Math.round(runMs * 10) / 10, cases: cases.length };
+      return { rows, error, warnings, compileMs, ms: msC };
     };
     const extraOf = (r, untouched) => {
       if (r.compileError) return untouched ? `<p class="t-caption">The starter is not finished yet, so it does not compile. Fill in what it asks for and check again.</p><details class="wd-res-more"><summary class="t-caption">Show the compiler's message</summary>${pre(r.error, 'wd-res-err')}</details>`

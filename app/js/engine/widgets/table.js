@@ -3,7 +3,11 @@
    tolerance; key is the first wrong cell id r{i}c{j} (zero-based, as the table canvas). After grading each
    editable cell is marked: right cells take green, wrong ones amber, so a retry only touches what is wrong.
    Item 118: a cell whose answer is text ("True", "AAPL") is graded as text, ignoring case and outer spaces;
-   accept: [..] lists other spellings. */
+   accept: [..] lists other spellings.
+   Pass 7: a cell's wrong: [{ id, value, tol } | { id, text }] names a specific wrong entry, and the key is that id
+   (items 356, 360); an answer written O(...) is compared as big-O, ignoring the O, spaces, case and the log base, so
+   "n log n" matches "O(n log n)" (item 390); deps: [canvas ids] highlights the cells a cell depends on while it has
+   focus, so a DP table can be filled beside its grid (item 408). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -17,7 +21,7 @@
       ${cols.length ? `<thead><tr>${cols.map(c => `<th scope="col">${Z.grade.inline(c)}</th>`).join('')}</tr></thead>` : ''}
       <tbody>${rows.map((row, i) => `<tr>${row.map((c, j) => {
         if (c && typeof c === 'object' && c.edit) {
-          cells.push({ id: `r${i}c${j}`, spec: c, text: typeof c.answer === 'string' && !Number.isFinite(Z.grade.parseNum(c.answer)) });
+          cells.push({ id: `r${i}c${j}`, spec: c, text: typeof c.answer === 'string' && (!Number.isFinite(Z.grade.parseNum(c.answer)) || c.compare === 'bigO'), bigO: c.compare === 'bigO' || (typeof c.answer === 'string' && /^\s*O\s*\(.*\)\s*$/i.test(c.answer)) });
           const label = `${cols[j] ? String(cols[j]).replace(/\$/g, '') : 'Column ' + (j + 1)}, row ${i + 1}`;
           return `<td class="wd-td-edit${c.unit === '%' ? ' has-unit' : ''}"><input type="text" inputmode="${typeof c.answer === 'string' && !Number.isFinite(Z.grade.parseNum(c.answer)) ? 'text' : 'decimal'}" autocomplete="off" spellcheck="false" data-cell="r${i}c${j}" aria-label="${Z.esc(label)}${c.unit === '%' ? ', in percent' : ''}" placeholder="${Z.esc(c.placeholder || '?')}">${c.unit === '%' ? '<span class="wd-td-unit" aria-hidden="true">%</span>' : ''}</td>`;
         }
@@ -41,7 +45,11 @@
     /* item 287: unit "%" on a cell: the answer is a fraction (0.25) and the learner types a percentage (25) */
     const pct = (c) => c.spec.unit === '%';
     const numIn = (c) => { const v = Z.grade.parseNum(String(input(c.id).value).replace('%', '')); return pct(c) ? v / 100 : v; };
-    const check = (c) => (c.text ? [c.spec.answer, ...(Array.isArray(c.spec.accept) ? c.spec.accept : [])].some(a => norm(a) === norm(input(c.id).value)) : Z.grade.within(numIn(c), +c.spec.answer, c.spec.tol)); // tol is in the answer's units (a fraction for %)
+    const bigO = (t) => norm(t).replace(/^o\s*\((.*)\)$/, '$1').replace(/\*\*/g, '^').replace(/²/g, '^2').replace(/³/g, '^3').replace(/\s+|\*|·|×/g, '').replace(/log_?\{?\d+\}?|lg|ln/g, 'log').replace(/[{}]/g, '');
+    const textEq = (c, a, b) => (c.bigO ? bigO(a) === bigO(b) : norm(a) === norm(b));
+    const check = (c) => (c.text ? [c.spec.answer, ...(Array.isArray(c.spec.accept) ? c.spec.accept : [])].some(a => textEq(c, a, input(c.id).value)) : Z.grade.within(numIn(c), +c.spec.answer, c.spec.tol)); // tol is in the answer's units (a fraction for %)
+    /* the wrong[] entry a cell's input matches, if any */
+    const wrongOf = (c) => (Array.isArray(c.spec.wrong) ? c.spec.wrong.find(w => w && (w.text != null ? textEq(c, w.text, input(c.id).value) : w.value != null && !c.text && Z.grade.within(numIn(c), +w.value, w.tol ?? { abs: 1e-9 }))) : null) || null;
     const shown = (c) => (c.text ? String(c.spec.answer) : pct(c) ? Z.grade.fmtNum(+(+c.spec.answer * 100).toFixed(8)) : Z.grade.fmtNum(+c.spec.answer));
     /* item 275: bind: "p.a-b" (a state path) on a cell writes what the learner types to the screen's canvas as they
        type, so a tree shows each probability on its branch; tapping that branch focuses the cell */
@@ -54,6 +62,10 @@
         ctx.canvas.on('change', (e) => { if (!e || !e.id) return; const c = bound.find((q) => String(q.spec.bind).split('.').slice(1).join('.') === String(e.id)); if (c) input(c.id).focus(); });
       }
     }
+    /* item 408: deps highlight on the canvas while the cell has focus */
+    const depsOf = (t) => { const c = cells.find((q) => q.id === (t && t.dataset ? t.dataset.cell : null)); return c && Array.isArray(c.spec.deps) ? c.spec.deps.map(String) : null; };
+    el.addEventListener('focusin', (e) => { const d = depsOf(e.target); if (d && ctx.canvas && ctx.canvas.highlight) ctx.canvas.highlight(d, true); });
+    el.addEventListener('focusout', (e) => { const d = depsOf(e.target); if (d && ctx.canvas && ctx.canvas.highlight) ctx.canvas.highlight(d, false); });
     const strip = () => cells.forEach(c => input(c.id).parentElement.classList.remove('ok', 'bad', 'wd-rev'));
     const showAccept = () => {
       const lines = cells.map(c => (c.spec.accept && !Array.isArray(c.spec.accept) ? Z.grade.inline(c.spec.accept) : Z.esc(shown(c))));
@@ -68,8 +80,8 @@
       ready: () => cells.every(c => (c.text ? input(c.id).value.trim() !== '' : Number.isFinite(numIn(c)))),
       dirty: () => cells.some(c => input(c.id).value !== ''),
       grade() {
-        const wrong = cells.filter(c => !check(c));
-        return { ok: !wrong.length, key: wrong.length ? wrong[0].id : null, detail: { wrong: wrong.map(c => c.id), value: value() } };
+        const wrong = cells.filter(c => !check(c)), w0 = wrong.length ? wrongOf(wrong[0]) : null;
+        return { ok: !wrong.length, key: wrong.length ? (w0 && w0.id ? w0.id : wrong[0].id) : null, detail: { wrong: wrong.map(c => c.id), value: value() } };
       },
       lock() { cells.forEach(c => { input(c.id).readOnly = true; }); },
       unlock() { strip(); acc.hidden = true; cells.forEach(c => { input(c.id).readOnly = false; }); },

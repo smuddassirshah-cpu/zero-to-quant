@@ -139,7 +139,16 @@
       if (mode === 'order') return [...zoneOf(slots[0].id).querySelectorAll('.wd-tok')].map(n => n.dataset.id);
       return Object.fromEntries(slots.map(s => [s.id, [...zoneOf(s.id).querySelectorAll('.wd-tok')].map(n => n.dataset.id)]));
     };
-    const changed = () => { syncPh(); ctx.change && ctx.change(value()); };
+    /* item 364: a token's onPlace (a canvas state patch, or { slotId: patch }) applies while the token sits in a slot,
+       over the canvas as it opened, so dropping a leg into the position redraws the payoff */
+    const cvp = ctx.canvas, cvBase = cvp && cvp.get && tokens.some(t => t.onPlace) ? (() => { try { return JSON.parse(JSON.stringify(cvp.get() || {})); } catch { return null; } })() : null;
+    const syncCv = () => {
+      if (!cvBase) return;
+      let st = cvBase;
+      slots.forEach(sl => [...zoneOf(sl.id).querySelectorAll('.wd-tok')].forEach(n => { const t = tokById[n.dataset.id]; if (!t || !t.onPlace) return; const p = t.onPlace[sl.id] && typeof t.onPlace[sl.id] === 'object' && !Object.keys(t.onPlace).some(k => !slots.some(q => q.id === k)) ? t.onPlace[sl.id] : slots.some(q => q.id in t.onPlace) ? null : t.onPlace; if (p) st = Z.canvas.merge(st, p); }));
+      try { cvp.set(st); } catch (e) { console.error(e); }
+    };
+    const changed = () => { syncPh(); syncCv(); ctx.change && ctx.change(value()); };
     const animateMove = (n, mutate) => {
       const a = n.getBoundingClientRect();
       mutate();

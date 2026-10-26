@@ -1,0 +1,1259 @@
+{
+ "id": "l5-bs-pricer",
+ "course": "opt-dash",
+ "title": "A Black-Scholes pricer",
+ "minutes": 14,
+ "objectives": [
+  "Implement and test a Black-Scholes pricer.",
+  "Add a dividend yield and handle expiry and zero volatility without dividing by zero."
+ ],
+ "skills": [
+  "od-pricers"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A dividend yield",
+   "prose": "The trees course priced this one-year call at £10.4506: $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$. The curve is its value today against the share price. Our chain's share also pays a dividend yield, $q = 1\\%$ a year.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "xStep": 10,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Call value (£)",
+     "functions": [
+      {
+       "id": "pay",
+       "expr": "max(x-K,0)",
+       "dashed": true,
+       "label": "payoff",
+       "labelAt": 132,
+       "labelSide": "below"
+      },
+      {
+       "id": "c",
+       "expr": "x*exp(-q*T)*Phi((ln(x/K)+(r-q+s*s/2)*T)/(s*sqrt(T)))-K*exp(-r*T)*Phi((ln(x/K)+(r-q-s*s/2)*T)/(s*sqrt(T)))",
+       "label": "value now",
+       "labelAt": 72
+      }
+     ],
+     "params": {
+      "K": 100,
+      "r": 0.05,
+      "s": 0.2,
+      "T": 1,
+      "q": 0
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 100,
+       "y": 10.4506,
+       "tap": false
+      }
+     ],
+     "vlines": [
+      {
+       "id": "spot",
+       "x": 100,
+       "label": "$S = 100$"
+      }
+     ]
+    },
+    "derive": {
+     "P.y": "100*exp(-q*T)*Phi((ln(100/K)+(r-q+s*s/2)*T)/(s*sqrt(T)))-K*exp(-r*T)*Phi((ln(100/K)+(r-q-s*s/2)*T)/(s*sqrt(T)))",
+     "caption": "At $S = 100$ the call is worth £{{fixed(P.y, 2)}}"
+    }
+   },
+   "question": "With the 1% yield, is the call worth more or less than £10.4506?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "less",
+      "text": "Less: the share pays dividends away, and the call holder gets none of them",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "More: a share that pays dividends is worth more to own",
+      "why": "You priced the share's appeal to its owner. The call holder receives no dividends, and each payout lowers the share price."
+     },
+     {
+      "id": "same",
+      "text": "The same: the formula has no dividend in it",
+      "why": "You read the formula without $q$. Paying out 1% a year lowers the share's expected price at expiry, and the call pays on that price."
+     },
+     {
+      "id": "one-pct",
+      "text": "Exactly 1% less, about £10.35",
+      "why": "You scaled the price by the yield. The yield lowers the forward, and the call falls by about 6%, to £9.83."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Who receives the dividends: the share's owner or the call's?"
+    },
+    {
+     "rung": "point",
+     "text": "Each dividend paid lowers the share price by the same amount.",
+     "highlight": [
+      "c"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The share grows at $r - q$ for the call holder, not at $r$."
+    }
+   ],
+   "feedback": {
+    "correct": "The call is worth £9.83 with the yield, 62p less.",
+    "generic": "Not quite right. Ask who gets the dividends, and what paying them does to the share price.",
+    "byKey": {
+     "more": "The owner gets the dividends; the call holder does not. Each payout lowers the price the call is struck on.",
+     "same": "The textbook formula has no $q$, but the share does pay. Our pricer needs an input for it.",
+     "one-pct": "The fall is not proportional to the yield. Here it is 62p, about 6%."
+    }
+   },
+   "explain": {
+    "text": "To a call holder, the share grows at $r - q$, because the dividends leave it. The forward falls from $100e^{0.05}$ to $100e^{0.04}$, so the call falls to £9.83. The curve now shows $q = 1\\%$.",
+    "canvas": {
+     "params": {
+      "q": 0.01
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two limits",
+   "prose": "Slide the inputs and watch the dot at $S = 100$. Two settings break the formula's division by $\\sigma\\sqrt T$: no time left, and no volatility. See what the curve becomes near each.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "xStep": 10,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Call value (£)",
+     "functions": [
+      {
+       "id": "pay",
+       "expr": "max(x-K,0)",
+       "dashed": true,
+       "label": "payoff",
+       "labelAt": 132,
+       "labelSide": "below"
+      },
+      {
+       "id": "c",
+       "expr": "x*exp(-q*T)*Phi((ln(x/K)+(r-q+s*s/2)*T)/(s*sqrt(T)))-K*exp(-r*T)*Phi((ln(x/K)+(r-q-s*s/2)*T)/(s*sqrt(T)))",
+       "label": "value now",
+       "labelAt": 72
+      }
+     ],
+     "params": {
+      "K": 100,
+      "r": 0.05,
+      "s": 0.2,
+      "T": 1,
+      "q": 0
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 100,
+       "y": 10.4506,
+       "tap": false
+      }
+     ],
+     "vlines": [
+      {
+       "id": "spot",
+       "x": 100,
+       "label": "$S = 100$"
+      }
+     ]
+    },
+    "derive": {
+     "P.y": "100*exp(-q*T)*Phi((ln(100/K)+(r-q+s*s/2)*T)/(s*sqrt(T)))-K*exp(-r*T)*Phi((ln(100/K)+(r-q-s*s/2)*T)/(s*sqrt(T)))",
+     "caption": "At $S = 100$ the call is worth £{{fixed(P.y, 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "s",
+      "min": 0.01,
+      "max": 0.5,
+      "step": 0.01,
+      "start": 0.2,
+      "label": "Volatility $\\sigma$",
+      "decimals": 2
+     },
+     {
+      "bind": "T",
+      "min": 0.02,
+      "max": 2,
+      "step": 0.02,
+      "start": 1,
+      "label": "Years left $T$",
+      "decimals": 2
+     },
+     {
+      "bind": "q",
+      "min": 0,
+      "max": 0.05,
+      "step": 0.005,
+      "start": 0,
+      "label": "Dividend yield $q$",
+      "decimals": 3
+     }
+    ]
+   },
+   "question": "Set $q$ to 0 and $T$ to 1, then slide $\\sigma$ down to 0.01. What is the call worth at $S = 100$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.88,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£4.88: the share reaches its forward £105.13 for sure, and $5.13e^{-0.05} = 4.88$.",
+    "unit": "£",
+    "label": "Value at S = 100",
+    "wrong": [
+     {
+      "id": "intrinsic",
+      "value": 0,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "start",
+      "value": 10.45,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption under the curve after each move."
+    },
+    {
+     "rung": "point",
+     "text": "With $\\sigma$ tiny, the share grows to $100e^{0.05}$ for sure.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The call pays £5.13 for sure in a year: worth $5.13e^{-0.05}$ today."
+    }
+   ],
+   "feedback": {
+    "correct": "£4.88: with no volatility the call is a sure payment.",
+    "generic": "Not quite right. Set $q = 0$, $T = 1$ and $\\sigma = 0.01$, then read the caption.",
+    "byKey": {
+     "intrinsic": "You expected intrinsic value, 0 at the money. With no volatility the share still grows to its forward, £105.13.",
+     "start": "That is the value at 20%. Slide $\\sigma$ all the way down to 0.01."
+    }
+   },
+   "explain": {
+    "text": "With no volatility the share reaches its forward $F = Se^{(r-q)T}$ for sure. The call is then $e^{-rT}\\max(F - K, 0) = 4.88$. As $T \\to 0$ instead, the curve settles onto the payoff: intrinsic value.",
+    "canvas": {
+     "params": {
+      "s": 0.01,
+      "T": 1,
+      "q": 0
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The course's signature",
+   "prose": "The dashboard's pricer is `bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0)`. The yield enters twice: the share counts as $Se^{-qT}$, and $d_1$ uses $r - q$. $$c = Se^{-qT}\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\quad d_1 = \\frac{\\ln(S/K) + (r - q + \\sigma^2/2)T}{\\sigma\\sqrt T},$$ and $d_2 = d_1 - \\sigma\\sqrt T$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Input",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Share price $S$",
+       "£100"
+      ],
+      [
+       "Strike $K$",
+       "£100"
+      ],
+      [
+       "Rate $r$",
+       "0.05"
+      ],
+      [
+       "Dividend yield $q$",
+       "0.01"
+      ],
+      [
+       "Volatility $\\sigma$",
+       "0.20"
+      ],
+      [
+       "Years $T$",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Work out each piece for our call with $q = 1\\%$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Piece",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$d_1$",
+      {
+       "edit": true,
+       "answer": 0.3,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "$d_2$",
+      {
+       "edit": true,
+       "answer": 0.1,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "$\\Phi(d_1)$",
+      "0.6179"
+     ],
+     [
+      "$\\Phi(d_2)$",
+      "0.5398"
+     ],
+     [
+      "$e^{-qT}$",
+      "0.9900"
+     ],
+     [
+      "$e^{-rT}$",
+      "0.9512"
+     ],
+     [
+      "Call (£)",
+      {
+       "edit": true,
+       "answer": 9.83,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\ln(100/100) = 0$, so only the drift term is left on top."
+    },
+    {
+     "rung": "point",
+     "text": "The drift is $r - q + \\sigma^2/2 = 0.05 - 0.01 + 0.02$.",
+     "highlight": [
+      "r0c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$d_1 = 0.06/0.2 = 0.30$, $d_2 = 0.10$, then $c = 99.00 \\times 0.6179 - 95.12 \\times 0.5398$."
+    }
+   ],
+   "feedback": {
+    "correct": "$d_1 = 0.30$, $d_2 = 0.10$ and the call is £9.83.",
+    "generic": "Not quite right. Work down the table; the call uses every line above it.",
+    "byKey": {
+     "r0c1": "You may have used $r$ alone. The top is $0.05 - 0.01 + 0.02 = 0.06$, so $d_1 = 0.30$.",
+     "r1c1": "$d_2 = d_1 - \\sigma\\sqrt T = 0.30 - 0.20$.",
+     "r6c1": "Weight the share by $e^{-qT}$ too: $100 \\times 0.9900 \\times 0.6179 - 100 \\times 0.9512 \\times 0.5398$."
+    }
+   },
+   "explain": {
+    "text": "$d_1 = (0 + 0.04 + 0.02)/0.2 = 0.30$ and $d_2 = 0.10$. Then $c = 99.00 \\times 0.6179 - 95.12 \\times 0.5398 = 9.83$. Without the yield, $d_1$ was 0.35 and the call £10.45."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The pricer in code",
+   "prose": "Now write it. $T = 0$ and $\\sigma = 0$ make the formula divide by zero, so return the limits you found instead. At $T = 0$ that is intrinsic value; at $\\sigma = 0$, the discounted forward payoff. Any `kind` other than `\"call\"` or `\"put\"` raises `ValueError`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> bs_price(100, 100, 0.05, 0.2, 1)",
+      "10.450583572185565",
+      ">>> bs_price(100, 100, 0.05, 0.2, 1, \"put\", q=0.01)",
+      "5.944256857893713",
+      ">>> bs_price(110, 100, 0.05, 0.2, 0)",
+      "10.0"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `bs_price`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    # 1. a kind other than \"call\" or \"put\": raise ValueError\n    # 2. T <= 0: intrinsic value\n    # 3. sigma <= 0: the discounted forward payoff\n    # 4. otherwise the formula, with S * exp(-q * T) and r - q\n    ...\n",
+    "solution": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n",
+    "examples": [
+     {
+      "call": "bs_price(100, 100, 0.05, 0.2, 1)",
+      "expect": "10.450583572185565",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(100, 100, 0.05, 0.2, 1, q=0.01)",
+      "expect": "9.826297782739111",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(110, 100, 0.05, 0.2, 0)",
+      "expect": "10.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "bs_price(100, 100, 0.05, 0.2, 1)",
+      "expect": "10.450583572185565",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(100, 100, 0.05, 0.2, 1, \"put\")",
+      "expect": "5.573526022256971",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(110, 100, 0.03, 0.25, 0.5)",
+      "expect": "14.466961084155471",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(110, 100, 0.03, 0.25, 0.5, \"put\")",
+      "expect": "2.978155044461733",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(90, 100, 0.05, 0.3, 2)",
+      "expect": "14.91959189145902",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(50, 48, 0.04, 0.3, 0.25, \"put\")",
+      "expect": "1.8417852232528205",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(100, 100, 0.05, 0.2, 1, q=0.01)",
+      "expect": "9.826297782739111",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(100, 100, 0.05, 0.2, 1, \"put\", q=0.01)",
+      "expect": "5.944256857893713",
+      "compare": "isclose"
+     },
+     {
+      "call": "abs(bs_price(105, 95, 0.04, 0.3, 0.75, \"call\", 0.02) - bs_price(105, 95, 0.04, 0.3, 0.75, \"put\", 0.02) - (105 * exp(-0.015) - 95 * exp(-0.03))) < 1e-12",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "bs_price(110, 100, 0.05, 0.2, 0)",
+      "expect": "10.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(90, 100, 0.05, 0.2, 0, \"put\")",
+      "expect": "10.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(100, 100, 0.05, 0.0, 1)",
+      "expect": "4.877057549928611",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(bs_price(100, 100, 0.05, 0.0, 1, \"put\"), 10)",
+      "expect": "0.0",
+      "compare": "equal"
+     },
+     {
+      "call": "bs_price(100, 90, 0.05, 0.0, 1, q=0.01)",
+      "expect": "13.394335169852539",
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_price(100, 100, 0.05, 0.2, 1, \"straddle\")",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "how": "Check runs 15 hidden tests: six options from the trees course, two with a dividend yield, parity to 1e-12, the two limits and a bad `kind`. Prices are compared with math.isclose. Pure Python: nothing to load."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Handle the three special cases first, in the order the comments give."
+    },
+    {
+     "rung": "point",
+     "text": "The forward is `S * exp((r - q) * T)`; at $\\sigma = 0$ a call is `exp(-r * T) * max(F - K, 0)`.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The formula: `S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)`, with `r - q` in `d1`."
+    }
+   ],
+   "feedback": {
+    "correct": "Fifteen tests pass: the trees values, the dividend case, parity and both limits.",
+    "generic": "Not quite right. The results table shows the first failing call; compare it with the formula.",
+    "byKey": {
+     "test-7": "Your dividend case is off. $q$ appears twice: in $Se^{-qT}$ and in $r - q$ inside $d_1$.",
+     "test-10": "At $T = 0$ return intrinsic value before computing $d_1$, which divides by $\\sqrt T$.",
+     "test-12": "With $\\sigma = 0$ return $e^{-rT}\\max(F - K, 0)$, with $F = Se^{(r-q)T}$.",
+     "test-15": "An unknown `kind` should raise `ValueError`, not fall through to the put formula."
+    }
+   },
+   "explain": {
+    "text": "Checking `kind` first means a typo such as `\"Call\"` fails loudly instead of pricing a put. The two guards return the limits the curve showed. The rest is the formula, with $q$ in two places."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Parity with a dividend yield",
+   "prose": "Your pricer gives £9.8263 for the call and £5.9443 for the put at $q = 1\\%$. Put-call parity with a yield (options l9) reads $$C - P = Se^{-qT} - Ke^{-rT}.$$ It holds for any $\\sigma$, so it tests a pricer without knowing the vol.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Option",
+      "bs_price (£)"
+     ],
+     "rows": [
+      [
+       "Call, $q = 1\\%$",
+       "9.8263"
+      ],
+      [
+       "Put, $q = 1\\%$",
+       "5.9443"
+      ],
+      [
+       "$C - P$",
+       "3.8820"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the right-hand side, $Se^{-qT} - Ke^{-rT}$, come to?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.882,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£3.8820: $100e^{-0.01} - 100e^{-0.05} = 99.0050 - 95.1229$.",
+    "unit": "£",
+    "label": "Right-hand side",
+    "wrong": [
+     {
+      "id": "no-q",
+      "value": 4.8771,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 0.995,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two terms: the share's value after the yield, and the discounted strike."
+    },
+    {
+     "rung": "point",
+     "text": "$100e^{-0.01} = 99.0050$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$99.0050 - 100e^{-0.05} = 99.0050 - 95.1229$."
+    }
+   ],
+   "feedback": {
+    "correct": "£3.8820 on both sides: the pricer passes parity.",
+    "generic": "Not quite right. Work out $100e^{-0.01}$ and $100e^{-0.05}$, then subtract.",
+    "byKey": {
+     "no-q": "You left out the yield: $S - Ke^{-rT} = 4.88$ is parity for $q = 0$. With $q = 1\\%$ the share counts as $Se^{-qT}$.",
+     "no-disc": "You did not discount the strike. It is paid in a year, so it is worth $100e^{-0.05}$ today."
+    }
+   },
+   "explain": {
+    "text": "$99.0050 - 95.1229 = 3.8820$, the same as $9.8263 - 5.9443$. A long call and a short put make a forward, which has no optionality. So $\\sigma$ cannot move $C - P$.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "The order of the inputs",
+   "prose": "A colleague ports a notebook from the options course, whose helper took `(S, K, T, sigma, r)`. Line 2 passes $T = 1$ and $r = 0.05$ in that old order. Line 3 types the rate in percent.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "numbers": true,
+     "lines": [
+      ">>> bs_price(100, 100, 0.05, 0.2, 1)",
+      "10.450583572185565",
+      ">>> bs_price(100, 100, 1, 0.2, 0.05)",
+      "5.165791120894568",
+      ">>> bs_price(100, 100, 5, 0.2, 1)",
+      "99.32620530009146"
+     ]
+    },
+    "state": {
+     "tone": {
+      "l4": "err",
+      "l6": "err"
+     }
+    }
+   },
+   "question": "Why does line 2 give £5.17 instead of £10.45?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "slots",
+      "text": "The slots read $r = 1$ and $T = 0.05$: an 18-day option at a 100% rate",
+      "correct": true
+     },
+     {
+      "id": "symmetric",
+      "text": "It should not: $e^{-rT}$ is the same either way round, so `bs_price` has a bug",
+      "why": "You trusted that $r$ and $T$ meet only as $rT$. They also appear apart: $\\sigma\\sqrt T$ becomes 0.045 instead of 0.2."
+     },
+     {
+      "id": "keyword",
+      "text": "Python matches the values to the names, so the order cannot matter",
+      "why": "That holds for keyword arguments only. Positional values fill `S, K, r, sigma, T` in order."
+     },
+     {
+      "id": "percent",
+      "text": "It is the percent slip: 1 means 1%",
+      "why": "The percent slip is line 3. There $r = 5$ discounts the strike to almost nothing, so the call is worth nearly $S$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Positional arguments fill the parameters left to right."
+    },
+    {
+     "rung": "point",
+     "text": "Read line 3 of the console against the signature `S, K, r, sigma, T`.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So `r` is 1 and `T` is 0.05 years, about 18 days."
+    }
+   ],
+   "feedback": {
+    "correct": "Positional values went into the wrong slots, and nothing raised an error.",
+    "generic": "Not quite right. Match each value on line 3 to the parameter in the same place.",
+    "byKey": {
+     "symmetric": "The discount factor is symmetric in $r$ and $T$, but the rest is not. A short, high-rate option is cheap.",
+     "keyword": "Positional values fill slots by place. Only `r=0.05, T=1` written out with names would be safe.",
+     "percent": "Line 3 is the percent slip, £99.33. Line 2 is a different mistake: the order."
+    }
+   },
+   "explain": {
+    "text": "Positional values fill slots in order, so `1` lands in `r` and `0.05` in `T`. Only $rT$ is symmetric; $\\sigma\\sqrt T$ and the drift are not. Call with names, `bs_price(S=100, K=100, r=0.05, sigma=0.2, T=1)`, and keep one known value in the tests.",
+    "canvas": {
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A grid at once",
+   "prose": "The dashboard prices whole grids. `bs_price_vec` takes NumPy arrays for `K` and `T` and broadcasts them: a column of strikes against a row of expiries gives a grid. `scipy.special.ndtr` is $\\Phi$ for arrays. It assumes $T > 0$ and $\\sigma > 0$, as the chain's quotes have.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> K = np.array([[90], [100], [110]])",
+      ">>> T = np.array([0.25, 0.5, 1.0])",
+      ">>> bs_price_vec(100, K, 0.05, 0.2, T).round(4)",
+      "array([[11.6701, 13.4985, 16.6994],",
+      "       [ 4.615 ,  6.8887, 10.4506],",
+      "       [ 1.1911,  2.9065,  6.0401]])"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `bs_price_vec`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.special import ndtr      # the normal cdf for arrays\n\n\ndef bs_price_vec(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"bs_price for NumPy arrays of strikes K and expiries T (T > 0).\"\"\"\n    K = np.asarray(K, dtype=float)\n    T = np.asarray(T, dtype=float)\n    d1 = ...\n    d2 = ...\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.special import ndtr      # the normal cdf for arrays\n\n\ndef bs_price_vec(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"bs_price for NumPy arrays of strikes K and expiries T (T > 0).\"\"\"\n    K = np.asarray(K, dtype=float)\n    T = np.asarray(T, dtype=float)\n    d1 = (np.log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * np.sqrt(T))\n    d2 = d1 - sigma * np.sqrt(T)\n    if kind == \"call\":\n        return S * np.exp(-q * T) * ndtr(d1) - K * np.exp(-r * T) * ndtr(d2)\n    if kind == \"put\":\n        return K * np.exp(-r * T) * ndtr(-d2) - S * np.exp(-q * T) * ndtr(-d1)\n    raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n",
+    "examples": [
+     {
+      "call": "np.round(bs_price_vec(100, np.array([[90], [100], [110]]), 0.05, 0.2, np.array([0.25, 0.5, 1.0])), 6).tolist()",
+      "expect": "[[11.670087, 13.498517, 16.699448], [4.614997, 6.888729, 10.450584], [1.191132, 2.906471, 6.040088]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(bs_price_vec(100, np.array([[90], [100], [110]]), 0.05, 0.2, np.array([0.25, 0.5, 1.0])), 6).tolist()",
+      "expect": "[[11.670087, 13.498517, 16.699448], [4.614997, 6.888729, 10.450584], [1.191132, 2.906471, 6.040088]]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(bs_price_vec(100, [80, 90, 100, 110, 120], 0.05, 0.25, 0.5, \"put\", 0.01), 6).tolist()",
+      "expect": "[0.601109, 2.318995, 5.9978, 11.822505, 19.384198]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(bs_price_vec(100, 100, 0.05, 0.2, [0.25, 0.5, 1.0], \"call\", 0.01), 6).tolist()",
+      "expect": "[4.474037, 6.594025, 9.826298]",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.allclose(bs_price_vec(103, np.arange(70, 131, 5), 0.04, 0.3, 0.75, \"put\", 0.02), [bs_price(103, k, 0.04, 0.3, 0.75, \"put\", 0.02) for k in range(70, 131, 5)], rtol=0, atol=1e-10))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "bs_price_vec(100, np.array([[90], [100]]), 0.05, 0.2, np.array([0.25, 0.5, 1.0])).shape",
+      "expect": "(2, 3)",
+      "compare": "equal"
+     },
+     {
+      "call": "type(bs_price_vec(100, [90, 100], 0.05, 0.2, 1.0)).__name__",
+      "expect": "'ndarray'",
+      "compare": "equal"
+     },
+     {
+      "call": "bs_price_vec(100, [90, 100], 0.05, 0.2, 1.0, \"Call\")",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n",
+    "how": "Check runs 7 hidden tests: a 3 by 3 grid, a row of puts with a yield, a row of expiries, agreement with your `bs_price` to 1e-10 on 13 strikes (it is already defined), the shape, the type and a bad `kind`. Arrays are rounded to 6 places and compared with ==. The first run loads NumPy and SciPy, which takes 20 to 40 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Swap `math.log`, `math.exp` and `math.sqrt` for their NumPy versions, and `norm_cdf` for `ndtr`."
+    },
+    {
+     "rung": "point",
+     "text": "`d1` is the scalar formula with `np.log` and `np.sqrt`; broadcasting does the rest.",
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`S * np.exp(-q * T) * ndtr(d1) - K * np.exp(-r * T) * ndtr(d2)` for a call; raise `ValueError` for anything but the two kinds."
+    }
+   ],
+   "feedback": {
+    "correct": "One call prices the whole grid, and it matches the scalar pricer to 1e-10.",
+    "generic": "Not quite right. Each array line should be the scalar formula with NumPy functions.",
+    "byKey": {
+     "test-4": "Your grid disagrees with `bs_price`. Check $Se^{-qT}$ and $r - q$, as in the scalar version.",
+     "test-5": "A (2, 1) column of strikes against three expiries should broadcast to a (2, 3) grid. Do not flatten `K` or `T`."
+    }
+   },
+   "explain": {
+    "text": "Broadcasting pairs every strike in the column with every expiry in the row. SciPy is a large first download, so the scalar pricer stays the dashboard's default. The vectorised one is for grids of thousands of cells."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Tests that catch bugs",
+   "prose": "The repository keeps `bs_price` in `pricers.py` and its tests beside it. Write two tests. `test_parity` checks $C - P = Se^{-qT} - Ke^{-rT}$ with a $q$ that is not 0. `test_limits` checks both limits. Check then swaps in three wrong pricers; each must make a test fail.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Repository",
+     "lines": [
+      "opt-dash/",
+      "  pricers.py            bs_price, norm_cdf",
+      "  test_pricers.py       your two tests",
+      "  README.md",
+      "  results.md"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `test_parity` and `test_limits`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import pytest\nfrom math import exp\nfrom pricers import bs_price      # your pricer, in pricers.py\n\n\ndef test_parity():\n    # C - P == S e^{-qT} - K e^{-rT}, with a q that is not 0\n    ...\n\n\ndef test_limits():\n    # T = 0 gives intrinsic value; sigma = 0 gives the discounted\n    # forward payoff, e^{-rT} max(F - K, 0)\n    ...\n",
+    "solution": "import pytest\nfrom math import exp\nfrom pricers import bs_price      # your pricer, in pricers.py\n\n\ndef test_parity():\n    S, K, r, sigma, T, q = 100, 95, 0.05, 0.25, 0.75, 0.02\n    c = bs_price(S, K, r, sigma, T, \"call\", q)\n    p = bs_price(S, K, r, sigma, T, \"put\", q)\n    assert c - p == pytest.approx(S * exp(-q * T) - K * exp(-r * T), abs=1e-12)\n\n\ndef test_limits():\n    assert bs_price(110, 100, 0.05, 0.2, 0) == pytest.approx(10)\n    assert bs_price(90, 100, 0.05, 0.2, 0, \"put\") == pytest.approx(10)\n    F = 100 * exp((0.05 - 0.01) * 1)\n    assert bs_price(100, 90, 0.05, 0.0, 1, q=0.01) == pytest.approx(exp(-0.05) * (F - 90))\n",
+    "examples": [
+     {
+      "call": "run_tests()",
+      "expect": "0",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "outcome()",
+      "expect": "'passed'",
+      "compare": "equal"
+     },
+     {
+      "call": "outcome(bs_price=wrong_q)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "outcome(bs_price=swapped)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "outcome(bs_price=no_guard)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "count(test='test_parity')",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "count(test='test_limits')",
+      "expect": "1",
+      "compare": "equal"
+     }
+    ],
+    "prelude": "import os as _os, sys as _sys\nopen('pricers.py', 'w').write('from math import erf, exp, log, sqrt\\n\\n\\ndef norm_cdf(z):\\n    return 0.5 * (1 + erf(z / sqrt(2)))\\n\\n\\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\\n    if kind not in (\"call\", \"put\"):\\n        raise ValueError(f\"kind must be \\'call\\' or \\'put\\', not {kind!r}\")\\n    if T <= 0:                          # at expiry: intrinsic value\\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\\n    F = S * exp((r - q) * T)            # the forward\\n    D = exp(-r * T)                     # the discount factor\\n    if sigma <= 0:                      # no randomness: the forward payoff\\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\\n    d2 = d1 - sigma * sqrt(T)\\n    if kind == \"call\":\\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\\n')\n_sys.path.insert(0, _os.getcwd())\n_sys.modules.pop('pricers', None)\nfrom pricers import bs_price as _right, norm_cdf as _ncdf\nfrom math import exp as _exp, log as _log, sqrt as _sqrt\n\ndef wrong_q(S, K, r, sigma, T, kind='call', q=0.0):\n    # q kept in d1 but missing from S * exp(-q * T)\n    if T <= 0 or sigma <= 0:\n        return _right(S, K, r, sigma, T, kind, q)\n    d1 = (_log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * _sqrt(T))\n    d2 = d1 - sigma * _sqrt(T)\n    if kind == 'call':\n        return S * _ncdf(d1) - K * _exp(-r * T) * _ncdf(d2)\n    return K * _exp(-r * T) * _ncdf(-d2) - S * _ncdf(-d1)\n\ndef swapped(S, K, r, sigma, T, kind='call', q=0.0):\n    # reads its arguments as (S, K, T, sigma, r)\n    return _right(S, K, T, sigma, r, kind, q)\n\ndef no_guard(S, K, r, sigma, T, kind='call', q=0.0):\n    # the textbook formula with no T = 0 or sigma = 0 case\n    d1 = (_log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * _sqrt(T))\n    d2 = d1 - sigma * _sqrt(T)\n    if kind == 'call':\n        return S * _exp(-q * T) * _ncdf(d1) - K * _exp(-r * T) * _ncdf(d2)\n    return K * _exp(-r * T) * _ncdf(-d2) - S * _exp(-q * T) * _ncdf(-d1)\n",
+    "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\", \"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(**swap):\n    code = _zq_pytest(swap)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n",
+    "how": "Check runs 6 hidden tests. Tests 2 to 4 swap in a wrong `bs_price`: one with $q$ missing from $Se^{-qT}$, one that reads its inputs as `(S, K, T, sigma, r)`, and one with no case for $T = 0$. Your tests must pass on the right pricer and fail on each wrong one. Run examples prints pytest's report; the first run loads pytest."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each test calls `bs_price` and asserts with `pytest.approx`."
+    },
+    {
+     "rung": "point",
+     "text": "For parity, price a call and a put on the same inputs with, say, $q = 0.02$.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the limits, assert `bs_price(110, 100, 0.05, 0.2, 0) == pytest.approx(10)` and a $\\sigma = 0$ case with its forward payoff."
+    }
+   ],
+   "feedback": {
+    "correct": "Your tests pass on the right pricer and catch all three wrong ones.",
+    "generic": "Not quite right. Run examples to see pytest's report, then check which wrong pricer slipped through.",
+    "byKey": {
+     "test-1": "Your tests fail on the right pricer. Check the expected values: parity uses $Se^{-qT}$, and $\\sigma = 0$ gives $e^{-rT}\\max(F - K, 0)$.",
+     "test-2": "The pricer missing $e^{-qT}$ passed. Use a $q$ that is not 0 in `test_parity`: with $q = 0$ it is the right pricer.",
+     "test-3": "The swapped pricer passed. Test $T = 0$ with $r \\ne 0$, or parity with $q \\ne 0$: $e^{-rT}$ alone cannot tell $r$ from $T$.",
+     "test-4": "The pricer with no $T = 0$ case passed. Call `bs_price` with $T = 0$ in `test_limits`."
+    }
+   },
+   "explain": {
+    "text": "Run parity with $q = 0$ and it passes all three wrong pricers: the $q$ does the work. Neither test would catch a wrong $d_1$, since parity holds for any $d_1$. That is why known values from the trees course stay in the suite too."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The pricer's rules",
+   "prose": "Your pricer, as rules: $$c = Se^{-qT}\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\qquad p = Ke^{-rT}\\Phi(-d_2) - Se^{-qT}\\Phi(-d_1),$$ intrinsic value at $T = 0$, and $e^{-rT}\\max(\\pm(F - K), 0)$ at $\\sigma = 0$, with $F = Se^{(r-q)T}$. Subtracting, $$C - P = Se^{-qT} - Ke^{-rT}$$ whatever $d_1$ and $d_2$ are.",
+   "question": "Which input can change without changing $C - P$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sigma",
+      "text": "The volatility $\\sigma$",
+      "correct": true
+     },
+     {
+      "id": "q",
+      "text": "The dividend yield $q$",
+      "why": "You held $q$ fixed in your head. It sits in $Se^{-qT}$, so a higher yield lowers $C - P$."
+     },
+     {
+      "id": "r",
+      "text": "The rate $r$",
+      "why": "The strike is discounted at $r$, so $Ke^{-rT}$ moves with it."
+     },
+     {
+      "id": "K",
+      "text": "The strike $K$",
+      "why": "$C - P$ falls by $e^{-rT}$ for each £1 of strike."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sigma$ appears only inside $d_1$ and $d_2$, and parity does not depend on them.",
+    "generic": "Not quite right. Look for the input that appears on neither side of the parity line."
+   },
+   "explain": {
+    "text": "A higher $\\sigma$ raises the call and the put by the same amount, since both gain from wider outcomes. Their difference is a forward, which has no optionality. So parity checks a pricer's $q$, $r$ and $T$, never its vol."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The pricer run backwards",
+   "prose": "Desks run the pricer backwards far more often than forwards. The same one-year at-the-money call trades at £12.00. You price it at five vols with `bs_price_vec`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Volatility $\\sigma$",
+      "Call (£)"
+     ],
+     "tap": "rows",
+     "rows": [
+      [
+       "0.22",
+       "11.2028"
+      ],
+      [
+       "0.23",
+       "11.5800"
+      ],
+      [
+       "0.24",
+       "11.9578"
+      ],
+      [
+       "0.25",
+       "12.3360"
+      ],
+      [
+       "0.26",
+       "12.7146"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Tap the two rows whose prices bracket £12.00.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r2",
+     "r3"
+    ],
+    "max": 2,
+    "countWord": "rows"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A bracket is one price below £12.00 and the next one above it."
+    },
+    {
+     "rung": "point",
+     "text": "£11.9578 is just below; which row is just above?",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Tap 0.24 and 0.25."
+    }
+   ],
+   "feedback": {
+    "correct": "£12.00 sits between 24% and 25%, so the market's vol is about 24.1%.",
+    "generic": "Not quite right. Find the last price below £12.00 and the first above it.",
+    "byKey": {
+     "r1": "£11.58 is below £12.00, but so is £11.96, which is closer. Take the nearest row on each side.",
+     "r4": "£12.71 is above £12.00, but so is £12.34, which is closer. Take the nearest row on each side.",
+     "r0": "£11.20 is far below £12.00. Take the nearest row on each side.",
+     "r3": "£12.34 is one end of the bracket. Tap the row just below £12.00 as well."
+    }
+   },
+   "explain": {
+    "text": "£12.00 lies between £11.96 at 24% and £12.34 at 25%. Level 3's solver narrows that bracket to 0.2411, and repeats it for every quote on every update. A surface stores vols, not prices, because vols compare across strikes and expiries.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2,
+       3
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The dashboard's pricer is `bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0)`: a yield $q$ enters as $Se^{-qT}$ and as $r - q$ in $d_1$, and lowers the £10.4506 call to £9.8263.",
+   "At $T = 0$ the pricer returns intrinsic value, and at $\\sigma = 0$ the discounted forward payoff, instead of dividing by zero.",
+   "Parity with $q \\ne 0$, the two limits and a known value make a test suite that catches swapped inputs, a missing $e^{-qT}$ and a wrong $d_1$."
+  ],
+  "formula": {
+   "name": "Black-Scholes with a dividend yield",
+   "tex": "c = Se^{-qT}\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\quad d_1 = \\dfrac{\\ln(S/K) + (r - q + \\sigma^2/2)T}{\\sigma\\sqrt T}",
+   "note": "$d_2 = d_1 - \\sigma\\sqrt T$; parity: $C - P = Se^{-qT} - Ke^{-rT}$."
+  },
+  "trap": "Passing the inputs in another order, such as `(S, K, T, sigma, r)`: Python raises nothing and the price is wrong."
+ },
+ "quiz": [
+  {
+   "id": "q-expiry-put",
+   "difficulty": 2,
+   "prose": "The pricer is called on a put at expiry: `bs_price(95, 100, 0.05, 0.3, 0, \"put\")`.",
+   "question": "What does it return, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£5.00: intrinsic value, $\\max(100 - 95, 0)$.",
+    "unit": "£",
+    "label": "Price",
+    "wrong": [
+     {
+      "id": "call",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "disc",
+      "value": 4.756,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "At expiry a put is worth $\\max(K - S, 0) = 5$.",
+    "generic": "Not quite right. At $T = 0$ the pricer returns intrinsic value.",
+    "byKey": {
+     "call": "You took the call's intrinsic value. A put struck at £100 on a £95 share pays £5.",
+     "disc": "There is nothing left to discount: at $T = 0$ the payment is now."
+    }
+   },
+   "explain": {
+    "text": "With no time left the share cannot move, so the put is worth what exercise pays: £5. The guard returns it before $d_1$ divides by $\\sqrt T = 0$."
+   }
+  },
+  {
+   "id": "q-parity-q",
+   "difficulty": 3,
+   "prose": "A six-month call and put struck at £90 on a £100 share, with $r = 4\\%$ and $q = 2\\%$.",
+   "question": "By put-call parity, what is $C - P$, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.787,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "£10.787: $100e^{-0.01} - 90e^{-0.02} = 99.005 - 88.218$.",
+    "unit": "£",
+    "label": "C − P",
+    "wrong": [
+     {
+      "id": "no-q",
+      "value": 11.782,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "plain",
+      "value": 10,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$99.005 - 88.218 = 10.787$.",
+    "generic": "Not quite right. Use $Se^{-qT} - Ke^{-rT}$ with $T = 0.5$.",
+    "byKey": {
+     "no-q": "You left out the yield. The share counts as $100e^{-0.02 \\times 0.5} = 99.005$.",
+     "plain": "You used $S - K$. Both sides need their factors: $e^{-qT}$ on the share and $e^{-rT}$ on the strike."
+    }
+   },
+   "explain": {
+    "text": "$Se^{-qT} = 100e^{-0.01} = 99.005$ and $Ke^{-rT} = 90e^{-0.02} = 88.218$. Their difference, 10.787, is the value of a forward struck at £90."
+   }
+  },
+  {
+   "id": "q-which-test",
+   "difficulty": 3,
+   "prose": "A colleague's `bs_price` uses $\\sigma^2$ in place of $\\sigma^2/2$ in $d_1$. Everything else is right.",
+   "question": "Which test catches it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "known",
+      "text": "A known value, such as £10.4506 for the trees course's call",
+      "correct": true
+     },
+     {
+      "id": "parity",
+      "text": "Put-call parity with $q = 2\\%$",
+      "why": "You trusted parity to see every bug. It holds for any $d_1$, so this pricer passes it."
+     },
+     {
+      "id": "limits",
+      "text": "The $T = 0$ and $\\sigma = 0$ limits",
+      "why": "The guards return those limits before $d_1$ is computed, so a wrong $d_1$ never reaches them."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only a known price sees a wrong $d_1$.",
+    "generic": "Not quite right. Ask which tests ever look at $d_1$."
+   },
+   "explain": {
+    "text": "Parity cancels $d_1$ and $d_2$ exactly, and the limits skip them. A known value from an independent source, here the trees course, is the test that sees the formula itself."
+   }
+  },
+  {
+   "id": "q-percent",
+   "difficulty": 2,
+   "prose": "The rate is typed in percent: `bs_price(100, 100, 5, 0.2, 1)`.",
+   "question": "About what does it return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "near-S",
+      "text": "About £99, nearly the share price",
+      "correct": true
+     },
+     {
+      "id": "near-bs",
+      "text": "About £10.45, since 5 and 0.05 differ only in scale",
+      "why": "You expected the scale to wash out. At $r = 5$ the discount factor is $e^{-5} = 0.0067$, so the strike costs almost nothing."
+     },
+     {
+      "id": "zero",
+      "text": "About £0, because a huge rate discounts everything away",
+      "why": "Discounting shrinks the strike, which the call holder pays. The share's value is not discounted, so the call nears $S$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£99.33: the strike is discounted to 67p.",
+    "generic": "Not quite right. Work out $Ke^{-rT}$ with $r = 5$."
+   },
+   "explain": {
+    "text": "$100e^{-5} = 0.67$, so the call is almost a right to the share for nothing: £99.33. A test with one known value catches this at once."
+   }
+  }
+ ]
+}

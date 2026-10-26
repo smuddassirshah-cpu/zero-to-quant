@@ -1,0 +1,418 @@
+{
+ "id": "homework-1",
+ "course": "alpha",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-clean",
+   "difficulty": 5,
+   "skills": [
+    "al-universe"
+   ],
+   "prose": "Put level 1 together. `clean_panel` turns a vendor's raw files into the returns a study may use. Keep a total return on day $t$ only if the share was in the point-in-time universe at the close of $t - 1$, when a portfolio could have bought it. `universe_mask`, `daily_volume_gbp`, `total_return`, `make_panel` and `small` are already defined.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected (window=2)",
+     "lines": [
+      "            A        B      C    D",
+      "01-01     NaN      NaN    NaN  NaN",
+      "01-02     NaN      NaN    NaN  NaN",
+      "01-03  0.0000      NaN -0.0122  NaN",
+      "01-04  0.0098  -0.0098 -0.8000  NaN",
+      "01-05  0.0000   0.0198    NaN  NaN",
+      "01-08  0.0059   0.0194    NaN  NaN"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `clean_panel(raw_close, split, dividend, listed, min_adv_gbp, adv_gbp)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def clean_panel(raw_close, split, dividend, listed, min_adv_gbp, adv_gbp, window=60):\n    \"\"\"Total returns, kept only where the share was in the universe at the\n    previous close; NaN elsewhere. adv_gbp is a Series (one £ volume per\n    share) or a date-by-share frame of daily £ volume.\"\"\"\n    ...\n",
+    "solution": "def clean_panel(raw_close, split, dividend, listed, min_adv_gbp, adv_gbp, window=60):\n    \"\"\"Total returns kept only when the share was in the point-in-time\n    universe at the previous close (held overnight into that day).\"\"\"\n    p = {\"listed\": listed}\n    if isinstance(adv_gbp, pd.DataFrame):\n        p[\"volume_gbp\"] = adv_gbp          # a daily £ volume\n    else:\n        p[\"adv_gbp\"] = adv_gbp             # one figure per share\n    held = universe_mask(p, min_adv_gbp, window).shift(1, fill_value=False)\n    return total_return(raw_close, split, dividend).where(held)\n",
+    "examples": [
+     {
+      "call": "clean_panel(rc, sp, dv, ls, 5e6, adv, window=2).round(6).fillna(-9).values.tolist()",
+      "expect": "[[-9.0, -9.0, -9.0, -9.0], [-9.0, -9.0, -9.0, -9.0], [0.0, -9.0, -0.012195, -9.0], [0.009804, -0.009804, -0.8, -9.0], [0.0, 0.019802, -9.0, -9.0], [0.005894, 0.019417, -9.0, -9.0]]",
+      "compare": "equal",
+      "setup": "d6 = pd.bdate_range(\"2024-01-01\", periods=6); rc = pd.DataFrame({\"A\": [100.0, 102.0, 51.0, 51.5, 50.9, 51.2], \"B\": [None, 20.0, 20.4, 20.2, 20.6, 21.0], \"C\": [40.0, 41.0, 40.5, 8.1, None, None], \"D\": [10.0, 10.1, 10.2, 10.0, 10.3, 10.4]}, index=d6, dtype=float); sp = pd.DataFrame(1.0, index=d6, columns=list(\"ABCD\")); sp.iloc[2, 0] = 2.0; dv = pd.DataFrame(0.0, index=d6, columns=list(\"ABCD\")); dv.iloc[4, 0] = 0.6; ls = rc.notna(); adv = pd.Series({\"A\": 9e6, \"B\": 6e6, \"C\": 7e6, \"D\": 1e6})"
+     }
+    ],
+    "tests": [
+     {
+      "call": "clean_panel(rc, sp, dv, ls, 5e6, adv, window=2).round(6).fillna(-9).values.tolist()",
+      "expect": "[[-9.0, -9.0, -9.0, -9.0], [-9.0, -9.0, -9.0, -9.0], [0.0, -9.0, -0.012195, -9.0], [0.009804, -0.009804, -0.8, -9.0], [0.0, 0.019802, -9.0, -9.0], [0.005894, 0.019417, -9.0, -9.0]]",
+      "compare": "equal",
+      "setup": "d6 = pd.bdate_range(\"2024-01-01\", periods=6); rc = pd.DataFrame({\"A\": [100.0, 102.0, 51.0, 51.5, 50.9, 51.2], \"B\": [None, 20.0, 20.4, 20.2, 20.6, 21.0], \"C\": [40.0, 41.0, 40.5, 8.1, None, None], \"D\": [10.0, 10.1, 10.2, 10.0, 10.3, 10.4]}, index=d6, dtype=float); sp = pd.DataFrame(1.0, index=d6, columns=list(\"ABCD\")); sp.iloc[2, 0] = 2.0; dv = pd.DataFrame(0.0, index=d6, columns=list(\"ABCD\")); dv.iloc[4, 0] = 0.6; ls = rc.notna(); adv = pd.Series({\"A\": 9e6, \"B\": 6e6, \"C\": 7e6, \"D\": 1e6})"
+     },
+     {
+      "call": "clean_panel(rc, sp, dv, ls, 5e6, adv, window=2)[\"C\"].round(4).tolist()[3]",
+      "expect": "-0.8",
+      "compare": "equal"
+     },
+     {
+      "call": "int(clean_panel(rc, sp, dv, ls, 5e6, adv, window=2)[\"D\"].notna().sum())",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "clean_panel(rc, sp, dv, ls, 5e6, vol, window=2)[\"B\"].round(6).fillna(-9).tolist()",
+      "expect": "[-9.0, -9.0, -9.0, -9.0, 0.019802, 0.019417]",
+      "compare": "equal",
+      "setup": "vol = pd.DataFrame({\"A\": [9e6] * 6, \"B\": [1e6, 1e6, 1e6, 9e6, 9e6, 9e6], \"C\": [7e6] * 6, \"D\": [1e6] * 6}, index=d6).where(ls)"
+     },
+     {
+      "call": "clean_panel(rc, sp, dv, ls, 5e6, adv, window=2).shape",
+      "expect": "(6, 4)",
+      "compare": "equal"
+     },
+     {
+      "call": "int(clean_panel(small[\"raw_close\"], small[\"split\"], small[\"dividend\"], small[\"listed\"], 5e6, small[\"adv_gbp\"]).iloc[:60].notna().sum().sum())",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "int(clean_panel(small[\"raw_close\"], small[\"split\"], small[\"dividend\"], small[\"listed\"], 5e6, small[\"adv_gbp\"]).notna().sum().sum())",
+      "expect": "6080",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(clean_panel(small[\"raw_close\"], small[\"split\"], small[\"dividend\"], small[\"listed\"], 5e6, small[\"adv_gbp\"]).mean(axis=1).mean() * 252), 4)",
+      "expect": "0.1755",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 8 hidden tests on a six-day hand panel with a split (A), a late listing (B), a death at −80% (C) and an illiquid share (D), with `window=2`; the same panel with a daily volume frame; and `small` with the default 60-day window (nothing kept in the first 60 rows, the count kept, the mean return a year). NaN is compared as −9. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
+    "prelude": "import numpy as np\nimport pandas as pd\n\nimport numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef daily_volume_gbp(p):\n    \"\"\"Each day's £ volume: p[\"volume_gbp\"] if the panel has one, else adv_gbp on every listed day.\"\"\"\n    vol = p[\"volume_gbp\"] if \"volume_gbp\" in p else p[\"listed\"] * p[\"adv_gbp\"]\n    return vol.where(p[\"listed\"])\n\ndef universe_mask(p, min_adv_gbp=5e6, window=60):\n    adv = daily_volume_gbp(p).rolling(window, min_periods=window).mean()\n    return p[\"listed\"] & (adv >= min_adv_gbp)\n\ndef total_return(raw_close, split, dividend):\n    return split * (raw_close + dividend) / raw_close.shift(1) - 1\n\nsmall = make_panel(30, 300, 5)\n"
+   },
+   "feedback": {
+    "correct": "Raw files in, an honest returns panel out.",
+    "generic": "Some tests failed. Build the mask from listing and volume, shift it one day, and keep total returns only where it is True.",
+    "byKey": {
+     "test-2": "C's −80% on its last day must be kept: it was in the universe the day before.",
+     "test-4": "With a daily volume frame, pass it as `volume_gbp` in the panel dict.",
+     "test-6": "Day 60 is the first day in the universe, so day 61 is the first return kept: rows 0 to 59 are empty."
+    }
+   },
+   "explain": {
+    "text": "The one-day shift is the whole point: a return on day $t$ belongs to whoever held the share from the close of $t - 1$. That keeps every delisting return and drops a share's first day in the universe. On `make_panel()` it keeps 207,419 returns with a mean of 9.58% a year."
+   }
+  },
+  {
+   "id": "h-turn",
+   "difficulty": 4,
+   "skills": [
+    "al-universe"
+   ],
+   "prose": "How fast does the universe itself change? Take the mask on each month's last trading day. For each pair of consecutive month ends, count the names that enter and the names that leave, and divide by the size of the earlier month. `universe_mask`, `make_panel` and `small` are already defined.",
+   "question": "Complete `universe_turnover(mask)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef universe_turnover(mask):\n    \"\"\"Mean over consecutive month ends of (names entering + names\n    leaving) / names at the earlier month end, rounded to 4 places.\n    Month ends with an empty universe are skipped; 0.0 if none remain.\"\"\"\n    me = mask.groupby(mask.index.to_period(\"M\")).last()   # one row a month\n    ...\n",
+    "solution": "import numpy as np\n\ndef universe_turnover(mask):\n    \"\"\"Mean over months of (names entering + names leaving) divided by\n    the names at the previous month end, rounded to 4 places.\"\"\"\n    me = mask.groupby(mask.index.to_period(\"M\")).last()\n    fr = []\n    for a, b in zip(me.values[:-1], me.values[1:]):\n        if a.sum() == 0:\n            continue\n        fr.append(((b & ~a).sum() + (a & ~b).sum()) / a.sum())\n    return round(float(np.mean(fr)), 4) if fr else 0.0\n",
+    "examples": [
+     {
+      "call": "universe_turnover(mk)",
+      "expect": "0.2917",
+      "compare": "equal",
+      "setup": "dm = pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-28\", \"2024-02-29\", \"2024-03-28\", \"2024-03-29\"]); mk = pd.DataFrame({\"A\": [1, 1, 1, 1, 1, 1], \"B\": [1, 1, 1, 1, 0, 0], \"C\": [0, 0, 0, 1, 1, 1], \"D\": [1, 1, 1, 1, 1, 1]}, index=dm).astype(bool)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "universe_turnover(mk)",
+      "expect": "0.2917",
+      "compare": "equal",
+      "setup": "dm = pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-28\", \"2024-02-29\", \"2024-03-28\", \"2024-03-29\"]); mk = pd.DataFrame({\"A\": [1, 1, 1, 1, 1, 1], \"B\": [1, 1, 1, 1, 0, 0], \"C\": [0, 0, 0, 1, 1, 1], \"D\": [1, 1, 1, 1, 1, 1]}, index=dm).astype(bool)"
+     },
+     {
+      "call": "universe_turnover(mk.iloc[:2])",
+      "expect": "0.0",
+      "compare": "equal"
+     },
+     {
+      "call": "universe_turnover(pd.DataFrame(False, index=dm, columns=list(\"AB\")))",
+      "expect": "0.0",
+      "compare": "equal"
+     },
+     {
+      "call": "universe_turnover(mk.assign(C=True))",
+      "expect": "0.125",
+      "compare": "equal"
+     },
+     {
+      "call": "universe_turnover(universe_mask(small))",
+      "expect": "0.0178",
+      "compare": "equal"
+     },
+     {
+      "call": "universe_turnover(universe_mask(make_panel()))",
+      "expect": "0.0036",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: a three-month hand mask (C enters, B leaves), a single month, an always-empty universe, a mask with no changes, and the masks of `small` and `make_panel()`. Compared with ==. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
+    "prelude": "import numpy as np\nimport pandas as pd\n\nimport numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef daily_volume_gbp(p):\n    \"\"\"Each day's £ volume: p[\"volume_gbp\"] if the panel has one, else adv_gbp on every listed day.\"\"\"\n    vol = p[\"volume_gbp\"] if \"volume_gbp\" in p else p[\"listed\"] * p[\"adv_gbp\"]\n    return vol.where(p[\"listed\"])\n\ndef universe_mask(p, min_adv_gbp=5e6, window=60):\n    adv = daily_volume_gbp(p).rolling(window, min_periods=window).mean()\n    return p[\"listed\"] & (adv >= min_adv_gbp)\n\ndef total_return(raw_close, split, dividend):\n    return split * (raw_close + dividend) / raw_close.shift(1) - 1\n\nsmall = make_panel(30, 300, 5)\n"
+   },
+   "feedback": {
+    "correct": "One number for how much the list itself moves.",
+    "generic": "Some tests failed. Compare each month end with the one before: entering is new and not old, leaving is old and not new.",
+    "byKey": {
+     "test-1": "January to February: C enters, so 1 of 3. February to March: B leaves, so 1 of 4. The mean is 0.2917.",
+     "test-3": "An empty universe has no month to divide by: return 0.0."
+    }
+   },
+   "explain": {
+    "text": "On `make_panel()` the universe changes by 0.36% a month, only through listings and deaths, because each share's volume is constant. Real universes move more, since volume rises and falls. Every change is a trade the portfolio in level 4 must pay for."
+   }
+  },
+  {
+   "id": "h-order",
+   "difficulty": 3,
+   "skills": [
+    "al-universe"
+   ],
+   "prose": "A vendor sends raw closes, split ratios, cash dividends, listing dates and daily £ volumes.",
+   "question": "Put the steps to a clean returns panel in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "load",
+      "text": "Load each file as a date-by-share frame on one calendar of trading days"
+     },
+     {
+      "id": "tr",
+      "text": "Compute total returns: $1 + R_t = s_t (P_t + D_t)/P_{t-1}$"
+     },
+     {
+      "id": "mask",
+      "text": "Build the universe mask from listing and trailing 60-day £ volume"
+     },
+     {
+      "id": "keep",
+      "text": "Keep a return on $t$ only where the share was in the universe at $t - 1$, delisting returns included"
+     },
+     {
+      "id": "fwd",
+      "text": "Compute forward returns from the cleaned panel, starting the day after each row"
+     },
+     {
+      "id": "test",
+      "text": "Run the spy and identity tests, and list the deaths for the note"
+     }
+    ],
+    "answer": [
+     "load",
+     "tr",
+     "mask",
+     "keep",
+     "fwd",
+     "test"
+    ],
+    "same": [
+     [
+      "tr",
+      "mask"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Load, returns and universe, keep, forward, test.",
+    "generic": "Not quite right. Each step needs the outputs of the ones before it.",
+    "byKey": {
+     "keep": "Keeping needs both the returns and the mask, so it comes after both."
+    }
+   },
+   "explain": {
+    "text": "Returns and the universe mask come from different files, so either can come first. Keeping needs both, forward returns need the kept panel, and the tests check the finished product."
+   }
+  },
+  {
+   "id": "h-three",
+   "difficulty": 3,
+   "skills": [
+    "al-universe"
+   ],
+   "prose": "A share closes at £96. The next day it splits three for one, pays £0.40 per new share and closes at £31.60.",
+   "question": "What is that day's total return, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0,
+    "tol": {
+     "abs": 5e-05
+    },
+    "label": "Total return",
+    "accept": "0%: $3 \\times (31.60 + 0.40)/96 - 1 = 0$.",
+    "placeholder": "decimal",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "nodiv",
+      "value": -0.0125,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "raw",
+      "value": -0.670833,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0%: three shares at £31.60 plus £1.20 cash is £96.",
+    "generic": "Not quite right. Multiply by 3 and add the dividend per new share.",
+    "byKey": {
+     "nodiv": "You left out the £0.40 a share in cash.",
+     "raw": "That is the raw-close change; the holder has three shares."
+    }
+   },
+   "explain": {
+    "text": "Three new shares worth £31.60 each, plus £0.40 cash on each, total £96. The holder's wealth did not change."
+   }
+  },
+  {
+   "id": "h-infer",
+   "difficulty": 4,
+   "skills": [
+    "al-universe"
+   ],
+   "prose": "A study of 400 shares finds a survivorship gap of 2.4% a year. Delisted shares lost 60% on their last day on average.",
+   "question": "About how many shares a year must be delisting?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16,
+    "tol": {
+     "abs": 0.5
+    },
+    "label": "Deaths a year",
+    "accept": "16: $k = 0.024 \\times 400 / 0.6$.",
+    "placeholder": "whole number",
+    "wrong": [
+     {
+      "id": "pct",
+      "value": 0.04,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "forty",
+      "value": 40,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 16 a year, 4% of the universe.",
+    "generic": "Not quite right. Solve $0.024 = (k/400) \\times 0.6$ for $k$.",
+    "byKey": {
+     "pct": "That is the fraction $k/N$. Multiply by 400 shares.",
+     "forty": "You left out the 60% loss: $k = 0.024 \\times 400 / 0.6$."
+    }
+   },
+   "explain": {
+    "text": "From bias $\\approx (k/N)|\\bar r_D|$: $k = 0.024 \\times 400 / 0.6 = 16$ deaths a year. That is a high rate, typical of small-cap universes."
+   }
+  },
+  {
+   "id": "h-lines",
+   "difficulty": 4,
+   "skills": [
+    "al-universe"
+   ],
+   "prose": "`L = np.log1p(ret)` is a frame of daily log returns.",
+   "question": "Which lines give the 21-day forward log return on row $t$, days $t + 1$ to $t + 21$? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`L.rolling(21).sum().shift(-21)`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`L[::-1].rolling(21).sum()[::-1].shift(-1)`",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "`L[::-1].rolling(21).sum()[::-1]`",
+      "why": "Reversed, the window on row $t$ covers $t$ to $t + 20$: it includes day $t$."
+     },
+     {
+      "id": "d",
+      "text": "`L.rolling(21).sum().shift(-20)`",
+      "why": "One row short: row $t$ covers $t$ to $t + 20$."
+     },
+     {
+      "id": "e",
+      "text": "`L.shift(1).rolling(21).sum()`",
+      "why": "That is a past return, days $t - 21$ to $t - 1$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two ways to the same window.",
+    "generic": "Not quite right. For each line, find the first and last day row $t$ covers."
+   },
+   "explain": {
+    "text": "A forward window must start on $t + 1$. Lines a and b both cover $t + 1$ to $t + 21$; c and d include day $t$. Note that both sum only days that exist, unlike `forward_returns`, which also blanks the last $h$ rows."
+   }
+  },
+  {
+   "id": "h-review",
+   "difficulty": 5,
+   "skills": [
+    "al-universe"
+   ],
+   "question": "Review a colleague's study.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "A colleague's momentum study uses the 200 largest shares today, monthly returns from raw closes, and only shares with a full price history from 2019 to 2023. It reports a top-minus-bottom return of 14% a year. Name each bias, say which way each pushes the reported number (or why the direction is unclear), and write the data paragraph of an honest note for the same study on `make_panel()`.",
+    "model": "**Bias 1: today's 200 largest.** The list is chosen with data from the end of the study. Shares are large today partly because they rose, so the sample is full of winners chosen with hindsight. Every fifth's return is pushed up. A past loser that is large today must have recovered strongly, so the bottom fifth is flattered too: the direction for the spread is unclear, and only a rerun can say.\n\n**Bias 2: raw closes.** Every split shows as a fake −50% month and dividends are missing. A split share's 12-month return looks about 50% lower, so it is ranked into the bottom fifth for a year, and a split inside a forward month shows a fake crash. These are large errors of unknown sign. Missing dividends lower every fifth's return by its yield, about 2% a year for a payer of 0.5% a quarter.\n\n**Bias 3: full histories only.** This drops every share that died, with its delisting loss, and every late listing. On `make_panel()` it raises the top fifth by about 2 points a year (20.68% against 18.66%) and lowers the spread slightly (11.02% against 11.88%), because deaths there are random. In real markets deaths cluster among past losers, so dropping them flatters the bottom fifth and shrinks the spread further.\n\n**Verdict.** The 14% cannot be trusted in either direction. Rerun the study on a point-in-time universe with total returns and the dead kept.\n\n**Data paragraph.** *Seeded `make_panel()`, seed 2310: 200 shares over 1,260 trading days from 2 January 2019. Universe on each date: listed that day, with a trailing 60-day mean £ volume of at least £5m; the first usable date is 26 March 2019, and the universe holds 165 to 180 shares. Returns are total returns from raw closes, split ratios and cash dividends ($1 + R_t = s_t (P_t + D_t)/P_{t-1}$): 14 splits in the prices and quarterly dividends on 110 shares. 20 shares delisted; each stays in to its last day with its delisting return (−54.9% to −93.5%), none missing. 20 shares listed late and join on their 60th trading day. A return is kept when the share was in the universe the day before. Forward returns start the day after the signal date, checked by a spy test.*",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Today's list: names it as look-ahead in the choice of names (selection on later size) and says it pushes returns up, with the spread's direction unclear"
+     },
+     {
+      "points": 2,
+      "text": "Raw closes: splits as fake −50% returns that mis-rank shares and fake crashes, and missing dividends that lower returns by the yield"
+     },
+     {
+      "points": 2,
+      "text": "Full histories only: survivorship bias from dropping the dead (and late listings), with a direction: long side up about 2 points here, spread down, more so when deaths cluster among losers"
+     },
+     {
+      "points": 1,
+      "text": "Concludes that the 14% cannot be trusted and must be rerun, rather than adjusting it by a guessed amount"
+     },
+     {
+      "points": 3,
+      "text": "Data paragraph: the point-in-time rule with its numbers, total returns with splits and dividends, dead shares kept with their count and delisting returns, late listings, and forward-return alignment with its test"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and mark it against the rubric.",
+    "generic": "Compare your answer with the model and mark it against the rubric."
+   },
+   "explain": {
+    "text": "Each bias has a mechanism and a direction, and two of the three have no safe direction for the spread. That is why the honest response is a rerun with a data paragraph a reviewer can check, not a corrected number."
+   }
+  }
+ ]
+}

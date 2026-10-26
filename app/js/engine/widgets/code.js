@@ -12,7 +12,11 @@
    exactly with exact: true), and a call case is evaluated in that run's namespace, which also holds printed (the
    captured lines as a list). input() prompts are not part of the output. Any case may carry setup (Python run before
    call); compare "raises" passes when the call (or, in script mode with no call, the program) raises the named
-   exception or a subclass. */
+   exception or a subclass.
+   Pass 7: a case may carry tol: { rel, abs } for isclose (items 378, 425, 464), shown in its row; each case has its own
+   time limit (5 s, plus the case's budget or the widget's caseBudget) reported against the case that hit it, so a slow
+   attempt stops after one case (items 394, 419); __learner_source__ is always defined (item 395); a stdout case may
+   check only some lines (lines: true, every expected line in order) or a pattern (match: "regex") (item 451). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -139,11 +143,15 @@
         if (m.type === 'ready') { clearTimeout(loadTimer); set('ready'); return; }
         if (m.type === 'fail') { unavailable(m.message); return; }
         if (!run || m.id !== run.id) return;
-        if (m.type === 'event') { let d = null; try { d = JSON.parse(m.data); } catch { return; } run.onEvent(d); }
+        if (m.type === 'event') {
+          let d = null; try { d = JSON.parse(m.data); } catch { return; }
+          if (run.perCase && (d.kind === 'loaded' || d.kind === 'test')) { const r = run; r.at = d.kind === 'loaded' ? 0 : d.i + 1; r.limit = r.perCase(r.at); clearTimeout(r.timer); r.timer = setTimeout(() => { end({ timeout: true, at: r.at }); start(true); }, r.limit); }
+          run.onEvent(d);
+        }
         else if (m.type === 'pkgs') { // item 161: package loading is kept out of the run's limit (2 minutes of its own)
           clearTimeout(run.timer);
           const r = run;
-          if (m.phase === 'end') r.timer = setTimeout(() => { end({ timeout: true }); start(true); }, r.limit);
+          if (m.phase === 'end') r.timer = setTimeout(() => { end({ timeout: true, at: r.at }); start(true); }, r.limit);
           else r.timer = setTimeout(() => { end({ timeout: true, loading: true }); start(true); }, PKG_MS);
           if (m.phase === 'msg' && r.onPkgs) r.onPkgs(String(m.text || ''));
         }
@@ -159,10 +167,13 @@
       w.postMessage({ type: 'init', indexURL: PYODIDE });
       loadTimer = setTimeout(() => { if (my === gen) unavailable('Python took more than a minute to load.'); }, LOAD_MS);
     };
-    const exec = (code, spec, limit, onEvent, onEnd, onPkgs) => {
+    /* items 394, 419: perCase(k) is the limit for case k (k = -1 while the code loads); each event re-arms the timer, so
+       a timeout names the case that hit it */
+    const exec = (code, spec, limit, onEvent, onEnd, onPkgs, perCase) => {
       if (status !== 'ready' || !w) return false;
-      run = { id: Date.now() + Math.random(), onEvent, onEnd, onPkgs, crash: null, limit };
-      run.timer = setTimeout(() => { end({ timeout: true }); start(true); }, limit);
+      run = { id: Date.now() + Math.random(), onEvent, onEnd, onPkgs, crash: null, limit, perCase, at: -1 };
+      if (perCase) limit = run.limit = perCase(-1);
+      run.timer = setTimeout(() => { end({ timeout: true, at: -1 }); start(true); }, limit);
       set('running');
       w.postMessage({ type: 'run', id: run.id, code, spec });
       return true;
@@ -187,7 +198,7 @@ def __zq_raises(_call, _exp, _ns):
     print(${JSON.stringify(MARK)} + 'no error, the value was ' + repr(_a), end='')
     return 0.0
 
-def __zq_cmp(_a, _exp, _cmp, _ns):
+def __zq_cmp(_a, _exp, _cmp, _ns, _tol=None):
     import math as _m
     from fractions import Fraction as _F
     print(${JSON.stringify(MARK)} + repr(_a), end='')
@@ -204,6 +215,8 @@ def __zq_cmp(_a, _exp, _cmp, _ns):
         if isinstance(_x, (str, bytes)) and not isinstance(_y, (str, bytes)):
             return False  # item 121: "0.05" is text, not the number 0.05
         try:
+            if _tol:
+                return _m.isclose(float(_x), float(_y), rel_tol=float(_tol[0]), abs_tol=float(_tol[1]))
             return _m.isclose(float(_x), float(_y), rel_tol=1e-9, abs_tol=1e-12)
         except Exception:
             return _x == _y
@@ -215,18 +228,22 @@ def __zq_cmp(_a, _exp, _cmp, _ns):
         return 0.0
 `;
   /* The harness: one function the worker calls per case, returning 1.0 for a pass */
-  const harness = (cases) => `
+  /* tol: { rel, abs } on a case: math.isclose with those tolerances (a missing one is 0) */
+  const tolOf = (c) => (c.tol && typeof c.tol === 'object' && (Number.isFinite(+c.tol.rel) || Number.isFinite(+c.tol.abs)) ? [Math.max(0, +c.tol.rel || 0), Math.max(0, +c.tol.abs || 0)] : typeof c.tol === 'number' && c.tol >= 0 ? [0, c.tol] : null);
+  const harness = (cases, src) => `
 ${JUDGE}
 def __zq_case(_i):
-    _call, _exp, _cmp, _setup = __ZQ_CASES[_i]
+    _call, _exp, _cmp, _setup, _tol = __ZQ_CASES[_i]
     if _setup:
         exec(_setup, globals())
     if _cmp == 'raises':
         return __zq_raises(_call, _exp, globals())
     _a = eval(_call, globals())  # evaluated here, one frame under the worker, as before
-    return __zq_cmp(_a, _exp, _cmp, globals())
+    return __zq_cmp(_a, _exp, _cmp, globals(), _tol)
 
-__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [String(c.call ?? ''), String(c.expect ?? ''), c.compare || 'equal', c.setup == null ? '' : String(c.setup)])))})
+if '__learner_source__' not in globals():
+    __learner_source__ = ${JSON.stringify(String(src ?? ''))}
+__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [String(c.call ?? ''), String(c.expect ?? ''), c.compare || 'equal', c.setup == null ? '' : String(c.setup), tolOf(c)])))})
 `;
   /* Script mode harness: the learner's source runs once per case in a fresh namespace (see the header) */
   /* The worker loads packages from the imports it can see (loadPackagesFromImports); in script mode the learner's code is
@@ -260,7 +277,7 @@ __ZQ_PRE = ${JSON.stringify(pre)}
 __ZQ_POST = ${JSON.stringify(post)}
 _zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
 __ZQ_CODE = compile(__ZQ_SRC, 'solution.py', 'exec')
-__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact, c.setup == null ? '' : String(c.setup), Array.isArray(c.argv) ? c.argv.map(String) : []])))})
+__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact, c.setup == null ? '' : String(c.setup), Array.isArray(c.argv) ? c.argv.map(String) : [], tolOf(c), !!c.lines, c.match == null ? '' : String(c.match)])))})
 ${JUDGE}
 def __zq_norm(_t):
     _ls = [_l.rstrip() for _l in _t.replace('\\r\\n', '\\n').split('\\n')]
@@ -271,7 +288,7 @@ def __zq_norm(_t):
 def __zq_case(_i):
     import math as _m
     from fractions import Fraction as _F
-    _call, _exp, _cmp, _stdin, _exact, _setup, _argv = __ZQ_CASES[_i]
+    _call, _exp, _cmp, _stdin, _exact, _setup, _argv, _tol, _lines, _match = __ZQ_CASES[_i]
     _feed = _zio.StringIO(_stdin)
     _out = _zio.StringIO()
     def _input(prompt=''):
@@ -308,6 +325,15 @@ def __zq_case(_i):
     _ns['printed'] = _txt.splitlines()
     if _cmp == 'stdout':
         print(${JSON.stringify(MARK)}, end='')
+        if _match:
+            import re as _re
+            return 1.0 if _re.search(_match, _txt, _re.M) else 0.0
+        if _lines:
+            _want, _have, _k = __zq_norm(_exp), __zq_norm(_txt), 0
+            for _l in _have:
+                if _k < len(_want) and _l == _want[_k]:
+                    _k += 1
+            return 1.0 if _k == len(_want) else 0.0
         if _exact:
             return 1.0 if _txt == _exp else 0.0
         return 1.0 if __zq_norm(_txt) == __zq_norm(_exp) else 0.0
@@ -318,7 +344,7 @@ def __zq_case(_i):
         exec(_setup, _ns)
     if _cmp == 'raises':
         return __zq_raises(_call, _exp, _ns)
-    return __zq_cmp(eval(_call, _ns), _exp, _cmp, _ns)
+    return __zq_cmp(eval(_call, _ns), _exp, _cmp, _ns, _tol)
 `;
   /* item 169: library housekeeping lines (matplotlib's font cache notice, warnings that slip through) are not the learner's output */
   const quietLib = (t) => String(t || '').split('\n').filter(l => !/^Matplotlib is building the font cache|^\S+\.py:\d+: (FutureWarning|DeprecationWarning):/.test(l)).join('\n');
@@ -389,7 +415,7 @@ def __zq_case(_i):
     const row = (r, label) => `<li class="wd-res-row ${r.ok ? 'ok' : 'bad'}">
         <span class="wd-res-ic" aria-hidden="true">${Z.icon(r.ok ? 'check' : 'cross', 'xs')}</span>
         <div class="wd-res-b"><div class="wd-res-h"><b>${label}</b> ${r.out ? (r.stdin ? 'what it prints with this input' : 'what it prints') : r.call ? `${r.setup ? `<code class="lsn-ic">${Z.esc(r.setup)}</code> then ` : ''}<code class="lsn-ic">${Z.esc(r.call)}</code>` : 'the whole program'}</div>
-        ${r.out ? outRow(r) : `${r.error ? pre(cleanTb(r.error), 'wd-res-err') : r.raises ? `<div class="t-caption">Expected it to raise <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>` : `<div class="t-caption">Expected <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>`}
+        ${r.out ? outRow(r) : `${r.error ? pre(cleanTb(r.error), 'wd-res-err') : r.raises ? `<div class="t-caption">Expected it to raise <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>` : `<div class="t-caption">Expected <code class="lsn-ic">${Z.esc(r.expect)}</code>${r.tol ? ` (within ${[r.tol[0] ? 'relative ' + r.tol[0] : '', r.tol[1] ? 'absolute ' + r.tol[1] : ''].filter(Boolean).join(' or ')})` : ''}, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>`}
         ${r.stdout ? pre(r.stdout) : ''}`}</div></li>`;
     const render = (title, rows, cases, extra = '') => {
       const n = rows.filter(r => r.ok).length;
@@ -399,13 +425,17 @@ def __zq_case(_i):
     const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
     const runCases = (cases) => new Promise((resolve) => {
       const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
-      const code = script ? scriptHarness(ed.value, cases, pre, post) : (pre || post ? loadHarness(ed.value, pre, post) : ed.value) + harness(cases);
-      const rows = cases.map(c => ({ argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
+      const code = script ? scriptHarness(ed.value, cases, pre, post) : (pre || post ? loadHarness(ed.value, pre, post) : ed.value) + harness(cases, ed.value);
+      const rows = cases.map(c => ({ tol: tolOf(c), argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
       let loadErr = null, loaded = '';
       /* item 143: spec.budget (ms) is added to the run's limit; code importing numpy, pandas or scipy gets 30 s on top
          without one, so the first package load is not charged against the 5 s per case */
       const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(ed.value + '\n' + String(spec.prelude || '') + '\n' + String(spec.postlude || ''));
-      const limit = TEST_MS * Math.max(1, cases.length) + (spec.budget != null ? Math.max(0, +spec.budget || 0) : heavy ? 30000 : 0);
+      const extra = spec.budget != null ? Math.max(0, +spec.budget || 0) : heavy ? 30000 : 0;
+      const limit = TEST_MS * Math.max(1, cases.length) + extra;
+      /* the load gets 5 s plus the widget's budget (or 30 s for heavy imports); each case 5 s plus its own budget, the
+         widget's caseBudget, or, when the widget has a budget, that budget again (a slow numpy case keeps its room) */
+      const caseMs = (k) => (k < 0 ? TEST_MS + extra : TEST_MS + (cases[k] && cases[k].budget != null ? Math.max(0, +cases[k].budget || 0) : spec.caseBudget != null ? Math.max(0, +spec.caseBudget || 0) : extra));
       const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
         (d) => {
           if (d.kind === 'error') { loadErr = d.error; loaded = quietLib(d.stdout); }
@@ -420,8 +450,18 @@ def __zq_case(_i):
             r.ok = !!d.ok && !d.error;
           }
         },
-        (info) => resolve({ rows, printed: loaded, error: loadErr ? cleanTb(loadErr) : info.loading ? 'The packages your code imports took more than two minutes to load. Check the connection and try again.' : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends, or an input() waiting for a line the test does not give.' : info.crash || null }),
-        (msg) => { if (alive && /^Loading\b/.test(msg)) res.innerHTML = `<p class="t-caption wd-res-load" aria-live="polite">${Z.esc(msg.replace(/\s*$/, ''))}. The first run that imports a package fetches it once.</p>`; });
+        (info) => {
+          /* a case that ran past its limit is reported on its own row; the rest did not run */
+          if (info.timeout && !info.loading && info.at != null && info.at >= 0 && info.at < rows.length && !loadErr) {
+            const k = info.at, secs = Math.round(caseMs(k) / 100) / 10;
+            rows[k].error = `Stopped after ${secs} s on this test. Look for a loop that never ends, work that grows too fast for this input, or an input() waiting for a line the test does not give.`;
+            rows.forEach((x, i) => { if (i > k) x.error = 'Not run: an earlier test went past its time limit.'; });
+            resolve({ rows, printed: loaded, error: null }); return;
+          }
+          resolve({ rows, printed: loaded, error: loadErr ? cleanTb(loadErr) : info.loading ? 'The packages your code imports took more than two minutes to load. Check the connection and try again.' : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends, or an input() waiting for a line the test does not give.' : info.crash || null });
+        },
+        (msg) => { if (alive && /^Loading\b/.test(msg)) res.innerHTML = `<p class="t-caption wd-res-load" aria-live="polite">${Z.esc(msg.replace(/\s*$/, ''))}. The first run that imports a package fetches it once.</p>`; },
+        caseMs);
       if (!ok) resolve({ rows, printed: '', error: Py.status === 'unavailable' ? 'Python could not load: ' + Py.reason : 'Python is still loading. Try again in a moment.' });
     });
     const runExamples = async () => {

@@ -1,0 +1,1464 @@
+{
+  "id": "l3-rates-dividends",
+  "course": "opt-dash",
+  "title": "Rates and dividends",
+  "minutes": 14,
+  "objectives": [
+    "Choose the interest rate and dividend inputs for each expiry.",
+    "Back out the forward from put-call parity and the dividend yield from the forward.",
+    "Write `implied_forward` and `implied_q` for the dashboard."
+  ],
+  "skills": [
+    "od-data"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where call meets put",
+      "prose": "Each dot is one strike of the cleaned one-year chain: the call's mid minus the put's mid. The dots lie on a line. Drag the point along it.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            -35,
+            40
+          ],
+          "xLabel": "Strike $K$ (£)",
+          "yLabel": "$C - P$ (£)",
+          "xStep": 10,
+          "yStep": 10,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "99.1878 - 0.9526*x",
+              "label": "fitted line",
+              "domain": [
+                60,
+                140
+              ],
+              "labelAt": 130
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "k70",
+              "x": 70,
+              "y": 32.62,
+              "tap": false
+            },
+            {
+              "id": "k75",
+              "x": 75,
+              "y": 27.64,
+              "tap": false
+            },
+            {
+              "id": "k90",
+              "x": 90,
+              "y": 13.44,
+              "tap": false
+            },
+            {
+              "id": "k100",
+              "x": 100,
+              "y": 3.86,
+              "tap": false
+            },
+            {
+              "id": "k105",
+              "x": 105,
+              "y": -0.79,
+              "tap": false
+            },
+            {
+              "id": "k115",
+              "x": 115,
+              "y": -10.38,
+              "tap": false
+            },
+            {
+              "id": "k120",
+              "x": 120,
+              "y": -15.05,
+              "tap": false
+            },
+            {
+              "id": "k125",
+              "x": 125,
+              "y": -19.96,
+              "tap": false
+            },
+            {
+              "id": "k130",
+              "x": 130,
+              "y": -24.615,
+              "tap": false
+            },
+            {
+              "id": "P",
+              "x": 80,
+              "y": 22.979,
+              "on": "f",
+              "drag": true,
+              "snap": 0.5,
+              "label": "K = {x}"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "zero",
+              "y": 0
+            }
+          ],
+          "caption": "One year, share at £100"
+        }
+      },
+      "question": "Drag the point to the strike where the call and the put cost the same.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "P",
+            "target": {
+              "on": "f",
+              "x": 104.12
+            },
+            "tol": 1.0
+          }
+        ],
+        "wrong": [
+          {
+            "id": "spot",
+            "region": {
+              "x": [
+                98.5,
+                101.5
+              ],
+              "y": [
+                -10,
+                10
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Call and put cost the same where $C - P = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "Find where the line crosses the dashed zero line.",
+          "highlight": [
+            "zero"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It crosses a little above 104."
+        }
+      ],
+      "feedback": {
+        "correct": "About £104.1: the call and put are equal there.",
+        "generic": "Not quite right. Slide the point to where the line crosses zero.",
+        "byKey": {
+          "spot": "You stopped at the spot, £100. There the call is still worth £3.86 more than the put.",
+          "P": "Not there yet. Stop exactly where the line crosses the zero line."
+        }
+      },
+      "explain": {
+        "text": "The line crosses zero near $K = \\text{£}104.1$, where the call and the put cost the same. That strike is the one-year **forward** price. It sits above the spot because cash earns 5% while the share pays only 1%.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 104.12,
+              "y": 0
+            }
+          },
+          "vlines": [
+            {
+              "id": "F",
+              "x": 104.12,
+              "label": "F"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Rates and dividends",
+      "prose": "Put-call parity with a dividend yield $q$ says $C - P = Se^{-qT} - Ke^{-rT}$. The blue line draws it for $S = \\text{£}100$, $T = 1$. Move both sliders until it runs through the dots.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            -35,
+            40
+          ],
+          "xLabel": "Strike $K$ (£)",
+          "yLabel": "$C - P$ (£)",
+          "xStep": 10,
+          "yStep": 10,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "100*exp(-q) - x*exp(-r)",
+              "label": "parity",
+              "domain": [
+                60,
+                140
+              ],
+              "labelAt": 70
+            }
+          ],
+          "params": {
+            "r": 0.0,
+            "q": 0.0
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "k70",
+              "x": 70,
+              "y": 32.62,
+              "tap": false
+            },
+            {
+              "id": "k75",
+              "x": 75,
+              "y": 27.64,
+              "tap": false
+            },
+            {
+              "id": "k90",
+              "x": 90,
+              "y": 13.44,
+              "tap": false
+            },
+            {
+              "id": "k100",
+              "x": 100,
+              "y": 3.86,
+              "tap": false
+            },
+            {
+              "id": "k105",
+              "x": 105,
+              "y": -0.79,
+              "tap": false
+            },
+            {
+              "id": "k115",
+              "x": 115,
+              "y": -10.38,
+              "tap": false
+            },
+            {
+              "id": "k120",
+              "x": 120,
+              "y": -15.05,
+              "tap": false
+            },
+            {
+              "id": "k125",
+              "x": 125,
+              "y": -19.96,
+              "tap": false
+            },
+            {
+              "id": "k130",
+              "x": 130,
+              "y": -24.615,
+              "tap": false
+            }
+          ],
+          "caption": "Parity line for your $r$ and $q$"
+        },
+        "controls": [
+          {
+            "bind": "r",
+            "min": 0,
+            "max": 0.1,
+            "step": 0.005,
+            "start": 0,
+            "label": "$r$",
+            "format": "percent"
+          },
+          {
+            "bind": "q",
+            "min": 0,
+            "max": 0.05,
+            "step": 0.005,
+            "start": 0,
+            "label": "$q$",
+            "format": "percent"
+          }
+        ]
+      },
+      "question": "Which slider turns the line, and which only lifts it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$r$ turns it; $q$ lifts it without turning",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "$q$ turns it; $r$ lifts it",
+            "why": "$q$ sits in $Se^{-qT}$, which has no $K$ in it: it moves the line up and down. $r$ multiplies $K$, so it sets the slope."
+          },
+          {
+            "id": "both",
+            "text": "Both turn it by the same amount",
+            "why": "Only the term with $K$ in it can change the slope, and that is $Ke^{-rT}$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which term of the formula multiplies $K$?"
+        },
+        {
+          "rung": "point",
+          "text": "The slope is $-e^{-rT}$ and the intercept $Se^{-qT}$.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So $r$ sets the slope and $q$ the height."
+        }
+      ],
+      "feedback": {
+        "correct": "The slope is $-e^{-rT}$; the intercept at $K = 0$ is $Se^{-qT}$.",
+        "generic": "Not quite right. Move one slider at a time and watch the line."
+      },
+      "explain": {
+        "text": "Near $r = 5\\%$ and $q = 1\\%$ the line runs through the dots. The slope $-e^{-rT}$ depends only on $r$, and the height $Se^{-qT}$ only on $q$. So one line holds both inputs.",
+        "canvas": {
+          "params": {
+            "r": 0.05,
+            "q": 0.01
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The implied forward",
+      "prose": "Write $F = Se^{(r-q)T}$, the **forward**. Parity becomes $C - P = e^{-rT}(F - K)$, which is zero at $K = F$, as you found. Each strike then gives its own estimate, $F = K + e^{rT}(C - P)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            -35,
+            40
+          ],
+          "xLabel": "Strike $K$ (£)",
+          "yLabel": "$C - P$ (£)",
+          "xStep": 10,
+          "yStep": 10,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "99.1878 - 0.9526*x",
+              "label": "fitted line",
+              "domain": [
+                60,
+                140
+              ],
+              "labelAt": 130
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "k70",
+              "x": 70,
+              "y": 32.62,
+              "tap": false
+            },
+            {
+              "id": "k75",
+              "x": 75,
+              "y": 27.64,
+              "tap": false
+            },
+            {
+              "id": "k90",
+              "x": 90,
+              "y": 13.44,
+              "tap": false
+            },
+            {
+              "id": "k100",
+              "x": 100,
+              "y": 3.86,
+              "tap": false
+            },
+            {
+              "id": "k105",
+              "x": 105,
+              "y": -0.79,
+              "tap": false
+            },
+            {
+              "id": "k115",
+              "x": 115,
+              "y": -10.38,
+              "tap": false
+            },
+            {
+              "id": "k120",
+              "x": 120,
+              "y": -15.05,
+              "tap": false
+            },
+            {
+              "id": "k125",
+              "x": 125,
+              "y": -19.96,
+              "tap": false
+            },
+            {
+              "id": "k130",
+              "x": 130,
+              "y": -24.615,
+              "tap": false
+            }
+          ],
+          "highlight": [
+            "k100"
+          ],
+          "caption": "The 100 strike: $C = 10.600$, $P = 6.740$"
+        }
+      },
+      "question": "With $r = 5\\%$, what forward does the 100 strike imply?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 104.058,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Forward in pounds",
+        "accept": "£104.06: $100 + e^{0.05} \\times 3.86$",
+        "wrong": [
+          {
+            "id": "no-grow",
+            "value": 103.86,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "discount",
+            "value": 103.67174557857275,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from $C - P$ at this strike."
+        },
+        {
+          "rung": "point",
+          "text": "$C - P = 3.86$, and $e^{0.05} = 1.0513$.",
+          "highlight": [
+            "k100"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$F = 100 + 1.0513 \\times 3.86$."
+        }
+      ],
+      "feedback": {
+        "correct": "£104.06, close to the line's £104.12.",
+        "generic": "Not quite right. Grow $C - P$ by $e^{rT}$, then add the strike.",
+        "byKey": {
+          "no-grow": "You added $C - P$ as it stands. It is a value today; grow it by $e^{rT}$ to reach expiry.",
+          "discount": "You multiplied by $e^{-rT}$. Going from today to expiry grows money, so multiply by $e^{rT}$."
+        }
+      },
+      "explain": {
+        "text": "$C - P = 3.86$ today is worth $3.86 e^{0.05} = 4.06$ at expiry, so $F = \\text{£}104.06$. Other strikes give slightly different values because of quote noise. We take the median over strikes, so one bad pair cannot move it.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "F",
+              "x": 104.06,
+              "label": "F"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The dividend yield",
+      "prose": "The median forward for each expiry of the cleaned chain, from the strikes with both a call and a put. With $r$ known, $F = Se^{(r-q)T}$ gives $q = r - \\ln(F/S)/T$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "expiry",
+            "pairs",
+            "median $F$",
+            "true $Se^{(r-q)T}$"
+          ],
+          "rows": [
+            [
+              "1 month",
+              "4",
+              "100.346",
+              "100.334"
+            ],
+            [
+              "2 months",
+              "7",
+              "100.650",
+              "100.669"
+            ],
+            [
+              "3 months",
+              "8",
+              "101.005",
+              "101.005"
+            ],
+            [
+              "6 months",
+              "11",
+              "102.004",
+              "102.020"
+            ],
+            [
+              "1 year",
+              "9",
+              "104.123",
+              "104.081"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          }
+        }
+      },
+      "question": "With $r = 5\\%$, what dividend yield does the one-year forward imply?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0096,
+        "tol": {
+          "abs": 0.0002
+        },
+        "unit": "%",
+        "label": "Dividend yield in percent",
+        "accept": "About 0.96%: $0.05 - \\ln(1.04123)$",
+        "wrong": [
+          {
+            "id": "growth",
+            "value": 0.04040234132012706,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "sign",
+            "value": 0.09040234132012706,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take the log of $F/S$ first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\ln(104.123/100) = 0.0404$ and $T = 1$.",
+          "highlight": [
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$q = 0.05 - 0.0404$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 0.96%, against the true 1%.",
+        "generic": "Not quite right. Use $q = r - \\ln(F/S)/T$.",
+        "byKey": {
+          "growth": "That is $r - q$, the forward's growth rate. Subtract it from $r$ to get $q$.",
+          "sign": "You added the growth rate to $r$. The forward grows at $r - q$, so $q = r - \\ln(F/S)/T$."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(F/S) = 0.0404$ is $r - q$ over one year, so $q = 0.0096$. The chain was built with $q = 1\\%$, and the median recovers it to within 0.04 points."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Fitting both",
+      "prose": "Why not fit $r$ and $q$ together, from the slope and intercept of a straight line through the dots? Here is that fit on the cleaned chain, at one month and at one year.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "expiry",
+            "slope",
+            "true slope",
+            "intercept",
+            "fitted $r$",
+            "fitted $q$"
+          ],
+          "rows": [
+            [
+              "1 month",
+              "-0.9993",
+              "-0.9958",
+              "100.27",
+              "0.84%",
+              "-3.24%"
+            ],
+            [
+              "1 year",
+              "-0.9526",
+              "-0.9512",
+              "99.19",
+              "4.86%",
+              "0.82%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Why is the one-month fit useless for $r$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Over one month $e^{-rT}$ is almost 1, so a penny of quote noise swamps the tilt",
+            "correct": true
+          },
+          {
+            "id": "rates",
+            "text": "Short-term rates really are near 1%",
+            "why": "The chain was built with $r = 5\\%$ at every expiry. The fit failed; the rate did not change."
+          },
+          {
+            "id": "few",
+            "text": "Cleaning left too few strikes",
+            "why": "Four pairs would pin a line with a clear slope. The trouble is that the true slope barely differs from $-1$."
+          },
+          {
+            "id": "bug",
+            "text": "The one-month quotes are wrong",
+            "why": "They are priced at $r = 5\\%$ plus noise. The noise is what the slope cannot see past."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the true slope with $-1$ at each expiry."
+        },
+        {
+          "rung": "point",
+          "text": "At one month the true slope is -0.9958.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A slope that close to $-1$ moves $C - P$ by pennies across the strikes: the size of the noise."
+        }
+      ],
+      "feedback": {
+        "correct": "The slope carries almost no information about $r$ at short expiries.",
+        "generic": "Not quite right. Look at how far the true one-month slope is from $-1$."
+      },
+      "explain": {
+        "text": "At one month, $r = 5\\%$ tilts the line by only 0.0042 per pound of strike. Across the strikes that is a few pennies, the size of the noise, so the fit returned 0.84%. So we take $r$ from the rate market, a bill or overnight-index swap rate per expiry, and back out $q$."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The spot is not the forward",
+      "prose": "A colleague centres every smile at the spot: he treats the 100 strike as at the money at every expiry. For a one-year option, $r = 5\\%$ and $q = 1\\%$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            -35,
+            40
+          ],
+          "xLabel": "Strike $K$ (£)",
+          "yLabel": "$C - P$ (£)",
+          "xStep": 10,
+          "yStep": 10,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "99.1878 - 0.9526*x",
+              "label": "fitted line",
+              "domain": [
+                60,
+                140
+              ],
+              "labelAt": 130
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "k70",
+              "x": 70,
+              "y": 32.62,
+              "tap": false
+            },
+            {
+              "id": "k75",
+              "x": 75,
+              "y": 27.64,
+              "tap": false
+            },
+            {
+              "id": "k90",
+              "x": 90,
+              "y": 13.44,
+              "tap": false
+            },
+            {
+              "id": "k100",
+              "x": 100,
+              "y": 3.86,
+              "tap": false
+            },
+            {
+              "id": "k105",
+              "x": 105,
+              "y": -0.79,
+              "tap": false
+            },
+            {
+              "id": "k115",
+              "x": 115,
+              "y": -10.38,
+              "tap": false
+            },
+            {
+              "id": "k120",
+              "x": 120,
+              "y": -15.05,
+              "tap": false
+            },
+            {
+              "id": "k125",
+              "x": 125,
+              "y": -19.96,
+              "tap": false
+            },
+            {
+              "id": "k130",
+              "x": 130,
+              "y": -24.615,
+              "tap": false
+            }
+          ],
+          "vlines": [
+            {
+              "id": "S",
+              "x": 100,
+              "label": "spot"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "zero",
+              "y": 0
+            }
+          ]
+        }
+      },
+      "question": "Where is the one-year forward, the true centre?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 104.081,
+        "tol": {
+          "abs": 0.1
+        },
+        "unit": "£",
+        "label": "Forward in pounds",
+        "accept": "£104.08: $100e^{0.04}$; the chain's median, £104.12, also counts",
+        "wrong": [
+          {
+            "id": "spot",
+            "value": 100,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "no-q",
+            "value": 105.12710963760242,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The forward grows the spot at $r - q$."
+        },
+        {
+          "rung": "point",
+          "text": "$F = 100e^{(0.05 - 0.01) \\times 1}$.",
+          "highlight": [
+            "zero"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$e^{0.04} = 1.0408$."
+        }
+      ],
+      "feedback": {
+        "correct": "£104.08: the centre is £4.08 above the spot.",
+        "generic": "Not quite right. Grow the spot at $r - q$ for one year.",
+        "byKey": {
+          "spot": "You used the spot as the forward. Holding the share costs interest and earns dividends, so the forward is $Se^{(r-q)T}$.",
+          "no-q": "You grew the spot at $r$ alone. The share pays a 1% dividend, which the forward does not get, so grow at $r - q$."
+        }
+      },
+      "explain": {
+        "text": "The centre moves by $S(e^{(r-q)T} - 1) = \\text{£}4.08$ at one year, almost a whole strike step. Measured from the spot, every one-year strike looks about 4% further out than it is. One flat rate for every expiry is the same slip when the curve is not flat.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "S",
+              "x": 100,
+              "label": "spot"
+            },
+            {
+              "id": "F",
+              "x": 104.08,
+              "label": "F"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "From parity to the forward",
+      "prose": "You read the forward off the line and the dividend yield off the forward. Here is the same chain of steps for any expiry.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "$C - P = Se^{-qT} - Ke^{-rT}$, put-call parity with a dividend yield"
+          },
+          {
+            "id": "s2",
+            "text": "$e^{rT}(C - P) = Se^{(r-q)T} - K$, multiply both sides by $e^{rT}$"
+          },
+          {
+            "id": "s3",
+            "text": "$e^{rT}(C - P) = F - K$, name the forward $F = Se^{(r-q)T}$"
+          },
+          {
+            "id": "s4",
+            "text": "$F = K + e^{rT}(C - P)$, add $K$ to both sides"
+          },
+          {
+            "id": "s5",
+            "text": "$q = r - \\ln(F/S)/T$, take logs of $F = Se^{(r-q)T}$"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from parity."
+        },
+        {
+          "rung": "point",
+          "text": "Multiplying by $e^{rT}$ clears the discount on $K$."
+        },
+        {
+          "rung": "step",
+          "text": "Then name $F$, solve for it, and finally solve $F = Se^{(r-q)T}$ for $q$."
+        }
+      ],
+      "feedback": {
+        "correct": "Parity, grow to expiry, name $F$, solve, then take logs.",
+        "generic": "Not quite right. Each line must follow from the one above it.",
+        "byKey": {
+          "s3": "Naming $F$ needs $Se^{(r-q)T}$ on the right, which only appears after multiplying by $e^{rT}$.",
+          "s5": "The log step needs $F$ first, so it comes last."
+        }
+      },
+      "explain": {
+        "text": "Multiplying parity by $e^{rT}$ turns today's values into values at expiry. The forward then appears as $Se^{(r-q)T}$, and each strike gives $F = K + e^{rT}(C - P)$. Logs turn $F$ into $q$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "implied_forward",
+      "prose": "Write the dashboard's forward. Pair each strike's call and put mids, keep strikes with both, and return the median of $K + e^{rT}(C - P)$ as a float. With fewer than three pairs, return NaN: too few to trust.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> one_year = clean[np.isclose(clean[\"T\"], 1.0)]",
+            ">>> round(implied_forward(one_year, 0.05, 1.0), 2)",
+            "104.12"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `implied_forward(df_T, r, T)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\nfrom math import exp\n\n# mid(df) is loaded, and clean = clean_quotes(make_chain()).\n\ndef implied_forward(df_T, r, T):\n    \"\"\"Median over strikes of K + e^(rT) (C - P); NaN under 3 pairs.\"\"\"\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    w = w.reindex(columns=[\"call\", \"put\"]).dropna()\n    if ...:\n        return float(\"nan\")\n    F = ...\n    return float(np.median(F))\n",
+        "solution": "import numpy as np\nimport pandas as pd\nfrom math import exp\n\n# mid(df) is loaded, and clean = clean_quotes(make_chain()).\n\ndef implied_forward(df_T, r, T):\n    \"\"\"Median over strikes of K + e^(rT) (C - P); NaN under 3 pairs.\"\"\"\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    w = w.reindex(columns=[\"call\", \"put\"]).dropna()\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef quotes(rows):\n    \"\"\"A hand-made chain: rows of [T, strike, type, bid, ask, volume, age_min].\"\"\"\n    return pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n\ndef toy_chain(S, r, q, sigma, T, strikes, half=0.05):\n    \"\"\"Calls and puts priced by bs_price at one vol, bid and ask half either side.\"\"\"\n    rows = []\n    for K in strikes:\n        for kind in (\"call\", \"put\"):\n            p = bs_price(S, K, r, sigma, T, kind, q)\n            rows.append([T, K, kind, p - half, p + half, 100, 0.0])\n    return quotes(rows)\n\nchain = make_chain()\nclean = clean_quotes(chain)\n",
+        "examples": [
+          {
+            "call": "round(implied_forward(clean[np.isclose(clean[\"T\"], 1.0)], 0.05, 1.0), 2)",
+            "expect": "104.12",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(implied_forward(toy_chain(100, 0.05, 0.02, 0.25, 0.5, [90, 95, 100, 105, 110]), 0.05, 0.5), 6)",
+            "expect": "round(100 * exp(0.015), 6)",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(implied_forward(toy_chain(50, 0.03, 0.0, 0.3, 1.0, [40, 45, 50, 55, 60]), 0.03, 1.0), 6)",
+            "expect": "round(50 * exp(0.03), 6)",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(implied_forward(clean[np.isclose(clean[\"T\"], 1.0)], 0.05, 1.0), 2)",
+            "expect": "104.12",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(implied_forward(clean[np.isclose(clean[\"T\"], 0.25)], 0.05, 0.25), 2)",
+            "expect": "101.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "h = toy_chain(100, 0.05, 0.02, 0.25, 0.5, [90, 95, 100, 105, 110])\nh.loc[(h[\"strike\"] == 100) & (h[\"type\"] == \"put\"), \"ask\"] += 1.0",
+            "call": "round(implied_forward(h, 0.05, 0.5), 6)",
+            "expect": "round(100 * exp(0.015), 6)",
+            "compare": "isclose"
+          },
+          {
+            "call": "bool(np.isnan(implied_forward(toy_chain(100, 0.05, 0.02, 0.25, 0.5, [95, 105]), 0.05, 0.5)))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = toy_chain(100, 0.05, 0.02, 0.25, 0.5, [90, 95, 100, 105, 110])\nh = h[h[\"type\"] == \"call\"]",
+            "call": "bool(np.isnan(implied_forward(h, 0.05, 0.5)))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "round(implied_forward(chain[chain[\"T\"] == 1.0], 0.05, 1.0), 2)",
+            "expect": "104.09",
+            "compare": "isclose"
+          },
+          {
+            "call": "isinstance(implied_forward(toy_chain(100, 0.05, 0.02, 0.25, 0.5, [90, 95, 100, 105, 110]), 0.05, 0.5), float)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "`mid` is loaded, with `chain = make_chain()` and `clean = clean_quotes(chain)`. `toy_chain(S, r, q, sigma, T, strikes)` builds an exact chain from `bs_price`. Check runs 9 hidden tests: forwards rounded and compared with math.isclose, NaN checks exactly. The first run loads numpy and pandas, which can take ten seconds or more."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The pivot gives one row per strike with a call and a put column."
+        },
+        {
+          "rung": "point",
+          "text": "`len(w) < 3` is the too-few test.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])`."
+        }
+      ],
+      "feedback": {
+        "correct": "A median forward per expiry, robust to one bad pair.",
+        "generic": "Some tests failed. Check the NaN rule and that you grow $C - P$ by $e^{rT}$."
+      },
+      "explain": {
+        "text": "`reindex` adds a missing call or put column as NaN, so `dropna` handles calls-only chains too. The median ignores the one bad pair in the hidden test. Your mid's NaN for zero bids drops those strikes automatically."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "implied_q",
+      "prose": "Now turn each forward into a yield. Solve $F = Se^{(r-q)T}$ for $q$. A NaN forward should give a NaN yield; the dashboard then falls back to $F = Se^{(r-q)T}$ with a stated $q$, 1% here, and says so in the note.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "expiry",
+            "pairs",
+            "median $F$",
+            "true $Se^{(r-q)T}$"
+          ],
+          "rows": [
+            [
+              "1 month",
+              "4",
+              "100.346",
+              "100.334"
+            ],
+            [
+              "2 months",
+              "7",
+              "100.650",
+              "100.669"
+            ],
+            [
+              "3 months",
+              "8",
+              "101.005",
+              "101.005"
+            ],
+            [
+              "6 months",
+              "11",
+              "102.004",
+              "102.020"
+            ],
+            [
+              "1 year",
+              "9",
+              "104.123",
+              "104.081"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "The forwards your function will turn into yields"
+        }
+      },
+      "question": "Complete `implied_q(F, S, r, T)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom math import log\n\n# implied_forward is loaded, and clean = clean_quotes(make_chain()).\n\ndef implied_q(F, S, r, T):\n    \"\"\"Dividend yield from F = S exp((r - q) T).\"\"\"\n    return ...\n",
+        "solution": "import numpy as np\nfrom math import log\n\n# implied_forward is loaded, and clean = clean_quotes(make_chain()).\n\ndef implied_q(F, S, r, T):\n    \"\"\"Dividend yield from F = S exp((r - q) T).\"\"\"\n    return r - log(F / S) / T\n",
+        "prelude": "import numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    w = w.reindex(columns=[\"call\", \"put\"]).dropna()\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n\n\nchain = make_chain()\nclean = clean_quotes(chain)\n",
+        "examples": [
+          {
+            "call": "round(implied_q(100 * exp(0.03 * 0.5), 100, 0.05, 0.5), 10)",
+            "expect": "0.02",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(implied_q(100 * exp(0.03 * 0.5), 100, 0.05, 0.5), 10)",
+            "expect": "0.02",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(implied_q(104.0811, 100, 0.05, 1.0), 4)",
+            "expect": "0.01",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(implied_q(100.0, 100, 0.05, 0.25), 10)",
+            "expect": "0.05",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(implied_q(100 * exp(-0.02), 100, 0.03, 1.0), 10)",
+            "expect": "0.05",
+            "compare": "isclose"
+          },
+          {
+            "call": "bool(np.isnan(implied_q(float(\"nan\"), 100, 0.05, 1.0)))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(implied_q(implied_forward(clean[np.isclose(clean[\"T\"], T)], 0.05, T), 100, 0.05, T), 4) for T in (1 / 12, 2 / 12, 3 / 12, 0.5, 1.0)]",
+            "expect": "[0.0085, 0.0111, 0.01, 0.0103, 0.0096]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "`implied_forward` is loaded, with `clean = clean_quotes(make_chain())`. Check runs 6 hidden tests: yields rounded and compared with math.isclose, a NaN check, and $q$ for all five expiries. The first run loads numpy and pandas."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take logs: $\\ln(F/S) = (r - q)T$."
+        },
+        {
+          "rung": "point",
+          "text": "Divide by $T$, then rearrange for $q$.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return r - log(F / S) / T`."
+        }
+      ],
+      "feedback": {
+        "correct": "One yield per expiry, near 1% throughout.",
+        "generic": "Some tests failed. Check the sign: $q = r - \\ln(F/S)/T$."
+      },
+      "explain": {
+        "text": "The five yields are 0.85%, 1.11%, 1.00%, 1.03%, 0.96%. The short expiries scatter most: a penny of noise in $F$ is divided by a small $T$. Level 3 uses each expiry's own forward."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A dividend announcement",
+      "prose": "The company announces a special dividend of £2.00, paid in six months. Shareholders get it; the holder of a one-year forward does not. Before the news, the one-year forward was £104.08 and $r = 5\\%$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            90,
+            120
+          ],
+          "y": [
+            -15,
+            15
+          ],
+          "xLabel": "Strike $K$ (£)",
+          "yLabel": "$C - P$ (£)",
+          "xStep": 5,
+          "yStep": 5,
+          "functions": [
+            {
+              "id": "before",
+              "expr": "99.005 - 0.9512*x",
+              "label": "before",
+              "domain": [
+                90,
+                120
+              ],
+              "labelAt": 92
+            },
+            {
+              "id": "after",
+              "expr": "97.0544 - 0.9512*x",
+              "label": "after",
+              "domain": [
+                90,
+                120
+              ],
+              "labelAt": 115,
+              "labelSide": "below",
+              "dashed": true
+            }
+          ]
+        },
+        "state": {
+          "caption": "Parity line before and after the news"
+        }
+      },
+      "question": "By how much does the one-year forward fall?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.0506,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Fall in the forward, pounds",
+        "accept": "£2.0506: $2e^{0.05 \\times 0.5}$",
+        "wrong": [
+          {
+            "id": "flat",
+            "value": 2.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "year",
+            "value": 2.1025421927520482,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "disc",
+            "value": 1.9506198240566652,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The forward is a price at expiry, in one year."
+        },
+        {
+          "rung": "point",
+          "text": "The £2.00 is paid at six months, leaving six months to earn interest.",
+          "highlight": [
+            "after"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2e^{0.05 \\times 0.5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "£2.05: the £2 plus six months' interest.",
+        "generic": "Not quite right. Carry the £2.00 from its payment date to expiry.",
+        "byKey": {
+          "flat": "You took off £2.00 as if paid at expiry. Paid at six months, it would earn interest for the other six.",
+          "year": "You grew it for a full year. It is paid at six months, so it earns interest for six.",
+          "disc": "You discounted it. The forward is a price at expiry, so the dividend is grown to expiry."
+        }
+      },
+      "explain": {
+        "text": "The forward falls by $2e^{0.025} = \\text{£}2.05$, and the parity line drops by $e^{-rT}$ times that, £1.95. An American call holder may exercise just before the dividend to collect it. Lesson 6 prices that early exercise on a tree."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Parity with a dividend yield is a straight line in the strike: $C - P = Se^{-qT} - Ke^{-rT}$. It crosses zero at the forward.",
+      "Each strike gives $F = K + e^{rT}(C - P)$; take the median over strikes, and NaN under three pairs.",
+      "Short expiries carry almost no information about $r$, so take $r$ from the rate market and back out $q = r - \\ln(F/S)/T$."
+    ],
+    "formula": {
+      "name": "Implied forward",
+      "tex": "F = K + e^{rT}(C - P), \\qquad q = r - \\dfrac{\\ln(F/S)}{T}",
+      "note": "The forward, not the spot, is the centre of the smile."
+    },
+    "trap": "Using the spot as the forward moves the one-year smile's centre by £4.08."
+  },
+  "quiz": [
+    {
+      "id": "q-fwd-6m",
+      "difficulty": 2,
+      "prose": "At six months the 100 call's mid is £6.975 and the 100 put's £5.020, with $r = 5\\%$.",
+      "question": "What forward does this strike imply?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 102.004,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Forward in pounds",
+        "accept": "£102.00: $100 + e^{0.025} \\times 1.955$",
+        "wrong": [
+          {
+            "id": "no-grow",
+            "value": 101.955,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£102.00.",
+        "generic": "Not quite right. $F = K + e^{rT}(C - P)$ with $T = 0.5$.",
+        "byKey": {
+          "no-grow": "You forgot to grow $C - P$ by $e^{rT}$."
+        }
+      },
+      "explain": {
+        "text": "$C - P = 1.955$, grown by $e^{0.025}$ to 2.004, so $F = \\text{£}102.00$. The true value is $100e^{0.02} = \\text{£}102.02$."
+      }
+    },
+    {
+      "id": "q-q-6m",
+      "difficulty": 3,
+      "prose": "The six-month forward is £102.004, the spot £100 and $r = 5\\%$.",
+      "question": "What dividend yield does it imply?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.01031,
+        "tol": {
+          "abs": 0.0002
+        },
+        "unit": "%",
+        "label": "Dividend yield in percent",
+        "accept": "About 1.03%",
+        "wrong": [
+          {
+            "id": "no-T",
+            "value": 0.030153343666982583,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 1.03%.",
+        "generic": "Not quite right. $q = r - \\ln(F/S)/T$ with $T = 0.5$.",
+        "byKey": {
+          "no-T": "You forgot to divide the log by $T = 0.5$."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(F/S) = 0.0198$ over half a year is a rate of 0.0397. So $q = 0.05 - 0.0397 = 0.0103$."
+      }
+    },
+    {
+      "id": "q-few-pairs",
+      "difficulty": 2,
+      "prose": "After cleaning, one expiry has a call and a put at only two strikes.",
+      "question": "What should `implied_forward` do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nan",
+            "text": "Return NaN, so the dashboard falls back to $Se^{(r-q)T}$ with a stated $q$",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "Average the two strikes' forwards",
+            "why": "With two pairs, one bad quote moves the answer by half its error and nothing flags it."
+          },
+          {
+            "id": "spot",
+            "text": "Return the spot",
+            "why": "That is the spot-for-forward slip: wrong by $S(e^{(r-q)T} - 1)$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Too few pairs: say so, and fall back openly.",
+        "generic": "Not quite right. Which choice is honest about too little data?"
+      },
+      "explain": {
+        "text": "Below three pairs a median cannot outvote a bad quote. NaN marks the expiry, and the fallback with a stated $q$ goes in the results note."
+      }
+    },
+    {
+      "id": "q-curve",
+      "difficulty": 3,
+      "prose": "Bills yield 5.2% at one month and 4.4% at one year. A colleague uses 5% for both. Take a forward read off near-the-money strikes, where $C - P$ is small.",
+      "question": "What happens to his one-year implied $q$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It comes out about 0.6 points too high",
+            "correct": true
+          },
+          {
+            "id": "low",
+            "text": "It comes out about 0.6 points too low",
+            "why": "$q = r - \\ln(F/S)/T$: with $F$ almost fixed, $q$ moves with $r$, up when $r$ is too high."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: $q$ does not depend on $r$",
+            "why": "It does, one for one: $q = r - \\ln(F/S)/T$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A rate 0.6 points too high gives a yield 0.6 points too high.",
+        "generic": "Not quite right. Look at how $r$ enters $q = r - \\ln(F/S)/T$."
+      },
+      "explain": {
+        "text": "Near the money $C - P$ is small, so $F \\approx K$ barely depends on $r$. Then $q = r - \\ln(F/S)/T$ moves one for one with the rate used, 5% against 4.4%."
+      }
+    }
+  ]
+}

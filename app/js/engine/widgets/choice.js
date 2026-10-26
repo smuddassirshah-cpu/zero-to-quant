@@ -12,7 +12,10 @@
   const optBody = (o) => {
     const img = o.image || (o.text && typeof o.text === 'object' && o.text.image);
     if (img) return `<span class="wd-opt-img" data-track>${window.ZQArt ? window.ZQArt(img, { label: o.alt || '' }) : ''}</span>`;
-    return `<span class="wd-opt-tx">${Z.grade.inline(o.text ?? '')}</span>`;
+    /* item 391: a fenced block in an option (```python ... ```) is a multi-line code block, no Copy button */
+    const t = String(o.text ?? '');
+    if (t.includes('```')) return `<span class="wd-opt-tx">${t.split(/```[\w+-]*\n?([\s\S]*?)```/).map((part, k) => (k % 2 ? `<pre class="wd-opt-code t-code">${Z.esc(part.replace(/\n$/, ''))}</pre>` : part.trim() ? `<span>${Z.grade.inline(part.trim())}</span>` : '')).join('')}</span>`;
+    return `<span class="wd-opt-tx">${Z.grade.inline(t)}</span>`;
   };
   const columns = (spec, opts) => {
     if (spec.layout === 'stack') return 1;
