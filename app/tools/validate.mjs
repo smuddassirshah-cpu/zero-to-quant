@@ -210,7 +210,9 @@ const regionIds = (canvas) => {
   if (!isObj(canvas)) return null;
   if (canvas.kind === 'pair') { // the side widgets drive, plus every id of either side with its "left:" or "right:" prefix
     const a = ['left', 'right'].includes(canvas.active) ? canvas.active : 'left', out = new Set();
-    ['left', 'right'].forEach(k => { const ids = regionIds(canvas[k]); if (ids) ids.forEach(id => { out.add(`${k}:${id}`); if (k === a) out.add(id); }); });
+    let unknown = false;
+    ['left', 'right'].forEach(k => { const ids = regionIds(canvas[k]); if (!ids) unknown = true; else ids.forEach(id => { out.add(`${k}:${id}`); if (k === a) out.add(id); }); });
+    if (unknown) return null; // a side whose ids the validator cannot list (array, scatter...): no check
     if (canvas.tap === 'sides') { out.add('left'); out.add('right'); } // whole sides (item 183)
     return out.size ? out : null;
   }
