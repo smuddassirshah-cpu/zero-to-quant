@@ -1,0 +1,3087 @@
+{
+  "id": "l7-out-of-bag",
+  "course": "ensembles",
+  "title": "Out-of-bag error",
+  "minutes": 15,
+  "objectives": [
+    "Estimate test error from the samples each tree left out.",
+    "Recognise when out-of-bag error flatters, and when a walk-forward test is still required."
+  ],
+  "skills": [
+    "en-bagging"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The rows each tree never saw",
+      "prose": "A forest of 4 trees grew on a book of 6 loans. Each number counts how often a tree's bootstrap sample drew that loan. A 0 means the tree never saw the loan: the loan is **out of bag** for that tree.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Loan",
+            "Tree 1",
+            "Tree 2",
+            "Tree 3",
+            "Tree 4"
+          ],
+          "rows": [
+            [
+              "1",
+              "2",
+              "0",
+              "1",
+              "0"
+            ],
+            [
+              "2",
+              "0",
+              "1",
+              "1",
+              "2"
+            ],
+            [
+              "3",
+              "1",
+              "2",
+              "0",
+              "1"
+            ],
+            [
+              "4",
+              "1",
+              "0",
+              "2",
+              "1"
+            ],
+            [
+              "5",
+              "0",
+              "1",
+              "2",
+              "0"
+            ],
+            [
+              "6",
+              "2",
+              "2",
+              "0",
+              "2"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "How many times each tree's resample drew each loan"
+        }
+      },
+      "question": "Tap every cell where a tree never saw the loan.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c2",
+          "r0c4",
+          "r1c1",
+          "r2c3",
+          "r3c2",
+          "r4c1",
+          "r4c4",
+          "r5c3"
+        ],
+        "countWord": "cells",
+        "only": [
+          "r0c1",
+          "r0c2",
+          "r0c3",
+          "r0c4",
+          "r1c1",
+          "r1c2",
+          "r1c3",
+          "r1c4",
+          "r2c1",
+          "r2c2",
+          "r2c3",
+          "r2c4",
+          "r3c1",
+          "r3c2",
+          "r3c3",
+          "r3c4",
+          "r4c1",
+          "r4c2",
+          "r4c3",
+          "r4c4",
+          "r5c1",
+          "r5c2",
+          "r5c3",
+          "r5c4"
+        ],
+        "wrong": [
+          {
+            "id": "ones",
+            "set": [
+              "r0c3",
+              "r1c2",
+              "r1c3",
+              "r2c1",
+              "r2c4",
+              "r3c1",
+              "r3c4",
+              "r4c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look for the zeros."
+        },
+        {
+          "rung": "point",
+          "text": "Loan 1 was never drawn by trees 2 and 4.",
+          "highlight": [
+            "r0c2",
+            "r0c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "There are 8 zeros: two in each tree's column."
+        }
+      ],
+      "feedback": {
+        "correct": "8 of the 24 cells, a third: close to the 36.8% we expect.",
+        "generic": "Not quite right. Tap exactly the cells that hold 0.",
+        "byKey": {
+          "r0c1": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r0c3": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r1c2": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r1c3": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r1c4": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r2c1": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r2c2": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r2c4": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r3c1": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r3c3": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r3c4": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r4c2": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r4c3": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r5c1": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r5c2": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "r5c4": "That tree drew this loan at least once, so it saw it. Tap only the zeros.",
+          "ones": "You tapped the loans drawn once. A tree that drew a loan once still learned from it."
+        }
+      },
+      "explain": {
+        "text": "Each tree left 2 of the 6 loans out. Those trees never learned from those loans, so their predictions for them are like predictions for new loans. That is the idea of this lesson.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c2",
+              "r0c4",
+              "r1c1",
+              "r2c3",
+              "r3c2",
+              "r4c1",
+              "r4c4",
+              "r5c3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Score each loan honestly",
+      "prose": "Predict each loan using only its out-of-bag trees, the ones that never saw it. Here are their votes for default. Then score: the **out-of-bag error** is the share of loans whose OOB prediction is wrong.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Loan",
+            "Tree 1",
+            "Tree 2",
+            "Tree 3",
+            "Tree 4"
+          ],
+          "rows": [
+            [
+              "1",
+              "2",
+              "0",
+              "1",
+              "0"
+            ],
+            [
+              "2",
+              "0",
+              "1",
+              "1",
+              "2"
+            ],
+            [
+              "3",
+              "1",
+              "2",
+              "0",
+              "1"
+            ],
+            [
+              "4",
+              "1",
+              "0",
+              "2",
+              "1"
+            ],
+            [
+              "5",
+              "0",
+              "1",
+              "2",
+              "0"
+            ],
+            [
+              "6",
+              "2",
+              "2",
+              "0",
+              "2"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "cells": [
+              "r0c2",
+              "r0c4",
+              "r1c1",
+              "r2c3",
+              "r3c2",
+              "r4c1",
+              "r4c4",
+              "r5c3"
+            ]
+          }
+        },
+        "maxHeight": 200
+      },
+      "question": "Fill in each loan's OOB prediction, then the OOB error.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Loan",
+          "Defaulted",
+          "OOB trees",
+          "Their votes",
+          "OOB prediction"
+        ],
+        "rows": [
+          [
+            "1",
+            "1",
+            "2 and 4",
+            "1, 1",
+            {
+              "edit": true,
+              "answer": "1",
+              "placeholder": "0 or 1"
+            }
+          ],
+          [
+            "2",
+            "0",
+            "1",
+            "0",
+            {
+              "edit": true,
+              "answer": "0",
+              "placeholder": "0 or 1"
+            }
+          ],
+          [
+            "3",
+            "1",
+            "3",
+            "0",
+            {
+              "edit": true,
+              "answer": "0",
+              "placeholder": "0 or 1"
+            }
+          ],
+          [
+            "4",
+            "0",
+            "2",
+            "0",
+            {
+              "edit": true,
+              "answer": "0",
+              "placeholder": "0 or 1"
+            }
+          ],
+          [
+            "5",
+            "0",
+            "1 and 4",
+            "1, 1",
+            {
+              "edit": true,
+              "answer": "1",
+              "placeholder": "0 or 1"
+            }
+          ],
+          [
+            "6",
+            "1",
+            "3",
+            "1",
+            {
+              "edit": true,
+              "answer": "1",
+              "placeholder": "0 or 1"
+            }
+          ],
+          [
+            "OOB error",
+            "",
+            "",
+            "",
+            {
+              "edit": true,
+              "answer": 0.3333,
+              "tol": {
+                "abs": 0.002
+              },
+              "placeholder": "decimal"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A loan's OOB prediction is the majority of its OOB trees' votes."
+        },
+        {
+          "rung": "point",
+          "text": "Loan 3 has one OOB tree, and it votes 0.",
+          "highlight": [
+            "r2c3",
+            "r4c1",
+            "r4c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Predictions: 1, 0, 0, 0, 1, 1. Loans 3 and 5 are wrong, so the error is $2/6$."
+        }
+      ],
+      "feedback": {
+        "correct": "Loans 3 and 5 are misjudged: an OOB error of $2/6 = 0.333$.",
+        "generic": "Not quite right. Use only the listed trees' votes, then count the loans where the prediction differs from what happened."
+      },
+      "explain": {
+        "text": "Loan 3 defaulted, but its one OOB tree voted 0. Loan 5 repaid, but both its OOB trees voted 1. So 2 of 6 are wrong. No tree graded a loan it had learned from, so this is an honest error estimate with no test set at all.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c3",
+              "r4c1",
+              "r4c4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "Out-of-bag error as the forest grows",
+      "prose": "Now the real book: the 400 loans of book 9 and a forest with `oob_score=True`. The dashed line is the error on 2,000 new loans. Slide $B$ and watch the out-of-bag error.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "oob",
+              "label": "OOB error",
+              "values": [
+                0.4725,
+                0.4275,
+                0.39,
+                0.3525,
+                0.3625,
+                0.3325,
+                0.33,
+                0.3375,
+                0.3425,
+                0.3175,
+                0.32,
+                0.3225,
+                0.3075,
+                0.3025,
+                0.305,
+                0.305,
+                0.3,
+                0.28,
+                0.275,
+                0.2825,
+                0.2825,
+                0.2825,
+                0.29,
+                0.2825,
+                0.28,
+                0.27,
+                0.2675,
+                0.265,
+                0.2575,
+                0.2625,
+                0.2575,
+                0.265,
+                0.26,
+                0.2575,
+                0.255,
+                0.2575,
+                0.2575,
+                0.2525,
+                0.255,
+                0.255,
+                0.255,
+                0.25,
+                0.2475,
+                0.2475,
+                0.2525,
+                0.25,
+                0.2525,
+                0.25,
+                0.245,
+                0.25,
+                0.245,
+                0.25,
+                0.245,
+                0.2425,
+                0.24,
+                0.2425,
+                0.2425,
+                0.235,
+                0.24,
+                0.2325,
+                0.235,
+                0.2325,
+                0.235,
+                0.235,
+                0.2325,
+                0.2375,
+                0.23,
+                0.2325,
+                0.235,
+                0.2275,
+                0.24,
+                0.235,
+                0.235,
+                0.2325,
+                0.23,
+                0.2325,
+                0.235,
+                0.23,
+                0.23,
+                0.2275,
+                0.2325,
+                0.2375,
+                0.24,
+                0.2375,
+                0.235,
+                0.2375,
+                0.23,
+                0.2275,
+                0.2275,
+                0.2275,
+                0.225,
+                0.2275,
+                0.2275,
+                0.225,
+                0.2225,
+                0.225,
+                0.2225,
+                0.225,
+                0.225,
+                0.2275,
+                0.225,
+                0.23,
+                0.2325,
+                0.225,
+                0.2275,
+                0.23,
+                0.2325,
+                0.23,
+                0.23,
+                0.2225,
+                0.22,
+                0.225,
+                0.225,
+                0.2225,
+                0.2275,
+                0.2275,
+                0.225,
+                0.2275,
+                0.225,
+                0.2275,
+                0.23,
+                0.2275,
+                0.23,
+                0.2325,
+                0.24,
+                0.24,
+                0.235,
+                0.2325,
+                0.2275,
+                0.2275,
+                0.2325,
+                0.235,
+                0.235,
+                0.235,
+                0.2325,
+                0.2275,
+                0.23,
+                0.23,
+                0.23,
+                0.235,
+                0.2325,
+                0.23,
+                0.23,
+                0.2325,
+                0.2275,
+                0.2275,
+                0.2275,
+                0.23,
+                0.23,
+                0.23
+              ],
+              "colour": 1
+            },
+            {
+              "id": "te",
+              "label": "Test error, 2,000 loans",
+              "values": [
+                0.3565,
+                0.3425,
+                0.2865,
+                0.2685,
+                0.2655,
+                0.263,
+                0.256,
+                0.2465,
+                0.243,
+                0.235,
+                0.2365,
+                0.23,
+                0.228,
+                0.228,
+                0.2295,
+                0.2185,
+                0.2295,
+                0.2205,
+                0.223,
+                0.2185,
+                0.215,
+                0.2125,
+                0.214,
+                0.21,
+                0.214,
+                0.2125,
+                0.21,
+                0.213,
+                0.217,
+                0.216,
+                0.2175,
+                0.2135,
+                0.209,
+                0.2095,
+                0.2105,
+                0.2115,
+                0.2105,
+                0.2115,
+                0.2145,
+                0.2115,
+                0.211,
+                0.209,
+                0.208,
+                0.2065,
+                0.2085,
+                0.2055,
+                0.2105,
+                0.2085,
+                0.209,
+                0.208,
+                0.208,
+                0.207,
+                0.208,
+                0.205,
+                0.208,
+                0.204,
+                0.204,
+                0.2015,
+                0.2045,
+                0.2025,
+                0.203,
+                0.199,
+                0.2015,
+                0.201,
+                0.2045,
+                0.203,
+                0.2,
+                0.198,
+                0.2005,
+                0.1985,
+                0.201,
+                0.2005,
+                0.1985,
+                0.2015,
+                0.2,
+                0.2025,
+                0.203,
+                0.203,
+                0.2,
+                0.2045,
+                0.2015,
+                0.204,
+                0.2025,
+                0.2025,
+                0.202,
+                0.2015,
+                0.2025,
+                0.1995,
+                0.1985,
+                0.198,
+                0.2005,
+                0.2,
+                0.199,
+                0.198,
+                0.1965,
+                0.197,
+                0.198,
+                0.1965,
+                0.1975,
+                0.196,
+                0.197,
+                0.1965,
+                0.197,
+                0.196,
+                0.196,
+                0.196,
+                0.1975,
+                0.1975,
+                0.1995,
+                0.199,
+                0.199,
+                0.2015,
+                0.1995,
+                0.199,
+                0.1995,
+                0.1995,
+                0.2,
+                0.197,
+                0.198,
+                0.198,
+                0.198,
+                0.198,
+                0.198,
+                0.1965,
+                0.1995,
+                0.198,
+                0.1975,
+                0.196,
+                0.1955,
+                0.196,
+                0.1945,
+                0.194,
+                0.1965,
+                0.1945,
+                0.1945,
+                0.193,
+                0.1965,
+                0.1965,
+                0.1965,
+                0.1955,
+                0.197,
+                0.196,
+                0.196,
+                0.195,
+                0.1955,
+                0.1955,
+                0.1965,
+                0.195,
+                0.195,
+                0.194
+              ],
+              "colour": 2,
+              "dashed": true
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Trees $B$",
+          "yLabel": "Error",
+          "y": [
+            0.15,
+            0.5
+          ],
+          "decimals": 4,
+          "params": {
+            "o": [
+              0.4725,
+              0.4275,
+              0.39,
+              0.3525,
+              0.3625,
+              0.3325,
+              0.33,
+              0.3375,
+              0.3425,
+              0.3175,
+              0.32,
+              0.3225,
+              0.3075,
+              0.3025,
+              0.305,
+              0.305,
+              0.3,
+              0.28,
+              0.275,
+              0.2825,
+              0.2825,
+              0.2825,
+              0.29,
+              0.2825,
+              0.28,
+              0.27,
+              0.2675,
+              0.265,
+              0.2575,
+              0.2625,
+              0.2575,
+              0.265,
+              0.26,
+              0.2575,
+              0.255,
+              0.2575,
+              0.2575,
+              0.2525,
+              0.255,
+              0.255,
+              0.255,
+              0.25,
+              0.2475,
+              0.2475,
+              0.2525,
+              0.25,
+              0.2525,
+              0.25,
+              0.245,
+              0.25,
+              0.245,
+              0.25,
+              0.245,
+              0.2425,
+              0.24,
+              0.2425,
+              0.2425,
+              0.235,
+              0.24,
+              0.2325,
+              0.235,
+              0.2325,
+              0.235,
+              0.235,
+              0.2325,
+              0.2375,
+              0.23,
+              0.2325,
+              0.235,
+              0.2275,
+              0.24,
+              0.235,
+              0.235,
+              0.2325,
+              0.23,
+              0.2325,
+              0.235,
+              0.23,
+              0.23,
+              0.2275,
+              0.2325,
+              0.2375,
+              0.24,
+              0.2375,
+              0.235,
+              0.2375,
+              0.23,
+              0.2275,
+              0.2275,
+              0.2275,
+              0.225,
+              0.2275,
+              0.2275,
+              0.225,
+              0.2225,
+              0.225,
+              0.2225,
+              0.225,
+              0.225,
+              0.2275,
+              0.225,
+              0.23,
+              0.2325,
+              0.225,
+              0.2275,
+              0.23,
+              0.2325,
+              0.23,
+              0.23,
+              0.2225,
+              0.22,
+              0.225,
+              0.225,
+              0.2225,
+              0.2275,
+              0.2275,
+              0.225,
+              0.2275,
+              0.225,
+              0.2275,
+              0.23,
+              0.2275,
+              0.23,
+              0.2325,
+              0.24,
+              0.24,
+              0.235,
+              0.2325,
+              0.2275,
+              0.2275,
+              0.2325,
+              0.235,
+              0.235,
+              0.235,
+              0.2325,
+              0.2275,
+              0.23,
+              0.23,
+              0.23,
+              0.235,
+              0.2325,
+              0.23,
+              0.23,
+              0.2325,
+              0.2275,
+              0.2275,
+              0.2275,
+              0.23,
+              0.23,
+              0.23
+            ],
+            "t": [
+              0.3565,
+              0.3425,
+              0.2865,
+              0.2685,
+              0.2655,
+              0.263,
+              0.256,
+              0.2465,
+              0.243,
+              0.235,
+              0.2365,
+              0.23,
+              0.228,
+              0.228,
+              0.2295,
+              0.2185,
+              0.2295,
+              0.2205,
+              0.223,
+              0.2185,
+              0.215,
+              0.2125,
+              0.214,
+              0.21,
+              0.214,
+              0.2125,
+              0.21,
+              0.213,
+              0.217,
+              0.216,
+              0.2175,
+              0.2135,
+              0.209,
+              0.2095,
+              0.2105,
+              0.2115,
+              0.2105,
+              0.2115,
+              0.2145,
+              0.2115,
+              0.211,
+              0.209,
+              0.208,
+              0.2065,
+              0.2085,
+              0.2055,
+              0.2105,
+              0.2085,
+              0.209,
+              0.208,
+              0.208,
+              0.207,
+              0.208,
+              0.205,
+              0.208,
+              0.204,
+              0.204,
+              0.2015,
+              0.2045,
+              0.2025,
+              0.203,
+              0.199,
+              0.2015,
+              0.201,
+              0.2045,
+              0.203,
+              0.2,
+              0.198,
+              0.2005,
+              0.1985,
+              0.201,
+              0.2005,
+              0.1985,
+              0.2015,
+              0.2,
+              0.2025,
+              0.203,
+              0.203,
+              0.2,
+              0.2045,
+              0.2015,
+              0.204,
+              0.2025,
+              0.2025,
+              0.202,
+              0.2015,
+              0.2025,
+              0.1995,
+              0.1985,
+              0.198,
+              0.2005,
+              0.2,
+              0.199,
+              0.198,
+              0.1965,
+              0.197,
+              0.198,
+              0.1965,
+              0.1975,
+              0.196,
+              0.197,
+              0.1965,
+              0.197,
+              0.196,
+              0.196,
+              0.196,
+              0.1975,
+              0.1975,
+              0.1995,
+              0.199,
+              0.199,
+              0.2015,
+              0.1995,
+              0.199,
+              0.1995,
+              0.1995,
+              0.2,
+              0.197,
+              0.198,
+              0.198,
+              0.198,
+              0.198,
+              0.198,
+              0.1965,
+              0.1995,
+              0.198,
+              0.1975,
+              0.196,
+              0.1955,
+              0.196,
+              0.1945,
+              0.194,
+              0.1965,
+              0.1945,
+              0.1945,
+              0.193,
+              0.1965,
+              0.1965,
+              0.1965,
+              0.1955,
+              0.197,
+              0.196,
+              0.196,
+              0.195,
+              0.1955,
+              0.1955,
+              0.1965,
+              0.195,
+              0.195,
+              0.194
+            ],
+            "z": [
+              250,
+              157,
+              95,
+              57,
+              36,
+              22,
+              16,
+              10,
+              6,
+              3,
+              3,
+              3,
+              2,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "state": {
+          "params": {
+            "B": 5
+          },
+          "markers": [
+            {
+              "id": "mk",
+              "i": 4,
+              "series": "oob"
+            }
+          ]
+        },
+        "derive": {
+          "mk.i": "B - 1",
+          "caption": "$B = {{B}}$: OOB error {{fixed(o[B - 1], 4)}}, test error {{fixed(t[B - 1], 4)}}; loans with no OOB tree: {{z[B - 1]}}"
+        },
+        "controls": [
+          {
+            "bind": "B",
+            "min": 1,
+            "max": 150,
+            "step": 1,
+            "start": 5,
+            "label": "Trees $B$"
+          }
+        ]
+      },
+      "question": "Why is the OOB error so high when $B$ is small?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Each loan is judged by only the trees that missed it, about 37% of $B$, and some loans by none",
+            "correct": true
+          },
+          {
+            "id": "over",
+            "text": "Small forests overfit, and the OOB error catches it",
+            "why": "The test line falls too, but far less. The OOB line starts higher because each loan's vote uses fewer trees."
+          },
+          {
+            "id": "leak",
+            "text": "The OOB rows leak into training when $B$ is small",
+            "why": "No tree ever grades a loan it saw, at any $B$. Count the trees in each loan's OOB vote instead."
+          },
+          {
+            "id": "noise",
+            "text": "It is noise, and would be just as high at $B = 150$",
+            "why": "Slide to 150: it settles near 0.23. The high start has a cause."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At $B = 5$, how many trees vote on a typical loan's OOB prediction?"
+        },
+        {
+          "rung": "point",
+          "text": "Read the caption: how many loans have no OOB tree at $B = 5$?",
+          "highlight": [
+            "oob"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About $0.37 \\times 5 \\approx 2$ trees vote per loan, and 36 loans get no vote at all."
+        }
+      ],
+      "feedback": {
+        "correct": "The OOB vote is a small forest until $B$ is large.",
+        "generic": "Not quite right. Count how many trees vote on each loan's OOB prediction."
+      },
+      "explain": {
+        "text": "An OOB vote uses about 37% of the trees, so at $B = 5$ it is a vote of about 2. It settles near 0.23 from about 75 trees. Set $B$ so the OOB curve is flat, then read it.",
+        "canvas": {
+          "params": {
+            "B": 100
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Loans with no vote",
+      "prose": "With 5 trees, a loan gets no OOB prediction if all 5 resamples drew it. scikit-learn then warns \"Some inputs do not have OOB scores\", gives the loan a row of zeros in `oob_decision_function_`, and scores it as class 0.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "oob",
+              "label": "OOB error",
+              "values": [
+                0.4725,
+                0.4275,
+                0.39,
+                0.3525,
+                0.3625,
+                0.3325,
+                0.33,
+                0.3375,
+                0.3425,
+                0.3175,
+                0.32,
+                0.3225,
+                0.3075,
+                0.3025,
+                0.305,
+                0.305,
+                0.3,
+                0.28,
+                0.275,
+                0.2825,
+                0.2825,
+                0.2825,
+                0.29,
+                0.2825,
+                0.28,
+                0.27,
+                0.2675,
+                0.265,
+                0.2575,
+                0.2625,
+                0.2575,
+                0.265,
+                0.26,
+                0.2575,
+                0.255,
+                0.2575,
+                0.2575,
+                0.2525,
+                0.255,
+                0.255,
+                0.255,
+                0.25,
+                0.2475,
+                0.2475,
+                0.2525,
+                0.25,
+                0.2525,
+                0.25,
+                0.245,
+                0.25,
+                0.245,
+                0.25,
+                0.245,
+                0.2425,
+                0.24,
+                0.2425,
+                0.2425,
+                0.235,
+                0.24,
+                0.2325,
+                0.235,
+                0.2325,
+                0.235,
+                0.235,
+                0.2325,
+                0.2375,
+                0.23,
+                0.2325,
+                0.235,
+                0.2275,
+                0.24,
+                0.235,
+                0.235,
+                0.2325,
+                0.23,
+                0.2325,
+                0.235,
+                0.23,
+                0.23,
+                0.2275,
+                0.2325,
+                0.2375,
+                0.24,
+                0.2375,
+                0.235,
+                0.2375,
+                0.23,
+                0.2275,
+                0.2275,
+                0.2275,
+                0.225,
+                0.2275,
+                0.2275,
+                0.225,
+                0.2225,
+                0.225,
+                0.2225,
+                0.225,
+                0.225,
+                0.2275,
+                0.225,
+                0.23,
+                0.2325,
+                0.225,
+                0.2275,
+                0.23,
+                0.2325,
+                0.23,
+                0.23,
+                0.2225,
+                0.22,
+                0.225,
+                0.225,
+                0.2225,
+                0.2275,
+                0.2275,
+                0.225,
+                0.2275,
+                0.225,
+                0.2275,
+                0.23,
+                0.2275,
+                0.23,
+                0.2325,
+                0.24,
+                0.24,
+                0.235,
+                0.2325,
+                0.2275,
+                0.2275,
+                0.2325,
+                0.235,
+                0.235,
+                0.235,
+                0.2325,
+                0.2275,
+                0.23,
+                0.23,
+                0.23,
+                0.235,
+                0.2325,
+                0.23,
+                0.23,
+                0.2325,
+                0.2275,
+                0.2275,
+                0.2275,
+                0.23,
+                0.23,
+                0.23
+              ],
+              "colour": 1
+            },
+            {
+              "id": "te",
+              "label": "Test error, 2,000 loans",
+              "values": [
+                0.3565,
+                0.3425,
+                0.2865,
+                0.2685,
+                0.2655,
+                0.263,
+                0.256,
+                0.2465,
+                0.243,
+                0.235,
+                0.2365,
+                0.23,
+                0.228,
+                0.228,
+                0.2295,
+                0.2185,
+                0.2295,
+                0.2205,
+                0.223,
+                0.2185,
+                0.215,
+                0.2125,
+                0.214,
+                0.21,
+                0.214,
+                0.2125,
+                0.21,
+                0.213,
+                0.217,
+                0.216,
+                0.2175,
+                0.2135,
+                0.209,
+                0.2095,
+                0.2105,
+                0.2115,
+                0.2105,
+                0.2115,
+                0.2145,
+                0.2115,
+                0.211,
+                0.209,
+                0.208,
+                0.2065,
+                0.2085,
+                0.2055,
+                0.2105,
+                0.2085,
+                0.209,
+                0.208,
+                0.208,
+                0.207,
+                0.208,
+                0.205,
+                0.208,
+                0.204,
+                0.204,
+                0.2015,
+                0.2045,
+                0.2025,
+                0.203,
+                0.199,
+                0.2015,
+                0.201,
+                0.2045,
+                0.203,
+                0.2,
+                0.198,
+                0.2005,
+                0.1985,
+                0.201,
+                0.2005,
+                0.1985,
+                0.2015,
+                0.2,
+                0.2025,
+                0.203,
+                0.203,
+                0.2,
+                0.2045,
+                0.2015,
+                0.204,
+                0.2025,
+                0.2025,
+                0.202,
+                0.2015,
+                0.2025,
+                0.1995,
+                0.1985,
+                0.198,
+                0.2005,
+                0.2,
+                0.199,
+                0.198,
+                0.1965,
+                0.197,
+                0.198,
+                0.1965,
+                0.1975,
+                0.196,
+                0.197,
+                0.1965,
+                0.197,
+                0.196,
+                0.196,
+                0.196,
+                0.1975,
+                0.1975,
+                0.1995,
+                0.199,
+                0.199,
+                0.2015,
+                0.1995,
+                0.199,
+                0.1995,
+                0.1995,
+                0.2,
+                0.197,
+                0.198,
+                0.198,
+                0.198,
+                0.198,
+                0.198,
+                0.1965,
+                0.1995,
+                0.198,
+                0.1975,
+                0.196,
+                0.1955,
+                0.196,
+                0.1945,
+                0.194,
+                0.1965,
+                0.1945,
+                0.1945,
+                0.193,
+                0.1965,
+                0.1965,
+                0.1965,
+                0.1955,
+                0.197,
+                0.196,
+                0.196,
+                0.195,
+                0.1955,
+                0.1955,
+                0.1965,
+                0.195,
+                0.195,
+                0.194
+              ],
+              "colour": 2,
+              "dashed": true
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Trees $B$",
+          "yLabel": "Error",
+          "y": [
+            0.15,
+            0.5
+          ],
+          "decimals": 4,
+          "params": {
+            "o": [
+              0.4725,
+              0.4275,
+              0.39,
+              0.3525,
+              0.3625,
+              0.3325,
+              0.33,
+              0.3375,
+              0.3425,
+              0.3175,
+              0.32,
+              0.3225,
+              0.3075,
+              0.3025,
+              0.305,
+              0.305,
+              0.3,
+              0.28,
+              0.275,
+              0.2825,
+              0.2825,
+              0.2825,
+              0.29,
+              0.2825,
+              0.28,
+              0.27,
+              0.2675,
+              0.265,
+              0.2575,
+              0.2625,
+              0.2575,
+              0.265,
+              0.26,
+              0.2575,
+              0.255,
+              0.2575,
+              0.2575,
+              0.2525,
+              0.255,
+              0.255,
+              0.255,
+              0.25,
+              0.2475,
+              0.2475,
+              0.2525,
+              0.25,
+              0.2525,
+              0.25,
+              0.245,
+              0.25,
+              0.245,
+              0.25,
+              0.245,
+              0.2425,
+              0.24,
+              0.2425,
+              0.2425,
+              0.235,
+              0.24,
+              0.2325,
+              0.235,
+              0.2325,
+              0.235,
+              0.235,
+              0.2325,
+              0.2375,
+              0.23,
+              0.2325,
+              0.235,
+              0.2275,
+              0.24,
+              0.235,
+              0.235,
+              0.2325,
+              0.23,
+              0.2325,
+              0.235,
+              0.23,
+              0.23,
+              0.2275,
+              0.2325,
+              0.2375,
+              0.24,
+              0.2375,
+              0.235,
+              0.2375,
+              0.23,
+              0.2275,
+              0.2275,
+              0.2275,
+              0.225,
+              0.2275,
+              0.2275,
+              0.225,
+              0.2225,
+              0.225,
+              0.2225,
+              0.225,
+              0.225,
+              0.2275,
+              0.225,
+              0.23,
+              0.2325,
+              0.225,
+              0.2275,
+              0.23,
+              0.2325,
+              0.23,
+              0.23,
+              0.2225,
+              0.22,
+              0.225,
+              0.225,
+              0.2225,
+              0.2275,
+              0.2275,
+              0.225,
+              0.2275,
+              0.225,
+              0.2275,
+              0.23,
+              0.2275,
+              0.23,
+              0.2325,
+              0.24,
+              0.24,
+              0.235,
+              0.2325,
+              0.2275,
+              0.2275,
+              0.2325,
+              0.235,
+              0.235,
+              0.235,
+              0.2325,
+              0.2275,
+              0.23,
+              0.23,
+              0.23,
+              0.235,
+              0.2325,
+              0.23,
+              0.23,
+              0.2325,
+              0.2275,
+              0.2275,
+              0.2275,
+              0.23,
+              0.23,
+              0.23
+            ],
+            "t": [
+              0.3565,
+              0.3425,
+              0.2865,
+              0.2685,
+              0.2655,
+              0.263,
+              0.256,
+              0.2465,
+              0.243,
+              0.235,
+              0.2365,
+              0.23,
+              0.228,
+              0.228,
+              0.2295,
+              0.2185,
+              0.2295,
+              0.2205,
+              0.223,
+              0.2185,
+              0.215,
+              0.2125,
+              0.214,
+              0.21,
+              0.214,
+              0.2125,
+              0.21,
+              0.213,
+              0.217,
+              0.216,
+              0.2175,
+              0.2135,
+              0.209,
+              0.2095,
+              0.2105,
+              0.2115,
+              0.2105,
+              0.2115,
+              0.2145,
+              0.2115,
+              0.211,
+              0.209,
+              0.208,
+              0.2065,
+              0.2085,
+              0.2055,
+              0.2105,
+              0.2085,
+              0.209,
+              0.208,
+              0.208,
+              0.207,
+              0.208,
+              0.205,
+              0.208,
+              0.204,
+              0.204,
+              0.2015,
+              0.2045,
+              0.2025,
+              0.203,
+              0.199,
+              0.2015,
+              0.201,
+              0.2045,
+              0.203,
+              0.2,
+              0.198,
+              0.2005,
+              0.1985,
+              0.201,
+              0.2005,
+              0.1985,
+              0.2015,
+              0.2,
+              0.2025,
+              0.203,
+              0.203,
+              0.2,
+              0.2045,
+              0.2015,
+              0.204,
+              0.2025,
+              0.2025,
+              0.202,
+              0.2015,
+              0.2025,
+              0.1995,
+              0.1985,
+              0.198,
+              0.2005,
+              0.2,
+              0.199,
+              0.198,
+              0.1965,
+              0.197,
+              0.198,
+              0.1965,
+              0.1975,
+              0.196,
+              0.197,
+              0.1965,
+              0.197,
+              0.196,
+              0.196,
+              0.196,
+              0.1975,
+              0.1975,
+              0.1995,
+              0.199,
+              0.199,
+              0.2015,
+              0.1995,
+              0.199,
+              0.1995,
+              0.1995,
+              0.2,
+              0.197,
+              0.198,
+              0.198,
+              0.198,
+              0.198,
+              0.198,
+              0.1965,
+              0.1995,
+              0.198,
+              0.1975,
+              0.196,
+              0.1955,
+              0.196,
+              0.1945,
+              0.194,
+              0.1965,
+              0.1945,
+              0.1945,
+              0.193,
+              0.1965,
+              0.1965,
+              0.1965,
+              0.1955,
+              0.197,
+              0.196,
+              0.196,
+              0.195,
+              0.1955,
+              0.1955,
+              0.1965,
+              0.195,
+              0.195,
+              0.194
+            ],
+            "z": [
+              250,
+              157,
+              95,
+              57,
+              36,
+              22,
+              16,
+              10,
+              6,
+              3,
+              3,
+              3,
+              2,
+              1,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "b5",
+              "i": 4,
+              "series": "oob",
+              "label": "$B = 5$: 36 loans with no OOB tree"
+            }
+          ]
+        }
+      },
+      "question": "What is the chance a given loan is drawn by all 5 resamples?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.101,
+        "tol": {
+          "abs": 0.003
+        },
+        "label": "Chance a loan has no OOB tree",
+        "placeholder": "decimal",
+        "accept": "About 0.101: $0.632^5$. Expect about 40 of 400 loans; this forest had 36.",
+        "wrong": [
+          {
+            "id": "oob5",
+            "value": 0.0068,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "lin",
+            "value": 0.632,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "miss",
+            "value": 0.899,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One resample draws a given loan with probability about 0.632."
+        },
+        {
+          "rung": "point",
+          "text": "The 5 resamples are independent, so multiply."
+        },
+        {
+          "rung": "step",
+          "text": "$0.632^5 \\approx 0.101$."
+        }
+      ],
+      "feedback": {
+        "correct": "About one loan in ten has no honest vote at $B = 5$.",
+        "generic": "Not quite right. Multiply the chance of being drawn, 0.632, five times.",
+        "byKey": {
+          "oob5": "$0.368^5$ is the chance every tree missed it. We need every tree to have drawn it.",
+          "lin": "0.632 is for one resample. All 5 must draw it.",
+          "miss": "That is the chance the loan has at least one OOB tree."
+        }
+      },
+      "explain": {
+        "text": "$0.632^5 = 0.101$, so about 40 of 400 loans have no OOB vote; this forest had 36. Scoring them as class 0 inflates the error. At $B = 50$ the chance is $0.632^{50} \\approx 10^{-10}$: every loan is covered.",
+        "canvas": {
+          "highlight": [
+            "b5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Who is out of bag",
+      "prose": "Build the out-of-bag matrix: row $i$, column $b$ is `True` when tree $b$ never drew row $i$. Use one generator for all the trees, drawing each tree's indices with `rng.integers(0, n, size=n)` in turn.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Row",
+            "Tree 0",
+            "Tree 1",
+            "Tree 2",
+            "Tree 3"
+          ],
+          "rows": [
+            [
+              "0",
+              "False",
+              "False",
+              "True",
+              "False"
+            ],
+            [
+              "1",
+              "False",
+              "False",
+              "True",
+              "False"
+            ],
+            [
+              "2",
+              "True",
+              "True",
+              "True",
+              "True"
+            ],
+            [
+              "3",
+              "False",
+              "False",
+              "False",
+              "False"
+            ],
+            [
+              "4",
+              "True",
+              "False",
+              "False",
+              "False"
+            ],
+            [
+              "5",
+              "False",
+              "False",
+              "False",
+              "False"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "`oob_mask(6, 4, 0)`. Rows 3 and 5 are in every resample, so they have no OOB tree.",
+          "highlight": {
+            "rows": [
+              3,
+              5
+            ]
+          }
+        },
+        "maxHeight": 220
+      },
+      "question": "Complete `oob_mask(n, B, seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef oob_mask(n, B, seed):\n    rng = np.random.default_rng(seed)\n    mask = np.zeros((n, B), dtype=bool)\n    for b in range(B):\n        idx = rng.integers(0, n, size=n)   # tree b's resample\n        mask[:, b] = ...   # True for rows not in idx\n    return mask\n",
+        "solution": "import numpy as np\n\ndef oob_mask(n, B, seed):\n    rng = np.random.default_rng(seed)\n    mask = np.zeros((n, B), dtype=bool)\n    for b in range(B):\n        idx = rng.integers(0, n, size=n)   # tree b's resample\n        mask[:, b] = ~np.isin(np.arange(n), idx)\n    return mask\n",
+        "examples": [
+          {
+            "call": "oob_mask(6, 4, 0).astype(int).tolist()",
+            "expect": "[[0, 0, 1, 0], [0, 0, 1, 0], [1, 1, 1, 1], [0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "oob_mask(6, 4, 0).astype(int).tolist()",
+            "expect": "[[0, 0, 1, 0], [0, 0, 1, 0], [1, 1, 1, 1], [0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]]",
+            "compare": "equal"
+          },
+          {
+            "call": "oob_mask(5, 2, 1).tolist()",
+            "expect": "[[False, False], [True, False], [False, True], [False, True], [False, False]]",
+            "compare": "equal"
+          },
+          {
+            "call": "oob_mask(400, 50, 3).shape",
+            "expect": "(400, 50)",
+            "compare": "equal"
+          },
+          {
+            "call": "round(float(oob_mask(400, 50, 3).mean()), 4)",
+            "expect": "0.3676",
+            "compare": "isclose"
+          },
+          {
+            "call": "int((~oob_mask(400, 5, 3)).all(axis=1).sum())",
+            "expect": "38",
+            "compare": "equal"
+          },
+          {
+            "call": "oob_mask(1, 3, 0).tolist()",
+            "expect": "[[False, False, False]]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. The matrices must match exactly, so draw each tree's indices in turn from one `rng`, with `rng.integers(0, n, size=n)`. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`np.isin(np.arange(n), idx)` is `True` for rows that were drawn."
+        },
+        {
+          "rung": "point",
+          "text": "Out of bag is the opposite: negate it with `~`.",
+          "highlight": [
+            "r3",
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`mask[:, b] = ~np.isin(np.arange(n), idx)`."
+        }
+      ],
+      "feedback": {
+        "correct": "On 400 rows and 50 trees, 36.76% of the cells are out of bag.",
+        "generic": "Some tests failed. Mark the rows that are not in `idx`, and draw the trees' indices in order from one generator."
+      },
+      "explain": {
+        "text": "The share of `True` cells is 0.3676, close to $e^{-1} = 0.368$. With 5 trees, 38 of 400 rows are in every resample and have no OOB tree. A one-row book always draws its only row."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "OOB error by hand",
+      "prose": "Now score a small ensemble yourself. Grow depth-3 trees on each resample, add each tree's $P(\\text{default})$ to the rows it never drew, and count. A row's OOB prediction is 1 when its average exceeds 0.5. Rows with no OOB tree are skipped.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Row",
+            "Tree 0",
+            "Tree 1",
+            "Tree 2",
+            "Tree 3"
+          ],
+          "rows": [
+            [
+              "0",
+              "False",
+              "False",
+              "True",
+              "False"
+            ],
+            [
+              "1",
+              "False",
+              "False",
+              "True",
+              "False"
+            ],
+            [
+              "2",
+              "True",
+              "True",
+              "True",
+              "True"
+            ],
+            [
+              "3",
+              "False",
+              "False",
+              "False",
+              "False"
+            ],
+            [
+              "4",
+              "True",
+              "False",
+              "False",
+              "False"
+            ],
+            [
+              "5",
+              "False",
+              "False",
+              "False",
+              "False"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              3,
+              5
+            ]
+          }
+        },
+        "maxHeight": 200
+      },
+      "question": "Complete `oob_error_by_hand(X, y, B, seed)`, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 10000,
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.tree import DecisionTreeClassifier\n\ndef oob_error_by_hand(X, y, B, seed):\n    X = np.asarray(X, dtype=float); y = np.asarray(y)\n    n = len(y)\n    rng = np.random.default_rng(seed)\n    total = np.zeros(n); count = np.zeros(n)\n    for b in range(B):\n        idx = rng.integers(0, n, size=n)\n        out = ~np.isin(np.arange(n), idx)\n        tree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X[idx], y[idx])\n        if out.any():\n            total[out] += ...   # this tree's P(class 1) for its OOB rows\n            count[out] += 1\n    seen = count > 0\n    pred = ...   # 1 where the average over OOB trees exceeds 0.5\n    return round(float(np.mean(pred != y[seen])), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.tree import DecisionTreeClassifier\n\ndef oob_error_by_hand(X, y, B, seed):\n    X = np.asarray(X, dtype=float); y = np.asarray(y)\n    n = len(y)\n    rng = np.random.default_rng(seed)\n    total = np.zeros(n); count = np.zeros(n)\n    for b in range(B):\n        idx = rng.integers(0, n, size=n)\n        out = ~np.isin(np.arange(n), idx)\n        tree = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X[idx], y[idx])\n        if out.any():\n            total[out] += tree.predict_proba(X[out])[:, 1]\n            count[out] += 1\n    seen = count > 0\n    pred = (total[seen] / count[seen] > 0.5).astype(int)\n    return round(float(np.mean(pred != y[seen])), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(5, 200)",
+            "call": "oob_error_by_hand(X, y, 3, 0)",
+            "expect": "0.255",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(5, 200)",
+            "call": "oob_error_by_hand(X, y, 3, 0)",
+            "expect": "0.255",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(5, 200)",
+            "call": "oob_error_by_hand(X, y, 20, 4)",
+            "expect": "0.315",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(3, 300)",
+            "call": "oob_error_by_hand(X, y, 30, 2)",
+            "expect": "0.1933",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(9, 400)",
+            "call": "oob_error_by_hand(X, y, 10, 1)",
+            "expect": "0.2494",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(9, 400)",
+            "call": "oob_error_by_hand(X, y, 50, 0)",
+            "expect": "0.2325",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on loans from `make_loans(seed, n)`, which is already defined. Each error is compared with math.isclose, so draw the indices exactly as the starter does. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`tree.predict_proba(X[out])` has a column for each class."
+        },
+        {
+          "rung": "point",
+          "text": "Divide each seen row's total by its count before comparing with 0.5."
+        },
+        {
+          "rung": "step",
+          "text": "`total[out] += tree.predict_proba(X[out])[:, 1]` and `pred = (total[seen] / count[seen] > 0.5).astype(int)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Fifty depth-3 trees on book 9 give an OOB error of 0.2325.",
+        "generic": "Some tests failed. Add column 1 of `predict_proba` to the OOB rows, then average by `count` over the seen rows."
+      },
+      "explain": {
+        "text": "With 3 trees on 200 loans, rows in all three resamples are skipped, so the 0.255 rests on fewer rows. With 50 trees every row counts. This is what `oob_score=True` does inside the forest."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "OOB against cross-validation",
+      "prose": "Does the free estimate agree with the paid one? For four values of $m$ we scored 100-tree forests on book 9 both ways: OOB accuracy from one fit, and 5-fold cross-validation from five more.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "m1",
+              "label": "$m = 1$"
+            },
+            {
+              "id": "m2",
+              "label": "$m = 2$"
+            },
+            {
+              "id": "m4",
+              "label": "$m = 4$"
+            },
+            {
+              "id": "m8",
+              "label": "$m = 8$"
+            }
+          ],
+          "groups": [
+            {
+              "id": "oob",
+              "label": "OOB",
+              "colour": 1
+            },
+            {
+              "id": "cv",
+              "label": "5-fold CV",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Accuracy",
+          "showValues": true,
+          "decimals": 4,
+          "yMin": 0.7,
+          "yMax": 0.8,
+          "truncate": true
+        },
+        "state": {
+          "values": {
+            "oob": {
+              "m1": 0.7425,
+              "m2": 0.7725,
+              "m4": 0.7675,
+              "m8": 0.7775
+            },
+            "cv": {
+              "m1": 0.765,
+              "m2": 0.7725,
+              "m4": 0.7725,
+              "m8": 0.7725
+            }
+          }
+        }
+      },
+      "question": "What is the largest gap between OOB and CV accuracy?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0225,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Largest gap, as a decimal",
+        "placeholder": "decimal",
+        "accept": "0.0225, at $m = 1$: $0.765 - 0.7425$.",
+        "wrong": [
+          {
+            "id": "m8",
+            "value": 0.005,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the two bars in each pair."
+        },
+        {
+          "rung": "point",
+          "text": "Most pairs differ by half a point or less. One differs more.",
+          "highlight": [
+            "m1-oob",
+            "m1-cv"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $m = 1$: $0.765 - 0.7425 = 0.0225$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 2 points at most, inside the noise of a 400-loan estimate.",
+        "generic": "Not quite right. Find the pair of bars that differ most and subtract.",
+        "byKey": {
+          "m8": "That is the gap at $m = 8$. Check $m = 1$.",
+          "zero": "They match at $m = 2$ only. Check the other pairs."
+        }
+      },
+      "explain": {
+        "text": "The gaps are 0.0225, 0, 0.005 and 0.005. An accuracy on 400 loans has a standard error near 0.02, so the two methods agree. OOB costs one fit; CV cost five more.",
+        "canvas": {
+          "highlight": [
+            "m1-oob",
+            "m1-cv"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Both estimates in code",
+      "prose": "Compute both numbers for one forest setting. `oob_score=True` makes the forest store `.oob_score_`, its OOB accuracy. `cross_val_score(model, X, y, cv=5).mean()` gives the CV accuracy.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "m2",
+              "label": "$m = 2$"
+            }
+          ],
+          "groups": [
+            {
+              "id": "oob",
+              "label": "OOB",
+              "colour": 1
+            },
+            {
+              "id": "cv",
+              "label": "5-fold CV",
+              "colour": 3
+            }
+          ],
+          "yLabel": "Accuracy",
+          "showValues": true,
+          "decimals": 4,
+          "yMin": 0.7,
+          "yMax": 0.8,
+          "truncate": true
+        },
+        "state": {
+          "values": {
+            "oob": {
+              "m2": 0.7725
+            },
+            "cv": {
+              "m2": 0.7725
+            }
+          }
+        }
+      },
+      "question": "Complete `rf_oob_vs_cv(X, y, n_estimators)` so it returns `(oob_acc, cv_acc)`, each rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 15000,
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n",
+        "starter": "from sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import cross_val_score\n\ndef rf_oob_vs_cv(X, y, n_estimators):\n    forest = ...   # oob_score=True, random_state=0, fitted on X, y\n    cv = ...       # mean 5-fold CV accuracy of the same settings\n    return round(float(forest.oob_score_), 4), round(float(cv), 4)\n",
+        "solution": "from sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import cross_val_score\n\ndef rf_oob_vs_cv(X, y, n_estimators):\n    forest = RandomForestClassifier(n_estimators=n_estimators, oob_score=True,\n                                    random_state=0).fit(X, y)\n    cv = cross_val_score(RandomForestClassifier(n_estimators=n_estimators,\n                                                random_state=0), X, y, cv=5).mean()\n    return round(float(forest.oob_score_), 4), round(float(cv), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(5, 200)",
+            "call": "list(rf_oob_vs_cv(X, y, 25))",
+            "expect": "[0.72, 0.73]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(5, 200)",
+            "call": "list(rf_oob_vs_cv(X, y, 25))",
+            "expect": "[0.72, 0.73]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(3, 300)",
+            "call": "list(rf_oob_vs_cv(X, y, 50))",
+            "expect": "[0.7833, 0.8033]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(9, 400)",
+            "call": "list(rf_oob_vs_cv(X, y, 40))",
+            "expect": "[0.745, 0.7825]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 3 hidden tests on loans from `make_loans(seed, n)`, which is already defined. Each pair is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick. The longest test grows 240 trees and takes about 3 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two models with the same settings: one fitted with `oob_score=True`, one handed to `cross_val_score`."
+        },
+        {
+          "rung": "point",
+          "text": "`cross_val_score` returns five accuracies; take their mean."
+        },
+        {
+          "rung": "step",
+          "text": "`forest = RandomForestClassifier(n_estimators=n_estimators, oob_score=True, random_state=0).fit(X, y)`; `cv = cross_val_score(RandomForestClassifier(n_estimators=n_estimators, random_state=0), X, y, cv=5).mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "The two estimates land within a couple of points of each other.",
+        "generic": "Some tests failed. Fit one forest with `oob_score=True` on all of `X`, and pass a fresh forest to `cross_val_score` with `cv=5`."
+      },
+      "explain": {
+        "text": "On 300 loans OOB says 0.7833 and CV says 0.8033, two points apart. For rows that are exchangeable, either is a fair estimate, and OOB comes free with the fit. The next screen is where they are not."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "OOB on a time series",
+      "prose": "A researcher predicts whether the next 10 days' return is positive from past returns and volatility, over 300 days. The returns are pure noise. Their forest's `oob_score_` is 0.767. An expanding walk-forward test over the next 200 days scores 0.495.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "oob",
+              "label": "OOB accuracy"
+            },
+            {
+              "id": "wf",
+              "label": "Walk-forward"
+            },
+            {
+              "id": "coin",
+              "label": "Coin flip"
+            }
+          ],
+          "yLabel": "Accuracy",
+          "showValues": true,
+          "decimals": 3,
+          "yMin": 0,
+          "yMax": 1
+        },
+        "state": {
+          "values": {
+            "oob": 0.767,
+            "wf": 0.495,
+            "coin": 0.5
+          }
+        }
+      },
+      "question": "Why is the OOB score so high?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Each OOB day's trees saw its neighbours, which share almost the same features and label",
+            "correct": true
+          },
+          {
+            "id": "signal",
+            "text": "The features carry a real signal that the walk-forward test missed",
+            "why": "The returns were generated as pure noise. Nothing in the past predicts the next 10 days."
+          },
+          {
+            "id": "few",
+            "text": "Too few trees, so some days had no OOB vote",
+            "why": "Too few trees push OOB accuracy down, not up. This forest has 100 trees."
+          },
+          {
+            "id": "fine",
+            "text": "It is fine: OOB rows were never seen by their trees",
+            "why": "The day itself was not seen, but days 1 and 2 either side were. With 10-day labels they are near copies."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Consecutive days' labels overlap in 9 of their 10 days."
+        },
+        {
+          "rung": "point",
+          "text": "A tree that saw day 151 and day 153 knows a lot about day 152."
+        },
+        {
+          "rung": "step",
+          "text": "Neighbouring days are near duplicates. OOB treats rows as independent, so the leak goes unnoticed."
+        }
+      ],
+      "feedback": {
+        "correct": "OOB assumes the rows are exchangeable; days are not.",
+        "generic": "Not quite right. Ask what a tree knows about a day it did not draw.",
+        "byKey": {
+          "fine": "The day was out of bag, but its neighbours were in. Overlapping labels make them near copies, so the tree has seen the answer."
+        }
+      },
+      "explain": {
+        "text": "Labels on consecutive days share 9 of 10 future returns; their correlation here is 0.73. A tree that drew the neighbours has effectively seen the day. OOB, like shuffled K-fold in *Why shuffling a time series lies*, needs a walk-forward test for returns data.",
+        "canvas": {
+          "highlight": [
+            "oob",
+            "wf"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The OOB recipe",
+      "prose": "Here is what `oob_score=True` does, which you just did by hand. Put the steps in the order the forest runs them.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "boot",
+            "text": "For each tree, draw a bootstrap sample of the $n$ rows and record which rows it left out"
+          },
+          {
+            "id": "fit",
+            "text": "Grow the tree on its sample only"
+          },
+          {
+            "id": "vote",
+            "text": "For each row, average the predictions of the trees that left it out"
+          },
+          {
+            "id": "score",
+            "text": "Compare each row's OOB prediction with its label and report the share correct, skipping or flagging rows with no OOB tree"
+          }
+        ],
+        "answer": [
+          "boot",
+          "fit",
+          "vote",
+          "score"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Nothing can be out of bag before the sample is drawn."
+        },
+        {
+          "rung": "point",
+          "text": "The votes need every tree grown first."
+        },
+        {
+          "rung": "step",
+          "text": "Sample, grow, vote, score."
+        }
+      ],
+      "feedback": {
+        "correct": "One fit gives every row a prediction from trees that never saw it.",
+        "generic": "Not quite right. Draw, grow, collect the votes, then score.",
+        "byKey": {
+          "vote": "The OOB vote needs the trees grown first.",
+          "score": "Scoring is last: it needs every row's OOB prediction."
+        }
+      },
+      "explain": {
+        "text": "Each row's OOB prediction comes from about 37% of the trees, a smaller forest than the one you will use. So OOB error runs slightly pessimistic, and settles once $B$ is large."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Tuning without touching the test period",
+      "prose": "A credit desk has 2018 to 2023 for building and locks 2024 as its final test. It tunes depth and $m$ on the 2018 to 2023 loans by OOB accuracy, never opening 2024. A month of loans issued close together share borrowers, sectors and rate conditions.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Depth",
+            "$m$",
+            "OOB accuracy"
+          ],
+          "rows": [
+            [
+              "4",
+              "2",
+              "0.771"
+            ],
+            [
+              "8",
+              "2",
+              "0.786"
+            ],
+            [
+              "None",
+              "2",
+              "0.789"
+            ],
+            [
+              "None",
+              "8",
+              "0.781"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Before the model trades, what should the desk still do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Run a walk-forward test by issue month, since loans close in time are not exchangeable",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "Nothing: OOB is a fair test, and 2024 stays locked anyway",
+            "why": "OOB is fair for exchangeable rows. Loans from the same month share conditions, so OOB flatters the model, as the daily returns did."
+          },
+          {
+            "id": "cv",
+            "text": "Swap OOB for shuffled 5-fold CV, which is more careful",
+            "why": "Shuffled folds have the same leak: neighbours in time land in training. Only time-ordered splits remove it."
+          },
+          {
+            "id": "test",
+            "text": "Open 2024 now to choose between the top two settings",
+            "why": "That spends the locked test on tuning. Choose by time-ordered validation inside 2018 to 2023, then open 2024 once."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What made OOB fail on the daily returns?"
+        },
+        {
+          "rung": "point",
+          "text": "Here, loans close in time share information too."
+        },
+        {
+          "rung": "step",
+          "text": "Use OOB for a quick first pass, then confirm with splits that respect time."
+        }
+      ],
+      "feedback": {
+        "correct": "OOB for speed; walk-forward for the decision.",
+        "generic": "Not quite right. Ask whether loans issued in the same month are independent of each other."
+      },
+      "explain": {
+        "text": "OOB chose depth None and $m = 2$ at no cost, and kept 2024 untouched. But loans issued together share conditions, so OOB may still flatter. A walk-forward by issue month, then one look at 2024, is what the desk trades on.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Each tree leaves out about 36.8% of the rows; predicting each row from only the trees that missed it gives a free test estimate, the out-of-bag error.",
+      "OOB error settles once there are enough trees and agrees with $k$-fold CV on exchangeable rows; too few trees leave rows with no OOB vote, which scikit-learn scores as class 0.",
+      "On time-ordered data a row's OOB trees saw its neighbours, so OOB flatters; returns data still needs a walk-forward test."
+    ],
+    "formula": {
+      "name": "Chance a row has no OOB tree",
+      "tex": "P(\\text{no OOB tree}) \\approx (1 - e^{-1})^{B} = 0.632^{B}",
+      "note": "About 10% of rows at $B = 5$; negligible by $B = 50$."
+    },
+    "trap": "Reporting OOB accuracy on daily returns as if it were a walk-forward result: neighbouring days leak into every OOB vote."
+  },
+  "quiz": [
+    {
+      "id": "q-share",
+      "difficulty": 2,
+      "prose": "A forest of 200 trees grows on 1,000 loans.",
+      "question": "About how many trees are out of bag for a given loan?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 73.6,
+        "tol": {
+          "abs": 3
+        },
+        "unit": "trees",
+        "label": "Out-of-bag trees per loan",
+        "accept": "About 74: $200 \\times 0.368$.",
+        "wrong": [
+          {
+            "id": "in",
+            "value": 126.4,
+            "tol": {
+              "abs": 3
+            }
+          },
+          {
+            "id": "half",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 74 trees vote on each loan's OOB prediction.",
+        "generic": "Not quite right. Each tree misses a loan with probability about 0.368.",
+        "byKey": {
+          "in": "That counts the trees that drew the loan. We want the ones that missed it.",
+          "half": "The chance of missing is $e^{-1} \\approx 0.368$, not a half."
+        }
+      },
+      "explain": {
+        "text": "$200 \\times 0.368 \\approx 74$. The OOB vote is a forest of about 74 trees, which is why it runs a little pessimistic."
+      }
+    },
+    {
+      "id": "q-why-honest",
+      "difficulty": 2,
+      "prose": "A colleague asks why OOB error is not just training error under another name.",
+      "question": "What is the best answer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Each row is predicted only by trees that never trained on it",
+            "correct": true
+          },
+          {
+            "id": "subset",
+            "text": "It is training error measured on a random subset of rows",
+            "why": "Every row gets an OOB prediction. What changes is which trees make it."
+          },
+          {
+            "id": "depth",
+            "text": "OOB uses shallower trees",
+            "why": "The trees are the forest's own; only the votes are restricted."
+          },
+          {
+            "id": "same",
+            "text": "It is the same as training error, but faster",
+            "why": "Training error of deep trees is near 0. OOB error on book 9 was about 0.23."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "That is the whole trick.",
+        "generic": "Not quite right. Ask which trees vote on each row."
+      },
+      "explain": {
+        "text": "Training error grades a row with trees that memorised it. OOB grades it with trees that never saw it, so it behaves like a test error."
+      }
+    },
+    {
+      "id": "q-b3",
+      "difficulty": 3,
+      "prose": "A forest of 3 trees grows on 500 rows with `oob_score=True`.",
+      "question": "About how many rows have no OOB prediction?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 126,
+        "tol": {
+          "abs": 8
+        },
+        "unit": "rows",
+        "label": "Rows with no OOB tree",
+        "accept": "About 126: $500 \\times 0.632^3 = 500 \\times 0.253$.",
+        "wrong": [
+          {
+            "id": "miss",
+            "value": 25,
+            "tol": {
+              "abs": 3
+            }
+          },
+          {
+            "id": "one",
+            "value": 316,
+            "tol": {
+              "abs": 5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A quarter of the rows get no honest vote, and scikit-learn scores them as class 0.",
+        "generic": "Not quite right. A row needs every one of the 3 trees to have drawn it.",
+        "byKey": {
+          "miss": "$0.368^3$ is the chance all three missed it. We need all three to have drawn it.",
+          "one": "That uses one tree. All three must draw the row."
+        }
+      },
+      "explain": {
+        "text": "$0.632^3 = 0.253$, so about 126 of 500 rows. scikit-learn warns and scores them as class 0, which skews the OOB score. Grow more trees before reading it."
+      }
+    },
+    {
+      "id": "q-overlap",
+      "difficulty": 3,
+      "prose": "Labels are 20-day forward returns, one row per day, so neighbouring rows share 19 of 20 days. A forest's OOB accuracy is 0.71.",
+      "question": "What should you conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Nothing yet: overlapping labels leak through neighbours, so run a walk-forward test with a gap",
+            "correct": true
+          },
+          {
+            "id": "trade",
+            "text": "The signal is strong enough to trade",
+            "why": "OOB on overlapping labels is inflated; on pure noise it scored 0.77."
+          },
+          {
+            "id": "more",
+            "text": "Grow more trees to make the estimate reliable",
+            "why": "More trees steady the OOB estimate but do not remove the leak."
+          },
+          {
+            "id": "cv",
+            "text": "Confirm with shuffled 10-fold CV",
+            "why": "Shuffled folds leak in the same way. The split must respect time."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Time-ordered data needs time-ordered tests.",
+        "generic": "Not quite right. Ask what a day's OOB trees know about it."
+      },
+      "explain": {
+        "text": "Each OOB row's trees saw its neighbours, near copies of it. Walk forward, with a gap at least as long as the label window, as in *Purging and embargo*."
+      }
+    }
+  ]
+}

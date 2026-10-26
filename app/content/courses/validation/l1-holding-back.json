@@ -1,0 +1,1615 @@
+{
+  "id": "l1-holding-back",
+  "course": "validation",
+  "title": "Holding data back",
+  "minutes": 14,
+  "objectives": [
+    "Evaluate a model on data it was not fitted on."
+  ],
+  "skills": [
+    "vl-cv",
+    "vl-overfit"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One split, one number",
+      "prose": "Our 200 loans are a cross-section: each row is a different borrower, and the row order means nothing. Rows like these are **exchangeable**, so a random split is fair. Time-ordered data needs more care; that is level 2. We fit a linear model for spread on 150 loans and test it on the other 50.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s0",
+              "label": "0",
+              "value": 0.196
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "value": 0.256
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "value": 0.246
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "value": 0.143
+            },
+            {
+              "id": "s4",
+              "label": "4",
+              "value": 0.286
+            },
+            {
+              "id": "s5",
+              "label": "5",
+              "value": 0.279
+            },
+            {
+              "id": "s6",
+              "label": "6",
+              "value": 0.196
+            },
+            {
+              "id": "s7",
+              "label": "7",
+              "value": 0.251
+            },
+            {
+              "id": "s8",
+              "label": "8",
+              "value": 0.176
+            },
+            {
+              "id": "s9",
+              "label": "9",
+              "value": 0.195
+            }
+          ],
+          "xLabel": "random_state of the split",
+          "yLabel": "Test MSE",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.32
+        },
+        "state": {
+          "caption": "One linear model, the same 200 loans. Only the seed of the split changes."
+        }
+      },
+      "question": "Ana reports the seed 3 split: test MSE 0.143. Ben reports seed 4: 0.286. Who measured the model correctly?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "Both did. Each split gives one noisy draw of the same model’s error.",
+            "correct": true
+          },
+          {
+            "id": "ana",
+            "text": "Ana: her number is lower, so her split was better.",
+            "why": "You trusted the lower number. A low MSE on one split means an easy set of 50 test loans, not a better measurement."
+          },
+          {
+            "id": "ben",
+            "text": "Ben: the higher number is the safe one to report.",
+            "why": "You picked the pessimistic draw. It is no more correct than Ana’s; both are single draws from one spread."
+          },
+          {
+            "id": "unstable",
+            "text": "Neither: the model must be unstable.",
+            "why": "You blamed the model. The method and the data are fixed; most of the change comes from which 50 loans land in the test set."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What changes between the ten bars?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the lowest and the highest bar.",
+          "highlight": [
+            "s3",
+            "s4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The model and the data are the same each time. Only the split moves, and the test MSE moves with it."
+        }
+      ],
+      "feedback": {
+        "correct": "Both numbers are honest draws. Neither alone is the model’s error.",
+        "generic": "Not quite right. Ask what differs between the two runs."
+      },
+      "explain": {
+        "text": "The ten bars run from 0.143 to 0.286 for one model on one dataset. A single split is one draw from that spread. Next we see what makes the draw steadier.",
+        "canvas": {
+          "highlight": [
+            "s3",
+            "s4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How much to hold back",
+      "prose": "For each test share from 10% to 50% we resplit the 200 loans with 200 seeds. The left axis is the spread (sd) of the test MSE across seeds; the right axis is its average. Slide the test share.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "x": "index",
+          "indexFrom": 10,
+          "xLabel": "Test share (%)",
+          "yLabel": "sd of test MSE",
+          "decimals": 3,
+          "series": [
+            {
+              "id": "sd",
+              "label": "sd",
+              "values": [
+                0.0583,
+                0.0558,
+                0.0548,
+                0.051,
+                0.0492,
+                0.0484,
+                0.0459,
+                0.0449,
+                0.0432,
+                0.042,
+                0.0391,
+                0.0389,
+                0.0384,
+                0.0373,
+                0.036,
+                0.0348,
+                0.0332,
+                0.0325,
+                0.0311,
+                0.031,
+                0.0303,
+                0.0293,
+                0.029,
+                0.0277,
+                0.0267,
+                0.0263,
+                0.0258,
+                0.0259,
+                0.0252,
+                0.025,
+                0.0248,
+                0.0246,
+                0.024,
+                0.0238,
+                0.0235,
+                0.0229,
+                0.0228,
+                0.0226,
+                0.0225,
+                0.0229,
+                0.0222
+              ]
+            },
+            {
+              "id": "avg",
+              "label": "average",
+              "values": [
+                0.207,
+                0.2062,
+                0.2075,
+                0.2081,
+                0.209,
+                0.2078,
+                0.2079,
+                0.2088,
+                0.2073,
+                0.2071,
+                0.2069,
+                0.2093,
+                0.2103,
+                0.2103,
+                0.2102,
+                0.2088,
+                0.2096,
+                0.2097,
+                0.2099,
+                0.21,
+                0.2101,
+                0.2098,
+                0.2096,
+                0.2092,
+                0.2099,
+                0.2106,
+                0.2116,
+                0.2116,
+                0.2121,
+                0.2122,
+                0.2127,
+                0.2131,
+                0.2128,
+                0.2138,
+                0.2141,
+                0.2142,
+                0.2145,
+                0.2144,
+                0.2149,
+                0.2152,
+                0.2147
+              ],
+              "axis": 2,
+              "dashed": true
+            }
+          ],
+          "y": [
+            0,
+            0.07
+          ],
+          "y2": [
+            0.2,
+            0.22
+          ],
+          "y2Label": "Average test MSE"
+        },
+        "state": {
+          "params": {
+            "share": 10
+          },
+          "markers": [
+            {
+              "id": "m1",
+              "i": 0,
+              "series": "sd",
+              "label": "{value}"
+            },
+            {
+              "id": "m2",
+              "i": 0,
+              "series": "avg",
+              "label": "{value}",
+              "below": true
+            }
+          ]
+        },
+        "derive": {
+          "m1.i": "share - 10",
+          "m2.i": "share - 10",
+          "caption": "{{share * 2}} test loans, {{200 - share * 2}} training loans"
+        },
+        "controls": [
+          {
+            "bind": "share",
+            "min": 10,
+            "max": 50,
+            "step": 1,
+            "start": 10,
+            "label": "Test share (%)"
+          }
+        ]
+      },
+      "question": "What happens as the test share grows from 10% to 50%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "trade",
+            "text": "The spread falls by more than half, but the average creeps up: each model trains on fewer loans.",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both improve, so the bigger the test set the better.",
+            "why": "You read only the solid line. The dashed average rises, because a model fitted on 100 loans is worse than one fitted on 180."
+          },
+          {
+            "id": "sum",
+            "text": "The spread grows, since more test loans add more errors.",
+            "why": "You treated the MSE as a sum. It is an average, and averages of more terms vary less."
+          },
+          {
+            "id": "none",
+            "text": "Nothing much changes; the test share is a detail.",
+            "why": "Slide again and read the left axis: the sd goes from 0.058 to 0.022."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the two marker labels as you slide."
+        },
+        {
+          "rung": "point",
+          "text": "The solid line is the spread, the dashed line the average.",
+          "highlight": [
+            "m1",
+            "m2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At 10% the sd is 0.058 and the average 0.207. At 50% they are 0.022 and 0.215."
+        }
+      ],
+      "feedback": {
+        "correct": "A big test set measures well but leaves less to learn from.",
+        "generic": "Not quite right. Read both lines at 10% and at 50%."
+      },
+      "explain": {
+        "text": "With 20 test loans the sd is 0.058; with 100 it is 0.022. Meanwhile the average rises from 0.207 to 0.215, because each model learns from fewer loans. Shares of 20% to 30% are the usual compromise.",
+        "canvas": {
+          "params": {
+            "share": 25
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Three sets, three jobs",
+      "prose": "The 50 loans we held back are a **test set**: rows the model never saw while it was fitted. When we must also choose between models, we hold back a second slice, the **validation set**. The rest is the **training set**. Here 400 loans are split 60/20/20.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "jobs",
+              "label": "Jobs",
+              "kind": "row",
+              "slots": 3,
+              "items": [
+                {
+                  "id": "fit",
+                  "kind": "card",
+                  "label": "Fit β"
+                },
+                {
+                  "id": "pick",
+                  "kind": "card",
+                  "label": "Pick model"
+                },
+                {
+                  "id": "report",
+                  "kind": "card",
+                  "label": "Final score"
+                }
+              ]
+            },
+            {
+              "id": "train",
+              "label": "Training: 240",
+              "kind": "box",
+              "items": []
+            },
+            {
+              "id": "val",
+              "label": "Validation: 80",
+              "kind": "box",
+              "items": []
+            },
+            {
+              "id": "test",
+              "label": "Test: 80",
+              "kind": "box",
+              "items": []
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Drag each job card into the set that does it.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "train": [
+            "fit"
+          ],
+          "val": [
+            "pick"
+          ],
+          "test": [
+            "report"
+          ]
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which set must stay untouched until the very end?"
+        },
+        {
+          "rung": "point",
+          "text": "The final score needs rows that took no part in fitting or choosing.",
+          "highlight": [
+            "test"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Fit on training rows, compare candidates on validation rows, and score once on test rows."
+        }
+      ],
+      "feedback": {
+        "correct": "Training fits, validation chooses, test reports once.",
+        "generic": "Not quite right. Each set has exactly one job.",
+        "byKey": {
+          "fit": "Fitting belongs on the training rows. Fitting on rows that later judge the model lets it mark its own homework.",
+          "pick": "Choosing needs rows the fit did not see, but not the test rows: they are kept for one final score.",
+          "report": "The final score must come from rows that played no part in fitting or choosing: the test set."
+        }
+      },
+      "explain": {
+        "text": "You gave each set one job. Training rows fit the coefficients, validation rows compare candidates, and test rows give one final score. Touch the test rows twice and they become a second validation set.",
+        "canvas": {
+          "move": {
+            "fit": "train",
+            "pick": "val",
+            "report": "test"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Counting the rows",
+      "prose": "The same 60/20/20 split, written as row counts. Fill the table for a book of 400 loans.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "jobs",
+              "label": "Jobs",
+              "kind": "row",
+              "slots": 3,
+              "items": [
+                {
+                  "id": "fit",
+                  "kind": "card",
+                  "label": "Fit β"
+                },
+                {
+                  "id": "pick",
+                  "kind": "card",
+                  "label": "Pick model"
+                },
+                {
+                  "id": "report",
+                  "kind": "card",
+                  "label": "Final score"
+                }
+              ]
+            },
+            {
+              "id": "train",
+              "label": "Training: 240",
+              "kind": "box",
+              "items": []
+            },
+            {
+              "id": "val",
+              "label": "Validation: 80",
+              "kind": "box",
+              "items": []
+            },
+            {
+              "id": "test",
+              "label": "Test: 80",
+              "kind": "box",
+              "items": []
+            }
+          ]
+        },
+        "state": {
+          "move": {
+            "fit": "train",
+            "pick": "val",
+            "report": "test"
+          }
+        }
+      },
+      "question": "How many loans go in each set, and how many final scores may the test set give?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Set",
+          "Share",
+          "Loans"
+        ],
+        "rows": [
+          [
+            "Training",
+            "60%",
+            {
+              "edit": true,
+              "answer": 240,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Validation",
+            "20%",
+            {
+              "edit": true,
+              "answer": 80,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Test",
+            "20%",
+            {
+              "edit": true,
+              "answer": 80,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Final scores from the test set",
+            "",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each share is a fraction of 400."
+        },
+        {
+          "rung": "point",
+          "text": "Twenty per cent of 400 is 80.",
+          "highlight": [
+            "train"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Training 240, validation 80, test 80, and the test set is scored once."
+        }
+      ],
+      "feedback": {
+        "correct": "240, 80 and 80 loans, and one final score.",
+        "generic": "Not quite right. Multiply 400 by each share, and remember the test set is spent once."
+      },
+      "explain": {
+        "text": "Sixty per cent of 400 is 240, and twenty per cent is 80. The test set gives one score, at the end. A second look would turn it into validation data."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A split you can repeat",
+      "prose": "Shuffle the row numbers with `np.random.default_rng(seed).permutation(n)`. The first `n_test` positions are the test rows, the next `n_val` the validation rows, the rest training. The chart shows the shuffle for 10 rows and seed 0, with the 3 test rows washed. Record the seed: anyone can then rebuild the exact split.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            6,
+            2,
+            7,
+            3,
+            5,
+            9,
+            0,
+            8,
+            1
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              1,
+              3
+            ],
+            "label": "test"
+          },
+          "caption": "Positions 4 and 5 are validation; 6 to 10 are training."
+        }
+      },
+      "question": "Complete `split_three` so it returns the training, validation and test row numbers, each sorted.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef split_three(X, y, n_val, n_test, seed):\n    order = np.random.default_rng(seed).permutation(len(y))\n    test = ...    # the first n_test positions, sorted\n    val = ...     # the next n_val positions, sorted\n    train = ...   # everything after, sorted\n    return train, val, test\n",
+        "solution": "import numpy as np\n\ndef split_three(X, y, n_val, n_test, seed):\n    order = np.random.default_rng(seed).permutation(len(y))\n    test = np.sort(order[:n_test])\n    val = np.sort(order[n_test:n_test + n_val])\n    train = np.sort(order[n_test + n_val:])\n    return train, val, test\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(10, 2, 1)",
+            "call": "[a.tolist() for a in split_three(X, y, 2, 3, 0)]",
+            "expect": "[[0, 1, 5, 8, 9], [3, 7], [2, 4, 6]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(10, 2, 1)",
+            "call": "[a.tolist() for a in split_three(X, y, 2, 3, 0)]",
+            "expect": "[[0, 1, 5, 8, 9], [3, 7], [2, 4, 6]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(10, 2, 1)",
+            "call": "[a.tolist() for a in split_three(X, y, 3, 2, 7)]",
+            "expect": "[[2, 4, 5, 6, 9], [1, 3, 7], [0, 8]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(12, 2, 1)",
+            "call": "[a.tolist() for a in split_three(X, y, 0, 4, 3)]",
+            "expect": "[[0, 1, 3, 4, 5, 6, 8, 9], [], [2, 7, 10, 11]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "[len(a) for a in split_three(X, y, 80, 80, 5)]",
+            "expect": "[240, 80, 80]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(400, 8, 21); parts = split_three(X, y, 80, 80, 5)",
+            "call": "sorted(int(i) for a in parts for i in a) == list(range(400))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "split_three(X, y, 80, 80, 5)[2][:6].tolist()",
+            "expect": "[0, 2, 10, 20, 22, 43]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "split_three(X, y, 80, 80, 6)[1][:6].tolist()",
+            "expect": "[1, 5, 10, 12, 23, 43]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests that compare your row numbers exactly, on 10 to 400 loans. `make_loans(n, p, seed)` is defined for you. This screen uses NumPy only; the first run loads it, which takes a few seconds.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slice `order` three times."
+        },
+        {
+          "rung": "point",
+          "text": "Test is `order[:n_test]`.",
+          "highlight": [
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Validation is `order[n_test:n_test + n_val]`, training is `order[n_test + n_val:]`; wrap each in `np.sort`."
+        }
+      ],
+      "feedback": {
+        "correct": "The same seed always rebuilds the same three sets.",
+        "generic": "Some tests failed. For 10 rows, `n_val=2`, `n_test=3`, seed 0 the answer is train `[0, 1, 5, 8, 9]`, validation `[3, 7]`, test `[2, 4, 6]`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Replace each `...` with a slice of `order`."
+        }
+      },
+      "explain": {
+        "text": "One permutation, cut into three pieces, keeps the sets disjoint and covers every row. Sorting makes the output easy to compare. The seed is the receipt: with it, a reviewer gets your exact split."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Many seeds, one summary",
+      "prose": "Instead of one split, use many and summarise them. For each seed, split with `train_test_split(X, y, test_size=0.25, random_state=seed)`, fit `LinearRegression`, and record the test MSE. Return the mean and the sd (`np.std`) of those MSEs, each rounded to 4 places.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s0",
+              "label": "0",
+              "value": 0.196
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "value": 0.256
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "value": 0.246
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "value": 0.143
+            },
+            {
+              "id": "s4",
+              "label": "4",
+              "value": 0.286
+            },
+            {
+              "id": "s5",
+              "label": "5",
+              "value": 0.279
+            },
+            {
+              "id": "s6",
+              "label": "6",
+              "value": 0.196
+            },
+            {
+              "id": "s7",
+              "label": "7",
+              "value": 0.251
+            },
+            {
+              "id": "s8",
+              "label": "8",
+              "value": 0.176
+            },
+            {
+              "id": "s9",
+              "label": "9",
+              "value": 0.195
+            }
+          ],
+          "xLabel": "random_state of the split",
+          "yLabel": "Test MSE",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.32
+        },
+        "state": {
+          "caption": "Seeds 0 to 9 summarise to a mean of 0.222 and an sd of 0.045."
+        }
+      },
+      "question": "Complete `test_mse_for_seeds(X, y, seeds)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import train_test_split\n\ndef test_mse_for_seeds(X, y, seeds):\n    mses = []\n    for seed in seeds:\n        ...\n    return round(float(np.mean(mses)), 4), round(float(np.std(mses)), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import train_test_split\n\ndef test_mse_for_seeds(X, y, seeds):\n    mses = []\n    for seed in seeds:\n        X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=seed)\n        model = LinearRegression().fit(X_tr, y_tr)\n        mses.append(np.mean((model.predict(X_te) - y_te) ** 2))\n    return round(float(np.mean(mses)), 4), round(float(np.std(mses)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(200, 8, 11)",
+            "call": "test_mse_for_seeds(X, y, range(10))",
+            "expect": "(0.2224, 0.0451)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(200, 8, 11)",
+            "call": "test_mse_for_seeds(X, y, range(10))",
+            "expect": "(0.2224, 0.0451)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 8, 11)",
+            "call": "test_mse_for_seeds(X, y, [3])",
+            "expect": "(0.1434, 0.0)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 8, 11)",
+            "call": "test_mse_for_seeds(X, y, range(20))",
+            "expect": "(0.2104, 0.0475)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 5, 12)",
+            "call": "test_mse_for_seeds(X, y, [0, 1, 2, 3, 4])",
+            "expect": "(0.2063, 0.0098)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(240, 12, 13)",
+            "call": "test_mse_for_seeds(X, y, range(10, 20))",
+            "expect": "(0.2415, 0.0322)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on loans from `make_loans`, comparing both numbers with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Inside the loop: split, fit, predict, then append one number."
+        },
+        {
+          "rung": "point",
+          "text": "The test MSE is `np.mean((model.predict(X_te) - y_te) ** 2)`.",
+          "highlight": [
+            "s0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=seed); model = LinearRegression().fit(X_tr, y_tr); then append the MSE."
+        }
+      ],
+      "feedback": {
+        "correct": "Your summary matches: (0.2224, 0.0451) for seeds 0 to 9.",
+        "generic": "Some tests failed. For `make_loans(200, 8, 11)` and seeds 0 to 9 the answer is (0.2224, 0.0451).",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that every name inside the loop is defined."
+        }
+      },
+      "explain": {
+        "text": "Ten splits give a mean of 0.222 and an sd of 0.045. The mean is steadier than any one split. Lesson 2 does the same job without overlapping test sets."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The luckiest split",
+      "prose": "A colleague runs the same model with seeds 0 to 19. The lowest test MSE is 0.142, from seed 15. Their slide says “test MSE 0.142”.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s0",
+              "label": "0",
+              "value": 0.196
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "value": 0.256
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "value": 0.246
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "value": 0.143
+            },
+            {
+              "id": "s4",
+              "label": "4",
+              "value": 0.286
+            },
+            {
+              "id": "s5",
+              "label": "5",
+              "value": 0.279
+            },
+            {
+              "id": "s6",
+              "label": "6",
+              "value": 0.196
+            },
+            {
+              "id": "s7",
+              "label": "7",
+              "value": 0.251
+            },
+            {
+              "id": "s8",
+              "label": "8",
+              "value": 0.176
+            },
+            {
+              "id": "s9",
+              "label": "9",
+              "value": 0.195
+            },
+            {
+              "id": "s10",
+              "label": "10",
+              "value": 0.245
+            },
+            {
+              "id": "s11",
+              "label": "11",
+              "value": 0.15
+            },
+            {
+              "id": "s12",
+              "label": "12",
+              "value": 0.161
+            },
+            {
+              "id": "s13",
+              "label": "13",
+              "value": 0.28
+            },
+            {
+              "id": "s14",
+              "label": "14",
+              "value": 0.199
+            },
+            {
+              "id": "s15",
+              "label": "15",
+              "value": 0.142
+            },
+            {
+              "id": "s16",
+              "label": "16",
+              "value": 0.27
+            },
+            {
+              "id": "s17",
+              "label": "17",
+              "value": 0.187
+            },
+            {
+              "id": "s18",
+              "label": "18",
+              "value": 0.177
+            },
+            {
+              "id": "s19",
+              "label": "19",
+              "value": 0.174
+            }
+          ],
+          "xLabel": "random_state of the split",
+          "yLabel": "Test MSE",
+          "yMax": 0.32
+        },
+        "state": {
+          "highlight": [
+            "s15"
+          ],
+          "caption": "Twenty splits of the same 200 loans."
+        }
+      },
+      "question": "What should the slide report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "min",
+            "text": "0.142, the best split",
+            "why": "You kept the luckiest of 20 draws. The minimum of 20 noisy numbers sits well below their centre, so it flatters the model."
+          },
+          {
+            "id": "mean",
+            "text": "The mean of all 20 splits, 0.210, with their spread, about 0.05",
+            "correct": true
+          },
+          {
+            "id": "max",
+            "text": "0.286, the worst split, to be safe",
+            "why": "You swapped one extreme for the other. The maximum is as unrepresentative as the minimum."
+          },
+          {
+            "id": "seed",
+            "text": "0.142, because seed 15 is written down and anyone can reproduce it",
+            "why": "A recorded seed makes the number repeatable, not representative. Picking the seed after seeing the scores is the problem."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Would seed 15 still win if we drew 50 new loans?"
+        },
+        {
+          "rung": "point",
+          "text": "The highlighted bar is the minimum of twenty draws.",
+          "highlight": [
+            "s15"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every split is equally valid, so report what they say together: their mean and spread."
+        }
+      ],
+      "feedback": {
+        "correct": "Report all twenty together, or one split fixed before looking.",
+        "generic": "Not quite right. Ask which number a fresh split would most likely give.",
+        "byKey": {
+          "min": "You reported the best of 20 splits. That number was chosen because it was low, so it is biased low.",
+          "seed": "You leaned on reproducibility. Choosing the seed after seeing the scores is still choosing."
+        }
+      },
+      "explain": {
+        "text": "The twenty splits average 0.210 with an sd of about 0.05. The minimum, 0.142, is what you get by choosing after looking. Fix the seed before you see any score, or report every split.",
+        "canvas": {
+          "hlines": [
+            {
+              "id": "avg",
+              "y": 0.21,
+              "label": "mean 0.210"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Edge case: five test loans",
+      "prose": "Now each split holds back only 5 loans. The ten seeds give test MSEs from 0.054 to 0.411, an sd of 0.11: half the size of the thing we are measuring.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s0",
+              "label": "0",
+              "value": 0.327
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "value": 0.146
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "value": 0.235
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "value": 0.054
+            },
+            {
+              "id": "s4",
+              "label": "4",
+              "value": 0.07
+            },
+            {
+              "id": "s5",
+              "label": "5",
+              "value": 0.218
+            },
+            {
+              "id": "s6",
+              "label": "6",
+              "value": 0.075
+            },
+            {
+              "id": "s7",
+              "label": "7",
+              "value": 0.225
+            },
+            {
+              "id": "s8",
+              "label": "8",
+              "value": 0.411
+            },
+            {
+              "id": "s9",
+              "label": "9",
+              "value": 0.239
+            }
+          ],
+          "xLabel": "random_state of the split",
+          "yLabel": "Test MSE (5 loans)",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.45
+        },
+        "state": {}
+      },
+      "question": "A new book has only 40 loans. What is the honest way to measure a model on it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rotate",
+            "text": "Let every loan take a turn in a small test set, and average all the turns",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "Hold back 5 loans once; the number is unbiased",
+            "why": "Unbiased is not enough. With 5 loans the sd is about half the MSE itself, so one number tells us little."
+          },
+          {
+            "id": "train",
+            "text": "Score the model on the loans it was fitted on",
+            "why": "You used training error. The model has seen those loans, so its error there is too low."
+          },
+          {
+            "id": "skip",
+            "text": "Skip testing: 40 loans is too few to bother",
+            "why": "Small data is where overfitting bites hardest, so measuring matters more, not less."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The trouble is noise, not bias."
+        },
+        {
+          "rung": "point",
+          "text": "Each 5-loan test set is tiny, but there are eight disjoint ones in 40 loans.",
+          "highlight": [
+            "s8",
+            "s3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If every loan is tested once and the results averaged, all 40 loans count towards the score."
+        }
+      ],
+      "feedback": {
+        "correct": "That is cross-validation, the subject of lesson 2.",
+        "generic": "Not quite right. Look for a way to use every loan for testing."
+      },
+      "explain": {
+        "text": "One 5-loan test set is too noisy to read. Rotating the test rows lets every loan be tested once, so the average uses all 40. Lesson 2 builds exactly that."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 3,
+      "title": "Why bigger test sets are steadier",
+      "prose": "A test MSE is the average of $n_{\\text{test}}$ squared errors $e_i^2$. An average of independent terms has sd $\\text{sd}(e^2)/\\sqrt{n_{\\text{test}}}$. For normal errors $\\text{Var}(e^2) = 2\\sigma^4$, so $$\\text{sd}(\\widehat{\\text{MSE}}) \\approx \\sigma^2\\sqrt{\\frac{2}{n_{\\text{test}}}}.$$ Our loans have $\\sigma^2 = 0.2025$: 50 test loans give about 0.04.",
+      "question": "What sd does a 200-loan test set give, with $\\sigma^2 = 0.2025$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0203,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "sd of the test MSE",
+        "accept": "0.0203 ± 0.0005, that is $0.2025\\sqrt{2/200}$",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 0.0405,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "linear",
+            "value": 0.0101,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four times the test loans, half the spread.",
+        "generic": "Not quite right. Put 200 into $\\sigma^2\\sqrt{2/n}$.",
+        "byKey": {
+          "same": "That is the 50-loan value. Put $n = 200$ under the square root.",
+          "linear": "You divided by 4. The sd shrinks with the square root of $n$, so four times the loans halves it."
+        }
+      },
+      "explain": {
+        "text": "$0.2025 \\times \\sqrt{2/200} = 0.2025 \\times 0.1 = 0.0203$. The resplits we saw spread a little less, 0.035 at 50 loans, because they reuse the same 200 loans. The square root is why halving the noise costs four times the data."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Was the test set touched?",
+      "prose": "A project log lists events as `(action, rows)` pairs, such as `('fit', 'train')` or `('score', 'val')`. The rule: the test rows may appear once, as `('final', 'test')`, and nowhere else. Any other use of the test rows, or a second final score, means the test set was touched.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "project log",
+          "lines": [
+            "('fit', 'train')",
+            "('score', 'test')",
+            "('fit', 'train')",
+            "('final', 'test')"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l2": "err"
+          },
+          "caption": "Touched: the test rows were scored before the final score."
+        }
+      },
+      "question": "Complete `is_touched(log)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def is_touched(log):\n    \"\"\"Return True if the test rows appear anywhere except one ('final', 'test').\"\"\"\n    ...\n",
+        "solution": "def is_touched(log):\n    uses = [event for event in log if event[1] == 'test']\n    if not uses:\n        return False\n    return len(uses) > 1 or uses[0][0] != 'final'\n",
+        "examples": [
+          {
+            "call": "is_touched([('fit', 'train'), ('score', 'val'), ('final', 'test')])",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "is_touched([('fit', 'train'), ('score', 'val'), ('final', 'test')])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([('fit', 'train'), ('score', 'test'), ('fit', 'train'), ('final', 'test')])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([('fit', 'train'), ('score', 'val')])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([('final', 'test'), ('fit', 'train'), ('final', 'test')])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([('fit', 'test')])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([('fit', 'train'), ('score', 'val'), ('fit', 'train'), ('score', 'val'), ('final', 'test')])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([('tune', 'test'), ('final', 'test')])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "is_touched([('final', 'test'), ('fit', 'train')])",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests on short logs, including an empty log and a log with two final scores, compared exactly. Pure Python, so it runs at once."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Collect every event whose rows are `'test'`."
+        },
+        {
+          "rung": "point",
+          "text": "Zero uses is fine. One use is fine only if its action is `'final'`.",
+          "highlight": [
+            "l2",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep the events whose rows are test. Return True when there are two or more, or one whose action is not final."
+        }
+      ],
+      "feedback": {
+        "correct": "Your checker enforces the rule: one look, at the end.",
+        "generic": "Some tests failed. `[('fit', 'train'), ('score', 'test'), ('fit', 'train'), ('final', 'test')]` should give True.",
+        "byKey": {
+          "test-6": "An empty log never used the test rows, so it is not touched.",
+          "test-4": "Two final scores mean the first was a look before the last one."
+        }
+      },
+      "explain": {
+        "text": "Count the uses of the test rows. None, or exactly one final score, is clean; anything else means the test set helped shape the model. A desk can run this on its experiment log."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The locked years",
+      "prose": "A credit desk keeps the last two years of loans locked until a model is frozen. In March, an analyst scores a draft on the locked years “just to look”. It does badly, so she drops two features and scores it again.",
+      "question": "What are the locked years now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "val",
+            "text": "A validation set: they helped choose the features, so the desk needs a new untouched test set",
+            "correct": true
+          },
+          {
+            "id": "once",
+            "text": "Still a test set, because she looked only once before changing the model",
+            "why": "You counted looks, not uses. One look that changes the model is enough to make those years part of the choosing."
+          },
+          {
+            "id": "second",
+            "text": "Still a test set, as long as she reports only the second score",
+            "why": "The second model was picked after seeing the first score, so its score on the same years is no longer clean."
+          },
+          {
+            "id": "train",
+            "text": "Training data, because the model has been fitted on them",
+            "why": "She did not fit on them; she chose with them. Rows that guide a choice are validation rows."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What did the first score change?"
+        },
+        {
+          "rung": "point",
+          "text": "Ask whether the final model would be the same if she had never looked."
+        },
+        {
+          "rung": "step",
+          "text": "The years influenced which features survived. That is the job of a validation set."
+        }
+      ],
+      "feedback": {
+        "correct": "The locked years became validation data the moment they changed the model.",
+        "generic": "Not quite right. Ask whether the locked years influenced the final model."
+      },
+      "explain": {
+        "text": "Her look led to a change, so the locked years now carry information into the model. Their score is no longer an outside view. The desk must wait for new loans, or lock a fresh slice, to get one."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Best of 20",
+      "prose": "A research note says “test Sharpe 1.4 (best of 20 splits)”. Suppose the signal’s test Sharpe across splits has mean 0.6 and sd 0.4. The largest of 20 normal draws sits, on average, 1.87 sds above their mean.",
+      "question": "What best-of-20 Sharpe would a signal with a true Sharpe of 0.6 typically show?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.35,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "a decimal",
+        "label": "Expected best-of-20 Sharpe",
+        "accept": "1.35 ± 0.01, that is $0.6 + 1.87 \\times 0.4$",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "nosd",
+            "value": 2.47,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the mean and add some sds."
+        },
+        {
+          "rung": "point",
+          "text": "The best of 20 sits 1.87 sds up."
+        },
+        {
+          "rung": "step",
+          "text": "$0.6 + 1.87 \\times 0.4$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 1.35: the note’s 1.4 is what a 0.6 signal shows as its best of 20.",
+        "generic": "Not quite right. Add 1.87 sds of 0.4 to the mean of 0.6.",
+        "byKey": {
+          "mean": "That is the typical split. The note reports the best of 20, which sits well above it.",
+          "nosd": "You added 1.87 itself. Multiply by the sd, 0.4, first."
+        }
+      },
+      "explain": {
+        "text": "$0.6 + 1.87 \\times 0.4 = 1.35$. A headline of 1.4 is what selection alone gives a 0.6 signal. Ask for all 20 splits, or one split fixed before any score was seen."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "One random split gives one noisy draw of a model’s error; resplit and it moves.",
+      "Training rows fit, validation rows choose, test rows report once at the end.",
+      "A bigger test set measures more steadily but leaves fewer rows to learn from."
+    ],
+    "formula": {
+      "name": "Spread of a test MSE",
+      "tex": "\\text{sd}(\\widehat{\\text{MSE}}) \\approx \\sigma^2\\sqrt{2/n_{\\text{test}}}",
+      "note": "Four times the test rows halves the spread."
+    },
+    "trap": "Reporting the best of several random splits, or letting the test set choose anything."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "You try five feature sets, pick the one with the best validation MSE, 0.19, and put “expected MSE 0.19” in the model card.",
+      "question": "What is wrong with the model card?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "chosen",
+            "text": "0.19 helped choose the model, so it is biased low; the expected MSE needs the untouched test set",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: the validation rows were not used for fitting",
+            "why": "Not fitting on them is not enough. The validation score picked the winner, so the winner’s score there flatters it."
+          },
+          {
+            "id": "train",
+            "text": "It should report the training MSE instead",
+            "why": "Training MSE is lower still and more biased. The honest number comes from rows used for neither job."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The validation score did the choosing; the test set does the reporting.",
+        "generic": "Not quite right. Ask which job the validation rows did."
+      },
+      "explain": {
+        "text": "The validation MSE of the winner is the lowest of five noisy numbers. One evaluation on the test set gives the number to report."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "A book of 500 loans is split 70/15/15 into training, validation and test.",
+      "question": "How many loans are in the test set?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 75,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "train",
+            "value": 350,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "both",
+            "value": 150,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "15% of 500 is 75.",
+        "generic": "Not quite right. Take 15% of 500.",
+        "byKey": {
+          "train": "That is the training set, 70%.",
+          "both": "You added validation and test together. The test set alone is 15%."
+        }
+      },
+      "explain": {
+        "text": "Training holds 350 loans, validation 75 and test 75."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 2,
+      "prose": "A notebook calls `train_test_split(X, y, test_size=0.2)` with no `random_state`.",
+      "question": "Why should the seed be recorded?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "repeat",
+            "text": "So the exact split can be rebuilt, and nobody can quietly rerun until the score looks good",
+            "correct": true
+          },
+          {
+            "id": "better",
+            "text": "Because a fixed seed gives a lower test MSE",
+            "why": "A seed makes the split repeatable; it does not make it better. Some seeds give lower scores purely by luck."
+          },
+          {
+            "id": "bias",
+            "text": "Because an unseeded split is biased",
+            "why": "Each random split is fair. The problem is that an unrecorded one cannot be checked or repeated."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The recorded seed is the receipt for the split.",
+        "generic": "Not quite right. Think about a reviewer trying to repeat your number."
+      },
+      "explain": {
+        "text": "Without the seed, every rerun gives a new split and a new score. Recording it makes the result checkable and rules out silent reruns."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "With $\\sigma^2 = 0.2025$, the test MSE has sd about $\\sigma^2\\sqrt{2/n_{\\text{test}}}$.",
+      "question": "How many test loans give an sd of 0.01?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 820,
+        "tol": {
+          "abs": 5
+        },
+        "placeholder": "whole number",
+        "accept": "820 ± 5, from $n = 2\\sigma^4/0.01^2$",
+        "wrong": [
+          {
+            "id": "sq",
+            "value": 29,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 820 loans.",
+        "generic": "Not quite right. Solve $0.2025\\sqrt{2/n} = 0.01$ for $n$.",
+        "byKey": {
+          "sq": "You forgot to square. $\\sqrt{2/n} = 0.01/0.2025$, so $n = 2/(0.0494)^2$."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt{2/n} = 0.01/0.2025 = 0.0494$, so $2/n = 0.00244$ and $n \\approx 820$. Quartering the noise from 0.04 needs sixteen times the 50 loans."
+      }
+    }
+  ]
+}

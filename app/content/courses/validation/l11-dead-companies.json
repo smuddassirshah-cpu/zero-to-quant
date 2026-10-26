@@ -1,0 +1,1952 @@
+{
+  "id": "l11-dead-companies",
+  "course": "validation",
+  "title": "Missing the companies that died",
+  "minutes": 14,
+  "objectives": [
+    "Spot survivorship bias in a dataset of shares.",
+    "Build a point-in-time universe and keep dead firms with their delisting returns."
+  ],
+  "skills": [
+    "vl-leakage"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Today's winners",
+      "prose": "In 2025 an analyst takes the 45 shares listed on a small market today. She backtests holding them in equal weights from January 2015: £100 grows to £367.24. In 2015 that market had 60 listed shares.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "x": "index",
+          "xLabel": "Months since January 2015",
+          "money": "£",
+          "yLabel": "Value of £100",
+          "series": [
+            {
+              "id": "surv",
+              "label": "today's 45",
+              "values": [
+                100.0,
+                99.94,
+                101.29,
+                103.38,
+                103.68,
+                103.15,
+                104.97,
+                108.21,
+                109.42,
+                108.5,
+                111.82,
+                111.95,
+                113.71,
+                116.45,
+                116.3,
+                119.9,
+                122.27,
+                125.43,
+                126.95,
+                129.02,
+                128.04,
+                128.33,
+                132.01,
+                133.49,
+                134.47,
+                136.43,
+                135.75,
+                141.06,
+                141.91,
+                145.59,
+                147.11,
+                146.67,
+                146.8,
+                149.09,
+                150.69,
+                150.09,
+                153.81,
+                153.37,
+                155.56,
+                152.27,
+                157.73,
+                160.7,
+                159.5,
+                161.08,
+                163.47,
+                167.87,
+                168.87,
+                170.94,
+                173.51,
+                176.64,
+                180.5,
+                181.51,
+                182.71,
+                185.57,
+                183.9,
+                187.09,
+                188.46,
+                195.25,
+                199.77,
+                203.35,
+                209.84,
+                213.47,
+                216.43,
+                223.4,
+                228.13,
+                229.88,
+                237.04,
+                238.69,
+                242.65,
+                242.57,
+                246.95,
+                246.36,
+                252.3,
+                253.85,
+                258.51,
+                269.74,
+                274.89,
+                275.32,
+                277.8,
+                283.74,
+                285.42,
+                288.35,
+                296.3,
+                297.81,
+                298.94,
+                304.57,
+                300.58,
+                300.77,
+                303.28,
+                300.78,
+                298.51,
+                306.36,
+                306.88,
+                307.97,
+                317.33,
+                316.22,
+                319.64,
+                320.47,
+                314.34,
+                321.04,
+                324.81,
+                326.9,
+                333.03,
+                335.92,
+                333.8,
+                336.84,
+                337.37,
+                340.91,
+                341.71,
+                344.84,
+                349.46,
+                345.12,
+                351.88,
+                354.39,
+                361.75,
+                362.94,
+                357.62,
+                363.08,
+                363.93,
+                365.56,
+                367.24
+              ],
+              "colour": 1
+            }
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "end",
+              "i": 120,
+              "series": "surv",
+              "label": "£{value}"
+            }
+          ]
+        }
+      },
+      "question": "An investor in 2015 buying all 60 shares equally would have ended with…",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "less",
+            "text": "less than £367.24",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "about £367.24",
+            "why": "You treated the 45 as a fair sample of the 60. They are the ones that lasted, so they are the better ones."
+          },
+          {
+            "id": "more",
+            "text": "more than £367.24",
+            "why": "More shares do not mean more return. The 15 that left are missing for a reason."
+          },
+          {
+            "id": "cant",
+            "text": "impossible to say without the data",
+            "why": "We can say the direction. Shares that collapse are delisted, so the missing 15 are mostly losers."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Why might 15 shares no longer be listed?"
+        },
+        {
+          "rung": "point",
+          "text": "Many shares leave a market because they collapsed or went bust."
+        },
+        {
+          "rung": "step",
+          "text": "The 45 are the ones that survived. Leaving out the ones that failed can only make the backtest look better."
+        }
+      ],
+      "feedback": {
+        "correct": "The 15 missing shares are mostly the ones that failed.",
+        "generic": "Not quite right. Ask why the 15 other shares are no longer listed.",
+        "byKey": {
+          "same": "You treated today's 45 as a fair sample. Firms that collapse get delisted, so the 45 are the survivors."
+        }
+      },
+      "explain": {
+        "text": "Firms leave a market by collapsing, going bust or being taken over. A list drawn up today has only those that lasted. Over the next screens we put the 15 back.",
+        "canvas": {
+          "highlight": [
+            "surv"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Put the dead back",
+      "prose": "Our seeded market: 60 firms, monthly returns over 10 years. A firm whose price falls below 40% of its start is delisted the next month, with a delisting return of −50%. Slide through the months.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "x": "index",
+          "xLabel": "Months since January 2015",
+          "money": "£",
+          "yLabel": "Value of £100",
+          "series": [
+            {
+              "id": "surv",
+              "label": "today's 45",
+              "values": [
+                100.0,
+                99.94,
+                101.29,
+                103.38,
+                103.68,
+                103.15,
+                104.97,
+                108.21,
+                109.42,
+                108.5,
+                111.82,
+                111.95,
+                113.71,
+                116.45,
+                116.3,
+                119.9,
+                122.27,
+                125.43,
+                126.95,
+                129.02,
+                128.04,
+                128.33,
+                132.01,
+                133.49,
+                134.47,
+                136.43,
+                135.75,
+                141.06,
+                141.91,
+                145.59,
+                147.11,
+                146.67,
+                146.8,
+                149.09,
+                150.69,
+                150.09,
+                153.81,
+                153.37,
+                155.56,
+                152.27,
+                157.73,
+                160.7,
+                159.5,
+                161.08,
+                163.47,
+                167.87,
+                168.87,
+                170.94,
+                173.51,
+                176.64,
+                180.5,
+                181.51,
+                182.71,
+                185.57,
+                183.9,
+                187.09,
+                188.46,
+                195.25,
+                199.77,
+                203.35,
+                209.84,
+                213.47,
+                216.43,
+                223.4,
+                228.13,
+                229.88,
+                237.04,
+                238.69,
+                242.65,
+                242.57,
+                246.95,
+                246.36,
+                252.3,
+                253.85,
+                258.51,
+                269.74,
+                274.89,
+                275.32,
+                277.8,
+                283.74,
+                285.42,
+                288.35,
+                296.3,
+                297.81,
+                298.94,
+                304.57,
+                300.58,
+                300.77,
+                303.28,
+                300.78,
+                298.51,
+                306.36,
+                306.88,
+                307.97,
+                317.33,
+                316.22,
+                319.64,
+                320.47,
+                314.34,
+                321.04,
+                324.81,
+                326.9,
+                333.03,
+                335.92,
+                333.8,
+                336.84,
+                337.37,
+                340.91,
+                341.71,
+                344.84,
+                349.46,
+                345.12,
+                351.88,
+                354.39,
+                361.75,
+                362.94,
+                357.62,
+                363.08,
+                363.93,
+                365.56,
+                367.24
+              ],
+              "colour": 1
+            },
+            {
+              "id": "all",
+              "label": "all 60",
+              "values": [
+                100.0,
+                99.22,
+                100.16,
+                102.08,
+                102.41,
+                101.68,
+                103.46,
+                105.52,
+                105.44,
+                104.14,
+                107.15,
+                106.37,
+                107.47,
+                110.01,
+                108.64,
+                110.9,
+                112.35,
+                114.95,
+                116.39,
+                118.49,
+                118.72,
+                119.34,
+                121.95,
+                122.42,
+                121.76,
+                122.9,
+                121.81,
+                125.51,
+                126.4,
+                129.14,
+                130.26,
+                129.1,
+                129.49,
+                131.61,
+                132.54,
+                131.87,
+                134.53,
+                133.83,
+                135.12,
+                131.82,
+                137.07,
+                137.49,
+                134.96,
+                136.39,
+                137.41,
+                138.27,
+                138.93,
+                140.29,
+                142.58,
+                145.09,
+                147.25,
+                147.52,
+                148.08,
+                147.98,
+                146.07,
+                147.7,
+                147.74,
+                151.48,
+                154.75,
+                157.34,
+                161.31,
+                164.14,
+                165.21,
+                168.48,
+                170.72,
+                173.26,
+                177.53,
+                176.08,
+                178.86,
+                177.6,
+                181.31,
+                180.68,
+                181.69,
+                180.1,
+                179.87,
+                185.86,
+                188.61,
+                187.78,
+                188.42,
+                190.79,
+                187.9,
+                187.41,
+                189.61,
+                191.94,
+                192.2,
+                194.83,
+                192.02,
+                189.69,
+                191.9,
+                190.02,
+                187.49,
+                193.37,
+                191.35,
+                191.21,
+                195.93,
+                193.89,
+                195.62,
+                195.34,
+                189.19,
+                192.58,
+                194.85,
+                196.54,
+                198.8,
+                198.51,
+                197.05,
+                195.71,
+                195.66,
+                195.72,
+                195.65,
+                197.56,
+                200.19,
+                197.81,
+                201.53,
+                202.9,
+                206.15,
+                204.58,
+                201.58,
+                204.66,
+                205.14,
+                206.05,
+                207.0
+              ],
+              "colour": 2
+            }
+          ],
+          "params": {
+            "ia": [
+              100.0,
+              99.22,
+              100.16,
+              102.08,
+              102.41,
+              101.68,
+              103.46,
+              105.52,
+              105.44,
+              104.14,
+              107.15,
+              106.37,
+              107.47,
+              110.01,
+              108.64,
+              110.9,
+              112.35,
+              114.95,
+              116.39,
+              118.49,
+              118.72,
+              119.34,
+              121.95,
+              122.42,
+              121.76,
+              122.9,
+              121.81,
+              125.51,
+              126.4,
+              129.14,
+              130.26,
+              129.1,
+              129.49,
+              131.61,
+              132.54,
+              131.87,
+              134.53,
+              133.83,
+              135.12,
+              131.82,
+              137.07,
+              137.49,
+              134.96,
+              136.39,
+              137.41,
+              138.27,
+              138.93,
+              140.29,
+              142.58,
+              145.09,
+              147.25,
+              147.52,
+              148.08,
+              147.98,
+              146.07,
+              147.7,
+              147.74,
+              151.48,
+              154.75,
+              157.34,
+              161.31,
+              164.14,
+              165.21,
+              168.48,
+              170.72,
+              173.26,
+              177.53,
+              176.08,
+              178.86,
+              177.6,
+              181.31,
+              180.68,
+              181.69,
+              180.1,
+              179.87,
+              185.86,
+              188.61,
+              187.78,
+              188.42,
+              190.79,
+              187.9,
+              187.41,
+              189.61,
+              191.94,
+              192.2,
+              194.83,
+              192.02,
+              189.69,
+              191.9,
+              190.02,
+              187.49,
+              193.37,
+              191.35,
+              191.21,
+              195.93,
+              193.89,
+              195.62,
+              195.34,
+              189.19,
+              192.58,
+              194.85,
+              196.54,
+              198.8,
+              198.51,
+              197.05,
+              195.71,
+              195.66,
+              195.72,
+              195.65,
+              197.56,
+              200.19,
+              197.81,
+              201.53,
+              202.9,
+              206.15,
+              204.58,
+              201.58,
+              204.66,
+              205.14,
+              206.05,
+              207.0
+            ],
+            "isv": [
+              100.0,
+              99.94,
+              101.29,
+              103.38,
+              103.68,
+              103.15,
+              104.97,
+              108.21,
+              109.42,
+              108.5,
+              111.82,
+              111.95,
+              113.71,
+              116.45,
+              116.3,
+              119.9,
+              122.27,
+              125.43,
+              126.95,
+              129.02,
+              128.04,
+              128.33,
+              132.01,
+              133.49,
+              134.47,
+              136.43,
+              135.75,
+              141.06,
+              141.91,
+              145.59,
+              147.11,
+              146.67,
+              146.8,
+              149.09,
+              150.69,
+              150.09,
+              153.81,
+              153.37,
+              155.56,
+              152.27,
+              157.73,
+              160.7,
+              159.5,
+              161.08,
+              163.47,
+              167.87,
+              168.87,
+              170.94,
+              173.51,
+              176.64,
+              180.5,
+              181.51,
+              182.71,
+              185.57,
+              183.9,
+              187.09,
+              188.46,
+              195.25,
+              199.77,
+              203.35,
+              209.84,
+              213.47,
+              216.43,
+              223.4,
+              228.13,
+              229.88,
+              237.04,
+              238.69,
+              242.65,
+              242.57,
+              246.95,
+              246.36,
+              252.3,
+              253.85,
+              258.51,
+              269.74,
+              274.89,
+              275.32,
+              277.8,
+              283.74,
+              285.42,
+              288.35,
+              296.3,
+              297.81,
+              298.94,
+              304.57,
+              300.58,
+              300.77,
+              303.28,
+              300.78,
+              298.51,
+              306.36,
+              306.88,
+              307.97,
+              317.33,
+              316.22,
+              319.64,
+              320.47,
+              314.34,
+              321.04,
+              324.81,
+              326.9,
+              333.03,
+              335.92,
+              333.8,
+              336.84,
+              337.37,
+              340.91,
+              341.71,
+              344.84,
+              349.46,
+              345.12,
+              351.88,
+              354.39,
+              361.75,
+              362.94,
+              357.62,
+              363.08,
+              363.93,
+              365.56,
+              367.24
+            ],
+            "cnt": [
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              60,
+              59,
+              59,
+              59,
+              59,
+              59,
+              59,
+              59,
+              59,
+              59,
+              59,
+              59,
+              58,
+              58,
+              58,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              57,
+              56,
+              56,
+              56,
+              56,
+              56,
+              56,
+              55,
+              54,
+              54,
+              54,
+              54,
+              54,
+              54,
+              52,
+              52,
+              51,
+              51,
+              51,
+              51,
+              51,
+              50,
+              50,
+              50,
+              50,
+              50,
+              49,
+              49,
+              49,
+              49,
+              49,
+              49,
+              48,
+              48,
+              48,
+              48,
+              48,
+              48,
+              48,
+              47,
+              47,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              46,
+              45,
+              45,
+              45,
+              45,
+              45
+            ]
+          }
+        },
+        "state": {
+          "params": {
+            "m": 0
+          },
+          "markers": [
+            {
+              "id": "mk1",
+              "i": 0,
+              "series": "surv"
+            },
+            {
+              "id": "mk2",
+              "i": 0,
+              "series": "all"
+            }
+          ]
+        },
+        "derive": {
+          "mk1.i": "m",
+          "mk2.i": "m",
+          "caption": "Month {{m}}: {{cnt[m]}} firms listed. Today's 45: £{{fixed(isv[m], 2)}}. All 60: £{{fixed(ia[m], 2)}}."
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": 0,
+            "max": 120,
+            "step": 1,
+            "start": 0,
+            "label": "Month"
+          }
+        ]
+      },
+      "question": "At month 120, how much more is £100 worth in today's 45 than in all 60?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 160.24,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Gap at month 120",
+        "accept": "£160.24: £367.24 against £207.00.",
+        "wrong": [
+          {
+            "id": "surv",
+            "value": 367.24,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "all",
+            "value": 207.0,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£367.24 against £207.00: a gap of £160.24.",
+        "generic": "Not quite right. Slide to month 120 and subtract the all-firms value from the survivors' value.",
+        "byKey": {
+          "surv": "That is the survivors' value alone. Subtract what all 60 firms gave.",
+          "all": "That is what all 60 gave. Subtract it from the survivors' £367.24."
+        }
+      },
+      "explain": {
+        "text": "The two lines start together and part as firms die: 60 listed in year 3, 46 by month 119. All 60, rebalanced each month and including each delisting loss, turn £100 into £207.00. Today's 45 turn it into £367.24, because they are, by construction, the ones that did not fail.",
+        "canvas": {
+          "params": {
+            "m": 120
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Measure the bias",
+      "prose": "Judging a strategy only on firms that survived is **survivorship bias**, which you met in the probability course. Now measure it on the panel. `make_panel()` gives a table of monthly returns, one column per firm, with NaN after a firm dies.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Month",
+            "F01",
+            "F02",
+            "…",
+            "F48",
+            "…"
+          ],
+          "rows": [
+            [
+              "29",
+              "0.031",
+              "−0.052",
+              "…",
+              "−0.188",
+              "…"
+            ],
+            [
+              "30",
+              "0.094",
+              "0.015",
+              "…",
+              "−0.500",
+              "…"
+            ],
+            [
+              "31",
+              "−0.067",
+              "0.110",
+              "…",
+              "NaN",
+              "…"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "center",
+            "right",
+            "center"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "cells": [
+              "r1c4"
+            ]
+          },
+          "caption": "F48 is delisted in month 30 at −50%; from month 31 it is NaN."
+        }
+      },
+      "question": "Complete `survivor_bias` so it returns the annualised mean return of the survivors and of all firms.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_panel(seed=5, n_firms=60, n_months=120, delist=-0.5, late=0):\n    \"\"\"Monthly returns of n_firms shares over n_months (rows: months, columns: firms).\n    A firm whose price closes below 40% of its start is delisted the next month:\n    that month's return is `delist`, and every later month is NaN.\n    The last `late` firms list only from month 24 (NaN before).\"\"\"\n    rng = np.random.default_rng(seed)\n    mu = rng.normal(0.007, 0.006, n_firms)\n    R = mu + 0.09 * rng.standard_normal((n_months, n_firms))\n    R[:24, n_firms - late:] = np.nan\n    for j in range(n_firms):\n        p = 1.0\n        for t in range(n_months):\n            if np.isnan(R[t, j]):\n                continue\n            p *= 1 + R[t, j]\n            if p < 0.4 and t + 1 < n_months:\n                R[t + 1, j] = delist\n                R[t + 2:, j] = np.nan\n                break\n    cols = [f\"F{j + 1:02d}\" for j in range(n_firms)]\n    return pd.DataFrame(R, columns=cols)\n",
+        "starter": "def survivor_bias(panel, alive_at_end):\n    \"\"\"panel: monthly returns, one column per firm, NaN\n    after a firm dies. alive_at_end: firms listed in the\n    last month. Returns 12 times the mean equal-weight\n    monthly return of the survivors, then of all firms.\"\"\"\n    surv = ...       # mean across survivors, each month\n    everyone = ...   # mean across every firm listed\n    return (round(float(12 * surv.mean()), 4),\n            round(float(12 * everyone.mean()), 4))\n",
+        "solution": "def survivor_bias(panel, alive_at_end):\n    \"\"\"panel: monthly returns, one column per firm, NaN\n    after a firm dies. alive_at_end: firms listed in the\n    last month. Returns 12 times the mean equal-weight\n    monthly return of the survivors, then of all firms.\"\"\"\n    surv = panel[alive_at_end].mean(axis=1)\n    everyone = panel.mean(axis=1)    # skips NaN\n    return (round(float(12 * surv.mean()), 4),\n            round(float(12 * everyone.mean()), 4))\n",
+        "examples": [
+          {
+            "setup": "P = make_panel(); alive = [c for c in P.columns if P[c].notna().iloc[-1]]",
+            "call": "survivor_bias(P, alive)",
+            "expect": "(0.1317, 0.074)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "P = make_panel(); alive = [c for c in P.columns if P[c].notna().iloc[-1]]",
+            "call": "survivor_bias(P, alive)",
+            "expect": "(0.1317, 0.074)",
+            "compare": "equal"
+          },
+          {
+            "setup": "P = make_panel(delist=0.0); alive = [c for c in P.columns if P[c].notna().iloc[-1]]",
+            "call": "survivor_bias(P, alive)",
+            "expect": "(0.1317, 0.0882)",
+            "compare": "equal"
+          },
+          {
+            "setup": "P = make_panel(delist=-1.0); alive = [c for c in P.columns if P[c].notna().iloc[-1]]",
+            "call": "survivor_bias(P, alive)",
+            "expect": "(0.1317, 0.0598)",
+            "compare": "equal"
+          },
+          {
+            "setup": "P = make_panel(seed=15); alive = [c for c in P.columns if P[c].notna().iloc[-1]]",
+            "call": "survivor_bias(P, alive)",
+            "expect": "(0.1389, 0.0839)",
+            "compare": "equal"
+          },
+          {
+            "setup": "P = make_panel(seed=18); alive = [c for c in P.columns if P[c].notna().iloc[-1]]",
+            "call": "survivor_bias(P, alive)",
+            "expect": "(0.124, 0.0741)",
+            "compare": "equal"
+          },
+          {
+            "setup": "P = make_panel(late=5); alive = [c for c in P.columns if P[c].notna().iloc[-1]]",
+            "call": "survivor_bias(P, alive)",
+            "expect": "(0.1319, 0.0734)",
+            "compare": "equal"
+          },
+          {
+            "call": "survivor_bias(pd.DataFrame({'A': [0.1, 0.1], 'B': [-0.5, None]}, dtype=float), ['A'])",
+            "expect": "(1.2, -0.6)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on panels from `make_panel(seed, delist, late)`, which is already defined, and one two-firm table. Each compares your rounded pair, survivors first, with ==. The first run loads pandas and NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`panel.mean(axis=1)` averages across firms each month and skips NaN."
+        },
+        {
+          "rung": "point",
+          "text": "For the survivors, select their columns first: `panel[alive_at_end]`.",
+          "highlight": [
+            "r1c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`surv = panel[alive_at_end].mean(axis=1)` and `everyone = panel.mean(axis=1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Survivors 13.17% a year, all firms 7.40%.",
+        "generic": "Some tests failed. Average across columns (`axis=1`) each month: survivors' columns for one, every column for the other.",
+        "byKey": {
+          "test-7": "Your two-firm answer is off. Month 1 averages 0.1 and −0.5 to −0.2; month 2 has only firm A, at 0.1."
+        }
+      },
+      "explain": {
+        "text": "Today's 45 average 13.17% a year; all 60, with each delisting loss, average 7.40%. The bias is 5.77 points a year, from 15 deaths in 60 firms. The dead firms averaged −17.7% a year while they were listed."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A tidy-looking line",
+      "prose": "A cleaning script ends with `panel = panel.dropna(axis=1)`: keep only firms with all 120 months, \"so every firm has a clean history\". Count what it throws away.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> panel.shape",
+            "(120, 60)",
+            ">>> panel = panel.dropna(axis=1)   # clean histories",
+            ">>> panel.shape",
+            "?"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      },
+      "question": "Complete `dropna_kills` so it returns how many firms the filter removes.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_panel(seed=5, n_firms=60, n_months=120, delist=-0.5, late=0):\n    \"\"\"Monthly returns of n_firms shares over n_months (rows: months, columns: firms).\n    A firm whose price closes below 40% of its start is delisted the next month:\n    that month's return is `delist`, and every later month is NaN.\n    The last `late` firms list only from month 24 (NaN before).\"\"\"\n    rng = np.random.default_rng(seed)\n    mu = rng.normal(0.007, 0.006, n_firms)\n    R = mu + 0.09 * rng.standard_normal((n_months, n_firms))\n    R[:24, n_firms - late:] = np.nan\n    for j in range(n_firms):\n        p = 1.0\n        for t in range(n_months):\n            if np.isnan(R[t, j]):\n                continue\n            p *= 1 + R[t, j]\n            if p < 0.4 and t + 1 < n_months:\n                R[t + 1, j] = delist\n                R[t + 2:, j] = np.nan\n                break\n    cols = [f\"F{j + 1:02d}\" for j in range(n_firms)]\n    return pd.DataFrame(R, columns=cols)\n",
+        "starter": "def dropna_kills(panel):\n    \"\"\"How many firms (columns) does keeping only\n    full-history firms remove?\"\"\"\n    full = panel.dropna(axis=1)\n    ...\n",
+        "solution": "def dropna_kills(panel):\n    \"\"\"How many firms (columns) does keeping only\n    full-history firms remove?\"\"\"\n    full = panel.dropna(axis=1)\n    return panel.shape[1] - full.shape[1]\n",
+        "examples": [
+          {
+            "call": "dropna_kills(make_panel())",
+            "expect": "15",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "dropna_kills(make_panel())",
+            "expect": "15",
+            "compare": "equal"
+          },
+          {
+            "call": "dropna_kills(make_panel(late=5))",
+            "expect": "19",
+            "compare": "equal"
+          },
+          {
+            "call": "dropna_kills(make_panel(seed=15))",
+            "expect": "15",
+            "compare": "equal"
+          },
+          {
+            "call": "dropna_kills(pd.DataFrame({'A': [0.1, 0.2], 'B': [0.0, 0.1]}))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "dropna_kills(pd.DataFrame({'A': [None, 0.2, 0.1], 'B': [0.0, 0.1, None], 'C': [0.1, 0.1, 0.1]}, dtype=float))",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: three panels from `make_panel`, which is already defined, and two small tables. Each compares your count with ==. The first run loads pandas and NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`panel.shape[1]` is the number of firms."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the number of columns before and after `dropna(axis=1)`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return panel.shape[1] - full.shape[1]`."
+        }
+      ],
+      "feedback": {
+        "correct": "The filter removes every dead firm, and every late lister too.",
+        "generic": "Some tests failed. Count columns before minus columns after the filter.",
+        "byKey": {
+          "test-2": "You counted only firms whose history ends early. A firm that listed late is missing its first months, and the filter drops it too."
+        }
+      },
+      "explain": {
+        "text": "On our panel it removes exactly the 15 dead firms: the clean-looking table is the survivors' table. With 5 late listers it removes 19, since one late lister also died. The line looks like hygiene and is survivorship bias in one call.",
+        "canvas": {
+          "lines": [
+            ">>> panel.shape",
+            "(120, 60)",
+            ">>> panel = panel.dropna(axis=1)   # clean histories",
+            ">>> panel.shape",
+            "(120, 45)"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The universe as of a date",
+      "prose": "The fix starts with the universe. Store index membership as records, one per spell, and ask who was a member on each backtest date. Using today's top 100 by market value for a 2010 backtest is look-ahead: it picks 2010's future winners.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Firm",
+            "Joined",
+            "Left"
+          ],
+          "rows": [
+            [
+              "AAA",
+              "2005-01-01",
+              "still a member"
+            ],
+            [
+              "BBB",
+              "2005-01-01",
+              "2012-06-30"
+            ],
+            [
+              "CCC",
+              "2010-03-01",
+              "still a member"
+            ],
+            [
+              "DDD",
+              "2008-01-01",
+              "2009-01-01"
+            ],
+            [
+              "EEE",
+              "2015-01-01",
+              "2020-01-01"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `universe_as_of` so it returns the members on `date`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def universe_as_of(members, date):\n    \"\"\"members: (firm, start, end) records, ISO date strings;\n    end is the first day it is no longer a member, or None.\n    Returns the sorted firms that are members on date.\"\"\"\n    ...\n",
+        "solution": "def universe_as_of(members, date):\n    \"\"\"members: (firm, start, end) records, ISO date strings;\n    end is the first day it is no longer a member, or None.\n    Returns the sorted firms that are members on date.\"\"\"\n    return sorted(f for f, start, end in members\n                  if start <= date and (end is None or date < end))\n",
+        "examples": [
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2010-01-01')",
+            "expect": "['AAA', 'BBB']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2010-01-01')",
+            "expect": "['AAA', 'BBB']",
+            "compare": "equal"
+          },
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2012-06-30')",
+            "expect": "['AAA', 'CCC']",
+            "compare": "equal"
+          },
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2012-06-29')",
+            "expect": "['AAA', 'BBB', 'CCC']",
+            "compare": "equal"
+          },
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2005-01-01')",
+            "expect": "['AAA', 'BBB']",
+            "compare": "equal"
+          },
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2024-01-01')",
+            "expect": "['AAA', 'CCC']",
+            "compare": "equal"
+          },
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2004-12-31')",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "universe_as_of([], '2015-01-01')",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "M = [('AAA', '2005-01-01', None), ('BBB', '2005-01-01', '2012-06-30'), ('CCC', '2010-03-01', None), ('DDD', '2008-01-01', '2009-01-01'), ('EEE', '2015-01-01', '2020-01-01')]",
+            "call": "universe_as_of(M, '2016-05-01')",
+            "expect": "['AAA', 'CCC', 'EEE']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on the five records shown and an empty list. Each compares your sorted list with ==. Pure Python is enough: ISO dates compare correctly as strings."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A firm is a member from its start date until the day before its end date."
+        },
+        {
+          "rung": "point",
+          "text": "Test `start <= date` and `end is None or date < end`.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`sorted(f for f, start, end in members if start <= date and (end is None or date < end))`."
+        }
+      ],
+      "feedback": {
+        "correct": "On 1 January 2010 the members were AAA and BBB.",
+        "generic": "Some tests failed. Include the start date, exclude the end date, and treat `None` as still a member.",
+        "byKey": {
+          "test-2": "You kept BBB on 30 June 2012, the day it left. The end date is the first day it is no longer a member: use `date < end`.",
+          "test-4": "You dropped firms on the day they joined. A firm is a member on its start date: use `start <= date`."
+        }
+      },
+      "explain": {
+        "text": "On 1 January 2010 the members were AAA and BBB: DDD had left and CCC had not joined. A backtest built from today's list would hold CCC in 2010 and miss BBB. Point-in-time membership is what a backtest date could have known.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "When is there no bias?",
+      "prose": "Edge case. Market A lost no firms in 10 years. Market B lost 15 of 60 through mergers that happened at random, at the market price, unrelated to how the firms had done. In each, an analyst backtests today's members.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Market",
+            "Firms that left",
+            "Why they left"
+          ],
+          "rows": [
+            [
+              "A",
+              "0",
+              "none left"
+            ],
+            [
+              "B",
+              "15",
+              "random mergers at market price"
+            ],
+            [
+              "Our panel",
+              "15",
+              "price fell below 40% of start"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which backtests overstate the return of the whole market?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ours",
+            "text": "Only the one on our panel",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "All three",
+            "why": "You treated every exit as bias. In A nobody left, and in B leaving had nothing to do with returns."
+          },
+          {
+            "id": "ab",
+            "text": "Our panel and market B",
+            "why": "In B the leavers were a random draw, so the stayers are a fair sample of the whole."
+          },
+          {
+            "id": "none",
+            "text": "None of them",
+            "why": "On our panel firms left because they fell; leaving them out lifted the return by 5.77 points a year."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does a survivor list differ from the whole when nobody leaves?"
+        },
+        {
+          "rung": "point",
+          "text": "In market B, are the leavers any worse than the stayers?"
+        },
+        {
+          "rung": "step",
+          "text": "Bias needs exits that depend on returns. Only our panel has them."
+        }
+      ],
+      "feedback": {
+        "correct": "Bias needs exits that depend on how firms did.",
+        "generic": "Not quite right. Ask, for each market, whether the firms that left did worse than those that stayed.",
+        "byKey": {
+          "ab": "In market B the leavers were picked at random, so the survivors are a fair sample. Random exits cost data, not accuracy."
+        }
+      },
+      "explain": {
+        "text": "With no deaths the survivors are the whole market, so the bias is 0. With random exits they are a fair sample: less data, no bias. Our panel's deaths came from falling prices, which is how real delistings mostly happen.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Dead, but with no loss",
+      "prose": "A colleague fixes the survivorship problem by keeping all 60 firms. The delisting returns were missing from the price file, so they filled them with 0. Their all-firm return is now 8.82% a year.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Universe",
+            "Delisting month",
+            "Return a year"
+          ],
+          "rows": [
+            [
+              "today's 45",
+              "not included",
+              "13.17%"
+            ],
+            [
+              "all 60",
+              "return set to 0",
+              "8.82%"
+            ],
+            [
+              "all 60",
+              "actual −50%",
+              "7.40%"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      },
+      "question": "How much of the 5.77-point bias is still in their number?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0142,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "label": "Bias left, in percentage points a year",
+        "accept": "1.42 points: 8.82% against 7.40%.",
+        "wrong": [
+          {
+            "id": "fixed",
+            "value": 0,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "full",
+            "value": 0.0577,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "removed",
+            "value": 0.0435,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare their number with the all-firm return that uses the actual delisting loss."
+        },
+        {
+          "rung": "point",
+          "text": "8.82% against 7.40%.",
+          "highlight": [
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$8.82 - 7.40 = 1.42$ points a year are still missing."
+        }
+      ],
+      "feedback": {
+        "correct": "1.42 points of the 5.77 remain.",
+        "generic": "Not quite right. Subtract the 7.40% with real delisting losses from their 8.82%.",
+        "byKey": {
+          "fixed": "You took putting the firms back as the whole fix. A return of 0 says the holders lost nothing on the last day, when they lost half.",
+          "full": "That is the whole bias before the fix. Their number already includes the dead firms' earlier months.",
+          "removed": "That is the part they removed, 13.17% minus 8.82%. The question asks what is left."
+        }
+      },
+      "explain": {
+        "text": "Setting the delisting return to 0 says shareholders walked away whole. In our panel they lost half, in the very month the firm left. Including dead firms fixes most of the bias; using their real delisting returns fixes the rest.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "A survivorship-free backtest",
+      "prose": "Put the fixes together. Each step closes one route by which the dead firms vanish.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "u",
+            "text": "For each rebalance date, list the firms that were members on that date"
+          },
+          {
+            "id": "r",
+            "text": "Pull those firms' returns, dead firms included"
+          },
+          {
+            "id": "d",
+            "text": "Use the actual delisting return in the month a firm leaves"
+          },
+          {
+            "id": "a",
+            "text": "Average the returns of the firms held each month"
+          },
+          {
+            "id": "c",
+            "text": "Compound the monthly averages into the backtest"
+          }
+        ],
+        "answer": [
+          "u",
+          "r",
+          "d",
+          "a",
+          "c"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must you know before you can pull any returns?"
+        },
+        {
+          "rung": "point",
+          "text": "The universe comes first: who was a member on each date."
+        },
+        {
+          "rung": "step",
+          "text": "Universe as of each date, then returns with dead firms, then delisting returns, then the average, then compounding."
+        }
+      ],
+      "feedback": {
+        "correct": "Universe, returns, delisting returns, average, compound.",
+        "generic": "Not quite right. Start from who was a member on each date and end with the compounded backtest.",
+        "byKey": {
+          "r": "Returns can only be pulled for a universe. List the members as of each date first.",
+          "c": "Compounding comes last, once each month's average exists."
+        }
+      },
+      "explain": {
+        "text": "The point-in-time universe stops look-ahead in the choice of firms. Keeping dead firms and their real delisting returns stops survivorship in the returns. The average and the compounding are then ordinary."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The size of the gap",
+      "prose": "From the probability course: with survival $S$ and return $R$, $$E[R \\mid S] - E[R] = P(S^c)\\,\\big(E[R \\mid S] - E[R \\mid S^c]\\big).$$ The gap is the death rate times how much worse the dead did. It is 0 if nobody dies, or if dying is unrelated to returns.",
+      "question": "A fund database lists only open funds. Over ten years 30% of funds closed, after doing 4 points a year worse than the survivors. How far does the database overstate the average fund?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.012,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "label": "Overstatement, percentage points a year",
+        "accept": "1.2 points: $0.30 \\times 4$.",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "thirty",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.30 \\times 4 = 1.2$ points a year.",
+        "generic": "Not quite right. Multiply the share of funds that closed by how much worse they did.",
+        "byKey": {
+          "four": "That is how much worse the closed funds did. Only 30% of funds closed, so multiply by 0.30."
+        }
+      },
+      "explain": {
+        "text": "$P(S^c) = 0.30$ and the gap in returns is 4 points, so the database overstates by $0.30 \\times 4 = 1.2$ points a year. Studies of fund databases find premiums of the order of 1 to 2% a year: an order of magnitude, not a precise figure."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Today's FTSE 100, from 2005",
+      "prose": "A backtest buys the shares in today's FTSE 100, in equal weights, from 2005. It beats the index itself by about 2% a year.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Group",
+            "In the backtest?",
+            "What they did after 2005"
+          ],
+          "rows": [
+            [
+              "in the index in 2005 and today",
+              "yes",
+              "stayed large"
+            ],
+            [
+              "joined after 2005",
+              "yes, from 2005",
+              "rose into the index"
+            ],
+            [
+              "left after 2005",
+              "no",
+              "fell out, failed or were bought"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Why is the backtest's return too high?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "It holds future joiners from 2005 and drops every share that fell out",
+            "correct": true
+          },
+          {
+            "id": "costs",
+            "text": "It ignores trading costs",
+            "why": "Costs lower any backtest a little. They do not explain picking shares by what happened after 2005."
+          },
+          {
+            "id": "weights",
+            "text": "Equal weights favour small shares",
+            "why": "Weighting matters, but the index itself was not chosen with hindsight. The member list was."
+          },
+          {
+            "id": "fine",
+            "text": "It is not too high: large shares did well",
+            "why": "You took the result at face value. The list of shares was chosen in 2025, using what happened after 2005."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which shares could a 2005 investor not have known to buy?"
+        },
+        {
+          "rung": "point",
+          "text": "Shares join the FTSE 100 by rising and leave it by falling.",
+          "highlight": [
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The backtest buys the future joiners early and never holds the leavers: look-ahead and survivorship together."
+        }
+      ],
+      "feedback": {
+        "correct": "The member list itself carries the future.",
+        "generic": "Not quite right. Ask how today's list was chosen.",
+        "byKey": {
+          "fine": "You took the result at face value. Today's list was chosen with knowledge of what happened after 2005."
+        }
+      },
+      "explain": {
+        "text": "Firms join the FTSE 100 by growing and leave it by shrinking, so today's list is a list of winners. Holding the joiners from 2005 is look-ahead; dropping the leavers is survivorship. Rebuild it from the membership as of each date.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A universe chosen today has no firms that went bust or were delisted, so its backtest looks better than any 2015 investor could have done.",
+      "On our panel of 60 firms, 15 deaths lifted the return from 7.40% to 13.17% a year; a filter like `dropna(axis=1)` does the same damage in one line.",
+      "Fix it with membership as of each date, dead firms kept, and their real delisting returns."
+    ],
+    "formula": {
+      "name": "Survivorship gap",
+      "tex": "E[R \\mid S] - E[R] = P(S^c)\\,\\big(E[R \\mid S] - E[R \\mid S^c]\\big)",
+      "note": "Zero with no deaths, or when deaths are unrelated to returns."
+    },
+    "trap": "Putting the dead firms back with a delisting return of 0: on our panel 1.42 points of bias remained."
+  },
+  "quiz": [
+    {
+      "id": "q-rows",
+      "difficulty": 3,
+      "prose": "Our panel has months as rows and firms as columns. The first firm to die is F48: its last return is in month 30. A colleague writes `panel.dropna()`, which drops rows.",
+      "question": "What is left?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "31",
+            "text": "Months 0 to 30 only: 31 of the 120 months",
+            "correct": true
+          },
+          {
+            "id": "45",
+            "text": "All 120 months of the 45 survivors",
+            "why": "That is `dropna(axis=1)`, which drops columns. Plain `dropna()` drops every row with any NaN."
+          },
+          {
+            "id": "all",
+            "text": "All 120 months of all 60 firms",
+            "why": "The panel has NaN after each death, so `dropna()` has rows to drop."
+          },
+          {
+            "id": "60",
+            "text": "The first 60 months",
+            "why": "Rows go from the first month with a NaN: month 31, the month after F48's last return."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every month after the first death has a NaN, so all of them go.",
+        "generic": "Not quite right. `dropna()` drops every row that contains any NaN.",
+        "byKey": {
+          "45": "That is `dropna(axis=1)`. Plain `dropna()` drops rows."
+        }
+      },
+      "explain": {
+        "text": "From month 31 on, F48 is NaN in every row, so `dropna()` drops months 31 to 120. Either direction of `dropna` on a panel with deaths quietly changes the question."
+      }
+    },
+    {
+      "id": "q-last-day",
+      "difficulty": 2,
+      "prose": "Edge case. One of the 46 firms listed in the final month is delisted that month at −50%. A backtest leaves it out.",
+      "question": "Roughly how much does that one omission lift the 10-year annualised mean return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tiny",
+            "text": "About 0.1 point a year",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "About 50 points a year",
+            "why": "You applied the −50% to the whole portfolio. It is one firm of 46, in one month of 120."
+          },
+          {
+            "id": "one",
+            "text": "About 1 point a year",
+            "why": "One firm of 46 lifts that month by about 1.1%. Spread over 120 months, it is about a tenth of a point a year."
+          },
+          {
+            "id": "zero",
+            "text": "Nothing: it died on the last day",
+            "why": "Its delisting loss is still part of the last month. Leaving it out does lift the result, a little."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.5 / 46 \\approx 1.1\\%$ in one month, about 0.1 point a year.",
+        "generic": "Not quite right. One firm of 46, in one month of 120.",
+        "byKey": {
+          "zero": "Its −50% still belongs to the last month. Leaving it out lifts the result a little."
+        }
+      },
+      "explain": {
+        "text": "Leaving it out lifts the last month's average by about $0.5/46 = 1.1\\%$. Annualised as 12 times the mean of 120 months, that is about 0.1 point. A death on the last day costs little; deaths in the middle cost years of losses."
+      }
+    },
+    {
+      "id": "q-fund-db",
+      "difficulty": 2,
+      "prose": "Studies of fund databases put the survivorship premium at about 1 to 2% a year.",
+      "question": "How should you use that figure?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "order",
+            "text": "As an order of magnitude for how much a survivor-only database flatters funds",
+            "correct": true
+          },
+          {
+            "id": "subtract",
+            "text": "Subtract exactly 1.5% from every fund's return",
+            "why": "The premium varies by period, asset class and database. It is a size, not a correction to apply."
+          },
+          {
+            "id": "only",
+            "text": "It applies only to failed funds",
+            "why": "It is the gap in the average fund's return, caused by dropping the failed ones."
+          },
+          {
+            "id": "small",
+            "text": "Ignore it: 1% to 2% is small",
+            "why": "Many fund strategies earn 1% to 2% a year above their benchmark. The bias can be all of it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It tells you the size of the problem, not the exact fix.",
+        "generic": "Not quite right. Ask whether 1 to 2% is a precise figure or a rough size.",
+        "byKey": {
+          "subtract": "The premium varies widely. Rebuild the database with dead funds instead."
+        }
+      },
+      "explain": {
+        "text": "The figure says the bias is comparable to the edge most funds claim. The fix is a database that keeps dead funds, not a deduction."
+      }
+    },
+    {
+      "id": "q-own-history",
+      "difficulty": 3,
+      "prose": "A desk's research wiki keeps a page for each signal that reached production: 12 signals, average live Sharpe 0.9. Signals that failed in testing were deleted.",
+      "question": "What does the wiki overstate?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "process",
+            "text": "How often the desk's research produces a working signal",
+            "correct": true
+          },
+          {
+            "id": "live",
+            "text": "The 12 signals' live Sharpe",
+            "why": "The live record of each kept signal is real. What is biased is the picture of the research process."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: failed signals never traded",
+            "why": "They never traded, but they were tried. Deleting them hides how many ideas it takes to find one."
+          },
+          {
+            "id": "costs",
+            "text": "The costs of trading",
+            "why": "Costs are a separate question. The wiki is missing the failures."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A strategy archive can have survivorship bias too.",
+        "generic": "Not quite right. Ask what is missing from the wiki.",
+        "byKey": {
+          "nothing": "Failed signals were still trials. Deleting them hides the real hit rate of research."
+        }
+      },
+      "explain": {
+        "text": "With the failures deleted, the wiki suggests most ideas work. Keeping every trial, as Lesson 12's research log does, shows the true count."
+      }
+    }
+  ]
+}
