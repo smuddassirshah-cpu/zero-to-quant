@@ -188,7 +188,7 @@
     const paint = (vis, showP, unknown, showVals) => {
       { const nL = all.filter(n => vis.get(n.path).o > 0.5 && !n.children.some(c => vis.get(c.path).o > 0.5)).length; crowd = nL >= 9 ? 3 : nL >= 7 ? 2 : 0; }
       const r = vis.get(''); attrs(rootDot, { transform: `translate(${r.x} ${r.y})` });
-      attrs(rootNv, { transform: tb ? `translate(${r.x + (rootLabel ? rootW / 2 : 6) + 8} ${r.y})` : `translate(${r.x} ${r.y - (rootLabel ? PH / 2 : 6) - 11})` });
+      attrs(rootNv, { transform: tb ? `translate(${r.x + (rootLabel ? rootW / 2 : 6) + 8} ${r.y})` : `translate(${Math.max(4, r.x - (rootLabel ? rootW / 2 : 6))} ${r.y - (rootLabel ? PH / 2 : 6) - 11})` });
       for (const n of all) {
         const e = el.get(n.path), v = vis.get(n.path), pv = vis.get(n.parent.path);
         const a = anchorOut(n.parent, pv), b = anchorIn(n, v);
@@ -267,7 +267,7 @@
         const v = nvals[n.path] == null ? '' : String(nvals[n.path]);
         if (v !== e.nvShown) { e.nv.replaceChildren(...(v ? [C.label(0, 0, v, { tex: 'auto', anchor: tb ? 'start' : 'middle', w: Math.max(60, C.textW(v, 12, 600) + 20), h: 22, cls: 'cv-vtext cv-nvtext', size: 12 })] : [])); e.nvShown = v; }
       }
-      { const rv = nvals.root == null ? (nvals[''] == null ? '' : String(nvals[''])) : String(nvals.root); if (rv !== rootNvShown) { rootNv.replaceChildren(...(rv ? [C.label(0, 0, rv, { tex: 'auto', anchor: tb ? 'start' : 'middle', w: Math.max(60, C.textW(rv, 12, 600) + 20), h: 22, cls: 'cv-vtext cv-nvtext', size: 12 })] : [])); rootNvShown = rv; } rootNv.style.opacity = rv ? 1 : 0; }
+      { const rv = nvals.root == null ? (nvals[''] == null ? '' : String(nvals[''])) : String(nvals.root); if (rv !== rootNvShown) { rootNv.replaceChildren(...(rv ? [C.label(0, 0, rv, { tex: 'auto', anchor: 'start', w: Math.max(60, C.textW(rv, 12, 600) + 20), h: 22, cls: 'cv-vtext cv-nvtext', size: 12 })] : [])); rootNvShown = rv; } rootNv.style.opacity = rv ? 1 : 0; }
       if (rootLabel && 'root' in labs && String(labs.root ?? rootLabel) !== rootDot.dataset.shown) { const t = String(labs.root ?? rootLabel); rootDot.dataset.shown = t; const old = rootDot.querySelector('.cv-ntext'); if (old) old.replaceWith(C.label(0, 0.5, t, { tex: 'auto', w: rootW, h: PH, cls: 'cv-ntext', size: PF })); }
       const dimSet = new Set(); [].concat(st.dim || []).forEach(p0 => { const p = String(p0); for (const n of all) if (n.path === p || n.path.startsWith(p + '-')) dimSet.add(n.path); });
       for (const n of all) { const e = el.get(n.path); e.g.classList.toggle('cv-dimmed', dimSet.has(n.path)); if (e.val) e.val.classList.toggle('cv-dimmed', dimSet.has(n.path)); e.nv.classList.toggle('cv-dimmed', dimSet.has(n.path)); }

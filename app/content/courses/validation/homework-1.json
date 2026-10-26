@@ -195,49 +195,39 @@
         "vl-overfit"
       ],
       "title": "A colleague’s note",
-      "prose": "A colleague sends this note about a loan-spread model built on 350 loans:\n\n“Tried 40 settings (8 values of α × 5 feature sets). Best 5-fold CV MSE 0.18. Used all the data for CV, so no held-out set was needed. Expected MSE in production: 0.18.”",
-      "question": "Write a reply: what is wrong with the note, roughly what the real error is likely to be, and what you would run instead.",
-      "widget": {
-        "kind": "longform",
-        "model": "**What is wrong.** The 0.18 is the lowest of 40 cross-validated scores. Each score is noisy, and the minimum of 40 noisy numbers sits below the truth, so the winner’s score is biased low. The same folds both chose the setting and scored it, so the CV rows did the job of a validation set, and nothing is left to act as a test set. “Expected MSE 0.18” is therefore an optimistic number, not an estimate.\n\n**What the real number is likely to be.** Higher than 0.18. With 40 settings that include different feature sets on only 350 loans, the search has a lot of freedom, and our level 1 experiments found gaps of 4% to 10% for searches of 15 to 105 feature choices on 200 rows. A reasonable guess is somewhere around 0.19 to 0.20, but the point is that we cannot know without measuring.\n\n**What to run.**\n1. Nested CV on all 350 loans: `cross_val_score(GridSearchCV(pipe, grid, cv=inner), X, y, cv=outer)` with shuffled 5-fold `KFold`s and a `Pipeline` so scaling happens inside each fold. Its mean is the honest score of the recipe “search 40 settings, refit the winner”. Cost: $5 \\times (5 \\times 40 + 1) = 1005$ fits, affordable for ridge.\n2. Report the nested mean with the fold spread, and the grid that was searched.\n3. If more loans arrive, lock them as a test set and score the frozen model once.\n4. Deploy the search refitted on all 350 loans; its score is the nested one.\n5. If these loans are in time order (they often are), the folds should move forward in time rather than be shuffled: level 2.\n\nThe desk’s rule applies: the number you tuned on is not the number you report.",
-        "rubric": [
-          {
-            "points": 2,
-            "text": "Says 0.18 is the best of 40 noisy scores, so it is biased low (selection bias)"
-          },
-          {
-            "points": 1,
-            "text": "Says the CV rows chose the setting, so no untouched data remains to report on"
-          },
-          {
-            "points": 2,
-            "text": "Says the real error is likely higher than 0.18, and gives a sensible reason the gap may be sizeable (40 settings with feature-set choices on 350 loans)"
-          },
-          {
-            "points": 2,
-            "text": "Proposes nested CV (tuning inside each outer fold), ideally with the one-line `cross_val_score(GridSearchCV(...))` form"
-          },
-          {
-            "points": 1,
-            "text": "Mentions a Pipeline or fitting preprocessing inside the folds, and shuffled or time-aware folds"
-          },
-          {
-            "points": 1,
-            "text": "Proposes a locked test set for new data, or explains when one could replace nested CV"
-          },
-          {
-            "points": 1,
-            "text": "Says what to deploy (the search refitted on all rows) and what to report (the nested score, with the grid searched)"
-          }
-        ]
-      },
-      "feedback": {
-        "correct": "Compare your reply with the model answer and tick the rubric.",
-        "generic": "Compare your reply with the model answer and tick the rubric."
-      },
-      "explain": {
-        "text": "The key points: the best of 40 scores is optimistic, nested CV measures the recipe honestly, and the tuned number is never the reported number."
-      }
+      "kind": "longform",
+      "prompt": "A colleague sends this note about a loan-spread model built on 350 loans:\n\n“Tried 40 settings (8 values of α × 5 feature sets). Best 5-fold CV MSE 0.18. Used all the data for CV, so no held-out set was needed. Expected MSE in production: 0.18.”\n\nWrite a reply: what is wrong with the note, roughly what the real error is likely to be, and what you would run instead.",
+      "model": "**What is wrong.** The 0.18 is the lowest of 40 cross-validated scores. Each score is noisy, and the minimum of 40 noisy numbers sits below the truth, so the winner’s score is biased low. The same folds both chose the setting and scored it, so the CV rows did the job of a validation set, and nothing is left to act as a test set. “Expected MSE 0.18” is therefore an optimistic number, not an estimate.\n\n**What the real number is likely to be.** Higher than 0.18. With 40 settings that include different feature sets on only 350 loans, the search has a lot of freedom, and our level 1 experiments found gaps of 4% to 10% for searches of 15 to 105 feature choices on 200 rows. A reasonable guess is somewhere around 0.19 to 0.20, but the point is that we cannot know without measuring.\n\n**What to run.**\n1. Nested CV on all 350 loans: `cross_val_score(GridSearchCV(pipe, grid, cv=inner), X, y, cv=outer)` with shuffled 5-fold `KFold`s and a `Pipeline` so scaling happens inside each fold. Its mean is the honest score of the recipe “search 40 settings, refit the winner”. Cost: $5 \\times (5 \\times 40 + 1) = 1005$ fits, affordable for ridge.\n2. Report the nested mean with the fold spread, and the grid that was searched.\n3. If more loans arrive, lock them as a test set and score the frozen model once.\n4. Deploy the search refitted on all 350 loans; its score is the nested one.\n5. If these loans are in time order (they often are), the folds should move forward in time rather than be shuffled: level 2.\n\nThe desk’s rule applies: the number you tuned on is not the number you report.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Says 0.18 is the best of 40 noisy scores, so it is biased low (selection bias)"
+        },
+        {
+          "points": 1,
+          "text": "Says the CV rows chose the setting, so no untouched data remains to report on"
+        },
+        {
+          "points": 2,
+          "text": "Says the real error is likely higher than 0.18, and gives a sensible reason the gap may be sizeable (40 settings with feature-set choices on 350 loans)"
+        },
+        {
+          "points": 2,
+          "text": "Proposes nested CV (tuning inside each outer fold), ideally with the one-line `cross_val_score(GridSearchCV(...))` form"
+        },
+        {
+          "points": 1,
+          "text": "Mentions a Pipeline or fitting preprocessing inside the folds, and shuffled or time-aware folds"
+        },
+        {
+          "points": 1,
+          "text": "Proposes a locked test set for new data, or explains when one could replace nested CV"
+        },
+        {
+          "points": 1,
+          "text": "Says what to deploy (the search refitted on all rows) and what to report (the nested score, with the grid searched)"
+        }
+      ]
     },
     {
       "id": "h5",
