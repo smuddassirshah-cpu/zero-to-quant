@@ -1,0 +1,1612 @@
+{
+  "id": "l9-probability-to-position",
+  "course": "fin-ml",
+  "title": "From a probability to a position",
+  "minutes": 14,
+  "objectives": [
+    "Turn predicted probabilities into position sizes.",
+    "Compare the AFML bet size with Kelly and explain why desks bet a fraction of Kelly."
+  ],
+  "skills": [
+    "fm-sizing"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two trades, one stake",
+      "prose": "A classifier scores two trades. Trade A wins with probability 0.51 and trade B with 0.9. Each pays £1 per £1 staked if it wins and loses the £1 if not. A rule that buys whenever $p > 0.5$ stakes the same on both.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            -1,
+            1
+          ],
+          "xLabel": "Predicted probability $p$",
+          "yLabel": "Expected profit per £1",
+          "xStep": 0.1,
+          "yStep": 0.5,
+          "functions": [
+            {
+              "id": "edge",
+              "expr": "2*x-1",
+              "label": "$2p - 1$",
+              "labelAt": 0.2
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.51,
+              "y": 0.02,
+              "label": "A"
+            },
+            {
+              "id": "B",
+              "x": 0.9,
+              "y": 0.8,
+              "label": "B"
+            }
+          ]
+        }
+      },
+      "question": "How many times larger is the expected profit per £1 on B than on A?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0.5
+        },
+        "label": "Times larger",
+        "accept": "40 exactly: $0.8 / 0.02 = 40$.",
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "ratio-p",
+            "value": 1.7647,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "diff",
+            "value": 0.78,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Per £1 staked, you win £1 with chance $p$ and lose £1 with chance $1 - p$."
+        },
+        {
+          "rung": "point",
+          "text": "Read the heights of A and B on the line.",
+          "highlight": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A earns $2 \\times 0.51 - 1 = 0.02$ per £1 and B earns $2 \\times 0.9 - 1 = 0.8$. Divide the two."
+        }
+      ],
+      "feedback": {
+        "correct": "B earns £0.80 per £1 staked and A earns £0.02.",
+        "generic": "Not quite right. Work out the expected profit per £1 for each trade, then divide.",
+        "byKey": {
+          "ratio-p": "You divided the probabilities. The profit per £1 is $p - (1 - p) = 2p - 1$, not $p$.",
+          "diff": "That is the difference in profit. The question asks how many times larger B's profit is."
+        }
+      },
+      "explain": {
+        "text": "B earns £0.80 per £1 and A earns £0.02, forty times less. A rule that stakes the same on both risks as much capital on a near coin flip as on a strong call. The stake should grow with how sure the model is.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "B"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A size that grows with confidence",
+      "prose": "One way to make the size grow with confidence: ask how far $p$ sits from a coin flip, measured in its own spread. The curve maps $p$ to a size from −1, fully short, to 1, fully long. Slide $p$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            -1.05,
+            1.05
+          ],
+          "xLabel": "Predicted probability $p$",
+          "yLabel": "Position size",
+          "xStep": 0.1,
+          "yStep": 0.5,
+          "functions": [
+            {
+              "id": "m",
+              "expr": "2*Phi((x-0.5)/sqrt(x*(1-x)))-1",
+              "label": "AFML size",
+              "domain": [
+                0.002,
+                0.998
+              ],
+              "labelAt": 0.88,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "p": 0.6
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.6,
+              "y": 0.1617,
+              "label": "size"
+            }
+          ]
+        },
+        "derive": {
+          "P.x": "p",
+          "P.y": "2*Phi((p-0.5)/sqrt(p*(1-p)))-1",
+          "caption": "$p$ = {{fixed(p, 2)}}, size {{fixed(2*Phi((p-0.5)/sqrt(p*(1-p)))-1, 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0.05,
+            "max": 0.95,
+            "step": 0.01,
+            "start": 0.6,
+            "label": "$p$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Set $p = 0.55$. What size does the curve give? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.08,
+        "tol": {
+          "abs": 0.006
+        },
+        "label": "Size at p = 0.55",
+        "accept": "0.08 (exactly 0.0801).",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "kelly",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "prob",
+            "value": 0.55,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move the slider to 0.55 and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The size is the height of the dot on the curve.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $p = 0.55$ the caption reads a size of 0.080."
+        }
+      ],
+      "feedback": {
+        "correct": "A 55% call earns a small position, 0.08 of the full size.",
+        "generic": "Not quite right. Set the slider to 0.55 and read the size in the caption.",
+        "byKey": {
+          "kelly": "That is $2p - 1 = 0.1$, the edge. The curve sits a little below it near 0.5.",
+          "prob": "You read the probability. The size is the height of the curve."
+        }
+      },
+      "explain": {
+        "text": "At 0.55 the curve gives 0.08, and below 0.5 it turns negative: a short. Near 0.5 it is flat, so weak calls get small sizes. Far from 0.5 it bends towards full size.",
+        "canvas": {
+          "params": {
+            "p": 0.55
+          },
+          "points": {
+            "P": {
+              "x": 0.55,
+              "y": 0.0801
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The test statistic behind the curve",
+      "prose": "López de Prado's *Advances in Financial Machine Learning* (AFML, chapter 10) builds this curve. Treat the call as a test of $p = \\tfrac12$: $$z = \\frac{p - \\tfrac12}{\\sqrt{p(1-p)}}, \\qquad m = 2\\Phi(z) - 1,$$ with $\\Phi$ the standard normal CDF and $m$ the **bet size**.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            -1.05,
+            1.05
+          ],
+          "xLabel": "Predicted probability $p$",
+          "yLabel": "Position size",
+          "xStep": 0.1,
+          "yStep": 0.5,
+          "functions": [
+            {
+              "id": "m",
+              "expr": "2*Phi((x-0.5)/sqrt(x*(1-x)))-1",
+              "label": "AFML size",
+              "domain": [
+                0.002,
+                0.998
+              ],
+              "labelAt": 0.88,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "p": 0.6
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.6,
+              "y": 0.1617,
+              "label": "size"
+            }
+          ]
+        },
+        "derive": {
+          "P.x": "p",
+          "P.y": "2*Phi((p-0.5)/sqrt(p*(1-p)))-1",
+          "caption": "$p$ = {{fixed(p, 2)}}, $z$ = {{fixed((p-0.5)/sqrt(p*(1-p)), 3)}}, size {{fixed(2*Phi((p-0.5)/sqrt(p*(1-p)))-1, 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0.05,
+            "max": 0.95,
+            "step": 0.01,
+            "start": 0.6,
+            "label": "$p$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Compute the bet size at $p = 0.7$. Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.34,
+        "tol": {
+          "abs": 0.006
+        },
+        "label": "Bet size at p = 0.7",
+        "accept": "0.34 (exactly 0.3375): $z = 0.2/\\sqrt{0.21} = 0.436$ and $2\\Phi(0.436) - 1 = 0.3375$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "z",
+            "value": 0.4364,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "phi",
+            "value": 0.6687,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "kelly",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.004
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with $p(1 - p) = 0.7 \\times 0.3$."
+        },
+        {
+          "rung": "point",
+          "text": "$z = 0.2 / \\sqrt{0.21} = 0.436$. Now look up $\\Phi(0.436)$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\Phi(0.436) = 0.669$, so $m = 2 \\times 0.669 - 1 = 0.338$. The slider at 0.7 confirms it."
+        }
+      ],
+      "feedback": {
+        "correct": "A 70% call gets about a third of the full size.",
+        "generic": "Not quite right. Find $z$, then $\\Phi(z)$, then $2\\Phi(z) - 1$.",
+        "byKey": {
+          "z": "That is $z$. The size is $2\\Phi(z) - 1$.",
+          "phi": "That is $\\Phi(z)$. Double it and subtract 1.",
+          "kelly": "That is $2p - 1$, the Kelly stake at even odds. The AFML curve is a different rule."
+        }
+      },
+      "explain": {
+        "text": "You found $z = 0.436$, so $m = 2\\Phi(0.436) - 1 = 0.34$. At $p = 0.5$, $z = 0$ and the size is 0: no edge, no bet. The curve only says how much; the side, long or short, comes from the sign of $p - \\tfrac12$.",
+        "canvas": {
+          "params": {
+            "p": 0.7
+          },
+          "points": {
+            "P": {
+              "x": 0.7,
+              "y": 0.3375
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Kelly, when a win pays more",
+      "prose": "You met Kelly in the conditional course (Bayes on a trading signal). For a bet that wins £$b$ per £1 staked and loses the £1 otherwise, Kelly stakes $$f = p - \\frac{1-p}{b}.$$ The dashed line is Kelly; slide the odds $b$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            -1.05,
+            1.05
+          ],
+          "xLabel": "Predicted probability $p$",
+          "yLabel": "Position size",
+          "xStep": 0.1,
+          "yStep": 0.5,
+          "functions": [
+            {
+              "id": "m",
+              "expr": "2*Phi((x-0.5)/sqrt(x*(1-x)))-1",
+              "label": "AFML size",
+              "domain": [
+                0.002,
+                0.998
+              ],
+              "labelAt": 0.88,
+              "labelSide": "below"
+            },
+            {
+              "id": "k",
+              "expr": "x - (1-x)/b",
+              "label": "Kelly",
+              "dashed": true,
+              "domain": [
+                0.25,
+                1
+              ],
+              "labelAt": 0.62
+            }
+          ],
+          "params": {
+            "b": 1
+          }
+        },
+        "state": {
+          "points": []
+        },
+        "controls": [
+          {
+            "bind": "b",
+            "min": 1,
+            "max": 3,
+            "step": 0.5,
+            "start": 1,
+            "label": "odds $b$",
+            "decimals": 1
+          }
+        ]
+      },
+      "question": "A trade wins £2 per £1 staked ($b = 2$) with probability 0.4. What fraction does Kelly stake?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Kelly fraction",
+        "accept": "0.1 exactly: $0.4 - 0.6/2 = 0.1$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "even",
+            "value": -0.2,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "nobet",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "times-b",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $p = 0.4$ and $b = 2$ into the formula."
+        },
+        {
+          "rung": "point",
+          "text": "Set the slider to $b = 2$ and read the dashed line at $p = 0.4$.",
+          "highlight": [
+            "k"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$f = 0.4 - 0.6/2 = 0.4 - 0.3 = 0.1$."
+        }
+      ],
+      "feedback": {
+        "correct": "Kelly stakes a tenth of capital.",
+        "generic": "Not quite right. Compute $p - (1 - p)/b$ with $p = 0.4$ and $b = 2$.",
+        "byKey": {
+          "even": "You used the even-odds rule $2p - 1$. Here a win pays £2, so the loss term is divided by 2.",
+          "nobet": "A chance below 0.5 can still be worth a bet when a win pays more than a loss costs.",
+          "times-b": "You multiplied the loss term by $b$. It is divided by $b$: $0.4 - 0.6/2$."
+        }
+      },
+      "explain": {
+        "text": "You found $f = 0.4 - 0.3 = 0.1$: a 40% bet paying 2 to 1 has an edge. At even odds, $b = 1$, Kelly is $2p - 1$, which sits above the AFML curve for most $p$.",
+        "canvas": {
+          "params": {
+            "b": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Half Kelly",
+      "prose": "Kelly maximises the long-run growth of capital, $g(f) = p\\ln(1+f) + (1-p)\\ln(1-f)$ per even-odds bet. The curve is $g$ for $p = 0.55$, where Kelly is $f = 0.1$. Many desks bet half Kelly.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.22
+          ],
+          "y": [
+            -0.1,
+            0.6
+          ],
+          "xLabel": "Fraction staked $f$",
+          "yLabel": "Growth per bet (%)",
+          "xStep": 0.05,
+          "yStep": 0.1,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "100*(0.55*ln(1+x)+0.45*ln(1-x))",
+              "label": "$g(f)$",
+              "domain": [
+                0,
+                0.21
+              ],
+              "labelAt": 0.17
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "K",
+              "x": 0.1,
+              "y": 0.5008,
+              "label": "Kelly"
+            },
+            {
+              "id": "Hf",
+              "x": 0.05,
+              "y": 0.3753,
+              "label": "half Kelly"
+            }
+          ]
+        }
+      },
+      "question": "What share of full Kelly's growth does half Kelly keep? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Share of growth kept",
+        "accept": "0.75: $0.375 / 0.501 = 0.749$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "lost",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the heights of the two points."
+        },
+        {
+          "rung": "point",
+          "text": "Kelly grows 0.501% per bet and half Kelly 0.375%.",
+          "highlight": [
+            "K",
+            "Hf"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide: $0.375 / 0.501$."
+        }
+      ],
+      "feedback": {
+        "correct": "Half Kelly keeps about three quarters of the growth.",
+        "generic": "Not quite right. Divide half Kelly's growth by full Kelly's.",
+        "byKey": {
+          "half": "Halving the stake does not halve the growth. The curve is flat near its top.",
+          "lost": "That is the share lost. The question asks for the share kept."
+        }
+      },
+      "explain": {
+        "text": "Half Kelly keeps 75% of the growth with half the swings in wealth. The curve is flat near its peak, so betting less costs little. Past the peak growth falls fast, and $p$ is only an estimate: that is why desks bet a fraction of Kelly.",
+        "canvas": {
+          "highlight": [
+            "K",
+            "Hf"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Flipping on noise",
+      "prose": "Over four days the model's $p$ reads 0.51, 0.49, 0.52 and 0.48. An all-or-nothing rule goes fully long when $p > 0.5$ and fully short below.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "$p$",
+            "All or nothing",
+            "AFML size",
+            "Rounded to 0.1"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.51",
+              "+1",
+              "",
+              ""
+            ],
+            [
+              "2",
+              "0.49",
+              "−1",
+              "",
+              ""
+            ],
+            [
+              "3",
+              "0.52",
+              "+1",
+              "",
+              ""
+            ],
+            [
+              "4",
+              "0.48",
+              "−1",
+              "",
+              ""
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Starting flat, how many units does the all-or-nothing rule trade over the four days?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Units traded",
+        "accept": "7: one unit to enter, then three flips of 2 units each.",
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "days",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "flips",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "six",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Going from flat to +1 trades one unit. What does going from +1 to −1 trade?"
+        },
+        {
+          "rung": "point",
+          "text": "Each flip sells the long and opens a short: 2 units.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Enter with 1 unit, then flip three times at 2 units each: $1 + 3 \\times 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven units of trading for four calls that were all close to a coin flip.",
+        "generic": "Not quite right. Add the size of each change in position, starting from 0.",
+        "byKey": {
+          "days": "You counted one unit a day. A flip from +1 to −1 trades 2 units.",
+          "flips": "You counted the flips. Each one trades 2 units, and the entry trades 1.",
+          "six": "You left out the first trade, from flat to +1."
+        }
+      },
+      "explain": {
+        "text": "The rule traded 7 units on four near coin flips. The AFML curve sizes them at about ±0.02 and ±0.03, and rounding to steps of 0.1 makes every one 0: no trades. **Discretising** sizes stops churn; the next lesson prices it.",
+        "canvas": {
+          "values": {
+            "r0c3": "0.016",
+            "r1c3": "−0.016",
+            "r2c3": "0.032",
+            "r3c3": "−0.032",
+            "r0c4": "0",
+            "r1c4": "0",
+            "r2c4": "0",
+            "r3c4": "0"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Bets that overlap",
+      "prose": "Labels last several days, so bets overlap (level 1, Overlapping labels). Bet 1, size 0.4, runs days 0 to 2. Bet 2, size 0.8, runs days 1 to 4. Bet 3, size −0.2, runs days 3 to 5. AFML holds the **average** size of the bets open each day.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -0.5,
+            5.5
+          ],
+          "y": [
+            -0.5,
+            1
+          ],
+          "xLabel": "Day",
+          "yLabel": "Bet size",
+          "xStep": 1,
+          "yStep": 0.2
+        },
+        "state": {
+          "segments": [
+            {
+              "id": "b1",
+              "from": [
+                0,
+                0.4
+              ],
+              "to": [
+                2,
+                0.4
+              ],
+              "label": "bet 1"
+            },
+            {
+              "id": "b2",
+              "from": [
+                1,
+                0.8
+              ],
+              "to": [
+                4,
+                0.8
+              ],
+              "label": "bet 2"
+            },
+            {
+              "id": "b3",
+              "from": [
+                3,
+                -0.2
+              ],
+              "to": [
+                5,
+                -0.2
+              ],
+              "label": "bet 3"
+            }
+          ]
+        },
+        "maxHeight": 220
+      },
+      "question": "Fill in the position on days 1, 3 and 5.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "Bets open",
+          "Position"
+        ],
+        "rows": [
+          [
+            "0",
+            "1",
+            "0.4"
+          ],
+          [
+            "1",
+            "1, 2",
+            {
+              "edit": true,
+              "answer": 0.6,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "2",
+            "1, 2",
+            "0.6"
+          ],
+          [
+            "3",
+            "2, 3",
+            {
+              "edit": true,
+              "answer": 0.3,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "4",
+            "2, 3",
+            "0.3"
+          ],
+          [
+            "5",
+            "3",
+            {
+              "edit": true,
+              "answer": -0.2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Average the sizes of the bets open that day."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1 has bets 1 and 2 open: 0.4 and 0.8.",
+          "highlight": [
+            "b1",
+            "b2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 1: $(0.4 + 0.8)/2 = 0.6$. Day 3: $(0.8 - 0.2)/2 = 0.3$. Day 5: bet 3 alone, −0.2."
+        }
+      ],
+      "feedback": {
+        "correct": "Averaging keeps the position between −1 and 1 however many bets are open.",
+        "generic": "Not quite right. On each day, add the sizes of the open bets and divide by how many there are."
+      },
+      "explain": {
+        "text": "You averaged the open bets: 0.6 on day 1, 0.3 on day 3 and −0.2 on day 5. Adding them instead would give 1.2 on day 1, more than a full position. Averaging also smooths the position as bets come and go.",
+        "canvas": {
+          "highlight": [
+            "b1",
+            "b2",
+            "b3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Sizing on an overconfident model",
+      "prose": "Your model says $p = 0.6$ on even-odds trades, so Kelly says stake 0.2. A calibration check (statistical learning, Probabilities you can trust) shows trades scored 0.6 win only 55% of the time. The curve is growth for a true 0.55.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.25
+          ],
+          "y": [
+            -0.3,
+            0.6
+          ],
+          "xLabel": "Fraction staked $f$",
+          "yLabel": "Growth per bet (%)",
+          "xStep": 0.05,
+          "yStep": 0.1,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "100*(0.55*ln(1+x)+0.45*ln(1-x))",
+              "label": "true $g(f)$",
+              "domain": [
+                0,
+                0.24
+              ],
+              "labelAt": 0.05,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "K",
+              "x": 0.1,
+              "y": 0.5008,
+              "label": "true Kelly"
+            },
+            {
+              "id": "M",
+              "x": 0.2,
+              "y": -0.0138,
+              "label": "model's Kelly"
+            }
+          ]
+        }
+      },
+      "question": "You stake 0.2 per trade while the true chance is 0.55. What growth do you get?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "double",
+            "text": "Twice the growth of staking 0.1",
+            "why": "You scaled growth with the stake. Past Kelly, growth falls; at twice Kelly it is about zero."
+          },
+          {
+            "id": "zero",
+            "text": "About zero: the extra size eats the whole edge",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "The same as staking 0.1, since the edge is the same",
+            "why": "The edge is the same but the swings are bigger. Losses in $\\ln(1 - f)$ grow faster than gains."
+          },
+          {
+            "id": "ruin",
+            "text": "About −5% per bet",
+            "why": "You took the loss side alone. Wins and losses nearly cancel: growth is about −0.01%."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which point is the model's stake, and where does it sit on the true curve?"
+        },
+        {
+          "rung": "point",
+          "text": "The model's stake is twice the true Kelly fraction.",
+          "highlight": [
+            "M"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Read the height at $f = 0.2$: $0.55\\ln 1.2 + 0.45\\ln 0.8 \\approx -0.0001$."
+        }
+      ],
+      "feedback": {
+        "correct": "An overconfident $p$ doubled the stake and wiped out the growth.",
+        "generic": "Not quite right. Read the true growth curve at $f = 0.2$.",
+        "byKey": {
+          "double": "You assumed growth rises with the stake. Kelly is the peak: twice Kelly grows at about zero, so the bigger bet earned nothing."
+        }
+      },
+      "explain": {
+        "text": "At $f = 0.2$ with a true 0.55, $g = 0.55\\ln 1.2 + 0.45\\ln 0.8 = -0.0001$: about zero. The model's overconfidence doubled the size, and double Kelly grows at about nothing. Size depends on $p$, so calibrate $p$ before you size.",
+        "canvas": {
+          "highlight": [
+            "M"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Where $2p - 1$ comes from",
+      "prose": "Kelly picks the stake $f$ that maximises the expected log growth of one even-odds bet. Derive it.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "g",
+            "text": "$g(f) = p\\ln(1+f) + (1-p)\\ln(1-f)$: a win multiplies capital by $1 + f$, a loss by $1 - f$"
+          },
+          {
+            "id": "d",
+            "text": "$g'(f) = \\dfrac{p}{1+f} - \\dfrac{1-p}{1-f} = 0$: the slope is zero at the peak"
+          },
+          {
+            "id": "m",
+            "text": "$p(1-f) = (1-p)(1+f)$: multiply both sides by $(1+f)(1-f)$"
+          },
+          {
+            "id": "e",
+            "text": "$p - pf = 1 - p + f - pf$: expand both brackets"
+          },
+          {
+            "id": "f",
+            "text": "$f = 2p - 1$: cancel $-pf$ and collect the rest"
+          }
+        ],
+        "answer": [
+          "g",
+          "d",
+          "m",
+          "e",
+          "f"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the quantity Kelly maximises."
+        },
+        {
+          "rung": "point",
+          "text": "At a maximum the derivative is zero; clear the fractions next."
+        },
+        {
+          "rung": "step",
+          "text": "Order: growth, derivative set to zero, clear fractions, expand, solve."
+        }
+      ],
+      "feedback": {
+        "correct": "Each line follows from the one before.",
+        "generic": "Not quite right. Write the growth first, differentiate, then solve for $f$.",
+        "byKey": {
+          "m": "Clearing the fractions needs the fractions first: the derivative line comes before it.",
+          "f": "The answer comes last, after the expansion."
+        }
+      },
+      "explain": {
+        "text": "Setting $g'(f) = 0$ and clearing fractions gives $p - pf = 1 - p + f - pf$, so $f = 2p - 1$. With odds $b$ the same steps give $f = p - (1-p)/b$. Since $g''(f) < 0$, this is a maximum."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Sizing rules in code",
+      "prose": "Now in code. Use `math.erf` for $\\Phi$: $\\Phi(z) = \\tfrac12\\left(1 + \\operatorname{erf}(z/\\sqrt2)\\right)$. `fractional_kelly` returns 0 when Kelly is negative: no bet.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            "bet_size_from_prob(0.7)   ->  0.3375",
+            "kelly_fraction(0.4, 2)    ->  0.1",
+            "fractional_kelly(0.6, 1, 0.5)  ->  0.1"
+          ]
+        }
+      },
+      "question": "Complete `bet_size_from_prob(p)`, `kelly_fraction(p, b)` and `fractional_kelly(p, b, frac)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\ndef bet_size_from_prob(p):\n    # AFML: z = (p - 1/2) / sqrt(p(1 - p)), size = 2 * Phi(z) - 1\n    ...\n\ndef kelly_fraction(p, b):\n    # win b per 1 staked with chance p, lose the stake otherwise\n    ...\n\ndef fractional_kelly(p, b, frac):\n    # frac times Kelly, and 0 when Kelly is negative\n    ...\n",
+        "solution": "import math\n\ndef bet_size_from_prob(p):\n    # AFML: z = (p - 1/2) / sqrt(p(1 - p)), size = 2 * Phi(z) - 1\n    z = (p - 0.5) / math.sqrt(p * (1 - p))\n    return math.erf(z / math.sqrt(2))\n\ndef kelly_fraction(p, b):\n    # win b per 1 staked with chance p, lose the stake otherwise\n    return p - (1 - p) / b\n\ndef fractional_kelly(p, b, frac):\n    # frac times Kelly, and 0 when Kelly is negative\n    return max(0.0, frac * kelly_fraction(p, b))\n",
+        "examples": [
+          {
+            "call": "round(bet_size_from_prob(0.7), 6)",
+            "expect": "0.337479",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(bet_size_from_prob(0.7), 6)",
+            "expect": "0.337479",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(bet_size_from_prob(0.55), 6)",
+            "expect": "0.080056",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(bet_size_from_prob(0.5), 6)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(bet_size_from_prob(0.3), 6)",
+            "expect": "-0.337479",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(bet_size_from_prob(0.9), 6)",
+            "expect": "0.817578",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(kelly_fraction(0.6, 1), 9)",
+            "expect": "0.2",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(kelly_fraction(0.4, 2), 9)",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(kelly_fraction(0.3, 1), 9)",
+            "expect": "-0.4",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(fractional_kelly(0.6, 1, 0.5), 9)",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(fractional_kelly(0.55, 3, 0.5), 9)",
+            "expect": "0.2",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(fractional_kelly(0.45, 1, 0.5), 9)",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 11 hidden tests, including $p = 0.5$, a short ($p = 0.3$) and a negative Kelly. Each result is rounded and accepted when math.isclose(actual, expected, rel_tol=1e-9). Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$2\\Phi(z) - 1$ simplifies: $2 \\cdot \\tfrac12(1 + \\operatorname{erf}(z/\\sqrt2)) - 1 = \\operatorname{erf}(z/\\sqrt2)$."
+        },
+        {
+          "rung": "point",
+          "text": "`kelly_fraction` is one line: `p - (1 - p) / b`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`fractional_kelly` returns `max(0.0, frac * kelly_fraction(p, b))`."
+        }
+      ],
+      "feedback": {
+        "correct": "All three rules pass.",
+        "generic": "Not quite right. Compare your output with the expected values above and check the case of a negative Kelly."
+      },
+      "explain": {
+        "text": "The AFML size is $2\\Phi(z) - 1 = \\operatorname{erf}(z/\\sqrt 2)$, so one call does it. Kelly is one line, and the fractional version floors a negative Kelly at 0 rather than betting the other way at the same odds."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Rounding and averaging in code",
+      "prose": "Two more pieces. `discretise` rounds a size to the nearest multiple of `step`. `average_active_bets` returns one position per day: the mean size of the bets open that day, or 0 when none is. A bet is open from its start day to its end day, both included.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            "discretise(0.337, 0.1)   ->  0.3",
+            "average_active_bets([0.4, 0.8, -0.2], [0, 1, 3], [2, 4, 5], 6)",
+            "  ->  [0.4, 0.6, 0.6, 0.3, 0.3, -0.2]"
+          ]
+        }
+      },
+      "question": "Complete `discretise(size, step)` and `average_active_bets(sizes, starts, ends, n_days)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def discretise(size, step):\n    ...\n\ndef average_active_bets(sizes, starts, ends, n_days):\n    positions = []\n    for t in range(n_days):\n        open_sizes = ...   # sizes of the bets with start <= t <= end\n        positions.append(...)\n    return positions\n",
+        "solution": "def discretise(size, step):\n    return round(size / step) * step\n\ndef average_active_bets(sizes, starts, ends, n_days):\n    positions = []\n    for t in range(n_days):\n        open_sizes = [m for m, a, b in zip(sizes, starts, ends) if a <= t <= b]   # sizes of the bets with start <= t <= end\n        positions.append(sum(open_sizes) / len(open_sizes) if open_sizes else 0.0)\n    return positions\n",
+        "examples": [
+          {
+            "call": "round(discretise(0.337, 0.1), 9)",
+            "expect": "0.3",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(discretise(0.337, 0.1), 9)",
+            "expect": "0.3",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(discretise(0.36, 0.1), 9)",
+            "expect": "0.4",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(discretise(-0.16, 0.1), 9)",
+            "expect": "-0.2",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(discretise(0.04, 0.1), 9)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(discretise(0.81, 0.25), 9)",
+            "expect": "0.75",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(v, 6) for v in average_active_bets([0.4, 0.8, -0.2], [0, 1, 3], [2, 4, 5], 6)]",
+            "expect": "[0.4, 0.6, 0.6, 0.3, 0.3, -0.2]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(v, 6) for v in average_active_bets([0.5], [2], [3], 6)]",
+            "expect": "[0.0, 0.0, 0.5, 0.5, 0.0, 0.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(v, 6) for v in average_active_bets([0.3, 0.6, 0.9], [0, 0, 0], [1, 2, 3], 5)]",
+            "expect": "[0.6, 0.6, 0.75, 0.9, 0.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(v, 6) for v in average_active_bets([0.2, 0.4, 0.6, -0.6], [0, 1, 1, 3], [3, 1, 4, 4], 6)]",
+            "expect": "[0.2, 0.4, 0.4, 0.066667, 0.0, 0.0]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: five roundings and four sets of overlapping bets, including days with no bet open. Results are rounded and accepted when math.isclose(actual, expected, rel_tol=1e-9). Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`round(size / step)` counts whole steps; multiply back by `step`."
+        },
+        {
+          "rung": "point",
+          "text": "Collect the sizes with `a <= t <= b` by zipping the three lists.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Append `sum(open_sizes) / len(open_sizes)`, or 0.0 when the list is empty."
+        }
+      ],
+      "feedback": {
+        "correct": "Both pieces pass.",
+        "generic": "Not quite right. Check days with no bet open, and that both end days are included."
+      },
+      "explain": {
+        "text": "Rounding to whole steps turns tiny changes in $p$ into no trade at all. Averaging the open bets keeps the position in $[-1, 1]$ and lets it change gradually as bets start and end."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The desk's sizing table",
+      "prose": "A desk trades even-odds bets from a calibrated model. Its sizing table maps $p = 0.58$ to a position of 0.3 and $p = 0.65$ to 0.6. The risk team asks how this compares with Kelly.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.5,
+            0.75
+          ],
+          "y": [
+            0,
+            0.7
+          ],
+          "xLabel": "Predicted probability $p$",
+          "yLabel": "Position size",
+          "xStep": 0.05,
+          "yStep": 0.1,
+          "functions": [
+            {
+              "id": "k",
+              "expr": "2*x-1",
+              "label": "Kelly $2p - 1$",
+              "dashed": true,
+              "labelAt": 0.7
+            },
+            {
+              "id": "m",
+              "expr": "2*Phi((x-0.5)/sqrt(x*(1-x)))-1",
+              "label": "AFML size",
+              "domain": [
+                0.5,
+                0.75
+              ],
+              "labelAt": 0.72,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "D1",
+              "x": 0.58,
+              "y": 0.3,
+              "label": "desk"
+            },
+            {
+              "id": "D2",
+              "x": 0.65,
+              "y": 0.6,
+              "label": "desk"
+            }
+          ]
+        }
+      },
+      "question": "At $p = 0.65$, the desk's position is how many times the Kelly fraction?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.02
+        },
+        "label": "Multiple of Kelly",
+        "accept": "2: Kelly at 0.65 is $2 \\times 0.65 - 1 = 0.3$, and $0.6 / 0.3 = 2$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "afml",
+            "value": 2.43,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "prob",
+            "value": 0.92,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Kelly at even odds is $2p - 1$."
+        },
+        {
+          "rung": "point",
+          "text": "Kelly at 0.65 is 0.3. Compare the desk's 0.6 with it.",
+          "highlight": [
+            "D2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.6 / 0.3 = 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "The desk bets double Kelly.",
+        "generic": "Not quite right. Divide the desk's 0.6 by the Kelly fraction at $p = 0.65$.",
+        "byKey": {
+          "afml": "You compared with the AFML size, 0.247. The question asks about Kelly, $2p - 1 = 0.3$.",
+          "prob": "You divided by $p$. Kelly at even odds is $2p - 1$."
+        }
+      },
+      "explain": {
+        "text": "Kelly at 0.65 is 0.3, so the desk bets twice Kelly; at 0.58 it bets 1.9 times. At double Kelly, growth is $0.65\\ln 1.6 + 0.35\\ln 0.4 = -1.5\\%$ per bet, against $+4.6\\%$ at Kelly. A cap on size whatever $p$ says, set by risk, guards against tables like this.",
+        "canvas": {
+          "highlight": [
+            "D1",
+            "D2"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A size should grow with confidence: AFML maps $p$ to $m = 2\\Phi(z) - 1$ with $z = (p - \\tfrac12)/\\sqrt{p(1-p)}$, so $p = 0.5$ gives 0.",
+      "Kelly stakes $f = p - (1-p)/b$, or $2p - 1$ at even odds. Desks bet a fraction of it because $p$ is estimated and growth falls fast past Kelly.",
+      "The position is side times size, averaged over the open bets and rounded to steps so that noise in $p$ does not churn the book."
+    ],
+    "formula": {
+      "name": "AFML bet size",
+      "tex": "m = 2\\Phi\\!\\left(\\dfrac{p - \\tfrac12}{\\sqrt{p(1-p)}}\\right) - 1",
+      "note": "Only as good as $p$: calibrate before you size."
+    },
+    "trap": "Sizing on an overconfident $p$: a model that says 0.6 when the truth is 0.55 bets double Kelly and grows at about zero."
+  },
+  "quiz": [
+    {
+      "id": "q-certain",
+      "difficulty": 2,
+      "prose": "Your model outputs $p = 1.00$ for one trade. The AFML curve says full size.",
+      "question": "What should you conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "full",
+            "text": "Bet full size: the model is sure",
+            "why": "A probability of 1 says the trade cannot lose. In a market that points to a leak or overfitting, not certainty."
+          },
+          {
+            "id": "leak",
+            "text": "The model is almost surely leaking or overfit: check it before trading",
+            "correct": true
+          },
+          {
+            "id": "kelly",
+            "text": "Bet Kelly, $2p - 1 = 1$: all of the capital",
+            "why": "Kelly at $p = 1$ stakes everything. One loss then ends the account, and the model is almost surely wrong."
+          },
+          {
+            "id": "zero",
+            "text": "Size zero, as at $p = 0.5$",
+            "why": "Size zero belongs to $p = 0.5$, where there is no edge. At $p = 1$ the formula gives full size; the question is whether to trust it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "No market trade is certain, so a 1.00 is a warning.",
+        "generic": "Not quite right. Ask what $p = 1$ claims about a market outcome."
+      },
+      "explain": {
+        "text": "At $p = 1$, $z$ is infinite and the size is full. No trade in a liquid market is certain, so a 1.00 means a feature saw the outcome or the model memorised its training data. Edge case: at $p = 0.5$ the size is 0."
+      }
+    },
+    {
+      "id": "q-half",
+      "difficulty": 2,
+      "prose": "An even-odds trade has a calibrated $p = 0.6$. The desk bets half Kelly.",
+      "question": "What fraction of capital does it stake?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Fraction staked",
+        "accept": "0.1: Kelly is $2 \\times 0.6 - 1 = 0.2$, and half of it is 0.1.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "full",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "halfp",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Half of Kelly's 0.2.",
+        "generic": "Not quite right. Find Kelly, $2p - 1$, then halve it.",
+        "byKey": {
+          "full": "That is full Kelly. The desk bets half of it.",
+          "halfp": "You halved $p$. Halve the Kelly fraction $2p - 1$ instead."
+        }
+      },
+      "explain": {
+        "text": "Kelly at even odds is $2p - 1 = 0.2$. Half Kelly stakes 0.1, keeping about three quarters of the growth."
+      }
+    },
+    {
+      "id": "q-cap",
+      "difficulty": 3,
+      "prose": "A primary model says short. The meta-label model (level 1, Should I take this trade?) gives $p = 0.8$ that the short works, so the AFML size is 0.547. Risk caps any position at 0.25.",
+      "question": "What position do you take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.25,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Position",
+        "accept": "−0.25: side −1 times the capped size 0.25.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "nocap",
+            "value": -0.547,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "long",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Short, at the cap.",
+        "generic": "Not quite right. The position is side times size, and the size cannot exceed the cap.",
+        "byKey": {
+          "nocap": "You left out the cap. Risk limits the size to 0.25 whatever $p$ says.",
+          "long": "The primary model said short, so the side is −1."
+        }
+      },
+      "explain": {
+        "text": "The side comes from the primary model and the size from $p$: $-1 \\times \\min(0.547, 0.25) = -0.25$. The cap binds whenever the model is confident, which is when an error would cost most."
+      }
+    },
+    {
+      "id": "q-round",
+      "difficulty": 2,
+      "prose": "The model moves from $p = 0.62$ to $p = 0.63$. The AFML sizes are 0.195 and 0.219. The desk rounds sizes to steps of 0.1.",
+      "question": "How much does the position change?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Change in position",
+        "accept": "0: both sizes round to 0.2.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 0.024,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "step",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Both round to 0.2, so nothing trades.",
+        "generic": "Not quite right. Round each size to the nearest 0.1, then compare.",
+        "byKey": {
+          "raw": "That is the change before rounding. Both sizes round to 0.2.",
+          "step": "Both sizes round to the same step, 0.2."
+        }
+      },
+      "explain": {
+        "text": "0.195 and 0.219 both round to 0.2, so the position stays put. Rounding absorbs small changes in $p$ that would otherwise turn into trades and costs."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1275 @@
+{
+  "id": "l9-knows-the-answer",
+  "course": "validation",
+  "title": "Features that know the answer",
+  "minutes": 14,
+  "objectives": [
+    "Find a feature that leaks the target.",
+    "Check each feature's known time against the prediction time, and store point-in-time values."
+  ],
+  "skills": [
+    "vl-leakage",
+    "vl-time"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Too good to be true",
+      "prose": "A junior's model predicts whether a share beats the market next month. On five years of test months it is right 67% of the time. The bars show each feature's share of the model's importance.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "mom",
+              "label": "mom_12_1"
+            },
+            {
+              "id": "vol",
+              "label": "vol_20d"
+            },
+            {
+              "id": "pe",
+              "label": "pe"
+            },
+            {
+              "id": "size",
+              "label": "size"
+            },
+            {
+              "id": "leak",
+              "label": "ret_m10_p10"
+            },
+            {
+              "id": "short",
+              "label": "short_int"
+            }
+          ],
+          "yLabel": "Share of importance",
+          "xLabel": "Feature",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 1
+        },
+        "state": {
+          "values": {
+            "mom": 0.04,
+            "vol": 0.03,
+            "pe": 0.03,
+            "size": 0.02,
+            "leak": 0.85,
+            "short": 0.03
+          }
+        }
+      },
+      "question": "What should you suspect first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "leak",
+            "text": "One feature contains part of the answer",
+            "correct": true
+          },
+          {
+            "id": "real",
+            "text": "The model has found a strong, real signal",
+            "why": "You took the score at face value. Monthly stock picks rarely beat 55%, and one feature doing 85% of the work is the pattern of a leak."
+          },
+          {
+            "id": "overfit",
+            "text": "The model overfits its training rows",
+            "why": "Overfitting makes the test score worse, not better. A test score this high says the test rows were helped."
+          },
+          {
+            "id": "small",
+            "text": "The test set is too small to judge",
+            "why": "A small test set makes a score noisy. Noise does not usually hand one feature 85% of the importance."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is 67% a normal hit rate for picking shares a month ahead?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the tallest bar. What could one feature know that the others do not?",
+          "highlight": [
+            "leak"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two tells together: a score far above what markets allow, and one feature doing most of the work. Suspect that feature."
+        }
+      ],
+      "feedback": {
+        "correct": "Suspect the feature first, the model second.",
+        "generic": "Not quite right. Ask what could make a test score this high, with one feature doing nearly all the work.",
+        "byKey": {
+          "real": "You took the score at face value. A 67% monthly hit rate with one dominant feature is the classic sign of a leak."
+        }
+      },
+      "explain": {
+        "text": "Two tells point the same way: a test score far above what markets allow, and one feature carrying 85% of the importance. That feature's name, `ret_m10_p10`, says its window runs from day −9 to day 10. Day 0 is when the prediction is made.",
+        "canvas": {
+          "highlight": [
+            "leak"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How much overlap?",
+      "prose": "We simulate 20,000 share-months of pure noise, so nothing can be predicted. The label is the return over days 1 to 21. The feature is a 20-day return. Slide the day its window ends and watch the hit rate.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": -20,
+          "max": 22,
+          "step": 1,
+          "labels": 5,
+          "params": {
+            "hr": [
+              0.499,
+              0.516,
+              0.53,
+              0.55,
+              0.563,
+              0.58,
+              0.597,
+              0.616,
+              0.633,
+              0.65,
+              0.667,
+              0.684,
+              0.7,
+              0.721,
+              0.743,
+              0.765,
+              0.79,
+              0.816,
+              0.841,
+              0.88,
+              0.931
+            ]
+          }
+        },
+        "state": {
+          "params": {
+            "k": 0
+          },
+          "intervals": [
+            {
+              "id": "lab",
+              "from": 1,
+              "to": 21,
+              "label": "label: days 1 to 21",
+              "labelPos": "above",
+              "row": 1,
+              "colour": 2
+            },
+            {
+              "id": "fw",
+              "from": -19,
+              "to": 0,
+              "label": "feature window",
+              "labelPos": "below",
+              "row": 0,
+              "colour": 1
+            }
+          ]
+        },
+        "derive": {
+          "fw.from": "k - 19",
+          "fw.to": "k",
+          "caption": "Window ends on day {{k}}: {{k}} days of overlap. Hit rate {{fixed(hr[k] * 100, 1)}}%."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 20,
+            "step": 1,
+            "start": 0,
+            "label": "Last day of the feature window"
+          }
+        ]
+      },
+      "question": "What is the smallest overlap, in days, that lifts the hit rate above 60%?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "days",
+        "label": "Days of overlap",
+        "accept": "7 exactly: 61.6%. Six days give 59.7%.",
+        "wrong": [
+          {
+            "id": "six",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Seven days of overlap give 61.6% from pure noise.",
+        "generic": "Not quite right. Step the slider one day at a time and read the hit rate in the caption.",
+        "byKey": {
+          "six": "Six days give 59.7%, just under 60%. One more day is needed.",
+          "ten": "Ten days give 66.7%, well past 60%. A smaller overlap already crosses it.",
+          "zero": "With no overlap the hit rate is 49.9%: a coin toss, as noise should be."
+        }
+      },
+      "explain": {
+        "text": "Seven days of overlap give 61.6%, from data where nothing can be predicted. Even one day lifts 49.9% to 51.6%, which looks like a modest real signal. Every point above 50% here is the label leaking into the feature.",
+        "canvas": {
+          "params": {
+            "k": 7
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "When was it known?",
+      "prose": "You predict at the close of day 0. The label is the return over days 1 to 21. The table lists each feature, what it is built from, and the day its value is first known.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Feature",
+            "Built from",
+            "Known on day"
+          ],
+          "rows": [
+            [
+              "`mom_12_1`",
+              "returns, months −12 to −1",
+              "0"
+            ],
+            [
+              "`vol_20d`",
+              "daily returns, days −19 to 0",
+              "0"
+            ],
+            [
+              "`volume_next`",
+              "traded volume, days 1 to 21",
+              "21"
+            ],
+            [
+              "`pe`",
+              "price on day 0 over last reported earnings",
+              "0"
+            ],
+            [
+              "`analyst_rev`",
+              "upgrades minus downgrades, days −21 to 0",
+              "0"
+            ],
+            [
+              "`short_int`",
+              "short interest reported on day −3",
+              "−3"
+            ],
+            [
+              "`ret_m10_p10`",
+              "return, days −9 to 10",
+              "10"
+            ],
+            [
+              "`size`",
+              "market value on day 0",
+              "0"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ],
+          "tap": "rows",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap the two features that leak the label.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2",
+          "r6"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "old",
+            "set": [
+              "r2",
+              "r5",
+              "r6"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each feature's known day with day 0."
+        },
+        {
+          "rung": "point",
+          "text": "Two rows are known only after day 0.",
+          "highlight": [
+            "r2",
+            "r6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`volume_next` is known on day 21 and `ret_m10_p10` on day 10. Both use days inside the label window."
+        }
+      ],
+      "feedback": {
+        "correct": "Both use days inside the label window.",
+        "generic": "Not quite right. Keep a feature only if its known day is 0 or earlier.",
+        "byKey": {
+          "old": "Short interest from day −3 is old news by day 0. Old data is allowed; only data after day 0 leaks.",
+          "r5": "Short interest from day −3 is old news by day 0. Old data is allowed; only data after day 0 leaks.",
+          "r1": "`vol_20d` ends on day 0, the day you predict. Data up to and including day 0 is allowed.",
+          "r0": "Momentum ends a month before day 0. It is known in time.",
+          "r3": "The price on day 0 and the last reported earnings are both known on day 0.",
+          "r4": "Revisions up to day 0 are known on day 0.",
+          "r7": "Market value on day 0 is known on day 0.",
+          "r2": "You left out `volume_next`. It sums volume over days 1 to 21, the label's own window.",
+          "r6": "You left out `ret_m10_p10`. Days 1 to 10 of its window are days of the label."
+        }
+      },
+      "explain": {
+        "text": "`volume_next` is built from days 1 to 21 and `ret_m10_p10` from days 1 to 10 of the label. A feature computed from the label, or from anything after the prediction, is **target leakage**. The test is one question per feature: when was it known?",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A known-at check",
+      "prose": "Put the check in code. A feature store keeps, for each feature, the day its value is first known. A feature may be used if it is known on or before the day the prediction is made.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> feature_time = {'mom_12_1': 0, 'vol_20d': 0, 'volume_next': ...}",
+            ">>> known_at(feature_time, 0)",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `known_at` so it returns the usable feature names, sorted.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def known_at(feature_time, label_time):\n    \"\"\"Names of the features known by label_time, sorted.\n\n    feature_time maps a feature name to the day it is known.\n    label_time is the day the prediction is made.\n    \"\"\"\n    ...\n",
+        "solution": "def known_at(feature_time, label_time):\n    \"\"\"Names of the features known by label_time, sorted.\n\n    feature_time maps a feature name to the day it is known.\n    label_time is the day the prediction is made.\n    \"\"\"\n    return sorted(name for name, t in feature_time.items() if t <= label_time)\n",
+        "examples": [
+          {
+            "call": "known_at({'mom': 0, 'vol_next': 21, 'pe': -2}, 0)",
+            "expect": "['mom', 'pe']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "known_at({'mom_12_1': 0, 'vol_20d': 0, 'volume_next': 21, 'pe': 0, 'analyst_rev': 0, 'short_int': -3, 'ret_m10_p10': 10, 'size': 0}, 0)",
+            "expect": "['analyst_rev', 'mom_12_1', 'pe', 'short_int', 'size', 'vol_20d']",
+            "compare": "equal"
+          },
+          {
+            "call": "known_at({'a': 0}, 0)",
+            "expect": "['a']",
+            "compare": "equal"
+          },
+          {
+            "call": "known_at({'a': 1}, 0)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "known_at({}, 5)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "known_at({'x': 3, 'y': 7, 'z': 5}, 5)",
+            "expect": "['x', 'z']",
+            "compare": "equal"
+          },
+          {
+            "call": "known_at({'late': 0.5, 'ok': -1}, 0)",
+            "expect": "['ok']",
+            "compare": "equal"
+          },
+          {
+            "call": "known_at({'b': -2, 'a': -1}, 0)",
+            "expect": "['a', 'b']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Each compares your list with the expected one using ==, so the order matters. Pure Python is enough."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which features have a known day no later than `label_time`?"
+        },
+        {
+          "rung": "point",
+          "text": "A feature known on the prediction day itself is allowed: compare with `<=`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`sorted(name for name, t in feature_time.items() if t <= label_time)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Six of the eight features pass; `volume_next` and `ret_m10_p10` do not.",
+        "generic": "Some tests failed. Keep names whose day is at most `label_time`, then sort them.",
+        "byKey": {
+          "test-2": "Your check dropped a feature known on the prediction day itself. Data up to and including that day is allowed: use `<=`.",
+          "test-7": "Your list is not sorted. Return `sorted(...)` so two runs always agree."
+        }
+      },
+      "explain": {
+        "text": "The check is one comparison per feature: `t <= label_time`. It is only as good as the times in the store. The next screen shows a feature whose recorded time is honest and whose contents are not."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Lagged by name only",
+      "prose": "`vol_20d` passed the check: its row is stamped day 0. But a stamp says when a row was written, not what went into it. In pandas, `rolling(w).std()` ends its window on day $t$; `rolling(w, center=True).std()` centres it there.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": -21,
+          "max": 12,
+          "step": 1,
+          "labels": 3
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "tr",
+              "from": -20,
+              "to": 0,
+              "label": "trailing, w = 21",
+              "labelPos": "left",
+              "row": 0,
+              "colour": 1
+            },
+            {
+              "id": "ce",
+              "from": -10,
+              "to": 10,
+              "label": "centred, w = 21",
+              "labelPos": "above",
+              "row": 1,
+              "colour": 3
+            }
+          ],
+          "points": [
+            {
+              "id": "t0",
+              "x": 0,
+              "label": "day 0"
+            }
+          ],
+          "caption": "Two 21-day windows for the value stamped day 0."
+        }
+      },
+      "question": "Complete `centred_vs_trailing` so both columns are rolling standard deviations of daily returns over `w` days.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(seed, n=60):\n    \"\"\"n daily closes of one share, starting near 100p, with 2% daily volatility.\"\"\"\n    rng = np.random.default_rng(seed)\n    return list(np.round(100 * np.cumprod(1 + 0.02 * rng.standard_normal(n)), 2))\n",
+        "starter": "import pandas as pd\n\ndef centred_vs_trailing(prices, w):\n    r = pd.Series(prices, dtype=float).pct_change()\n    trailing = ...   # window of w returns ending on day t\n    centred = ...    # window of w returns centred on day t\n    return pd.DataFrame({\"trailing\": trailing, \"centred\": centred})\n",
+        "solution": "import pandas as pd\n\ndef centred_vs_trailing(prices, w):\n    r = pd.Series(prices, dtype=float).pct_change()\n    trailing = r.rolling(w).std()               # window of w returns ending on day t\n    centred = r.rolling(w, center=True).std()   # window of w returns centred on day t\n    return pd.DataFrame({\"trailing\": trailing, \"centred\": centred})\n",
+        "examples": [
+          {
+            "call": "[round(v, 6) if v == v else None for v in centred_vs_trailing([100, 102, 99, 103, 101, 104, 100], 3)['centred']]",
+            "expect": "[None, None, 0.035898, 0.037755, 0.031901, 0.035171, None]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "out = centred_vs_trailing(make_prices(1), 5)",
+            "call": "round(float(out['trailing'].iloc[10]), 6)",
+            "expect": "0.008606",
+            "compare": "isclose"
+          },
+          {
+            "setup": "out = centred_vs_trailing(make_prices(1), 5)",
+            "call": "round(float(out['centred'].iloc[10]), 6)",
+            "expect": "0.010073",
+            "compare": "isclose"
+          },
+          {
+            "setup": "out = centred_vs_trailing(make_prices(2, 80), 21)",
+            "call": "round(float(out['trailing'].iloc[40]), 6)",
+            "expect": "0.019794",
+            "compare": "isclose"
+          },
+          {
+            "setup": "out = centred_vs_trailing(make_prices(2, 80), 21)",
+            "call": "round(float(out['centred'].iloc[40]), 6)",
+            "expect": "0.018883",
+            "compare": "isclose"
+          },
+          {
+            "setup": "out = centred_vs_trailing(make_prices(2, 80), 21)",
+            "call": "int(out['centred'].tail(10).isna().sum())",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "setup": "out = centred_vs_trailing(make_prices(2, 80), 21)",
+            "call": "int(out['trailing'].tail(10).isna().sum())",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "setup": "out = centred_vs_trailing(make_prices(2, 80), 21)",
+            "call": "bool(np.allclose(out['centred'].shift(10), out['trailing'], equal_nan=True))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) if v == v else None for v in centred_vs_trailing([100, 102, 99, 103, 101, 104, 100], 3)['centred']]",
+            "expect": "[None, None, 0.035898, 0.037755, 0.031901, 0.035171, None]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on price paths from `make_prices(seed, n)`, which is already defined, and one short list. Four compare single values with math.isclose; the others check where each column is empty and how the two line up. The first run loads pandas and NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both columns are `r.rolling(w).std()`; one needs one extra argument."
+        },
+        {
+          "rung": "point",
+          "text": "Pass `center=True` to the centred one.",
+          "highlight": [
+            "ce"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`trailing = r.rolling(w).std()` and `centred = r.rolling(w, center=True).std()`."
+        }
+      ],
+      "feedback": {
+        "correct": "The centred column is the trailing one moved $w // 2$ days earlier.",
+        "generic": "Some tests failed. Both columns are `rolling(w).std()` of `r`; only the centred one passes `center=True`.",
+        "byKey": {
+          "test-5": "Your centred column has values in its last 10 rows. A centred window needs future days, so those rows must be empty: use `center=True`."
+        }
+      },
+      "explain": {
+        "text": "At day 40 the centred 21-day window uses days 30 to 50, ten of them after day 40. The giveaway is the end of the column: it is empty for the last 10 days, because those windows need days that have not happened. For a day-0 prediction, a centred `vol_20d` leaks 10 days of the label.",
+        "canvas": {
+          "highlight": [
+            "ce"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Restated numbers",
+      "prose": "Firms restate earnings: after an accounting review this one cut two quarters in March 2021. The database below keeps every version with the date it was published. Your backtest makes a prediction on 1 March 2020.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quarter",
+            "EPS (p)",
+            "Published"
+          ],
+          "rows": [
+            [
+              "Q3 2019",
+              "42",
+              "5 Nov 2019"
+            ],
+            [
+              "Q3 2019, restated",
+              "31",
+              "12 Mar 2021"
+            ],
+            [
+              "Q4 2019",
+              "47",
+              "20 Feb 2020"
+            ],
+            [
+              "Q4 2019, restated",
+              "39",
+              "12 Mar 2021"
+            ],
+            [
+              "Q1 2020",
+              "12",
+              "6 May 2020"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap every row the model could have seen on 1 March 2020.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0",
+          "r2"
+        ],
+        "wrong": [
+          {
+            "id": "restated",
+            "set": [
+              "r1",
+              "r3"
+            ]
+          },
+          {
+            "id": "all-q",
+            "set": [
+              "r0",
+              "r1",
+              "r2",
+              "r3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each Published date with 1 March 2020."
+        },
+        {
+          "rung": "point",
+          "text": "Two rows were published before the prediction date.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first reports of Q3 and Q4 2019 came out in November 2019 and February 2020. The restatements came a year later."
+        }
+      ],
+      "feedback": {
+        "correct": "On 1 March 2020 the model knew 42p and 47p.",
+        "generic": "Not quite right. Keep the rows whose Published date is before 1 March 2020.",
+        "byKey": {
+          "restated": "You picked today's corrected numbers. They were published in March 2021, a year after the prediction.",
+          "all-q": "You kept every version of Q3 and Q4. The restated rows were published in 2021.",
+          "r1": "The restatement of Q3 was published on 12 March 2021, after the prediction.",
+          "r3": "The restatement of Q4 was published on 12 March 2021, after the prediction.",
+          "r4": "Q1 2020 results came out on 6 May 2020, after the prediction."
+        }
+      },
+      "explain": {
+        "text": "On 1 March 2020 the model knew 42p and 47p. A database that keeps only today's numbers would hand it 31p and 39p a year early, and the cut itself is news about the share. Data stored with the date each value was first known is **point-in-time** data.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Measure the inflation",
+      "prose": "How much does a leak flatter a score? `make_leak(seed)` builds 600 share-months. `X_clean` holds momentum and value, which really move returns. `X_leaky` adds `ret_m10_p10`, whose window shares 10 days with the label.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rows",
+            "Used for"
+          ],
+          "rows": [
+            [
+              "1 to 400",
+              "fit `LinearRegression`"
+            ],
+            [
+              "401 to 600",
+              "test $R^2$, `model.score`"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `leak_score_gap`: fit on the first `n_train` rows of each matrix, and return both test $R^2$ values.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_leak(seed, n=600):\n    \"\"\"n share-months in month order; y is the return over days 1 to 21, in %.\n    X_clean: momentum and value z-scores. X_leaky adds ret_m10_p10,\n    the return from day -9 to day 10, which overlaps the label.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = rng.standard_normal(n)\n    value = rng.standard_normal(n)\n    daily = rng.standard_normal((n, 31)) * 6 / np.sqrt(21)   # days -9 to 21\n    y = 0.5 * mom + 0.3 * value + daily[:, 10:].sum(1)        # days 1 to 21\n    ret_m10_p10 = daily[:, :20].sum(1)                        # days -9 to 10\n    X_clean = np.column_stack([mom, value])\n    X_leaky = np.column_stack([mom, value, ret_m10_p10])\n    return X_clean, X_leaky, y\n",
+        "starter": "from sklearn.linear_model import LinearRegression\n\ndef leak_score_gap(X_clean, X_leaky, y, n_train):\n    scores = []\n    for X in (X_clean, X_leaky):\n        model = ...   # fit on the first n_train rows\n        r2 = ...      # model.score on the rows after them\n        scores.append(round(float(r2), 3))\n    return tuple(scores)\n",
+        "solution": "from sklearn.linear_model import LinearRegression\n\ndef leak_score_gap(X_clean, X_leaky, y, n_train):\n    scores = []\n    for X in (X_clean, X_leaky):\n        model = LinearRegression().fit(X[:n_train], y[:n_train])\n        r2 = model.score(X[n_train:], y[n_train:])\n        scores.append(round(float(r2), 3))\n    return tuple(scores)\n",
+        "examples": [
+          {
+            "setup": "Xc, Xl, y = make_leak(3)",
+            "call": "leak_score_gap(Xc, Xl, y, 400)",
+            "expect": "(0.023, 0.221)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Xc, Xl, y = make_leak(3)",
+            "call": "leak_score_gap(Xc, Xl, y, 400)",
+            "expect": "(0.023, 0.221)",
+            "compare": "equal"
+          },
+          {
+            "setup": "Xc, Xl, y = make_leak(1)",
+            "call": "leak_score_gap(Xc, Xl, y, 400)",
+            "expect": "(-0.033, 0.271)",
+            "compare": "equal"
+          },
+          {
+            "setup": "Xc, Xl, y = make_leak(2)",
+            "call": "leak_score_gap(Xc, Xl, y, 400)",
+            "expect": "(-0.027, 0.21)",
+            "compare": "equal"
+          },
+          {
+            "setup": "Xc, Xl, y = make_leak(4, n=300)",
+            "call": "leak_score_gap(Xc, Xl, y, 200)",
+            "expect": "(-0.001, 0.195)",
+            "compare": "equal"
+          },
+          {
+            "setup": "Xc, Xl, y = make_leak(5, n=1000)",
+            "call": "leak_score_gap(Xc, Xl, y, 700)",
+            "expect": "(0.005, 0.16)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on datasets from `make_leak(seed, n)`, which is already defined. Each compares your pair of rounded scores, clean first, with ==. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fit on rows `[:n_train]` and score on rows `[n_train:]`."
+        },
+        {
+          "rung": "point",
+          "text": "`LinearRegression().fit(X[:n_train], y[:n_train])` gives the model.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then `model.score(X[n_train:], y[n_train:])` is the test $R^2$."
+        }
+      ],
+      "feedback": {
+        "correct": "On seed 3 the clean model scores 0.023 and the leaky one 0.221.",
+        "generic": "Some tests failed. Fit each model on `X[:n_train]`, `y[:n_train]`, then score it on the rows after `n_train`.",
+        "byKey": {
+          "test-1": "Your scores differ from 0.023 and 0.221 on seed 3. Check that you score on `X[n_train:]`, the rows the fit never saw."
+        }
+      },
+      "explain": {
+        "text": "On seed 3 the honest model scores a test $R^2$ of 0.023: small, like a real monthly signal. The leaky one scores 0.221, nearly ten times as much, from 10 borrowed days. A score that jumps like this when one feature joins is a reason to audit that feature."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "An average of everything",
+      "prose": "A colleague adds one feature: each share's average next-month return. The returns are pure noise, yet the test hit rate is 55.0%. The test months come strictly after the training months.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> df.shape   # 1,000 shares x 36 months, pure noise",
+            "(36000, 3)",
+            ">>> df['stock_avg'] = (df.groupby('stock')['next_ret']",
+            "...                       .transform('mean'))",
+            ">>> hit_rate(train=months[:24], test=months[24:])",
+            "0.550"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What explains the 55%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "own",
+            "text": "Each share's average includes the row's own label",
+            "correct": true
+          },
+          {
+            "id": "split",
+            "text": "Nothing: the time split makes the test honest",
+            "why": "You trusted the time split. The groupby ran over all 36 months first, so every test row's feature held its own label."
+          },
+          {
+            "id": "mom",
+            "text": "Shares that did well keep doing well",
+            "why": "You read it as momentum. The returns are pure noise, so there is no persistence to find."
+          },
+          {
+            "id": "overfit",
+            "text": "Overfitting: one number per share is too many",
+            "why": "Overfitting would lower the test score. Here the test score rose, so the test rows were helped."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which months went into each share's average?"
+        },
+        {
+          "rung": "point",
+          "text": "The groupby saw all 36 months, the 12 test months included.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A test row's `stock_avg` is the mean of 36 labels, one of which is its own."
+        }
+      ],
+      "feedback": {
+        "correct": "The feature was built before the split, from every label.",
+        "generic": "Not quite right. Ask which labels went into `stock_avg` for a test row.",
+        "byKey": {
+          "split": "You trusted the time split. The groupby ran over all 36 months first, so every test row's feature already held its own label."
+        }
+      },
+      "explain": {
+        "text": "A test row's average covers 36 labels, one its own, so it correlates with the label at about $1/\\sqrt{36} = 0.17$. That predicts a hit rate of 55.3% from noise. Built from the 24 training months only, the same feature scores 49.9%. Averaging a target by group is **target encoding**, and it must be fitted on training rows only.",
+        "canvas": {
+          "tone": {
+            "l6": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "One rule for every feature",
+      "prose": "Every check you made is one rule. For a prediction made at time $t$, keep feature $x_j$ only if $$\\text{known}(x_j) \\le t,$$ where known is when every input to the value existed, not when the row was stamped. Store that time beside every feature, and keep old versions.",
+      "question": "A feature `eps_ttm` is stamped day 0, but uses earnings restated on day 300. May a day-0 prediction use it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: its inputs are known only on day 300",
+            "correct": true
+          },
+          {
+            "id": "stamp",
+            "text": "Yes: it is stamped day 0",
+            "why": "You trusted the stamp. The rule asks when the inputs existed, and the restated earnings existed only on day 300."
+          },
+          {
+            "id": "small",
+            "text": "Yes, if the restatement was small",
+            "why": "Size does not make a leak safe. Even a 1-day overlap lifted a noise hit rate to 51.6%."
+          },
+          {
+            "id": "test",
+            "text": "Only in the test period",
+            "why": "The test period is exactly where a leak does its damage. Use the version first published by day 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Use the version that was published by day 0.",
+        "generic": "Not quite right. Ask when the inputs to the value existed.",
+        "byKey": {
+          "stamp": "You trusted the stamp. The rule asks when the inputs existed: day 300."
+        }
+      },
+      "explain": {
+        "text": "$\\text{known}(\\texttt{eps\\_ttm}) = 300 > 0$, so it fails the rule. Point-in-time data keeps the first-published value, with its date, beside every later revision."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The research note",
+      "prose": "A note pitches a daily model for 300 UK shares: tomorrow's direction, right 64% of the time over 2019 to 2023. One feature, `big_move_flag`, carries 80% of the importance. The desk's rule: a daily hit rate above 60% is a bug until proved otherwise.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "mom",
+              "label": "mom_20d"
+            },
+            {
+              "id": "vol",
+              "label": "vol_20d"
+            },
+            {
+              "id": "spread",
+              "label": "spread"
+            },
+            {
+              "id": "sector",
+              "label": "sector_ret"
+            },
+            {
+              "id": "flag",
+              "label": "big_move_flag"
+            },
+            {
+              "id": "volz",
+              "label": "volume_z"
+            }
+          ],
+          "yLabel": "Share of importance",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 1
+        },
+        "state": {
+          "values": {
+            "mom": 0.05,
+            "vol": 0.04,
+            "spread": 0.03,
+            "sector": 0.04,
+            "flag": 0.8,
+            "volz": 0.04
+          }
+        }
+      },
+      "question": "What do you ask first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "when",
+            "text": "When is `big_move_flag` known, and what is it built from?",
+            "correct": true
+          },
+          {
+            "id": "longer",
+            "text": "Does the hit rate hold over a longer test?",
+            "why": "A longer test runs the same leak for longer. Ask what the feature contains before testing it again."
+          },
+          {
+            "id": "size",
+            "text": "How large can the position be while it works?",
+            "why": "You moved to sizing before checking the score. A leak trades badly at any size."
+          },
+          {
+            "id": "better",
+            "text": "Which model would score even higher?",
+            "why": "You went looking for more score. A suspicious score needs an audit, not a bigger model."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which number in the note breaks the desk's rule?"
+        },
+        {
+          "rung": "point",
+          "text": "The rule says 64% is a bug until proved otherwise. Which feature would you audit?",
+          "highlight": [
+            "flag"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Ask for the known time and the inputs of the feature with 80% of the importance."
+        }
+      ],
+      "feedback": {
+        "correct": "Audit the dominant feature before anything else.",
+        "generic": "Not quite right. A 64% daily hit rate is a bug until proved otherwise; start with the dominant feature.",
+        "byKey": {
+          "longer": "A longer test runs the same leak for longer. Ask when `big_move_flag` is known first."
+        }
+      },
+      "explain": {
+        "text": "In this note the flag is set when a share moves more than 3% on the label day itself. Dropped, the model's hit rate falls to about 50%. A real 64% daily hit rate would make the desk the best forecaster in the market; a leak is far likelier.",
+        "canvas": {
+          "highlight": [
+            "flag"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A test score far too good, with one feature doing most of the work, is the signature of a leak.",
+      "For each feature ask when every input existed; keep it only if that is no later than the prediction time.",
+      "Stamps lie: a centred window, a full-sample average or a restated value can sit in a row stamped day 0."
+    ],
+    "formula": {
+      "name": "Known-at rule",
+      "tex": "\\text{use } x_j \\text{ at } t \\iff \\text{known}(x_j) \\le t",
+      "note": "known is when the inputs existed, not when the row was written."
+    },
+    "trap": "Trusting a time split when a feature was built from all rows first, as a groupby mean of the target is."
+  },
+  "quiz": [
+    {
+      "id": "q-one-day",
+      "difficulty": 2,
+      "prose": "A trailing 20-day return should end on day 0, but a bug ends it on day 1. On pure noise the hit rate becomes 51.6%.",
+      "question": "Is a leak this small safe to keep?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: it adds 1.6 points from nothing and looks like a believable signal",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "Yes: 1.6 points is too small to matter",
+            "why": "You judged the leak by its size. Small edges are what real signals look like, so this one would be believed and traded."
+          },
+          {
+            "id": "sig",
+            "text": "Yes, unless 51.6% is statistically significant",
+            "why": "Significance does not cure a leak. With enough rows it would be significant, and still false."
+          },
+          {
+            "id": "live",
+            "text": "Yes: it will keep working live",
+            "why": "Live, day 1 is not known on day 0, so the 1.6 points vanish."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A small leak is the dangerous kind: it is believable.",
+        "generic": "Not quite right. Ask whether the 1.6 points would exist live.",
+        "byKey": {
+          "small": "You judged the leak by its size. A 51.6% hit rate is what a real signal looks like, so it would be believed."
+        }
+      },
+      "explain": {
+        "text": "Live, day 1 is not known on day 0, so the 1.6 points vanish. Big leaks get caught by the too-good test; small ones survive into production. Fix the window either way."
+      }
+    },
+    {
+      "id": "q-noise-future",
+      "difficulty": 2,
+      "prose": "Edge case. A feature holds tomorrow's rainfall in Reykjavik. It uses future data, but has nothing to do with UK share returns.",
+      "question": "What does it do, and what do you do with it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "drop",
+            "text": "It barely moves the score, but remove it: the pipeline reads future data",
+            "correct": true
+          },
+          {
+            "id": "keep",
+            "text": "Keep it: it cannot help, so it cannot leak",
+            "why": "You judged by the effect on this score. The pipeline still reads data from after the prediction, and the next such feature may matter."
+          },
+          {
+            "id": "inflate",
+            "text": "It inflates the score like any leak",
+            "why": "Future data inflates a score only if it relates to the label. Rainfall in Iceland does not."
+          },
+          {
+            "id": "lag",
+            "text": "Lag the label by a day to match it",
+            "why": "Moving the label changes the question being asked. Remove the feature instead."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Harmless to the score, still wrong practice.",
+        "generic": "Not quite right. Separate what it does to the score from what it says about the pipeline.",
+        "byKey": {
+          "keep": "You judged by the effect on this score. A pipeline that reads tomorrow's data will one day read something that matters."
+        }
+      },
+      "explain": {
+        "text": "Future data inflates a score only when it relates to the label, so this one costs little. But it proves the pipeline can read data after the prediction. Remove it and find out how it got in."
+      }
+    },
+    {
+      "id": "q-centre-days",
+      "difficulty": 3,
+      "prose": "A volatility feature uses `rolling(21, center=True)`. The prediction is made at the close of day 0; the label covers days 1 to 21.",
+      "question": "How many days of the label does the day-0 value contain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "days",
+        "label": "Days of the label inside the window",
+        "accept": "10 exactly: the window is days −10 to 10.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 21,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "eleven",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Ten days: the window runs from day −10 to day 10.",
+        "generic": "Not quite right. A centred window of 21 days has 10 days on each side of day 0.",
+        "byKey": {
+          "all": "That is the whole label. A centred 21-day window reaches only 10 days past day 0.",
+          "eleven": "You counted day 0 as a label day. The label starts on day 1.",
+          "none": "The value is stamped day 0, but its window reaches 10 days ahead."
+        }
+      },
+      "explain": {
+        "text": "A centred 21-day window is days −10 to 10: ten days on each side of day 0. Days 1 to 10 belong to the label."
+      }
+    },
+    {
+      "id": "q-index-flag",
+      "difficulty": 2,
+      "prose": "A 2015 to 2019 backtest uses `in_ftse_2024`: 1 if the share is in the FTSE 100 in 2024.",
+      "question": "Does it leak?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: being in the index in 2024 rewards shares that rose after 2015",
+            "correct": true
+          },
+          {
+            "id": "static",
+            "text": "No: index membership is public information",
+            "why": "It is public in 2024. In 2015 nobody knew which shares would be in the 2024 index."
+          },
+          {
+            "id": "slow",
+            "text": "No: membership changes slowly",
+            "why": "Slow change still changes. Shares that fell out by 2024 are exactly the ones that did badly."
+          },
+          {
+            "id": "only-big",
+            "text": "Only for small shares",
+            "why": "The flag leaks for every share: it records how each one did after 2015."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The flag records the future it is meant to predict.",
+        "generic": "Not quite right. Ask when the 2024 membership list was known.",
+        "byKey": {
+          "static": "It is public now. In 2015 the 2024 index did not exist yet."
+        }
+      },
+      "explain": {
+        "text": "Shares join a large-cap index by rising and leave it by falling. A 2024 flag in a 2015 backtest knows which shares would rise. Use the membership as of each backtest date, as Lesson 11 does."
+      }
+    }
+  ]
+}

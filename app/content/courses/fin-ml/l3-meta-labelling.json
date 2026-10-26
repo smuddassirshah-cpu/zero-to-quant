@@ -1,0 +1,1512 @@
+{
+  "id": "l3-meta-labelling",
+  "course": "fin-ml",
+  "title": "Should I take this trade?",
+  "minutes": 15,
+  "objectives": [
+    "Use meta-labelling to decide when to act on a primary signal.",
+    "Score the secondary model by precision and recall against the primary's base rate."
+  ],
+  "skills": [
+    "fm-labels",
+    "fm-eval"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which calls paid?",
+      "prose": "A moving-average rule goes long when the 5-day average is above the 20-day one, and short otherwise. Each trade then runs under the barriers of lesson 2. The table shows eight trades and the barrier the **price** hit first.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Entry day",
+            "Side",
+            "Price hit first"
+          ],
+          "rows": [
+            [
+              "112",
+              "Long",
+              "upper"
+            ],
+            [
+              "131",
+              "Short",
+              "upper"
+            ],
+            [
+              "158",
+              "Short",
+              "lower"
+            ],
+            [
+              "176",
+              "Long",
+              "time"
+            ],
+            [
+              "203",
+              "Long",
+              "lower"
+            ],
+            [
+              "219",
+              "Short",
+              "time"
+            ],
+            [
+              "247",
+              "Long",
+              "upper"
+            ],
+            [
+              "266",
+              "Short",
+              "lower"
+            ]
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap every trade that made money.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0",
+          "r2",
+          "r6",
+          "r7"
+        ],
+        "countWord": "trades",
+        "wrong": [
+          {
+            "id": "longs",
+            "set": [
+              "r0",
+              "r6"
+            ]
+          },
+          {
+            "id": "upper",
+            "set": [
+              "r0",
+              "r1",
+              "r6"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A short gains when the price falls."
+        },
+        {
+          "rung": "point",
+          "text": "Day 158: short, and the price hit the lower barrier.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Wins: long with upper (days 112, 247) and short with lower (days 158, 266). Time-outs are not wins."
+        }
+      ],
+      "feedback": {
+        "correct": "Four calls paid: two longs that rose, two shorts that fell.",
+        "generic": "Not quite right. A trade pays when its side matches the barrier: long with upper, short with lower.",
+        "byKey": {
+          "longs": "You kept only the longs. A short that hits the lower barrier has taken its profit too.",
+          "upper": "You tapped every upper touch. For the short on day 131, the upper barrier is its stop.",
+          "r1": "Day 131 is a short, and the price rose to the upper barrier: that is its stop.",
+          "r4": "Day 203 is a long that hit the lower barrier: its stop.",
+          "r3": "Day 176 timed out without touching a barrier. Our convention does not count that as a win.",
+          "r5": "Day 219 timed out. It is not a win."
+        }
+      },
+      "explain": {
+        "text": "You matched each side with the barrier: long and upper, or short and lower. Four of eight calls paid, so the rule's hit rate here is 50%. Whether a call paid is itself a label, with values 1 and 0.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              2,
+              6,
+              7
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "When does the rule work?",
+      "prose": "We run the rule on every day of a six-year series: 1,471 trades. In the first 900 it pays 53% of the time. The chart splits those 900 by the 20-day volatility on the entry day, into five equal groups.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "v0",
+              "label": "0.5–0.8"
+            },
+            {
+              "id": "v1",
+              "label": "0.8–1.0"
+            },
+            {
+              "id": "v2",
+              "label": "1.0–1.4"
+            },
+            {
+              "id": "v3",
+              "label": "1.4–1.6"
+            },
+            {
+              "id": "v4",
+              "label": "1.6–2.3"
+            }
+          ],
+          "xLabel": "20-day volatility at entry (%)",
+          "yLabel": "Share of calls that paid",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": 0,
+          "yMax": 1,
+          "hlines": [
+            {
+              "id": "half",
+              "y": 0.5,
+              "label": "0.5"
+            }
+          ]
+        },
+        "state": {
+          "values": {
+            "v0": 0.74,
+            "v1": 0.69,
+            "v2": 0.41,
+            "v3": 0.41,
+            "v4": 0.4
+          }
+        }
+      },
+      "question": "Tap every group where acting on the rule pays more than half the time.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "v0",
+          "v1"
+        ],
+        "countWord": "groups"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each bar with the dashed line at 0.5."
+        },
+        {
+          "rung": "point",
+          "text": "The calm groups are on the left.",
+          "highlight": [
+            "v0",
+            "v1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Calm entries pay 74% and 69% of the time; the rest about 41%.",
+        "generic": "Not quite right. Keep only the bars above 0.5."
+      },
+      "explain": {
+        "text": "The same rule pays 74% of the time in calm markets and about 41% in wild ones. In this share calm spells trend and wild ones chop. A second model could learn when to trust the rule from data like this.",
+        "canvas": {
+          "highlight": [
+            "v0",
+            "v1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Two models, two questions",
+      "prose": "This is López de Prado's **meta-labelling**, from *Advances in Financial Machine Learning*. A **primary** model picks the side. A **secondary** model is trained on the **meta-label**: 1 if the primary's trade hit its profit barrier, else 0. Its probability sets whether to trade, and how big.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "px",
+              "label": "Prices",
+              "x": 0.08,
+              "y": 0.55,
+              "shape": "rect"
+            },
+            {
+              "id": "pri",
+              "label": "Primary\nside: ±1",
+              "x": 0.33,
+              "y": 0.55,
+              "shape": "rect"
+            },
+            {
+              "id": "sec",
+              "label": "Secondary\nP(pays)",
+              "x": 0.62,
+              "y": 0.55,
+              "shape": "rect"
+            },
+            {
+              "id": "trade",
+              "label": "Trade\nside × size",
+              "x": 0.9,
+              "y": 0.55,
+              "shape": "rect"
+            },
+            {
+              "id": "feat",
+              "label": "Features",
+              "x": 0.62,
+              "y": 0.08,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "px",
+              "to": "pri"
+            },
+            {
+              "from": "pri",
+              "to": "sec"
+            },
+            {
+              "from": "feat",
+              "to": "sec"
+            },
+            {
+              "from": "sec",
+              "to": "trade"
+            },
+            {
+              "from": "pri",
+              "to": "trade",
+              "bend": -0.5,
+              "dashed": true,
+              "label": "side"
+            }
+          ],
+          "height": 260
+        },
+        "state": {}
+      },
+      "question": "A long trade times out at the vertical barrier. What is its meta-label?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0: it did not hit the profit barrier",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1: it did not hit the stop either",
+            "why": "You counted \"not a loss\" as a win. The meta-label is 1 only for a profit-barrier exit."
+          },
+          {
+            "id": "minus",
+            "text": "−1: the primary was wrong",
+            "why": "The meta-label has two values, 1 and 0. The side, not the meta-label, carries the sign."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The meta-label asks one yes or no question."
+        },
+        {
+          "rung": "point",
+          "text": "This model learns it.",
+          "highlight": [
+            "sec"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Yes means the trade reached its profit barrier. A time-out did not."
+        }
+      ],
+      "feedback": {
+        "correct": "Only a profit-barrier exit is a 1.",
+        "generic": "Not quite right. The meta-label is 1 only when the trade took its profit."
+      },
+      "explain": {
+        "text": "The meta-label is binary: did acting on the primary pay? A time-out did not, so it is 0. The secondary never chooses the side; it only learns when the primary is worth following.",
+        "canvas": {
+          "highlight": [
+            "sec"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The primary in code",
+      "prose": "The primary is a plain rule: long when the fast average of closes is above the slow one, short otherwise. Day $t$'s side uses closes up to $t$ only. The first day with a side is day `slow - 1`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> primary_crossover_side([10, 11, 12, 13, 12, 11, 10, 9], 2, 4)",
+            "[1, 1, -1, -1, -1]",
+            ">>> # entry 0 is day 3, the first with four closes"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `primary_crossover_side` so it returns one side per day from day `slow - 1`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n\ndef rolling_vol(prices, window=20):\n    \"\"\"vol[t]: sample sd of the last `window` simple returns ending on day t (nan before).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    r = p[1:] / p[:-1] - 1\n    vol = [float('nan')] * len(p)\n    for t in range(window, len(p)):\n        vol[t] = float(np.std(r[t - window:t], ddof=1))\n    return vol\n\ndef make_trend_prices(n=1500, seed=20, block=60):\n    \"\"\"n + 1 closes in 60-day blocks: half trend (drift 0.3% a day either way, vol 0.8%),\n    half chop (no drift, vol 1.6%).\"\"\"\n    rng = np.random.default_rng(seed)\n    r = []\n    while len(r) < n:\n        if rng.random() < 0.5:\n            r += list(rng.choice([-1, 1]) * 0.003 + 0.008 * rng.standard_normal(block))\n        else:\n            r += list(0.016 * rng.standard_normal(block))\n    r = np.array(r[:n])\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef _touch(path, upper, lower, h):\n    for d in range(1, min(h, len(path) - 1) + 1):\n        if path[d] <= lower:\n            return (-1, d)\n        if path[d] >= upper:\n            return (1, d)\n    return (0, min(h, len(path) - 1))\n\ndef tb_events(prices, vol, k, h, start):\n    \"\"\"(label, days to touch) for entries start .. len(prices) - h - 1.\"\"\"\n    return [_touch(prices[t:t + h + 1], prices[t] * (1 + k * vol[t]),\n                   prices[t] * (1 - k * vol[t]), h) for t in range(start, len(prices) - h)]\n\ndef _side(prices, fast, slow):\n    p = np.asarray(prices, dtype=float)\n    return [1 if p[t - fast + 1:t + 1].mean() > p[t - slow + 1:t + 1].mean() else -1\n            for t in range(slow - 1, len(p))]\n\ndef meta_dataset(seed=20, k=2.5, h=10):\n    \"\"\"Crossover (5, 20) sides on make_trend_prices(1500, seed), triple-barrier outcomes\n    (k, h), meta-labels, and two features per event: 20-day vol (%) and the 10-day\n    return in the direction of the side (%). Events are days 20 to len - h - 1.\"\"\"\n    p = make_trend_prices(1500, seed)\n    vol = rolling_vol(p, 20)\n    P = np.asarray(p)\n    side = _side(p, 5, 20)\n    X, y = [], []\n    for t in range(20, len(p) - h):\n        s = side[t - 19]\n        lab = _touch(p[t:t + h + 1], p[t] * (1 + k * vol[t]), p[t] * (1 - k * vol[t]), h)[0]\n        X.append([round(vol[t] * 100, 4), round((P[t] / P[t - 10] - 1) * 100 * s, 4)])\n        y.append(1 if s * lab == 1 else 0)\n    return np.array(X), y\n",
+        "starter": "import numpy as np\n\ndef primary_crossover_side(prices, fast, slow):\n    p = np.asarray(prices, dtype=float)\n    sides = []\n    for t in range(slow - 1, len(p)):   # the first day with a full slow window\n        f = ...   # mean of the last `fast` closes, up to and including day t\n        s = ...   # mean of the last `slow` closes\n        sides.append(1 if f > s else -1)\n    return sides\n",
+        "solution": "import numpy as np\n\ndef primary_crossover_side(prices, fast, slow):\n    p = np.asarray(prices, dtype=float)\n    sides = []\n    for t in range(slow - 1, len(p)):   # the first day with a full slow window\n        f = p[t - fast + 1:t + 1].mean()\n        s = p[t - slow + 1:t + 1].mean()\n        sides.append(1 if f > s else -1)\n    return sides\n",
+        "examples": [
+          {
+            "call": "primary_crossover_side([10, 11, 12, 13, 12, 11, 10, 9], 2, 4)",
+            "expect": "[1, 1, -1, -1, -1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "primary_crossover_side([10, 11, 12, 13, 12, 11, 10, 9], 2, 4)",
+            "expect": "[1, 1, -1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "primary_crossover_side([10, 11, 12, 13, 12, 11, 10, 9], 1, 3)",
+            "expect": "[1, 1, -1, -1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(primary_crossover_side(list(range(100, 130)), 5, 20))",
+            "expect": "11",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_trend_prices(1500, seed=20)",
+            "call": "len(primary_crossover_side(p, 5, 20))",
+            "expect": "1482",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_trend_prices(1500, seed=20)",
+            "call": "primary_crossover_side(p, 5, 20)[:12]",
+            "expect": "[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_trend_prices(1500, seed=20)",
+            "call": "sum(primary_crossover_side(p, 5, 20))",
+            "expect": "-280",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: two short lists, a rising line, and `make_trend_prices(1500, seed=20)`, which is already defined. Lists must match exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The window ending at `t` and holding `n` closes is `p[t - n + 1:t + 1]`."
+        },
+        {
+          "rung": "point",
+          "text": "Output entry 0 belongs to day 3 here.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`f = p[t - fast + 1:t + 1].mean()` and `s = p[t - slow + 1:t + 1].mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "One side per day, aligned to the day it was known.",
+        "generic": "Not quite right. Check the window slices end at `t + 1`, so day $t$ is included and day $t + 1$ is not."
+      },
+      "explain": {
+        "text": "Both windows end at day $t$, so the side is known at the close of $t$, before the trade's first future close. A window ending at `t + 2` would peek one day ahead. The output is `slow - 1` shorter than the prices."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Meta-labels in code",
+      "prose": "The triple-barrier labels of lesson 2 say which barrier the **price** hit: $+1$ upper, $-1$ lower, $0$ time. The side says which way we bet. Combine them into the meta-label.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Side",
+            "Price label",
+            "Meta-label"
+          ],
+          "rows": [
+            [
+              "+1",
+              "+1",
+              "1"
+            ],
+            [
+              "−1",
+              "+1",
+              "0"
+            ],
+            [
+              "−1",
+              "−1",
+              "1"
+            ],
+            [
+              "+1",
+              "0",
+              "0"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `meta_labels` so it returns 1 where the trade hit its profit barrier and 0 otherwise.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n\ndef rolling_vol(prices, window=20):\n    \"\"\"vol[t]: sample sd of the last `window` simple returns ending on day t (nan before).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    r = p[1:] / p[:-1] - 1\n    vol = [float('nan')] * len(p)\n    for t in range(window, len(p)):\n        vol[t] = float(np.std(r[t - window:t], ddof=1))\n    return vol\n\ndef make_trend_prices(n=1500, seed=20, block=60):\n    \"\"\"n + 1 closes in 60-day blocks: half trend (drift 0.3% a day either way, vol 0.8%),\n    half chop (no drift, vol 1.6%).\"\"\"\n    rng = np.random.default_rng(seed)\n    r = []\n    while len(r) < n:\n        if rng.random() < 0.5:\n            r += list(rng.choice([-1, 1]) * 0.003 + 0.008 * rng.standard_normal(block))\n        else:\n            r += list(0.016 * rng.standard_normal(block))\n    r = np.array(r[:n])\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef _touch(path, upper, lower, h):\n    for d in range(1, min(h, len(path) - 1) + 1):\n        if path[d] <= lower:\n            return (-1, d)\n        if path[d] >= upper:\n            return (1, d)\n    return (0, min(h, len(path) - 1))\n\ndef tb_events(prices, vol, k, h, start):\n    \"\"\"(label, days to touch) for entries start .. len(prices) - h - 1.\"\"\"\n    return [_touch(prices[t:t + h + 1], prices[t] * (1 + k * vol[t]),\n                   prices[t] * (1 - k * vol[t]), h) for t in range(start, len(prices) - h)]\n\ndef _side(prices, fast, slow):\n    p = np.asarray(prices, dtype=float)\n    return [1 if p[t - fast + 1:t + 1].mean() > p[t - slow + 1:t + 1].mean() else -1\n            for t in range(slow - 1, len(p))]\n\ndef meta_dataset(seed=20, k=2.5, h=10):\n    \"\"\"Crossover (5, 20) sides on make_trend_prices(1500, seed), triple-barrier outcomes\n    (k, h), meta-labels, and two features per event: 20-day vol (%) and the 10-day\n    return in the direction of the side (%). Events are days 20 to len - h - 1.\"\"\"\n    p = make_trend_prices(1500, seed)\n    vol = rolling_vol(p, 20)\n    P = np.asarray(p)\n    side = _side(p, 5, 20)\n    X, y = [], []\n    for t in range(20, len(p) - h):\n        s = side[t - 19]\n        lab = _touch(p[t:t + h + 1], p[t] * (1 + k * vol[t]), p[t] * (1 - k * vol[t]), h)[0]\n        X.append([round(vol[t] * 100, 4), round((P[t] / P[t - 10] - 1) * 100 * s, 4)])\n        y.append(1 if s * lab == 1 else 0)\n    return np.array(X), y\n",
+        "starter": "def meta_labels(sides, tb_labels):\n    return [...]   # 1 where the trade hit its own profit barrier, else 0\n",
+        "solution": "def meta_labels(sides, tb_labels):\n    return [1 if s * y == 1 else 0 for s, y in zip(sides, tb_labels)]\n",
+        "examples": [
+          {
+            "call": "meta_labels([1, -1, -1, 1, 1, -1, 1, -1], [1, 1, -1, 0, -1, 0, 1, -1])",
+            "expect": "[1, 0, 1, 0, 0, 0, 1, 1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "meta_labels([1, -1, -1, 1, 1, -1, 1, -1], [1, 1, -1, 0, -1, 0, 1, -1])",
+            "expect": "[1, 0, 1, 0, 0, 0, 1, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "meta_labels([1, 1, 1], [0, 0, 0])",
+            "expect": "[0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "meta_labels([-1, -1], [-1, 1])",
+            "expect": "[1, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = meta_dataset(20)",
+            "call": "meta_labels([1] * 6, [1, -1, 0, 1, 1, -1])",
+            "expect": "[1, 0, 0, 1, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_trend_prices(1500, seed=20); v = rolling_vol(p, 20); ev = tb_events(p, v, 2.5, 10, 20); s = _side(p, 5, 20)[1:1 + len(ev)]",
+            "call": "sum(meta_labels(s, [e[0] for e in ev]))",
+            "expect": "710",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_trend_prices(1500, seed=20); v = rolling_vol(p, 20); ev = tb_events(p, v, 2.5, 10, 20); s = _side(p, 5, 20)[1:1 + len(ev)]",
+            "call": "meta_labels(s, [e[0] for e in ev])[:15]",
+            "expect": "[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: short lists, including the eight trades from the first screen, and the crossover trades on the seeded six-year series. Lists must match exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the side by the price label. What does a product of 1 mean?"
+        },
+        {
+          "rung": "point",
+          "text": "Row 3: a short whose price fell.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`[1 if s * y == 1 else 0 for s, y in zip(sides, tb_labels)]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Side times label is 1 exactly when the bet and the move agree.",
+        "generic": "Not quite right. A short wins on $-1$ and a long on $+1$; a time-out is never a win."
+      },
+      "explain": {
+        "text": "The product $s \\cdot y$ is $+1$ when the side matches the barrier, $-1$ when the trade was stopped, and $0$ on a time-out. Only $+1$ becomes a meta-label of 1. For a short the lower barrier is its profit target."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How good is the filter?",
+      "prose": "The secondary gives each trade a probability $p$. We act when $p$ is at least a threshold. **Precision**: of the trades we took, the share that paid. **Recall**: of the trades that paid, the share we took. Stat-learning lesson 12 met both.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "$p$",
+            "Paid?"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.9",
+              "1"
+            ],
+            [
+              "2",
+              "0.8",
+              "0"
+            ],
+            [
+              "3",
+              "0.4",
+              "1"
+            ],
+            [
+              "4",
+              "0.6",
+              "1"
+            ],
+            [
+              "5",
+              "0.2",
+              "0"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `meta_precision_recall` so it returns (precision, recall), each rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n\ndef rolling_vol(prices, window=20):\n    \"\"\"vol[t]: sample sd of the last `window` simple returns ending on day t (nan before).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    r = p[1:] / p[:-1] - 1\n    vol = [float('nan')] * len(p)\n    for t in range(window, len(p)):\n        vol[t] = float(np.std(r[t - window:t], ddof=1))\n    return vol\n\ndef make_trend_prices(n=1500, seed=20, block=60):\n    \"\"\"n + 1 closes in 60-day blocks: half trend (drift 0.3% a day either way, vol 0.8%),\n    half chop (no drift, vol 1.6%).\"\"\"\n    rng = np.random.default_rng(seed)\n    r = []\n    while len(r) < n:\n        if rng.random() < 0.5:\n            r += list(rng.choice([-1, 1]) * 0.003 + 0.008 * rng.standard_normal(block))\n        else:\n            r += list(0.016 * rng.standard_normal(block))\n    r = np.array(r[:n])\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef _touch(path, upper, lower, h):\n    for d in range(1, min(h, len(path) - 1) + 1):\n        if path[d] <= lower:\n            return (-1, d)\n        if path[d] >= upper:\n            return (1, d)\n    return (0, min(h, len(path) - 1))\n\ndef tb_events(prices, vol, k, h, start):\n    \"\"\"(label, days to touch) for entries start .. len(prices) - h - 1.\"\"\"\n    return [_touch(prices[t:t + h + 1], prices[t] * (1 + k * vol[t]),\n                   prices[t] * (1 - k * vol[t]), h) for t in range(start, len(prices) - h)]\n\ndef _side(prices, fast, slow):\n    p = np.asarray(prices, dtype=float)\n    return [1 if p[t - fast + 1:t + 1].mean() > p[t - slow + 1:t + 1].mean() else -1\n            for t in range(slow - 1, len(p))]\n\ndef meta_dataset(seed=20, k=2.5, h=10):\n    \"\"\"Crossover (5, 20) sides on make_trend_prices(1500, seed), triple-barrier outcomes\n    (k, h), meta-labels, and two features per event: 20-day vol (%) and the 10-day\n    return in the direction of the side (%). Events are days 20 to len - h - 1.\"\"\"\n    p = make_trend_prices(1500, seed)\n    vol = rolling_vol(p, 20)\n    P = np.asarray(p)\n    side = _side(p, 5, 20)\n    X, y = [], []\n    for t in range(20, len(p) - h):\n        s = side[t - 19]\n        lab = _touch(p[t:t + h + 1], p[t] * (1 + k * vol[t]), p[t] * (1 - k * vol[t]), h)[0]\n        X.append([round(vol[t] * 100, 4), round((P[t] / P[t - 10] - 1) * 100 * s, 4)])\n        y.append(1 if s * lab == 1 else 0)\n    return np.array(X), y\n",
+        "starter": "import numpy as np\n\ndef meta_precision_recall(y_meta, p, threshold):\n    y = np.asarray(y_meta)\n    p = np.asarray(p)\n    take = p >= threshold           # the trades we act on\n    precision = ...                 # share of taken trades that paid (0.0 if none taken)\n    recall = ...                    # share of paying trades that we took\n    return (round(float(precision), 4), round(float(recall), 4))\n",
+        "solution": "import numpy as np\n\ndef meta_precision_recall(y_meta, p, threshold):\n    y = np.asarray(y_meta)\n    p = np.asarray(p)\n    take = p >= threshold           # the trades we act on\n    precision = y[take].mean() if take.any() else 0.0\n    recall = y[take].sum() / y.sum()\n    return (round(float(precision), 4), round(float(recall), 4))\n",
+        "examples": [
+          {
+            "call": "meta_precision_recall([1, 0, 1, 1, 0], [0.9, 0.8, 0.4, 0.6, 0.2], 0.5)",
+            "expect": "(0.6667, 0.6667)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "meta_precision_recall([1, 0, 1, 1, 0], [0.9, 0.8, 0.4, 0.6, 0.2], 0.5)",
+            "expect": "(0.6667, 0.6667)",
+            "compare": "isclose"
+          },
+          {
+            "call": "meta_precision_recall([1, 0, 1, 1, 0], [0.9, 0.8, 0.4, 0.6, 0.2], 0.0)",
+            "expect": "(0.6, 1.0)",
+            "compare": "isclose"
+          },
+          {
+            "call": "meta_precision_recall([1, 0, 1, 1, 0], [0.9, 0.8, 0.4, 0.6, 0.2], 0.95)",
+            "expect": "(0.0, 0.0)",
+            "compare": "isclose"
+          },
+          {
+            "call": "meta_precision_recall([1, 1, 0, 0], [0.7, 0.6, 0.6, 0.1], 0.6)",
+            "expect": "(0.6667, 1.0)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "y = [1, 0] * 50; p = [0.5 + 0.004 * i for i in range(100)]",
+            "call": "meta_precision_recall(y, p, 0.7)",
+            "expect": "(0.5, 0.5)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on short lists, including a threshold of 0 and one so high nothing is taken. Each number is compared with math.isclose. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`y[take]` keeps the meta-labels of the trades we took."
+        },
+        {
+          "rung": "point",
+          "text": "At 0.5 we take trades 1, 2 and 4.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`precision = y[take].mean() if take.any() else 0.0` and `recall = y[take].sum() / y.sum()`."
+        }
+      ],
+      "feedback": {
+        "correct": "At 0.5 the table gives (0.6667, 0.6667).",
+        "generic": "Not quite right. Precision divides by trades taken; recall divides by trades that paid."
+      },
+      "explain": {
+        "text": "On the seeded series' last 571 trades, a threshold of 0.5 gives precision 0.549 and recall 0.724. A threshold of 0 takes everything: recall 1, and precision 0.406, the primary's own hit rate. That base rate is what the filter must beat."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Choosing a threshold",
+      "prose": "Raise the threshold and we trade less, with higher precision and lower recall. The **F1** score, $\\frac{2 \\cdot \\text{precision} \\cdot \\text{recall}}{\\text{precision} + \\text{recall}}$, balances the two. The solid line is F1 on the test trades.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.25,
+            0.75
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xLabel": "Threshold",
+          "yLabel": "Score",
+          "grid": true,
+          "height": 300,
+          "xStep": 0.1,
+          "yStep": 0.2
+        },
+        "state": {
+          "points": [
+            {
+              "id": "t30",
+              "x": 0.3,
+              "y": 0.5753,
+              "label": "0.575"
+            },
+            {
+              "id": "t40",
+              "x": 0.4,
+              "y": 0.5847,
+              "label": "0.585"
+            },
+            {
+              "id": "t50",
+              "x": 0.5,
+              "y": 0.6245,
+              "label": "0.625"
+            },
+            {
+              "id": "t60",
+              "x": 0.6,
+              "y": 0.6132,
+              "label": "0.613"
+            },
+            {
+              "id": "t70",
+              "x": 0.7,
+              "y": 0.1532,
+              "label": "0.153"
+            }
+          ],
+          "segments": [
+            {
+              "id": "f0",
+              "from": [
+                0.3,
+                0.5753
+              ],
+              "to": [
+                0.4,
+                0.5847
+              ]
+            },
+            {
+              "id": "p0",
+              "from": [
+                0.3,
+                0.418
+              ],
+              "to": [
+                0.4,
+                0.4574
+              ],
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "r0",
+              "from": [
+                0.3,
+                0.9224
+              ],
+              "to": [
+                0.4,
+                0.8103
+              ],
+              "dashed": true,
+              "colour": 3
+            },
+            {
+              "id": "f1",
+              "from": [
+                0.4,
+                0.5847
+              ],
+              "to": [
+                0.5,
+                0.6245
+              ]
+            },
+            {
+              "id": "p1",
+              "from": [
+                0.4,
+                0.4574
+              ],
+              "to": [
+                0.5,
+                0.549
+              ],
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "r1",
+              "from": [
+                0.4,
+                0.8103
+              ],
+              "to": [
+                0.5,
+                0.7241
+              ],
+              "dashed": true,
+              "colour": 3
+            },
+            {
+              "id": "f2",
+              "from": [
+                0.5,
+                0.6245
+              ],
+              "to": [
+                0.6,
+                0.6132
+              ]
+            },
+            {
+              "id": "p2",
+              "from": [
+                0.5,
+                0.549
+              ],
+              "to": [
+                0.6,
+                0.6771
+              ],
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "r2",
+              "from": [
+                0.5,
+                0.7241
+              ],
+              "to": [
+                0.6,
+                0.5603
+              ],
+              "dashed": true,
+              "colour": 3
+            },
+            {
+              "id": "f3",
+              "from": [
+                0.6,
+                0.6132
+              ],
+              "to": [
+                0.7,
+                0.1532
+              ]
+            },
+            {
+              "id": "p3",
+              "from": [
+                0.6,
+                0.6771
+              ],
+              "to": [
+                0.7,
+                0.6897
+              ],
+              "dashed": true,
+              "colour": 2,
+              "label": "precision"
+            },
+            {
+              "id": "r3",
+              "from": [
+                0.6,
+                0.5603
+              ],
+              "to": [
+                0.7,
+                0.0862
+              ],
+              "dashed": true,
+              "colour": 3,
+              "label": "recall"
+            }
+          ]
+        }
+      },
+      "question": "Tap the threshold with the highest F1.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "t50"
+        ],
+        "max": 1,
+        "countWord": "thresholds"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the labels on the solid line."
+        },
+        {
+          "rung": "point",
+          "text": "Two points are close.",
+          "highlight": [
+            "t50",
+            "t60"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "F1 peaks at 0.5: 0.625, with precision 0.549.",
+        "generic": "Not quite right. Find the highest point on the solid line.",
+        "byKey": {
+          "t60": "At 0.6 precision is higher, 0.677, but recall falls to 0.560, so F1 is 0.613.",
+          "t70": "At 0.7 precision is high but only 29 trades remain: recall 0.086.",
+          "t30": "At 0.3 nearly everything is taken: precision 0.418, close to the base rate."
+        }
+      },
+      "explain": {
+        "text": "F1 is highest at 0.5, 0.625. A desk paying costs on every trade may still prefer 0.6: 192 trades at 68% precision instead of 306 at 55%. F1 is one way to choose, not the only one.",
+        "canvas": {
+          "highlight": [
+            "t50"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "What the 0.72 means",
+      "prose": "The primary says **short**. The secondary model gives this trade $p = 0.72$. A colleague reads it as \"a 72% chance the price goes up\", so the two models disagree and the trade should be skipped.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "pri",
+              "label": "Primary\nside: −1",
+              "x": 0.2,
+              "y": 0.5,
+              "shape": "rect"
+            },
+            {
+              "id": "sec",
+              "label": "Secondary\np = 0.72",
+              "x": 0.55,
+              "y": 0.5,
+              "shape": "rect"
+            },
+            {
+              "id": "trade",
+              "label": "Trade?",
+              "x": 0.88,
+              "y": 0.5,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "pri",
+              "to": "sec"
+            },
+            {
+              "from": "sec",
+              "to": "trade"
+            }
+          ],
+          "height": 160
+        },
+        "state": {}
+      },
+      "question": "What does $p = 0.72$ say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A 72% chance this short reaches its profit barrier, the lower one: take it",
+            "correct": true
+          },
+          {
+            "id": "up",
+            "text": "A 72% chance the price rises: skip the short",
+            "why": "You read $p$ as the chance of a rise. The secondary was trained on meta-labels, so $p$ is the chance this call pays. For a short, paying means the price falls."
+          },
+          {
+            "id": "down",
+            "text": "A 28% chance the price falls",
+            "why": "You turned $p$ into a statement about direction. It says nothing about the price alone, only about this call."
+          },
+          {
+            "id": "size",
+            "text": "Nothing until we know the long trades' probabilities",
+            "why": "Each probability stands alone: it rates this trade, with this side."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What label was the secondary trained on?"
+        },
+        {
+          "rung": "point",
+          "text": "The secondary never sees \"up\" or \"down\".",
+          "highlight": [
+            "sec"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Its target was 1 when the primary's call paid. So $p$ is the chance the call pays."
+        }
+      ],
+      "feedback": {
+        "correct": "The secondary rates the call, not the price.",
+        "generic": "Not quite right. Recall the secondary's target: did the primary's trade pay?",
+        "byKey": {
+          "up": "You read $p$ as the chance of a rise. The secondary learned \"does this call pay?\", so 0.72 backs the short."
+        }
+      },
+      "explain": {
+        "text": "The secondary's target was the meta-label, so $p$ estimates \"this side pays\". For a short that means the price falls to the lower barrier. Here $p = 0.72$ is a vote for the trade, and a large position.",
+        "canvas": {
+          "highlight": [
+            "sec"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The secondary model",
+      "prose": "`meta_dataset(20)` returns, for all 1,471 trades in time order, two features known at entry (20-day volatility and the 10-day return in the trade's direction) and the meta-labels. Fit on the first 900 trades and score the 571 after them.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> X, y = meta_dataset(20)",
+            ">>> X.shape",
+            "(1471, 2)",
+            ">>> p = fit_meta_model(X[:900], y[:900], X[900:])",
+            ">>> p[:4]",
+            "[0.5701, 0.5871, 0.6048, 0.617]"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `fit_meta_model` so it returns test probabilities of meta-label 1, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n\ndef rolling_vol(prices, window=20):\n    \"\"\"vol[t]: sample sd of the last `window` simple returns ending on day t (nan before).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    r = p[1:] / p[:-1] - 1\n    vol = [float('nan')] * len(p)\n    for t in range(window, len(p)):\n        vol[t] = float(np.std(r[t - window:t], ddof=1))\n    return vol\n\ndef make_trend_prices(n=1500, seed=20, block=60):\n    \"\"\"n + 1 closes in 60-day blocks: half trend (drift 0.3% a day either way, vol 0.8%),\n    half chop (no drift, vol 1.6%).\"\"\"\n    rng = np.random.default_rng(seed)\n    r = []\n    while len(r) < n:\n        if rng.random() < 0.5:\n            r += list(rng.choice([-1, 1]) * 0.003 + 0.008 * rng.standard_normal(block))\n        else:\n            r += list(0.016 * rng.standard_normal(block))\n    r = np.array(r[:n])\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef _touch(path, upper, lower, h):\n    for d in range(1, min(h, len(path) - 1) + 1):\n        if path[d] <= lower:\n            return (-1, d)\n        if path[d] >= upper:\n            return (1, d)\n    return (0, min(h, len(path) - 1))\n\ndef tb_events(prices, vol, k, h, start):\n    \"\"\"(label, days to touch) for entries start .. len(prices) - h - 1.\"\"\"\n    return [_touch(prices[t:t + h + 1], prices[t] * (1 + k * vol[t]),\n                   prices[t] * (1 - k * vol[t]), h) for t in range(start, len(prices) - h)]\n\ndef _side(prices, fast, slow):\n    p = np.asarray(prices, dtype=float)\n    return [1 if p[t - fast + 1:t + 1].mean() > p[t - slow + 1:t + 1].mean() else -1\n            for t in range(slow - 1, len(p))]\n\ndef meta_dataset(seed=20, k=2.5, h=10):\n    \"\"\"Crossover (5, 20) sides on make_trend_prices(1500, seed), triple-barrier outcomes\n    (k, h), meta-labels, and two features per event: 20-day vol (%) and the 10-day\n    return in the direction of the side (%). Events are days 20 to len - h - 1.\"\"\"\n    p = make_trend_prices(1500, seed)\n    vol = rolling_vol(p, 20)\n    P = np.asarray(p)\n    side = _side(p, 5, 20)\n    X, y = [], []\n    for t in range(20, len(p) - h):\n        s = side[t - 19]\n        lab = _touch(p[t:t + h + 1], p[t] * (1 + k * vol[t]), p[t] * (1 - k * vol[t]), h)[0]\n        X.append([round(vol[t] * 100, 4), round((P[t] / P[t - 10] - 1) * 100 * s, 4)])\n        y.append(1 if s * lab == 1 else 0)\n    return np.array(X), y\n",
+        "starter": "from sklearn.linear_model import LogisticRegression\n\ndef fit_meta_model(X_train, y_meta_train, X_test):\n    model = ...   # logistic regression with default settings, fitted on the training block\n    p = ...       # probability of meta-label 1 for each test row\n    return [round(float(x), 4) for x in p]\n",
+        "solution": "from sklearn.linear_model import LogisticRegression\n\ndef fit_meta_model(X_train, y_meta_train, X_test):\n    model = LogisticRegression().fit(X_train, y_meta_train)\n    p = model.predict_proba(X_test)[:, 1]\n    return [round(float(x), 4) for x in p]\n",
+        "examples": [
+          {
+            "call": "fit_meta_model([[0.0], [1.0], [2.0], [3.0]], [0, 0, 1, 1], [[1.5]])",
+            "expect": "[0.5]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = meta_dataset(20)",
+            "call": "len(fit_meta_model(X[:900], y[:900], X[900:]))",
+            "expect": "571",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = meta_dataset(20)",
+            "call": "bool(np.allclose(fit_meta_model(X[:900], y[:900], X[900:])[:10], [0.5701, 0.5871, 0.6048, 0.617, 0.6096, 0.6313, 0.6151, 0.6194, 0.641, 0.6802], atol=0.002))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = meta_dataset(20)",
+            "call": "bool(np.allclose(fit_meta_model(X[:900], y[:900], X[900:])[-5:], [0.6849, 0.7106, 0.707, 0.7109, 0.6986], atol=0.002))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = meta_dataset(9)",
+            "call": "bool(np.allclose(fit_meta_model(X[:900], y[:900], X[900:])[:10], [0.2561, 0.2537, 0.3408, 0.3702, 0.3635, 0.3757, 0.3973, 0.4056, 0.4151, 0.4206], atol=0.002))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = meta_dataset(20)",
+            "call": "bool(abs(np.mean(fit_meta_model(X[:900], y[:900], X[900:])) - 0.5046) < 0.002)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "fit_meta_model([[0.0], [1.0], [2.0], [3.0]], [0, 0, 1, 1], [[1.5]])",
+            "expect": "[0.5]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on `meta_dataset(seed)`, already defined, which returns the two features and the meta-labels of the crossover trades. Probabilities must match the default `LogisticRegression` to within 0.002. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`LogisticRegression()` with no arguments uses the defaults."
+        },
+        {
+          "rung": "point",
+          "text": "`predict_proba` gives two columns: for 0 and for 1.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`model = LogisticRegression().fit(X_train, y_meta_train)` and `p = model.predict_proba(X_test)[:, 1]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Fitted on the earlier block, scored on the later one.",
+        "generic": "Not quite right. Fit on the training rows only, then take column 1 of `predict_proba` for the test rows."
+      },
+      "explain": {
+        "text": "The fitted slope on volatility is -1.38: calmer entries get higher probabilities, as the bar chart suggested. The test block is later in time than every training trade. With a fitted primary, the secondary must also train after the primary's own training period."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The bar the filter must clear",
+      "prose": "On the 571 test trades, the secondary at threshold 0.5 takes 306 and 54.9% of them pay. Before celebrating, set the threshold to 0.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "all",
+              "label": "Threshold 0"
+            },
+            {
+              "id": "half",
+              "label": "Threshold 0.5"
+            }
+          ],
+          "yLabel": "Precision",
+          "showValues": true,
+          "decimals": 3,
+          "yMin": 0,
+          "yMax": 0.8
+        },
+        "state": {
+          "values": {
+            "all": 0,
+            "half": 0.549
+          }
+        }
+      },
+      "question": "What is the precision at threshold 0, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4063,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "%",
+        "label": "Precision at threshold 0, in per cent",
+        "accept": "40.6% ± 0.2: every trade is taken, so precision is the share of trades that paid.",
+        "wrong": [
+          {
+            "id": "train",
+            "value": 0.5311,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Threshold 0 takes every trade."
+        },
+        {
+          "rung": "point",
+          "text": "So precision is the share of all test trades that paid.",
+          "highlight": [
+            "all"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "232 of 571 paid."
+        }
+      ],
+      "feedback": {
+        "correct": "40.6%: taking every trade is just the primary.",
+        "generic": "Not quite right. With every trade taken, precision is the meta-label base rate on the test block.",
+        "byKey": {
+          "train": "That is the training block's base rate. On the test trades it is 40.6%.",
+          "one": "Recall is 1 at threshold 0. Precision is the share of all trades that paid."
+        }
+      },
+      "explain": {
+        "text": "Threshold 0 acts on every call, so it is the primary alone: 40.6% pay. The filter lifts that to 54.9% while keeping 72% of the winners. Always report the secondary against this base rate.",
+        "canvas": {
+          "values": {
+            "all": 0.406
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Side from one model, size from another",
+      "prose": "With side $s_i$ from the primary and price label $y_i$ from the barriers, the meta-label is $$z_i = \\mathbf{1}\\{s_i y_i = 1\\}.$$ The secondary estimates $p_i = P(z_i = 1 \\mid \\text{features})$. We trade $s_i$ when $p_i \\ge c$, sized by $p_i$. At $c = 0$ we get the primary back.",
+      "question": "A primary is right on every training trade. What does the secondary learn?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Nothing useful: every meta-label is 1, so there is no 0 to tell apart",
+            "correct": true
+          },
+          {
+            "id": "perfect",
+            "text": "A perfect filter",
+            "why": "A filter needs bad trades to learn from. With every $z_i = 1$ there is only one class."
+          },
+          {
+            "id": "size",
+            "text": "To size trades by volatility",
+            "why": "With one class, the fitted probability is 1 for every trade, whatever its volatility."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "List the meta-labels of a primary that is always right."
+        }
+      ],
+      "feedback": {
+        "correct": "One class leaves nothing to learn.",
+        "generic": "Not quite right. Work out $z_i$ when every call pays."
+      },
+      "explain": {
+        "text": "The secondary's job is to spot the primary's mistakes. With no mistakes, every $z_i$ is 1 and there is nothing to learn. With a primary that has no edge the opposite happens: the secondary has to find all the edge itself, and usually cannot."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A trader and a model",
+      "prose": "A discretionary trader makes 400 calls a year. 45% reach the profit target, averaging +2.0%; the rest average −1.5%. A secondary model, fitted on her past calls, keeps the 160 with $p \\ge 0.6$, and 58% of those pay.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Calls",
+            "Paid",
+            "Win",
+            "Loss"
+          ],
+          "rows": [
+            [
+              "All calls",
+              "400",
+              "45%",
+              "+2.0%",
+              "−1.5%"
+            ],
+            [
+              "Kept by model",
+              "160",
+              "58%",
+              "+2.0%",
+              "−1.5%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the average return per call the model keeps, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0053,
+        "tol": {
+          "abs": 5e-05
+        },
+        "unit": "%",
+        "label": "Average return per kept call, in per cent",
+        "accept": "0.53% ± 0.005: $0.58 \\times 2.0 - 0.42 \\times 1.5$.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 0.00075,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "win",
+            "value": 0.0116,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Expected return = share paid × win − share not paid × loss."
+        },
+        {
+          "rung": "point",
+          "text": "Use the kept row.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.58 \\times 2.0\\% - 0.42 \\times 1.5\\% = 1.16\\% - 0.63\\%$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.53% a call, against 0.075% for all her calls.",
+        "generic": "Not quite right. Weight the win and the loss by the kept calls' hit rate.",
+        "byKey": {
+          "all": "That is the average over all 400 calls, 0.075%. Use the 58% hit rate of the kept calls.",
+          "win": "You left out the losses: 42% of kept calls still lose 1.5%."
+        }
+      },
+      "explain": {
+        "text": "Her calls average 0.075%; the kept ones 0.53%, and over a year 85% against 30% in summed returns. She keeps the side, where her judgement lives; the model decides when and how much. Desks split the work this way because a model can size consistently without having to explain a view."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A primary model picks the side; the meta-label is 1 when acting on it hit the profit barrier.",
+      "A secondary model learns $P(\\text{call pays})$, which decides whether to trade and how big, not which way.",
+      "Report its precision and recall against the primary's own hit rate, on a block the primary never trained on."
+    ],
+    "formula": {
+      "name": "Meta-label",
+      "tex": "z_i = \\mathbf{1}\\{s_i y_i = 1\\}",
+      "note": "Side times price label is 1 exactly when the call paid."
+    },
+    "trap": "The secondary's probability is the chance the primary's call pays, not the chance the price rises."
+  },
+  "quiz": [
+    {
+      "id": "q-train-block",
+      "difficulty": 3,
+      "prose": "A primary classifier is fitted on 2015 to 2019. A colleague then trains the secondary on the meta-labels of the primary's calls over the same years.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The primary was fitted to those years, so its calls there look better than they will be; the secondary learns from flattering meta-labels",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: the secondary uses different features",
+            "why": "Different features do not help. The meta-labels themselves are in-sample results of the primary."
+          },
+          {
+            "id": "small",
+            "text": "The secondary has too little data",
+            "why": "The size is the same either way. The trouble is that those calls are in-sample."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Train the secondary on a later block the primary never saw.",
+        "generic": "Not quite right. Ask whether the primary's calls on 2015 to 2019 are honest."
+      },
+      "explain": {
+        "text": "In its own training years the primary looks skilled, so most meta-labels are 1. The secondary then learns a world that will not return. Fit the primary on one block, the secondary on the next, and test on a third."
+      }
+    },
+    {
+      "id": "q-meta-sum",
+      "difficulty": 2,
+      "prose": "Sides $[1, -1, 1, -1]$ and price labels $[-1, -1, 0, 1]$.",
+      "question": "How many meta-labels are 1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Number of meta-labels equal to 1",
+        "accept": "1: only the second trade, a short whose price hit the lower barrier.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only the short that fell pays.",
+        "generic": "Not quite right. Multiply each side by its label and count the products equal to 1.",
+        "byKey": {
+          "two": "You counted the last trade too: a short whose price hit the upper barrier, its stop."
+        }
+      },
+      "explain": {
+        "text": "The products are $-1$, $1$, $0$, $-1$. Only one equals 1. The time-out gives 0, and so do both stops."
+      }
+    },
+    {
+      "id": "q-no-edge",
+      "difficulty": 3,
+      "prose": "A primary picks its side by coin toss. On our six-year series about 35% of its calls reach the profit barrier.",
+      "question": "What can meta-labelling add?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Little: the secondary would have to find all the edge on its own, which is the hard problem we started with",
+            "correct": true
+          },
+          {
+            "id": "fix",
+            "text": "It turns the coin into a good strategy",
+            "why": "The secondary cannot choose sides. A coin's calls carry no information for it to filter."
+          },
+          {
+            "id": "double",
+            "text": "It doubles the hit rate",
+            "why": "Nothing guarantees that. The filter can only exploit patterns in when the coin happens to be right."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Meta-labelling refines an edge; it does not create one.",
+        "generic": "Not quite right. What does the secondary learn from, and what does a coin give it?"
+      },
+      "explain": {
+        "text": "The secondary learns when the primary is right. A coin is right at random, so the meta-labels track the price moves alone. The secondary is then a direction model in disguise, the problem meta-labelling was meant to avoid."
+      }
+    },
+    {
+      "id": "q-threshold",
+      "difficulty": 2,
+      "prose": "Raising the secondary's threshold from 0.5 to 0.65.",
+      "question": "What usually happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Fewer trades, higher precision, lower recall",
+            "correct": true
+          },
+          {
+            "id": "more",
+            "text": "More trades and higher precision",
+            "why": "A higher threshold keeps fewer trades, not more."
+          },
+          {
+            "id": "recall",
+            "text": "Higher recall",
+            "why": "Recall can only fall as we drop trades: fewer winners are kept."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A stricter filter trades less and more accurately.",
+        "generic": "Not quite right. A higher threshold keeps a subset of the trades."
+      },
+      "explain": {
+        "text": "Every trade kept at 0.65 was kept at 0.5, so recall cannot rise. Precision usually rises, because the trades dropped had lower probabilities. On our test trades, 0.6 gave precision 0.677 on 192 trades."
+      }
+    }
+  ]
+}

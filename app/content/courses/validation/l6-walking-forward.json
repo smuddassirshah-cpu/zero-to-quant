@@ -1,0 +1,1373 @@
+{
+  "id": "l6-walking-forward",
+  "course": "validation",
+  "title": "Walking forward",
+  "minutes": 14,
+  "objectives": [
+    "Validate with expanding and rolling windows",
+    "Read the fold boundaries `TimeSeriesSplit` makes, with `test_size` and `gap`",
+    "Score the joined out-of-sample predictions once"
+  ],
+  "skills": [
+    "vl-time",
+    "vl-cv"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "1,000 days cut into six blocks. Each fold trains on blocks before its test block, never after. Slide the fold forward, and switch the window from expanding (0) to rolling (1), which keeps only the two latest blocks.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 6,
+          "colLabel": "Blocks of days (first day of each block)",
+          "rowHeads": false,
+          "colHeads": [
+            "0",
+            "170",
+            "336",
+            "502",
+            "668",
+            "834"
+          ]
+        },
+        "state": {
+          "params": {
+            "fold": 1,
+            "roll": 0
+          },
+          "shade": {
+            "train": {
+              "ids": [
+                "r1c1"
+              ],
+              "colour": 2
+            },
+            "test": {
+              "ids": [
+                "r1c2"
+              ],
+              "colour": 4
+            }
+          }
+        },
+        "derive": {
+          "shade.train.ids": "roll < 0.5 ? (fold < 1.5 ? ['r1c1'] : fold < 2.5 ? ['r1c1', 'r1c2'] : fold < 3.5 ? ['r1c1', 'r1c2', 'r1c3'] : fold < 4.5 ? ['r1c1', 'r1c2', 'r1c3', 'r1c4'] : ['r1c1', 'r1c2', 'r1c3', 'r1c4', 'r1c5']) : (fold < 1.5 ? ['r1c1'] : fold < 2.5 ? ['r1c1', 'r1c2'] : fold < 3.5 ? ['r1c2', 'r1c3'] : fold < 4.5 ? ['r1c3', 'r1c4'] : ['r1c4', 'r1c5'])",
+          "shade.test.ids": "fold < 1.5 ? ['r1c2'] : fold < 2.5 ? ['r1c3'] : fold < 3.5 ? ['r1c4'] : fold < 4.5 ? ['r1c5'] : ['r1c6']",
+          "caption": "Fold {{fold}}: train on {{roll < 0.5 ? (fold < 1.5 ? 170 : fold < 2.5 ? 336 : fold < 3.5 ? 502 : fold < 4.5 ? 668 : 834) : (fold < 1.5 ? 170 : fold < 2.5 ? 332 : fold < 3.5 ? 332 : fold < 4.5 ? 332 : 332)}} days, test days {{fold < 1.5 ? 170 : fold < 2.5 ? 336 : fold < 3.5 ? 502 : fold < 4.5 ? 668 : 834}} to {{fold < 1.5 ? 170 : fold < 2.5 ? 336 : fold < 3.5 ? 502 : fold < 4.5 ? 668 : 834 + 165}}"
+        },
+        "controls": [
+          {
+            "bind": "fold",
+            "min": 1,
+            "max": 5,
+            "step": 1,
+            "start": 1,
+            "label": "Fold"
+          },
+          {
+            "bind": "roll",
+            "min": 0,
+            "max": 1,
+            "step": 1,
+            "start": 0,
+            "label": "Rolling window"
+          }
+        ]
+      },
+      "question": "With the expanding window, how many days does fold 5 train on?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 834,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "834: days 0 to 833, everything before the last test block.",
+        "label": "Training days in fold 5",
+        "unit": "days",
+        "wrong": [
+          {
+            "id": "test",
+            "value": 166,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rolling",
+            "value": 332,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the fold to 5 and the window to 0, then read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "Fold 5 trains on the five blocks before the last one.",
+          "highlight": [
+            "r1c1",
+            "r1c2",
+            "r1c3",
+            "r1c4",
+            "r1c5"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "834 days: every day before the last test block.",
+        "generic": "Not quite right. Read the caption at fold 5 with the window at 0.",
+        "byKey": {
+          "test": "166 is the size of one test block. The question asks about training.",
+          "all": "The last 166 days are the test block, so they cannot train the model.",
+          "rolling": "332 is the rolling window. Set the window slider to 0 for expanding."
+        }
+      },
+      "explain": {
+        "text": "The expanding window grows from 170 days in fold 1 to 834 in fold 5, and the test block always comes after it. Validating this way is called **walk-forward**: the model walks through time, refitting before each block.",
+        "canvas": {
+          "params": {
+            "fold": 5,
+            "roll": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "`TimeSeriesSplit(n_splits=5)` on $n = 1000$ rows makes test blocks of $\\lfloor n / (5 + 1) \\rfloor = 166$ rows. The first test block starts at $1000 - 5 \\times 166 = 170$. Each block starts where the last one ended, and training is everything before it.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 6,
+          "colLabel": "Blocks of days (first day of each block)",
+          "rowHeads": false,
+          "colHeads": [
+            "0",
+            "170",
+            "336",
+            "502",
+            "668",
+            "834"
+          ]
+        },
+        "state": {
+          "shade": {
+            "train": {
+              "ids": [
+                "r1c1"
+              ],
+              "colour": 2
+            },
+            "test": {
+              "ids": [
+                "r1c2"
+              ],
+              "colour": 4
+            }
+          },
+          "caption": "Fold 1: train 0 to 169, test 170 to 335"
+        }
+      },
+      "question": "Fill in the missing boundaries. Days are numbered from 0, as Python does.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Fold",
+          "Train last day",
+          "Test first day",
+          "Test last day"
+        ],
+        "rows": [
+          [
+            "1",
+            "169",
+            "170",
+            "335"
+          ],
+          [
+            "2",
+            "335",
+            {
+              "edit": true,
+              "answer": 336,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 501,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 501,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 502,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "667"
+          ],
+          [
+            "4",
+            "667",
+            "668",
+            "833"
+          ],
+          [
+            "5",
+            {
+              "edit": true,
+              "answer": 833,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 834,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 999,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each test block is 166 days and starts the day after the last one ends."
+        },
+        {
+          "rung": "point",
+          "text": "Fold 2's test starts at 170 + 166 = 336.",
+          "highlight": [
+            "r1c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Test blocks start at 170, 336, 502, 668 and 834, each ending 165 days later. Training ends the day before."
+        }
+      ],
+      "feedback": {
+        "correct": "These are exactly the folds scikit-learn makes.",
+        "generic": "Not quite right. Add 166 to each test start, and end training the day before."
+      },
+      "explain": {
+        "text": "You walked the blocks forward 166 days at a time: 170, 336, 502, 668, 834. The last test block ends on day 999, the final row. No fold ever trains on a day after its test block."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Two arguments change the folds. `test_size=100` fixes each test block at 100 rows, so five blocks take the last 500 days. `gap=5` drops the 5 rows just before each test block from training.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 1000,
+          "step": 100,
+          "labels": 2
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "train",
+              "from": 0,
+              "to": 494,
+              "label": "train 0 to 494",
+              "colour": 2,
+              "labelPos": "above"
+            },
+            {
+              "id": "gap",
+              "from": 495,
+              "to": 499,
+              "label": "",
+              "colour": 6,
+              "row": 0
+            },
+            {
+              "id": "test",
+              "from": 500,
+              "to": 599,
+              "label": "test 500 to 599",
+              "colour": 4,
+              "labelPos": "below"
+            }
+          ],
+          "caption": "Fold 1 of `TimeSeriesSplit(5, test_size=100, gap=5)`"
+        }
+      },
+      "question": "For `TimeSeriesSplit(n_splits=5, test_size=100, gap=5)` on 1,000 rows, what is the last training day of fold 1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 494,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "494: the test starts at 1000 − 5 × 100 = 500, and the gap removes days 495 to 499.",
+        "label": "Last training day",
+        "wrong": [
+          {
+            "id": "nogap",
+            "value": 499,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "off",
+            "value": 495,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "default",
+            "value": 164,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the first test day, then step back past the gap."
+        },
+        {
+          "rung": "point",
+          "text": "The first test block starts at $1000 - 5 \\times 100 = 500$.",
+          "highlight": [
+            "gap"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Without the gap training ends on 499. Dropping 5 rows ends it on 494."
+        }
+      ],
+      "feedback": {
+        "correct": "Days 495 to 499 sit in the gap, between train and test.",
+        "generic": "Not quite right. The test starts at day 500; remove 5 days before it.",
+        "byKey": {
+          "nogap": "499 ignores the gap. Five days before the test are dropped.",
+          "off": "495 is the first day in the gap. Training ends one day earlier.",
+          "default": "That uses the default test size. Here `test_size=100`."
+        }
+      },
+      "explain": {
+        "text": "You stepped back from day 500 past five gap days to 494. The gap matters when labels look ahead, as the next lesson shows. With `test_size` set, the first fold trains on 495 days instead of 170.",
+        "canvas": {
+          "highlight": [
+            "gap"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Build the folds yourself",
+      "prose": "Write the splitter without scikit-learn. With $k$ splits and test size $s$, test blocks start at $n - ks$, $n - ks + s$, ..., and each trains on rows $0$ to $\\text{start} - \\text{gap} - 1$.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 1000,
+          "step": 100,
+          "labels": 2
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "train",
+              "from": 0,
+              "to": 494,
+              "label": "train 0 to 494",
+              "colour": 2,
+              "labelPos": "above"
+            },
+            {
+              "id": "gap",
+              "from": 495,
+              "to": 499,
+              "label": "",
+              "colour": 6,
+              "row": 0
+            },
+            {
+              "id": "test",
+              "from": 500,
+              "to": 599,
+              "label": "test 500 to 599",
+              "colour": 4,
+              "labelPos": "below"
+            }
+          ],
+          "caption": "Fold 1 of `TimeSeriesSplit(5, test_size=100, gap=5)`"
+        }
+      },
+      "question": "Complete `walk_forward_indices` so it matches `TimeSeriesSplit` exactly.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def walk_forward_indices(n, n_splits, test_size=None, gap=0):\n    \"\"\"Return a list of (train, test) lists of row indices,\n    exactly as TimeSeriesSplit makes them.\"\"\"\n    if test_size is None:\n        test_size = n // (n_splits + 1)\n    folds = []\n    ...\n    return folds\n",
+        "solution": "def walk_forward_indices(n, n_splits, test_size=None, gap=0):\n    \"\"\"Return a list of (train, test) lists of row indices,\n    exactly as TimeSeriesSplit makes them.\"\"\"\n    if test_size is None:\n        test_size = n // (n_splits + 1)\n    folds = []\n    for start in range(n - n_splits * test_size, n, test_size):\n        train = list(range(0, start - gap))\n        test = list(range(start, start + test_size))\n        folds.append((train, test))\n    return folds\n",
+        "examples": [
+          {
+            "call": "[[tr[0], tr[-1], len(tr), te[0], te[-1], len(te)] for tr, te in walk_forward_indices(1000, 5)]",
+            "expect": "[[0, 169, 170, 170, 335, 166], [0, 335, 336, 336, 501, 166], [0, 501, 502, 502, 667, 166], [0, 667, 668, 668, 833, 166], [0, 833, 834, 834, 999, 166]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[[tr[0], tr[-1], len(tr), te[0], te[-1], len(te)] for tr, te in walk_forward_indices(1000, 5)]",
+            "expect": "[[0, 169, 170, 170, 335, 166], [0, 335, 336, 336, 501, 166], [0, 501, 502, 502, 667, 166], [0, 667, 668, 668, 833, 166], [0, 833, 834, 834, 999, 166]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[tr[0], tr[-1], len(tr), te[0], te[-1], len(te)] for tr, te in walk_forward_indices(1000, 5, 100, 5)]",
+            "expect": "[[0, 494, 495, 500, 599, 100], [0, 594, 595, 600, 699, 100], [0, 694, 695, 700, 799, 100], [0, 794, 795, 800, 899, 100], [0, 894, 895, 900, 999, 100]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[tr[0], tr[-1], len(tr), te[0], te[-1], len(te)] for tr, te in walk_forward_indices(1500, 10)]",
+            "expect": "[[0, 139, 140, 140, 275, 136], [0, 275, 276, 276, 411, 136], [0, 411, 412, 412, 547, 136], [0, 547, 548, 548, 683, 136], [0, 683, 684, 684, 819, 136], [0, 819, 820, 820, 955, 136], [0, 955, 956, 956, 1091, 136], [0, 1091, 1092, 1092, 1227, 136], [0, 1227, 1228, 1228, 1363, 136], [0, 1363, 1364, 1364, 1499, 136]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[tr[0], tr[-1], len(tr), te[0], te[-1], len(te)] for tr, te in walk_forward_indices(100, 3, 10, 2)]",
+            "expect": "[[0, 67, 68, 70, 79, 10], [0, 77, 78, 80, 89, 10], [0, 87, 88, 90, 99, 10]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[tr[0], tr[-1], len(tr), te[0], te[-1], len(te)] for tr, te in walk_forward_indices(50, 4, None, 3)]",
+            "expect": "[[0, 6, 7, 10, 19, 10], [0, 16, 17, 20, 29, 10], [0, 26, 27, 30, 39, 10], [0, 36, 37, 40, 49, 10]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[tr[0], tr[-1], len(tr), te[0], te[-1], len(te)] for tr, te in walk_forward_indices(21, 20)]",
+            "expect": "[[0, 0, 1, 1, 1, 1], [0, 1, 2, 2, 2, 1], [0, 2, 3, 3, 3, 1], [0, 3, 4, 4, 4, 1], [0, 4, 5, 5, 5, 1], [0, 5, 6, 6, 6, 1], [0, 6, 7, 7, 7, 1], [0, 7, 8, 8, 8, 1], [0, 8, 9, 9, 9, 1], [0, 9, 10, 10, 10, 1], [0, 10, 11, 11, 11, 1], [0, 11, 12, 12, 12, 1], [0, 12, 13, 13, 13, 1], [0, 13, 14, 14, 14, 1], [0, 14, 15, 15, 15, 1], [0, 15, 16, 16, 16, 1], [0, 16, 17, 17, 17, 1], [0, 17, 18, 18, 18, 1], [0, 18, 19, 19, 19, 1], [0, 19, 20, 20, 20, 1]]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each summarises every fold as first, last and count of the train and test rows, and is compared exactly with what `TimeSeriesSplit` produced for the same arguments. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over the test starts with `range(n - n_splits * test_size, n, test_size)`."
+        },
+        {
+          "rung": "point",
+          "text": "For each start, test is `range(start, start + test_size)`.",
+          "highlight": [
+            "train",
+            "test"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Train is `range(0, start - gap)`; append `(train, test)` as lists."
+        }
+      ],
+      "feedback": {
+        "correct": "Your folds match scikit-learn's for every case.",
+        "generic": "Some tests failed. For `(1000, 5)` fold 1 trains on 0 to 169 and tests on 170 to 335.",
+        "byKey": {
+          "error": "Your code stopped with an error. Make sure every fold is a pair of lists."
+        }
+      },
+      "explain": {
+        "text": "Your loop is `TimeSeriesSplit` in six lines. The first test block starts at $n - ks$, so the first training set is whatever is left over at the start.\n\n```python\nfor start in range(n - n_splits * test_size, n, test_size):\n    folds.append((list(range(0, start - gap)),\n                  list(range(start, start + test_size))))\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The data: a desk predicts tomorrow's volume surprise in a share from 20 signals (seed 0). Here are walk-forward MSEs for a ridge model on the first 1,000 days, with `TimeSeriesSplit(5)`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "f1",
+              "label": "Fold 1",
+              "colour": 2
+            },
+            {
+              "id": "f2",
+              "label": "Fold 2",
+              "colour": 2
+            },
+            {
+              "id": "f3",
+              "label": "Fold 3",
+              "colour": 2
+            },
+            {
+              "id": "f4",
+              "label": "Fold 4",
+              "colour": 2
+            },
+            {
+              "id": "f5",
+              "label": "Fold 5",
+              "colour": 2
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMin": 0,
+          "yMax": 1.6,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "f1": 1.4244,
+            "f2": 1.077,
+            "f3": 0.996,
+            "f4": 0.8873,
+            "f5": 0.9329
+          },
+          "caption": "Train sizes 170, 336, 502, 668 and 834 days"
+        }
+      },
+      "question": "Tap the fold whose score you trust least as a guide to the model's future.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "f1"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which fold had the least data to learn from?"
+        },
+        {
+          "rung": "point",
+          "text": "Fold 1 trains on 170 days for 21 coefficients.",
+          "highlight": [
+            "f1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tap fold 1: its model is fitted on the fewest rows, so its score says least about the model you will trade."
+        }
+      ],
+      "feedback": {
+        "correct": "Fold 1 learned 21 coefficients from 170 days.",
+        "generic": "Not quite right. Look at the training sizes in the caption.",
+        "byKey": {
+          "f2": "Fold 2 trains on 336 days, twice fold 1. The weakest fit is fold 1.",
+          "f5": "Fold 5 trains on the most data, 834 days. Its fit is the most like the model you will trade."
+        }
+      },
+      "explain": {
+        "text": "Fold 1 scores 1.42 against about 0.9 to 1.1 for the others. Its model saw 170 days, so its error mostly measures a model you will never trade. Early folds are noisy; an expanding window steadies as it grows.",
+        "canvas": {
+          "highlight": [
+            "f1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague walks forward one calendar year at a time and reports the mean of four yearly MSEs. The last year is only 50 days old.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "y1",
+              "label": "2022 (250 days)",
+              "colour": 2
+            },
+            {
+              "id": "y2",
+              "label": "2023 (250 days)",
+              "colour": 2
+            },
+            {
+              "id": "y3",
+              "label": "2024 (250 days)",
+              "colour": 2
+            },
+            {
+              "id": "y4",
+              "label": "2025 (50 days)",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMin": 0,
+          "yMax": 3.5,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "y1": 1.0,
+            "y2": 1.1,
+            "y3": 0.9,
+            "y4": 3.0
+          }
+        }
+      },
+      "question": "What is the MSE of all 800 out-of-sample days taken together?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.125,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "1.125: $(250 \\times 1.0 + 250 \\times 1.1 + 250 \\times 0.9 + 50 \\times 3.0)/800$.",
+        "label": "Pooled MSE",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "drop",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Turn each MSE back into a total squared error."
+        },
+        {
+          "rung": "point",
+          "text": "Total squared error in a year is days times MSE.",
+          "highlight": [
+            "y4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$250 + 275 + 225 + 150 = 900$, over 800 days."
+        }
+      ],
+      "feedback": {
+        "correct": "The joined score is 1.125, not 1.5.",
+        "generic": "Not quite right. Weight each year by its number of days.",
+        "byKey": {
+          "mean": "You averaged the four MSEs. That gives the 50-day year the weight of a full year.",
+          "drop": "You left out the last year. Its 50 days count, just with their own weight."
+        }
+      },
+      "explain": {
+        "text": "The mean of fold scores gave 50 noisy days a quarter of the vote. Joining the out-of-sample predictions and scoring once weights every day equally. With equal folds the two agree; with unequal folds only the joined score is right.",
+        "canvas": {
+          "highlight": [
+            "y4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Now all 1,500 days, `TimeSeriesSplit(10)`. On day 1,000 an index rule changes and half the signals flip their effect. Two walk-forwards: rolling (the latest 250 days) and expanding (everything so far).",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "roll",
+              "label": "Rolling 250",
+              "values": [
+                1.1677,
+                1.4859,
+                1.1782,
+                0.9075,
+                0.933,
+                0.807,
+                3.3958,
+                1.8381,
+                1.1307,
+                1.0911
+              ],
+              "colour": 2
+            },
+            {
+              "id": "exp",
+              "label": "Expanding",
+              "values": [
+                1.1677,
+                1.4678,
+                1.075,
+                0.9061,
+                0.8656,
+                0.7807,
+                3.3607,
+                2.955,
+                2.4686,
+                2.3042
+              ],
+              "colour": 4
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Fold",
+          "yLabel": "Fold MSE",
+          "decimals": 2,
+          "height": 260
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "brk",
+              "i": 6,
+              "series": "exp",
+              "label": "rule change"
+            }
+          ]
+        }
+      },
+      "question": "Which reading of the two lines is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "trade",
+            "text": "Before the change expanding is a little better; after it, rolling recovers within two folds while expanding stays high",
+            "correct": true
+          },
+          {
+            "id": "always",
+            "text": "Rolling is better in every fold",
+            "why": "Before the change expanding wins narrowly in folds 2 to 7: more data, steadier coefficients."
+          },
+          {
+            "id": "never",
+            "text": "Expanding is better, because it uses more data",
+            "why": "More data helps only while the past still describes the future. After day 1,000 half of it points the wrong way."
+          },
+          {
+            "id": "same",
+            "text": "They are the same model, so the difference is noise",
+            "why": "The gap after the change is about 1 to 1.4 per fold, far bigger than the small differences before it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the lines before and after the marker."
+        },
+        {
+          "rung": "point",
+          "text": "Before fold 7 the lines nearly touch. After it they part.",
+          "highlight": [
+            "roll",
+            "exp"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rolling drops the old rows within 250 days; expanding carries them for ever."
+        }
+      ],
+      "feedback": {
+        "correct": "Rolling adapts; expanding is steadier while nothing changes.",
+        "generic": "Not quite right. Read the lines separately before and after the change."
+      },
+      "explain": {
+        "text": "Joined over all ten folds, rolling scores 1.3935 and expanding 1.7351. Expanding is steadier but stale after a change. Rolling adapts but pays for its short memory in quiet times. Research notes call expanding **anchored**.",
+        "canvas": {
+          "highlight": [
+            "roll"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "One honest out-of-sample series",
+      "prose": "Each fold predicts its own test block. Laid end to end, the blocks make one out-of-sample series covering days 140 to 1,499. Score that series once.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "roll",
+              "label": "Rolling 250",
+              "values": [
+                1.1677,
+                1.4859,
+                1.1782,
+                0.9075,
+                0.933,
+                0.807,
+                3.3958,
+                1.8381,
+                1.1307,
+                1.0911
+              ],
+              "colour": 2
+            },
+            {
+              "id": "exp",
+              "label": "Expanding",
+              "values": [
+                1.1677,
+                1.4678,
+                1.075,
+                0.9061,
+                0.8656,
+                0.7807,
+                3.3607,
+                2.955,
+                2.4686,
+                2.3042
+              ],
+              "colour": 4
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Fold",
+          "yLabel": "Fold MSE",
+          "decimals": 2,
+          "height": 220
+        },
+        "state": {}
+      },
+      "question": "Complete `walk_forward_mse(X, y, n_splits, rolling)`: refit a ridge model in every fold, join the predictions, and return one MSE rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_signals(seed=0, n=1500, p=20, brk=1000):\n    \"\"\"Tomorrow's volume surprise for a share from 20 standardised signals.\n    At day brk an index rule changes and half the signals flip their effect.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p))\n    bA = rng.normal(0, 1, p)\n    bA /= np.linalg.norm(bA)\n    bB = bA.copy()\n    bB[: p // 2] *= -1\n    y = np.empty(n)\n    y[:brk] = X[:brk] @ bA\n    y[brk:] = X[brk:] @ bB\n    y += rng.normal(0, 1, n)\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.linear_model import Ridge\n\ndef walk_forward_mse(X, y, n_splits, rolling=None):\n    \"\"\"Ridge(alpha=1.0), refitted on every fold. rolling=None is an\n    expanding window; a number keeps only that many latest rows.\"\"\"\n    cv = TimeSeriesSplit(n_splits=n_splits, max_train_size=rolling)\n    preds, actual = [], []\n    for train, test in cv.split(X):\n        ...\n    # join the out-of-sample blocks, then score once\n    ...\n    return round(float(mse), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.linear_model import Ridge\n\ndef walk_forward_mse(X, y, n_splits, rolling=None):\n    \"\"\"Ridge(alpha=1.0), refitted on every fold. rolling=None is an\n    expanding window; a number keeps only that many latest rows.\"\"\"\n    cv = TimeSeriesSplit(n_splits=n_splits, max_train_size=rolling)\n    preds, actual = [], []\n    for train, test in cv.split(X):\n        model = Ridge(alpha=1.0).fit(X[train], y[train])\n        preds.append(model.predict(X[test]))\n        actual.append(y[test])\n    p, a = np.concatenate(preds), np.concatenate(actual)\n    mse = ((p - a) ** 2).mean()\n    return round(float(mse), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "walk_forward_mse(X, y, 10)",
+            "expect": "1.7351",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "walk_forward_mse(X, y, 10)",
+            "expect": "1.7351",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "walk_forward_mse(X, y, 10, 250)",
+            "expect": "1.3935",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "walk_forward_mse(X, y, 10, 100)",
+            "expect": "1.571",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "walk_forward_mse(X[:1000], y[:1000], 5)",
+            "expect": "1.0635",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(3)",
+            "call": "walk_forward_mse(X, y, 6, 400)",
+            "expect": "1.7907",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_signals(seed)`, already defined, which returns `(X, y)`. Each MSE is compared with math.isclose against the solution run in this browser's scikit-learn 1.6.1. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In the loop: fit on `X[train]`, predict `X[test]`, and keep both the predictions and `y[test]`."
+        },
+        {
+          "rung": "point",
+          "text": "`max_train_size=rolling` already makes the window roll.",
+          "highlight": [
+            "exp"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After the loop, `np.concatenate` each list and take the mean squared difference."
+        }
+      ],
+      "feedback": {
+        "correct": "Expanding gives 1.7351 and rolling 250 gives 1.3935.",
+        "generic": "Some tests failed. For `make_signals(0)` with 10 splits the expanding MSE is 1.7351.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that every `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "Your function gives 1.7351 expanding and 1.3935 rolling, with 100 rows 1.5710 and 500 rows 1.4928. Too short a window is noisy, too long is stale.\n\n```python\np, a = np.concatenate(preds), np.concatenate(actual)\nmse = ((p - a) ** 2).mean()\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Rolling against expanding",
+      "prose": "Put the comparison in one function. Besides the two joined scores, count the folds rolling wins outright. A fold where the two windows hold the same rows is a tie, not a win.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "roll",
+              "label": "Rolling 250",
+              "values": [
+                1.1677,
+                1.4859,
+                1.1782,
+                0.9075,
+                0.933,
+                0.807,
+                3.3958,
+                1.8381,
+                1.1307,
+                1.0911
+              ],
+              "colour": 2
+            },
+            {
+              "id": "exp",
+              "label": "Expanding",
+              "values": [
+                1.1677,
+                1.4678,
+                1.075,
+                0.9061,
+                0.8656,
+                0.7807,
+                3.3607,
+                2.955,
+                2.4686,
+                2.3042
+              ],
+              "colour": 4
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Fold",
+          "yLabel": "Fold MSE",
+          "decimals": 2,
+          "height": 220
+        },
+        "state": {}
+      },
+      "question": "Complete `rolling_vs_expanding(X, y, window)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_signals(seed=0, n=1500, p=20, brk=1000):\n    \"\"\"Tomorrow's volume surprise for a share from 20 standardised signals.\n    At day brk an index rule changes and half the signals flip their effect.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p))\n    bA = rng.normal(0, 1, p)\n    bA /= np.linalg.norm(bA)\n    bB = bA.copy()\n    bB[: p // 2] *= -1\n    y = np.empty(n)\n    y[:brk] = X[:brk] @ bA\n    y[brk:] = X[brk:] @ bB\n    y += rng.normal(0, 1, n)\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.linear_model import Ridge\n\ndef rolling_vs_expanding(X, y, window):\n    \"\"\"Walk forward with TimeSeriesSplit(n_splits=10) twice: a rolling\n    window of `window` rows and an expanding window. Return\n    (rolling_mse, expanding_mse, folds_rolling_wins), the two MSEs\n    of the joined predictions rounded to 4 places, and the number of\n    folds where the rolling fold MSE is strictly lower.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.linear_model import Ridge\n\ndef rolling_vs_expanding(X, y, window):\n    \"\"\"Walk forward with TimeSeriesSplit(n_splits=10) twice: a rolling\n    window of `window` rows and an expanding window. Return\n    (rolling_mse, expanding_mse, folds_rolling_wins), the two MSEs\n    of the joined predictions rounded to 4 places, and the number of\n    folds where the rolling fold MSE is strictly lower.\"\"\"\n    def run(max_rows):\n        cv = TimeSeriesSplit(n_splits=10, max_train_size=max_rows)\n        errs = []\n        for train, test in cv.split(X):\n            m = Ridge(alpha=1.0).fit(X[train], y[train])\n            errs.append((m.predict(X[test]) - y[test]) ** 2)\n        return errs\n    roll, expd = run(window), run(None)\n    wins = sum(1 for r, e in zip(roll, expd) if r.mean() < e.mean())\n    pooled = lambda errs: round(float(np.concatenate(errs).mean()), 4)\n    return pooled(roll), pooled(expd), wins\n",
+        "examples": [
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "list(rolling_vs_expanding(X, y, 250))",
+            "expect": "[1.3935, 1.7351, 3]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "list(rolling_vs_expanding(X, y, 250))",
+            "expect": "[1.3935, 1.7351, 3]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "list(rolling_vs_expanding(X, y, 100))",
+            "expect": "[1.571, 1.7351, 3]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(0)",
+            "call": "list(rolling_vs_expanding(X, y, 500))",
+            "expect": "[1.4928, 1.7351, 4]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(0, brk=1500)",
+            "call": "list(rolling_vs_expanding(X, y, 250))",
+            "expect": "[1.1057, 1.0515, 0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_signals(2)",
+            "call": "list(rolling_vs_expanding(X, y, 300))",
+            "expect": "[1.1776, 1.406, 4]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_signals`, already defined (one with no rule change, `brk=1500`). Each triple is compared with math.isclose against the solution run in this browser's scikit-learn 1.6.1. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write a helper that walks forward with a given `max_train_size` and returns each fold's squared errors."
+        },
+        {
+          "rung": "point",
+          "text": "Call it with `window` and with `None`.",
+          "highlight": [
+            "roll"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count folds where `roll[k].mean() < expd[k].mean()`; pool each list with `np.concatenate` for the MSEs."
+        }
+      ],
+      "feedback": {
+        "correct": "Rolling 250 wins 3 of 10 folds and still wins overall: 1.3935 against 1.7351.",
+        "generic": "Some tests failed. For `make_signals(0)` and a window of 250 the answer is [1.3935, 1.7351, 3].",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the helper returns a list of arrays."
+        }
+      },
+      "explain": {
+        "text": "Rolling wins only 3 folds, all after the change, yet wins the joined score because those wins are large. With no rule change (`brk=1500`) the result is [1.1057, 1.0515, 0]: expanding does better. Fold counts and pooled scores answer different questions."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "What you built: fold $k$ trains only on rows before its test block $T_k$ and predicts it. The blocks join into one out-of-sample series of $N = \\sum_k n_k$ days, scored once:\n\n$$\\text{MSE}_{\\text{wf}} = \\frac{1}{N}\\sum_k \\sum_{t \\in T_k} (y_t - \\hat y_t^{(k)})^2 = \\sum_k \\frac{n_k}{N}\\,\\text{MSE}_k$$",
+      "question": "When does the plain mean of fold MSEs equal $\\text{MSE}_{\\text{wf}}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "equal",
+            "text": "When every test block has the same number of days",
+            "correct": true
+          },
+          {
+            "id": "never",
+            "text": "Never: they always differ",
+            "why": "With equal $n_k$ every weight $n_k / N$ is $1/K$, which is the plain mean."
+          },
+          {
+            "id": "expanding",
+            "text": "Only with an expanding window",
+            "why": "The window changes the predictions, not the weights. The weights depend only on the block sizes."
+          },
+          {
+            "id": "many",
+            "text": "When there are at least 10 folds",
+            "why": "The number of folds does not matter. Unequal block sizes still give unequal weights."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the weights $n_k / N$ on the right."
+        },
+        {
+          "rung": "point",
+          "text": "The plain mean gives each fold weight $1/K$."
+        },
+        {
+          "rung": "step",
+          "text": "The two agree when $n_k / N = 1/K$ for every fold, that is, equal block sizes."
+        }
+      ],
+      "feedback": {
+        "correct": "Equal blocks, equal weights. Otherwise score the joined series.",
+        "generic": "Not quite right. Compare the weights $n_k/N$ with $1/K$."
+      },
+      "explain": {
+        "text": "The joined score weights each fold by its share of days. `TimeSeriesSplit` makes equal blocks, so the two agree there; calendar folds and dropped rows break that. Scoring the joined series is right in every case."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A desk refits a signal model at each month-end on an expanding window and trades the next month with it. After six years it has 72 monthly out-of-sample blocks. The head of desk says this series is the only track record anyone believes.",
+      "question": "What should the model's quarterly review report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "joined",
+            "text": "The hit rate and error of all 72 blocks joined, beside the same numbers for the last 12 months",
+            "correct": true
+          },
+          {
+            "id": "insample",
+            "text": "The fit of the latest model on all six years",
+            "why": "The latest model has seen all six years. Its fit on them is in-sample and says nothing about next month."
+          },
+          {
+            "id": "best",
+            "text": "The best 12 months, to show what the model can do",
+            "why": "Choosing the best months is selection, not measurement. Report all of them."
+          },
+          {
+            "id": "mean",
+            "text": "The mean of the 72 monthly hit rates, each month weighted equally",
+            "why": "Months have 19 to 23 trading days, so equal weights are close but not exact. Score the joined days."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which predictions were made before the outcomes were known?"
+        },
+        {
+          "rung": "point",
+          "text": "Every monthly block was predicted by a model fitted only on earlier data."
+        },
+        {
+          "rung": "step",
+          "text": "Join the 72 blocks, score them once, and show the recent part too, so a change shows up."
+        }
+      ],
+      "feedback": {
+        "correct": "The joined out-of-sample series is the honest record; the recent slice shows if it is decaying.",
+        "generic": "Not quite right. Pick the report built only from predictions made before their outcomes."
+      },
+      "explain": {
+        "text": "Each month was predicted out of sample, so joined they form one honest track record. Showing the last 12 months beside it is how a desk spots a regime change, the subject of the last lesson in this level."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Walk-forward trains each fold only on days before its test block: an expanding window keeps everything, a rolling window only the latest rows.",
+      "`TimeSeriesSplit` makes test blocks of $\\lfloor n/(k+1) \\rfloor$ rows from the end backwards; `test_size` fixes them and `gap` drops rows before each.",
+      "Join the out-of-sample blocks into one series and score it once; early folds with little data are noisy."
+    ],
+    "formula": {
+      "name": "Walk-forward error",
+      "tex": "\\text{MSE}_{\\text{wf}} = \\sum_k \\frac{n_k}{N}\\,\\text{MSE}_k",
+      "note": "Weighted by block size: the plain mean is right only for equal blocks."
+    },
+    "trap": "Averaging fold scores gives a short fold the same weight as a long one."
+  },
+  "quiz": [
+    {
+      "id": "q-once",
+      "difficulty": 2,
+      "prose": "A notebook fits the ridge model once on the first 140 days and predicts the other 1,360, calling it a walk-forward test. Its MSE is 2.2447; the expanding walk-forward with 10 refits scores 1.7351.",
+      "question": "What is wrong with the label?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "refit",
+            "text": "Walk-forward refits before each block; one fit tested on everything later is a single time split",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: it never trains on the future, so it is walk-forward",
+            "why": "It is honest, but it measures a model nobody would trade, one never refitted for six years."
+          },
+          {
+            "id": "leak",
+            "text": "It leaks future data into training",
+            "why": "No later day trains this model. The problem is the missing refits, not a leak."
+          },
+          {
+            "id": "short",
+            "text": "140 days is too few for any test",
+            "why": "Few training days explain the high error, but the label is still wrong: there is only one fit."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One fit is a time split. Walk-forward refits as time moves.",
+        "generic": "Not quite right. Count how many times the model is fitted."
+      },
+      "explain": {
+        "text": "A walk-forward refits on the data available at each step, as the desk would. Fitting once on 140 days and predicting six years measures a stale, small model, hence 2.24 against 1.74."
+      }
+    },
+    {
+      "id": "q-one-split",
+      "difficulty": 2,
+      "prose": "Edge case. You want a plain time split, so you try `TimeSeriesSplit(n_splits=1)`.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "error",
+            "text": "scikit-learn raises a `ValueError`: it needs at least 2 splits, so you slice `X[:cut]` and `X[cut:]` yourself",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "It trains on the first half and tests on the second",
+            "why": "That is what one split would mean, but scikit-learn refuses `n_splits=1`."
+          },
+          {
+            "id": "all",
+            "text": "It trains on everything and tests on nothing",
+            "why": "It never builds a fold with an empty test. It raises an error instead."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One split is just a time split; write it as two slices.",
+        "generic": "Not quite right. `TimeSeriesSplit` requires `n_splits` of at least 2."
+      },
+      "explain": {
+        "text": "A single time split is the walk-forward with one fold, but `TimeSeriesSplit` raises `ValueError` for `n_splits=1`. Slicing at a cut date does the same job."
+      }
+    },
+    {
+      "id": "q-short-window",
+      "difficulty": 3,
+      "prose": "Edge case. You try a rolling window of 15 days on the 20-signal data. Ridge still returns predictions; the joined MSE is 3.2993, against 1.3935 for 250 days.",
+      "question": "Why is it so bad?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "under",
+            "text": "15 rows cannot pin down 21 coefficients, so the penalty, not the data, decides them",
+            "correct": true
+          },
+          {
+            "id": "stale",
+            "text": "The window is too stale to follow the rule change",
+            "why": "15 days is the freshest window possible. The problem is too little data, not stale data."
+          },
+          {
+            "id": "bug",
+            "text": "Ridge fails silently with a bug",
+            "why": "There is no bug. With more coefficients than rows, many fits match the data and the penalty picks one."
+          },
+          {
+            "id": "gap",
+            "text": "There is no gap between train and test",
+            "why": "A gap is about labels that look ahead. These targets are one day ahead."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Fewer rows than coefficients: the fit is mostly penalty.",
+        "generic": "Not quite right. Compare 15 rows with 20 signals plus an intercept."
+      },
+      "explain": {
+        "text": "Plain least squares has no unique answer with 15 rows and 21 coefficients. Ridge gives one, chosen largely by its penalty, so the forecasts are close to noise. A rolling window needs many more rows than features."
+      }
+    },
+    {
+      "id": "q-horizon",
+      "difficulty": 3,
+      "prose": "Your label is the 20-day forward return, and you walk forward with test blocks of 5 days and no gap.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "overlap",
+            "text": "The last training rows' labels run 19 days into the test block and beyond, so training sees test outcomes",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "Nothing: 5-day blocks just give more folds",
+            "why": "More folds are fine. But each training row's label covers the next 20 days, which reach the test days."
+          },
+          {
+            "id": "power",
+            "text": "Only that each block is too short to score",
+            "why": "Short blocks are noisy, but the larger problem is the overlap between labels and test days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Labels that look ahead 20 days reach into a 5-day test block. Purging fixes it.",
+        "generic": "Not quite right. Ask which days the label of the last training row uses."
+      },
+      "explain": {
+        "text": "A label of 20 days ahead on the last training day uses returns from the whole test block. The next lesson removes those rows, which is what `gap` is for."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1357 @@
+{
+  "id": "l6-random-forest",
+  "course": "ensembles",
+  "title": "Random forests",
+  "minutes": 15,
+  "objectives": [
+    "Decorrelate the trees by choosing features at random.",
+    "Explain why only lower correlation, not more trees, lowers the variance floor of an average."
+  ],
+  "skills": [
+    "en-bagging"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Every tree starts the same way",
+      "prose": "We bag 100 deep trees on 400 loans, as in lesson 5. Each tree may split on any of the 8 features. Here are the root splits of the first six, beside a forest that we will explain shortly.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Tree",
+            "Bagged: root split",
+            "Forest, $m = 2$: root split"
+          ],
+          "rows": [
+            [
+              "1",
+              "leverage ≤ 0.40",
+              "vol ≤ −0.54"
+            ],
+            [
+              "2",
+              "leverage ≤ 0.34",
+              "margin ≤ 0.99"
+            ],
+            [
+              "3",
+              "leverage ≤ −0.14",
+              "leverage ≤ −0.14"
+            ],
+            [
+              "4",
+              "leverage ≤ 0.00",
+              "leverage ≤ 0.00"
+            ],
+            [
+              "5",
+              "leverage ≤ −0.57",
+              "drawdown ≤ −1.33"
+            ],
+            [
+              "6",
+              "leverage ≤ −0.18",
+              "vol ≤ −0.41"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "The first 6 of 100 trees grown on the same 400 loans (book 9). All 100 bagged trees start with leverage."
+        }
+      },
+      "question": "Every bagged tree opens with leverage. What does that do to their vote?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The trees make similar mistakes, so averaging them cancels less",
+            "correct": true
+          },
+          {
+            "id": "good",
+            "text": "Nothing bad: leverage is the best feature, so it belongs at every root",
+            "why": "Leverage is the best single split, yes. But 100 trees that agree at the root share their errors, and shared errors do not average away."
+          },
+          {
+            "id": "same",
+            "text": "The trees are identical, so the vote equals one tree",
+            "why": "The thresholds differ, from −0.57 to 0.40, and the lower splits differ more. The trees are alike, not identical."
+          },
+          {
+            "id": "deep",
+            "text": "It does not matter, because the deeper splits differ anyway",
+            "why": "The root decides which half of the book each subtree sees. Trees that share it stay alike all the way down."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Recall the fifty analysts who read the same filings."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the two columns: how many different root features does each use?",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Trees that agree at the root tend to be wrong on the same loans. Correlated errors do not cancel."
+        }
+      ],
+      "feedback": {
+        "correct": "Alike trees are correlated trees.",
+        "generic": "Not quite right. Ask what happens to an average when its parts move together."
+      },
+      "explain": {
+        "text": "Bagged trees all split first on leverage, so they send loans down similar paths and err on similar loans. Their errors are correlated, which is why the lesson 5 curve flattened so early. The right-hand column shows a forest that breaks the habit.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Correlation sets a floor",
+      "prose": "Each tree's prediction has variance $\\sigma^2$, and any two trees have correlation $\\rho$. The curve shows the variance of the average of $B$ trees. Slide $\\rho$ and watch where the curve ends.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            1.05
+          ],
+          "xLabel": "Trees $B$",
+          "yLabel": "Variance of the average, in units of $\\sigma^2$",
+          "functions": [
+            {
+              "id": "v",
+              "expr": "r + (1 - r)/x",
+              "domain": [
+                1,
+                100
+              ],
+              "label": "average of $B$ trees"
+            }
+          ],
+          "params": {
+            "r": 0.5
+          },
+          "height": 300
+        },
+        "state": {
+          "params": {
+            "r": 0.5
+          }
+        },
+        "derive": {
+          "caption": "$\\rho = {{fixed(r, 2)}}$: at $B = 100$ the variance is {{fixed(r + (1 - r)/100, 3)}} $\\sigma^2$"
+        },
+        "controls": [
+          {
+            "bind": "r",
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "start": 0.5,
+            "label": "Correlation $\\rho$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "With $\\rho = 0.5$, what value does the variance approach as $B$ grows, in units of $\\sigma^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Limit of the variance, in units of sigma squared",
+        "placeholder": "decimal",
+        "accept": "0.5: the curve flattens at $\\rho\\sigma^2$.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "b100",
+            "value": 0.505,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $\\rho$ to 0.5 and read the right end of the curve."
+        },
+        {
+          "rung": "point",
+          "text": "Try $\\rho = 0$ and $\\rho = 1$ too: where does the curve end each time?",
+          "highlight": [
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The curve flattens at $\\rho$ itself: 0 for independent trees, 1 for identical ones."
+        }
+      ],
+      "feedback": {
+        "correct": "The curve flattens at $\\rho\\sigma^2$.",
+        "generic": "Not quite right. Slide $\\rho$ to 0.5 and watch what the curve levels off at.",
+        "byKey": {
+          "zero": "That is the independent case, $\\rho = 0$. With $\\rho = 0.5$ the curve stops at a floor.",
+          "b100": "0.505 is the value at $B = 100$. As $B$ keeps growing it settles a little lower, at 0.5.",
+          "one": "1 is where the curve starts, at $B = 1$."
+        }
+      },
+      "explain": {
+        "text": "At $\\rho = 0$ the curve falls like $1/B$ towards 0. At $\\rho = 0.5$ it levels off at half of $\\sigma^2$, and at $\\rho = 1$ it never falls. More trees cannot get below the floor $\\rho\\sigma^2$.",
+        "canvas": {
+          "params": {
+            "r": 0.5
+          },
+          "hlines": [
+            {
+              "id": "fl",
+              "y": 0.5,
+              "label": "floor $\\rho\\sigma^2$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Where the floor comes from",
+      "prose": "Let $X_1, \\dots, X_B$ be the trees' predictions for one loan, each with variance $\\sigma^2$ and pairwise correlation $\\rho$, so each covariance is $\\rho\\sigma^2$. Derive the curve you just slid.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "scale",
+            "text": "$\\operatorname{Var}\\left(\\frac{1}{B}\\sum_b X_b\\right) = \\frac{1}{B^2}\\operatorname{Var}\\left(\\sum_b X_b\\right)$, since a constant comes out squared"
+          },
+          {
+            "id": "sum",
+            "text": "$= \\frac{1}{B^2}\\left(\\sum_b \\operatorname{Var}(X_b) + \\sum_{b \\ne c} \\operatorname{Cov}(X_b, X_c)\\right)$, the variance of a sum"
+          },
+          {
+            "id": "count",
+            "text": "$= \\frac{1}{B^2}\\left(B\\sigma^2 + B(B - 1)\\rho\\sigma^2\\right)$: $B$ variances and $B(B - 1)$ ordered pairs"
+          },
+          {
+            "id": "tidy",
+            "text": "$= \\rho\\sigma^2 + \\frac{(1 - \\rho)\\sigma^2}{B}$, dividing by $B^2$ and collecting the $\\rho\\sigma^2$ terms"
+          }
+        ],
+        "answer": [
+          "scale",
+          "sum",
+          "count",
+          "tidy"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take the $\\frac{1}{B}$ out of the variance first."
+        },
+        {
+          "rung": "point",
+          "text": "The variance of a sum is every variance plus every covariance."
+        },
+        {
+          "rung": "step",
+          "text": "Scale, expand the sum, count the terms, tidy up."
+        }
+      ],
+      "feedback": {
+        "correct": "Only the second term shrinks with $B$.",
+        "generic": "Not quite right. Pull out the constant, expand, count, then simplify.",
+        "byKey": {
+          "count": "You can only count terms once the sum has been expanded into variances and covariances.",
+          "tidy": "The tidy form comes last, after counting $B$ variances and $B(B - 1)$ covariances."
+        }
+      },
+      "explain": {
+        "text": "$\\frac{\\sigma^2}{B} + \\frac{(B - 1)\\rho\\sigma^2}{B} = \\rho\\sigma^2 + \\frac{(1 - \\rho)\\sigma^2}{B}$. As $B$ grows the second term vanishes and $\\rho\\sigma^2$ stays. To lower the floor we must lower $\\rho$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two floors",
+      "prose": "We grew pairs of trees on 200 fresh books of 400 loans and measured both numbers. Bagged trees: $\\rho = 0.11$, $\\sigma^2 = 0.146$. Trees that see only 2 random features per split: $\\rho = 0.04$, $\\sigma^2 = 0.175$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            1.05
+          ],
+          "xLabel": "Trees $B$",
+          "yLabel": "Variance of the average, in units of $\\sigma^2$",
+          "functions": [
+            {
+              "id": "v",
+              "expr": "r + (1 - r)/x",
+              "domain": [
+                1,
+                100
+              ],
+              "label": "average of $B$ trees"
+            }
+          ],
+          "params": {
+            "r": 0.11
+          },
+          "height": 300
+        },
+        "state": {
+          "params": {
+            "r": 0.11
+          },
+          "caption": "Bagged trees, $\\rho = 0.11$: in units of $\\sigma^2$ the floor is 0.11"
+        }
+      },
+      "question": "What is the variance floor $\\rho\\sigma^2$ for the trees that see 2 features per split?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.007,
+        "tol": {
+          "abs": 0.0003
+        },
+        "label": "Variance floor",
+        "placeholder": "decimal",
+        "accept": "0.007: $0.04 \\times 0.175$. The bagged floor is $0.11 \\times 0.146 = 0.016$.",
+        "wrong": [
+          {
+            "id": "bag",
+            "value": 0.0161,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "sig",
+            "value": 0.175,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "rho",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The floor is the term that survives large $B$."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply that tree's $\\rho$ by its $\\sigma^2$.",
+          "highlight": [
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.04 \\times 0.175 = 0.007$."
+        }
+      ],
+      "feedback": {
+        "correct": "Less than half the bagged floor of 0.016.",
+        "generic": "Not quite right. Multiply $\\rho = 0.04$ by $\\sigma^2 = 0.175$.",
+        "byKey": {
+          "bag": "That is the bagged trees' floor. Use $\\rho = 0.04$ and $\\sigma^2 = 0.175$.",
+          "sig": "0.175 is one tree's variance, the value at $B = 1$. The floor multiplies it by $\\rho$.",
+          "rho": "$\\rho$ alone is the floor in units of $\\sigma^2$. Multiply by $\\sigma^2 = 0.175$."
+        }
+      },
+      "explain": {
+        "text": "Each restricted tree is noisier, 0.175 against 0.146. But their correlation drops from 0.11 to 0.04, so the floor falls from 0.016 to 0.007. Worse trees, better average.",
+        "canvas": {
+          "params": {
+            "r": 0.04
+          },
+          "caption": "Restricted trees, $\\rho = 0.04$: the floor drops to 0.04 $\\sigma^2$"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The formula in code",
+      "prose": "Turn the derivation into a function you can reuse when you size an ensemble.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> average_variance(0.146, 0.11, 100)",
+            "?",
+            ">>> average_variance(0.175, 0.04, 100)",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `average_variance(sigma2, rho, B)`: the variance of the average of `B` predictors.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def average_variance(sigma2, rho, B):\n    \"\"\"Each predictor has variance sigma2; any two have correlation rho.\"\"\"\n    return ...\n",
+        "solution": "def average_variance(sigma2, rho, B):\n    \"\"\"Each predictor has variance sigma2; any two have correlation rho.\"\"\"\n    return rho * sigma2 + (1 - rho) * sigma2 / B\n",
+        "examples": [
+          {
+            "call": "average_variance(1.0, 0.0, 10)",
+            "expect": "0.1",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "average_variance(1.0, 0.0, 10)",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "call": "average_variance(1.0, 1.0, 50)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "average_variance(2.0, 0.5, 1)",
+            "expect": "2.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "average_variance(0.146, 0.11, 100)",
+            "expect": "0.0173594",
+            "compare": "isclose"
+          },
+          {
+            "call": "average_variance(0.175, 0.04, 100)",
+            "expect": "0.00868",
+            "compare": "isclose"
+          },
+          {
+            "call": "average_variance(0.04, 0.3, 50)",
+            "expect": "0.01256",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, including the independent case, identical predictors and a single predictor. Each answer is compared with math.isclose. Plain Python is enough."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two terms: one that ignores $B$ and one divided by $B$."
+        },
+        {
+          "rung": "point",
+          "text": "The first term is the floor, $\\rho\\sigma^2$.",
+          "highlight": [
+            "l1",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return rho * sigma2 + (1 - rho) * sigma2 / B`."
+        }
+      ],
+      "feedback": {
+        "correct": "At 100 trees: 0.0174 for bagged trees, 0.0087 for restricted ones.",
+        "generic": "Some tests failed. Return $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$."
+      },
+      "explain": {
+        "text": "With $B = 1$ the formula gives $\\sigma^2$ whatever $\\rho$ is: one tree is one tree. At 100 trees the restricted ensemble has half the variance of the bagged one."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Random features at each split",
+      "prose": "A **random forest** is bagging plus one change: at every split, the tree may look at only $m$ features drawn at random. In scikit-learn, `max_features=m`. With $m = 2$ of 8, leverage is often not on offer.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Tree",
+            "Bagged: root split",
+            "Forest, $m = 2$: root split"
+          ],
+          "rows": [
+            [
+              "1",
+              "leverage ≤ 0.40",
+              "vol ≤ −0.54"
+            ],
+            [
+              "2",
+              "leverage ≤ 0.34",
+              "margin ≤ 0.99"
+            ],
+            [
+              "3",
+              "leverage ≤ −0.14",
+              "leverage ≤ −0.14"
+            ],
+            [
+              "4",
+              "leverage ≤ 0.00",
+              "leverage ≤ 0.00"
+            ],
+            [
+              "5",
+              "leverage ≤ −0.57",
+              "drawdown ≤ −1.33"
+            ],
+            [
+              "6",
+              "leverage ≤ −0.18",
+              "vol ≤ −0.41"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          },
+          "caption": "Forest with $m = 2$: of 100 roots, 25 split on leverage"
+        }
+      },
+      "question": "At the root, what is the chance that leverage is one of the 2 features on offer?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.25,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Chance leverage is a candidate",
+        "placeholder": "fraction or decimal",
+        "accept": "0.25: $1 - \\binom{7}{2}/\\binom{8}{2} = 1 - 21/28$, or simply $2/8$.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.125,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "pair",
+            "value": 0.0357,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "miss",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the pairs of features that leave leverage out."
+        },
+        {
+          "rung": "point",
+          "text": "There are $\\binom{8}{2} = 28$ pairs; $\\binom{7}{2} = 21$ of them miss leverage.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 - 21/28 = 0.25$."
+        }
+      ],
+      "feedback": {
+        "correct": "One root in four can use leverage, and 25 of the 100 did.",
+        "generic": "Not quite right. Find the share of the 28 pairs that include leverage.",
+        "byKey": {
+          "one": "$1/8$ is the chance with one feature on offer. Two features double it.",
+          "pair": "$1/28$ is the chance of one particular pair. Seven pairs contain leverage.",
+          "miss": "0.75 is the chance leverage is left out."
+        }
+      },
+      "explain": {
+        "text": "Seven of the 28 pairs contain leverage, so $7/28 = 0.25$. When it is on offer it nearly always wins, which is why 25 of the 100 roots use it. The other 75 trees must start elsewhere, so they differ.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Choosing $m$",
+      "prose": "Grow forests of 100 trees on the same 400 loans with each $m$ from 1 to 8, and score each on the 2,000 new loans. scikit-learn's default for a classifier is $m = \\sqrt{p}$, rounded down: 2 here.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "err",
+              "label": "Forest, 100 trees",
+              "values": [
+                0.204,
+                0.196,
+                0.204,
+                0.206,
+                0.2025,
+                0.206,
+                0.209,
+                0.2115
+              ],
+              "colour": 1
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Features per split, $m$",
+          "yLabel": "Test error",
+          "y": [
+            0.19,
+            0.215
+          ],
+          "decimals": 4
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m2",
+              "i": 1,
+              "series": "err",
+              "label": "$m = 2$: {value}",
+              "below": true
+            },
+            {
+              "id": "m8",
+              "i": 7,
+              "series": "err",
+              "label": "$m = 8$: {value}"
+            }
+          ]
+        }
+      },
+      "question": "What is the forest with $m = 8$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Plain bagging: every split may use every feature",
+            "correct": true
+          },
+          {
+            "id": "best",
+            "text": "The strongest forest, since it sees the most features",
+            "why": "You expected more choice to help. $m = 8$ has the highest error here, 0.2115 against 0.196."
+          },
+          {
+            "id": "rand",
+            "text": "A forest of fully random splits",
+            "why": "That is closer to $m = 1$, where each split gets one random feature and no choice."
+          },
+          {
+            "id": "over",
+            "text": "An overfitted forest that needs fewer trees",
+            "why": "Its trees are not deeper than the others'. They are just more alike."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a split choose among when $m = p$?"
+        },
+        {
+          "rung": "point",
+          "text": "With all 8 features on offer, nothing random is left inside the trees.",
+          "highlight": [
+            "m8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only the bootstrap rows differ between trees: that is bagging."
+        }
+      ],
+      "feedback": {
+        "correct": "$m = p$ is bagging; smaller $m$ decorrelates the trees.",
+        "generic": "Not quite right. Ask what is random about a tree when $m = 8$."
+      },
+      "explain": {
+        "text": "With $m = 8$ only the resample differs between trees, so this is bagging, at 0.2115. The best $m$ here is 2, at 0.196: 1.6 points better. Across 12 books the average gain was 0.7 points: modest and steady.",
+        "canvas": {
+          "highlight": [
+            "m2",
+            "m8"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The curve in code",
+      "prose": "Write the scan. Fix `n_estimators=50` and `random_state=0`, so every $m$ sees the same resamples and the comparison is fair.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "err",
+              "label": "Forest, 100 trees",
+              "values": [
+                0.204,
+                0.196,
+                0.204,
+                0.206,
+                0.2025,
+                0.206,
+                0.209,
+                0.2115
+              ],
+              "colour": 1
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Features per split, $m$",
+          "yLabel": "Test error",
+          "y": [
+            0.19,
+            0.215
+          ],
+          "decimals": 4
+        },
+        "state": {}
+      },
+      "question": "Complete `rf_test_acc_by_m` so it returns the test accuracy for each `m` in `ms`, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 15000,
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n",
+        "starter": "from sklearn.ensemble import RandomForestClassifier\n\ndef rf_test_acc_by_m(X_train, y_train, X_test, y_test, ms):\n    out = []\n    for m in ms:\n        forest = ...   # 50 trees, max_features=m, random_state=0\n        out.append(round(float(forest.score(X_test, y_test)), 4))\n    return out\n",
+        "solution": "from sklearn.ensemble import RandomForestClassifier\n\ndef rf_test_acc_by_m(X_train, y_train, X_test, y_test, ms):\n    out = []\n    for m in ms:\n        forest = RandomForestClassifier(n_estimators=50, max_features=m,\n                                        random_state=0).fit(X_train, y_train)\n        out.append(round(float(forest.score(X_test, y_test)), 4))\n    return out\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(6, 200)",
+            "call": "rf_test_acc_by_m(X[:150], y[:150], X[150:], y[150:], [3])",
+            "expect": "[0.88]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(6, 200)",
+            "call": "rf_test_acc_by_m(X[:150], y[:150], X[150:], y[150:], [3])",
+            "expect": "[0.88]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(9, 400); Xn, yn = make_loans(2, 2000)",
+            "call": "rf_test_acc_by_m(X, y, Xn, yn, [1, 2, 8])",
+            "expect": "[0.792, 0.792, 0.786]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(4, 300); Xn, yn = make_loans(5, 1000)",
+            "call": "rf_test_acc_by_m(X, y, Xn, yn, [2, 4])",
+            "expect": "[0.79, 0.803]",
+            "compare": "isclose"
+          },
+          {
+            "call": "rf_test_acc_by_m([[0, 1], [1, 0], [2, 1], [3, 0]], [0, 0, 1, 1], [[0, 0], [3, 1]], [0, 1], [])",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on loans from `make_loans(seed, n)`, which is already defined, and one empty list. Each list of accuracies is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick. The longest test grows 150 trees and takes about 2 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build the forest with three keyword arguments, then `.fit` it."
+        },
+        {
+          "rung": "point",
+          "text": "`max_features=m` is the only argument that changes inside the loop.",
+          "highlight": [
+            "err"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`forest = RandomForestClassifier(n_estimators=50, max_features=m, random_state=0).fit(X_train, y_train)`."
+        }
+      ],
+      "feedback": {
+        "correct": "With 50 trees on book 9: 0.792 at $m = 1$ and 2, 0.786 at $m = 8$.",
+        "generic": "Some tests failed. Fit a new forest for each `m`, with `n_estimators=50` and `random_state=0`."
+      },
+      "explain": {
+        "text": "A forest needs little tuning: $m$ near $\\sqrt{p}$, enough trees for the curve to flatten, and sometimes a depth cap. The gaps between $m$ values are small, so tune on validation data, not on the test set."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Is the vote a probability?",
+      "prose": "The forest's `predict_proba` is the share of its trees voting default. A colleague uses it as each loan's probability of default for pricing. Here is how the $m = 2$ forest's votes compare with what happened to 2,000 new loans.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Vote for default",
+            "Loans",
+            "Mean vote",
+            "Defaulted"
+          ],
+          "rows": [
+            [
+              "0.0 to 0.1",
+              "127",
+              "0.064",
+              "0.024"
+            ],
+            [
+              "0.1 to 0.3",
+              "408",
+              "0.190",
+              "0.096"
+            ],
+            [
+              "0.3 to 0.5",
+              "425",
+              "0.393",
+              "0.282"
+            ],
+            [
+              "0.5 to 0.7",
+              "411",
+              "0.595",
+              "0.603"
+            ],
+            [
+              "0.7 to 0.9",
+              "480",
+              "0.794",
+              "0.860"
+            ],
+            [
+              "0.9 to 1.0",
+              "149",
+              "0.934",
+              "0.960"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the table say about using the vote as a probability?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It is pulled towards 0.5: low votes overstate default and high votes understate it",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "It is a calibrated probability, since it is a fraction between 0 and 1",
+            "why": "You read a share of trees as a chance. Loans with a mean vote of 0.19 defaulted only 9.6% of the time."
+          },
+          {
+            "id": "over",
+            "text": "It is overconfident: it says 0.9 when the truth is nearer 0.5",
+            "why": "Look at the top row: a mean vote of 0.934 against 96% defaulted. The forest is too cautious, not too bold."
+          },
+          {
+            "id": "rank",
+            "text": "It ranks loans badly, so it is useless",
+            "why": "The ranking is good: the default rate rises in every row. Only the scale is off."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the mean vote with the default rate, row by row."
+        },
+        {
+          "rung": "point",
+          "text": "Rows 2 and 3 have votes above the default rate; row 5 has a vote below it.",
+          "highlight": [
+            "r1",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Votes of 0.19 meet 9.6% defaults; votes of 0.79 meet 86%. The votes are squeezed towards the middle."
+        }
+      ],
+      "feedback": {
+        "correct": "The vote ranks loans well but is not calibrated.",
+        "generic": "Not quite right. Compare the mean vote with the default rate in each row.",
+        "byKey": {
+          "fine": "You read the share of trees as a probability. In the 0.1 to 0.3 row the vote says 0.19 and 9.6% defaulted."
+        }
+      },
+      "explain": {
+        "text": "Averaging trees that each saw different rows pulls the vote towards the middle. The order is right, the scale is not. Calibrate on held-out loans, as in *Probabilities you can trust*, before pricing with it.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Counting the votes",
+      "prose": "Compute the vote yourself. Each tree in `forest.estimators_` is a fitted `DecisionTreeClassifier`; `tree.predict(x)` gives its class, 0 or 1, for one row.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Tree",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "Share voting 1"
+          ],
+          "rows": [
+            [
+              "Vote",
+              "1",
+              "0",
+              "1",
+              "1",
+              "0",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `rf_vote_fraction`: the share of trees voting 1 for the single row `x_query`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 10000,
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.ensemble import RandomForestClassifier\n\ndef rf_vote_fraction(X_train, y_train, x_query, n_estimators):\n    forest = RandomForestClassifier(n_estimators=n_estimators,\n                                    random_state=0).fit(X_train, y_train)\n    x = np.asarray(x_query, dtype=float).reshape(1, -1)   # one row\n    votes = ...   # each tree's class for x\n    return round(float(np.mean(votes)), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.ensemble import RandomForestClassifier\n\ndef rf_vote_fraction(X_train, y_train, x_query, n_estimators):\n    forest = RandomForestClassifier(n_estimators=n_estimators,\n                                    random_state=0).fit(X_train, y_train)\n    x = np.asarray(x_query, dtype=float).reshape(1, -1)   # one row\n    votes = [tree.predict(x)[0] for tree in forest.estimators_]\n    return round(float(np.mean(votes)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(3, 300)",
+            "call": "rf_vote_fraction(X, y, [1.0, 0, 0, 0, 0, 0, 0, 0], 25)",
+            "expect": "0.96",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(3, 300)",
+            "call": "rf_vote_fraction(X, y, [1.0, 0, 0, 0, 0, 0, 0, 0], 25)",
+            "expect": "0.96",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(3, 300)",
+            "call": "rf_vote_fraction(X, y, [-1.0, 0, 0, 0, 0, 0, 0, 0], 25)",
+            "expect": "0.08",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(3, 300)",
+            "call": "rf_vote_fraction(X, y, [0.3, 0, 0, 0, 0, 0, 0, 0], 40)",
+            "expect": "0.325",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(9, 400); Xn, yn = make_loans(2, 2000)",
+            "call": "rf_vote_fraction(X, y, Xn[1], 50)",
+            "expect": "0.76",
+            "compare": "isclose"
+          },
+          {
+            "call": "rf_vote_fraction([[0], [1], [2], [3]], [0, 0, 0, 0], [5], 10)",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on loans from `make_loans(seed, n)` and one book where no loan defaulted. Each share is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over `forest.estimators_`."
+        },
+        {
+          "rung": "point",
+          "text": "`tree.predict(x)` returns an array with one class; take `[0]`.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`votes = [tree.predict(x)[0] for tree in forest.estimators_]`."
+        }
+      ],
+      "feedback": {
+        "correct": "For deep trees this share equals `forest.predict_proba(x)[0, 1]`.",
+        "generic": "Some tests failed. Ask each tree in `forest.estimators_` for its class on `x`, then average."
+      },
+      "explain": {
+        "text": "Deep trees have pure leaves, so each tree's probability is 0 or 1 and the forest's `predict_proba` is exactly this vote share. With shallower trees it averages leaf shares instead. Either way it still needs calibrating."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The feature that eats the model",
+      "prose": "A credit desk scores 12,000 loans on 30 features. In its bagged trees, leverage wins every root split, so every tree looks alike. It switches to `RandomForestClassifier(n_estimators=200, max_features=\"sqrt\")`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "bag",
+              "label": "Bagging, $m = 30$"
+            },
+            {
+              "id": "rf",
+              "label": "Forest, $m = 5$"
+            }
+          ],
+          "yLabel": "Roots that can use leverage",
+          "showValues": true,
+          "decimals": 3,
+          "yMin": 0,
+          "yMax": 1.1
+        },
+        "state": {
+          "values": {
+            "bag": 1.0,
+            "rf": 0
+          }
+        }
+      },
+      "question": "With $m = \\lfloor\\sqrt{30}\\rfloor = 5$, what share of root splits even have leverage on offer?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1667,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Share of roots with leverage on offer",
+        "placeholder": "fraction or decimal",
+        "accept": "$5/30 = 1/6 \\approx 0.167$.",
+        "wrong": [
+          {
+            "id": "sqrt",
+            "value": 0.1826,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.0333,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "miss",
+            "value": 0.8333,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On the 8-feature book, 2 of 8 gave a chance of $2/8$."
+        },
+        {
+          "rung": "point",
+          "text": "Each feature is equally likely to be among the 5 drawn.",
+          "highlight": [
+            "rf"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$5/30 = 0.167$."
+        }
+      ],
+      "feedback": {
+        "correct": "Five in six trees must start without leverage.",
+        "generic": "Not quite right. A random 5 of 30 features includes any given one with chance $5/30$.",
+        "byKey": {
+          "sqrt": "You used $\\sqrt{30} = 5.48$ before rounding down. scikit-learn uses 5 features.",
+          "one": "$1/30$ is the chance for one feature on offer. Five are on offer.",
+          "miss": "That is the share without leverage on offer."
+        }
+      },
+      "explain": {
+        "text": "$5/30 = 0.167$, so about 33 of the 200 trees can start with leverage. The rest must find structure in the other 29 features, which decorrelates the vote. With defaults like these, 200 shallow-to-deep trees and little tuning, a forest is the desk's standard tabular baseline.",
+        "canvas": {
+          "values": {
+            "rf": 0.1667
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The average of $B$ predictors with variance $\\sigma^2$ and correlation $\\rho$ has variance $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$; for large $B$ only $\\rho\\sigma^2$ is left.",
+      "A random forest lowers $\\rho$ by offering each split only $m$ random features (`max_features`; $\\sqrt{p}$ for classification, $p/3$ for regression); $m = p$ is plain bagging.",
+      "Forests need little tuning, but their vote share ranks well and is not a calibrated probability."
+    ],
+    "formula": {
+      "name": "Variance of an average of correlated predictors",
+      "tex": "\\operatorname{Var}\\left(\\bar X\\right) = \\rho\\sigma^2 + \\frac{(1 - \\rho)\\sigma^2}{B}",
+      "note": "More trees shrink the second term; only lower correlation shrinks the first."
+    },
+    "trap": "The share of trees voting default is not the probability of default: it is pulled towards 0.5. Calibrate before pricing."
+  },
+  "quiz": [
+    {
+      "id": "q-m-equals-p",
+      "difficulty": 2,
+      "prose": "A colleague fits `RandomForestClassifier(max_features=None)` on 8 features and calls it an improvement on their bagged trees.",
+      "question": "How does it differ from `BaggingClassifier(DecisionTreeClassifier())`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "Hardly at all: every split sees every feature, so it is bagging",
+            "correct": true
+          },
+          {
+            "id": "better",
+            "text": "It decorrelates the trees, so it is better",
+            "why": "Decorrelation comes from a small `max_features`. With `None` every split sees all 8."
+          },
+          {
+            "id": "deeper",
+            "text": "Its trees grow deeper",
+            "why": "Both grow deep trees by default. Depth is not the difference."
+          },
+          {
+            "id": "no-boot",
+            "text": "It does not resample the rows",
+            "why": "A forest bootstraps the rows by default, exactly as bagging does."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$m = p$ is bagging.",
+        "generic": "Not quite right. Ask what is random inside each tree when `max_features=None`."
+      },
+      "explain": {
+        "text": "With every feature on offer, only the bootstrap rows differ between trees. That is bagging under another name."
+      }
+    },
+    {
+      "id": "q-p2",
+      "difficulty": 3,
+      "prose": "A forest classifies loans on only 2 features, leverage and cover. scikit-learn's default is $m = \\lfloor\\sqrt{2}\\rfloor = 1$.",
+      "question": "What happens at each split?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "coin",
+            "text": "The tree must split on one feature picked at random, best threshold or not",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "It compares both features, as bagging would",
+            "why": "That is $m = 2$. With $m = 1$ there is no comparison to make."
+          },
+          {
+            "id": "lev",
+            "text": "It always splits on leverage, the stronger feature",
+            "why": "The feature is drawn at random before the split looks at the data."
+          },
+          {
+            "id": "none",
+            "text": "It cannot split, since one feature is too few",
+            "why": "One feature is enough to split; the tree just takes the best threshold on it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Half the splits use the weaker feature.",
+        "generic": "Not quite right. With $m = 1$, how many features does a split get to choose between?"
+      },
+      "explain": {
+        "text": "With $m = 1$ the feature at each split is a coin flip, so half the splits use cover even where leverage is far better. With $p = 2$ the choice is only between $m = 1$ and bagging, so check both on validation data."
+      }
+    },
+    {
+      "id": "q-m1",
+      "difficulty": 3,
+      "prose": "On book 9 we grew forests of depth-3 trees. Test accuracy: 0.7815 with $m = 1$, 0.792 with $m = 2$, 0.7775 with $m = 8$.",
+      "question": "Why does $m = 1$ fall behind $m = 2$ here?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bias",
+            "text": "Each split is forced onto a random feature, and with only 3 levels the trees rarely reach leverage: high bias",
+            "correct": true
+          },
+          {
+            "id": "corr",
+            "text": "Its trees are too correlated",
+            "why": "$m = 1$ gives the least correlated trees of all. Their problem is that each one is weak."
+          },
+          {
+            "id": "over",
+            "text": "It overfits the 400 loans",
+            "why": "Depth-3 trees with random splits fit the data loosely. That is bias, not overfitting."
+          },
+          {
+            "id": "trees",
+            "text": "It needs fewer trees",
+            "why": "More or fewer trees cannot repair trees that each split on the wrong features."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Too much randomness costs bias.",
+        "generic": "Not quite right. Ask how good one $m = 1$ tree of depth 3 can be."
+      },
+      "explain": {
+        "text": "Lower $m$ lowers $\\rho$ but raises each tree's error. At $m = 1$ with shallow trees the second effect wins. The best $m$ sits in between."
+      }
+    },
+    {
+      "id": "q-avgvar",
+      "difficulty": 2,
+      "prose": "Fifty predictors each have variance 0.04, and any two have correlation 0.3.",
+      "question": "What is the variance of their average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.01256,
+        "tol": {
+          "abs": 0.0001
+        },
+        "label": "Variance of the average",
+        "placeholder": "decimal",
+        "accept": "0.01256: $0.3 \\times 0.04 + 0.7 \\times 0.04/50 = 0.012 + 0.00056$.",
+        "wrong": [
+          {
+            "id": "ind",
+            "value": 0.0008,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "floor",
+            "value": 0.012,
+            "tol": {
+              "abs": 2e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The floor, 0.012, is almost all of it.",
+        "generic": "Not quite right. Use $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$.",
+        "byKey": {
+          "ind": "That is $\\sigma^2/B$, which assumes independence. Add the floor $\\rho\\sigma^2 = 0.012$.",
+          "floor": "0.012 is the floor alone. Add $(1 - \\rho)\\sigma^2/B = 0.00056$."
+        }
+      },
+      "explain": {
+        "text": "$0.3 \\times 0.04 = 0.012$ and $0.7 \\times 0.04 / 50 = 0.00056$, total 0.01256. Doubling to 100 predictors would save only 0.00028."
+      }
+    }
+  ]
+}
