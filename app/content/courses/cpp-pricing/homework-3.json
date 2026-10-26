@@ -1,0 +1,579 @@
+{
+  "id": "homework-3",
+  "course": "cpp-pricing",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-test-file",
+      "difficulty": 5,
+      "skills": [
+        "cx-testing",
+        "cx-pricers"
+      ],
+      "title": "A test file for the pricer library",
+      "prose": "The desk's pricer library is hidden: `bs_call`, `bs_put`, `bs_delta_call` and `tree_call`. Write its test file with the test kit from l12: at least six tests covering a limit, put-call parity, a known value, the tree's convergence and delta by bumping. Check runs your file against the correct library and against six versions with one bug each, including a call that returns 0 when $\\sigma < 0.001$.",
+      "question": "Write the test file.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\n// Hidden: the test kit (TEST, CHECK, CHECK_CLOSE), bs_call, bs_put,\n// bs_delta_call, tree_call(s, k, r, sigma, t, n) and norm_cdf.\n// Write at least six tests. Ideas:\n//   a limit (sigma -> 0, or deep in or out of the money)\n//   put-call parity\n//   a known value (call 10.4506, put 5.5735)\n//   convergence of tree_call at n = 512\n//   delta against a central difference\nTEST(test_example) {\n    CHECK(bs_call(100, 100, 0.05, 0.2, 1) > 0);\n}\n",
+        "solution": "#include <cmath>\n\n// Hidden: the test kit (TEST, CHECK, CHECK_CLOSE), bs_call, bs_put,\n// bs_delta_call, tree_call(s, k, r, sigma, t, n) and norm_cdf.\nconst double S = 100, K = 100, R = 0.05, SIG = 0.2, T = 1;\n\nTEST(test_call_tiny_vol) {\n    CHECK_CLOSE(bs_call(S, K, R, 1e-6, T), S - K * std::exp(-R * T), 1e-6);\n}\n\nTEST(test_call_deep_out) {\n    CHECK(bs_call(50, K, R, SIG, T) < 0.01);\n}\n\nTEST(test_parity) {\n    CHECK_CLOSE(bs_call(S, K, R, SIG, T) - bs_put(S, K, R, SIG, T), S - K * std::exp(-R * T), 1e-9);\n}\n\nTEST(test_known_values) {\n    CHECK_CLOSE(bs_call(S, K, R, SIG, T), 10.4506, 1e-4);\n    CHECK_CLOSE(bs_put(S, K, R, SIG, T), 5.5735, 1e-4);\n}\n\nTEST(test_tree_converges) {\n    CHECK_CLOSE(tree_call(S, K, R, SIG, T, 512), bs_call(S, K, R, SIG, T), 0.01);\n}\n\nTEST(test_delta_by_bumping) {\n    double h = 0.01;\n    double fd = (bs_call(S + h, K, R, SIG, T) - bs_call(S - h, K, R, SIG, T)) / (2 * h);\n    CHECK_CLOSE(bs_delta_call(S, K, R, SIG, T), fd, 1e-5);\n}\n",
+        "prelude": "#include <cmath>\n#include <cstdio>\n#include <string>\n#include <vector>\n\nstruct ZqTest { const char* name; void (*fn)(); };\nstd::vector<ZqTest>& zq_registry() { static std::vector<ZqTest> t; return t; }\nstruct ZqAdd { ZqAdd(const char* n, void (*f)()) { zq_registry().push_back({n, f}); } };\nint zq_bad = 0, zq_passed = 0, zq_failed = 0;\n\n#define TEST(name) void name(); static ZqAdd name##_zq(#name, name); void name()\n#define CHECK(cond) do { if (!(cond)) { ++zq_bad; std::printf(\"  %s:%d: CHECK(%s) failed\\n\", __FILE__, __LINE__, #cond); } } while (0)\n#define CHECK_CLOSE(a, b, tol) do { double zq_a = (a), zq_b = (b); if (!(std::fabs(zq_a - zq_b) <= (tol))) { ++zq_bad; std::printf(\"  %s:%d: CHECK_CLOSE(%s, %s, %s) failed: %.10g and %.10g\\n\", __FILE__, __LINE__, #a, #b, #tol, zq_a, zq_b); } } while (0)\n#include <algorithm>\n#include <stdexcept>\n\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s, double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    ++zq_trees;\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\n\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\n\ndouble bs_call_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n\ndouble bs_put_ok(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1);\n}\n\ndouble bs_call_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return s * norm_cdf(d1) - k * norm_cdf(d1 - sigma * std::sqrt(t));\n}\ndouble bs_put_nodisc(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    return k * norm_cdf(-(d1 - sigma * std::sqrt(t))) - s * norm_cdf(-d1);\n}\ndouble bs_put_buggy(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(d2) - s * norm_cdf(-d1);\n}\ndouble bs_delta_ok(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r + 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_d2(double s, double k, double r, double sigma, double t) {\n    return norm_cdf((std::log(s / k) + (r - 0.5 * sigma * sigma) * t) / (sigma * std::sqrt(t)));\n}\ndouble bs_delta_disc(double s, double k, double r, double sigma, double t) {\n    return std::exp(-r * t) * bs_delta_ok(s, k, r, sigma, t);\n}\ndouble tree_call_ok(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n, false);\n}\ndouble tree_call_capped(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, r, sigma, t, n > 64 ? 64 : n, false);\n}\ndouble tree_call_nodisc(double s, double k, double r, double sigma, double t, int n) {\n    return binomial_price(Call(k), s, 0.0, sigma, t, n, false);\n}\ndouble bs_call_lowvol(double s, double k, double r, double sigma, double t) {\n    if (sigma < 1e-3) return 0.0;  // a 'guard' that is wrong\n    return bs_call_ok(s, k, r, sigma, t);\n}\ntypedef double (*Pricer)(double, double, double, double, double);\nPricer bs_call = bs_call_ok, bs_put = bs_put_ok, bs_delta_call = bs_delta_ok;\ndouble (*tree_call)(double, double, double, double, double, int) = tree_call_ok;\n",
+        "postlude": "std::string run_tests() {\n    zq_passed = zq_failed = 0;\n    for (const ZqTest& t : zq_registry()) {\n        int before = zq_bad;\n        t.fn();\n        if (zq_bad == before) { ++zq_passed; std::printf(\"PASS %s\\n\", t.name); }\n        else { ++zq_failed; std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    return std::to_string(zq_passed) + \" passed, \" + std::to_string(zq_failed) + \" failed\";\n}\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "6 passed, 0 failed"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "run_tests();",
+            "call": "zq_passed >= 6 && zq_failed == 0",
+            "expect": true
+          },
+          {
+            "setup": "bs_put = bs_put_buggy;\nrun_tests();",
+            "call": "zq_failed >= 1",
+            "expect": true
+          },
+          {
+            "setup": "bs_put = bs_put_nodisc;\nrun_tests();",
+            "call": "zq_failed >= 1",
+            "expect": true
+          },
+          {
+            "setup": "bs_call = bs_call_nodisc;\nrun_tests();",
+            "call": "zq_failed >= 1",
+            "expect": true
+          },
+          {
+            "setup": "bs_call = bs_call_lowvol;\nrun_tests();",
+            "call": "zq_failed >= 1",
+            "expect": true
+          },
+          {
+            "setup": "tree_call = tree_call_capped;\nrun_tests();",
+            "call": "zq_failed >= 1",
+            "expect": true
+          },
+          {
+            "setup": "bs_delta_call = bs_delta_disc;\nrun_tests();",
+            "call": "zq_failed >= 1",
+            "expect": true
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 needs at least six tests, all passing on the correct library. Tests 2 to 7 each swap in one bug (put with $N(d_2)$, put or call without the discount, a call that is 0 below $\\sigma = 0.001$, a tree stuck at 64 steps, a discounted delta) and need at least one of your tests to fail. The example expects exactly six tests."
+      },
+      "feedback": {
+        "correct": "Six independent checks; every planted bug trips at least one.",
+        "generic": "Not quite right. Read the PASS and FAIL lines under the first failing row.",
+        "byKey": {
+          "test-1": "On the correct library you need at least six tests and no failures. Check each tolerance against the error the quantity really has.",
+          "test-5": "The call that returns 0 at tiny volatility got through. You need a $\\sigma \\to 0$ limit test.",
+          "test-6": "The tree stuck at 64 steps (0.031 off) got through. Test the tree at $n = 512$ within 0.01.",
+          "test-7": "The discounted delta (0.6058) got through. Compare `bs_delta_call` with a central difference within 1e-5."
+        }
+      },
+      "explain": {
+        "text": "Each family catches different bugs: parity and known values catch formula slips, the limit catches special-case code, convergence catches the tree, the bump catches a Greek. A suite earns trust when every plausible bug fails at least one test."
+      }
+    },
+    {
+      "id": "h-tri-lattice",
+      "difficulty": 4,
+      "skills": [
+        "cx-perf",
+        "cx-pricers"
+      ],
+      "title": "A packed lattice for an American put",
+      "prose": "A square $(n + 1)^2$ lattice wastes almost half its places. Pack the triangle instead: node $(i, j)$ at $i(i + 1)/2 + j$, $(n + 1)(n + 2)/2$ nodes in all. Store every share price in one vector filled with `push_back` after a single `reserve`, with no `pow` per node, then price the American put on it.",
+      "question": "Write `flat_american_put`. At $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ and $n = 512$ it is £6.0889.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\n// Node (i, j) of the triangle lives at i * (i + 1) / 2 + j.\nint tri(int i, int j) { return i * (i + 1) / 2 + j; }\n\ndouble flat_american_put(double s, double k, double r, double sigma, double t, int n) {\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    int nodes = (n + 1) * (n + 2) / 2;\n    std::vector<double> price;\n    // 1. reserve, then push_back every share price, row 0 to row n\n    std::vector<double> v(nodes);\n    // 2. leaves, then step back with early exercise\n    return v[0];\n}\n",
+        "solution": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\n// Node (i, j) of the triangle lives at i * (i + 1) / 2 + j.\nint tri(int i, int j) { return i * (i + 1) / 2 + j; }\n\ndouble flat_american_put(double s, double k, double r, double sigma, double t, int n) {\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    int nodes = (n + 1) * (n + 2) / 2;\n    std::vector<double> price;\n    price.reserve(nodes);                      // one allocation, no copies\n    for (int i = 0; i <= n; ++i) {\n        double p = s * std::pow(d, i);         // node (i, 0)\n        for (int j = 0; j <= i; ++j) {\n            price.push_back(p);\n            p *= u * u;\n        }\n    }\n    std::vector<double> v(nodes);\n    for (int j = 0; j <= n; ++j) v[tri(n, j)] = std::max(k - price[tri(n, j)], 0.0);\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            double hold = disc * (q * v[tri(i + 1, j + 1)] + (1 - q) * v[tri(i + 1, j)]);\n            v[tri(i, j)] = std::max(hold, k - price[tri(i, j)]);\n        }\n    return v[0];\n}\n",
+        "examples": [
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              4
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 5.88280035132943,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              4
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 5.88280035132943,
+            "compare": "isclose"
+          },
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              100
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 6.082354409142385,
+            "compare": "isclose"
+          },
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              512
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 6.088850829289741,
+            "compare": "isclose"
+          },
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              1000
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 6.089595282978188,
+            "compare": "isclose"
+          },
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              90.0,
+              0.05,
+              0.2,
+              1.0,
+              200
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 2.4765604545108886,
+            "compare": "isclose"
+          },
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              150.0,
+              0.05,
+              0.2,
+              1.0,
+              50
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 50.0,
+            "compare": "isclose"
+          },
+          {
+            "call": "flat_american_put",
+            "args": [
+              100.0,
+              110.0,
+              0.05,
+              0.2,
+              1.0,
+              1
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 11.304236451473336,
+            "compare": "isclose"
+          },
+          {
+            "call": "tri(3, 2)",
+            "expect": 8
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Eight hidden tests: prices for $n$ from 1 to 1,000 and strikes £90 to £150 within a relative 1e-9, and the packed index of node (3, 2)."
+      },
+      "feedback": {
+        "correct": "One reserved block of share prices, half the memory of the square lattice, and the same American price.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-1": "At $n = 4$ the put is 5.8828. Check row $i$ starts at $S d^i$ and climbs by $u^2$, and that `v` reads row `i + 1`.",
+          "test-6": "Deep in the money the put is worth exercising at once: £50. The early-exercise value is `k - price[tri(i, j)]`."
+        }
+      },
+      "explain": {
+        "text": "`reserve` makes one allocation of the exact size, so the `push_back` loop never copies. Row $i$ starts at index $i(i + 1)/2$ because rows $0$ to $i - 1$ hold $1 + 2 + \\dots + i$ nodes. At $n = 1{,}000$ that is 501,501 doubles per vector, against 1,002,001 for the square."
+      }
+    },
+    {
+      "id": "h-bisect",
+      "difficulty": 4,
+      "skills": [
+        "cx-testing"
+      ],
+      "title": "Hunting a regression",
+      "prose": "Last night the regression test `cpp_matches_python` started failing. It passed on the release tagged three weeks ago, and 64 commits have landed since. You will find the commit that broke it by halving the range.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "b1",
+            "text": "Confirm the test fails on today's commit: mark it bad"
+          },
+          {
+            "id": "b2",
+            "text": "Confirm it passes on the tagged release: mark it good"
+          },
+          {
+            "id": "b3",
+            "text": "Check out the commit halfway between good and bad"
+          },
+          {
+            "id": "b4",
+            "text": "Build it and run only the failing test"
+          },
+          {
+            "id": "b5",
+            "text": "Mark that commit good or bad, halving the range; repeat from the halfway step"
+          },
+          {
+            "id": "b6",
+            "text": "When one commit is left, read its diff and write a test that pins the bug"
+          }
+        ],
+        "answer": [
+          "b1",
+          "b2",
+          "b3",
+          "b4",
+          "b5",
+          "b6"
+        ],
+        "same": [
+          [
+            "b1",
+            "b2"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Six halvings find one commit among 64.",
+        "generic": "Not quite right. You need a good and a bad end before you can halve."
+      },
+      "explain": {
+        "text": "`git bisect` automates exactly this: `git bisect bad`, `git bisect good v1.4`, then a build and test at each step. 64 commits take $\\log_2 64 = 6$ builds. The final test pins the bug so it cannot return unnoticed."
+      }
+    },
+    {
+      "id": "h-timing-writeup",
+      "difficulty": 5,
+      "skills": [
+        "cx-perf",
+        "cx-testing"
+      ],
+      "kind": "longform",
+      "title": "The timing write-up for the desk",
+      "prompt": "This is the exit deliverable of the C++ topic. Write a one-page note to the desk head comparing the Python tree pricer (trees course) with your C++ version. Use these medians for one 1,000-step European call on a Linux server (Intel Xeon, 2.1 GHz, Python 3.13, g++ 13.3): Python loop 40 ms; NumPy 4.2 ms; C++ `-O0` 4.5 ms; C++ `-O2` 0.45 ms. The American put took 15.5 ms with `pow` at every node and 1.6 ms with one `pow` per step, both at `-O2`. The desk prices 100,000 options a night.\n\nCover: your method, the numbers, the flags and machine, how you know the two pricers agree, the caveats, and what you recommend.",
+      "model": "**Method.** I timed the European call at $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ on a 1,000-step CRR tree. Both versions run the same algorithm: one row of $n + 1$ values, reused at each step. Each run starts with one warm-up call. I then timed five batches (C++: batches long enough to span many clock ticks) and report the median per tree. Every timed price went into a sum that is printed, so nothing was optimised away. Before timing, the C++ and Python prices were checked to agree to a relative $10^{-9}$ on 100 seeded random inputs.\n\n**Machine and builds.** One Linux server, Intel Xeon at 2.1 GHz, idle apart from the benchmark. Python 3.13, pure Python lists. NumPy version vectorising each step. C++ built with g++ 13.3, `-std=c++17`, at `-O0` and at `-O2` (the desk's release flags).\n\n**Numbers (median per tree, $n = 1{,}000$).**\n\n| Version | ms per tree | vs Python |\n|---|---|---|\n| Python loop | 40 | 1× |\n| NumPy | 4.2 | 10× |\n| C++ `-O0` | 4.5 | 9× |\n| C++ `-O2` | 0.45 | about 90× |\n\nTime grows about 4 times per doubling of $n$ in both languages, as $n^2/2$ node updates predict, so the ratio holds across $n$.\n\n**What it means for the batch.** 100,000 options a night take $100{,}000 \\times 0.040 = 4{,}000$ s, about 67 minutes, in Python, and 45 s in the C++ release build. The American put shows a second lesson: with `pow` at every node it took 15.5 ms at `-O2`; with one `pow` per step 1.6 ms. The algorithm change was worth as much as the language change.\n\n**Caveats.** One machine; another processor or compiler will change the numbers, though not the order of magnitude. The machine was shared, so single runs scattered by up to 50%; the median of five absorbs most of it. The browser runs of the course were slower again (WebAssembly, a 100 µs clock). I did not test `-O3` or `-march=native` in production; `-O3` was faster here, but it is not what we ship. No `-ffast-math`: it changes prices in the last digits and can delete NaN checks.\n\n**Recommendation.** Move the nightly tree pricing to the C++ library built `RelWithDebInfo` (`-O2 -g -DNDEBUG`), keeping the Python pricer as the reference in a regression test (100 seeded inputs, relative $10^{-9}$). Run the test suite on Debug and Release in CI. Re-run this benchmark on the production machine before sizing the batch window, and publish it with the machine, compiler and flags.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Method: same algorithm and inputs, warm-up, repeated batches, median, results kept alive (a printed sink)"
+        },
+        {
+          "points": 1,
+          "text": "States the machine, compiler and flags for every number"
+        },
+        {
+          "points": 2,
+          "text": "Numbers right: about 90 times faster at `-O2`; Python batch about 67 minutes against 45 s"
+        },
+        {
+          "points": 1,
+          "text": "Notes that `-O0` and NumPy are about ten times slower than `-O2`, so a debug build must not be quoted"
+        },
+        {
+          "points": 1,
+          "text": "Shows the two pricers agree, with a tolerance (relative 1e-9) and not `==`"
+        },
+        {
+          "points": 1,
+          "text": "Mentions the algorithm change (one `pow` per step) as a gain no flag gives"
+        },
+        {
+          "points": 1,
+          "text": "Caveats: one machine, noise, illustrative numbers; no `-ffast-math`"
+        },
+        {
+          "points": 1,
+          "text": "A concrete recommendation: the build type to ship, the regression test to keep, and a re-run on the production machine"
+        }
+      ]
+    },
+    {
+      "id": "h-window",
+      "difficulty": 4,
+      "skills": [
+        "cx-perf"
+      ],
+      "title": "How fine a tree fits the window",
+      "prose": "The C++ release build prices one 1,000-step tree in 0.45 ms. The 100,000-option batch must finish in 30 minutes on one core. Time per tree grows as $n^2$.",
+      "question": "What is the largest number of steps $n$ the batch can afford?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6325,
+        "tol": {
+          "rel": 0.03
+        },
+        "unit": "steps",
+        "accept": "About 6,300 steps: $1{,}000\\sqrt{40}$, within 3%.",
+        "wrong": [
+          {
+            "id": "lin",
+            "value": 40000,
+            "tol": {
+              "rel": 0.05
+            }
+          },
+          {
+            "id": "sec",
+            "value": 200,
+            "tol": {
+              "rel": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 6,300 steps per tree.",
+        "generic": "Not quite right. Find the time allowed per option, then use $T \\propto n^2$.",
+        "byKey": {
+          "lin": "You scaled $n$ by 40, as if time grew in proportion to $n$. It grows as $n^2$, so $n$ grows by $\\sqrt{40}$.",
+          "sec": "Check the units: 30 minutes is 1,800 s, so each option may take 18 ms."
+        }
+      },
+      "explain": {
+        "text": "Per option: $1{,}800\\ \\text{s} / 100{,}000 = 18$ ms, which is $18 / 0.45 = 40$ times the 1,000-step time. Since $T \\propto n^2$, $n = 1{,}000\\sqrt{40} \\approx 6{,}325$."
+      }
+    },
+    {
+      "id": "h-transposed",
+      "difficulty": 3,
+      "skills": [
+        "cx-perf"
+      ],
+      "title": "A lattice read the wrong way",
+      "prose": "A colleague's flat lattice stores node $(i, j)$ at `v[i * (n + 1) + j]`, but their backward step reads\n\n```cpp\nfor (int j = 0; j <= i; ++j)\n    v[j * (n + 1) + i] = disc * (q * v[(j + 1) * (n + 1) + i + 1]\n                             + (1 - q) * v[j * (n + 1) + i + 1]);\n```\n\nThe leaves were written with the first index.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "both",
+            "text": "It reads nodes the leaves never filled, so the price is wrong, and each step jumps a whole row in memory",
+            "correct": true
+          },
+          {
+            "id": "slow",
+            "text": "Only speed: the price is right, but the inner loop has a stride of $n + 1$",
+            "why": "Swapping $i$ and $j$ in the index reads different nodes, not the same nodes in a different order. The leaves sit in row $n$, which this code never reads."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: $i$ and $j$ play the same part in a square lattice",
+            "why": "Row $i$ is a step of the tree; column $j$ counts ups. They are not interchangeable."
+          },
+          {
+            "id": "crash",
+            "text": "It always crashes with an index out of range",
+            "why": "Every index stays below $(n + 1)^2$, so no check fires: the code quietly prices from empty nodes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Wrong price and a strided walk: the swapped index costs both.",
+        "generic": "Not quite right. Where did the leaves go, and where does this code read?"
+      },
+      "explain": {
+        "text": "The leaves are at `n * (n + 1) + j`, but this loop reads places such as `j * (n + 1) + n` and writes column `i`. The result is a wrong price, and the inner loop jumps $n + 1$ doubles per step. An `index(i, j, cols)` helper used everywhere prevents both."
+      }
+    },
+    {
+      "id": "h-bad-bench",
+      "difficulty": 4,
+      "skills": [
+        "cx-perf"
+      ],
+      "title": "A benchmark to fix",
+      "prose": "```cpp\n// built with: g++ -O0 bench.cpp\nauto a = std::chrono::system_clock::now();\nbinomial_price(Call(100), 100, 0.05, 0.2, 1, 100, false);\nauto b = std::chrono::system_clock::now();\nstd::cout << (b - a).count() << \" ticks\\n\";\n```",
+      "question": "Which problems does this benchmark have? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "o0",
+            "text": "It times a debug build",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "It times a single, cold run with no warm-up or repeats",
+            "correct": true
+          },
+          {
+            "id": "clock",
+            "text": "It uses `system_clock`, which can jump, instead of `steady_clock`",
+            "correct": true
+          },
+          {
+            "id": "unused",
+            "text": "The price is never used, so an optimised build may delete the call",
+            "correct": true
+          },
+          {
+            "id": "cout",
+            "text": "Printing with `std::cout` after the second reading slows the timed call",
+            "why": "The print happens after `b` is read, outside the timed interval. Printing inside the interval would be a problem."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four problems; the print is outside the interval.",
+        "generic": "Not quite right. Check the build, the clock, the repetition and what happens to the result."
+      },
+      "explain": {
+        "text": "Fix: build with `-O2`, use `steady_clock` and `duration_cast<microseconds>`, warm up, time five batches of many trees, add every price to a printed sink, and report the median per tree. Printing after the second reading is fine; flushing output inside the interval would not be."
+      }
+    },
+    {
+      "id": "h-book-lines",
+      "difficulty": 3,
+      "skills": [
+        "cx-perf"
+      ],
+      "title": "Scanning an order book",
+      "prose": "An order book keeps 10,000 price levels as `std::vector<Level>`, where `struct Level { double price; double qty; int orders; int flags; };` is 24 bytes. A risk check scans only the `qty` of every level.",
+      "question": "How many 64-byte cache lines does the scan read?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3750,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "lines",
+        "accept": "3,750: 10,000 × 24 / 64.",
+        "wrong": [
+          {
+            "id": "soa",
+            "value": 1250,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "each",
+            "value": 10000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3,750 lines; a separate `qty` vector would need 1,250.",
+        "generic": "Not quite right. The distance from one `qty` to the next is a whole `Level`.",
+        "byKey": {
+          "soa": "1,250 is the count for a separate `qty` vector. Here each quantity drags its price, order count and flags along.",
+          "each": "Two or three levels share each line, so it is fewer than one line per level."
+        }
+      },
+      "explain": {
+        "text": "$10{,}000 \\times 24 / 64 = 3{,}750$ lines. Stored as a struct of arrays, the `qty` column alone is $10{,}000 \\times 8 / 64 = 1{,}250$ lines, three times fewer."
+      }
+    }
+  ]
+}

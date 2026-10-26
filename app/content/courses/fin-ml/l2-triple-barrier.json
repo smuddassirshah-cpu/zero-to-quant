@@ -1,0 +1,1394 @@
+{
+  "id": "l2-triple-barrier",
+  "course": "fin-ml",
+  "title": "The triple-barrier method",
+  "minutes": 14,
+  "objectives": [
+    "Label trades by a profit target, a stop loss and a time limit.",
+    "Scale the barriers by volatility and read the label distribution against the width."
+  ],
+  "skills": [
+    "fm-labels"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which exit comes first?",
+      "prose": "A trade buys at £100.00 on day 0. It sells at the first close at or above £103.00 (take profit), at or below £97.00 (stop), or on day 10 (time limit), whichever comes first.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "",
+              "values": [
+                100.0,
+                101.2,
+                102.1,
+                102.6,
+                101.4,
+                99.8,
+                98.1,
+                96.7,
+                98.4,
+                101.2,
+                103.4,
+                104.2,
+                103.9
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260,
+          "y": [
+            94,
+            106
+          ]
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "up",
+              "y": 103.0,
+              "label": "profit £103.00"
+            },
+            {
+              "id": "dn",
+              "y": 97.0,
+              "label": "stop £97.00"
+            }
+          ],
+          "window": {
+            "from": 0,
+            "to": 10,
+            "label": "time limit: 10 days"
+          },
+          "markers": [
+            {
+              "id": "mup",
+              "i": 5,
+              "y": 103.0,
+              "label": "profit"
+            },
+            {
+              "id": "mdn",
+              "i": 5,
+              "y": 97.0,
+              "label": "stop",
+              "below": true
+            },
+            {
+              "id": "mtime",
+              "i": 10,
+              "y": 95,
+              "label": "time"
+            }
+          ]
+        }
+      },
+      "question": "Tap the exit that ends this trade.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "mdn"
+        ],
+        "max": 1,
+        "countWord": "exits"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk along the closes from day 1. Stop at the first one outside the band."
+        },
+        {
+          "rung": "point",
+          "text": "Look at day 7.",
+          "highlight": [
+            "dn"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 7 closes at £96.70, below £97.00. The trade is over before the rise on day 10."
+        }
+      ],
+      "feedback": {
+        "correct": "The stop at £97.00 is hit on day 7.",
+        "generic": "Not quite right. The first close outside the band ends the trade; later closes do not matter.",
+        "byKey": {
+          "mup": "You saw the close of £103.40 on day 10. The trade was already sold at £96.70 on day 7.",
+          "mtime": "The time limit only applies if neither price barrier is hit by day 10. The stop was hit on day 7."
+        }
+      },
+      "explain": {
+        "text": "The closes stay inside £97.00 to £103.00 until day 7, when £96.70 breaks the stop. The trade is sold there for a 3.3% loss. The fixed-horizon label for $h = 10$ would have said $+1$, because day 10 closes at £103.40.",
+        "canvas": {
+          "markers": {
+            "m7": {
+              "id": "m7",
+              "i": 7,
+              "label": "sold £96.70",
+              "below": true
+            }
+          },
+          "shade": [
+            {
+              "id": "live",
+              "from": 0,
+              "to": 7,
+              "label": "trade open",
+              "tone": "neg"
+            }
+          ],
+          "highlight": [
+            "mdn"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Narrow and wide barriers",
+      "prose": "The share's daily volatility is $\\sigma = 1.5\\%$. We put the barriers at $\\pm k\\sigma$ from the entry. Slide $k$ and watch which exit ends the trade.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "",
+              "values": [
+                100.0,
+                101.2,
+                102.1,
+                102.6,
+                101.4,
+                99.8,
+                98.1,
+                96.7,
+                98.4,
+                101.2,
+                103.4,
+                104.2,
+                103.9
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260,
+          "y": [
+            94,
+            106
+          ],
+          "params": {
+            "labs": [
+              "profit barrier on day 1, label +1",
+              "profit barrier on day 2, label +1",
+              "profit barrier on day 3, label +1",
+              "stop on day 7, label −1",
+              "time limit on day 10, label 0",
+              "time limit on day 10, label 0"
+            ]
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "up",
+              "y": 103.0,
+              "label": "profit £103.00"
+            },
+            {
+              "id": "dn",
+              "y": 97.0,
+              "label": "stop £97.00"
+            }
+          ],
+          "window": {
+            "from": 0,
+            "to": 10,
+            "label": "time limit: 10 days"
+          },
+          "markers": [],
+          "params": {
+            "k": 2
+          }
+        },
+        "derive": {
+          "hlines.up.y": "100 * (1 + k * 0.015)",
+          "hlines.dn.y": "100 * (1 - k * 0.015)",
+          "hlines.up.label": "profit £{{fixed(100 * (1 + k * 0.015), 2)}}",
+          "hlines.dn.label": "stop £{{fixed(100 * (1 - k * 0.015), 2)}}",
+          "caption": "$k = {{fixed(k, 1)}}$, barriers ±{{fixed(1.5 * k, 2)}}%: {{labs[round((k - 0.5) / 0.5)]}}"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0.5,
+            "max": 3,
+            "step": 0.5,
+            "start": 2,
+            "label": "$k$",
+            "decimals": 1
+          }
+        ]
+      },
+      "question": "What is the smallest $k$ at which the trade runs to the time limit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Smallest k with a time-limit exit",
+        "accept": "2.5 exactly: barriers at £103.75 and £96.25 are never touched by day 10.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At $k = 2.5$ neither barrier is touched in ten days.",
+        "generic": "Not quite right. Read the caption at each $k$ from small to large.",
+        "byKey": {
+          "two": "At $k = 2$ the stop at £97.00 is hit on day 7. Go one step wider.",
+          "three": "At $k = 3$ it also times out, but so does $k = 2.5$, which is smaller."
+        }
+      },
+      "explain": {
+        "text": "Narrow barriers end the trade within days: $k = 0.5$ takes profit on day 1. Wider ones let the path wander: $k = 2$ is stopped on day 7, and from $k = 2.5$ nothing is hit by day 10. The barrier width decides what the label measures.",
+        "canvas": {
+          "params": {
+            "k": 2.5
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The first touch in code",
+      "prose": "This is López de Prado's **triple-barrier method**, from *Advances in Financial Machine Learning*. Two horizontal barriers and one vertical: the label is the first one touched. This course labels a time-limit exit $0$, and uses closes only.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> path = [100.0, 101.2, 102.1, 102.6, 101.4, 99.8, 98.1, 96.7, ...]",
+            ">>> first_touch(path, 103, 97, 10)",
+            "(-1, 7)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `first_touch` so it returns the label and the number of days the trade was open.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def first_touch(path, upper, lower, h):\n    \"\"\"path[0] is the entry close. Returns (label, days held).\"\"\"\n    last = min(h, len(path) - 1)   # the time limit, or the end of the data\n    for d in range(1, last + 1):\n        ...   # a close at or below lower: (-1, d); at or above upper: (1, d)\n    return ...   # neither barrier by the time limit\n",
+        "solution": "def first_touch(path, upper, lower, h):\n    \"\"\"path[0] is the entry close. Returns (label, days held).\"\"\"\n    last = min(h, len(path) - 1)\n    for d in range(1, last + 1):\n        if path[d] <= lower:\n            return (-1, d)\n        if path[d] >= upper:\n            return (1, d)\n    return (0, last)\n",
+        "examples": [
+          {
+            "call": "first_touch([100.0, 101.2, 102.1, 102.6, 101.4, 99.8, 98.1, 96.7, 98.4, 101.2, 103.4, 104.2, 103.9], 103, 97, 10)",
+            "expect": "(-1, 7)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "first_touch([100.0, 101.2, 102.1, 102.6, 101.4, 99.8, 98.1, 96.7, 98.4, 101.2, 103.4, 104.2, 103.9], 103, 97, 10)",
+            "expect": "(-1, 7)",
+            "compare": "equal"
+          },
+          {
+            "call": "first_touch([100.0, 101.2, 102.1, 102.6, 101.4, 99.8, 98.1, 96.7, 98.4, 101.2, 103.4, 104.2, 103.9], 102.25, 97.75, 10)",
+            "expect": "(1, 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "first_touch([100.0, 101.2, 102.1, 102.6, 101.4, 99.8, 98.1, 96.7, 98.4, 101.2, 103.4, 104.2, 103.9], 103.75, 96.25, 10)",
+            "expect": "(0, 10)",
+            "compare": "equal"
+          },
+          {
+            "call": "first_touch([100.0, 101.2, 102.1, 102.6, 101.4, 99.8, 98.1, 96.7, 98.4, 101.2, 103.4, 104.2, 103.9], 103, 97, 5)",
+            "expect": "(0, 5)",
+            "compare": "equal"
+          },
+          {
+            "call": "first_touch([100, 101, 99], 105, 95, 10)",
+            "expect": "(0, 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "first_touch([100, 101, 102], 102, 98, 5)",
+            "expect": "(1, 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "first_touch([100, 99, 98, 97], 102, 98, 5)",
+            "expect": "(-1, 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "first_touch([100, 104], 103, 97, 1)",
+            "expect": "(1, 1)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on hand-made paths, including touches exactly on a barrier and a path shorter than the time limit. Each result must be the exact tuple (label, days)."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check each close in time order and return at the first touch."
+        },
+        {
+          "rung": "point",
+          "text": "Touching counts: use `<=` and `>=`, as in this example.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inside the loop: `if path[d] <= lower: return (-1, d)`, then the same for `upper`. After the loop: `return (0, last)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The label and its holding time, from one walk along the path.",
+        "generic": "Not quite right. Return at the first close outside the band, and return `(0, last)` if none is."
+      },
+      "explain": {
+        "text": "Returning inside the loop makes the first touch win; later closes are never read. The second number, the days held, is a by-product we need in lesson 4: it is how long each label lasts. A path that ends before the limit stops at its last close."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Three classes, one dial",
+      "prose": "Now every day of a four-year series is an entry: 971 labels, with $\\sigma$ the 20-day volatility at entry and a 10-day limit. Slide $k$ and watch the three classes trade places.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "up",
+              "label": "Profit (+1)"
+            },
+            {
+              "id": "dn",
+              "label": "Stop (−1)"
+            },
+            {
+              "id": "tm",
+              "label": "Time (0)"
+            }
+          ],
+          "yLabel": "Share of labels",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": 0,
+          "yMax": 0.8,
+          "params": {
+            "U": [
+              0.5489,
+              0.5705,
+              0.5469,
+              0.4954,
+              0.4305,
+              0.3512,
+              0.2822,
+              0.2194
+            ],
+            "L": [
+              0.4511,
+              0.4161,
+              0.3728,
+              0.3223,
+              0.2626,
+              0.2173,
+              0.1668,
+              0.1287
+            ],
+            "T": [
+              0.0,
+              0.0134,
+              0.0803,
+              0.1823,
+              0.3069,
+              0.4315,
+              0.551,
+              0.6519
+            ]
+          }
+        },
+        "state": {
+          "params": {
+            "k": 2
+          }
+        },
+        "derive": {
+          "values.up": "U[round((k - 0.5) / 0.5)]",
+          "values.dn": "L[round((k - 0.5) / 0.5)]",
+          "values.tm": "T[round((k - 0.5) / 0.5)]",
+          "caption": "$k = {{fixed(k, 1)}}$, time limit 10 days"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0.5,
+            "max": 4,
+            "step": 0.5,
+            "start": 2,
+            "label": "$k$",
+            "decimals": 1
+          }
+        ]
+      },
+      "question": "What is the smallest $k$ at which more than half the labels are time-outs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Smallest k with over half time-outs",
+        "accept": "3.5: time-outs 0.55, against 0.43 at $k = 3$.",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the Time bar as $k$ grows."
+        },
+        {
+          "rung": "point",
+          "text": "This bar.",
+          "highlight": [
+            "tm"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $k = 3$ it is 0.43; at $k = 3.5$ it is 0.55."
+        }
+      ],
+      "feedback": {
+        "correct": "At $k = 3.5$, 55% of labels time out.",
+        "generic": "Not quite right. Find the first $k$ where the Time bar passes 0.50.",
+        "byKey": {
+          "four": "At 4 the share is 0.65, but it already passed 0.50 at 3.5.",
+          "three": "At 3 the share is 0.43, just under half."
+        }
+      },
+      "explain": {
+        "text": "At $k = 0.5$ almost every label is an early exit, and time-outs are 0.00. At $k = 4$ they are 0.65. Profit beats stop at every $k$ here because this share drifted up.",
+        "canvas": {
+          "params": {
+            "k": 3.5
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Barriers that breathe",
+      "prose": "The barriers are set at entry from that day's volatility: upper $P_0(1 + k\\sigma)$, lower $P_0(1 - k\\sigma)$. Two entries at £80.00 with $k = 2$: one in a calm March with $\\sigma = 0.6\\%$, one in a wild October with $\\sigma = 2.0\\%$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Entry",
+            "$P_0$",
+            "$\\sigma$",
+            "$k$"
+          ],
+          "rows": [
+            [
+              "March",
+              "£80.00",
+              "0.6%",
+              "2"
+            ],
+            [
+              "October",
+              "£80.00",
+              "2.0%",
+              "2"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in the four barrier prices, in pounds.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Entry",
+          "Upper (£)",
+          "Lower (£)"
+        ],
+        "rows": [
+          [
+            "March",
+            {
+              "edit": true,
+              "answer": 80.96,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            {
+              "edit": true,
+              "answer": 79.04,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "October",
+            {
+              "edit": true,
+              "answer": 83.2,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            {
+              "edit": true,
+              "answer": 76.8,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$k\\sigma$ is the barrier distance as a share of the entry."
+        },
+        {
+          "rung": "point",
+          "text": "March: $2 \\times 0.6\\% = 1.2\\%$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "March: £80.00 × 1.012 = £80.96 and × 0.988 = £79.04. October: × 1.04 = £83.20 and × 0.96 = £76.80."
+        }
+      ],
+      "feedback": {
+        "correct": "March ±1.2%, October ±4%: the same $k$, different prices.",
+        "generic": "Not quite right. Multiply £80.00 by $1 \\pm k\\sigma$ for each row."
+      },
+      "explain": {
+        "text": "Both trades need the same move, two days' worth of noise, to touch a barrier. In pounds that is 96p in March and £3.20 in October. So a $+1$ means the same surprise in either month, which a fixed per cent cannot promise."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "One barrier for all seasons",
+      "prose": "A colleague labels the calm-then-wild share from lesson 1 with fixed barriers: ±2% and a 10-day limit, for every entry. The chart splits the labels by half, 220 entries each.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "up",
+              "label": "Profit"
+            },
+            {
+              "id": "dn",
+              "label": "Stop"
+            },
+            {
+              "id": "tm",
+              "label": "Time"
+            }
+          ],
+          "groups": [
+            {
+              "id": "calm",
+              "label": "Calm half"
+            },
+            {
+              "id": "wild",
+              "label": "Wild half"
+            }
+          ],
+          "yLabel": "Share of labels",
+          "yMin": 0,
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "calm": {
+              "up": 0.2,
+              "dn": 0.1409,
+              "tm": 0.6591
+            },
+            "wild": {
+              "up": 0.5273,
+              "dn": 0.4682,
+              "tm": 0.0045
+            }
+          },
+          "caption": "Fixed ±2% barriers"
+        }
+      },
+      "question": "What will a model trained on these labels mostly learn?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "regime",
+            "text": "Which half it is in: calm entries time out, wild ones hit a barrier within days",
+            "correct": true
+          },
+          {
+            "id": "edge",
+            "text": "When the share is about to rise",
+            "why": "You read the labels as about direction. Profit and stop shares move together; what changes between halves is the time-outs, which track volatility."
+          },
+          {
+            "id": "same",
+            "text": "Nothing odd: ±2% is the same target in both halves",
+            "why": "You treated 2% as the same target. It is 3.6 calm days' noise and 1 wild day's, so 66% of calm labels time out against 0.4% of wild ones."
+          },
+          {
+            "id": "more",
+            "text": "The wild half better, because it has more decisive labels",
+            "why": "More barrier hits came from bigger noise, not more predictable prices."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the Time bars of the two halves."
+        },
+        {
+          "rung": "point",
+          "text": "These two bars.",
+          "highlight": [
+            "tm-calm",
+            "tm-wild"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Calm: 0.66 time-outs. Wild: 0.004. A feature measuring volatility would predict the class."
+        }
+      ],
+      "feedback": {
+        "correct": "The label class mostly encodes the volatility regime.",
+        "generic": "Not quite right. Look at what differs between the halves.",
+        "byKey": {
+          "same": "You treated 2% as the same target in both halves. Against each half's noise it is not: 66% of calm labels time out and 0.4% of wild ones."
+        }
+      },
+      "explain": {
+        "text": "With fixed ±2%, calm trades take 8.6 days on average and wild ones 2.9. With barriers at $\\pm 2\\sigma$ instead, both halves look alike: time-outs 0.23 and 0.20, about 5.6 days each. Scaled barriers leave the model to find edge, not the weather.",
+        "canvas": {
+          "values": {
+            "calm": {
+              "up": 0.4136,
+              "dn": 0.3591,
+              "tm": 0.2273
+            },
+            "wild": {
+              "up": 0.45,
+              "dn": 0.3545,
+              "tm": 0.1955
+            }
+          },
+          "caption": "Barriers at $\\pm 2\\sigma$"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Inside the day",
+      "prose": "Entry £100.00, barriers £103.00 and £97.00. On day 3 the price spikes to £103.60, slumps to £96.50, and closes at £99.80. This course reads closes only.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Price",
+              "values": [
+                100.0,
+                100.9,
+                101.1,
+                99.8,
+                100.3,
+                101.7
+              ],
+              "ohlc": [
+                [
+                  100,
+                  100.4,
+                  99.6,
+                  100.0
+                ],
+                [
+                  100.0,
+                  101.2,
+                  99.4,
+                  100.9
+                ],
+                [
+                  100.9,
+                  101.6,
+                  99.9,
+                  101.1
+                ],
+                [
+                  101.1,
+                  103.6,
+                  96.5,
+                  99.8
+                ],
+                [
+                  99.8,
+                  100.7,
+                  98.9,
+                  100.3
+                ],
+                [
+                  100.3,
+                  102.0,
+                  100.0,
+                  101.7
+                ]
+              ]
+            }
+          ],
+          "candles": true,
+          "x": "index",
+          "xLabel": "Day",
+          "money": "£",
+          "height": 250,
+          "y": [
+            95,
+            105
+          ],
+          "hlines": [
+            {
+              "id": "up",
+              "y": 103,
+              "label": "profit £103.00"
+            },
+            {
+              "id": "dn",
+              "y": 97,
+              "label": "stop £97.00"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the close-only rule do on day 3?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Nothing: £99.80 is inside both barriers, so the trade stays open",
+            "correct": true
+          },
+          {
+            "id": "profit",
+            "text": "Takes profit, because the high reached £103.60",
+            "why": "You used the high. The rule reads closes, and £99.80 touches neither barrier."
+          },
+          {
+            "id": "stop",
+            "text": "Stops out, because the low reached £96.50",
+            "why": "You used the low. Under the close-only rule day 3 touches nothing."
+          },
+          {
+            "id": "both",
+            "text": "Labels it $0$, because both barriers were crossed",
+            "why": "Crossing both is not a time-out. With closes only, nothing was crossed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of the four prices on day 3 does the rule look at?"
+        },
+        {
+          "rung": "point",
+          "text": "The close is the end of the candle body.",
+          "highlight": [
+            "px-3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£97.00 < £99.80 < £103.00, so no barrier is touched."
+        }
+      ],
+      "feedback": {
+        "correct": "With closes only, day 3 is just another day inside the band.",
+        "generic": "Not quite right. Use day 3's close, £99.80, and nothing else."
+      },
+      "explain": {
+        "text": "The close-only rule misses intraday touches: a real stop order would have filled near £97.00 during day 3. With highs and lows, this day touches both barriers and we cannot tell which came first. Our convention then counts the stop, $-1$: the cautious reading.",
+        "canvas": {
+          "highlight": [
+            "px-3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Every day an entry",
+      "prose": "`rolling_vol(prices, 20)[t]` is the sd of the 20 daily returns up to day $t$, or `nan` for the first 20 days. Each entry day with a volatility and $h$ days of future gets one label.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> p = make_prices(1000, seed=21)",
+            ">>> v = rolling_vol(p, 20)",
+            ">>> v[19], round(v[20], 5)",
+            "(nan, 0.01492)",
+            ">>> len(triple_barrier_labels(p, v, 2, 10))",
+            "971"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `triple_barrier_labels` so it labels every usable entry day.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n\ndef rolling_vol(prices, window=20):\n    \"\"\"vol[t]: sample sd of the last `window` simple returns ending on day t (nan before).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    r = p[1:] / p[:-1] - 1\n    vol = [float('nan')] * len(p)\n    for t in range(window, len(p)):\n        vol[t] = float(np.std(r[t - window:t], ddof=1))\n    return vol\n\ndef first_touch(path, upper, lower, h):\n    last = min(h, len(path) - 1)\n    for d in range(1, last + 1):\n        if path[d] <= lower:\n            return (-1, d)\n        if path[d] >= upper:\n            return (1, d)\n    return (0, last)\n",
+        "starter": "import math\n\ndef triple_barrier_labels(prices, vol, k, h):\n    labels = []\n    for t in range(len(prices) - h):\n        if math.isnan(vol[t]):\n            continue   # no volatility yet: no barriers, no label\n        upper = ...\n        lower = ...\n        label, days = first_touch(prices[t:t + h + 1], upper, lower, h)\n        labels.append(label)\n    return labels\n",
+        "solution": "import math\n\ndef triple_barrier_labels(prices, vol, k, h):\n    labels = []\n    for t in range(len(prices) - h):\n        if math.isnan(vol[t]):\n            continue   # no volatility yet: no barriers, no label\n        upper = prices[t] * (1 + k * vol[t])\n        lower = prices[t] * (1 - k * vol[t])\n        label, days = first_touch(prices[t:t + h + 1], upper, lower, h)\n        labels.append(label)\n    return labels\n",
+        "examples": [
+          {
+            "call": "triple_barrier_labels([100, 101, 103, 99, 96, 97, 102], [0.01] * 7, 2, 3)",
+            "expect": "[1, -1, -1, -1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "triple_barrier_labels([100, 101, 103, 99, 96, 97, 102], [0.01] * 7, 2, 3)",
+            "expect": "[1, -1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "triple_barrier_labels([100, 101, 103, 99, 96, 97, 102], [float(\"nan\"), 0.02, 0.02, 0.01, 0.01, 0.01, 0.01], 1.5, 2)",
+            "expect": "[0, -1, -1, 1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "len(triple_barrier_labels(p, v, 2, 10))",
+            "expect": "971",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "triple_barrier_labels(p, v, 2, 10)[:15]",
+            "expect": "[1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "[triple_barrier_labels(p, v, 2, 10).count(c) for c in (1, -1, 0)]",
+            "expect": "[481, 313, 177]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "[triple_barrier_labels(p, v, 3, 5).count(c) for c in (1, -1, 0)]",
+            "expect": "[160, 100, 716]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "triple_barrier_labels(p, v, 2, 10) == triple_barrier_labels(p, v, 2, 10)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: two short lists and the seeded series `make_prices(1000, seed=21)` with `rolling_vol(p, 20)`. `first_touch`, `make_prices` and `rolling_vol` are already defined. Lists must match exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The barriers are set once, at entry, from that day's price and volatility."
+        },
+        {
+          "rung": "point",
+          "text": "Entry 20 is the first with a volatility.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`upper = prices[t] * (1 + k * vol[t])` and `lower = prices[t] * (1 - k * vol[t])`."
+        }
+      ],
+      "feedback": {
+        "correct": "971 labels from 1,001 closes: 20 lost to the volatility window, 10 to the time limit.",
+        "generic": "Not quite right. Set both barriers from `prices[t]` and `vol[t]`."
+      },
+      "explain": {
+        "text": "The slice `prices[t:t + h + 1]` starts at the entry, so `path[0]` is the entry close. Only the past enters the barriers: `vol[t]` uses returns up to $t$. The last test calls the function twice: a labeller must give the same answer every time."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A time limit that is too short",
+      "prose": "A colleague wants quick trades: barriers at $\\pm 3\\sigma$ and a 2-day limit. Before training anything, report the share of each class.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> y = triple_barrier_labels(p, v, 3, 2)",
+            ">>> barrier_hit_shares(y)   # profit, stop, time",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `barrier_hit_shares` so it returns the shares of $+1$, $-1$ and $0$, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef make_regime_prices(n=500, seed=11, calm=0.006, wild=0.02):\n    \"\"\"n + 1 closes: calm for the first half, wild for the second.\"\"\"\n    rng = np.random.default_rng(seed)\n    sig = np.where(np.arange(n) < n // 2, calm, wild)\n    r = 0.0002 + sig * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef log_returns(prices):\n    \"\"\"Daily log returns: entry t is ln(P[t+1] / P[t]).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    return np.round(np.diff(np.log(p)), 8).tolist()\n\ndef rolling_vol(prices, window=20):\n    \"\"\"vol[t]: sample sd of the last `window` simple returns ending on day t (nan before).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    r = p[1:] / p[:-1] - 1\n    vol = [float('nan')] * len(p)\n    for t in range(window, len(p)):\n        vol[t] = float(np.std(r[t - window:t], ddof=1))\n    return vol\n\ndef first_touch(path, upper, lower, h):\n    last = min(h, len(path) - 1)\n    for d in range(1, last + 1):\n        if path[d] <= lower:\n            return (-1, d)\n        if path[d] >= upper:\n            return (1, d)\n    return (0, last)\n\nimport math\n\ndef triple_barrier_labels(prices, vol, k, h):\n    out = []\n    for t in range(len(prices) - h):\n        if math.isnan(vol[t]):\n            continue\n        out.append(first_touch(prices[t:t + h + 1], prices[t] * (1 + k * vol[t]), prices[t] * (1 - k * vol[t]), h)[0])\n    return out\n",
+        "starter": "def barrier_hit_shares(labels):\n    n = len(labels)\n    return [...]   # shares of +1, -1 and 0, in that order, rounded to 4 places\n",
+        "solution": "def barrier_hit_shares(labels):\n    n = len(labels)\n    return [round(labels.count(c) / n, 4) for c in (1, -1, 0)]\n",
+        "examples": [
+          {
+            "call": "barrier_hit_shares([1, -1, 0, 1])",
+            "expect": "[0.5, 0.25, 0.25]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "barrier_hit_shares([1, -1, 0, 1])",
+            "expect": "[0.5, 0.25, 0.25]",
+            "compare": "equal"
+          },
+          {
+            "call": "barrier_hit_shares([0, 0, 0])",
+            "expect": "[0.0, 0.0, 1.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "barrier_hit_shares([1, 1, -1, 0, 0, 0, 1])",
+            "expect": "[0.4286, 0.1429, 0.4286]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "barrier_hit_shares(triple_barrier_labels(p, v, 2, 10))",
+            "expect": "[0.4954, 0.3223, 0.1823]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "barrier_hit_shares(triple_barrier_labels(p, v, 3, 2))",
+            "expect": "[0.0347, 0.0204, 0.9448]",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = make_prices(1000, seed=21); v = rolling_vol(p, 20)",
+            "call": "barrier_hit_shares(triple_barrier_labels(p, v, 1, 20))",
+            "expect": "[0.5786, 0.4204, 0.001]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: three short lists and labels from the seeded series, made by `triple_barrier_labels`, which is already defined. Lists must match exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A list's `count(c)` counts the labels equal to `c`."
+        },
+        {
+          "rung": "point",
+          "text": "The order is profit, stop, time.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`[round(labels.count(c) / n, 4) for c in (1, -1, 0)]`."
+        }
+      ],
+      "feedback": {
+        "correct": "With $k = 3$ and $h = 2$: [0.0347, 0.0204, 0.9448]. Almost everything times out.",
+        "generic": "Not quite right. Return three shares in the order $+1$, $-1$, $0$."
+      },
+      "explain": {
+        "text": "With $k = 3$ and a 2-day limit, 94% of labels are $0$. Moving three days' noise in two days is rare, so the label says \"nothing happened\" almost always. Set $h$ longer than the typical first touch, or the model learns one class."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The triple-barrier label",
+      "prose": "From entry $t$, with $\\sigma_t$ known at $t$, the first touch is $$\\tau = \\min\\{d \\le h : P_{t+d} \\ge P_t(1 + k\\sigma_t) \\text{ or } P_{t+d} \\le P_t(1 - k\\sigma_t)\\}.$$ The label is $+1$ or $-1$ for the barrier touched, and $0$ with $\\tau = h$ if none is.",
+      "question": "A long-only fund sets the profit barrier at $2\\sigma$ and the stop at $1\\sigma$. Entry £50.00, $\\sigma = 1.5\\%$. Where is the stop?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "£49.25",
+            "correct": true
+          },
+          {
+            "id": "sym",
+            "text": "£48.50",
+            "why": "You used $2\\sigma$ for the stop too. The barriers may differ: the stop is $1\\sigma$ below, £50.00 × 0.985."
+          },
+          {
+            "id": "up",
+            "text": "£51.50",
+            "why": "That is the profit barrier, $2\\sigma$ above. The stop sits below the entry."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $k = 1$ into the lower barrier."
+        }
+      ],
+      "feedback": {
+        "correct": "£50.00 × (1 − 0.015) = £49.25.",
+        "generic": "Not quite right. The stop is $P_t(1 - 1 \\times \\sigma)$."
+      },
+      "explain": {
+        "text": "Nothing forces the two barriers to match. A long-only view can take profit at $2\\sigma$ and cut losses at $1\\sigma$: £51.50 and £49.25 here. The label then answers that fund's own question."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Labels a desk would recognise",
+      "prose": "A desk manages every trade the same way: take profit at $+2\\sigma$, stop at $-2\\sigma$, close after 10 days. Here are four of its trades, labelled two ways.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "What happened",
+            "Day-10 return",
+            "Fixed 10-day",
+            "Triple barrier"
+          ],
+          "rows": [
+            [
+              "A",
+              "stop on day 3",
+              "+1.9%",
+              "+1",
+              "−1"
+            ],
+            [
+              "B",
+              "profit on day 6",
+              "−0.4%",
+              "−1",
+              "+1"
+            ],
+            [
+              "C",
+              "no touch",
+              "+0.6%",
+              "+1",
+              "0"
+            ],
+            [
+              "D",
+              "profit on day 2",
+              "+3.1%",
+              "+1",
+              "+1"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "A model trained on the triple-barrier labels learns to predict what?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "enter",
+            "text": "Which entries pay off under the desk's own exit rules",
+            "correct": true
+          },
+          {
+            "id": "direction",
+            "text": "Which way the price will be in 10 days",
+            "why": "That is the fixed-horizon column. Trades A and B show the two disagree whenever the path crosses a barrier first."
+          },
+          {
+            "id": "vol",
+            "text": "How volatile the next 10 days will be",
+            "why": "The barriers scale with $\\sigma$, so volatility alone does not decide the label."
+          },
+          {
+            "id": "same",
+            "text": "The same as the fixed label, with an extra class",
+            "why": "Two of four trades flip sign between the columns. The labels answer different questions."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two label columns row by row."
+        },
+        {
+          "rung": "point",
+          "text": "Trades A and B disagree.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Trade A ended at a loss but finished the 10 days up. The desk lived through the stop, not the day-10 close."
+        }
+      ],
+      "feedback": {
+        "correct": "The label scores the trade as the desk would have run it.",
+        "generic": "Not quite right. Ask what each label column records: the price on day 10, or the trade's outcome."
+      },
+      "explain": {
+        "text": "Trade A lost money though the price was higher on day 10; trade B made money though it was lower. The triple-barrier label records the managed outcome. So the model learns \"is this trade worth entering\", the question the desk actually asks.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The triple-barrier label is the first of three barriers touched: profit ($+1$), stop ($-1$) or the time limit ($0$).",
+      "Barriers at $\\pm k\\sigma_t$, set at entry, keep the label's meaning steady across calm and wild markets.",
+      "Narrow barriers give early exits, wide ones time-outs; the days to the first touch are each label's window."
+    ],
+    "formula": {
+      "name": "First touch",
+      "tex": "\\tau = \\min\\{d \\le h : |P_{t+d}/P_t - 1| \\ge k\\sigma_t\\}",
+      "note": "This course reads closes only; a same-day double touch on highs and lows counts as the stop."
+    },
+    "trap": "Barriers fixed in per cent make the label class follow volatility rather than edge."
+  },
+  "quiz": [
+    {
+      "id": "q-wide",
+      "difficulty": 2,
+      "prose": "A researcher sets $k = 10$ with a 10-day limit on a share with $\\sigma = 1\\%$.",
+      "question": "What will nearly every label be?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "$0$: a 10% move in 10 days almost never happens, so the time limit ends nearly every trade",
+            "correct": true
+          },
+          {
+            "id": "mix",
+            "text": "An even mix of $+1$ and $-1$",
+            "why": "An even mix needs barriers that get touched. At ±10% they rarely are."
+          },
+          {
+            "id": "plus",
+            "text": "Mostly $+1$, if the share drifts up",
+            "why": "Drift of a few basis points a day cannot reach +10% in 10 days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Wide barriers leave only the vertical barrier.",
+        "generic": "Not quite right. Ask how often a 10% move happens within 10 days."
+      },
+      "explain": {
+        "text": "The barriers sit ten days' noise away, and the trade has ten days. Over 10 days the spread is about $\\sqrt{10} \\times 1\\% \\approx 3.2\\%$, so ±10% is three spreads out. The label collapses into one class."
+      }
+    },
+    {
+      "id": "q-double",
+      "difficulty": 3,
+      "prose": "A desk labels with daily highs and lows instead of closes. On day 4 the high is above the profit barrier and the low is below the stop.",
+      "question": "Which label does this course's convention give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stop",
+            "text": "$-1$: we cannot tell which came first, so we take the cautious reading",
+            "correct": true
+          },
+          {
+            "id": "profit",
+            "text": "$+1$: the high is checked first",
+            "why": "Checking the high first is a choice that flatters the labels. The convention takes the worse case."
+          },
+          {
+            "id": "zero",
+            "text": "$0$: the two cancel out",
+            "why": "Touching both is not a time-out. One of them filled first; we assume the stop."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A same-day double touch counts as the stop.",
+        "generic": "Not quite right. Which assumption cannot overstate the strategy?"
+      },
+      "explain": {
+        "text": "Without intraday timestamps the order of the high and low is unknown. Counting the stop never makes the labels look better than reality. With closes only, as in this course, the case cannot arise."
+      }
+    },
+    {
+      "id": "q-touch-time",
+      "difficulty": 2,
+      "prose": "`first_touch` returns `(1, 4)` for a trade entered on day 50.",
+      "question": "Which days does this label's outcome depend on?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Days 51 to 54",
+            "correct": true
+          },
+          {
+            "id": "h",
+            "text": "Days 51 to 60, the whole 10-day limit",
+            "why": "The trade closed on day 54. Days 55 to 60 never reach the label."
+          },
+          {
+            "id": "fifty",
+            "text": "Day 50 only",
+            "why": "Day 50 sets the barriers. The outcome comes from the closes after it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The label lives on days 51 to 54.",
+        "generic": "Not quite right. The second number is how many closes after entry were read."
+      },
+      "explain": {
+        "text": "The trade was open for 4 closes after entry: days 51 to 54. That span, not the full limit, is the label's window. Lesson 4 uses these spans to see which labels overlap."
+      }
+    },
+    {
+      "id": "q-fixed-pct",
+      "difficulty": 3,
+      "prose": "Barriers fixed at ±1.5% are used on a share whose 20-day volatility ranges from 0.5% to 3% over the sample.",
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "In calm spells most labels time out; in wild ones most hit a barrier within a day or two",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "The labels are consistent, because the barriers never change",
+            "why": "The barriers are fixed in pounds per pound, not in noise. 1.5% is three calm days' noise and half a wild day's."
+          },
+          {
+            "id": "dir",
+            "text": "The labels lean towards $+1$ in calm spells",
+            "why": "Fixed barriers change how often any barrier is touched, not which one."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Fixed per cent barriers make the class track volatility.",
+        "generic": "Not quite right. Measure 1.5% in units of each spell's daily noise."
+      },
+      "explain": {
+        "text": "At $\\sigma = 0.5\\%$ the barriers are $3\\sigma$ away; at $\\sigma = 3\\%$ they are half a day's move away. The class mix then follows volatility. Setting barriers at $\\pm k\\sigma_t$ keeps their meaning fixed."
+      }
+    }
+  ]
+}

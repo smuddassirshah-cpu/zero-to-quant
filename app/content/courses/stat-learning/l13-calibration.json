@@ -1,0 +1,1457 @@
+{
+  "id": "l13-calibration",
+  "course": "stat-learning",
+  "title": "Probabilities you can trust",
+  "minutes": 15,
+  "objectives": [
+    "Check whether predicted probabilities are calibrated",
+    "Read a reliability diagram and compute the Brier score",
+    "Calibrate a model on held-out data"
+  ],
+  "skills": [
+    "sl-classify",
+    "sl-setup"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A $k$-nearest-neighbours model with $k = 3$ was fitted on 1,000 loans and scores 1,000 newer ones. On 48 loans all three neighbours had defaulted, so it said “default, probability 1”. Of those 48 loans, 33 defaulted.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "said",
+              "label": "model said",
+              "colour": 1
+            },
+            {
+              "id": "hap",
+              "label": "share that defaulted",
+              "colour": 2
+            }
+          ],
+          "yLabel": "probability",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 1,
+          "height": 200
+        },
+        "state": {
+          "values": {
+            "said": 1,
+            "hap": 0
+          },
+          "caption": "The 48 loans scored 1"
+        }
+      },
+      "question": "What fraction of the loans it was “certain” about actually defaulted?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6875,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "Observed fraction",
+        "placeholder": "decimal",
+        "accept": "0.6875: 33 of 48.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "rest",
+            "value": 0.3125,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the loans that defaulted by the loans it scored 1."
+        },
+        {
+          "rung": "point",
+          "text": "33 defaulted out of 48.",
+          "highlight": [
+            "hap"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$33/48 = 0.6875$."
+        }
+      ],
+      "feedback": {
+        "correct": "33 of 48: 0.6875, not 1.",
+        "generic": "Not quite right. Divide 33 by 48.",
+        "byKey": {
+          "one": "That is what the model said. Count what happened: 33 of 48.",
+          "rest": "0.3125 is the share that repaid. The question asks for the share that defaulted."
+        }
+      },
+      "explain": {
+        "text": "A model that says 1 should be right every time; this one was right 69% of the time. A forecast is **calibrated** when its $p$ comes true a fraction $p$ of the times it is said.",
+        "canvas": {
+          "values": {
+            "said": 1,
+            "hap": 0.6875
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Cut each model's 1,000 predictions into five bins: 0 to 0.2, 0.2 to 0.4, and so on. Each dot plots a bin's mean prediction across and the share of its loans that defaulted up. Slide between the two models.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xLabel": "mean predicted probability in the bin",
+          "yLabel": "share that defaulted",
+          "height": 280,
+          "functions": [
+            {
+              "id": "diag",
+              "expr": "x",
+              "dashed": true,
+              "label": "calibrated",
+              "labelAt": 0.82,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "m": 0
+          },
+          "PX": [
+            [
+              0.0695,
+              0.2971,
+              0.497,
+              0.6968,
+              0.8365
+            ],
+            [
+              0.0,
+              0.3333,
+              0.6667,
+              1.0,
+              -1
+            ]
+          ],
+          "PY": [
+            [
+              0.0866,
+              0.2772,
+              0.5304,
+              0.622,
+              0.8333
+            ],
+            [
+              0.1252,
+              0.26,
+              0.4768,
+              0.6875,
+              -1
+            ]
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b0",
+              "x": 0.0695,
+              "y": 0.0866,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b1",
+              "x": 0.2971,
+              "y": 0.2772,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b2",
+              "x": 0.497,
+              "y": 0.5304,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b3",
+              "x": 0.6968,
+              "y": 0.622,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b4",
+              "x": 0.8365,
+              "y": 0.8333,
+              "colour": 2,
+              "tap": false
+            }
+          ],
+          "params": {
+            "m": 0
+          }
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": 0,
+            "max": 1,
+            "step": 1,
+            "label": "model",
+            "start": 0
+          }
+        ],
+        "derive": {
+          "b0.x": "params.PX[m][0]",
+          "b1.x": "params.PX[m][1]",
+          "b2.x": "params.PX[m][2]",
+          "b3.x": "params.PX[m][3]",
+          "b4.x": "params.PX[m][4]",
+          "b0.y": "params.PY[m][0]",
+          "b1.y": "params.PY[m][1]",
+          "b2.y": "params.PY[m][2]",
+          "b3.y": "params.PY[m][3]",
+          "b4.y": "params.PY[m][4]",
+          "caption": "Model {{m}}: {{m == 0 ? 'logistic regression' : 'k-NN with k = 3'}}. Each dot is one bin of predictions."
+        }
+      },
+      "question": "Which model is overconfident: when it predicts a high probability, loans default less often than it says?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "knn",
+            "text": "$k$-NN with $k = 3$: its dots fall below the diagonal on the right",
+            "correct": true
+          },
+          {
+            "id": "lr",
+            "text": "Logistic regression",
+            "why": "Its dots sit close to the diagonal: when it says 0.84, 83% default."
+          },
+          {
+            "id": "both",
+            "text": "Both, equally",
+            "why": "Compare the top bins: logistic says 0.84 and sees 0.83; $k$-NN says 1 and sees 0.69."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: both rank the loans well",
+            "why": "Ranking is a different question. A model can rank well and still say 1 when the truth is 0.69."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the slider to 1 and look at the right-hand dots."
+        },
+        {
+          "rung": "point",
+          "text": "On the diagonal, prediction equals outcome. Below it, outcomes fall short.",
+          "highlight": [
+            "b4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$k$-NN's top bin says 1.0 and sees 0.69; its bottom bin says 0 and sees 0.13. Both are too extreme."
+        }
+      ],
+      "feedback": {
+        "correct": "$k$-NN is overconfident at both ends.",
+        "generic": "Not quite right. Find the model whose dots stray from the diagonal, and which way."
+      },
+      "explain": {
+        "text": "$k$-NN's dots lie below the diagonal on the right and above it on the left: too extreme both ways. That is **overconfidence**. A model whose dots bend the other way, towards 0.5, is **underconfident**.",
+        "canvas": {
+          "params": {
+            "m": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The chart is a **reliability diagram**. Build the logistic model's by hand. The table counts the test loans in each bin and how many defaulted.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xLabel": "mean predicted probability in the bin",
+          "yLabel": "share that defaulted",
+          "height": 280,
+          "functions": [
+            {
+              "id": "diag",
+              "expr": "x",
+              "dashed": true,
+              "label": "calibrated",
+              "labelAt": 0.82,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "m": 0
+          },
+          "PX": [
+            [
+              0.0695,
+              0.2971,
+              0.497,
+              0.6968,
+              0.8365
+            ],
+            [
+              0.0,
+              0.3333,
+              0.6667,
+              1.0,
+              -1
+            ]
+          ],
+          "PY": [
+            [
+              0.0866,
+              0.2772,
+              0.5304,
+              0.622,
+              0.8333
+            ],
+            [
+              0.1252,
+              0.26,
+              0.4768,
+              0.6875,
+              -1
+            ]
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b0",
+              "x": 0.0695,
+              "y": 0.0866,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b1",
+              "x": 0.2971,
+              "y": 0.2772,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b2",
+              "x": 0.497,
+              "y": 0.5304,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b3",
+              "x": 0.6968,
+              "y": 0.622,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "b4",
+              "x": 0.8365,
+              "y": 0.8333,
+              "colour": 2,
+              "tap": false
+            }
+          ],
+          "caption": "Logistic regression, five bins"
+        },
+        "controls": [],
+        "derive": {},
+        "maxHeight": 200
+      },
+      "question": "Fill in the observed frequency for three of the bins, to 3 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "bin",
+          "loans",
+          "mean prediction",
+          "defaulted",
+          "observed frequency"
+        ],
+        "rows": [
+          [
+            "0 to 0.2",
+            "589",
+            "0.070",
+            "51",
+            {
+              "edit": true,
+              "answer": 0.087,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "0.2 to 0.4",
+            "184",
+            "0.297",
+            "51",
+            "0.277"
+          ],
+          [
+            "0.4 to 0.6",
+            "115",
+            "0.497",
+            "61",
+            {
+              "edit": true,
+              "answer": 0.53,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "0.6 to 0.8",
+            "82",
+            "0.697",
+            "51",
+            "0.622"
+          ],
+          [
+            "0.8 to 1",
+            "30",
+            "0.837",
+            "25",
+            {
+              "edit": true,
+              "answer": 0.833,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Observed frequency is defaulted over loans in that bin."
+        },
+        {
+          "rung": "point",
+          "text": "The first bin: 51 of 589.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$51/589 = 0.087$, $61/115 = 0.530$, $25/30 = 0.833$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.087, 0.530 and 0.833: each close to its mean prediction.",
+        "generic": "Not quite right. Divide the defaults in each bin by its loans.",
+        "byKey": {
+          "r0c4": "$51/589 = 0.087$.",
+          "r2c4": "$61/115 = 0.530$.",
+          "r4c4": "$25/30 = 0.833$."
+        }
+      },
+      "explain": {
+        "text": "Each bin's observed share sits within 0.08 of its mean prediction, so the dots hug the diagonal. The top bin rests on 30 loans, so its 0.833 has a standard error near 0.07."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "One number for the whole diagram is the **Brier score**: the mean squared error of the probabilities, $\\frac{1}{n}\\sum (p_i - y_i)^2$. It is level 1's MSE with outcomes 0 and 1. Four loans:",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "loan",
+            "$p$",
+            "defaulted $y$",
+            "$(p - y)^2$"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.9",
+              "1",
+              "0.01"
+            ],
+            [
+              "2",
+              "0.2",
+              "0",
+              "?"
+            ],
+            [
+              "3",
+              "0.6",
+              "0",
+              "?"
+            ],
+            [
+              "4",
+              "0.1",
+              "0",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is their Brier score?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.105,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "Brier score",
+        "placeholder": "decimal",
+        "accept": "0.105: $(0.01 + 0.04 + 0.36 + 0.01)/4$.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 0.42,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "abs",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Square each gap between $p$ and $y$."
+        },
+        {
+          "rung": "point",
+          "text": "The gaps are 0.1, 0.2, 0.6 and 0.1.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(0.01 + 0.04 + 0.36 + 0.01)/4 = 0.105$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.42/4 = 0.105$.",
+        "generic": "Not quite right. Average the squared gaps $(p_i - y_i)^2$.",
+        "byKey": {
+          "sum": "0.42 is the sum. Divide by the 4 loans.",
+          "abs": "0.3 averages the gaps without squaring them."
+        }
+      },
+      "explain": {
+        "text": "The one wrong-way call, 0.6 on a loan that repaid, supplies 0.36 of the 0.42. Lower is better: our logistic model scores 0.134 on the test loans, $k$-NN 0.177. Brier splits into a calibration part, minus a resolution part, plus the base rate's own uncertainty.",
+        "canvas": {
+          "values": {
+            "r1c3": "0.04",
+            "r2c3": "0.36",
+            "r3c3": "0.01"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Here are $k$-NN's four bins as bars: what it said beside what happened. With $k = 3$ it can only say 0, 1/3, 2/3 or 1.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "c0",
+              "label": "said 0"
+            },
+            {
+              "id": "c1",
+              "label": "said 1/3"
+            },
+            {
+              "id": "c2",
+              "label": "said 2/3"
+            },
+            {
+              "id": "c3",
+              "label": "said 1"
+            }
+          ],
+          "groups": [
+            {
+              "id": "said",
+              "label": "prediction",
+              "colour": 1
+            },
+            {
+              "id": "hap",
+              "label": "share that defaulted",
+              "colour": 2
+            }
+          ],
+          "yLabel": "probability",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 2,
+          "height": 230
+        },
+        "state": {
+          "values": {
+            "said": {
+              "c0": 0,
+              "c1": 0.333,
+              "c2": 0.667,
+              "c3": 1
+            },
+            "hap": {
+              "c0": 0.1252,
+              "c1": 0.26,
+              "c2": 0.4768,
+              "c3": 0.6875
+            }
+          }
+        }
+      },
+      "question": "Why are $k$-NN's probabilities so extreme with $k = 3$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "vote",
+            "text": "Each prediction is a vote of three noisy neighbours, so one unlucky neighbour moves it by a third",
+            "correct": true
+          },
+          {
+            "id": "bias",
+            "text": "$k$-NN is biased towards predicting default",
+            "why": "It errs both ways: too high on the right, too low on the left. That is spread, not a lean one way."
+          },
+          {
+            "id": "scale",
+            "text": "The features were not scaled",
+            "why": "Scaling changes which loans are neighbours, but three votes can still only give four values."
+          },
+          {
+            "id": "data",
+            "text": "1,000 training loans are too few for any model",
+            "why": "Logistic regression on the same loans is well calibrated."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "List the values three votes can give."
+        },
+        {
+          "rung": "point",
+          "text": "Three neighbours give 0, 1/3, 2/3 or 1, nothing in between.",
+          "highlight": [
+            "c3-said",
+            "c3-hap"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A prediction from three noisy votes is high-variance, as small $k$ was in level 1: it overshoots both ways."
+        }
+      ],
+      "feedback": {
+        "correct": "Small $k$ means high variance, and high variance shows up as overconfidence.",
+        "generic": "Not quite right. Ask what three votes can and cannot say."
+      },
+      "explain": {
+        "text": "Three votes give coarse, noisy probabilities, so the extremes are often wrong. Larger $k$ smooths them; $k = 5$ already lowers the Brier score from 0.177 to 0.160. Calibration can also be repaired afterwards, as we see next."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "Model B reports each logistic probability cubed, $p^3$. Cubing never changes the order, so B ranks the loans exactly as logistic regression does: the same AUC, 0.818. A colleague concludes B's probabilities are just as good for pricing loans.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xLabel": "mean predicted probability (model B)",
+          "yLabel": "share that defaulted",
+          "height": 280,
+          "functions": [
+            {
+              "id": "diag",
+              "expr": "x",
+              "dashed": true,
+              "label": "calibrated",
+              "labelAt": 0.82,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "c0",
+              "x": 0.0213,
+              "y": 0.1775,
+              "colour": 3,
+              "tap": false
+            },
+            {
+              "id": "c1",
+              "x": 0.2976,
+              "y": 0.6056,
+              "colour": 3,
+              "tap": false
+            },
+            {
+              "id": "c2",
+              "x": 0.4949,
+              "y": 0.8158,
+              "colour": 3,
+              "tap": false
+            },
+            {
+              "id": "c3",
+              "x": 0.6393,
+              "y": 0.75,
+              "colour": 3,
+              "tap": false
+            },
+            {
+              "id": "c4",
+              "x": -1,
+              "y": -1,
+              "colour": 3,
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "B says about 0.30 for a group of 71 loans. Roughly what share of them default?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.61,
+        "tol": {
+          "abs": 0.03
+        },
+        "unit": "",
+        "label": "Share that defaulted",
+        "placeholder": "decimal",
+        "accept": "About 0.61: the second dot sits there.",
+        "wrong": [
+          {
+            "id": "trust",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.03
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the dot whose mean prediction is near 0.3."
+        },
+        {
+          "rung": "point",
+          "text": "Go up from 0.3 on the across axis to the dot.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The dot is at (0.30, 0.61): 43 of 71 defaulted."
+        }
+      ],
+      "feedback": {
+        "correct": "About 0.61, double what B says.",
+        "generic": "Not quite right. Read the share that defaulted from the dot near 0.3.",
+        "byKey": {
+          "trust": "That is what B says. The dot shows what happened, and it sits far above the diagonal."
+        }
+      },
+      "explain": {
+        "text": "B ranks perfectly well, AUC 0.818, and is badly calibrated: its dots sit far above the diagonal. Its Brier score is 0.177, against 0.134. AUC looks only at order, so it cannot see calibration."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Model C ignores the features and says 0.233, the training default rate, for every loan. On the 1,000 test loans 23.9% defaulted. Its Brier score is 0.182.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xLabel": "mean predicted probability (model C)",
+          "yLabel": "share that defaulted",
+          "height": 260,
+          "functions": [
+            {
+              "id": "diag",
+              "expr": "x",
+              "dashed": true,
+              "label": "calibrated",
+              "labelAt": 0.82,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "c",
+              "x": 0.233,
+              "y": 0.239,
+              "label": "C",
+              "colour": 4,
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "How should we judge model C?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "useless",
+            "text": "Almost perfectly calibrated, and useless: AUC 0.5, so it cannot tell loans apart",
+            "correct": true
+          },
+          {
+            "id": "best",
+            "text": "The best model: its one bin sits on the diagonal",
+            "why": "Calibration alone is easy. Saying the base rate every time is calibrated and tells you nothing about any loan."
+          },
+          {
+            "id": "bad-cal",
+            "text": "Badly calibrated, since it never says 0 or 1",
+            "why": "Calibration asks whether 0.233 comes true 23.3% of the time. It does, nearly: 23.9%."
+          },
+          {
+            "id": "auc1",
+            "text": "Good: its AUC is 1, since it never ranks a pair wrongly",
+            "why": "Every pair is a tie, and ties count half: AUC 0.5."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Plot C's single bin on the reliability diagram."
+        },
+        {
+          "rung": "point",
+          "text": "One dot at (0.233, 0.239): almost on the diagonal.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every pair of loans ties, so AUC is 0.5. Brier 0.182 is worse than logistic's 0.134."
+        }
+      ],
+      "feedback": {
+        "correct": "Calibration is necessary, not enough: a forecast must also separate the loans.",
+        "generic": "Not quite right. Check C's calibration and its ranking separately."
+      },
+      "explain": {
+        "text": "C sits on the diagonal and ranks nothing. Brier rewards both calibration and resolution, so C's 0.182 loses to logistic's 0.134. Good models are calibrated and sharp."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Two repairs learn a map from a model's scores to outcomes. **Platt scaling** fits an S-curve; **isotonic regression** fits any rising staircase. The map must be learned on loans the model was not fitted on, or it learns the overfit. `CalibratedClassifierCV` does this with 5 folds of the training loans.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> CalibratedClassifierCV(KNeighborsClassifier(5),",
+            "...                        method='isotonic', cv=5)"
+          ],
+          "title": "Calibration with held-out folds"
+        },
+        "state": {}
+      },
+      "question": "Complete `calibrated_knn` with isotonic calibration and `cv=5`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.calibration import CalibratedClassifierCV\n\ndef calibrated_knn(X_train, y_train, X_test):\n    base = KNeighborsClassifier(n_neighbors=5)\n    model = ...\n    ...\n    return [round(float(v), 4) for v in probs]\n",
+        "solution": "from sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.calibration import CalibratedClassifierCV\n\ndef calibrated_knn(X_train, y_train, X_test):\n    base = KNeighborsClassifier(n_neighbors=5)\n    model = CalibratedClassifierCV(base, method='isotonic', cv=5)\n    model.fit(X_train, y_train)\n    probs = model.predict_proba(X_test)[:, 1]\n    return [round(float(v), 4) for v in probs]\n",
+        "prelude": "import numpy as np\nrng = np.random.default_rng(21)\nn = 2000\nlev = np.round(rng.uniform(0.5, 7.5, n), 2)\ncover = np.round(np.clip(rng.gamma(3.0, 1.3, n), 0.2, 12), 2)\nsize = np.round(rng.normal(0, 1, n), 2)\nz = -2.0 + 0.6 * lev - 0.55 * cover\ndefault = (rng.uniform(0, 1, n) < 1 / (1 + np.exp(-z))).astype(int)\nX = np.column_stack([lev, cover])\nX_train, y_train, X_test = X[:1000], default[:1000], X[1000:]\ny_test = [int(v) for v in default[1000:]]\np_logit = [round(float(v), 4) for v in 1 / (1 + np.exp(-(-2.161 + 0.647 * lev[1000:] - 0.605 * cover[1000:])))]\n",
+        "examples": [
+          {
+            "call": "calibrated_knn(X_train, y_train, X_test)[:5]",
+            "expect": "[0.0673, 0.0673, 0.0673, 0.4216, 0.0673]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "calibrated_knn(X_train, y_train, X_test)[:5]",
+            "expect": "[0.0673, 0.0673, 0.0673, 0.4216, 0.0673]",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(sum((a - b) ** 2 for a, b in zip(calibrated_knn(X_train, y_train, X_test), y_test)) / 1000, 4)",
+            "expect": "0.1492",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibrated_knn(X_train[:500], y_train[:500], [[2.0, 3.0], [6.0, 1.0]])",
+            "expect": "[0.0502, 0.5619]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 3 hidden tests: the first five calibrated test probabilities, their Brier score on the 1,000 test loans, and a fit on 500 loans. Expected values come from running the solution, rounded to 4 places. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Wrap `base` in `CalibratedClassifierCV`."
+        },
+        {
+          "rung": "point",
+          "text": "`CalibratedClassifierCV(base, method='isotonic', cv=5)`, then `fit`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`probs = model.predict_proba(X_test)[:, 1]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Calibrated $k$-NN scores Brier 0.1492 on the test loans.",
+        "generic": "Some tests failed. The Brier score should come out at 0.1492.",
+        "byKey": {
+          "error": "Your code stopped with an error. Set `model`, fit it, then set `probs`."
+        }
+      },
+      "explain": {
+        "text": "Calibration cut $k$-NN's Brier score from 0.160 to 0.149. Each fold fits $k$-NN on four fifths and learns the staircase on the fifth it did not see. Calibrating on the training predictions would learn how the model scores loans it remembers."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now the bins in code. Bin $i$ holds predictions from $i/n$ up to, not including, $(i+1)/n$. A prediction of exactly 1 joins the last bin. Skip empty bins. `y_test` and `p_logit` hold the logistic model's test loans.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> reliability_bins([1, 0, 1, 0, 1], [0.15, 0.05, 0.95, 0.55, 1.0], 2)",
+            "[(0.1, 0.5, 2), (0.8333, 0.6667, 3)]"
+          ],
+          "title": "Two bins"
+        },
+        "state": {}
+      },
+      "question": "Complete `reliability_bins(y, p, n_bins)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def reliability_bins(y, p, n_bins):\n    # bin i holds p in [i/n_bins, (i+1)/n_bins); p = 1 goes in the last bin\n    # return [(mean p, observed frequency, count), ...] for non-empty bins, rounded to 4\n    ...\n",
+        "solution": "def reliability_bins(y, p, n_bins):\n    # bin i holds p in [i/n_bins, (i+1)/n_bins); p = 1 goes in the last bin\n    # return [(mean p, observed frequency, count), ...] for non-empty bins, rounded to 4\n    groups = [[] for _ in range(n_bins)]\n    for yi, pi in zip(y, p):\n        i = min(int(pi * n_bins), n_bins - 1)\n        groups[i].append((yi, pi))\n    out = []\n    for g in groups:\n        if g:\n            mean_p = sum(pi for _, pi in g) / len(g)\n            freq = sum(yi for yi, _ in g) / len(g)\n            out.append((round(mean_p, 4), round(freq, 4), len(g)))\n    return out\n",
+        "prelude": "import numpy as np\nrng = np.random.default_rng(21)\nn = 2000\nlev = np.round(rng.uniform(0.5, 7.5, n), 2)\ncover = np.round(np.clip(rng.gamma(3.0, 1.3, n), 0.2, 12), 2)\nsize = np.round(rng.normal(0, 1, n), 2)\nz = -2.0 + 0.6 * lev - 0.55 * cover\ndefault = (rng.uniform(0, 1, n) < 1 / (1 + np.exp(-z))).astype(int)\nX = np.column_stack([lev, cover])\nX_train, y_train, X_test = X[:1000], default[:1000], X[1000:]\ny_test = [int(v) for v in default[1000:]]\np_logit = [round(float(v), 4) for v in 1 / (1 + np.exp(-(-2.161 + 0.647 * lev[1000:] - 0.605 * cover[1000:])))]\n",
+        "examples": [
+          {
+            "call": "reliability_bins(y_test, p_logit, 5)",
+            "expect": "[(0.0695, 0.0866, 589), (0.2971, 0.2772, 184), (0.497, 0.5304, 115), (0.6968, 0.622, 82), (0.8365, 0.8333, 30)]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "reliability_bins(y_test, p_logit, 5)",
+            "expect": "[(0.0695, 0.0866, 589), (0.2971, 0.2772, 184), (0.497, 0.5304, 115), (0.6968, 0.622, 82), (0.8365, 0.8333, 30)]",
+            "compare": "isclose"
+          },
+          {
+            "call": "reliability_bins([1, 0, 1, 0, 1], [0.15, 0.05, 0.95, 0.55, 1.0], 2)",
+            "expect": "[(0.1, 0.5, 2), (0.8333, 0.6667, 3)]",
+            "compare": "isclose"
+          },
+          {
+            "call": "reliability_bins([0, 1, 0, 0], [0.12, 0.18, 0.33, 0.81], 10)",
+            "expect": "[(0.15, 0.5, 2), (0.33, 0.0, 1), (0.81, 0.0, 1)]",
+            "compare": "isclose"
+          },
+          {
+            "call": "reliability_bins(y_test, p_logit, 10)[:3]",
+            "expect": "[(0.0399, 0.0619, 420), (0.1433, 0.1479, 169), (0.255, 0.2424, 99)]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests, including the logistic model's test loans in 5 and 10 bins. Each bin is a (mean p, frequency, count) triple, rounded to 4 places and compared with math.isclose. The first run loads NumPy for the hidden data."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find each prediction's bin with `int(p * n_bins)`."
+        },
+        {
+          "rung": "point",
+          "text": "Cap the index with `min(..., n_bins - 1)` so $p = 1$ fits.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Group the pairs by bin, then average $p$ and $y$ in each non-empty group."
+        }
+      ],
+      "feedback": {
+        "correct": "Five bins reproduce the table you filled: (0.0695, 0.0866, 589) first.",
+        "generic": "Some tests failed. The first 5-bin entry on the test loans should be (0.0695, 0.0866, 589).",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the bin index for $p = 1$."
+        }
+      },
+      "explain": {
+        "text": "`sklearn.calibration.calibration_curve` does the same job, though it puts a prediction on a bin edge in the lower bin. With ten bins the top ones hold few loans. A bin of two loans can only show 0, 0.5 or 1."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Two summary numbers. `brier` is the mean squared gap. The **expected calibration error** averages each bin's gap $|\\bar p - \\bar y|$, weighted by the bin's share of predictions. `y_test` and `p_logit` are loaded.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> brier([1, 0, 0, 0], [0.9, 0.2, 0.6, 0.1])",
+            "0.105"
+          ],
+          "title": "The four loans from earlier"
+        },
+        "state": {}
+      },
+      "question": "Complete `brier(y, p)` and `expected_calibration_error(y, p, n_bins)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def brier(y, p):\n    ...\n\ndef expected_calibration_error(y, p, n_bins):\n    # sum over bins of (count / n) * |mean p - observed frequency|\n    ...\n",
+        "solution": "def brier(y, p):\n    return sum((pi - yi) ** 2 for yi, pi in zip(y, p)) / len(y)\n\ndef expected_calibration_error(y, p, n_bins):\n    # sum over bins of (count / n) * |mean p - observed frequency|\n    groups = [[] for _ in range(n_bins)]\n    for yi, pi in zip(y, p):\n        groups[min(int(pi * n_bins), n_bins - 1)].append((yi, pi))\n    total = 0.0\n    for g in groups:\n        if g:\n            mean_p = sum(pi for _, pi in g) / len(g)\n            freq = sum(yi for yi, _ in g) / len(g)\n            total += len(g) / len(y) * abs(mean_p - freq)\n    return total\n",
+        "prelude": "import numpy as np\nrng = np.random.default_rng(21)\nn = 2000\nlev = np.round(rng.uniform(0.5, 7.5, n), 2)\ncover = np.round(np.clip(rng.gamma(3.0, 1.3, n), 0.2, 12), 2)\nsize = np.round(rng.normal(0, 1, n), 2)\nz = -2.0 + 0.6 * lev - 0.55 * cover\ndefault = (rng.uniform(0, 1, n) < 1 / (1 + np.exp(-z))).astype(int)\nX = np.column_stack([lev, cover])\nX_train, y_train, X_test = X[:1000], default[:1000], X[1000:]\ny_test = [int(v) for v in default[1000:]]\np_logit = [round(float(v), 4) for v in 1 / (1 + np.exp(-(-2.161 + 0.647 * lev[1000:] - 0.605 * cover[1000:])))]\n",
+        "examples": [
+          {
+            "call": "round(brier([1, 0, 0, 0], [0.9, 0.2, 0.6, 0.1]), 6)",
+            "expect": "0.105",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(brier([1, 0, 0, 0], [0.9, 0.2, 0.6, 0.1]), 6)",
+            "expect": "0.105",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(brier(y_test, p_logit), 6)",
+            "expect": "0.134203",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_calibration_error(y_test, p_logit, 5), 6)",
+            "expect": "0.023787",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_calibration_error([1, 0, 1, 0], [0.9, 0.9, 0.1, 0.1], 2), 6)",
+            "expect": "0.4",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_calibration_error([0, 1, 0, 1], [0.5, 0.5, 0.5, 0.5], 10), 6)",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, including the logistic model's test loans (the Brier score matches `sklearn.metrics.brier_score_loss`). Results are rounded to 6 places and compared with math.isclose. The first run loads NumPy for the hidden data."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`brier` is one line with `zip`."
+        },
+        {
+          "rung": "point",
+          "text": "For the ECE, reuse the binning from the last screen.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add `len(g) / len(y) * abs(mean_p - freq)` over the non-empty bins."
+        }
+      ],
+      "feedback": {
+        "correct": "The logistic model's ECE in 5 bins is 0.023787.",
+        "generic": "Some tests failed. `brier([1, 0, 0, 0], [0.9, 0.2, 0.6, 0.1])` should be 0.105.",
+        "byKey": {
+          "error": "Your code stopped with an error. Both functions need a `return`."
+        }
+      },
+      "explain": {
+        "text": "In the tests, 0.9 and 0.1 said at random score ECE 0.4. A constant 0.5 on a fair split scores 0. ECE measures calibration only; Brier mixes it with sharpness. Report both, with the reliability diagram."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "You take even-money bets that truly win with probability 0.55. The Kelly rule from the conditional course stakes $2p - 1$ of capital. An overconfident model says 0.65, so it stakes 0.30 instead of 0.10. Growth per bet is $$G(f) = 0.55\\ln(1 + f) + 0.45\\ln(1 - f).$$",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.4
+          ],
+          "y": [
+            -0.03,
+            0.01
+          ],
+          "xLabel": "fraction staked $f$",
+          "yLabel": "growth per bet",
+          "height": 240,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "0.55*ln(1+x) + 0.45*ln(1-x)",
+              "label": "$G(f)$",
+              "labelAt": 0.06
+            }
+          ],
+          "hlines": [
+            {
+              "id": "z",
+              "y": 0
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "k",
+              "x": 0.1,
+              "y": 0.005,
+              "label": "Kelly 0.10"
+            }
+          ]
+        }
+      },
+      "question": "What is $G(0.30)$, the growth per bet when you follow the overconfident model? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0162,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "Growth per bet",
+        "placeholder": "decimal",
+        "accept": "-0.0162: $0.55\\ln 1.3 + 0.45\\ln 0.7$.",
+        "wrong": [
+          {
+            "id": "cal",
+            "value": 0.005,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "model-p",
+            "value": 0.0457,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $f = 0.30$ into $G$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\ln 1.3 = 0.2624$ and $\\ln 0.7 = -0.3567$.",
+          "highlight": [
+            "k"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.55 \\times 0.2624 - 0.45 \\times 0.3567 = -0.0162$."
+        }
+      ],
+      "feedback": {
+        "correct": "$G(0.30) = -0.0162$: capital shrinks.",
+        "generic": "Not quite right. Use the true 0.55 and the stake 0.30.",
+        "byKey": {
+          "cal": "0.0050 is $G(0.10)$, the calibrated stake. The overconfident model stakes 0.30.",
+          "model-p": "You used the model's 0.65 as the true chance. The bets really win 55% of the time."
+        }
+      },
+      "explain": {
+        "text": "Staking 0.30 loses about 1.6% per bet in the long run; staking 0.10 grows 0.5%. The same ranking, sized by an overconfident probability, turns an edge into ruin. Sizing needs calibration; AUC is not enough.",
+        "canvas": {
+          "points": {
+            "o": {
+              "x": 0.3,
+              "y": -0.0162,
+              "label": "model's 0.30"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A calibrated model's 0.8 comes true 80% of the time; a reliability diagram shows it bin by bin against the diagonal.",
+      "Brier is the MSE of the probabilities; ECE averages each bin's gap. Both are judged on held-out data.",
+      "AUC sees only the ranking: a cubed model ranks as well and is badly calibrated, and position sizing needs calibration."
+    ],
+    "formula": {
+      "name": "Brier score",
+      "tex": "\\text{Brier} = \\frac{1}{n}\\sum_{i=1}^{n} (p_i - y_i)^2",
+      "note": "Lower is better; a coin's 0.5 on a fair split scores 0.25."
+    },
+    "trap": "Reading a good AUC as good calibration, or calibrating on the training predictions."
+  },
+  "quiz": [
+    {
+      "id": "q-two",
+      "difficulty": 3,
+      "prose": "In a reliability diagram with ten bins, the top bin holds 2 loans. Their mean prediction is 0.93 and 1 of them defaulted.",
+      "question": "What can you say about calibration in that bin?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cant",
+            "text": "Very little: with 2 loans the observed share can only be 0, 0.5 or 1",
+            "correct": true
+          },
+          {
+            "id": "over",
+            "text": "The model is badly overconfident there",
+            "why": "0.5 against 0.93 looks bad, but the standard error of a share from 2 loans is about 0.35."
+          },
+          {
+            "id": "fine",
+            "text": "It is well calibrated, since 0.5 is close to 0.93",
+            "why": "A gap of 0.43 is large; it is the sample size that makes it uninformative."
+          },
+          {
+            "id": "drop",
+            "text": "The model should never predict above 0.9",
+            "why": "Two loans cannot support that rule either way."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct.",
+        "generic": "Not quite right. Ask how precisely 2 loans can measure a share."
+      },
+      "explain": {
+        "text": "A share from 2 loans has standard error near $\\sqrt{0.5 \\times 0.5/2} = 0.35$. Merge thin bins, or show each bin's count beside its dot."
+      }
+    },
+    {
+      "id": "q-train",
+      "difficulty": 2,
+      "prose": "An analyst fits $k$-NN on 1,000 loans, then fits isotonic calibration on $k$-NN's predictions for the same 1,000 loans.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "overfit",
+            "text": "$k$-NN's training predictions are too good, so the calibration map learns the overfit",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: more data for calibration is better",
+            "why": "$k$-NN memorised these loans. Its scores on them are not what it will give new loans."
+          },
+          {
+            "id": "slow",
+            "text": "It is slow, but the result is the same",
+            "why": "The result differs: new loans get mapped as if the model were as sure as it is on loans it has seen."
+          },
+          {
+            "id": "auc",
+            "text": "It lowers the model's AUC",
+            "why": "Isotonic maps are rising, so they barely change the ranking. The damage is to the probabilities."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct.",
+        "generic": "Not quite right. Ask how $k$-NN scores a loan it was fitted on."
+      },
+      "explain": {
+        "text": "Calibration must learn from predictions on unseen loans: a held-out set, or folds as `CalibratedClassifierCV` uses."
+      }
+    },
+    {
+      "id": "q-brier",
+      "difficulty": 2,
+      "prose": "Three loans get probabilities 0.8, 0.3 and 0.5. The first defaulted; the other two repaid.",
+      "question": "What is their Brier score? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.127,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "Brier score",
+        "placeholder": "decimal",
+        "accept": "0.127: $(0.04 + 0.09 + 0.25)/3$.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 0.38,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.38/3 = 0.127$.",
+        "generic": "Not quite right. Square each gap, add, divide by 3.",
+        "byKey": {
+          "sum": "0.38 is the sum of the squares. Divide by the 3 loans."
+        }
+      },
+      "explain": {
+        "text": "The gaps are 0.2, 0.3 and 0.5, which square to 0.04, 0.09 and 0.25. Their mean is 0.127."
+      }
+    },
+    {
+      "id": "q-size",
+      "difficulty": 2,
+      "prose": "Two models have the same AUC, 0.82. You will size each position by the model's probability.",
+      "question": "What else must you check?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cal",
+            "text": "Calibration: a reliability diagram and Brier score on held-out data",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: equal AUC means equal value",
+            "why": "AUC ignores the probabilities themselves; lesson 13's model B shares its AUC and is badly calibrated."
+          },
+          {
+            "id": "acc",
+            "text": "Accuracy at 0.5",
+            "why": "Accuracy at one threshold says nothing about whether 0.7 means 70%."
+          },
+          {
+            "id": "recall",
+            "text": "Recall",
+            "why": "Recall is about one threshold too."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct.",
+        "generic": "Not quite right. Ask whether the probabilities themselves can be trusted."
+      },
+      "explain": {
+        "text": "Position size depends on the probability, so it must be calibrated. AUC can only tell you about the ordering."
+      }
+    }
+  ]
+}

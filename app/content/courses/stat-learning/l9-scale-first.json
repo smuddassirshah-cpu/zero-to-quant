@@ -1,0 +1,1276 @@
+{
+  "id": "l9-scale-first",
+  "course": "stat-learning",
+  "title": "Scaling before you penalise",
+  "minutes": 14,
+  "objectives": [
+    "Standardise features and see why the penalty needs it.",
+    "Build a scaler and a penalised model into one pipeline fitted on training rows only."
+  ],
+  "skills": [
+    "sl-regularise"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Measured in millions",
+      "prose": "Five raw features for four share-months: mom and vol in %, size in £ millions, turnover as the fraction of shares traded a day, value as book-to-price. A lasso fit gives size a coefficient of 1.37e-05 per £1m.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "mom (%)",
+            "vol (%)",
+            "size (£m)",
+            "turnover",
+            "value"
+          ],
+          "rows": [
+            [
+              "1.5",
+              "17.6",
+              "1,094",
+              "0.0014",
+              "0.57"
+            ],
+            [
+              "-4.2",
+              "47.8",
+              "3,526",
+              "0.0017",
+              "0.83"
+            ],
+            [
+              "-3.3",
+              "32.4",
+              "4,289",
+              "0.0070",
+              "0.37"
+            ],
+            [
+              "-19.5",
+              "20.4",
+              "13,213",
+              "0.0078",
+              "0.79"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Measure size in £ billions instead. What is its coefficient per £1bn?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.01367,
+        "tol": {
+          "rel": 0.02
+        },
+        "label": "Coefficient per billion pounds",
+        "accept": "0.01367: 1,000 times the coefficient per £1m.",
+        "wrong": [
+          {
+            "id": "div",
+            "value": 1.3666865730114942e-08,
+            "tol": {
+              "rel": 0.05
+            }
+          },
+          {
+            "id": "same",
+            "value": 1.3666865730114942e-05,
+            "tol": {
+              "rel": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "£1bn is £1,000m. How much more return does £1bn of size bring than £1m?"
+        },
+        {
+          "rung": "point",
+          "text": "The size column's numbers get 1,000 times smaller.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.37e-05 \\times 1{,}000$."
+        }
+      ],
+      "feedback": {
+        "correct": "Same effect, a coefficient 1,000 times larger.",
+        "generic": "Not quite right. Shrinking the column by 1,000 must grow its coefficient by 1,000.",
+        "byKey": {
+          "div": "You shrank the coefficient with the column. The product, coefficient times size, must stay the same.",
+          "same": "The column changed, so the coefficient must change to keep the forecast."
+        }
+      },
+      "explain": {
+        "text": "Forecasts are unchanged, but the lasso's charge on size, $\\alpha|\\beta|$, is now 1,000 times larger. So the units we happen to choose decide how hard each feature is penalised. That cannot be right."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Before and after",
+      "prose": "Fix the units problem by putting every feature on one scale: subtract its mean, divide by its standard deviation. We refit the same lasso both ways and show each coefficient's effect of a one-sd move.",
+      "canvas": {
+        "kind": "pair",
+        "active": "right",
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "mom",
+                "label": "mom"
+              },
+              {
+                "id": "vol",
+                "label": "vol"
+              },
+              {
+                "id": "size",
+                "label": "size"
+              },
+              {
+                "id": "turnover",
+                "label": "turnover"
+              },
+              {
+                "id": "value",
+                "label": "value"
+              }
+            ],
+            "yLabel": "Effect per 1 sd (%)",
+            "showValues": true,
+            "decimals": 2,
+            "yMin": -0.5,
+            "yMax": 0.4,
+            "height": 260
+          },
+          "state": {
+            "values": {
+              "mom": 0.31,
+              "vol": -0.07,
+              "size": 0.1,
+              "turnover": 0.0,
+              "value": 0.0
+            },
+            "caption": "Lasso on raw features"
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "mom",
+                "label": "mom"
+              },
+              {
+                "id": "vol",
+                "label": "vol"
+              },
+              {
+                "id": "size",
+                "label": "size"
+              },
+              {
+                "id": "turnover",
+                "label": "turnover"
+              },
+              {
+                "id": "value",
+                "label": "value"
+              }
+            ],
+            "yLabel": "Effect per 1 sd (%)",
+            "showValues": true,
+            "decimals": 2,
+            "yMin": -0.5,
+            "yMax": 0.4,
+            "height": 260
+          },
+          "state": {
+            "values": {
+              "mom": 0.19,
+              "vol": -0.01,
+              "size": 0.0,
+              "turnover": -0.43,
+              "value": 0.21
+            },
+            "caption": "Lasso on standardised features"
+          }
+        },
+        "state": {
+          "caption": "Same 300 rows, same $\\alpha = 0.1$. Each bar is a coefficient times its feature's standard deviation."
+        }
+      },
+      "question": "Tap the feature on the right whose coefficient changed most.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "turnover"
+        ],
+        "max": 1
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each bar on the left with the same feature on the right."
+        },
+        {
+          "rung": "point",
+          "text": "One feature is 0 on the left and the tallest bar on the right.",
+          "highlight": [
+            "left:turnover",
+            "right:turnover"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "turnover goes from 0 to -0.43."
+        }
+      ],
+      "feedback": {
+        "correct": "turnover went from 0 to -0.43: it is the strongest feature once units stop mattering.",
+        "generic": "Not quite right. Find the biggest change between the left and right bars.",
+        "byKey": {
+          "size": "size did change, from 0.10 to 0, but turnover changed more: from 0 to the largest effect.",
+          "value": "value changed from 0 to 0.21; turnover changed more.",
+          "mom": "mom changed only a little."
+        }
+      },
+      "explain": {
+        "text": "Raw turnover is tiny (about 0.006), so it needs a huge coefficient, and the lasso cut it. Raw size is huge, so its coefficient is nearly free, and the lasso kept it though size has no effect at all. After scaling the lasso keeps turnover and value and drops size.",
+        "canvas": {
+          "right": {
+            "highlight": [
+              "turnover",
+              "size"
+            ]
+          },
+          "left": {
+            "highlight": [
+              "turnover",
+              "size"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Train statistics only",
+      "prose": "To **standardise** a feature, subtract its mean and divide by its standard deviation, both from the **training** rows: $z = (x - \\bar x_{\\text{train}}) / s_{\\text{train}}$. For size, $\\bar x_{\\text{train}} = 5,170$ and $s_{\\text{train}} = 7,410$ (£m).",
+      "canvas": {
+        "kind": "pair",
+        "active": "right",
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "mom",
+                "label": "mom"
+              },
+              {
+                "id": "vol",
+                "label": "vol"
+              },
+              {
+                "id": "size",
+                "label": "size"
+              },
+              {
+                "id": "turnover",
+                "label": "turnover"
+              },
+              {
+                "id": "value",
+                "label": "value"
+              }
+            ],
+            "yLabel": "Effect per 1 sd (%)",
+            "showValues": true,
+            "decimals": 2,
+            "yMin": -0.5,
+            "yMax": 0.4,
+            "height": 260
+          },
+          "state": {
+            "values": {
+              "mom": 0.31,
+              "vol": -0.07,
+              "size": 0.1,
+              "turnover": 0.0,
+              "value": 0.0
+            },
+            "caption": "Lasso on raw features"
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "mom",
+                "label": "mom"
+              },
+              {
+                "id": "vol",
+                "label": "vol"
+              },
+              {
+                "id": "size",
+                "label": "size"
+              },
+              {
+                "id": "turnover",
+                "label": "turnover"
+              },
+              {
+                "id": "value",
+                "label": "value"
+              }
+            ],
+            "yLabel": "Effect per 1 sd (%)",
+            "showValues": true,
+            "decimals": 2,
+            "yMin": -0.5,
+            "yMax": 0.4,
+            "height": 260
+          },
+          "state": {
+            "values": {
+              "mom": 0.19,
+              "vol": -0.01,
+              "size": 0.0,
+              "turnover": -0.43,
+              "value": 0.21
+            },
+            "caption": "Lasso on standardised features"
+          }
+        },
+        "state": {
+          "caption": "Same 300 rows, same $\\alpha = 0.1$. Each bar is a coefficient times its feature's standard deviation."
+        }
+      },
+      "question": "A test share has size £12,000m. What is its standardised size?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9217,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Standardised size of the test share",
+        "accept": "0.922: $(12{,}000 - 5,170) / 7,410$.",
+        "wrong": [
+          {
+            "id": "nomean",
+            "value": 1.6194,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the training mean and standard deviation, not the test share's own."
+        },
+        {
+          "rung": "point",
+          "text": "Subtract first, then divide.",
+          "highlight": [
+            "right:size"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(12{,}000 - 5,170) / 7,410$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.922: this share is 0.92 training standard deviations above the training mean.",
+        "generic": "Not quite right. Subtract the training mean, then divide by the training standard deviation.",
+        "byKey": {
+          "nomean": "You divided without subtracting the mean first.",
+          "zero": "You standardised the test share by itself. A test row is always scaled with the training numbers."
+        }
+      },
+      "explain": {
+        "text": "The test share is scaled with numbers learned on the training rows, exactly as a model's coefficients are. Its own statistics, or the test set's, would let the future into the inputs."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Standardise in NumPy",
+      "prose": "Learn each column's mean and standard deviation on the training rows, then apply them to both sets. Use the population standard deviation (`np.std`, `ddof=0`), as `StandardScaler` does, and leave a constant column's divisor at 1.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Learned on",
+            "Applied to"
+          ],
+          "rows": [
+            [
+              "mean, sd",
+              "training rows",
+              "training and test rows"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `standardise_train_test(X_train, X_test)` so it returns the two scaled arrays.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_raw(seed, n=400):\n    \"\"\"Share-months in month order. Columns: mom (%), vol (%), size (GBP m),\n    turnover (fraction of shares traded a day), value (book-to-price).\n    Next-month return in %; size has no effect at all.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = 8.0 * rng.standard_normal(n)\n    vol = 30 + 10 * rng.standard_normal(n)\n    size = np.exp(8.0 + 1.0 * rng.standard_normal(n))\n    turnover = rng.gamma(2.25, 0.006 / 2.25, n)\n    value = 0.6 + 0.3 * rng.standard_normal(n)\n    X = np.column_stack([mom, vol, size, turnover, value])\n    y = (0.5 + 0.06 * mom - 0.02 * (vol - 30) - 120 * (turnover - 0.006)\n         + 0.8 * (value - 0.6) + 3.0 * rng.standard_normal(n))\n    return X, y\n",
+        "starter": "import numpy as np\n\ndef standardise_train_test(X_train, X_test):\n    X_train = np.asarray(X_train, dtype=float)\n    X_test = np.asarray(X_test, dtype=float)\n    mu = ...   # column means of the training rows\n    sd = ...   # column standard deviations of the training rows\n    sd = np.where(sd == 0, 1.0, sd)   # a constant column stays at 0\n    return (X_train - mu) / sd, ...\n",
+        "solution": "import numpy as np\n\ndef standardise_train_test(X_train, X_test):\n    X_train = np.asarray(X_train, dtype=float)\n    X_test = np.asarray(X_test, dtype=float)\n    mu = X_train.mean(axis=0)\n    sd = X_train.std(axis=0)\n    sd = np.where(sd == 0, 1.0, sd)   # a constant column stays at 0\n    return (X_train - mu) / sd, (X_test - mu) / sd\n",
+        "examples": [
+          {
+            "call": "[np.round(a, 6).tolist() for a in standardise_train_test([[1], [3]], [[5]])]",
+            "expect": "[[[-1.0], [1.0]], [[3.0]]]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[np.round(a, 6).tolist() for a in standardise_train_test([[1], [3]], [[5]])]",
+            "expect": "[[[-1.0], [1.0]], [[3.0]]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[np.round(a, 6).tolist() for a in standardise_train_test([[1, 10], [2, 20], [3, 30]], [[4, 0]])]",
+            "expect": "[[[-1.224745, -1.224745], [0.0, 0.0], [1.224745, 1.224745]], [[2.44949, -2.44949]]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[np.round(a, 6).tolist() for a in standardise_train_test([[2, 7], [4, 7]], [[3, 9]])]",
+            "expect": "[[[-1.0, 0.0], [1.0, 0.0]], [[0.0, 2.0]]]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_raw(2)",
+            "call": "np.round(standardise_train_test(X[:300], X[300:])[1][:2], 6).tolist()",
+            "expect": "[[1.610185, -0.576216, 0.343154, 0.187401, 0.499527], [0.646999, 1.417396, 0.947054, 1.672515, -0.419413]]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_raw(2); Z, _ = standardise_train_test(X[:300], X[300:])",
+            "call": "bool(np.allclose(Z.mean(axis=0), 0) and np.allclose(Z.std(axis=0), 1))",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, four comparing the scaled arrays with math.isclose entry by entry and one checking the training columns end with mean 0 and sd 1. `make_raw(seed)` is already defined. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`X_train.mean(axis=0)` and `X_train.std(axis=0)` give one number per column."
+        },
+        {
+          "rung": "point",
+          "text": "The test rows use the same `mu` and `sd`.",
+          "highlight": [
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `(X_train - mu) / sd, (X_test - mu) / sd`."
+        }
+      ],
+      "feedback": {
+        "correct": "The training columns now have mean 0 and sd 1; the test columns are close, but not exactly.",
+        "generic": "Some tests failed. Compute `mu` and `sd` from `X_train` only, and apply them to both arrays."
+      },
+      "explain": {
+        "text": "In the third test the second column is constant, 7, so its sd is 0; dividing by 1 leaves it at 0 and a test value of 9 becomes 2. `StandardScaler` does the same. The test rows' means drift from 0, which is honest: the future differs from the past."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A pipeline",
+      "prose": "scikit-learn bundles the two steps: `Pipeline([('scale', StandardScaler()), ('model', Lasso(alpha=a, max_iter=10000))])`. Its `.fit` learns the scaler and the lasso on the rows it is given; its `.predict` scales new rows with the stored statistics.",
+      "canvas": {
+        "kind": "pair",
+        "active": "right",
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "mom",
+                "label": "mom"
+              },
+              {
+                "id": "vol",
+                "label": "vol"
+              },
+              {
+                "id": "size",
+                "label": "size"
+              },
+              {
+                "id": "turnover",
+                "label": "turnover"
+              },
+              {
+                "id": "value",
+                "label": "value"
+              }
+            ],
+            "yLabel": "Effect per 1 sd (%)",
+            "showValues": true,
+            "decimals": 2,
+            "yMin": -0.5,
+            "yMax": 0.4,
+            "height": 260
+          },
+          "state": {
+            "values": {
+              "mom": 0.31,
+              "vol": -0.07,
+              "size": 0.1,
+              "turnover": 0.0,
+              "value": 0.0
+            },
+            "caption": "Lasso on raw features"
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "mom",
+                "label": "mom"
+              },
+              {
+                "id": "vol",
+                "label": "vol"
+              },
+              {
+                "id": "size",
+                "label": "size"
+              },
+              {
+                "id": "turnover",
+                "label": "turnover"
+              },
+              {
+                "id": "value",
+                "label": "value"
+              }
+            ],
+            "yLabel": "Effect per 1 sd (%)",
+            "showValues": true,
+            "decimals": 2,
+            "yMin": -0.5,
+            "yMax": 0.4,
+            "height": 260
+          },
+          "state": {
+            "values": {
+              "mom": 0.19,
+              "vol": -0.01,
+              "size": 0.0,
+              "turnover": -0.43,
+              "value": 0.21
+            },
+            "caption": "Lasso on standardised features"
+          }
+        },
+        "state": {
+          "caption": "Same 300 rows, same $\\alpha = 0.1$. Each bar is a coefficient times its feature's standard deviation."
+        }
+      },
+      "question": "Complete `scaled_lasso_support(X_train, y_train, alpha)` so it returns the sorted indices the scaled lasso keeps.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_raw(seed, n=400):\n    \"\"\"Share-months in month order. Columns: mom (%), vol (%), size (GBP m),\n    turnover (fraction of shares traded a day), value (book-to-price).\n    Next-month return in %; size has no effect at all.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = 8.0 * rng.standard_normal(n)\n    vol = 30 + 10 * rng.standard_normal(n)\n    size = np.exp(8.0 + 1.0 * rng.standard_normal(n))\n    turnover = rng.gamma(2.25, 0.006 / 2.25, n)\n    value = 0.6 + 0.3 * rng.standard_normal(n)\n    X = np.column_stack([mom, vol, size, turnover, value])\n    y = (0.5 + 0.06 * mom - 0.02 * (vol - 30) - 120 * (turnover - 0.006)\n         + 0.8 * (value - 0.6) + 3.0 * rng.standard_normal(n))\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\n\ndef scaled_lasso_support(X_train, y_train, alpha):\n    pipe = Pipeline([('scale', ...), ('model', ...)])\n    pipe.fit(X_train, y_train)\n    coef = pipe.named_steps['model'].coef_\n    return [int(i) for i in np.flatnonzero(coef)]\n",
+        "solution": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\n\ndef scaled_lasso_support(X_train, y_train, alpha):\n    pipe = Pipeline([('scale', StandardScaler()), ('model', Lasso(alpha=alpha, max_iter=10000))])\n    pipe.fit(X_train, y_train)\n    coef = pipe.named_steps['model'].coef_\n    return [int(i) for i in np.flatnonzero(coef)]\n",
+        "examples": [
+          {
+            "setup": "X, y = make_raw(2)",
+            "call": "scaled_lasso_support(X[:300], y[:300], 0.1)",
+            "expect": "[0, 1, 3, 4]"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_raw(2)",
+            "call": "scaled_lasso_support(X[:300], y[:300], 0.1)",
+            "expect": "[0, 1, 3, 4]"
+          },
+          {
+            "setup": "X, y = make_raw(1)",
+            "call": "scaled_lasso_support(X[:300], y[:300], 0.2)",
+            "expect": "[0, 2, 3, 4]"
+          },
+          {
+            "setup": "X, y = make_raw(3)",
+            "call": "scaled_lasso_support(X[:300], y[:300], 0.3)",
+            "expect": "[1, 2, 3, 4]"
+          },
+          {
+            "setup": "X, y = make_raw(5)",
+            "call": "scaled_lasso_support(X[:300], y[:300], 0.25)",
+            "expect": "[0, 2, 3]"
+          },
+          {
+            "setup": "X, y = make_raw(4)",
+            "call": "scaled_lasso_support(X[:300], y[:300], 0.15)",
+            "expect": "[0, 2, 3]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_raw(seed)` panels, already defined; each list of indices must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each step is a name and an object."
+        },
+        {
+          "rung": "point",
+          "text": "The scaler comes first, the model second.",
+          "highlight": [
+            "right:turnover"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`('scale', StandardScaler())` and `('model', Lasso(alpha=alpha, max_iter=10000))`."
+        }
+      ],
+      "feedback": {
+        "correct": "On `make_raw(2)` at $\\alpha = 0.1$ the scaled lasso keeps [0, 1, 3, 4]: mom, vol, turnover and value, not size.",
+        "generic": "Some tests failed. Put `StandardScaler()` then `Lasso(alpha=alpha, max_iter=10000)` in the pipeline."
+      },
+      "explain": {
+        "text": "Index 2, size, is gone: once every feature is in standard deviations, its tiny noise effect is not worth the charge. A pipeline is also a guard: whatever rows you fit it on are the only rows its scaler learns from."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Scaled on everything",
+      "prose": "A colleague scales before splitting, so that both sets are on the same scale. Then they fit ridge on rows 1 to 300 and score rows 301 to 400.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> Z = StandardScaler().fit_transform(X)      # all 400 rows",
+            ">>> model = Ridge(alpha=10).fit(Z[:300], y[:300])",
+            ">>> mean_squared_error(y[300:], model.predict(Z[300:]))",
+            "8.7437"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "leak",
+            "text": "The scaler's means and sds were learned partly from the test rows, so the test period shaped the inputs",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: scaling has no coefficients, so it cannot leak",
+            "why": "You treated the scaler as fixed. Its mean and sd are estimated from rows, like coefficients, and here those rows include the test months."
+          },
+          {
+            "id": "better",
+            "text": "Nothing: one shared scale is more consistent than two",
+            "why": "There is one scale in the right way too: the training one, applied to both sets."
+          },
+          {
+            "id": "target",
+            "text": "The target should have been scaled too",
+            "why": "Scaling the target is optional and leak-free if done on training rows. The problem is where the feature scaler learned."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows did `fit_transform` see?"
+        },
+        {
+          "rung": "point",
+          "text": "The first line touches all 400 rows.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Split first. Fit the scaler on rows 1 to 300 only, inside a pipeline."
+        }
+      ],
+      "feedback": {
+        "correct": "Any statistic learned from the test rows is leakage, however harmless it looks.",
+        "generic": "Not quite right. Ask which rows the scaler learned from.",
+        "byKey": {
+          "fine": "You treated scaling as fixed arithmetic. It estimates a mean and a sd per column, and it estimated them using the test months."
+        }
+      },
+      "explain": {
+        "text": "Here the effect is small: 8.7437 against 8.7447 done properly. In a backtest over years, full-history scaling tells early months where later prices go, and the gap can be large. Use a pipeline and the mistake cannot happen.",
+        "canvas": {
+          "tone": {
+            "l1": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Who needs it?",
+      "prose": "Scaling matters wherever the method compares sizes across features: a penalty on coefficients, or a distance between rows as in level 1's nearest neighbours.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            "LinearRegression()",
+            "Ridge(alpha=10)",
+            "Lasso(alpha=0.1)",
+            "KNeighborsRegressor(n_neighbors=20)",
+            "DecisionTreeRegressor(max_depth=3)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Select all that apply: which models change their forecasts when a feature's units change?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ols",
+            "text": "`LinearRegression()`",
+            "why": "OLS rescales the coefficient to undo the units: forecasts are identical. It does not need scaling."
+          },
+          {
+            "id": "ridge",
+            "text": "`Ridge(alpha=10)`",
+            "correct": true
+          },
+          {
+            "id": "lasso",
+            "text": "`Lasso(alpha=0.1)`",
+            "correct": true
+          },
+          {
+            "id": "knn",
+            "text": "`KNeighborsRegressor(n_neighbors=20)`",
+            "correct": true
+          },
+          {
+            "id": "tree",
+            "text": "`DecisionTreeRegressor(max_depth=3)`",
+            "why": "A tree splits on thresholds of one feature at a time; changing units moves the threshold, not the split."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the method add up or compare quantities measured in different features' units?"
+        },
+        {
+          "rung": "point",
+          "text": "Penalties add $|\\beta_j|$ across features; distances add squared gaps across features.",
+          "highlight": [
+            "l2",
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Ridge, lasso and k-NN change; OLS and trees do not."
+        }
+      ],
+      "feedback": {
+        "correct": "Penalties and distances mix features' units; OLS and trees do not.",
+        "generic": "Not quite right. Ask, for each model, whether it ever adds across features."
+      },
+      "explain": {
+        "text": "A k-NN distance on raw data is nearly all size, because £ millions dwarf everything else. Scaling costs OLS and trees nothing, so pipelines often scale anyway."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Constants and dummies",
+      "prose": "Two awkward columns: one is the same for every training row, and one is a sector dummy, 1 for the 30 banks among 300 share-months and 0 otherwise. Both go through `StandardScaler`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> sc = StandardScaler().fit(F_train)   # [constant, bank dummy]",
+            ">>> sc.scale_",
+            "array([1.  , 0.3])",
+            ">>> sc.transform([[1.0, 1.0], [1.0, 0.0]])",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What happens to the two columns?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The constant becomes 0 everywhere; the dummy becomes 3 for banks and −0.33 for others",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "The constant becomes NaN, a division by zero",
+            "why": "You expected a raw division by its sd of 0. `StandardScaler` sets `scale_` to 1 for such a column."
+          },
+          {
+            "id": "skip",
+            "text": "The scaler leaves the dummy as 0 and 1",
+            "why": "`StandardScaler` treats every column alike. To keep a dummy as 0/1 you would have to exclude it yourself."
+          },
+          {
+            "id": "both",
+            "text": "Both become 0 and 1",
+            "why": "The dummy's mean is 0.1 and its sd 0.3, so it moves to $(1 - 0.1)/0.3 = 3$ and $(0 - 0.1)/0.3 = -0.33$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The dummy's mean is $30/300 = 0.1$ and its sd is $\\sqrt{0.1 \\times 0.9} = 0.3$."
+        },
+        {
+          "rung": "point",
+          "text": "`scale_` is 1 for the constant column.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Constant: $(1 - 1)/1 = 0$. Dummy: $(1 - 0.1)/0.3 = 3$ and $(0 - 0.1)/0.3 = -0.33$."
+        }
+      ],
+      "feedback": {
+        "correct": "This course scales dummies with the rest, inside the pipeline, so every coefficient is per one-sd move.",
+        "generic": "Not quite right. Apply $(x - \\bar x)/s$ with each column's own mean and sd."
+      },
+      "explain": {
+        "text": "A constant carries no information, and scaling turns it into a column of zeros the model ignores. For dummies we keep it simple and scale them too; leaving them at 0/1 is also defensible, but then rare sectors are penalised more per unit of effect."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The whole pipeline",
+      "prose": "Put scaling and ridge together and score honestly. The pipeline learns the scaler and the ridge from the training rows, and applies both to the test rows.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> pipe = Pipeline([('scale', StandardScaler()), ('model', Ridge(alpha=10))])",
+            ">>> pipe.fit(X[:300], y[:300])",
+            ">>> mean_squared_error(y[300:], pipe.predict(X[300:]))",
+            "8.744701"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `pipeline_test_mse(X_train, y_train, X_test, y_test, alpha)`, returning the test MSE rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_raw(seed, n=400):\n    \"\"\"Share-months in month order. Columns: mom (%), vol (%), size (GBP m),\n    turnover (fraction of shares traded a day), value (book-to-price).\n    Next-month return in %; size has no effect at all.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = 8.0 * rng.standard_normal(n)\n    vol = 30 + 10 * rng.standard_normal(n)\n    size = np.exp(8.0 + 1.0 * rng.standard_normal(n))\n    turnover = rng.gamma(2.25, 0.006 / 2.25, n)\n    value = 0.6 + 0.3 * rng.standard_normal(n)\n    X = np.column_stack([mom, vol, size, turnover, value])\n    y = (0.5 + 0.06 * mom - 0.02 * (vol - 30) - 120 * (turnover - 0.006)\n         + 0.8 * (value - 0.6) + 3.0 * rng.standard_normal(n))\n    return X, y\n",
+        "starter": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef pipeline_test_mse(X_train, y_train, X_test, y_test, alpha):\n    pipe = ...\n    pipe.fit(X_train, y_train)\n    pred = ...\n    return round(float(mean_squared_error(y_test, pred)), 6)\n",
+        "solution": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef pipeline_test_mse(X_train, y_train, X_test, y_test, alpha):\n    pipe = Pipeline([('scale', StandardScaler()), ('model', Ridge(alpha=alpha))])\n    pipe.fit(X_train, y_train)\n    pred = pipe.predict(X_test)\n    return round(float(mean_squared_error(y_test, pred)), 6)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_raw(2)",
+            "call": "pipeline_test_mse(X[:300], y[:300], X[300:], y[300:], 10.0)",
+            "expect": "8.744701",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_raw(2)",
+            "call": "pipeline_test_mse(X[:300], y[:300], X[300:], y[300:], 10.0)",
+            "expect": "8.744701",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_raw(2)",
+            "call": "pipeline_test_mse(X[:300], y[:300], X[300:], y[300:], 100.0)",
+            "expect": "8.670623",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_raw(1)",
+            "call": "pipeline_test_mse(X[:300], y[:300], X[300:], y[300:], 30.0)",
+            "expect": "7.972124",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_raw(3)",
+            "call": "pipeline_test_mse(X[:300], y[:300], X[300:], y[300:], 0.0)",
+            "expect": "10.451206",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_raw(4)",
+            "call": "pipeline_test_mse(X[:300], y[:300], X[300:], y[300:], 300.0)",
+            "expect": "7.711572",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_raw(seed)` panels, already defined; each MSE is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build the pipeline as on the console, with `alpha`."
+        },
+        {
+          "rung": "point",
+          "text": "`pipe.predict(X_test)` scales the test rows with the training statistics.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pipe = Pipeline([('scale', StandardScaler()), ('model', Ridge(alpha=alpha))])` and `pred = pipe.predict(X_test)`."
+        }
+      ],
+      "feedback": {
+        "correct": "One object, fitted once on training rows, applied once to test rows.",
+        "generic": "Some tests failed. Fit the pipeline on the training rows and predict the test rows with it."
+      },
+      "explain": {
+        "text": "On `make_raw(2)`, $\\lambda = 10$ gives 8.7447 and $\\lambda = 100$ gives 8.6706. With `alpha=0` the pipeline is OLS on scaled features, which forecasts exactly as OLS on raw ones."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why OLS does not care",
+      "prose": "Scaling changes ridge and lasso answers but not OLS forecasts. Put the argument in order, for one feature with training mean $m$ and sd $s$.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "Write $x = m + s\\,z$, where $z = (x - m)/s$ is the scaled feature"
+          },
+          {
+            "id": "sub",
+            "text": "$b_0 + b\\,x = (b_0 + b\\,m) + (b\\,s)\\,z$: any line in $x$ is a line in $z$ with slope $b\\,s$"
+          },
+          {
+            "id": "ols",
+            "text": "OLS on $z$ can choose slope $b\\,s$, so it finds the same fitted values, and the same forecasts"
+          },
+          {
+            "id": "pen",
+            "text": "A penalty charges $|b\\,s|$ or $(b\\,s)^2$ instead of $|b|$ or $b^2$, so the penalised answer moves with $s$"
+          }
+        ],
+        "answer": [
+          "def",
+          "sub",
+          "ols",
+          "pen"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by writing $x$ in terms of $z$."
+        },
+        {
+          "rung": "point",
+          "text": "Substitute into the line, then ask what OLS and the penalty each see."
+        },
+        {
+          "rung": "step",
+          "text": "Definition, substitution, the OLS conclusion, then the penalty's."
+        }
+      ],
+      "feedback": {
+        "correct": "OLS only cares about the space of lines, which scaling does not change. A penalty cares about the slope's number, which it does.",
+        "generic": "Not quite right. Define $z$, substitute, then compare OLS with the penalty.",
+        "byKey": {
+          "pen": "The penalty's contrast comes last, after the OLS conclusion.",
+          "ols": "The OLS conclusion needs the substitution first."
+        }
+      },
+      "explain": {
+        "text": "Rescaling $x$ maps every candidate line to another, one for one, so the best fit is the same line. The penalty sees the slope's number, $b\\,s$, and the number depends on $s$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The feature store",
+      "prose": "A signal desk's feature store z-scores every feature across shares each day: on each date, subtract that day's mean over all shares and divide by that day's sd. A researcher's backtest instead scaled each feature with its mean and sd over 2015 to 2024, and beat live trading.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Method",
+            "Statistics from",
+            "Known on the day?"
+          ],
+          "rows": [
+            [
+              "Cross-sectional z-score",
+              "That day's shares",
+              "Yes"
+            ],
+            [
+              "Full-history z-score",
+              "All dates, 2015 to 2024",
+              "No"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The full-history scaling used future data; the daily cross-sectional z-score uses only that day's shares, and also removes what moves all shares together",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both leak, because both use more than one share",
+            "why": "Using many shares on the same day is fine: they are all known that day. The leak is across time."
+          },
+          {
+            "id": "neither",
+            "text": "Neither leaks: means and sds are too stable to matter",
+            "why": "Over ten years a feature's level drifts; a 2015 value scaled with 2024's mean is scaled with information from 2024."
+          },
+          {
+            "id": "luck",
+            "text": "The backtest was lucky; scaling cannot change results",
+            "why": "Scaling changes penalised fits and any threshold rule, so it can and did change results."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each method, could you have computed the statistics on that day?"
+        },
+        {
+          "rung": "point",
+          "text": "Read the last column.",
+          "highlight": [
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Full-history statistics include later years. Cross-sectional ones use only the day itself."
+        }
+      ],
+      "feedback": {
+        "correct": "Scale with what was known at the time, and the backtest and live trading see the same inputs.",
+        "generic": "Not quite right. Check when each method's statistics become known."
+      },
+      "explain": {
+        "text": "Subtracting each day's average across shares also strips out the market's move that day, so the model ranks shares rather than timing the market. The full-history version knew 2024's levels in 2015. Live trading cannot, so the edge vanished."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A penalty charges every coefficient alike, so units decide who is penalised: standardise features before ridge, lasso or k-NN.",
+      "Learn the mean and sd on training rows and apply them to test rows; a constant column becomes 0.",
+      "`Pipeline([('scale', StandardScaler()), ('model', Ridge(alpha))])` makes leaking the test rows into the scaler impossible."
+    ],
+    "formula": {
+      "name": "Standardising",
+      "tex": "z_{ij} = \\dfrac{x_{ij} - \\bar x_{j,\\text{train}}}{s_{j,\\text{train}}}",
+      "note": "OLS and trees do not need it; penalties and distances do."
+    },
+    "trap": "Fitting the scaler on all rows, test rows included, leaks the future into the inputs; split first, then fit the scaler inside a pipeline."
+  },
+  "quiz": [
+    {
+      "id": "q-forgot-test",
+      "difficulty": 2,
+      "prose": "A colleague fits `Ridge` on standardised training rows, then predicts from the raw test rows.",
+      "question": "What happens to the forecasts?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "r",
+            "text": "They are wrong: the coefficients expect inputs in standard deviations, and size alone arrives in thousands",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "They are fine: the coefficients already include the scaling",
+            "why": "The coefficients are per sd of the scaled inputs. Raw inputs must be scaled the same way first."
+          },
+          {
+            "id": "slight",
+            "text": "Slightly off, because the test means differ",
+            "why": "It is not slight: a raw size of 5,000 enters as 5,000 sds."
+          },
+          {
+            "id": "err",
+            "text": "scikit-learn raises an error",
+            "why": "Nothing checks the units; it happily multiplies whatever it is given."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A pipeline makes this impossible: `predict` always scales first.",
+        "generic": "Not quite right. What units do the coefficients expect?"
+      },
+      "explain": {
+        "text": "Every forecast must go through the same transform the training rows did. Fitting and predicting through one pipeline guarantees it."
+      }
+    },
+    {
+      "id": "q-target",
+      "difficulty": 3,
+      "prose": "Someone also standardises the target, next-month return, before fitting a lasso.",
+      "question": "Is that needed?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "r",
+            "text": "No: the features carry the units problem; scaling $y$ only changes what a given $\\alpha$ means, and forecasts must be scaled back",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: otherwise the penalty treats the target unfairly",
+            "why": "The penalty is on coefficients, one per feature. The target has no coefficient to penalise."
+          },
+          {
+            "id": "leak",
+            "text": "It always leaks",
+            "why": "It leaks only if its mean and sd come from test rows, like any transform."
+          },
+          {
+            "id": "same",
+            "text": "It changes nothing at all, even $\\alpha$",
+            "why": "Scaling $y$ by $c$ scales the squared errors by $c^2$ and the coefficients by $c$, so the same $\\alpha$ now means a different penalty."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Scale the features; leave the target in its units unless there is a reason.",
+        "generic": "Not quite right. Ask what the penalty is charged on."
+      },
+      "explain": {
+        "text": "The penalty is on coefficients, so only the features' units matter for fairness. Scaling $y$ just rescales the problem, which is harmless if you re-tune $\\alpha$ and undo it for forecasts."
+      }
+    },
+    {
+      "id": "q-z",
+      "difficulty": 2,
+      "prose": "Training turnover has mean 0.006 and sd 0.004. A test share has turnover 0.016.",
+      "question": "What is its standardised turnover?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Standardised turnover",
+        "accept": "2.5: $(0.016 - 0.006)/0.004$.",
+        "wrong": [
+          {
+            "id": "nomean",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "mul",
+            "value": 4e-05,
+            "tol": {
+              "abs": 1e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2.5 training sds above the training mean.",
+        "generic": "Not quite right. Subtract 0.006, then divide by 0.004.",
+        "byKey": {
+          "nomean": "You divided without subtracting the mean.",
+          "mul": "You multiplied by the sd. Divide by it."
+        }
+      },
+      "explain": {
+        "text": "$(0.016 - 0.006)/0.004 = 2.5$. On this scale a turnover coefficient is the effect of a 2.5-sd jump divided by 2.5, comparable with every other feature."
+      }
+    }
+  ]
+}

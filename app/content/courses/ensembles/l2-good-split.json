@@ -294,8 +294,7 @@
               "expr": "2*x*(1-x)",
               "label": "Gini",
               "colour": 1,
-              "labelAt": 0.82,
-              "labelSide": "below"
+              "labelAt": 0.25
             },
             {
               "id": "err",
@@ -303,7 +302,7 @@
               "label": "Error rate",
               "colour": 4,
               "dashed": true,
-              "labelAt": 0.5,
+              "labelAt": 0.88,
               "labelSide": "below"
             }
           ]
@@ -915,62 +914,6 @@
       "difficulty": 2,
       "title": "Gain, in general",
       "prose": "For a split of $n$ rows into $n_L$ left and $n_R$ right, with impurity $I$: $$\\text{gain} = I(\\text{parent}) - \\tfrac{n_L}{n} I(L) - \\tfrac{n_R}{n} I(R).$$ With entropy, the gain is called **information gain**. scikit-learn uses Gini unless you pass `criterion=\"entropy\"`.",
-      "canvas": {
-        "kind": "bars",
-        "params": {
-          "categories": [
-            {
-              "id": "al",
-              "label": "A: left"
-            },
-            {
-              "id": "ar",
-              "label": "A: right"
-            },
-            {
-              "id": "bl",
-              "label": "B: left"
-            },
-            {
-              "id": "br",
-              "label": "B: right"
-            }
-          ],
-          "groups": [
-            {
-              "id": "D",
-              "label": "Default",
-              "colour": 2
-            },
-            {
-              "id": "R",
-              "label": "Repaid",
-              "colour": 3
-            }
-          ],
-          "yLabel": "Loans",
-          "yMax": 32,
-          "showValues": true,
-          "decimals": 0
-        },
-        "state": {
-          "values": {
-            "D": {
-              "al": 15,
-              "ar": 5,
-              "bl": 10,
-              "br": 10
-            },
-            "R": {
-              "al": 5,
-              "ar": 15,
-              "bl": 20,
-              "br": 0
-            }
-          }
-        },
-        "maxHeight": 180
-      },
       "question": "Split A sends 20 loans each way, and each side has entropy 0.811. What is A's information gain? The parent's entropy is 1.",
       "widget": {
         "kind": "numeric",
@@ -1167,8 +1110,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "# The 12 loans: [leverage, interest cover], outcome 1 = default, 0 = repaid\nX12 = [[1.2, 5.0], [3.8, 2.2], [2.4, 2.5], [4.1, 4.5], [2.2, 1.2], [1.6, 4.0],\n       [5.0, 3.5], [2.8, 1.8], [3.2, 1.5], [2.0, 3.0], [4.4, 2.9], [2.6, 2.0]]\ny12 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0]\n",
-        "starter": "from collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of a list of labels; 0.0 for an empty list.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n\ndef split_gain(y_left, y_right, criterion=\"gini\"):\n    parent = list(y_left) + list(y_right)\n    n = len(parent)\n    child = ...   # weighted impurity of the two sides\n    return round(impurity(parent, criterion) - child, 6)\n",
-        "solution": "from collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of a list of labels; 0.0 for an empty list.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n\ndef split_gain(y_left, y_right, criterion=\"gini\"):\n    parent = list(y_left) + list(y_right)\n    n = len(parent)\n    child = (len(y_left) * impurity(y_left, criterion)\n             + len(y_right) * impurity(y_right, criterion)) / n\n    return round(impurity(parent, criterion) - child, 6)\n",
+        "starter": "from collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of labels; 0.0 if empty.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n\ndef split_gain(y_left, y_right, criterion=\"gini\"):\n    parent = list(y_left) + list(y_right)\n    n = len(parent)\n    child = ...   # weighted impurity of the two sides\n    return round(impurity(parent, criterion) - child, 6)\n",
+        "solution": "from collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of labels; 0.0 if empty.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n\ndef split_gain(y_left, y_right, criterion=\"gini\"):\n    parent = list(y_left) + list(y_right)\n    n = len(parent)\n    child = (len(y_left) * impurity(y_left, criterion)\n             + len(y_right) * impurity(y_right, criterion)) / n\n    return round(impurity(parent, criterion) - child, 6)\n",
         "examples": [
           {
             "call": "split_gain([1] * 10 + [0] * 20, [1] * 10, 'gini')",
@@ -1278,9 +1221,9 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "prelude": "# The 12 loans: [leverage, interest cover], outcome 1 = default, 0 = repaid\nX12 = [[1.2, 5.0], [3.8, 2.2], [2.4, 2.5], [4.1, 4.5], [2.2, 1.2], [1.6, 4.0],\n       [5.0, 3.5], [2.8, 1.8], [3.2, 1.5], [2.0, 3.0], [4.4, 2.9], [2.6, 2.0]]\ny12 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0]\n\n# 40 loans from make_loans(4, 40), as lists: [leverage, cover]\nX40 = [[5.69, 5.69], [3.31, 6.28], [5.87, 1.93], [0.94, 3.95], [3.84, 3.21], \n       [2.57, 1.78], [4.91, 2.16], [1.46, 7.72], [5.29, 7.13], [3.49, 3.37], \n       [5.46, 6.05], [3.12, 0.81], [2.87, 7.36], [4.84, 4.53], [5.91, 6.65], \n       [2.53, 2.57], [5.83, 3.32], [5.61, 3.11], [1.48, 7.79], [3.85, 3.72], \n       [4.38, 4.25], [5.69, 7.67], [4.16, 7.27], [1.23, 3.46], [3.24, 2.81], \n       [3.21, 6.55], [3.25, 1.31], [5.77, 3.44], [2.42, 7.07], [1.73, 7.38], \n       [3.37, 2.25], [4.03, 1.09], [5.67, 6.41], [3.7, 5.16], [1.97, 2.28], \n       [5.61, 4.29], [3.2, 1.04], [4.22, 5.75], [3.12, 4.45], [1.69, 5.78]]\ny40 = [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0]\n\nfrom collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of a list of labels; 0.0 for an empty list.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n",
-        "starter": "def best_split(X, y):\n    \"\"\"(feature, threshold, gain) with the largest Gini gain;\n    (None, None, 0.0) when no split gains anything.\"\"\"\n    y = list(y)\n    best = (None, None, 0.0)\n    for f in range(len(X[0])):\n        col = [row[f] for row in X]\n        values = sorted(set(col))\n        for a, b in zip(values, values[1:]):\n            t = (a + b) / 2\n            ...\n    if best[0] is None:\n        return best\n    return (best[0], round(best[1], 6), round(best[2], 6))\n",
-        "solution": "def best_split(X, y):\n    \"\"\"(feature, threshold, gain) with the largest Gini gain;\n    (None, None, 0.0) when no split gains anything.\"\"\"\n    y = list(y)\n    best = (None, None, 0.0)\n    for f in range(len(X[0])):\n        col = [row[f] for row in X]\n        values = sorted(set(col))\n        for a, b in zip(values, values[1:]):\n            t = (a + b) / 2\n            left = [lab for v, lab in zip(col, y) if v <= t]\n            right = [lab for v, lab in zip(col, y) if v > t]\n            g = impurity(y) - (len(left) * impurity(left)\n                               + len(right) * impurity(right)) / len(y)\n            if g > best[2]:\n                best = (f, t, g)\n    if best[0] is None:\n        return best\n    return (best[0], round(best[1], 6), round(best[2], 6))\n",
+        "prelude": "# The 12 loans: [leverage, interest cover], outcome 1 = default, 0 = repaid\nX12 = [[1.2, 5.0], [3.8, 2.2], [2.4, 2.5], [4.1, 4.5], [2.2, 1.2], [1.6, 4.0],\n       [5.0, 3.5], [2.8, 1.8], [3.2, 1.5], [2.0, 3.0], [4.4, 2.9], [2.6, 2.0]]\ny12 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0]\n\n# 40 loans from make_loans(4, 40), as lists: [leverage, cover]\nX40 = [[5.69, 5.69], [3.31, 6.28], [5.87, 1.93], [0.94, 3.95], [3.84, 3.21], \n       [2.57, 1.78], [4.91, 2.16], [1.46, 7.72], [5.29, 7.13], [3.49, 3.37], \n       [5.46, 6.05], [3.12, 0.81], [2.87, 7.36], [4.84, 4.53], [5.91, 6.65], \n       [2.53, 2.57], [5.83, 3.32], [5.61, 3.11], [1.48, 7.79], [3.85, 3.72], \n       [4.38, 4.25], [5.69, 7.67], [4.16, 7.27], [1.23, 3.46], [3.24, 2.81], \n       [3.21, 6.55], [3.25, 1.31], [5.77, 3.44], [2.42, 7.07], [1.73, 7.38], \n       [3.37, 2.25], [4.03, 1.09], [5.67, 6.41], [3.7, 5.16], [1.97, 2.28], \n       [5.61, 4.29], [3.2, 1.04], [4.22, 5.75], [3.12, 4.45], [1.69, 5.78]]\ny40 = [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0]\n\nfrom collections import Counter\nfrom math import log2\n\ndef impurity(labels, criterion=\"gini\"):\n    \"\"\"Gini or entropy (bits) of labels; 0.0 if empty.\"\"\"\n    n = len(labels)\n    if n == 0:\n        return 0.0\n    ps = [c / n for c in Counter(labels).values()]\n    if criterion == \"gini\":\n        return 1 - sum(p * p for p in ps)\n    return -sum(p * log2(p) for p in ps)\n",
+        "starter": "def best_split(X, y):\n    \"\"\"Largest Gini gain as (feature, threshold, gain).\n    (None, None, 0.0) when no split gains anything.\"\"\"\n    y = list(y)\n    best = (None, None, 0.0)\n    for f in range(len(X[0])):\n        col = [row[f] for row in X]\n        values = sorted(set(col))\n        for a, b in zip(values, values[1:]):\n            t = (a + b) / 2\n            ...\n    if best[0] is None:\n        return best\n    return (best[0], round(best[1], 6), round(best[2], 6))\n",
+        "solution": "def best_split(X, y):\n    \"\"\"Largest Gini gain as (feature, threshold, gain).\n    (None, None, 0.0) when no split gains anything.\"\"\"\n    y = list(y)\n    best = (None, None, 0.0)\n    for f in range(len(X[0])):\n        col = [row[f] for row in X]\n        values = sorted(set(col))\n        for a, b in zip(values, values[1:]):\n            t = (a + b) / 2\n            left = [lab for v, lab in zip(col, y) if v <= t]\n            right = [lab for v, lab in zip(col, y) if v > t]\n            g = impurity(y) - (len(left) * impurity(left)\n                               + len(right) * impurity(right)) / len(y)\n            if g > best[2]:\n                best = (f, t, g)\n    if best[0] is None:\n        return best\n    return (best[0], round(best[1], 6), round(best[2], 6))\n",
         "examples": [
           {
             "call": "best_split(X12, y12)",

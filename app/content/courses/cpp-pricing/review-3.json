@@ -1,0 +1,394 @@
+{
+  "id": "review-3",
+  "course": "cpp-pricing",
+  "level": 3,
+  "items": [
+    {
+      "id": "r-batch",
+      "difficulty": 2,
+      "skills": [
+        "cx-perf"
+      ],
+      "prose": "The clock in this app ticks every 100 µs. A Monte Carlo pricer takes about 50 µs per call.",
+      "question": "How many calls must one timed batch hold for the tick to be at most 1% of the batch time?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 200,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "accept": "200: the batch must last 10,000 µs.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "hundred",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "10,000 µs / 50 µs = 200 calls.",
+        "generic": "Not quite right. First find how long the batch must last.",
+        "byKey": {
+          "two": "Two calls last 100 µs, one tick: the error can be 100%.",
+          "hundred": "You divided 10,000 by the tick. Divide by the time per call, 50 µs."
+        }
+      },
+      "explain": {
+        "text": "One tick is 1% of $100 / 0.01 = 10{,}000$ µs, and $10{,}000 / 50 = 200$ calls. Time the batch, then divide by 200."
+      }
+    },
+    {
+      "id": "r-zero",
+      "difficulty": 3,
+      "skills": [
+        "cx-perf"
+      ],
+      "prose": "```cpp\nauto us = time_us([] {\n    for (int i = 0; i < 1000000; ++i)\n        bs_call(100, 100, 0.05, 0.2, 1);\n});\n```\nIt prints `0 us` for a million Black-Scholes calls.",
+      "question": "What is the most likely reason?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "dce",
+            "text": "The results are unused, so the optimiser removed the calls",
+            "correct": true
+          },
+          {
+            "id": "tick",
+            "text": "The 100 µs tick rounds a long run down to 0",
+            "why": "A million calls take tens of milliseconds, hundreds of ticks. The tick cannot hide that."
+          },
+          {
+            "id": "fast",
+            "text": "C++ really prices a million calls in under a microsecond",
+            "why": "Each call evaluates `log`, `exp` and two `erfc`s: tens of nanoseconds at least, so tens of milliseconds in all."
+          },
+          {
+            "id": "warm",
+            "text": "The first call was a warm-up and was not counted",
+            "why": "Nothing here skips any calls; `time_us` times the whole lambda."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Keep the results alive: add them to a sink you print.",
+        "generic": "Not quite right. What happens to each call's result?"
+      },
+      "explain": {
+        "text": "`bs_call` has no side effects, so unused results let the optimiser delete the whole loop. Write `sum += bs_call(...)` and print `sum` after timing."
+      }
+    },
+    {
+      "id": "r-quad",
+      "difficulty": 2,
+      "skills": [
+        "cx-perf",
+        "cx-pricers"
+      ],
+      "prose": "Level 2's tree takes 180 µs at $n = 300$.",
+      "question": "About how long does it take at $n = 600$, in µs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 720,
+        "tol": {
+          "rel": 0.15
+        },
+        "unit": "µs",
+        "accept": "About 720 µs: four times 180.",
+        "wrong": [
+          {
+            "id": "lin",
+            "value": 360,
+            "tol": {
+              "rel": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Doubling $n$ quadruples the work.",
+        "generic": "Not quite right. The tree does about $n^2/2$ updates.",
+        "byKey": {
+          "lin": "You doubled the time. The work grows as $n^2$, so doubling $n$ multiplies it by 4."
+        }
+      },
+      "explain": {
+        "text": "$T(600)/T(300) \\approx (600/300)^2 = 4$, so about 720 µs."
+      }
+    },
+    {
+      "id": "r-index",
+      "difficulty": 2,
+      "skills": [
+        "cx-perf"
+      ],
+      "prose": "A flat lattice for $n = 100$ stores node $(i, j)$ at `v[i * (n + 1) + j]`.",
+      "question": "At which index is node $(10, 4)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1014,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1,014 = 10 × 101 + 4.",
+        "wrong": [
+          {
+            "id": "n",
+            "value": 1004,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "swap",
+            "value": 414,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "10 × 101 + 4.",
+        "generic": "Not quite right. Each row holds $n + 1 = 101$ places.",
+        "byKey": {
+          "n": "You used rows of 100. A row holds $n + 1 = 101$ nodes.",
+          "swap": "You swapped $i$ and $j$: 4 × 101 + 10."
+        }
+      },
+      "explain": {
+        "text": "Row 10 starts at $10 \\times 101 = 1{,}010$, and node $j = 4$ is four places further: 1,014."
+      }
+    },
+    {
+      "id": "r-loops",
+      "difficulty": 3,
+      "skills": [
+        "cx-perf"
+      ],
+      "prose": "```cpp\nfor (int j = 0; j < cols; ++j)\n    for (int i = 0; i < rows; ++i)\n        total += m[i * cols + j];\n```\n`m` is a 4,000 by 4,000 row-major matrix.",
+      "question": "What is the fastest correct change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "swap",
+            "text": "Swap the two loops, keeping the index `i * cols + j`",
+            "correct": true
+          },
+          {
+            "id": "res",
+            "text": "Call `m.reserve(rows * cols)` before the loops",
+            "why": "`reserve` only sets aside room for future `push_back`s. It does not change the order the loops read memory."
+          },
+          {
+            "id": "vov",
+            "text": "Copy `m` into a `std::vector<std::vector<double>>` first",
+            "why": "Rows in separate blocks do not help a column walk, and the copy costs more than the sum."
+          },
+          {
+            "id": "o3",
+            "text": "Build with `-O3`",
+            "why": "On the desk run, `-O3` left the column walk about 7 times slower than row by row. The access pattern is the problem."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Last index innermost: sequential access.",
+        "generic": "Not quite right. Which loop order reads memory in order?"
+      },
+      "explain": {
+        "text": "With `i` outside and `j` inside, the inner loop reads consecutive doubles, eight per cache line. The sum is the same; the walk is several times faster."
+      }
+    },
+    {
+      "id": "r-ndebug",
+      "difficulty": 3,
+      "skills": [
+        "cx-perf",
+        "cx-testing"
+      ],
+      "prose": "```cpp\nint trades = 0;\nassert(++trades == 1);\nstd::printf(\"%d\\n\", trades);\n```",
+      "question": "What does a build with `-DNDEBUG` print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "That is the debug build. With `NDEBUG` the whole assert, `++trades` included, is removed."
+          },
+          {
+            "id": "abort",
+            "text": "Nothing: the assert fails and stops the program",
+            "why": "Under `NDEBUG` the assert is not evaluated at all, so it cannot fail."
+          },
+          {
+            "id": "err",
+            "text": "It does not compile",
+            "why": "`assert` with `NDEBUG` expands to an empty statement, which compiles."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The side effect vanished with the assert.",
+        "generic": "Not quite right. What does `assert(x)` become under `NDEBUG`?"
+      },
+      "explain": {
+        "text": "With `NDEBUG`, `assert(++trades == 1)` expands to nothing, so `trades` stays 0. Do the work outside: `++trades; assert(trades == 1);`."
+      }
+    },
+    {
+      "id": "r-fastmath",
+      "difficulty": 3,
+      "skills": [
+        "cx-perf"
+      ],
+      "prose": "After adding `-ffast-math`, the desk's nightly P&L total moves in the 12th significant figure and a NaN check on input volatilities stops firing.",
+      "question": "What should the desk do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "drop",
+            "text": "Remove `-ffast-math`: it reorders sums and lets the compiler assume NaN never appears",
+            "correct": true
+          },
+          {
+            "id": "tol",
+            "text": "Keep it and loosen every test's tolerance",
+            "why": "Loosening tolerances hides real bugs too, and it does not bring back the deleted NaN check."
+          },
+          {
+            "id": "o0",
+            "text": "Build at `-O0` with `-ffast-math`",
+            "why": "That is slow and still breaks IEEE rules. The flag is the cause."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: the 12th digit does not matter",
+            "why": "The missing NaN check matters: bad inputs now get priced."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Pricing code keeps IEEE semantics.",
+        "generic": "Not quite right. Which flag changed both behaviours?"
+      },
+      "explain": {
+        "text": "`-ffast-math` allows reassociation and assumes no NaN or infinity, so sums change and `std::isnan` can be folded to `false`. Use `-O2` without it."
+      }
+    },
+    {
+      "id": "r-indep",
+      "difficulty": 3,
+      "skills": [
+        "cx-testing"
+      ],
+      "prose": "You must test a new `bs_put`. `bs_call` is already trusted.",
+      "question": "Which test can catch a wrong `norm_cdf(d2)` inside `bs_put`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "par",
+            "text": "Parity: `bs_call - bs_put` against `S - K e^{-rT}` within 1e-9",
+            "correct": true
+          },
+          {
+            "id": "circ",
+            "text": "Compare `bs_put` with the put formula written out again in the test",
+            "why": "If the test copies the formula, it copies the mistake, and both sides agree."
+          },
+          {
+            "id": "pos",
+            "text": "Check that `bs_put` is positive",
+            "why": "The wrong put is 16.92, positive too. The check cannot fail on this bug."
+          },
+          {
+            "id": "eq",
+            "text": "Check `bs_put(...) == 5.5735` with `==`",
+            "why": "The correct put is 5.57352602..., so `==` fails on the right answer as well."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Parity uses the trusted call as an independent reference.",
+        "generic": "Not quite right. Which test does not reuse the code under test?"
+      },
+      "explain": {
+        "text": "Parity holds in any arbitrage-free model, and `bs_call` is trusted, so a wrong put breaks it. The wrong put gives 16.92, far from 5.57."
+      }
+    },
+    {
+      "id": "r-tol",
+      "difficulty": 4,
+      "skills": [
+        "cx-testing",
+        "cx-pricers"
+      ],
+      "prose": "At $n = 512$ the correct tree is 0.004 from Black-Scholes. A tree that stops at 64 steps is 0.031 away.",
+      "question": "Which tolerance should the convergence test use?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "t01",
+            "text": "0.01",
+            "correct": true
+          },
+          {
+            "id": "t05",
+            "text": "0.05",
+            "why": "That passes the tree stuck at 64 steps, 0.031 away, so the test cannot catch that bug."
+          },
+          {
+            "id": "t001",
+            "text": "0.001",
+            "why": "The correct tree is 0.004 away, so this fails the right answer."
+          },
+          {
+            "id": "t0",
+            "text": "`==`, no tolerance",
+            "why": "A tree never equals Black-Scholes exactly at finite $n$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Above the true error, below the bug's error.",
+        "generic": "Not quite right. The tolerance must sit between 0.004 and 0.031."
+      },
+      "explain": {
+        "text": "A tolerance must pass the known error, 0.004, and fail plausible bugs, 0.031. 0.01 sits between with room on both sides."
+      }
+    }
+  ]
+}

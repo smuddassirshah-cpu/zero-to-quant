@@ -1,0 +1,2364 @@
+{
+  "id": "l5-shuffling-lies",
+  "course": "validation",
+  "title": "Why shuffling a time series lies",
+  "minutes": 14,
+  "objectives": [
+    "See how random folds let a model peek at the future",
+    "Measure autocorrelation and say when rows are not exchangeable",
+    "Count the test days that have a later day in training"
+  ],
+  "skills": [
+    "vl-time",
+    "vl-cv",
+    "vl-leakage"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Fifteen days of a share's volatility, split into five folds at random, as `KFold(5, shuffle=True)` does. Each cell shows its day's fold. Fold 3 is the test fold, shaded.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 15,
+          "colLabel": "Day (the number in each cell is its fold)",
+          "rowHeads": false,
+          "colHeads": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15"
+          ],
+          "cells": [
+            [
+              "5",
+              "1",
+              "3",
+              "4",
+              "2",
+              "5",
+              "1",
+              "4",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "3",
+              "2"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "test": {
+              "ids": [
+                "r1c3",
+                "r1c11",
+                "r1c14"
+              ],
+              "colour": 4
+            }
+          },
+          "caption": "Test fold 3: days 3, 11 and 14"
+        }
+      },
+      "question": "Tap every training day that sits right next to a test day.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c2",
+          "r1c4",
+          "r1c10",
+          "r1c12",
+          "r1c13",
+          "r1c15"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "left-only",
+            "set": [
+              "r1c2",
+              "r1c10",
+              "r1c13"
+            ]
+          },
+          {
+            "id": "right-only",
+            "set": [
+              "r1c4",
+              "r1c12",
+              "r1c15"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look either side of each shaded day."
+        },
+        {
+          "rung": "point",
+          "text": "Day 3 has days 2 and 4 beside it. Both are in other folds.",
+          "highlight": [
+            "r1c3",
+            "r1c11",
+            "r1c14"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Days 2 and 4 sit by day 3, days 10 and 12 by day 11, days 13 and 15 by day 14."
+        }
+      ],
+      "feedback": {
+        "correct": "Six training days touch the test fold, two for each test day.",
+        "generic": "Not quite right. For each shaded day, tap the day before and the day after.",
+        "byKey": {
+          "left-only": "You tapped only the day before each test day. The day after is in training too.",
+          "right-only": "You tapped only the day after each test day. The day before is in training too.",
+          "r1c3": "Day 3 is a test day itself. Tap the training days beside it.",
+          "r1c11": "Day 11 is a test day itself. Tap the training days beside it.",
+          "r1c14": "Day 14 is a test day itself. Tap the training days beside it."
+        }
+      },
+      "explain": {
+        "text": "Every test day has a training day on both sides. The model is tested on day 11 after training on days 10 and 12. Volatility barely moves in a day, so those two days nearly give the answer away.",
+        "canvas": {
+          "shade": {
+            "test": {
+              "ids": [
+                "r1c3",
+                "r1c11",
+                "r1c14"
+              ],
+              "colour": 4
+            },
+            "train": {
+              "ids": [
+                "r1c2",
+                "r1c4",
+                "r1c10",
+                "r1c12",
+                "r1c13",
+                "r1c15"
+              ],
+              "colour": 2
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Slide through the five folds. Each time one fold is the test fold and the other four train the model. The caption counts the test days that are sandwiched between training days.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 15,
+          "colLabel": "Day (the number in each cell is its fold)",
+          "rowHeads": false,
+          "colHeads": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15"
+          ],
+          "cells": [
+            [
+              "5",
+              "1",
+              "3",
+              "4",
+              "2",
+              "5",
+              "1",
+              "4",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "3",
+              "2"
+            ]
+          ]
+        },
+        "state": {
+          "params": {
+            "fold": 3
+          },
+          "shade": {
+            "test": {
+              "ids": [
+                "r1c3",
+                "r1c11",
+                "r1c14"
+              ],
+              "colour": 4
+            }
+          }
+        },
+        "derive": {
+          "shade.test.ids": "fold < 1.5 ? ['r1c2', 'r1c7', 'r1c9'] : fold < 2.5 ? ['r1c5', 'r1c10', 'r1c15'] : fold < 3.5 ? ['r1c3', 'r1c11', 'r1c14'] : fold < 4.5 ? ['r1c4', 'r1c8', 'r1c12'] : ['r1c1', 'r1c6', 'r1c13']",
+          "caption": "Fold {{fold}} is the test fold: {{fold < 1.5 ? 3 : fold < 2.5 ? 2 : fold < 3.5 ? 3 : fold < 4.5 ? 3 : 2}} of its 3 days have a training day on both sides"
+        },
+        "controls": [
+          {
+            "bind": "fold",
+            "min": 1,
+            "max": 5,
+            "step": 1,
+            "start": 3,
+            "label": "Test fold"
+          }
+        ]
+      },
+      "question": "Over all five folds, how many of the 15 test days have a training day on both sides?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "13: every day except day 1 and day 15, which sit at the ends.",
+        "label": "Sandwiched test days",
+        "unit": "days",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-fold",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the caption for each of the five folds and add the counts."
+        },
+        {
+          "rung": "point",
+          "text": "Folds 2 and 5 hold the two end days, which have only one neighbour.",
+          "highlight": [
+            "r1c1",
+            "r1c15"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "13 of 15. Only the two end days escape.",
+        "generic": "Not quite right. Add the caption's count over the five folds: 3, 2, 3, 3 and 2.",
+        "byKey": {
+          "all": "Day 1 has no day before it and day 15 none after. Those two have one neighbour each.",
+          "one-fold": "That is one fold. Add the counts for all five."
+        }
+      },
+      "explain": {
+        "text": "You found 13 of 15 test days sandwiched between training days. With 1,000 days the share is nearly all of them. A shuffled fold is mostly days whose yesterday and tomorrow were in training.",
+        "canvas": {
+          "highlight": [
+            "r1c1",
+            "r1c15"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Now the full data: 1,000 days of the same share (seed 7). A 5-nearest-neighbour model predicts tomorrow's volatility from its 5-, 20- and 60-day averages. We score it twice: shuffled 5-fold CV, and a fit on the first 800 days tested on the last 200.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "shuf",
+              "label": "Shuffled 5-fold CV",
+              "colour": 2
+            },
+            {
+              "id": "ord",
+              "label": "Last 200 days",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMax": 8,
+          "yMin": 0,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "shuf": 3.3135,
+            "ord": 7.2578
+          },
+          "caption": "Same model, same data, two scores"
+        }
+      },
+      "question": "How many times larger is the time-ordered error than the shuffled one? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.19,
+        "tol": {
+          "abs": 0.02
+        },
+        "accept": "2.19: 7.2578 / 3.3135.",
+        "label": "Ratio of errors",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.46,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "difference",
+            "value": 3.94,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the larger bar by the smaller."
+        },
+        {
+          "rung": "point",
+          "text": "The bars read 7.26 and 3.31.",
+          "highlight": [
+            "xord",
+            "xshuf"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "7.2578 / 3.3135 is about 2.19."
+        }
+      ],
+      "feedback": {
+        "correct": "The honest error is more than twice the shuffled one.",
+        "generic": "Not quite right. Divide the time-ordered error by the shuffled error.",
+        "byKey": {
+          "inverted": "You divided the small bar by the large one. Put the time-ordered error on top.",
+          "difference": "That is the difference. The question asks how many times larger."
+        }
+      },
+      "explain": {
+        "text": "You found the shuffled score 2.19 times too kind. Information about the test days reached the model through their neighbours in training. That is **leakage**, and here it comes from shuffling alone.",
+        "canvas": {
+          "highlight": [
+            "xshuf"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Two facts about the runs. In shuffled CV, the closest training row to a test day (in the three features) is the day before or after 69% of the time. In the time-ordered split it is a median 272 days away, and the last 200 days are stormier: 22.4% on average against 15.2%.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "shuf",
+              "label": "Shuffled 5-fold CV",
+              "colour": 2
+            },
+            {
+              "id": "ord",
+              "label": "Last 200 days",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMax": 8,
+          "yMin": 0,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "shuf": 3.3135,
+            "ord": 7.2578
+          },
+          "caption": "The model finds its neighbours in feature space"
+        }
+      },
+      "question": "Why does the shuffled score look so good?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "copy",
+            "text": "The nearest rows to a test day are usually its own neighbours in time, and their volatility is almost the same",
+            "correct": true
+          },
+          {
+            "id": "better",
+            "text": "The model really is more accurate on randomly chosen days",
+            "why": "You took the score at face value. The model is the same; only the way we test it changed, and the shuffled test lets it copy neighbours."
+          },
+          {
+            "id": "more",
+            "text": "Shuffling gives the model more training rows",
+            "why": "Both runs train on 800 rows. The difference is which 800 rows, not how many."
+          },
+          {
+            "id": "luck",
+            "text": "The last 200 days are bad luck, so the time-ordered score is the unfair one",
+            "why": "You blamed the test period. Real trading always faces a new period; the shuffled test never does. Across 16 seeds the gap ranges from 1.2 to 3.4 times, always the same way."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows does a nearest-neighbour model average?"
+        },
+        {
+          "rung": "point",
+          "text": "It averages the 5 training rows whose features are closest.",
+          "highlight": [
+            "xshuf"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Moving averages change slowly, so the closest rows are usually yesterday and tomorrow, whose volatility is nearly the same."
+        }
+      ],
+      "feedback": {
+        "correct": "The model copies yesterday and tomorrow. In real time it never has tomorrow.",
+        "generic": "Not quite right. Think about which training rows sit closest to a test day in feature space."
+      },
+      "explain": {
+        "text": "A nearest-neighbour model averages the closest rows, and with smooth features those are the next-door days. Shuffled CV hands it tomorrow; the ordered split does not, and also meets a regime it barely saw. Both are what trading the model would really face."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Measure the stickiness",
+      "prose": "Why are neighbours so alike? Today's volatility is close to yesterday's. The **autocorrelation** at lag $k$ measures that: the correlation of the series with itself shifted $k$ days. The last 200 days, the time-ordered test, are shaded.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "vol",
+              "label": "Volatility",
+              "values": [
+                16.2,
+                16.5,
+                15.1,
+                13.7,
+                12.4,
+                13.1,
+                15.5,
+                16.3,
+                14.0,
+                13.9,
+                15.1,
+                13.7,
+                12.3,
+                12.6,
+                12.5,
+                13.9,
+                16.5,
+                12.4,
+                14.1,
+                16.3,
+                15.4,
+                14.7,
+                15.9,
+                15.9,
+                15.7,
+                12.9,
+                14.7,
+                13.7,
+                15.3,
+                16.8,
+                17.2,
+                18.2,
+                16.5,
+                19.1,
+                19.4,
+                19.9,
+                18.9,
+                17.8,
+                16.1,
+                15.1,
+                12.8,
+                13.6,
+                13.1,
+                15.6,
+                13.5,
+                13.8,
+                15.0,
+                16.5,
+                16.5,
+                15.4,
+                16.0,
+                16.0,
+                16.3,
+                15.6,
+                16.6,
+                16.8,
+                15.3,
+                13.1,
+                14.8,
+                14.5,
+                14.9,
+                16.9,
+                15.8,
+                12.2,
+                13.3,
+                14.4,
+                10.8,
+                11.5,
+                10.3,
+                11.8,
+                11.5,
+                13.0,
+                13.4,
+                11.9,
+                13.6,
+                14.5,
+                12.3,
+                13.6,
+                14.0,
+                12.4,
+                15.0,
+                13.3,
+                12.8,
+                14.5,
+                13.2,
+                11.6,
+                13.8,
+                13.9,
+                14.3,
+                11.6,
+                12.8,
+                12.9,
+                11.9,
+                13.2,
+                14.0,
+                12.2,
+                10.3,
+                12.8,
+                12.2,
+                10.9,
+                11.4,
+                12.1,
+                12.6,
+                12.8,
+                11.4,
+                10.5,
+                10.0,
+                11.6,
+                10.3,
+                11.5,
+                10.5,
+                14.1,
+                10.2,
+                12.3,
+                10.0,
+                8.9,
+                11.3,
+                11.1,
+                12.0,
+                11.2,
+                10.0,
+                9.8,
+                11.6,
+                11.6,
+                12.4,
+                11.6,
+                13.6,
+                14.9,
+                14.1,
+                12.0,
+                11.1,
+                11.9,
+                16.0,
+                13.6,
+                16.3,
+                16.5,
+                18.6,
+                18.8,
+                17.3,
+                18.8,
+                17.9,
+                18.8,
+                18.7,
+                20.0,
+                23.6,
+                21.7,
+                22.5,
+                19.6,
+                21.5,
+                21.1,
+                20.2,
+                21.8,
+                17.8,
+                18.4,
+                17.0,
+                18.3,
+                17.7,
+                15.0,
+                16.0,
+                15.5,
+                16.8,
+                14.7,
+                13.1,
+                12.1,
+                15.0,
+                15.9,
+                13.2,
+                12.5,
+                10.2,
+                12.0,
+                14.2,
+                11.6,
+                12.7,
+                12.5,
+                13.1,
+                14.2,
+                12.6,
+                13.7,
+                14.3,
+                13.6,
+                12.8,
+                13.7,
+                12.6,
+                12.2,
+                13.4,
+                13.9,
+                13.4,
+                11.4,
+                11.6,
+                8.4,
+                5.9,
+                5.3,
+                8.7,
+                9.2,
+                9.9,
+                5.7,
+                7.9,
+                9.9,
+                9.0,
+                9.1,
+                11.3,
+                10.3,
+                10.2,
+                10.5,
+                11.2,
+                11.9,
+                9.7,
+                11.4,
+                11.8,
+                11.8,
+                10.8,
+                10.9,
+                12.8,
+                12.0,
+                13.2,
+                14.8,
+                14.3,
+                10.2,
+                12.5,
+                13.6,
+                14.7,
+                9.9,
+                14.6,
+                10.9,
+                14.3,
+                15.1,
+                14.9,
+                15.7,
+                14.0,
+                15.5,
+                12.4,
+                12.3,
+                18.7,
+                17.6,
+                19.4,
+                16.9,
+                19.5,
+                19.4,
+                19.2,
+                17.7,
+                18.1,
+                19.7,
+                17.6,
+                17.6,
+                18.7,
+                19.3,
+                20.6,
+                20.7,
+                22.4,
+                20.6,
+                19.2,
+                21.4,
+                19.0,
+                19.2,
+                20.3,
+                18.2,
+                17.6,
+                16.4,
+                17.0,
+                19.5,
+                16.4,
+                18.0,
+                18.4,
+                17.9,
+                17.2,
+                20.1,
+                21.0,
+                18.2,
+                17.5,
+                21.0,
+                19.7,
+                20.6,
+                19.0,
+                19.4,
+                18.5,
+                16.2,
+                17.7,
+                15.6,
+                18.0,
+                18.6,
+                20.1,
+                19.8,
+                22.8,
+                22.9,
+                20.4,
+                19.6,
+                19.5,
+                22.7,
+                24.6,
+                22.7,
+                20.6,
+                21.9,
+                19.2,
+                22.0,
+                20.1,
+                18.2,
+                23.3,
+                22.2,
+                19.8,
+                20.9,
+                21.0,
+                23.2,
+                22.1,
+                22.9,
+                22.3,
+                22.4,
+                21.4,
+                18.8,
+                22.0,
+                19.6,
+                20.5,
+                16.6,
+                16.9,
+                18.8,
+                17.2,
+                21.0,
+                20.6,
+                18.8,
+                18.4,
+                18.2,
+                18.1,
+                18.2,
+                18.2,
+                15.9,
+                16.8,
+                19.1,
+                19.8,
+                20.4,
+                22.6,
+                20.7,
+                19.4,
+                18.9,
+                17.0,
+                15.5,
+                16.3,
+                16.8,
+                17.0,
+                19.2,
+                16.4,
+                15.9,
+                15.1,
+                18.4,
+                17.0,
+                19.3,
+                18.6,
+                18.1,
+                15.5,
+                17.4,
+                19.9,
+                14.1,
+                18.0,
+                19.2,
+                19.3,
+                19.3,
+                19.5,
+                16.5,
+                20.2,
+                18.7,
+                20.5,
+                19.9,
+                20.5,
+                19.1,
+                19.1,
+                18.2,
+                20.4,
+                20.7,
+                20.6,
+                18.4,
+                18.2,
+                18.4,
+                18.3,
+                15.7,
+                17.4,
+                19.4,
+                13.5,
+                15.2,
+                14.7,
+                15.2,
+                15.2,
+                12.8,
+                13.6,
+                14.1,
+                13.4,
+                12.8,
+                15.0,
+                13.7,
+                16.3,
+                13.6,
+                14.8,
+                13.3,
+                15.3,
+                15.2,
+                12.7,
+                14.3,
+                13.2,
+                14.0,
+                17.2,
+                13.6,
+                13.7,
+                14.7,
+                14.1,
+                14.6,
+                11.7,
+                10.6,
+                12.7,
+                12.6,
+                11.4,
+                9.9,
+                9.0,
+                9.5,
+                8.4,
+                10.5,
+                9.3,
+                7.6,
+                8.9,
+                9.4,
+                8.3,
+                5.9,
+                7.5,
+                8.2,
+                6.9,
+                7.5,
+                10.0,
+                9.0,
+                12.0,
+                12.0,
+                10.0,
+                8.6,
+                9.6,
+                9.1,
+                9.1,
+                9.5,
+                8.0,
+                6.6,
+                9.2,
+                6.3,
+                5.3,
+                6.3,
+                7.5,
+                6.5,
+                5.2,
+                5.3,
+                5.0,
+                6.8,
+                6.6,
+                8.3,
+                5.7,
+                5.1,
+                6.6,
+                4.8,
+                5.2,
+                7.0,
+                4.7,
+                5.0,
+                5.8,
+                8.2,
+                7.0,
+                8.5,
+                7.8,
+                7.8,
+                7.7,
+                7.2,
+                8.5,
+                6.5,
+                8.4,
+                8.8,
+                8.1,
+                9.1,
+                10.1,
+                8.0,
+                7.1,
+                7.3,
+                7.0,
+                8.4,
+                7.9,
+                6.5,
+                6.0,
+                7.0,
+                5.4,
+                4.3,
+                3.5,
+                4.1,
+                4.6,
+                7.2,
+                4.5,
+                3.7,
+                3.7,
+                3.9,
+                5.1,
+                3.8,
+                6.2,
+                4.8,
+                6.2,
+                4.9,
+                6.1,
+                2.7,
+                4.8,
+                5.4,
+                5.8,
+                4.5,
+                7.2,
+                5.9,
+                6.8,
+                7.6,
+                8.1,
+                7.5,
+                6.6,
+                8.3,
+                10.8,
+                11.1,
+                9.2,
+                10.1,
+                9.9,
+                8.3,
+                10.2,
+                6.7,
+                8.2,
+                7.1,
+                7.4,
+                8.5,
+                6.8,
+                8.5,
+                10.7,
+                11.7,
+                11.7,
+                10.4,
+                10.5,
+                8.9,
+                12.1,
+                10.4,
+                12.3,
+                12.0,
+                11.3,
+                12.0,
+                13.1,
+                15.2,
+                16.3,
+                16.1,
+                15.0,
+                14.3,
+                12.6,
+                14.7,
+                12.2,
+                15.9,
+                12.6,
+                12.1,
+                12.8,
+                12.7,
+                10.0,
+                10.6,
+                10.7,
+                12.4,
+                12.0,
+                10.8,
+                13.3,
+                9.4,
+                9.4,
+                9.2,
+                10.7,
+                13.6,
+                12.8,
+                15.2,
+                15.3,
+                16.2,
+                13.2,
+                15.4,
+                17.1,
+                17.7,
+                18.5,
+                16.0,
+                19.3,
+                19.3,
+                20.8,
+                19.6,
+                21.1,
+                20.0,
+                20.8,
+                19.9,
+                21.2,
+                22.5,
+                18.5,
+                19.0,
+                18.8,
+                16.5,
+                19.8,
+                20.9,
+                19.0,
+                17.5,
+                21.4,
+                21.1,
+                21.9,
+                21.3,
+                18.4,
+                19.4,
+                17.4,
+                18.1,
+                20.8,
+                18.2,
+                21.3,
+                18.7,
+                18.9,
+                19.8,
+                20.3,
+                20.3,
+                20.8,
+                24.4,
+                25.3,
+                23.6,
+                24.8,
+                26.3,
+                24.4,
+                23.2,
+                24.3,
+                23.0,
+                22.3,
+                20.6,
+                22.3,
+                21.1,
+                18.7,
+                20.9,
+                22.0,
+                21.2,
+                22.2,
+                19.7,
+                19.0,
+                19.8,
+                19.0,
+                17.9,
+                20.3,
+                18.2,
+                18.4,
+                18.1,
+                16.5,
+                15.7,
+                16.2,
+                19.5,
+                17.8,
+                20.8,
+                19.6,
+                21.7,
+                23.2,
+                22.0,
+                21.7,
+                25.5,
+                23.4,
+                23.9,
+                25.7,
+                28.5,
+                27.1,
+                29.1,
+                25.2,
+                27.5,
+                25.3,
+                26.0,
+                28.9,
+                26.8,
+                24.8,
+                27.2,
+                24.5,
+                22.9,
+                23.7,
+                21.4,
+                21.4,
+                22.7,
+                21.1,
+                22.1,
+                24.9,
+                24.6,
+                21.7,
+                22.3,
+                18.5,
+                19.6,
+                19.7,
+                17.8,
+                18.8,
+                15.8,
+                17.9,
+                17.1,
+                16.4,
+                15.6,
+                15.4,
+                16.4,
+                13.4,
+                14.5,
+                17.5,
+                19.5,
+                21.4,
+                20.2,
+                18.8,
+                22.3,
+                21.5,
+                22.2,
+                20.8,
+                22.1,
+                21.3,
+                21.1,
+                19.8,
+                19.3,
+                21.4,
+                21.3,
+                21.8,
+                20.8,
+                23.8,
+                20.8,
+                21.6,
+                21.5,
+                21.6,
+                23.9,
+                23.1,
+                21.4,
+                22.0,
+                21.8,
+                25.7,
+                21.7,
+                21.8,
+                19.3,
+                21.3,
+                22.2,
+                24.7,
+                20.6,
+                22.6,
+                22.0,
+                19.9,
+                21.5,
+                20.3,
+                16.1,
+                18.7,
+                17.2,
+                15.6,
+                15.2,
+                18.4,
+                18.8,
+                19.4,
+                18.3,
+                15.7,
+                16.1,
+                14.0,
+                14.7,
+                14.1,
+                12.4,
+                14.3,
+                13.4,
+                13.6,
+                13.7,
+                15.1,
+                14.0,
+                15.7,
+                16.6,
+                16.6,
+                17.5,
+                15.6,
+                18.1,
+                17.3,
+                16.7,
+                14.9,
+                18.9,
+                17.2,
+                15.6,
+                14.4,
+                14.2,
+                15.4,
+                13.3,
+                15.7,
+                12.2,
+                14.4,
+                12.2,
+                15.1,
+                14.0,
+                17.0,
+                17.0,
+                17.0,
+                13.9,
+                15.5,
+                13.4,
+                14.5,
+                14.4,
+                13.3,
+                12.1,
+                12.1,
+                9.8,
+                9.8,
+                10.6,
+                7.5,
+                9.3,
+                7.5,
+                8.2,
+                7.8,
+                9.3,
+                8.6,
+                9.6,
+                9.9,
+                9.3,
+                8.8,
+                7.6,
+                8.0,
+                10.6,
+                11.7,
+                10.9,
+                13.2,
+                13.0,
+                10.6,
+                13.6,
+                16.8,
+                16.3,
+                14.1,
+                14.1,
+                16.0,
+                15.7,
+                12.9,
+                14.4,
+                13.2,
+                13.5,
+                17.0,
+                15.8,
+                17.3,
+                17.0,
+                18.1,
+                19.1,
+                20.3,
+                19.7,
+                22.4,
+                23.0,
+                20.3,
+                21.3,
+                22.4,
+                22.9,
+                23.8,
+                23.6,
+                21.3,
+                21.9,
+                20.5,
+                20.9,
+                20.7,
+                24.2,
+                20.6,
+                18.1,
+                20.2,
+                19.9,
+                18.7,
+                18.0,
+                19.7,
+                22.7,
+                24.2,
+                23.2,
+                25.5,
+                24.2,
+                24.2,
+                24.8,
+                24.0,
+                26.4,
+                23.9,
+                26.8,
+                27.6,
+                25.7,
+                26.5,
+                25.7,
+                28.1,
+                28.2,
+                26.7,
+                22.4,
+                23.9,
+                26.6,
+                27.3,
+                25.9,
+                27.8,
+                25.3,
+                24.9,
+                24.8,
+                26.3,
+                22.9,
+                26.4,
+                26.1,
+                22.4,
+                23.4,
+                24.9,
+                22.5,
+                20.4,
+                24.4,
+                24.9,
+                23.7,
+                26.6,
+                25.3,
+                23.7,
+                24.8,
+                23.5,
+                23.2,
+                23.7,
+                22.8,
+                22.9,
+                24.4,
+                23.1,
+                24.1,
+                24.0,
+                24.7,
+                26.8,
+                25.8,
+                29.8,
+                26.1,
+                27.4,
+                25.8,
+                28.6,
+                31.0,
+                29.7,
+                26.5,
+                27.7,
+                27.9,
+                28.1,
+                27.4,
+                29.0,
+                27.6,
+                29.2,
+                30.0,
+                26.8,
+                27.0,
+                25.4,
+                29.5,
+                25.9,
+                27.8,
+                27.0,
+                25.0,
+                23.2,
+                23.8,
+                24.4,
+                22.2,
+                23.8,
+                24.9,
+                25.1,
+                26.7,
+                24.0,
+                25.6,
+                24.7,
+                27.6,
+                24.4,
+                22.7,
+                24.8,
+                23.7,
+                26.8,
+                24.0,
+                24.7,
+                24.4,
+                25.7,
+                24.3,
+                24.9,
+                26.3,
+                25.8,
+                27.8,
+                28.6,
+                26.8,
+                28.4,
+                26.1,
+                28.5,
+                28.2,
+                26.7,
+                24.1,
+                24.3,
+                22.7,
+                23.3,
+                22.1,
+                22.1,
+                20.3,
+                21.3,
+                18.1,
+                18.6,
+                17.0,
+                14.5,
+                15.2,
+                16.4,
+                11.9,
+                15.6,
+                12.8,
+                15.7,
+                16.9,
+                14.0,
+                15.2,
+                16.8,
+                17.6,
+                18.1,
+                17.8,
+                16.2,
+                18.6,
+                16.9,
+                18.2,
+                20.8,
+                18.4,
+                16.5,
+                17.7,
+                17.6,
+                17.2,
+                18.2,
+                14.5,
+                16.4,
+                19.1,
+                20.2,
+                19.0,
+                19.2,
+                17.8,
+                19.3,
+                18.2,
+                18.8,
+                16.0
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Day",
+          "yLabel": "Volatility (% a year)",
+          "height": 240
+        },
+        "state": {
+          "shade": [
+            {
+              "id": "test",
+              "from": 800,
+              "to": 999,
+              "label": "last 200 days",
+              "tone": "neutral"
+            }
+          ]
+        }
+      },
+      "question": "Complete `autocorr(x, lag)`: the sum of products of deviations `lag` days apart, over the sum of squared deviations.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef _ma(v, w):\n    c = np.cumsum(np.insert(v, 0, 0.0))\n    out = np.full(len(v), np.nan)\n    out[w - 1:] = (c[w:] - c[:-w]) / w\n    return out\n\ndef make_vol(seed=7, n=1000, h=1, phi=0.98):\n    \"\"\"Daily volatility of a share, in % a year: a slow AR(1) level plus daily noise.\n    X: 5-, 20- and 60-day averages up to day t. y: mean volatility over days t+1 to t+h.\"\"\"\n    rng = np.random.default_rng(seed)\n    N = n + 100\n    e = rng.normal(0, 1, N)\n    m = np.empty(N)\n    m[0] = e[0]\n    for t in range(1, N):\n        m[t] = phi * m[t - 1] + 0.2 * e[t]\n    v = 20 + 5 * m + rng.normal(0, 1, N)\n    X = np.column_stack([_ma(v, w)[59:59 + n] for w in (5, 20, 60)])\n    y = np.array([v[t + 1:t + 1 + h].mean() for t in range(59, 59 + n)])\n    return X, y\n",
+        "starter": "import numpy as np\n\ndef autocorr(x, lag):\n    x = np.asarray(x, float)\n    d = x - x.mean()\n    ...\n",
+        "solution": "import numpy as np\n\ndef autocorr(x, lag):\n    x = np.asarray(x, float)\n    d = x - x.mean()\n    return float((d[:-lag] * d[lag:]).sum() / (d * d).sum())\n",
+        "examples": [
+          {
+            "call": "round(autocorr([1, 2, 3, 4, 5], 1), 6)",
+            "expect": "0.4",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(autocorr([1, 2, 3, 4, 5], 1), 6)",
+            "expect": "0.4",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(autocorr([1, -1, 1, -1, 1, -1], 1), 6)",
+            "expect": "-0.833333",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(autocorr([1, -1, 1, -1, 1, -1], 2), 6)",
+            "expect": "0.666667",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7)",
+            "call": "round(autocorr(y, 1), 4)",
+            "expect": "0.9523",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7)",
+            "call": "round(autocorr(y, 20), 4)",
+            "expect": "0.7028",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7, phi=0.0)",
+            "call": "round(autocorr(y, 1), 4)",
+            "expect": "-0.0041",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: three tiny lists and three on `make_vol(seed)`, already defined, which returns `(X, y)`. Each result is compared with math.isclose. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Pair each deviation with the one `lag` days later."
+        },
+        {
+          "rung": "point",
+          "text": "`d[:-lag]` and `d[lag:]` line up day $t$ with day $t + k$.",
+          "highlight": [
+            "vol"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return float((d[:-lag] * d[lag:]).sum() / (d * d).sum())`."
+        }
+      ],
+      "feedback": {
+        "correct": "Lag 1 gives 0.95: tomorrow's volatility is nearly today's.",
+        "generic": "Some tests failed. For `[1, 2, 3, 4, 5]` at lag 1 the answer is 0.4.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the slices have the same length."
+        }
+      },
+      "explain": {
+        "text": "Your function gives 0.95 at lag 1 and 0.70 at lag 20: the series stays near where it was for weeks. That is why a shuffled fold's neighbours are almost copies of it.\n\n```python\nreturn float((d[:-lag] * d[lag:]).sum() / (d * d).sum())\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "No memory, no lie",
+      "prose": "An edge case. We rebuild the series with no stickiness at all: each day's level is a fresh draw (`phi=0.0`), so the lag-1 autocorrelation is -0.004. Same model, same two scores.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "shuf",
+              "label": "Shuffled 5-fold CV",
+              "colour": 2
+            },
+            {
+              "id": "ord",
+              "label": "Last 200 days",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMax": 8,
+          "yMin": 0,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "shuf": 2.5595,
+            "ord": 2.6159
+          },
+          "caption": "A series with no autocorrelation"
+        }
+      },
+      "question": "What happened to the gap between the two scores?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gone",
+            "text": "It almost vanished: neighbouring days carry no extra information, so shuffling is harmless",
+            "correct": true
+          },
+          {
+            "id": "bigger",
+            "text": "It grew, because shuffling always inflates a score",
+            "why": "You assumed shuffling is always wrong. The bars are 2.56 and 2.62, nearly equal."
+          },
+          {
+            "id": "model",
+            "text": "It vanished because the model got better",
+            "why": "The errors went down because the series is easier, not because the model improved. Compare the two bars, not this run with the last."
+          },
+          {
+            "id": "folds",
+            "text": "It vanished because there are fewer folds",
+            "why": "Both runs use 5 folds. Only the series changed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two bars with each other."
+        },
+        {
+          "rung": "point",
+          "text": "2.56 against 2.62.",
+          "highlight": [
+            "xshuf",
+            "xord"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With no autocorrelation, yesterday says nothing about today, so copying it gains nothing."
+        }
+      ],
+      "feedback": {
+        "correct": "With no memory in the series, a neighbour is no better than any other day.",
+        "generic": "Not quite right. Read the two bars: are they close or far apart?"
+      },
+      "explain": {
+        "text": "You saw 2.56 against 2.62, a gap of about 2%. Shuffling lies only when neighbouring rows share information. Rows that do not are **exchangeable**, and then shuffled folds are fair."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Both scores in code",
+      "prose": "Write the experiment yourself. `cross_val_score` returns negative MSEs for `scoring=\"neg_mean_squared_error\"`, so flip the sign. The time-ordered score fits on the first 80% of rows and tests on the rest.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "shuf",
+              "label": "Shuffled 5-fold CV",
+              "colour": 2
+            },
+            {
+              "id": "ord",
+              "label": "Last 200 days",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMax": 8,
+          "yMin": 0,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "shuf": 3.3135,
+            "ord": 7.2578
+          },
+          "caption": "Your function should return these two numbers for seed 0"
+        }
+      },
+      "question": "Complete `shuffled_vs_ordered(X, y, seed)` so it returns `(shuffled_cv_mse, ordered_test_mse)`, each rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef _ma(v, w):\n    c = np.cumsum(np.insert(v, 0, 0.0))\n    out = np.full(len(v), np.nan)\n    out[w - 1:] = (c[w:] - c[:-w]) / w\n    return out\n\ndef make_vol(seed=7, n=1000, h=1, phi=0.98):\n    \"\"\"Daily volatility of a share, in % a year: a slow AR(1) level plus daily noise.\n    X: 5-, 20- and 60-day averages up to day t. y: mean volatility over days t+1 to t+h.\"\"\"\n    rng = np.random.default_rng(seed)\n    N = n + 100\n    e = rng.normal(0, 1, N)\n    m = np.empty(N)\n    m[0] = e[0]\n    for t in range(1, N):\n        m[t] = phi * m[t - 1] + 0.2 * e[t]\n    v = 20 + 5 * m + rng.normal(0, 1, N)\n    X = np.column_stack([_ma(v, w)[59:59 + n] for w in (5, 20, 60)])\n    y = np.array([v[t + 1:t + 1 + h].mean() for t in range(59, 59 + n)])\n    return X, y\n",
+        "starter": "from sklearn.model_selection import KFold, cross_val_score\nfrom sklearn.neighbors import KNeighborsRegressor\n\ndef shuffled_vs_ordered(X, y, seed):\n    model = KNeighborsRegressor(n_neighbors=5)\n    cv = KFold(n_splits=5, shuffle=True, random_state=seed)\n    shuffled = ...   # mean MSE over the five shuffled folds\n    cut = int(len(y) * 0.8)\n    ordered = ...    # fit on rows before cut, MSE on rows from cut on\n    return round(float(shuffled), 4), round(float(ordered), 4)\n",
+        "solution": "from sklearn.model_selection import KFold, cross_val_score\nfrom sklearn.neighbors import KNeighborsRegressor\n\ndef shuffled_vs_ordered(X, y, seed):\n    model = KNeighborsRegressor(n_neighbors=5)\n    cv = KFold(n_splits=5, shuffle=True, random_state=seed)\n    scores = cross_val_score(model, X, y, cv=cv,\n                             scoring=\"neg_mean_squared_error\")\n    shuffled = -scores.mean()\n    cut = int(len(y) * 0.8)\n    model.fit(X[:cut], y[:cut])\n    ordered = ((model.predict(X[cut:]) - y[cut:]) ** 2).mean()\n    return round(float(shuffled), 4), round(float(ordered), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_vol(7)",
+            "call": "list(shuffled_vs_ordered(X, y, 0))",
+            "expect": "[3.3135, 7.2578]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_vol(7)",
+            "call": "list(shuffled_vs_ordered(X, y, 0))",
+            "expect": "[3.3135, 7.2578]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7)",
+            "call": "list(shuffled_vs_ordered(X, y, 1))",
+            "expect": "[3.1889, 7.2578]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7, phi=0.0)",
+            "call": "list(shuffled_vs_ordered(X, y, 0))",
+            "expect": "[2.5595, 2.6159]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(3)",
+            "call": "list(shuffled_vs_ordered(X, y, 0))",
+            "expect": "[3.4186, 5.1653]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(11, n=600)",
+            "call": "list(shuffled_vs_ordered(X, y, 2))",
+            "expect": "[3.402, 5.2629]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_vol(seed)`, already defined, with different seeds and shuffles. Each pair is compared with math.isclose against values from the solution run in this browser's scikit-learn 1.6.1. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`cross_val_score(model, X, y, cv=cv, scoring=\"neg_mean_squared_error\")` gives five negative numbers."
+        },
+        {
+          "rung": "point",
+          "text": "Shuffled: minus their mean. Ordered: `model.fit(X[:cut], y[:cut])`, then score `X[cut:]`.",
+          "highlight": [
+            "xshuf",
+            "xord"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`ordered = ((model.predict(X[cut:]) - y[cut:]) ** 2).mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "For seed 0 you get (3.3135, 7.2578), the bars above.",
+        "generic": "Some tests failed. For `make_vol(7)` and seed 0 the answer is (3.3135, 7.2578).",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the `...` placeholders are all replaced."
+        }
+      },
+      "explain": {
+        "text": "Your two numbers are the two bars. Changing the shuffle seed moves the first a little (3.1889 with seed 1) and never closes the gap.\n\n```python\nshuffled = -cross_val_score(model, X, y, cv=cv,\n    scoring=\"neg_mean_squared_error\").mean()\n```"
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague says: \"scikit-learn's `KFold` does not shuffle by default, so it is fine for time series.\" Without shuffling the folds are blocks of consecutive days. Here fold 3 is the test block.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 15,
+          "colLabel": "Day (the number in each cell is its fold)",
+          "rowHeads": false,
+          "colHeads": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15"
+          ],
+          "cells": [
+            [
+              "1",
+              "1",
+              "1",
+              "2",
+              "2",
+              "2",
+              "3",
+              "3",
+              "3",
+              "4",
+              "4",
+              "4",
+              "5",
+              "5",
+              "5"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "test": {
+              "ids": [
+                "r1c7",
+                "r1c8",
+                "r1c9"
+              ],
+              "colour": 4
+            }
+          },
+          "caption": "KFold(5) without shuffling: blocks of three days"
+        }
+      },
+      "question": "How many training days come after the test block?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "6: days 10 to 15 are in folds 4 and 5, both in training.",
+        "label": "Later training days",
+        "unit": "days",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "before",
+            "value": 6.5,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "all",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which folds train the model when fold 3 is the test?"
+        },
+        {
+          "rung": "point",
+          "text": "Folds 4 and 5 are days 10 to 15.",
+          "highlight": [
+            "r1c10",
+            "r1c11",
+            "r1c12",
+            "r1c13",
+            "r1c14",
+            "r1c15"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count days 10 to 15: six days, all later than the test block."
+        }
+      ],
+      "feedback": {
+        "correct": "Six later days train the model. Blocks are better, but fold 3 still learns from the future.",
+        "generic": "Not quite right. Count the training days to the right of the shaded block.",
+        "byKey": {
+          "none": "You trusted the missing shuffle. The blocks are in order, but folds 4 and 5 still train the model that is tested on fold 3.",
+          "all": "12 counts every training day. Only those after day 9 are in the test block's future."
+        }
+      },
+      "explain": {
+        "text": "Unshuffled `KFold` on the 1,000 days scores 7.10 on average, close to the honest 7.26: blocks leak only at their edges. But every fold except the last still trains on later days. Only folds that never train on the future are honest.",
+        "canvas": {
+          "shade": {
+            "test": {
+              "ids": [
+                "r1c7",
+                "r1c8",
+                "r1c9"
+              ],
+              "colour": 4
+            },
+            "future": {
+              "ids": [
+                "r1c10",
+                "r1c11",
+                "r1c12",
+                "r1c13",
+                "r1c14",
+                "r1c15"
+              ],
+              "colour": 6
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Count the peeks",
+      "prose": "A quick audit for any split. A test day \"sees the future\" when some training day comes after it.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 1,
+          "cols": 15,
+          "colLabel": "Day (the number in each cell is its fold)",
+          "rowHeads": false,
+          "colHeads": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15"
+          ],
+          "cells": [
+            [
+              "1",
+              "1",
+              "1",
+              "2",
+              "2",
+              "2",
+              "3",
+              "3",
+              "3",
+              "4",
+              "4",
+              "4",
+              "5",
+              "5",
+              "5"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "test": {
+              "ids": [
+                "r1c7",
+                "r1c8",
+                "r1c9"
+              ],
+              "colour": 4
+            }
+          },
+          "caption": "Fold 3 of the blocked split: all 3 test days have a later training day"
+        }
+      },
+      "question": "Complete `future_in_train(train_idx, test_idx)`: the number of test days that have at least one later day in training.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def future_in_train(train_idx, test_idx):\n    \"\"\"How many test days have at least one later day in train?\"\"\"\n    ...\n",
+        "solution": "def future_in_train(train_idx, test_idx):\n    \"\"\"How many test days have at least one later day in train?\"\"\"\n    last = max(train_idx)\n    return sum(1 for t in test_idx if t < last)\n",
+        "examples": [
+          {
+            "call": "future_in_train([0, 1, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14], [6, 7, 8])",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "future_in_train([0, 1, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14], [6, 7, 8])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "future_in_train(list(range(12)), [12, 13, 14])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "future_in_train([0, 1, 2, 3, 8], [4, 5, 9])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "future_in_train([0, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14], [2, 10, 13])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "future_in_train(list(range(800)), list(range(800, 1000)))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "future_in_train([5], [4, 5, 6])",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: blocked, shuffled and time-ordered splits. Each count is compared exactly. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only the latest training day matters."
+        },
+        {
+          "rung": "point",
+          "text": "A test day $t$ sees the future if $t$ is before `max(train_idx)`.",
+          "highlight": [
+            "r1c10",
+            "r1c11",
+            "r1c12",
+            "r1c13",
+            "r1c14",
+            "r1c15"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`last = max(train_idx)`, then `return sum(1 for t in test_idx if t < last)`."
+        }
+      ],
+      "feedback": {
+        "correct": "An honest split returns 0 for every fold.",
+        "generic": "Some tests failed. For the blocked fold 3 the answer is 3, and for the last block 0."
+      },
+      "explain": {
+        "text": "Your audit gives 3 for the blocked fold 3 and 0 for a test block at the end. A time-ordered scheme is one where every fold scores 0. The next lesson builds those folds.\n\n```python\nlast = max(train_idx)\nreturn sum(1 for t in test_idx if t < last)\n```"
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "What you found: shuffled folds treat rows as **exchangeable**, as if their order carried no information. A series with autocorrelation\n\n$$\\hat\\rho(k) = \\frac{\\sum_{t} (x_t - \\bar x)(x_{t+k} - \\bar x)}{\\sum_t (x_t - \\bar x)^2}$$\n\nfar from 0 breaks that: a test row's neighbours in training carry its answer. Then only folds in time order are honest.",
+      "question": "Which data set can you shuffle into folds safely?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "iid",
+            "text": "Daily returns with $\\hat\\rho(k)$ near 0 at every lag, and features with no smoothing",
+            "correct": true
+          },
+          {
+            "id": "vol",
+            "text": "Daily volatility with $\\hat\\rho(1) = 0.95$",
+            "why": "You picked the sticky series from this lesson. Its neighbours carry the answer."
+          },
+          {
+            "id": "ma",
+            "text": "Daily returns as the target, with 20-day moving averages as features",
+            "why": "The target has no memory, but the smoothed features make neighbouring days near-copies in feature space. Check the features too."
+          },
+          {
+            "id": "many",
+            "text": "Any series, as long as there are more than 1,000 rows",
+            "why": "More rows means more neighbours to copy, not fewer. Size does not fix the order problem."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Exchangeable rows carry no information in their order."
+        },
+        {
+          "rung": "point",
+          "text": "Check both the target and the features for stickiness."
+        },
+        {
+          "rung": "step",
+          "text": "Only the first option has no memory in either."
+        }
+      ],
+      "feedback": {
+        "correct": "No memory in the target and none in the features: order carries nothing.",
+        "generic": "Not quite right. Look for a target and features that are both free of autocorrelation."
+      },
+      "explain": {
+        "text": "Shuffling is safe when nothing about a row is shared with its neighbours. Smoothed features break that even when the target is noise, because neighbouring days then look alike to the model."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A paper reports a factor model for monthly stock returns with $R^2 = 0.9$ from shuffled 10-fold cross-validation on 30 years of data. The features include 12-month moving averages of valuation ratios. Your desk is asked to trade it.",
+      "question": "What number should the desk ask for before believing it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "wf",
+            "text": "An out-of-sample $R^2$ from folds in time order: fit up to each date, predict the months after, score the joined predictions",
+            "correct": true
+          },
+          {
+            "id": "more",
+            "text": "The same shuffled CV with 20 folds instead of 10",
+            "why": "More shuffled folds put even more neighbouring months in training. The leak gets worse, not better."
+          },
+          {
+            "id": "seed",
+            "text": "Shuffled CV repeated with five different random seeds",
+            "why": "Each seed shuffles the same way in spirit. The spread across seeds says nothing about the leak through neighbours."
+          },
+          {
+            "id": "insample",
+            "text": "The in-sample $R^2$ on all 30 years",
+            "why": "In-sample fit is the most optimistic number of all. It answers a different question."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does trading the model actually do with the data?"
+        },
+        {
+          "rung": "point",
+          "text": "Trading always predicts months it has not seen, after the ones it trained on."
+        },
+        {
+          "rung": "step",
+          "text": "Ask for a time-ordered score: train on the past, test on the following months, never the reverse."
+        }
+      ],
+      "feedback": {
+        "correct": "Only a time-ordered test resembles trading. An $R^2$ of 0.9 on monthly returns would be extraordinary; expect it to collapse.",
+        "generic": "Not quite right. Pick the test that never lets the model see months after the one it predicts."
+      },
+      "explain": {
+        "text": "Twelve-month moving averages make each month's features almost a copy of its neighbours. Shuffled folds let the model copy them, just as your volatility model did. The desk asks for the walk-forward number, which the next lesson builds."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Shuffled folds put each test day between training days, so a model can copy its neighbours.",
+      "Autocorrelation in the target or smoothed features means rows are not exchangeable, and shuffled scores are too kind.",
+      "Unshuffled blocks leak less but still train on the future; only folds in time order are honest."
+    ],
+    "formula": {
+      "name": "Autocorrelation at lag $k$",
+      "tex": "\\hat\\rho(k) = \\dfrac{\\sum_t (x_t - \\bar x)(x_{t+k} - \\bar x)}{\\sum_t (x_t - \\bar x)^2}",
+      "note": "Near 0 at every lag: shuffling is harmless. Far from 0: keep time order."
+    },
+    "trap": "Unshuffled `KFold` is in blocks, but every fold but the last still trains on later days."
+  },
+  "quiz": [
+    {
+      "id": "q-split",
+      "difficulty": 2,
+      "prose": "You call `train_test_split(X, y, test_size=0.2)` on 1,000 days of prices, with no other arguments.",
+      "question": "Which days end up in the test set?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "random",
+            "text": "200 days scattered at random through the whole period",
+            "correct": true
+          },
+          {
+            "id": "last",
+            "text": "The last 200 days",
+            "why": "You assumed it keeps order. Its default is `shuffle=True`, so the test days are scattered."
+          },
+          {
+            "id": "first",
+            "text": "The first 200 days",
+            "why": "It neither keeps order nor takes the start. The default shuffles."
+          },
+          {
+            "id": "blocks",
+            "text": "Five blocks of 40 days",
+            "why": "That is not how it splits. It draws 200 rows at random."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Scattered test days, each with its neighbours in training. Pass `shuffle=False` to keep the last 200 days as the test.",
+        "generic": "Not quite right. Check the default of `shuffle` in `train_test_split`."
+      },
+      "explain": {
+        "text": "`train_test_split` shuffles unless told `shuffle=False`. On a time series that recreates this lesson's leak in one line."
+      }
+    },
+    {
+      "id": "q-hit",
+      "difficulty": 3,
+      "prose": "The same 1,000 days, now with a 5-neighbour classifier for direction: will tomorrow's volatility be above its 5-day average? Shuffled 5-fold CV gives a hit rate of 58.1%. Trained on the first 800 days, it hits 52.5% on the last 200, where 51.0% of days were \"above\".",
+      "question": "What is the fairest summary of the classifier?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tiny",
+            "text": "About 1.5 points better than always guessing \"above\", which may well be noise",
+            "correct": true
+          },
+          {
+            "id": "seven",
+            "text": "About 7 points better than a coin, as the shuffled CV says",
+            "why": "You trusted the shuffled score. It let the classifier copy neighbouring days."
+          },
+          {
+            "id": "worse",
+            "text": "Worse than a coin, since 52.5% is below 58.1%",
+            "why": "52.5% is still above the 51.0% base rate. Compare with the base rate, not the shuffled score."
+          },
+          {
+            "id": "avg",
+            "text": "About 55.3%, the average of the two estimates",
+            "why": "Averaging an honest score with a leaky one keeps half the leak."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "52.5% against 51.0%: a small edge at best.",
+        "generic": "Not quite right. Compare the honest hit rate with the base rate."
+      },
+      "explain": {
+        "text": "The honest number is the time-ordered 52.5%, and the yardstick is the 51.0% you would get by always guessing \"above\". The shuffled 58.1% is the leak talking."
+      }
+    },
+    {
+      "id": "q-ridge",
+      "difficulty": 3,
+      "prose": "On the same data a ridge regression with three coefficients scores 3.21 in shuffled CV and 3.50 on the last 200 days. The 5-neighbour model scored 3.31 and 7.26.",
+      "question": "Why is the ridge model's shuffled score so much less misleading?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "memory",
+            "text": "Ridge fits one line to all rows, so it cannot copy a test day's neighbours",
+            "correct": true
+          },
+          {
+            "id": "penalty",
+            "text": "The ridge penalty removes autocorrelation from the data",
+            "why": "The penalty shrinks coefficients; it does nothing to the series. The data are just as sticky."
+          },
+          {
+            "id": "safe",
+            "text": "Ridge regression is immune to leakage",
+            "why": "Ridge can leak through features that know the answer; it just cannot memorise neighbours. Level 3 shows other leaks."
+          },
+          {
+            "id": "lucky",
+            "text": "The ridge run used a luckier seed",
+            "why": "Both runs use the same data and folds. The difference is in the models."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three coefficients cannot memorise rows. The flexible model can, so it leaks most.",
+        "generic": "Not quite right. Ask what each model does with the training rows nearest a test day."
+      },
+      "explain": {
+        "text": "A nearest-neighbour model reads its forecast straight off nearby rows, so it exploits leaky neighbours fully. A three-coefficient line averages over all rows. The more flexible the model, the more shuffling inflates its score."
+      }
+    },
+    {
+      "id": "q-nolag",
+      "difficulty": 2,
+      "prose": "Edge case. The target is still the sticky volatility series, but the only feature is a fresh random number each day, with no smoothing or lags.",
+      "question": "Can a nearest-neighbour model still copy a test day's neighbours under shuffled CV?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: rows close in feature space are now random days, not neighbouring days",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: the target is sticky, so neighbours always leak",
+            "why": "The model only sees the features. If they carry no trace of time, it cannot find next-door days."
+          },
+          {
+            "id": "half",
+            "text": "Only on half the folds",
+            "why": "Folds do not matter here. The feature gives the model no way to find neighbours."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The neighbour route needs features that change slowly in time.",
+        "generic": "Not quite right. Think about which rows look close to the model."
+      },
+      "explain": {
+        "text": "To copy tomorrow, the model must recognise tomorrow as similar. With a feature that has no lag structure it cannot, so this particular leak closes."
+      }
+    }
+  ]
+}
