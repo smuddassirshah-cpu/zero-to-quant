@@ -1,5 +1,8 @@
 /* payoff: option payoff or P&L at expiry against the underlying; legs, combined line, strikes, breakevens, spot.
-   Contract: docs/AUTHORING.md section 4; details in canvas/README-B.md. Builds on ZQ.cvb (canvas/plane.js). */
+   Contract: docs/AUTHORING.md section 4; details in canvas/README-B.md. Builds on ZQ.cvb (canvas/plane.js).
+   Pass 7: legs live in state (item 363: a list replaces, a map by id merges, adds or removes with null; qty 0 hides a
+   leg), a cash leg (type "cash", amount) (item 379), several value-before-expiry curves (value as a list), and stock
+   or forward legs show their entry price F and may be dragged when params.drag names them (item 371). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -11,11 +14,13 @@
     const W = 540, H = params.height || 320;
     const range = params.range || [80, 120];
     const baseLegs = (params.legs || []).map((l, i) => ({ ...l, id: l.id || 'leg' + i, slot: l.colour || i + 2 }));
+    const isLin = (l) => l.type === 'stock' || l.type === 'forward';
 
-    const legsOf = (view) => baseLegs.map((l) => ({ ...l, strike: view.strike && view.strike[l.id] != null ? +view.strike[l.id] : +(l.strike ?? l.price ?? 0), premium: view.premium && view.premium[l.id] != null ? +view.premium[l.id] : +(l.premium || 0) }));
+    const legsOf = (view) => (Array.isArray(view.legs) ? view.legs : baseLegs).filter((l) => l && (l.qty ?? 1) !== 0).map((l, i) => ({ ...l, id: l.id || 'leg' + i, slot: l.slot || l.colour || i + 2, strike: view.strike && view.strike[l.id] != null ? +view.strike[l.id] : +(l.strike ?? l.price ?? 0), premium: view.premium && view.premium[l.id] != null ? +view.premium[l.id] : +(l.premium || 0) }));
     const legValue = (l, S, pl) => {
       const sign = l.side === 'short' ? -1 : 1, q = l.qty ?? 1;
-      if (l.type === 'stock') return sign * q * (S - l.strike);
+      if (l.type === 'cash') return sign * q * +(l.amount ?? l.strike ?? 0);
+      if (isLin(l)) return sign * q * (S - l.strike);
       /* item 339: floor: false draws the leg without its floor (the holder "forgot" the right not to exercise) */
       const pay = l.floor === false ? (l.type === 'put' ? l.strike - S : S - l.strike) : l.type === 'put' ? Math.max(l.strike - S, 0) : Math.max(S - l.strike, 0);
       return sign * q * (pay - (pl ? l.premium : 0));
@@ -25,7 +30,8 @@
     const Ncdf = (x) => 0.5 * (1 + K.erf(x / Math.SQRT2));
     const legNow = (l, S, v, pl) => {
       const sign = l.side === 'short' ? -1 : 1, q = l.qty ?? 1, T = Math.max(1e-9, +v.t || 0), sg = Math.max(1e-9, +v.sigma || 0.2), r = +v.r || 0, K0 = l.strike;
-      if (l.type === 'stock') return sign * q * (S - K0);
+      if (l.type === 'cash') return sign * q * +(l.amount ?? l.strike ?? 0);
+      if (isLin(l)) return sign * q * (S - K0);
       const d1 = (Math.log(S / K0) + (r + sg * sg / 2) * T) / (sg * Math.sqrt(T)), d2 = d1 - sg * Math.sqrt(T);
       const call = S * Ncdf(d1) - K0 * Math.exp(-r * T) * Ncdf(d2), val = l.type === 'put' ? call - S + K0 * Math.exp(-r * T) : call;
       return sign * q * (val - (pl ? l.premium : 0));
@@ -33,7 +39,7 @@
     const totalNow = (legs, S, v, pl) => legs.reduce((s, l) => s + legNow(l, S, v, pl), 0);
     /* Piecewise linear: breakpoints at strikes, so roots are exact per segment. */
     const breakevens = (legs, pl) => {
-      const xs = [range[0], ...legs.filter((l) => l.type !== 'stock').map((l) => l.strike).filter((k) => k > range[0] && k < range[1]), range[1]].sort((a, b) => a - b);
+      const xs = [range[0], ...legs.filter((l) => !isLin(l) && l.type !== 'cash').map((l) => l.strike).filter((k) => k > range[0] && k < range[1]), range[1]].sort((a, b) => a - b);
       const out = [];
       for (let i = 0; i < xs.length - 1; i++) {
         const a = xs[i], b = xs[i + 1], fa = total(legs, a, pl), fb = total(legs, b, pl);
@@ -58,7 +64,8 @@
       kind: 'payoff', aria: params.aria || 'Option payoff diagram',
       modes: ['drag', 'slider', 'tap'],
       size: () => ({ w: W, h: H }),
-      init: () => ({ strike: Object.fromEntries(baseLegs.map((l) => [l.id, +(l.strike ?? l.price ?? 0)])), premium: Object.fromEntries(baseLegs.map((l) => [l.id, +(l.premium || 0)])), spot: null, highlight: [], pl: params.pl ?? true }),
+      listKeys: ['legs'],
+      init: () => ({ legs: baseLegs.map((l) => ({ ...l })), strike: Object.fromEntries(baseLegs.map((l) => [l.id, +(l.strike ?? l.price ?? 0)])), premium: Object.fromEntries(baseLegs.map((l) => [l.id, +(l.premium || 0)])), spot: null, highlight: [], pl: params.pl ?? true }),
       prepare(patch) { if (patch.params) { if (patch.params.spot != null) patch.spot = patch.params.spot; for (const l of baseLegs) if (patch.params[l.id] != null) patch.strike = { ...(patch.strike || {}), [l.id]: patch.params[l.id] }; } return patch; },
       render(view, R) {
         const g = R.F.g, pl = view.pl ?? params.pl ?? true, legs = legsOf(view);
@@ -96,7 +103,14 @@
         if (params.label) { const lx = range[1] - (range[1] - range[0]) * 0.03; labels.push({ x: sx(lx), y: sy(total(legs, lx, pl)) - 14, text: params.label, anchor: 'end' }); }
         /* strike ticks and the kinks they make */
         const seenK = new Set();
-        legs.filter((l) => l.type !== 'stock' && l.strike >= range[0] && l.strike <= range[1]).forEach((l) => {
+        /* item 371: a stock or forward leg marks its entry price on the axis (F = 100, or its strikeLabel) */
+        legs.filter((l) => isLin(l) && l.entryLabel !== false && l.strike >= range[0] && l.strike <= range[1]).forEach((l) => {
+          const x = sx(l.strike), o = K.obj('entry-' + l.id, '', 'ink'), yk = sy(legValue(l, l.strike, pl));
+          o.append(svg('line', { x1: x, x2: x, y1: y0 - 5, y2: y0 + 5, class: 'cvb-ln thin' }), svg('circle', { cx: x, cy: yk, r: 3.5, class: 'cvb-dot' }));
+          over.append(o); fixed.push({ x0: x - 6, x1: x + 6, y0: yk - 6, y1: yk + 6 });
+          if (view.kinkLabels !== false) labels.push({ x, y: yk + 18, text: (l.strikeLabel || 'F') + ' = ' + K.fmt(l.strike, 2), anchor: 'middle' });
+        });
+        legs.filter((l) => !isLin(l) && l.type !== 'cash' && l.strike >= range[0] && l.strike <= range[1]).forEach((l) => {
           const dup = seenK.has(l.strike); seenK.add(l.strike);
           const x = sx(l.strike), o = K.obj('strike-' + l.id, '', 'ink');
           o.append(svg('line', { x1: x, x2: x, y1: y0 - 5, y2: y0 + 5, class: 'cvb-ln thin' }));
@@ -128,13 +142,22 @@
           if (spotDrag(view, R)) over.append(K.handle(x, y0, 'spot', { r: 8, label: 'Spot price' }));
         }
         /* value before expiry, and a tangent on it (delta) */
-        const vv = view.value ?? params.value;
+        /* item 379: value may be a list of curves (vega: two sigmas; theta: two times), each with its own label and colour */
+        const vlist = [].concat(view.value ?? params.value ?? []).filter((q) => q && (q.t ?? 0) > 0);
+        vlist.slice(1).forEach((v2, k) => {
+          const N = 160, xs = Array.from({ length: N + 1 }, (_, i) => range[0] + (range[1] - range[0]) * i / N);
+          const d = 'M' + xs.map((S) => sx(S).toFixed(2) + ',' + sy(totalNow(legs, S, v2, pl)).toFixed(2)).join('L');
+          const o = K.obj(v2.id || 'value' + (k + 2), '', v2.colour || 5 + (k % 2)); o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (v2.dashed ? ' cvb-dash' : '') })); plot.append(o);
+          fixed.push(...K.lineBoxes(xs.map((S) => [sx(S), sy(totalNow(legs, S, v2, pl))]), 8, 4));
+          const lx = range[0] + (range[1] - range[0]) * (v2.labelAt ?? (0.35 + 0.15 * k)); labels.push({ x: sx(lx), y: sy(totalNow(legs, lx, v2, pl)) - 12, text: v2.label || 'value', anchor: 'middle' });
+        });
+        const vv = vlist[0];
         if (vv && (vv.t ?? 0) > 0) {
           const N = 160, xs = Array.from({ length: N + 1 }, (_, i) => range[0] + (range[1] - range[0]) * i / N);
           const d = 'M' + xs.map((S) => sx(S).toFixed(2) + ',' + sy(totalNow(legs, S, vv, pl)).toFixed(2)).join('L');
           const o = K.obj('value', '', vv.colour || 4); o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' })); plot.append(o);
           fixed.push(...K.lineBoxes(xs.map((S) => [sx(S), sy(totalNow(legs, S, vv, pl))]), 8, 4));
-          const lx = range[0] + (range[1] - range[0]) * 0.2; labels.push({ x: sx(lx), y: sy(totalNow(legs, lx, vv, pl)) - 12, text: vv.label || params.valueLabel || 'value now', anchor: 'middle' });
+          const lx = range[0] + (range[1] - range[0]) * (vv.labelAt ?? 0.2); labels.push({ x: sx(lx), y: sy(totalNow(legs, lx, vv, pl)) - 12, text: vv.label || params.valueLabel || 'value now', anchor: 'middle' });
           const tg = view.tangent ?? params.tangent;
           if (tg) {
             const at = typeof tg === 'object' && tg.at != null ? +tg.at : view.spot ?? (range[0] + range[1]) / 2, h = (range[1] - range[0]) * 1e-4;
@@ -149,19 +172,19 @@
         K.placeLabels(labels, fixed, { x0, x1, y0: y1, y1: y0 });
         for (const l of labels) over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong', size: 12 }));
         /* strike handles on the axis */
-        if (R.active('drag')) legs.filter((l) => l.type !== 'stock' && (!params.drag || [].concat(params.drag).includes(l.id))).forEach((l) => over.append(K.handle(sx(l.strike), y0, l.id, { r: 7, shape: 'diamond', label: `Strike of ${l.label || l.id}` })));
+        if (R.active('drag')) legs.filter((l) => l.type !== 'cash' && (isLin(l) ? [].concat(params.drag || [], (R.modeOpts && R.modeOpts.ids) || []).includes(l.id) : (!params.drag || [].concat(params.drag).includes(l.id)))).forEach((l) => over.append(K.handle(sx(l.strike), y0, l.id, { r: 7, shape: 'diamond', label: `Strike of ${l.label || l.id}` })));
         R._sx = sx;
       },
       drag: {
-        start: (id, p, R) => (id === 'spot' ? (spotDrag(R.state, R) ? { id } : null) : R.active('drag') && baseLegs.some((l) => l.id === id) ? { id } : null),
+        start: (id, p, R) => (id === 'spot' ? (spotDrag(R.state, R) ? { id } : null) : R.active('drag') && legsOf(R.state).some((l) => l.id === id) ? { id } : null),
         move(info, p, R, end) { if (info.id === 'spot') setSpot(R, R._sx.invert(p.x), end); else setStrike(R, info.id, R._sx.invert(p.x), end); },
         key(id, dx, dy, R) { if (id === 'spot') { setSpot(R, +R.state.spot + (dx || dy) * (params.snap || 1), true); return; } const l = legsOf(R.state).find((q) => q.id === id); if (l) setStrike(R, id, l.strike + (dx || dy) * (params.snap || 1), true); },
       },
       methods: (R) => ({
         value: (S) => { const st = R.state; return total(legsOf(st), S, st.pl ?? params.pl ?? true); },
-        valueNow: (S) => { const st = R.state, vv = st.value ?? params.value; return vv ? totalNow(legsOf(st), S, vv, st.pl ?? params.pl ?? true) : NaN; },
+        valueNow: (S) => { const st = R.state, vv = [].concat(st.value ?? params.value ?? [])[0]; return vv ? totalNow(legsOf(st), S, vv, st.pl ?? params.pl ?? true) : NaN; },
         breakevens: () => breakevens(legsOf(R.state), R.state.pl ?? params.pl ?? true),
-        points: () => ({ ...Object.fromEntries(legsOf(R.state).filter((l) => l.type !== 'stock').map((l) => [l.id, { x: l.strike, y: 0 }])), ...(R.state.spot != null ? { spot: { x: +R.state.spot, y: 0 } } : {}) }),
+        points: () => ({ ...Object.fromEntries(legsOf(R.state).filter((l) => l.type !== 'cash' && (!isLin(l) || [].concat(params.drag || []).includes(l.id))).map((l) => [l.id, { x: l.strike, y: 0 }])), ...(R.state.spot != null ? { spot: { x: +R.state.spot, y: 0 } } : {}) }),
         place: (id, pos, opts = {}) => (id === 'spot' ? R.inst.set({ spot: Array.isArray(pos) ? pos[0] : +pos }, opts) : R.inst.set({ strike: { [id]: Array.isArray(pos) ? pos[0] : pos } }, opts)),
       }),
     };

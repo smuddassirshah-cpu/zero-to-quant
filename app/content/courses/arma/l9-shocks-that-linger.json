@@ -1,0 +1,1569 @@
+{
+ "id": "l9-shocks-that-linger",
+ "course": "arma",
+ "title": "Shocks that linger",
+ "minutes": 15,
+ "objectives": [
+  "Simulate and identify an MA(1) model",
+  "Derive the MA(1) autocorrelation and its ceiling of one half"
+ ],
+ "skills": [
+  "ts-models",
+  "ts-acf"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One shock, two memories",
+   "prose": "A single shock of 3 arrives on day 1; every other day's shock is 0. Top: $x_t = 0.6\\,x_{t-1} + \\varepsilon_t$. Bottom: $x_t = \\varepsilon_t + 0.6\\,\\varepsilon_{t-1}$. Up to day 2 the two look identical.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "shareMargins": true,
+    "left": {
+     "kind": "series",
+     "params": {
+      "x": "index",
+      "xLabel": "Day",
+      "height": 170,
+      "y": [
+       -0.5,
+       3.5
+      ],
+      "baseline": 0,
+      "decimals": 2,
+      "series": [
+       {
+        "id": "top",
+        "label": "Top",
+        "values": [
+         0,
+         3,
+         1.8,
+         1.08,
+         0.648,
+         0.3888,
+         0.2333,
+         0.14
+        ],
+        "colour": 1
+       }
+      ]
+     },
+     "state": {
+      "reveal": 0.2857
+     }
+    },
+    "right": {
+     "kind": "series",
+     "params": {
+      "x": "index",
+      "xLabel": "Day",
+      "height": 170,
+      "y": [
+       -0.5,
+       3.5
+      ],
+      "baseline": 0,
+      "decimals": 2,
+      "series": [
+       {
+        "id": "bot",
+        "label": "Bottom",
+        "values": [
+         0,
+         3,
+         1.8,
+         0,
+         0,
+         0,
+         0,
+         0
+        ],
+        "colour": 3
+       }
+      ]
+     },
+     "state": {
+      "reveal": 0.2857
+     }
+    }
+   },
+   "question": "What is each series on day 3?",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Series",
+     "Day 3"
+    ],
+    "rows": [
+     [
+      "Top",
+      {
+       "edit": true,
+       "answer": 1.08,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "Bottom",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write out each model for $t = 3$. Which shocks are non-zero?"
+    },
+    {
+     "rung": "point",
+     "text": "Top uses $x_2 = 1.8$. Bottom uses $\\varepsilon_3$ and $\\varepsilon_2$ only."
+    },
+    {
+     "rung": "step",
+     "text": "Top: $0.6 \\times 1.8 = 1.08$. Bottom: $\\varepsilon_3 + 0.6\\,\\varepsilon_2 = 0 + 0 = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The top keeps 60% of yesterday forever; the bottom forgets the shock after one extra day.",
+    "generic": "Not quite right. Put $t = 3$ into each equation: the top reads yesterday's value, the bottom reads yesterday's shock.",
+    "byKey": {
+     "r1c1": "You carried the bottom series on like the top one. It reads yesterday's *shock*, $\\varepsilon_2 = 0$, not yesterday's value, so it drops to 0.",
+     "r0c1": "The top multiplies yesterday's value by 0.6: $0.6 \\times 1.8$."
+    }
+   },
+   "explain": {
+    "text": "The top is an AR(1): the shock echoes as $3 \\times 0.6^{k}$, which never quite reaches 0. The bottom only remembers one shock back, so the 3 shows on day 1, its 0.6 share on day 2, then nothing. Same first two days, very different memories.",
+    "canvas": {
+     "left": {
+      "reveal": 1
+     },
+     "right": {
+      "reveal": 1
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "One spike",
+   "prose": "Here is the sample ACF of 500 days of the bottom model with seeded shocks: `make_arma([], [0.6], 500, 21)`. The dashed lines are the band $\\pm 1.96/\\sqrt{500} = \\pm 0.0877$. Slide $\\theta$ to move the theory bars.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "Lag",
+     "yMin": -0.3,
+     "yMax": 0.7,
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877,
+       "label": ""
+      }
+     ],
+     "groups": [
+      {
+       "id": "sample",
+       "label": "sample",
+       "colour": 1
+      },
+      {
+       "id": "theory",
+       "label": "theory, MA(1)",
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "sample": {
+       "1": 0.4631,
+       "2": 0.0074,
+       "3": -0.0084,
+       "4": 0.0542,
+       "5": 0.0843,
+       "6": 0.0253,
+       "7": -0.0244,
+       "8": -0.0107,
+       "9": 0.0391,
+       "10": 0.0684
+      },
+      "theory": {
+       "1": 0,
+       "2": 0,
+       "3": 0,
+       "4": 0,
+       "5": 0,
+       "6": 0,
+       "7": 0,
+       "8": 0,
+       "9": 0,
+       "10": 0
+      }
+     }
+    },
+    "derive": {
+     "values.theory.1": "theta / (1 + theta * theta)",
+     "caption": "Theory at $\\theta$ = {{fixed(theta, 2)}}: $\\rho_1$ = {{fixed(theta / (1 + theta * theta), 4)}}, and 0 at every later lag."
+    },
+    "controls": [
+     {
+      "bind": "theta",
+      "min": -0.9,
+      "max": 0.9,
+      "step": 0.05,
+      "start": 0.2,
+      "label": "$\\theta$",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "After lag 1, where do the sample bars sit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "band",
+      "text": "Inside the band at every lag from 2 to 10",
+      "correct": true
+     },
+     {
+      "id": "decay",
+      "text": "They shrink by a constant factor each lag, like an AR(1)",
+      "why": "You pictured the AR(1) correlogram from lesson 7. Here lag 2 is 0.0074, not $0.46^2 \\approx 0.21$."
+     },
+     {
+      "id": "alt",
+      "text": "They alternate in sign outside the band",
+      "why": "That is what the *partial* autocorrelations do here, as we will see. The ACF bars after lag 1 are all small."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Lag 1 is 0.4631; lags 2 to 10 never leave the band.",
+    "generic": "Not quite right. Compare each bar from lag 2 on with the dashed lines."
+   },
+   "explain": {
+    "text": "The sample ACF is 0.4631 at lag 1, then 0.0074, −0.0084, 0.0542, 0.0843: noise inside the band. At $\\theta = 0.6$ the theory bar is $0.6/1.36 = 0.4412$, close to the sample. Whatever $\\theta$ you choose, the theory has nothing after lag 1.",
+    "canvas": {
+     "params": {
+      "theta": 0.6
+     },
+     "values": {
+      "theory": {
+       "1": 0.4412
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A moving average",
+   "prose": "The bottom model is a **moving average of order 1**, MA(1): $$x_t = \\mu + \\varepsilon_t + \\theta\\,\\varepsilon_{t-1}.$$ Today's value is today's shock plus a share $\\theta$ of yesterday's. Below are the first 100 of the 500 days, with $\\mu = 0$, $\\theta = 0.6$ and shocks of variance $\\sigma^2 = 1$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "x": "index",
+     "xLabel": "Day",
+     "height": 200,
+     "baseline": 0,
+     "series": [
+      {
+       "id": "ma",
+       "label": "MA(1)",
+       "values": [
+        -0.307,
+        -2.573,
+        -2.053,
+        -1.111,
+        0.542,
+        1.628,
+        -0.412,
+        -0.453,
+        0.194,
+        -1.382,
+        -2.915,
+        -1.325,
+        0.081,
+        -0.513,
+        -3.068,
+        -1.656,
+        -0.596,
+        -1.237,
+        -0.858,
+        -1.323,
+        -0.117,
+        0.347,
+        -0.553,
+        -0.054,
+        0.137,
+        -1.537,
+        -1.055,
+        -0.544,
+        -2.015,
+        -1.696,
+        0.035,
+        -0.364,
+        1.036,
+        2.543,
+        0.713,
+        0.37,
+        2.325,
+        0.864,
+        -1.098,
+        -0.962,
+        -1.628,
+        -2.174,
+        -0.601,
+        -0.292,
+        -0.004,
+        0.636,
+        -0.471,
+        -0.653,
+        -0.386,
+        -0.83,
+        -1.238,
+        -0.186,
+        0.049,
+        0.248,
+        1.2,
+        1.615,
+        -0.504,
+        -1.523,
+        -0.77,
+        -0.03,
+        1.013,
+        -0.399,
+        -1.014,
+        -0.015,
+        1.377,
+        2.117,
+        -0.178,
+        -0.816,
+        -0.935,
+        0.363,
+        0.955,
+        -0.09,
+        -0.826,
+        -0.072,
+        1.157,
+        -0.179,
+        -0.784,
+        -0.081,
+        0.086,
+        0.349,
+        -0.797,
+        -1.195,
+        -2.457,
+        -1.204,
+        1.104,
+        -1.415,
+        -1.866,
+        0.519,
+        0.396,
+        -1.981,
+        0.032,
+        -0.725,
+        0.515,
+        0.238,
+        -1.057,
+        -0.397,
+        -0.006,
+        0.587,
+        0.863,
+        0.154
+       ],
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $Var(x_t)$? The shocks are independent.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.36,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "accept": "$1 + 0.6^2 = 1.36$, ± 0.005",
+    "wrong": [
+     {
+      "id": "theta",
+      "value": 1.6,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "ar",
+      "value": 1.5625,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The variance of a sum of independent pieces is the sum of their variances."
+    },
+    {
+     "rung": "point",
+     "text": "Multiplying a shock by $\\theta$ multiplies its variance by $\\theta^2$."
+    },
+    {
+     "rung": "step",
+     "text": "$Var(\\varepsilon_t) + \\theta^2 Var(\\varepsilon_{t-1}) = 1 + 0.36$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. $\\sigma^2(1 + \\theta^2) = 1.36$.",
+    "generic": "Not quite right. Add the variance of $\\varepsilon_t$ to the variance of $0.6\\,\\varepsilon_{t-1}$.",
+    "byKey": {
+     "theta": "You added $\\theta$, but scaling a shock by 0.6 scales its variance by $0.6^2 = 0.36$.",
+     "one": "You counted today's shock only. Yesterday's shock is in $x_t$ too, with weight 0.6.",
+     "ar": "You used the AR(1) formula $\\sigma^2/(1 - \\phi^2)$. An MA(1) holds only two shocks, not an endless tail of them."
+    }
+   },
+   "explain": {
+    "text": "$x_t$ holds two independent shocks, so $Var(x_t) = \\sigma^2 + \\theta^2\\sigma^2 = 1.36$. The sample variance of the 500 days is 1.3513. Its mean is $\\mu$, here 0 (the sample gives 0.0617)."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Simulating an MA(1)",
+   "prose": "To make $n$ values we need $n + 1$ shocks: the first value already uses yesterday's. Draw $\\varepsilon_0, \\dots, \\varepsilon_n$ and set $x_t = \\mu + \\varepsilon_{t+1} + \\theta\\,\\varepsilon_t$ for $t = 0, \\dots, n - 1$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "value",
+      "shock today",
+      "shock yesterday"
+     ],
+     "rows": [
+      [
+       "$x_0$",
+       "$\\varepsilon_1$",
+       "$\\varepsilon_0$"
+      ],
+      [
+       "$x_1$",
+       "$\\varepsilon_2$",
+       "$\\varepsilon_1$"
+      ],
+      [
+       "…",
+       "…",
+       "…"
+      ],
+      [
+       "$x_{n-1}$",
+       "$\\varepsilon_n$",
+       "$\\varepsilon_{n-1}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `simulate_ma1(theta, n, seed, mu=0.0)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n",
+    "starter": "import numpy as np\n\ndef simulate_ma1(theta, n, seed, mu=0.0):\n    e = np.random.default_rng(seed).standard_normal(n + 1)\n    return ...      # n values: today's shock plus theta times yesterday's\n",
+    "solution": "import numpy as np\n\ndef simulate_ma1(theta, n, seed, mu=0.0):\n    e = np.random.default_rng(seed).standard_normal(n + 1)\n    return mu + e[1:] + theta * e[:-1]      # x_t = mu + e_{t+1} + theta * e_t\n",
+    "examples": [
+     {
+      "call": "[round(float(v), 6) for v in simulate_ma1(0.6, 5, 21)]",
+      "expect": "[1.725941, -0.879925, 0.614815, 0.964651, -0.828369]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(float(v), 6) for v in simulate_ma1(0.6, 5, 21)]",
+      "expect": "[1.725941, -0.879925, 0.614815, 0.964651, -0.828369]",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(simulate_ma1(0.6, 500, 1))",
+      "expect": "500",
+      "compare": "equal"
+     },
+     {
+      "call": "bool(np.allclose(simulate_ma1(0.0, 10, 4), np.random.default_rng(4).standard_normal(11)[1:]))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "[round(float(v), 6) for v in simulate_ma1(-0.5, 4, 7, mu=2.0)]",
+      "expect": "[2.29813, 1.576489, 1.246477, 1.990625]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(np.var(simulate_ma1(0.6, 100000, 9))), 4)",
+      "expect": "1.366",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(np.mean(simulate_ma1(0.6, 100000, 9, mu=5.0))), 4)",
+      "expect": "5.0045",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: exact values on seeds 21 and 7 (rounded to 6 places), the length, $\\theta = 0$ giving the draws shifted by one, and the mean and variance of 100,000 days. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`e[1:]` is today's shock for each value; what slice is yesterday's?"
+    },
+    {
+     "rung": "point",
+     "text": "Yesterday's shocks are every shock but the last.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return `mu + e[1:] + theta * e[:-1]`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Two slices of one array line up today with yesterday.",
+    "generic": "Some tests failed. Use `e[1:]` for today and `e[:-1]` for yesterday, and add `mu`."
+   },
+   "explain": {
+    "text": "Each shock appears twice: once as today's and once, scaled by $\\theta$, as tomorrow's yesterday. That shared shock is the only link between neighbouring days, which is why the ACF stops at lag 1. The variance test lands near 1.36.",
+    "canvas": {
+     "highlight": [
+      "c1",
+      "c2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The mirror image",
+   "prose": "Lesson 8's rule for an AR($p$) was: the PACF cuts off after lag $p$. Here is the PACF of the same MA(1) series. Its ACF cut off after lag 1.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "Lag",
+     "yLabel": "PACF",
+     "yMin": -0.3,
+     "yMax": 0.7,
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877,
+       "label": ""
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "1": 0.4641,
+      "2": -0.265,
+      "3": 0.1511,
+      "4": -0.0107,
+      "5": 0.0723,
+      "6": -0.0556,
+      "7": 0.0063,
+      "8": 0.0008,
+      "9": 0.0455,
+      "10": 0.0296
+     }
+    }
+   },
+   "question": "Tap every PACF bar outside the band.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "x1",
+     "x2",
+     "x3"
+    ],
+    "countWord": "bars"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The band is $\\pm 0.0877$."
+    },
+    {
+     "rung": "point",
+     "text": "Look at the first few lags.",
+     "highlight": [
+      "x1",
+      "x2",
+      "x3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Lags 1, 2 and 3: 0.4641, −0.265, 0.1511."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Three bars, alternating in sign and shrinking.",
+    "generic": "Not quite right. Compare each bar with $\\pm 0.0877$.",
+    "byKey": {
+     "x5": "Lag 5 is 0.0723, just inside the band of 0.0877.",
+     "x4": "Lag 4 is −0.0107, well inside the band.",
+     "x1": "Lag 1 is outside the band too: 0.4641."
+    }
+   },
+   "explain": {
+    "text": "The PACF tails off with alternating sign: 0.4641, −0.265, 0.1511. That is the mirror of an AR(1): there the ACF tails off and the PACF cuts off. An AR(3) could mimic this, but one MA parameter explains it more simply.",
+    "canvas": {
+     "highlight": [
+      "x1",
+      "x2",
+      "x3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A ceiling of one half",
+   "prose": "The curve is the MA(1)'s lag-1 autocorrelation, $\\rho_1 = \\theta/(1 + \\theta^2)$, which we derive later in the lesson. Drag the point along it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -0.7,
+      0.7
+     ],
+     "xLabel": "$\\theta$",
+     "yLabel": "$\\rho_1$",
+     "height": 260,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x/(1+x^2)",
+       "label": "$\\rho_1(\\theta)$"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "h1",
+       "y": 0.5,
+       "label": "0.5"
+      },
+      {
+       "id": "h2",
+       "y": -0.5,
+       "label": "−0.5"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.6,
+       "y": 0.4412,
+       "drag": true,
+       "on": "f",
+       "label": "θ"
+      },
+      {
+       "id": "Q",
+       "x": 1.6667,
+       "y": 0.4412,
+       "label": "1/θ"
+      }
+     ]
+    },
+    "derive": {
+     "Q.x": "1 / P.x",
+     "Q.y": "P.y",
+     "caption": "$\\theta$ = {{fixed(P.x, 2)}} and $1/\\theta$ = {{fixed(1 / P.x, 2)}} both give $\\rho_1$ = {{fixed(P.y, 4)}}."
+    }
+   },
+   "question": "A series has a lag-1 ACF of 0.7 and nothing after it. Could it be an MA(1)?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: no $\\theta$ gives $\\rho_1$ above 0.5",
+      "correct": true
+     },
+     {
+      "id": "seven",
+      "text": "Yes, with $\\theta = 0.7$",
+      "why": "You set $\\theta$ equal to $\\rho_1$. On the curve, $\\theta = 0.7$ gives $0.7/1.49 = 0.47$.",
+      "canvas": {
+       "points": {
+        "P": {
+         "x": 0.7,
+         "y": 0.4698
+        }
+       }
+      }
+     },
+     {
+      "id": "big",
+      "text": "Yes, with a large $\\theta$ such as 3",
+      "why": "You assumed a bigger $\\theta$ means more memory. Past $\\theta = 1$ the curve falls: $\\theta = 3$ gives 0.3.",
+      "canvas": {
+       "points": {
+        "P": {
+         "x": 3,
+         "y": 0.3
+        }
+       }
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where is the top of the curve?"
+    },
+    {
+     "rung": "point",
+     "text": "Drag the point to $\\theta = 1$.",
+     "highlight": [
+      "h1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The peak is $1/(1 + 1) = 0.5$ at $\\theta = 1$, so 0.7 is out of reach."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. $|\\rho_1| \\le 0.5$ for every MA(1).",
+    "generic": "Not quite right. Find the highest point of the curve."
+   },
+   "explain": {
+    "text": "The curve peaks at 0.5 when $\\theta = 1$, so a lag-1 spike of 0.7 needs another model. Notice the second point: $\\theta$ and $1/\\theta$ give the same $\\rho_1$, so the ACF cannot tell them apart. We choose $|\\theta| < 1$, the **invertible** one, so the shocks can be recovered from past values; statsmodels does this by default.",
+    "canvas": {
+     "points": {
+      "P": {
+       "x": 1,
+       "y": 0.5
+      }
+     },
+     "highlight": [
+      "h1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The theoretical ACF",
+   "prose": "Write the theory bars from the explore screen as a function: a list of $\\rho_1, \\dots, \\rho_{\\text{nlags}}$ for an MA(1).",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "Lag",
+     "yLabel": "ACF",
+     "yMin": -0.3,
+     "yMax": 0.7,
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877,
+       "label": ""
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "1": 0.4412,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0
+     }
+    }
+   },
+   "question": "Complete `ma1_acf(theta, nlags)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def ma1_acf(theta, nlags):\n    rho = [0.0] * nlags      # rho[0] is lag 1\n    ...\n    return rho\n",
+    "solution": "def ma1_acf(theta, nlags):\n    rho = [0.0] * nlags\n    rho[0] = theta / (1 + theta ** 2)       # lag 1: one shared shock\n    return rho                               # lags 2 and on share none\n",
+    "examples": [
+     {
+      "call": "ma1_acf(0.6, 3)",
+      "expect": "[0.44117647058823534, 0.0, 0.0]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(ma1_acf(0.6, 3)[0], 4)",
+      "expect": "0.4412",
+      "compare": "isclose"
+     },
+     {
+      "call": "ma1_acf(0.6, 5)[1:]",
+      "expect": "[0.0, 0.0, 0.0, 0.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(ma1_acf(0.3, 12))",
+      "expect": "12",
+      "compare": "equal"
+     },
+     {
+      "call": "ma1_acf(-1, 2)",
+      "expect": "[-0.5, 0.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "ma1_acf(0.0, 3)",
+      "expect": "[0.0, 0.0, 0.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "ma1_acf(2, 4)",
+      "expect": "[0.4, 0.0, 0.0, 0.0]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: $\\theta$ = 0.6, 0.3, −1, 0 and 2, with lists of length 2 to 12, compared with `math.isclose`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Only one lag is non-zero."
+    },
+    {
+     "rung": "point",
+     "text": "Lag 1 is $\\theta/(1 + \\theta^2)$.",
+     "highlight": [
+      "x1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Set `rho[0] = theta / (1 + theta ** 2)` and leave the rest at 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. One number, then zeros.",
+    "generic": "Some tests failed. Put $\\theta/(1 + \\theta^2)$ in `rho[0]` and leave every other entry at 0."
+   },
+   "explain": {
+    "text": "The test with $\\theta = 2$ returns 0.4, the same as $\\theta = 0.5$: the two roots from the last screen. An MA(1) with $\\theta = -1$ hits the floor of $-0.5$.",
+    "canvas": {
+     "highlight": [
+      "x1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Back from the spike to $\\theta$",
+   "prose": "Turn the sample spike into an estimate of $\\theta$. Rearranging $\\rho_1 = \\theta/(1 + \\theta^2)$ gives $\\rho_1\\theta^2 - \\theta + \\rho_1 = 0$, a quadratic with roots $$\\theta = \\frac{1 \\pm \\sqrt{1 - 4\\rho_1^2}}{2\\rho_1}.$$ Keep the invertible root, with $|\\theta| \\le 1$. Refuse any $|\\rho_1| > 0.5$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -0.7,
+      0.7
+     ],
+     "xLabel": "$\\theta$",
+     "yLabel": "$\\rho_1$",
+     "height": 220,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x/(1+x^2)",
+       "label": "$\\rho_1(\\theta)$"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "h",
+       "y": 0.4631,
+       "label": "sample 0.4631"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "r1",
+       "x": 0.6726,
+       "y": 0.4631,
+       "label": "0.67"
+      },
+      {
+       "id": "r2",
+       "x": 1.4868,
+       "y": 0.4631,
+       "label": "1.49"
+      }
+     ]
+    }
+   },
+   "question": "Complete `theta_from_rho1(rho1)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef theta_from_rho1(rho1):\n    # rho1 * theta**2 - theta + rho1 = 0 has two roots; return the invertible one\n    ...\n",
+    "solution": "import math\n\ndef theta_from_rho1(rho1):\n    if abs(rho1) > 0.5:\n        raise ValueError(\"no MA(1) has |rho1| > 0.5\")\n    if rho1 == 0:\n        return 0.0\n    return (1 - math.sqrt(1 - 4 * rho1 ** 2)) / (2 * rho1)   # the root with |theta| <= 1\n",
+    "examples": [
+     {
+      "call": "round(theta_from_rho1(0.4631), 4)",
+      "expect": "0.6726",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(theta_from_rho1(0.6 / 1.36), 10)",
+      "expect": "0.6",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(theta_from_rho1(0.4631), 4)",
+      "expect": "0.6726",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(theta_from_rho1(-0.3), 4)",
+      "expect": "-0.3333",
+      "compare": "isclose"
+     },
+     {
+      "call": "theta_from_rho1(0)",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "theta_from_rho1(0.5)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "theta_from_rho1(0.7)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "theta_from_rho1(-0.51)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: $\\rho_1$ = 0.4412, 0.4631, −0.3, 0 and 0.5 (rounded to 4 places), and two values beyond $\\pm 0.5$ that must raise `ValueError`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which sign in $\\pm$ gives the root inside $[-1, 1]$?"
+    },
+    {
+     "rung": "point",
+     "text": "The smaller root, 0.67, is the invertible one.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Use `(1 - math.sqrt(1 - 4 * rho1 ** 2)) / (2 * rho1)`, raise `ValueError` when `abs(rho1) > 0.5`, and return 0.0 for 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The minus sign picks the invertible root.",
+    "generic": "Some tests failed. Check the three cases: beyond 0.5, exactly 0, and the minus root otherwise."
+   },
+   "explain": {
+    "text": "The spike of 0.4631 gives $\\hat\\theta = 0.6726$. statsmodels' `ARIMA(x, order=(0, 0, 1)).fit()` uses maximum likelihood and gets `ma.L1` = 0.6186, with `const` 0.0645 and `sigma2` 0.9611. Likelihood uses every lag, so it lands closer to the true 0.6.",
+    "canvas": {
+     "highlight": [
+      "r1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "An AR(1) with a small $\\phi$?",
+   "prose": "A colleague sees one spike of 0.4631 and fits an AR(1) with $\\phi = 0.46$, reasoning that a small $\\phi$ dies out fast. The green bars are what that AR(1) predicts.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "xLabel": "Lag",
+     "yMin": -0.3,
+     "yMax": 0.7,
+     "height": 230,
+     "hlines": [
+      {
+       "id": "up",
+       "y": 0.0877,
+       "label": "band"
+      },
+      {
+       "id": "dn",
+       "y": -0.0877,
+       "label": ""
+      }
+     ],
+     "groups": [
+      {
+       "id": "sample",
+       "label": "sample",
+       "colour": 1
+      },
+      {
+       "id": "theory",
+       "label": "AR(1), φ = 0.4631",
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "sample": {
+       "1": 0.4631,
+       "2": 0.0074,
+       "3": -0.0084,
+       "4": 0.0542,
+       "5": 0.0843,
+       "6": 0.0253,
+       "7": -0.0244,
+       "8": -0.0107,
+       "9": 0.0391,
+       "10": 0.0684
+      },
+      "theory": {
+       "1": 0.4631,
+       "2": 0.2145,
+       "3": 0.0993,
+       "4": 0.046,
+       "5": 0.0213,
+       "6": 0.0099,
+       "7": 0.0046,
+       "8": 0.0021,
+       "9": 0.001,
+       "10": 0.0005
+      }
+     }
+    }
+   },
+   "question": "Is the AR(1) right for this series?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: it needs a lag-2 value near 0.21, and the sample has 0.0074",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "Yes: with a small $\\phi$, lag 2 is lost inside the band",
+      "why": "You assumed a small $\\phi$ hides lag 2. $0.4631^2 = 0.2145$, more than twice the band of 0.0877.",
+      "canvas": {
+       "highlight": [
+        "x2-theory",
+        "x2-sample"
+       ]
+      }
+     },
+     {
+      "id": "signif",
+      "text": "Yes: its $\\phi$ is far from 0, so the model is significant",
+      "why": "You judged the model by its coefficient. The AR(1) leaves structure behind: its residuals fail Ljung-Box (Q = 49.16, p ≈ 0), and its AIC is 1454.31 against 1405.57 for the MA(1)."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the lag the colleague did not look at."
+    },
+    {
+     "rung": "point",
+     "text": "Compare the green and blue bars at lag 2.",
+     "highlight": [
+      "x2-theory",
+      "x2-sample"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "An AR(1) has $\\rho_2 = \\phi^2$. Is the sample lag 2 near $0.4631^2$?"
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The lag-2 bar settles it.",
+    "generic": "Not quite right. An AR(1) predicts $\\rho_2 = \\phi^2$; compare that with the sample at lag 2.",
+    "byKey": {
+     "small": "You assumed a small $\\phi$ hides lag 2. $0.4631^2 = 0.2145$, more than twice the band of 0.0877, and the sample's 0.0074 is nowhere near it."
+    }
+   },
+   "explain": {
+    "text": "An AR(1) predicts $\\rho_2 = \\phi^2 = 0.2145$, well outside the band, but the sample lag 2 is 0.0074. The MA(1) fits better on every count: AIC 1405.57 against 1454.31, and its residuals pass Ljung-Box (p = 0.78). Always check lag 2 before calling a single spike an AR(1).",
+    "canvas": {
+     "highlight": [
+      "x2-theory",
+      "x2-sample"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why one spike",
+   "prose": "We derive $\\rho_1$. Neighbouring days are $x_t = \\mu + \\varepsilon_t + \\theta\\varepsilon_{t-1}$ and $x_{t-1} = \\mu + \\varepsilon_{t-1} + \\theta\\varepsilon_{t-2}$. The shocks are independent with variance $\\sigma^2$, and $Var(x_t) = \\sigma^2(1 + \\theta^2)$ from earlier.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$Cov(x_t, x_{t-1}) = Cov(\\varepsilon_t + \\theta\\varepsilon_{t-1},\\ \\varepsilon_{t-1} + \\theta\\varepsilon_{t-2})$: the constant $\\mu$ drops out of a covariance"
+     },
+     {
+      "id": "s2",
+      "text": "$= Cov(\\varepsilon_t, \\varepsilon_{t-1}) + \\theta Cov(\\varepsilon_t, \\varepsilon_{t-2}) + \\theta Cov(\\varepsilon_{t-1}, \\varepsilon_{t-1}) + \\theta^2 Cov(\\varepsilon_{t-1}, \\varepsilon_{t-2})$: expand, covariance is linear in each slot"
+     },
+     {
+      "id": "s3",
+      "text": "$= \\theta\\sigma^2$: different shocks are independent, and $Cov(\\varepsilon_{t-1}, \\varepsilon_{t-1}) = \\sigma^2$"
+     },
+     {
+      "id": "s4",
+      "text": "$\\rho_1 = \\dfrac{\\theta\\sigma^2}{\\sigma^2(1 + \\theta^2)} = \\dfrac{\\theta}{1 + \\theta^2}$: divide by the variance"
+     },
+     {
+      "id": "s5",
+      "text": "$\\rho_k = 0$ for $k \\ge 2$: $x_t$ and $x_{t-k}$ share no shock, so every term is 0"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by writing both days in terms of shocks."
+    },
+    {
+     "rung": "point",
+     "text": "Expand the covariance before using independence."
+    },
+    {
+     "rung": "step",
+     "text": "Substitute, expand, keep the one shared shock, divide, then look two days apart."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. One shared shock, one non-zero autocovariance.",
+    "generic": "Not quite right. Substitute the model first, expand, then apply independence.",
+    "byKey": {
+     "s4": "You divided before finding the covariance. The covariance $\\theta\\sigma^2$ has to come first.",
+     "s3": "Independence can only kill terms once the covariance is expanded into them."
+    }
+   },
+   "explain": {
+    "text": "Of the four products, only $\\varepsilon_{t-1}$ with itself survives, giving $\\theta\\sigma^2$. Two days apart there is no shared shock, so the ACF is exactly 0 from lag 2: the cut-off you saw. An MA($q$) shares shocks up to $q$ days apart and cuts off after lag $q$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Overlapping returns",
+   "prose": "A researcher wants 2-day returns but samples them every day: $y_t = r_t + r_{t-1}$. The daily returns $r_t$ are independent with sd 1%. Neighbouring 2-day windows share a day.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "day",
+      "2-day return"
+     ],
+     "rows": [
+      [
+       "2",
+       "$r_2 + r_1$"
+      ],
+      [
+       "3",
+       "$r_3 + r_2$"
+      ],
+      [
+       "4",
+       "$r_4 + r_3$"
+      ],
+      [
+       "5",
+       "$r_5 + r_4$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the lag-1 autocorrelation of $y_t$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "accept": "$\\theta/(1+\\theta^2)$ with $\\theta = 1$: 0.5, ± 0.005",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which model is $y_t = r_t + r_{t-1}$?"
+    },
+    {
+     "rung": "point",
+     "text": "Each row shares one return with the row above.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It is an MA(1) with $\\theta = 1$: $\\rho_1 = 1/(1 + 1)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Overlap makes an MA(1) with $\\theta = 1$, at the 0.5 ceiling.",
+    "generic": "Not quite right. Treat $y_t$ as an MA(1) and read off $\\theta$.",
+    "byKey": {
+     "zero": "You treated the 2-day returns as separate. Neighbours share a whole day, so they are correlated by construction.",
+     "one": "The windows share one of their two days, not both. Covariance $\\sigma^2$ over variance $2\\sigma^2$.",
+     "quarter": "You squared the shared share. The covariance is $\\sigma^2$ and the variance is $2\\sigma^2$, so the ratio is 0.5."
+    }
+   },
+   "explain": {
+    "text": "$y_t$ is an MA(1) with $\\theta = 1$, so $\\rho_1 = 0.5$ by construction; 1,000 seeded days give 0.4998. A regression on overlapping returns overstates its own t statistics, as `regression` lesson 11 warned, and overlapping labels leak in `fin-ml` lesson 4. The cure is to sample without overlap or correct the standard errors.",
+    "canvas": {
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An MA(1) remembers one shock: $x_t = \\mu + \\varepsilon_t + \\theta\\varepsilon_{t-1}$, so a shock lasts exactly one extra day.",
+   "Its ACF cuts off after lag 1 and its PACF tails off: the mirror of an AR(1).",
+   "$|\\rho_1| \\le 0.5$, and $\\theta$ and $1/\\theta$ give the same ACF; we keep the invertible one, $|\\theta| < 1$."
+  ],
+  "formula": {
+   "name": "MA(1) autocorrelation",
+   "tex": "\\rho_1 = \\dfrac{\\theta}{1 + \\theta^2}, \\qquad \\rho_k = 0 \\ (k \\ge 2)",
+   "note": "Variance $\\sigma^2(1 + \\theta^2)$; the peak $\\rho_1 = 0.5$ is at $\\theta = 1$."
+  },
+  "trap": "One spike is not an AR(1) with a small $\\phi$: that would need $\\rho_2 = \\phi^2$. Check lag 2."
+ },
+ "quiz": [
+  {
+   "id": "q-overdiff",
+   "difficulty": 3,
+   "prose": "Level 1's lesson 4 warned against differencing a series that is already stationary. Take white noise $x_t = \\varepsilon_t$ and difference it: $\\Delta x_t = \\varepsilon_t - \\varepsilon_{t-1}$.",
+   "question": "What is the lag-1 autocorrelation of $\\Delta x_t$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "accept": "$-1/(1 + 1) = -0.5$, ± 0.005",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "minus1",
+      "value": -1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. An MA(1) with $\\theta = -1$, at the floor.",
+    "generic": "Not quite right. Read $\\theta$ off $\\varepsilon_t - \\varepsilon_{t-1}$ and use $\\theta/(1 + \\theta^2)$.",
+    "byKey": {
+     "zero": "You assumed differencing noise leaves noise. Neighbouring differences share $\\varepsilon_{t-1}$ with opposite signs.",
+     "minus1": "You gave $\\theta$ itself. The autocorrelation is $\\theta/(1 + \\theta^2)$."
+    }
+   },
+   "explain": {
+    "text": "$\\theta = -1$ gives $\\rho_1 = -0.5$, the lowest an MA(1) can reach, and $\\theta = -1$ is not invertible. On `np.diff(make_wn(3))` the sample value is −0.515. A lag-1 ACF near $-0.5$ after differencing is the signature of one difference too many."
+   }
+  },
+  {
+   "id": "q-negative",
+   "difficulty": 2,
+   "prose": "An MA(1) has $\\theta = -0.4$.",
+   "question": "What is its lag-1 autocorrelation?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.3448,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "$-0.4/1.16 = -0.3448$, ± 0.0005",
+    "wrong": [
+     {
+      "id": "theta",
+      "value": -0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "pos",
+      "value": 0.3448,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $-0.4/(1 + 0.16)$.",
+    "generic": "Not quite right. Use $\\theta/(1 + \\theta^2)$ and keep the sign.",
+    "byKey": {
+     "theta": "You gave $\\theta$. Divide it by $1 + \\theta^2$.",
+     "pos": "You dropped the sign. A negative $\\theta$ gives a negative $\\rho_1$."
+    }
+   },
+   "explain": {
+    "text": "$\\rho_1 = -0.4/(1 + 0.16) = -0.3448$, and $\\rho_k = 0$ for $k \\ge 2$."
+   }
+  },
+  {
+   "id": "q-identify",
+   "difficulty": 2,
+   "prose": "A correlogram of 500 days: the ACF has one bar outside the band, at lag 1, then nothing. The PACF has bars at lags 1, 2, 3 and 4, alternating in sign and shrinking.",
+   "question": "Which model do they point to?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ma1",
+      "text": "MA(1)",
+      "correct": true
+     },
+     {
+      "id": "ar4",
+      "text": "AR(4)",
+      "why": "You applied the AR rule to the PACF. The PACF tails off here; it is the ACF that cuts off, which marks an MA."
+     },
+     {
+      "id": "ar1",
+      "text": "AR(1)",
+      "why": "An AR(1) has a tailing ACF and a single PACF spike: the opposite pattern."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. ACF cuts off, PACF tails off: MA(1).",
+    "generic": "Not quite right. Which of the two cuts off?"
+   },
+   "explain": {
+    "text": "The ACF cuts off after lag $q$ for an MA($q$), and the PACF tails off. Here $q = 1$."
+   }
+  },
+  {
+   "id": "q-pnl",
+   "difficulty": 3,
+   "prose": "A desk's booked daily P&L is $b_t = p_t + u_t - u_{t-1}$: the true P&L $p_t$ (sd £1m) plus a booking error $u_t$ (sd £0.5m) reversed the next day. All are independent.",
+   "question": "What is the lag-1 autocorrelation of $b_t$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neg",
+      "text": "$-0.25/1.5 \\approx -0.17$",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "0, since the true P&L is independent",
+      "why": "You looked at $p_t$ only. Each error enters twice, with opposite signs, on neighbouring days."
+     },
+     {
+      "id": "half",
+      "text": "$-0.5$",
+      "why": "That would need the errors to be the whole P&L. The true P&L adds variance but no covariance."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. A booking correction makes an MA(1) with negative $\\theta$.",
+    "generic": "Not quite right. Find $Cov(b_t, b_{t-1})$ and $Var(b_t)$ in £m²."
+   },
+   "explain": {
+    "text": "$Cov(b_t, b_{t-1}) = -Var(u) = -0.25$ and $Var(b_t) = 1 + 2(0.25) = 1.5$, so $\\rho_1 = -0.1667$. A negative lag-1 spike in a P&L series often means corrections, not a mean-reverting strategy."
+   }
+  }
+ ]
+}
