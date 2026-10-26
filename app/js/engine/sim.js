@@ -64,8 +64,10 @@
      (divide by k), sd, sum and len take a list, or (k, e) to draw a fresh sample: mean(10, n()) is the mean of ten
      normal draws. tstat(k) (or tstat(k, mu, sd)) is one t statistic of k normal draws. Lists index with xs[0].
      Extra names (a canvas's params, a sim's let bindings) may be read when compile is given them. */
-  const NAMES = ['d6', 'd', 'coin', 'u', 'n', 'binomial', 'pick', 'shuffle', 'max', 'min', 'abs', 'floor', 'ceil', 'round', 'sqrt', 'exp', 'log', 'pow', 'sample', 'mean', 'var', 'varp', 'sd', 'sum', 'len', 'tstat', 'maxn', 'minn', 'count', 'repeat'];
-  const MATH = { max: Math.max, min: Math.min, abs: Math.abs, floor: Math.floor, ceil: Math.ceil, round: Math.round, sqrt: Math.sqrt, exp: Math.exp, log: Math.log, pow: Math.pow };
+  const NAMES = ['d6', 'd', 'coin', 'u', 'n', 'binomial', 'pick', 'shuffle', 'max', 'min', 'abs', 'floor', 'ceil', 'round', 'sqrt', 'exp', 'log', 'pow', 'sample', 'mean', 'var', 'varp', 'sd', 'sum', 'len', 'tstat', 'maxn', 'minn', 'count', 'repeat', 'argmax', 'argmin'];
+  /* inbox (validation 3): max and min take a list too (max(sample(N, n())) is the best of N), and argmax / argmin give
+     the index of the largest or smallest entry */
+  const MATH = { max: (...a) => (Array.isArray(a[0]) ? Math.max(...a[0]) : Math.max(...a)), min: (...a) => (Array.isArray(a[0]) ? Math.min(...a[0]) : Math.min(...a)), abs: Math.abs, floor: Math.floor, ceil: Math.ceil, round: Math.round, sqrt: Math.sqrt, exp: Math.exp, log: Math.log, pow: Math.pow };
   const LAZY = ['sample', 'mean', 'var', 'varp', 'sd', 'sum', 'maxn', 'minn', 'count', 'repeat'];
   /* fn(k, e) for a lazy helper becomes fn(k, () => (e)) so e is drawn afresh each time (after the guard has run) */
   const lazify = (src) => {
@@ -96,6 +98,8 @@
   STATS.minn = (a, f) => Math.min(...listOf(a, f).map(Number));
   STATS.count = (a, f) => listOf(a, f).filter((x) => !!x && +x !== 0).length;
   STATS.repeat = STATS.sample;
+  STATS.argmax = (a) => { const xs = listOf(a); let b = 0; xs.forEach((x, i) => { if (+x > +xs[b]) b = i; }); return b; };
+  STATS.argmin = (a) => { const xs = listOf(a); let b = 0; xs.forEach((x, i) => { if (+x < +xs[b]) b = i; }); return b; };
   const cache = new Map();
   const compile = (expr, extra = []) => {
     const names = [...new Set((extra || []).filter((x) => /^[A-Za-z_$][\w$]*$/.test(x) && !NAMES.includes(x)))];
@@ -110,7 +114,7 @@
     const run = (r, vars = {}) => {
       const h = bind(r);
       const tstat = (k, mu = 0, s = 1) => { const xs = listOf(k, () => normal(mu, s, h.rng)); return (STATS.mean(xs) - mu) / (STATS.sd(xs) / Math.sqrt(xs.length)); };
-      const v = f(h.d6, h.d, h.coin, h.u, h.n, h.binomial, h.pick, h.shuffle, ...['max', 'min', 'abs', 'floor', 'ceil', 'round', 'sqrt', 'exp', 'log', 'pow'].map(k => MATH[k]), STATS.sample, STATS.mean, STATS.var, STATS.varp, STATS.sd, STATS.sum, STATS.len, tstat, STATS.maxn, STATS.minn, STATS.count, STATS.repeat, ...names.map((k) => vars[k]));
+      const v = f(h.d6, h.d, h.coin, h.u, h.n, h.binomial, h.pick, h.shuffle, ...['max', 'min', 'abs', 'floor', 'ceil', 'round', 'sqrt', 'exp', 'log', 'pow'].map(k => MATH[k]), STATS.sample, STATS.mean, STATS.var, STATS.varp, STATS.sd, STATS.sum, STATS.len, tstat, STATS.maxn, STATS.minn, STATS.count, STATS.repeat, STATS.argmax, STATS.argmin, ...names.map((k) => vars[k]));
       return typeof v === 'boolean' ? (v ? 1 : 0) : Array.isArray(v) ? v.map((x) => (typeof x === 'boolean' ? +x : x)) : v;
     };
     cache.set(key, run);

@@ -1,0 +1,95 @@
+# PLAN
+
+Goal: a single-user, Brilliant-style interactive teaching app (vanilla JS, static, `app/`) that takes a learner from zero to quant-interview ready across Stages 0 to 3 of `docs/curriculum.md`. Every lesson is JSON content played by the engine, validated by `app/tools/validate.mjs` and played end to end by `app/tools/playthrough.mjs`. Done means: every course map level written, every topic and stage exam written, every topic second-read and fixed, the engine backlog inbox integrated, `validate.mjs` at 0 errors and `playthrough.mjs --all` green, and `docs/PLAN.md` section 13 satisfied.
+
+Design documents live in `docs/` (`PLAN.md` there is the product design, not this checklist). Briefs for every unwritten level are in `docs/briefs/`. Conventions are in `CLAUDE.md`.
+
+## Tasks (one per session; tick when committed)
+
+### 0. Triage work left in flight on 27 Oct
+- [ ] Triage: run the validator and `playthrough.mjs --lesson/--set` on every file that exists but has no report in `docs/reports/`: arma L2, L3; alpha L3, L4; opt-dash L2 to L4 (partial); any coint or contests files. Keep what passes, finish or delete partials (a partial level is one whose level agent never reported). Check `app/js/` for half-applied engine pass 7 edits (`git diff HEAD~40 --stat app/js`); if the full playthrough fails, revert the engine files to the last green commit and record what was lost in KNOWN_ISSUES.md. Check `docs/reviews/review-1.9.md` (partial reader) and mark its task below accordingly.
+
+### 1. Stage 2 content (brief: `docs/briefs/<course>.md`, section `## Level n`)
+- [ ] garch L2
+- [ ] garch L3
+- [ ] coint L1
+- [ ] coint L2
+- [ ] coint L3
+- [ ] opt-dash L2 (review-2, homework-2 missing)
+- [ ] opt-dash L3 (review-3, homework-3 missing)
+- [ ] opt-dash L4 (l15, l16, review-4, homework-4 missing)
+- [ ] contests L1
+- [ ] contests L2
+- [ ] contests L3
+- [ ] contests L4
+
+### 2. Stage 1 gap levels (briefs: `docs/briefs/gap-<course>.md`; plan in `docs/briefs/gaps-plan.md`)
+- [ ] limits L5
+- [ ] integrals L4
+- [ ] multivar L5
+- [ ] eigen L4
+- [ ] random-vars L5
+- [ ] limits-thm L4
+- [ ] markov L4
+- [ ] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (items listed in `docs/briefs/gaps-plan.md`)
+
+### 3. Stage 3 content (briefs in `docs/briefs/`)
+- [ ] momentum-rep L1
+- [ ] momentum-rep L2
+- [ ] momentum-rep L3
+- [ ] pairs-rep L1
+- [ ] pairs-rep L2
+- [ ] pairs-rep L3
+- [ ] ito L1
+- [ ] ito L2
+- [ ] ito L3
+- [ ] puzzles L1
+- [ ] puzzles L2
+- [ ] puzzles L3
+- [ ] puzzles L4
+- [ ] mm-games L1
+- [ ] mm-games L2
+- [ ] mm-games L3
+- [ ] mental-pressure L1
+- [ ] mental-pressure L2
+- [ ] mental-pressure L3
+
+### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
+- [ ] topic-1.9 (cpp, cpp-pricing; the 1.9 review proposes coverage)
+- [ ] topic-2.1 (stat-learning, validation, ensembles, fin-ml)
+- [ ] topic-2.2 (arma, garch, coint)
+- [ ] topic-2.3 (backtest, alpha, opt-dash)
+- [ ] topic-2.4 (contests)
+- [ ] topic-3.1 (momentum-rep, pairs-rep)
+- [ ] topic-3.2 (ito)
+- [ ] topic-3.3 (puzzles, mm-games, mental-pressure)
+- [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`)
+
+### 5. Second readers and fix passes (reader pattern: `docs/reviews/review-1.5.md`; fix pattern: its `## Fix pass` section)
+- [ ] Second reader 1.8 (was in flight; no file yet) then fix pass 1.8
+- [ ] Second reader 1.9 (`docs/reviews/review-1.9.md` may be partial) then fix pass 1.9
+- [ ] Second reader 2.1 then fix pass
+- [ ] Second reader 2.2 then fix pass
+- [ ] Second reader 2.3 and 2.4 then fix pass
+- [ ] Second reader 3.1 to 3.3 then fix pass
+- [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
+
+### 6. Engine
+- [ ] Engine pass 7: backlog items 340 to 422 plus `docs/BACKLOG-INBOX.md` (was in flight; status block "Seventh pass" may be partial). Number inbox bullets from 424, clear the inbox, document in AUTHORING.md and canvas READMEs
+- [ ] Engine pass 8: whatever the inbox holds after Stage 2 and 3 content lands
+- [ ] Full `playthrough.mjs --all --local-cdn <pkgs>` green; `validate.mjs` 0 errors; System gallery renders in both themes
+
+### 7. Finalise
+- [ ] Getting started: `app/README.md` and `README.md` describe clone, `app/run.sh`, first load (jsDelivr for Pyodide, MathLive, Compute Engine, YoWASP clang), the self-host fallback in `app/vendor/`
+- [ ] Check `docs/PLAN.md` section 13 (definition of done) item by item; record gaps in KNOWN_ISSUES.md
+- [ ] Final report to the user; create `DONE`
+
+## Completed
+- [x] Stage 0 content (163 lessons, 76 sets, stage exam)
+- [x] Stage 1 original content: all 426 lessons and 204 sets of topics 1.1 to 1.9
+- [x] Exams topic-1.1 to topic-1.8
+- [x] Second readers and fix passes for topics 1.3, 1.4, 1.5, 1.6, 1.7
+- [x] Gap-pass plan: seven new levels added to course maps, briefs written
+- [x] Stage 2: stat-learning, validation, ensembles, fin-ml, backtest complete; arma L1, alpha L1, L2, opt-dash L1, garch L1
+- [x] Briefs for every remaining course and level
+- [x] Engine passes 1 to 6; C++ runtime (clang in WebAssembly); Python via Pyodide with scikit-learn and statsmodels

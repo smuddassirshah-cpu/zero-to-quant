@@ -88,7 +88,7 @@
       kind: 'series', aria: params.aria || 'Time series chart',
       modes: ['slider', 'tap'],
       size: () => ({ w: W, h: H }),
-      listKeys: ['markers', 'hlines'],
+      listKeys: ['markers', 'hlines', 'vlines'],
       init: () => ({ markers: [], hlines: [], shade: [], window: null, reveal: 1, highlight: [], drawdown: false }),
       prepare(patch) { if (Array.isArray(patch.window)) patch.window = { from: patch.window[0], to: patch.window[1] }; return patch; },
       render(view, R) {
@@ -97,6 +97,15 @@
            slider, such as ar1(phi, 60, 7)); give params.y so the axis holds still */
         const list = list0.map((s0) => (K.isObj(view.series) && K.isObj(view.series[s0.id]) ? { ...s0, ...view.series[s0.id] } : s0));
         let xt = K.ticksFor(0, n - 1, x1 - x0, { minGap: 56, fmtF: (v) => fmtX(v) });
+        /* inbox (fin-ml 2, arma 1): a date format showing only the year puts ticks on the first date of each year (only
+           the month: of each month), so a tick under Dec 2016 no longer reads 2016 */
+        if (dates && params.dateFormat && /%[Yy]/.test(params.dateFormat) && !/%[mdeb B]/.test(params.dateFormat.replace(/%[Yy]/g, ''))) {
+          const firsts = []; dates.forEach((d, i) => { if (i === 0 ? d.getUTCMonth() === 0 && d.getUTCDate() <= 7 : d.getUTCFullYear() !== dates[i - 1].getUTCFullYear()) firsts.push(i); });
+          const every = Math.max(1, Math.ceil(firsts.length / Math.max(2, Math.floor((x1 - x0) / 46)))); xt = { ticks: firsts.filter((_, k) => k % every === 0), step: 1 };
+        } else if (dates && params.dateFormat && /%[bBm]/.test(params.dateFormat) && !/%[de]/.test(params.dateFormat)) {
+          const firsts = []; dates.forEach((d, i) => { if (i > 0 && d.getUTCMonth() !== dates[i - 1].getUTCMonth()) firsts.push(i); });
+          if (firsts.length) { const every = Math.max(1, Math.ceil(firsts.length / Math.max(2, Math.floor((x1 - x0) / 56)))); xt = { ticks: firsts.filter((_, k) => k % every === 0), step: 1 }; }
+        }
         if (logX) { const lt = K.logTicks(Math.max(1e-9, ix0), ix0 + n - 1, x1 - x0, { minGap: 40 }); xt = { ticks: lt.ticks.map((v) => v - ix0), step: 1 }; }
         else if (params.xStep && !dates) { const st = +params.xStep, t = []; for (let v = Math.ceil(ix0 / st) * st; v <= ix0 + n - 1 + 1e-9; v += st) t.push(Math.round(v - ix0)); xt = { ticks: t, step: 1 }; }
         if (XV) { const lo = Math.min(...XV), hi = Math.max(...XV), t = xvLog ? K.logTicks(lo, hi, x1 - x0, { minGap: 44 }) : params.xStep ? { ticks: (() => { const a = []; for (let v = Math.ceil(lo / +params.xStep) * +params.xStep; v <= hi + 1e-9; v += +params.xStep) a.push(+v.toFixed(10)); return a; })() } : K.ticksFor(lo, hi, x1 - x0, { minGap: 46 }); xt = { ticks: t.ticks.filter((v) => v >= lo - 1e-9 && v <= hi + 1e-9).map(iAt), step: 1 }; }
@@ -135,6 +144,8 @@
           const syH = h.axis === 2 && sy2 ? sy2 : sy, yy = syH(+h.y); if (yy < y1 - 0.5 || yy > y0 + 0.5) return;
           const o = K.obj(h.id || 'hline' + i, '', h.colour || 'muted');
           o.append(svg('line', { x1: x0, x2: x1, y1: yy, y2: yy, class: 'cvb-ln thin' + (h.dashed === false ? '' : ' cvb-dash') }));
+          /* inbox (fin-ml 1): reference lines are tap targets ("tap the barrier hit first") */
+          if (R.mode === 'tap') { o.append(svg('line', { x1: x0, x2: x1, y1: yy, y2: yy, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 18px' })); R.tappable(o, h.id || 'hline' + i, h.label ? String(h.label).replace(/\$/g, '') : 'Reference line'); }
           back.append(o);
           if (h.label) {
             /* the label sits above or below the line at the right end, or at the left, wherever no series line passes */
@@ -148,9 +159,20 @@
             over.append(K.lab(pick[0], yy + pick[1], lt, { anchor: pick[2], halo: true, cls: 'cvb-strong', size: 12 })); fixed.push(box(pick));
           }
         });
+        /* inbox (fin-ml 1): vlines [{ id, i, label, colour, dashed }] (params or state, patchable): a vertical reference at an
+           index or date, such as a time limit a slider on h moves (bind "vlines.v1.i") */
+        [].concat(params.vlines || [], view.vlines || []).forEach((v, k) => {
+          if (!v || v.i == null) return; const xx = sx(idxOf(v.i)); if (!(xx >= x0 - 0.5 && xx <= x1 + 0.5)) return;
+          const o = K.obj(v.id || 'vline' + k, '', v.colour || 'muted');
+          o.append(K.washPath(`M${xx},${y0}L${xx},${y1}`), svg('line', { x1: xx, x2: xx, y1: y0, y2: y1, class: 'cvb-ln thin' + (v.dashed === false ? '' : ' cvb-dash') }));
+          if (R.mode === 'tap') { o.append(svg('line', { x1: xx, x2: xx, y1: y0, y2: y1, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 18px' })); R.tappable(o, v.id || 'vline' + k, v.label ? String(v.label).replace(/\$/g, '') : 'Vertical line'); }
+          back.append(o);
+          if (v.label) { const t = String(v.label), lx = K.clamp(xx + 4, x0, x1 - K.tw(t) - 2); over.append(K.lab(lx, y1 + 10, t, { anchor: 'start', halo: true, cls: 'cvb-strong', size: 12 })); fixed.push(K.boxOf({ x: lx, y: y1 + 10, text: t.replace(/\$/g, ''), anchor: 'start' })); }
+        });
         if (view.window && view.window.from != null) {
           const a = sx(idxOf(view.window.from)), b = sx(idxOf(view.window.to ?? n - 1)), o = K.obj('window', '', 'manip');
-          o.append(K.washRect(a, y1, b - a, y0 - y1, 0), svg('rect', { x: a, y: y1, width: Math.max(1, b - a), height: y0 - y1, class: 'cvb-window' }));
+          o.append(K.washRect(a, y1, b - a, y0 - y1, 0), svg('rect', { x: a, y: y1, width: Math.max(1, b - a), height: y0 - y1, class: 'cvb-window' + (R.mode === 'tap' ? ' cv-body' : '') }));
+          if (R.mode === 'tap') R.tappable(o, 'window', view.window.label || 'Window');
           back.append(o);
           if (view.window.label) { over.append(K.txt((a + b) / 2, y0 - 10, view.window.label, { halo: true, size: 12, cls: 'cvb-strong' })); }
         }

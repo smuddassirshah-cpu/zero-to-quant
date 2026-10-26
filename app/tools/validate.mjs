@@ -285,7 +285,7 @@ const PLAUSIBLE = {
   table: /^(r\d+|c\d+|r\d+c\d+)$/,
   console: /^l\d+$/,
   matrix: /^[A-Za-z][A-Za-z0-9]*(-(r\d+|c\d+|\d+-\d+))?$/,
-  walk: /^(path\d+|barrier-up|barrier-down)$/,
+  walk: /^(path\d+|barrier-up|barrier-down|mean|spread|envelope)$/, // inbox (arma 1): README-B's mean and spread
   orderbook: /^(bid\d+|ask\d+|spread)$/,
   distribution: /^(mean|median|sd|prob|curve|cdf|rug|shade\d*|observed\d*|x-?[\d.]+|overlay\d+)$/,
   scatter: /^(p\d+|line|line\d+|fit|r-p\d+|legend-.+|curve|[A-Za-z][\w-]*)$/, // item 351: the fit, curve ids and residuals r-p{i}
@@ -351,6 +351,8 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
     case 'expression':
       if (typeof w.answer !== 'string' || !w.answer) err(file, `${where}.answer`, 'expression answer must be a TeX string');
       if (!Array.isArray(w.accept) || !w.accept.length) warn(file, `${where}.accept`, 'list the accepted plain-text forms for the fallback grader');
+      /* inbox (validation 3): the Compute Engine reads a lone capital N (and D) as its own functions, so the answer never grades */
+      if (typeof w.answer === 'string' && /(^|[^\\A-Za-z])[ND](?![A-Za-z])/.test(w.answer)) warn(file, `${where}.answer`, 'a capital N or D in an expression answer is read by the maths engine as its numeric-evaluation (or derivative) function, so the answer may never grade; use another letter (n, m, T) or an order or choice widget');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
       if (w.form != null) { if (!['expanded', 'factorised', 'simplified'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised" or "simplified"'); keys.add('form'); }
@@ -624,7 +626,9 @@ const checkCanvas = (file, where, c) => {
   if (c.kind === 'tree' && S.current != null && typeof S.current !== 'string') err(file, `${where}.state.current`, 'current is a branch path such as "a-b", or "root"');
   if (c.kind === 'vectors' && P.points != null && !(Array.isArray(P.points) && P.points.every(q => isObj(q) && typeof q.x === 'number' && typeof q.y === 'number'))) err(file, `${where}.params.points`, 'points is a list of { id, x, y, label }');
   (c.controls || []).forEach((k, i) => {
-    if (!k.bind && !k.reseed) err(file, `${where}.controls[${i}].bind`, 'required');
+    if (!k.bind && !k.reseed && k.frames == null) err(file, `${where}.controls[${i}].bind`, 'required');
+    if (k.frames != null && !(Array.isArray(k.frames) && k.frames.length >= 2 && k.frames.every(isObj))) err(file, `${where}.controls[${i}].frames`, 'frames is a list of at least two state patches');
+    else (k.frames || []).forEach((f, j) => wholeCanvasPatch(file, `${where}.controls[${i}].frames[${j}]`, f));
     if (k.format != null && !['fraction', 'percent'].includes(k.format)) err(file, `${where}.controls[${i}].format`, 'format is "fraction" or "percent"');
     if (k.scale != null && k.scale !== 'log') err(file, `${where}.controls[${i}].scale`, 'scale is "log" (or leave it out for a linear slider)');
     if (k.scale === 'log' && !(+k.min > 0 && +k.max > +k.min)) err(file, `${where}.controls[${i}]`, 'a log slider needs 0 < min < max (stops at powers of ten from min)');

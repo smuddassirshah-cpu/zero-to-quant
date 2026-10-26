@@ -190,7 +190,7 @@
     "ts-acf",
     "ts-stationary"
    ],
-   "prose": "Put the level together. For each series: test for a unit root first, then let the PACF propose an order and AIC (with a tolerance of 2) propose another, take the smaller, and check that fit's residuals.",
+   "prose": "Put the level together. For each series, test for a unit root first. Then the PACF proposes an order and AIC, with a tolerance of 2, proposes another. Take the smaller, and check that fit's residuals.",
    "question": "Write `identify_ar(series_list, max_p=4)` returning one dict per series, as the starter describes.",
    "widget": {
     "kind": "code",
@@ -295,7 +295,7 @@
     "generic": "Not quite right. Nothing is modelled before the series is stationary, and the residual check comes last."
    },
    "explain": {
-    "text": "Each step guards the next: the ACF means nothing on a walk, the PACF only matters if Ljung-Box finds memory, and a model is done only when its residuals are white noise."
+    "text": "Each step guards the next. The ACF means nothing on a walk, and the PACF only matters if Ljung-Box finds memory. A model is done only when its residuals are white noise."
    }
   },
   {
@@ -391,39 +391,36 @@
    "skills": [
     "ts-acf"
    ],
-   "prose": "A colleague's note: \"Daily returns of our index, 500 days. Significant autocorrelation at lags 6 and 12 (0.091 and 0.096, band ±0.088). This is a fortnightly cycle and we should trade it.\" The full correlogram to lag 20 has no other bar outside the band. `acorr_ljungbox(r, lags=[20])` gives $Q = 27.54$, p = 0.121.",
-   "question": "Write a reply of about 200 words. Explain what the band means, what 20 bars of pure noise would do, what Ljung-Box says, and what evidence would convince you.",
-   "widget": {
-    "kind": "longform",
-    "prompt": "Reply to the colleague: what the band means, the arithmetic of 20 bars, the Ljung-Box result, and what would convince you of a real cycle.",
-    "model": "**What the band means.** The dashed band is $\\pm 1.96/\\sqrt{500} = \\pm 0.088$. If the returns had no memory, each $\\hat\\rho_k$ would land inside it with probability 0.95. A bar outside is surprising for *one pre-chosen lag*, not for the largest of twenty.\n\n**Twenty bars.** Looking at 20 lags gives 20 chances of 5%. The number outside is about Binomial(20, 0.05): we expect $20 \\times 0.05 = 1$, and the chance of at least one is $1 - 0.95^{20} = 0.64$. Two bars out is common; here they are 0.091 and 0.096, barely beyond 0.088.\n\n**Ljung-Box.** Pooling the first 20 lags gives $Q = 27.54$ against $\\chi^2_{20}$, p = 0.121. The joint test does not reject white noise at 5%.\n\n**The 'cycle'.** Lags 6 and 12 are not a fortnight in trading days (that would be 10), and nothing at 18 continues the pattern.\n\n**What would convince me.** A hypothesis fixed in advance, with a reason, such as a fortnightly settlement. Then: the same lags significant in a new sample; a bar well beyond the band, not at its edge; a Ljung-Box rejection; and a backtest that still pays after costs. Until then this is noise: `make_wn(24)`, the series in lesson 6, looks exactly like this.",
-    "rubric": [
-     {
-      "points": 2,
-      "text": "States the band as ±1.96/√n = ±0.088 and that it holds 95% of bars under white noise, one lag at a time"
-     },
-     {
-      "points": 2,
-      "text": "Does the 20-bar arithmetic: about one bar expected outside, and 1 − 0.95²⁰ ≈ 0.64 for at least one"
-     },
-     {
-      "points": 2,
-      "text": "Reads Ljung-Box correctly: Q = 27.54 on 20 degrees of freedom, p = 0.12, no rejection at 5%"
-     },
-     {
-      "points": 1,
-      "text": "Notes that the bars are only just outside the band, or that 6 and 12 trading days are not a fortnight"
-     },
-     {
-      "points": 2,
-      "text": "Names convincing evidence: a prior reason, replication out of sample, and a joint test that rejects"
-     },
-     {
-      "points": 1,
-      "text": "Concludes that the cycle is not established and should not be traded on this evidence"
-     }
-    ]
-   }
+   "title": "A fortnightly cycle?",
+   "kind": "longform",
+   "prompt": "A colleague's note: \"Daily returns of our index, 500 days. Significant autocorrelation at lags 6 and 12 (0.091 and 0.096, band ±0.088). This is a fortnightly cycle and we should trade it.\" No other bar up to lag 20 is outside the band. `acorr_ljungbox(r, lags=[20])` gives $Q = 27.54$, p = 0.121. Write a reply of about 200 words. Explain what the band means, what 20 bars of pure noise would do, what Ljung-Box says, and what evidence would convince you.",
+   "model": "**What the band means.** The dashed band is $\\pm 1.96/\\sqrt{500} = \\pm 0.088$. If the returns had no memory, each $\\hat\\rho_k$ would land inside it with probability 0.95. A bar outside is surprising for *one pre-chosen lag*, not for the largest of twenty.\n\n**Twenty bars.** Looking at 20 lags gives 20 chances of 5%. The number outside is about Binomial(20, 0.05): we expect $20 \\times 0.05 = 1$, and the chance of at least one is $1 - 0.95^{20} = 0.64$. Two bars out is common; here they are 0.091 and 0.096, barely beyond 0.088.\n\n**Ljung-Box.** Pooling the first 20 lags gives $Q = 27.54$ against $\\chi^2_{20}$, p = 0.121. The joint test does not reject white noise at 5%.\n\n**The 'cycle'.** Lags 6 and 12 are not a fortnight in trading days (that would be 10), and nothing at 18 continues the pattern.\n\n**What would convince me.** A hypothesis fixed in advance, with a reason, such as a fortnightly settlement. Then: the same lags significant in a new sample; a bar well beyond the band, not at its edge; a Ljung-Box rejection; and a backtest that still pays after costs. Until then this is noise: `make_wn(24)`, the series in lesson 6, looks exactly like this.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States the band as ±1.96/√n = ±0.088 and that it holds 95% of bars under white noise, one lag at a time"
+    },
+    {
+     "points": 2,
+     "text": "Does the 20-bar arithmetic: about one bar expected outside, and 1 − 0.95²⁰ ≈ 0.64 for at least one"
+    },
+    {
+     "points": 2,
+     "text": "Reads Ljung-Box correctly: Q = 27.54 on 20 degrees of freedom, p = 0.12, no rejection at 5%"
+    },
+    {
+     "points": 1,
+     "text": "Notes that the bars are only just outside the band, or that 6 and 12 trading days are not a fortnight"
+    },
+    {
+     "points": 2,
+     "text": "Names convincing evidence: a prior reason, replication out of sample, and a joint test that rejects"
+    },
+    {
+     "points": 1,
+     "text": "Concludes that the cycle is not established and should not be traded on this evidence"
+    }
+   ]
   }
  ]
 }

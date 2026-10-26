@@ -162,3 +162,116 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
   - Parity is derived in options l9 and the exam (e-parity-order).
   - The Python binomial pricer is built in trees l8 and the exam (e-code-put-pricer).
 - Thin or missing against Hull and Varsity: interest-rate futures and hedging with futures beyond one basis screen; swaps; options on futures; dividend effects on option bounds and parity, which are stated as "no dividends" throughout options; and the Greeks of portfolios beyond delta (gamma or vega hedging appears only in prose).
+
+## Fix pass
+
+I recomputed every corrected number before writing it. Bond prices, CRR trees, Black-Scholes values, vega and theta came from Python, using the review's `crr.py` and closed-form checks. After the edits, `tolcheck.py` finds no answer or misconception overlap in any topic 1.7 file. `sentcount.py` finds no explanation over three sentences. A sentence scan that also breaks at display maths and skips derive captions finds no sentence over 20 words; the 38 hits left in the original `style.py` are derive formulas and display-maths artefacts. `node tools/validate.mjs`: 0 errors in topic 1.7 files (the 8 errors are all in fin-ml l4). All 62 touched files pass the playthrough (42 lessons, 19 sets and the exam).
+
+Status: fixed 88, fixed in part 2, disputed 0, deferred 0. Where a fix differs from the proposal, the line says why.
+
+### markets (20 fixed)
+
+1. l1 q-simple-vs-compound `b-small`: fixed. The option now reads £200.00, and the why gives the 1% gap as simple interest over 20 years.
+2. l2 s9: fixed, "The value is about a third below the headline" (679,516/1,000,000 = 0.68).
+3. l4 s3: fixed, "We solve for it numerically, for example by Newton's method".
+4. l5 s1 `coupons-only`: fixed, wording as proposed (five £4 coupons at 5% = 17.32).
+5. l6 s2: fixed, £92.18 at 5.85% and £91.97 at 5.90% (92.1752, 91.9747). The yield stays 5.89% (5.8937%).
+6. l6 s4: fixed, "In Limits and Derivatives you found...".
+7. l6 s5: fixed, answer −7.58 (−7.584%).
+8. l6 s8 `inverse`: fixed, value 0.0453 (4.33/95.67). The why is unchanged.
+9. l6 s11: fixed, "about three points".
+10. l8 s6: fixed with 0.75% a month. The answer is 9.38% (1.0075¹² − 1 = 0.09381), `times12` is 9% and `simple` is 0.0075. The series, marker, caption, hints and explain were updated.
+11. l11 s7: fixed, the limit-down sentence is dropped.
+12. l12 summary.ideas[2]: fixed, "a profit of $P_0 - C$", as the generalise screen has it.
+13. l13 q-recover: fixed, "(Series and Approximation, lesson 12)".
+14. l13 s5: fixed, "The interest is due either way, so it drags on both outcomes."
+15. homework-2 h-bond-hold `five-year`: fixed, −0.0010 ((91.5753 + 4 − 95.6705)/95.6705 = −0.000995).
+16. review-3 r-margin-loan `orig`: fixed, value 27,000 (18,000 + 0.3 × 30,000).
+17. "percent": fixed, "per cent" in prose. The engine's `"format": "percent"` keyword is left unchanged. homework-2 now asks for the yield "as a percentage, to two decimal places".
+18. `math.isclose`: fixed, in code formatting.
+19. l6 s3 and s8: fixed, three sentences each.
+20. Long sentences: fixed, split. Three of the cited examples were scan artefacts: l10 s0, l11 s6 and l12 s7 already break at bold text or display maths. A missing full stop after display maths was added in l1 s6.
+
+### options (21 fixed)
+
+21. l1 s10: fixed. The explain now says the cash is untouched "less the premium", and that apart from the premium the fund misses only the first £5.00.
+22. l4 s10: fixed. The crash is to 80 in one month, without "as in 2008", so the answer is −9. `no-prem` is now −10 and `from-100` −19; `premium` stays −1. Hints, feedback and explain were updated ("9 months of premium").
+23. l6: fixed, c + p in all seven places.
+24. l6 q-strangle: fixed, "The cheaper bet needs a wider move."
+25. l7 s8: fixed. A call spread scaled by one over its gap tends to a digital, and a butterfly scaled by one over the gap squared tends to a spike at £100.00. The first sentence now says the narrow tent is £1.00 high on a £2.00 base, because "tall, thin spike" was also wrong. h is not defined until s9, so the screen says "gap".
+26. l7 s10: fixed, "turns such chances into risk-neutral probabilities", in three sentences.
+27. l7 s5 option d: fixed, value £27.50 (35 − 7.50), with the why showing it.
+28. l9: fixed, `\text{£}` in all five places.
+29. l9 s2: fixed. The prose and the feedback now say a one-step tree gives the price, which you build in Pricing with Trees.
+30. l9 s6: fixed, "a year's interest on £95.24" (0.05 × 95.24 = 4.76).
+31. l9 s9: fixed, "from Markets and Instruments", in three sentences.
+32. l10 s9 and s11: fixed, "A bet on staying put".
+33. l11: fixed, "the last lesson" for l10 in four places, and "Pricing with Trees ... in Exercising early on a tree".
+34. l11 s9: fixed, "Rates are 5% a year." (45 − 20/1.05⁴ = 28.55).
+35. l12 s7 `inverse`: fixed, "It equals 1 − Δ only because r = 0 and S = K here."
+36. l12 theta: fixed. The s8 prose, feedback.correct and summary.ideas[2] now state rates at 0, as on the lesson's curves.
+37. review-2 r-short-strangle `centre`: fixed, wording as proposed.
+38. review-2 r-cc-put: fixed, byKey lines for `premium`, `gap` and `diff`.
+39. homework-2 h-long-spread: fixed with new numbers. The share is £80.00 and the view £84.00, with the cap at £88.00. Calls cost £4.80 and £1.60, so the spread costs £3.20, the cap is £8.00, maximum profit £4.80 and break-even £83.20. The crossover is £89.60. At £84.00 the call loses £0.80 and the spread makes £0.80. Rubric points are unchanged (10).
+40. `math.isclose`: fixed.
+41. Long sentences: fixed, split. Breaks were added before display formulas where needed.
+
+### trees (26: 25 fixed, 1 fixed in part)
+
+42. l2 s7: fixed, "as in Vectors and Matrices".
+43. l2 q-call-13 `reverse`: fixed, wording as proposed.
+44. l4 s7: fixed, Limits and Derivatives and Multivariable Calculus.
+45. l5 q-new-tree `middle`: fixed, value 3.40 ((3.78 − 0.48 × 0.50)/1.0404). The byKey line names the slip.
+46. l6 s3 feedback: fixed differently, "$0.10778/0.2004 = 0.5378$". The given u and d make u − d exactly 0.2004, so only the numerator needed more places (1.012578 − 0.9048).
+47. l6 s3 prose: fixed, "From here, r is a continuously compounded rate".
+48. l7: fixed. s7 now says each step grows cash by e^{rΔt}, as in the last lesson. The s5 generalise and summary.formula now divide by R, one step's growth of £1. The note gives 1 + r, or e^{rΔt} on a calibrated tree. s0 to s6 still use 1.05 a step, which is consistent with R.
+49. l9 s2 table: fixed, −0.25 (10.2051 − 10.4506 = −0.2455).
+50. l9 s5: fixed, "(Distributions and Limit Theorems, Why sums look normal)".
+51. l9 q-real: fixed, "12% a year, continuously compounded" (£15.53 checked).
+52. l10 s8: fixed, "(Options and Payoffs, How the price responds)".
+53. l11 s2: fixed, "(Series and Approximation, Newton's method)".
+54. l11 s7: fixed, "r = 5% and no dividends".
+55. l11 q-otm: fixed, "about 0.7". Black-Scholes vega is 0.55 at 21.2%, 0.73 at 21.9% and 0.95 at 22.6%.
+56. l12 s4: fixed in part. The prose now states the drift: each path drifts at the 5% risk-free rate. No seed is stated, because the generator and seed behind the 3,000-path figures are not recorded. The review's 40,000-path rerun with μ = r agrees to within sampling error.
+57. l12 s6: fixed, "−£1.19".
+58. l12 s9 and l10 s8: fixed. l12 now says "one trading day of theta (252 a year)" (1,000 × 6.414/252 = 25.45). l10 says "per calendar day" (6.414/365 = 0.0176).
+59. l12 q-zero: fixed, "...and you price and hedge with σ = 0".
+60. review-2 r-crr-q: fixed, "$e^{0.04/12} = 1.00334$, so $q = 0.08634/0.1735 = 0.4976$". The given u − d is exactly 0.1735.
+61. review-3 r-freq `1800`: fixed with a new why, "You raised the factor to the fourth power: 20 × 3.06⁴ ≈ 1,750". The value is kept.
+62. homework-1 h-digital-100: fixed, ×1.1 and ×0.9.
+63. homework-2 h-calibrate: fixed, `one-step` dropped.
+64. Bare £ in maths: fixed, `\text{£}`.
+65. homework-2 items[1] and [4] and homework-3 items[3]: fixed, three sentences each.
+66. `math.isclose` and "per cent": fixed.
+67. Long sentences: fixed, split.
+
+### micro (20 fixed)
+
+68. l2 q-slip: fixed, byKey lines for `level-gap` (the 2p gap between the bid levels) and `total` (£12 on all 1,000 shares).
+69. l4 q-urgent: fixed. The prose now gives the 4p spread (half-spread 2p × 2,000 = £40).
+70. l6 q-walk: fixed as proposed. The third level is now 800 shares and `all-third` is 20.0278 (36,050/1,800), with tolerance 0.0005. The answer stays £20.030, and the explain says "500 of the 800".
+71. l7: fixed, "the microprice, also called the weighted mid".
+72. l9 s5: fixed, "2 × 10 × 0.0674 = 1.35".
+73. l9 to l12 objectives: fixed, full stops added.
+74. l10 s5: fixed, "drifts as far as 18 lots".
+75. l11 s5: fixed, "the bigger cost promised in Quoting both sides, after the £100,000 day". The lesson is named rather than "l9".
+76. l12 s2: fixed. 300 stay unfilled, bids above 501p fill in full, and the 500 shares bid at exactly 501p share the last 200 by time priority. It is split across two sentences to stay within 20 words and three sentences.
+77. l12 venues: fixed. The internaliser line, the s10 row 4 and the s10 explain now say US, and the explain notes that UK rules ban payment for order flow. homework-3 h-pfof is now "A US retail app". The s7 option now reads "in the UK and EU they run under MiFID II rules. The EU also caps dark volume."
+78. l12 s10 explain: fixed, three sentences.
+79. Duplicate flash-crash quiz: fixed. l12 q-flash is replaced with q-imbalance, a closing-auction item: 900,000 to buy against 300,000 to sell at the indicative 2,000p. The answer is that publishing the imbalance draws in sellers. Each distractor names one slip: the excess is cancelled, the indicative price is final, or the order goes to a dark pool. l8 keeps the flash crash.
+80. review-1 r-marketable `market`: fixed, "the bid at £20.02".
+81. homework-1 h-bp: fixed as proposed. The item now asks for two decimal places: answer 32.05 with tolerance 0.005, `bid` 32.10. A new `ask` misconception at 32.00 has a byKey line (0.04/12.48 × 10⁴ = 32.051).
+82. homework-1 h-sell-walk `all-levels`: fixed, 260 (3,000 shares at the mid less £751,030).
+83. homework-2 hw2-longform (e): fixed, "the best bid is £24.99 for 2,000 shares and the best ask £25.01 for 8,000" (microprice £24.994 checked).
+84. homework-3 h-best-s `old-k`: fixed, 48.52 (2 × 2 × 20e^{−0.5}), with a byKey line.
+85. Bare £ in maths: fixed, `\text{£}` in every place listed.
+86. `math.isclose`: fixed.
+87. Long sentences: fixed, split. l4 quiz[1] was a scan artefact (a quoted sentence); it now reads as indirect speech.
+
+### exam (3: 2 fixed, 1 fixed in part)
+
+88. e-crr-q: fixed with σ = 25%, weekly steps and r = 5% continuous. u = 1.035277, d = 0.965925 and q = 0.5052. The wrong values are `annual-growth` 1.2306, `annual-simple` 1.2123 and `no-growth` 0.4913; the byKey lines point out that the first two give a q above 1.
+89. Whole exam: fixed in part. I added e-greek-signs (difficulty 3, signs of a short put at r = 0) and e-split-impact (difficulty 4). The impact item uses the square-root model: £6m against £24m a day at 2% vol saves £40,000 over nine days, £60,000 against £20,000. The exam now has 30 items at 6/15/6/3, which is the 8.4 ramp. Implied vol and futures margin still have no exam item; the exam is at its 30-item ceiling.
+90. Items[20] and [25] how: fixed, `math.isclose`.
+
+Course files were out of scope for this pass, and none needs a change for these fixes.

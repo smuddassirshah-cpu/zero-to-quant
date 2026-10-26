@@ -54,7 +54,9 @@
     /* item 275: bind: "p.a-b" (a state path) on a cell writes what the learner types to the screen's canvas as they
        type, so a tree shows each probability on its branch; tapping that branch focuses the cell */
     const bound = cells.filter((c) => typeof c.spec.bind === 'string' && c.spec.bind);
-    const pushCanvas = (c) => { const cv = ctx.canvas; if (!cv || !cv.set) return; const v = input(c.id).value.trim(); cv.set(String(c.spec.bind).split('.').reduceRight((acc, k) => ({ [k]: acc }), v), { instant: true }); };
+    /* inbox (fin-ml 3): a number typed into a cell bound to a numeric path (values.<category> on bars, points.<id>.y on a
+       plane) is written as a number, so the bar or point moves as the learner types */
+    const pushCanvas = (c) => { const cv = ctx.canvas; if (!cv || !cv.set) return; const raw = input(c.id).value.trim(), num = Z.grade.parseNum(raw.replace('%', '')), v = /^(values|points|params|strike|spot|cells\b)/.test(String(c.spec.bind)) && !/^cells\./.test(String(c.spec.bind)) && raw !== '' && Number.isFinite(num) ? (pct(c) ? num / 100 : num) : raw; cv.set(String(c.spec.bind).split('.').reduceRight((acc, k) => ({ [k]: acc }), v), { instant: true }); };
     if (bound.length && ctx.canvas) {
       el.addEventListener('input', (e) => { const c = bound.find((q) => q.id === (e.target.dataset || {}).cell); if (c) pushCanvas(c); });
       if (ctx.canvas.enable && ctx.canvas.on) {

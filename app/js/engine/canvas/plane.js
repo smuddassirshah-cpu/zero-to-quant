@@ -217,7 +217,8 @@
     if (o.xTicks === 'integer') xt = intTicks(xt, sx.domain[0], sx.domain[1], px1 - px0);
     /* xStep / yStep: ticks (and grid lines) at every multiple of the step, such as 90 for degrees or 3 for months */
     const stepTicks = (lo, hi, st) => { const ticks = []; for (let v = Math.ceil(lo / st - 1e-9) * st, k = 0; v <= hi + 1e-9 && k < 200; v += st, k++) ticks.push(+v.toFixed(10)); return { ticks, step: st }; };
-    if (o.xStep > 0) xt = stepTicks(sx.domain[0], sx.domain[1], +o.xStep);
+    if (o.xStep > 0 && !sx.log) xt = stepTicks(sx.domain[0], sx.domain[1], +o.xStep);
+    if (sx.log) xt = logTicks(sx.domain[0], sx.domain[1], px1 - px0, { minGap: 40 });
     let yt = sy.log ? logTicks(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 26 }) : ticksFor(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 34 });
     if (o.yTicks === 'integer' && !sy.log) yt = intTicks(yt, sy.domain[0], sy.domain[1], py0 - py1);
     if (o.yStep > 0 && !sy.log) yt = stepTicks(sy.domain[0], sy.domain[1], +o.yStep);
@@ -238,7 +239,7 @@
     for (const v of xt.ticks) {
       const x = sx(v); if ((yAt0 && Math.abs(x - ay) < 2) || x > px1 - 14) continue;
       gg.append(svg('line', { x1: x, x2: x, y1: ax - 3, y2: ax + 3, class: 'cvb-axis thin' }));
-      const t = o.fmtX ? o.fmtX(v, xt.step) : fmtTick(v, xt.step);
+      const t = o.fmtX ? o.fmtX(v, xt.step) : fmtTick(v, xt.log ? Math.pow(10, Math.floor(Math.log10(v))) : xt.step);
       gg.append(txt(x, below, t, { cls: 'cvb-tick', size: 12, halo: true }));
       boxes.push(boxOf({ x, y: below, text: t, h: 14 }));
     }
@@ -617,7 +618,8 @@
       const xLabelRoom = yr[0] >= 0 || yr[1] < 0 || params.xAxis === 'bottom' ? 22 : 0, yLabelRoom = xr[0] >= 0 || xr[1] <= 0 || params.yAxis === 'left' ? 34 : 0;
       const m = { l: 14 + yLabelRoom, r: 18, t: 18, b: 14 + xLabelRoom + (xBelowOf(params) && xLabelRoom ? 20 : 0) };
       /* yScale: "log" (positive y range): log-price charts; ticks at 1, 2, 5 times powers of ten, labelled as prices with yFormat */
-      return { m, sx: C.scale(xr, [m.l, size.w - m.r]), sy: params.yScale === 'log' ? K.logScale([Math.max(1e-9, yr[0]), yr[1]], [size.h - m.b, m.t]) : C.scale(yr, [size.h - m.b, m.t]) };
+      /* inbox (fin-ml 3): xScale "log" (positive x range), ticks at 1, 2, 5 times powers of ten */
+      return { m, sx: params.xScale === 'log' ? K.logScale([Math.max(1e-9, xr[0]), xr[1]], [m.l, size.w - m.r]) : C.scale(xr, [m.l, size.w - m.r]), sy: params.yScale === 'log' ? K.logScale([Math.max(1e-9, yr[0]), yr[1]], [size.h - m.b, m.t]) : C.scale(yr, [size.h - m.b, m.t]) };
     };
     /* item 173: hidden functions stay evaluable (a point can still ride one); only drawing skips them */
     const functionsOf = (view) => {
@@ -1088,6 +1090,8 @@
           o.append(K.washPath(d));
           if (s.arrow) o.append(K.arrow(sx(ax), sy(ay), sx(bx), sy(by), { cls: 'cvb-ln' + (s.dashed ? ' cvb-dash' : '') }));
           else o.append(svg('path', { d, class: 'cvb-ln' + (s.dashed ? ' cvb-dash thin' : '') }));
+          /* inbox (validation 2): segments are tap targets (a label window as a bar) unless tap: false */
+          if (R.mode === 'tap' && s.tap !== false && s.id != null) { o.append(svg('path', { d, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 18px; fill: none' })); R.tappable(o, s.id, s.ariaLabel || s.label || 'Segment'); }
           plot.append(o);
           /* label at the midpoint, nudged by labelOffset [dx, dy] in px (default 8 right and 10 up) */
           const so = Array.isArray(s.labelOffset) ? s.labelOffset : [8, -10];

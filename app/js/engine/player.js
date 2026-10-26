@@ -165,9 +165,18 @@
         /* Explore controls: each slider drives canvas.setParam(bind, v) (else state.params[bind], or the state path for a
            dotted bind). `start` sets the opening value and is applied to the canvas; without it the slider opens at the
            bound value's current value (a number-line point's x, an area split, a param), else at min. */
-        const shown = (c, v) => G().fmtAs(v, c.format, c.decimals);
+        /* inbox (validation 2): frames: [state patch, ...] is a slider through authored states (fold 1, 2, 3), each applied
+           over the canvas as it opened (a key a frame leaves out goes back to its opening value); frameLabels name them */
+        const isFrames = (c) => Array.isArray(c.frames) && c.frames.length > 1;
+        const shown = (c, v) => (isFrames(c) ? (Array.isArray(c.frameLabels) && c.frameLabels[v] != null ? String(c.frameLabels[v]) : `${v + 1} of ${c.frames.length}`) : G().fmtAs(v, c.format, c.decimals));
         const drive = (c, v) => {
           if (!canvas) return;
+          if (isFrames(c)) {
+            const k = Math.max(0, Math.min(c.frames.length - 1, Math.round(+v) || 0)), fr = c.frames[k] || {}, keys = new Set(c.frames.flatMap((f) => Object.keys(f || {}))), patch = {};
+            keys.forEach((key) => { patch[key] = key in fr ? fr[key] : born && key in born ? born[key] : null; });
+            try { canvas.set(patch); } catch (err) { console.error(err); }
+            return;
+          }
           try {
             const listPath = /^(points|intervals|arrows|markers|vectors|segments|pointers)\./.test(String(c.bind)); // an item by id: points.p1.x
             if (canvas.setParam && !listPath) canvas.setParam(c.bind, v);
@@ -190,8 +199,8 @@
         const lg = (c) => ({ min: Math.log10(+c.min), max: Math.log10(+c.max), step: 1 / Math.max(1, Math.round(+c.perDecade || 1)) });
         const nearestStop = (c, v) => c.stops.reduce((b, x, i) => (Math.abs(+x - v) < Math.abs(+c.stops[b] - v) ? i : b), 0);
         const toVal = (c, p) => (hasStops(c) ? +c.stops[Math.max(0, Math.min(c.stops.length - 1, Math.round(+p)))] : isLog(c) ? +Number(10 ** +p).toPrecision(3) : +p), toPos = (c, v) => (hasStops(c) ? nearestStop(c, v) : isLog(c) ? Math.log10(Math.max(+c.min, v)) : v);
-        const vals = spec.canvas.controls.map((c) => (c.reseed ? 0 : isOpts(c) ? Math.max(0, Math.min(c.options.length - 1, Math.round(c.start ?? c.value ?? boundValue(canvas, c.bind, spec.canvas) ?? 0) || 0)) : hasStops(c) && c.start == null && c.value == null ? (() => { const cur = boundValue(canvas, c.bind, spec.canvas); return +c.stops[Number.isFinite(cur) ? nearestStop(c, cur) : 0]; })() : opening(c)));
-        const rng3 = (c) => (hasStops(c) ? { min: 0, max: c.stops.length - 1, step: 1 } : isLog(c) ? lg(c) : { min: c.min ?? 0, max: c.max ?? 1, step: c.step ?? 0.01 });
+        const vals = spec.canvas.controls.map((c) => (c.reseed ? 0 : isFrames(c) ? Math.max(0, Math.min(c.frames.length - 1, Math.round(+(c.start ?? 0)) || 0)) : isOpts(c) ? Math.max(0, Math.min(c.options.length - 1, Math.round(c.start ?? c.value ?? boundValue(canvas, c.bind, spec.canvas) ?? 0) || 0)) : hasStops(c) && c.start == null && c.value == null ? (() => { const cur = boundValue(canvas, c.bind, spec.canvas); return +c.stops[Number.isFinite(cur) ? nearestStop(c, cur) : 0]; })() : opening(c)));
+        const rng3 = (c) => (isFrames(c) ? { min: 0, max: c.frames.length - 1, step: 1 } : hasStops(c) ? { min: 0, max: c.stops.length - 1, step: 1 } : isLog(c) ? lg(c) : { min: c.min ?? 0, max: c.max ?? 1, step: c.step ?? 0.01 });
         /* item 323: { "reseed": true, "label": "New paths" } is a button that draws a fresh seeded run (walk, bars sims) */
         const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => { if (c.reseed) return `<div class="lsn-ctl lsn-ctl-btn"><button type="button" class="btn secondary" data-reseed="${i}">${G().inline(c.label || 'New run')}</button></div>`;
           if (isOpts(c)) return `<div class="lsn-ctl lsn-ctl-opts" role="radiogroup" aria-label="${Z.esc(String(c.label || c.bind).replace(/\$/g, ''))}"><span class="t-label">${G().inline(c.label || c.bind)}</span><div class="lsn-ctl-row">${c.options.map((o, k) => `<button type="button" class="chip lsn-ctl-opt${k === vals[i] ? ' is-on' : ''}" role="radio" aria-checked="${k === vals[i]}" data-ctl="${i}" data-k="${k}">${G().inline(String(o))}</button>`).join('')}</div></div>`; const q = rng3(c); return `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${q.min}" max="${q.max}" step="${q.step}" value="${toPos(c, vals[i])}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`; }).join('')}</div>`);

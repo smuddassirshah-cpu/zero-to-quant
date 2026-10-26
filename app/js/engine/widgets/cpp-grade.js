@@ -267,7 +267,7 @@ inline void finish(const std::string& o) {
 #line 1 "test ${i + 1}"
 static void zq_case_${i}(std::string& zq_o) {
 ${c.setup == null ? '' : String(c.setup)}
-zq::emit(zq_o, [&]() -> decltype(auto) { return
+zq::emit(zq_o, [&]() -> ${/\)\s*(\[|\.|->)/.test(callOf(c)) ? 'auto' : 'decltype(auto)'} { return
 ${callOf(c)}
 ; });
 }
@@ -563,7 +563,7 @@ inline int test_count() { return (int)zq_tk::all().size(); }
       const input = (r.argv && r.argv.length ? `<div class="t-caption">Run as</div>${pre('./main ' + r.argv.map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' '), 'wd-res-out wd-res-in')}` : '') + (r.stdin ? `<div class="t-caption">Input</div>${pre(r.stdin.replace(/\n$/, ''), 'wd-res-out wd-res-in')}` : '');
       if (r.error) return `${input}${pre(r.error, 'wd-res-err')}${r.stdout.trim() ? `<div class="t-caption">Printed before the error</div>${said}` : ''}`;
       if (r.ok) return `${input}<div class="t-caption">Printed the expected output</div>${said}`;
-      return `${input}<div class="t-caption">Expected output</div>${pre(String(r.expect).replace(/\n$/, ''))}<div class="t-caption">Your program printed</div>${said}`;
+      return `${input}<div class="t-caption">Expected output</div>${pre(String(r.expect ?? '').replace(/\n$/, ''))}<div class="t-caption">Your program printed</div>${said}${r.stderr ? `<details class="wd-res-more"><summary class="t-caption">It also wrote to stderr</summary>${pre(r.stderr, 'wd-res-err')}</details>` : ''}`;
     };
     const valRow = (r) => {
       if (r.error) return pre(r.error, 'wd-res-err') + (r.stdout ? `<div class="t-caption">Printed before the error</div>${pre(r.stdout)}` : '');
@@ -639,6 +639,7 @@ inline int test_count() { return (int)zq_tk::all().size(); }
             if (cs.match != null) { let re = null; try { re = new RegExp(String(cs.match), 'm'); } catch { re = null; } row.ok = !!re && re.test(row.stdout); return; }
             if (cs.lines) { const want = norm(row.expect).split('\n'), have = norm(row.stdout).split('\n'); let q = 0; have.forEach((l) => { if (q < want.length && l === want[q]) q++; }); row.ok = q === want.length; return; }
             row.ok = cs.exact ? row.stdout === String(row.expect) : norm(row.stdout) === norm(row.expect);
+            if (!row.ok && e.text) row.stderr = e.text; // inbox (cpp 4): what the program wrote to stderr, folded under a failing row
             return;
           }
           if (err || !row.hasValue) { row.error = err || 'The test did not report a value.'; return; }

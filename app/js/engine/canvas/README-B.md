@@ -10,6 +10,9 @@ Authors write `canvas: { "kind", "params", "state", "controls" }` (AUTHORING.md 
 - **Labels.** A label string with no `$` is plain text. A label that is entirely `$...$` is KaTeX. Mixed text and maths (`"slope of $f$"`) also works.
 - **Series colours.** Series take slots 1 to 6 in order. Set `colour: 1..6` on a series, function, vector or leg to pick a slot. Learner-movable things are always manipulable blue.
 - **Linked state (`derive`).** Any canvas may carry `"derive": { "<target>": "<expression>" }` beside `params` and `state`. After every change (a patch, a drag, a control) each target is set from its expression: `"p2.x": "0.8 * p1.x"` (an item's property, by id), `"values.7": "10 - values['3']"` (bars), `"params.b": "2 * a"`, `"caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%"` (a string fills each `{{expression}}`). Expressions see item ids (`p1.x`), param names, top-level numbers (`angle`, `ran`) and `values` (bar heights by label and id). The function set: `abs min max sqrt pow floor ceil sign hypot`, `round(v, places)`, `exp`, `log` and `ln` (natural), `log10`, `sin cos tan asin acos atan atan2` (radians), the constants `pi` and `e`, and for text `fixed(v, places)` and `money(v, symbol, places)`. `=` and `;` may appear only inside quoted strings. Rules run up to three passes, so a caption may read a value another rule derives. `fixed(3.5, 2)` is "3.50"; `money(1234.5)` is "£1,234.50" (`money(v, "$")` for dollars); negative numbers, in captions and from these helpers, print with the minus sign −; `(expr).toFixed(2)` and ternaries (`p1.x > 3 ? "high" : "low"`) work as in JavaScript. A plane explore screen often pairs points with `drag: true` and a `derive` caption: the validator accepts that as the screen's interaction. It is engine-wide (`ZQ.canvas.create`), so it works on number-line, plane, bars and every other kind, runs again in the Why? copy on the explained state, and on a `pair` reads both sides (README.md, "pair").
+- **Derive, pass 7.** More functions, the same in curve formulas where they make sense: `erfc`, `Phi` (accurate to about 1e-14 relative, so `Phi(-10)` is 7.62e-24), `normcdf(x, mu, sigma)` (alias `pnorm`), `normpdf(x, mu, sigma)` (alias `dnorm`), `qnorm(p, mu, sigma)` (aliases `PhiInv`, `NormInv`); matrices `solve(A, b)` (b a vector or a matrix), `inv(A)`, `transpose(A)`; lists `seq(a, b, step)`, `vadd`, `vsub`, `vmul` (element by element, a number acts as a constant list), `vscale(a, k)`, `cumsum(a)`, `diff(a)`, `rolling(a, w, "mean" | "sd" | "sum")`; seeded noise `randn(n, seed)` and `ar1(phi, n, seed, sigma, x0)` (the same shocks for every phi); objects `obj("range", [a, b], "colour", 2)` and `range(a, b)` (= `{ range: [a, b] }`), since braces are not allowed in a formula. A single state object with an id (a plane's `area: { id: "A", ... }`) is read and written by that id (`A.to`). A rule whose value is not ready yet (it reads something another rule derives) waits for the next pass instead of writing `undefined`.
+- **Ordered taps.** With a tap-regions widget's `ordered: true`, every kind numbers the selected objects 1, 2, 3 in tap order (README.md, "Canvas-bound widgets").
+- **Merging.** A state patch that maps indices into an array (`{ "quotes": { "bid": { "0": 49.99 } } }`, which a control bound to `quotes.bid.0` writes) patches those entries and keeps the array.
 - **Keyed list patches.** Lists with ids (`points`, `vectors`, `segments`, `markers`, `pointers`) can be patched by id: `{ "points": { "p1": { "x": 2 } } }` changes only `p1`. Sending an array replaces the whole list.
 - **`state.params` overrides params.** In `plane` and `distribution` it overrides the expression or family parameters (`params.params`). In `walk` it overrides top-level numbers (`p`, `mu`, `sigma`, `steps`, `paths`, `start`). This is what a bound slider writes.
 - **Interactive modes.** A widget calls `canvas.enable(mode, opts)`. The modes each kind supports are listed below. Elements the author marks as movable (`"drag": true` on a plane point, `state.drag` on vectors) move without `enable`. Clones made for the Why? modal are always static.
@@ -105,6 +108,17 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - Curve formulas may call `sum(k, 0, n, term)` (a partial sum: Taylor polynomials with a slider on `n`) and `fact(k)`.
 - `values()` returns area values by id; `setParam` / `getParam` handle `zoom`, dotted state paths (`tangent.x`) and params.
 
+**Integration pass 7 additions**
+- A point with `on: "f"` stays on its curve whenever its x changes (a control on `points.p1.x`, a derive, an explanation patch) or the curve's params change, not only while dragged; on a polyline or parametric curve it moves to the nearest point.
+- Function entries: `exprs: ["1", "a*x", ...]` with `index: "d"` (a param name, or a number; `indexFrom` shifts it) picks one formula, so a control switches between precomputed fits without a ternary chain; `points: [[x, y], ...]` is a polyline (an empirical ROC curve) that a point can ride with `on`; `steps: { at: [b1, b2], levels: [l0, l1, l2], from, to, closed: "left" | "right" }` is a step function (closed dot at the left end of each piece by default, open at the right; a list of these with `index` switches them); `cells: { x: [x0, x1], y: [y0, y1], values: [[...], ...], colours, opacity }` is a classified-region layer (values[0] is the bottom row; class k washes in series slot k + 1, null is clear), for a k-NN or tree decision region computed offline. `contour` and `heat` entries are accepted by the validator in params and state.
+- `hide: [ids]` also hides points, segments, polygons, angles, vectors and reference lines, by id or by a `group` name on the item (`hide: ["test"]` hides every point with `group: "test"`), so a control plus derive can reveal a set.
+- `xAxis: "bottom"` keeps the x axis at the bottom edge even when the y range spans 0 (signed coefficient paths); `xScale: "log"` (a positive x range) with ticks at 1, 2 and 5 times powers of ten; `xFormat` / `yFormat: "percent"` (or `"%"`) label ticks as percentages (0.05 reads 5%).
+- Point labels take `{x:.2f}` and `{y:.0f}` (fixed places, trailing zeros kept: `£{y:.2f}` reads £100.00).
+- Labels keep clear of points as well as curves (`labelsAvoidPoints: false` turns that off); a function label pushed more than 14px off its curve gets a thin dashed leader back to it (`leaders: false` turns that off). Close vertical reference lines put the earlier label on the left of its line, so neither vanishes. The x-axis title also moves for the sketch's control points.
+- `state.ci: { n, size, mu, sigma, seed, level, known, label }` draws n confidence intervals from repeated seeded samples, one per row (give `y: [0, n + 1]`), the misses in the negative colour, mu dashed, and "k of n miss" at the top (`label: "{misses} of {n} miss"`); `values().misses` and `values().covered` feed a derive caption, and a control on `ci.n` adds samples (the same draws each time).
+- Segments are tap targets in tap mode (by id; `tap: false` opts out).
+- Derive targets for `vlines` and `hlines` work by id like any list item: `"derive": { "v1.x": "mu + 1.96 * se" }`.
+
 ## bars
 
 Bar chart or histogram. It can draw dashed exact-value lines and fill itself from a seeded simulation.
@@ -155,6 +169,14 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
 - `showMean` draws the weighted mean of the heights; `state.pivot` draws a fulcrum under the axis, draggable with `drag: true` or a drag-point widget (target: a number), for "balance the see-saw".
 - Simulations: `sim.outcome` reads params and `state.params` by name, so a slider on sample size re-runs the seeded stream; `sim.let: { xs: "sample(k, n())" }` binds names per trial; `sim.filter: "xs[0] > 0"` discards trials (the count reads "1,000 trials (195 discarded)"); outcome helpers `sample`, `mean`, `var`, `varp`, `sd`, `sum`, `len`, `tstat(k)` (see `engine/sim.js`). Methods `discarded()`, `points()`, `place("pivot", x)`.
 
+**Integration pass 7 additions**
+- A catch-all category: a label ending in `+` (`"4+"`) or `{ "label": "4 or more", "atLeast": 4 }` (or `atMost`) takes every outcome from there on, so a capped count needs no `min(..., 4)` trick.
+- Sim outcomes gain `maxn(k, e)`, `minn(k, e)` (the largest or smallest of k fresh draws), `count(k, e)`, `repeat(k, e)`, `argmax(list)`, `argmin(list)`, and `max` / `min` accept a list (`max(sample(N, n()))`).
+- Bins are half-open, [lo, hi), with the top edge of the last bin counted in it, for data and sims alike.
+- `state.categories` replaces the category list, so a derive such as `"categories": "seq(0, n)"` gives one bar per value of n.
+- `dataSets: [[...], [...]]` with `index: "k"` picks one data set by a param (precomputed C++ draws following a control stop).
+- With `showValues`, a bar of height 0 shows its 0 (`showZero: false` hides it). With `state.cut`, `values()` adds `beyondCut` (the height past the cut) and `beyondShare` (its share of the total).
+
 ## distribution
 
 A pmf drawn as bars, or a pdf drawn as a curve, with a shaded probability.
@@ -194,6 +216,8 @@ A pmf drawn as bars, or a pdf drawn as a curve, with a shaded probability.
 - `drag: true` (params or state) shows the shade handles on an explore screen without a drag-point widget; dragging moves the first region.
 - ids: `cdf`, `median`, `rug`, `observed`, `observed1`, …, named shade regions.
 
+**Integration pass 7 additions:** `family: "beta"` with `params: { a, b }` on [0, 1] (mean, sd and the usual shading and labels), for posteriors and credible intervals.
+
 ## scatter
 
 Points, a least squares line, a given or learner-placed line, and residuals.
@@ -227,6 +251,12 @@ Points, a least squares line, a given or learner-placed line, and residuals.
 **Integration pass 5 additions:** `curves: [{ id, expr: "f(x)" } | { id, x: "...", y: "...", t: [a, b] } | { id, implicit: "F(x, y)" }]` (params or state, with `colour`, `dashed`, `label`, `labelAt: [x, y]`) draws curves over the cloud, such as a risk ellipse. Controls and derive reach `line.m` and `line.b` directly (a missing line starts flat at 0).
 
 **Integration pass 6 additions:** `sim: { n, rho, seed, mx, my, sx, sy }` draws n seeded normal pairs with correlation `rho`; a control on `rho` (state.params.rho) re-correlates the same draws, and `values()` gives `r`, the sample correlation, for captions.
+
+**Integration pass 7 additions**
+- Curves take `thin: true` and `opacity` (a band of resampled fits).
+- A point with `exclude: true` is drawn as a ring and joins neither the fit nor the residuals (an (x̄, ȳ) marker); `showSAE: true` adds the sum of absolute residuals under `showSSE`; `xTicks: "integer"`; `state.lines: [{ id, m, b, label, colour, dashed }]` draws more straight lines, each with its label.
+- Points carry a `group` (on an object point, or a third entry `[x, y, "A"]`) and are coloured by it with a legend in the top right; `params.groups: ["A", { "id": "B", "label": "Bonds" }]` orders and names them, `legend: false` hides it.
+- The validator accepts `fit`, `line`, curve ids and residual ids `r-p{i}` as highlight targets.
 
 ## series
 
@@ -271,6 +301,15 @@ One or more time series, with optional candles.
 - A series may be simulated: `sim: { outcome, n, seed, running: "mean" | "varp" | "var" | "sd" | "sum" | "none", let, filter }` plots the running statistic of n seeded outcomes (params read by name).
 - `xScale: "log"` spaces the index on a log axis (from `indexFrom`, default 1); `xStep: 250` fixes the tick spacing.
 - Controls bind `reveal` (0 to 1), `revealAt` (an index) and `markers.<id>.i`; a marker with `i: "reveal"` rides the end of the reveal.
+
+**Integration pass 7 additions**
+- `xValues: [0.01, 0.1, 1, 10]` gives each index its real x (with `xScale: "log"` on a log axis; `xStep` sets linear ticks); markers and shades still take indices.
+- `step: true` on a series draws a step line (flat, then a jump at each point), for balances that jump.
+- `sim` with `band: 2` on a running mean shades mean ± 2·sd/√i; a series may also carry `band: { lo: [...], hi: [...] }` (error bands from precomputed values).
+- `state.series: { "<id>": { values: [...] } }` overrides a series, so a derive can redraw a line from a slider (`"series.x.values": "ar1(phi, 60, 7)"`, `"series.net.values": "cumsum(vsub(gross, vscale(traded, c)))"`); give `params.y` so the axis holds still. `hide` (state, and so derive) still hides lines by id.
+- Marker labels take `labelSize` (or `params.markerLabelSize`) and `labelOffset: [dx, dy]`, and keep clear of the end labels.
+- `hlines` and the `window` are tap targets in tap mode; `vlines: [{ id, i, label, colour, dashed }]` (params or state, patchable: a control binds `vlines.v1.i`) draws a vertical reference at an index or date.
+- With a `dateFormat` that shows only the year (`"%Y"`), ticks fall on the first date of each year; with only a month (`"%b %y"`), on the first of each month.
 
 ## walk
 
@@ -384,7 +423,7 @@ Random walks or price paths from the seeded RNG.
 **params**
 - `nodes: [{ id, label, x, y, colour }]`. `x` and `y` are fractions from 0 to 1 of the frame.
 - `edges: [{ from, to, w, label, directed, dashed, bend, colour }]`. Edge ids are `e-{from}-{to}`.
-- `directed` (the default for all edges), `markov: true`, `nodeRadius`, `height`.
+- `directed: true` (params, for all edges, or per edge) draws arrowheads; without it edges are undirected (a flowchart or pipeline needs `directed: true`), `markov: true`, `nodeRadius`, `height`.
 - `layout: "ring"`: the nodes sit evenly round a circle in list order (seats round a table), ignoring `x` and `y`.
 - Without `nodeRadius` the radius grows to fit the longest label (22 up to 34); a label still too long shrinks (down to 10px).
 - A node may carry its own `r`, `shape: "pill"` (a rounded box as wide as its label, for branch names and variable names) and `dashed: true` (for example a fetched commit not yet merged). Edges stop at each node's rim.
@@ -417,6 +456,15 @@ Random walks or price paths from the seeded RNG.
 
 **Integration pass 6 additions:** an edge's `loopAngle` (degrees: 0 right, 90 up) points a self-loop that way; a node's `valueSide` (`below` default, `above`, `left`, `right`, or `state.valueSide: { id: side }`) moves its distribution value; on a column narrower than 540px the frame narrows (down to 300) instead of shrinking the drawing, so labels keep their 12px minimum on a phone (`fitWidth: false` keeps the fixed frame).
 
+**Integration pass 7 additions**
+- Edges are undirected unless `directed` is set (the line above used to say otherwise); flowcharts and pipelines need `params.directed: true`.
+- The circle radius follows labels set later (`state.labels`) as well as the opening ones; the frame padding follows the nodes' own sizes, so rect and pill nodes neither waste the frame nor run off it; below 440px pill and rect labels are set at 12px.
+- Edge labels may hold KaTeX (`"label": "$\\lambda$"`).
+- `state.pointers: { "slow": "n2", "fast": { "at": "n4", "side": "below" } }` (or a list of `{ id, at, label, side }`) draws a labelled arrow onto a node; several on one node stack; a patch moves them (linked lists without re-pointing pills).
+- `state.values: { "<node>": "17.71" }` writes a value under a node (`valueSide` moves it).
+- `params.lattice: { steps: 3, S0: 100, u: 1.1, d, decimals: 2, money: "£", labels, shape, stepLabels: true | [...] }` lays out a recombining binomial lattice: nodes `n{t}_{k}` (k up moves after t steps), edges up and down, prices as labels (or `labels` by id), step labels along the bottom. Values per node come from `state.values`, so a table widget (`bind: "values.n2_1"`) or a derive can fill them.
+- Not added: a side panel for auxiliary state (a heap's contents); put an `array` beside the graph in a `pair`.
+
 ## array
 
 **params**
@@ -448,6 +496,15 @@ Random walks or price paths from the seeded RNG.
 ```
 
 **Integration pass 6 additions:** `wrap: 12` (or `true`) puts a long array on rows of that many cells, ranges drawn row by row.
+
+**Integration pass 7 additions**
+- Pointers are tap targets (by id) in tap mode, beside cells.
+- The layout follows the current number of cells and the widest text in any state (or `params.steps`); `cellWidth` fixes the cell width.
+- `state.insert: { at, value }` shifts the later cells right and fades the new one in; `state.remove: i` closes the gap (both animated).
+- A cell may be `{ "v": 6, "label": "i2" }`: a small label above the value (a monotonic stack of indices and values).
+- `params.steps: [state patch, ...]` with a control bound to `step` is a built-in stepper: each step applies over the opening state and the caption reads "Step k of n" (`stepCounter: false` to drop it). A `frames` control (AUTHORING section 4) does the same on any kind.
+- `highlight.ranges: [[a, b], { range: [c, d], colour: 3, label: "test" }]` draws several bands at once (train, purge, test), beside `highlight.range`.
+- `place` with `mode: "array"` grades the order after a drag (README.md, "Canvas-bound widgets").
 
 ## payoff
 
@@ -488,6 +545,13 @@ Payoff or profit and loss at expiry against the price of the underlying.
 - `drag: "spot"` (or a drag-point widget naming `spot`) makes the spot a handle on the axis; `points()` and `place("spot", x)` include it.
 - `showTotal: false` hides the combined line and draws each leg solid; a leg's `labelAt` (0 to 1 along the price range) places its label; `floor: false` on a leg drops its floor (the "forgot the right not to exercise" line).
 
+**Integration pass 7 additions**
+- Legs live in state: `state.legs` replaces them, or a map by id merges, adds or removes (`null`) one; `qty: 0` hides a leg. A `place` token's `onPlace` patch can add a leg, so dropping legs builds the position.
+- A cash leg: `{ "type": "cash", "amount": 100 }` (a flat line; short it for a loan).
+- Stock (or `"forward"`) legs mark their entry price on the axis ("F = 100", or their `strikeLabel`), and are dragged when `params.drag` (or a drag-point widget) names them.
+- `value` may be a list of curves (`[{ "t": 0.5, "sigma": 0.2, "label": "σ = 20%" }, { "t": 0.5, "sigma": 0.4, "label": "σ = 40%" }]`), each with its own label, colour and `labelAt`; the tangent follows the first.
+- Per-leg label positions were already `labelAt` (pass 6).
+
 ## orderbook
 
 **params**
@@ -515,6 +579,11 @@ Payoff or profit and loss at expiry against the price of the underlying.
 ```
 
 ---
+
+**Integration pass 7 additions**
+- `bids` and `asks` live in state, seeded from params: a list replaces a side; a map keyed by price sets a size (`{ "100.5": 300 }`), adds a level or removes one (`null`); a map keyed by level index patches a level (`{ "0": { "1": 350 } }`, which a control bound to `bids.0.1` writes). A level's third entry is a label (`[100.5, 300, "#17"]`, an order id), shown beside its size. Give `depth` to reserve rows for levels that arrive.
+- `state.quotes: { "bid": [p, s], "ask": [p, s] }` merges the learner's own quotes into the book, labelled "You" (`youLabel`), in the manipulable colour; `state.fair` (or `params.fair`) adds a fair value to the spread row, so sliders on fair, half-spread and skew (with a derive writing `quotes`) move the learner's quotes in the book.
+- `decimals` for the average fill price, `midDecimals` for the mid (default: one more place when the mid falls between ticks), `spreadUnit: "pence" | "bp"` for the spread.
 
 ## Widget: slider
 

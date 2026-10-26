@@ -125,7 +125,7 @@
     const e = FN.Phi(x) - p, u = e * Math.sqrt(2 * Math.PI) * Math.exp(x * x / 2); x = x - u / (1 + x * u / 2);
     return mu + sd * x;
   };
-  FN.pnorm = FN.normcdf; FN.dnorm = FN.normpdf;
+  FN.pnorm = FN.normcdf; FN.dnorm = FN.normpdf; FN.PhiInv = FN.qnorm; FN.NormInv = FN.qnorm; // inbox (fin-ml 3): the names authors reach for
   /* sum(k, a, b, term) becomes F.sum(a, b, (k) => term): split the call's arguments at top-level commas */
   const sumCalls = (src) => {
     for (let guard = 0; guard < 20; guard++) {
@@ -167,7 +167,7 @@
     return src;
   };
   const compile = (expr, paramNames = []) => {
-    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact|lgamma|erfc|erf|Phi|normcdf|normpdf|pnorm|dnorm|qnorm)\b(?!\s*[:\w])/g, 'F.$1'));
+    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact|lgamma|erfc|erf|PhiInv|Phi|NormInv|normcdf|normpdf|pnorm|dnorm|qnorm)\b(?!\s*[:\w])/g, 'F.$1'));
     if (!paramNames.includes('e')) src = src.replace(/(^|[^\w.])e(?![\w(])/g, '$1F.e'); // Euler's number, not the e of 1e5
     src = wrapUnaryPow(src);
     if (/[^\w\s+\-*/().,<>=?:!&|%]/.test(src.replace(/F\./g, ''))) throw new Error('Bad expression: ' + expr);
@@ -526,7 +526,16 @@
   DERIVE_FN.prod = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), ['k', ...Object.keys(names)]); let s = 1; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s *= f(0, { ...names, k }); return s; };
   DERIVE_FN.lgamma = FN.lgamma; DERIVE_FN.erf = FN.erf; DERIVE_FN.Phi = FN.Phi;
   /* items 341, 380: the normal family in derive and captions as in curve formulas */
-  ['erfc', 'normcdf', 'normpdf', 'pnorm', 'dnorm', 'qnorm'].forEach((k) => { DERIVE_FN[k] = FN[k]; });
+  ['erfc', 'normcdf', 'normpdf', 'pnorm', 'dnorm', 'qnorm', 'PhiInv', 'NormInv'].forEach((k) => { DERIVE_FN[k] = FN[k]; });
+  /* inbox (fin-ml 3, arma 1): list arithmetic for series a derive writes (arrow functions are not allowed):
+     vadd(a, b), vsub(a, b), vmul(a, b) element by element (a number counts as a constant list), vscale(a, k),
+     cumsum(a), diff(a) (first differences, one shorter), rolling(a, w, "mean" | "sd" | "sum") (null until w values) */
+  const vz = (a, b, f) => { const n = Math.max(Array.isArray(a) ? a.length : 0, Array.isArray(b) ? b.length : 0); return Array.from({ length: n }, (_, i) => { const x = Array.isArray(a) ? a[i] : a, y = Array.isArray(b) ? b[i] : b; return x == null || y == null ? null : f(+x, +y); }); };
+  DERIVE_FN.vadd = (a, b) => vz(a, b, (x, y) => x + y); DERIVE_FN.vsub = (a, b) => vz(a, b, (x, y) => x - y); DERIVE_FN.vmul = (a, b) => vz(a, b, (x, y) => x * y);
+  DERIVE_FN.vscale = (a, k) => vz(a, k, (x, y) => x * y);
+  DERIVE_FN.cumsum = (a) => { let t = 0; return (a || []).map((x) => (x == null ? null : (t += +x))); };
+  DERIVE_FN.diff = (a) => (a || []).slice(1).map((x, i) => (x == null || a[i] == null ? null : x - a[i]));
+  DERIVE_FN.rolling = (a, w, stat = 'mean') => { w = Math.max(1, Math.round(+w || 1)); return (a || []).map((_, i) => { if (i + 1 < w) return null; const win = a.slice(i + 1 - w, i + 1).map(Number), m = win.reduce((t, x) => t + x, 0) / w; return stat === 'sum' ? m * w : stat === 'sd' ? (w > 1 ? Math.sqrt(win.reduce((t, x) => t + (x - m) ** 2, 0) / (w - 1)) : 0) : m; }); };
   /* item 432: solve(A, b) (Gaussian elimination with partial pivoting; b a vector or a matrix) and inv(A), for small
      systems such as ridge coefficients that follow a lambda slider; transpose(A) */
   DERIVE_FN.solve = (A, b) => {

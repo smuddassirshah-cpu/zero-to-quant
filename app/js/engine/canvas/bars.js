@@ -215,7 +215,7 @@
             if (R.mode === 'tap') o.append(svg('rect', { x: xb, y: sy(top), width: sub, height: sy(bot) - sy(top), class: 'cvb-selw' }));
             o.append(svg('rect', { x: xb + (binned ? 0.5 : 0), y, width: Math.max(0, sub - (binned ? 1 : groups ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
             if (R.mode === 'tap') o.append(svg('rect', { x: xb, y: sy(top), width: sub, height: sy(bot) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
-            if (params.showValues && (v || sim)) vals.append(K.txt(xb + sub / 2, v < 0 ? Math.min(sy(v) + 11, H - mb - 8) : Math.min(y - 9, sy(base) - 9), fmtV(v), { size: groups ? 11 : 12, cls: 'cvb-muted', halo: true })); // item 263: never on the category labels
+            if (params.showValues && (v || sim || params.showZero !== false)) vals.append(K.txt(xb + sub / 2, v < 0 ? Math.min(sy(v) + 11, H - mb - 8) : Math.min(y - 9, sy(base) - 9), fmtV(v), { size: groups ? 11 : 12, cls: 'cvb-muted', halo: true })); // item 263: never on the category labels
             R.tappable(o, id, groups ? `${c.label}, ${groups[k].label}` : c.label);
             bars.append(o);
           });
@@ -302,7 +302,13 @@
         run: (n) => R.inst.set({ ran: Math.round(R.state.ran || 0) + n }),
         reset: () => R.inst.set({ ran: 0 }, { instant: true }),
         /* Current heights by category id: proportions or counts as drawn. */
-        values: () => (groups ? Object.fromEntries(groups.flatMap((q, k) => { const hs = heights(R.state, k); return cats.map((c, i) => [`${c.id}-${q.id}`, hs[i]]); })) : Object.fromEntries(cats.map((c, i) => [c.id, heights(R.state)[i]]))),
+        /* inbox (arma 1): with a cut, beyondCut is the total height (count, or share) past the cut and beyondShare its share */
+        values: () => {
+          const out = groups ? Object.fromEntries(groups.flatMap((q, k) => { const hs = heights(R.state, k); return cats.map((c, i) => [`${c.id}-${q.id}`, hs[i]]); })) : Object.fromEntries(cats.map((c, i) => [c.id, heights(R.state)[i]]));
+          const cut = R.state.cut && Number.isFinite(+R.state.cut.at) ? R.state.cut : null;
+          if (cut && !groups) { const hs = heights(R.state); let b = 0, t = 0; cats.forEach((c, i) => { const v = valOf(i), on = cut.side === 'below' ? v <= +cut.at + 1e-9 : v >= +cut.at - 1e-9; t += hs[i]; if (on) b += hs[i]; }); out.beyondCut = b; out.beyondShare = t ? b / t : 0; }
+          return out;
+        },
         counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0), R.state)[i]])),
         discarded: () => discarded,
         points: () => (R.state.pivot != null ? { pivot: { x: +R.state.pivot, y: 0 } } : {}),

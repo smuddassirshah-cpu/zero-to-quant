@@ -77,7 +77,9 @@
       render(view, R) {
         const g = R.F.g, cells = view.cells || [], n = cells.length;
         lay(n, cells); const G = geom(n);
-        const hlRange = K.isObj(view.highlight) && Array.isArray(view.highlight.range) ? view.highlight.range : null;
+        /* inbox (fin-ml 1, validation 2): highlight.ranges [[a, b] | { range: [a, b], colour, label }] draws several bands,
+           each in its own colour (train, purge, test), beside the single highlight.range */
+        const hlRanges = K.isObj(view.highlight) ? [...(Array.isArray(view.highlight.range) ? [{ range: view.highlight.range, colour: 1, label: view.highlight.label }] : []), ...(Array.isArray(view.highlight.ranges) ? view.highlight.ranges.map((q, k) => (Array.isArray(q) ? { range: q, colour: k + 2 } : K.isObj(q) && Array.isArray(q.range) ? { colour: k + 2, ...q } : null)).filter(Boolean) : [])] : [];
         const sel = new Set(view.selected || []), done = new Set((view.done || []).map(Number));
         const act = view.active;
         /* cell positions, adjusted by a running swap or a drag */
@@ -96,18 +98,20 @@
           }
           return [x, y];
         };
-        /* range wash behind the cells */
-        if (hlRange && n) {
+        /* range washes behind the cells */
+        hlRanges.forEach((hr, ri) => {
+          const hlRange = hr.range; if (!n) return;
           const a = hlRange[0] - from, b = hlRange[1] - from, [ax, ay] = G.pos(Math.max(0, a)), [bx, by] = G.pos(Math.min(n - 1, b));
-          const o = K.obj('range', '', 1);
-          if (stack) o.append(svg('rect', { x: ax - 6, y: by - 6, width: cw + 12, height: ay - by + ch + 12, rx: 8, class: 'cvb-range' }));
+          const o = K.obj(hr.id || (ri ? 'range' + (ri + 1) : 'range'), '', hr.colour || 1);
+          const lift = Math.min(3, ri) * 3; // later bands sit a little inside earlier ones, so overlaps show
+          if (stack) o.append(svg('rect', { x: ax - 6 + lift, y: by - 6 + lift, width: cw + 12 - 2 * lift, height: ay - by + ch + 12 - 2 * lift, rx: 8, class: 'cvb-range' }));
           else { // one band per row the range covers (wrapped arrays)
             const lo = Math.max(0, a), hi = Math.min(n - 1, b);
-            for (let r0 = Math.floor(lo / perRow); r0 <= Math.floor(hi / perRow); r0++) { const s0 = Math.max(lo, r0 * perRow), s1 = Math.min(hi, r0 * perRow + perRow - 1), [sx0, sy0] = G.pos(s0), [sx1] = G.pos(s1); o.append(svg('rect', { x: sx0 - 6, y: sy0 - 6, width: sx1 - sx0 + cw + 12, height: ch + 12, rx: 8, class: 'cvb-range' })); }
+            for (let r0 = Math.floor(lo / perRow); r0 <= Math.floor(hi / perRow); r0++) { const s0 = Math.max(lo, r0 * perRow), s1 = Math.min(hi, r0 * perRow + perRow - 1), [sx0, sy0] = G.pos(s0), [sx1] = G.pos(s1); o.append(svg('rect', { x: sx0 - 6 + lift, y: sy0 - 6 + lift, width: sx1 - sx0 + cw + 12 - 2 * lift, height: ch + 12 - 2 * lift, rx: 8, class: 'cvb-range' })); }
           }
           g.append(o);
-          if (view.highlight.label) g.append(K.txt(stack ? ax + cw + 14 : (ax + bx + cw) / 2, stack ? (ay + by + ch) / 2 : ay + ch + 34, view.highlight.label, { anchor: stack ? 'start' : 'middle', size: 12, cls: 'cvb-strong' }));
-        }
+          if (hr.label) g.append(K.txt(stack ? ax + cw + 14 : (ax + bx + cw) / 2, stack ? (ay + by + ch) / 2 : ay + ch + 34 + ri * 14, hr.label, { anchor: stack ? 'start' : 'middle', size: 12, cls: 'cvb-strong' }));
+        });
         const order = [...Array(n).keys()];
         if (dragView) { order.splice(order.indexOf(dragView.i), 1); order.push(dragView.i); }
         const idxG = svg('g'), cellsG = svg('g'); g.append(idxG, cellsG);

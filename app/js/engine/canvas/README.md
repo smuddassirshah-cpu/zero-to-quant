@@ -77,6 +77,12 @@ Lattice paths (counting routes on a 4 by 5 street grid):
 - Tap-regions `answer`, `among` and `wrong` sets may use set names (`cross2`, `row5`, `all`).
 - Typing into a canvas: a `table` widget cell with `bind: "cells.r2c3"` writes what the learner types into that grid cell (margins update), so "fill the product of the margins" happens on the grid.
 
+**Integration pass 7 additions**
+- `state.mark` entries set to `null` (or `""`) remove a badge instead of printing "null"; `{ "text": "♛", "pos": "centre" }` (or `params.markPos: "centre"`) draws the glyph large in the middle of the cell, hiding that cell's text.
+- A cell text with a newline (`"£5\n£20"`, in `params.cells` or `state.cells`) is drawn on two lines, the second lighter; `values()` reads the first line.
+- The text of every cell a `paths` route passes is repeated above the route with a halo, so the numbers on a route stay readable.
+- Filling a DP table: a `table` widget cell may carry `deps: ["r1c2", "r2c1"]` (grid ids), highlighted on the grid while that cell has focus; with `bind: "cells.r2c2"` the typed value appears in the grid cell too. Grading stays in the table widget (a grid table-fill mode of its own is not added).
+
 ## tree
 
 Probability and decision trees, left to right or top to bottom; spacing is automatic.
@@ -101,6 +107,17 @@ Label spacing: on a tree with 7 or more leaves shown, probability labels from th
 ```
 
 **Integration pass 6 additions:** `state.p: { "a-b": "1/3" }` replaces a branch's probability ("" shows "?") and `state.leaves: { "a-b": "£12" }` a leaf's value (give `leaves: { "a-b": "" }` to keep room for values a patch fills). A `table` widget cell with `bind: "p.a-b"` draws what the learner types on that branch and focuses when the branch is tapped. First-level labels on a fan of three or more move along their branches, away from the root.
+
+**Integration pass 7 additions**
+- `state.collapse: [""]` (only the root shown) no longer throws.
+- `state.labels: { "<path>": "text", "root": "text" }` replaces a pill's text (a question while expanded, counts when collapsed); the pill widens to fit.
+- `state.values: { "<path>": "V = 3.10", "root": "V₀ = 8.6" }` (or `params.values`) writes a value above any node's pill (beside it top to bottom), inner nodes and the root included, for backward induction and call-by-call return values. `state.leaves` keeps leaf values to the right; `state.values: false` still hides every value.
+- `state.dim: [paths]` greys those branches and everything under them (pruned branches).
+- `state.arrows: { "<path>": "down" | "up" | "both" }` puts an arrowhead on a branch: down toward the child (a call), up toward the parent (a return).
+- `params.binary: true` with `nodes` as one top node `{ "id": "n8", "label": "8", "left": {...}, "right": {...} }` (or `children` with `side: "left" | "right"`) draws a binary tree top to bottom: x is each node's in-order rank, so a single child sits on its own side and no placeholder nodes are needed; the top node is a real pill (path `n8`), tappable; `highlight`, `shade` and taps act on single nodes, not paths. Ids are paths as usual (`n8-n3-n6`).
+- `params.spacing: 1.3` multiplies the leaf spacing (stacked pairs with long branch labels).
+- A recombining binomial lattice is the `graph` canvas's `lattice` layout (README-B), not a tree option.
+- Not added: a minimum font size under `canvas.maxHeight` (a capped tree still scales as a picture; prefer `compact`).
 
 ## venn
 
@@ -134,6 +151,8 @@ One to three sets in a universe; each region is its exact shape.
 
 **Integration pass 6 additions:** `scale: "log"` (positive values, ticks at 1, 2, 5 times powers of ten) and `scale: "log-odds"` (probabilities placed by ln(p/(1 − p)), ticks at 1%, 5%, 10%, 25%, 50%, …; `format: "percent"`); values, snapping and labels stay in the natural unit.
 
+**Integration pass 7 additions:** negative tick labels use the minus sign −. `params.tapIntervals: true` (or `tap: true` on an interval) makes intervals tap targets by their ids, beside points.
+
 ## boxes
 
 Containers and items for counting and drawing without replacement.
@@ -152,6 +171,12 @@ Containers and items for counting and drawing without replacement.
 ```
 
 **Integration pass 6 additions:** `size: "large"` (or `"medium"`, or a number) scales every item, so three large cards fill the canvas; item kind `door` (a tall card with a knob; face down shows its back).
+
+**Integration pass 7 additions**
+- `state.labels: { "<item>": "You 300" }` relabels an item (a card widens to fit).
+- Dropping into a `row` places the item at the slot under the pointer (the others close up), kept in `state.at: { "<item>": slot }` (0-based); `contents()` (and `place` grading with `ordered: true`) follow that order.
+- Four or more containers that would shrink below 80% wrap onto two or three rows; `params.rows: 2` sets the rows, `wrap: false` keeps one row. A container's own `cols` still sets its columns.
+- A `card` whose label looks like code (brackets, `_`, `;`, `::`, `->`), or with `code: true` (or `params.code: true`), is set in the code face and sized from the label in that face.
 
 ## area
 
@@ -230,6 +255,8 @@ Numbers print with the minus sign (−3), as does text that starts with a negati
 
 ---
 
+**Integration pass 7 additions:** `canvas.maxHeight` now caps a table (and a console): it scrolls inside the cap instead of growing.
+
 ## console
 
 Terminal sessions, pytest output, tracebacks: a monospace block where every line keeps its indentation and long lines scroll sideways. HTML inside the canvas wrapper, like the table.
@@ -244,6 +271,8 @@ Terminal sessions, pytest output, tracebacks: a monospace block where every line
 { "kind": "console", "params": { "title": "Terminal", "lines": ["$ pytest -q", "..F.", "E       assert 0.01 == 0.0", "1 failed, 3 passed"] },
   "state": { "shade": { "fail": ["l3"] }, "tone": { "l4": "muted" } } }
 ```
+
+**Integration pass 7 additions:** `compact: true` (11.5px) or `fontSize: 10` to `14` fits 80-column output such as a statsmodels summary; `wrap: true` wraps long lines with a hanging indent so real compiler and sanitiser lines show verbatim. Without `wrap`, a box whose lines run past its edge shows a fade at the right while there is more to scroll.
 
 ## pair
 
@@ -269,9 +298,13 @@ Two canvases side by side (stacked below 480px, or always with `stack: true`), f
 - An `explain.canvas` patch under the active side's key (`{ "right": {...} }`) wins over the flattened active state, so it shows in the Why? copy.
 - A matrix side is drawn at its own width (`fit: true`), and a pair with a matrix side stacks whenever side by side would draw a side below 80% of its size; `minScale: 0.7` sets that threshold on any pair.
 
+**Integration pass 7 additions:** `split: 0.6` (0.3 to 0.7) gives the left side that share of the width (a compact chart beside a wider table). A pair holding `bars` stacks automatically when side by side would shrink a chart below 70% (as matrices do at 80%); `minScale` overrides it.
+
 ## Canvas-bound widgets
 
 - **tap-regions** (`answer`, `max`, `wrong: [{ "id", "set", "flash" }]`, `countWord`): works on any canvas with tap mode (grid, tree, venn, area, boxes, table, number-line points, and E4's tappable kinds). Keys: a matching `wrong[]` id, else the first wrongly selected id, else the first missed answer id. `showWhy` flashes the extra ids of the matched set (or `flash`), else the wrong picks. Count mode: `{ "count": 3, "among": ["c11", "c12", "c13", "c14"] }` with no `answer` is correct when exactly `count` regions are selected, all within `among` when given; keys are a matching `wrong[]` id, else the first pick outside `among`, else `too-few` or `too-many`; the count reads "2 of 3 shaded" (with `countWord`); reveal selects the first `count` of `among`.
+- **tap-regions** with `ordered: true` grades the order of the taps against `answer` (a BFS visit order on a graph, the cells a search reads on an array); every canvas numbers each selected object 1, 2, 3 as it is tapped; a wrong order returns the key `order` (or the first id that should not be there, or the first missing one), and a `wrong[]` set is read as a sequence. Not with `count`.
+- **place** in `mode: "array"` (`answer: ["c2", "c0", "c1"]`, the opening cell ids in the order wanted): the learner drags the cells of an `array` canvas into order; key the first id out of place.
 - **place** in `mode: "boxes"` (`answer: { "<container>": [itemIds] }`, `ordered`, or `count: { "<container>": n }`, or `free: true`): the learner drags the canvas's items between containers; correct when every named container holds exactly its listed items. Keys: the first item out of place. `reveal` moves the items there in hint indigo.
 - **balance** (`moves: ["remove-both", "remove-unknown-both", "halve-both", "divide-both", "subtract-both", "add-both", "remove-item"]`, `target: { "left": ["unknown"], "right": [4] }`): chips under the canvas and a live equation. Keys: `unbalanced`, `unsolved`. A target matches either way round; weights compare by total. The test hook's correct answer is the shortest list of the allowed moves (at most six) that reaches the target (`ZQ.grade.balanceMoves`), so the target must be reachable with them.
 - **drag-point** (`points: [{ "id", "target", "tol" }]`, `wrong: [{ "id", "region": { "x": [a, b], "y": [c, d] } | { "angle": [a, b] }, "canvas": {patch} }]`): targets are `[x, y]`, or a number on number-line (x) and circle (angle). Default `tol` 0.25. Keys: a `wrong[]` id whose region holds a point, else the first point off target (its point id, which `byKey` may use).
