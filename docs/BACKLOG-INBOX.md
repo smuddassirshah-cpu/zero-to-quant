@@ -120,3 +120,11 @@ Raised later (fin-ml level 3):
 - table widget: `bind` reaches tree branches and grid cells only, so values a learner types (three Sharpe standard errors) cannot draw on a bars or plane canvas as they type. Wanted: `bind: "values.<category>"` for bars and `bind: "points.<id>.y"` for plane.
 - Python code widget: another vote for a per-case `tol`; the scikit-learn study is compared after rounding to 4 places with `isclose` at 1e-9, so a fifth-place platform difference would flip a digit.
 - graph canvas: rect nodes with labels of about 18 characters overlap at four per row in the 540 px column (labels are clipped, "dels and trial log"), and the frame does not widen or warn; l12 uses three per row. Wanted: node spacing checked against measured label widths, or automatic wrapping.
+
+Raised later (validation level 3):
+
+- sim outcomes (bars and series `sim`): `max` and `min` are `Math.max`/`Math.min` and take no list, so `max(sample(N, n()))` is not possible. The best of 40 had to be written as 40 copies of the term (2 KB outcome strings in l12) and no slider can change N. Wanted: list-aware `max`/`min` (and `argmax`), so a best-of-N simulation follows a control on N.
+- expression widget: Compute Engine parses a capital `N` as its built-in numeric-evaluation function, so an answer such as `\frac{\sqrt{2\ln N}}{\sqrt{T}}` never grades as correct (the playthrough reported "not correct, key null"). l12's derive became an `order` item. Wanted: treat lone single letters as symbols in the grader, or a validator warning for `N` (and other CE built-ins such as `D`, `E` used as variables).
+- bars canvas: with `showValues`, a bar of height 0 shows no value label, so "the scaling leak is 0.00" was invisible; l10 adds a caption. Wanted: a value label at the baseline for zero bars.
+- graph canvas: directed edges between `rect` nodes spaced about a node-width apart show no arrowheads (the edge stops at the rims with no room), so a pipeline's order is not readable; l10 numbers the steps in their labels. Wanted: a minimum edge length or arrowheads drawn on short edges.
+- number-line canvas: plain points with near-equal values (seven training days between 19 and 27 on a 10 to 70 axis) draw on top of each other with no stacking or jitter. Wanted: `stack: true` to lift coincident dots, as labels already stack.
