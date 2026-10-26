@@ -1,0 +1,392 @@
+{
+ "id": "homework-3",
+ "course": "ensembles",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "hw-scratch-boost",
+   "difficulty": 5,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "Build gradient boosting for squared error yourself, with a learning rate and a stopping rule chosen on validation data. `make_trades(seed, n)` from lesson 9 is already defined: trade size against price impact, noise sd 3 bp.",
+   "question": "Complete `boost_with_stopping` so it returns the best number of rounds, from 0 to `max_rounds`, and its validation MSE rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_trades(seed, n=40):\n    \"\"\"n trades: size as % of the day's volume, and the price\n    impact in bp. True impact is 8 * sqrt(size); noise has sd 3 bp.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.sort(np.round(rng.uniform(0.2, 10.0, n), 2))\n    y = np.round(8 * np.sqrt(x) + 3 * rng.standard_normal(n), 2)\n    return x, y\n",
+    "starter": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef boost_with_stopping(x_train, y_train, x_val, y_val, lr, max_rounds):\n    \"\"\"Gradient boosting for squared error with stumps, from scratch.\n    Start both predictions at the training mean. Each round: fit a stump\n    (random_state=0) to the training residuals and add lr times its output\n    to both predictions. Return (best number of rounds, its validation MSE\n    rounded to 4 places); round 0 counts as 0 rounds.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef boost_with_stopping(x_train, y_train, x_val, y_val, lr, max_rounds):\n    Xt = np.asarray(x_train, dtype=float).reshape(-1, 1)\n    Xv = np.asarray(x_val, dtype=float).reshape(-1, 1)\n    yt = np.asarray(y_train, dtype=float)\n    yv = np.asarray(y_val, dtype=float)\n    ft = np.full(len(yt), yt.mean())\n    fv = np.full(len(yv), yt.mean())\n    losses = [float(np.mean((yv - fv) ** 2))]\n    for _ in range(max_rounds):\n        stump = DecisionTreeRegressor(max_depth=1, random_state=0).fit(Xt, yt - ft)\n        ft = ft + lr * stump.predict(Xt)\n        fv = fv + lr * stump.predict(Xv)\n        losses.append(float(np.mean((yv - fv) ** 2)))\n    best = int(np.argmin(losses))\n    return best, round(losses[best], 4)\n",
+    "examples": [
+     {
+      "setup": "x, y = make_trades(7); xv, yv = make_trades(107, n=400)",
+      "call": "boost_with_stopping(x, y, xv, yv, 1.0, 100)",
+      "compare": "equal",
+      "expect": "(15, 9.8607)"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x, y = make_trades(7); xv, yv = make_trades(107, n=400)",
+      "call": "boost_with_stopping(x, y, xv, yv, 1.0, 100)",
+      "compare": "equal",
+      "expect": "(15, 9.8607)"
+     },
+     {
+      "setup": "x, y = make_trades(7); xv, yv = make_trades(107, n=400)",
+      "call": "boost_with_stopping(x, y, xv, yv, 0.1, 300)",
+      "compare": "equal",
+      "expect": "(58, 8.575)"
+     },
+     {
+      "setup": "x, y = make_trades(7); xv, yv = make_trades(107, n=400)",
+      "call": "boost_with_stopping(x, y, xv, yv, 0.01, 50)",
+      "compare": "equal",
+      "expect": "(50, 25.3991)"
+     },
+     {
+      "call": "boost_with_stopping([1, 2, 3, 4], [5, 5, 5, 5], [1.5, 3.5], [5, 5], 0.5, 10)",
+      "compare": "equal",
+      "expect": "(0, 0.0)"
+     },
+     {
+      "setup": "x, y = make_trades(21, n=60); xv, yv = make_trades(121, n=200)",
+      "call": "boost_with_stopping(x, y, xv, yv, 0.3, 80)",
+      "compare": "equal",
+      "expect": "(10, 8.6676)"
+     }
+    ],
+    "how": "Check runs 5 hidden tests, including a constant target and a learning rate too small to finish. Each uses up to 300 stumps, under a second. Tuples must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+   },
+   "feedback": {
+    "correct": "At ν = 1 the stumps stop early; at ν = 0.01 the best is the last round: not finished.",
+    "generic": "Some tests failed. Start at the training mean, add `lr` times each stump to both predictions, and count round 0."
+   },
+   "explain": {
+    "text": "The validation MSE list starts with round 0, the training mean. Each stump is fitted to training residuals only, and applied to both sets. A best round equal to `max_rounds` means the learning rate needs more rounds."
+   }
+  },
+  {
+   "id": "hw-full-study",
+   "difficulty": 5,
+   "skills": [
+    "en-interpret",
+    "en-boosting"
+   ],
+   "prose": "Package lesson 12's study as one function a reviewer can rerun. `make_study(seed, kind)` and `boost_fit(X, y)` are already defined, as in the lesson.",
+   "question": "Complete `full_study(seed, kind)` so it returns the three hit rates, the base rate and the $t$ statistic of the best model, each rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nfrom sklearn.ensemble import HistGradientBoostingClassifier\n\ndef make_returns(seed, n=1000, kind=\"threshold\"):\n    \"\"\"n daily returns. Volatility moves in slow regimes and the mean\n    drifts a little. kind=\"threshold\": when the trailing 20-day vol is\n    above 1.2%, a move bigger than 1.5% is followed by a rise of 0.6 sd\n    on average, a smaller move by a fall of 0.48 sd. \"linear\": every day\n    reverses 0.3 times yesterday's return. \"none\": no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    lv, h = np.log(0.01), np.zeros(n)\n    h[0] = lv\n    for t in range(1, n):\n        h[t] = lv + 0.98 * (h[t - 1] - lv) + 0.12 * rng.standard_normal()\n    z = rng.standard_normal(n)\n    d = np.zeros(n)\n    for t in range(1, n):\n        d[t] = 0.995 * d[t - 1] + 0.00003 * rng.standard_normal()\n    r = np.zeros(n)\n    for t in range(n):\n        m = 0.0003 + d[t]\n        if t >= 20:\n            v = r[t - 20:t].std()\n            if kind == \"threshold\" and v > 0.012:\n                m += np.exp(h[t]) * (0.6 if abs(r[t - 1]) > 0.015 else -0.48)\n            if kind == \"linear\":\n                m += -0.3 * r[t - 1]\n        r[t] = m + np.exp(h[t]) * z[t]\n    return np.round(r, 6)\n\ndef make_study(seed, kind=\"threshold\"):\n    \"\"\"Features for day t: its return, its 20-day vol, three noise columns.\n    y = 1 if day t + 1 is up; nxt is day t + 1's return.\"\"\"\n    r = make_returns(seed, kind=kind)\n    rows = [[r[t], r[t - 19:t + 1].std()] for t in range(19, len(r) - 1)]\n    y = (r[20:] > 0).astype(int)\n    noise = np.random.default_rng(seed + 1000).standard_normal((len(y), 3))\n    return np.round(np.column_stack([rows, noise]), 6), y, r[20:]\n\nclass _Stopped:\n    def __init__(self, model, n_trees):\n        self.model, self.n_trees = model, n_trees\n    def predict_proba(self, X):\n        for i, p in enumerate(self.model.staged_predict_proba(X), 1):\n            if i == self.n_trees:\n                return p\n\ndef boost_fit(X, y):\n    \"\"\"Boosting stopped in time order: fit on the first 80% of the rows,\n    choose the number of trees (up to 100) on the last 20%.\"\"\"\n    k = int(len(y) * 0.8)\n    m = HistGradientBoostingClassifier(max_iter=100, max_depth=2, learning_rate=0.1,\n                                       early_stopping=False, random_state=0).fit(X[:k], y[:k])\n    yv = y[k:]\n    losses = [-np.mean(yv * np.log(np.clip(p[:, 1], 1e-15, 1)) + (1 - yv) * np.log(np.clip(p[:, 0], 1e-15, 1)))\n              for p in m.staged_predict_proba(X[k:])]\n    return _Stopped(m, int(np.argmin(losses)) + 1)\n",
+    "starter": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import TimeSeriesSplit\n\ndef full_study(seed, kind=\"threshold\"):\n    \"\"\"Walk-forward study on make_study(seed, kind): 5 splits, test_size=50,\n    gap=1; logistic, forest (30 trees, depth 3, min_samples_leaf=20,\n    random_state=0) and boost_fit. Return (hit_logistic, hit_forest,\n    hit_boost, base_rate, t_of_best), each rounded to 4 places. The base\n    rate is the better of always-up and always-down on the test days.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import TimeSeriesSplit\n\ndef full_study(seed, kind=\"threshold\"):\n    X, y, nxt = make_study(seed, kind)\n    preds, truth = [[], [], []], []\n    for train, test in TimeSeriesSplit(n_splits=5, test_size=50, gap=1).split(X):\n        Xtr, ytr = X[train], y[train]\n        models = [make_pipeline(StandardScaler(), LogisticRegression()).fit(Xtr, ytr),\n                  RandomForestClassifier(n_estimators=30, max_depth=3, min_samples_leaf=20,\n                                         random_state=0).fit(Xtr, ytr),\n                  boost_fit(Xtr, ytr)]\n        for j, m in enumerate(models):\n            preds[j].extend(m.predict_proba(X[test])[:, 1])\n        truth.extend(y[test])\n    truth = np.array(truth)\n    hits = [float(np.mean((np.array(p) > 0.5) == truth)) for p in preds]\n    up = float(truth.mean())\n    base = max(up, 1 - up)\n    t = (max(hits) - base) / math.sqrt(base * (1 - base) / len(truth))\n    return tuple(round(v, 4) for v in hits + [base, t])\n",
+    "examples": [
+     {
+      "call": "full_study(4)",
+      "compare": "equal",
+      "expect": "(0.476, 0.568, 0.532, 0.516, 1.6452)"
+     }
+    ],
+    "tests": [
+     {
+      "call": "full_study(4)",
+      "compare": "equal",
+      "expect": "(0.476, 0.568, 0.532, 0.516, 1.6452)"
+     },
+     {
+      "call": "full_study(8, 'linear')",
+      "compare": "equal",
+      "expect": "(0.644, 0.628, 0.612, 0.516, 4.0498)"
+     },
+     {
+      "call": "full_study(7, 'none')",
+      "compare": "equal",
+      "expect": "(0.516, 0.46, 0.512, 0.512, 0.1265)"
+     }
+    ],
+    "how": "Check runs 3 hidden tests: the threshold, linear and no-signal datasets. Each fits 15 small models, a few seconds. Tuples must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+    "budget": 60000
+   },
+   "feedback": {
+    "correct": "On `make_study(4)` the best model, the forest, has $t = 1.65$; on the linear data logistic is best.",
+    "generic": "Some tests failed. Pool the five test blocks, take the base rate from the pooled labels, and use the best of the three hit rates for $t$."
+   },
+   "explain": {
+    "text": "One function makes the study repeatable and its choices visible: the splits, the gap, the models and the base rate. The $t$ of the best model is still the best of three, so a reviewer should discount it for the selection."
+   }
+  },
+  {
+   "id": "hw-order-study",
+   "difficulty": 4,
+   "skills": [
+    "en-interpret"
+   ],
+   "prose": "Put the steps of an honest tabular prediction study in order, from raw prices to the results table.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "feat",
+      "text": "Build features from data known at each day's close, and label each row with the next day's direction"
+     },
+     {
+      "id": "split",
+      "text": "Fix the walk-forward splits, with a purge gap, before looking at any model's results"
+     },
+     {
+      "id": "fit",
+      "text": "In each fold, fit every candidate model on the training rows only, stopping boosting on a later block inside them"
+     },
+     {
+      "id": "pool",
+      "text": "Pool the out-of-sample predictions across folds"
+     },
+     {
+      "id": "score",
+      "text": "Score every model on the pooled days: hit rate against the base rate with its $t$, AUC, P&L after costs"
+     },
+     {
+      "id": "report",
+      "text": "Report every model tried, the per-fold results and the selection, then decide"
+     }
+    ],
+    "answer": [
+     "feat",
+     "split",
+     "fit",
+     "pool",
+     "score",
+     "report"
+    ]
+   },
+   "feedback": {
+    "correct": "Every choice that could flatter the result is made before the results exist.",
+    "generic": "Not quite right. Ask what each step needs from the step before it.",
+    "byKey": {
+     "split": "The splits must be fixed before any model is scored, or they can be chosen to flatter it."
+    }
+   },
+   "explain": {
+    "text": "Features come first because the splits are over rows. The splits are fixed before fitting so they cannot be tuned to the results. Scoring pools the folds; reporting counts every model tried."
+   }
+  },
+  {
+   "id": "hw-t-58",
+   "difficulty": 3,
+   "skills": [
+    "en-interpret"
+   ],
+   "prose": "A boosted direction model scores 58% on 120 test days. Assume a base rate of 50%.",
+   "question": "What is its $t$ statistic, to 2 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.75,
+    "tol": {
+     "abs": 0.02
+    },
+    "label": "t statistic",
+    "accept": "1.75: $0.08/\\sqrt{0.25/120} = 0.08/0.0456$.",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.16,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "n250",
+      "value": 2.53,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1.75: below 2, before counting any selection.",
+    "generic": "Not quite right. Divide 0.08 by $\\sqrt{0.25/120}$.",
+    "byKey": {
+     "sd": "You divided by one day's standard deviation, 0.5. Use the standard error over 120 days."
+    }
+   },
+   "explain": {
+    "text": "The standard error on 120 days is $\\sqrt{0.25/120} = 0.0456$, so $t = 0.08/0.0456 = 1.75$. With five models tried, the best scoring 1.75 is unremarkable."
+   }
+  },
+  {
+   "id": "hw-f0",
+   "difficulty": 4,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "A boosted default model starts from a constant log-odds $F_0$, the one that minimises log loss on a book where 20% of firms defaulted.",
+   "question": "What is $F_0$, to 4 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.3863,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Starting log-odds",
+    "accept": "−1.3863: $\\ln(0.2/0.8) = \\ln 0.25$.",
+    "wrong": [
+     {
+      "id": "p",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "odds",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$F_0 = \\ln 0.25 = -1.3863$, so every firm starts at $p = 0.2$.",
+    "generic": "Not quite right. The best constant probability is the base rate; convert it to log-odds.",
+    "byKey": {
+     "p": "That is the probability. Boosting works on the log-odds scale.",
+     "odds": "That is the odds. Take its natural log."
+    }
+   },
+   "explain": {
+    "text": "The slopes $p - y$ sum to 0 when $p$ equals the default rate, 0.2. Its log-odds is $\\ln(0.2/0.8) = -1.3863$. A defaulter's first target is then $1 - 0.2 = 0.8$."
+   }
+  },
+  {
+   "id": "hw-mono",
+   "difficulty": 4,
+   "skills": [
+    "en-boosting",
+    "en-interpret"
+   ],
+   "prose": "On the lesson 11 credit data, forcing default risk to rise with leverage gave a test log loss of 0.3259 against 0.3267 unconstrained. Forcing it to fall with leverage gave 0.4570; the base rate scores 0.4400.",
+   "question": "What do the three numbers show?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The data agree with 'risk rises with leverage', so that constraint is free; the reversed constraint fights the data and loses even to the base rate",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "Monotone constraints always improve a model",
+      "why": "The wrong constraint scored 0.4570, worse than no model at all."
+     },
+     {
+      "id": "useless",
+      "text": "Constraints change nothing, since the first two are almost equal",
+      "why": "The reversed constraint changed a lot. A constraint is free only when the data agree with it."
+     },
+     {
+      "id": "free",
+      "text": "The free model is best, so constraints should be avoided",
+      "why": "The constrained model scored slightly better, and it can be signed off by the committee."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A constraint costs what the data disagree with it.",
+    "generic": "Not quite right. Compare each number with the free model and with the base rate."
+   },
+   "explain": {
+    "text": "A constraint restricts the shapes the trees may draw. When the truth lies inside the restriction it costs nothing and can steady the fit. When it lies outside, the model is forced away from the data, by design."
+   }
+  },
+  {
+   "id": "hw-nu-grid",
+   "difficulty": 3,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "A grid of learning rate by depth, each cell stopped at its best number of trees on one validation set, gave a best validation MSE of 11.54 out of 16 cells.",
+   "question": "What should you quote as the model's expected error on new data?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "test",
+      "text": "Its MSE on a later test set that played no part in the choices",
+      "correct": true
+     },
+     {
+      "id": "val",
+      "text": "11.54, its validation MSE",
+      "why": "You quoted the winner's validation score. It was chosen from 16 cells and 200 stages on that set, so it flatters."
+     },
+     {
+      "id": "mean",
+      "text": "The mean of the 16 cells",
+      "why": "That mixes in models you will not use. Score the chosen one on fresh data."
+     },
+     {
+      "id": "train",
+      "text": "Its training MSE",
+      "why": "Training error is the most flattering number of all."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Selection makes the winning validation score optimistic.",
+    "generic": "Not quite right. Ask which data the choice was made on."
+   },
+   "explain": {
+    "text": "Picking the best of many configurations on one validation set favours the one that fits its noise, as in *Trying too many models*. A test set used once gives the honest number."
+   }
+  },
+  {
+   "id": "hw-colleague",
+   "difficulty": 5,
+   "skills": [
+    "en-boosting",
+    "en-interpret"
+   ],
+   "kind": "longform",
+   "prompt": "A colleague's note: \"I boosted a direction model for the index: 3,000 trees of depth 6, learning rate 0.3, on 1,500 days of 40 features. I stopped it with `HistGradientBoostingClassifier(early_stopping=True)` and its default validation split. On the last 120 days it scores a 58% hit rate. It was the best of the five models I tried, so I propose to trade it.\" Name every problem, estimate how much of the 58% survives, and write the three sentences the desk would accept. Write at most 350 words.",
+   "model": "**The settings.** Learning rate 0.3 with depth-6 trees is large steps with deep trees: the model fits noise within a few dozen rounds. 3,000 trees is only a cap if early stopping works, and here it does not work honestly. Use small trees (depth 2 or 3), a smaller rate (0.05), and choose the number of trees on a validation curve.\n\n**The validation split.** `early_stopping=True` holds out a *random* fraction of the 1,500 days. Neighbouring days share most of their rolling-window features, so validation days have near-copies in training: stopping comes late and the validation score flatters. Stop on a later block instead, with a purge gap.\n\n**The test.** 120 days is short. Against a base rate of 50%, the standard error is $\\sqrt{0.25/120} = 4.6$ points, so 58% is $t = 1.75$. The base rate should be the better of always-up and always-down on those days, which may be above 50% and shrink the edge further.\n\n**The selection.** It was the best of five models on the same 120 days. The best of five with no skill often reaches $t \\approx 1.2$ to $1.5$; picking it was a sixth fit to the test set. With a Bonferroni view, $t = 1.75$ across five tries is not significant.\n\n**What survives.** Probably little: discount the selection and the leaky stopping, and a fair guess is 50% to 53%, within one standard error of the base rate. Costs are not yet in the number at all.\n\n**What I would ask for.** Walk-forward over the full 1,500 days with purging, all five models reported on the same pooled out-of-sample days, per-fold results, and P&L after costs.\n\n**The three sentences.** \"Over 120 test days the best of five models scored 58%, 1.75 standard errors above a 50% base rate, before any adjustment for trying five models. Its stopping used a random validation split, which flatters on daily data, so the true edge is likely smaller. We will rerun all five on a purged walk-forward over the full history, with costs, before proposing a trade.\"",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "Says depth 6 with learning rate 0.3 overfits quickly, and proposes smaller trees and rate"
+    },
+    {
+     "points": 2,
+     "text": "Explains why a random validation fraction leaks on daily data and proposes a later block with a gap"
+    },
+    {
+     "points": 2,
+     "text": "Computes the standard error on 120 days (about 4.6 points) and $t \\approx 1.75$"
+    },
+    {
+     "points": 1,
+     "text": "Notes the base rate should be the best constant on the test days, not assumed 50%"
+    },
+    {
+     "points": 2,
+     "text": "Discounts for the best of five models and estimates what survives (near the base rate)"
+    },
+    {
+     "points": 1,
+     "text": "Asks for walk-forward with purging, per-fold results and P&L after costs"
+    },
+    {
+     "points": 1,
+     "text": "Writes three honest sentences: the result with its uncertainty, the flaw, and the next step"
+    }
+   ]
+  }
+ ]
+}

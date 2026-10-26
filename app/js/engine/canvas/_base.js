@@ -242,6 +242,8 @@
       const keyed = isPlain(v) && Array.isArray(b) && b.every(it => isPlain(it) && it.id != null) && Object.values(v).every(x => x === null || isPlain(x))
         && Object.entries(v).some(([id, x]) => isPlain(x) || b.some(it => it.id === id));
       if (keyed) out[k] = keyedList(b, v);
+      /* a map of indices into an array patches those entries ("quotes.bid.0" from a control), keeping it an array */
+      else if (isPlain(v) && Array.isArray(b) && Object.keys(v).length && Object.keys(v).every(x => /^\d+$/.test(x))) { const a = b.slice(); Object.entries(v).forEach(([i, x]) => { a[+i] = isPlain(x) && (isPlain(a[+i]) || Array.isArray(a[+i])) ? (Array.isArray(a[+i]) ? Object.values(merge({ ...a[+i] }, x)) : merge(a[+i], x)) : x; }); out[k] = a; }
       else out[k] = (isPlain(v) && isPlain(b)) ? merge(b, v) : v;
     }
     return out;

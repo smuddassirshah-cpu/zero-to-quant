@@ -192,18 +192,18 @@
         "kind": "array",
         "params": {
           "cells": [
-            99.59,
-            100.28,
-            97.31,
-            96.97,
-            96.95,
-            96.39,
-            96.92,
-            97.84,
-            98.9,
-            98.45,
-            99.31,
-            99.99
+            "99.59",
+            "100.28",
+            "97.31",
+            "96.97",
+            "96.95",
+            "96.39",
+            "96.92",
+            "97.84",
+            "98.90",
+            "98.45",
+            "99.31",
+            "99.99"
           ],
           "showIndex": true
         },
@@ -334,7 +334,7 @@
         "language": "python",
         "starter": "def run_loop(bars, decide):\n    \"\"\"One target per bar. decide(history) sees bars 0..t only.\"\"\"\n    targets = []\n    for t in range(len(bars)):\n        history = ...      # bars 0 to t, today's bar included\n        targets.append(...)\n    return targets\n",
         "solution": "def run_loop(bars, decide):\n    \"\"\"One target per bar. decide(history) sees bars 0..t only.\"\"\"\n    targets = []\n    for t in range(len(bars)):\n        history = bars.iloc[: t + 1]      # bars 0 to t, today's bar included\n        targets.append(decide(history))\n    return targets\n",
-        "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    \"\"\"Five hand-made daily bars, Monday 4 to Friday 8 March 2024.\"\"\"\n    idx = pd.bdate_range(\"2024-03-04\", periods=5)\n    return pd.DataFrame({\"open\": [99.5, 100.4, 102.2, 100.6, 99.4],\n                         \"high\": [100.6, 102.5, 102.4, 101.0, 103.3],\n                         \"low\": [99.2, 100.1, 100.7, 98.8, 99.1],\n                         \"close\": [100.0, 102.0, 101.0, 99.0, 103.0],\n                         \"volume\": [2.1e6, 1.8e6, 2.4e6, 2.0e6, 1.9e6]}, index=idx)\n\ndef up_day(history):\n    \"\"\"The first rule: long 1 when today's close beats yesterday's, else 0.\"\"\"\n    c = history[\"close\"]\n    return 1 if len(c) > 1 and c.iloc[-1] > c.iloc[-2] else 0\n\ndef decide_mom(history, lookback):\n    \"\"\"The sign of the lookback-day return, seen from the last bar of history.\"\"\"\n    c = history[\"close\"]\n    if len(c) <= lookback:\n        return 0\n    return int(np.sign(c.iloc[-1] / c.iloc[-1 - lookback] - 1))\n\nclass Spy:\n    \"\"\"A decide() that records what it was shown and always returns 0.\"\"\"\n    def __init__(self):\n        self.lens, self.last = [], []\n    def __call__(self, history):\n        self.lens.append(len(history))\n        self.last.append(str(history.index[-1].date()))\n        return 0\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    \"\"\"Five hand-made daily bars, Monday 4 to Friday 8 March 2024.\"\"\"\n    idx = pd.bdate_range(\"2024-03-04\", periods=5)\n    return pd.DataFrame({\"open\": [99.5, 100.4, 102.2, 100.6, 99.4],\n                         \"high\": [100.6, 102.5, 102.4, 101.0, 103.3],\n                         \"low\": [99.2, 100.1, 100.7, 98.8, 99.1],\n                         \"close\": [100.0, 102.0, 101.0, 99.0, 103.0],\n                         \"volume\": [2.1e6, 1.8e6, 2.4e6, 2.0e6, 1.9e6]}, index=idx)\n\ndef up_day(history):\n    \"\"\"The first rule: long 1 when today's close beats yesterday's, else 0.\"\"\"\n    c = history[\"close\"]\n    return 1 if len(c) > 1 and c.iloc[-1] > c.iloc[-2] else 0\n\ndef decide_mom(history, lookback):\n    \"\"\"The sign of the lookback-day return, seen from the last bar of history.\"\"\"\n    c = history[\"close\"]\n    if len(c) <= lookback:\n        return 0\n    return int(np.sign(c.iloc[-1] / c.iloc[-1 - lookback] - 1))\n\nclass Spy:\n    \"\"\"A decide() that records what it was shown and always returns 0.\"\"\"\n    def __init__(self):\n        self.lens, self.last = [], []\n    def __call__(self, history):\n        self.lens.append(len(history))\n        self.last.append(str(history.index[-1].date()))\n        return 0\n",
         "examples": [
           {
             "call": "run_loop(hand_bars(), up_day)",
@@ -541,7 +541,7 @@
         "language": "python",
         "starter": "import numpy as np\n\ndef vector_targets(close, lookback):\n    \"\"\"The sign of the lookback-day return at every bar, 0 where it is undefined.\"\"\"\n    ret = ...          # one pandas call on the whole column\n    return ...\n",
         "solution": "import numpy as np\n\ndef vector_targets(close, lookback):\n    \"\"\"The sign of the lookback-day return at every bar, 0 where it is undefined.\"\"\"\n    ret = close.pct_change(lookback)          # one pandas call on the whole column\n    return np.sign(ret).fillna(0)\n",
-        "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    \"\"\"Five hand-made daily bars, Monday 4 to Friday 8 March 2024.\"\"\"\n    idx = pd.bdate_range(\"2024-03-04\", periods=5)\n    return pd.DataFrame({\"open\": [99.5, 100.4, 102.2, 100.6, 99.4],\n                         \"high\": [100.6, 102.5, 102.4, 101.0, 103.3],\n                         \"low\": [99.2, 100.1, 100.7, 98.8, 99.1],\n                         \"close\": [100.0, 102.0, 101.0, 99.0, 103.0],\n                         \"volume\": [2.1e6, 1.8e6, 2.4e6, 2.0e6, 1.9e6]}, index=idx)\n\ndef up_day(history):\n    \"\"\"The first rule: long 1 when today's close beats yesterday's, else 0.\"\"\"\n    c = history[\"close\"]\n    return 1 if len(c) > 1 and c.iloc[-1] > c.iloc[-2] else 0\n\ndef decide_mom(history, lookback):\n    \"\"\"The sign of the lookback-day return, seen from the last bar of history.\"\"\"\n    c = history[\"close\"]\n    if len(c) <= lookback:\n        return 0\n    return int(np.sign(c.iloc[-1] / c.iloc[-1 - lookback] - 1))\n\nclass Spy:\n    \"\"\"A decide() that records what it was shown and always returns 0.\"\"\"\n    def __init__(self):\n        self.lens, self.last = [], []\n    def __call__(self, history):\n        self.lens.append(len(history))\n        self.last.append(str(history.index[-1].date()))\n        return 0\n\ndef run_loop(bars, decide):\n    targets = []\n    for t in range(len(bars)):\n        history = bars.iloc[: t + 1]\n        targets.append(decide(history))\n    return targets\n",
+        "prelude": "import numpy\nimport pandas\nimport numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    \"\"\"Five hand-made daily bars, Monday 4 to Friday 8 March 2024.\"\"\"\n    idx = pd.bdate_range(\"2024-03-04\", periods=5)\n    return pd.DataFrame({\"open\": [99.5, 100.4, 102.2, 100.6, 99.4],\n                         \"high\": [100.6, 102.5, 102.4, 101.0, 103.3],\n                         \"low\": [99.2, 100.1, 100.7, 98.8, 99.1],\n                         \"close\": [100.0, 102.0, 101.0, 99.0, 103.0],\n                         \"volume\": [2.1e6, 1.8e6, 2.4e6, 2.0e6, 1.9e6]}, index=idx)\n\ndef up_day(history):\n    \"\"\"The first rule: long 1 when today's close beats yesterday's, else 0.\"\"\"\n    c = history[\"close\"]\n    return 1 if len(c) > 1 and c.iloc[-1] > c.iloc[-2] else 0\n\ndef decide_mom(history, lookback):\n    \"\"\"The sign of the lookback-day return, seen from the last bar of history.\"\"\"\n    c = history[\"close\"]\n    if len(c) <= lookback:\n        return 0\n    return int(np.sign(c.iloc[-1] / c.iloc[-1 - lookback] - 1))\n\nclass Spy:\n    \"\"\"A decide() that records what it was shown and always returns 0.\"\"\"\n    def __init__(self):\n        self.lens, self.last = [], []\n    def __call__(self, history):\n        self.lens.append(len(history))\n        self.last.append(str(history.index[-1].date()))\n        return 0\n\ndef run_loop(bars, decide):\n    targets = []\n    for t in range(len(bars)):\n        history = bars.iloc[: t + 1]\n        targets.append(decide(history))\n    return targets\n",
         "examples": [
           {
             "call": "vector_targets(pd.Series([100, 102, 101, 101, 104.0]), 1).tolist()",
@@ -629,18 +629,18 @@
         "kind": "array",
         "params": {
           "cells": [
-            99.59,
-            100.28,
-            97.31,
-            96.97,
-            96.95,
-            96.39,
-            96.92,
-            97.84,
-            98.9,
-            98.45,
-            99.31,
-            99.99
+            "99.59",
+            "100.28",
+            "97.31",
+            "96.97",
+            "96.95",
+            "96.39",
+            "96.92",
+            "97.84",
+            "98.90",
+            "98.45",
+            "99.31",
+            "99.99"
           ],
           "showIndex": true
         },
@@ -737,18 +737,18 @@
         "kind": "array",
         "params": {
           "cells": [
-            99.59,
-            100.28,
-            97.31,
-            96.97,
-            96.95,
-            96.39,
-            96.92,
-            97.84,
-            98.9,
-            98.45,
-            99.31,
-            99.99
+            "99.59",
+            "100.28",
+            "97.31",
+            "96.97",
+            "96.95",
+            "96.39",
+            "96.92",
+            "97.84",
+            "98.90",
+            "98.45",
+            "99.31",
+            "99.99"
           ],
           "showIndex": true
         },

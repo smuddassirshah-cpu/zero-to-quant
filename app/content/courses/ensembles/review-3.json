@@ -1,0 +1,358 @@
+{
+ "id": "review-3",
+ "course": "ensembles",
+ "level": 3,
+ "items": [
+  {
+   "id": "rv-residual",
+   "difficulty": 2,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "Four trades of 1, 2, 3 and 4 lots paid slippage of 2, 4, 9 and 11 bp. A first stump splits at 2.5 lots and predicts the mean on each side.",
+   "question": "What residual is left on the 3-lot trade?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Residual on the 3-lot trade",
+    "accept": "−1: the right leaf predicts 10, and $9 - 10 = -1$.",
+    "wrong": [
+     {
+      "id": "flip",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "all",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ],
+    "unit": "bp"
+   },
+   "feedback": {
+    "correct": "The right leaf predicts 10 bp, so the residual is −1 bp.",
+    "generic": "Not quite right. Find the right leaf's mean, then subtract it from 9.",
+    "byKey": {
+     "flip": "You computed $\\hat y - y$. The residual is the outcome minus the prediction.",
+     "all": "You used the mean of all four trades, 6.5. The stump predicts each side's own mean."
+    }
+   },
+   "explain": {
+    "text": "The right leaf holds 9 and 11, mean 10. The residual is $y - \\hat y = 9 - 10 = -1$. The next stump is fitted to $-1, 1, -1, 1$ on the four trades."
+   }
+  },
+  {
+   "id": "rv-bag-boost",
+   "difficulty": 2,
+   "skills": [
+    "en-boosting",
+    "en-bagging"
+   ],
+   "prose": "Two teams each build 500 trees on the same loan book. Team A grows deep trees on bootstrap samples and averages them. Team B grows depth-2 trees, each fitted to the residuals of the sum so far.",
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ab",
+      "text": "A mainly cuts variance; B mainly cuts bias, and B's number of trees must be chosen on held-out data",
+      "correct": true
+     },
+     {
+      "id": "ba",
+      "text": "A mainly cuts bias; B mainly cuts variance",
+      "why": "You swapped the two. Averaging deep trees cuts variance; adding small corrections cuts bias."
+     },
+     {
+      "id": "same",
+      "text": "Both are random forests with different settings",
+      "why": "B's trees depend on each other: that is boosting, not a forest."
+     },
+     {
+      "id": "more",
+      "text": "Adding trees can only help either team",
+      "why": "That holds roughly for A. For B, extra trees eventually fit noise."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Bagging averages away variance; boosting adds capacity step by step.",
+    "generic": "Not quite right. Ask which team's trees depend on the trees before them."
+   },
+   "explain": {
+    "text": "Team A's trees are independent and noisy; their average is steadier. Team B's trees each fix what is left, so the sum grows more flexible, and must be stopped."
+   }
+  },
+  {
+   "id": "rv-nu-trees",
+   "difficulty": 3,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "A model was tuned at ν = 0.2: the validation curve's minimum is at 120 trees. You change to ν = 0.05.",
+   "question": "What should you do about the number of trees?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "refit",
+      "text": "Grow well past 120, about 500 or more, and read the new minimum off a fresh validation curve",
+      "correct": true
+     },
+     {
+      "id": "keep",
+      "text": "Keep 120 trees",
+      "why": "You carried the best number of trees across a change of ν. A quarter of the step size needs several times the trees."
+     },
+     {
+      "id": "cut",
+      "text": "Cut to 30 trees, a quarter",
+      "why": "Smaller steps need more trees, not fewer."
+     },
+     {
+      "id": "any",
+      "text": "It does not matter: small ν never overfits",
+      "why": "Small ν overfits more slowly, but it still overfits, and with too few trees it underfits."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The best number of trees belongs to one learning rate.",
+    "generic": "Not quite right. Ask how far 120 small steps go."
+   },
+   "explain": {
+    "text": "At a quarter of the step size, 120 trees cover roughly a quarter of the distance. Search up to 600 or so and let the curve say where it bottoms out."
+   }
+  },
+  {
+   "id": "rv-depth",
+   "difficulty": 3,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "A desk suspects that a carry signal pays only when volatility is low. It boosts stumps on carry and volatility, with ν = 0.05 and 2,000 trees.",
+   "question": "What can this model learn about the suspicion?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "Nothing: stumps add a carry effect and a vol effect, so carry's effect cannot depend on vol",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "All of it, given 2,000 trees",
+      "why": "You expected more trees to help. Any number of stumps is a sum of one-feature steps."
+     },
+     {
+      "id": "half",
+      "text": "Half of it, since half the trees will split on vol",
+      "why": "Splitting on vol in one tree and on carry in another still adds two separate effects."
+     },
+     {
+      "id": "lr",
+      "text": "All of it, if ν is small enough",
+      "why": "ν changes speed, not the shapes the sum can draw."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Depth 1 is additive; the suspicion is an interaction.",
+    "generic": "Not quite right. Ask what one split per tree can express."
+   },
+   "explain": {
+    "text": "An interaction needs a tree that splits on vol and then on carry. Depth 2 is the least that can do it."
+   }
+  },
+  {
+   "id": "rv-grad",
+   "difficulty": 2,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "A boosted default model currently gives a firm $p = 0.15$. The firm defaulted, $y = 1$.",
+   "question": "What is this firm's target for the next tree under log loss?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.85,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Next tree target for the firm",
+    "accept": "0.85: the negative gradient is $y - p = 1 - 0.15$.",
+    "wrong": [
+     {
+      "id": "grad",
+      "value": -0.85,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "p",
+      "value": 0.15,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The tree is pushed to raise this firm's log-odds.",
+    "generic": "Not quite right. The target is minus the slope, $y - p$.",
+    "byKey": {
+     "grad": "That is the slope itself. The tree fits minus the slope.",
+     "p": "That is the current probability, not how far it is from the outcome."
+    }
+   },
+   "explain": {
+    "text": "The slope of the log loss in the log-odds is $p - y = -0.85$. The tree fits minus that, 0.85, so it raises this firm's log-odds."
+   }
+  },
+  {
+   "id": "rv-random-val",
+   "difficulty": 3,
+   "skills": [
+    "en-boosting"
+   ],
+   "prose": "On 2,000 days of features with 10-day forward labels, `HistGradientBoostingClassifier(early_stopping=True)` stops at 60 trees with a validation log loss well below the base rate's. On the next year it does worse than the base rate.",
+   "question": "What most likely went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "The random validation fraction held days whose overlapping labels and features had near-copies in training",
+      "correct": true
+     },
+     {
+      "id": "regime",
+      "text": "The market changed in the next year",
+      "why": "It may have, but the validation set had a simpler flaw: it was not later in time."
+     },
+     {
+      "id": "trees",
+      "text": "60 trees are too few",
+      "why": "The test loss is worse than the base rate: more trees would fit more noise."
+     },
+     {
+      "id": "lr",
+      "text": "The default learning rate is too high",
+      "why": "The learning rate does not explain a validation score that flatters by this much."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Validate on a later block, with a gap, when labels overlap.",
+    "generic": "Not quite right. Ask which days the validation set held."
+   },
+   "explain": {
+    "text": "Each validation day had neighbours in training that share 9 of its 10 label days. The trees memorised them, so stopping came late and the score lied. Pass a later block as validation instead."
+   }
+  },
+  {
+   "id": "rv-tstat",
+   "difficulty": 3,
+   "skills": [
+    "en-interpret"
+   ],
+   "prose": "A direction model scores 55% on 400 walk-forward test days. The base rate, always 'up', is 52%.",
+   "question": "What is its $t$ statistic, to 2 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2,
+    "tol": {
+     "abs": 0.02
+    },
+    "label": "t statistic",
+    "accept": "1.20: $0.03 / \\sqrt{0.52 \\times 0.48 / 400} = 0.03/0.02498$.",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.06,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "fifty",
+      "value": 2.0,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1.20 standard errors: not enough on its own.",
+    "generic": "Not quite right. Divide the 0.03 edge by $\\sqrt{b(1 - b)/n}$.",
+    "byKey": {
+     "sd": "You divided by the standard deviation of one day, 0.5. Divide by the standard error over 400 days.",
+     "fifty": "You measured the edge against 50%. The base rate to beat is 52%."
+    }
+   },
+   "explain": {
+    "text": "The standard error is $\\sqrt{0.2496/400} = 0.025$. So $t = 0.03/0.025 = 1.20$, well short of 2."
+   }
+  },
+  {
+   "id": "rv-pnl",
+   "difficulty": 3,
+   "skills": [
+    "en-interpret"
+   ],
+   "prose": "A model is long £1m on day 1 and short £1m on day 2. The index rises 1.0% on day 1 and falls 0.4% on day 2. Costs are 10 bp per unit traded, starting flat.",
+   "question": "What is the two-day P&L after costs, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11000,
+    "tol": {
+     "abs": 1
+    },
+    "label": "Two-day P&L in pounds",
+    "accept": "£11,000: £10,000 + £4,000 gross, less £1,000 to open and £2,000 to flip.",
+    "wrong": [
+     {
+      "id": "gross",
+      "value": 14000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "onecost",
+      "value": 12000,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ],
+    "unit": "£"
+   },
+   "feedback": {
+    "correct": "£14,000 gross, £3,000 in costs.",
+    "generic": "Not quite right. Add the two days' gains, then subtract 10 bp for each unit traded.",
+    "byKey": {
+     "gross": "That is before costs. Opening costs £1,000 and the flip trades 2 units, £2,000.",
+     "onecost": "You charged the flip as one unit. Long to short is 2 units of £1m."
+    }
+   },
+   "explain": {
+    "text": "Day 1 gains £10,000 and day 2's short gains £4,000. Opening trades 1 unit (£1,000) and the flip trades 2 (£2,000). Net £11,000."
+   }
+  }
+ ]
+}

@@ -73,6 +73,7 @@
       animate(prev, next, a, R) {
         const changed = JSON.stringify(prev.order) !== JSON.stringify(next.order);
         if (a.instant || !changed || !next.order) { a.show(next); return; }
+        { const bk = bookOf(next); B = bk.B; A = bk.A; }
         const w = walk(next.order), levels = Math.max(1, w.fills.length);
         return C.tween(0, levels, Math.min(1800, 420 * levels + 200), (t) => { if (a.alive()) a.show(t >= levels ? next : { ...next, _p: t }); }, 'linear');
       },
