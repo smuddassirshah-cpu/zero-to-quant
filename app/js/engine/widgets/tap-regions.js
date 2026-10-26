@@ -9,7 +9,10 @@
    given ("shade any 3 of the 4"); `answer` may be omitted. Keys: a matching wrong[] set, else the first selected id
    outside `among`, else "too-few" or "too-many". reveal selects the first k of `among` (else the first k tappable).
    The player shows the running count in the question line ("2 of 3 shaded" in count mode); ctx.countEl or ctx.count
-   are honoured when given. `countWord` replaces the noun in the count. */
+   are honoured when given. `countWord` replaces the noun in the count.
+   Ordered mode (items 398, 411: ordered: true): the answer is a sequence (a BFS visit order, cells in the order a
+   search reads them); the canvas numbers each tap; grading compares the order. Keys: a wrong[] whose set (read as a
+   sequence) matches, else the first tapped id not in the answer, else the first answer id missing, else "order". */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -29,7 +32,8 @@
     /* item 132: only may use the canvas's set names (a grid's col7, row5, cross5), expanded to ids */
     const among = among0 && typeof cv.expand === 'function' ? [...new Set(cv.expand(among0).map(String))] : among0;
     const only = Array.isArray(spec.only) ? (typeof cv.expand === 'function' ? cv.expand(spec.only) : spec.only).map(String) : null;
-    cv.enable('tap', { max: spec.max || null, only });
+    const ordered = spec.ordered === true && !count;
+    cv.enable('tap', { max: spec.max || null, only, ordered });
     /* The answer set: authored, or in count mode the first k of `among` (else of the tappable ids) */
     const tappable = () => Array.from(cv.el.querySelectorAll('[data-tap]')).map(n => n.dataset.id).filter(id => !only || only.includes(id));
     /* item 290: answer, among and wrong sets may use set names too (a grid's cross2, row5, all) */
@@ -60,13 +64,18 @@
 
     return {
       el,
-      value: () => sel().slice().sort(),
+      value: () => (ordered ? sel().slice() : sel().slice().sort()),
       set(v) { cv.set({ selected: (v || []).map(String) }, { instant: true }); showCount((v || []).length); ctx.change && ctx.change({ selected: (v || []).slice() }); },
       answer: () => answer.slice(),
       ready: () => sel().length > 0,
       dirty: () => sel().length > 0,
       grade() {
         const s = sel(), d = split(s);
+        if (ordered) {
+          if (s.length === answer.length && s.every((x, i) => x === answer[i])) return { ok: true, key: null, detail: d };
+          const wo = (spec.wrong || []).find(x => { const q = ex(x.set || x.order || []); return q.length === s.length && q.every((y, i) => y === s[i]); });
+          return { ok: false, key: wo ? wo.id : d.wrong[0] ?? d.missing[0] ?? 'order', detail: d };
+        }
         if (count ? s.length === count && !d.wrong.length : sameSet(s, answer)) return { ok: true, key: null, detail: d };
         const w = (spec.wrong || []).find(x => sameSet(ex(x.set || []), s));
         if (count) return { ok: false, key: w ? w.id : d.wrong[0] ?? (s.length < count ? 'too-few' : 'too-many'), detail: d };
@@ -78,6 +87,7 @@
         unmark();
         const d = split(sel());
         if (res && res.ok) mark(d.hit, 'is-correct');
+        else if (ordered) { const s = sel(); mark(s.filter((x, i) => x !== answer[i]), 'is-notyet'); mark(s.filter((x, i) => x === answer[i]), 'is-dim'); }
         else { mark(d.wrong, 'is-notyet'); mark(d.hit, 'is-dim'); }
       },
       reveal() {

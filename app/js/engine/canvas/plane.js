@@ -316,6 +316,7 @@
         if (n.dataset.label) n.setAttribute('aria-label', n.dataset.label);
       });
       if (items.length) (items.find((n) => n.dataset.tap === lastTap) || items[0]).setAttribute('tabindex', '0');
+      if (modeOpts.ordered && C.orderBadges) C.orderBadges(F.g, state.selected, (id) => all(id).filter((n) => n.dataset.tap != null || n.classList.contains('cv-obj')));
     };
 
     const draw = (view) => {

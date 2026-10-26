@@ -104,8 +104,26 @@
     x -= 1; let a = c[0]; const t = x + 7.5; for (let i = 1; i < 9; i++) a += c[i] / (x + i);
     return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
   };
-  FN.erf = (x) => { const s = Math.sign(x), a = Math.abs(x), t = 1 / (1 + 0.3275911 * a), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a); return s * y; };
-  FN.Phi = (x) => 0.5 * (1 + FN.erf(x / Math.SQRT2));
+  /* item 380: erfc with relative accuracy about 1e-7 everywhere (Numerical Recipes' Chebyshev fit), so far tails
+     (Phi(-10) = 7.6e-24) keep their digits; erf(x) = 1 - erfc(x) for x >= 0 */
+  FN.erfc = (x) => { const z = Math.abs(x), t = 1 / (1 + 0.5 * z), r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))); return x >= 0 ? r : 2 - r; };
+  FN.erf = (x) => { if (Math.abs(x) < 0.5) { let sum = 0, term = x, n = 0; while (Math.abs(term) > 1e-17 && n < 60) { sum += term / (2 * n + 1); n++; term *= -x * x / n; } return 2 / Math.sqrt(Math.PI) * sum; } return x > 0 ? 1 - FN.erfc(x) : FN.erfc(-x) - 1; };
+  /* Phi(x) and normcdf(x, mu, sigma) (alias pnorm) are the normal CDF, normpdf(x, mu, sigma) (alias dnorm) its density,
+     qnorm(p, mu, sigma) the quantile (Acklam's rational approximation, one Newton step); mu 0 and sigma 1 by default */
+  FN.Phi = (x) => 0.5 * FN.erfc(-x / Math.SQRT2);
+  FN.normcdf = (x, mu = 0, sd = 1) => FN.Phi((x - mu) / sd);
+  FN.normpdf = (x, mu = 0, sd = 1) => Math.exp(-0.5 * ((x - mu) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
+  FN.qnorm = (p, mu = 0, sd = 1) => {
+    if (!(p > 0 && p < 1)) return p === 0 ? -Infinity : p === 1 ? Infinity : NaN;
+    const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239], b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572], c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783], d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+    const lo = 0.02425; let q, r, x;
+    if (p < lo) { q = Math.sqrt(-2 * Math.log(p)); x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+    else if (p > 1 - lo) { q = Math.sqrt(-2 * Math.log(1 - p)); x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+    else { q = p - 0.5; r = q * q; x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); }
+    const e = FN.Phi(x) - p, u = e * Math.sqrt(2 * Math.PI) * Math.exp(x * x / 2); x = x - u / (1 + x * u / 2);
+    return mu + sd * x;
+  };
+  FN.pnorm = FN.normcdf; FN.dnorm = FN.normpdf;
   /* sum(k, a, b, term) becomes F.sum(a, b, (k) => term): split the call's arguments at top-level commas */
   const sumCalls = (src) => {
     for (let guard = 0; guard < 20; guard++) {
@@ -147,7 +165,7 @@
     return src;
   };
   const compile = (expr, paramNames = []) => {
-    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact|lgamma|erf|Phi)\b(?!\s*[:\w])/g, 'F.$1'));
+    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact|lgamma|erfc|erf|Phi|normcdf|normpdf|pnorm|dnorm|qnorm)\b(?!\s*[:\w])/g, 'F.$1'));
     if (!paramNames.includes('e')) src = src.replace(/(^|[^\w.])e(?![\w(])/g, '$1F.e'); // Euler's number, not the e of 1e5
     src = wrapUnaryPow(src);
     if (/[^\w\s+\-*/().,<>=?:!&|%]/.test(src.replace(/F\./g, ''))) throw new Error('Bad expression: ' + expr);
@@ -336,6 +354,22 @@
     if (obj.parentNode && obj.parentNode.lastElementChild !== obj && document.activeElement !== obj) obj.parentNode.append(obj);
   };
 
+  /* items 398, 411: ordered taps (tap-regions ordered: true) wear their tap number, top left of the object */
+  const orderBadges = (root, sel, find) => {
+    root.querySelectorAll('.cv-obadge').forEach(n => n.remove());
+    (sel || []).forEach((id, k) => {
+      let obj = find(id).find(n => n.classList && n.classList.contains('cv-obj')) || find(id)[0];
+      if (!obj) return;
+      if (obj.tagName === 'TR') obj = obj.firstElementChild;
+      if (!(obj instanceof SVGElement)) { const b = document.createElement('span'); b.className = 'cv-obadge'; b.setAttribute('aria-hidden', 'true'); b.textContent = String(k + 1); obj.append(b); return; }
+      const body = obj.querySelector('.cv-body') || obj;
+      let bb, m; try { bb = body.getBBox(); m = obj.getCTM().inverse().multiply(body.getCTM()); } catch { return; }
+      if (!bb.width && !bb.height) return;
+      const p = new DOMPoint(bb.x + 2, bb.y + 2).matrixTransform(m);
+      obj.append(svg('g', { class: 'cv-obadge', transform: `translate(${p.x} ${p.y})`, 'aria-hidden': 'true' }, [svg('circle', { r: 9 }), svg('text', { y: 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'middle' }, [String(k + 1)])]));
+    });
+  };
+
   /* ---------- Shared instance ---------- */
   const GRADED = ['is-correct', 'is-notyet', 'is-reveal', 'is-dim'];
   /* instance(o) builds the PLAN section 9 object around a canvas's draw function.
@@ -362,6 +396,7 @@
     const applySelected = () => {
       const sel = new Set(state.selected || []);
       wrap.querySelectorAll('[data-tap]').forEach(n => { const on = sel.has(n.dataset.id); n.classList.toggle('is-on', on); if (mode === 'tap') n.setAttribute('aria-pressed', String(on)); });
+      if (mode === 'tap' && modeOpts.ordered) orderBadges(wrap, state.selected, all); else if (wrap.querySelector('.cv-obadge')) orderBadges(wrap, [], all);
     };
     const applyMarks = () => {
       wrap.querySelectorAll(GRADED.map(c => '.' + c).join(',')).forEach(n => n.classList.remove(...GRADED));
@@ -486,6 +521,27 @@
      at least 0), vecmat(v, P) (a row vector times P), so a slider on k drives pi0 P^k */
   DERIVE_FN.prod = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), ['k', ...Object.keys(names)]); let s = 1; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s *= f(0, { ...names, k }); return s; };
   DERIVE_FN.lgamma = FN.lgamma; DERIVE_FN.erf = FN.erf; DERIVE_FN.Phi = FN.Phi;
+  /* items 341, 380: the normal family in derive and captions as in curve formulas */
+  ['erfc', 'normcdf', 'normpdf', 'pnorm', 'dnorm', 'qnorm'].forEach((k) => { DERIVE_FN[k] = FN[k]; });
+  /* item 432: solve(A, b) (Gaussian elimination with partial pivoting; b a vector or a matrix) and inv(A), for small
+     systems such as ridge coefficients that follow a lambda slider; transpose(A) */
+  DERIVE_FN.solve = (A, b) => {
+    const n = A.length, vec = !Array.isArray(b[0]), B = vec ? b.map((v) => [+v]) : b.map((r) => r.map(Number)), M = A.map((r, i) => r.map(Number).concat(B[i]));
+    for (let k = 0; k < n; k++) {
+      let p = k; for (let i = k + 1; i < n; i++) if (Math.abs(M[i][k]) > Math.abs(M[p][k])) p = i;
+      if (!(Math.abs(M[p][k]) > 1e-14)) return vec ? b.map(() => NaN) : B.map((r) => r.map(() => NaN));
+      [M[k], M[p]] = [M[p], M[k]];
+      for (let i = 0; i < n; i++) if (i !== k) { const f = M[i][k] / M[k][k]; for (let j = k; j < M[i].length; j++) M[i][j] -= f * M[k][j]; }
+    }
+    const X = M.map((r, i) => r.slice(n).map((v) => v / r[i]));
+    return vec ? X.map((r) => r[0]) : X;
+  };
+  DERIVE_FN.inv = (A) => DERIVE_FN.solve(A, A.map((r, i) => r.map((_, j) => +(i === j))));
+  DERIVE_FN.transpose = (A) => A[0].map((_, j) => A.map((r) => r[j]));
+  /* item 389: braces are not allowed in a derive formula, so obj("range", [a, b], "colour", 2) builds an object and
+     range(a, b) is { range: [a, b] } (an array canvas's highlight) */
+  DERIVE_FN.obj = (...kv) => { const o = {}; for (let i = 0; i + 1 < kv.length; i += 2) o[String(kv[i])] = kv[i + 1]; return o; };
+  DERIVE_FN.range = (a, b) => ({ range: [a, b] });
   DERIVE_FN.matmul = (A, B) => A.map((row) => B[0].map((_, j) => row.reduce((t, a, k) => t + a * B[k][j], 0)));
   DERIVE_FN.matpow = (P, k) => { let n = Math.max(0, Math.round(+k || 0)), R = P.map((r, i) => r.map((_, j) => +(i === j))), B = P; while (n > 0) { if (n & 1) R = DERIVE_FN.matmul(R, B); B = DERIVE_FN.matmul(B, B); n >>= 1; } return R; };
   DERIVE_FN.vecmat = (v, P) => P[0].map((_, j) => v.reduce((t, a, k) => t + a * P[k][j], 0));
@@ -519,6 +575,8 @@
       Object.values(st).forEach(v => { if (Array.isArray(v)) v.forEach(it => { if (it && typeof it === 'object' && it.id != null && /^[A-Za-z_$][\w$]*$/.test(it.id)) S[it.id] = it; }); });
       /* items 197, 250: plain objects in state read by name too (riemann.n, line.m, transform.angle) */
       Object.entries(st).forEach(([k, v]) => { if (isPlain(v) && !(k in S) && /^[A-Za-z_$][\w$]*$/.test(k) && !['params', 'values', 'highlight', 'mark', 'move'].includes(k)) S[k] = v; });
+      /* item 427: a single object with an id (a plane's area: { id: "A", ... }) reads by that id too (A.to) */
+      Object.values(st).forEach(v => { if (isPlain(v) && v.id != null && /^[A-Za-z_$][\w$]*$/.test(v.id) && !(v.id in S)) S[v.id] = v; });
       return S;
     };
     /* A pair reads across both sides: ids of either side directly, or left.p1 and right.p1 when they share an id */
@@ -536,6 +594,9 @@
     const put = (st, patch, target, v) => {
       const [head, ...rest] = target.split('.');
       const listKey = rest.length ? Object.keys(st).find(k => Array.isArray(st[k]) && st[k].some(it => it && it.id === head)) : null;
+      /* item 427: "A.to" writes into the single state object whose id is A (a plane's area), when no key is named A */
+      const objKey = rest.length && !listKey && !(head in st) ? Object.keys(st).find(k => isPlain(st[k]) && st[k].id === head) : null;
+      if (objKey) { put(st, patch, [objKey, ...rest].join('.'), v); return; }
       if (listKey) {
         const list = (patch[listKey] || st[listKey]).map(it => (it && it.id === head ? setPath({ ...it }, rest, v) : it));
         const before = st[listKey].find(it => it && it.id === head);
@@ -724,7 +785,7 @@
     busy: () => busy.n,
     register, create, kinds, svg, attrs, label, scale, niceTicks, fmtNum, compile, tween, pulse, clearHighlight, merge, frame, emitter, series, SERIES, INK, NS,
     // added by E3: shared instance and helpers (see header)
-    instance, GRADED, ease, animator, lerp, flash, badge, texOf, textW, toLocal, dragger, cellOutline, nextInDirection,
+    instance, GRADED, ease, animator, lerp, flash, badge, orderBadges, texOf, textW, toLocal, dragger, cellOutline, nextInDirection,
     /* a control name a canvas does not own: a dotted name is a state path (tangent.x), a plain one state.params */
     paramPatch: (name, v) => { const n = String(name); return n.includes('.') ? n.split('.').reduceRight((acc, k) => ({ [k]: acc }), +v) : { params: { [n]: +v } }; },
     /* fill {{expression}} in a string with derive's functions and the given names (matrix cells, item 235) */

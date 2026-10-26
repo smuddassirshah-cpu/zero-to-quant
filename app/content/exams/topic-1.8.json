@@ -2026,7 +2026,7 @@
             "setup": "pnl = [7, -7] * 50000"
           }
         ],
-        "how": "Check runs 10 hidden tests, compared with ==. Tests 8 to 10 have 100,000 days each, so trying every start and end is quadratic and runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+        "how": "Check runs 10 hidden tests, compared with ==. Tests 8 to 10 have 100,000 days each. Trying every start and end is quadratic and runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
       },
       "feedback": {
         "correct": "Two equal running totals bracket a zero-sum run, and the dict keeps the earliest.",
@@ -2039,7 +2039,7 @@
         }
       },
       "explain": {
-        "text": "If the running total after day $j$ equals the total after day $i$, days $i + 1$ to $j$ sum to zero. A dict from total to its first day finds the longest such gap in one pass. Recording total 0 at day −1 covers runs that start on day 0."
+        "text": "Equal running totals after days $i$ and $j$ mean days $i + 1$ to $j$ sum to zero. A dict from total to its first day finds the longest such gap in one pass. Recording total 0 at day −1 covers runs that start on day 0."
       }
     },
     {
@@ -2182,13 +2182,13 @@
             "setup": "px = [100 + (i % 7) * 3 for i in range(100000)]"
           }
         ],
-        "how": "Check runs 10 hidden tests, compared with ==. Tests 9 and 10 have 100,000 prices, so a table that tries every buy day for every sell day runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+        "how": "Check runs 10 hidden tests, compared with ==. Tests 9 and 10 have 100,000 prices. Trying every buy day for every sell day runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
       },
       "feedback": {
         "correct": "Two running states, flat and holding, carry the whole history.",
         "generic": "Some tests failed. Track the best P&L while flat and while holding, and update both each day.",
         "byKey": {
-          "test-1": "Selling at every rise pays the fee too often. Here one trade from 1 to 8 beats three small ones.",
+          "test-1": "Selling at every rise pays the fee too often. Hold from 1 to 8 rather than selling at 3.",
           "test-5": "With no fee, every rise can be taken: the answer is the sum of the rises.",
           "test-8": "Two trades, 10 to 18 and 12 to 30, beat any single trade.",
           "error": "If it stopped at the time limit, you loop over every buy day for each sell day. Keep two running values instead."
@@ -2295,7 +2295,7 @@
       },
       "feedback": {
         "correct": "55 moves up to the root, and 57 takes 55's old place under 60.",
-        "generic": "The successor is the smallest value in 50's right subtree: go right once, then left as far as you can.",
+        "generic": "The successor is the smallest value right of 50. Go right once, then left as far as you can.",
         "byKey": {
           "pred": "40 is the in-order predecessor. That also keeps the order, but this code uses the successor.",
           "child": "70 and 60 are larger than 55. The successor is the leftmost node of the right subtree.",
@@ -2317,7 +2317,7 @@
         "at-greedy"
       ],
       "title": "At most two round trips",
-      "prose": "These are eight daily closes of one share, in £. You may make at most two round trips, each a buy then a later sale. You hold at most one share at a time, and a sale and a new buy may share a day.",
+      "prose": "These are eight daily closes of one share, in £. You may make at most two round trips, each a buy then a later sale. You hold at most one share at a time. A sale and a new buy may share a day.",
       "canvas": {
         "kind": "array",
         "params": {
@@ -2467,7 +2467,7 @@
             "setup": "costs = [[1 + (r * 7 + c * 13) % 5 for c in range(250)] for r in range(250)]"
           }
         ],
-        "how": "Check runs 10 hidden tests, compared with ==. Tests 5 and 6 need moves up or left. Tests 8 to 10 are grids of up to 300 by 300, so scanning every cell for the next one, or sweeping until nothing changes, runs out of time. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
+        "how": "Check runs 10 hidden tests, compared with ==. Tests 5 and 6 need moves up or left. Tests 8 to 10 are grids of up to 300 by 300. Scanning every cell for the next one runs out of time. So does sweeping until nothing changes. The first run starts Python in your browser, which can take 10 to 20 seconds. Later runs are quick."
       },
       "feedback": {
         "correct": "Dijkstra with a heap settles each cell once, cheapest first.",
@@ -2476,7 +2476,7 @@
           "test-5": "This grid's cheap route snakes right, down, left and down again. A right-and-down table cannot follow it.",
           "test-6": "The cheap route goes down, right, up and over the wall. Allow moves up and left.",
           "test-2": "A single cell's route is just that cell: count the start.",
-          "error": "If it stopped at the time limit, push neighbours onto a heap instead of scanning every cell for the minimum."
+          "error": "If it stopped at the time limit, stop scanning for the minimum. Push neighbours onto a heap instead."
         }
       },
       "explain": {
@@ -2495,7 +2495,7 @@
       "title": "Designing an order book",
       "kind": "longform",
       "prompt": "Design the order book for one share on a venue. It must:\n\n1. add a limit order (id, side, price, quantity);\n2. cancel an order by id;\n3. report the best bid and the best ask;\n4. match an incoming market order in price-time priority.\n\nExpect 1,000,000 messages a day, about 90% of them adds and cancels. Each side has about 500 live price levels.\n\n(a) Choose the data structures for one side, and say what each one is for.\n\n(b) Give the cost of each of the four operations, and justify it.\n\n(c) Explain how cancels interact with finding the best price.\n\n(d) Prices always lie within 200 ticks of the mid. What would you change, and why?",
-      "model": "**(a)** For each side we keep three things.\n\n- A dict from price to a **level**. A level holds its orders in a doubly linked list, oldest at the head, and its total quantity.\n- A dict from order id to its list node. This finds any order without a search.\n- A heap of the side's live prices: a max-heap for bids (store $-p$) and a min-heap for asks. Its top is the best price.\n\nThe list gives time priority within a level. The heap gives price priority across levels.\n\n**(b)** Let $L$ be the live levels on a side, about 500.\n\n- *Add.* Find the level in the price dict, $O(1)$ on average. Append the node at the tail, $O(1)$. A new price also pushes onto the heap: $O(\\log L)$, about 9 steps.\n- *Cancel.* The id dict finds the node in $O(1)$. Its two links unlink it in $O(1)$, and the level's quantity drops. A singly linked list would need a walk to the predecessor.\n- *Best bid or ask.* Peek at the heap's top: $O(1)$, once dead levels are cleared (part c).\n- *Match.* Take from the best level's head, filling oldest first. Each fill is $O(1)$. An emptied level is popped from the heap in $O(\\log L)$. A market order that makes $k$ fills across $m$ levels costs $O(k + m \\log L)$.\n\nSo nearly every message is $O(1)$, and only level changes pay $O(\\log L)$. At a million messages a day that is trivial work.\n\n**(c)** A heap cannot delete an arbitrary price cheaply. When a cancel empties a level, we delete it from the price dict but leave its price in the heap. That is **lazy deletion**. Before reading the best price, we pop tops whose level is gone. Each dead price is popped once, so the cost is $O(\\log L)$ amortised per level ever created. A level that refills must not be pushed twice while still live, so we push only when the price dict lacks it.\n\n**(d)** With prices inside a 200-tick band, use an **array of 401 levels** indexed by tick offset from a base price. Add and cancel stay $O(1)$, with no hashing of prices. Keep an index of the best occupied tick. After a fill or cancel empties it, scan outwards to the next occupied tick. That scan is at most 400 steps and usually one or two. The array also gives depth at any price in $O(1)$ and is cache-friendly. If the band moves, re-centre the base, which costs $O(\\text{band})$ but is rare.\n\n**Summary.** Dicts give $O(1)$ lookup by price and by id. Doubly linked lists give FIFO fills and $O(1)$ unlinks. A heap with lazy deletion, or a bounded tick array, gives the best price.",
+      "model": "**(a)** For each side we keep three things.\n\n- A dict from price to a **level**. A level holds its orders in a doubly linked list, oldest at the head, and its total quantity.\n- A dict from order id to its list node. This finds any order without a search.\n- A heap of the side's live prices: a max-heap for bids (store $-p$) and a min-heap for asks. Its top is the best price.\n\nThe list gives time priority within a level. The heap gives price priority across levels.\n\n**(b)** Let $L$ be the live levels on a side, about 500.\n\n- *Add.* Find the level in the price dict, $O(1)$ on average. Append the node at the tail, $O(1)$. A new price also pushes onto the heap: $O(\\log L)$, about 9 steps.\n- *Cancel.* The id dict finds the node in $O(1)$. Its two links unlink it in $O(1)$, and the level's quantity drops. A singly linked list would need a walk to the predecessor.\n- *Best bid or ask.* Peek at the heap's top: $O(1)$, once dead levels are cleared (part c).\n- *Match.* Take from the best level's head, filling oldest first. Each fill is $O(1)$. An emptied level is popped from the heap in $O(\\log L)$. A market order that makes $k$ fills across $m$ levels costs $O(k + m \\log L)$.\n\nSo nearly every message is $O(1)$, and only level changes pay $O(\\log L)$. At a million messages a day that is trivial work.\n\n**(c)** A heap cannot delete an arbitrary price cheaply. When a cancel empties a level, we drop it from the price dict. Its price stays in the heap. That is **lazy deletion**. Before reading the best price, we pop tops whose level is gone. Each dead price is popped once, so the cost is $O(\\log L)$ amortised per level ever created. A live price must not be pushed twice. So we push only when the price dict lacks it.\n\n**(d)** Prices sit inside a 200-tick band. So use an **array of 401 levels**, indexed by tick offset from a base price. Add and cancel stay $O(1)$, with no hashing of prices. Keep an index of the best occupied tick. After a fill or cancel empties it, scan outwards to the next occupied tick. That scan is at most 400 steps and usually one or two. The array also gives depth at any price in $O(1)$ and is cache-friendly. If the band moves, re-centre the base, which costs $O(\\text{band})$ but is rare.\n\n**Summary.** Dicts give $O(1)$ lookup by price and by id. Doubly linked lists give FIFO fills and $O(1)$ unlinks. A heap with lazy deletion, or a bounded tick array, gives the best price.",
       "rubric": [
         {
           "points": 2,
@@ -2507,7 +2507,7 @@
         },
         {
           "points": 2,
-          "text": "A heap (or balanced tree) of prices for the best bid and ask, with add $O(\\log L)$ for a new level and peek $O(1)$."
+          "text": "A heap or balanced tree of prices gives the best bid and ask. A new level costs $O(\\log L)$; a peek costs $O(1)$."
         },
         {
           "points": 1,
@@ -2523,7 +2523,7 @@
         }
       ],
       "explain": {
-        "text": "Each operation picks its own structure: dicts to find, linked lists to keep time order, a heap or array to keep price order. The design is judged by its worst common operation. Here that is the cancel, which must be $O(1)$."
+        "text": "Each job gets its own structure. Dicts find, linked lists keep time order, and a heap or array keeps price order. The design is judged by its worst common operation. Here that is the cancel, which must be $O(1)$."
       }
     }
   ]
