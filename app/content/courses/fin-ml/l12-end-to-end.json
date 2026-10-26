@@ -1,0 +1,1156 @@
+{
+  "id": "l12-end-to-end",
+  "course": "fin-ml",
+  "title": "An end-to-end prediction study",
+  "minutes": 15,
+  "objectives": [
+    "Plan the 2.1 exit project with time-ordered validation from the start.",
+    "Run a small study end to end and write up its results honestly."
+  ],
+  "skills": [
+    "fm-eval",
+    "fm-labels",
+    "fm-features",
+    "fm-sizing"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The plan before the model",
+      "prose": "The exit project for this topic is one prediction problem done end to end, honestly. Before any code, a plan. Here are its stages, shuffled.",
+      "question": "Put the stages of the study in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "q",
+            "text": "State the question and the universe: what is predicted, for which assets, and why it would pay"
+          },
+          {
+            "id": "data",
+            "text": "Collect point-in-time data: only what was known on each date, dead companies included"
+          },
+          {
+            "id": "lab",
+            "text": "Label the events (triple barrier, level 1) and measure their overlap"
+          },
+          {
+            "id": "feat",
+            "text": "Build features from data known at each date (level 2)"
+          },
+          {
+            "id": "split",
+            "text": "Fix a time-ordered split with purge and embargo, and open the trial log"
+          },
+          {
+            "id": "model",
+            "text": "Fit the model families, logging every configuration tried"
+          },
+          {
+            "id": "cal",
+            "text": "Check calibration of the predicted probabilities"
+          },
+          {
+            "id": "size",
+            "text": "Size positions from the probabilities"
+          },
+          {
+            "id": "cost",
+            "text": "Subtract costs, at several levels"
+          },
+          {
+            "id": "wf",
+            "text": "Run the walk-forward P&L and deflate its Sharpe by the trial count"
+          },
+          {
+            "id": "write",
+            "text": "Write up: results gross and net, trial count, DSR, and what failed"
+          }
+        ],
+        "answer": [
+          "q",
+          "data",
+          "lab",
+          "feat",
+          "split",
+          "model",
+          "cal",
+          "size",
+          "cost",
+          "wf",
+          "write"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must you know before you can label anything?"
+        },
+        {
+          "rung": "point",
+          "text": "The question and the data come first; the write-up comes last."
+        },
+        {
+          "rung": "step",
+          "text": "Question, data, labels, features, split, models, calibration, sizing, costs, walk-forward with DSR, write-up."
+        }
+      ],
+      "feedback": {
+        "correct": "Question and data first, model in the middle, write-up last.",
+        "generic": "Not quite right. Each stage needs the output of the one before it.",
+        "byKey": {
+          "model": "The model needs labels, features and a split first. Starting with the model is the commonest mistake.",
+          "split": "The split, and the trial log, must be fixed before the first model is fitted."
+        }
+      },
+      "explain": {
+        "text": "Each stage uses the one before: labels need data, the split needs labels (for purging), sizing needs calibrated probabilities. The trial log opens with the split, before the first fit, so no run goes uncounted."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where leaks live",
+      "prose": "The same pipeline as a map. Each stage is a lesson you have done: labels in level 1, features in level 2, splits in the validation course, sizing, costs and the DSR in this level. A backtest scores 61% and the live model scores 50%.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "q",
+              "label": "Question",
+              "x": 0.13,
+              "y": 0.15,
+              "shape": "rect"
+            },
+            {
+              "id": "data",
+              "label": "Point-in-time data",
+              "x": 0.38,
+              "y": 0.15,
+              "shape": "rect"
+            },
+            {
+              "id": "lab",
+              "label": "Labels",
+              "x": 0.62,
+              "y": 0.15,
+              "shape": "rect"
+            },
+            {
+              "id": "feat",
+              "label": "Features",
+              "x": 0.87,
+              "y": 0.15,
+              "shape": "rect"
+            },
+            {
+              "id": "split",
+              "label": "Split, purge, embargo",
+              "x": 0.87,
+              "y": 0.5,
+              "shape": "rect"
+            },
+            {
+              "id": "model",
+              "label": "Models and trial log",
+              "x": 0.62,
+              "y": 0.5,
+              "shape": "rect"
+            },
+            {
+              "id": "cal",
+              "label": "Calibration",
+              "x": 0.38,
+              "y": 0.5,
+              "shape": "rect"
+            },
+            {
+              "id": "size",
+              "label": "Sizing",
+              "x": 0.13,
+              "y": 0.5,
+              "shape": "rect"
+            },
+            {
+              "id": "cost",
+              "label": "Costs",
+              "x": 0.13,
+              "y": 0.85,
+              "shape": "rect"
+            },
+            {
+              "id": "wf",
+              "label": "Walk-forward P&L",
+              "x": 0.38,
+              "y": 0.85,
+              "shape": "rect"
+            },
+            {
+              "id": "dsr",
+              "label": "DSR",
+              "x": 0.62,
+              "y": 0.85,
+              "shape": "rect"
+            },
+            {
+              "id": "write",
+              "label": "Write-up",
+              "x": 0.87,
+              "y": 0.85,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "q",
+              "to": "data"
+            },
+            {
+              "from": "data",
+              "to": "lab"
+            },
+            {
+              "from": "lab",
+              "to": "feat"
+            },
+            {
+              "from": "feat",
+              "to": "split"
+            },
+            {
+              "from": "split",
+              "to": "model"
+            },
+            {
+              "from": "model",
+              "to": "cal"
+            },
+            {
+              "from": "cal",
+              "to": "size"
+            },
+            {
+              "from": "size",
+              "to": "cost"
+            },
+            {
+              "from": "cost",
+              "to": "wf"
+            },
+            {
+              "from": "wf",
+              "to": "dsr"
+            },
+            {
+              "from": "dsr",
+              "to": "write"
+            }
+          ],
+          "directed": true,
+          "height": 300
+        },
+        "state": {}
+      },
+      "question": "Tap the stage where look-ahead most often hides.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "feat"
+        ],
+        "max": 1
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which stage computes numbers from dated data, row by row?"
+        },
+        {
+          "rung": "point",
+          "text": "Level 2 had a lesson called Features with hidden look-ahead.",
+          "highlight": [
+            "feat"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A feature scaled with the full sample, or a value restated later, leaks the future into the past."
+        }
+      ],
+      "feedback": {
+        "correct": "Features are where most leaks enter.",
+        "generic": "Not quite right. Think about which stage can use tomorrow's data by accident.",
+        "byKey": {
+          "split": "The split is where overlapping labels leak, and purging fixes that. Most leaks enter earlier, through features.",
+          "model": "A model only sees what the features give it. The leak is upstream.",
+          "data": "Point-in-time data stops restatements and survivorship. The commonest leak, though, is a feature built with future data.",
+          "lab": "Labels are meant to look ahead. The damage comes when a feature does too."
+        }
+      },
+      "explain": {
+        "text": "Most leaks live in the features: a rolling window that includes today's close, a scaler fitted on all the data, a fundamental value restated later. The split leaks through overlapping labels, which purging fixes. Check these two stages first when live results fall short.",
+        "canvas": {
+          "highlight": [
+            "feat",
+            "split"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The trial log",
+      "prose": "The trial count in the DSR must include every configuration, so the log starts before the first run. A log is a list of configuration dicts. Running the same configuration twice is still one trial.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            "log = trial_log_add([], {'model': 'logistic', 'C': 1.0})",
+            "log = trial_log_add(log, {'model': 'logistic', 'C': 0.1})",
+            "log = trial_log_add(log, {'model': 'logistic', 'C': 1.0})",
+            "trial_count(log)  ->  2"
+          ]
+        }
+      },
+      "question": "Complete `trial_log_add(log, config)`, returning a new list, and `trial_count(log)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def trial_log_add(log, config):\n    # return a new list with a copy of config at the end; leave log unchanged\n    ...\n\ndef trial_count(log):\n    # the number of distinct configurations in the log\n    ...\n",
+        "solution": "def trial_log_add(log, config):\n    # return a new list with a copy of config at the end; leave log unchanged\n    return log + [dict(config)]\n\ndef trial_count(log):\n    # the number of distinct configurations in the log\n    return len({tuple(sorted(c.items())) for c in log})\n",
+        "examples": [
+          {
+            "call": "trial_count(trial_log_add(trial_log_add([], {'model': 'logistic', 'C': 1.0}), {'model': 'logistic', 'C': 0.1}))",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "trial_count([])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "trial_count(trial_log_add([], {'model': 'logistic', 'C': 1.0}))",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "log = trial_log_add(trial_log_add(trial_log_add([], {'model': 'logistic', 'C': 1.0}), {'model': 'logistic', 'C': 0.1}), {'model': 'logistic', 'C': 1.0})",
+            "call": "trial_count(log)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "log = trial_log_add([], {'model': 'boosting', 'depth': 2, 'trees': 25})",
+            "call": "trial_count(trial_log_add(log, {'trees': 25, 'model': 'boosting', 'depth': 2}))",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "old = [{'model': 'logistic'}]; new = trial_log_add(old, {'model': 'boosting'})",
+            "call": "(len(old), len(new))",
+            "expect": "(1, 2)",
+            "compare": "equal"
+          },
+          {
+            "setup": "cfg = {'model': 'logistic', 'C': 1.0}; log = trial_log_add([], cfg); cfg['C'] = 0.5",
+            "call": "log[0]['C']",
+            "expect": "1.0",
+            "compare": "equal"
+          },
+          {
+            "setup": "log = []\nfor d in (2, 3):\n    for n in (25, 50, 100):\n        log = trial_log_add(log, {'model': 'boosting', 'depth': d, 'trees': n})",
+            "call": "trial_count(log)",
+            "expect": "6",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: an empty log, repeats, the same settings in a different key order, and checks that the old log and the caller's dict are left unchanged. Exact comparisons. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`log + [dict(config)]` builds a new list with a copy of the dict."
+        },
+        {
+          "rung": "point",
+          "text": "Two dicts with the same items in a different order are the same configuration: compare `sorted(c.items())`.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`len({tuple(sorted(c.items())) for c in log})` counts distinct configurations."
+        }
+      ],
+      "feedback": {
+        "correct": "The log counts trials, not runs.",
+        "generic": "Not quite right. Check repeats, key order, and that neither the old log nor the caller's dict changes."
+      },
+      "explain": {
+        "text": "Copying the dict matters: a config edited after logging would otherwise rewrite history. The count ignores repeats but includes every distinct setting, kept or dropped. That number is the $N$ in the DSR."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A small study, end to end",
+      "prose": "A seeded run of the whole plan: 600 days of prices, triple-barrier labels (10 days, ±3%), three features, walk-forward test blocks of 90 days after day 300 with a purge, logistic against boosting, AFML sizes averaged over open bets and rounded to 0.1, 5 bp costs, and the DSR with the trial count. Fill the four gaps.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            "study_pipeline(7)",
+            "  -> {'model': 'logistic', 'hit_rate': 0.5314, 'base_rate': 0.4908,",
+            "      'gross_sharpe': 0.3149, 'net_sharpe': 0.2757, 'dsr': 0.4082}"
+          ]
+        }
+      },
+      "question": "Complete the purge, the sizes, the net P&L and the DSR in `study_pipeline(seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "\nimport math\nimport numpy as np\nfrom statistics import NormalDist\n\ndef make_prices(seed, n=600, phi=0.97, s_mu=0.0015, s_eps=0.01):\n    \"\"\"n + 1 closes from 100. Daily log return = slow drift mu_t (AR(1)) + noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    mu, r = 0.0, np.empty(n)\n    k = s_mu * math.sqrt(1 - phi * phi)\n    for t in range(n):\n        mu = phi * mu + k * rng.standard_normal()\n        r[t] = mu + s_eps * rng.standard_normal()\n    return 100 * np.exp(np.concatenate([[0.0], np.cumsum(r)]))\n\ndef tb_label(prices, t, width, h):\n    \"\"\"Triple barrier from day t: 1 if the upper barrier is touched first,\n    0 if the lower one is; at the time limit, 1 if the price ended higher.\"\"\"\n    p0 = prices[t]\n    for d in range(1, h + 1):\n        if prices[t + d] >= p0 * (1 + width):\n            return 1\n        if prices[t + d] <= p0 * (1 - width):\n            return 0\n    return int(prices[t + h] > p0)\n\ndef features(prices):\n    \"\"\"Row t, known at the close of day t (t >= 20): 5- and 20-day log returns,\n    and 5-day over 20-day volatility of daily log returns.\"\"\"\n    r = np.diff(np.log(prices))\n    X = np.full((len(prices), 3), np.nan)\n    for t in range(20, len(prices)):\n        w = r[t - 20:t]                      # the 20 returns ending at close t\n        X[t] = [w[-5:].sum(), w.sum(), w[-5:].std() / w.std()]\n    return X\n\ndef bet_size(p):\n    z = (p - 0.5) / math.sqrt(p * (1 - p))\n    return 2 * NormalDist().cdf(z) - 1\n\ndef sharpe(x):\n    x = np.asarray(x)\n    return float(x.mean() / x.std(ddof=1) * math.sqrt(252)) if x.std() > 0 else 0.0\n\ndef dsr(sr_ann, n, skew, kurt, n_trials):\n    \"\"\"Deflated Sharpe ratio, noise variance of a trial's daily Sharpe 1/(n - 1).\"\"\"\n    sr = sr_ann / math.sqrt(252)\n    g, nd = 0.5772156649015329, NormalDist()\n    emax = 0.0 if n_trials <= 1 else math.sqrt(1 / (n - 1)) * (\n        (1 - g) * nd.inv_cdf(1 - 1 / n_trials) + g * nd.inv_cdf(1 - 1 / (n_trials * math.e)))\n    se = math.sqrt((1 - skew * sr + (kurt - 1) / 4 * sr ** 2) / (n - 1))\n    return nd.cdf((sr - emax) / se)\n",
+        "postlude": "_R = {}\ndef _run(seed):\n    if seed not in _R:\n        _R[seed] = study_pipeline(seed)\n    return _R[seed]\n",
+        "budget": 30000,
+        "starter": "from sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import GradientBoostingClassifier\nfrom scipy.stats import skew, kurtosis\n\nH, WIDTH, COST_BP = 10, 0.03, 5\n\ndef study_pipeline(seed):\n    prices = make_prices(seed)\n    days = list(range(20, len(prices) - H))          # every day with 20 days behind, H ahead\n    X = features(prices)[days]\n    y = np.array([tb_label(prices, t, WIDTH, H) for t in days])\n    rets = np.diff(np.log(prices))                     # rets[t]: close t to close t + 1\n    models = {\"logistic\": lambda: make_pipeline(StandardScaler(), LogisticRegression(C=1.0)),\n              \"boosting\": lambda: GradientBoostingClassifier(n_estimators=25, max_depth=2, random_state=0)}\n    results = {}\n    for name, make in models.items():\n        p = np.full(len(days), np.nan)\n        for start in range(300, len(days), 90):        # walk forward: test blocks of 90 days\n            stop = min(start + 90, len(days))\n            train = ...                                  # purge: labels must end before the test block\n            m = make().fit(X[train], y[train])\n            p[start:stop] = m.predict_proba(X[start:stop])[:, 1]\n        test = np.arange(300, len(days))\n        size = ...                                       # AFML bet size of each test probability\n        pos = np.round(np.convolve(size, np.ones(H) / H)[:len(size)] * 10) / 10   # average active bets, steps of 0.1\n        r_next = rets[np.array(days)[test]]\n        gross = pos * r_next\n        net = ...                                        # gross minus COST_BP on each change in position\n        results[name] = dict(p=p[test], y=y[test], gross=gross, net=net)\n    best = max(results, key=lambda k: sharpe(results[k][\"net\"]))\n    b = results[best]\n    n = len(b[\"net\"])\n    return {\"model\": best,\n            \"hit_rate\": round(float(np.mean((b[\"p\"] > 0.5) == (b[\"y\"] == 1))), 4),\n            \"base_rate\": round(float(np.mean(b[\"y\"])), 4),\n            \"gross_sharpe\": round(sharpe(b[\"gross\"]), 4),\n            \"net_sharpe\": round(sharpe(b[\"net\"]), 4),\n            \"dsr\": ...}                                    # dsr(sr, n, skew, kurt, n_trials), rounded to 4\n",
+        "solution": "from sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.ensemble import GradientBoostingClassifier\nfrom scipy.stats import skew, kurtosis\n\nH, WIDTH, COST_BP = 10, 0.03, 5\n\ndef study_pipeline(seed):\n    prices = make_prices(seed)\n    days = list(range(20, len(prices) - H))          # every day with 20 days behind, H ahead\n    X = features(prices)[days]\n    y = np.array([tb_label(prices, t, WIDTH, H) for t in days])\n    rets = np.diff(np.log(prices))                     # rets[t]: close t to close t + 1\n    models = {\"logistic\": lambda: make_pipeline(StandardScaler(), LogisticRegression(C=1.0)),\n              \"boosting\": lambda: GradientBoostingClassifier(n_estimators=25, max_depth=2, random_state=0)}\n    results = {}\n    for name, make in models.items():\n        p = np.full(len(days), np.nan)\n        for start in range(300, len(days), 90):        # walk forward: test blocks of 90 days\n            stop = min(start + 90, len(days))\n            train = np.arange(0, start - H)              # purge: labels must end before the test block\n            m = make().fit(X[train], y[train])\n            p[start:stop] = m.predict_proba(X[start:stop])[:, 1]\n        test = np.arange(300, len(days))\n        size = np.array([bet_size(v) for v in p[test]])\n        pos = np.round(np.convolve(size, np.ones(H) / H)[:len(size)] * 10) / 10   # average active bets, steps of 0.1\n        r_next = rets[np.array(days)[test]]\n        gross = pos * r_next\n        net = gross - COST_BP / 1e4 * np.abs(np.diff(np.concatenate([[0.0], pos])))\n        results[name] = dict(p=p[test], y=y[test], gross=gross, net=net)\n    best = max(results, key=lambda k: sharpe(results[k][\"net\"]))\n    b = results[best]\n    n = len(b[\"net\"])\n    return {\"model\": best,\n            \"hit_rate\": round(float(np.mean((b[\"p\"] > 0.5) == (b[\"y\"] == 1))), 4),\n            \"base_rate\": round(float(np.mean(b[\"y\"])), 4),\n            \"gross_sharpe\": round(sharpe(b[\"gross\"]), 4),\n            \"net_sharpe\": round(sharpe(b[\"net\"]), 4),\n            \"dsr\": round(dsr(sharpe(b[\"net\"]), n, float(skew(b[\"net\"])), float(kurtosis(b[\"net\"], fisher=False)), len(models)), 4)}\n",
+        "examples": [
+          {
+            "call": "_run(7)['net_sharpe']",
+            "expect": "0.2757",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "_run(7)['model']",
+            "expect": "'logistic'",
+            "compare": "equal"
+          },
+          {
+            "call": "_run(7)['hit_rate']",
+            "expect": "0.5314",
+            "compare": "isclose"
+          },
+          {
+            "call": "_run(7)['base_rate']",
+            "expect": "0.4908",
+            "compare": "isclose"
+          },
+          {
+            "call": "_run(7)['gross_sharpe']",
+            "expect": "0.3149",
+            "compare": "isclose"
+          },
+          {
+            "call": "_run(7)['net_sharpe']",
+            "expect": "0.2757",
+            "compare": "isclose"
+          },
+          {
+            "call": "_run(7)['dsr']",
+            "expect": "0.4082",
+            "compare": "isclose"
+          },
+          {
+            "call": "_run(11)['net_sharpe']",
+            "expect": "0.7631",
+            "compare": "isclose"
+          },
+          {
+            "call": "_run(11)['dsr']",
+            "expect": "0.6058",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: every key for seed 7 and two for seed 11, each run once (about 2 s a run). Expected values come from running the solution in Pyodide, rounded to 4 places. `make_prices`, `tb_label`, `features`, `bet_size`, `sharpe` and `dsr` are already defined. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Purge: train only on rows `0 .. start - H - 1`, whose 10-day labels end before the test block."
+        },
+        {
+          "rung": "point",
+          "text": "Sizes: `np.array([bet_size(v) for v in p[test]])`. Net: subtract `COST_BP / 1e4` times the absolute change in `pos`, starting from 0.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "DSR: `dsr(sharpe(b['net']), n, skew, kurtosis with fisher=False, len(models))`, rounded to 4."
+        }
+      ],
+      "feedback": {
+        "correct": "The pipeline reproduces the study.",
+        "generic": "Not quite right. Compare each key with the expected output; a wrong purge changes the hit rate first."
+      },
+      "explain": {
+        "text": "Each gap is a lesson: the purge (validation), the sizes (l9), the costs (l10) and the DSR with $N = 2$ (l11). The result is weak: a hit rate a little above the base, net Sharpe 0.28 and DSR 0.41."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Reading the run",
+      "prose": "The results table needs a fair baseline. A model that always predicts the commoner label is right 1 − 0.4908 = 0.5092 of the time here, since fewer than half the labels are up.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Run output, seed 7",
+          "lines": [
+            "{'model': 'logistic', 'hit_rate': 0.5314, 'base_rate': 0.4908,",
+            " 'gross_sharpe': 0.3149, 'net_sharpe': 0.2757, 'dsr': 0.4082}",
+            "trial count: 2   test days: 271   cost: 5 bp a side"
+          ]
+        }
+      },
+      "question": "Fill in the results table from the run's output.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Line",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Majority-class accuracy",
+            "0.5092"
+          ],
+          [
+            "Hit rate minus majority-class accuracy",
+            {
+              "edit": true,
+              "answer": 0.0222,
+              "tol": {
+                "abs": 0.0002
+              }
+            }
+          ],
+          [
+            "Gross Sharpe minus net Sharpe (cost drag)",
+            {
+              "edit": true,
+              "answer": 0.0392,
+              "tol": {
+                "abs": 0.0002
+              }
+            }
+          ],
+          [
+            "DSR",
+            {
+              "edit": true,
+              "answer": 0.4082,
+              "tol": {
+                "abs": 0.0002
+              }
+            }
+          ],
+          [
+            "Trials",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract 0.5092 from the hit rate."
+        },
+        {
+          "rung": "point",
+          "text": "$0.5314 - 0.5092 = 0.0222$; $0.3149 - 0.2757 = 0.0392$.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then copy the DSR, 0.4082, and the trial count, 2."
+        }
+      ],
+      "feedback": {
+        "correct": "A 2.2-point edge over a constant guess, a small cost drag, and a DSR of 0.41.",
+        "generic": "Not quite right. Work each line from the printed output."
+      },
+      "explain": {
+        "text": "Against the majority-class guess the model gains 2.2 points of accuracy. Costs take 0.04 off the Sharpe because sizes are averaged and rounded. A DSR of 0.41 means the result is about as likely luck as not."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The table and the checklist in code",
+      "prose": "Two helpers for the write-up. `results_table` prints the gross Sharpe and the net Sharpe at each cost, to 2 places. `write_up_sections` returns, in the template's order, every required section that is missing or empty: question, data, method, results, trial_count, dsr, what_failed, next_steps.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            "results_table(0.31, [0.28, 0.24], [5, 10])",
+            "  ->  ['gross: 0.31', 'net at 5 bp: 0.28', 'net at 10 bp: 0.24']",
+            "write_up_sections({'question': 'Up in 10 days?', 'dsr': 0.41})",
+            "  ->  ['data', 'method', 'results', 'trial_count', 'what_failed', 'next_steps']"
+          ]
+        }
+      },
+      "question": "Complete `results_table(gross, net, costs)` and `write_up_sections(results)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "REQUIRED = ['question', 'data', 'method', 'results', 'trial_count', 'dsr', 'what_failed', 'next_steps']\n\ndef results_table(gross, net, costs):\n    lines = [...]\n    ...\n    return lines\n\ndef write_up_sections(results):\n    ...\n",
+        "solution": "REQUIRED = ['question', 'data', 'method', 'results', 'trial_count', 'dsr', 'what_failed', 'next_steps']\n\ndef results_table(gross, net, costs):\n    lines = [f'gross: {gross:.2f}']\n    for c, s in zip(costs, net):\n        lines.append(f'net at {c} bp: {s:.2f}')\n    return lines\n\ndef write_up_sections(results):\n    return [k for k in REQUIRED if results.get(k) in (None, '', [], {})]\n",
+        "examples": [
+          {
+            "call": "results_table(0.31, [0.28, 0.24], [5, 10])",
+            "expect": "['gross: 0.31', 'net at 5 bp: 0.28', 'net at 10 bp: 0.24']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "results_table(0.31, [0.28, 0.24], [5, 10])",
+            "expect": "['gross: 0.31', 'net at 5 bp: 0.28', 'net at 10 bp: 0.24']",
+            "compare": "equal"
+          },
+          {
+            "call": "results_table(1.178, [0.431, -0.313, -1.765], [5, 10, 20])",
+            "expect": "['gross: 1.18', 'net at 5 bp: 0.43', 'net at 10 bp: -0.31', 'net at 20 bp: -1.76']",
+            "compare": "equal"
+          },
+          {
+            "call": "results_table(0.5, [], [])",
+            "expect": "['gross: 0.50']",
+            "compare": "equal"
+          },
+          {
+            "call": "write_up_sections({'question': 'Up in 10 days?', 'dsr': 0.41})",
+            "expect": "['data', 'method', 'results', 'trial_count', 'what_failed', 'next_steps']",
+            "compare": "equal"
+          },
+          {
+            "call": "write_up_sections({k: 'x' for k in REQUIRED})",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "write_up_sections({**{k: 'x' for k in REQUIRED}, 'what_failed': ''})",
+            "expect": "['what_failed']",
+            "compare": "equal"
+          },
+          {
+            "call": "write_up_sections({**{k: 'x' for k in REQUIRED}, 'trial_count': 0, 'dsr': None})",
+            "expect": "['dsr']",
+            "compare": "equal"
+          },
+          {
+            "call": "write_up_sections({})",
+            "expect": "['question', 'data', 'method', 'results', 'trial_count', 'dsr', 'what_failed', 'next_steps']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: three tables (one with negative Sharpes and one with no costs) and five write-ups, including an empty `what_failed` and a trial count of 0, which is a value, not a gap. Lists must match exactly. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Format with `f'{gross:.2f}'`; Python prints the minus sign itself."
+        },
+        {
+          "rung": "point",
+          "text": "A section is missing when `results.get(k)` is `None`, `''`, `[]` or `{}`. A 0 is a value.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`[k for k in REQUIRED if results.get(k) in (None, '', [], {})]` keeps the template's order."
+        }
+      ],
+      "feedback": {
+        "correct": "Both helpers pass.",
+        "generic": "Not quite right. Check the 2-place formatting of negatives, and that a value of 0 is not treated as missing."
+      },
+      "explain": {
+        "text": "Note −1.765 prints as −1.76: Python rounds the stored binary value, which is just below −1.765. The checklist treats 0 as a real answer, so an honest trial count of 0 is not flagged, but an empty `what_failed` is."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Starting with the model",
+      "prose": "A colleague's draft opens: \"I fitted gradient boosting on 40 technical features and got 58% accuracy on the test set.\" Nothing comes before it.",
+      "question": "What is the first thing the draft is missing?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tune",
+            "text": "A better-tuned model, to push 58% higher",
+            "why": "You started from the model again. Without the question and the base rate, 58% cannot be judged at all."
+          },
+          {
+            "id": "question",
+            "text": "The question and the data: what is predicted, on what, and how often the label occurs",
+            "correct": true
+          },
+          {
+            "id": "deep",
+            "text": "A comparison with a neural network",
+            "why": "Another model answers nothing. First say what 58% is measured against."
+          },
+          {
+            "id": "costs",
+            "text": "Trading costs",
+            "why": "Costs matter, later. First the draft must say what is predicted and what a constant guess would score."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Could 58% be worse than a constant guess?"
+        },
+        {
+          "rung": "point",
+          "text": "If 62% of labels are up, always saying up scores 62%."
+        },
+        {
+          "rung": "step",
+          "text": "The question, the data and the base rate come before any model."
+        }
+      ],
+      "feedback": {
+        "correct": "Question and data first.",
+        "generic": "Not quite right. Ask what the 58% is measured against.",
+        "byKey": {
+          "tune": "You reached for the model. The draft has not said what it predicts, or what a constant guess would score, so 58% means nothing yet."
+        }
+      },
+      "explain": {
+        "text": "A study starts with the question, the universe and the data, and reports the base rate before any accuracy. If 62% of the labels are up, 58% is worse than always guessing up. Level 1 (Fixed-horizon labels) met exactly this."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "When the answer is no",
+      "prose": "Edge case. Your seed-7 study ends with net Sharpe 0.28 and DSR 0.41 after two trials. You have a week left before the write-up is due.",
+      "question": "What do you hand in?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "more",
+            "text": "Try more models until the DSR passes 0.95, then write it up",
+            "why": "Each new try raises $N$ and the bar with it. Searching until something passes is the overfitting the DSR measures."
+          },
+          {
+            "id": "honest",
+            "text": "The study as it stands: no reliable edge found, with the numbers, the trial count and what you would try next",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "Nothing: a study with no edge is a failed project",
+            "why": "A clean null result is a deliverable. It saves the desk from trading noise."
+          },
+          {
+            "id": "gross",
+            "text": "Report the gross Sharpe and leave out the DSR",
+            "why": "Dropping the numbers that hurt is the habit a senior reader looks for first."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does trying more models do to $N$?"
+        },
+        {
+          "rung": "point",
+          "text": "A result of no edge, honestly measured, is still a result."
+        },
+        {
+          "rung": "step",
+          "text": "Write up what you found, including the DSR and the trial count."
+        }
+      ],
+      "feedback": {
+        "correct": "No edge, honestly shown, is a valid deliverable.",
+        "generic": "Not quite right. Think about what extra trials do, and what a reader needs."
+      },
+      "explain": {
+        "text": "A study whose honest answer is no edge is a valid deliverable: it says not to trade this. Extra searching would raise $N$ and the bar. The write-up says what was tried, what failed and what you would test next on new data."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drafting what failed",
+      "prose": "The template's rubric for the \"what failed\" paragraph: specific, quantified, names what was tried and dropped, and makes no excuses. Here are six draft sentences.",
+      "question": "Select all that apply: the sentences that meet the rubric.",
+      "widget": {
+        "kind": "multi",
+        "options": [
+          {
+            "id": "a",
+            "text": "Boosting was tried and dropped: its net Sharpe was below logistic's on the same folds.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The hit rate beat the majority-class guess by only 2.2 points over 271 test days.",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "The market was unusually hard in the test period, so the results understate the model.",
+            "why": "That is an excuse with no evidence. The rubric asks for what failed, not why it was not your fault."
+          },
+          {
+            "id": "d",
+            "text": "With two trials the DSR is 0.41, so the net Sharpe of 0.28 is not evidence of skill.",
+            "correct": true
+          },
+          {
+            "id": "e",
+            "text": "Some things did not work as well as hoped.",
+            "why": "Vague: it names nothing and quantifies nothing."
+          },
+          {
+            "id": "f",
+            "text": "Results would be better with more data and a deeper model.",
+            "why": "An untested claim. Put a proposal in next steps, framed as a test, not as a result."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the sentence name something and give a number?"
+        },
+        {
+          "rung": "point",
+          "text": "Sentences that blame the market or promise improvement are not about what failed."
+        },
+        {
+          "rung": "step",
+          "text": "a, b and d name a failure and quantify it; c, e and f do not."
+        }
+      ],
+      "feedback": {
+        "correct": "Three sentences a senior reader can check.",
+        "generic": "Not quite right. Keep only sentences that name something specific and give its number.",
+        "byKey": {
+          "c": "That blames the test period. Without evidence it is an excuse, and it reads as one.",
+          "e": "That sentence names nothing. A reader cannot check it.",
+          "f": "That is a hope, not a finding."
+        }
+      },
+      "explain": {
+        "text": "The good sentences name the dropped model, the size of the edge and the DSR. They can be checked against the run. That is why a senior reader trusts this paragraph most: it is the part that costs the author something to write."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The desk's research template",
+      "prose": "Three research notes reach a portfolio manager. Note A: hit rate and gross Sharpe. Note B: gross and net Sharpe at 5, 10 and 20 bp, and a trial count of 14 with DSR. Note C: net Sharpe at 10 bp and a chart of cumulative P&L.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Note",
+            "Costs",
+            "Trial count",
+            "DSR",
+            "What failed"
+          ],
+          "rows": [
+            [
+              "A",
+              "no",
+              "no",
+              "no",
+              "no"
+            ],
+            [
+              "B",
+              "3 levels",
+              "14",
+              "yes",
+              "yes"
+            ],
+            [
+              "C",
+              "1 level",
+              "no",
+              "no",
+              "no"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which note can the manager act on?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Note A: its gross Sharpe is the highest",
+            "why": "A gross Sharpe ignores costs, and without a trial count it cannot be deflated."
+          },
+          {
+            "id": "b",
+            "text": "Note B",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "Note C: it is net of costs",
+            "why": "One cost level and no trial count: the manager cannot tell luck from skill, or how fragile the result is to costs."
+          },
+          {
+            "id": "none",
+            "text": "None: research notes cannot be trusted",
+            "why": "A note that reports costs, trials and failures can be checked. That is the point of the template."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which note lets you deflate the Sharpe and check it against twice the expected cost?"
+        },
+        {
+          "rung": "point",
+          "text": "You need costs at several levels and the trial count.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only note B reports both, with the DSR and what failed."
+        }
+      ],
+      "feedback": {
+        "correct": "B is the only note a reader can check.",
+        "generic": "Not quite right. Look for costs at several levels and a trial count."
+      },
+      "explain": {
+        "text": "Note B reports net results at three costs, the trial count, the DSR and what failed: everything a reader needs to apply the desk's rules. A results table without costs or trial counts cannot be acted on, however good it looks.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 2,
+      "title": "The exit line",
+      "prose": "The exit line for this topic: one tabular prediction problem done end to end with time-ordered cross-validation, and leakage, regularisation and bias-variance explained without notes. This lesson's study used synthetic prices.",
+      "question": "When is the exit line met?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "now",
+            "text": "Now: the seed-7 study is end to end",
+            "why": "The study is complete, but on synthetic data with a known answer. The exit asks for real data."
+          },
+          {
+            "id": "real",
+            "text": "When this plan is carried out on real data, in the Stage 2 project courses (backtest, alpha), and the ideas explained without notes",
+            "correct": true
+          },
+          {
+            "id": "dsr",
+            "text": "When a study reaches a DSR above 0.95",
+            "why": "The exit asks for an honest study, not a winning one. A clean no edge result meets it."
+          },
+          {
+            "id": "model",
+            "text": "When a model beats 60% accuracy",
+            "why": "Accuracy alone is not the bar. A full, honest study is."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What was synthetic about this lesson's study?"
+        },
+        {
+          "rung": "point",
+          "text": "Synthetic data have a known answer and none of real data's mess."
+        },
+        {
+          "rung": "step",
+          "text": "The plan is ready; the exit needs it run on real data."
+        }
+      ],
+      "feedback": {
+        "correct": "The plan is ready; the real data come in the projects.",
+        "generic": "Not quite right. Reread the exit line and think about the data used here."
+      },
+      "explain": {
+        "text": "The plan is complete and tested on synthetic data, where the truth is known. The exit line is met when you run it on real prices in the backtest and alpha projects, trial log open from day one, and can explain each stage without notes."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A study runs question, data, labels, features, split with purge, models with a trial log, calibration, sizing, costs, walk-forward P&L with DSR, write-up.",
+      "The trial log opens before the first fit; the results table reports gross and net at several costs, the trial count and the DSR.",
+      "An honest \"no edge\" is a valid result, and the \"what failed\" paragraph is the part a senior reader trusts most."
+    ],
+    "formula": {
+      "name": "Write-up template",
+      "tex": "\\text{question} \\to \\text{data} \\to \\text{method} \\to \\text{results (gross, net)} \\to N,\\ \\text{DSR} \\to \\text{what failed} \\to \\text{next}",
+      "note": "One page. Every number checkable from the run."
+    },
+    "trap": "Starting with the model. Without the question, the data and the base rate, no accuracy can be judged."
+  },
+  "quiz": [
+    {
+      "id": "q-short",
+      "difficulty": 2,
+      "prose": "Edge case. A colleague runs the full study on 120 days of a new market: 30 test days, labels lasting 10 days.",
+      "question": "What can the study conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "little",
+            "text": "Almost nothing: about 3 independent labels in the test set",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Whatever its DSR says",
+            "why": "The DSR assumes enough independent observations. With about 3, its inputs are meaningless."
+          },
+          {
+            "id": "more",
+            "text": "More than a long study, since the data are recent",
+            "why": "Recent is not the same as enough."
+          },
+          {
+            "id": "double",
+            "text": "Enough if the Sharpe is above 2",
+            "why": "A Sharpe above 2 on 30 overlapping days is well within luck."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Thirty days of 10-day labels is about 3 independent results.",
+        "generic": "Not quite right. Count the effective number of observations."
+      },
+      "explain": {
+        "text": "30 test days of 10-day labels give an effective $n$ of about 3. No Sharpe, hit rate or DSR means anything there. The honest write-up says the data are too short and what length would be needed."
+      }
+    },
+    {
+      "id": "q-log-start",
+      "difficulty": 2,
+      "prose": "A researcher tried 25 configurations over two weeks and opened the trial log only after choosing the final model. The log shows 1.",
+      "question": "What $N$ belongs in the DSR?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Trials",
+        "accept": "25: every configuration tried on the data.",
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All 25.",
+        "generic": "Not quite right. Count every configuration tried, logged or not.",
+        "byKey": {
+          "one": "The log is wrong, not the count. All 25 were tried on the same data."
+        }
+      },
+      "explain": {
+        "text": "The 24 unlogged runs were still chances to find a lucky best. $N = 25$; a log opened late understates it. That is why the log opens with the split."
+      }
+    },
+    {
+      "id": "q-table",
+      "difficulty": 3,
+      "prose": "A results table reads: hit rate 54%, Sharpe 1.4.",
+      "question": "Select all that apply: what must be added before anyone can act on it?",
+      "widget": {
+        "kind": "multi",
+        "options": [
+          {
+            "id": "base",
+            "text": "The base rate",
+            "correct": true
+          },
+          {
+            "id": "net",
+            "text": "Net Sharpe at several cost levels",
+            "correct": true
+          },
+          {
+            "id": "n",
+            "text": "The trial count and the DSR",
+            "correct": true
+          },
+          {
+            "id": "font",
+            "text": "A larger chart of cumulative P&L",
+            "why": "A chart restates the Sharpe; it adds neither costs nor trials."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Base rate, costs and trials.",
+        "generic": "Not quite right. Which numbers let a reader judge luck, costs and the baseline?"
+      },
+      "explain": {
+        "text": "54% needs the base rate to mean anything, 1.4 needs costs, and both need the trial count to be deflated."
+      }
+    }
+  ]
+}

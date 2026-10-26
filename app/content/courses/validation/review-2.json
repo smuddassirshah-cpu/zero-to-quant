@@ -1,0 +1,364 @@
+{
+  "id": "review-2",
+  "course": "validation",
+  "level": 2,
+  "items": [
+    {
+      "id": "r-shuffle",
+      "difficulty": 2,
+      "skills": [
+        "vl-time",
+        "vl-cv"
+      ],
+      "prose": "A model of tomorrow's spread on an index future uses 10-day and 30-day moving averages of the spread. Its lag-1 autocorrelation is 0.9. Shuffled 5-fold CV gives an MSE of 1.2; a fit on the first 80% tested on the last 20% gives 2.9.",
+      "question": "Which number should go in the research note?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ordered",
+            "text": "2.9, the time-ordered score",
+            "correct": true
+          },
+          {
+            "id": "shuffled",
+            "text": "1.2, since cross-validation uses all the data",
+            "why": "Using all the data in shuffled folds is the problem: each test day has its neighbours in training."
+          },
+          {
+            "id": "mean",
+            "text": "About 2.05, the average of the two",
+            "why": "Averaging keeps half of the leak. Report the honest score."
+          },
+          {
+            "id": "both",
+            "text": "Neither: run shuffled CV again with more folds",
+            "why": "More shuffled folds put even more neighbours in training."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The time-ordered score is the one trading will see.",
+        "generic": "Not quite right. Pick the score where the model never trains on days near or after the test days."
+      },
+      "explain": {
+        "text": "With autocorrelation of 0.9 a shuffled test day has its yesterday and tomorrow in training. Only the time-ordered split matches how the model will be used."
+      }
+    },
+    {
+      "id": "r-tss",
+      "difficulty": 2,
+      "skills": [
+        "vl-time"
+      ],
+      "prose": "`TimeSeriesSplit(n_splits=4)` on 500 rows, numbered from 0.",
+      "question": "What is the first row of the last test block?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 400,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "400: test blocks are $\\lfloor 500/5 \\rfloor = 100$ rows and start at 100, 200, 300 and 400.",
+        "label": "First test row",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "end",
+            "value": 499,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "q",
+            "value": 375,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Blocks of 100 from row 100: the last starts at 400.",
+        "generic": "Not quite right. The block size is $\\lfloor n/(k+1) \\rfloor$.",
+        "byKey": {
+          "first": "100 is where the first test block starts. Count forward to the fourth.",
+          "q": "375 splits 500 into four blocks of 125. `TimeSeriesSplit` uses $k + 1 = 5$ pieces."
+        }
+      },
+      "explain": {
+        "text": "The first test starts at $500 - 4 \\times 100 = 100$, and each block is 100 rows. The fourth runs from 400 to 499."
+      }
+    },
+    {
+      "id": "r-purge",
+      "difficulty": 3,
+      "skills": [
+        "vl-leakage",
+        "vl-time"
+      ],
+      "prose": "Blocked k-fold with a 10-day forward label and an embargo of 3. The test block sits in the middle of the data.",
+      "question": "How many training rows outside the block do the purge and embargo remove?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "21: $h - 1 = 9$ before, 9 after, and 3 more for the embargo.",
+        "label": "Rows removed",
+        "unit": "rows",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "h",
+            "value": 23,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-emb",
+            "value": 18,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "9 + 9 + 3 = 21.",
+        "generic": "Not quite right. Count $h - 1$ on each side, then add the embargo.",
+        "byKey": {
+          "one-side": "That is the side before the block. In k-fold the rows after it overlap too.",
+          "h": "You used $h = 10$ rows per side. A 10-day label overlaps $h - 1 = 9$.",
+          "no-emb": "You left out the embargo of 3."
+        }
+      },
+      "explain": {
+        "text": "Labels over 10 days overlap the test labels for 9 rows on each side. The embargo removes 3 more after the block, for features built from test days."
+      }
+    },
+    {
+      "id": "r-pool",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv",
+        "vl-time"
+      ],
+      "prose": "Three walk-forward folds: 100 days with MSE 2.0, 100 days with MSE 2.0, and 40 days with MSE 5.0.",
+      "question": "What is the MSE of the joined out-of-sample predictions?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "2.5: $(200 + 200 + 200)/240$.",
+        "label": "Joined MSE",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 3.0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "600 squared-error units over 240 days.",
+        "generic": "Not quite right. Weight each fold's MSE by its days.",
+        "byKey": {
+          "mean": "You averaged the three MSEs, giving 40 days the weight of 100."
+        }
+      },
+      "explain": {
+        "text": "Each fold's total squared error is days times MSE: 200, 200 and 200. Over 240 days that is 2.5, not the plain mean of 3.0."
+      }
+    },
+    {
+      "id": "r-gap",
+      "difficulty": 3,
+      "skills": [
+        "vl-leakage",
+        "vl-time"
+      ],
+      "prose": "You walk forward with `TimeSeriesSplit` on a 5-day forward-return label. The features look back only at past prices.",
+      "question": "Which `gap` removes the label overlap without wasting rows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "four",
+            "text": "`gap=4`",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "`gap=5`",
+            "why": "Row $s - 5$ uses days $s - 4$ to $s$, and the first test label starts at $s + 1$. It is clean, so 4 is enough."
+          },
+          {
+            "id": "zero",
+            "text": "`gap=0`",
+            "why": "The last 4 training rows have labels that use test days."
+          },
+          {
+            "id": "twenty",
+            "text": "`gap=20`",
+            "why": "That throws away 16 clean rows before every block."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$h - 1 = 4$.",
+        "generic": "Not quite right. Count $h - 1$ for a 5-day label."
+      },
+      "explain": {
+        "text": "In walk-forward only rows before the block train the model, and the last $h - 1 = 4$ of them overlap. `gap=4` removes exactly those."
+      }
+    },
+    {
+      "id": "r-mean-hides",
+      "difficulty": 3,
+      "skills": [
+        "vl-time",
+        "vl-cv"
+      ],
+      "prose": "A signal's five walk-forward folds hit 0.616, 0.600, 0.564, 0.452, 0.424 against a base rate of 0.506. The note says: mean hit rate 53.1%, above the base rate.",
+      "question": "What is the main problem with the note?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "time",
+            "text": "The mean hides that the last two folds, the most recent 500 days, are below the base rate",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "The edge is too small to matter",
+            "why": "The size is not the main issue. The recent folds are losing, which the mean hides."
+          },
+          {
+            "id": "folds",
+            "text": "Five folds are too few to compute a mean",
+            "why": "Five is enough to average. The problem is that averaging hides the time pattern."
+          },
+          {
+            "id": "base",
+            "text": "The base rate should be 0.5",
+            "why": "Using the actual share of up days is right. The problem is the averaging."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Read folds in time order before averaging.",
+        "generic": "Not quite right. Look at the order of the fold scores."
+      },
+      "explain": {
+        "text": "Folds 4 and 5 lose against the base rate while the first three win. The mean blends them into a number that describes no period at all."
+      }
+    },
+    {
+      "id": "r-se",
+      "difficulty": 4,
+      "skills": [
+        "vl-time"
+      ],
+      "prose": "A fold of 100 days has hit rate 0.55.",
+      "question": "What is its standard error, $\\sqrt{p(1-p)/n}$, using $p = 0.55$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0497,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.0497: $\\sqrt{0.2475/100}$.",
+        "label": "Standard error",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 0.0025,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 5 points: one 100-day fold is a blunt measure.",
+        "generic": "Not quite right. Compute $\\sqrt{0.55 \\times 0.45 / 100}$.",
+        "byKey": {
+          "var": "That is the variance. Take its square root.",
+          "half": "0.05 uses $p = 0.5$. The question says $p = 0.55$."
+        }
+      },
+      "explain": {
+        "text": "$0.55 \\times 0.45 = 0.2475$, over 100 is 0.002475, whose root is about 0.0497. A fold at 0.50 would be just one standard error below 0.55."
+      }
+    },
+    {
+      "id": "r-flex",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv",
+        "vl-leakage"
+      ],
+      "prose": "On the same autocorrelated data, shuffled CV flatters a 5-nearest-neighbour model by 2.2 times but a three-coefficient ridge model by only 1.09 times.",
+      "question": "Which model would purging and time order change most, and why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "knn",
+            "text": "The nearest-neighbour model, because it reads predictions straight off the rows closest to the test day",
+            "correct": true
+          },
+          {
+            "id": "ridge",
+            "text": "The ridge model, because the penalty interacts with the folds",
+            "why": "The penalty does not look at neighbours. Ridge fits one line through all rows."
+          },
+          {
+            "id": "same",
+            "text": "Both equally, since the data are the same",
+            "why": "The data leak equally, but only a model that can memorise rows can use the leak fully."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Flexible models exploit leaky neighbours most.",
+        "generic": "Not quite right. Ask which model can copy individual rows."
+      },
+      "explain": {
+        "text": "A nearest-neighbour forecast is an average of a few training rows, so leaky neighbours flow straight into it. A rigid line averages over all rows, so the same leak moves it little."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1653 @@
+{
+ "id": "l9-fixing-mistakes",
+ "course": "ensembles",
+ "title": "Fixing the last tree’s mistakes",
+ "minutes": 14,
+ "objectives": [
+  "Fit trees to residuals one after another.",
+  "Contrast boosting's sequential small trees with bagging's parallel deep trees."
+ ],
+ "skills": [
+  "en-boosting",
+  "en-bagging"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One stump, six trades",
+   "prose": "Six trades of 1 to 6 lots, and the slippage each one paid, in bp. A **stump**, a tree with one split, has been fitted. It predicts 5 bp for trades up to 5 lots and 11 bp above.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "6 trades",
+     "nodes": [
+      {
+       "id": "l",
+       "label": "5 trades",
+       "p": "size ≤ 5.5",
+       "value": "5 bp"
+      },
+      {
+       "id": "r",
+       "label": "1 trade",
+       "p": "size > 5.5",
+       "value": "11 bp"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the stump's prediction and the error it leaves, $y - \\hat y$, for each trade.",
+   "widget": {
+    "kind": "table",
+    "label": "Predictions and residuals of the first stump",
+    "columns": [
+     "Size (lots)",
+     "Slippage $y$ (bp)",
+     "Stump $\\hat y$",
+     "Left over $y - \\hat y$"
+    ],
+    "rows": [
+     [
+      "1",
+      "3",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "2",
+      "3",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "3",
+      "6",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "4",
+      "6",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "5",
+      "7",
+      {
+       "edit": true,
+       "answer": 5,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "6",
+      "11",
+      {
+       "edit": true,
+       "answer": 11,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the stump: is the trade's size at most 5.5 lots?"
+    },
+    {
+     "rung": "point",
+     "text": "Five trades go left and predict 5 bp; the 6-lot trade goes right.",
+     "highlight": [
+      "l",
+      "r"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Predictions 5, 5, 5, 5, 5, 11. Then subtract: 3 − 5 = −2, and so on."
+    }
+   ],
+   "feedback": {
+    "correct": "The stump leaves −2, −2, 1, 1, 2 and 0 bp.",
+    "generic": "Not quite right. Each prediction is the leaf the trade lands in; the left-over is the slippage minus that."
+   },
+   "explain": {
+    "text": "The stump gets the 6-lot trade exactly. It is 2 bp too high on the two small trades and up to 2 bp too low on the middle ones. Those left-overs are the **residuals**, and they still have a pattern: small trades below, middle trades above.",
+    "canvas": {
+     "highlight": [
+      "l"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 1,
+   "title": "Fit what is left",
+   "prose": "The residuals still have a pattern, so fit a second stump to them, not to the slippage. It splits at 2.5 lots: −2 bp on the left, the mean of the four residuals on the right.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "6 residuals",
+     "nodes": [
+      {
+       "id": "l",
+       "label": "2 trades",
+       "p": "size ≤ 2.5",
+       "value": "−2 bp"
+      },
+      {
+       "id": "r",
+       "label": "4 trades",
+       "p": "size > 2.5",
+       "value": "+1 bp"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the second stump's output and the new prediction, first stump plus second.",
+   "widget": {
+    "kind": "table",
+    "label": "Second stump and the summed prediction",
+    "columns": [
+     "Size",
+     "First stump",
+     "Residual",
+     "Second stump",
+     "Sum of both"
+    ],
+    "rows": [
+     [
+      "1",
+      "5",
+      "-2",
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "2",
+      "5",
+      "-2",
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "3",
+      "5",
+      "1",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 6,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "4",
+      "5",
+      "1",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 6,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "5",
+      "5",
+      "2",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 6,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "6",
+      "11",
+      "0",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.01
+       }
+      },
+      {
+       "edit": true,
+       "answer": 12,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which leaf does each trade fall into on the second stump?"
+    },
+    {
+     "rung": "point",
+     "text": "Trades of 1 and 2 lots get −2; the rest get +1.",
+     "highlight": [
+      "l",
+      "r"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Second stump: −2, −2, 1, 1, 1, 1. Add it to the first: 3, 3, 6, 6, 6, 12."
+    }
+   ],
+   "feedback": {
+    "correct": "The sum predicts 3, 3, 6, 6, 6 and 12 bp.",
+    "generic": "Not quite right. The second stump's output is its leaf value; the sum adds it to the first stump's prediction."
+   },
+   "explain": {
+    "text": "Four of the six trades are now exact. The residuals are 0, 0, 0, 0, 1 and −1, and their sum of squares fell from 14 to 2. You just did two rounds of **boosting**: each new tree fits what the trees before it left.",
+    "canvas": {
+     "highlight": [
+      "r"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Forty trades, many stumps",
+   "prose": "Now 40 trades and their price impact. We repeat your two steps: fit a stump to the residuals, add it, again and again. The test MSE scores each stage on 400 new trades. Slide through the stages.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      10.5
+     ],
+     "y": [
+      0,
+      30
+     ],
+     "xLabel": "Trade size (% of daily volume)",
+     "yLabel": "Impact (bp)",
+     "functions": [
+      {
+       "id": "F",
+       "expr": "k < 0.5 ? (10.33+10.25*(x>3.495)) : (k < 1.5 ? (4.94+6.90*(x>1.170)+7.23*(x>3.495)+2.00*(x>6.315)+4.15*(x>8.545)) : (k < 2.5 ? (4.31+1.26*(x>0.590)+6.90*(x>1.170)-2.03*(x>1.740)+1.89*(x>1.930)+2.45*(x>2.360)-1.38*(x>2.665)+5.32*(x>3.495)-0.71*(x>4.930)+0.72*(x>6.250)+2.00*(x>6.315)+0.84*(x>8.130)+4.15*(x>8.545)-1.40*(x>9.090)) : (4.03-0.53*(x>0.435)+3.00*(x>0.590)+6.90*(x>1.170)-5.57*(x>1.740)+4.44*(x>1.930)+4.29*(x>2.360)-1.30*(x>2.520)-3.54*(x>2.665)+2.22*(x>2.815)-0.24*(x>3.155)+4.75*(x>3.495)+0.86*(x>4.665)-1.75*(x>4.930)+0.36*(x>5.910)+1.61*(x>6.250)+2.40*(x>6.315)-2.50*(x>6.675)+0.33*(x>7.390)+2.53*(x>7.885)-3.91*(x>7.990)+3.20*(x>8.130)+0.61*(x>8.290)+4.15*(x>8.545)-2.20*(x>9.090))))",
+       "label": "sum of stumps",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "k": 0,
+      "ns": [
+       1,
+       5,
+       20,
+       100
+      ],
+      "tr": [
+       16.68,
+       6.53,
+       4.1,
+       1.64
+      ],
+      "te": [
+       17.28,
+       10.59,
+       10.2,
+       11.34
+      ]
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p0",
+       "x": 0.24,
+       "y": 3.58,
+       "tap": false
+      },
+      {
+       "id": "p1",
+       "x": 0.25,
+       "y": 4.33,
+       "tap": false
+      },
+      {
+       "id": "p2",
+       "x": 0.32,
+       "y": 4.72,
+       "tap": false
+      },
+      {
+       "id": "p3",
+       "x": 0.55,
+       "y": 2.26,
+       "tap": false
+      },
+      {
+       "id": "p4",
+       "x": 0.63,
+       "y": 6.58,
+       "tap": false
+      },
+      {
+       "id": "p5",
+       "x": 1.71,
+       "y": 14.54,
+       "tap": false
+      },
+      {
+       "id": "p6",
+       "x": 1.77,
+       "y": 6.0,
+       "tap": false
+      },
+      {
+       "id": "p7",
+       "x": 2.09,
+       "y": 14.14,
+       "tap": false
+      },
+      {
+       "id": "p8",
+       "x": 2.17,
+       "y": 12.14,
+       "tap": false
+      },
+      {
+       "id": "p9",
+       "x": 2.31,
+       "y": 10.23,
+       "tap": false
+      },
+      {
+       "id": "p10",
+       "x": 2.41,
+       "y": 18.42,
+       "tap": false
+      },
+      {
+       "id": "p11",
+       "x": 2.63,
+       "y": 15.26,
+       "tap": false
+      },
+      {
+       "id": "p12",
+       "x": 2.7,
+       "y": 9.55,
+       "tap": false
+      },
+      {
+       "id": "p13",
+       "x": 2.93,
+       "y": 13.92,
+       "tap": false
+      },
+      {
+       "id": "p14",
+       "x": 3.14,
+       "y": 15.91,
+       "tap": false
+      },
+      {
+       "id": "p15",
+       "x": 3.17,
+       "y": 13.68,
+       "tap": false
+      },
+      {
+       "id": "p16",
+       "x": 3.82,
+       "y": 17.68,
+       "tap": false
+      },
+      {
+       "id": "p17",
+       "x": 4.56,
+       "y": 16.88,
+       "tap": false
+      },
+      {
+       "id": "p18",
+       "x": 4.77,
+       "y": 19.47,
+       "tap": false
+      },
+      {
+       "id": "p19",
+       "x": 4.79,
+       "y": 21.82,
+       "tap": false
+      },
+      {
+       "id": "p20",
+       "x": 5.07,
+       "y": 15.99,
+       "tap": false
+      },
+      {
+       "id": "p21",
+       "x": 5.14,
+       "y": 18.75,
+       "tap": false
+      },
+      {
+       "id": "p22",
+       "x": 5.24,
+       "y": 16.92,
+       "tap": false
+      },
+      {
+       "id": "p23",
+       "x": 5.25,
+       "y": 18.71,
+       "tap": false
+      },
+      {
+       "id": "p24",
+       "x": 5.62,
+       "y": 15.4,
+       "tap": false
+      },
+      {
+       "id": "p25",
+       "x": 6.2,
+       "y": 18.18,
+       "tap": false
+      },
+      {
+       "id": "p26",
+       "x": 6.3,
+       "y": 19.49,
+       "tap": false
+      },
+      {
+       "id": "p27",
+       "x": 6.33,
+       "y": 22.82,
+       "tap": false
+      },
+      {
+       "id": "p28",
+       "x": 6.37,
+       "y": 23.63,
+       "tap": false
+      },
+      {
+       "id": "p29",
+       "x": 6.98,
+       "y": 17.17,
+       "tap": false
+      },
+      {
+       "id": "p30",
+       "x": 7.8,
+       "y": 19.96,
+       "tap": false
+      },
+      {
+       "id": "p31",
+       "x": 7.97,
+       "y": 24.53,
+       "tap": false
+      },
+      {
+       "id": "p32",
+       "x": 8.01,
+       "y": 16.66,
+       "tap": false
+      },
+      {
+       "id": "p33",
+       "x": 8.25,
+       "y": 21.59,
+       "tap": false
+      },
+      {
+       "id": "p34",
+       "x": 8.33,
+       "y": 22.8,
+       "tap": false
+      },
+      {
+       "id": "p35",
+       "x": 8.76,
+       "y": 27.45,
+       "tap": false
+      },
+      {
+       "id": "p36",
+       "x": 8.99,
+       "y": 26.05,
+       "tap": false
+      },
+      {
+       "id": "p37",
+       "x": 9.19,
+       "y": 23.27,
+       "tap": false
+      },
+      {
+       "id": "p38",
+       "x": 9.89,
+       "y": 24.05,
+       "tap": false
+      },
+      {
+       "id": "p39",
+       "x": 9.96,
+       "y": 24.5,
+       "tap": false
+      }
+     ],
+     "params": {
+      "k": 0
+     }
+    },
+    "derive": {
+     "caption": "{{ns[k]}} stumps: train MSE {{fixed(tr[k], 2)}}, test MSE {{fixed(te[k], 2)}} (bp²)"
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "start": 0,
+      "label": "Stage: 1, 5, 20 or 100 stumps"
+     }
+    ]
+   },
+   "question": "Which stage has the lowest test MSE?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "s1",
+      "text": "1 stump",
+      "why": "One stump is a single step: train and test MSE are both above 17."
+     },
+     {
+      "id": "s5",
+      "text": "5 stumps",
+      "why": "Five stumps catch the bend; test MSE is 10.59, and 20 stumps do a little better."
+     },
+     {
+      "id": "s20",
+      "text": "20 stumps",
+      "correct": true
+     },
+     {
+      "id": "s100",
+      "text": "100 stumps",
+      "why": "You chose the stage that fits the 40 trades best. Its test MSE, 11.34, is the worst of the last three."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the test MSE in the caption, not the train MSE."
+    },
+    {
+     "rung": "point",
+     "text": "Train MSE falls at every stage. Test MSE does not.",
+     "highlight": [
+      "F"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Test MSE: 17.28, 10.59, 10.20, 11.34."
+    }
+   ],
+   "feedback": {
+    "correct": "Twenty stumps give the lowest test MSE of the four, 10.20 bp².",
+    "generic": "Not quite right. Compare the test MSE across the four stages."
+   },
+   "explain": {
+    "text": "Train MSE falls from 16.68 to 1.64 as stumps are added. Test MSE falls to 10.20 at 20 stumps, then rises: by 100 the steps chase single trades. The noise alone has variance 9, so 10.2 is close to the floor.",
+    "canvas": {
+     "params": {
+      "k": 2
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Boosting by hand",
+   "prose": "Write the loop you have been doing. Start every prediction at 0, fit a stump to what is left, add its output, repeat. `DecisionTreeRegressor(max_depth=1)` is a stump.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Round",
+      "Fit a stump to",
+      "Prediction after"
+     ],
+     "rows": [
+      [
+       "0",
+       "",
+       "0, 0, 0, 0, 0, 0"
+      ],
+      [
+       "1",
+       "3, 3, 6, 6, 7, 11",
+       "5, 5, 5, 5, 5, 11"
+      ],
+      [
+       "2",
+       "−2, −2, 1, 1, 2, 0",
+       "3, 3, 6, 6, 6, 12"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `boost_stumps` so it returns the predictions on `x` after `n_rounds` stumps, rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_trades(seed, n=40):\n    \"\"\"n trades: size as % of the day's volume, and the price\n    impact in bp. True impact is 8 * sqrt(size); noise has sd 3 bp.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.sort(np.round(rng.uniform(0.2, 10.0, n), 2))\n    y = np.round(8 * np.sqrt(x) + 3 * rng.standard_normal(n), 2)\n    return x, y\n",
+    "starter": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef boost_stumps(x, y, n_rounds):\n    X = np.asarray(x, dtype=float).reshape(-1, 1)\n    y = np.asarray(y, dtype=float)\n    pred = np.zeros(len(y))           # round 0 predicts 0\n    for _ in range(n_rounds):\n        tree = ...                    # a stump fitted to y - pred\n        pred = ...                    # add its predictions\n    return np.round(pred, 4)\n",
+    "solution": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef boost_stumps(x, y, n_rounds):\n    X = np.asarray(x, dtype=float).reshape(-1, 1)\n    y = np.asarray(y, dtype=float)\n    pred = np.zeros(len(y))           # round 0 predicts 0\n    for _ in range(n_rounds):\n        tree = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y - pred)\n        pred = pred + tree.predict(X)\n    return np.round(pred, 4)\n",
+    "examples": [
+     {
+      "call": "boost_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 1).tolist()",
+      "compare": "equal",
+      "expect": "[5.0, 5.0, 5.0, 5.0, 5.0, 11.0]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "boost_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 1).tolist()",
+      "compare": "equal",
+      "expect": "[5.0, 5.0, 5.0, 5.0, 5.0, 11.0]"
+     },
+     {
+      "call": "boost_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 2).tolist()",
+      "compare": "equal",
+      "expect": "[3.0, 3.0, 6.0, 6.0, 6.0, 12.0]"
+     },
+     {
+      "call": "boost_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 3).tolist()",
+      "compare": "equal",
+      "expect": "[3.2, 3.2, 6.2, 6.2, 6.2, 11.0]"
+     },
+     {
+      "call": "boost_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 0).tolist()",
+      "compare": "equal",
+      "expect": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+     },
+     {
+      "setup": "x, y = make_trades(7)",
+      "call": "boost_stumps(x, y, 5)[:6].tolist()",
+      "compare": "equal",
+      "expect": "[4.9383, 4.9383, 4.9383, 4.9383, 4.9383, 11.8352]"
+     },
+     {
+      "setup": "x, y = make_trades(7)",
+      "call": "boost_stumps(x, y, 20)[-3:].tolist()",
+      "compare": "equal",
+      "expect": "[24.3006, 24.3006, 24.3006]"
+     },
+     {
+      "setup": "x, y = make_trades(3, n=25)",
+      "call": "boost_stumps(x, y, 10).tolist()",
+      "compare": "equal",
+      "expect": "[6.6171, 10.8497, 8.4381, 8.4381, 13.2972, 13.2972, 13.2972, 14.9809, 14.9809, 14.9809, 14.9809, 13.6814, 13.6814, 13.6814, 13.6814, 20.9741, 20.9741, 20.9741, 20.9741, 22.1832, 22.1832, 25.7255, 25.7255, 25.7255, 28.6472]"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: the six trades, `make_trades(seed, n)` (already defined), and 0 rounds. Lists must match exactly after rounding. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each round's target is `y - pred`, not `y`."
+    },
+    {
+     "rung": "point",
+     "text": "Fit the stump on `X` and `y - pred`, then add `tree.predict(X)`.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`tree = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y - pred)` and `pred = pred + tree.predict(X)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your loop reproduces the table: 5, then 3, 3, 6, 6, 6, 12.",
+    "generic": "Some tests failed. Fit each stump to `y - pred`, add its predictions, and start from zeros."
+   },
+   "explain": {
+    "text": "Round 3 splits at 5.5 again and gives 3.2, 3.2, 6.2, 6.2, 6.2 and 11. A split can come back: each round only sees the current residuals. With 0 rounds the model predicts 0 everywhere."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Does it always help?",
+   "prose": "Track the training fit round by round: after each stump, the sum of squared residuals on the training trades. On the six trades it went 14, then 2.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "xLabel": "Round",
+     "yLabel": "Sum of squared residuals (bp²)",
+     "showValues": true,
+     "decimals": 3,
+     "yMin": 0,
+     "yMax": 15
+    },
+    "state": {
+     "values": {
+      "1": 14,
+      "2": 2,
+      "3": 0.8,
+      "4": 0.32,
+      "5": 0.128
+     }
+    }
+   },
+   "question": "Complete `residuals_after` so it returns that sum after every round, each rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_trades(seed, n=40):\n    \"\"\"n trades: size as % of the day's volume, and the price\n    impact in bp. True impact is 8 * sqrt(size); noise has sd 3 bp.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.sort(np.round(rng.uniform(0.2, 10.0, n), 2))\n    y = np.round(8 * np.sqrt(x) + 3 * rng.standard_normal(n), 2)\n    return x, y\n",
+    "starter": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef residuals_after(x, y, n_rounds):\n    X = np.asarray(x, dtype=float).reshape(-1, 1)\n    y = np.asarray(y, dtype=float)\n    pred = np.zeros(len(y))\n    out = []\n    for _ in range(n_rounds):\n        tree = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y - pred)\n        pred = pred + tree.predict(X)\n        out.append(...)               # sum of squared residuals, 4 places\n    return out\n",
+    "solution": "import numpy as np\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef residuals_after(x, y, n_rounds):\n    X = np.asarray(x, dtype=float).reshape(-1, 1)\n    y = np.asarray(y, dtype=float)\n    pred = np.zeros(len(y))\n    out = []\n    for _ in range(n_rounds):\n        tree = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y - pred)\n        pred = pred + tree.predict(X)\n        out.append(round(float(np.sum((y - pred) ** 2)), 4))\n    return out\n",
+    "examples": [
+     {
+      "call": "residuals_after([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 5)",
+      "compare": "equal",
+      "expect": "[14.0, 2.0, 0.8, 0.32, 0.128]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "residuals_after([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 5)",
+      "compare": "equal",
+      "expect": "[14.0, 2.0, 0.8, 0.32, 0.128]"
+     },
+     {
+      "call": "residuals_after([1, 2, 3, 4, 5, 6], [4, 4, 4, 4, 4, 4], 3)",
+      "compare": "equal",
+      "expect": "[0.0, 0.0, 0.0]"
+     },
+     {
+      "call": "residuals_after([1, 2, 3], [1, 5, 2], 1)",
+      "compare": "equal",
+      "expect": "[4.5]"
+     },
+     {
+      "setup": "x, y = make_trades(7)",
+      "call": "residuals_after(x, y, 6)",
+      "compare": "equal",
+      "expect": "[667.0755, 458.9715, 383.7519, 296.2476, 261.2716, 250.0448]"
+     },
+     {
+      "setup": "x, y = make_trades(7); s = residuals_after(x, y, 100)",
+      "call": "all(a >= b for a, b in zip(s, s[1:]))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "setup": "x, y = make_trades(11, n=30)",
+      "call": "residuals_after(x, y, 4)",
+      "compare": "equal",
+      "expect": "[339.1009, 231.398, 210.8077, 188.376]"
+     }
+    ],
+    "how": "Check runs 6 hidden tests, including six equal slippages and a check that the list never rises over 100 rounds on `make_trades(7)`. Lists must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The residual after a round is `y - pred` with the new `pred`."
+    },
+    {
+     "rung": "point",
+     "text": "Square the residuals, add them up, round to 4 places.",
+     "highlight": [
+      "x1",
+      "x2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`out.append(round(float(np.sum((y - pred) ** 2)), 4))`."
+    }
+   ],
+   "feedback": {
+    "correct": "The training error never rises: each stump can only remove error, or none.",
+    "generic": "Some tests failed. After each round, append the rounded sum of squared residuals."
+   },
+   "explain": {
+    "text": "A stump fitted by least squares never does worse than predicting 0 for the residuals, so training error cannot rise. With six equal slippages the first stump predicts 4 everywhere and every residual is 0. Later stumps then have nothing to fit: they predict 0, and the list stays at 0.",
+    "canvas": {
+     "highlight": [
+      "x2",
+      "x3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The model is the sum",
+   "prose": "After boosting, what do we keep? Not the residuals: the list of stumps. A new trade gets each stump's output, and the forecast is their sum, $$\\hat f(x) = \\sum_{b=1}^{B} \\hat f_b(x).$$",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "New trade",
+      "Stump 1",
+      "Stump 2",
+      "Forecast"
+     ],
+     "rows": [
+      [
+       "1.5 lots",
+       "5",
+       "−2",
+       "3"
+      ],
+      [
+       "4 lots",
+       "5",
+       "+1",
+       "6"
+      ],
+      [
+       "6.5 lots",
+       "11",
+       "+1",
+       "12"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `ensemble_predict(trees, x_query)`: the sum of every tree's prediction at each query point, rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_trades(seed, n=40):\n    \"\"\"n trades: size as % of the day's volume, and the price\n    impact in bp. True impact is 8 * sqrt(size); noise has sd 3 bp.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.sort(np.round(rng.uniform(0.2, 10.0, n), 2))\n    y = np.round(8 * np.sqrt(x) + 3 * rng.standard_normal(n), 2)\n    return x, y\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef fit_stumps(x, y, n_rounds):\n    \"\"\"The list of stumps from boosting x, y for n_rounds.\"\"\"\n    X = np.asarray(x, dtype=float).reshape(-1, 1)\n    y = np.asarray(y, dtype=float)\n    pred, trees = np.zeros(len(y)), []\n    for _ in range(n_rounds):\n        t = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y - pred)\n        trees.append(t)\n        pred = pred + t.predict(X)\n    return trees\n",
+    "starter": "import numpy as np\n\ndef ensemble_predict(trees, x_query):\n    X = np.asarray(x_query, dtype=float).reshape(-1, 1)\n    total = np.zeros(len(X))\n    ...                               # add every tree's predictions\n    return np.round(total, 4)\n",
+    "solution": "import numpy as np\n\ndef ensemble_predict(trees, x_query):\n    X = np.asarray(x_query, dtype=float).reshape(-1, 1)\n    total = np.zeros(len(X))\n    for tree in trees:\n        total = total + tree.predict(X)\n    return np.round(total, 4)\n",
+    "examples": [
+     {
+      "setup": "T = fit_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 2)",
+      "call": "ensemble_predict(T, [1.5, 4, 6.5]).tolist()",
+      "compare": "equal",
+      "expect": "[3.0, 6.0, 12.0]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "T = fit_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 2)",
+      "call": "ensemble_predict(T, [1.5, 4, 6.5]).tolist()",
+      "compare": "equal",
+      "expect": "[3.0, 6.0, 12.0]"
+     },
+     {
+      "setup": "T = fit_stumps([1, 2, 3, 4, 5, 6], [3, 3, 6, 6, 7, 11], 2)",
+      "call": "ensemble_predict(T[:1], [1.5, 4, 6.5]).tolist()",
+      "compare": "equal",
+      "expect": "[5.0, 5.0, 11.0]"
+     },
+     {
+      "call": "ensemble_predict([], [1, 2]).tolist()",
+      "compare": "equal",
+      "expect": "[0.0, 0.0]"
+     },
+     {
+      "setup": "x, y = make_trades(7); T = fit_stumps(x, y, 20)",
+      "call": "ensemble_predict(T, [0.5, 2.5, 5.0, 7.5, 9.5]).tolist()",
+      "compare": "equal",
+      "expect": "[4.3112, 14.7675, 17.9995, 20.7183, 24.3006]"
+     },
+     {
+      "setup": "x, y = make_trades(7); T = fit_stumps(x, y, 100)",
+      "call": "ensemble_predict(T, [3.0, 3.2]).tolist()",
+      "compare": "equal",
+      "expect": "[13.9495, 13.7119]"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on stumps from `fit_stumps(x, y, n_rounds)`, which is already defined, and one empty list of trees. Lists must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over `trees` and call `.predict(X)` on each."
+    },
+    {
+     "rung": "point",
+     "text": "Start from zeros and keep a running total.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`for tree in trees: total = total + tree.predict(X)`."
+    }
+   ],
+   "feedback": {
+    "correct": "The forecast is a sum, and an empty list sums to 0.",
+    "generic": "Some tests failed. Add every tree's `predict(X)` to a running total that starts at zeros."
+   },
+   "explain": {
+    "text": "A trade of 3.0 lots and one of 3.2 lots get different forecasts after 100 stumps: some stump split between them. Nothing averages here, unlike a forest. Each stump is a small correction, and only the sum is a model."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Bigger trees, faster progress?",
+   "prose": "A colleague finds stumps slow. They boost depth-4 trees on the same 40 trades instead. After 6 rounds the training MSE is 0.05 bp², against 6.53 for 5 stumps.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "d1",
+       "label": "Stumps",
+       "values": [
+        17.28,
+        16.3,
+        14.1,
+        11.63,
+        10.59,
+        10.15,
+        10.33,
+        9.99,
+        10.27,
+        9.97,
+        10.05,
+        10.01,
+        10.12,
+        10.0,
+        9.86,
+        10.03,
+        9.87,
+        10.16,
+        10.27,
+        10.2,
+        10.27,
+        10.24,
+        10.3,
+        10.28,
+        10.36,
+        10.41,
+        10.45,
+        10.61,
+        10.47,
+        10.47
+       ],
+       "colour": 1
+      },
+      {
+       "id": "d4",
+       "label": "Depth 4",
+       "values": [
+        13.1,
+        14.12,
+        14.72,
+        14.37,
+        14.48,
+        15.12,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1,
+        15.1
+       ],
+       "colour": 2
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "xLabel": "Rounds",
+     "yLabel": "Test MSE (bp²)",
+     "y": [
+      8,
+      18
+     ],
+     "decimals": 2
+    },
+    "state": {}
+   },
+   "question": "What does the test MSE say about the depth-4 version?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "worse",
+      "text": "It is worse from round 2 on: deep trees fit the noise in a few rounds and then stop learning",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "It is better, because its training error is far lower",
+      "why": "You ranked the models by training error. On the 400 new trades depth 4 never gets below 13.1."
+     },
+     {
+      "id": "same",
+      "text": "It ends at the same place, only sooner",
+      "why": "You expected the same destination by a faster road. Depth 4 settles at 15.1, the stumps at about 10."
+     },
+     {
+      "id": "more",
+      "text": "It needs more rounds to catch up",
+      "why": "You expected more rounds to help. Once the residuals are near 0, later trees add almost nothing."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two test lines, not the training numbers."
+    },
+    {
+     "rung": "point",
+     "text": "The depth-4 line starts at 13.1 and rises; the stump line falls to about 10.",
+     "highlight": [
+      "d4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "After 6 rounds depth 4 has fitted the 40 trades almost exactly. Nothing is left for later trees."
+    }
+   ],
+   "feedback": {
+    "correct": "Deep trees used up the residuals at once, noise included.",
+    "generic": "Not quite right. Read the test MSE of each line after a few rounds.",
+    "byKey": {
+     "better": "You read the training error as skill. Depth 4 drives it to 0 by fitting the noise, and test MSE rises to 15.1.",
+     "same": "You expected the same end point. Depth 4 stops at 15.1 bp²; stumps reach 9.86."
+    }
+   },
+   "explain": {
+    "text": "Each depth-4 tree has 16 leaves for 40 trades, so two or three rounds memorise them. Boosting works by adding capacity slowly; a big tree spends it all at once. Small trees, many rounds, and a test set to say when to stop.",
+    "canvas": {
+     "highlight": [
+      "d4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Boosting against bagging",
+   "prose": "Boosting fits trees in sequence. Start with $\\hat f(x) = 0$ and $r_i = y_i$. For $b = 1, \\dots, B$: fit a small tree $\\hat f_b$ to the $r_i$, then $$\\hat f(x) \\leftarrow \\hat f(x) + \\hat f_b(x), \\qquad r_i \\leftarrow r_i - \\hat f_b(x_i).$$ Bagging fits deep trees side by side on resamples and averages them.",
+   "question": "Which statement is true of boosting but not of bagging?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "seq",
+      "text": "Tree $b$ cannot be fitted until tree $b-1$ is done",
+      "correct": true
+     },
+     {
+      "id": "var",
+      "text": "Its main job is to cut variance by averaging noisy trees",
+      "why": "That is bagging's job. Boosting starts from a weak, biased model and cuts bias round by round."
+     },
+     {
+      "id": "deep",
+      "text": "It works best with deep, unpruned trees",
+      "why": "That is bagging again. Deep trees in boosting fit the noise in a few rounds, as the colleague found."
+     },
+     {
+      "id": "more",
+      "text": "Adding trees can never hurt the test error",
+      "why": "That holds roughly for bagging. In boosting the 100-stump model was worse on new trades than the 20-stump one."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which method needs the previous tree's residuals?"
+    },
+    {
+     "rung": "point",
+     "text": "Each boosting tree is fitted to $r_i$, which the last tree changed."
+    },
+    {
+     "rung": "step",
+     "text": "Bagging's trees can be grown on 100 machines at once; boosting's cannot."
+    }
+   ],
+   "feedback": {
+    "correct": "Each tree's target depends on every tree before it.",
+    "generic": "Not quite right. Ask which method can grow its trees all at once."
+   },
+   "explain": {
+    "text": "Bagging's trees are independent, so they can grow in parallel, and averaging cuts their variance. Boosting's trees form a chain: each one corrects the sum so far, which cuts bias. That is why boosting's number of trees must be chosen, and bagging's need not."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Boosting a direction call",
+   "prose": "For up or down days, boosting sums trees on the **log-odds** scale, $F(x)$, and turns it into $p = 1/(1 + e^{-F})$. Each tree is fitted to $y - p$: how far the probability is from the outcome. Lesson 11 shows why that is the right target.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Log-odds added"
+     ],
+     "rows": [
+      [
+       "Start (base rate)",
+       "0.10"
+      ],
+      [
+       "Tree 1",
+       "+0.35"
+      ],
+      [
+       "Tree 2",
+       "−0.15"
+      ],
+      [
+       "Total $F$",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What probability of an up day do the start and two trees give, to 4 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5744,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Probability of an up day",
+    "accept": "0.5744: $F = 0.30$ and $1/(1 + e^{-0.3})$.",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "add-p",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the three log-odds numbers first."
+    },
+    {
+     "rung": "point",
+     "text": "$F = 0.10 + 0.35 - 0.15 = 0.30$.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$p = 1/(1 + e^{-0.30}) = 1/1.7408$."
+    }
+   ],
+   "feedback": {
+    "correct": "$F = 0.30$, so $p = 0.5744$.",
+    "generic": "Not quite right. Sum the log-odds, then apply $p = 1/(1 + e^{-F})$.",
+    "byKey": {
+     "raw": "That is $F$ itself, on the log-odds scale. Turn it into a probability with $1/(1 + e^{-F})$.",
+     "add-p": "You treated each number as a probability and added. The trees add on the log-odds scale."
+    }
+   },
+   "explain": {
+    "text": "$F = 0.30$ and $p = 1/(1 + e^{-0.30}) = 0.5744$. Summing on the log-odds scale keeps every $p$ between 0 and 1, however many trees we add. If the day is up, the next tree's target is $1 - 0.5744 = 0.4256$.",
+    "canvas": {
+     "values": {
+      "r3c1": "0.30"
+     },
+     "highlight": {
+      "cells": [
+       "r3c1"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The correction model",
+   "prose": "A desk forecasts each stock's monthly return with a three-factor linear model. A quant then fits a depth-2 tree to the factor model's residuals, using two extra features. The desk's forecast is factor model plus tree. For one stock: factor model +1.20%, tree −0.35%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Stage",
+      "Fitted to",
+      "Forecast for the stock"
+     ],
+     "rows": [
+      [
+       "Factor model",
+       "returns",
+       "+1.20%"
+      ],
+      [
+       "Correction tree",
+       "factor residuals",
+       "−0.35%"
+      ],
+      [
+       "Desk forecast",
+       "",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which description of the desk's model is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "boost",
+      "text": "Boosting with two rounds: +0.85%, and the tree only means something added to the factor model",
+      "correct": true
+     },
+     {
+      "id": "bag",
+      "text": "Bagging: average the two forecasts, +0.43%",
+      "why": "You averaged them as a forest would. The tree was fitted to residuals, so it is added, not averaged."
+     },
+     {
+      "id": "tree-alone",
+      "text": "The tree is a return model in its own right; use −0.35%",
+      "why": "You expected each stage to be a good model alone. The tree predicts the factor model's error, not the return."
+     },
+     {
+      "id": "replace",
+      "text": "The tree replaces the factor model where they disagree",
+      "why": "Nothing is replaced. The second stage only corrects the first, and its forecast is the sum."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did the tree learn to predict: returns, or something else?"
+    },
+    {
+     "rung": "point",
+     "text": "It was fitted to the factor model's residuals.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Residual model plus base model: $1.20 - 0.35 = 0.85\\%$."
+    }
+   ],
+   "feedback": {
+    "correct": "Two rounds of boosting, with a linear first learner: +0.85%.",
+    "generic": "Not quite right. Ask what the second model was fitted to."
+   },
+   "explain": {
+    "text": "The tree's target was the factor model's residual, exactly as your second stump's was. So the forecast is $1.20 - 0.35 = 0.85\\%$. The same risk applies: a deep correction tree on a small panel fits the residual noise, so it too needs a held-out check."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Boosting fits a small tree, takes its residuals, fits the next small tree to them, and adds it; the model is the sum of the trees.",
+   "Training error falls every round; test error falls, then rises once the trees start fitting noise, so the number of trees must be chosen on held-out data.",
+   "Bagging grows deep trees in parallel and averages them to cut variance; boosting grows small trees in sequence to cut bias slowly."
+  ],
+  "formula": {
+   "name": "One boosting round",
+   "tex": "\\hat f(x) \\leftarrow \\hat f(x) + \\hat f_b(x), \\qquad r_i \\leftarrow r_i - \\hat f_b(x_i)",
+   "note": "Each tree is fitted to the current residuals $r_i$."
+  },
+  "trap": "Deep trees in boosting fit the training data, noise included, in a few rounds; after that no tree has anything useful left to learn."
+ },
+ "quiz": [
+  {
+   "id": "q-one-round",
+   "difficulty": 2,
+   "prose": "You run `boost_stumps(x, y, 1)` and, separately, fit `DecisionTreeRegressor(max_depth=1)` to `x, y`.",
+   "question": "How do their predictions on `x` compare?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "They are identical: one round of boosting from 0 is a plain stump",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "Boosting's is better, because it fitted residuals",
+      "why": "With one round the residuals are $y - 0 = y$, so it fits the same target."
+     },
+     {
+      "id": "worse",
+      "text": "Boosting's is worse, because it starts from 0",
+      "why": "Starting from 0 only means the first target is $y$ itself; the stump is the same."
+     },
+     {
+      "id": "half",
+      "text": "Boosting's is half the stump's",
+      "why": "That would need a learning rate of 0.5. Here each stump is added at full size."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The first round sees $y$ itself.",
+    "generic": "Not quite right. Work out the first round's target."
+   },
+   "explain": {
+    "text": "With a prediction of 0, the first residuals are the $y_i$. So round 1 is an ordinary stump, and boosting begins to differ only from round 2."
+   }
+  },
+  {
+   "id": "q-parallel",
+   "difficulty": 2,
+   "prose": "You have 100 machines and want to grow 100 trees as fast as possible.",
+   "question": "Which can use all 100 machines at once?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bag",
+      "text": "A random forest, but not boosting",
+      "correct": true
+     },
+     {
+      "id": "boost",
+      "text": "Boosting, but not a random forest",
+      "why": "You swapped them. Boosting's tree $b$ needs the residuals left by tree $b-1$."
+     },
+     {
+      "id": "both",
+      "text": "Both",
+      "why": "Boosting's trees form a chain; each waits for the one before."
+     },
+     {
+      "id": "neither",
+      "text": "Neither",
+      "why": "A forest's trees are fitted to independent resamples, so they can grow at once."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Independent trees can be grown in parallel; a chain cannot.",
+    "generic": "Not quite right. Ask which trees depend on each other."
+   },
+   "explain": {
+    "text": "Each forest tree sees only its own bootstrap sample. Each boosting tree is fitted to residuals that every earlier tree shaped, so the rounds must run in order."
+   }
+  },
+  {
+   "id": "q-weak-tree",
+   "difficulty": 3,
+   "prose": "After 50 rounds on the trade data, the 50th stump on its own predicts between −0.4 and +0.1 bp for every trade, while impact runs from 2 to 27 bp.",
+   "question": "What does that say about the 50th stump?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fine",
+      "text": "Nothing bad: it is a small correction to the sum, not a model of impact",
+      "correct": true
+     },
+     {
+      "id": "broken",
+      "text": "It is a broken tree and should be removed",
+      "why": "You judged the stump as a model of impact. It predicts the residual left after 49 stumps, which is small."
+     },
+     {
+      "id": "prune",
+      "text": "The whole model has failed, since its trees are poor",
+      "why": "Each tree is meant to be weak. The model is the sum, and the sum fits."
+     },
+     {
+      "id": "deeper",
+      "text": "It should be deeper so it predicts impact properly",
+      "why": "A deep tree would fit the remaining noise. Small residuals call for small corrections."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Late trees fix little because little is left.",
+    "generic": "Not quite right. Ask what the 50th stump was fitted to."
+   },
+   "explain": {
+    "text": "By round 50 the residuals are mostly noise, a few bp at most. A stump fitted to them predicts small numbers, as it should. Judge the sum on test data, never one tree alone."
+   }
+  },
+  {
+   "id": "q-sse",
+   "difficulty": 2,
+   "prose": "On the six trades, the sums of squared residuals were 14 after one stump and 2 after two. A third stump leaves residuals −0.2, −0.2, −0.2, −0.2, 0.8 and 0.",
+   "question": "What is the sum of squared residuals after three stumps?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Sum of squared residuals after three stumps",
+    "accept": "0.8: $4 \\times 0.04 + 0.64$.",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "abs",
+      "value": 1.6,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.8, down from 2.",
+    "generic": "Not quite right. Square each residual, then add.",
+    "byKey": {
+     "sum": "You added the residuals without squaring them. They cancel to 0, but the fit is not perfect.",
+     "abs": "You added the sizes of the residuals. Square them first."
+    }
+   },
+   "explain": {
+    "text": "$4 \\times 0.2^2 + 0.8^2 + 0 = 0.16 + 0.64 = 0.8$. Training error fell again, as it must."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1521 @@
+{
+  "id": "l2-rotating-folds",
+  "course": "validation",
+  "title": "Rotating the test fold",
+  "minutes": 15,
+  "objectives": [
+    "Run $k$-fold cross-validation and read its spread."
+  ],
+  "skills": [
+    "vl-cv"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Everyone takes a turn",
+      "prose": "Lesson 1 ended with a small book: one small test set is too noisy to trust. Here are 20 loans. We want every loan tested exactly once, by a model that never saw it, with 4 test loans each round.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            [
+              "6",
+              "7",
+              "8",
+              "9",
+              "10"
+            ],
+            [
+              "11",
+              "12",
+              "13",
+              "14",
+              "15"
+            ],
+            [
+              "16",
+              "17",
+              "18",
+              "19",
+              "20"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Twenty loans, numbered 1 to 20"
+        }
+      },
+      "question": "How many rounds do we need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "label": "Rounds",
+        "wrong": [
+          {
+            "id": "each",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each round tests 4 new loans."
+        },
+        {
+          "rung": "point",
+          "text": "Twenty loans, four at a time, with no loan tested twice.",
+          "highlight": [
+            "r1c1",
+            "r1c2",
+            "r1c3",
+            "r1c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "20 divided by 4 is 5 rounds."
+        }
+      ],
+      "feedback": {
+        "correct": "Five rounds of four cover all twenty loans once.",
+        "generic": "Not quite right. Divide the loans among rounds of four.",
+        "byKey": {
+          "each": "That is one round per loan, testing one loan at a time. With 4 test loans a round you need fewer.",
+          "four": "Four is the size of each round, not the number of rounds."
+        }
+      },
+      "explain": {
+        "text": "Twenty loans in groups of four make five groups. Each round holds one group out and fits on the other sixteen. Every loan is then tested once.",
+        "canvas": {
+          "shade": {
+            "f1": [
+              "r1c2",
+              "r2c4",
+              "r4c4",
+              "r4c5"
+            ],
+            "f2": [
+              "r2c2",
+              "r3c1",
+              "r3c4",
+              "r4c3"
+            ],
+            "f3": [
+              "r1c3",
+              "r1c5",
+              "r2c1",
+              "r3c5"
+            ],
+            "f4": [
+              "r2c3",
+              "r2c5",
+              "r3c2",
+              "r4c2"
+            ],
+            "f5": [
+              "r1c1",
+              "r1c4",
+              "r3c3",
+              "r4c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Rotate the test fold",
+      "prose": "The loans were shuffled and cut into five groups of four, called **folds**. Slide through the rounds. The shaded loans are the test fold; the model is fitted on the rest.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            [
+              "6",
+              "7",
+              "8",
+              "9",
+              "10"
+            ],
+            [
+              "11",
+              "12",
+              "13",
+              "14",
+              "15"
+            ],
+            [
+              "16",
+              "17",
+              "18",
+              "19",
+              "20"
+            ]
+          ]
+        },
+        "state": {
+          "params": {
+            "fold": 1,
+            "ids": [
+              [
+                "r1c2",
+                "r2c4",
+                "r4c4",
+                "r4c5"
+              ],
+              [
+                "r2c2",
+                "r3c1",
+                "r3c4",
+                "r4c3"
+              ],
+              [
+                "r1c3",
+                "r1c5",
+                "r2c1",
+                "r3c5"
+              ],
+              [
+                "r2c3",
+                "r2c5",
+                "r3c2",
+                "r4c2"
+              ],
+              [
+                "r1c1",
+                "r1c4",
+                "r3c3",
+                "r4c1"
+              ]
+            ]
+          },
+          "shade": {
+            "test": [
+              "r1c2",
+              "r2c4",
+              "r4c4",
+              "r4c5"
+            ]
+          }
+        },
+        "derive": {
+          "shade.test": "ids[fold - 1]",
+          "caption": "Round {{fold}}: 4 loans tested, 16 used for fitting"
+        },
+        "controls": [
+          {
+            "bind": "fold",
+            "min": 1,
+            "max": 5,
+            "step": 1,
+            "start": 1,
+            "label": "Round"
+          }
+        ]
+      },
+      "question": "Over the five rounds, how many times is loan 7 used for fitting?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "label": "Rounds in training",
+        "wrong": [
+          {
+            "id": "once",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the round where loan 7 is shaded."
+        },
+        {
+          "rung": "point",
+          "text": "Loan 7 is tested in round 2.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It is tested once, so it is in the fitting rows in the other four rounds."
+        }
+      ],
+      "feedback": {
+        "correct": "Tested once, fitted on four times.",
+        "generic": "Not quite right. Count the rounds where loan 7 is not shaded.",
+        "byKey": {
+          "once": "One is how often loan 7 is tested. In every other round it helps fit the model.",
+          "all": "In round 2 loan 7 is in the test fold, so it cannot be in that round’s fitting rows."
+        }
+      },
+      "explain": {
+        "text": "Loan 7 is shaded only in round 2. In rounds 1, 3, 4 and 5 it is one of the sixteen fitting loans. Every loan has the same pattern: tested once, fitted on $k - 1$ times.",
+        "canvas": {
+          "params": {
+            "fold": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Find fold 3",
+      "prose": "This is **$k$-fold cross-validation**, here with $k = 5$. `KFold(n_splits=5, shuffle=True, random_state=0)` shuffles the row numbers, then cuts them into consecutive blocks. For these 20 loans the shuffled order is 19, 2, 20, 9 | 11, 18, 7, 14 | 5, 3, 6, 15 | 10, 8, 17, 12 | 4, 1, 16, 13.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            [
+              "6",
+              "7",
+              "8",
+              "9",
+              "10"
+            ],
+            [
+              "11",
+              "12",
+              "13",
+              "14",
+              "15"
+            ],
+            [
+              "16",
+              "17",
+              "18",
+              "19",
+              "20"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the four loans in test fold 3.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c3",
+          "r1c5",
+          "r2c1",
+          "r3c5"
+        ],
+        "countWord": "loans",
+        "wrong": [
+          {
+            "id": "unshuffled",
+            "set": [
+              "r2c4",
+              "r2c5",
+              "r3c1",
+              "r3c2"
+            ]
+          },
+          {
+            "id": "fold1",
+            "set": [
+              "r1c2",
+              "r2c4",
+              "r4c4",
+              "r4c5"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The blocks of the shuffled order are the folds, in order."
+        },
+        {
+          "rung": "point",
+          "text": "Fold 3 is the third block of four.",
+          "highlight": [
+            "r1c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The third block is 5, 3, 6, 15."
+        }
+      ],
+      "feedback": {
+        "correct": "Loans 3, 5, 6 and 15: the third block of the shuffled order.",
+        "generic": "Not quite right. Read the third block of the shuffled order.",
+        "byKey": {
+          "unshuffled": "You took loans 9 to 12, the third block before shuffling. KFold cuts the shuffled order.",
+          "fold1": "Those are the first block, fold 1."
+        }
+      },
+      "explain": {
+        "text": "The third block of the shuffled order is 5, 3, 6, 15. Shuffling first scatters each fold across the book. Without it, fold 3 would be loans 9 to 12.",
+        "canvas": {
+          "shade": {
+            "test": [
+              "r1c3",
+              "r1c5",
+              "r2c1",
+              "r3c5"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "KFold by hand",
+      "prose": "Rebuild `KFold` yourself. Shuffle `np.arange(n)` with `np.random.RandomState(seed).shuffle`, the shuffle scikit-learn uses. Fold sizes are $\\lfloor n/k \\rfloor$, with one extra row for each of the first $n \\bmod k$ folds. Cut the shuffled order into those blocks, in order. Return a list of `(train, test)` pairs, each sorted.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            [
+              "6",
+              "7",
+              "8",
+              "9",
+              "10"
+            ],
+            [
+              "11",
+              "12",
+              "13",
+              "14",
+              "15"
+            ],
+            [
+              "16",
+              "17",
+              "18",
+              "19",
+              "20"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "f1": [
+              "r1c2",
+              "r2c4",
+              "r4c4",
+              "r4c5"
+            ],
+            "f2": [
+              "r2c2",
+              "r3c1",
+              "r3c4",
+              "r4c3"
+            ],
+            "f3": [
+              "r1c3",
+              "r1c5",
+              "r2c1",
+              "r3c5"
+            ],
+            "f4": [
+              "r2c3",
+              "r2c5",
+              "r3c2",
+              "r4c2"
+            ],
+            "f5": [
+              "r1c1",
+              "r1c4",
+              "r3c3",
+              "r4c1"
+            ]
+          },
+          "caption": "The five folds of 20 loans, seed 0"
+        }
+      },
+      "question": "Complete `kfold_indices(n, k, seed)` so it matches `KFold(n_splits=k, shuffle=True, random_state=seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef kfold_indices(n, k, seed):\n    idx = np.arange(n)\n    np.random.RandomState(seed).shuffle(idx)\n    sizes = ...   # n // k, plus 1 for the first n % k folds\n    folds, start = [], 0\n    for size in sizes:\n        test = ...\n        train = ...\n        folds.append((train, test))\n        start += size\n    return folds\n",
+        "solution": "import numpy as np\n\ndef kfold_indices(n, k, seed):\n    idx = np.arange(n)\n    np.random.RandomState(seed).shuffle(idx)\n    sizes = [n // k + (1 if f < n % k else 0) for f in range(k)]\n    folds, start = [], 0\n    for size in sizes:\n        test = np.sort(idx[start:start + size])\n        train = np.sort(np.concatenate([idx[:start], idx[start + size:]]))\n        folds.append((train, test))\n        start += size\n    return folds\n",
+        "examples": [
+          {
+            "call": "[(list(map(int, tr)), list(map(int, te))) for tr, te in kfold_indices(10, 5, 0)]",
+            "expect": "[([0, 1, 3, 4, 5, 6, 7, 9], [2, 8]), ([0, 1, 2, 3, 5, 6, 7, 8], [4, 9]), ([0, 2, 3, 4, 5, 7, 8, 9], [1, 6]), ([0, 1, 2, 4, 5, 6, 8, 9], [3, 7]), ([1, 2, 3, 4, 6, 7, 8, 9], [0, 5])]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[(list(map(int, tr)), list(map(int, te))) for tr, te in kfold_indices(10, 5, 0)]",
+            "expect": "[([0, 1, 3, 4, 5, 6, 7, 9], [2, 8]), ([0, 1, 2, 3, 5, 6, 7, 8], [4, 9]), ([0, 2, 3, 4, 5, 7, 8, 9], [1, 6]), ([0, 1, 2, 4, 5, 6, 8, 9], [3, 7]), ([1, 2, 3, 4, 6, 7, 8, 9], [0, 5])]",
+            "compare": "equal"
+          },
+          {
+            "call": "[(list(map(int, tr)), list(map(int, te))) for tr, te in kfold_indices(12, 3, 0)]",
+            "expect": "[([0, 1, 2, 3, 5, 7, 8, 9], [4, 6, 10, 11]), ([0, 3, 4, 5, 6, 9, 10, 11], [1, 2, 7, 8]), ([1, 2, 4, 6, 7, 8, 10, 11], [0, 3, 5, 9])]",
+            "compare": "equal"
+          },
+          {
+            "call": "[(list(map(int, tr)), list(map(int, te))) for tr, te in kfold_indices(11, 3, 4)]",
+            "expect": "[([0, 1, 2, 5, 6, 7, 10], [3, 4, 8, 9]), ([3, 4, 5, 7, 8, 9, 10], [0, 1, 2, 6]), ([0, 1, 2, 3, 4, 6, 8, 9], [5, 7, 10])]",
+            "compare": "equal"
+          },
+          {
+            "call": "[(list(map(int, tr)), list(map(int, te))) for tr, te in kfold_indices(20, 5, 0)]",
+            "expect": "[([0, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17], [1, 8, 18, 19]), ([0, 1, 2, 3, 4, 5, 7, 8, 9, 11, 12, 14, 15, 16, 18, 19], [6, 10, 13, 17]), ([0, 1, 3, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19], [2, 4, 5, 14]), ([0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 13, 14, 15, 17, 18, 19], [7, 9, 11, 16]), ([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 16, 17, 18, 19], [0, 3, 12, 15])]",
+            "compare": "equal"
+          },
+          {
+            "call": "[list(map(int, te)) for tr, te in kfold_indices(7, 2, 1)]",
+            "expect": "[[0, 1, 2, 6], [3, 4, 5]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[len(te) for tr, te in kfold_indices(403, 5, 2)]",
+            "expect": "[81, 81, 81, 80, 80]",
+            "compare": "equal"
+          },
+          {
+            "call": "[list(map(int, te[:5])) for tr, te in kfold_indices(400, 5, 0)]",
+            "expect": "[[1, 4, 5, 6, 7], [8, 17, 21, 22, 30], [2, 13, 18, 24, 27], [0, 3, 11, 16, 19], [9, 25, 28, 31, 32]]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests that compare your folds exactly with scikit-learn 1.6.1’s `KFold` output, including $n = 11$, $k = 3$ and $n = 403$. NumPy only; the first run loads it, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the sizes first: `[n // k + (1 if f < n % k else 0) for f in range(k)]`."
+        },
+        {
+          "rung": "point",
+          "text": "Test is `np.sort(idx[start:start + size])`.",
+          "highlight": [
+            "r1c2",
+            "r2c4",
+            "r4c4",
+            "r4c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Train is everything else: `np.sort(np.concatenate([idx[:start], idx[start + size:]]))`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your folds match scikit-learn row for row.",
+        "generic": "Some tests failed. For $n = 10$, $k = 5$, seed 0 the first test fold is `[2, 8]`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Fill in `sizes`, `test` and `train`.",
+          "test-6": "For 403 rows the sizes are 81, 81, 81, 80, 80: the first three folds take the extra rows."
+        }
+      },
+      "explain": {
+        "text": "KFold shuffles once, then cuts consecutive blocks, so the folds are disjoint and cover every row. The first $n \\bmod k$ folds are one row larger. Matching it exactly means you can check any library’s folds."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Five scores, one summary",
+      "prose": "Now the real book: 400 loans, 8 features, ridge with $\\alpha = 1$, five shuffled folds. Each fold gives a test MSE. The **CV estimate** is their mean; their sd shows how much the folds disagree.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "f1",
+              "label": "Fold 1",
+              "value": 0.157
+            },
+            {
+              "id": "f2",
+              "label": "Fold 2",
+              "value": 0.159
+            },
+            {
+              "id": "f3",
+              "label": "Fold 3",
+              "value": 0.234
+            },
+            {
+              "id": "f4",
+              "label": "Fold 4",
+              "value": 0.181
+            },
+            {
+              "id": "f5",
+              "label": "Fold 5",
+              "value": 0.176
+            }
+          ],
+          "yLabel": "Test MSE",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.26
+        },
+        "state": {}
+      },
+      "question": "Fill in the mean of the five fold MSEs and the largest minus the smallest.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Summary",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Mean",
+            {
+              "edit": true,
+              "answer": 0.181,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Largest minus smallest",
+            {
+              "edit": true,
+              "answer": 0.077,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the five bars and divide by 5."
+        },
+        {
+          "rung": "point",
+          "text": "The five values sum to 0.907.",
+          "highlight": [
+            "f1",
+            "f3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Mean 0.907 / 5 = 0.181; range 0.234 − 0.157 = 0.077."
+        }
+      ],
+      "feedback": {
+        "correct": "Mean 0.181, range 0.077.",
+        "generic": "Not quite right. The bars read 0.157, 0.159, 0.234, 0.181 and 0.176."
+      },
+      "explain": {
+        "text": "The five folds average 0.181, and their sd is 0.028. Fold 3 is the odd one out at 0.234. One fold alone could have told us anything from 0.157 to 0.234.",
+        "canvas": {
+          "hlines": [
+            {
+              "id": "mean",
+              "y": 0.1815,
+              "label": "mean 0.181"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The extreme: one loan at a time",
+      "prose": "More folds means bigger training sets. At $k = n$ each fold is a single loan: **leave-one-out** (LOO). The table shows four choices of $k$ on one dataset of 200 loans.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$k$",
+            "Fits",
+            "CV MSE"
+          ],
+          "rows": [
+            [
+              "2",
+              "2",
+              "0.2180"
+            ],
+            [
+              "5",
+              "5",
+              "0.2133"
+            ],
+            [
+              "10",
+              "10",
+              "0.2109"
+            ],
+            [
+              "200 (leave-one-out)",
+              "200",
+              "0.2121"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "A linear model on 200 loans, 3 features, shuffle seed 0."
+        }
+      },
+      "question": "What does leave-one-out buy, and what does it cost?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "trade",
+            "text": "Each model trains on 199 of 200 loans, so little bias; but it takes 200 fits, and the 200 nearly identical models make the estimate noisy",
+            "correct": true
+          },
+          {
+            "id": "free",
+            "text": "It is always best, because every loan is used for testing",
+            "why": "Every $k$ tests every loan once. LOO adds training rows, at the price of $n$ fits and a noisier average."
+          },
+          {
+            "id": "biased",
+            "text": "It is biased upwards, because each test fold has only one loan",
+            "why": "One test loan per fold makes each fold’s score noisy, not biased. Training on 199 loans makes the bias small."
+          },
+          {
+            "id": "same",
+            "text": "Nothing: it gives the same number as 5-fold",
+            "why": "The numbers are close here, 0.2121 against 0.2133, but LOO costs 200 fits against 5."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the Fits column for $k = 5$ and LOO."
+        },
+        {
+          "rung": "point",
+          "text": "Each LOO model differs from the next by one loan.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Training on $n - 1$ rows cuts the bias; averaging highly similar models does not cut the noise much."
+        }
+      ],
+      "feedback": {
+        "correct": "Low bias, high cost, and no less noise.",
+        "generic": "Not quite right. Read the Fits column, then think about how similar the models are."
+      },
+      "explain": {
+        "text": "LOO trains on 199 loans each time, so it barely underestimates what a 200-loan fit can do. But it needs 200 fits, and its 200 models are almost the same model. That is why $k = 5$ or $k = 10$ is the usual choice.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "All the big firms in fold 5",
+      "prose": "A file of 400 firms arrives sorted by size, smallest first. An analyst runs `KFold(5)` without `shuffle=True`, so fold 5 is the 80 biggest firms. The chart compares each fold’s MSE with a shuffled run.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "f1",
+              "label": "Fold 1",
+              "value": [
+                0.409,
+                0.217
+              ]
+            },
+            {
+              "id": "f2",
+              "label": "Fold 2",
+              "value": [
+                0.232,
+                0.248
+              ]
+            },
+            {
+              "id": "f3",
+              "label": "Fold 3",
+              "value": [
+                0.233,
+                0.253
+              ]
+            },
+            {
+              "id": "f4",
+              "label": "Fold 4",
+              "value": [
+                0.262,
+                0.264
+              ]
+            },
+            {
+              "id": "f5",
+              "label": "Fold 5",
+              "value": [
+                0.49,
+                0.259
+              ]
+            }
+          ],
+          "groups": [
+            {
+              "id": "sorted",
+              "label": "No shuffle"
+            },
+            {
+              "id": "shuf",
+              "label": "Shuffled"
+            }
+          ],
+          "yLabel": "Test MSE",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 0.55
+        },
+        "state": {}
+      },
+      "question": "Why is fold 5’s MSE 0.49 without the shuffle?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "extrap",
+            "text": "The model never saw firms that big: it was fitted on the smaller 320 and asked to extrapolate",
+            "correct": true
+          },
+          {
+            "id": "risky",
+            "text": "Big firms are simply harder to predict",
+            "why": "You blamed the firms. Shuffled, the same big firms are predicted well, because every training set includes some of them."
+          },
+          {
+            "id": "luck",
+            "text": "Fold 5 drew an unlucky set of firms",
+            "why": "Luck does not explain both ends: fold 1, the smallest firms, is also high at 0.41. Sorting, not chance, built these folds."
+          },
+          {
+            "id": "few",
+            "text": "Five folds are too few; use ten",
+            "why": "More unshuffled folds would still put the biggest firms together, with no big firms in training."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which firms are in the training rows when fold 5 is tested?"
+        },
+        {
+          "rung": "point",
+          "text": "Without the shuffle, fold 5 is a block of the sorted file.",
+          "highlight": [
+            "f5-sorted",
+            "f5-shuf"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The model learns from firms 1 to 320 only, then meets the 80 biggest. Shuffled folds mix sizes, and the MSEs even out near 0.25."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted folds turned cross-validation into an extrapolation test.",
+        "generic": "Not quite right. Think about what the training rows contain when fold 5 is held out.",
+        "byKey": {
+          "luck": "You read fold 5 as chance. Both end folds are high because both lie outside the range the model trained on.",
+          "risky": "You blamed big firms. The shuffled bars show they are predictable when training includes them."
+        }
+      },
+      "explain": {
+        "text": "Without the shuffle, the end folds hold sizes the model never saw, and the CV mean rises from 0.25 to 0.33. Shuffle exchangeable rows before cutting folds. For data in time order, the cut is the point; that is level 2.",
+        "canvas": {
+          "highlight": [
+            "f5-sorted",
+            "f1-sorted"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Edge case: a fold with no defaults",
+      "prose": "A default model uses 300 loans, of which 15 defaulted. Shuffled 5-fold CV gave these default counts per fold of 60. Fold 2 has none, so its recall cannot even be computed.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "f1",
+              "label": "Fold 1",
+              "value": 4
+            },
+            {
+              "id": "f2",
+              "label": "Fold 2",
+              "value": 0
+            },
+            {
+              "id": "f3",
+              "label": "Fold 3",
+              "value": 6
+            },
+            {
+              "id": "f4",
+              "label": "Fold 4",
+              "value": 3
+            },
+            {
+              "id": "f5",
+              "label": "Fold 5",
+              "value": 2
+            }
+          ],
+          "yLabel": "Defaults in the fold",
+          "showValues": true,
+          "decimals": 0,
+          "yMax": 7
+        },
+        "state": {
+          "highlight": [
+            "f2"
+          ]
+        }
+      },
+      "question": "`StratifiedKFold(n_splits=5, shuffle=True, random_state=0)` keeps the default rate equal across folds. How many defaults does each fold get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "label": "Defaults per fold",
+        "wrong": [
+          {
+            "id": "rate",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Stratifying splits each class across the folds separately."
+        },
+        {
+          "rung": "point",
+          "text": "Fifteen defaults over five folds.",
+          "highlight": [
+            "f2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "15 / 5 = 3 defaults, and 57 non-defaults, in every fold."
+        }
+      ],
+      "feedback": {
+        "correct": "Three defaults in every fold, a 5% rate each time.",
+        "generic": "Not quite right. Share the 15 defaults equally among 5 folds.",
+        "byKey": {
+          "rate": "Five is the default rate as a percentage. The count per fold is 15 shared by 5.",
+          "all": "That is the whole book. Each fold gets a fifth."
+        }
+      },
+      "explain": {
+        "text": "Plain folds leave the count to chance: here any one fold has a 3% chance of no defaults, and some fold has a 16% chance. Stratifying deals the 15 defaults out three per fold. Use it whenever one class is rare.",
+        "canvas": {
+          "values": {
+            "f1": 3,
+            "f2": 3,
+            "f3": 3,
+            "f4": 3,
+            "f5": 3
+          },
+          "highlight": []
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "cross_val_score",
+      "prose": "`cross_val_score(model, X, y, cv=folds, scoring='neg_mean_squared_error')` runs every round for you. It returns *negative* MSEs, because scikit-learn always treats bigger as better. Flip the sign, then summarise.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "f1",
+              "label": "Fold 1",
+              "value": 0.157
+            },
+            {
+              "id": "f2",
+              "label": "Fold 2",
+              "value": 0.159
+            },
+            {
+              "id": "f3",
+              "label": "Fold 3",
+              "value": 0.234
+            },
+            {
+              "id": "f4",
+              "label": "Fold 4",
+              "value": 0.181
+            },
+            {
+              "id": "f5",
+              "label": "Fold 5",
+              "value": 0.176
+            }
+          ],
+          "yLabel": "Test MSE",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.26
+        },
+        "state": {
+          "caption": "Seed 0 on 400 loans: mean 0.1815, sd 0.0277."
+        }
+      },
+      "question": "Complete `cv_mean_sd(X, y, k, seed)` for ridge with $\\alpha = 1$: the mean and sd of the fold MSEs, each rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import KFold, cross_val_score\n\ndef cv_mean_sd(X, y, k, seed):\n    folds = KFold(n_splits=k, shuffle=True, random_state=seed)\n    scores = ...   # one MSE per fold, as positive numbers\n    return round(float(scores.mean()), 4), round(float(scores.std()), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import KFold, cross_val_score\n\ndef cv_mean_sd(X, y, k, seed):\n    folds = KFold(n_splits=k, shuffle=True, random_state=seed)\n    scores = -cross_val_score(Ridge(alpha=1.0), X, y, cv=folds,\n                              scoring='neg_mean_squared_error')\n    return round(float(scores.mean()), 4), round(float(scores.std()), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "cv_mean_sd(X, y, 5, 0)",
+            "expect": "(0.1815, 0.0277)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "cv_mean_sd(X, y, 5, 0)",
+            "expect": "(0.1815, 0.0277)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "cv_mean_sd(X, y, 10, 0)",
+            "expect": "(0.1831, 0.0332)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "cv_mean_sd(X, y, 5, 1)",
+            "expect": "(0.1927, 0.0396)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(250, 12, 22)",
+            "call": "cv_mean_sd(X, y, 2, 3)",
+            "expect": "(0.2861, 0.0435)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 4, 23)",
+            "call": "cv_mean_sd(X, y, 5, 7)",
+            "expect": "(0.184, 0.0245)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on loans from `make_loans(n, p, seed)`, with $k$ from 2 to 10, compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Call `cross_val_score` with `cv=folds`."
+        },
+        {
+          "rung": "point",
+          "text": "Put a minus sign in front: the scores come back negative.",
+          "highlight": [
+            "f3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "scores = -cross_val_score(Ridge(alpha=1.0), X, y, cv=folds, scoring='neg_mean_squared_error')"
+        }
+      ],
+      "feedback": {
+        "correct": "(0.1815, 0.0277) for the 400 loans, as the bars showed.",
+        "generic": "Some tests failed. For `make_loans(400, 8, 21)`, $k = 5$, seed 0 the answer is (0.1815, 0.0277).",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the `scoring` name: `neg_mean_squared_error`."
+        }
+      },
+      "explain": {
+        "text": "The minus sign undoes scikit-learn’s convention. `scores.std()` divides by $k$, as `np.std` does. Pass the same `KFold` object to every model you compare."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Leave-one-out by hand",
+      "prose": "Write leave-one-out for a linear model with an intercept, using only NumPy. For each row $i$: fit least squares on every other row with `np.linalg.lstsq`, predict row $i$, and square the miss. Return the mean squared miss, rounded to 4 places.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$k$",
+            "Fits",
+            "CV MSE"
+          ],
+          "rows": [
+            [
+              "2",
+              "2",
+              "0.2180"
+            ],
+            [
+              "5",
+              "5",
+              "0.2133"
+            ],
+            [
+              "10",
+              "10",
+              "0.2109"
+            ],
+            [
+              "200 (leave-one-out)",
+              "200",
+              "0.2121"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          },
+          "caption": "Your function should give 0.2121 on these 200 loans."
+        }
+      },
+      "question": "Complete `loo_mse(X, y)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef loo_mse(X, y):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    n = len(y)\n    A = np.column_stack([np.ones(n), X])   # intercept column\n    errors = []\n    for i in range(n):\n        keep = np.arange(n) != i\n        ...\n    return round(float(np.mean(errors)), 4)\n",
+        "solution": "import numpy as np\n\ndef loo_mse(X, y):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    n = len(y)\n    A = np.column_stack([np.ones(n), X])\n    errors = []\n    for i in range(n):\n        keep = np.arange(n) != i\n        coef = np.linalg.lstsq(A[keep], y[keep], rcond=None)[0]\n        errors.append((A[i] @ coef - y[i]) ** 2)\n    return round(float(np.mean(errors)), 4)\n",
+        "examples": [
+          {
+            "call": "loo_mse([[0.0], [1.0], [2.0], [3.0], [4.0]], [1.0, 3.0, 2.0, 5.0, 4.0])",
+            "expect": "1.8115",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "loo_mse([[0.0], [1.0], [2.0], [3.0], [4.0]], [1.0, 3.0, 2.0, 5.0, 4.0])",
+            "expect": "1.8115",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 3, 7)",
+            "call": "loo_mse(X, y)",
+            "expect": "0.2121",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 8, 8)",
+            "call": "loo_mse(X, y)",
+            "expect": "0.2366",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(60, 2, 9)",
+            "call": "loo_mse(X, y)",
+            "expect": "0.1742",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 3, 7)",
+            "call": "loo_mse(X.tolist(), y.tolist())",
+            "expect": "0.2121",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, from 5 hand-made rows to 200 loans from `make_loans`, compared with math.isclose against scikit-learn’s `LeaveOneOut`. NumPy only; the first run loads it, which takes a few seconds.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Inside the loop: fit on `A[keep]`, predict `A[i]`."
+        },
+        {
+          "rung": "point",
+          "text": "`coef = np.linalg.lstsq(A[keep], y[keep], rcond=None)[0]`.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Append `(A[i] @ coef - y[i]) ** 2` to `errors`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your LOO matches scikit-learn: 0.2121 on the 200 loans.",
+        "generic": "Some tests failed. For $x = 0, 1, 2, 3, 4$ and $y = 1, 3, 2, 5, 4$ the answer is 1.8115.",
+        "byKey": {
+          "error": "Your code stopped with an error. Fit with `np.linalg.lstsq` on the kept rows."
+        }
+      },
+      "explain": {
+        "text": "Each of the $n$ fits leaves one row out and predicts it. Two hundred least-squares fits are quick here; on a big book they are not. That cost is why $k = 5$ or 10 is the default."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 3,
+      "title": "What the number estimates",
+      "prose": "With fold MSEs $m_1, \\dots, m_k$: $$\\text{CV}_{(k)} = \\frac{1}{k}\\sum_{j=1}^{k} m_j.$$ Their sd is a rough guide to spread. It is not a standard error: $\\text{sd}/\\sqrt{k}$ assumes independent folds, but any two folds share most training rows. And no single model was tested: each fold had its own.",
+      "question": "What does the 5-fold estimate 0.1815 describe?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "proc",
+            "text": "How well the recipe “fit ridge, $\\alpha = 1$, on about 320 such loans” does on new loans",
+            "correct": true
+          },
+          {
+            "id": "final",
+            "text": "The error of the ridge model fitted on all 400 loans",
+            "why": "That model was never tested; it did not exist during CV. The estimate is for the recipe that produced the five fold models."
+          },
+          {
+            "id": "fold",
+            "text": "The error of fold 3’s model, the worst one",
+            "why": "Each fold’s model has its own score. The CV mean averages over five models."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Cross-validation scores the procedure, not one fitted model.",
+        "generic": "Not quite right. Ask which model was tested in each round."
+      },
+      "explain": {
+        "text": "Five different models were fitted and tested, one per fold. Their average estimates what the fitting recipe achieves. The final model, fitted on all 400 loans, borrows that estimate, which is slightly pessimistic because it trains on more rows."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "MSE 0.21 ± 0.04",
+      "prose": "A credit model for loan spreads, in percentage points, is validated with 5 folds of 400 loans. The memo to the desk reads “CV MSE 0.21 ± 0.04”, where 0.04 is the sd of the five fold MSEs.",
+      "question": "What does the memo tell the desk?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "read",
+            "text": "A typical squared miss of 0.21, so a typical miss of about $\\sqrt{0.21} = 0.46$ points; the five folds varied by about 0.04",
+            "correct": true
+          },
+          {
+            "id": "ci",
+            "text": "The true MSE lies between 0.17 and 0.25 with 95% confidence",
+            "why": "You read the fold sd as a confidence interval. Folds share training rows, so ± 0.04 is only a rough spread."
+          },
+          {
+            "id": "points",
+            "text": "Predictions miss by 0.21 percentage points on average",
+            "why": "You forgot the square. An MSE of 0.21 means a root mean squared miss of about 0.46 points."
+          },
+          {
+            "id": "future",
+            "text": "Next year’s loans will score 0.21",
+            "why": "The estimate is for new loans like these 400. A new year can differ; time is level 2’s subject."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "MSE is in squared units."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt{0.21} \\approx 0.46$."
+        },
+        {
+          "rung": "step",
+          "text": "The 0.04 is a spread across folds, not a standard error."
+        }
+      ],
+      "feedback": {
+        "correct": "About 46 basis points of typical miss, with fold-to-fold spread of 0.04.",
+        "generic": "Not quite right. Take a square root, and remember what the 0.04 is."
+      },
+      "explain": {
+        "text": "$\\sqrt{0.21} = 0.458$, so a typical miss is about 46 basis points of spread. The ± 0.04 shows the folds roughly agree, nothing more. A desk would still lock a final test set, because CV numbers like this get used to choose models."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$k$-fold CV tests every row once, with a model that never saw it, and averages the $k$ scores.",
+      "Shuffle exchangeable rows before cutting folds, stratify a rare class, and compare models on the same folds.",
+      "The CV mean estimates the fitting procedure’s error; the fold sd is a rough spread, not a standard error."
+    ],
+    "formula": {
+      "name": "Cross-validation estimate",
+      "tex": "\\text{CV}_{(k)} = \\frac{1}{k}\\sum_{j=1}^{k} \\text{MSE}_j",
+      "note": "Each MSE comes from a model fitted without fold $j$."
+    },
+    "trap": "Cutting folds from a sorted file without shuffling, so each fold tests a range the model never saw."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "An analyst compares ridge models A and B by 5-fold CV. A was scored with `random_state=0` and B with `random_state=1`. A wins, 0.1815 to 0.1927.",
+      "question": "What is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "folds",
+            "text": "Different fold assignments: the same model A scores 0.1927 with seed 1, so the gap may be all folds",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: each score is a fair CV estimate",
+            "why": "Each is fair alone, but the gap mixes model differences with fold differences. Score both on the same folds."
+          },
+          {
+            "id": "k",
+            "text": "Five folds are too few for a comparison",
+            "why": "The problem is not $k$; it is using different folds for the two models."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare models on identical folds.",
+        "generic": "Not quite right. Look at the two seeds."
+      },
+      "explain": {
+        "text": "Ridge with $\\alpha = 1$ on these 400 loans scores 0.1815 with seed 0 and 0.1927 with seed 1. Fold luck alone can make a gap that size. Pass one `KFold` object to both models."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "A dataset has 403 rows and you run `KFold(n_splits=5, shuffle=True, random_state=2)`.",
+      "question": "How many rows are in the largest test fold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 81,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "floor",
+            "value": 80,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The first three folds take 81 rows, the last two 80.",
+        "generic": "Not quite right. 403 = 5 × 80 + 3.",
+        "byKey": {
+          "floor": "Eighty is the smallest fold. The 3 leftover rows go one each to the first three folds."
+        }
+      },
+      "explain": {
+        "text": "$403 = 5 \\times 80 + 3$, so three folds get one extra row: 81, 81, 81, 80, 80."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "Edge case $k = 2$. On the same 200 loans, five shuffle seeds give 2-fold CV MSEs from 0.2045 to 0.2180, and 10-fold CV MSEs from 0.2078 to 0.2121.",
+      "question": "Why does 2-fold move more between seeds?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "half",
+            "text": "Each model trains on only 100 loans and each estimate averages just two folds, so it depends heavily on one random cut",
+            "correct": true
+          },
+          {
+            "id": "test",
+            "text": "Its test folds are too small",
+            "why": "2-fold has the largest test folds, 100 loans each. The weakness is the small training sets and having only two of them."
+          },
+          {
+            "id": "bias",
+            "text": "It is biased low",
+            "why": "Training on half the data biases the estimate up, if anything. The question is about the spread across seeds."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two folds, each trained on half the data: one cut decides a lot.",
+        "generic": "Not quite right. Ask how many rows each model trains on."
+      },
+      "explain": {
+        "text": "With $k = 2$ each model sees half the book, and the estimate is the average of only two numbers. A different cut gives a noticeably different answer. With $k = 10$ the training sets overlap by 89%, so seeds matter less."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "After tuning by 5-fold CV, a team’s best model scores 0.19. The desk still insists on a final locked test set.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "used",
+            "text": "The CV score was used to choose the model, so it flatters the winner; a locked set gives a clean final number",
+            "correct": true
+          },
+          {
+            "id": "waste",
+            "text": "It is a waste: CV already tested every loan",
+            "why": "CV tested every loan, but then the same scores picked the winner. That choice biases them."
+          },
+          {
+            "id": "time",
+            "text": "Because CV cannot handle 400 loans",
+            "why": "CV handles any size. The issue is that its score did the choosing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Rows that chose the model cannot also report on it.",
+        "generic": "Not quite right. Ask what the CV score was used for."
+      },
+      "explain": {
+        "text": "Once CV scores pick a winner, the winner’s score is optimistic. A locked test set, scored once, is untouched by that choice. Lessons 3 and 4 measure how big the optimism is."
+      }
+    }
+  ]
+}

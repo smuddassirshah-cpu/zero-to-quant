@@ -30,6 +30,7 @@
             }
           ],
           "yLabel": "Share of searches",
+          "yMax": 1,
           "exact": [
             {
               "x": "1",
@@ -201,35 +202,39 @@
       "title": "Same Sharpe, different tails",
       "prose": "Three monthly strategies, each with a Sharpe of 0.3 a month (1.04 a year) over $n = 60$ months. Their measured skew and kurtosis differ.",
       "canvas": {
-        "kind": "bars",
+        "kind": "plane",
         "params": {
-          "categories": [
-            {
-              "id": "nrm",
-              "label": "normal"
-            },
-            {
-              "id": "skw",
-              "label": "skewed"
-            },
-            {
-              "id": "fat",
-              "label": "fat-tailed"
-            }
+          "x": [
+            -2,
+            1
           ],
+          "y": [
+            0.1,
+            0.18
+          ],
+          "yAxis": "left",
+          "xLabel": "Skew $\\gamma_3$",
           "yLabel": "Standard error",
-          "showValues": true,
-          "decimals": 4,
-          "yMax": 0.2
+          "xStep": 0.5,
+          "yStep": 0.02,
+          "functions": [
+            {
+              "id": "k3",
+              "expr": "sqrt((1 - 0.3*x + 0.5*0.09)/59)",
+              "label": "$\\gamma_4 = 3$",
+              "labelAt": 0.7,
+              "labelSide": "below"
+            },
+            {
+              "id": "k12",
+              "expr": "sqrt((1 - 0.3*x + 2.75*0.09)/59)",
+              "label": "$\\gamma_4 = 12$",
+              "labelAt": 0.7
+            }
+          ]
         },
-        "state": {
-          "values": {
-            "nrm": 0,
-            "skw": 0,
-            "fat": 0
-          }
-        },
-        "maxHeight": 200
+        "state": {},
+        "maxHeight": 220
       },
       "question": "Fill in each standard error to 4 decimal places.",
       "widget": {
@@ -288,7 +293,8 @@
           "rung": "point",
           "text": "Skewed: the top is $1 - (-1.5)(0.3) + 0.5 \\times 0.09 = 1.495$.",
           "highlight": [
-            "skw"
+            "k3",
+            "k12"
           ]
         },
         {
@@ -303,11 +309,26 @@
       "explain": {
         "text": "Negative skew adds 20% to the standard error and kurtosis 12 adds 9%. A strategy that earns small gains and takes rare big losses looks steadier than it is. The Sharpe alone cannot tell you.",
         "canvas": {
-          "values": {
-            "nrm": 0.1331,
-            "skw": 0.1592,
-            "fat": 0.1454
-          }
+          "points": [
+            {
+              "id": "nrm",
+              "x": 0,
+              "y": 0.1331,
+              "label": "normal"
+            },
+            {
+              "id": "skw",
+              "x": -1.5,
+              "y": 0.1592,
+              "label": "skewed"
+            },
+            {
+              "id": "fat",
+              "x": 0,
+              "y": 0.1454,
+              "label": "fat-tailed"
+            }
+          ]
         }
       }
     },
@@ -1082,7 +1103,7 @@
             ],
             [
               "Standard error",
-              "0.0458"
+              "0.0464"
             ],
             [
               "DSR",
@@ -1092,29 +1113,29 @@
         },
         "state": {}
       },
-      "question": "What is the deflated Sharpe ratio? Give 2 decimal places.",
+      "question": "What is the deflated Sharpe ratio? Give 3 decimal places.",
       "widget": {
         "kind": "numeric",
-        "answer": 0.77,
+        "answer": 0.772,
         "tol": {
-          "abs": 0.01
+          "abs": 0.003
         },
         "label": "DSR",
-        "accept": "0.77: $\\Phi((0.1323 - 0.0976)/0.0458) = \\Phi(0.757) = 0.77$.",
+        "accept": "0.772: $\\Phi((0.1323 - 0.0976)/0.0464) = \\Phi(0.747) = 0.772$.",
         "placeholder": "decimal",
         "wrong": [
           {
             "id": "psr",
-            "value": 1.0,
+            "value": 0.998,
             "tol": {
-              "abs": 0.005
+              "abs": 0.002
             }
           },
           {
             "id": "normal",
-            "value": 0.78,
+            "value": 0.7805,
             "tol": {
-              "abs": 0.004
+              "abs": 0.002
             }
           }
         ]
@@ -1126,14 +1147,14 @@
         },
         {
           "rung": "point",
-          "text": "$(0.1323 - 0.0976)/0.0458 = 0.757$.",
+          "text": "$(0.1323 - 0.0976)/0.0464 = 0.747$.",
           "highlight": [
             "r3c1"
           ]
         },
         {
           "rung": "step",
-          "text": "$\\Phi(0.757) = 0.775$, so 0.77."
+          "text": "$\\Phi(0.747) = 0.772$."
         }
       ],
       "feedback": {
@@ -1141,14 +1162,14 @@
         "generic": "Not quite right. Subtract $E[\\max]$ from the daily Sharpe, divide by the standard error, then apply $\\Phi$.",
         "byKey": {
           "psr": "That is the PSR against zero, 0.998. The search of 40 raises the benchmark to $E[\\max]$.",
-          "normal": "Close: that is the DSR assuming normal returns. With skew −0.5 and kurtosis 5 the error is a little wider."
+          "normal": "Close: 0.781 is the DSR assuming normal returns. With skew −0.5 and kurtosis 5 the error is a little wider."
         }
       },
       "explain": {
         "text": "The PSR against zero is 0.998, but against the best of 40 it is 0.77. The 2.1 is above what noise would give, but not by enough to be sure. A desk records the trial count in every research note so a reader can do this sum.",
         "canvas": {
           "values": {
-            "r3c1": "0.77"
+            "r3c1": "0.772"
           }
         }
       }

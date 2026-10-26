@@ -1,0 +1,1343 @@
+{
+  "id": "l7-ranking-across-stocks",
+  "course": "fin-ml",
+  "title": "Ranking across stocks",
+  "minutes": 14,
+  "objectives": [
+    "Build cross-sectional rank features.",
+    "Rank a long-format panel by date, and within sector, with pandas."
+  ],
+  "skills": [
+    "fm-features"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A bad day for everyone",
+      "prose": "Six shares on one day. The whole market fell, and every one of them closed down.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share",
+            "Return today"
+          ],
+          "rows": [
+            [
+              "Aster",
+              "−2.1%"
+            ],
+            [
+              "Birch",
+              "−0.4%"
+            ],
+            [
+              "Cedar",
+              "−3.5%"
+            ],
+            [
+              "Dune",
+              "−1.2%"
+            ],
+            [
+              "Elm",
+              "−0.9%"
+            ],
+            [
+              "Fern",
+              "−5.0%"
+            ]
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap the share that did best today.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1"
+        ],
+        "max": 1,
+        "countWord": "shares"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every return is negative. Best means the smallest fall."
+        },
+        {
+          "rung": "point",
+          "text": "Compare $-0.4\\%$ with the others.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Birch fell least, by 0.4%."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. Birch fell least: best of the day, though it lost money.",
+        "generic": "Not quite. Look for the smallest fall.",
+        "byKey": {
+          "r5": "You tapped the largest fall. That is the worst of the day.",
+          "r2": "Cedar fell 3.5%, more than most."
+        }
+      },
+      "explain": {
+        "text": "On a day when everything falls, the raw return mostly measures the market. Which share did best is a statement about order, not size. Ordering the shares within the day removes the market's move.",
+        "canvas": {
+          "highlight": [
+            "r1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Rank within the day",
+      "prose": "Order the shares by today's return, lowest first: rank 1 to $n$. Then rescale to a **percentile rank** $$q = \\frac{\\text{rank} - 1}{n - 1},$$ so the worst share scores 0 and the best scores 1. This is a **cross-sectional** rank: across shares, on one date.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share",
+            "Return"
+          ],
+          "rows": [
+            [
+              "Aster",
+              "−2.1%"
+            ],
+            [
+              "Birch",
+              "−0.4%"
+            ],
+            [
+              "Cedar",
+              "−3.5%"
+            ],
+            [
+              "Dune",
+              "−1.2%"
+            ],
+            [
+              "Elm",
+              "−0.9%"
+            ],
+            [
+              "Fern",
+              "−5.0%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in each share's percentile rank for today.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Share",
+          "Percentile rank"
+        ],
+        "rows": [
+          [
+            "Aster",
+            {
+              "edit": true,
+              "answer": 0.4,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Birch",
+            {
+              "edit": true,
+              "answer": 1.0,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Cedar",
+            {
+              "edit": true,
+              "answer": 0.2,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Dune",
+            {
+              "edit": true,
+              "answer": 0.6,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Elm",
+            {
+              "edit": true,
+              "answer": 0.8,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Fern",
+            {
+              "edit": true,
+              "answer": 0.0,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fern fell most, so its rank is 1 and $q = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "With $n = 6$, each step in rank adds $1/5 = 0.2$.",
+          "highlight": [
+            "r5",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Fern 0, Cedar 0.2, Aster 0.4, Dune 0.6, Elm 0.8, Birch 1."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. Five steps of 0.2 run from Fern at 0 to Birch at 1.",
+        "generic": "Not quite. Order the six returns, then rescale ranks 1 to 6 onto 0 to 1."
+      },
+      "explain": {
+        "text": "The ranks are 1 to 6, so $q$ runs 0, 0.2, ..., 1 whatever the market did. A day when every share rose 3% would give the same spread of $q$. That is the market level removed."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The next day, with a tie",
+      "prose": "The next day the market rose. Aster and Cedar both returned exactly 1.0%. Tied shares share the average of the ranks they cover.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share",
+            "Return"
+          ],
+          "rows": [
+            [
+              "Aster",
+              "+1.0%"
+            ],
+            [
+              "Birch",
+              "+2.4%"
+            ],
+            [
+              "Cedar",
+              "+1.0%"
+            ],
+            [
+              "Dune",
+              "+3.1%"
+            ],
+            [
+              "Elm",
+              "+0.2%"
+            ],
+            [
+              "Fern",
+              "+4.5%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in each share's percentile rank.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Share",
+          "Percentile rank"
+        ],
+        "rows": [
+          [
+            "Aster",
+            {
+              "edit": true,
+              "answer": 0.3,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Birch",
+            {
+              "edit": true,
+              "answer": 0.6,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Cedar",
+            {
+              "edit": true,
+              "answer": 0.3,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Dune",
+            {
+              "edit": true,
+              "answer": 0.8,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Elm",
+            {
+              "edit": true,
+              "answer": 0.0,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Fern",
+            {
+              "edit": true,
+              "answer": 1.0,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Elm is lowest: rank 1."
+        },
+        {
+          "rung": "point",
+          "text": "Aster and Cedar cover ranks 2 and 3, so each gets 2.5.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$q = (2.5 - 1)/5 = 0.3$ for both; Birch 0.6, Dune 0.8, Fern 1."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The tie gives Aster and Cedar 0.3 each; the ranks still average 0.5.",
+        "generic": "Not quite. Give the tied pair the average of ranks 2 and 3."
+      },
+      "explain": {
+        "text": "Averaging tied ranks treats equal returns equally and keeps the day's average at exactly 0.5. Birch was best yesterday and fourth today. Its rank moved although every return was positive."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One outlier",
+      "prose": "A third day: Fern receives a takeover bid and jumps 40%. Left, each share's z-score across the six, $(r - \\bar r)/s$. Right, the percentile ranks.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              "Aster",
+              "Birch",
+              "Cedar",
+              "Dune",
+              "Elm",
+              "Fern"
+            ],
+            "yLabel": "z-score",
+            "showValues": true,
+            "decimals": 2,
+            "yMin": -1,
+            "yMax": 2.5,
+            "height": 200
+          },
+          "state": {
+            "values": {
+              "Aster": -0.48,
+              "Birch": -0.38,
+              "Cedar": -0.4,
+              "Dune": -0.43,
+              "Elm": -0.35,
+              "Fern": 2.04
+            }
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              "Aster",
+              "Birch",
+              "Cedar",
+              "Dune",
+              "Elm",
+              "Fern"
+            ],
+            "yLabel": "Percentile rank",
+            "showValues": true,
+            "decimals": 1,
+            "yMin": 0,
+            "yMax": 1
+          },
+          "state": {
+            "values": {
+              "Aster": 0.0,
+              "Birch": 0.6,
+              "Cedar": 0.4,
+              "Dune": 0.2,
+              "Elm": 0.8,
+              "Fern": 1.0
+            }
+          }
+        }
+      },
+      "question": "What does the z-score do to the other five shares?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "squash",
+            "text": "Squashes them together near the same value, so their differences almost vanish",
+            "correct": true
+          },
+          {
+            "id": "spread",
+            "text": "Spreads them evenly, as the ranks do",
+            "why": "Read the left chart: the five sit between -0.48 and -0.35. Only the ranks are evenly spaced."
+          },
+          {
+            "id": "drop",
+            "text": "Removes them from the feature",
+            "why": "They are still there; they just look alike."
+          },
+          {
+            "id": "same",
+            "text": "Nothing: z-scores and ranks order the shares the same way, so they are equivalent",
+            "why": "The order is the same, but a model sees the values. Five near-equal z-scores carry little information."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the five small bars on the left with those on the right."
+        },
+        {
+          "rung": "point",
+          "text": "One huge value inflates the sd that every z-score divides by.",
+          "highlight": [
+            "left:xFern"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Five z-scores fall between -0.48 and -0.35; their ranks run 0 to 0.8."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The outlier inflates the mean and sd, so the other five look identical; ranks keep them apart.",
+        "generic": "Not quite. Look at the spread of the five non-takeover bars on each side."
+      },
+      "explain": {
+        "text": "Fern's 40% lifts the mean to 6.75% and the sd to 16.30%. The other five all score near -0.41. Ranks are bounded and evenly spaced, so one outlier moves only its own value.",
+        "canvas": {
+          "left": {
+            "highlight": [
+              "xAster",
+              "xBirch",
+              "xCedar",
+              "xDune",
+              "xElm"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Ranks in code",
+      "prose": "One day's values in, percentile ranks out. Ties take the average rank. One share alone has no one to be ranked against: we return 0.5, the middle, rather than divide by zero.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input",
+            "Output"
+          ],
+          "rows": [
+            [
+              "`[1.0, 2.4, 1.0, 3.1, 0.2, 4.5]`",
+              "`[0.3, 0.6, 0.3, 0.8, 0.0, 1.0]`"
+            ],
+            [
+              "`[0.3]`",
+              "`[0.5]`"
+            ],
+            [
+              "`[2, 2, 2]`",
+              "`[0.5, 0.5, 0.5]`"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `cs_rank(values)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef cs_rank(values):\n    s = pd.Series(values, dtype=float)\n    n = len(s)\n    if n == 1:\n        return [0.5]\n    r = s.rank()   # 1 to n, ties averaged\n    return (...).tolist()\n",
+        "solution": "import pandas as pd\n\ndef cs_rank(values):\n    s = pd.Series(values, dtype=float)\n    n = len(s)\n    if n == 1:\n        return [0.5]\n    r = s.rank()   # 1 to n, ties averaged\n    return ((r - 1) / (n - 1)).tolist()\n",
+        "examples": [
+          {
+            "call": "[round(v, 6) for v in cs_rank([1.0, 2.4, 1.0, 3.1, 0.2, 4.5])]",
+            "expect": "[0.3, 0.6, 0.3, 0.8, 0.0, 1.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(v, 6) for v in cs_rank([-2.1, -0.4, -3.5, -1.2, -0.9, -5.0])]",
+            "expect": "[0.4, 1.0, 0.2, 0.6, 0.8, 0.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(v, 6) for v in cs_rank([1.0, 2.4, 1.0, 3.1, 0.2, 4.5])]",
+            "expect": "[0.3, 0.6, 0.3, 0.8, 0.0, 1.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "cs_rank([0.3])",
+            "expect": "[0.5]"
+          },
+          {
+            "call": "cs_rank([5, 1])",
+            "expect": "[1.0, 0.0]"
+          },
+          {
+            "call": "cs_rank([2, 2, 2])",
+            "expect": "[0.5, 0.5, 0.5]"
+          },
+          {
+            "call": "[round(v, 6) for v in cs_rank([0.1, 0.4, 0.2, 0.3, 0.5, 0.0, 0.7, 0.6])]",
+            "expect": "[0.142857, 0.571429, 0.285714, 0.428571, 0.714286, 0.0, 1.0, 0.857143]",
+            "compare": "isclose"
+          },
+          {
+            "call": "sum(cs_rank([3, 1, 4, 1, 5, 9, 2, 6]))",
+            "expect": "4.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: the two days from this lesson, one share, two shares, a three-way tie, eight shares and the sum of ranks, compared exactly or with math.isclose. The first run loads pandas, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`r` already runs from 1 to $n$."
+        },
+        {
+          "rung": "point",
+          "text": "Subtract 1, then divide by $n - 1$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`((r - 1) / (n - 1))`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. A three-way tie gives 0.5 to each; one share gives 0.5 by our rule.",
+        "generic": "Some tests failed. Rescale the ranks with $(r - 1)/(n - 1)$."
+      },
+      "explain": {
+        "text": "pandas' `rank()` averages ties by default, which keeps the mean rank at 0.5. Its `rank(pct=True)` is a different scale, rank over $n$, running from $1/n$ to 1. Pick one convention and use it everywhere."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The z-score across shares",
+      "prose": "The alternative to a rank: subtract the day's mean across shares and divide by the day's sample sd. It keeps the sizes of the gaps, outliers included. With one share, or all equal, return zeros.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "Aster",
+            "Birch",
+            "Cedar",
+            "Dune",
+            "Elm",
+            "Fern"
+          ],
+          "yLabel": "z-score",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": -1,
+          "yMax": 2.5,
+          "height": 200
+        },
+        "state": {
+          "values": {
+            "Aster": -0.48,
+            "Birch": -0.38,
+            "Cedar": -0.4,
+            "Dune": -0.43,
+            "Elm": -0.35,
+            "Fern": 2.04
+          }
+        }
+      },
+      "question": "Complete `cs_zscore(values)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef cs_zscore(values):\n    x = np.asarray(values, dtype=float)\n    if len(x) < 2 or x.std(ddof=1) == 0:\n        return np.zeros(len(x))\n    return ...   # (x - mean) / sample sd, across the shares\n",
+        "solution": "import numpy as np\n\ndef cs_zscore(values):\n    x = np.asarray(values, dtype=float)\n    if len(x) < 2 or x.std(ddof=1) == 0:\n        return np.zeros(len(x))\n    return (x - x.mean()) / x.std(ddof=1)\n",
+        "examples": [
+          {
+            "call": "np.round(cs_zscore([1, 2, 3]), 6).tolist()",
+            "expect": "[-1.0, 0.0, 1.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(cs_zscore([1, 2, 3]), 6).tolist()",
+            "expect": "[-1.0, 0.0, 1.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.round(cs_zscore([-1.0, 0.5, 0.2, -0.3, 1.1, 40.0]), 6).tolist()",
+            "expect": "[-0.475323, -0.383325, -0.401725, -0.432391, -0.346526, 2.03929]",
+            "compare": "isclose"
+          },
+          {
+            "call": "cs_zscore([4.2]).tolist()",
+            "expect": "[0.0]"
+          },
+          {
+            "call": "cs_zscore([3, 3, 3]).tolist()",
+            "expect": "[0.0, 0.0, 0.0]"
+          },
+          {
+            "call": "round(float(np.std(cs_zscore([5, 1, 7, 2]), ddof=1)), 6)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(cs_zscore([5, 1, 7, 2]).sum()), 6)",
+            "expect": "-0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: two days rounded to 6 places, one share, a tie, and checks that the output has sd 1 and sums to 0. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`x.mean()` and `x.std(ddof=1)` are across the shares."
+        },
+        {
+          "rung": "point",
+          "text": "The takeover day should give Fern about 2.04.",
+          "highlight": [
+            "xFern"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`(x - x.mean()) / x.std(ddof=1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. Every day's z-scores sum to 0 and have sd 1, whatever the market did.",
+        "generic": "Some tests failed. Subtract the mean across shares, then divide by the sample sd."
+      },
+      "explain": {
+        "text": "A z-score across shares also removes the market level: the day's mean is subtracted. It keeps magnitude, which helps when gaps matter and hurts when one outlier dominates. Many desks clip z-scores at $\\pm 3$ or use ranks."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A whole panel",
+      "prose": "Real data is a panel in long format: one row per date and stock. `make_panel(seed)` gives 60 days of 20 stocks with about 10% of rows missing, so each day's universe differs. `small` is the table shown.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "stock",
+            "mom",
+            "mom_rank"
+          ],
+          "rows": [
+            [
+              "d1",
+              "A",
+              "0.5",
+              "1"
+            ],
+            [
+              "d1",
+              "B",
+              "−0.2",
+              "0"
+            ],
+            [
+              "d1",
+              "C",
+              "0.1",
+              "0.5"
+            ],
+            [
+              "d2",
+              "A",
+              "1.0",
+              "0"
+            ],
+            [
+              "d2",
+              "B",
+              "2.0",
+              "0.5"
+            ],
+            [
+              "d2",
+              "C",
+              "3.0",
+              "1"
+            ],
+            [
+              "d2",
+              "D",
+              "2.0",
+              "0.5"
+            ],
+            [
+              "d3",
+              "A",
+              "0.7",
+              "0.5"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `panel_cs_rank(df)` with a `groupby` on `date`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef panel_cs_rank(df):\n    g = df.groupby('date')['mom']\n    n = g.transform('count')\n    q = ...   # (rank within the date - 1) / (n - 1)\n    out = df.copy()\n    out['mom_rank'] = q.where(n > 1, 0.5)\n    return out\n",
+        "solution": "import pandas as pd\n\ndef panel_cs_rank(df):\n    g = df.groupby('date')['mom']\n    n = g.transform('count')\n    q = (g.rank() - 1) / (n - 1)\n    out = df.copy()\n    out['mom_rank'] = q.where(n > 1, 0.5)\n    return out\n",
+        "examples": [
+          {
+            "call": "panel_cs_rank(small)['mom_rank'].round(6).tolist()",
+            "expect": "[1.0, 0.0, 0.5, 0.0, 0.5, 1.0, 0.5, 0.5]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "panel_cs_rank(small)['mom_rank'].round(6).tolist()",
+            "expect": "[1.0, 0.0, 0.5, 0.0, 0.5, 1.0, 0.5, 0.5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "panel_cs_rank(small)['stock'].tolist()",
+            "expect": "['A', 'B', 'C', 'A', 'B', 'C', 'D', 'A']"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "len(panel_cs_rank(p)) == len(p)",
+            "expect": "True"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "round(float(panel_cs_rank(p)['mom_rank'].mean()), 6)",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "round(float(panel_cs_rank(p).groupby('date')['mom_rank'].max().min()), 6)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "round(float(panel_cs_rank(p).loc[5, 'mom_rank']), 6)",
+            "expect": "0.066667",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "panel_cs_rank(p).groupby('date').size().agg(['min', 'max']).tolist()",
+            "expect": "[14, 20]"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on `small` and on `make_panel(7)`: exact ranks with a tie and a one-stock day, row order kept, and daily summaries. The first run loads pandas, which takes a few seconds.",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_panel(seed, n_days=60, n_stocks=20):\n    \"\"\"A seeded long-format panel: date, stock, sector, mom. About 10% of\n    rows are missing, so the universe changes size from day to day.\"\"\"\n    rng = np.random.default_rng(seed)\n    dates = pd.bdate_range('2024-01-02', periods=n_days)\n    stocks = [f'S{i:02d}' for i in range(n_stocks)]\n    sectors = ['Banks', 'Energy', 'Retail', 'Tech']\n    rows = [(d, s, sectors[i % 4], rng.standard_normal()) for d in dates for i, s in enumerate(stocks)]\n    df = pd.DataFrame(rows, columns=['date', 'stock', 'sector', 'mom'])\n    return df[rng.random(len(df)) > 0.1].reset_index(drop=True)\n\nsmall = pd.DataFrame({'date': ['d1'] * 3 + ['d2'] * 4 + ['d3'],\n                      'stock': ['A', 'B', 'C', 'A', 'B', 'C', 'D', 'A'],\n                      'sector': ['X', 'X', 'Y', 'X', 'X', 'Y', 'Y', 'X'],\n                      'mom': [0.5, -0.2, 0.1, 1.0, 2.0, 3.0, 2.0, 0.7]})\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`g.rank()` ranks within each date and keeps the rows where they were."
+        },
+        {
+          "rung": "point",
+          "text": "`n` already holds each date's stock count on every row.",
+          "highlight": [
+            "r4",
+            "r6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`q = (g.rank() - 1) / (n - 1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. Every date's top stock scores 1 whatever the universe size, and d3's lone stock gets 0.5.",
+        "generic": "Some tests failed. Rank within each date with `g.rank()`, then rescale by that date's count."
+      },
+      "explain": {
+        "text": "`groupby('date')` makes each day its own cross-section, so the universe size never leaks between days. Dividing by $n - 1$ makes the top share 1 on a 17-stock day and on a 20-stock day alike. The mean rank is 0.5 on every day by construction.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              4,
+              6,
+              7
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Neutral to sector",
+      "prose": "If tech shares all rose on news, a plain rank fills the top with tech. Ranking **within** each date and sector asks a narrower question: was this bank strong for a bank today?",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "stock",
+            "sector",
+            "mom",
+            "mom_sn"
+          ],
+          "rows": [
+            [
+              "d1",
+              "A",
+              "X",
+              "0.5",
+              "1"
+            ],
+            [
+              "d1",
+              "B",
+              "X",
+              "−0.2",
+              "0"
+            ],
+            [
+              "d1",
+              "C",
+              "Y",
+              "0.1",
+              "0.5"
+            ],
+            [
+              "d2",
+              "A",
+              "X",
+              "1.0",
+              "0"
+            ],
+            [
+              "d2",
+              "B",
+              "X",
+              "2.0",
+              "1"
+            ],
+            [
+              "d2",
+              "C",
+              "Y",
+              "3.0",
+              "1"
+            ],
+            [
+              "d2",
+              "D",
+              "Y",
+              "2.0",
+              "0"
+            ],
+            [
+              "d3",
+              "A",
+              "X",
+              "0.7",
+              "0.5"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `sector_neutral_rank(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef sector_neutral_rank(df):\n    g = df.groupby(...)['mom']   # one group per date and sector\n    n = g.transform('count')\n    q = (g.rank() - 1) / (n - 1)\n    out = df.copy()\n    out['mom_sn'] = q.where(n > 1, 0.5)\n    return out\n",
+        "solution": "import pandas as pd\n\ndef sector_neutral_rank(df):\n    g = df.groupby(['date', 'sector'])['mom']\n    n = g.transform('count')\n    q = (g.rank() - 1) / (n - 1)\n    out = df.copy()\n    out['mom_sn'] = q.where(n > 1, 0.5)\n    return out\n",
+        "examples": [
+          {
+            "call": "sector_neutral_rank(small)['mom_sn'].round(6).tolist()",
+            "expect": "[1.0, 0.0, 0.5, 0.0, 1.0, 1.0, 0.0, 0.5]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sector_neutral_rank(small)['mom_sn'].round(6).tolist()",
+            "expect": "[1.0, 0.0, 0.5, 0.0, 1.0, 1.0, 0.0, 0.5]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "round(float(sector_neutral_rank(p)['mom_sn'].mean()), 6)",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "round(float(sector_neutral_rank(p).loc[5, 'mom_sn']), 6)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p = make_panel(7)",
+            "call": "sector_neutral_rank(p).groupby(['date', 'sector'])['mom_sn'].max().eq(1).all().item()",
+            "expect": "True"
+          },
+          {
+            "setup": "p = make_panel(3, 20, 8)",
+            "call": "sector_neutral_rank(p)['mom_sn'].round(6).tolist()[:8]",
+            "expect": "[1.0, 0.0, 0.0, 1.0, 0.5, 0.5, 0.0, 1.0]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `small` and on seeded panels: exact ranks, a lone stock in its sector, and that each date and sector has a top score of 1. The first run loads pandas, which takes a few seconds.",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_panel(seed, n_days=60, n_stocks=20):\n    \"\"\"A seeded long-format panel: date, stock, sector, mom. About 10% of\n    rows are missing, so the universe changes size from day to day.\"\"\"\n    rng = np.random.default_rng(seed)\n    dates = pd.bdate_range('2024-01-02', periods=n_days)\n    stocks = [f'S{i:02d}' for i in range(n_stocks)]\n    sectors = ['Banks', 'Energy', 'Retail', 'Tech']\n    rows = [(d, s, sectors[i % 4], rng.standard_normal()) for d in dates for i, s in enumerate(stocks)]\n    df = pd.DataFrame(rows, columns=['date', 'stock', 'sector', 'mom'])\n    return df[rng.random(len(df)) > 0.1].reset_index(drop=True)\n\nsmall = pd.DataFrame({'date': ['d1'] * 3 + ['d2'] * 4 + ['d3'],\n                      'stock': ['A', 'B', 'C', 'A', 'B', 'C', 'D', 'A'],\n                      'sector': ['X', 'X', 'Y', 'X', 'X', 'Y', 'Y', 'X'],\n                      'mom': [0.5, -0.2, 0.1, 1.0, 2.0, 3.0, 2.0, 0.7]})\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A `groupby` can take a list of columns."
+        },
+        {
+          "rung": "point",
+          "text": "The group is the pair of date and sector.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`df.groupby(['date', 'sector'])['mom']`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. C was alone in sector Y on d1, so it scores 0.5.",
+        "generic": "Some tests failed. Group by both `date` and `sector`."
+      },
+      "explain": {
+        "text": "Grouping by date and sector removes the market move and the sector move together. With few shares per sector, ranks get coarse: two shares can only score 0 or 1. Neutralise only when sectors are large enough."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Ranked against itself",
+      "prose": "A colleague writes `df.groupby('stock')['mom'].rank(pct=True)` and calls it a cross-sectional rank.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Notebook",
+          "lines": [
+            ">>> df['mom_rank'] = df.groupby('stock')['mom'].rank(pct=True)",
+            ">>> df[df.stock == 'S03'].head(3)",
+            "        date stock   mom  mom_rank",
+            "0 2024-01-02   S03  0.41      0.62",
+            "1 2024-01-03   S03 -1.20      0.08",
+            "2 2024-01-04   S03  0.95      0.80"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the colleague's column measure?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "history",
+            "text": "Where today's value sits in that stock's own history, including days after today",
+            "correct": true
+          },
+          {
+            "id": "cs",
+            "text": "Where the stock sits among all stocks today",
+            "why": "You read `groupby('stock')` as a cross-section. It groups each stock's rows across dates: a time-series rank."
+          },
+          {
+            "id": "past",
+            "text": "Where today sits in the stock's past, a fair trailing feature",
+            "why": "`rank` sees every row of the group, later dates included. On 2 January it already knows the rest of the year."
+          },
+          {
+            "id": "same",
+            "text": "The same as `groupby('date')`, just faster",
+            "why": "Grouping by stock and grouping by date answer different questions."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows share a group under `groupby('stock')`?"
+        },
+        {
+          "rung": "point",
+          "text": "Every date of S03 is in one group.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So the rank compares S03 with itself over all dates, future ones included."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. It is a time-series rank over the full history: a different feature, and a look-ahead.",
+        "generic": "Not quite. Ask which rows each rank is computed among.",
+        "byKey": {
+          "cs": "You assumed the grouping was by date. `groupby('stock')` puts one stock's whole history in each group.",
+          "past": "You assumed the rank is trailing. A group rank uses every row in the group, future dates too."
+        }
+      },
+      "explain": {
+        "text": "A cross-sectional rank groups by date. Grouping by stock ranks each day against the stock's whole history, which also includes the future: lesson 8's subject. A fair time-series version uses a trailing window."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The rule",
+      "prose": "On each date $t$, rank the $n_t$ shares present and rescale: $$q_{i,t} = \\frac{\\operatorname{rank}_t(x_{i,t}) - 1}{n_t - 1}, \\qquad q = 0.5 \\text{ when } n_t = 1.$$ It removes the day's market move, puts every share on a 0 to 1 scale, and ignores how far an outlier sits.",
+      "question": "A universe grows from 400 to 500 shares. Why does the percentile rank still work where the raw rank does not?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "scale",
+            "text": "Dividing by $n_t - 1$ puts the top share at 1 in both universes",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Raw ranks work just as well",
+            "why": "Rank 400 is the top of 400 shares but only 80% of the way up 500. The raw rank changed meaning."
+          },
+          {
+            "id": "drop",
+            "text": "Because the new shares are dropped",
+            "why": "Nothing is dropped; each date ranks whoever is present."
+          },
+          {
+            "id": "mean",
+            "text": "Because the mean return is subtracted",
+            "why": "That is what a z-score does. The rank fixes size by rescaling."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. A percentile means the same on a 400-share day and a 500-share day.",
+        "generic": "Not quite. Compare what rank 400 means in each universe."
+      },
+      "explain": {
+        "text": "Raw ranks count shares, so their scale grows with the universe. Dividing by $n_t - 1$ removes that, which also makes panels with missing shares comparable day to day. It is the cross-sectional version of lesson 5's unit test."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Long the top decile",
+      "prose": "A desk's momentum signal: each share's return over the past 12 months, skipping the last month, ranked daily across 500 shares. It buys the top decile and sells the bottom decile, equal weights. The Momentum project course replicates this.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rank band",
+            "Shares",
+            "Position"
+          ],
+          "rows": [
+            [
+              "$q \\ge 0.9$",
+              "about 50",
+              "long"
+            ],
+            [
+              "$0.1 < q < 0.9$",
+              "about 400",
+              "none"
+            ],
+            [
+              "$q \\le 0.1$",
+              "about 50",
+              "short"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Why does the desk sort on ranks rather than on the raw 12-month returns?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ranks",
+            "text": "Deciles are a statement about order on each day, and ranks give that order whatever the market's level and spread",
+            "correct": true
+          },
+          {
+            "id": "raw",
+            "text": "Raw returns would work the same, since a cut at 20% is a cut",
+            "why": "After a 30% market rally, most shares clear a fixed 20% cut. The book would be long nearly everything."
+          },
+          {
+            "id": "faster",
+            "text": "Ranks are faster to compute",
+            "why": "Speed is not the reason. Sorting by raw values gives the same order on one day; the trouble is a fixed cut across days."
+          },
+          {
+            "id": "leak",
+            "text": "Raw returns leak the future",
+            "why": "A trailing 12-month return uses only the past. The issue is comparability across days."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would a fixed cut on raw returns do after a big rally?"
+        },
+        {
+          "rung": "point",
+          "text": "A decile is the top tenth on that day.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Ranks pick the top tenth every day, rally or crash."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. Ranks keep the book balanced at about 50 long and 50 short every day.",
+        "generic": "Not quite. Think about the same rule on a day after a big rally."
+      },
+      "explain": {
+        "text": "A rank-based book always holds about 50 longs and 50 shorts, so its market exposure stays near zero. Raw cuts let the book drift long or short with the market. The target can be ranked too: next month's return rank across shares."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A cross-sectional rank orders the shares within each date, which removes the market's move that day.",
+      "Percentile ranks are bounded, evenly spaced and comparable across universe sizes; z-scores keep magnitudes, outliers included.",
+      "In pandas: `groupby('date')` for the cross-section, `groupby(['date', 'sector'])` for sector-neutral ranks."
+    ],
+    "formula": {
+      "name": "Percentile rank",
+      "tex": "q_{i,t} = \\dfrac{\\operatorname{rank}_t(x_{i,t}) - 1}{n_t - 1}",
+      "note": "Ties take the average rank; a lone share gets 0.5."
+    },
+    "trap": "`groupby('stock')` ranks a share against its own full history: a different feature, and a look-ahead."
+  },
+  "quiz": [
+    {
+      "id": "q-five",
+      "difficulty": 2,
+      "prose": "Five shares return $-1\\%$, $2\\%$, $0.5\\%$, $3\\%$ and $-4\\%$ today.",
+      "question": "What is the percentile rank $(\\text{rank} - 1)/(n - 1)$ of the share that returned $0.5\\%$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a decimal",
+        "accept": "0.5",
+        "wrong": [
+          {
+            "id": "pct",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. It ranks 3 of 5, so $q = 2/4 = 0.5$.",
+        "generic": "Not quite. Order the five returns from lowest.",
+        "byKey": {
+          "pct": "You used rank over $n$, $3/5$. Our scale is $(3 - 1)/(5 - 1)$."
+        }
+      },
+      "explain": {
+        "text": "Sorted: $-4, -1, 0.5, 2, 3$. The $0.5\\%$ share is third, so $q = (3 - 1)/4 = 0.5$."
+      }
+    },
+    {
+      "id": "q-avg",
+      "difficulty": 3,
+      "prose": "A researcher averages every share's daily percentile rank over a year, across the whole universe, and reports 0.5 as 'the signal is neutral'.",
+      "question": "What does the 0.5 tell us?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Nothing: ranks average 0.5 on every day by construction",
+            "correct": true
+          },
+          {
+            "id": "neutral",
+            "text": "That the signal has no edge",
+            "why": "The average says nothing about edge: any signal's ranks average 0.5."
+          },
+          {
+            "id": "bias",
+            "text": "That the universe has no bias",
+            "why": "It is forced by the rescaling, whatever the universe."
+          },
+          {
+            "id": "error",
+            "text": "That the ranks were computed wrongly",
+            "why": "0.5 is exactly what correct ranks give."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. The average of $0, 1/(n-1), \\dots, 1$ is always 0.5.",
+        "generic": "Not quite. Average the ranks of any single day."
+      },
+      "explain": {
+        "text": "Ranks are uniform on 0 to 1 by construction. To judge a signal, compare its ranks with the next period's returns, not with themselves."
+      }
+    },
+    {
+      "id": "q-one",
+      "difficulty": 2,
+      "prose": "On one date a sector holds a single share.",
+      "question": "What does our sector-neutral rank give it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "half",
+            "text": "0.5, by our rule for a group of one",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1, since it is the best in its sector",
+            "why": "It is also the worst. Our rule places it in the middle."
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "Rank 1 of 1 would give $0/0$, not 0."
+          },
+          {
+            "id": "error",
+            "text": "An error the code cannot avoid",
+            "why": "The code checks $n > 1$ and uses 0.5 otherwise."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. $(1 - 1)/(1 - 1)$ is undefined, so we chose 0.5.",
+        "generic": "Not quite. Try the formula with $n = 1$."
+      },
+      "explain": {
+        "text": "With one share the formula is $0/0$. Returning 0.5 keeps the share neutral rather than extreme."
+      }
+    }
+  ]
+}

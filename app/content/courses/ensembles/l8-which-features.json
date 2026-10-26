@@ -1,0 +1,1735 @@
+{
+  "id": "l8-which-features",
+  "course": "ensembles",
+  "title": "Which features matter",
+  "minutes": 15,
+  "objectives": [
+    "Compare impurity importance with permutation importance.",
+    "Read correlated features, partial dependence and the limits of importance."
+  ],
+  "skills": [
+    "en-interpret",
+    "en-bagging"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Credit for the splits",
+      "prose": "In a tree, each split lowers the weighted Gini impurity, as in lesson 2. One way to rank features: add up the drop each feature's splits achieve, then divide by the total. Here is a small tree with its drops.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "leverage ≤ 0.1?",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "y",
+              "label": "cover ≤ −0.4?",
+              "p": "yes",
+              "children": [
+                {
+                  "id": "y",
+                  "label": "Default",
+                  "p": "yes"
+                },
+                {
+                  "id": "n",
+                  "label": "Repay",
+                  "p": "no"
+                }
+              ]
+            },
+            {
+              "id": "n",
+              "label": "loan_id ≤ 0.62?",
+              "p": "no",
+              "children": [
+                {
+                  "id": "y",
+                  "label": "Default",
+                  "p": "yes"
+                },
+                {
+                  "id": "n",
+                  "label": "Default",
+                  "p": "no"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Drop in weighted Gini: leverage split 0.120, cover split 0.040, loan_id split 0.020"
+        }
+      },
+      "question": "What share of the tree's total drop belongs to leverage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6667,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Leverage's share of the drop",
+        "placeholder": "fraction or decimal",
+        "accept": "$0.120/0.180 = 2/3 \\approx 0.667$.",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 0.12,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "third",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 3,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the three drops first."
+        },
+        {
+          "rung": "point",
+          "text": "The total is $0.120 + 0.040 + 0.020$.",
+          "highlight": [
+            "root"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.120 / 0.180 = 0.667$."
+        }
+      ],
+      "feedback": {
+        "correct": "Two thirds of the credit goes to leverage.",
+        "generic": "Not quite right. Divide leverage's drop by the sum of all three.",
+        "byKey": {
+          "raw": "0.120 is leverage's drop. Divide by the total, 0.180, to get its share.",
+          "third": "That gives each of the three splits equal credit. Weight them by their drops.",
+          "ratio": "That compares leverage with cover only. Divide by the total of all three."
+        }
+      },
+      "explain": {
+        "text": "$0.120/0.180 = 0.667$; cover gets 0.222 and loan_id 0.111. This is **impurity importance**: a forest averages these shares over its trees. It is `feature_importances_`, and it sums to 1.",
+        "canvas": {
+          "highlight": [
+            "root"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "Two rankings of the same forest",
+      "prose": "A forest of 100 trees on 400 loans. Left: impurity importance. Right: shuffle one column of 2,000 new loans and record how much accuracy falls, from 0.760. We generated loan_id as a random number, unique to each loan.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "leverage",
+                "label": "leverage"
+              },
+              {
+                "id": "cover",
+                "label": "cover"
+              },
+              {
+                "id": "cover_ttm",
+                "label": "cover_ttm"
+              },
+              {
+                "id": "secured",
+                "label": "secured"
+              },
+              {
+                "id": "loan_id",
+                "label": "loan_id"
+              },
+              {
+                "id": "odd_day",
+                "label": "odd_day"
+              },
+              {
+                "id": "currency",
+                "label": "currency"
+              }
+            ],
+            "yLabel": "Impurity importance",
+            "showValues": true,
+            "decimals": 3,
+            "yMin": 0,
+            "yMax": 0.4
+          },
+          "state": {
+            "values": {
+              "leverage": 0.3437,
+              "cover": 0.2333,
+              "cover_ttm": 0.2226,
+              "secured": 0.0219,
+              "loan_id": 0.1581,
+              "odd_day": 0.0203,
+              "currency": 0.0
+            }
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "leverage",
+                "label": "leverage"
+              },
+              {
+                "id": "cover",
+                "label": "cover"
+              },
+              {
+                "id": "cover_ttm",
+                "label": "cover_ttm"
+              },
+              {
+                "id": "secured",
+                "label": "secured"
+              },
+              {
+                "id": "loan_id",
+                "label": "loan_id"
+              },
+              {
+                "id": "odd_day",
+                "label": "odd_day"
+              },
+              {
+                "id": "currency",
+                "label": "currency"
+              }
+            ],
+            "yLabel": "Accuracy drop when shuffled",
+            "showValues": true,
+            "decimals": 4,
+            "yMin": -0.02,
+            "yMax": 0.18
+          },
+          "state": {
+            "values": {
+              "leverage": 0.1608,
+              "cover": 0.0289,
+              "cover_ttm": 0.0146,
+              "secured": 0.0002,
+              "loan_id": -0.0078,
+              "odd_day": -0.0023,
+              "currency": 0.0
+            }
+          }
+        },
+        "state": {
+          "caption": "Same forest, same 7 columns"
+        }
+      },
+      "question": "Tap the feature whose rank changes most between the two charts.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "loan_id"
+        ],
+        "max": 1,
+        "countWord": "features",
+        "only": [
+          "leverage",
+          "cover",
+          "cover_ttm",
+          "secured",
+          "loan_id",
+          "odd_day",
+          "currency"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rank the bars on each chart from tallest to shortest."
+        },
+        {
+          "rung": "point",
+          "text": "leverage, cover and cover_ttm keep their places. Look further down.",
+          "highlight": [
+            "left:loan_id",
+            "right:loan_id"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "loan_id is fourth on the left and last on the right."
+        }
+      ],
+      "feedback": {
+        "correct": "loan_id drops from fourth to last.",
+        "generic": "Not quite right. Find the column ranked high on the left and low on the right.",
+        "byKey": {
+          "leverage": "Leverage is first on both charts.",
+          "cover": "cover is second on both.",
+          "cover_ttm": "cover_ttm is third on both.",
+          "secured": "secured moves from fifth to fourth: one place.",
+          "odd_day": "odd_day stays sixth.",
+          "currency": "currency moves two places, from last to fifth. One column moves further."
+        }
+      },
+      "explain": {
+        "text": "loan_id gets 0.158 of the impurity credit, yet shuffling it changes nothing: accuracy even rises a little. Deep trees split on it near their leaves, carving up noise, and impurity importance rewards every such split.",
+        "canvas": {
+          "highlight": [
+            "left:loan_id",
+            "right:loan_id"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Shuffle one column",
+      "prose": "The right chart is **permutation importance**: score the fitted model on test data, shuffle one column so its link to the label breaks, and score again. The drop is the importance. Here is leverage, shuffled 10 times.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Test data",
+            "Accuracy"
+          ],
+          "rows": [
+            [
+              "As it is",
+              "0.7600"
+            ],
+            [
+              "leverage shuffled, mean of 10",
+              "0.5992"
+            ],
+            [
+              "loan_id shuffled, mean of 10",
+              "0.7678"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is leverage's permutation importance?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1608,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Drop in accuracy",
+        "placeholder": "decimal",
+        "accept": "$0.7600 - 0.5992 = 0.1608$.",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 0.2116,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "shuf",
+            "value": 0.5992,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Importance is the fall in score."
+        },
+        {
+          "rung": "point",
+          "text": "Subtract the shuffled accuracy from the unshuffled one.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.7600 - 0.5992$."
+        }
+      ],
+      "feedback": {
+        "correct": "Breaking leverage costs 16 points of accuracy.",
+        "generic": "Not quite right. Subtract 0.5992 from 0.7600.",
+        "byKey": {
+          "ratio": "That is the drop as a share of 0.76. Permutation importance is the raw drop.",
+          "shuf": "That is the shuffled accuracy itself. Subtract it from 0.7600."
+        }
+      },
+      "explain": {
+        "text": "Leverage: $0.7600 - 0.5992 = 0.1608$. loan_id: $0.7600 - 0.7678 = -0.0078$, a little better shuffled, which is noise around 0. The model never needed loan_id on new loans.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Permutation importance by hand",
+      "prose": "Write it. Shuffle with `rng.permutation`, from one generator `rng = np.random.default_rng(seed)`, a fresh copy of `X_test` each repeat. scikit-learn's `permutation_importance` shuffles with another generator, so its mean differs slightly from yours.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Test data",
+            "Accuracy"
+          ],
+          "rows": [
+            [
+              "As it is",
+              "0.7600"
+            ],
+            [
+              "leverage shuffled, mean of 10",
+              "0.5992"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `permutation_importance_by_hand(model, X_test, y_test, feature, n_repeats, seed)`, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 10000,
+        "prelude": "import numpy as np\n\nCOLS = [\"leverage\", \"cover\", \"cover_ttm\", \"secured\", \"loan_id\", \"odd_day\", \"currency\"]\n\ndef make_book(seed, n=400):\n    \"\"\"n loans, 7 columns. Default risk rises with leverage and falls with\n    interest cover; secured loans default a little less. cover and cover_ttm\n    are two measures of the same cover (correlation about 0.9). loan_id is a\n    random number with a different value on every loan; odd_day is a random\n    0 or 1; currency is 1 on every loan (all are sterling).\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = rng.standard_normal(n)\n    cov = rng.standard_normal(n)\n    cover = cov + 0.3 * rng.standard_normal(n)\n    cover_ttm = cov + 0.3 * rng.standard_normal(n)\n    secured = rng.integers(0, 2, n)\n    loan_id = rng.random(n)\n    odd_day = rng.integers(0, 2, n)\n    currency = np.ones(n)\n    z = -0.3 + 1.8 * lev - 1.2 * cov - 0.5 * secured\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    X = np.column_stack([lev, cover, cover_ttm, secured, loan_id, odd_day, currency])\n    return X, y\n\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.inspection import permutation_importance\n",
+        "starter": "import numpy as np\n\ndef permutation_importance_by_hand(model, X_test, y_test, feature, n_repeats, seed):\n    X_test = np.asarray(X_test, dtype=float)\n    rng = np.random.default_rng(seed)\n    base = model.score(X_test, y_test)\n    drops = []\n    for _ in range(n_repeats):\n        Xp = X_test.copy()\n        Xp[:, feature] = ...   # the column, shuffled\n        drops.append(...)      # how much the score fell\n    return round(float(np.mean(drops)), 4)\n",
+        "solution": "import numpy as np\n\ndef permutation_importance_by_hand(model, X_test, y_test, feature, n_repeats, seed):\n    X_test = np.asarray(X_test, dtype=float)\n    rng = np.random.default_rng(seed)\n    base = model.score(X_test, y_test)\n    drops = []\n    for _ in range(n_repeats):\n        Xp = X_test.copy()\n        Xp[:, feature] = rng.permutation(X_test[:, feature])\n        drops.append(base - model.score(Xp, y_test))\n    return round(float(np.mean(drops)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000); m = RandomForestClassifier(n_estimators=50, random_state=0).fit(X, y)",
+            "call": "permutation_importance_by_hand(m, Xt, yt, 0, 20, 0)",
+            "expect": "0.1815",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000); m = RandomForestClassifier(n_estimators=50, random_state=0).fit(X, y)",
+            "call": "permutation_importance_by_hand(m, Xt, yt, 0, 20, 0)",
+            "expect": "0.1815",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000); m = RandomForestClassifier(n_estimators=50, random_state=0).fit(X, y)",
+            "call": "permutation_importance_by_hand(m, Xt, yt, 1, 20, 1)",
+            "expect": "0.0527",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000); m = RandomForestClassifier(n_estimators=50, random_state=0).fit(X, y)",
+            "call": "permutation_importance_by_hand(m, Xt, yt, 4, 20, 2)",
+            "expect": "0.0027",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000); m = RandomForestClassifier(n_estimators=50, random_state=0).fit(X, y)",
+            "call": "permutation_importance_by_hand(m, Xt, yt, 6, 5, 0)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000); m = RandomForestClassifier(n_estimators=50, random_state=0).fit(X, y); ref = permutation_importance(m, Xt, yt, n_repeats=30, random_state=3).importances_mean[2]",
+            "call": "abs(permutation_importance_by_hand(m, Xt, yt, 2, 30, 3) - ref) < 0.01",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on a forest fitted to `make_book(1, 400)` and scored on `make_book(2, 1000)`. Four compare your rounded mean with math.isclose, so shuffle with `rng.permutation` as the starter says. The fifth checks you are within 0.01 of scikit-learn's `permutation_importance`, which uses its own shuffles. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`rng.permutation(col)` returns a shuffled copy of `col`."
+        },
+        {
+          "rung": "point",
+          "text": "Shuffle the original column from `X_test`, and record `base` minus the new score.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`Xp[:, feature] = rng.permutation(X_test[:, feature])` and `drops.append(base - model.score(Xp, y_test))`."
+        }
+      ],
+      "feedback": {
+        "correct": "Leverage costs 0.18 here; currency costs exactly 0.",
+        "generic": "Some tests failed. Shuffle one column of a fresh copy, score, and record the fall from `base`."
+      },
+      "explain": {
+        "text": "Shuffling a constant column such as currency changes nothing, so its importance is exactly 0. Yours and scikit-learn's differ only through the random shuffles, by a few thousandths."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Impurity importance in code",
+      "prose": "Now the left chart. A fitted forest stores impurity importance in `feature_importances_`, already averaged over its trees and normalised to sum to 1.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "leverage",
+              "label": "leverage"
+            },
+            {
+              "id": "cover",
+              "label": "cover"
+            },
+            {
+              "id": "cover_ttm",
+              "label": "cover_ttm"
+            },
+            {
+              "id": "secured",
+              "label": "secured"
+            },
+            {
+              "id": "loan_id",
+              "label": "loan_id"
+            },
+            {
+              "id": "odd_day",
+              "label": "odd_day"
+            },
+            {
+              "id": "currency",
+              "label": "currency"
+            }
+          ],
+          "yLabel": "Impurity importance",
+          "showValues": true,
+          "decimals": 3,
+          "yMin": 0,
+          "yMax": 0.4
+        },
+        "state": {
+          "values": {
+            "leverage": 0.3437,
+            "cover": 0.2333,
+            "cover_ttm": 0.2226,
+            "secured": 0.0219,
+            "loan_id": 0.1581,
+            "odd_day": 0.0203,
+            "currency": 0.0
+          }
+        }
+      },
+      "question": "Complete `impurity_importance(X_train, y_train, n_estimators)`: the normalised importances, rounded to 4 places, as a list.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 10000,
+        "prelude": "import numpy as np\n\nCOLS = [\"leverage\", \"cover\", \"cover_ttm\", \"secured\", \"loan_id\", \"odd_day\", \"currency\"]\n\ndef make_book(seed, n=400):\n    \"\"\"n loans, 7 columns. Default risk rises with leverage and falls with\n    interest cover; secured loans default a little less. cover and cover_ttm\n    are two measures of the same cover (correlation about 0.9). loan_id is a\n    random number with a different value on every loan; odd_day is a random\n    0 or 1; currency is 1 on every loan (all are sterling).\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = rng.standard_normal(n)\n    cov = rng.standard_normal(n)\n    cover = cov + 0.3 * rng.standard_normal(n)\n    cover_ttm = cov + 0.3 * rng.standard_normal(n)\n    secured = rng.integers(0, 2, n)\n    loan_id = rng.random(n)\n    odd_day = rng.integers(0, 2, n)\n    currency = np.ones(n)\n    z = -0.3 + 1.8 * lev - 1.2 * cov - 0.5 * secured\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    X = np.column_stack([lev, cover, cover_ttm, secured, loan_id, odd_day, currency])\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.ensemble import RandomForestClassifier\n\ndef impurity_importance(X_train, y_train, n_estimators):\n    forest = ...   # n_estimators trees, random_state=0, fitted\n    return np.round(..., 4).tolist()\n",
+        "solution": "import numpy as np\nfrom sklearn.ensemble import RandomForestClassifier\n\ndef impurity_importance(X_train, y_train, n_estimators):\n    forest = RandomForestClassifier(n_estimators=n_estimators,\n                                    random_state=0).fit(X_train, y_train)\n    return np.round(forest.feature_importances_, 4).tolist()\n",
+        "examples": [
+          {
+            "setup": "X, y = make_book(1, 400)",
+            "call": "impurity_importance(X[:, :2], y, 20)",
+            "expect": "[0.5496, 0.4504]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_book(1, 400)",
+            "call": "impurity_importance(X[:, :2], y, 20)",
+            "expect": "[0.5496, 0.4504]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(1, 400)",
+            "call": "impurity_importance(X, y, 50)",
+            "expect": "[0.3419, 0.2394, 0.2199, 0.0224, 0.1562, 0.0201, 0.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(3, 300)",
+            "call": "impurity_importance(X, y, 25)",
+            "expect": "[0.3202, 0.2288, 0.2381, 0.0179, 0.1721, 0.0229, 0.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(3, 300)",
+            "call": "round(sum(impurity_importance(X, y, 25)), 2)",
+            "expect": "1.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on loans from `make_book(seed, n)`, which is already defined. Each list is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fit the forest first."
+        },
+        {
+          "rung": "point",
+          "text": "The attribute ends in an underscore, like every fitted attribute.",
+          "highlight": [
+            "loan_id"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`forest = RandomForestClassifier(n_estimators=n_estimators, random_state=0).fit(X_train, y_train)` and `forest.feature_importances_`."
+        }
+      ],
+      "feedback": {
+        "correct": "On book 1, loan_id takes 0.156 of the credit in a 50-tree forest.",
+        "generic": "Some tests failed. Fit the forest with `random_state=0` and round `feature_importances_`."
+      },
+      "explain": {
+        "text": "With 50 trees the shares barely move from the 100-tree chart. currency is exactly 0: a constant column can never split, so no method can credit it. loan_id is the warning: continuous noise with many distinct values offers many thresholds to chase."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Two features that cover for each other",
+      "prose": "cover and cover_ttm measure the same thing; their correlation is 0.92. Permutation importance gives them only 0.029 and 0.015: shuffle one and the forest reads the other. We refit the forest with columns removed and score it on the 2,000 new loans.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "all",
+              "label": "All 7"
+            },
+            {
+              "id": "ttm",
+              "label": "No cover_ttm"
+            },
+            {
+              "id": "cov",
+              "label": "No cover"
+            },
+            {
+              "id": "both",
+              "label": "Neither"
+            }
+          ],
+          "yLabel": "Test accuracy",
+          "showValues": true,
+          "decimals": 4,
+          "yMin": 0.6,
+          "yMax": 0.8,
+          "truncate": true
+        },
+        "state": {
+          "values": {
+            "all": 0.76,
+            "ttm": 0.7695,
+            "cov": 0.7655,
+            "both": 0
+          }
+        }
+      },
+      "question": "What happens to test accuracy when both are removed?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It falls by about 10 points, to 0.66",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "It falls by about 0.04, the sum of their permutation importances",
+            "why": "You added the two small importances. Each was small because the other covered for it; together they carry far more.",
+            "canvas": {
+              "values": {
+                "both": 0.6645
+              }
+            }
+          },
+          {
+            "id": "none",
+            "text": "Nothing: each one alone was dispensable",
+            "why": "Each alone was dispensable because its twin stayed. Remove both and cover is gone.",
+            "canvas": {
+              "values": {
+                "both": 0.6645
+              }
+            }
+          },
+          {
+            "id": "rise",
+            "text": "It rises, since two redundant columns only add noise",
+            "why": "Redundancy is not noise. Cover is the second strongest risk here.",
+            "canvas": {
+              "values": {
+                "both": 0.6645
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Why was each one's permutation importance small?"
+        },
+        {
+          "rung": "point",
+          "text": "When cover is shuffled, cover_ttm still tells the trees the cover.",
+          "highlight": [
+            "ttm",
+            "cov"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Remove both and no column says anything about cover."
+        }
+      ],
+      "feedback": {
+        "correct": "Correlated features split their importance, and their sum hides how much they carry together.",
+        "generic": "Not quite right. Ask what information is left once both columns are gone."
+      },
+      "explain": {
+        "text": "Dropping either one costs nothing: 0.7695 and 0.7655 against 0.760. Dropping both costs 9.5 points, to 0.6645. Refit without cover_ttm and cover's permutation importance jumps from 0.029 to 0.087.",
+        "canvas": {
+          "values": {
+            "both": 0.6645
+          },
+          "highlight": [
+            "both"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Shuffling the training rows",
+      "prose": "A colleague computes permutation importance on the 400 training loans instead of new ones, to save data. Their chart gives loan_id 0.080 and odd_day 0.064, both random columns.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "leverage",
+                "label": "leverage"
+              },
+              {
+                "id": "cover",
+                "label": "cover"
+              },
+              {
+                "id": "cover_ttm",
+                "label": "cover_ttm"
+              },
+              {
+                "id": "secured",
+                "label": "secured"
+              },
+              {
+                "id": "loan_id",
+                "label": "loan_id"
+              },
+              {
+                "id": "odd_day",
+                "label": "odd_day"
+              },
+              {
+                "id": "currency",
+                "label": "currency"
+              }
+            ],
+            "yLabel": "Drop, training loans",
+            "showValues": true,
+            "decimals": 3,
+            "yMin": -0.02,
+            "yMax": 0.3
+          },
+          "state": {
+            "values": {
+              "leverage": 0.2858,
+              "cover": 0.1542,
+              "cover_ttm": 0.1175,
+              "secured": 0.0387,
+              "loan_id": 0.08,
+              "odd_day": 0.064,
+              "currency": 0.0
+            }
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "leverage",
+                "label": "leverage"
+              },
+              {
+                "id": "cover",
+                "label": "cover"
+              },
+              {
+                "id": "cover_ttm",
+                "label": "cover_ttm"
+              },
+              {
+                "id": "secured",
+                "label": "secured"
+              },
+              {
+                "id": "loan_id",
+                "label": "loan_id"
+              },
+              {
+                "id": "odd_day",
+                "label": "odd_day"
+              },
+              {
+                "id": "currency",
+                "label": "currency"
+              }
+            ],
+            "yLabel": "Drop, new loans",
+            "showValues": true,
+            "decimals": 4,
+            "yMin": -0.02,
+            "yMax": 0.3
+          },
+          "state": {
+            "values": {
+              "leverage": 0.1608,
+              "cover": 0.0289,
+              "cover_ttm": 0.0146,
+              "secured": 0.0002,
+              "loan_id": -0.0078,
+              "odd_day": -0.0023,
+              "currency": 0.0
+            }
+          }
+        }
+      },
+      "question": "Why do the random columns look important on the training loans?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The trees memorised the training loans, partly through those columns, so shuffling them breaks the memory",
+            "correct": true
+          },
+          {
+            "id": "signal",
+            "text": "They carry a weak signal that only shows with fewer rows",
+            "why": "We generated them as pure noise. On 2,000 new loans their importance is at or below 0."
+          },
+          {
+            "id": "same",
+            "text": "The two charts agree; only the scale differs",
+            "why": "The ranking changes too: odd_day beats secured on the left and not on the right."
+          },
+          {
+            "id": "shuffle",
+            "text": "Shuffling 400 rows is too noisy to trust",
+            "why": "Ten shuffles of 400 rows give a standard error near 0.007. That cannot make 0.08 out of 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is a deep forest's accuracy on its own training loans?"
+        },
+        {
+          "rung": "point",
+          "text": "Leaves fitted on loan_id thresholds are right about those exact loans.",
+          "highlight": [
+            "left:loan_id",
+            "left:odd_day"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Training importance measures what the model memorised; test importance measures what generalises."
+        }
+      ],
+      "feedback": {
+        "correct": "Permute on held-out data, or you measure memory.",
+        "generic": "Not quite right. Ask what the forest knows about the training loans that it does not know about new ones.",
+        "byKey": {
+          "signal": "You read memorisation as signal. Both columns were generated as noise; on new loans they score 0 or below."
+        }
+      },
+      "explain": {
+        "text": "A deep forest scores 100% on its own training loans, partly by splits on loan_id and odd_day. Shuffling them breaks that memory, so they look useful. On new loans the same columns score −0.008 and −0.002.",
+        "canvas": {
+          "highlight": [
+            "left:loan_id",
+            "left:odd_day",
+            "right:loan_id",
+            "right:odd_day"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How the prediction moves",
+      "prose": "Importance says how much a feature matters, not how. **Partial dependence** does: set leverage to one value on all 2,000 new loans, average the forest's $P(\\text{default})$, and repeat across values.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.6,
+            2.6
+          ],
+          "y": [
+            0,
+            0.9
+          ],
+          "xLabel": "Leverage (z-score), set on every loan",
+          "yLabel": "Average $P(\\text{default})$",
+          "height": 300,
+          "grid": true
+        },
+        "state": {
+          "segments": [
+            {
+              "id": "s0",
+              "from": [
+                -2.5,
+                0.1641
+              ],
+              "to": [
+                -2.25,
+                0.1641
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s1",
+              "from": [
+                -2.25,
+                0.1641
+              ],
+              "to": [
+                -2.0,
+                0.1666
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s2",
+              "from": [
+                -2.0,
+                0.1666
+              ],
+              "to": [
+                -1.75,
+                0.1681
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s3",
+              "from": [
+                -1.75,
+                0.1681
+              ],
+              "to": [
+                -1.5,
+                0.1486
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s4",
+              "from": [
+                -1.5,
+                0.1486
+              ],
+              "to": [
+                -1.25,
+                0.1584
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s5",
+              "from": [
+                -1.25,
+                0.1584
+              ],
+              "to": [
+                -1.0,
+                0.1906
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s6",
+              "from": [
+                -1.0,
+                0.1906
+              ],
+              "to": [
+                -0.75,
+                0.2467
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s7",
+              "from": [
+                -0.75,
+                0.2467
+              ],
+              "to": [
+                -0.5,
+                0.2997
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s8",
+              "from": [
+                -0.5,
+                0.2997
+              ],
+              "to": [
+                -0.25,
+                0.3094
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s9",
+              "from": [
+                -0.25,
+                0.3094
+              ],
+              "to": [
+                0.0,
+                0.4349
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s10",
+              "from": [
+                0.0,
+                0.4349
+              ],
+              "to": [
+                0.25,
+                0.4841
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s11",
+              "from": [
+                0.25,
+                0.4841
+              ],
+              "to": [
+                0.5,
+                0.5075
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s12",
+              "from": [
+                0.5,
+                0.5075
+              ],
+              "to": [
+                0.75,
+                0.6722
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s13",
+              "from": [
+                0.75,
+                0.6722
+              ],
+              "to": [
+                1.0,
+                0.6641
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s14",
+              "from": [
+                1.0,
+                0.6641
+              ],
+              "to": [
+                1.25,
+                0.7076
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s15",
+              "from": [
+                1.25,
+                0.7076
+              ],
+              "to": [
+                1.5,
+                0.7317
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s16",
+              "from": [
+                1.5,
+                0.7317
+              ],
+              "to": [
+                1.75,
+                0.7498
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s17",
+              "from": [
+                1.75,
+                0.7498
+              ],
+              "to": [
+                2.0,
+                0.7651
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s18",
+              "from": [
+                2.0,
+                0.7651
+              ],
+              "to": [
+                2.25,
+                0.7651
+              ],
+              "colour": 1
+            },
+            {
+              "id": "s19",
+              "from": [
+                2.25,
+                0.7651
+              ],
+              "to": [
+                2.5,
+                0.7624
+              ],
+              "colour": 1
+            }
+          ],
+          "points": [
+            {
+              "id": "a",
+              "x": -1.0,
+              "y": 0.1906,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "b",
+              "x": 1.0,
+              "y": 0.6641,
+              "label": "",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "By how much does the average predicted default rise as leverage goes from −1 to +1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4735,
+        "tol": {
+          "abs": 0.02
+        },
+        "label": "Rise in average P(default)",
+        "placeholder": "decimal",
+        "accept": "About 0.47: from 0.19 at −1 to 0.66 at +1.",
+        "wrong": [
+          {
+            "id": "end",
+            "value": 0.6641,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "full",
+            "value": 0.5983,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the curve at the two marked points."
+        },
+        {
+          "rung": "point",
+          "text": "At $-1$ the curve is near 0.19; at $+1$ near 0.66.",
+          "highlight": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.664 - 0.191 = 0.473$."
+        }
+      ],
+      "feedback": {
+        "correct": "Most of leverage's effect sits between −1 and +1.",
+        "generic": "Not quite right. Subtract the curve's height at −1 from its height at +1.",
+        "byKey": {
+          "end": "0.66 is the height at +1. Subtract the height at −1.",
+          "full": "That is the rise across the whole range, −2.5 to 2.5. Read only −1 and +1."
+        }
+      },
+      "explain": {
+        "text": "The curve rises from 0.19 to 0.66 between −1 and +1, then flattens: trees cannot extrapolate past the leverage they saw. It is an average over the other features, so it hides effects that depend on them.",
+        "canvas": {
+          "highlight": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What importance measures",
+      "prose": "For a fitted model with test score $s$, shuffle feature $j$ in $K$ copies of the test data, scoring each $s_{k,j}$. Its permutation importance is $$I_j = s - \\frac{1}{K}\\sum_{k=1}^{K} s_{k,j}.$$ It measures what this model loses without $j$; not what $j$ is worth alone, and not what causes default.",
+      "question": "currency is 1 on every loan. Its importance under both methods is exactly 0. Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A constant column offers no split, and shuffling it changes nothing",
+            "correct": true
+          },
+          {
+            "id": "useless",
+            "text": "Currency is irrelevant to credit risk",
+            "why": "Currency could matter in a mixed book. Here it never varies, so no model can learn from it."
+          },
+          {
+            "id": "weak",
+            "text": "Its effect is too weak for a forest to detect",
+            "why": "There is nothing to detect: every value is the same."
+          },
+          {
+            "id": "cor",
+            "text": "It is perfectly correlated with leverage",
+            "why": "A constant has no correlation with anything; it never moves."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What split could a tree make on a column of all 1s?"
+        },
+        {
+          "rung": "point",
+          "text": "Shuffling a column of identical values gives the same column back."
+        },
+        {
+          "rung": "step",
+          "text": "Both methods need the column to vary."
+        }
+      ],
+      "feedback": {
+        "correct": "Never used, never missed.",
+        "generic": "Not quite right. Ask what a tree or a shuffle can do with a column that never varies."
+      },
+      "explain": {
+        "text": "A column that never varies is never split on and is unchanged by shuffling, so both methods give 0. A zero importance means this model never used the column. It does not mean the feature cannot matter elsewhere."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Which rank moved most",
+      "prose": "Automate the first comparison. Rank each list from largest to smallest, with ties kept in column order (`np.argsort(-imp, kind=\"stable\")`), and return the index of the feature whose rank moves most. On a tie, return the lowest index.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Feature",
+            "Impurity",
+            "Rank",
+            "Permutation",
+            "Rank"
+          ],
+          "rows": [
+            [
+              "leverage",
+              "0.3437",
+              "1",
+              "0.1608",
+              "1"
+            ],
+            [
+              "cover",
+              "0.2333",
+              "2",
+              "0.0289",
+              "2"
+            ],
+            [
+              "cover_ttm",
+              "0.2226",
+              "3",
+              "0.0146",
+              "3"
+            ],
+            [
+              "secured",
+              "0.0219",
+              "5",
+              "0.0002",
+              "4"
+            ],
+            [
+              "loan_id",
+              "0.1581",
+              "4",
+              "-0.0078",
+              "7"
+            ],
+            [
+              "odd_day",
+              "0.0203",
+              "6",
+              "-0.0023",
+              "6"
+            ],
+            [
+              "currency",
+              "0.0000",
+              "7",
+              "0.0000",
+              "5"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          }
+        }
+      },
+      "question": "Complete `importance_rank_change(imp_a, imp_b)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef ranks(imp):\n    \"\"\"Rank 0 for the largest value; ties keep column order.\"\"\"\n    order = np.argsort(-np.asarray(imp, dtype=float), kind=\"stable\")\n    r = np.empty(len(imp), dtype=int)\n    r[order] = ...\n    return r\n\ndef importance_rank_change(imp_a, imp_b):\n    moves = ...   # how far each feature's rank moves\n    return int(np.argmax(moves))   # argmax returns the first maximum\n",
+        "solution": "import numpy as np\n\ndef ranks(imp):\n    \"\"\"Rank 0 for the largest value; ties keep column order.\"\"\"\n    order = np.argsort(-np.asarray(imp, dtype=float), kind=\"stable\")\n    r = np.empty(len(imp), dtype=int)\n    r[order] = np.arange(len(imp))\n    return r\n\ndef importance_rank_change(imp_a, imp_b):\n    moves = np.abs(ranks(imp_a) - ranks(imp_b))   # how far each feature's rank moves\n    return int(np.argmax(moves))   # argmax returns the first maximum\n",
+        "examples": [
+          {
+            "call": "importance_rank_change([0.5, 0.3, 0.2], [0.2, 0.3, 0.5])",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "importance_rank_change([0.5, 0.3, 0.2], [0.2, 0.3, 0.5])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "importance_rank_change([0.3437, 0.2333, 0.2226, 0.0219, 0.1581, 0.0203, 0.0], [0.1608, 0.0289, 0.0146, 0.0002, -0.0078, -0.0023, 0.0])",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "importance_rank_change([0.1, 0.5, 0.2, 0.15], [0.1, 0.05, 0.2, 0.15])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "importance_rank_change([0.4, 0.3, 0.2, 0.1], [0.4, 0.3, 0.1, 0.25])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "importance_rank_change([0.4, 0.6], [0.4, 0.6])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "importance_rank_change([0.2, 0.2, 0.6], [0.6, 0.2, 0.2])",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, including the two charts from this lesson, identical lists and ties. Each answer is an index compared exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`order` lists the columns from largest to smallest; position in that list is the rank."
+        },
+        {
+          "rung": "point",
+          "text": "Put rank `k` at `order[k]`: `r[order] = np.arange(len(imp))`.",
+          "highlight": [
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`moves = np.abs(ranks(imp_a) - ranks(imp_b))`."
+        }
+      ],
+      "feedback": {
+        "correct": "On our charts it returns 4: loan_id, which falls from rank 4 to rank 7.",
+        "generic": "Some tests failed. Build the ranks with `r[order] = np.arange(len(imp))`, then take the largest absolute change."
+      },
+      "explain": {
+        "text": "`r[order] = np.arange(n)` turns a sort order into ranks. A big rank change between impurity and permutation importance is a flag for a high-cardinality or memorised column, here loan_id."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The research note",
+      "prose": "A research note ranks 30 features for a forest that predicts which stocks beat the market next month. The top feature by impurity importance, 0.14, is `ticker_code`, an integer id with 1,800 distinct values. The note recommends buying research on the top 5.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "t",
+              "label": "ticker_code"
+            },
+            {
+              "id": "m",
+              "label": "momentum"
+            },
+            {
+              "id": "v",
+              "label": "value"
+            },
+            {
+              "id": "q",
+              "label": "quality"
+            },
+            {
+              "id": "s",
+              "label": "size"
+            }
+          ],
+          "yLabel": "Impurity importance",
+          "showValues": true,
+          "decimals": 2,
+          "yMin": 0,
+          "yMax": 0.16
+        },
+        "state": {
+          "values": {
+            "t": 0.14,
+            "m": 0.11,
+            "v": 0.09,
+            "q": 0.07,
+            "s": 0.06
+          }
+        }
+      },
+      "question": "What should the desk do before acting on the note?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Recompute permutation importance on the walk-forward test blocks, and run an ablation table by dropping groups of features",
+            "correct": true
+          },
+          {
+            "id": "trust",
+            "text": "Trust it: the forest found that some tickers do better",
+            "why": "An id with 1,800 values offers trees endless thresholds. Impurity importance credits that memorising, as it did loan_id."
+          },
+          {
+            "id": "drop",
+            "text": "Drop ticker_code and keep the rest of the ranking as it is",
+            "why": "Removing the obvious offender does not fix the method. The other ranks are impurity ranks too, and correlated factors split their credit."
+          },
+          {
+            "id": "causal",
+            "text": "Read the top five as the causes of outperformance",
+            "why": "Importance measures what the model uses, not what causes returns."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which method was fooled by loan_id?"
+        },
+        {
+          "rung": "point",
+          "text": "Measure importance on data the model did not train on, in time order.",
+          "highlight": [
+            "t"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Permutation importance on walk-forward test blocks, plus ablation for correlated groups."
+        }
+      ],
+      "feedback": {
+        "correct": "Held-out permutation importance and ablation are the desk's standard.",
+        "generic": "Not quite right. Ask which method rewards a column with many distinct values."
+      },
+      "explain": {
+        "text": "On walk-forward test blocks, a memorised id scores near 0. Ablation, refitting without a group such as all value measures, shows what correlated features carry together. Neither says what causes returns."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Impurity importance, `feature_importances_`, credits each feature with its splits' share of impurity drop; it favours continuous and high-cardinality columns, even pure noise.",
+      "Permutation importance shuffles one column of held-out data and measures the fall in score; computed on training data it measures memorisation.",
+      "Correlated features split their importance, so dropping one costs little and dropping both a lot; partial dependence shows how a prediction moves, and none of this is causation."
+    ],
+    "formula": {
+      "name": "Permutation importance",
+      "tex": "I_j = s - \\frac{1}{K}\\sum_{k=1}^{K} s_{k,j}",
+      "note": "$s$ is the test score; $s_{k,j}$ is the score with feature $j$ shuffled, $K$ times."
+    },
+    "trap": "Reading impurity importance as predictive value: a random id column scored 0.158 and was worth nothing on new loans."
+  },
+  "quiz": [
+    {
+      "id": "q-interaction",
+      "difficulty": 3,
+      "prose": "A model predicts default from two features, A and B. Default is likely when exactly one of them is high, and unlikely when both are high or both low.",
+      "question": "What does partial dependence on A alone look like?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "flat",
+            "text": "Almost flat, even though A matters a lot",
+            "correct": true
+          },
+          {
+            "id": "rise",
+            "text": "Rising, since high A raises default",
+            "why": "High A raises default only when B is low; when B is high it lowers it. Averaged over B, the effects cancel."
+          },
+          {
+            "id": "zero-imp",
+            "text": "It shows A has zero importance",
+            "why": "Partial dependence is not importance. Shuffling A would hurt the model badly."
+          },
+          {
+            "id": "u",
+            "text": "U-shaped",
+            "why": "Averaging over B gives roughly the same value at every A."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An interaction can hide from a one-feature curve.",
+        "generic": "Not quite right. Average the effect of A over high and low B."
+      },
+      "explain": {
+        "text": "High A pushes default up when B is low and down when B is high; averaged over B these cancel. A's permutation importance is still large. Use a two-feature plot to see it."
+      }
+    },
+    {
+      "id": "q-drop-one",
+      "difficulty": 2,
+      "prose": "Two columns are nearly copies of each other. Each has a small permutation importance.",
+      "question": "What happens if you drop one of them?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "little",
+            "text": "Little changes: the other still carries the information",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "Accuracy falls by half of what dropping both would cost",
+            "why": "The survivor carries almost all of it, so dropping one costs about nothing."
+          },
+          {
+            "id": "lots",
+            "text": "Accuracy falls a lot",
+            "why": "That happens when both go. One copy is enough."
+          },
+          {
+            "id": "better",
+            "text": "Accuracy rises a lot",
+            "why": "It may rise a little, by noise; redundancy is not harmful enough to cost much."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One copy covers for the other.",
+        "generic": "Not quite right. Ask what information the remaining column still holds."
+      },
+      "explain": {
+        "text": "On our book, dropping cover_ttm moved accuracy from 0.760 to 0.7695: no loss. Dropping both cost 9.5 points."
+      }
+    },
+    {
+      "id": "q-cardinality",
+      "difficulty": 2,
+      "prose": "You add two columns of pure noise to a forest's data: one a random 0 or 1, one a random number with a different value on every row.",
+      "question": "Which gets more impurity importance?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cont",
+            "text": "The random number, because it offers many more thresholds to split on",
+            "correct": true
+          },
+          {
+            "id": "bin",
+            "text": "The random 0 or 1, because it splits rows cleanly in two",
+            "why": "One threshold is one chance to fit noise; a continuous column offers hundreds."
+          },
+          {
+            "id": "same",
+            "text": "Neither: noise gets 0",
+            "why": "Deep trees split on noise near their leaves, and impurity importance credits every split."
+          },
+          {
+            "id": "equal",
+            "text": "Both the same, since both are noise",
+            "why": "On our book odd_day got 0.020 and loan_id 0.158."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Many distinct values, many chances to chase noise.",
+        "generic": "Not quite right. Count the splits each column can offer."
+      },
+      "explain": {
+        "text": "Each distinct value is a candidate threshold. With 400 values, some threshold always lowers impurity a little in a small node. Permutation importance on new data scores both near 0."
+      }
+    },
+    {
+      "id": "q-where",
+      "difficulty": 2,
+      "prose": "You want permutation importances for a forest you will trade.",
+      "question": "Which data should you shuffle?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "test",
+            "text": "Held-out data the model never trained on, in time order",
+            "correct": true
+          },
+          {
+            "id": "train",
+            "text": "The training data, since it is larger",
+            "why": "On training data a deep forest has memorised the rows, so random columns look important."
+          },
+          {
+            "id": "all",
+            "text": "Training and test data together",
+            "why": "The training part brings the memorisation back in."
+          },
+          {
+            "id": "oob",
+            "text": "Any data, since importance is a property of the features",
+            "why": "Importance belongs to a model and a dataset. Use data the model has not seen."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Shuffle what the model never saw.",
+        "generic": "Not quite right. Recall what loan_id scored on the training loans."
+      },
+      "explain": {
+        "text": "On the training loans loan_id scored 0.080; on new loans −0.008. Use held-out, time-ordered data, such as the walk-forward test blocks."
+      }
+    }
+  ]
+}

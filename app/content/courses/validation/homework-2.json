@@ -1,0 +1,455 @@
+{
+  "id": "homework-2",
+  "course": "validation",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-shuffle",
+      "difficulty": 3,
+      "skills": [
+        "vl-time",
+        "vl-leakage"
+      ],
+      "prose": "Two features for a next-day volatility model: (a) the 20-day average volatility up to today; (b) a fresh random number each day. The target's lag-1 autocorrelation is 0.95. A 5-neighbour model is scored by shuffled 5-fold CV.",
+      "question": "With which feature does shuffling inflate the score more?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "(a): neighbouring days have almost the same 20-day average, so the model finds them and copies their targets",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "(b): random features always leak",
+            "why": "A random feature gives the model no way to find a test day's neighbours."
+          },
+          {
+            "id": "same",
+            "text": "Equally: the target is what matters",
+            "why": "The target's stickiness is needed, but the model also has to find the neighbours through the features."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Leak needs both a sticky target and features that locate the neighbours.",
+        "generic": "Not quite right. Ask which feature lets the model find yesterday and tomorrow."
+      },
+      "explain": {
+        "text": "With (a) a test day's nearest rows in feature space are its neighbours in time, whose targets nearly equal its own. With (b) the nearest rows are random days, so there is nothing to copy."
+      }
+    },
+    {
+      "id": "h-table",
+      "difficulty": 3,
+      "skills": [
+        "vl-time"
+      ],
+      "prose": "`TimeSeriesSplit(n_splits=4, test_size=50, gap=4)` on 400 rows numbered from 0.",
+      "question": "Fill in each fold's last training row and first test row.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Fold",
+          "Train last row",
+          "Test first row"
+        ],
+        "rows": [
+          [
+            "1",
+            {
+              "edit": true,
+              "answer": 195,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 200,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 245,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 250,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 295,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 300,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 345,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 350,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Tests start at 200, 250, 300 and 350; training stops 5 rows earlier.",
+        "generic": "Not quite right. The first test starts at $400 - 4 \\times 50$; training ends `gap + 1` rows before each test start."
+      },
+      "explain": {
+        "text": "The first test block starts at $400 - 4 \\times 50 = 200$. With `gap=4`, rows 196 to 199 are dropped, so training ends at 195. Each later fold shifts by 50."
+      }
+    },
+    {
+      "id": "h-count",
+      "difficulty": 4,
+      "skills": [
+        "vl-leakage",
+        "vl-cv"
+      ],
+      "prose": "Blocked 10-fold CV on 1,000 rows with a 20-day forward label and an embargo of 10. Take a block in the middle.",
+      "question": "How many rows train the model for that block?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 852,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "852: $1000 - 100 - 19 - 19 - 10$.",
+        "label": "Training rows",
+        "unit": "rows",
+        "wrong": [
+          {
+            "id": "nopurge",
+            "value": 900,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "h",
+            "value": 850,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "noemb",
+            "value": 862,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "100 test rows, 38 purged and 10 embargoed leave 852.",
+        "generic": "Not quite right. Remove the block, $h - 1$ rows on each side, then the embargo.",
+        "byKey": {
+          "nopurge": "900 removes only the test block.",
+          "h": "You removed 20 rows a side. A 20-day label overlaps 19.",
+          "noemb": "You left out the embargo of 10."
+        }
+      },
+      "explain": {
+        "text": "A 20-day label overlaps on 19 rows each side, and the embargo adds 10 after the block. That leaves $1000 - 100 - 38 - 10 = 852$, with 15% of the data gone for every fold."
+      }
+    },
+    {
+      "id": "h-z",
+      "difficulty": 4,
+      "skills": [
+        "vl-time"
+      ],
+      "prose": "A signal hit 58% in each of four walk-forward folds of 250 days. The fifth fold hits 47%. The base rate is 51%.",
+      "question": "How many standard errors below the base rate is the fifth fold? Use $p = 0.5$; give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1.3,
+        "tol": {
+          "abs": 0.1
+        },
+        "accept": "-1.3: $(0.47 - 0.51)/\\sqrt{0.25/250}$.",
+        "label": "Standard errors",
+        "placeholder": "a negative number",
+        "wrong": [
+          {
+            "id": "from58",
+            "value": -3.5,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 1.3 below the base rate, and 3.5 below its own earlier level.",
+        "generic": "Not quite right. Divide $0.47 - 0.51$ by $\\sqrt{0.25/250}$.",
+        "byKey": {
+          "from58": "You measured from the earlier 58%. The question asks about the base rate."
+        }
+      },
+      "explain": {
+        "text": "The standard error is about 0.032, so 47% is 1.3 below the base rate: not a loss you could prove. But it is 3.5 below the earlier 58%, a large fall. Watch the next fold before switching off."
+      }
+    },
+    {
+      "id": "h-pks",
+      "difficulty": 4,
+      "skills": [
+        "vl-leakage",
+        "vl-cv"
+      ],
+      "prose": "Build every fold of a purged k-fold, as López de Prado describes it: blocks in time, each with its own purge and embargo.",
+      "question": "Complete `purged_kfold_splits(n, n_splits, h, embargo)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def purged_kfold_splits(n, n_splits, h, embargo):\n    \"\"\"Blocked k-fold in time order, as KFold(n_splits) without shuffling\n    cuts it (the first n % n_splits blocks get one extra row). For each\n    block return (train, test) as lists, where train drops h - 1 rows on\n    each side of the block and `embargo` more rows after it.\"\"\"\n    ...\n",
+        "solution": "def purged_kfold_splits(n, n_splits, h, embargo):\n    \"\"\"Blocked k-fold in time order, as KFold(n_splits) without shuffling\n    cuts it (the first n % n_splits blocks get one extra row). For each\n    block return (train, test) as lists, where train drops h - 1 rows on\n    each side of the block and `embargo` more rows after it.\"\"\"\n    sizes = [n // n_splits + (1 if k < n % n_splits else 0) for k in range(n_splits)]\n    folds, start = [], 0\n    for size in sizes:\n        s, e = start, start + size\n        lo = max(0, s - (h - 1))\n        hi = min(n, e + (h - 1) + embargo)\n        folds.append((list(range(0, lo)) + list(range(hi, n)), list(range(s, e))))\n        start = e\n    return folds\n",
+        "examples": [
+          {
+            "call": "[[len(tr), te[0], te[-1], tr[:3], tr[-3:]] for tr, te in purged_kfold_splits(100, 5, 5, 0)]",
+            "expect": "[[76, 0, 19, [24, 25, 26], [97, 98, 99]], [72, 20, 39, [0, 1, 2], [97, 98, 99]], [72, 40, 59, [0, 1, 2], [97, 98, 99]], [72, 60, 79, [0, 1, 2], [97, 98, 99]], [76, 80, 99, [0, 1, 2], [73, 74, 75]]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[[len(tr), te[0], te[-1], tr[:3], tr[-3:]] for tr, te in purged_kfold_splits(100, 5, 5, 0)]",
+            "expect": "[[76, 0, 19, [24, 25, 26], [97, 98, 99]], [72, 20, 39, [0, 1, 2], [97, 98, 99]], [72, 40, 59, [0, 1, 2], [97, 98, 99]], [72, 60, 79, [0, 1, 2], [97, 98, 99]], [76, 80, 99, [0, 1, 2], [73, 74, 75]]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[len(tr), te[0], te[-1], tr[:3], tr[-3:]] for tr, te in purged_kfold_splits(100, 5, 5, 3)]",
+            "expect": "[[73, 0, 19, [27, 28, 29], [97, 98, 99]], [69, 20, 39, [0, 1, 2], [97, 98, 99]], [69, 40, 59, [0, 1, 2], [97, 98, 99]], [69, 60, 79, [0, 1, 2], [97, 98, 99]], [76, 80, 99, [0, 1, 2], [73, 74, 75]]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[len(tr), te[0], te[-1], tr[:3], tr[-3:]] for tr, te in purged_kfold_splits(103, 5, 3, 2)]",
+            "expect": "[[78, 0, 20, [25, 26, 27], [100, 101, 102]], [76, 21, 41, [0, 1, 2], [100, 101, 102]], [76, 42, 62, [0, 1, 2], [100, 101, 102]], [77, 63, 82, [0, 1, 2], [100, 101, 102]], [81, 83, 102, [0, 1, 2], [78, 79, 80]]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[len(tr), te[0], te[-1], tr[:3], tr[-3:]] for tr, te in purged_kfold_splits(60, 3, 1, 0)]",
+            "expect": "[[40, 0, 19, [20, 21, 22], [57, 58, 59]], [40, 20, 39, [0, 1, 2], [57, 58, 59]], [40, 40, 59, [0, 1, 2], [37, 38, 39]]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[len(tr), te[0], te[-1], tr[:3], tr[-3:]] for tr, te in purged_kfold_splits(50, 5, 10, 20)]",
+            "expect": "[[11, 0, 9, [39, 40, 41], [47, 48, 49]], [2, 10, 19, [0, 49], [0, 49]], [11, 20, 29, [0, 1, 2], [8, 9, 10]], [21, 30, 39, [0, 1, 2], [18, 19, 20]], [31, 40, 49, [0, 1, 2], [28, 29, 30]]]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, including uneven blocks and an embargo longer than a block. Each fold is summarised by its training size, test range, and first and last three training rows, and compared exactly with sets built from scikit-learn's `KFold` blocks. Pure Python: nothing to load."
+      },
+      "feedback": {
+        "correct": "Every block gets its own purge and embargo.",
+        "generic": "Some tests failed. For `(100, 5, 5, 0)` the first block is rows 0 to 19 and trains on 76 rows."
+      },
+      "explain": {
+        "text": "The block sizes follow `KFold`: the first `n % n_splits` blocks get one extra row. Each block then drops $h - 1$ rows on each side and the embargo after it, clipped at the ends of the data."
+      }
+    },
+    {
+      "id": "h-honest",
+      "difficulty": 5,
+      "skills": [
+        "vl-time",
+        "vl-leakage",
+        "vl-cv"
+      ],
+      "prose": "The full honest walk-forward. `make_hw(seed)` gives 1,200 days of returns with a slowly drifting mean: features are 5- and 20-day average returns, and `y` is the 5-day forward return.",
+      "question": "Complete `honest_walk_forward(X, y, h, n_splits, embargo)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef _ma(v, w):\n    c = np.cumsum(np.insert(v, 0, 0.0))\n    out = np.full(len(v), np.nan)\n    out[w - 1:] = (c[w:] - c[:-w]) / w\n    return out\n\ndef make_hw(seed=0, n=1200, h=5):\n    \"\"\"Daily returns in % with a slowly drifting mean. X: 5- and 20-day\n    average returns up to day t. y: the sum of returns over t+1 to t+h.\"\"\"\n    rng = np.random.default_rng(seed)\n    N = n + 20 + h\n    e = rng.normal(0, 1, N)\n    m = np.empty(N)\n    m[0] = 0.15 * e[0]\n    for t in range(1, N):\n        m[t] = 0.99 * m[t - 1] + 0.15 * np.sqrt(1 - 0.99 ** 2) * e[t]\n    r = m + rng.normal(0, 1, N)\n    X = np.column_stack([_ma(r, w)[19:19 + n] for w in (5, 20)])\n    y = np.array([r[t + 1:t + 1 + h].sum() for t in range(19, 19 + n)])\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.linear_model import Ridge\n\ndef honest_walk_forward(X, y, h, n_splits, embargo):\n    \"\"\"Expanding walk-forward with Ridge(alpha=1.0). y[t] is an h-day\n    forward label, so purge h - 1 rows before each test block and leave\n    `embargo` more. Join the test blocks and return\n    (hit_rate, base_rate, mse), each rounded to 4 places. A hit is a\n    prediction with the same sign as the label (> 0 counts as up); the\n    base rate is the hit rate of always calling the more common sign.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.linear_model import Ridge\n\ndef honest_walk_forward(X, y, h, n_splits, embargo):\n    \"\"\"Expanding walk-forward with Ridge(alpha=1.0). y[t] is an h-day\n    forward label, so purge h - 1 rows before each test block and leave\n    `embargo` more. Join the test blocks and return\n    (hit_rate, base_rate, mse), each rounded to 4 places. A hit is a\n    prediction with the same sign as the label (> 0 counts as up); the\n    base rate is the hit rate of always calling the more common sign.\"\"\"\n    cv = TimeSeriesSplit(n_splits=n_splits, gap=h - 1 + embargo)\n    preds, actual = [], []\n    for train, test in cv.split(X):\n        model = Ridge(alpha=1.0).fit(X[train], y[train])\n        preds.append(model.predict(X[test]))\n        actual.append(y[test])\n    p, a = np.concatenate(preds), np.concatenate(actual)\n    hit = np.mean((p > 0) == (a > 0))\n    up = np.mean(a > 0)\n    base = max(up, 1 - up)\n    mse = np.mean((p - a) ** 2)\n    return round(float(hit), 4), round(float(base), 4), round(float(mse), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_hw(0)",
+            "call": "list(honest_walk_forward(X, y, 5, 10, 5))",
+            "expect": "[0.5486, 0.5908, 5.5583]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_hw(0)",
+            "call": "list(honest_walk_forward(X, y, 5, 10, 5))",
+            "expect": "[0.5486, 0.5908, 5.5583]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_hw(0)",
+            "call": "list(honest_walk_forward(X, y, 5, 10, 0))",
+            "expect": "[0.5495, 0.5908, 5.4992]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_hw(2)",
+            "call": "list(honest_walk_forward(X, y, 5, 8, 2))",
+            "expect": "[0.5686, 0.6165, 5.3055]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_hw(5, h=10)",
+            "call": "list(honest_walk_forward(X, y, 10, 6, 5))",
+            "expect": "[0.5468, 0.5916, 14.6112]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_hw(3, h=1)",
+            "call": "list(honest_walk_forward(X, y, 1, 10, 0))",
+            "expect": "[0.5321, 0.5349, 1.0433]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_hw(seed, h=...)`, already defined, with horizons 1, 5 and 10. Each triple is compared with math.isclose against the solution run in this browser's scikit-learn 1.6.1. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "For seed 0 the model hits 54.9% against a base rate of 59.1%: always calling \"up\" beats it.",
+        "generic": "Some tests failed. For `make_hw(0)`, $h = 5$, 10 splits and embargo 5 the answer is [0.5486, 0.5908, 5.5583]."
+      },
+      "explain": {
+        "text": "`TimeSeriesSplit(gap=h - 1 + embargo)` purges and embargoes in one argument, because walk-forward has training rows only before each block. The hit rate of 54.9% looks like an edge until the base rate, 59.1%, says otherwise."
+      }
+    },
+    {
+      "id": "h-order",
+      "difficulty": 4,
+      "skills": [
+        "vl-time",
+        "vl-leakage"
+      ],
+      "prose": "Purged walk-forward validation for an $h$-day forward-return signal.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "label",
+            "text": "Build the label $y_t = p_{t+h}/p_t - 1$ and drop the last $h$ rows, which have none"
+          },
+          {
+            "id": "feat",
+            "text": "Build each day's features from data up to that day only"
+          },
+          {
+            "id": "split",
+            "text": "Cut time-ordered folds with `TimeSeriesSplit(gap=h - 1 + embargo)`"
+          },
+          {
+            "id": "fit",
+            "text": "In each fold, fit the model and any scaling on the training rows only"
+          },
+          {
+            "id": "pred",
+            "text": "Predict the fold's test block and keep the predictions"
+          },
+          {
+            "id": "score",
+            "text": "Join all test blocks and score them once, against the base rate"
+          }
+        ],
+        "answer": [
+          "label",
+          "feat",
+          "split",
+          "fit",
+          "pred",
+          "score"
+        ],
+        "same": [
+          [
+            "label",
+            "feat"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Data first, then folds, then fit inside each fold, then one score.",
+        "generic": "Not quite right. You cannot cut folds before the rows exist, or score before every block is predicted."
+      },
+      "explain": {
+        "text": "Label and features can be built in either order, but both come before the split. Fitting, including any scaling, happens inside each fold. The joined predictions are scored once, beside the base rate."
+      }
+    },
+    {
+      "id": "h-note",
+      "difficulty": 5,
+      "skills": [
+        "vl-time",
+        "vl-leakage",
+        "vl-cv"
+      ],
+      "kind": "longform",
+      "prompt": "A colleague's backtest note: \"Gradient-boosted trees on 2,000 days of one stock. Features: 5-, 20- and 60-day moving averages of returns and volume. Label: the 20-day forward return. Validation: `KFold(5, shuffle=True)`. Result: mean fold $R^2$ of 0.18 and hit rate 64%. Recommend trading.\"\n\nWrite the review you would send back. Say what is wrong, how large each inflation is likely to be and in which direction, and exactly what you would run instead and report.",
+      "model": "**What is wrong.**\n\n1. **Shuffled folds on autocorrelated data.** The features are moving averages, so neighbouring days look almost identical to the model, and trees can isolate them. A shuffled test day has its yesterday and tomorrow in training.\n2. **Overlapping labels with no purge.** A 20-day forward return on day $t$ shares 19 days with the label on day $t + 1$. Neighbouring labels are about 95% the same, so copying a neighbour's label nearly gives the answer. With shuffling this affects almost every test day, not just block edges.\n3. **Mean of fold scores.** Five shuffled folds are similar in size, so this is the smallest problem, but a walk-forward should report the joined out-of-sample series anyway.\n4. **No baseline.** A 64% hit rate means nothing without the share of up periods. A stock that rose over the sample can give 55% to 60% for always calling up.\n\n**How large.** The shuffle plus overlap leak is the big one. With 20-day overlapping labels a flexible model can reach a high $R^2$ from pure noise; on daily returns any honest $R^2$ above 0.01 would be remarkable, so 0.18 is almost certainly mostly leak. Expect the honest $R^2$ near 0 or negative and the hit rate near the base rate. In this level's volatility data, purging a 20-day label in blocked folds raised the error by about 40%; shuffling makes it worse.\n\n**What to run.** Walk forward with `TimeSeriesSplit(n_splits=..., gap=19)` (purge $h - 1 = 19$ rows; add an embargo if any feature uses future data), refitting the trees in each fold on past rows only. Join the out-of-sample predictions and report the $R^2$, the MSE, and the hit rate beside the base rate, for the whole period and the latest year. Show fold scores in time order and check for a break. If several models or settings were tried, say how many.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Identifies shuffled folds on autocorrelated, smoothed features as letting the model see neighbouring days"
+        },
+        {
+          "points": 2,
+          "text": "Identifies the 20-day overlapping label with no purge, and that 19 neighbouring rows share label days"
+        },
+        {
+          "points": 2,
+          "text": "Says the inflation is large and upward: an honest daily R² near zero, hit rate near the base rate"
+        },
+        {
+          "points": 1,
+          "text": "Notes the hit rate has no base rate for comparison"
+        },
+        {
+          "points": 2,
+          "text": "Prescribes walk-forward with gap = 19 (and an embargo if needed), refitting per fold on past data only"
+        },
+        {
+          "points": 1,
+          "text": "Asks for the joined out-of-sample score, fold scores in time order, and the number of variants tried"
+        }
+      ]
+    }
+  ]
+}

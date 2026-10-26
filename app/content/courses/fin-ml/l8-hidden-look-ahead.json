@@ -1,0 +1,1406 @@
+{
+  "id": "l8-hidden-look-ahead",
+  "course": "fin-ml",
+  "title": "Features with hidden look-ahead",
+  "minutes": 15,
+  "objectives": [
+    "Find look-ahead hidden in a feature pipeline.",
+    "Fix it with trailing windows, publication-date joins and point-in-time data."
+  ],
+  "skills": [
+    "fm-features",
+    "fm-eval"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A line that knew",
+      "prose": "A share sits at £100 until news on day 21 lifts it to £110. Two 5-day moving averages: one **trailing** (days $t - 4$ to $t$), one **centred** (days $t - 2$ to $t + 2$).",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "x": "index",
+          "indexFrom": 1,
+          "money": "£",
+          "xLabel": "Day",
+          "y": [
+            98,
+            112
+          ],
+          "series": [
+            {
+              "id": "px",
+              "label": "Price",
+              "values": [
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0
+              ],
+              "thin": true
+            },
+            {
+              "id": "tr",
+              "label": "trailing",
+              "values": [
+                null,
+                null,
+                null,
+                null,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                102.0,
+                104.0,
+                106.0,
+                108.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0
+              ],
+              "colour": 2
+            },
+            {
+              "id": "ce",
+              "label": "centred",
+              "values": [
+                null,
+                null,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                100.0,
+                102.0,
+                104.0,
+                106.0,
+                108.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                110.0,
+                null,
+                null
+              ],
+              "colour": 3
+            }
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "news",
+              "i": 20,
+              "series": "px",
+              "label": "news"
+            }
+          ]
+        }
+      },
+      "question": "On which day does the centred average first rise above £100?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a day number",
+        "accept": "19",
+        "wrong": [
+          {
+            "id": "trailing",
+            "value": 21,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "end",
+            "value": 23,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Day 19's centred window is days 17 to 21."
+        },
+        {
+          "rung": "point",
+          "text": "Day 21 is the first £110 day.",
+          "highlight": [
+            "ce",
+            "news"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So the centred mean moves on day 19, two days before the news."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The centred line rises on day 19, two days before the news it averages in.",
+        "generic": "Not quite. Write out which days each centred window covers.",
+        "byKey": {
+          "trailing": "That is the trailing line, which rises on the news day itself. The centred one moves earlier.",
+          "end": "Day 23 is when the centred window holds three £110 days. It first rises earlier."
+        }
+      },
+      "explain": {
+        "text": "A centred window includes days after $t$. On day 19 it already holds day 21's price, so a model using it reacts to news before the news. That is **look-ahead**: a feature using data not yet known when it is dated.",
+        "canvas": {
+          "highlight": [
+            "ce"
+          ],
+          "markers": {
+            "m19": {
+              "i": 18,
+              "series": "ce",
+              "label": "day 19"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Count the look-ahead",
+      "prose": "In pandas, `rolling(w, center=True)` puts each window's mean at its middle. The window at $t$ then reaches $(w - 1)/2$ days ahead, rounded down. Count the positions where a centred value exists and looks ahead.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$w$",
+            "Window at $t$",
+            "Days ahead"
+          ],
+          "rows": [
+            [
+              "5",
+              "$t - 2$ to $t + 2$",
+              "2"
+            ],
+            [
+              "4",
+              "$t - 2$ to $t + 1$",
+              "1"
+            ],
+            [
+              "2",
+              "$t - 1$ to $t$",
+              "0"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `trailing_vs_centred(x, w)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef trailing_vs_centred(x, w):\n    s = pd.Series(x, dtype=float)\n    trailing = s.rolling(w).mean()\n    centred = ...                 # pandas' centred window\n    ahead = (w - 1) // 2          # future days inside each centred window\n    n_future = ...                # positions where centred exists and looks ahead\n    return trailing.to_numpy(), centred.to_numpy(), n_future\n",
+        "solution": "import pandas as pd\n\ndef trailing_vs_centred(x, w):\n    s = pd.Series(x, dtype=float)\n    trailing = s.rolling(w).mean()\n    centred = s.rolling(w, center=True).mean()\n    ahead = (w - 1) // 2          # future days inside each centred window\n    n_future = int(centred.notna().sum()) if ahead > 0 else 0\n    return trailing.to_numpy(), centred.to_numpy(), n_future\n",
+        "examples": [
+          {
+            "call": "trailing_vs_centred(x10, 5)[2]",
+            "expect": "6"
+          }
+        ],
+        "tests": [
+          {
+            "call": "trailing_vs_centred(x10, 5)[2]",
+            "expect": "6"
+          },
+          {
+            "call": "np.round(trailing_vs_centred(x10, 5)[0][4:], 6).tolist()",
+            "expect": "[5.0, 8.0, 12.0, 17.0, 23.0, 30.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.round(trailing_vs_centred(x10, 5)[1][2:8], 6).tolist()",
+            "expect": "[5.0, 8.0, 12.0, 17.0, 23.0, 30.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "int(np.isnan(trailing_vs_centred(x10, 5)[1]).sum())",
+            "expect": "4"
+          },
+          {
+            "call": "trailing_vs_centred(x10, 4)[2]",
+            "expect": "7"
+          },
+          {
+            "call": "trailing_vs_centred(x10, 2)[2]",
+            "expect": "0"
+          },
+          {
+            "call": "trailing_vs_centred(x10, 1)[2]",
+            "expect": "0"
+          },
+          {
+            "call": "bool(np.allclose(trailing_vs_centred(x10, 5)[1][2:8], trailing_vs_centred(x10, 5)[0][4:]))",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on a 10-day list `x10`, already defined: exact counts for $w = 5, 4, 2, 1$, both averages rounded to 6 places, and a test that the centred mean is the trailing one moved back. The first run loads pandas, which takes a few seconds.",
+        "prelude": "import numpy as np\nx10 = [1, 2, 4, 7, 11, 16, 22, 29, 37, 46]\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`center=True` is an argument to `rolling`."
+        },
+        {
+          "rung": "point",
+          "text": "Every centred value that exists looks ahead, unless `ahead` is 0.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`s.rolling(w, center=True).mean()` and `int(centred.notna().sum()) if ahead > 0 else 0`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. With $w = 5$ all 6 centred values look 2 days ahead; with $w = 2$ pandas' window is trailing.",
+        "generic": "Some tests failed. Every existing centred value looks ahead exactly when $(w - 1)//2 > 0$."
+      },
+      "explain": {
+        "text": "The centred mean is the trailing mean moved back $(w - 1)//2$ days, which is why the last test passes. Moving a feature earlier is look-ahead by definition. pandas' 2-day 'centred' window happens to be trailing, an edge case worth knowing.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When was it known?",
+      "prose": "A company's quarter ends on 31 March 2024 (the last trading day is 28 March). It reports earnings after the close on 7 May. The feature 'last quarter's earnings growth' changes when the report lands.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "x": "dates",
+          "dates": [
+            "2024-03-18",
+            "2024-03-19",
+            "2024-03-20",
+            "2024-03-21",
+            "2024-03-22",
+            "2024-03-25",
+            "2024-03-26",
+            "2024-03-27",
+            "2024-03-28",
+            "2024-03-29",
+            "2024-04-01",
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17",
+            "2024-04-18",
+            "2024-04-19",
+            "2024-04-22",
+            "2024-04-23",
+            "2024-04-24",
+            "2024-04-25",
+            "2024-04-26",
+            "2024-04-29",
+            "2024-04-30",
+            "2024-05-01",
+            "2024-05-02",
+            "2024-05-03",
+            "2024-05-06",
+            "2024-05-07",
+            "2024-05-08",
+            "2024-05-09",
+            "2024-05-10",
+            "2024-05-13",
+            "2024-05-14",
+            "2024-05-15",
+            "2024-05-16",
+            "2024-05-17"
+          ],
+          "money": "£",
+          "series": [
+            {
+              "id": "px",
+              "label": "Price",
+              "values": [
+                244.84,
+                240.94,
+                237.04,
+                236.04,
+                229.58,
+                229.06,
+                226.45,
+                228.89,
+                231.53,
+                235.43,
+                237.61,
+                237.46,
+                239.92,
+                244.29,
+                242.39,
+                244.17,
+                244.04,
+                248.3,
+                245.82,
+                244.93,
+                245.99,
+                246.76,
+                241.95,
+                243.0,
+                242.65,
+                241.96,
+                241.51,
+                242.14,
+                236.92,
+                241.38,
+                238.89,
+                232.55,
+                232.32,
+                236.42,
+                234.96,
+                239.37,
+                243.89,
+                241.37,
+                234.34,
+                230.89,
+                234.2,
+                231.92,
+                227.75,
+                224.13,
+                224.13
+              ]
+            }
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "qe",
+              "i": 8,
+              "series": "px",
+              "label": "quarter end"
+            },
+            {
+              "id": "rep",
+              "i": 36,
+              "series": "px",
+              "label": "report, after close"
+            },
+            {
+              "id": "next",
+              "i": 37,
+              "series": "px",
+              "label": "8 May",
+              "below": true
+            }
+          ],
+          "shade": [
+            {
+              "id": "gap",
+              "from": 8,
+              "to": 36,
+              "label": "not yet known",
+              "tone": "neg"
+            }
+          ]
+        }
+      },
+      "question": "Tap the first day a model could trade on the new figure.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "next"
+        ],
+        "max": 1,
+        "countWord": "markers"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The report arrives after the market has closed."
+        },
+        {
+          "rung": "point",
+          "text": "No trade on 7 May can use a number published after that close.",
+          "highlight": [
+            "rep",
+            "next"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first open after the report is 8 May."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. 8 May is the first session after the report.",
+        "generic": "Not quite. Ask when the number reached the market.",
+        "byKey": {
+          "qe": "You tapped the quarter end. The quarter's earnings exist then but nobody outside the company knows them for five weeks.",
+          "rep": "You tapped the report day. It came after the close, so 7 May's trading could not use it."
+        }
+      },
+      "explain": {
+        "text": "Dating the feature at the quarter end hands the model 27 business days of knowledge it did not have. The fix is to date every figure by its publication time, then join on that date. After-close releases count from the next session.",
+        "canvas": {
+          "highlight": [
+            "gap",
+            "next"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Join on the publication date",
+      "prose": "Two quarters of earnings per share, £1.20 and £1.35, with their quarter ends and publication dates (`eps`, `pubs`), and a daily index `days`. Each day should carry the latest figure **published** on or before it.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quarter end",
+            "EPS (£)",
+            "Published"
+          ],
+          "rows": [
+            [
+              "31 Dec 2023",
+              "1.20",
+              "15 Feb 2024"
+            ],
+            [
+              "31 Mar 2024",
+              "1.35",
+              "8 May 2024"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `publication_lag_join` so 1 April still shows £1.20.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef publication_lag_join(features_by_quarter_end, pub_dates, daily_index):\n    # re-date each value by its publication date\n    by_pub = pd.Series(features_by_quarter_end.values,\n                       index=pd.DatetimeIndex(pub_dates.loc[features_by_quarter_end.index].values))\n    by_pub = by_pub.sort_index()\n    return ...   # the latest value published on or before each day of daily_index\n",
+        "solution": "import pandas as pd\n\ndef publication_lag_join(features_by_quarter_end, pub_dates, daily_index):\n    # re-date each value by its publication date\n    by_pub = pd.Series(features_by_quarter_end.values,\n                       index=pd.DatetimeIndex(pub_dates.loc[features_by_quarter_end.index].values))\n    by_pub = by_pub.sort_index()\n    return by_pub.reindex(daily_index, method='ffill')\n",
+        "examples": [
+          {
+            "call": "float(publication_lag_join(eps, pubs, days).loc['2024-04-01'])",
+            "expect": "1.2"
+          }
+        ],
+        "tests": [
+          {
+            "call": "int(publication_lag_join(eps, pubs, days).isna().sum())",
+            "expect": "3"
+          },
+          {
+            "call": "float(publication_lag_join(eps, pubs, days).loc['2024-02-15'])",
+            "expect": "1.2"
+          },
+          {
+            "call": "float(publication_lag_join(eps, pubs, days).loc['2024-04-01'])",
+            "expect": "1.2"
+          },
+          {
+            "call": "float(publication_lag_join(eps, pubs, days).loc['2024-05-07'])",
+            "expect": "1.2"
+          },
+          {
+            "call": "float(publication_lag_join(eps, pubs, days).loc['2024-05-08'])",
+            "expect": "1.35"
+          },
+          {
+            "call": "len(publication_lag_join(eps, pubs, days))",
+            "expect": "65"
+          },
+          {
+            "call": "int((publication_lag_join(eps, pubs, days) == 1.2).sum())",
+            "expect": "59"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on `eps`, `pubs` and `days`, already defined: the NaN days before the first report, values on four dates, the length, and how many days carry £1.20. The first run loads pandas, which takes a few seconds.",
+        "prelude": "import numpy as np\nimport pandas as pd\n\nqe = pd.to_datetime(['2023-12-31', '2024-03-31'])\neps = pd.Series([1.20, 1.35], index=qe)\npubs = pd.Series(pd.to_datetime(['2024-02-15', '2024-05-08']), index=qe)\ndays = pd.bdate_range('2024-02-12', '2024-05-10')\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`by_pub` is indexed by publication date and sorted."
+        },
+        {
+          "rung": "point",
+          "text": "Each day needs the last published value at or before it: a forward fill.",
+          "highlight": [
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`by_pub.reindex(daily_index, method='ffill')`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. 1 April and 7 May show £1.20; £1.35 appears on 8 May.",
+        "generic": "Some tests failed. Reindex the publication-dated series onto `daily_index`, filling forward."
+      },
+      "explain": {
+        "text": "Forward-filling from publication dates means a value appears only once it was public. Joining on quarter end instead would show £1.35 from 1 April, 27 business days early. Before the first report the feature is honestly missing.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The direction of an as-of join",
+      "prose": "`pd.merge_asof(left, right, on='time')` gives each left row the right row 'as of' its time. With `direction='backward'` (the default) that is the last right row at or before; `'forward'` takes the next one after, which is the future. Write the backward rule by hand.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Left time",
+            "Backward",
+            "Forward"
+          ],
+          "rows": [
+            [
+              "1",
+              "none",
+              "a (at 2)"
+            ],
+            [
+              "5",
+              "b (at 4)",
+              "c (at 9)"
+            ],
+            [
+              "10",
+              "c (at 9)",
+              "none"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Right times 2, 4, 9 carry a, b, c."
+        }
+      },
+      "question": "Complete `asof_backward(left_times, right_times, right_values)`; `right_times` is sorted.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from bisect import bisect_right\n\ndef asof_backward(left_times, right_times, right_values):\n    out = []\n    for t in left_times:\n        i = ...   # how many right times are <= t\n        out.append(right_values[i - 1] if i > 0 else None)\n    return out\n",
+        "solution": "from bisect import bisect_right\n\ndef asof_backward(left_times, right_times, right_values):\n    out = []\n    for t in left_times:\n        i = bisect_right(right_times, t)\n        out.append(right_values[i - 1] if i > 0 else None)\n    return out\n",
+        "examples": [
+          {
+            "call": "asof_backward([1, 5, 10], [2, 4, 9], ['a', 'b', 'c'])",
+            "expect": "[None, 'b', 'c']"
+          }
+        ],
+        "tests": [
+          {
+            "call": "asof_backward([1, 5, 10], [2, 4, 9], ['a', 'b', 'c'])",
+            "expect": "[None, 'b', 'c']"
+          },
+          {
+            "call": "asof_backward([4], [2, 4, 9], ['a', 'b', 'c'])",
+            "expect": "['b']"
+          },
+          {
+            "call": "asof_backward([0, 1], [2, 4, 9], ['a', 'b', 'c'])",
+            "expect": "[None, None]"
+          },
+          {
+            "call": "asof_backward([3, 3, 100], [2, 4, 9], [1.0, 2.0, 3.0])",
+            "expect": "[1.0, 1.0, 3.0]"
+          },
+          {
+            "call": "asof_backward([], [1], ['x'])",
+            "expect": "[]"
+          },
+          {
+            "call": "asof_backward([5, 6], [], [])",
+            "expect": "[None, None]"
+          }
+        ],
+        "how": "Check runs 6 hidden tests compared exactly: the table's case, an exact time match, times before any right row, repeats, and empty inputs. Pure Python, so no package loads."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`bisect_right(a, t)` counts the items of sorted `a` that are at most `t`."
+        },
+        {
+          "rung": "point",
+          "text": "At time 4 the count is 2, so the value is `right_values[1]`, b.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`i = bisect_right(right_times, t)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. An exact time match counts as known: `bisect_right` includes it.",
+        "generic": "Some tests failed. Count right times at or before `t` with `bisect_right`."
+      },
+      "explain": {
+        "text": "Backward uses only rows already in the past, so it is the safe default. Forward hands each row the next value, a one-row look-ahead that is easy to miss in a large join. Whether an equal time counts depends on whether the right row's time is when it was known.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Find the leak",
+      "prose": "A colleague's feature pipeline backtests with a Sharpe ratio of 3.1. Every step looks routine. Exactly one of them lets the future in.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "Daily closes",
+              "x": 0.5,
+              "y": 0.08,
+              "shape": "rect"
+            },
+            {
+              "id": "n2",
+              "label": "Log returns",
+              "x": 0.5,
+              "y": 0.248,
+              "shape": "rect"
+            },
+            {
+              "id": "n3",
+              "label": "Trailing 20-day volatility",
+              "x": 0.5,
+              "y": 0.416,
+              "shape": "rect"
+            },
+            {
+              "id": "n4",
+              "label": "Earnings joined on quarter end",
+              "x": 0.5,
+              "y": 0.584,
+              "shape": "rect"
+            },
+            {
+              "id": "n5",
+              "label": "Rank across stocks by date",
+              "x": 0.5,
+              "y": 0.752,
+              "shape": "rect"
+            },
+            {
+              "id": "n6",
+              "label": "Fit model on training years",
+              "x": 0.5,
+              "y": 0.92,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2"
+            },
+            {
+              "from": "n2",
+              "to": "n3"
+            },
+            {
+              "from": "n3",
+              "to": "n4"
+            },
+            {
+              "from": "n4",
+              "to": "n5"
+            },
+            {
+              "from": "n5",
+              "to": "n6"
+            }
+          ],
+          "height": 420
+        },
+        "state": {}
+      },
+      "question": "Tap the step that leaks.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "n4"
+        ],
+        "max": 1,
+        "countWord": "steps"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask of each step: was this value known on the date it carries?"
+        },
+        {
+          "rung": "point",
+          "text": "Earnings are not public on the quarter's last day.",
+          "highlight": [
+            "n4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The quarter-end join dates each figure five or more weeks early."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. Joining on quarter end uses figures weeks before they were published.",
+        "generic": "Not quite. For each step, ask when its input was known.",
+        "byKey": {
+          "n3": "You tapped the trailing volatility. A trailing window uses only past returns.",
+          "n5": "You tapped the cross-sectional rank. Ranking within each date uses only that date's values.",
+          "n6": "You tapped the fit. Fitting on training years is the right procedure; the leak is upstream.",
+          "n2": "Log returns from closes use today's and yesterday's prices, both known at today's close."
+        }
+      },
+      "explain": {
+        "text": "The detective's question for every node is the same: on the date this row carries, could anyone have known this value? Only the earnings join fails. Re-date by publication and join backward, as on the last two screens.",
+        "canvas": {
+          "highlight": [
+            "n4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which way is the past?",
+      "prose": "A data vendor sends prices newest first. A colleague computes 5-day momentum without sorting.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Notebook",
+          "lines": [
+            ">>> df.head(3)",
+            "         date   close",
+            "0  2024-06-28  104.10",
+            "1  2024-06-27  103.55",
+            "2  2024-06-26  101.90",
+            ">>> df['mom_5'] = df['close'].pct_change(5)",
+            ">>> df['prev_ret'] = df['close'].pct_change().shift(-1)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does `mom_5` hold on each row?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "future",
+            "text": "The change from the price 5 trading days later back to this row: built from the future",
+            "correct": true
+          },
+          {
+            "id": "mom",
+            "text": "The 5-day momentum, as intended",
+            "why": "You read `pct_change(5)` as 'from 5 days ago'. It means 'from 5 rows up', and here the rows above are later dates."
+          },
+          {
+            "id": "nan",
+            "text": "Nothing useful: all NaN",
+            "why": "Only the first 5 rows are NaN. The rest hold numbers, which is why the leak goes unnoticed."
+          },
+          {
+            "id": "shift",
+            "text": "The same as `prev_ret`, which is safe because of `shift(-1)`",
+            "why": "`shift(-1)` pulls the next row up. On any frame it moves a value one row earlier, a classic look-ahead."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`pct_change(5)` compares each row with the row 5 above it."
+        },
+        {
+          "rung": "point",
+          "text": "Row 5 above is 5 trading days later here.",
+          "highlight": [
+            "l3",
+            "l6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So each value mixes this row's price with a future one. Sort by date first."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. On a newest-first frame every 'past' operation looks forward. Sort ascending before any `shift`, `diff` or `pct_change`.",
+        "generic": "Not quite. Check which row is 5 rows up on this frame.",
+        "byKey": {
+          "mom": "You assumed rows run oldest first. They do not here, so 'previous row' is tomorrow.",
+          "shift": "You trusted `shift(-1)`. A negative shift moves later values onto earlier rows, on any frame."
+        }
+      },
+      "explain": {
+        "text": "pandas works in rows, not dates. Row order newest first turns `pct_change`, `diff` and `shift(1)` into look-ahead, and `shift(-1)` is look-ahead on any frame. Sort with `sort_values('date')` and assert the index is increasing.",
+        "canvas": {
+          "highlight": [
+            "l6",
+            "l7"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Leak or not",
+      "prose": "Four features from one pipeline, each computed on a frame sorted oldest first.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Notebook",
+          "lines": [
+            "a = df['close'].rolling(20, min_periods=1).mean()",
+            "b = df['sector_code']",
+            "c = df['close'].rolling(21, center=True).mean()",
+            "d = (x - x.mean()) / x.std()   # x over all years"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Select all that apply: which features leak?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`a`: rolling mean with `min_periods=1`",
+            "why": "It uses fewer than 20 days at the start, so its meaning drifts early on. It never uses the future."
+          },
+          {
+            "id": "b",
+            "text": "`b`: a fixed sector code",
+            "why": "It has no time dependence, so it cannot leak. Unless sectors are reassigned later and back-filled."
+          },
+          {
+            "id": "c",
+            "text": "`c`: a centred 21-day mean",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "`d`: z-scored with the full-sample mean and sd",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Leak means using information from after the row's date."
+        },
+        {
+          "rung": "point",
+          "text": "`min_periods=1` changes how many past days are used, not which days.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`c` looks 10 days ahead; `d` uses every year's mean and sd."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. `c` and `d` leak; `a` drifts in meaning at the start; `b` cannot leak.",
+        "generic": "Not quite. For each line, ask whether any later date enters it.",
+        "byKey": {
+          "a": "You flagged `min_periods=1`. It is a drift in meaning, a 1-day mean on day 1, not a leak.",
+          "b": "You flagged a constant. With no time in it, it cannot see the future."
+        }
+      },
+      "explain": {
+        "text": "A leak needs later data inside the feature. `min_periods=1` gives a 1-day mean on day 1 and a 20-day mean from day 20: not a leak, but the first 19 values mean something else, so drop them. A feature with no time dependence cannot leak.",
+        "canvas": {
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "One day too few",
+      "prose": "`make_returns(seed)` gives 2,000 seeded daily returns with a weak real momentum. The feature is the 5-day mean return. `hit_rate(feature, r, n_train)` picks the sign on the first `n_train` days, then scores sign matches after them. Both helpers are defined.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "Uses returns",
+            "Predicts"
+          ],
+          "rows": [
+            [
+              "honest",
+              "$t - 5$ to $t - 1$",
+              "$r_t$"
+            ],
+            [
+              "leaky",
+              "$t - 4$ to $t$",
+              "$r_t$"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `leak_gap_one_day(returns, n_train)`: return the honest and the leaky hit rate.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef leak_gap_one_day(returns, n_train):\n    r = pd.Series(returns, dtype=float)\n    feat = r.rolling(5).mean()   # known at the close of day t\n    honest = ...   # what is known before day t's return\n    leaky = ...    # the same feature shifted one day too few\n    return hit_rate(honest, r, n_train), hit_rate(leaky, r, n_train)\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef leak_gap_one_day(returns, n_train):\n    r = pd.Series(returns, dtype=float)\n    feat = r.rolling(5).mean()   # known at the close of day t\n    honest = feat.shift(1)\n    leaky = feat\n    return hit_rate(honest, r, n_train), hit_rate(leaky, r, n_train)\n",
+        "examples": [
+          {
+            "setup": "r = make_returns(7)",
+            "call": "leak_gap_one_day(r, 1000)",
+            "expect": "(0.542, 0.662)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "r = make_returns(7)",
+            "call": "leak_gap_one_day(r, 1000)",
+            "expect": "(0.542, 0.662)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "r = make_returns(2)",
+            "call": "leak_gap_one_day(r, 1000)",
+            "expect": "(0.509, 0.622)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "r = make_returns(7, phi=0)",
+            "call": "leak_gap_one_day(r, 1000)",
+            "expect": "(0.537, 0.659)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "r = make_returns(3, n=1000)",
+            "call": "leak_gap_one_day(r, 500)",
+            "expect": "(0.502, 0.636)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on seeded return series, comparing both hit rates (rounded to 4 places) with math.isclose. The first run loads NumPy and pandas, which takes a few seconds.",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_returns(seed, n=2000, phi=0.05):\n    \"\"\"Seeded daily returns with a weak real momentum: r_t = phi * r_(t-1) + noise, 1% daily sd.\"\"\"\n    rng = np.random.default_rng(seed)\n    e = 0.01 * rng.standard_normal(n)\n    r = np.zeros(n)\n    for t in range(n):\n        r[t] = (phi * r[t - 1] if t else 0.0) + e[t]\n    return r\n\n\ndef hit_rate(feature, r, n_train):\n    ok = feature.notna()\n    train = ok & (r.index < n_train)\n    test = ok & (r.index >= n_train)\n    sign = 1.0 if (feature[train] * r[train]).mean() > 0 else -1.0\n    return round(float((np.sign(sign * feature[test]) == np.sign(r[test])).mean()), 4)\n\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`feat` on day $t$ includes $r_t$ itself."
+        },
+        {
+          "rung": "point",
+          "text": "To predict $r_t$ honestly, use the feature from day $t - 1$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`honest = feat.shift(1)` and `leaky = feat`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. On seed 7 the honest hit rate is 54.2% and the leaky one 66.2%.",
+        "generic": "Some tests failed. The honest feature is `feat.shift(1)`; the leaky one is `feat` unshifted."
+      },
+      "explain": {
+        "text": "The leaky feature contains one fifth of the return it predicts, so it agrees in sign far more often. Seed 7's edge over a coin grows from 4.2 to 16.2 percentage points. With no momentum at all (phi = 0) it still scores 65.9%, from nothing.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The fixes",
+      "prose": "Every leak here broke one rule: a value dated $t$ must be known at $t$.\n- Centred window: use trailing windows.\n- Full-sample scaler or rank: fit on training rows, within each date.\n- Lagged publication: date by publication, join backward.\n- Revised data, such as adjusted prices: keep point-in-time snapshots.\n- Row order: sort ascending; `shift(1)` before predicting.",
+      "question": "A backtest uses split- and dividend-adjusted prices downloaded today, back to 2005. Which fix applies?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pit",
+            "text": "Use point-in-time prices, or adjust each date only with corporate actions known by then",
+            "correct": true
+          },
+          {
+            "id": "shift",
+            "text": "Shift every price one day",
+            "why": "A shift fixes alignment. The adjustment factors themselves came from later events."
+          },
+          {
+            "id": "trail",
+            "text": "Use a trailing window",
+            "why": "No window is involved: each historical price was rescaled with later information."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: adjustment only rescales",
+            "why": "Returns survive rescaling, but level rules such as 'price below £5' change, and dividends adjust with future payments."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Today's adjusted history embeds splits and dividends that happened later.",
+        "generic": "Not quite. Ask when the adjustment factors were known."
+      },
+      "explain": {
+        "text": "An adjusted 2005 price was rescaled by every split and dividend since. Returns mostly survive, but any rule on the price level sees the future. Point-in-time data stores each value as it was known, with an 'as of' date."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The earnings-surprise backtest",
+      "prose": "Many published 'earnings surprise' strategies looked brilliant because they used the reported quarter's figures from the quarter end. A desk now stores every table with an `as_of` column: when each row became known.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "quarter_end",
+            "eps",
+            "as_of"
+          ],
+          "rows": [
+            [
+              "ACME",
+              "2024-03-31",
+              "1.35",
+              "2024-05-08"
+            ],
+            [
+              "ACME",
+              "2024-03-31",
+              "1.31",
+              "2024-08-02"
+            ],
+            [
+              "ACME",
+              "2024-06-30",
+              "1.40",
+              "2024-08-01"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "The second row is a restatement, published after the next quarter's report."
+        }
+      },
+      "question": "Which EPS should a backtest use for ACME's March quarter on 15 July 2024?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "orig",
+            "text": "£1.35, the latest row with `as_of` on or before 15 July",
+            "correct": true
+          },
+          {
+            "id": "restated",
+            "text": "£1.31, the corrected figure",
+            "why": "You took the final figure. On 15 July the restatement was three weeks away."
+          },
+          {
+            "id": "june",
+            "text": "£1.40, the June quarter",
+            "why": "The June quarter's figure arrived on 1 August."
+          },
+          {
+            "id": "none",
+            "text": "None: the quarter is not over",
+            "why": "The March quarter ended long before; its first figure was public from 8 May."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Filter to rows known by 15 July."
+        },
+        {
+          "rung": "point",
+          "text": "Only one row has `as_of` on or before 15 July.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That row says £1.35."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The backtest must see what the market saw: £1.35.",
+        "generic": "Not quite. Keep only rows with `as_of` at or before the date.",
+        "byKey": {
+          "restated": "Using restated figures is look-ahead too: the market traded on £1.35."
+        }
+      },
+      "explain": {
+        "text": "An `as_of` column turns every query into 'what did we know then', a backward as-of join on knowledge time. Restatements, revisions and late reports all fall out correctly. Without it, the database quietly hands the backtest today's view of the past.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Look-ahead is any value dated $t$ that was not known at $t$: centred windows, full-sample scalers, quarter-end joins, revised data, forward joins.",
+      "The detective's question, step by step: could anyone have known this value on this date?",
+      "A one-day leak is enough: on seeded returns the hit rate rose from 54.2% to 66.2%."
+    ],
+    "formula": {
+      "name": "Known at t",
+      "tex": "x_t = f(\\text{data with knowledge time} \\le t)",
+      "note": "Date every input by when it became known, not by the period it describes."
+    },
+    "trap": "`shift(-1)`, or `pct_change` on a newest-first frame, puts tomorrow on today's row."
+  },
+  "quiz": [
+    {
+      "id": "q-resample",
+      "difficulty": 3,
+      "prose": "Daily data is resampled to weeks with `resample('W-FRI').last()`. The label is the week's Friday return, and the feature is that week's mean daily volume.",
+      "question": "What is the problem?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inside",
+            "text": "The feature's week includes Friday, the day whose return is the label",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: both describe the same week",
+            "why": "That is the problem: the feature includes the label's own day."
+          },
+          {
+            "id": "late",
+            "text": "Weekly bars are too slow",
+            "why": "Speed is not the issue; overlap with the label is."
+          },
+          {
+            "id": "drift",
+            "text": "Volume drifts",
+            "why": "Volume does drift, but the leak here is the shared Friday."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Shift the feature one week, or end its window before the label period starts.",
+        "generic": "Not quite. Compare the feature's window with the label's day."
+      },
+      "explain": {
+        "text": "The label period must start after the feature window ends. Friday's heavy volume and Friday's return are measured together, so the feature partly knows the answer."
+      }
+    },
+    {
+      "id": "q-shift",
+      "difficulty": 2,
+      "prose": "A frame is sorted oldest first. `df['x'] = df['close'].shift(-1)`.",
+      "question": "What does row $t$ hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tomorrow",
+            "text": "Tomorrow's close",
+            "correct": true
+          },
+          {
+            "id": "yesterday",
+            "text": "Yesterday's close",
+            "why": "That is `shift(1)`. A negative shift pulls the next row up."
+          },
+          {
+            "id": "today",
+            "text": "Today's close",
+            "why": "`shift(0)` would leave it."
+          },
+          {
+            "id": "nan",
+            "text": "NaN everywhere",
+            "why": "Only the last row is NaN."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. `shift(-1)` is a label, never a feature.",
+        "generic": "Not quite. A negative shift moves values up the frame."
+      },
+      "explain": {
+        "text": "`shift(-1)` places row $t + 1$ on row $t$. It is how a next-day label is built, and a leak if it ever enters the features."
+      }
+    },
+    {
+      "id": "q-merge",
+      "difficulty": 2,
+      "prose": "Analyst forecasts arrive at irregular times. They are joined to daily rows with `pd.merge_asof(daily, forecasts, on='time', direction='forward')`.",
+      "question": "What does each daily row get?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "next",
+            "text": "The next forecast after that day: a look-ahead",
+            "correct": true
+          },
+          {
+            "id": "last",
+            "text": "The last forecast before that day",
+            "why": "That is `direction='backward'`, the default."
+          },
+          {
+            "id": "nearest",
+            "text": "The nearest forecast either side",
+            "why": "That is `direction='nearest'`, which can also look ahead."
+          },
+          {
+            "id": "same",
+            "text": "Only forecasts made that day",
+            "why": "An as-of join always reaches to a neighbour."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Use `direction='backward'`.",
+        "generic": "Not quite. Forward means later."
+      },
+      "explain": {
+        "text": "Forward takes the first right row at or after each left row, so every day sees a forecast not yet made. Backward is the only direction that respects time."
+      }
+    }
+  ]
+}
