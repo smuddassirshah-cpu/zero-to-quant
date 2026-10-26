@@ -168,7 +168,7 @@
         /* inbox (validation 2): frames: [state patch, ...] is a slider through authored states (fold 1, 2, 3), each applied
            over the canvas as it opened (a key a frame leaves out goes back to its opening value); frameLabels name them */
         const isFrames = (c) => Array.isArray(c.frames) && c.frames.length > 1;
-        const shown = (c, v) => (isFrames(c) ? (Array.isArray(c.frameLabels) && c.frameLabels[v] != null ? String(c.frameLabels[v]) : `${v + 1} of ${c.frames.length}`) : G().fmtAs(v, c.format, c.decimals));
+        const shown = (c, v) => (isFrames(c) ? (Array.isArray(c.frameLabels) && c.frameLabels[v] != null ? String(c.frameLabels[v]) : `${v + 1} of ${c.frames.length}`) : Array.isArray(c.stops) && Array.isArray(c.stopLabels) && c.stops.indexOf(v) >= 0 && c.stopLabels[c.stops.indexOf(v)] != null ? String(c.stopLabels[c.stops.indexOf(v)]) : G().fmtAs(v, c.format, c.decimals)); // inbox (garch 1): stopLabels name the stops
         const drive = (c, v) => {
           if (!canvas) return;
           if (isFrames(c)) {
@@ -302,7 +302,7 @@
       reveal() {
         if (!widget) return;
         widget.reveal();
-        if (canvas && spec.explain && spec.explain.canvas) { try { canvas.set(spec.explain.canvas); } catch (e) { console.error(e); } }
+        if (canvas && spec.explain && spec.explain.canvas) { try { const { controls: cv0, ...pt } = spec.explain.canvas; canvas.set(pt); if (cv0 && typeof cv0 === 'object' && canvas.setParam) Object.entries(cv0).forEach(([b, v]) => canvas.setParam(b, v)); } catch (e) { console.error(e); } }
       },
       point(h) {
         if (canvas && h && h.highlight && canvas.highlight) { try { canvas.highlight(h.highlight, true); } catch (e) { console.error(e); } o.into && o.into(cvHost); return; }

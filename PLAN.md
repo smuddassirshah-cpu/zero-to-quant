@@ -7,7 +7,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 ## Tasks (one per session; tick when committed)
 
 ### 0. Triage work left in flight on 27 Oct
-- [ ] Triage: run the validator and `playthrough.mjs --lesson/--set` on every file that exists but has no report in `docs/reports/`: arma L3; alpha L3; opt-dash L2 to L4 (partial); any coint or contests files. Keep what passes, finish or delete partials (a partial level is one whose level agent never reported). Check `app/js/` for half-applied engine pass 7 edits (`git diff HEAD~40 --stat app/js`); if the full playthrough fails, revert the engine files to the last green commit and record what was lost in KNOWN_ISSUES.md. Check `docs/reviews/review-1.9.md` (partial reader) and mark its task below accordingly.
+- [ ] Triage: run the validator and `playthrough.mjs --lesson/--set` on every file that exists but has no report in `docs/reports/`: arma L3; alpha L3; opt-dash L3 and L4 (partial); any coint or contests files. Keep what passes, finish or delete partials (a partial level is one whose level agent never reported). Check `app/js/` for half-applied engine pass 7 edits (`git diff HEAD~40 --stat app/js`); if the full playthrough fails, revert the engine files to the last green commit and record what was lost in KNOWN_ISSUES.md. Check `docs/reviews/review-1.9.md` (partial reader) and mark its task below accordingly.
 
 ### 1. Stage 2 content (brief: `docs/briefs/<course>.md`, section `## Level n`)
 - [ ] garch L2
@@ -15,7 +15,6 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [ ] coint L1
 - [ ] coint L2
 - [ ] coint L3
-- [ ] opt-dash L2 (review-2, homework-2 missing)
 - [ ] opt-dash L3 (review-3, homework-3 missing)
 - [ ] opt-dash L4 (l15, l16, review-4, homework-4 missing)
 - [ ] contests L1

@@ -244,3 +244,10 @@ Raised later (arma level 2):
 - walk canvas: its paths come from the engine's own RNG, so they cannot reproduce the NumPy-seeded `make_walk(4, 500)` whose correlogram sits below it in l5's trap. Workaround: the prose says the top panel draws other walks. Wanted: a walk fed with given paths (`params.paths: [[...]]`) that the reseed control steps through.
 - series canvas: another vote for a control that shifts a series or picks one of several. l5's lag-shift hook uses 11 precomputed shifted copies, and l7's φ hook 21 precomputed paths, both chosen through a derive `hide` chain (l7 maps φ to an index with `let: { j: "round(f * 20)" }`).
 - plane canvas: a long `xLabel` on the lower plot of a stacked pair overlaps the pair's caption (l7 hook, "Days after a shock of 1"). Workaround: a shorter label, "Days $h$". Wanted: the pair caption placed below the full height of the lower plot.
+
+Raised later (opt-dash level 2):
+
+- payoff canvas `value`: the Black-Scholes curve takes `t`, `sigma` and `r` but no dividend yield, so l5 could not show how $q = 1\%$ lowers the call on a payoff chart. Workaround: a `plane` with the closed form written in `Phi` and a control on `q`. Wanted: `value.q`.
+- series canvas, a control bound to `markers.<id>.i`: the readout shows the zero-based index, so l6's "steps $n$" slider reads one less than the step count and is labelled "Marker (steps − 1)". Wanted: an `offset` (or the x-axis value) for the readout, or a marker that rides `revealAt` with the axis label.
+- tree canvas: draws non-recombining paths only, so a recombining CRR tree (l6 hook, 15 nodes) has to be laid out by hand as a `graph` with node coordinates, as trees l7 did. Wanted: `recombining: true` on `tree` with `n` levels and node labels per (step, ups).
+- code widget, `compare: "isclose"` on lists: a `nan` entry never compares equal, so l6's `exercise_boundary` tests convert `nan` to `None` inside the test call (`[None if x != x else round(x, 6) for x in ...]`), which the learner sees in the results table. Wanted: an `isclose` that treats two NaNs as equal (as `math.isclose` does not, but `numpy.allclose(equal_nan=True)` can).

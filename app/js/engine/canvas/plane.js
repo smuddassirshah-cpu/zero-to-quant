@@ -783,12 +783,29 @@
            reference lines (a point's group: "test" hides every point of that group), so a control or derive can reveal a set */
         const hideSet = new Set((view.hide || []).map(String)), isHidden = (it) => !!it && ((it.id != null && hideSet.has(String(it.id))) || (it.group != null && hideSet.has(String(it.group))));
         /* item 216: heat: "expr in x and y" draws a colour ramp over the view behind everything (range: [lo, hi]) */
-        for (const fd of functionsOf(view).filter((f) => f.heat != null && !(view.hide || []).includes(f.id))) {
-          const P = exprParams(view), c = K.fnOf(String(fd.heat), ['y', ...Object.keys(P)]), nx = 72, ny = 54, vals = [];
-          for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const x = xr[0] + (xr[1] - xr[0]) * (i + 0.5) / nx, y = yr[0] + (yr[1] - yr[0]) * (j + 0.5) / ny; vals.push([i, j, c(x, { ...P, y })]); }
-          const fin = vals.map((v) => v[2]).filter(Number.isFinite), lo = fd.range ? fd.range[0] : Math.min(...fin), hi = fd.range ? fd.range[1] : Math.max(...fin);
-          const o = K.obj(fd.id, 'cvb-heat', fd.colour || 1), cw = (px1 - px0) / nx, ch = (py0 - py1) / ny;
-          vals.forEach(([i, j, v]) => { if (!Number.isFinite(v)) return; const t = K.clamp((v - lo) / ((hi - lo) || 1), 0, 1); o.append(svg('rect', { x: (px0 + i * cw).toFixed(1), y: (py0 - (j + 1) * ch).toFixed(1), width: (cw + 0.6).toFixed(1), height: (ch + 0.6).toFixed(1), 'fill-opacity': (0.04 + 0.5 * t).toFixed(3) })); });
+        /* inbox (ensembles 3): heat may come from data, grid: { x: [x0, x1], y: [y0, y1], z: [[...], ...] } (z[0] is the
+           bottom row), and diverging: true (with mid, default 0) washes values above mid in colour and below it in
+           colourBelow (default slot 2), so a signed surface needs one layer */
+        for (const fd of functionsOf(view).filter((f) => (f.heat != null || K.isObj(f.grid)) && !hideSet.has(String(f.id)))) {
+          const P = exprParams(view), vals = [];
+          let nx = 72, ny = 54, gx0 = xr[0], gx1 = xr[1], gy0 = yr[0], gy1 = yr[1];
+          if (K.isObj(fd.grid) && Array.isArray(fd.grid.z)) {
+            const z = fd.grid.z; ny = z.length; nx = Math.max(0, ...z.map((r) => (Array.isArray(r) ? r.length : 0)));
+            [gx0, gx1] = fd.grid.x || xr; [gy0, gy1] = fd.grid.y || yr;
+            z.forEach((r, j) => (r || []).forEach((v, i) => vals.push([i, j, v == null ? NaN : +v])));
+          } else {
+            const c = K.fnOf(String(fd.heat), ['y', ...Object.keys(P)]);
+            for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const x = xr[0] + (xr[1] - xr[0]) * (i + 0.5) / nx, y = yr[0] + (yr[1] - yr[0]) * (j + 0.5) / ny; vals.push([i, j, c(x, { ...P, y })]); }
+          }
+          if (!nx || !ny) continue;
+          const fin = vals.map((v) => v[2]).filter(Number.isFinite), mid = +(fd.mid ?? 0), lo = fd.range ? fd.range[0] : Math.min(...fin), hi = fd.range ? fd.range[1] : Math.max(...fin), dev = fd.range ? Math.max(Math.abs(fd.range[0] - mid), Math.abs(fd.range[1] - mid)) : Math.max(...fin.map((v) => Math.abs(v - mid)), 1e-12);
+          const o = K.obj(fd.id, 'cvb-heat', fd.colour || 1), px = (x) => sx(x), py = (y) => sy(y), cw = (gx1 - gx0) / nx, ch = (gy1 - gy0) / ny;
+          vals.forEach(([i, j, v]) => {
+            if (!Number.isFinite(v)) return;
+            const a = px(gx0 + i * cw), b = px(gx0 + (i + 1) * cw), c0 = py(gy0 + j * ch), c1 = py(gy0 + (j + 1) * ch);
+            const t = fd.diverging ? K.clamp(Math.abs(v - mid) / dev, 0, 1) : K.clamp((v - lo) / ((hi - lo) || 1), 0, 1);
+            o.append(svg('rect', { x: Math.min(a, b).toFixed(1), y: Math.min(c0, c1).toFixed(1), width: (Math.abs(b - a) + 0.6).toFixed(1), height: (Math.abs(c1 - c0) + 0.6).toFixed(1), 'fill-opacity': (0.04 + 0.5 * t).toFixed(3), ...(fd.diverging && v < mid ? { class: K.colourCls(fd.colourBelow || 2) } : {}) }));
+          });
           plot.append(o);
         }
 
@@ -1187,6 +1204,8 @@
           }
         }
 
+        /* inbox (alpha 3): legend: [{ label, colour, line: true }] (params or state) names point groups or curves, top right */
+        { const lg = view.legend || params.legend; if (Array.isArray(lg) && lg.length) lg.forEach((q, k) => { if (!q || q.label == null) return; const t = String(q.label), ly = py1 + 10 + 18 * k, lx = px1 - 6, w = K.tw(t.replace(/\$/g, ''), 12), o = K.obj('legend-' + (q.id || k), '', q.colour || k + 1); o.append(q.line ? svg('path', { d: `M${lx - w - 26},${ly}L${lx - w - 10},${ly}`, class: 'cvb-ln' + (q.dashed ? ' cvb-dash' : '') }) : svg('circle', { cx: lx - w - 12, cy: ly, r: 4.5, class: 'cvb-dot' }), K.lab(lx, ly, t, { anchor: 'end', size: 12, halo: true })); over.append(o); fixed.push({ x0: lx - w - 30, x1: lx + 2, y0: ly - 9, y1: ly + 9 }); }); }
         /* item 372: the sketch's control points count as points for the x-axis title */
         if (Array.isArray(sk.points)) sk.points.forEach((q) => { const x = sx(q[0]), y = sy(q[1]); if (Number.isFinite(x) && Number.isFinite(y)) marks.push({ x0: x - 9, x1: x + 9, y0: y - 9, y1: y + 9 }); });
         /* The x-axis title moves below the axis when a point or curve sits under it near y = 0 */

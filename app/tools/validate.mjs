@@ -590,7 +590,7 @@ const checkCanvas = (file, where, c) => {
     listOf(P.functions).forEach((f, i) => {
       if (!isObj(f)) return;
       /* items 430, 459, 446, 461, 469, 460: contour, heat, exprs with index, points (a polyline), steps and cells are function entries too */
-      const fam = f.expr != null || (f.x != null && f.y != null) || f.implicit != null || f.contour != null || f.heat != null || Array.isArray(f.exprs) || Array.isArray(f.points) || f.steps != null || isObj(f.cells) || Array.isArray(f.pointsList);
+      const fam = f.expr != null || (f.x != null && f.y != null) || f.implicit != null || f.contour != null || f.heat != null || Array.isArray(f.exprs) || Array.isArray(f.points) || f.steps != null || isObj(f.cells) || isObj(f.grid) || Array.isArray(f.pointsList);
       if (!fam) err(file, `${where}.params.functions[${i}]`, 'a function needs expr (or exprs with index), x and y (parametric, with t: [from, to]), implicit, contour (with levels), heat, points (a polyline), steps or cells');
       if (Array.isArray(f.exprs) && f.index == null) err(file, `${where}.params.functions[${i}].index`, 'exprs needs index: the param (or a number) that picks one');
       if (Array.isArray(f.exprs)) f.exprs.forEach((e, k) => { if (typeof e !== 'string' && typeof e !== 'number') err(file, `${where}.params.functions[${i}].exprs[${k}]`, 'each entry of exprs is a formula'); });
