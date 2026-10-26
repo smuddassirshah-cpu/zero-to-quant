@@ -1,0 +1,397 @@
+{
+  "id": "review-2",
+  "course": "ensembles",
+  "level": 2,
+  "items": [
+    {
+      "id": "rv-left-out",
+      "difficulty": 2,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "A book has 50 loans. A tree is grown on one bootstrap sample of 50 draws.",
+      "question": "What is the chance a given loan is left out of the sample?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3642,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Chance the loan is left out",
+        "placeholder": "decimal",
+        "accept": "$(49/50)^{50} \\approx 0.364$, a little below $e^{-1} = 0.368$.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "in",
+            "value": 0.6358,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Close to $e^{-1}$ even for 50 loans.",
+        "generic": "Not quite right. All 50 draws must miss the loan.",
+        "byKey": {
+          "one": "$1/50$ is the chance one draw picks it. All 50 draws must miss it.",
+          "in": "That is the chance it is drawn at least once."
+        }
+      },
+      "explain": {
+        "text": "Each draw misses the loan with probability $49/50$, and the draws are independent: $(49/50)^{50} = 0.364$."
+      }
+    },
+    {
+      "id": "rv-floor",
+      "difficulty": 3,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "Each tree in a forest has prediction variance 0.20 for a loan, and any two trees have correlation 0.25. The forest has 200 trees.",
+      "question": "What is the variance of the forest's average prediction?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.05075,
+        "tol": {
+          "abs": 0.0002
+        },
+        "label": "Variance of the average",
+        "placeholder": "decimal",
+        "accept": "0.0508: $0.25 \\times 0.20 + 0.75 \\times 0.20/200 = 0.05 + 0.00075$.",
+        "wrong": [
+          {
+            "id": "ind",
+            "value": 0.001,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "floor",
+            "value": 0.05,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The floor, 0.05, is nearly all of it.",
+        "generic": "Not quite right. Use $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$.",
+        "byKey": {
+          "ind": "$\\sigma^2/B$ assumes independent trees. Add the floor $\\rho\\sigma^2 = 0.05$.",
+          "floor": "0.05 is the floor alone; add $(1 - \\rho)\\sigma^2/B$."
+        }
+      },
+      "explain": {
+        "text": "$0.25 \\times 0.20 = 0.05$ survives any number of trees; the rest is $0.15/200 = 0.00075$. Only a lower $\\rho$ would help much."
+      }
+    },
+    {
+      "id": "rv-oob-table",
+      "difficulty": 2,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "Five loans, each with the average $P(\\text{default})$ from its out-of-bag trees. The forest predicts default above 0.5.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Loan",
+            "Defaulted",
+            "OOB average"
+          ],
+          "rows": [
+            [
+              "1",
+              "1",
+              "0.8"
+            ],
+            [
+              "2",
+              "0",
+              "0.3"
+            ],
+            [
+              "3",
+              "1",
+              "0.4"
+            ],
+            [
+              "4",
+              "0",
+              "0.6"
+            ],
+            [
+              "5",
+              "1",
+              "0.9"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the out-of-bag error?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "OOB error",
+        "placeholder": "decimal",
+        "accept": "0.4: loans 3 and 4 are misjudged, 2 of 5.",
+        "wrong": [
+          {
+            "id": "acc",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two of five OOB predictions are wrong.",
+        "generic": "Not quite right. Turn each average into a prediction, then count the wrong ones.",
+        "byKey": {
+          "acc": "0.6 is the OOB accuracy. The error is the share wrong.",
+          "one": "Check loan 4 too: 0.6 predicts default, but it repaid."
+        }
+      },
+      "explain": {
+        "text": "Predictions are 1, 0, 0, 1, 1. Loan 3 defaulted but scored 0.4; loan 4 repaid but scored 0.6. Error $2/5 = 0.4$."
+      }
+    },
+    {
+      "id": "rv-client-id",
+      "difficulty": 3,
+      "skills": [
+        "en-interpret"
+      ],
+      "prose": "A forest's impurity importances put `client_id`, a number unique to each borrower, second of 12. On the test set its permutation importance is −0.002.",
+      "question": "What is the best reading?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "client_id is memorised noise: impurity importance rewards its many thresholds",
+            "correct": true
+          },
+          {
+            "id": "hidden",
+            "text": "client_id carries a hidden signal that permutation importance misses",
+            "why": "Permutation importance on new data is the direct test of usefulness; −0.002 is noise around 0."
+          },
+          {
+            "id": "shuffle",
+            "text": "The shuffle was unlucky; repeat it until the drop is positive",
+            "why": "Repeating shuffles changes the noise, not the answer. Ten more will still average near 0."
+          },
+          {
+            "id": "causal",
+            "text": "Borrower identity drives default, so keep it",
+            "why": "An id can stand for real history, but this model gains nothing from it on new borrowers."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Many distinct values let trees chase noise.",
+        "generic": "Not quite right. Recall loan_id: 0.158 impurity, −0.008 on new loans."
+      },
+      "explain": {
+        "text": "A unique id offers a threshold between every pair of borrowers, so deep trees use it near their leaves. Held-out permutation importance shows it is worth nothing."
+      }
+    },
+    {
+      "id": "rv-regressor",
+      "difficulty": 3,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "You fit `RandomForestRegressor(n_estimators=300, random_state=0)` on 9 features to forecast credit spreads. In scikit-learn 1.6 its default is `max_features=1.0`.",
+      "question": "What have you fitted?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Bagged regression trees: every split sees all 9 features",
+            "correct": true
+          },
+          {
+            "id": "third",
+            "text": "A forest with $m = p/3 = 3$, the textbook default",
+            "why": "$p/3$ is the usual recommendation, not scikit-learn's regressor default. Set `max_features=1/3` to get it."
+          },
+          {
+            "id": "sqrt",
+            "text": "A forest with $m = \\sqrt{9} = 3$",
+            "why": "$\\sqrt{p}$ is the classifier's default. The regressor's is 1.0, all features."
+          },
+          {
+            "id": "one",
+            "text": "Trees that each use one feature",
+            "why": "1.0 is a fraction of the features, so all 9."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Check `max_features` before you call it a forest.",
+        "generic": "Not quite right. `max_features=1.0` is a fraction of the 9 features."
+      },
+      "explain": {
+        "text": "A float means a share of the features: 1.0 is all of them, which is bagging. Pass `max_features=1/3` for the $p/3$ rule, or tune it with OOB."
+      }
+    },
+    {
+      "id": "rv-oob-time",
+      "difficulty": 3,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "A forest predicts whether each week's 4-week forward return is positive, one row per week. Its `oob_score_` is 0.68; a walk-forward test gives 0.51.",
+      "question": "Which number should go in the report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.51: neighbouring weeks share 3 of 4 return weeks, so OOB votes saw near copies",
+            "correct": true
+          },
+          {
+            "id": "oob",
+            "text": "0.68: OOB is an honest test because no tree saw its own row",
+            "why": "Each row's OOB trees saw its neighbours, which share most of its label."
+          },
+          {
+            "id": "avg",
+            "text": "Their average, 0.595",
+            "why": "Averaging an inflated number with an honest one is still inflated."
+          },
+          {
+            "id": "more",
+            "text": "Neither: grow more trees until OOB matches walk-forward",
+            "why": "More trees steady the OOB estimate; they do not remove the leak."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Overlapping labels break the OOB assumption.",
+        "generic": "Not quite right. Ask what each row's OOB trees know about it."
+      },
+      "explain": {
+        "text": "OOB assumes exchangeable rows. With overlapping labels, the neighbours a tree drew are near copies of the OOB row, so the score flatters. Report the walk-forward result."
+      }
+    },
+    {
+      "id": "rv-pair",
+      "difficulty": 4,
+      "skills": [
+        "en-interpret"
+      ],
+      "prose": "Two features, debt-to-EBITDA and net debt-to-EBITDA, have correlation 0.95. Their permutation importances are 0.006 and 0.004. A colleague drops both as unimportant.",
+      "question": "What should you expect?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A large fall in accuracy is possible: each was small only because the other covered for it",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "A fall of about 0.01, the sum of the two importances",
+            "why": "You added the two small numbers. Each was measured with its twin still present."
+          },
+          {
+            "id": "none",
+            "text": "No change, since both are unimportant",
+            "why": "Each alone is redundant; together they may carry the leverage information."
+          },
+          {
+            "id": "gain",
+            "text": "A gain, because redundant features overfit",
+            "why": "Redundancy rarely costs a forest much. Losing both can cost a lot."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Test a correlated group by dropping it together.",
+        "generic": "Not quite right. Recall cover and cover_ttm: 0.029 and 0.015, yet 9.5 points together."
+      },
+      "explain": {
+        "text": "Permutation importance of one feature leaves its twin in place, so it understates the pair. Refit without both, an ablation, to see what they carry together."
+      }
+    },
+    {
+      "id": "rv-implied-rho",
+      "difficulty": 4,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "One analyst's forecast error has sd 4.0%. The average of 50 analysts has error sd 2.9%. Assume every pair has the same correlation $\\rho$.",
+      "question": "What $\\rho$ does that imply?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.516,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Implied correlation",
+        "placeholder": "decimal",
+        "accept": "About 0.516: solve $8.41 = 16\\rho + 16(1 - \\rho)/50$.",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 0.725,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sq",
+            "value": 0.5256,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The analysts' errors are about half shared.",
+        "generic": "Not quite right. Square the sds, then solve the variance formula for $\\rho$.",
+        "byKey": {
+          "ratio": "$2.9/4.0$ compares sds. The formula is in variances: square them first.",
+          "sq": "$8.41/16$ ignores the $(1 - \\rho)\\sigma^2/B$ term. Include it, then solve."
+        }
+      },
+      "explain": {
+        "text": "$8.41 = 16\\rho + 0.32(1 - \\rho)$, so $8.09 = 15.68\\rho$ and $\\rho = 0.516$. Even 1,000 analysts would leave an sd of about $4\\sqrt{0.516} = 2.87\\%$."
+      }
+    }
+  ]
+}

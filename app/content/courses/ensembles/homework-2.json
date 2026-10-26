@@ -1,0 +1,394 @@
+{
+  "id": "homework-2",
+  "course": "ensembles",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw-no-oob",
+      "difficulty": 3,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "A forest of 10 trees is grown on 1,000 loans with `oob_score=True`.",
+      "question": "About how many loans have no out-of-bag tree at all?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.2,
+        "tol": {
+          "abs": 1.5
+        },
+        "unit": "loans",
+        "label": "Loans with no OOB tree",
+        "accept": "About 10: $1000 \\times 0.632^{10} \\approx 10.2$.",
+        "wrong": [
+          {
+            "id": "miss",
+            "value": 0.045,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "one",
+            "value": 632,
+            "tol": {
+              "abs": 5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 10 loans, which scikit-learn scores as class 0 with a warning.",
+        "generic": "Not quite right. A loan has no OOB tree when all 10 resamples drew it.",
+        "byKey": {
+          "miss": "$0.368^{10}$ is the chance every tree missed the loan. We need every tree to have drawn it.",
+          "one": "That uses one tree. All 10 must draw the loan."
+        }
+      },
+      "explain": {
+        "text": "$0.632^{10} = 0.0102$, so about 10 of 1,000 loans. They get a row of zeros in `oob_decision_function_` and count as class 0, biasing the score a little."
+      }
+    },
+    {
+      "id": "hw-how-many-trees",
+      "difficulty": 4,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "Bagged trees on a book have $\\rho = 0.11$. You want the variance of the average within 5% of its floor $\\rho\\sigma^2$.",
+      "question": "What is the smallest number of trees that does it?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 162,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "trees",
+        "label": "Smallest number of trees",
+        "accept": "162: need $(1 - \\rho)/B \\le 0.05\\rho$, so $B \\ge 0.89/0.0055 = 161.8$.",
+        "wrong": [
+          {
+            "id": "floor",
+            "value": 161,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 8,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "162 trees: more buys almost nothing.",
+        "generic": "Not quite right. Solve $(1 - \\rho)\\sigma^2/B \\le 0.05\\rho\\sigma^2$ for $B$.",
+        "byKey": {
+          "floor": "161.8 rounds up: 161 trees leave the gap just above 5%.",
+          "ratio": "$(1 - \\rho)/\\rho \\approx 8$ is where the two terms are equal. Within 5% needs 20 times more."
+        }
+      },
+      "explain": {
+        "text": "$\\sigma^2$ cancels: $B \\ge (1 - \\rho)/(0.05\\rho) = 0.89/0.0055 = 161.8$, so 162. Beyond that, trees cost time and buy nothing, but they never hurt."
+      }
+    },
+    {
+      "id": "hw-derive-b-star",
+      "difficulty": 4,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "Find the number of trees $B^*$ at which the shrinking term of the variance equals the floor.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "var",
+            "text": "$\\operatorname{Var}(\\bar X) = \\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$, the variance of an average of correlated trees"
+          },
+          {
+            "id": "set",
+            "text": "Set the two terms equal: $(1 - \\rho)\\sigma^2/B^* = \\rho\\sigma^2$"
+          },
+          {
+            "id": "cancel",
+            "text": "Divide both sides by $\\sigma^2$, which is positive: $(1 - \\rho)/B^* = \\rho$"
+          },
+          {
+            "id": "solve",
+            "text": "Multiply by $B^*/\\rho$: $B^* = (1 - \\rho)/\\rho$, so $\\rho = 0.11$ gives $B^* \\approx 8$"
+          }
+        ],
+        "answer": [
+          "var",
+          "set",
+          "cancel",
+          "solve"
+        ]
+      },
+      "feedback": {
+        "correct": "Past about 8 bagged trees the floor dominates, which is why lesson 5's curve flattened early.",
+        "generic": "Not quite right. Start from the formula, set the terms equal, cancel, solve.",
+        "byKey": {
+          "solve": "Solving needs $\\sigma^2$ cancelled first.",
+          "cancel": "Cancel only once the two terms are set equal."
+        }
+      },
+      "explain": {
+        "text": "$B^* = 0.89/0.11 \\approx 8$. By 20 trees the second term is under half the floor; by 162 it is under 5%."
+      }
+    },
+    {
+      "id": "hw-scratch-forest",
+      "difficulty": 5,
+      "skills": [
+        "en-bagging",
+        "en-interpret"
+      ],
+      "prose": "Build a bagged ensemble from scratch: your own bootstrap sampler, depth-2 trees, OOB scoring, and a permutation importance for every feature on a test set. Use one generator for everything, in the order the starter's comments give.",
+      "question": "Complete `scratch_forest(X, y, X_test, y_test, B, seed)`. Return `(oob_acc, top_feature)`: the OOB accuracy rounded to 4 places, and the index of the feature with the largest permutation importance.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 15000,
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n\nimport numpy as np\n\nCOLS = [\"leverage\", \"cover\", \"cover_ttm\", \"secured\", \"loan_id\", \"odd_day\", \"currency\"]\n\ndef make_book(seed, n=400):\n    \"\"\"n loans, 7 columns. Default risk rises with leverage and falls with\n    interest cover; secured loans default a little less. cover and cover_ttm\n    are two measures of the same cover (correlation about 0.9). loan_id is a\n    random number with a different value on every loan; odd_day is a random\n    0 or 1; currency is 1 on every loan (all are sterling).\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = rng.standard_normal(n)\n    cov = rng.standard_normal(n)\n    cover = cov + 0.3 * rng.standard_normal(n)\n    cover_ttm = cov + 0.3 * rng.standard_normal(n)\n    secured = rng.integers(0, 2, n)\n    loan_id = rng.random(n)\n    odd_day = rng.integers(0, 2, n)\n    currency = np.ones(n)\n    z = -0.3 + 1.8 * lev - 1.2 * cov - 0.5 * secured\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    X = np.column_stack([lev, cover, cover_ttm, secured, loan_id, odd_day, currency])\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.tree import DecisionTreeClassifier\n\ndef scratch_forest(X, y, X_test, y_test, B, seed):\n    X = np.asarray(X, dtype=float); y = np.asarray(y)\n    X_test = np.asarray(X_test, dtype=float); y_test = np.asarray(y_test)\n    n = len(y)\n    rng = np.random.default_rng(seed)\n    # 1. For b in range(B): idx = rng.integers(0, n, size=n); grow\n    #    DecisionTreeClassifier(max_depth=2, random_state=0) on X[idx], y[idx];\n    #    add its P(class 1) to every row it left out, and count.\n    # 2. OOB accuracy over rows with at least one OOB tree; predict 1 above 0.5.\n    # 3. Ensemble test accuracy: average the trees' P(class 1), predict 1 above 0.5.\n    # 4. For j in range(X_test.shape[1]): shuffle column j of a copy of X_test\n    #    with rng.permutation, and record the fall in test accuracy.\n    ...\n    return round(float(oob_acc), 4), int(np.argmax(drops))\n",
+        "solution": "def scratch_forest(X, y, X_test, y_test, B, seed):\n    X = np.asarray(X, dtype=float); y = np.asarray(y)\n    X_test = np.asarray(X_test, dtype=float); y_test = np.asarray(y_test)\n    n = len(y)\n    rng = np.random.default_rng(seed)\n    trees = []\n    total = np.zeros(n); count = np.zeros(n)\n    for b in range(B):\n        idx = rng.integers(0, n, size=n)\n        out = ~np.isin(np.arange(n), idx)\n        tree = DecisionTreeClassifier(max_depth=2, random_state=0).fit(X[idx], y[idx])\n        trees.append(tree)\n        if out.any():\n            total[out] += tree.predict_proba(X[out])[:, 1]\n            count[out] += 1\n    seen = count > 0\n    oob_acc = np.mean((total[seen] / count[seen] > 0.5).astype(int) == y[seen])\n    def acc(Z):\n        p = np.mean([t.predict_proba(Z)[:, 1] for t in trees], axis=0)\n        return np.mean((p > 0.5).astype(int) == y_test)\n    base = acc(X_test)\n    drops = []\n    for j in range(X_test.shape[1]):\n        Xp = X_test.copy()\n        Xp[:, j] = rng.permutation(X_test[:, j])\n        drops.append(base - acc(Xp))\n    return round(float(oob_acc), 4), int(np.argmax(drops))\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(3, 200)",
+            "call": "scratch_forest(X[:150], y[:150], X[150:], y[150:], 5, 0)",
+            "expect": "(0.7218, 0)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(3, 200)",
+            "call": "scratch_forest(X[:150], y[:150], X[150:], y[150:], 5, 0)",
+            "expect": "(0.7218, 0)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(1, 400); Xt, yt = make_loans(2, 1000)",
+            "call": "scratch_forest(X, y, Xt, yt, 30, 0)",
+            "expect": "(0.7725, 0)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(1, 400); Xt, yt = make_loans(2, 1000)",
+            "call": "scratch_forest(X, y, Xt, yt, 10, 1)",
+            "expect": "(0.7708, 0)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(1, 400); Xt, yt = make_loans(2, 1000)",
+            "call": "scratch_forest(X[:, ::-1], y, Xt[:, ::-1], yt, 30, 0)",
+            "expect": "(0.7725, 7)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000)",
+            "call": "scratch_forest(X, y, Xt, yt, 25, 2)",
+            "expect": "(0.7525, 0)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_book(1, 400); Xt, yt = make_book(2, 1000)",
+            "call": "scratch_forest(X[:, [1, 2, 0]], y, Xt[:, [1, 2, 0]], yt, 25, 2)",
+            "expect": "(0.7525, 2)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on `make_loans` and `make_book`, which are already defined; two reorder the columns, so the top feature moves. Each pair is compared with math.isclose, so use one generator in the order the comments give. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Leverage comes out on top wherever its column sits.",
+        "generic": "Some tests failed. Check the order of the random draws: all the resamples first, then one permutation per feature."
+      },
+      "explain": {
+        "text": "Thirty depth-2 trees reach an OOB accuracy of 0.7725 on book 1, close to a full forest. Moving the leverage column moves the answer with it, which is how you know the importance follows the data, not the position."
+      }
+    },
+    {
+      "id": "hw-honest-forest",
+      "difficulty": 5,
+      "skills": [
+        "en-bagging"
+      ],
+      "prose": "The loans are in issue order. Build the honest procedure: train on the first `n_train`, choose $m$ and depth by OOB accuracy on those rows only, then score once on the later loans, beside a logistic regression.",
+      "question": "Complete `honest_forest(X, y, n_train, ms, depths)`. Return `(m, depth, forest_test_acc, logit_test_acc)`, accuracies rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 20000,
+        "prelude": "import numpy as np\n\nNAMES = [\"leverage\", \"cover\", \"margin\", \"vol\", \"short\", \"drawdown\", \"size\", \"age\"]\n\ndef make_loans(seed, n=400):\n    \"\"\"n company loans, 8 features as z-scores across the book.\n    y = 1 if the loan defaulted within a year. Leverage matters most;\n    the next five matter a little; size and age carry no signal.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 8))\n    z = (-0.3 + 2.5 * X[:, 0]\n         + 0.7 * (-X[:, 1] - X[:, 2] + X[:, 3] + X[:, 4] + X[:, 5]))\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    return X, y\n\nimport numpy as np\n\nCOLS = [\"leverage\", \"cover\", \"cover_ttm\", \"secured\", \"loan_id\", \"odd_day\", \"currency\"]\n\ndef make_book(seed, n=400):\n    \"\"\"n loans, 7 columns. Default risk rises with leverage and falls with\n    interest cover; secured loans default a little less. cover and cover_ttm\n    are two measures of the same cover (correlation about 0.9). loan_id is a\n    random number with a different value on every loan; odd_day is a random\n    0 or 1; currency is 1 on every loan (all are sterling).\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = rng.standard_normal(n)\n    cov = rng.standard_normal(n)\n    cover = cov + 0.3 * rng.standard_normal(n)\n    cover_ttm = cov + 0.3 * rng.standard_normal(n)\n    secured = rng.integers(0, 2, n)\n    loan_id = rng.random(n)\n    odd_day = rng.integers(0, 2, n)\n    currency = np.ones(n)\n    z = -0.3 + 1.8 * lev - 1.2 * cov - 0.5 * secured\n    y = (rng.random(n) < 1 / (1 + np.exp(-z))).astype(int)\n    X = np.column_stack([lev, cover, cover_ttm, secured, loan_id, odd_day, currency])\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.linear_model import LogisticRegression\n\ndef honest_forest(X, y, n_train, ms, depths):\n    X = np.asarray(X, dtype=float); y = np.asarray(y)\n    Xtr, ytr, Xte, yte = X[:n_train], y[:n_train], X[n_train:], y[n_train:]\n    best = None\n    for m in ms:\n        for d in depths:\n            # 50 trees, max_features=m, max_depth=d, oob_score=True, random_state=0\n            # keep the first setting with the highest oob_score_\n            ...\n    _, m, d, f = best\n    logit = ...   # LogisticRegression(max_iter=1000) on the training rows\n    return m, d, round(float(f.score(Xte, yte)), 4), round(float(logit.score(Xte, yte)), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.linear_model import LogisticRegression\n\ndef honest_forest(X, y, n_train, ms, depths):\n    X = np.asarray(X, dtype=float); y = np.asarray(y)\n    Xtr, ytr, Xte, yte = X[:n_train], y[:n_train], X[n_train:], y[n_train:]\n    best = None\n    for m in ms:\n        for d in depths:\n            f = RandomForestClassifier(n_estimators=50, max_features=m, max_depth=d,\n                                       oob_score=True, random_state=0).fit(Xtr, ytr)\n            if best is None or f.oob_score_ > best[0]:\n                best = (f.oob_score_, m, d, f)\n    _, m, d, f = best\n    logit = LogisticRegression(max_iter=1000).fit(Xtr, ytr)\n    return m, d, round(float(f.score(Xte, yte)), 4), round(float(logit.score(Xte, yte)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(8, 300)",
+            "call": "honest_forest(X, y, 200, [3], [2])",
+            "expect": "(3, 2, 0.79, 0.89)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(8, 300)",
+            "call": "honest_forest(X, y, 200, [3], [2])",
+            "expect": "(3, 2, 0.79, 0.89)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(7, 600)",
+            "call": "list(honest_forest(X, y, 400, [2, 8], [3, None]))",
+            "expect": "[2, None, 0.79, 0.8]",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_book(4, 600)",
+            "call": "list(honest_forest(X, y, 400, [2, 7], [4, None]))",
+            "expect": "[7, 4, 0.795, 0.83]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests on `make_loans` and `make_book`, which are already defined, with the first rows as training data. The grid is searched with $m$ in the outer loop; on equal OOB scores the first setting is kept. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick. The longest test grows 200 trees and takes about 3 seconds."
+      },
+      "feedback": {
+        "correct": "Here the logistic baseline wins: the true risk is linear in the log-odds.",
+        "generic": "Some tests failed. Choose by `oob_score_` on the training rows only, keep the first best, and fit the logistic regression on the same rows."
+      },
+      "explain": {
+        "text": "On book 7 the forest scores 0.79 and the logistic regression 0.80; on book 4, 0.795 against 0.83. We built these books with a linear log-odds, so the simple model is right. Always report a baseline. With returns data, replace OOB with a walk-forward inside the training period."
+      }
+    },
+    {
+      "id": "hw-train-perm",
+      "difficulty": 3,
+      "skills": [
+        "en-interpret"
+      ],
+      "prose": "A quant computes permutation importance for a deep forest on its own training data. A column of random noise comes out third of ten.",
+      "question": "What explains it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The trees memorised training rows partly through the noise column, so shuffling it breaks that memory",
+            "correct": true
+          },
+          {
+            "id": "weak",
+            "text": "The noise is weakly predictive after all",
+            "why": "On held-out data it would score about 0. The importance came from memorisation."
+          },
+          {
+            "id": "scale",
+            "text": "Permutation importance favours columns with large values",
+            "why": "Shuffling ignores scale; it breaks the link to the label."
+          },
+          {
+            "id": "few",
+            "text": "Too few repeats",
+            "why": "More repeats steady the number; they do not remove memorisation."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Shuffle held-out data, never the training data.",
+        "generic": "Not quite right. Ask what a deep forest does on its own training rows."
+      },
+      "explain": {
+        "text": "A deep forest is near perfect on its training rows, partly through splits on noise. Breaking those splits costs training accuracy, not test accuracy."
+      }
+    },
+    {
+      "id": "hw-stumps",
+      "difficulty": 3,
+      "skills": [
+        "en-bagging",
+        "en-trees"
+      ],
+      "prose": "A colleague bags 500 depth-1 trees on a credit book and sees test error move from 0.266 to 0.259. They conclude bagging does not work on this data.",
+      "question": "What is wrong with the conclusion?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Stumps barely vary between resamples; bag deep trees, whose variance averaging can remove",
+            "correct": true
+          },
+          {
+            "id": "more",
+            "text": "500 trees are too few; try 5,000",
+            "why": "Bagged stumps are flat after about 10 trees. More of them change nothing."
+          },
+          {
+            "id": "boost",
+            "text": "Nothing: bagging only helps regression",
+            "why": "Bagged deep trees cut test error from 0.2595 to 0.2075 on the same kind of book."
+          },
+          {
+            "id": "over",
+            "text": "The 500 trees overfit",
+            "why": "Adding trees cannot overfit; the average just converges."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Bagging fixes variance, so feed it high-variance models.",
+        "generic": "Not quite right. Ask how much a stump changes from one resample to the next."
+      },
+      "explain": {
+        "text": "Every resample picks nearly the same single split, so 500 stumps vote like one. Deep trees differ, and averaging them is where the gain is."
+      }
+    },
+    {
+      "id": "hw-colleague",
+      "difficulty": 5,
+      "skills": [
+        "en-bagging",
+        "en-interpret"
+      ],
+      "kind": "longform",
+      "prompt": "A colleague sends you this summary of a daily equity signal. \"I fitted a random forest with 2,000 trees and `max_features=None` on 2,500 days of 12 features, predicting whether the next 5-day return is positive. The OOB accuracy is 0.71, so the model is strong. The impurity importances show that 20-day momentum causes the returns, followed by the day-of-year feature.\" Explain what each choice costs and what you would change. Write at most 300 words.",
+      "model": "**2,000 trees.** Not harmful: more trees cannot overfit, and the vote converges. But past a few hundred trees nothing changes, so 2,000 only costs time. Use enough trees that the OOB curve is flat, perhaps 300.\n\n**`max_features=None`.** With $m = p$ every split sees all 12 features, so this is bagging, not a random forest. If one feature dominates, every tree starts with it, the trees are correlated, and the variance floor $\\rho\\sigma^2$ stays high. Use $m \\approx \\sqrt{12} = 3$, or choose $m$ on validation data.\n\n**OOB accuracy on daily data.** The labels are 5-day forward returns, so neighbouring days share 4 of 5 return days. Each day's OOB trees drew its neighbours, which are near copies of it, so 0.71 is inflated; on pure noise this setup can score above 0.75. Report an expanding walk-forward test, with a gap of at least 5 days between training and test (purging), and compare it with a coin flip and a simple baseline such as logistic regression.\n\n**Impurity importance as causation.** Impurity importance credits every split, so continuous and high-cardinality columns gain credit even when they are noise; day-of-year, with 365 values, is a likely case of memorisation. Importance also says what the model uses, never what causes returns. Compute permutation importance on the walk-forward test blocks, run an ablation that drops correlated groups together, and describe momentum as a useful predictor, not a cause.\n\n**What I would change.** Fewer trees with $m = 3$; walk-forward with purging; permutation importance and ablation on test blocks; a baseline; and no causal language.",
+      "rubric": [
+        {
+          "points": 1,
+          "text": "Says extra trees cannot overfit; 2,000 costs only time, and B should be where the OOB curve is flat"
+        },
+        {
+          "points": 2,
+          "text": "Identifies `max_features=None` as bagging, explains correlated trees and the floor $\\rho\\sigma^2$, and suggests $m \\approx \\sqrt{p}$ or tuning"
+        },
+        {
+          "points": 2,
+          "text": "Explains why OOB is inflated with overlapping 5-day labels: OOB trees saw neighbouring, near-identical days"
+        },
+        {
+          "points": 1,
+          "text": "Replaces OOB with a walk-forward test with a purge gap of at least the label length, plus a baseline"
+        },
+        {
+          "points": 2,
+          "text": "Explains the impurity-importance bias towards continuous or high-cardinality columns, naming day-of-year as likely memorisation, and recommends held-out permutation importance or ablation"
+        },
+        {
+          "points": 2,
+          "text": "States that importance is not causation and rewrites the momentum claim as predictive use"
+        }
+      ]
+    }
+  ]
+}
