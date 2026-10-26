@@ -1,0 +1,1157 @@
+{
+  "id": "l1-one-bar-at-a-time",
+  "course": "backtest",
+  "title": "One bar at a time",
+  "minutes": 14,
+  "objectives": [
+    "Design an event loop that can only see past data.",
+    "Write the loop and a vectorised version, and test that they agree."
+  ],
+  "skills": [
+    "bt-design"
+  ],
+  "screens": [
+    {
+      "type": "title",
+      "title": "One bar at a time",
+      "prose": "This course builds a backtesting engine in pieces: one function per code screen, and later screens load your earlier ones. At the end of level 4 the pieces run end to end and write a results note. On GitHub the same code becomes a repository with a README, a `tests/` folder and `RESULTS.md`, as in the git and pytest courses."
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "When can a rule speak?",
+      "prose": "Twelve daily bars of one share, oldest first, prices in £. Our first rule: **buy when today's close is above yesterday's**. The rule decides after the close, once the day's bar is complete.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume"
+          ],
+          "rows": [
+            [
+              "2019-01-02",
+              "100.05",
+              "100.21",
+              "98.70",
+              "99.59",
+              "2.42m"
+            ],
+            [
+              "2019-01-03",
+              "99.87",
+              "101.29",
+              "99.50",
+              "100.28",
+              "2.67m"
+            ],
+            [
+              "2019-01-04",
+              "98.81",
+              "99.45",
+              "97.09",
+              "97.31",
+              "1.60m"
+            ],
+            [
+              "2019-01-07",
+              "97.05",
+              "97.42",
+              "96.65",
+              "96.97",
+              "1.48m"
+            ],
+            [
+              "2019-01-08",
+              "96.69",
+              "97.05",
+              "96.61",
+              "96.95",
+              "1.87m"
+            ],
+            [
+              "2019-01-09",
+              "96.69",
+              "96.87",
+              "95.49",
+              "96.39",
+              "2.18m"
+            ],
+            [
+              "2019-01-10",
+              "96.40",
+              "97.07",
+              "95.77",
+              "96.92",
+              "2.05m"
+            ],
+            [
+              "2019-01-11",
+              "97.75",
+              "97.87",
+              "97.62",
+              "97.84",
+              "1.74m"
+            ],
+            [
+              "2019-01-14",
+              "98.08",
+              "99.47",
+              "97.53",
+              "98.90",
+              "2.08m"
+            ],
+            [
+              "2019-01-15",
+              "98.40",
+              "98.55",
+              "98.31",
+              "98.45",
+              "2.82m"
+            ],
+            [
+              "2019-01-16",
+              "99.09",
+              "99.80",
+              "99.08",
+              "99.31",
+              "2.07m"
+            ],
+            [
+              "2019-01-17",
+              "99.35",
+              "100.23",
+              "98.71",
+              "99.99",
+              "1.00m"
+            ]
+          ],
+          "tap": "rows",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap the first row on which the rule can act.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1"
+        ],
+        "max": 1,
+        "countWord": "rows"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The rule compares two closes. Which row is the first to have a yesterday?"
+        },
+        {
+          "rung": "point",
+          "text": "Row 0 is the first bar we have. Nothing comes before it.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 1 has row 0 as its yesterday, and 100.28 beats 99.59."
+        }
+      ],
+      "feedback": {
+        "correct": "Row 1: the first bar with a yesterday, and its close beats it.",
+        "generic": "Not quite right. Find the first row whose close can be compared with the close before it.",
+        "byKey": {
+          "r0": "Row 0 has no yesterday in the data, so the rule has nothing to compare it with.",
+          "r2": "Row 2 is where the trade can first be filled, at its open. The rule itself spoke a row earlier, at row 1's close."
+        }
+      },
+      "explain": {
+        "text": "Row 1 is the first bar with a yesterday, and its close of 100.28 beats 99.59. The decision comes after row 1's close, when the market has shut. The earliest fill is row 2's open of 98.81: lesson 5 builds that.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          },
+          "caption": "Decide at row 1's close; fill no earlier than row 2's open."
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Step through the bars",
+      "prose": "The same twelve closes as cells. Move the slider to step the pointer `now` forward one bar at a time. The bars the strategy may read stay lit; the greyed ones have not happened yet.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            99.59,
+            100.28,
+            97.31,
+            96.97,
+            96.95,
+            96.39,
+            96.92,
+            97.84,
+            98.9,
+            98.45,
+            99.31,
+            99.99
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "now",
+              "at": 0,
+              "label": "now"
+            }
+          ],
+          "active": [
+            0,
+            0
+          ],
+          "params": {
+            "t": 0
+          }
+        },
+        "derive": {
+          "now.at": "t",
+          "active": "[0, t]",
+          "caption": "Bar {{t}}: the strategy sees bars 0 to {{t}}, which is {{t + 1}} rows."
+        },
+        "controls": [
+          {
+            "bind": "t",
+            "min": 0,
+            "max": 11,
+            "step": 1,
+            "start": 0,
+            "label": "bar $t$"
+          }
+        ]
+      },
+      "question": "Step to bar 7. How many rows of history can the strategy read there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Rows the strategy can read",
+        "placeholder": "whole number",
+        "accept": "8: bars 0 to 7, today's bar included.",
+        "wrong": [
+          {
+            "id": "seven",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the lit cells when the pointer is on bar 7."
+        },
+        {
+          "rung": "point",
+          "text": "Bars are numbered from 0, so bar 7 is the eighth bar.",
+          "highlight": [
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bars 0, 1, ..., 7 make 8 rows."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight rows: bars 0 to 7.",
+        "generic": "Not quite right. Count every lit cell, including the one under the pointer.",
+        "byKey": {
+          "seven": "You left out bar 7 itself. The strategy decides after bar 7's close, so that bar is history too.",
+          "all": "You counted the greyed bars as well. Bars 8 to 11 are the future at bar 7."
+        }
+      },
+      "explain": {
+        "text": "At bar 7 the strategy reads bars 0 to 7, eight rows, and nothing after. Each step adds one row to the history. That is the whole discipline of a backtest: the future stays greyed out.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "now",
+              "at": 7,
+              "label": "now"
+            }
+          ],
+          "active": [
+            0,
+            7
+          ],
+          "params": {
+            "t": 7
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The event loop in code",
+      "prose": "What you just did with the slider is an **event loop**: for each bar, hand the strategy the history up to and including that bar, record the target it returns, move on. `decide(history)` takes a DataFrame of bars and returns a target position. Write the loop.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> b = hand_bars()        # 5 bars, closes 100, 102, 101, 99, 103",
+            ">>> run_loop(b, up_day)    # 1 when today's close beats yesterday's",
+            "[0, 1, 0, 0, 1]"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete `run_loop(bars, decide)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def run_loop(bars, decide):\n    \"\"\"One target per bar. decide(history) sees bars 0..t only.\"\"\"\n    targets = []\n    for t in range(len(bars)):\n        history = ...      # bars 0 to t, today's bar included\n        targets.append(...)\n    return targets\n",
+        "solution": "def run_loop(bars, decide):\n    \"\"\"One target per bar. decide(history) sees bars 0..t only.\"\"\"\n    targets = []\n    for t in range(len(bars)):\n        history = bars.iloc[: t + 1]      # bars 0 to t, today's bar included\n        targets.append(decide(history))\n    return targets\n",
+        "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    \"\"\"Five hand-made daily bars, Monday 4 to Friday 8 March 2024.\"\"\"\n    idx = pd.bdate_range(\"2024-03-04\", periods=5)\n    return pd.DataFrame({\"open\": [99.5, 100.4, 102.2, 100.6, 99.4],\n                         \"high\": [100.6, 102.5, 102.4, 101.0, 103.3],\n                         \"low\": [99.2, 100.1, 100.7, 98.8, 99.1],\n                         \"close\": [100.0, 102.0, 101.0, 99.0, 103.0],\n                         \"volume\": [2.1e6, 1.8e6, 2.4e6, 2.0e6, 1.9e6]}, index=idx)\n\ndef up_day(history):\n    \"\"\"The first rule: long 1 when today's close beats yesterday's, else 0.\"\"\"\n    c = history[\"close\"]\n    return 1 if len(c) > 1 and c.iloc[-1] > c.iloc[-2] else 0\n\ndef decide_mom(history, lookback):\n    \"\"\"The sign of the lookback-day return, seen from the last bar of history.\"\"\"\n    c = history[\"close\"]\n    if len(c) <= lookback:\n        return 0\n    return int(np.sign(c.iloc[-1] / c.iloc[-1 - lookback] - 1))\n\nclass Spy:\n    \"\"\"A decide() that records what it was shown and always returns 0.\"\"\"\n    def __init__(self):\n        self.lens, self.last = [], []\n    def __call__(self, history):\n        self.lens.append(len(history))\n        self.last.append(str(history.index[-1].date()))\n        return 0\n",
+        "examples": [
+          {
+            "call": "run_loop(hand_bars(), up_day)",
+            "expect": "[0, 1, 0, 0, 1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_loop(hand_bars(), up_day)",
+            "expect": "[0, 1, 0, 0, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(run_loop(make_bars(60), up_day))",
+            "expect": "60",
+            "compare": "equal"
+          },
+          {
+            "setup": "spy = Spy(); out = run_loop(hand_bars(), spy)",
+            "call": "spy.lens",
+            "expect": "[1, 2, 3, 4, 5]",
+            "compare": "equal"
+          },
+          {
+            "setup": "spy = Spy(); out = run_loop(hand_bars(), spy)",
+            "call": "spy.last == [str(d.date()) for d in hand_bars().index]",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "spy = Spy(); out = run_loop(make_bars(40), spy)",
+            "call": "all(n <= i + 1 for i, n in enumerate(spy.lens))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "run_loop(make_bars(40), lambda h: decide_mom(h, 3))[:8]",
+            "expect": "[0, 0, 0, -1, -1, -1, -1, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_loop(hand_bars().iloc[:0], up_day)",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on `hand_bars()` and `make_bars(n)`, both already defined, with `up_day`, a 3-day momentum rule and a spy. The spy records how many rows each call saw and the last date in them: it fails if any call sees a bar after `t`. Lists are compared with ==. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`bars.iloc[a:b]` takes rows by position, from `a` up to but not including `b`."
+        },
+        {
+          "rung": "point",
+          "text": "Bar `t` must be in the history, so the slice ends at `t + 1`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`history = bars.iloc[: t + 1]`, then `targets.append(decide(history))`."
+        }
+      ],
+      "feedback": {
+        "correct": "The loop passes, and the spy saw 1, 2, 3, 4 and 5 rows: never a bar ahead.",
+        "generic": "Some tests failed. Slice `bars.iloc[: t + 1]` at each step and append what `decide` returns.",
+        "byKey": {
+          "test-3": "The spy saw the wrong number of rows. At bar `t` the history holds `t + 1` rows: use `iloc[: t + 1]`.",
+          "test-5": "A call saw a bar after `t`. That is look-ahead: the slice must stop at bar `t`."
+        }
+      },
+      "explain": {
+        "text": "The slice `bars.iloc[: t + 1]` is the only line that matters: it hands over bars 0 to `t` and nothing else. The spy is the course's first look-ahead check. It watches what the strategy was shown, not what it returned."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What is known at the close",
+      "prose": "Same loop, real calendar. It is Tuesday 10 March, just after the close, and `decide` is running for that bar. A government figure for each month is published on the 15th of the next month.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "Mon 9",
+            "Tue 10",
+            "Wed 11",
+            "Thu 12",
+            "Fri 13",
+            "Mon 16"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "now",
+              "at": 1,
+              "label": "now"
+            }
+          ],
+          "active": [
+            0,
+            1
+          ],
+          "caption": "The loop is at Tuesday's bar."
+        }
+      },
+      "question": "Which can `decide` use on Tuesday 10 March? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "high",
+            "text": "Tuesday's high",
+            "correct": true
+          },
+          {
+            "id": "vol",
+            "text": "Tuesday's volume",
+            "correct": true
+          },
+          {
+            "id": "close",
+            "text": "Tuesday's close",
+            "correct": true
+          },
+          {
+            "id": "open",
+            "text": "Wednesday's open",
+            "why": "Wednesday's open happens tomorrow morning. You can trade at it, but you cannot read it tonight."
+          },
+          {
+            "id": "feb",
+            "text": "February's figure",
+            "why": "February's figure is published on 15 March, five days from now. Using it on the 10th is look-ahead."
+          },
+          {
+            "id": "jan",
+            "text": "January's figure",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each item ask: has it been printed by Tuesday evening?"
+        },
+        {
+          "rung": "point",
+          "text": "Every number in Tuesday's own bar is final once the market shuts.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tuesday's high, volume and close, plus January's figure (published 15 February). Not Wednesday's open, not February's figure."
+        }
+      ],
+      "feedback": {
+        "correct": "Tuesday's bar and January's figure; tomorrow's open and February's figure are still in the future.",
+        "generic": "Not quite right. Keep only what has been published by Tuesday evening.",
+        "byKey": {
+          "open": "Wednesday's open is tomorrow's price. The order can fill there, but the decision cannot read it.",
+          "feb": "February's figure describes the past, but it is not published until 15 March. What matters is when a number is known, not what period it covers."
+        }
+      },
+      "explain": {
+        "text": "A value is usable at bar `t` when it was known by then, not when the thing it describes happened. February ended on the 29th, but its figure exists only from the 15th. The alpha course meets this again with company accounts.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ],
+          "caption": "Known on Tuesday evening: Tuesday's bar and anything published by then."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The fast version",
+      "prose": "The loop calls `decide` once per bar, so it is slow. Pandas does a whole column at once: `close.pct_change(lookback)` is each bar's return over the last `lookback` bars, NaN where there are not enough bars. Write the vectorised momentum rule; your `run_loop` is already defined, and the tests check that the two agree.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> s = pd.Series([100, 102, 101, 101, 104.0])",
+            ">>> vector_targets(s, 1).tolist()",
+            "[0.0, 1.0, -1.0, 0.0, 1.0]"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete `vector_targets(close, lookback)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef vector_targets(close, lookback):\n    \"\"\"The sign of the lookback-day return at every bar, 0 where it is undefined.\"\"\"\n    ret = ...          # one pandas call on the whole column\n    return ...\n",
+        "solution": "import numpy as np\n\ndef vector_targets(close, lookback):\n    \"\"\"The sign of the lookback-day return at every bar, 0 where it is undefined.\"\"\"\n    ret = close.pct_change(lookback)          # one pandas call on the whole column\n    return np.sign(ret).fillna(0)\n",
+        "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    \"\"\"Five hand-made daily bars, Monday 4 to Friday 8 March 2024.\"\"\"\n    idx = pd.bdate_range(\"2024-03-04\", periods=5)\n    return pd.DataFrame({\"open\": [99.5, 100.4, 102.2, 100.6, 99.4],\n                         \"high\": [100.6, 102.5, 102.4, 101.0, 103.3],\n                         \"low\": [99.2, 100.1, 100.7, 98.8, 99.1],\n                         \"close\": [100.0, 102.0, 101.0, 99.0, 103.0],\n                         \"volume\": [2.1e6, 1.8e6, 2.4e6, 2.0e6, 1.9e6]}, index=idx)\n\ndef up_day(history):\n    \"\"\"The first rule: long 1 when today's close beats yesterday's, else 0.\"\"\"\n    c = history[\"close\"]\n    return 1 if len(c) > 1 and c.iloc[-1] > c.iloc[-2] else 0\n\ndef decide_mom(history, lookback):\n    \"\"\"The sign of the lookback-day return, seen from the last bar of history.\"\"\"\n    c = history[\"close\"]\n    if len(c) <= lookback:\n        return 0\n    return int(np.sign(c.iloc[-1] / c.iloc[-1 - lookback] - 1))\n\nclass Spy:\n    \"\"\"A decide() that records what it was shown and always returns 0.\"\"\"\n    def __init__(self):\n        self.lens, self.last = [], []\n    def __call__(self, history):\n        self.lens.append(len(history))\n        self.last.append(str(history.index[-1].date()))\n        return 0\n\ndef run_loop(bars, decide):\n    targets = []\n    for t in range(len(bars)):\n        history = bars.iloc[: t + 1]\n        targets.append(decide(history))\n    return targets\n",
+        "examples": [
+          {
+            "call": "vector_targets(pd.Series([100, 102, 101, 101, 104.0]), 1).tolist()",
+            "expect": "[0.0, 1.0, -1.0, 0.0, 1.0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "vector_targets(pd.Series([100, 102, 101, 101, 104.0]), 1).tolist()",
+            "expect": "[0.0, 1.0, -1.0, 0.0, 1.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "vector_targets(pd.Series([100, 102, 101, 101, 104.0]), 2).tolist()",
+            "expect": "[0.0, 0.0, 1.0, -1.0, 1.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "vector_targets(pd.Series([100, 102, 101, 101, 104.0]), 5).tolist()",
+            "expect": "[0.0, 0.0, 0.0, 0.0, 0.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "h = pd.DataFrame({'close': [100, 102, 101, 101, 104.0]})",
+            "call": "[int(v) for v in vector_targets(h['close'], 2)] == run_loop(h, lambda x: decide_mom(x, 2))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "b = make_bars(60)",
+            "call": "[int(v) for v in vector_targets(b['close'], 3)] == run_loop(b, lambda x: decide_mom(x, 3))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "b = make_bars(60)",
+            "call": "[int(v) for v in vector_targets(b['close'], 10)] == run_loop(b, lambda x: decide_mom(x, 10))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "int(pd.Series(vector_targets(make_bars(60)['close'], 20)).isna().sum())",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: a five-bar hand series at lookbacks 1, 2 and 5 (longer than the data), and three comparisons with `run_loop` and the matching `decide_mom(history, lookback)` on the hand series and on `make_bars(60)`, which are already defined. The last test checks that no target is NaN. The first run loads NumPy and pandas, which takes about 15 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`np.sign` of a Series is a Series of −1, 0 and 1, and NaN stays NaN."
+        },
+        {
+          "rung": "point",
+          "text": "The first `lookback` returns are NaN: there is no bar that far back.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`ret = close.pct_change(lookback)`, then `return np.sign(ret).fillna(0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The fast version agrees with the loop, bar for bar.",
+        "generic": "Some tests failed. Take `np.sign(close.pct_change(lookback))` and replace the NaNs with 0.",
+        "byKey": {
+          "test-7": "Some targets are NaN. A bar with no signal yet must hold nothing: `fillna(0)`.",
+          "test-5": "Your targets differ from the loop's on `make_bars(60)`. Check that you used `pct_change(lookback)` on `close`, with no shift."
+        }
+      },
+      "explain": {
+        "text": "One line does what the loop does in sixty calls. But the line can reach forward: `close.pct_change(lookback).shift(-1)` is one typo away and reads tomorrow. The loop cannot make that mistake, so the course keeps both and tests that they agree."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Before there is a signal",
+      "prose": "Edge case. The rule now uses a 5-day lookback: the sign of the return from bar $t - 5$ to bar $t$. The cells are the same twelve closes.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            99.59,
+            100.28,
+            97.31,
+            96.97,
+            96.95,
+            96.39,
+            96.92,
+            97.84,
+            98.9,
+            98.45,
+            99.31,
+            99.99
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "now",
+              "at": 4,
+              "label": "now"
+            }
+          ]
+        }
+      },
+      "question": "Tap every bar whose target must be 0 because the 5-day return does not exist yet.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c0",
+          "c1",
+          "c2",
+          "c3",
+          "c4"
+        ],
+        "countWord": "bars",
+        "wrong": [
+          {
+            "id": "four",
+            "set": [
+              "c0",
+              "c1",
+              "c2",
+              "c3"
+            ]
+          },
+          {
+            "id": "six",
+            "set": [
+              "c0",
+              "c1",
+              "c2",
+              "c3",
+              "c4",
+              "c5"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At bar $t$ the rule needs the close at bar $t - 5$."
+        },
+        {
+          "rung": "point",
+          "text": "Bar 5 can look back to bar 0. Bar 4 would need bar −1.",
+          "highlight": [
+            "c4",
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bars 0 to 4 have no 5-day return: five bars, target 0 each."
+        }
+      ],
+      "feedback": {
+        "correct": "Bars 0 to 4: five bars with no signal, each holding 0.",
+        "generic": "Not quite right. Shade each bar that cannot reach five bars back.",
+        "byKey": {
+          "four": "You stopped at bar 3. Bar 4 needs the close at bar −1, which does not exist.",
+          "six": "Bar 5 can use bar 0 as its start, so its 5-day return exists."
+        }
+      },
+      "explain": {
+        "text": "The first `lookback` bars have no signal, so their target is 0, never NaN. A NaN target would spread through the engine: NaN shares, NaN cash, NaN equity. Holding nothing is the honest default.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              0,
+              4
+            ],
+            "label": "target 0"
+          },
+          "caption": "Bars 0 to 4: no 5-day return yet."
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A window that looks both ways",
+      "prose": "A colleague's rule: buy when the close is above `df[\"close\"].rolling(5, center=True).mean()`. It backtests beautifully. The pointer is on bar 7.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            99.59,
+            100.28,
+            97.31,
+            96.97,
+            96.95,
+            96.39,
+            96.92,
+            97.84,
+            98.9,
+            98.45,
+            99.31,
+            99.99
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "now",
+              "at": 7,
+              "label": "now"
+            }
+          ]
+        }
+      },
+      "question": "Tap the closes that the average at bar 7 uses.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c5",
+          "c6",
+          "c7",
+          "c8",
+          "c9"
+        ],
+        "countWord": "closes",
+        "wrong": [
+          {
+            "id": "trailing",
+            "set": [
+              "c3",
+              "c4",
+              "c5",
+              "c6",
+              "c7"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`center=True` puts the label in the middle of the window, not at its end."
+        },
+        {
+          "rung": "point",
+          "text": "A 5-bar window centred on bar 7 has two bars on each side.",
+          "highlight": [
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bars 5, 6, 7, 8 and 9."
+        }
+      ],
+      "feedback": {
+        "correct": "Bars 5 to 9: two of them are after bar 7.",
+        "generic": "Not quite right. Put bar 7 in the middle of five bars.",
+        "byKey": {
+          "trailing": "You picked the trailing window, bars 3 to 7. With `center=True` pandas centres the window on bar 7, so it reads bars 8 and 9 too: two days of the future."
+        }
+      },
+      "explain": {
+        "text": "The centred mean at bar 7 averages bars 5 to 9, so the rule compares today with two closes it cannot have seen. In the event loop it could not even be computed: the history stops at bar 7. The validation course's `centred_vs_trailing` shows the same leak in a feature.",
+        "canvas": {
+          "active": [
+            0,
+            7
+          ],
+          "highlight": {
+            "range": [
+              8,
+              9
+            ],
+            "label": "future"
+          },
+          "caption": "Bars 8 and 9 are greyed: the loop never hands them over."
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Two engines, one answer",
+      "prose": "You wrote both halves of the design:\n```python\nfor t in range(len(bars)):\n    history = bars.iloc[: t + 1]   # bars 0..t\n    targets.append(decide(history))\n```\nThe loop is slow but cannot peek. The vectorised `np.sign(close.pct_change(k)).fillna(0)` is fast but one `shift(-1)` or `center=True` from peeking. A test that they agree joins the strengths.",
+      "question": "Why does the engine keep the slow loop once the fast version exists?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ref",
+            "text": "It cannot see the future by construction, so it is the reference the fast version must match",
+            "correct": true
+          },
+          {
+            "id": "fast",
+            "text": "It is faster on long histories",
+            "why": "You picked speed, but the loop is the slow one: it slices the history and calls `decide` once per bar."
+          },
+          {
+            "id": "sharpe",
+            "text": "It gives a more realistic, lower Sharpe ratio",
+            "why": "Run on the same honest rule, both give the same targets and so the same Sharpe. A difference means one of them is wrong."
+          },
+          {
+            "id": "fill",
+            "text": "It fills orders at better prices",
+            "why": "Neither version fills anything yet. Both only produce targets; fills come in lesson 5."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The loop is the honest reference; the fast version is checked against it.",
+        "generic": "Not quite right. Think about which version could read tomorrow by mistake."
+      },
+      "explain": {
+        "text": "The loop hands over bars 0 to `t` and nothing else, so no rule run through it can peek. The vectorised version is what we run hundreds of times in research. Agreement on seeded data, as your tests checked, is what lets us trust the fast one."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The one line that matters",
+      "prose": "The loop's safety rests on one slice. Each candidate below runs without an error on a DataFrame of bars.",
+      "question": "Which slice is the history at bar `t`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`bars.iloc[: t + 1]`",
+            "correct": true
+          },
+          {
+            "id": "lag",
+            "text": "`bars.iloc[:t]`",
+            "why": "You left out bar `t` itself. Its close is known when we decide after the close, so this throws a day away and lags every signal by one bar."
+          },
+          {
+            "id": "ahead",
+            "text": "`bars.iloc[: t + 2]`",
+            "why": "You included bar `t + 1`, tomorrow's bar. The strategy would read tomorrow's close today."
+          },
+          {
+            "id": "from",
+            "text": "`bars.iloc[t:]`",
+            "why": "You took bar `t` and everything after it: the whole future and none of the past."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`iloc[a:b]` stops before position `b`."
+        },
+        {
+          "rung": "point",
+          "text": "We want positions 0, 1, ..., `t`, so the stop is `t + 1`."
+        },
+        {
+          "rung": "step",
+          "text": "`bars.iloc[: t + 1]` holds `t + 1` rows, ending at bar `t`."
+        }
+      ],
+      "feedback": {
+        "correct": "Positions 0 to `t`: today included, tomorrow excluded.",
+        "generic": "Not quite right. Find the slice that ends exactly at bar `t`.",
+        "byKey": {
+          "lag": "That slice is safe but late: it drops today's bar, which is known at the close.",
+          "ahead": "That slice reaches tomorrow: one row of look-ahead."
+        }
+      },
+      "explain": {
+        "text": "`iloc` stops before its end, so `: t + 1` ends at bar `t`. One less is a needless one-day lag; one more is look-ahead. The spy in your tests checks exactly this boundary."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Prototype against replay",
+      "prose": "A desk's researcher prototypes a rule in vectorised pandas on five years of bars: annualised Sharpe 1.3. Before any money moves, the desk replays the same rule through its event-driven backtester, which feeds bars one at a time as a live system would. The replay gives 0.4.",
+      "question": "What should the desk conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Trust the replay, and find where the vectorised code uses data the loop never hands over",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "Report the average, 0.85",
+            "why": "You averaged a correct number with a wrong one. The two engines should agree exactly on the same rule; a gap means a bug."
+          },
+          {
+            "id": "proto",
+            "text": "Trust the prototype: the replay is slower and adds noise",
+            "why": "You treated the replay as noisy. With the same rule and data it is deterministic; it is lower because it cannot read the future."
+          },
+          {
+            "id": "seed",
+            "text": "Rerun both with a new random seed",
+            "why": "Neither engine is random. The same bars give the same targets every time, so a rerun gives 1.3 and 0.4 again."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both engines saw the same rule and the same bars."
+        },
+        {
+          "rung": "point",
+          "text": "Only one of them can hand the rule a bar from the future."
+        },
+        {
+          "rung": "step",
+          "text": "The replay is the reference. A higher prototype Sharpe points to a peek, such as a `shift(-1)` or a centred window."
+        }
+      ],
+      "feedback": {
+        "correct": "The replay is the reference; the gap is a bug to find.",
+        "generic": "Not quite right. Ask which engine could have read a bar it should not have.",
+        "byKey": {
+          "avg": "Averaging hides the bug. Find the line where the two disagree.",
+          "proto": "Speed has nothing to do with it. The replay is lower because it cannot see ahead."
+        }
+      },
+      "explain": {
+        "text": "When an interviewer asks about an \"event-driven backtester\", they mean this loop: bars arrive one at a time, as they would live. Its result is the reference, and a vectorised result that beats it is a bug until found. Chan's *Quantitative Trading* (chapter 3) lists look-ahead as the first error to rule out."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An event loop hands the strategy bars 0 to $t$, records its target and moves on, so it cannot read the future.",
+      "A value is usable at bar $t$ only if it was known by then: today's bar yes, tomorrow's open and unpublished figures no.",
+      "The vectorised version is fast but one `shift(-1)` from peeking, so a test checks that it agrees with the loop. Before a signal exists the target is 0, never NaN."
+    ],
+    "formula": {
+      "name": "History at bar $t$",
+      "tex": "\\text{history}_t = (\\text{bar}_0, \\text{bar}_1, \\ldots, \\text{bar}_t)",
+      "note": "In pandas: `bars.iloc[: t + 1]`."
+    },
+    "trap": "`rolling(5, center=True)` looks two bars ahead. Any window, shift or statistic must end at bar $t$."
+  },
+  "quiz": [
+    {
+      "id": "q-first-bar",
+      "difficulty": 2,
+      "prose": "`run_loop` is at the very first bar, $t = 0$.",
+      "question": "How many rows does `decide` receive?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "1: bar 0 itself.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row: bar 0.",
+        "generic": "Not quite right. `bars.iloc[: 0 + 1]` holds one row.",
+        "byKey": {
+          "zero": "You left out bar 0 itself. Its close is known when we decide."
+        }
+      },
+      "explain": {
+        "text": "`bars.iloc[:1]` is the first row alone. The strategy decides after bar 0's close with one bar of history. Most rules return 0 here, for lack of a yesterday."
+      }
+    },
+    {
+      "id": "q-lookback-zeros",
+      "difficulty": 2,
+      "prose": "`vector_targets(close, 20)` runs on 1,260 daily bars.",
+      "question": "How many targets at the start are 0 because there is no 20-day return yet?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "20: bars 0 to 19.",
+        "wrong": [
+          {
+            "id": "nineteen",
+            "value": 19,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "twentyone",
+            "value": 21,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Bars 0 to 19 have no bar 20 days earlier.",
+        "generic": "Not quite right. Bar $t$ needs bar $t - 20$.",
+        "byKey": {
+          "nineteen": "Bar 19 would need bar −1. It has no signal either.",
+          "twentyone": "Bar 20 can use bar 0, so its return exists."
+        }
+      },
+      "explain": {
+        "text": "`pct_change(20)` is NaN for bars 0 to 19 and defined from bar 20. Those 20 NaNs become targets of 0. A longer lookback costs more days at the start."
+      }
+    },
+    {
+      "id": "q-which-peeks",
+      "difficulty": 3,
+      "prose": "Four ways to compute a column from `close` in pandas.",
+      "question": "Which one uses a close after bar $t$ in its value at bar $t$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "centre",
+            "text": "`close.rolling(10, center=True).mean()`",
+            "correct": true
+          },
+          {
+            "id": "trail",
+            "text": "`close.rolling(10).mean()`",
+            "why": "A plain rolling window ends at bar $t$: it averages bars $t - 9$ to $t$."
+          },
+          {
+            "id": "lag",
+            "text": "`close.shift(1)`",
+            "why": "`shift(1)` moves yesterday's close down to today. It looks back, not ahead; `shift(-1)` would peek."
+          },
+          {
+            "id": "exp",
+            "text": "`close.expanding().mean()`",
+            "why": "An expanding mean averages bars 0 to $t$, everything so far and nothing after."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The centred window reaches five bars ahead.",
+        "generic": "Not quite right. Look for a window that does not end at bar $t$."
+      },
+      "explain": {
+        "text": "With `center=True` a 10-bar window at bar $t$ covers bars $t - 5$ to $t + 4$ in pandas. The other three end at bar $t$. The event loop could not compute the centred one at all."
+      }
+    },
+    {
+      "id": "q-disagree",
+      "difficulty": 3,
+      "prose": "On `make_bars()`, your `vector_targets(close, 3)` and `run_loop` with the matching rule disagree on 412 of 1,260 bars.",
+      "question": "What is the most likely cause?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The vectorised line reads a bar the loop never hands over, such as a `shift(-1)`",
+            "correct": true
+          },
+          {
+            "id": "float",
+            "text": "Floating-point rounding in `pct_change`",
+            "why": "Both compute the same division. Rounding cannot flip the sign of hundreds of returns."
+          },
+          {
+            "id": "nan",
+            "text": "The first three bars are NaN",
+            "why": "That explains at most three bars, not 412."
+          },
+          {
+            "id": "slow",
+            "text": "The loop ran out of time",
+            "why": "A slow loop is still a correct loop. It returns the same targets, just later."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Hundreds of disagreements mean a timing bug.",
+        "generic": "Not quite right. Think about what could change hundreds of targets at once."
+      },
+      "explain": {
+        "text": "The two should agree on every bar. A shift of one bar changes the target wherever the sign changes, which is often: hundreds of bars. The agreement test exists to catch exactly this."
+      }
+    }
+  ]
+}
