@@ -314,10 +314,17 @@
         if (!spec.canvas || !Z.canvas) return null;
         let state = {};
         try { state = canvas && canvas.get ? canvas.get() || {} : Object.assign({}, initial); } catch { state = Object.assign({}, initial); }
-        const patch = (spec.explain && spec.explain.canvas) || {};
+        const patch0 = (spec.explain && spec.explain.canvas) || {};
+        /* inbox (backtest 3, alpha 4): explain.canvas.controls { "<bind>": value } sets those controls' values on the copy
+           (through setParam, as the slider would), so derive shows the explore's answer state */
+        const { controls: ctlVals, ...patch } = patch0 && typeof patch0 === 'object' ? patch0 : {};
         const merged = Z.canvas.merge ? Z.canvas.merge(state, patch) : Object.assign({}, state, patch);
         /* derive runs again on the explained state, so derived points and captions follow the patch */
-        try { return Z.canvas.create(host, { ...spec.canvas, state: merged }, { mode: 'static', reducedMotion: true }) /* the whole spec, so a pair keeps stack, active and shareMargins (item 194) */; } catch (e) { console.error(e); return null; }
+        try {
+          const c = Z.canvas.create(host, { ...spec.canvas, state: merged }, { mode: 'static', reducedMotion: true }); /* the whole spec, so a pair keeps stack, active and shareMargins (item 194) */
+          if (c && ctlVals && typeof ctlVals === 'object') Object.entries(ctlVals).forEach(([b, v]) => { try { const listPath = /^(points|intervals|arrows|markers|vectors|segments|pointers)\./.test(b); if (c.setParam && !listPath) c.setParam(b, v); else c.set(b.includes('.') ? b.split('.').reduceRight((acc, k) => ({ [k]: acc }), v) : { params: { [b]: v } }, { instant: true }); } catch (err) { console.error(err); } });
+          return c;
+        } catch (e) { console.error(e); return null; }
       },
       answer() {
         if (!widget) return true;
