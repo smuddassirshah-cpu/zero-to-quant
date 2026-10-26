@@ -1,0 +1,1111 @@
+{
+ "id": "l11-gradient-boosting",
+ "course": "ensembles",
+ "title": "Gradient boosting in practice",
+ "minutes": 15,
+ "objectives": [
+  "Train a gradient boosted model with early stopping.",
+  "Fit trees to the negative gradient of a loss, and validate on a later block for time-ordered data."
+ ],
+ "skills": [
+  "en-boosting"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Which way is downhill?",
+   "prose": "A boosted direction model holds a log-odds $F$ for one day, so $p = 1/(1 + e^{-F})$. The day went up, $y = 1$, and the log loss is $\\ln(1 + e^{-F})$. Drag the point along the loss curve and watch the slope.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      4
+     ],
+     "y": [
+      0,
+      4.5
+     ],
+     "xLabel": "Log-odds $F$",
+     "yLabel": "Log loss when $y = 1$",
+     "functions": [
+      {
+       "id": "L",
+       "expr": "ln(1 + exp(-x))",
+       "label": "$\\ln(1 + e^{-F})$",
+       "colour": 1
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": -2,
+       "y": 2.1269,
+       "drag": true,
+       "on": "L"
+      }
+     ],
+     "tangent": {
+      "f": "L",
+      "x": "P",
+      "lengthPx": 120
+     }
+    },
+    "derive": {
+     "caption": "$F$ = {{fixed(P.x, 2)}}, $p$ = {{fixed(1 / (1 + exp(-P.x)), 3)}}, slope = {{fixed(1 / (1 + exp(-P.x)) - 1, 3)}}"
+    }
+   },
+   "question": "Drag the point to $F = 0$. What is the slope of the loss there?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.01
+    },
+    "label": "Slope of the log loss at F = 0",
+    "accept": "−0.5: at $F = 0$, $p = 0.5$ and the slope is $p - y = -0.5$.",
+    "wrong": [
+     {
+      "id": "pos",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "loss",
+      "value": 0.693,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the slope in the caption as you drag."
+    },
+    {
+     "rung": "point",
+     "text": "At $F = 0$ the probability is 0.5.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The caption shows slope −0.500 at $F = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "The slope is −0.5, and it always equals $p - 1$ here.",
+    "generic": "Not quite right. Move the point to $F = 0$ and read the slope.",
+    "byKey": {
+     "pos": "You dropped the sign. The loss falls as $F$ grows, so the slope is negative.",
+     "loss": "That is the loss itself, $\\ln 2$, not its slope."
+    }
+   },
+   "explain": {
+    "text": "Drag anywhere and the caption's slope is $p - 1$. Downhill means raising $F$, by an amount that shrinks as $p$ nears 1. A tree that pushes $F$ by $-(p - y)$ is stepping downhill: that is the target boosting gives it.",
+    "canvas": {
+     "points": {
+      "P": {
+       "x": 0,
+       "y": 0.6931
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Minus the slope",
+   "prose": "In lesson 9 each tree was fitted to $y - \\hat f$. That is minus the slope of $\\tfrac{1}{2}(y - F)^2$ in $F$. For log loss, minus the slope in $F$ is $y - p$. These are **pseudo-residuals**: the negative gradient of the loss.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Loss",
+      "Slope in $F$"
+     ],
+     "rows": [
+      [
+       "$\\tfrac{1}{2}(y - F)^2$",
+       "$-(y - F)$"
+      ],
+      [
+       "$-y\\ln p - (1 - y)\\ln(1 - p)$",
+       "$p - y$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the next tree's target, minus the slope, for each row.",
+   "widget": {
+    "kind": "table",
+    "label": "Next tree targets",
+    "columns": [
+     "Loss",
+     "Outcome $y$",
+     "Current fit",
+     "Next tree's target"
+    ],
+    "rows": [
+     [
+      "Squared error",
+      "5 bp",
+      "$F = 3$ bp",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Squared error",
+      "−1 bp",
+      "$F = 2$ bp",
+      {
+       "edit": true,
+       "answer": -3,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Log loss",
+      "1 (up)",
+      "$p = 0.8$",
+      {
+       "edit": true,
+       "answer": 0.2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Log loss",
+      "0 (down)",
+      "$p = 0.3$",
+      {
+       "edit": true,
+       "answer": -0.3,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Log loss",
+      "1 (up)",
+      "$p = 0.5$",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Squared error: $y - F$. Log loss: $y - p$."
+    },
+    {
+     "rung": "point",
+     "text": "The second row: $-1 - 2$.",
+     "highlight": [
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Targets: 2, −3, 0.2, −0.3 and 0.5."
+    }
+   ],
+   "feedback": {
+    "correct": "Each target points the fit toward its outcome, by how far it is off.",
+    "generic": "Not quite right. The target is $y - F$ for squared error and $y - p$ for log loss."
+   },
+   "explain": {
+    "text": "Both losses give 'outcome minus fit', measured on the scale the loss uses. For log loss the step is in probability units, but the tree adds it to $F$. This is **gradient boosting**: fit each tree to the negative gradient of the loss.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The gradient in code",
+   "prose": "scikit-learn's classifier computes this for every row before each tree. Return the slope itself, $p - y$, rounded to 6 places; the tree is then fitted to minus it.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$y$",
+      "$p$",
+      "Slope $p - y$"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.8",
+       "−0.2"
+      ],
+      [
+       "0",
+       "0.3",
+       "0.3"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `gradient_of_logloss(y, p)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef gradient_of_logloss(y, p):\n    \"\"\"The slope of the log loss in the log-odds F, for each row.\"\"\"\n    y = np.asarray(y, dtype=float)\n    p = np.asarray(p, dtype=float)\n    return ...\n",
+    "solution": "import numpy as np\n\ndef gradient_of_logloss(y, p):\n    \"\"\"The slope of the log loss in the log-odds F, for each row.\"\"\"\n    y = np.asarray(y, dtype=float)\n    p = np.asarray(p, dtype=float)\n    return np.round(p - y, 6)\n",
+    "examples": [
+     {
+      "call": "gradient_of_logloss([1, 0], [0.8, 0.3]).tolist()",
+      "compare": "equal",
+      "expect": "[-0.2, 0.3]"
+     }
+    ],
+    "tests": [
+     {
+      "call": "gradient_of_logloss([1, 0], [0.8, 0.3]).tolist()",
+      "compare": "equal",
+      "expect": "[-0.2, 0.3]"
+     },
+     {
+      "call": "gradient_of_logloss([1, 1, 0], [0.5, 0.99, 0.01]).tolist()",
+      "compare": "equal",
+      "expect": "[-0.5, -0.01, 0.01]"
+     },
+     {
+      "call": "gradient_of_logloss([0], [0.5]).tolist()",
+      "compare": "equal",
+      "expect": "[0.5]"
+     },
+     {
+      "call": "gradient_of_logloss([1, 0, 1, 0], [0.25, 0.25, 0.75, 0.75]).tolist()",
+      "compare": "equal",
+      "expect": "[-0.75, 0.25, -0.25, 0.75]"
+     },
+     {
+      "call": "float(np.sum(gradient_of_logloss([1, 0, 1, 1], [0.75, 0.75, 0.75, 0.75])))",
+      "compare": "isclose",
+      "expect": "0.0"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on short lists. Lists must match exactly after rounding to 6 places. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "It is one line of array arithmetic."
+    },
+    {
+     "rung": "point",
+     "text": "Subtract the outcomes from the probabilities.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return np.round(p - y, 6)`."
+    }
+   ],
+   "feedback": {
+    "correct": "The slope is $p - y$: no logs needed.",
+    "generic": "Some tests failed. Return `p - y`, rounded to 6 places."
+   },
+   "explain": {
+    "text": "When every $p$ is 0.75 and three of four days are up, the slopes sum to 0. That is the start of boosting: $F_0$ is the log-odds of the base rate, where the average slope is 0. Every later tree fits what that constant cannot explain."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The general algorithm",
+   "prose": "Put the steps of gradient boosting in order, for any differentiable loss $L(y, F)$. ISLP's algorithm 8.2 is the case of squared error with $F_0 = 0$.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "init",
+      "text": "Start with a constant: $F_0$ minimises $\\sum_i L(y_i, c)$ (the mean, or the log-odds of the base rate)"
+     },
+     {
+      "id": "grad",
+      "text": "For tree $b$, compute $r_i = -\\partial L(y_i, F)/\\partial F$ at $F = F_{b-1}(x_i)$"
+     },
+     {
+      "id": "fit",
+      "text": "Fit a small regression tree to the $r_i$; its leaves split the rows into regions"
+     },
+     {
+      "id": "leaf",
+      "text": "Set each leaf's value to the step that most lowers the loss in that leaf (a line search)"
+     },
+     {
+      "id": "upd",
+      "text": "Update $F_b(x) = F_{b-1}(x) + \\nu\\, \\hat f_b(x)$, and repeat until validation loss stops falling"
+     }
+    ],
+    "answer": [
+     "init",
+     "grad",
+     "fit",
+     "leaf",
+     "upd"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "You need residuals before you can fit a tree to them."
+    },
+    {
+     "rung": "point",
+     "text": "The line search sets the values of leaves that already exist."
+    },
+    {
+     "rung": "step",
+     "text": "Constant, gradient, tree, leaf values, shrunken update."
+    }
+   ],
+   "feedback": {
+    "correct": "That is the whole algorithm; the loss only changes the gradient and the leaf values.",
+    "generic": "Not quite right. Ask what each step needs from the one before.",
+    "byKey": {
+     "leaf": "The leaf values need the tree's regions, so the tree must be fitted first.",
+     "grad": "The gradients are taken at the current fit, so a fit must exist first: the constant."
+    }
+   },
+   "explain": {
+    "text": "For squared error the gradient is the residual and the best leaf value is the leaf's mean residual, so the line search is free. For log loss scikit-learn uses one Newton step per leaf. Shrinkage ν then scales the whole tree."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Let validation stop it",
+   "prose": "`HistGradientBoostingClassifier` holds back a fraction of the rows, scores each new tree on them, and stops once 10 trees in a row bring no gain. `model.n_iter_` is how many trees it built. `model.validation_score_` lists the scores, as minus the log loss, starting before the first tree.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> X, y = make_credit(1)",
+      ">>> y.mean()",
+      "0.1555",
+      ">>> hgb_early_stopped(X[:1500], y[:1500])",
+      "?"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `hgb_early_stopped` so it returns the number of trees and the final validation log loss, rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_credit(seed, n=2000):\n    \"\"\"n firms. Columns: leverage (debt / assets), interest cover, size\n    (z-score) and two columns with no signal. y = 1 if the firm defaults\n    within a year. Default risk rises with leverage, faster above 0.7.\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = rng.uniform(0.05, 0.95, n)\n    cover = np.exp(rng.normal(1.0, 0.8, n))\n    size = rng.normal(0, 1, n)\n    noise = rng.normal(0, 1, (n, 2))\n    z = -4.2 + 4.0 * lev + 1.2 * (lev > 0.7) - 0.6 * np.log(cover) - 0.3 * size\n    y = (rng.uniform(size=n) < 1 / (1 + np.exp(-z))).astype(int)\n    return np.round(np.column_stack([lev, cover, size, noise]), 4), y\n",
+    "starter": "from sklearn.ensemble import HistGradientBoostingClassifier\n\ndef hgb_early_stopped(X_train, y_train):\n    model = HistGradientBoostingClassifier(early_stopping=True,\n                                           validation_fraction=0.2,\n                                           n_iter_no_change=10,\n                                           random_state=0)\n    ...                               # fit it\n    n_trees = ...                     # trees it kept\n    val_loss = ...                    # validation log loss at the end, 4 places\n    return n_trees, val_loss\n",
+    "solution": "from sklearn.ensemble import HistGradientBoostingClassifier\n\ndef hgb_early_stopped(X_train, y_train):\n    model = HistGradientBoostingClassifier(early_stopping=True,\n                                           validation_fraction=0.2,\n                                           n_iter_no_change=10,\n                                           random_state=0)\n    model.fit(X_train, y_train)\n    n_trees = int(model.n_iter_)\n    val_loss = round(float(-model.validation_score_[-1]), 4)\n    return n_trees, val_loss\n",
+    "examples": [
+     {
+      "setup": "X, y = make_credit(1)",
+      "call": "hgb_early_stopped(X[:1500], y[:1500])",
+      "compare": "equal",
+      "expect": "(24, 0.3776)"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "X, y = make_credit(1)",
+      "call": "hgb_early_stopped(X[:1500], y[:1500])",
+      "compare": "equal",
+      "expect": "(24, 0.3776)"
+     },
+     {
+      "setup": "X, y = make_credit(2)",
+      "call": "hgb_early_stopped(X[:1500], y[:1500])",
+      "compare": "equal",
+      "expect": "(25, 0.3555)"
+     },
+     {
+      "setup": "X, y = make_credit(3, n=800)",
+      "call": "hgb_early_stopped(X, y)",
+      "compare": "equal",
+      "expect": "(25, 0.3404)"
+     }
+    ],
+    "how": "Check runs 3 hidden tests on firms from `make_credit(seed, n)`, which is already defined. Each fit takes under a second. Tuples must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`validation_score_` holds negative log losses."
+    },
+    {
+     "rung": "point",
+     "text": "The last entry is the score of the final model; flip its sign.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`model.fit(X_train, y_train)`, `int(model.n_iter_)` and `round(float(-model.validation_score_[-1]), 4)`."
+    }
+   ],
+   "feedback": {
+    "correct": "On `make_credit(1)` it stops at 24 trees, with a validation log loss of 0.3776.",
+    "generic": "Some tests failed. Fit, read `n_iter_`, and flip the sign of the last validation score."
+   },
+   "explain": {
+    "text": "The best validation loss, 0.3582, came after 14 trees; the 10 that followed never beat it, so the fit stopped at 24. scikit-learn keeps those 10 trees. Before any tree the loss was 0.4341, the base rate's.",
+    "canvas": {
+     "lines": [
+      ">>> X, y = make_credit(1)",
+      ">>> y.mean()",
+      "0.1555",
+      ">>> hgb_early_stopped(X[:1500], y[:1500])",
+      "(24, 0.3776)"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Why 'hist' is fast",
+   "prose": "Before fitting, `HistGradientBoosting` sorts each feature's values into at most 255 bins, by quantile. A split can then fall only between bins. A plain tree checks a split between every pair of neighbouring distinct values.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "plain",
+       "label": "Plain tree"
+      },
+      {
+       "id": "hist",
+       "label": "Histogram"
+      }
+     ],
+     "yLabel": "Split points per feature",
+     "showValues": true,
+     "yScale": "log"
+    },
+    "state": {
+     "values": {
+      "plain": 999999,
+      "hist": 254
+     }
+    }
+   },
+   "question": "A feature has 1,000,000 distinct values. How many split points per node does the histogram version check for it?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 254,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "split points",
+    "label": "Split points with 255 bins",
+    "accept": "254: 255 bins have 254 boundaries between them.",
+    "wrong": [
+     {
+      "id": "bins",
+      "value": 255,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "plain",
+      "value": 999999,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Splits fall between bins, not inside them."
+    },
+    {
+     "rung": "point",
+     "text": "How many gaps are there between 255 boxes in a row?",
+     "highlight": [
+      "hist"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "255 bins leave 254 boundaries."
+    }
+   ],
+   "feedback": {
+    "correct": "254 against 999,999: about 4,000 times fewer candidates.",
+    "generic": "Not quite right. Count the boundaries between 255 bins.",
+    "byKey": {
+     "bins": "You counted the bins. A split sits between two bins, so there is one fewer.",
+     "plain": "That is the plain tree's count. Binning is what cuts it."
+    }
+   },
+   "explain": {
+    "text": "Binning also lets each node build its histogram of gradients in one pass, and the sibling's histogram is the parent's minus its own. With 255 quantile bins little is lost, because a split between two close values rarely matters. That speed is why histogram boosting is the default for large tabular data."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A random 20% of a time series",
+   "prose": "An analyst boosts on 1,200 trading days of momentum and volatility features. The label: is the next 10-day return positive? They use `early_stopping=True` with its default random validation fraction, then test on the next 300 days.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> h = HistGradientBoostingClassifier(early_stopping=True, validation_fraction=0.2, n_iter_no_change=10, random_state=0)",
+      ">>> h.fit(X[:1200], y[:1200]).n_iter_",
+      "24",
+      ">>> -h.validation_score_[[0, -1]]  # before any tree, at the end",
+      "[0.6897, 0.6629]",
+      ">>> log_loss(y[1200:], h.predict_proba(X[1200:])[:, 1])",
+      "0.8038",
+      ">>> log_loss(y[1200:], [y[:1200].mean()] * 300)  # base rate",
+      "0.6654"
+     ]
+    },
+    "state": {}
+   },
+   "question": "The returns in this data are pure noise. Why did validation loss improve?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "The random 20% sits between training days whose 10-day labels and 20-day features overlap theirs, so the trees memorised neighbours",
+      "correct": true
+     },
+     {
+      "id": "signal",
+      "text": "The momentum features carry a real but small signal",
+      "why": "You trusted the validation score. The data has no signal: the test loss, 0.8038, is far worse than the base rate's 0.6654."
+     },
+     {
+      "id": "early",
+      "text": "Early stopping removed the overfitting, so the gain is real",
+      "why": "Early stopping can only be as honest as its validation set. These validation days were next to training days."
+     },
+     {
+      "id": "luck",
+      "text": "Chance: 240 validation days is a small sample",
+      "why": "A gain this size on overlapping labels is not luck. The same gain vanishes on a later block, as the next screen shows."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A day's label covers the next 10 days. What does its neighbour's label cover?"
+    },
+    {
+     "rung": "point",
+     "text": "Days $t$ and $t + 1$ share 9 of their 10 label days and 19 of 20 feature days."
+    },
+    {
+     "rung": "step",
+     "text": "With a random split almost every validation day has a near-twin in training."
+    }
+   ],
+   "feedback": {
+    "correct": "The validation set leaked, so early stopping chose too many trees and the score lied.",
+    "generic": "Not quite right. Ask how close each validation day is to a training day.",
+    "byKey": {
+     "signal": "You read the validation gain as signal. There is none by construction, and the test period shows it.",
+     "early": "You trusted early stopping. It stops well only on a validation set the trees cannot have seen."
+    }
+   },
+   "explain": {
+    "text": "Neighbouring days are near copies, in features and in labels. A random validation fraction rewards trees that memorise them, so stopping comes late and the score flatters. On time-ordered data, validate on a later block, with a gap: pass it yourself.",
+    "canvas": {
+     "tone": {
+      "l6": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Stop on a later block",
+   "prose": "Do it in time order. Fit on the first `n_train` days, score every stage on the next `n_val` days, and pick the stage with the lowest log loss. `staged_predict_proba` gives each stage's probabilities from one fit.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "d",
+       "label": "days",
+       "values": [
+        0,
+        0
+       ]
+      }
+     ],
+     "x": "index",
+     "height": 120
+    },
+    "state": {}
+   },
+   "question": "Complete `hgb_time_ordered_stop` so it returns the best number of trees on the later block.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_daily(seed, n=1500, h=10):\n    \"\"\"n trading days in order. Features at day t: 20-day momentum,\n    20-day volatility and 5-day momentum, from returns up to day t.\n    y = 1 if the return over the next h days is positive. The returns\n    are pure noise: nothing here predicts y.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = 0.0003 + 0.01 * rng.standard_normal(n + 30 + h)\n    rows, ys = [], []\n    for t in range(29, 29 + n):\n        w = r[t - 19:t + 1]\n        rows.append([w.sum(), w.std(), r[t - 4:t + 1].sum()])\n        ys.append(int(r[t + 1:t + 1 + h].sum() > 0))\n    return np.round(np.array(rows), 6), np.array(ys)\n",
+    "starter": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingClassifier\nfrom sklearn.metrics import log_loss\n\ndef hgb_time_ordered_stop(X, y, n_train, n_val):\n    model = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,\n                                       max_depth=2, random_state=0)\n    model.fit(X[:n_train], y[:n_train])\n    X_val, y_val = X[n_train:n_train + n_val], y[n_train:n_train + n_val]\n    losses = []\n    for proba in ...:                 # probabilities after 1, 2, ... trees\n        losses.append(log_loss(y_val, proba[:, 1], labels=[0, 1]))\n    return ...                        # best number of trees\n",
+    "solution": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingClassifier\nfrom sklearn.metrics import log_loss\n\ndef hgb_time_ordered_stop(X, y, n_train, n_val):\n    model = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,\n                                       max_depth=2, random_state=0)\n    model.fit(X[:n_train], y[:n_train])\n    X_val, y_val = X[n_train:n_train + n_val], y[n_train:n_train + n_val]\n    losses = []\n    for proba in model.staged_predict_proba(X_val):\n        losses.append(log_loss(y_val, proba[:, 1], labels=[0, 1]))\n    return int(np.argmin(losses)) + 1\n",
+    "examples": [
+     {
+      "setup": "X, y = make_daily(4)",
+      "call": "hgb_time_ordered_stop(X, y, 960, 240)",
+      "compare": "equal",
+      "expect": "2"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "X, y = make_daily(4)",
+      "call": "hgb_time_ordered_stop(X, y, 960, 240)",
+      "compare": "equal",
+      "expect": "2"
+     },
+     {
+      "setup": "X, y = make_daily(1)",
+      "call": "hgb_time_ordered_stop(X, y, 960, 240)",
+      "compare": "equal",
+      "expect": "1"
+     },
+     {
+      "setup": "X, y = make_daily(2, n=600)",
+      "call": "hgb_time_ordered_stop(X, y, 400, 150)",
+      "compare": "equal",
+      "expect": "3"
+     },
+     {
+      "call": "hgb_time_ordered_stop(np.array([[0.], [1.], [0.], [1.], [0.], [1.], [0.], [1.]]), np.array([0, 1, 0, 1, 0, 1, 0, 1]), 6, 2) > 1",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 4 hidden tests on days from `make_daily(seed, n)`, which is already defined, and one toy series with a perfect signal. Each fit of 100 small trees takes about a second. Answers must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+    "budget": 10000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over `model.staged_predict_proba(X_val)`."
+    },
+    {
+     "rung": "point",
+     "text": "The best stage is the position of the smallest loss, plus 1."
+    },
+    {
+     "rung": "step",
+     "text": "`for proba in model.staged_predict_proba(X_val):` and `return int(np.argmin(losses)) + 1`."
+    }
+   ],
+   "feedback": {
+    "correct": "On `make_daily(4)` the later block picks 2 trees, not 24.",
+    "generic": "Some tests failed. Score each stage on the later block and return the 1-based position of the minimum."
+   },
+   "explain": {
+    "text": "On a later block the best stage is 2 trees, with loss 0.6922; after 100 trees it is 0.8744. Refitted on all 1,200 days with 2 trees, the test loss is 0.6697, close to the base rate's 0.6654. Honest validation says: there is nothing here."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A rule the trees must keep",
+   "prose": "A risk committee wants one rule: more leverage never lowers the default probability. `monotonic_cst` takes one entry per column: 1 forces the prediction to rise with it, −1 to fall, 0 leaves it free. Leverage is column 0 of `make_credit`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Column",
+      "leverage",
+      "cover",
+      "size",
+      "noise 1",
+      "noise 2"
+     ],
+     "rows": [
+      [
+       "monotonic_cst",
+       "?",
+       "0",
+       "0",
+       "0",
+       "0"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `monotone_vs_free` so it returns the test log loss with the constraint, then without, each rounded to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_credit(seed, n=2000):\n    \"\"\"n firms. Columns: leverage (debt / assets), interest cover, size\n    (z-score) and two columns with no signal. y = 1 if the firm defaults\n    within a year. Default risk rises with leverage, faster above 0.7.\"\"\"\n    rng = np.random.default_rng(seed)\n    lev = rng.uniform(0.05, 0.95, n)\n    cover = np.exp(rng.normal(1.0, 0.8, n))\n    size = rng.normal(0, 1, n)\n    noise = rng.normal(0, 1, (n, 2))\n    z = -4.2 + 4.0 * lev + 1.2 * (lev > 0.7) - 0.6 * np.log(cover) - 0.3 * size\n    y = (rng.uniform(size=n) < 1 / (1 + np.exp(-z))).astype(int)\n    return np.round(np.column_stack([lev, cover, size, noise]), 4), y\n",
+    "starter": "from sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import log_loss\n\ndef monotone_vs_free(X_train, y_train, X_test, y_test):\n    out = []\n    for cst in (..., None):           # first: risk never falls as leverage rises\n        model = HistGradientBoostingClassifier(monotonic_cst=cst, max_depth=2,\n                                               max_iter=100, early_stopping=False,\n                                               random_state=0)\n        model.fit(X_train, y_train)\n        out.append(round(log_loss(y_test, model.predict_proba(X_test)[:, 1]), 4))\n    return tuple(out)\n",
+    "solution": "from sklearn.ensemble import HistGradientBoostingClassifier\nfrom sklearn.metrics import log_loss\n\ndef monotone_vs_free(X_train, y_train, X_test, y_test):\n    out = []\n    for cst in ([1, 0, 0, 0, 0], None):\n        model = HistGradientBoostingClassifier(monotonic_cst=cst, max_depth=2,\n                                               max_iter=100, early_stopping=False,\n                                               random_state=0)\n        model.fit(X_train, y_train)\n        out.append(round(log_loss(y_test, model.predict_proba(X_test)[:, 1]), 4))\n    return tuple(out)\n",
+    "examples": [
+     {
+      "setup": "X, y = make_credit(1)",
+      "call": "monotone_vs_free(X[:1000], y[:1000], X[1000:], y[1000:])",
+      "compare": "equal",
+      "expect": "(0.3259, 0.3267)"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "X, y = make_credit(1)",
+      "call": "monotone_vs_free(X[:1000], y[:1000], X[1000:], y[1000:])",
+      "compare": "equal",
+      "expect": "(0.3259, 0.3267)"
+     },
+     {
+      "setup": "X, y = make_credit(2)",
+      "call": "monotone_vs_free(X[:1000], y[:1000], X[1000:], y[1000:])",
+      "compare": "equal",
+      "expect": "(0.3252, 0.3263)"
+     },
+     {
+      "setup": "X, y = make_credit(5)",
+      "call": "monotone_vs_free(X[:1000], y[:1000], X[1000:], y[1000:])",
+      "compare": "equal",
+      "expect": "(0.3004, 0.3054)"
+     }
+    ],
+    "how": "Check runs 3 hidden tests; each fits two models of 100 depth-2 trees on 1,000 firms, under a second in all. Tuples must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One entry per column, five in all."
+    },
+    {
+     "rung": "point",
+     "text": "Leverage is first and must push risk up.",
+     "highlight": [
+      "r0c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`for cst in ([1, 0, 0, 0, 0], None):`."
+    }
+   ],
+   "feedback": {
+    "correct": "With the constraint 0.3259, free 0.3267: the rule costs nothing here.",
+    "generic": "Some tests failed. Pass `[1, 0, 0, 0, 0]` first, then `None`."
+   },
+   "explain": {
+    "text": "The data agree with the rule, so the constrained model loses nothing, 0.3259 against 0.3267. Force the wrong rule, −1 on leverage, and the test loss jumps to 0.4570, worse than the base rate's 0.4400. A constraint the data contradict costs fit, by design.",
+    "canvas": {
+     "values": {
+      "r0c1": "1"
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The desk's standard model",
+   "prose": "A credit desk replaces its logistic scorecard with early-stopped boosting: monotone in leverage, stopped on the latest year of loans. On the following year it beats the scorecard's log loss by 4%. An untuned random forest beat the scorecard by 3%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Model",
+      "Tuning",
+      "Test log loss vs scorecard"
+     ],
+     "rows": [
+      [
+       "Logistic scorecard",
+       "regularisation chosen",
+       "0%"
+      ],
+      [
+       "Random forest",
+       "defaults",
+       "−3%"
+      ],
+      [
+       "Boosting",
+       "ν, depth, stopping on the latest year",
+       "−4%"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should the desk write in the model's approval note?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "honest",
+      "text": "Boosting wins after tuning, by 1% over an untuned forest; the gain must hold on a second later year, and probabilities need a calibration check",
+      "correct": true
+     },
+     {
+      "id": "best",
+      "text": "Boosting is the best model for credit, by a clear margin",
+      "why": "You read one year's 1% gap as a ranking. The forest was untuned and the gap is small."
+     },
+     {
+      "id": "calib",
+      "text": "Boosting's probabilities can go straight into pricing",
+      "why": "Boosted probabilities are often off in the tails. Check calibration before pricing with them."
+     },
+     {
+      "id": "forest",
+      "text": "Use the forest: it needs no tuning and is nearly as good",
+      "why": "It may be right, but 'nearly as good' on one year is not evidence either way. Tune both and test both."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How much tuning did each model get?"
+    },
+    {
+     "rung": "point",
+     "text": "Boosting had three knobs tuned; the forest had none.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A small gap after unequal tuning, on one year, earns a careful sentence, not a ranking."
+    }
+   ],
+   "feedback": {
+    "correct": "Boosting is the usual winner on tabular data, but only once tuned, and only if the gain holds out of sample.",
+    "generic": "Not quite right. Ask how fair the comparison was and what it was measured on."
+   },
+   "explain": {
+    "text": "Tuned boosting usually edges out a forest on tables like this, and the monotone rule lets the committee sign it off. But the forest got no tuning, and one later year is one draw. The note should state the tuning, the margin, the test period, and the calibration check still to do."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Gradient boosting fits each tree to the negative gradient of the loss: the residual $y - F$ for squared error, $y - p$ for log loss.",
+   "Early stopping chooses the number of trees on held-out rows; on time-ordered data those rows must be a later block, not a random fraction.",
+   "Monotone constraints build a rule such as 'more leverage never lowers risk' into the trees; they cost little when the data agree and a lot when they do not."
+  ],
+  "formula": {
+   "name": "Gradient boosting step",
+   "tex": "r_i = -\\dfrac{\\partial L(y_i, F)}{\\partial F}\\bigg|_{F = F_{b-1}(x_i)}, \\qquad F_b = F_{b-1} + \\nu\\, \\hat f_b",
+   "note": "For log loss, $r_i = y_i - p_i$."
+  },
+  "trap": "A random validation fraction on daily data puts near-copies of training days in the validation set, so early stopping stops late and the score flatters."
+ },
+ "quiz": [
+  {
+   "id": "q-never",
+   "difficulty": 2,
+   "prose": "On the credit data, `HistGradientBoostingClassifier(early_stopping=True, learning_rate=0.01, random_state=0)` reports `n_iter_ = 100`.",
+   "question": "What happened?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "max",
+      "text": "Early stopping never triggered: the loss was still falling when it hit `max_iter`, 100",
+      "correct": true
+     },
+     {
+      "id": "best",
+      "text": "100 trees is the best number for this data",
+      "why": "You read the cap as the answer. The fit stopped because it ran out of trees, not because the loss stopped falling."
+     },
+     {
+      "id": "bug",
+      "text": "Early stopping was switched off",
+      "why": "It was on. It simply never saw 10 rounds without a gain."
+     },
+     {
+      "id": "over",
+      "text": "The model overfitted",
+      "why": "A curve still falling at the cap is underfitting: raise `max_iter` or the learning rate."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`n_iter_` equal to `max_iter` means 'not finished'.",
+    "generic": "Not quite right. Compare `n_iter_` with `max_iter`."
+   },
+   "explain": {
+    "text": "At learning rate 0.01 each tree moves the fit a little, so 100 trees are not enough to reach the minimum. Raise `max_iter` until `n_iter_` falls below it."
+   }
+  },
+  {
+   "id": "q-calib",
+   "difficulty": 3,
+   "prose": "A boosted default model says 12% for a loan. You will price the loan from that number.",
+   "question": "What should you check first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cal",
+      "text": "Calibration: among loans it scores near 12%, do about 12% default on later data",
+      "correct": true
+     },
+     {
+      "id": "auc",
+      "text": "Its AUC, which says the probabilities are right",
+      "why": "AUC ranks loans; it says nothing about whether 12% means 12%."
+     },
+     {
+      "id": "none",
+      "text": "Nothing: log loss training makes probabilities exact",
+      "why": "Early stopping and shrinkage leave probabilities off, often in the tails. Check them."
+     },
+     {
+      "id": "trees",
+      "text": "The number of trees",
+      "why": "The number of trees affects calibration, but only a calibration check on later data measures it."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Ranking well and being calibrated are different properties.",
+    "generic": "Not quite right. Ask what makes '12%' mean 12%."
+   },
+   "explain": {
+    "text": "Group later loans by predicted probability and compare each group's default rate with its average prediction. If they disagree, recalibrate before pricing."
+   }
+  },
+  {
+   "id": "q-compare",
+   "difficulty": 3,
+   "prose": "Model A was stopped at 40 trees on a random 20% of 2023. Model B was stopped at 15 trees on all of 2024. A scores 0.61 log loss on its validation set, B 0.66 on its own.",
+   "question": "Which model is better?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cant",
+      "text": "We cannot tell: the scores come from different data. Score both on the same later block",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "A, with the lower loss",
+      "why": "You compared scores on different validation sets. A's set is also random, so it flatters."
+     },
+     {
+      "id": "b",
+      "text": "B, with fewer trees",
+      "why": "Fewer trees is not better in itself. Compare both on the same held-out data."
+     },
+     {
+      "id": "avg",
+      "text": "Average them",
+      "why": "Averaging may help, but it does not answer which is better."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare models on the same rows, held out from both.",
+    "generic": "Not quite right. Ask whether the two scores were measured on the same days."
+   },
+   "explain": {
+    "text": "A validation score belongs to its validation set. Score A and B on the same later block, which neither used for stopping."
+   }
+  },
+  {
+   "id": "q-imp",
+   "difficulty": 2,
+   "prose": "You want to know which features the boosted credit model relies on.",
+   "question": "Which measure would you trust most?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "perm",
+      "text": "Permutation importance on held-out loans",
+      "correct": true
+     },
+     {
+      "id": "imp",
+      "text": "The impurity importance stored in the model",
+      "why": "Impurity importance is measured on training rows and favours features with many split points, as in lesson 8."
+     },
+     {
+      "id": "count",
+      "text": "How often each feature is split on",
+      "why": "Split counts favour continuous features too, whatever they contribute."
+     },
+     {
+      "id": "coef",
+      "text": "The model's coefficients",
+      "why": "Boosted trees have no coefficients."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Shuffle a column on held-out data and see how much worse the loss gets.",
+    "generic": "Not quite right. Recall lesson 8's comparison."
+   },
+   "explain": {
+    "text": "Permutation importance asks how much worse held-out log loss gets when a column is shuffled. It works for any model, so it compares a forest and a boosted model on equal terms."
+   }
+  }
+ ]
+}

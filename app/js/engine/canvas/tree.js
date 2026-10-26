@@ -1,13 +1,17 @@
 /* tree canvas: probability and decision trees, left to right (orient "lr", default) or top to bottom ("tb").
    Branch ids are paths of branch ids joined by "-": a, a-b, a-b-c. Leaf values have ids val-<path>; the root dot is "root".
-   Highlighting a path highlights every branch from the root to it. Params and state: engine/canvas/README.md. */
+   Highlighting a path highlights every branch from the root to it. Params and state: engine/canvas/README.md.
+   Pass 7: state.labels relabels pills, state.values puts a value above any node's pill (inner nodes and the root too),
+   state.dim greys a subtree, state.arrows marks a branch as a call (down) or a return (up), and params.binary draws a
+   binary tree (left and right children, a single child on its own side, the top node a real tappable node). */
 (function () {
   'use strict';
   const Z = window.ZQ, C = Z.canvas, { svg, attrs, lerp } = C;
 
   function tree(host, params, ctx = {}) {
     const P = params || {};
-    const tb = P.orient === 'tb';
+    const binary = !!P.binary && !!P.nodes; // item 420
+    const tb = P.orient === 'tb' || (binary && P.orient !== 'lr');
     const compact = !!P.compact; // item 94: smaller pills and closer leaves, so a 16-leaf tree fits the column
 
     /* ---- Model ---- */
@@ -19,7 +23,18 @@
       const n = { path, id: spec.id, depth: parent.depth + 1, parent, children: [], label: spec.label ?? spec.id, p: spec.p, value: spec.value };
       parent.children.push(n); nodes.set(path, n); return n;
     };
-    if (P.nodes) {
+    if (binary) {
+      /* item 420: a node is { id, label, left: {...}, right: {...} } (or children with side: "left"|"right"); the top node is
+         P.nodes itself (or the first of a list) */
+      const kidsOf = (spec) => {
+        if (spec.left || spec.right) return [spec.left ? { ...spec.left, side: 'left' } : null, spec.right ? { ...spec.right, side: 'right' } : null].filter(Boolean);
+        const ch = (spec.children || []).filter(Boolean);
+        return ch.map((c, i) => ({ ...c, side: c.side || (ch.length === 1 ? 'left' : i === 0 ? 'left' : 'right') }));
+      };
+      const walk = (parent, spec) => { const n = addNode(parent, spec); n.side = spec.side || null; kidsOf(spec).forEach(c => walk(n, c)); };
+      const top = Array.isArray(P.nodes) ? P.nodes[0] : P.nodes.id != null ? P.nodes : (P.nodes.children || [])[0];
+      if (top) walk(root, top);
+    } else if (P.nodes) {
       const walk = (parent, list) => (list || []).forEach(spec => { const n = addNode(parent, spec); walk(n, spec.children); });
       walk(root, Array.isArray(P.nodes) ? P.nodes : P.nodes.children);
     } else {
@@ -59,17 +74,18 @@
     /* top to bottom, level labels sit in a left margin of their own so they never cross a branch */
     const leftM = tb && hasHead ? Math.ceil(Math.max(...levelLabels.map(t => C.textW(String(t || ''), 13)))) + 16 : 12;
     const spOf = compact ? (n) => (n <= 2 ? 64 : n <= 4 ? 46 : n <= 8 ? 32 : 26) : (n) => (n <= 2 ? 80 : n <= 4 ? 60 : n <= 6 ? 50 : n <= 8 ? 42 : 34); // leaf spacing for n leaves shown
-    const rowSp = compact ? 72 : 96;
+    const rowSp = (compact ? 72 : 96) * (binary ? 0.78 : 1);
+    const gapK = Number.isFinite(+P.spacing) && +P.spacing > 0 ? +P.spacing : 1; // item 470: spacing multiplies the leaf gap
     if (!tb) {
       W = 540; top = titleH + (hasHead ? 26 : 8) + 6;
-      band = Lf * spOf(Lf); H = top + band + 6;
+      band = Lf * spOf(Lf) * gapK; H = top + band + 6;
       const maxLast = Math.max(30, ...all.filter(n => n.depth === D).map(pillW));
       const x0 = 14 + rootW / 2, xD = W - 8 - valW - maxLast / 2;
       colPos = (d) => (d === 0 ? x0 : x0 + rootW / 2 + 22 + (xD - x0 - rootW / 2 - 22) * d / D);
     } else {
-      W = 540; top = titleH + (rootLabel ? 6 + PH / 2 : 18);
-      H = top + D * rowSp + 20 + (anyValue ? 30 : 0) + 6;
-      colPos = (d) => top + d * rowSp;
+      W = 540; top = titleH + (rootLabel ? 6 + PH / 2 : 18) + (binary ? PH / 2 : 0);
+      H = top + (binary ? D - 1 : D) * rowSp + 20 + (anyValue ? 30 : 0) + 6;
+      colPos = binary ? (d) => top + Math.max(0, d - 1) * rowSp : (d) => top + d * rowSp;
       band = W - 12 - leftM;
     }
     const fr = C.frame(host, W, H, { label: P.label || 'Probability tree' });
@@ -84,6 +100,9 @@
       ? [svg('rect', { class: 'cv-cur', x: -rootW / 2 - 4, y: -PH / 2 - 4, width: rootW + 8, height: PH + 8, rx: 11 }), svg('rect', { class: 'cv-body', x: -rootW / 2, y: -PH / 2, width: rootW, height: PH, rx: 8 }), C.label(0, 0.5, rootLabel, { tex: 'auto', w: rootW, h: PH, cls: 'cv-ntext', size: PF })]
       : [svg('circle', { class: 'cv-cur', r: 10 }), svg('circle', { class: 'cv-body', r: 5 })]);
     g.append(rootDot);
+    if (binary) rootDot.style.display = 'none';
+    const rootNv = svg('g', { class: 'cv-obj cv-nval', 'data-id': 'nval-root' }); let rootNvShown = '';
+    valG.append(rootNv);
     const el = new Map();
     for (const n of all) {
       const pb = pBox(n.p), pt = pTex(n.p);
@@ -100,7 +119,10 @@
         e.pq = C.label(0, 0.5, '?', { cls: 'cv-halo cv-q' });
         e.pg.append(e.pText, e.pq);
       }
-      e.g.append(e.hit, e.wash, e.line, e.pg, e.pill);
+      e.arrow = svg('path', { class: 'cv-tarrow', d: '' });
+      e.nv = svg('g', { class: 'cv-obj cv-nval', 'data-id': 'nval-' + n.path }); e.nvShown = '';
+      e.g.append(e.hit, e.wash, e.line, e.arrow, e.pg, e.pill);
+      if (binary && n.depth === 1) [e.hit, e.wash, e.line, e.pg, e.arrow].forEach(x => { x.style.display = 'none'; });
       branchG.append(e.g);
       if ((n.value != null && n.value !== '') || !n.children.length) {
         /* item 324: every leaf has a value slot, so state.leaves can fill or change it (reveal prices in an explanation) */
@@ -108,6 +130,7 @@
         e.valShown = n.value == null ? '' : String(n.value);
         valG.append(e.val);
       }
+      valG.append(e.nv);
       el.set(n.path, e);
     }
 
@@ -122,18 +145,29 @@
       const leaves = []; const dfs = (n) => { const k = kids(n); if (!k.length && n !== root) leaves.push(n); k.forEach(dfs); }; dfs(root);
       const nL = Math.max(1, leaves.length);
       /* the drawing is sized by the leaves (left to right) or the depth (top to bottom) actually shown */
-      const b = tb ? band : nL * spOf(nL);
+      const b = tb ? band : nL * spOf(nL) * gapK;
       const pos = new Map();
-      leaves.forEach((n, i) => { const t = (i + 0.5) / nL; pos.set(n, tb ? { x: leftM + b * t, y: colPos(n.depth) } : { x: colPos(n.depth), y: top + b * t }); });
       const dShown = Math.max(1, ...leaves.map(n => n.depth));
-      vis.H = tb ? top + dShown * rowSp + 20 + (anyValue ? 30 : 0) + 6 : top + b + 6;
-      const place = (n) => {
-        const k = kids(n); if (!k.length) return pos.get(n) || { x: colPos(0), y: top + b / 2 };
-        const ps = k.map(place), a = ps[0], b = ps[ps.length - 1];
-        const p = tb ? { x: (a.x + b.x) / 2, y: colPos(n.depth) } : { x: colPos(n.depth), y: (a.y + b.y) / 2 };
-        pos.set(n, p); return p;
-      };
-      const rp = place(root); pos.set(root, rp);
+      vis.H = tb ? top + (binary ? dShown - 1 : dShown) * rowSp + 20 + (anyValue ? 30 : 0) + 6 : top + b + 6;
+      let rp;
+      if (binary) {
+        /* item 420: x is the node's in-order rank among the nodes shown, so a single child sits on its own side */
+        const order = []; const ino = (n) => { const k = kids(n); const L = k.filter(c => c.side === 'left'), Rt = k.filter(c => c.side !== 'left'); L.forEach(ino); if (n !== root) order.push(n); Rt.forEach(ino); }; ino(root);
+        const nI = Math.max(1, order.length);
+        order.forEach((n, i) => pos.set(n, tb ? { x: leftM + b * (i + 0.5) / nI, y: colPos(n.depth) } : { x: colPos(n.depth), y: top + (nI * spOf(nI) * gapK) * (i + 0.5) / nI }));
+        if (!tb) vis.H = top + nI * spOf(nI) * gapK + 6;
+        rp = pos.get(root.children[0]) || { x: leftM + b / 2, y: top };
+      } else {
+        leaves.forEach((n, i) => { const t = (i + 0.5) / nL; pos.set(n, tb ? { x: leftM + b * t, y: colPos(n.depth) } : { x: colPos(n.depth), y: top + b * t }); });
+        const place = (n) => {
+          const k = kids(n); if (!k.length) return pos.get(n) || { x: colPos(0), y: top + b / 2 }; // item 465: a collapsed root sits mid-band
+          const ps = k.map(place), p0 = ps[0], p1 = ps[ps.length - 1];
+          const p = tb ? { x: (p0.x + p1.x) / 2, y: colPos(n.depth) } : { x: colPos(n.depth), y: (p0.y + p1.y) / 2 };
+          pos.set(n, p); return p;
+        };
+        rp = place(root);
+      }
+      pos.set(root, rp);
       const shown = new Set(); const mark = (n) => { shown.add(n); kids(n).forEach(mark); }; mark(root);
       for (const n of all) {
         if (shown.has(n)) vis.set(n.path, { ...pos.get(n), o: 1 });
@@ -150,14 +184,19 @@
        different grandparents */
     const rankAt = new Map(); { const seen = {}; for (const n of all) { seen[n.depth] = (seen[n.depth] || 0) + 1; rankAt.set(n, seen[n.depth] - 1); } }
     const subIdx = (n) => (n.parent === root ? 0 : rankAt.get(n.parent));
-    let crowd = 0;
+    let crowd = 0, arrowsSt = {};
     const paint = (vis, showP, unknown, showVals) => {
       { const nL = all.filter(n => vis.get(n.path).o > 0.5 && !n.children.some(c => vis.get(c.path).o > 0.5)).length; crowd = nL >= 9 ? 3 : nL >= 7 ? 2 : 0; }
       const r = vis.get(''); attrs(rootDot, { transform: `translate(${r.x} ${r.y})` });
+      attrs(rootNv, { transform: tb ? `translate(${r.x + (rootLabel ? rootW / 2 : 6) + 8} ${r.y})` : `translate(${r.x} ${r.y - (rootLabel ? PH / 2 : 6) - 11})` });
       for (const n of all) {
         const e = el.get(n.path), v = vis.get(n.path), pv = vis.get(n.parent.path);
         const a = anchorOut(n.parent, pv), b = anchorIn(n, v);
         for (const ln of [e.hit, e.wash, e.line]) attrs(ln, { x1: a.x, y1: a.y, x2: b.x, y2: b.y });
+        /* item 396: state.arrows { path: "down" | "up" | "both" }: a head on the branch, toward the child (a call) or the parent (a return) */
+        { const ar = arrowsSt[n.path], L = Math.hypot(b.x - a.x, b.y - a.y) || 1, ux = (b.x - a.x) / L, uy = (b.y - a.y) / L;
+          const head = (t, dir) => { const hx = a.x + (b.x - a.x) * t, hy = a.y + (b.y - a.y) * t, k = dir, s2 = 7; return `M${hx + ux * s2 * k},${hy + uy * s2 * k}L${hx - uy * s2 * 0.6},${hy + ux * s2 * 0.6}L${hx + uy * s2 * 0.6},${hy - ux * s2 * 0.6}Z`; };
+          attrs(e.arrow, { d: ar === 'down' ? head(0.7, 1) : ar === 'up' ? head(0.3, -1) : ar === 'both' ? head(0.72, 1) + head(0.28, -1) : '' }); }
         attrs(e.pill, { transform: `translate(${v.x} ${v.y})` });
         e.g.style.opacity = v.o; e.g.classList.toggle('is-hidden', v.o < 0.5);
         if (e.pText) {
@@ -179,6 +218,8 @@
           e.pText.style.display = q ? 'none' : ''; e.pq.style.display = q ? '' : 'none';
           e.pg.style.opacity = showP ? 1 : 0;
         }
+        attrs(e.nv, { transform: tb ? `translate(${v.x + e.w / 2 + 8} ${v.y})` : `translate(${v.x} ${v.y - PH / 2 - 11})` });
+        e.nv.style.opacity = e.nvShown ? v.o : 0;
         if (e.val) {
           attrs(e.val, { transform: tb ? `translate(${v.x} ${v.y + PH / 2 + 20})` : `translate(${v.x + e.w / 2 + 10} ${v.y})` });
           const kidsShown = n.children.some(c => vis.get(c.path).o > 0.01);
@@ -187,13 +228,19 @@
       }
     };
 
+    const setLabel = (n, e, t) => {
+      e.labShown = t; e.w = pillW({ label: t });
+      e.pill.replaceChildren(svg('rect', { class: 'cv-cur', x: -e.w / 2 - 4, y: -PH / 2 - 4, width: e.w + 8, height: PH + 8, rx: 11 }), svg('rect', { class: 'cv-body', x: -e.w / 2, y: -PH / 2, width: e.w, height: PH, rx: 8 }), C.label(0, 0.5, t, { tex: 'auto', w: e.w, h: PH, cls: 'cv-ntext', size: PF }));
+      e.g.dataset.label = `${C.texOf(t).src}${n.p != null ? ', probability ' + n.p : ''}`;
+    };
     const setP = (n, e, v) => {
       const pt = pTex(v); e.pb = pBox(v);
       const nt = pt.tex ? C.label(0, 0, v, { tex: 'auto', w: e.pb.w + 8, h: e.pb.h + 4 }) : C.label(0, 0.5, pt.src, { cls: 'cv-halo' });
       if (e.pText) e.pText.replaceWith(nt); else { e.pq = C.label(0, 0.5, '?', { cls: 'cv-halo cv-q' }); e.pg.append(nt, e.pq); }
       e.pText = nt; e.pShown = String(v ?? '');
     };
-    const prefixes = (path) => { const parts = String(path).split('-'), out = []; for (let i = 1; i <= parts.length; i++) out.push(parts.slice(0, i).join('-')); return out.filter(p => nodes.has(p)); };
+    /* item 420: in a binary tree a highlight or shade is the node itself, not the path from the top */
+    const prefixes = (path) => { if (binary) return nodes.has(String(path)) ? [String(path)] : []; const parts = String(path).split('-'), out = []; for (let i = 1; i <= parts.length; i++) out.push(parts.slice(0, i).join('-')); return out.filter(p => nodes.has(p)); };
     let cur = layout([]);
     const anim = C.animator();
     const draw = (st, prev, { instant, ms }) => {
@@ -210,6 +257,21 @@
         else if (e.pShown != null && e.pShown !== String(n.p ?? '')) setP(n, e, n.p);
         if (e.val) { const v = st.leaves && n.path in st.leaves ? st.leaves[n.path] : n.value; const t = v == null ? '' : String(v); if (t !== e.valShown) { e.val.replaceChildren(...(t ? [C.label(0, 0, t, { tex: 'auto', anchor: tb ? 'middle' : 'start', w: valW || 60, h: 34, cls: 'cv-vtext' })] : [])); e.valShown = t; } }
       }
+      /* item 359, 466, 396: state.labels { path: "text" } replaces a pill's text (a question while expanded, counts when
+         collapsed); state.values { path: v } (params.values too) writes a value above an inner node's pill (beside it top
+         to bottom), the root as "root"; state.dim [paths] greys those branches and everything under them (item 417) */
+      const labs = st.labels || {}, nvals = { ...(P.values || {}), ...(st.values && typeof st.values === 'object' ? st.values : {}) };
+      for (const n of all) {
+        const e = el.get(n.path), t = n.path in labs && labs[n.path] != null ? String(labs[n.path]) : String(n.label ?? '');
+        if (t !== (e.labShown ?? String(n.label ?? ''))) setLabel(n, e, t);
+        const v = nvals[n.path] == null ? '' : String(nvals[n.path]);
+        if (v !== e.nvShown) { e.nv.replaceChildren(...(v ? [C.label(0, 0, v, { tex: 'auto', anchor: tb ? 'start' : 'middle', w: Math.max(60, C.textW(v, 12, 600) + 20), h: 22, cls: 'cv-vtext cv-nvtext', size: 12 })] : [])); e.nvShown = v; }
+      }
+      { const rv = nvals.root == null ? (nvals[''] == null ? '' : String(nvals[''])) : String(nvals.root); if (rv !== rootNvShown) { rootNv.replaceChildren(...(rv ? [C.label(0, 0, rv, { tex: 'auto', anchor: tb ? 'start' : 'middle', w: Math.max(60, C.textW(rv, 12, 600) + 20), h: 22, cls: 'cv-vtext cv-nvtext', size: 12 })] : [])); rootNvShown = rv; } rootNv.style.opacity = rv ? 1 : 0; }
+      if (rootLabel && 'root' in labs && String(labs.root ?? rootLabel) !== rootDot.dataset.shown) { const t = String(labs.root ?? rootLabel); rootDot.dataset.shown = t; const old = rootDot.querySelector('.cv-ntext'); if (old) old.replaceWith(C.label(0, 0.5, t, { tex: 'auto', w: rootW, h: PH, cls: 'cv-ntext', size: PF })); }
+      const dimSet = new Set(); [].concat(st.dim || []).forEach(p0 => { const p = String(p0); for (const n of all) if (n.path === p || n.path.startsWith(p + '-')) dimSet.add(n.path); });
+      for (const n of all) { const e = el.get(n.path); e.g.classList.toggle('cv-dimmed', dimSet.has(n.path)); if (e.val) e.val.classList.toggle('cv-dimmed', dimSet.has(n.path)); e.nv.classList.toggle('cv-dimmed', dimSet.has(n.path)); }
+      arrowsSt = st.arrows && typeof st.arrows === 'object' ? st.arrows : {};
       /* current (item 97): a manipulable-blue ring round one node's pill ("root" or "" for the root) */
       const curP = st.current == null ? null : String(st.current) === 'root' ? '' : String(st.current);
       rootDot.classList.toggle('is-current', curP === '');

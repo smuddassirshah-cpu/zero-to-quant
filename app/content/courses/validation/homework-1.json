@@ -1,0 +1,429 @@
+{
+  "id": "homework-1",
+  "course": "validation",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h1",
+      "difficulty": 5,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "title": "The whole procedure",
+      "prose": "The complete honest procedure on a book of loans. Split off 25% as a locked test set with `train_test_split(X, y, test_size=0.25, random_state=seed)`. Build `Pipeline([('scale', StandardScaler()), ('ridge', Ridge())])` and tune `ridge__alpha` over `alphas` with `GridSearchCV`, using `KFold(n_splits=5, shuffle=True, random_state=seed)` and `scoring='neg_mean_squared_error'`, on the training rows only. Score the refitted search once on the test rows. Finally, run nested CV of the same search on the training rows, with that same `KFold` as the outer folds.",
+      "question": "Complete `honest_procedure(X, y, alphas, seed)`, returning `(alpha, test_mse, nested_mse)` with both MSEs rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import (GridSearchCV, KFold, cross_val_score,\n                                     train_test_split)\n\ndef honest_procedure(X, y, alphas, seed):\n    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=seed)\n    pipe = Pipeline([('scale', StandardScaler()), ('ridge', Ridge())])\n    folds = KFold(n_splits=5, shuffle=True, random_state=seed)\n    search = ...\n    ...\n    return alpha, round(float(test_mse), 4), round(float(nested), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import (GridSearchCV, KFold, cross_val_score,\n                                     train_test_split)\n\ndef honest_procedure(X, y, alphas, seed):\n    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=seed)\n    pipe = Pipeline([('scale', StandardScaler()), ('ridge', Ridge())])\n    folds = KFold(n_splits=5, shuffle=True, random_state=seed)\n    search = GridSearchCV(pipe, {'ridge__alpha': alphas}, cv=folds,\n                          scoring='neg_mean_squared_error')\n    search.fit(X_tr, y_tr)\n    alpha = search.best_params_['ridge__alpha']\n    test_mse = np.mean((search.predict(X_te) - y_te) ** 2)\n    nested = -cross_val_score(search, X_tr, y_tr, cv=folds,\n                              scoring='neg_mean_squared_error').mean()\n    return alpha, round(float(test_mse), 4), round(float(nested), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(400, 12, 81)",
+            "call": "honest_procedure(X, y, [0.1, 1, 10, 100, 1000], 0)",
+            "expect": "(1, 0.2253, 0.2165)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(400, 12, 81)",
+            "call": "honest_procedure(X, y, [0.1, 1, 10, 100, 1000], 0)",
+            "expect": "(1, 0.2253, 0.2165)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(400, 12, 81)",
+            "call": "honest_procedure(X, y, [0.1, 1, 10, 100, 1000], 1)",
+            "expect": "(0.1, 0.2185, 0.2285)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 15, 82)",
+            "call": "honest_procedure(X, y, [1, 10, 100], 0)",
+            "expect": "(1, 0.2041, 0.2757)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_noise(300, 10, 83)",
+            "call": "honest_procedure(X, y, [1, 100, 10000], 2)",
+            "expect": "(10000, 0.1986, 0.1678)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on loans from `make_loans` and `make_noise`, comparing all three values with math.isclose; each takes up to a few seconds. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n\ndef make_noise(n, p, seed):\n    \"\"\"Loans whose p signals are all pure noise: spread = 2.5 + noise sd 0.45, unrelated to X.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    y = (2.5 + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n",
+        "budget": 40000
+      },
+      "feedback": {
+        "correct": "All three numbers match: tuned on train, tested once, nested on train.",
+        "generic": "Some tests failed. For `make_loans(400, 12, 81)`, alphas 0.1 to 1000 and seed 0 the answer is (1, 0.2253, 0.2165).",
+        "byKey": {
+          "error": "Your code stopped with an error. Fit the search on `X_tr, y_tr` before predicting."
+        }
+      },
+      "explain": {
+        "text": "The search sees only the training rows; the test rows give one score; nested CV on the training rows checks that score without touching the test rows. Here the two honest numbers, 0.2253 and 0.2165, agree within the noise of a 100-loan test set."
+      }
+    },
+    {
+      "id": "h2",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv"
+      ],
+      "title": "Same folds, paired",
+      "prose": "Compare two penalties fairly: on the same folds, fold by fold. For each fold of `KFold(n_splits=k, shuffle=True, random_state=seed)`, fit `Ridge(alpha=alpha_a)` and `Ridge(alpha=alpha_b)` on the training rows and record MSE(a) minus MSE(b) on the test rows. Return the mean and sd (`np.std`) of the differences, each rounded to 4 places.",
+      "question": "Complete `paired_fold_diff(X, y, alpha_a, alpha_b, k, seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import KFold\n\ndef paired_fold_diff(X, y, alpha_a, alpha_b, k, seed):\n    diffs = []\n    for tr, te in KFold(n_splits=k, shuffle=True, random_state=seed).split(X):\n        ...\n    return round(float(np.mean(diffs)), 4), round(float(np.std(diffs)), 4)\n",
+        "solution": "import numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import KFold\n\ndef paired_fold_diff(X, y, alpha_a, alpha_b, k, seed):\n    diffs = []\n    for tr, te in KFold(n_splits=k, shuffle=True, random_state=seed).split(X):\n        mse = []\n        for a in (alpha_a, alpha_b):\n            model = Ridge(alpha=a).fit(X[tr], y[tr])\n            mse.append(np.mean((model.predict(X[te]) - y[te]) ** 2))\n        diffs.append(mse[0] - mse[1])\n    return round(float(np.mean(diffs)), 4), round(float(np.std(diffs)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "paired_fold_diff(X, y, 1, 30, 5, 0)",
+            "expect": "(-0.0104, 0.027)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "paired_fold_diff(X, y, 1, 30, 5, 0)",
+            "expect": "(-0.0104, 0.027)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(200, 15, 52)",
+            "call": "paired_fold_diff(X, y, 100, 10, 5, 0)",
+            "expect": "(0.0958, 0.068)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(400, 8, 21)",
+            "call": "paired_fold_diff(X, y, 1, 1, 5, 0)",
+            "expect": "(0.0, 0.0)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_loans(300, 10, 5)",
+            "call": "paired_fold_diff(X, y, 0.1, 1000, 10, 3)",
+            "expect": "(-0.3426, 0.1524)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on loans from `make_loans`, including a model compared with itself, compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
+      },
+      "feedback": {
+        "correct": "Your paired differences match.",
+        "generic": "Some tests failed. For `make_loans(200, 15, 52)`, $\\alpha$ 1 against 30, 5 folds, seed 0, the answer is (−0.0104, 0.027)."
+      },
+      "explain": {
+        "text": "Pairing on identical folds cancels the fold-to-fold noise both models share, so the differences vary far less than the raw scores. A model compared with itself gives exactly (0, 0), a useful sanity check."
+      }
+    },
+    {
+      "id": "h3",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "title": "Nested CV in order",
+      "prose": "Put the steps of nested cross-validation in order, ending with the model you deploy.",
+      "question": "Order the steps.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "n1",
+            "text": "Cut all rows into $K$ shuffled outer folds"
+          },
+          {
+            "id": "n2",
+            "text": "Set outer fold $j$ aside"
+          },
+          {
+            "id": "n3",
+            "text": "Run a grid search with inner folds on the other outer folds"
+          },
+          {
+            "id": "n4",
+            "text": "Refit the winning setting on all of those outer training rows"
+          },
+          {
+            "id": "n5",
+            "text": "Score that refit once on outer fold $j$; repeat for every $j$"
+          },
+          {
+            "id": "n6",
+            "text": "Report the mean of the $K$ outer scores"
+          },
+          {
+            "id": "n7",
+            "text": "Run the same grid search on all rows to get the model to deploy"
+          }
+        ],
+        "answer": [
+          "n1",
+          "n2",
+          "n3",
+          "n4",
+          "n5",
+          "n6",
+          "n7"
+        ]
+      },
+      "feedback": {
+        "correct": "Choose inside, measure outside, then refit on everything.",
+        "generic": "Not quite right. The inner search must run before its outer fold is scored, and the final fit comes last."
+      },
+      "explain": {
+        "text": "Each outer fold sees the whole recipe: search, refit, one score. The mean of those scores belongs to the recipe. The deployed model is the recipe run on all rows."
+      }
+    },
+    {
+      "id": "h4",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "title": "A colleague’s note",
+      "prose": "A colleague sends this note about a loan-spread model built on 350 loans:\n\n“Tried 40 settings (8 values of α × 5 feature sets). Best 5-fold CV MSE 0.18. Used all the data for CV, so no held-out set was needed. Expected MSE in production: 0.18.”",
+      "question": "Write a reply: what is wrong with the note, roughly what the real error is likely to be, and what you would run instead.",
+      "widget": {
+        "kind": "longform",
+        "model": "**What is wrong.** The 0.18 is the lowest of 40 cross-validated scores. Each score is noisy, and the minimum of 40 noisy numbers sits below the truth, so the winner’s score is biased low. The same folds both chose the setting and scored it, so the CV rows did the job of a validation set, and nothing is left to act as a test set. “Expected MSE 0.18” is therefore an optimistic number, not an estimate.\n\n**What the real number is likely to be.** Higher than 0.18. With 40 settings that include different feature sets on only 350 loans, the search has a lot of freedom, and our level 1 experiments found gaps of 4% to 10% for searches of 15 to 105 feature choices on 200 rows. A reasonable guess is somewhere around 0.19 to 0.20, but the point is that we cannot know without measuring.\n\n**What to run.**\n1. Nested CV on all 350 loans: `cross_val_score(GridSearchCV(pipe, grid, cv=inner), X, y, cv=outer)` with shuffled 5-fold `KFold`s and a `Pipeline` so scaling happens inside each fold. Its mean is the honest score of the recipe “search 40 settings, refit the winner”. Cost: $5 \\times (5 \\times 40 + 1) = 1005$ fits, affordable for ridge.\n2. Report the nested mean with the fold spread, and the grid that was searched.\n3. If more loans arrive, lock them as a test set and score the frozen model once.\n4. Deploy the search refitted on all 350 loans; its score is the nested one.\n5. If these loans are in time order (they often are), the folds should move forward in time rather than be shuffled: level 2.\n\nThe desk’s rule applies: the number you tuned on is not the number you report.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Says 0.18 is the best of 40 noisy scores, so it is biased low (selection bias)"
+          },
+          {
+            "points": 1,
+            "text": "Says the CV rows chose the setting, so no untouched data remains to report on"
+          },
+          {
+            "points": 2,
+            "text": "Says the real error is likely higher than 0.18, and gives a sensible reason the gap may be sizeable (40 settings with feature-set choices on 350 loans)"
+          },
+          {
+            "points": 2,
+            "text": "Proposes nested CV (tuning inside each outer fold), ideally with the one-line `cross_val_score(GridSearchCV(...))` form"
+          },
+          {
+            "points": 1,
+            "text": "Mentions a Pipeline or fitting preprocessing inside the folds, and shuffled or time-aware folds"
+          },
+          {
+            "points": 1,
+            "text": "Proposes a locked test set for new data, or explains when one could replace nested CV"
+          },
+          {
+            "points": 1,
+            "text": "Says what to deploy (the search refitted on all rows) and what to report (the nested score, with the grid searched)"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your reply with the model answer and tick the rubric.",
+        "generic": "Compare your reply with the model answer and tick the rubric."
+      },
+      "explain": {
+        "text": "The key points: the best of 40 scores is optimistic, nested CV measures the recipe honestly, and the tuned number is never the reported number."
+      }
+    },
+    {
+      "id": "h5",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv"
+      ],
+      "prose": "A model’s errors are roughly normal with $\\sigma = 0.5$, so $\\sigma^2 = 0.25$. The test MSE has sd about $\\sigma^2\\sqrt{2/n_{\\text{test}}}$.",
+      "question": "What sd does a 200-loan test set give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.025,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "sigma",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.25 \\times \\sqrt{2/200} = 0.025$.",
+        "generic": "Not quite right. $\\sqrt{2/200} = 0.1$.",
+        "byKey": {
+          "sigma": "You used $\\sigma = 0.5$ in place of $\\sigma^2 = 0.25$."
+        }
+      },
+      "explain": {
+        "text": "The sd is a tenth of $\\sigma^2$ here: 0.025, against a test MSE near 0.25. Doubling the precision would take 800 test loans."
+      }
+    },
+    {
+      "id": "h6",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv"
+      ],
+      "title": "How rare is an empty fold",
+      "prose": "A default model uses 500 loans with 25 defaults, in 5 plain shuffled folds of 100.",
+      "question": "What is the chance that one given fold has no defaults at all? Give a decimal to 4 places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0032,
+        "tol": {
+          "abs": 0.0002
+        },
+        "placeholder": "a decimal",
+        "accept": "0.0032 ± 0.0002, that is $\\binom{400}{25}/\\binom{500}{25}$",
+        "wrong": [
+          {
+            "id": "indep",
+            "value": 0.0038,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 0.0032.",
+        "generic": "Not quite right. All 25 defaults must land in the other 400 rows.",
+        "byKey": {
+          "indep": "You used $0.8^{25}$, treating each default as an independent draw. Drawing without replacement makes it a little smaller: 0.0032."
+        }
+      },
+      "explain": {
+        "text": "The 25 defaults must all fall among the 400 rows outside the fold: $\\binom{400}{25}/\\binom{500}{25} = 0.0032$. With 5 defaults per fold on average, an empty fold is rare here; with 15 in 300 it was 3%. Stratifying removes the risk entirely."
+      }
+    },
+    {
+      "id": "h7",
+      "difficulty": 4,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "On 200 loans, ridge with $\\alpha = 1$ and $\\alpha = 30$ score 0.2021 and 0.2125 by 5-fold CV, but on the same folds their fold-by-fold difference has mean −0.0104 and sd 0.027.",
+      "question": "What should you conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tie",
+            "text": "The difference is small next to its fold-to-fold spread, so the data cannot separate them; prefer the simpler $\\alpha = 30$",
+            "correct": true
+          },
+          {
+            "id": "a1",
+            "text": "$\\alpha = 1$ is clearly better: it wins by 0.0104",
+            "why": "The win is about a third of the sd of the differences. On another set of folds it could vanish."
+          },
+          {
+            "id": "diff",
+            "text": "The comparison is invalid, since the scores differ",
+            "why": "Paired differences on identical folds are the fair way to compare. The question is how big the mean is next to its spread."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Within the noise: take the simpler model.",
+        "generic": "Not quite right. Compare the mean difference with its sd."
+      },
+      "explain": {
+        "text": "A mean of −0.0104 with an sd of 0.027 across five folds is weak evidence. When the data cannot separate two settings, the one-standard-error spirit says prefer the more shrunk one."
+      }
+    },
+    {
+      "id": "h8",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "Edge case: two outer folds of a nested run pick $\\alpha = 3$, two pick $\\alpha = 10$ and one picks $\\alpha = 1$. The outer mean is 0.200.",
+      "question": "What does 0.200 describe?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "recipe",
+            "text": "The error of the recipe “tune α by inner CV, then refit”, whichever α it picks",
+            "correct": true
+          },
+          {
+            "id": "a3",
+            "text": "The error of $\\alpha = 3$, the most common pick",
+            "why": "No single $\\alpha$ was scored in every outer fold. The score belongs to the tuning procedure."
+          },
+          {
+            "id": "avg",
+            "text": "The error of a model using the average pick, $\\alpha = 5.4$",
+            "why": "Nobody fitted that model. The outer folds scored whatever the recipe chose there."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Nested CV scores the procedure.",
+        "generic": "Not quite right. Ask what was held fixed across the outer folds."
+      },
+      "explain": {
+        "text": "What stays the same across outer folds is the recipe, not the setting. Run the recipe on all rows to choose the deployed $\\alpha$."
+      }
+    },
+    {
+      "id": "h9",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv"
+      ],
+      "prose": "A colleague proposes nested CV with 5 outer folds, 3 inner folds and a grid of 8 settings, with one refit per outer fold.",
+      "question": "How many fits will it make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 125,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "norefit",
+            "value": 120,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$5 \\times (3 \\times 8 + 1) = 125$.",
+        "generic": "Not quite right. Use $K(K_{\\text{in}}G + 1)$.",
+        "byKey": {
+          "norefit": "You left out the 5 refits."
+        }
+      },
+      "explain": {
+        "text": "$5 \\times 3 \\times 8 = 120$ inner fits, plus 5 refits: 125."
+      }
+    }
+  ]
+}

@@ -1,0 +1,370 @@
+{
+  "id": "review-1",
+  "course": "validation",
+  "level": 1,
+  "items": [
+    {
+      "id": "r1",
+      "difficulty": 2,
+      "skills": [
+        "vl-cv"
+      ],
+      "prose": "A book of 600 loans is split 60/20/20 into training, validation and test.",
+      "question": "How many loans are in the validation set?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 120,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "train",
+            "value": 360,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "both",
+            "value": 240,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "20% of 600 is 120.",
+        "generic": "Not quite right. Take 20% of 600.",
+        "byKey": {
+          "train": "That is the training set, 60%.",
+          "both": "You added validation and test. Validation alone is 20%."
+        }
+      },
+      "explain": {
+        "text": "Training 360, validation 120, test 120."
+      }
+    },
+    {
+      "id": "r2",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "A project log reads: fit on train; score on validation; score on test; change two features; fit on train; final score on test.",
+      "question": "Is the final test score clean?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the test rows were scored before the feature change, so they helped choose the model",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: the final score is the only one reported",
+            "why": "Reporting only the last score hides the first look. That look changed the features, so the test rows did validation work."
+          },
+          {
+            "id": "val",
+            "text": "Yes, because validation rows were used for choosing",
+            "why": "They were, but the test rows were also scored before the change, so they took part too."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The first test score shaped the model, so the test set was touched.",
+        "generic": "Not quite right. Look at the event just before the feature change."
+      },
+      "explain": {
+        "text": "Any use of the test rows before the final score, followed by a change, turns them into validation rows. A fresh test set is needed."
+      }
+    },
+    {
+      "id": "r3",
+      "difficulty": 2,
+      "skills": [
+        "vl-cv"
+      ],
+      "prose": "A memo reads “5-fold CV MSE 0.18 ± 0.03”, where 0.03 is the sd of the five fold MSEs.",
+      "question": "Which reading is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "spread",
+            "text": "The folds scored about 0.03 either side of 0.18; it is a rough spread, not a confidence interval",
+            "correct": true
+          },
+          {
+            "id": "ci",
+            "text": "With 95% confidence the true MSE is between 0.12 and 0.24",
+            "why": "You built an interval from the fold sd. Folds share training rows, so the sd is only a rough guide."
+          },
+          {
+            "id": "se",
+            "text": "The standard error of 0.18 is $0.03/\\sqrt{5} = 0.013$",
+            "why": "That formula assumes independent folds. They overlap heavily, so it understates the uncertainty."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A rough spread, nothing more.",
+        "generic": "Not quite right. Recall what the fold sd measures."
+      },
+      "explain": {
+        "text": "The five fold scores vary by about 0.03. Because every two folds share most of their training rows, no simple formula turns that into a standard error."
+      }
+    },
+    {
+      "id": "r4",
+      "difficulty": 2,
+      "skills": [
+        "vl-cv"
+      ],
+      "prose": "You run 10-fold cross-validation on 500 loans.",
+      "question": "How many of the 10 fitted models use any given loan for fitting?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Nine: every model except the one that tests it.",
+        "generic": "Not quite right. Each loan is tested once.",
+        "byKey": {
+          "one": "One is how often it is tested.",
+          "ten": "In its own test fold the loan cannot be a fitting row."
+        }
+      },
+      "explain": {
+        "text": "A loan sits in exactly one test fold, so it helps fit the other $k - 1 = 9$ models."
+      }
+    },
+    {
+      "id": "r5",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "A 5-fold validation curve for ridge gives these numbers.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$\\alpha$",
+            "Mean CV MSE",
+            "Fold sd"
+          ],
+          "rows": [
+            [
+              "0.1",
+              "0.31",
+              "0.02"
+            ],
+            [
+              "1",
+              "0.29",
+              "0.02"
+            ],
+            [
+              "10",
+              "0.30",
+              "0.02"
+            ],
+            [
+              "100",
+              "0.36",
+              "0.03"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which $\\alpha$ does the one-standard-error rule pick?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a10",
+            "text": "$\\alpha = 10$",
+            "correct": true
+          },
+          {
+            "id": "a1",
+            "text": "$\\alpha = 1$, the lowest mean",
+            "why": "You took the best mean. The rule moves to the most shrunk model within one sd of it."
+          },
+          {
+            "id": "a100",
+            "text": "$\\alpha = 100$, the largest penalty",
+            "why": "Its mean, 0.36, is above the limit of 0.29 + 0.02 = 0.31."
+          },
+          {
+            "id": "a01",
+            "text": "$\\alpha = 0.1$, the other one within the limit",
+            "why": "It is within the limit, but it is the least shrunk. The rule takes the largest qualifying $\\alpha$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Limit 0.31; the largest $\\alpha$ under it is 10.",
+        "generic": "Not quite right. Add the best setting’s sd to its mean, then find the largest $\\alpha$ under that."
+      },
+      "explain": {
+        "text": "The best mean is 0.29 at $\\alpha = 1$, with sd 0.02, so the limit is 0.31. Both $\\alpha = 0.1$ (0.31) and $\\alpha = 10$ (0.30) qualify; the rule takes the larger, 10."
+      }
+    },
+    {
+      "id": "r6",
+      "difficulty": 3,
+      "skills": [
+        "vl-overfit"
+      ],
+      "prose": "A grid search over $k$ for nearest neighbours tried $k = 1, 2, 3, 4, 5$. The best CV score was at $k = 5$.",
+      "question": "What should you do next?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "widen",
+            "text": "Extend the grid to larger $k$ until the CV curve turns up",
+            "correct": true
+          },
+          {
+            "id": "accept",
+            "text": "Use $k = 5$, the best tried",
+            "why": "A best value on the edge only says the curve was still falling there."
+          },
+          {
+            "id": "test",
+            "text": "Check $k = 6$ to 20 on the test set",
+            "why": "That tunes on the test set. Widen the grid inside the CV on the training rows."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Widen the grid past its edge.",
+        "generic": "Not quite right. Where does the best value sit?"
+      },
+      "explain": {
+        "text": "An optimum on the boundary is not yet an optimum. Extend the grid in that direction, still scoring by CV on the training rows."
+      }
+    },
+    {
+      "id": "r7",
+      "difficulty": 3,
+      "skills": [
+        "vl-cv",
+        "vl-overfit"
+      ],
+      "prose": "A nested run has 3 outer folds, 4 inner folds and 6 settings, with one refit of the winner per outer fold.",
+      "question": "How many model fits does it make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 75,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "norefit",
+            "value": 72,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$3 \\times (4 \\times 6 + 1) = 75$.",
+        "generic": "Not quite right. Use $K(K_{\\text{in}}G + 1)$.",
+        "byKey": {
+          "norefit": "You left out the 3 refits.",
+          "sum": "You added the counts. The inner loop runs for every setting in every outer fold: multiply."
+        }
+      },
+      "explain": {
+        "text": "$3 \\times 4 \\times 6 = 72$ inner fits, plus 3 refits, gives 75."
+      }
+    },
+    {
+      "id": "r8",
+      "difficulty": 4,
+      "skills": [
+        "vl-overfit"
+      ],
+      "prose": "A team tunes 40 settings on 300 loans. `best_score_` gives MSE 0.150. Nested CV gives 0.170. Later a locked test set of new loans gives 0.172.",
+      "question": "What is the best summary for the desk?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nested",
+            "text": "Expect about 0.17: nested CV predicted the locked score, and 0.150 was flattered by the search",
+            "correct": true
+          },
+          {
+            "id": "best",
+            "text": "Expect 0.150; the test set was unlucky",
+            "why": "Two independent honest measures agree at 0.17. The odd one out is the number that did the choosing."
+          },
+          {
+            "id": "avg",
+            "text": "Expect 0.164, the average of the three",
+            "why": "Averaging in a biased number drags the estimate down. Use the honest ones."
+          },
+          {
+            "id": "broken",
+            "text": "Nested CV is broken because it disagrees with best_score_",
+            "why": "It is meant to disagree: the gap is the cost of choosing among 40 settings."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The number you tuned on is not the number you report.",
+        "generic": "Not quite right. Which numbers are free of the choice?"
+      },
+      "explain": {
+        "text": "Nested CV and the locked test set both measure the tuned recipe on unseen rows, and they agree. The 0.150 is the minimum of 40 estimates, so it is about 12% too low."
+      }
+    }
+  ]
+}
