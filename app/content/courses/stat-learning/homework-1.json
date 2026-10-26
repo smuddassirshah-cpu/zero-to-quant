@@ -1,0 +1,429 @@
+{
+  "id": "homework-1",
+  "course": "stat-learning",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-pipeline",
+      "difficulty": 5,
+      "skills": [
+        "sl-setup",
+        "sl-tradeoff"
+      ],
+      "title": "The whole pipeline",
+      "prose": "End to end, on the spread data. The prelude defines `make_spreads(n, seed)`; its rows are in time order. Split them: the first `n_train` rows train, the rest test. Rescale the hours to $[-1, 1]$ with the training minimum and maximum. Fit degrees 0 to 10 with `np.polyfit`. Round each MSE to 4 places, then pick the degree with the lowest test MSE (the lower degree on a tie).",
+      "question": "Complete `pipeline` so it returns (best degree, training MSE at that degree).",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef pipeline(n, n_train, seed):\n    t, y = make_spreads(n, seed)\n    ...\n    return best_degree, train_mse_at_best\n",
+        "solution": "import numpy as np\n\ndef pipeline(n, n_train, seed):\n    t, y = make_spreads(n, seed)\n    x, x_test = t[:n_train], t[n_train:]\n    y_train, y_test = y[:n_train], y[n_train:]\n    lo, hi = x.min(), x.max()\n    z = 2 * (x - lo) / (hi - lo) - 1\n    z_test = 2 * (x_test - lo) / (hi - lo) - 1\n    results = []\n    for d in range(11):\n        coef = np.polyfit(z, y_train, d)\n        tr = np.mean((np.polyval(coef, z) - y_train) ** 2)\n        te = np.mean((np.polyval(coef, z_test) - y_test) ** 2)\n        results.append((round(float(te), 4), round(float(tr), 4)))\n    tests = [te for te, tr in results]\n    best_degree = int(np.argmin(tests))\n    train_mse_at_best = results[best_degree][1]\n    return best_degree, train_mse_at_best\n",
+        "examples": [
+          {
+            "call": "list(pipeline(80, 60, 1))",
+            "expect": "[6, 0.2836]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "list(pipeline(80, 60, 1))",
+            "expect": "[6, 0.2836]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(pipeline(80, 60, 2))",
+            "expect": "[5, 0.2336]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(pipeline(120, 90, 3))",
+            "expect": "[5, 0.349]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(pipeline(60, 40, 4))",
+            "expect": "[7, 0.3307]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(pipeline(200, 150, 5))",
+            "expect": "[7, 0.3451]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(pipeline(50, 30, 6))",
+            "expect": "[7, 0.2283]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on seeded data. Each pair is compared with values from running the solution, using `math.isclose(actual, expected, rel_tol=1e-9)`. The first run loads NumPy.",
+        "prelude": "import numpy as np\n\ndef make_spreads(n, seed):\n    rng = np.random.default_rng(seed)\n    t = rng.uniform(0, 8.5, n).round(2)\n    f = (4 + 2.5 * np.cos(2 * np.pi * t / 8.5)\n         + 0.8 * np.sin(4 * np.pi * t / 8.5))\n    y = (f + rng.normal(0, 0.6, n)).round(2)\n    return t, y\n"
+      },
+      "feedback": {
+        "correct": "A full, honest model choice in one function.",
+        "generic": "Not quite right. Check the split (first `n_train` rows), the scaling (training `lo` and `hi`) and the rounding before choosing."
+      },
+      "explain": {
+        "text": "The pipeline keeps the test rows out of every decision except the final choice of degree. Its training MSE at the chosen degree is always below the test MSE that chose it: the gap is the cost of fitting noise."
+      }
+    },
+    {
+      "id": "h-hit-rate",
+      "difficulty": 4,
+      "skills": [
+        "sl-tradeoff"
+      ],
+      "title": "Hit rate of a direction call",
+      "prose": "Now $k$-NN as a classifier. Label a day 1 if its next-day return is above 0, else 0. Fit `KNeighborsClassifier` on the training labels and report the **hit rate**: the share of test days whose predicted label matches the actual one. The prelude defines `make_knn(n, seed)`; the tests use odd $k$, so votes never tie.",
+      "question": "Complete `knn_hit_rate`, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom sklearn.neighbors import KNeighborsClassifier\n\ndef knn_hit_rate(X_train, y_train, X_test, y_test, k):\n    ...\n",
+        "solution": "import numpy as np\nfrom sklearn.neighbors import KNeighborsClassifier\n\ndef knn_hit_rate(X_train, y_train, X_test, y_test, k):\n    model = KNeighborsClassifier(n_neighbors=k)\n    model.fit(X_train, (np.asarray(y_train) > 0).astype(int))\n    pred = model.predict(X_test)\n    actual = (np.asarray(y_test) > 0).astype(int)\n    return round(float(np.mean(pred == actual)), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_hit_rate(Xtr, ytr, Xte, yte, 11)",
+            "expect": "0.66",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_hit_rate(Xtr, ytr, Xte, yte, 1)",
+            "expect": "0.61",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_hit_rate(Xtr, ytr, Xte, yte, 5)",
+            "expect": "0.62",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_hit_rate(Xtr, ytr, Xte, yte, 11)",
+            "expect": "0.66",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(300, 11); Xtr, ytr, Xte, yte = X[:200], y[:200], X[200:], y[200:]",
+            "call": "knn_hit_rate(Xtr, ytr, Xte, yte, 25)",
+            "expect": "0.66",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(150, 3); Xtr, ytr, Xte, yte = X[:100], y[:100], X[100:], y[100:]",
+            "call": "knn_hit_rate(Xtr, ytr, Xte, yte, 3)",
+            "expect": "0.7",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_knn(150, 3); Xtr, ytr, Xte, yte = X[:100], y[:100], X[100:], y[100:]",
+            "call": "knn_hit_rate(Xtr, ytr, Xte, yte, 9)",
+            "expect": "0.6",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each value is compared with `math.isclose(actual, expected, rel_tol=1e-9)`, against values from running the solution in this browser's scikit-learn 1.6.1 and checked with a NumPy majority vote. **The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds.**",
+        "prelude": "import numpy as np\n\ndef make_knn(n, seed):\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, 2))\n    signal = (0.8 * X[:, 0] * np.tanh(2 * X[:, 1])\n              - 0.3 * X[:, 1] ** 2 + 0.3)\n    y = (signal + rng.normal(0, 0.7, n)).round(2)\n    return X, y\n"
+      },
+      "feedback": {
+        "correct": "On the 300-day set, $k = 11$ hits 66% of test days.",
+        "generic": "Not quite right. Turn both targets into 0 or 1 labels, fit on the training labels, then compare predictions with the test labels."
+      },
+      "explain": {
+        "text": "Up days are 58% of the test set, so always saying up already hits 58%. $k = 11$ reaches 66%: a hit rate means little without that base rate beside it."
+      }
+    },
+    {
+      "id": "h-honest-order",
+      "difficulty": 4,
+      "skills": [
+        "sl-setup"
+      ],
+      "title": "An honest comparison",
+      "prose": "You must choose between five models for next-day returns and then report how well the winner will do. Choosing on the test set and then reporting the same test score flatters the winner, so a third block is needed.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Sort the rows by date"
+          },
+          {
+            "id": "s2",
+            "text": "Cut them, in time order, into training, validation and test blocks"
+          },
+          {
+            "id": "s3",
+            "text": "Fit each of the five models on the training block only"
+          },
+          {
+            "id": "s4",
+            "text": "Score each fitted model on the validation block"
+          },
+          {
+            "id": "s5",
+            "text": "Keep the model with the lowest validation error"
+          },
+          {
+            "id": "s6",
+            "text": "Score that one model, once, on the untouched test block and report it"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ]
+      },
+      "feedback": {
+        "correct": "Each block is used for one job, and the test block only once.",
+        "generic": "Not quite right. Every choice must be made before the test block is looked at.",
+        "byKey": {
+          "s6": "The test score comes last, after every choice has been made.",
+          "s2": "The blocks must be cut in time order, so sort the rows first."
+        }
+      },
+      "explain": {
+        "text": "Validation picks the model; the test block, touched once, estimates its error. Reusing the test block to choose would make its score a training score in disguise. The `validation` course replaces the single validation block with time-ordered folds."
+      }
+    },
+    {
+      "id": "h-decompose",
+      "difficulty": 3,
+      "skills": [
+        "sl-tradeoff"
+      ],
+      "title": "From four refits",
+      "prose": "Four refits of a model at one point predict 5.2, 4.8, 5.5 and 4.5. The truth there is 5.5 and the noise variance is 0.3. Use the variance that divides by 4.",
+      "question": "What is the expected test error at that point?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.695,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "0.695: mean 5.0, bias² 0.25, variance 0.145, plus 0.3",
+        "label": "Expected test error",
+        "wrong": [
+          {
+            "id": "ddof1",
+            "value": 0.7433,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "nonoise",
+            "value": 0.395,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "nobias",
+            "value": 0.445,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.25 + 0.145 + 0.3 = 0.695$.",
+        "generic": "Not quite right. Find the mean, then the bias², the variance about the mean, and add the noise.",
+        "byKey": {
+          "ddof1": "You divided by 3 for the variance. Here the variance divides by 4.",
+          "nonoise": "Add the noise variance, 0.3.",
+          "nobias": "The mean, 5.0, misses the truth by 0.5. Add its square."
+        }
+      },
+      "explain": {
+        "text": "The mean is 5.0, so bias² is $0.5^2 = 0.25$. Deviations 0.2, −0.2, 0.5 and −0.5 give variance $(0.04 + 0.04 + 0.25 + 0.25)/4 = 0.145$. With the noise: 0.695."
+      }
+    },
+    {
+      "id": "h-radius",
+      "difficulty": 4,
+      "skills": [
+        "sl-tradeoff"
+      ],
+      "title": "How far to reach",
+      "prose": "Days are spread evenly over the unit square of two scaled features. You want a circle round the centre day that holds 10% of all days.",
+      "question": "What radius does it need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1784,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "0.178: $\\pi r^2 = 0.1$, so $r = \\sqrt{0.1/\\pi}$",
+        "label": "Radius",
+        "wrong": [
+          {
+            "id": "noroot",
+            "value": 0.0318,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$r = \\sqrt{0.1/\\pi} \\approx 0.178$.",
+        "generic": "Not quite right. The share inside the circle is its area, $\\pi r^2$.",
+        "byKey": {
+          "noroot": "That is $r^2$. Take the square root.",
+          "tenth": "A radius of 0.1 holds $\\pi \\times 0.01 \\approx 3.1\\%$."
+        }
+      },
+      "explain": {
+        "text": "Area $\\pi r^2 = 0.1$ gives $r \\approx 0.178$. In 10 dimensions the same 10% needs a ball of radius about 0.72, wider than the cube's half-width 0.5: the neighbours stop being local."
+      }
+    },
+    {
+      "id": "h-k-edge",
+      "difficulty": 3,
+      "skills": [
+        "sl-tradeoff"
+      ],
+      "title": "The two ends of $k$",
+      "prose": "A $k$-NN regression has 200 training rows. Training MSE at $k = 1$ is 0 and test MSE at $k = 200$ is 1.01, the same as forecasting the training mean.",
+      "question": "Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "options": [
+          {
+            "id": "a",
+            "text": "At $k = 1$ the training MSE is 0 because each row is its own nearest neighbour",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "At $k = 200$ every forecast equals the training mean",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "$k = 1$ has the lowest test MSE because its training MSE is lowest",
+            "why": "Training MSE at $k = 1$ is always 0; its test MSE is usually the worst."
+          },
+          {
+            "id": "d",
+            "text": "Raising $k$ from 1 makes the model more flexible",
+            "why": "Raising $k$ averages more rows, so the model gets smoother: less flexible."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$k = 1$ memorises and $k = n$ forecasts the mean.",
+        "generic": "Not quite right. Picture what the forecast is at each end."
+      },
+      "explain": {
+        "text": "At $k = 1$ a training row finds itself, so the training error is 0 and says nothing. At $k = n$ every row is a neighbour, so the forecast is the mean. Flexibility falls as $k$ rises."
+      }
+    },
+    {
+      "id": "h-r2-90",
+      "difficulty": 5,
+      "skills": [
+        "sl-setup",
+        "sl-tradeoff"
+      ],
+      "title": "An R² of 0.9",
+      "kind": "longform",
+      "prompt": "A colleague shows you a strategy \"model\": a regression of the next day's return of an index future on 25 technical indicators, fitted on 120 trading days. In sample it has $R^2 = 0.9$, and they want £5m of risk to trade it.\n\n(a) What do you ask about how the model was built and scored?\n\n(b) What do you run, step by step, to judge it honestly?\n\n(c) What do you expect to find, and why? Use bias, variance and degrees of freedom.\n\n(d) What would convince you it is worth trading?",
+      "model": "**(a) Questions.** Was $R^2 = 0.9$ measured on the same 120 days used to fit? Almost certainly: so it is a training score. How were the 25 indicators chosen, and how many others were tried and dropped? Each one tried is a hidden degree of freedom. Are any indicators computed with data from the day being predicted (look-ahead), or standardised over the whole sample? Either leaks the future. What is the target exactly, next-day return measured close to close, and when could the position actually be taken?\n\n**(b) What to run.** Sort by date. Hold out the latest block of days that played no part in choosing the indicators or fitting, ideally a year, or use time-ordered folds. Refit on the training block only and compute the test MSE. Compare it with the simplest benchmark: always forecasting the training mean return, whose test MSE is about the variance of daily returns. Also report the hit rate against the share of up days, and a P&L after costs.\n\n**(c) What to expect.** With 26 coefficients on 120 rows, the fit has about one free parameter per 4.6 days, so it can fit much of the noise: daily index returns are mostly noise, with a true predictable share well under 5%. Training $R^2$ rises with every indicator added, whatever it is, because the models are nested. The model's variance is high: refitting on another 120 days would give very different coefficients. Expect test MSE at or above the mean forecast's, an out-of-sample $R^2$ near zero or negative, and a hit rate near the base rate. An in-sample $R^2$ of 0.9 for next-day returns is itself the warning sign.\n\n**(d) What would convince me.** A positive out-of-sample $R^2$, or a hit rate clearly above the base rate, on a long held-out period, stable across sub-periods, from a model with few, pre-specified features, and surviving transaction costs. A smaller model, for example two or three indicators with a stated economic reason, that does as well out of sample is far more credible than 25.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Identifies $R^2 = 0.9$ as an in-sample (training) score that says nothing about new days"
+        },
+        {
+          "points": 1,
+          "text": "Asks how many indicators were tried, and about look-ahead or whole-sample standardising"
+        },
+        {
+          "points": 2,
+          "text": "Proposes a time-ordered held-out period (or time-ordered folds) untouched by any choice, with refitting on the training block only"
+        },
+        {
+          "points": 1,
+          "text": "Compares test MSE with the mean forecast (about the variance of daily returns), and the hit rate with the base rate"
+        },
+        {
+          "points": 2,
+          "text": "Explains with degrees of freedom and variance why 26 coefficients on 120 noisy rows overfit, and that training $R^2$ only rises as indicators are added"
+        },
+        {
+          "points": 1,
+          "text": "Predicts test performance near or below the mean forecast's"
+        },
+        {
+          "points": 1,
+          "text": "States credible evidence: positive out-of-sample performance over a long period, stable, after costs, with few pre-specified features"
+        }
+      ]
+    },
+    {
+      "id": "h-noise-bias",
+      "difficulty": 4,
+      "skills": [
+        "sl-tradeoff"
+      ],
+      "title": "Error that will not go away",
+      "prose": "A spread model's test MSE falls from 0.90 to 0.37 as the training set grows from 30 to 3,000 days, then stays at 0.37 up to 30,000 days. The noise variance is 0.36.",
+      "question": "What is the remaining 0.01 most likely to be?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bias",
+            "text": "Squared bias: the model's shape cannot quite follow the truth, and more data will not fix it",
+            "correct": true
+          },
+          {
+            "id": "var",
+            "text": "Variance, which another tenfold more data would remove",
+            "why": "Variance shrinks with data, and going from 3,000 to 30,000 days changed nothing. What is left does not shrink."
+          },
+          {
+            "id": "noise",
+            "text": "Noise, which a better model would remove",
+            "why": "The noise is 0.36 and belongs to the target. No model removes it."
+          },
+          {
+            "id": "test",
+            "text": "Rounding error in the test set",
+            "why": "With large test sets the gap is stable at 0.01. It is a real part of the error."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The part that does not shrink with data is bias.",
+        "generic": "Not quite right. Ask which part of the error more data cannot reduce."
+      },
+      "explain": {
+        "text": "At 30,000 days the variance is negligible, so test MSE is about noise plus bias²: $0.36 + 0.01$. Only a more flexible model could cut the 0.01, at the cost of some variance."
+      }
+    }
+  ]
+}

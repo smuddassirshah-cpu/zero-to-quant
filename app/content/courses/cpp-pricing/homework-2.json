@@ -196,7 +196,7 @@
     "generic": "Not quite right. Establish the pieces' moments, then the pair's variance, then compare."
    },
    "explain": {
-    "text": "The pair's variance is $\\tfrac12(v + \\mathrm{Cov})$ against $\\tfrac12 v$ for two plain paths. For our call, $v/2$ per pair of paths was 0.0109 × 20,000 / 2 in total terms; antithetic pairs gave half the variance, so the covariance was close to $-v/2$... in our run, the variance fell from 0.0109 to 0.0054 for the same 20,000 payoffs."
+    "text": "The pair's variance is $\\tfrac12(v + \\mathrm{Cov})$, against $\\tfrac12 v$ for two plain paths, so the ratio is $1 + \\mathrm{Cov}/v$. For our call the estimate's variance fell from 0.0109 to 0.0054 for the same 20,000 payoffs. So $\\mathrm{Cov}(Y, Y') \\approx -v/2$: a correlation of about −0.5."
    }
   },
   {
@@ -206,11 +206,10 @@
     "cx-pricers",
     "cx-testing"
    ],
-   "prose": "A small desk asks you to design its C++ pricing library from this level's pieces. Describe the interface: the payoff classes, the three pricers (tree, closed form, Monte Carlo), what each is for, and how you would test them against each other. Mention one payoff the interface cannot price as it stands, and how you would extend it.",
    "question": "Write your design in about 250 words.",
    "widget": {
     "kind": "longform",
-    "prompt": "Design the pricing library: payoff classes, three pricers and their uses, and cross-tests. Name one payoff the design cannot yet price and the extension it needs.",
+    "prompt": "A small desk asks you to design its C++ pricing library from this level's pieces. Describe the interface: the payoff classes, the three pricers (tree, closed form, Monte Carlo), what each is for, and how you would test them against each other. Name one payoff the interface cannot price as it stands, and how you would extend it.",
     "model": "**Payoffs.** An abstract base `class Payoff { public: virtual ~Payoff() = default; virtual double operator()(double spot) const = 0; };`. Each payoff is one class: `Call`, `Put`, `DigitalCall`, `CappedCall`, and composites such as `Straddle` that hold other payoffs. Books are `std::vector<std::unique_ptr<Payoff>>`. Pricers take `const Payoff&`, never a copy, so adding a payoff never changes a pricer.\n\n**Pricers.**\n\n- `binomial_price(const Payoff&, s, r, sigma, t, n, american)`: a CRR tree on one vector of n + 1 values. It is the only one of the three that handles early exercise. It costs $O(n^2)$ and converges like $1/n$.\n- `bs_call`, `bs_put` and the Greeks: exact for European calls and puts under Black-Scholes, and instant. They are the reference the others are tested against.\n- `mc_price` and `mc_standard_error(const Payoff&, ..., n, seed)`: any European payoff, with an error bar. The error falls like $1/\\sqrt n$; antithetic pairs halve the variance for a call.\n\n**Cross-tests.** The closed form against known values (£10.4506, £5.5735) and parity. The tree against Black-Scholes: within 0.005 at 512 steps. Monte Carlo against Black-Scholes: within 3 standard errors, with a fixed seed. Limits for all three: T = 0 gives the payoff, small σ gives the discounted forward payoff. The American put is at least the European, and equals the exercise value deep in the money (£40 at £60).\n\n**Limit.** `Payoff` sees one spot, so it cannot price an Asian option, whose payoff needs the whole path. Add a second interface, `class PathPayoff { virtual double operator()(const std::vector<double>& path) const = 0; }`, and a Monte Carlo pricer that simulates m steps per path.",
     "rubric": [
      {
