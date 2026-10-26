@@ -1,0 +1,436 @@
+{
+ "id": "homework-4",
+ "course": "alpha",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "hw-capacity",
+   "difficulty": 5,
+   "skills": [
+    "al-costs"
+   ],
+   "prose": "`rebalance_dates`, `portfolio_returns`, `trade_costs`, `charge_next_day` and `sharpe` are defined. For each book size, charge the full cost of each rebalance on the next day and compute the net Sharpe (daily, $\\sqrt{252}$). `sigma` may be a frame by date and share, a Series by share, or one number.",
+   "question": "Complete `capacity_curve(weights, ret, half_spread_bp, adv_gbp, sigma, books, rebalance=\"M\")`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef rebalance_dates(index, rebalance=\"M\"):\n    \"\"\"The last day of each day (\"D\"), week (\"W\") or month (\"M\") in the index.\"\"\"\n    if rebalance == \"D\":\n        return index\n    per = index.to_period(rebalance)\n    last = np.append(per[:-1] != per[1:], True)\n    return index[last]\n\ndef portfolio_returns(weights, ret, rebalance=\"M\"):\n    dates = rebalance_dates(weights.index, rebalance)\n    held = weights.loc[dates].reindex(weights.index).ffill().shift(1)\n    r = ret.reindex(index=weights.index, columns=weights.columns).fillna(0.0)\n    out = (held.fillna(0.0) * r).sum(axis=1)\n    live = held.abs().sum(axis=1) > 0\n    if not live.any():\n        return out.iloc[0:0]\n    return out.loc[live.idxmax():]\n\ndef trade_costs(weights, half_spread_bp, adv_gbp, sigma, book_gbp, c=1.0):\n    w = weights.fillna(0.0)\n    dw = (w - w.shift(1).fillna(0.0)).abs()\n    impact = c * (dw * book_gbp).div(adv_gbp).pow(0.5).mul(sigma)\n    rate = impact.add(half_spread_bp / 1e4)\n    return (dw * rate).sum(axis=1)\n\ndef charge_next_day(cost, index):\n    \"\"\"Spread a cost per rebalance date onto the next day of the index.\"\"\"\n    out = pd.Series(0.0, index=index)\n    pos = index.get_indexer(cost.index) + 1\n    ok = pos < len(index)\n    out.iloc[pos[ok]] = cost.to_numpy()[ok]\n    return out\n\ndef sharpe(returns, periods):\n    x = pd.Series(returns, dtype=float).dropna()\n    if len(x) < 2:\n        return 0.0\n    s = x.std(ddof=1)\n    if not s > 0:\n        return 0.0\n    return float(math.sqrt(periods) * x.mean() / s)\n\ndef reversal_5d(ret):\n    logret = np.log1p(ret)\n    past5 = logret.rolling(5, min_periods=5).sum()\n    return -past5\n\ndef long_short_weights(signal, min_names=10):\n    r = signal.rank(axis=1)\n    d = r.sub(r.mean(axis=1), axis=0)\n    gross = d.abs().sum(axis=1)\n    n = signal.notna().sum(axis=1)\n    w = d.div(gross.where((gross > 0) & (n >= min_names)), axis=0)\n    return w.fillna(0.0)\n\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef capacity_curve(weights, ret, half_spread_bp, adv_gbp, sigma, books, rebalance=\"M\"):\n    \"\"\"Net Sharpe (3 places) at each book size, and the first book at which\n    it is at most half the gross Sharpe (None if it never is).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef capacity_curve(weights, ret, half_spread_bp, adv_gbp, sigma, books, rebalance=\"M\"):\n    dates = rebalance_dates(weights.index, rebalance)\n    gross = portfolio_returns(weights, ret, rebalance)\n    sg = sigma.loc[dates] if isinstance(sigma, pd.DataFrame) else sigma\n    target = sharpe(gross, 252) / 2\n    nets, first = [], None\n    for book in books:\n        cost = trade_costs(weights.loc[dates], half_spread_bp, adv_gbp, sg, book)\n        net = gross - charge_next_day(cost, weights.index).reindex(gross.index)\n        sr = round(sharpe(net, 252), 3)\n        nets.append(sr)\n        if first is None and sr <= target:\n            first = book\n    return nets, first\n",
+    "examples": [
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e6, 3e7], 'W')",
+      "expect": "([-0.248, -3.357], 1000000.0)",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e5, 1e6, 1e7, 1e8], 'M')",
+      "expect": "([-0.525, -0.685, -1.158, -2.223], 100000.0)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'] * 0, P['adv_gbp'], sg * 0, [1e6, 1e9], 'M')",
+      "expect": "([-0.282, -0.282], 1000000.0)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e6, 3e7], 'W')",
+      "expect": "([-0.248, -3.357], 1000000.0)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], 0.02, [1e6, 1e8], 'M')",
+      "expect": "([-0.688, -2.233], 1000000.0)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [], 'M')",
+      "expect": "([], None)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests on a monthly and a weekly reversal book from `make_panel(30, 300, 5)`: four book sizes, a cost-free case (None), `sigma` as one number, and an empty list of books. Compared with math.isclose. NumPy and pandas load on the first run."
+   },
+   "feedback": {
+    "correct": "All tests pass.",
+    "generic": "Not quite. Check the halving target (half the gross Sharpe) and the shapes of `sigma`."
+   },
+   "explain": {
+    "text": "The gross series is the same for every book; only the cost changes, growing with $\\sqrt{B}$ through impact. With no spread and no volatility the book never halves, so the answer is None."
+   }
+  },
+  {
+   "id": "hw-band",
+   "difficulty": 4,
+   "skills": [
+    "al-costs"
+   ],
+   "prose": "A no-trade band: at a rebalance, a share trades to its target weight only when the gap $|w^{\\text{target}} - w^{\\text{current}}|$ is larger than `band`; otherwise it keeps its current weight. The cost is the half spread on each £ traded, as a fraction of the book. Inside the band the book can drift away from exactly ±0.5.",
+   "question": "Complete `cost_aware_rebalance(target, current, half_spread_bp, band)`, returning `(new_weights, cost)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\n",
+    "starter": "import pandas as pd\n\ndef cost_aware_rebalance(target, current, half_spread_bp, band):\n    \"\"\"Trade only shares whose weight gap exceeds band. Return (new, cost).\"\"\"\n    ...\n",
+    "solution": "import pandas as pd\n\ndef cost_aware_rebalance(target, current, half_spread_bp, band):\n    gap = (target - current).abs()\n    trade = gap > band\n    new = target.where(trade, current)\n    cost = float(((new - current).abs() * half_spread_bp / 1e4).sum())\n    return new, cost\n",
+    "examples": [
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "[round(v, 6) for v in cost_aware_rebalance(t, c, hs, 0.02)[0].tolist()]",
+      "expect": "[0.3, 0.2, -0.25, -0.25]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "[round(v, 6) for v in cost_aware_rebalance(t, c, hs, 0.02)[0].tolist()]",
+      "expect": "[0.3, 0.2, -0.25, -0.25]",
+      "compare": "equal"
+     },
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "round(cost_aware_rebalance(t, c, hs, 0.02)[1], 9)",
+      "expect": "0.0001",
+      "compare": "isclose"
+     },
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "[round(v, 6) for v in cost_aware_rebalance(t, c, hs, 0.06)[0].tolist()]",
+      "expect": "[0.25, 0.25, -0.25, -0.25]",
+      "compare": "equal"
+     },
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "cost_aware_rebalance(t, c, hs, 0.06)[1]",
+      "expect": "0.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "[round(v, 6) for v in cost_aware_rebalance(t, c * 0, hs, 0.0)[0].tolist()]",
+      "expect": "[0.3, 0.2, -0.25, -0.25]",
+      "compare": "equal"
+     },
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "round(cost_aware_rebalance(t, c * 0, hs, 0.0)[1], 9)",
+      "expect": "0.001125",
+      "compare": "isclose"
+     },
+     {
+      "setup": "t = pd.Series([0.30, 0.20, -0.25, -0.25], index=list('abcd')); c = pd.Series([0.25, 0.25, -0.25, -0.25], index=list('abcd')); hs = pd.Series([10.0, 10.0, 20.0, 5.0], index=list('abcd'))",
+      "call": "[round(v, 6) for v in cost_aware_rebalance(t, c, hs, 0.05)[0].tolist()]",
+      "expect": "[0.25, 0.25, -0.25, -0.25]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests on a four-share book: bands of 0.02, 0.05 (a gap exactly equal to the band does not trade) and 0.06, and a first trade from cash with no band. Compared exactly or with math.isclose. pandas loads on the first run."
+   },
+   "feedback": {
+    "correct": "All tests pass.",
+    "generic": "Not quite. Trade only where the gap is strictly larger than the band."
+   },
+   "explain": {
+    "text": "`target.where(trade, current)` keeps the current weight wherever the gap is inside the band. A band trades less, at the price of a book that lags its target; fin-ml's `smooth_positions` is the same idea for one position."
+   }
+  },
+  {
+   "id": "hw-order",
+   "difficulty": 3,
+   "skills": [
+    "al-ic",
+    "al-costs"
+   ],
+   "prose": "The whole study, from an empty folder to the research note, as eight steps.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s0",
+      "text": "Lock the held-out year and start the trial log"
+     },
+     {
+      "id": "s1",
+      "text": "Build the point-in-time universe with delisted shares kept"
+     },
+     {
+      "id": "s2",
+      "text": "Compute total returns and forward returns"
+     },
+     {
+      "id": "s3",
+      "text": "Build, normalise and neutralise the signal"
+     },
+     {
+      "id": "s4",
+      "text": "Measure the IC, its decay and the quintiles on the research period"
+     },
+     {
+      "id": "s5",
+      "text": "Form rank weights and the book's daily returns"
+     },
+     {
+      "id": "s6",
+      "text": "Subtract costs and compute the net Sharpe with its interval and the deflated check"
+     },
+     {
+      "id": "s7",
+      "text": "Open the held-out year once and write the note with what failed"
+     }
+    ],
+    "answer": [
+     "s0",
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6",
+     "s7"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. The lock comes first and the held-out year is opened last."
+   },
+   "explain": {
+    "text": "The held-out year and the trial log come first, before any result can tempt us. Data, signal, measurement, portfolio and costs follow the pipeline; the held-out year is opened once, just before the note."
+   }
+  },
+  {
+   "id": "hw-hedge",
+   "difficulty": 4,
+   "skills": [
+    "al-portfolio"
+   ],
+   "prose": "On 2020-03-31 the momentum book has a beta of −0.058 per £ of gross, on a £100m gross book. You hedge it with an equal-weighted index future so that the book's market exposure is zero.",
+   "question": "What position in the future do you take, in £m? Give 1 decimal place (positive for long).",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.8,
+    "tol": {
+     "abs": 0.06
+    },
+    "unit": "£m",
+    "label": "Future",
+    "placeholder": "£m",
+    "accept": "+5.8: the book is short 5.8m of market, so buy that much.",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -5.8,
+      "tol": {
+       "abs": 0.06
+      }
+     },
+     {
+      "id": "half",
+      "value": 2.9,
+      "tol": {
+       "abs": 0.06
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Market exposure is beta times gross; take the opposite position.",
+    "byKey": {
+     "sign": "You copied the sign. A net short of the market is hedged by buying.",
+     "half": "You used one side of the book. Beta here is per £ of gross, £100m."
+    }
+   },
+   "explain": {
+    "text": "Exposure is −0.058 × £100m = −£5.8m, so a long future of £5.8m brings it to zero. The hedge needs re-sizing at each rebalance, and it costs a little to trade."
+   }
+  },
+  {
+   "id": "hw-scale",
+   "difficulty": 4,
+   "skills": [
+    "al-costs"
+   ],
+   "prose": "At a £100m book, monthly momentum's costs are 165.4 bp a year: 36.6 bp of half spread and 128.8 bp of impact. The weights, and so the trades per £ of book, are the same at any book size.",
+   "question": "What are its costs a year at a £400m book, in bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 294.2,
+    "tol": {
+     "abs": 0.6
+    },
+    "unit": "bp",
+    "label": "Costs",
+    "placeholder": "bp",
+    "accept": "294.2 bp: the spread stays 36.6; impact per £ grows by √4 = 2, to 257.5.",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 551.7,
+      "tol": {
+       "abs": 0.6
+      }
+     },
+     {
+      "id": "all",
+      "value": 330.8,
+      "tol": {
+       "abs": 0.6
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. The spread part does not change with size; the impact part grows with $\\sqrt{B}$.",
+    "byKey": {
+     "linear": "You scaled impact by 4. It grows with the square root of size.",
+     "all": "You doubled the spread too. The half spread per £ does not depend on size."
+    }
+   },
+   "explain": {
+    "text": "Four times the book means each trade is four times larger, so impact per £ is $\\sqrt 4 = 2$ times larger: 257.5 bp. With the unchanged 36.6 bp of spread the total is 294.2 bp, against a gross return of 524 bp."
+   }
+  },
+  {
+   "id": "hw-emax",
+   "difficulty": 3,
+   "skills": [
+    "al-costs"
+   ],
+   "prose": "A study tried 10 variants over about 3 years of daily data. With no skill a Sharpe estimate then scatters with sd 0.5 a year. Use $E[\\max_N] = sd\\,[(1-\\gamma)\\Phi^{-1}(1 - 1/N) + \\gamma\\,\\Phi^{-1}(1 - 1/(Ne))]$ with $\\gamma = 0.5772$, $\\Phi^{-1}(0.9) = 1.2816$ and $\\Phi^{-1}(1 - 1/(10e)) = 1.7892$.",
+   "question": "What is the expected best Sharpe under no skill? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.79,
+    "tol": {
+     "abs": 0.011
+    },
+    "label": "Expected best",
+    "placeholder": "decimal",
+    "accept": "0.79: 0.5 × (0.4228 × 1.2816 + 0.5772 × 1.7892).",
+    "wrong": [
+     {
+      "id": "nosd",
+      "value": 1.57,
+      "tol": {
+       "abs": 0.011
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Weight the quantiles, add, and multiply by the sd.",
+    "byKey": {
+     "nosd": "You stopped at the bracket. Multiply by the sd, 0.5."
+    }
+   },
+   "explain": {
+    "text": "The bracket is 1.575, so the bar is 0.79. A reported Sharpe has to clear it with room to spare to pass the deflated check."
+   }
+  },
+  {
+   "id": "hw-again",
+   "difficulty": 4,
+   "skills": [
+    "al-ic",
+    "al-costs"
+   ],
+   "prose": "The held-out year came back at −0.49. A colleague proposes switching to 12−0 momentum, the best of the 37 variants on the research period, and running the held-out year again.",
+   "question": "What is the honest response?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The held-out year is spent: report it, and test any new choice on data not yet seen, such as paper trading",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Fine, as long as the note mentions it",
+      "why": "Choosing the variant after seeing the year makes the year part of the search. Its result would mean little."
+     },
+     {
+      "id": "c",
+      "text": "Fine, because 12−0 was chosen on the research period",
+      "why": "It was chosen after the held-out year disappointed. The choice used the held-out result."
+     },
+     {
+      "id": "d",
+      "text": "Extend the research period into the held-out year and pick again",
+      "why": "That uses every day for selection and leaves nothing to test on."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Once a held-out result shapes a choice, it is no longer held out."
+   },
+   "explain": {
+    "text": "A held-out year can be used once. New ideas need new data: a later period, another market, or live paper trading. The note records the switch as a variant tried, so $N$ becomes 38."
+   }
+  },
+  {
+   "id": "hw-note",
+   "difficulty": 5,
+   "skills": [
+    "al-ic",
+    "al-costs"
+   ],
+   "kind": "longform",
+   "prose": "Write the one-page research note for this course's study, 12−1 momentum on the seeded panel, under the ten headings. Use your own `run_research` output. Include the real-data paragraph under Next steps.",
+   "question": "Write the note.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Write the research note: Question, Data, Signals, Measurement, Portfolio, Costs, Results, Variants tried, What failed, Next steps.",
+    "model": "# Research note: 12-minus-1 momentum across 200 shares\n\n## Question\nDoes 12-minus-1 momentum predict next month's returns across shares well enough to trade after costs?\n\n## Data\nSeeded `make_panel` (seed 2310): 200 shares, 1,260 business days from 2 January 2019. Universe on each date: listed, with trailing 60-day average £ volume of at least £5m. Total returns from raw closes, splits and cash dividends; delisting returns kept and dead shares leave the universe the next day. Research period 2 January 2019 to 11 November 2022; held-out year 14 November 2022 to 31 October 2023, opened once.\n\n## Signals\nSum of log returns from 251 to 21 days ago (at least 200 days of history), masked to the universe, ranked across shares on each date.\n\n## Measurement\nMonthly rank IC against the next 21 days' return, 35 month-end dates: mean 0.0377, t 2.30, hit rate 63%. Quintile returns a month, low to high: 0.22%, 0.81%, 0.75%, 0.83%, 1.52%: higher at the top, not monotone in the middle.\n\n## Portfolio\nRank weights, longs +0.5 and shorts −0.5 per £ of gross, rebalanced at each month end and held constant between rebalances; £100m gross. Book beta stayed small (−0.01 on the equal-weighted index).\n\n## Costs\nTurnover 2.34 a year. Costs 165 bp a year at £100m: each share's half spread plus square-root impact ($c = 1$, 60-day volatility, daily £ volume). Break-even 112 bp per £ traded. Borrow costs are not included.\n\n## Results\nResearch: Sharpe gross 1.82, net 1.23 (95% interval 0.10 to 2.35, Lo's formula; a 21-day block bootstrap gives 0.13 to 2.36); maximum drawdown −3.6%. Held-out year: net −0.49 (95% interval −2.45 to 1.47).\n\n## Variants tried\n37: six signals (12−1 and 12−0 momentum; reversal over 1, 5 and 21 days; a 50/50 combination) × two neutralisations × three rebalance frequencies, plus one quintile book. Expected best net Sharpe under no skill 1.24; ours is 1.23, so the deflated check fails.\n\n## What failed\n- Daily reversal: gross Sharpe 3.42, net −18.8 at £100m; break-even 6 bp per £ traded, below the median half spread of 7.3 bp.\n- The 50/50 combination: gross 2.15, net −0.00; its reversal leg turned the book over 6.1 times a year.\n- The held-out year: net −0.49, against 1.23 in research; one year cannot separate them.\n- The deflated check at $N = 37$.\n\n## Next steps\nRun the same code on real data: prices, splits and dividends from yfinance cached to disk with `auto_adjust` set explicitly, or Nasdaq Data Link with the key in an environment variable; a point-in-time universe with delisted shares (Nasdaq Data Link's US equity tables or CRSP: free data cannot do this well, since yfinance has current tickers only); sectors as of each date; quoted spreads and real volumes; a few hundred shares; the same held-out rule. The synthetic panel plants its momentum, so expect a much lower Sharpe on real shares.\n",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Measurement gives the mean IC with its t statistic (about 0.0377 and 2.30) and says what the quintiles show"
+     },
+     {
+      "points": 2,
+      "text": "Costs give turnover a year (2.34), cost a year at a stated book (165 bp at £100m) and the break-even cost"
+     },
+     {
+      "points": 2,
+      "text": "Results give the net Sharpe with its interval (1.23, 0.10 to 2.35) and the held-out year beside it with its own interval"
+     },
+     {
+      "points": 1,
+      "text": "Variants tried gives N (37) and the result of the deflated check"
+     },
+     {
+      "points": 2,
+      "text": "What failed lists at least two concrete, quantified failures, with no excuses"
+     },
+     {
+      "points": 1,
+      "text": "Next steps says what changes on real data, including a point-in-time universe with delisted shares"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Marked.",
+    "generic": "Compare your note with the model, section by section."
+   },
+   "explain": {
+    "text": "A note a committee can act on lets every number be checked: net of costs, with intervals, with the search counted and the failures named."
+   }
+  }
+ ]
+}
