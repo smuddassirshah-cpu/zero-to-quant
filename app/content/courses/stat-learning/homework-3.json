@@ -1,0 +1,467 @@
+{
+  "id": "homework-3",
+  "course": "stat-learning",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-pipeline",
+      "difficulty": 5,
+      "skills": [
+        "sl-classify",
+        "sl-setup",
+        "sl-regularise"
+      ],
+      "title": "The honest direction pipeline",
+      "prose": "Put lesson 14 together in one function. Build the three features: today's return, the 5-day return and 20-day volatility, dividing by 20. The label is tomorrow's direction; rows run from day 19 to day $n - 2$. Fit `StandardScaler` and `LogisticRegression(C=1.0)` in a Pipeline on the first `n_train` rows; test on the rest. `returns` and `returns_b` are two seeded series.",
+      "question": "Complete `direction_report(returns, n_train)`, returning `(hit_rate, base_rate, t, auc)` with $t$ measured against the base rate.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import roc_auc_score\n\ndef direction_report(returns, n_train):\n    # features without look-ahead, time split, scaler + logistic regression in a Pipeline\n    # return (hit_rate, base_rate, t_vs_base, auc), each rounded to 4 places\n    ...\n",
+        "solution": "import math\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.metrics import roc_auc_score\n\ndef direction_report(returns, n_train):\n    # features without look-ahead, time split, scaler + logistic regression in a Pipeline\n    # return (hit_rate, base_rate, t_vs_base, auc), each rounded to 4 places\n    X, y = [], []\n    for t in range(19, len(returns) - 1):\n        window = returns[t - 19:t + 1]\n        m = sum(window) / 20\n        vol = (sum((v - m) ** 2 for v in window) / 20) ** 0.5\n        X.append([returns[t], sum(returns[t - 4:t + 1]), vol])\n        y.append(1 if returns[t + 1] > 0 else 0)\n    model = make_pipeline(StandardScaler(), LogisticRegression(C=1.0))\n    model.fit(X[:n_train], y[:n_train])\n    y_test = y[n_train:]\n    pred = model.predict(X[n_train:])\n    prob = model.predict_proba(X[n_train:])[:, 1]\n    n = len(y_test)\n    hit = sum(int(a == b) for a, b in zip(pred, y_test)) / n\n    base = sum(y_test) / n\n    t = (hit - base) / math.sqrt(base * (1 - base) / n)\n    auc = roc_auc_score(y_test, prob)\n    return (round(hit, 4), round(base, 4), round(t, 4), round(float(auc), 4))\n",
+        "prelude": "import numpy as np\n\ndef simulate(n, seed, mu=0.0004, phi=-0.05, gam=-0.03, sigma=0.01):\n    rng = np.random.default_rng(seed)\n    e = rng.normal(0, sigma, n)\n    r = np.zeros(n)\n    for t in range(n):\n        prev = r[t - 1] if t >= 1 else 0.0\n        week = r[max(0, t - 5):t].sum()\n        r[t] = mu + phi * prev + gam * week + e[t]\n    return [round(float(v), 6) for v in r]\n\nreturns = simulate(1000, 27)\nreturns_b = simulate(1000, 6)\n",
+        "examples": [
+          {
+            "call": "direction_report(returns, 730)",
+            "expect": "(0.56, 0.54, 0.6345, 0.5773)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "direction_report(returns, 730)",
+            "expect": "(0.56, 0.54, 0.6345, 0.5773)",
+            "compare": "isclose"
+          },
+          {
+            "call": "direction_report(returns_b, 730)",
+            "expect": "(0.548, 0.544, 0.127, 0.5272)",
+            "compare": "isclose"
+          },
+          {
+            "call": "direction_report(returns, 480)",
+            "expect": "(0.552, 0.54, 0.5384, 0.5681)",
+            "compare": "isclose"
+          },
+          {
+            "call": "direction_report(returns_b[:600], 400)",
+            "expect": "(0.5056, 0.4944, 0.2982, 0.4994)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests: two 1,000-day seeded series, a shorter training period, and a 600-day series. Each tuple is rounded to 4 places and compared with math.isclose; the expected values come from running the model solution. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds."
+      },
+      "feedback": {
+        "correct": "On our series: (0.56, 0.54, 0.6345, 0.5773). A 56% hit rate, 2 points over the base rate, $t = 0.63$, AUC 0.58.",
+        "generic": "Some tests failed. On our series the answer should be (0.56, 0.54, 0.6345, 0.5773).",
+        "byKey": {
+          "error": "Your code stopped with an error. Build the features, fit, then compute the four numbers."
+        }
+      },
+      "explain": {
+        "text": "The AUC of 0.58 says the ranking holds a little information. The $t$ of 0.63 says the hit rate does not yet prove an edge over always up. Both are honest only because every fitted step saw the first 730 rows alone."
+      }
+    },
+    {
+      "id": "h-calib-report",
+      "difficulty": 4,
+      "skills": [
+        "sl-classify"
+      ],
+      "title": "One report, three numbers",
+      "prose": "Report three numbers. The Brier score. The expected calibration error, bins $[i/n, (i+1)/n)$ with 1 in the last bin. AUC as the share of pairs ranked right, ties counting half. `y_test` and `p_logit` hold lesson 13's test loans. Sort the scores rather than loop over all pairs.",
+      "question": "Complete `calibration_report(y, p, n_bins)`, returning `(brier, ece, auc)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def calibration_report(y, p, n_bins):\n    # return (brier, expected calibration error, auc by ranks), each rounded to 4 places\n    ...\n",
+        "solution": "def calibration_report(y, p, n_bins):\n    # return (brier, expected calibration error, auc by ranks), each rounded to 4 places\n    n = len(y)\n    brier = sum((pi - yi) ** 2 for yi, pi in zip(y, p)) / n\n    groups = [[] for _ in range(n_bins)]\n    for yi, pi in zip(y, p):\n        groups[min(int(pi * n_bins), n_bins - 1)].append((yi, pi))\n    ece = 0.0\n    for g in groups:\n        if g:\n            ece += len(g) / n * abs(sum(pi for _, pi in g) / len(g) - sum(yi for yi, _ in g) / len(g))\n    pos = sorted(pi for yi, pi in zip(y, p) if yi == 1)\n    neg = sorted(pi for yi, pi in zip(y, p) if yi == 0)\n    wins, j, k = 0.0, 0, 0\n    for a in pos:\n        while j < len(neg) and neg[j] < a:\n            j += 1\n        k = j\n        while k < len(neg) and neg[k] == a:\n            k += 1\n        wins += j + 0.5 * (k - j)\n    auc = wins / (len(pos) * len(neg))\n    return (round(brier, 4), round(ece, 4), round(auc, 4))\n",
+        "prelude": "import numpy as np\nrng = np.random.default_rng(21)\nn = 2000\nlev = np.round(rng.uniform(0.5, 7.5, n), 2)\ncover = np.round(np.clip(rng.gamma(3.0, 1.3, n), 0.2, 12), 2)\nsize = np.round(rng.normal(0, 1, n), 2)\nz = -2.0 + 0.6 * lev - 0.55 * cover\ndefault = (rng.uniform(0, 1, n) < 1 / (1 + np.exp(-z))).astype(int)\nX = np.column_stack([lev, cover])\nX_train, y_train, X_test = X[:1000], default[:1000], X[1000:]\ny_test = [int(v) for v in default[1000:]]\np_logit = [round(float(v), 4) for v in 1 / (1 + np.exp(-(-2.161 + 0.647 * lev[1000:] - 0.605 * cover[1000:])))]\n",
+        "examples": [
+          {
+            "call": "calibration_report([1, 0, 1, 0], [0.9, 0.9, 0.1, 0.1], 2)",
+            "expect": "(0.41, 0.4, 0.5)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "calibration_report(y_test, p_logit, 5)",
+            "expect": "(0.1342, 0.0238, 0.8179)",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibration_report(y_test, [v ** 3 for v in p_logit], 5)",
+            "expect": "(0.177, 0.1726, 0.8179)",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibration_report(y_test, [0.233] * 1000, 10)",
+            "expect": "(0.1819, 0.006, 0.5)",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibration_report([1, 0, 1, 0], [0.9, 0.9, 0.1, 0.1], 2)",
+            "expect": "(0.41, 0.4, 0.5)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests: the logistic model, the same probabilities cubed, a constant 0.233, and a four-loan case. Brier and AUC match `brier_score_loss` and `roc_auc_score`; each tuple is rounded to 4 places. The first run loads NumPy for the hidden data."
+      },
+      "feedback": {
+        "correct": "The cubed model keeps its AUC and loses on Brier and ECE; the constant scores AUC 0.5.",
+        "generic": "Some tests failed. For the logistic model the answer should be (0.1342, 0.0238, 0.8179).",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the bin index and the pair count."
+        }
+      },
+      "explain": {
+        "text": "Logistic (0.1342, 0.0238, 0.8179), cubed (0.177, 0.1726, 0.8179), constant (0.1819, 0.006, 0.5). Ranking and calibration are separate questions, and the report answers both."
+      }
+    },
+    {
+      "id": "h-derive-logit",
+      "difficulty": 4,
+      "skills": [
+        "sl-classify"
+      ],
+      "prose": "Derive logistic regression's formula for $p$ from the assumption that the log-odds are linear in the features.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "$\\ln\\dfrac{p}{1-p} = z$, where $z = \\beta_0 + \\boldsymbol\\beta^T\\mathbf{x}$: the model's assumption"
+          },
+          {
+            "id": "b",
+            "text": "$\\dfrac{p}{1-p} = e^{z}$: exponentiate both sides"
+          },
+          {
+            "id": "c",
+            "text": "$p = e^{z}(1 - p)$: multiply by $1 - p$"
+          },
+          {
+            "id": "d",
+            "text": "$p(1 + e^{z}) = e^{z}$: collect the $p$ terms"
+          },
+          {
+            "id": "e",
+            "text": "$p = \\dfrac{e^{z}}{1 + e^{z}} = \\dfrac{1}{1 + e^{-z}}$: divide, then divide top and bottom by $e^{z}$"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "feedback": {
+        "correct": "Exponentiate, clear the fraction, collect, divide: the sigmoid.",
+        "generic": "Not quite right. Undo the log first, then solve for $p$.",
+        "byKey": {
+          "c": "Clearing the fraction needs the odds written without a log first.",
+          "d": "Collecting $p$ terms needs the fraction cleared first.",
+          "e": "Dividing is the last step."
+        }
+      },
+      "explain": {
+        "text": "Each step keeps the equation true. The last form keeps $p$ inside $(0, 1)$ for every $z$. The straight line of lesson 10 could not."
+      }
+    },
+    {
+      "id": "h-honest-steps",
+      "difficulty": 3,
+      "skills": [
+        "sl-setup",
+        "sl-classify"
+      ],
+      "prose": "A colleague asks how to evaluate a new default classifier on 5 years of loans.",
+      "question": "Put the steps of an honest evaluation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "split",
+            "text": "Split by time: the oldest 4 years to train, the latest year to test, untouched"
+          },
+          {
+            "id": "fit",
+            "text": "Fit the scaler and the model on the training years only"
+          },
+          {
+            "id": "tune",
+            "text": "Choose the threshold from the costs, on training-year predictions"
+          },
+          {
+            "id": "score",
+            "text": "Score the test year once: precision, recall, AUC and a reliability diagram"
+          },
+          {
+            "id": "base",
+            "text": "Compare with the base rate and “always no”, with standard errors"
+          }
+        ],
+        "answer": [
+          "split",
+          "fit",
+          "tune",
+          "score",
+          "base"
+        ]
+      },
+      "feedback": {
+        "correct": "Every fitted choice happens before the test year is opened, and the result is judged against a baseline.",
+        "generic": "Not quite right. Nothing may be fitted or chosen after the test year is looked at.",
+        "byKey": {
+          "fit": "The split must come first, or the scaler sees the test year.",
+          "tune": "The threshold is chosen after the model is fitted, and before testing.",
+          "score": "Scoring comes after every choice is fixed.",
+          "base": "The comparison needs the test scores."
+        }
+      },
+      "explain": {
+        "text": "Split, fit, choose, score once, compare. Any loop back from the test year to an earlier step turns it into training data."
+      }
+    },
+    {
+      "id": "h-crash",
+      "difficulty": 5,
+      "skills": [
+        "sl-classify",
+        "sl-setup"
+      ],
+      "title": "The 72% crash predictor",
+      "kind": "longform",
+      "prompt": "A colleague announces a “72% accurate crash predictor”. It calls each trading day “crash” or “no crash”, where a crash is a fall of more than 3%. In the data, 3% of days are crashes. Write a note to your desk head: (a) what 72% accuracy means here, and how it compares with a trivial rule; (b) the five things you would ask for; (c) what result would convince you the predictor is worth using.",
+      "model": "**(a) What 72% means.** Accuracy counts right calls on all days. With crashes on 3% of days, the rule “never crash” is right 97% of the time, so 72% is 25 points *worse* than doing nothing. A predictor scores 72% only by calling crash on many calm days. If it caught every crash, its false alarms would be about $1 - 0.72 = 28\\%$ of days, so at best roughly 3 of every 31 crash calls would be real: precision near 0.10.\n\n**(b) What to ask for.**\n1. The confusion matrix on a held-out period: true and false positives and negatives, not accuracy.\n2. Precision and recall for crashes, and the ROC and precision-recall curves with AUC, so the threshold is not hiding anything.\n3. How the test was built: a time-ordered split, features computed without look-ahead, the threshold chosen on training data, no shuffled cross-validation of overlapping windows.\n4. How many crashes the test period contains. With 3% of 1,000 days, about 30, so any recall has a standard error near $\\sqrt{0.5 \\times 0.5/30} = 0.09$.\n5. Calibration, if the output is a probability that will size hedges: a reliability diagram on held-out days.\n\n**(c) What would convince me.** On a test period the model never touched: precision well above the 3% base rate (say 0.15 or more) with useful recall, a precision-recall curve clearly above the base-rate line, and a number of crashes large enough that the gain is several standard errors. Then the economic test: does hedging on its calls, after the cost of each hedge, beat hedging never and hedging always? Only that last number decides whether anyone uses it.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Compares 72% with the 97% of “never crash” and explains that accuracy is dominated by the base rate"
+        },
+        {
+          "points": 1,
+          "text": "Infers that the model must raise many false alarms, so precision is low"
+        },
+        {
+          "points": 2,
+          "text": "Asks for the confusion matrix, precision and recall (or ROC/PR curves and AUC) instead of accuracy"
+        },
+        {
+          "points": 2,
+          "text": "Asks about leakage: time-ordered split, no look-ahead, threshold chosen on training data"
+        },
+        {
+          "points": 1,
+          "text": "Notes the small number of crashes in a test period and the resulting uncertainty"
+        },
+        {
+          "points": 2,
+          "text": "States a convincing result: precision well above the base rate on untouched data, by several standard errors, and a P&L test after hedging costs"
+        }
+      ]
+    },
+    {
+      "id": "h-cost-t",
+      "difficulty": 3,
+      "skills": [
+        "sl-classify"
+      ],
+      "prose": "A lender refuses loans above a threshold. A wrongly refused loan loses £3,000 of margin; a missed default loses £30,000. The model is calibrated.",
+      "question": "What threshold minimises the expected cost? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.091,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "Threshold",
+        "placeholder": "decimal",
+        "accept": "0.091: $3{,}000/33{,}000$.",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "swap",
+            "value": 0.909,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$3{,}000/33{,}000 = 0.091$.",
+        "generic": "Not quite right. Use $c_{FP}/(c_{FP} + c_{FN})$.",
+        "byKey": {
+          "ratio": "$3{,}000/30{,}000$ leaves the false-alarm cost out of the denominator.",
+          "swap": "You put the miss cost on top."
+        }
+      },
+      "explain": {
+        "text": "Refuse when $(1 - p) \\times 3{,}000 < p \\times 30{,}000$, so $p > 1/11 = 0.091$. If the probabilities were overconfident, this threshold would refuse the wrong loans."
+      }
+    },
+    {
+      "id": "h-odds3",
+      "difficulty": 4,
+      "skills": [
+        "sl-classify"
+      ],
+      "prose": "A default model has coefficient 0.40 on leverage. A loan has default probability 0.10. Its leverage rises by 3 turns, the rest fixed.",
+      "question": "What is its new default probability? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.269,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "label": "New probability",
+        "placeholder": "decimal",
+        "accept": "0.269: odds $0.111 \\times e^{1.2} = 0.369$.",
+        "wrong": [
+          {
+            "id": "add",
+            "value": 1.3,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "once",
+            "value": 0.142,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "ratio-p",
+            "value": 0.332,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Odds 0.369, so $p = 0.269$.",
+        "generic": "Not quite right. Three turns add $3 \\times 0.40 = 1.2$ to the log-odds.",
+        "byKey": {
+          "add": "You added the change to the probability.",
+          "once": "You applied one turn only. Three turns multiply the odds by $e^{1.2}$.",
+          "ratio-p": "You multiplied the probability, not the odds, by $e^{1.2}$."
+        }
+      },
+      "explain": {
+        "text": "The odds $1/9$ become $e^{1.2}/9 = 0.369$, so $p = 0.269$. The odds more than triple; the probability does not quite."
+      }
+    },
+    {
+      "id": "h-days",
+      "difficulty": 4,
+      "skills": [
+        "sl-classify",
+        "sl-setup"
+      ],
+      "prose": "A model's true hit rate is 0.53 in a market whose base rate of up days is 0.51.",
+      "question": "How many test days does its edge need to reach two standard errors of the base rate?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2499,
+        "tol": {
+          "abs": 2
+        },
+        "unit": "",
+        "label": "Test days",
+        "placeholder": "whole number",
+        "accept": "About 2,499: $4 \\times 0.51 \\times 0.49/0.02^2$.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 625,
+            "tol": {
+              "abs": 2
+            }
+          },
+          {
+            "id": "coin",
+            "value": 1111,
+            "tol": {
+              "abs": 2
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 2,499 days: ten years.",
+        "generic": "Not quite right. Solve $0.02 = 2\\sqrt{0.51 \\times 0.49/n}$ for $n$.",
+        "byKey": {
+          "one": "That reaches one standard error. Two need four times the days.",
+          "coin": "You measured the edge against 0.5. The baseline is 0.51, so the edge is 0.02."
+        }
+      },
+      "explain": {
+        "text": "$n = 4b(1-b)/\\delta^2 = 2,499$ trading days, about ten years, and the edge must survive costs as well."
+      }
+    },
+    {
+      "id": "h-kelly",
+      "difficulty": 4,
+      "skills": [
+        "sl-classify"
+      ],
+      "prose": "Even-money bets truly win with probability 0.58, so Kelly stakes $2p - 1 = 0.16$. An overconfident model says 0.70 and stakes 0.40.",
+      "question": "What is the long-run growth per bet at a stake of 0.40? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0194,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "Growth per bet",
+        "placeholder": "decimal",
+        "accept": "-0.0194: $0.58\\ln 1.4 + 0.42\\ln 0.6$.",
+        "wrong": [
+          {
+            "id": "kelly",
+            "value": 0.0129,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "model",
+            "value": 0.0823,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "-0.0194: overbetting shrinks capital.",
+        "generic": "Not quite right. Use the true 0.58 with a stake of 0.40.",
+        "byKey": {
+          "kelly": "0.0129 is the growth at the Kelly stake 0.16.",
+          "model": "You used the model's 0.70. The bets win 58% of the time."
+        }
+      },
+      "explain": {
+        "text": "At the calibrated stake capital grows 1.29% per bet; at 0.40 it shrinks 1.94%. The edge is real and the overconfidence destroys it."
+      }
+    }
+  ]
+}

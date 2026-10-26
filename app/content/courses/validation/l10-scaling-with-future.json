@@ -1,0 +1,1254 @@
+{
+  "id": "l10-scaling-with-future",
+  "course": "validation",
+  "title": "Scaling with future data",
+  "minutes": 14,
+  "objectives": [
+    "Fit preprocessing inside each fold with a pipeline.",
+    "Tell small unsupervised leaks from large ones that read the target."
+  ],
+  "skills": [
+    "vl-leakage",
+    "vl-cv",
+    "vl-time"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Who paid into the mean?",
+      "prose": "Ten days of trading volume for one share, in £m. A colleague standardises it with `StandardScaler().fit(X)` on all ten days. Then the model trains on days 1 to 7 and is tested on days 8 to 10.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            22,
+            25,
+            19,
+            24,
+            27,
+            21,
+            23,
+            41,
+            45,
+            38
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              1,
+              7
+            ],
+            "label": "train"
+          },
+          "pointers": [
+            {
+              "id": "t",
+              "at": 8,
+              "label": "test",
+              "below": true
+            }
+          ],
+          "caption": "The scaler's mean is $285 / 10 = 28.5$."
+        }
+      },
+      "question": "Tap every day whose value the training step had no right to see.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c8",
+          "c9",
+          "c10"
+        ],
+        "wrong": [
+          {
+            "id": "every",
+            "set": [
+              "c1",
+              "c2",
+              "c3",
+              "c4",
+              "c5",
+              "c6",
+              "c7",
+              "c8",
+              "c9",
+              "c10"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which days are meant to be unseen until the test?"
+        },
+        {
+          "rung": "point",
+          "text": "The test days are 8 to 10.",
+          "highlight": [
+            "c8",
+            "c9",
+            "c10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The mean of 28.5 adds in days 8, 9 and 10. Tap those three."
+        }
+      ],
+      "feedback": {
+        "correct": "Days 8 to 10 reached the training rows through the mean.",
+        "generic": "Not quite right. Tap the days the model is tested on: their values went into the scaler's mean.",
+        "byKey": {
+          "every": "You tapped every day the mean used. Days 1 to 7 are training days, so the training step may see them.",
+          "c1": "Day 1 is a training day. Training may use it.",
+          "c8": "You left out day 8. It is a test day, and its 41 went into the mean."
+        }
+      },
+      "explain": {
+        "text": "The training days alone have mean $161 / 7 = 23.0$. Scaling with 28.5 pulls in the three busy test days, so every scaled training value already reflects the test period. Nothing was predicted yet, but test data shaped the inputs.",
+        "canvas": {
+          "selected": [
+            "c8",
+            "c9",
+            "c10"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Move a test day",
+      "prose": "Each dot is one day's volume. Days 8 to 10 are the test days. Drag day 8 and watch both means: the one the colleague used, and the one from the training days alone.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 10,
+          "max": 70,
+          "step": 5,
+          "labels": 2
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p1",
+              "x": 22
+            },
+            {
+              "id": "p2",
+              "x": 25
+            },
+            {
+              "id": "p3",
+              "x": 19
+            },
+            {
+              "id": "p4",
+              "x": 24
+            },
+            {
+              "id": "p5",
+              "x": 27
+            },
+            {
+              "id": "p6",
+              "x": 21
+            },
+            {
+              "id": "p7",
+              "x": 23
+            },
+            {
+              "id": "p8",
+              "x": 41,
+              "drag": true,
+              "label": "day 8",
+              "labelPos": "below"
+            },
+            {
+              "id": "p9",
+              "x": 45,
+              "colour": 2
+            },
+            {
+              "id": "p10",
+              "x": 38,
+              "colour": 2
+            },
+            {
+              "id": "mtr",
+              "x": 23,
+              "label": "train mean",
+              "colour": 3
+            },
+            {
+              "id": "mall",
+              "x": 28.5,
+              "label": "full mean",
+              "colour": 4
+            }
+          ]
+        },
+        "derive": {
+          "mall.x": "(161 + p8.x + p9.x + p10.x) / 10",
+          "caption": "Full-sample mean {{fixed((161 + p8.x + p9.x + p10.x) / 10, 1)}}; training mean 23.0."
+        }
+      },
+      "question": "Drag day 8 from 41 to 60. How far does the full-sample mean move?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.9,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "£m",
+        "label": "Change in the full-sample mean",
+        "accept": "1.9: the mean goes from 28.5 to 30.4.",
+        "wrong": [
+          {
+            "id": "nineteen",
+            "value": 19,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "level",
+            "value": 30.4,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A test value moved the scaler by 1.9.",
+        "generic": "Not quite right. Read the full-sample mean before and after the drag, and subtract.",
+        "byKey": {
+          "nineteen": "That is how far day 8 moved. The mean moves a tenth of that, since day 8 is one of ten days.",
+          "zero": "That is the training mean, which never moves. The full-sample mean does.",
+          "level": "That is the new mean. The question asks how far it moved from 28.5."
+        }
+      },
+      "explain": {
+        "text": "The full-sample mean rises from 28.5 to 30.4: a change in the future moved a number used to train. The training mean stays at 23.0 whatever the test days do. That is the whole test of a leak: could the future change it?",
+        "canvas": {
+          "points": {
+            "p8": {
+              "x": 60
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How big is the scaling leak?",
+      "prose": "Fitting a transform on rows the model is later tested on is **preprocessing leakage**. Measure it. `make_shift(seed)` builds 200 share-days whose second half is a busier regime. Train a ridge model on the first 140 days and test on the last 60.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "fit",
+            "fit",
+            "fit",
+            "…",
+            "test",
+            "test"
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              1,
+              3
+            ],
+            "label": "days 1 to 140"
+          },
+          "caption": "The leaky scaler fits on all 200 days; the clean one on days 1 to 140."
+        }
+      },
+      "question": "Complete `scale_leak_gap` so it returns the test MSE with each scaler, leaky first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_shift(seed, n=200, p=6):\n    \"\"\"n share-days in time order, p features. The second half is a\n    busier regime: each feature is twice as spread out and 1.5 higher.\n    y is the next-day return; only the first three features matter.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    X[n // 2:] = X[n // 2:] * 2.0 + 1.5\n    beta = np.array([0.5, -0.4, 0.3] + [0.0] * (p - 3))\n    y = X @ beta + 2.0 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "from sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef scale_leak_gap(X, y, n_train):\n    def test_mse(scaler):\n        Z = scaler.transform(X)\n        model = Ridge(alpha=10.0).fit(Z[:n_train], y[:n_train])\n        pred = model.predict(Z[n_train:])\n        return round(float(mean_squared_error(y[n_train:], pred)), 4)\n    leaky = test_mse(StandardScaler().fit(...))   # every row\n    clean = test_mse(StandardScaler().fit(...))   # training rows only\n    return leaky, clean\n",
+        "solution": "from sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef scale_leak_gap(X, y, n_train):\n    def test_mse(scaler):\n        Z = scaler.transform(X)\n        model = Ridge(alpha=10.0).fit(Z[:n_train], y[:n_train])\n        pred = model.predict(Z[n_train:])\n        return round(float(mean_squared_error(y[n_train:], pred)), 4)\n    leaky = test_mse(StandardScaler().fit(X))   # every row\n    clean = test_mse(StandardScaler().fit(X[:n_train]))   # training rows only\n    return leaky, clean\n",
+        "examples": [
+          {
+            "setup": "X, y = make_shift(2)",
+            "call": "scale_leak_gap(X, y, 140)",
+            "expect": "(4.1647, 4.19)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_shift(2)",
+            "call": "scale_leak_gap(X, y, 140)",
+            "expect": "(4.1647, 4.19)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_shift(1)",
+            "call": "scale_leak_gap(X, y, 140)",
+            "expect": "(5.6201, 5.5815)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_shift(3)",
+            "call": "scale_leak_gap(X, y, 140)",
+            "expect": "(2.8964, 2.9045)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_shift(4)",
+            "call": "scale_leak_gap(X, y, 140)",
+            "expect": "(2.9071, 2.8966)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_shift(5)",
+            "call": "scale_leak_gap(X, y, 140)",
+            "expect": "(4.9555, 4.9349)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_shift(1, n=120, p=4)",
+            "call": "scale_leak_gap(X, y, 80)",
+            "expect": "(6.1722, 6.3328)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_shift(2, n=120, p=4)",
+            "call": "scale_leak_gap(X, y, 80)",
+            "expect": "(4.9748, 4.7592)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on datasets from `make_shift(seed, n, p)`, which is already defined. Each compares your pair of rounded MSEs, leaky first, with ==. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each `fit` decides which rows the scaler learns its mean and spread from."
+        },
+        {
+          "rung": "point",
+          "text": "The leaky scaler sees `X`; the clean one sees `X[:n_train]`.",
+          "highlight": [
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`StandardScaler().fit(X)` for leaky and `StandardScaler().fit(X[:n_train])` for clean."
+        }
+      ],
+      "feedback": {
+        "correct": "On seed 2: leaky 4.1647, clean 4.19.",
+        "generic": "Some tests failed. Fit the leaky scaler on `X` and the clean one on `X[:n_train]`.",
+        "byKey": {
+          "test-1": "Your pair differs from (4.1647, 4.19) on seed 2. Check that the clean scaler is fitted on `X[:n_train]` only."
+        }
+      },
+      "explain": {
+        "text": "On seed 2 the leak lowers test MSE from 4.19 to 4.1647, under 1%. On seeds 1, 4 and 5 it makes the score slightly worse. A scaler leaks only a mean and a spread per column, so the error is small and its sign is luck. The score is still not one you could have computed in 2020."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Find the misplaced step",
+      "prose": "Here is a colleague's research pipeline, step by step. Every step before the split sees all rows, test rows included. Every step after it runs inside each training fold.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "load",
+              "label": "load prices",
+              "x": 0.12,
+              "y": 0.2,
+              "shape": "rect"
+            },
+            {
+              "id": "log",
+              "label": "log(volume)",
+              "x": 0.42,
+              "y": 0.2,
+              "shape": "rect"
+            },
+            {
+              "id": "fill",
+              "label": "fill gaps: median\nof all rows",
+              "x": 0.75,
+              "y": 0.2,
+              "shape": "rect"
+            },
+            {
+              "id": "split",
+              "label": "walk-forward\nsplit",
+              "x": 0.12,
+              "y": 0.75,
+              "shape": "rect"
+            },
+            {
+              "id": "scale",
+              "label": "scale: fit on\ntrain fold",
+              "x": 0.42,
+              "y": 0.75,
+              "shape": "rect"
+            },
+            {
+              "id": "fit",
+              "label": "fit Ridge on\ntrain fold",
+              "x": 0.75,
+              "y": 0.75,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "load",
+              "to": "log"
+            },
+            {
+              "from": "log",
+              "to": "fill"
+            },
+            {
+              "from": "fill",
+              "to": "split"
+            },
+            {
+              "from": "split",
+              "to": "scale"
+            },
+            {
+              "from": "scale",
+              "to": "fit"
+            }
+          ],
+          "height": 240
+        },
+        "state": {}
+      },
+      "question": "Tap the step that is in the wrong place.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "fill"
+        ],
+        "max": 1
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which steps before the split learn a number from the data?"
+        },
+        {
+          "rung": "point",
+          "text": "A log uses only the row itself. A median is learned from rows.",
+          "highlight": [
+            "fill"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The median fill learns one number per column from all rows, test rows included. It belongs after the split."
+        }
+      ],
+      "feedback": {
+        "correct": "The median fill learns from all rows, so it must move inside the fold.",
+        "generic": "Not quite right. Look for a step before the split that learns a number from many rows.",
+        "byKey": {
+          "log": "A log has no fitted parameters: each row's log uses that row alone. It is safe anywhere, even before the split.",
+          "scale": "That scaler is fitted on the training fold, after the split. It is in the right place.",
+          "load": "Loading prices learns nothing from the rows. The problem is a step that does.",
+          "split": "The split is the dividing line. The problem is a step before it that learns from every row.",
+          "fit": "The model is fitted on the training fold. It is in the right place."
+        }
+      },
+      "explain": {
+        "text": "The median fill learns one number per column from all rows, so test rows decide what fills training gaps. Moved after the split, it becomes `SimpleImputer(strategy=\"median\")` fitted on each training fold. The log can stay where it is: a transform with nothing to fit cannot leak.",
+        "canvas": {
+          "highlight": [
+            "fill"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Let the pipeline do it",
+      "prose": "A `Pipeline` chains steps into one estimator. Hand it to `cross_val_score` and every step is refitted on each training fold. With `TimeSeriesSplit` the scaler refits at every walk-forward step, on the past only.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> pipe = Pipeline([(\"scale\", StandardScaler()), (\"model\", Ridge())])",
+            ">>> # inside each fold: pipe.fit(X[train], y[train])",
+            ">>> #   scale.fit(X[train]), then model.fit(...)",
+            ">>> # then pipe.predict(X[test]) reuses that scaler"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `pipeline_cv` so it returns the walk-forward test MSE of a scaled ridge model.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_shift(seed, n=200, p=6):\n    \"\"\"n share-days in time order, p features. The second half is a\n    busier regime: each feature is twice as spread out and 1.5 higher.\n    y is the next-day return; only the first three features matter.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    X[n // 2:] = X[n // 2:] * 2.0 + 1.5\n    beta = np.array([0.5, -0.4, 0.3] + [0.0] * (p - 3))\n    y = X @ beta + 2.0 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\n\ndef pipeline_cv(X, y, folds):\n    pipe = ...   # scale, then Ridge(), as one estimator\n    scores = cross_val_score(pipe, X, y, cv=TimeSeriesSplit(n_splits=folds),\n                             scoring=\"neg_mean_squared_error\")\n    return round(float(-scores.mean()), 4)\n",
+        "solution": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\n\ndef pipeline_cv(X, y, folds):\n    pipe = Pipeline([(\"scale\", StandardScaler()), (\"model\", Ridge())])\n    scores = cross_val_score(pipe, X, y, cv=TimeSeriesSplit(n_splits=folds),\n                             scoring=\"neg_mean_squared_error\")\n    return round(float(-scores.mean()), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_shift(1)",
+            "call": "pipeline_cv(X, y, 4)",
+            "expect": "5.8329",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_shift(1)",
+            "call": "pipeline_cv(X, y, 4)",
+            "expect": "5.8329",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_shift(2)",
+            "call": "pipeline_cv(X, y, 4)",
+            "expect": "4.6857",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_shift(3)",
+            "call": "pipeline_cv(X, y, 4)",
+            "expect": "4.317",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_shift(1, n=120)",
+            "call": "pipeline_cv(X, y, 5)",
+            "expect": "4.4901",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_shift(2, n=120)",
+            "call": "pipeline_cv(X, y, 5)",
+            "expect": "5.5672",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_shift(seed, n)` data, which is already defined. Each mean MSE is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A Pipeline takes a list of (name, step) pairs."
+        },
+        {
+          "rung": "point",
+          "text": "The steps are `StandardScaler()` and then `Ridge()`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pipe = Pipeline([(\"scale\", StandardScaler()), (\"model\", Ridge())])`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each fold's scaler saw only that fold's past.",
+        "generic": "Some tests failed. Build the pipeline from `StandardScaler()` then `Ridge()`, and pass it to `cross_val_score` unfitted.",
+        "byKey": {
+          "test-1": "Your MSE on seed 1 is not 5.8329. Check that you pass the pipeline itself, not data you scaled first."
+        }
+      },
+      "explain": {
+        "text": "On seed 1 the walk-forward MSE is 5.8329 over 4 folds. You never call `fit` yourself: `cross_val_score` calls `pipe.fit` on each training fold, so the scaler cannot see a test row. Any step with a `fit` goes in the pipeline."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Which leaks are large?",
+      "prose": "Edge case first: a log or a ratio of two columns in the same row has nothing to fit, so it cannot leak. For steps that do fit, the bars show how much fitting on all rows inflates 5-fold CV $R^2$, averaged over 20 seeded datasets.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "scale",
+              "label": "Scale"
+            },
+            {
+              "id": "pca",
+              "label": "PCA, 3 parts"
+            },
+            {
+              "id": "te",
+              "label": "Target encode"
+            },
+            {
+              "id": "sel",
+              "label": "Select 10 of 500"
+            }
+          ],
+          "yLabel": "Inflation of CV $R^2$",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 0.8
+        },
+        "state": {
+          "values": {
+            "scale": 0.0,
+            "pca": 0.0,
+            "te": 0.45,
+            "sel": 0.74
+          }
+        }
+      },
+      "question": "What do the two large leaks have in common?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "y",
+            "text": "Both look at the target $y$ when they are fitted",
+            "correct": true
+          },
+          {
+            "id": "many",
+            "text": "Both use many columns",
+            "why": "PCA uses all 50 columns and leaks nothing. The large leaks are the steps that read $y$."
+          },
+          {
+            "id": "model",
+            "text": "Both are models in their own right",
+            "why": "A scaler and PCA are fitted too. What sets the two large ones apart is that they read the target."
+          },
+          {
+            "id": "noise",
+            "text": "Both were run on noise",
+            "why": "Running on noise does not cause a leak. Target encoding and selection read the labels, test labels included."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a scaler or PCA learn from? What does a target encoder learn from?"
+        },
+        {
+          "rung": "point",
+          "text": "Scaling and PCA use $X$ only. The other two need $y$.",
+          "highlight": [
+            "te",
+            "sel"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Target encoding averages $y$ by group; selection ranks columns by their correlation with $y$. Both saw the test labels."
+        }
+      ],
+      "feedback": {
+        "correct": "A step fitted on the labels leaks the labels.",
+        "generic": "Not quite right. Ask which steps need $y$ to be fitted.",
+        "byKey": {
+          "many": "PCA uses all 50 columns and still leaks nothing here. Look at which steps read $y$."
+        }
+      },
+      "explain": {
+        "text": "Scaling and PCA learn from $X$ alone, and on these data their leaks round to 0.00. Target encoding and selection rank or average by $y$, so test labels flow straight into the features: 0.45 and 0.74 of $R^2$ from nothing. The habit of fitting inside the fold costs nothing for the small leaks and saves you from the large ones.",
+        "canvas": {
+          "highlight": [
+            "te",
+            "sel"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Cross-validated, and still wrong",
+      "prose": "A colleague has 100 rows and 500 candidate signals, all of them noise. They keep the 10 most correlated with returns, then run 5-fold cross-validation. The mean CV $R^2$ is 0.403.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> X.shape, y.shape   # pure noise",
+            "((100, 500), (100,))",
+            ">>> sel = SelectKBest(f_regression, k=10).fit(X, y)",
+            ">>> X_10 = sel.transform(X)",
+            ">>> cross_val_score(LinearRegression(), X_10, y, cv=KFold(5)).mean()",
+            "0.403"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l6": "err"
+          }
+        }
+      },
+      "question": "What $R^2$ should they expect on new data?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "About 0 or below",
+            "correct": true
+          },
+          {
+            "id": "cv",
+            "text": "About 0.40: cross-validation measured it",
+            "why": "You trusted `cross_val_score`. The 10 columns were chosen using every row's label, so each test fold helped pick them."
+          },
+          {
+            "id": "half",
+            "text": "About 0.2: a haircut for optimism",
+            "why": "There is nothing to haircut. The data are noise; any positive score came from the choice of columns."
+          },
+          {
+            "id": "more",
+            "text": "Higher with more data",
+            "why": "More rows of noise give the same nothing. The 0.403 came from choosing columns on the labels."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows' labels did `SelectKBest` use?"
+        },
+        {
+          "rung": "point",
+          "text": "The selector was fitted before the folds were made.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "All 100 labels picked the 10 columns, so every test fold had a hand in choosing them. With noise, new data give about 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Selection done once, on all rows, lets every fold's labels pick the features.",
+        "generic": "Not quite right. Ask when the 10 columns were chosen, and from which labels.",
+        "byKey": {
+          "cv": "You trusted `cross_val_score`. The selection ran on all 100 labels before the folds existed, so the test folds helped choose the columns."
+        }
+      },
+      "explain": {
+        "text": "With the selection inside each fold, the same data score $-0.005$: nothing, as noise should. Choosing 10 of 500 columns by their correlation with all labels makes those columns fit every fold's noise. Cross-validation can only judge what happens inside its folds.",
+        "canvas": {
+          "lines": [
+            ">>> X.shape, y.shape   # pure noise",
+            "((100, 500), (100,))",
+            ">>> sel = SelectKBest(f_regression, k=10).fit(X, y)",
+            ">>> X_10 = sel.transform(X)",
+            ">>> cross_val_score(LinearRegression(), X_10, y, cv=KFold(5)).mean()",
+            "0.403",
+            ">>> pipe = Pipeline([(\"select\", SelectKBest(f_regression, k=10)),",
+            "...                  (\"model\", LinearRegression())])",
+            ">>> cross_val_score(pipe, X, y, cv=KFold(5)).mean()",
+            "-0.005"
+          ],
+          "tone": {
+            "l6": "err",
+            "l10": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Prove it on five datasets",
+      "prose": "Now run both versions yourself. The leaky half is the colleague's code. Write the honest half: put the selector inside a `Pipeline`, so each training fold picks its own columns.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "Columns chosen on",
+            "CV $R^2$, seed 1"
+          ],
+          "rows": [
+            [
+              "select, then CV",
+              "all 100 labels",
+              "0.403"
+            ],
+            [
+              "CV, then select",
+              "each training fold",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `select_then_cv_vs_cv_then_select` so it returns both mean CV scores, leaky first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_noise(seed, n=100, p=500):\n    \"\"\"n rows, p candidate signals and a target: all independent noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    return rng.standard_normal((n, p)), rng.standard_normal(n)\n",
+        "starter": "from sklearn.feature_selection import SelectKBest, f_regression\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import KFold, cross_val_score\nfrom sklearn.pipeline import Pipeline\n\ndef select_then_cv_vs_cv_then_select(X, y, k_features, folds):\n    cv = KFold(n_splits=folds)\n    # leaky: choose the columns on all rows, then cross-validate\n    X_k = SelectKBest(f_regression, k=k_features).fit_transform(X, y)\n    leaky = cross_val_score(LinearRegression(), X_k, y, cv=cv).mean()\n    # honest: the choice happens inside each fold\n    pipe = ...\n    honest = ...\n    return round(float(leaky), 3), round(float(honest), 3)\n",
+        "solution": "from sklearn.feature_selection import SelectKBest, f_regression\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import KFold, cross_val_score\nfrom sklearn.pipeline import Pipeline\n\ndef select_then_cv_vs_cv_then_select(X, y, k_features, folds):\n    cv = KFold(n_splits=folds)\n    # leaky: choose the columns on all rows, then cross-validate\n    X_k = SelectKBest(f_regression, k=k_features).fit_transform(X, y)\n    leaky = cross_val_score(LinearRegression(), X_k, y, cv=cv).mean()\n    # honest: the choice happens inside each fold\n    pipe = Pipeline([(\"select\", SelectKBest(f_regression, k=k_features)),\n                     (\"model\", LinearRegression())])\n    honest = cross_val_score(pipe, X, y, cv=cv).mean()\n    return round(float(leaky), 3), round(float(honest), 3)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_noise(1)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 10, 5)",
+            "expect": "(0.403, -0.005)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_noise(1)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 10, 5)",
+            "expect": "(0.403, -0.005)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(2)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 10, 5)",
+            "expect": "(0.14, -0.826)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(3)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 10, 5)",
+            "expect": "(0.235, -0.948)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(4)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 10, 5)",
+            "expect": "(0.232, -0.427)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(5)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 10, 5)",
+            "expect": "(0.292, -0.156)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(1, 60, 200)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 5, 3)",
+            "expect": "(0.306, -0.239)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(2, 60, 200)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 5, 3)",
+            "expect": "(0.283, -0.493)",
+            "compare": "equal"
+          },
+          {
+            "setup": "X, y = make_noise(7, 80, 1)",
+            "call": "select_then_cv_vs_cv_then_select(X, y, 1, 4)",
+            "expect": "(-0.06, -0.06)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on noise from `make_noise(seed, n, p)`, which is already defined. Each compares your rounded pair with ==. The last case has one column, so there is nothing to choose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The honest version needs the selector and the model in one estimator."
+        },
+        {
+          "rung": "point",
+          "text": "`Pipeline([(\"select\", SelectKBest(f_regression, k=k_features)), (\"model\", LinearRegression())])`.",
+          "highlight": [
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then `honest = cross_val_score(pipe, X, y, cv=cv).mean()`: pass the raw `X`, not `X_k`."
+        }
+      ],
+      "feedback": {
+        "correct": "Leaky scores are positive on every seed; honest ones are at or below 0.",
+        "generic": "Some tests failed. Pass the raw `X` to `cross_val_score` with the pipeline, so the selector refits in each fold.",
+        "byKey": {
+          "test-1": "Your honest score on seed 1 is not −0.005. Check that you pass `X`, not `X_k`, to the pipeline."
+        }
+      },
+      "explain": {
+        "text": "On five noise datasets the leaky score runs from 0.14 to 0.40 and the honest one from −0.005 to −0.948. With one column and $k = 1$ there is nothing to choose, so both agree at −0.06. The leak lives in the choosing.",
+        "canvas": {
+          "values": {
+            "r1c2": "−0.005"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Every fit inside the fold",
+      "prose": "Every leak here had one shape: a `fit` that saw test rows. For each fitted step, $\\hat\\theta = \\hat\\theta(\\text{training rows of the fold})$. In code:\n```python\npipe = Pipeline([(\"fill\", SimpleImputer()),\n                 (\"scale\", StandardScaler()),\n                 (\"model\", Ridge())])\ncross_val_score(pipe, X, y, cv=TimeSeriesSplit(5))\n```\nOnly steps with nothing to fit may sit outside.",
+      "question": "Which step can safely run once on all rows before the split?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "log",
+            "text": "Taking the log of each price",
+            "correct": true
+          },
+          {
+            "id": "scale",
+            "text": "`StandardScaler`",
+            "why": "A scaler learns a mean and spread from the rows it is fitted on. It belongs in the pipeline."
+          },
+          {
+            "id": "pca",
+            "text": "`PCA(n_components=3)`",
+            "why": "PCA learns its components from the rows it sees. Fitted on all rows, it has seen the test rows."
+          },
+          {
+            "id": "sel",
+            "text": "`SelectKBest`",
+            "why": "Selection reads the labels, so on all rows it is the largest leak on this level."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A log uses each row alone, so it has nothing to learn.",
+        "generic": "Not quite right. Find the step with no fitted parameters.",
+        "byKey": {
+          "scale": "A scaler learns a mean and spread from the rows it is fitted on. Put it in the pipeline."
+        }
+      },
+      "explain": {
+        "text": "`np.log(price)` gives the same answer whatever other rows exist, so it cannot leak. Every other step learned a number from rows, and must learn it from training rows only."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The feature store",
+      "prose": "A desk's feature store prepares signals for a backtest from 2005 to 2024. The research template's rule: every `fit` lives inside the fold loop. Five recipes are in use.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Recipe",
+            "What it does"
+          ],
+          "rows": [
+            [
+              "A",
+              "z-score each day across that day's 500 shares"
+            ],
+            [
+              "B",
+              "z-score each share's P/E over its 2005 to 2024 history"
+            ],
+            [
+              "C",
+              "rank momentum across shares each day"
+            ],
+            [
+              "D",
+              "z-score with a mean and spread up to the day before"
+            ],
+            [
+              "E",
+              "clip at the 1st and 99th percentiles of the 2005 to 2024 panel"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap every recipe that leaks the future into a 2010 value.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1",
+          "r4"
+        ],
+        "wrong": [
+          {
+            "id": "cross",
+            "set": [
+              "r0",
+              "r1",
+              "r4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For a value on a day in 2010, which recipes use data from after that day?"
+        },
+        {
+          "rung": "point",
+          "text": "A cross-sectional z-score uses only that day's shares.",
+          "highlight": [
+            "r1",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B uses a share's whole history to 2024, and E uses percentiles of the whole panel. Both use years after 2010."
+        }
+      ],
+      "feedback": {
+        "correct": "B and E learn their numbers from the whole 2005 to 2024 history.",
+        "generic": "Not quite right. For each recipe, ask whether a 2010 value would change if 2020 data changed.",
+        "byKey": {
+          "cross": "Recipe A uses only that day's shares, all known on that day. Across shares is safe; across time is the leak.",
+          "r0": "Recipe A uses only that day's shares, all known on that day. Across shares is safe; across time is the leak.",
+          "r2": "Ranks across shares on one day use only that day.",
+          "r3": "Data up to the day before is known on the day.",
+          "r1": "You left out B. Its mean and spread come from 2005 to 2024, so 2010 values know the future.",
+          "r4": "You left out E. Its percentiles are learned from the whole panel, years after 2010 included."
+        }
+      },
+      "explain": {
+        "text": "A and C use only one day's cross-section, and D only the past, so none can see later data. B and E fit a mean, a spread or a percentile on the whole history. Recomputed with expanding windows, as D does, they become safe.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              4
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Any step with a `fit` (scaler, imputer, PCA, encoder, selector) leaks if it is fitted on rows the model is tested on.",
+      "Unsupervised steps usually leak a little; steps that read $y$, such as target encoding and selection, can manufacture a score from noise.",
+      "Put every fitted step in a `Pipeline` and hand it to `cross_val_score`, so each fold, or each walk-forward step, refits it."
+    ],
+    "formula": {
+      "name": "The pipeline rule",
+      "tex": "\\hat{\\theta}_{\\text{step}} = \\hat{\\theta}_{\\text{step}}(\\text{training rows of this fold})",
+      "note": "Only a step with nothing to fit, such as a log, may run on all rows."
+    },
+    "trap": "Choosing features on all rows, then cross-validating: on pure noise it scored 0.403."
+  },
+  "quiz": [
+    {
+      "id": "q-fit-test",
+      "difficulty": 2,
+      "prose": "Edge case. A colleague fits the scaler on the training rows, then writes `X_test_s = scaler.fit_transform(X_test)` for the test rows.",
+      "question": "Is the test score honest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the test rows are scaled with their own mean and spread",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: the scaler was fitted on training rows first",
+            "why": "`fit_transform` refits it. The test rows were then scaled with test-period statistics."
+          },
+          {
+            "id": "better",
+            "text": "Yes, and it is more accurate for the test period",
+            "why": "It uses numbers that were not known until the test period ended. Live, you would not have them."
+          },
+          {
+            "id": "only",
+            "text": "Only if the test set is large",
+            "why": "Size does not help: the leak is using test statistics at all."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`fit_transform` refits on the test rows.",
+        "generic": "Not quite right. Ask which rows the last `fit` saw.",
+        "byKey": {
+          "yes": "`fit_transform` refits the scaler, so the test rows were scaled with their own statistics."
+        }
+      },
+      "explain": {
+        "text": "Use `scaler.transform(X_test)`, which reuses the training mean and spread. Any `fit` on test rows, even after a correct training fit, uses numbers you will not have live."
+      }
+    },
+    {
+      "id": "q-ols",
+      "difficulty": 3,
+      "prose": "With plain `LinearRegression`, scaling on all rows and scaling on training rows give exactly the same test MSE.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "affine",
+            "text": "Shifting and stretching a column just changes its slope and the intercept to match",
+            "correct": true
+          },
+          {
+            "id": "noleak",
+            "text": "Full-sample scaling never leaks",
+            "why": "It does leak information; this model simply cannot use it. Ridge, kNN and PCA can."
+          },
+          {
+            "id": "random",
+            "text": "The two scalers happen to agree",
+            "why": "They give different means and spreads, as on the volume example: 28.5 against 23.0."
+          },
+          {
+            "id": "cv",
+            "text": "Because the test is cross-validated",
+            "why": "The equality holds on a single split too. It comes from how least squares treats a rescaled column."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Least squares undoes any shift and stretch of a column.",
+        "generic": "Not quite right. Think about what a least squares slope does when its column is doubled.",
+        "byKey": {
+          "noleak": "It does leak; this model just cannot use what leaked."
+        }
+      },
+      "explain": {
+        "text": "Double a column and its least squares slope halves, so predictions do not change. Ridge penalises slopes, so it can feel the scaler, which is why the gap was small but not zero."
+      }
+    },
+    {
+      "id": "q-target-scale",
+      "difficulty": 2,
+      "prose": "A colleague z-scores the label $y$ with its mean and spread over all rows, then fits the model inside walk-forward folds.",
+      "question": "Is that a leak?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: the test period's mean and spread shaped the training labels",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No: only features can leak",
+            "why": "Labels pass through fitted steps too. A full-sample mean of $y$ contains the test labels."
+          },
+          {
+            "id": "undo",
+            "text": "No, as long as predictions are scaled back",
+            "why": "Scaling back with the same full-sample numbers still uses test labels."
+          },
+          {
+            "id": "big",
+            "text": "Yes, and it is always the largest leak",
+            "why": "Its size depends on the model; for many linear models it is small. It is still a leak."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A target scaler is a fitted step like any other.",
+        "generic": "Not quite right. Ask which rows the label's mean and spread came from.",
+        "byKey": {
+          "no": "Labels pass through fitted steps too. A full-sample mean of $y$ contains the test labels."
+        }
+      },
+      "explain": {
+        "text": "Fit the target's scaler on training labels only. scikit-learn's `TransformedTargetRegressor` does it inside each fold, as a `Pipeline` does for features."
+      }
+    },
+    {
+      "id": "q-select-noise",
+      "difficulty": 3,
+      "prose": "On 100 rows of noise, choosing 10 of 500 columns on all rows gave a CV $R^2$ of 0.403. Choosing them inside each fold gave −0.005.",
+      "question": "Which number estimates the model's $R^2$ on new data?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.005,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "CV $R^2$ to trust",
+        "accept": "−0.005, the honest score.",
+        "wrong": [
+          {
+            "id": "leaky",
+            "value": 0.403,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only the score with the choice inside the folds is honest.",
+        "generic": "Not quite right. Trust the version where the test folds took no part in choosing columns.",
+        "byKey": {
+          "leaky": "0.403 came from letting every fold's labels choose the columns.",
+          "zero": "Close in spirit. The question asks for the measured honest score, −0.005."
+        }
+      },
+      "explain": {
+        "text": "−0.005 is the honest estimate: on noise there is nothing to find. The 0.403 measured how well the columns were chosen to fit these labels."
+      }
+    }
+  ]
+}

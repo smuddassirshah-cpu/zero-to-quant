@@ -1,0 +1,421 @@
+{
+  "id": "homework-2",
+  "course": "stat-learning",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-test-r2-code",
+      "difficulty": 3,
+      "skills": [
+        "sl-linear"
+      ],
+      "title": "An honest score",
+      "prose": "Write the score every model in this level is judged by.",
+      "question": "Complete `test_r2(y_train, y_test, pred)`: one minus the model's test MSE over the test MSE of forecasting the training mean. Round to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef test_r2(y_train, y_test, pred):\n    y_train, y_test, pred = (np.asarray(a, dtype=float) for a in (y_train, y_test, pred))\n    mse_model = ...\n    mse_base = ...\n    return round(float(1 - mse_model / mse_base), 6)\n",
+        "solution": "import numpy as np\n\ndef test_r2(y_train, y_test, pred):\n    y_train, y_test, pred = (np.asarray(a, dtype=float) for a in (y_train, y_test, pred))\n    mse_model = np.mean((y_test - pred) ** 2)\n    mse_base = np.mean((y_test - y_train.mean()) ** 2)\n    return round(float(1 - mse_model / mse_base), 6)\n",
+        "examples": [
+          {
+            "call": "test_r2([1, 2, 3], [2, 4], [2.5, 3.5])",
+            "expect": "0.875",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "test_r2([1, 2, 3], [2, 4], [2.5, 3.5])",
+            "expect": "0.875",
+            "compare": "isclose"
+          },
+          {
+            "call": "test_r2([0, 0], [1, -1], [2, -2])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "test_r2([0, 0, 0], [1, -1], [3, -3])",
+            "expect": "-3.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "test_r2([5, 5], [6, 7], [6, 7])",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "test_r2([0, 0], [5, 5], [4, 4])",
+            "expect": "0.96",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, each compared with math.isclose. The last one would fail if the baseline used the test mean. The first run loads NumPy, which takes a few seconds."
+      },
+      "feedback": {
+        "correct": "This is the number to report, not `.score` on training rows.",
+        "generic": "Some tests failed. The baseline forecasts `y_train.mean()` for every test row."
+      },
+      "explain": {
+        "text": "The baseline is a forecast you could have made before the test period. With the test mean instead, the last test would divide by 0."
+      }
+    },
+    {
+      "id": "h-survivors",
+      "difficulty": 4,
+      "skills": [
+        "sl-regularise"
+      ],
+      "title": "Counting survivors",
+      "prose": "`make_signals(seed)` gives 400 share-months with 12 features in mixed units: `make_raw`'s five, then seven pure-noise signals. Trace how many coefficients a scaled lasso keeps as $\\alpha$ rises.",
+      "question": "Complete `count_survivors(X, y, alphas)`: for each alpha, fit a `StandardScaler` and `Lasso(alpha, max_iter=10000)` pipeline on all of `X, y` and count the non-zero coefficients.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_raw(seed, n=400):\n    \"\"\"Share-months in month order. Columns: mom (%), vol (%), size (GBP m),\n    turnover (fraction of shares traded a day), value (book-to-price).\n    Next-month return in %; size has no effect at all.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = 8.0 * rng.standard_normal(n)\n    vol = 30 + 10 * rng.standard_normal(n)\n    size = np.exp(8.0 + 1.0 * rng.standard_normal(n))\n    turnover = rng.gamma(2.25, 0.006 / 2.25, n)\n    value = 0.6 + 0.3 * rng.standard_normal(n)\n    X = np.column_stack([mom, vol, size, turnover, value])\n    y = (0.5 + 0.06 * mom - 0.02 * (vol - 30) - 120 * (turnover - 0.006)\n         + 0.8 * (value - 0.6) + 3.0 * rng.standard_normal(n))\n    return X, y\n\ndef make_signals(seed, n=400):\n    \"\"\"make_raw's five features (columns 0 to 4) plus seven pure-noise signals in assorted units (columns 5 to 11).\"\"\"\n    X5, y = make_raw(seed, n)\n    rng = np.random.default_rng(seed + 1000)\n    scales = np.array([0.01, 0.5, 3.0, 50.0, 2000.0, 0.2, 10.0])\n    noise = rng.standard_normal((n, 7)) * scales\n    return np.column_stack([X5, noise]), y\n",
+        "starter": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\n\ndef count_survivors(X, y, alphas):\n    out = []\n    for al in alphas:\n        ...\n    return out\n",
+        "solution": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\n\ndef count_survivors(X, y, alphas):\n    out = []\n    for al in alphas:\n        p = Pipeline([('scale', StandardScaler()), ('model', Lasso(alpha=al, max_iter=10000))]).fit(X, y)\n        out.append(int(np.sum(p.named_steps['model'].coef_ != 0)))\n    return out\n",
+        "examples": [
+          {
+            "setup": "X, y = make_signals(1)",
+            "call": "count_survivors(X[:300], y[:300], [0.01, 0.1, 0.2, 0.4, 0.8])",
+            "expect": "[11, 10, 7, 1, 0]"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_signals(1)",
+            "call": "count_survivors(X[:300], y[:300], [0.01, 0.1, 0.2, 0.4, 0.8])",
+            "expect": "[11, 10, 7, 1, 0]"
+          },
+          {
+            "setup": "X, y = make_signals(2)",
+            "call": "count_survivors(X[:300], y[:300], [0.01, 0.1, 0.2, 0.4, 0.8])",
+            "expect": "[12, 8, 4, 1, 0]"
+          },
+          {
+            "setup": "X, y = make_signals(3)",
+            "call": "count_survivors(X[:300], y[:300], [0.01, 0.1, 0.2, 0.4, 0.8])",
+            "expect": "[12, 9, 6, 3, 0]"
+          },
+          {
+            "setup": "X, y = make_signals(2)",
+            "call": "count_survivors(X[:300], y[:300], [5.0])",
+            "expect": "[0]"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on `make_signals(seed)`, already defined; each list of counts must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "On seed 1 the count falls 11, 10, 7, 1, 0: noise survives at small $\\alpha$.",
+        "generic": "Some tests failed. For each alpha, fit the pipeline and count `coef_ != 0`."
+      },
+      "explain": {
+        "text": "At $\\alpha = 0.01$ almost every noise signal is kept; by 0.4 only one feature remains. Where between those to stop is a question for a validation block, which the next item answers."
+      }
+    },
+    {
+      "id": "h-end-to-end",
+      "difficulty": 5,
+      "skills": [
+        "sl-regularise",
+        "sl-linear",
+        "sl-tradeoff"
+      ],
+      "title": "End to end",
+      "prose": "Rows are in month order. Use the first 60% to train, the next 20% to validate and the last 20% to test (`a = int(0.6 * n)`, `b = int(0.8 * n)`). For each alpha, fit a scaler and lasso pipeline on the training block and score it on the validation block. Refit the best alpha on training and validation together, then score once on the test block.",
+      "question": "Complete `end_to_end(X, y, alphas)`, returning `(best_alpha, support, test_mse)`: the chosen alpha, the sorted indices the refitted lasso keeps, and its test MSE rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_raw(seed, n=400):\n    \"\"\"Share-months in month order. Columns: mom (%), vol (%), size (GBP m),\n    turnover (fraction of shares traded a day), value (book-to-price).\n    Next-month return in %; size has no effect at all.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = 8.0 * rng.standard_normal(n)\n    vol = 30 + 10 * rng.standard_normal(n)\n    size = np.exp(8.0 + 1.0 * rng.standard_normal(n))\n    turnover = rng.gamma(2.25, 0.006 / 2.25, n)\n    value = 0.6 + 0.3 * rng.standard_normal(n)\n    X = np.column_stack([mom, vol, size, turnover, value])\n    y = (0.5 + 0.06 * mom - 0.02 * (vol - 30) - 120 * (turnover - 0.006)\n         + 0.8 * (value - 0.6) + 3.0 * rng.standard_normal(n))\n    return X, y\n\ndef make_signals(seed, n=400):\n    \"\"\"make_raw's five features (columns 0 to 4) plus seven pure-noise signals in assorted units (columns 5 to 11).\"\"\"\n    X5, y = make_raw(seed, n)\n    rng = np.random.default_rng(seed + 1000)\n    scales = np.array([0.01, 0.5, 3.0, 50.0, 2000.0, 0.2, 10.0])\n    noise = rng.standard_normal((n, 7)) * scales\n    return np.column_stack([X5, noise]), y\n",
+        "starter": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\nfrom sklearn.metrics import mean_squared_error\n\ndef end_to_end(X, y, alphas):\n    X = np.asarray(X, dtype=float); y = np.asarray(y, dtype=float)\n    n = len(y); a, b = int(0.6 * n), int(0.8 * n)\n    ...\n",
+        "solution": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Lasso\nfrom sklearn.metrics import mean_squared_error\n\ndef end_to_end(X, y, alphas):\n    X = np.asarray(X, dtype=float); y = np.asarray(y, dtype=float)\n    n = len(y); a, b = int(0.6 * n), int(0.8 * n)\n    def pipe(alpha):\n        return Pipeline([('scale', StandardScaler()), ('model', Lasso(alpha=alpha, max_iter=10000))])\n    scores = [mean_squared_error(y[a:b], pipe(al).fit(X[:a], y[:a]).predict(X[a:b])) for al in alphas]\n    best = alphas[int(np.argmin(scores))]\n    final = pipe(best).fit(X[:b], y[:b])\n    support = [int(i) for i in np.flatnonzero(final.named_steps['model'].coef_)]\n    return best, support, round(float(mean_squared_error(y[b:], final.predict(X[b:]))), 4)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_signals(2)",
+            "call": "end_to_end(X, y, [0.01, 0.03, 0.1, 0.3, 1.0])",
+            "expect": "(0.3, [0, 3, 4], 9.0117)"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_signals(2)",
+            "call": "end_to_end(X, y, [0.01, 0.03, 0.1, 0.3, 1.0])",
+            "expect": "(0.3, [0, 3, 4], 9.0117)"
+          },
+          {
+            "setup": "X, y = make_signals(6)",
+            "call": "end_to_end(X, y, [0.01, 0.03, 0.1, 0.3, 1.0])",
+            "expect": "(0.3, [0, 3], 10.455)"
+          },
+          {
+            "setup": "X, y = make_signals(1)",
+            "call": "end_to_end(X, y, [0.01, 0.03, 0.1, 0.3, 1.0])",
+            "expect": "(0.1, [0, 1, 2, 3, 4, 6, 7, 9, 10, 11], 8.184)"
+          },
+          {
+            "setup": "X, y = make_signals(10)",
+            "call": "end_to_end(X, y, [0.01, 0.03, 0.1, 0.3, 1.0])",
+            "expect": "(0.3, [0, 3, 8], 9.8467)"
+          },
+          {
+            "setup": "X, y = make_signals(8, n=250)",
+            "call": "end_to_end(X, y, [0.01, 0.03, 0.1, 0.3, 1.0])",
+            "expect": "(0.3, [0, 4, 5], 15.1223)"
+          },
+          {
+            "setup": "X, y = make_signals(4)",
+            "call": "end_to_end(X, y, [0.01, 0.03, 0.1, 0.3, 1.0])",
+            "expect": "(1.0, [], 7.9465)"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on `make_signals(seed, n)`, already defined. Each returned tuple must match exactly: the alpha, the list of indices, and the test MSE to 4 places. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Time split, scaler inside the pipeline, alpha from validation, one look at the test block.",
+        "generic": "Some tests failed. Check the block boundaries, that each validation fit sees only the first block, and that the final refit uses the first two."
+      },
+      "explain": {
+        "text": "On seed 2 the validation block picks $\\alpha = 0.3$ and the lasso keeps mom, turnover and value. On seed 1 it picks 0.1 and keeps five noise signals as well: selection is noisy, which is why the test score, not the support, is the honest summary. On seed 4 it keeps nothing, and the model is the training mean."
+      }
+    },
+    {
+      "id": "h-pipeline-order",
+      "difficulty": 4,
+      "skills": [
+        "sl-regularise",
+        "sl-tradeoff"
+      ],
+      "title": "A leak-free workflow",
+      "prose": "A researcher builds a lasso return model on ten years of monthly share data.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "sort",
+            "text": "Sort the rows by month; build only features known at each month's end"
+          },
+          {
+            "id": "split",
+            "text": "Cut the months into a training block, a later validation block and a final test block"
+          },
+          {
+            "id": "fit",
+            "text": "For each $\\alpha$, fit a scaler and lasso pipeline on the training block"
+          },
+          {
+            "id": "val",
+            "text": "Score each fit on the validation block and pick the $\\alpha$ with the lowest MSE"
+          },
+          {
+            "id": "refit",
+            "text": "Refit the pipeline with that $\\alpha$ on training and validation together"
+          },
+          {
+            "id": "test",
+            "text": "Score the refitted model once on the test block and report that number"
+          }
+        ],
+        "answer": [
+          "sort",
+          "split",
+          "fit",
+          "val",
+          "refit",
+          "test"
+        ]
+      },
+      "feedback": {
+        "correct": "Every choice is made on earlier data than the score that judges it.",
+        "generic": "Not quite right. Nothing may be fitted on rows that a later step uses to judge it.",
+        "byKey": {
+          "split": "The split needs the rows in time order first.",
+          "test": "The test block is touched once, at the very end.",
+          "refit": "The refit needs the chosen $\\alpha$, so it follows validation."
+        }
+      },
+      "explain": {
+        "text": "Sorting first makes every split a time split. The scaler sits inside the pipeline, so it never sees validation or test rows. The test block is used once; using it twice turns it into a second validation block."
+      }
+    },
+    {
+      "id": "h-ridge-gain",
+      "difficulty": 4,
+      "skills": [
+        "sl-regularise",
+        "sl-tradeoff"
+      ],
+      "title": "What shrinking buys",
+      "prose": "A market we built: two uncorrelated z-scored features, true coefficients 0.4 and 0, noise variance 4. On $n = 100$ training rows OLS estimated 0.5 and 0.2. Expected test MSE is the noise variance plus the sum of squared coefficient errors.",
+      "question": "By how much does ridge at $\\lambda = 25$ lower the expected test MSE compared with OLS?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0244,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Fall in expected test MSE",
+        "accept": "0.0244: OLS 4.0500, ridge 4.0256.",
+        "wrong": [
+          {
+            "id": "ols",
+            "value": 4.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "ridge",
+            "value": 4.0256,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Shrinking by 0.8 trades a small bias for a bigger cut in error.",
+        "generic": "Not quite right. Ridge multiplies both estimates by $100/125 = 0.8$; compare the squared errors."
+      },
+      "explain": {
+        "text": "Ridge gives 0.4 and 0.16, errors 0 and 0.16: $0.0256$. OLS errors 0.1 and 0.2 give $0.05$. The fall is 0.0244, here from the noise feature's estimate shrinking towards its true 0."
+      }
+    },
+    {
+      "id": "h-distance",
+      "difficulty": 3,
+      "skills": [
+        "sl-regularise"
+      ],
+      "title": "Distance after scaling",
+      "prose": "Two shares differ by £2,000m in size and by 10 percentage points in past-month return. The training sds are £8,000m and 8 points.",
+      "question": "What is their Euclidean distance after standardising?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2748,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Scaled distance",
+        "accept": "1.275: $\\sqrt{0.25^2 + 1.25^2}$.",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 2000.02,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "sum",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Now momentum, 1.25 sds apart, drives the distance, not size.",
+        "generic": "Not quite right. Divide each gap by its sd, then take $\\sqrt{a^2 + b^2}$.",
+        "byKey": {
+          "raw": "That is the raw distance, almost all size. Divide each gap by its sd first.",
+          "sum": "You added the scaled gaps. Euclidean distance takes the root of the sum of squares."
+        }
+      },
+      "explain": {
+        "text": "Gaps of $2000/8000 = 0.25$ and $10/8 = 1.25$ sds give $\\sqrt{0.0625 + 1.5625} = 1.275$. Raw, the distance was 2,000.02, decided by size alone."
+      }
+    },
+    {
+      "id": "h-elastic",
+      "difficulty": 3,
+      "skills": [
+        "sl-regularise"
+      ],
+      "title": "Ridge, lasso or both",
+      "prose": "A desk has 40 signals in five families; signals within a family are highly correlated. It wants a sparse model but does not want one arbitrary member to stand for each family.",
+      "question": "Which penalty fits the brief best?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "en",
+            "text": "The elastic net: its absolute part sets coefficients to zero, its squared part shares weight within a family",
+            "correct": true
+          },
+          {
+            "id": "lasso",
+            "text": "The lasso alone",
+            "why": "The lasso tends to keep one member of each correlated family and zero the rest, which is the arbitrary choice the desk wants to avoid."
+          },
+          {
+            "id": "ridge",
+            "text": "Ridge alone",
+            "why": "Ridge shares weight well but never sets a coefficient to zero, so the model is not sparse."
+          },
+          {
+            "id": "ols",
+            "text": "OLS, then drop small coefficients",
+            "why": "With correlated signals OLS coefficients are noisy and offsetting; small ones are not the unimportant ones."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each penalty contributes the property the other lacks.",
+        "generic": "Not quite right. Which penalty zeroes, and which shares?"
+      },
+      "explain": {
+        "text": "Squared penalties prefer splitting weight across copies; absolute penalties prefer zeros. The elastic net mixes the two, with a second parameter setting the mix."
+      }
+    },
+    {
+      "id": "h-review-model",
+      "difficulty": 5,
+      "skills": [
+        "sl-regularise",
+        "sl-linear",
+        "sl-tradeoff"
+      ],
+      "title": "Reviewing a colleague's model",
+      "kind": "longform",
+      "prompt": "A colleague sends you a return model for next-month stock returns. It uses 60 features on 240 months of a 50-share universe. Their notes:\n\n1. Standardised every feature with `StandardScaler().fit_transform(X)` on all rows.\n2. Fitted OLS; coefficients looked wild, so switched to ridge.\n3. Split the rows at random, 80% train, 20% test.\n4. Tried ten values of $\\lambda$ and kept the one with the lowest test MSE.\n5. Reported that test MSE and a test $R^2$ of 6%, computed against the test rows' own mean.\n6. Included the share's trading volume over the forecast month, because it raised $R^2$ most.\n\nWrite a review: say what is wrong with each step, why it matters, and what to do instead. End with what you expect the honest $R^2$ to look like.",
+      "model": "**1. Scaling on all rows.** The means and sds were learned partly from the test rows, so the test period shaped the inputs: leakage. Split first, then fit `StandardScaler` inside a `Pipeline` on the training rows only, so test rows are scaled with training statistics.\n\n**2. OLS to ridge.** The switch is right: 60 correlated features on noisy returns give OLS large offsetting coefficients and high variance. Ridge (or the lasso, if a sparse model is wanted) trades a little bias for much less variance. Scaling before the penalty is also right; it is only the rows used that are wrong.\n\n**3. Random split.** Returns are ordered in time and shares in the same month move together. A random split puts later months in training and earlier ones in test, and lets the model learn each month's common move from its neighbours. Split by time: train on early months, validate on later ones, test on the last block.\n\n**4. $\\lambda$ chosen on the test set.** Picking the best of ten on the test rows makes their score optimistic: the luckiest $\\lambda$ wins and its luck is baked in. Choose $\\lambda$ on a validation block (or with time-ordered cross-validation), refit on training plus validation, then score the test block once.\n\n**5. Reporting.** The reported number is biased by steps 1, 3, 4 and 6. Also, $R^2$ against the test rows' own mean uses a baseline nobody could have known in advance; use the training mean as the baseline forecast.\n\n**6. Volume over the forecast month.** This is not known when the forecast is made; it is part of what is being predicted. It leaks the target and explains most of the 6%. Every feature must be point-in-time: computable from data available at the month-end before the forecast.\n\n**Expected honest result.** With leakage removed, a time split and $\\lambda$ chosen on validation data, a monthly stock-return model should expect a test $R^2$ around 0% to 2%, possibly negative. That is normal for returns; the model should be judged by whether that small edge is stable across later blocks.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Identifies the volume-over-the-forecast-month feature as target leakage and requires point-in-time features"
+        },
+        {
+          "points": 2,
+          "text": "Identifies scaling on all rows as leakage and fixes it with a scaler fitted on training rows, inside a pipeline"
+        },
+        {
+          "points": 2,
+          "text": "Identifies choosing $\\lambda$ on the test set as optimistic and replaces it with a validation block or time-ordered cross-validation, testing once"
+        },
+        {
+          "points": 1,
+          "text": "Replaces the random split with a time-ordered split and says why"
+        },
+        {
+          "points": 1,
+          "text": "Says the switch from OLS to a penalised model, with scaling, is sound"
+        },
+        {
+          "points": 1,
+          "text": "Uses the training mean, not the test mean, as the $R^2$ baseline"
+        },
+        {
+          "points": 1,
+          "text": "Expects an honest test $R^2$ near 0% to 2%, possibly negative, and calls that normal for returns"
+        }
+      ]
+    }
+  ]
+}
