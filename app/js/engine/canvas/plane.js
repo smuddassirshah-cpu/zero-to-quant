@@ -221,7 +221,7 @@
     let yt = sy.log ? logTicks(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 26 }) : ticksFor(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 34 });
     if (o.yTicks === 'integer' && !sy.log) yt = intTicks(yt, sy.domain[0], sy.domain[1], py0 - py1);
     if (o.yStep > 0 && !sy.log) yt = stepTicks(sy.domain[0], sy.domain[1], +o.yStep);
-    const ax = !sy.log && sy.domain[0] <= 0 && sy.domain[1] >= 0 ? sy(0) : py0; // x axis pixel y
+    const ax = !o.xAxisBottom && !sy.log && sy.domain[0] <= 0 && sy.domain[1] >= 0 ? sy(0) : py0; // x axis pixel y (item 429: xAxis "bottom" keeps it at the bottom edge)
     const ay = !o.yAxisLeft && sx.domain[0] <= 0 && sx.domain[1] >= 0 ? sx(0) : px0; // y axis pixel x (item 318: yAxis "left" keeps it at the left edge)
     const gg = svg('g', { class: 'cvb-axes' });
     if (o.grid !== false) {
@@ -233,12 +233,12 @@
     gg.append(arrow(px0, ax, px1 + 6, ax, { cls: 'cvb-axis', head: 8 }));
     gg.append(arrow(ay, py0, ay, py1 - 6, { cls: 'cvb-axis', head: 8 }));
     const below = ax + 14 > py0 + 18 ? ax - 12 : ax + 14;
-    const origin = !o.yAxisLeft && !sy.log && sx.domain[0] <= 0 && sx.domain[1] >= 0 && sy.domain[0] <= 0 && sy.domain[1] >= 0, yAt0 = origin, xAt0 = origin;
+    const origin = !o.yAxisLeft && !o.xAxisBottom && !sy.log && sx.domain[0] <= 0 && sx.domain[1] >= 0 && sy.domain[0] <= 0 && sy.domain[1] >= 0, yAt0 = origin, xAt0 = origin;
     const boxes = [];
     for (const v of xt.ticks) {
       const x = sx(v); if ((yAt0 && Math.abs(x - ay) < 2) || x > px1 - 14) continue;
       gg.append(svg('line', { x1: x, x2: x, y1: ax - 3, y2: ax + 3, class: 'cvb-axis thin' }));
-      const t = fmtTick(v, xt.step);
+      const t = o.fmtX ? o.fmtX(v, xt.step) : fmtTick(v, xt.step);
       gg.append(txt(x, below, t, { cls: 'cvb-tick', size: 12, halo: true }));
       boxes.push(boxOf({ x, y: below, text: t, h: 14 }));
     }
@@ -614,7 +614,7 @@
     const exprParams = (view) => ({ ...(params.params || {}), ...(view.params || {}) });
 
     const geom = (R) => {
-      const xLabelRoom = yr[0] >= 0 || yr[1] < 0 ? 22 : 0, yLabelRoom = xr[0] >= 0 || xr[1] <= 0 || params.yAxis === 'left' ? 34 : 0;
+      const xLabelRoom = yr[0] >= 0 || yr[1] < 0 || params.xAxis === 'bottom' ? 22 : 0, yLabelRoom = xr[0] >= 0 || xr[1] <= 0 || params.yAxis === 'left' ? 34 : 0;
       const m = { l: 14 + yLabelRoom, r: 18, t: 18, b: 14 + xLabelRoom + (xBelowOf(params) && xLabelRoom ? 20 : 0) };
       /* yScale: "log" (positive y range): log-price charts; ticks at 1, 2, 5 times powers of ten, labelled as prices with yFormat */
       return { m, sx: C.scale(xr, [m.l, size.w - m.r]), sy: params.yScale === 'log' ? K.logScale([Math.max(1e-9, yr[0]), yr[1]], [size.h - m.b, m.t]) : C.scale(yr, [size.h - m.b, m.t]) };
@@ -626,7 +626,19 @@
         const j = list.findIndex((g) => g.id === f.id);
         if (j >= 0) list[j] = { ...list[j], ...f }; else list.push({ ...f, slot: f.colour || list.length + 1 });
       }
-      return list;
+      /* item 446: exprs: [...] with index: "d" picks one formula by a param (a control on d switches between precomputed
+         curves, one per degree); steps may be a list too, picked the same way */
+      const P = exprParams(view);
+      return list.map((f) => {
+        if (f.index == null) return f;
+        const raw = typeof f.index === 'number' ? f.index : +P[f.index];
+        const pick = (arr) => arr[Math.max(0, Math.min(arr.length - 1, Math.round(Number.isFinite(raw) ? raw : 0) - (f.indexFrom || 0)))];
+        const out = { ...f };
+        if (Array.isArray(f.exprs) && f.exprs.length) out.expr = pick(f.exprs);
+        if (Array.isArray(f.steps) && f.steps.length && typeof f.steps[0] === 'object' && !Array.isArray(f.steps[0])) out.steps = pick(f.steps);
+        if (Array.isArray(f.pointsList) && f.pointsList.length) out.points = pick(f.pointsList);
+        return out;
+      });
     };
     const evaluator = (view) => {
       const P = exprParams(view), names = Object.keys(P);
@@ -641,6 +653,23 @@
     const curvesOf = (view) => {
       const P = exprParams(view), names = Object.keys(P), out = {};
       for (const f of functionsOf(view)) {
+        /* item 461: points: [[x, y], ...] is a polyline (an empirical ROC curve) that a point can ride (on: id) */
+        if (Array.isArray(f.points) && f.expr == null) {
+          const pts = f.points.filter((q) => Array.isArray(q) && Number.isFinite(+q[0]) && Number.isFinite(+q[1])).map((q) => [+q[0], +q[1]]);
+          if (pts.length < 2) continue;
+          const near = (x, y) => { const kx = 1 / ((xr[1] - xr[0]) || 1), ky = 1 / ((yr[1] - yr[0]) || 1); let best = pts[0], bd = Infinity; for (let i = 0; i + 1 < pts.length; i++) { const [ax, ay] = pts[i], [bx, by] = pts[i + 1], dx = (bx - ax) * kx, dy = (by - ay) * ky, L2 = dx * dx + dy * dy, t = L2 ? Math.max(0, Math.min(1, (((x - ax) * kx) * dx + ((y - ay) * ky) * dy) / L2)) : 0, q = [ax + (bx - ax) * t, ay + (by - ay) * t], d = ((q[0] - x) * kx) ** 2 + ((q[1] - y) * ky) ** 2; if (d < bd) { bd = d; best = q; } } return best; };
+          out[f.id] = { def: f, kind: 'param', sample: () => [pts], near, slopeAt: (x, y) => { const q = near(x, y); for (let i = 0; i + 1 < pts.length; i++) if (q[0] >= Math.min(pts[i][0], pts[i + 1][0]) - 1e-12 && q[0] <= Math.max(pts[i][0], pts[i + 1][0]) + 1e-12) return (pts[i + 1][1] - pts[i][1]) / ((pts[i + 1][0] - pts[i][0]) || 1e-12); return 0; }, at: (t) => pts[Math.max(0, Math.min(pts.length - 1, Math.round(t)))] };
+          continue;
+        }
+        /* item 469: steps: { at: [b1, b2, ...], levels: [l0, l1, ...], from, to }: a step function, level k between break k
+           and k + 1, closed on the left and open on the right (closed: "right" swaps them) */
+        if (f.steps && typeof f.steps === 'object' && !Array.isArray(f.steps)) {
+          const st = f.steps, at = (st.at || []).map(Number), lv = (st.levels || []).map(Number), lo = st.from ?? xr[0], hi = st.to ?? xr[1];
+          const edges = [lo, ...at.filter((b) => b > lo && b < hi), hi];
+          const pieces = edges.slice(0, -1).map((a, k) => ({ a, b: edges[k + 1], y: lv[k] })).filter((q) => Number.isFinite(q.y));
+          out[f.id] = { def: f, kind: 'steps', pieces, closedRight: st.closed === 'right' };
+          continue;
+        }
         if (f.x != null && f.y != null) {
           const cx = K.fnOf(String(f.x), ['t', ...names]), cy = K.fnOf(String(f.y), ['t', ...names]), tr = f.t || [0, 2 * Math.PI];
           const X = (t) => cx(0, { ...P, t }), Y = (t) => cy(0, { ...P, t });
@@ -713,10 +742,13 @@
         areaVals = {};
         const px0 = m.l, px1 = size.w - m.r, py0 = size.h - m.b, py1 = m.t;
         /* axes: false draws no axes, ticks or grid (a geometry figure) */
-        const fmtYp = params.yFormat === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || '£') + K.fmtTick(Math.abs(v), st) : null;
-        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp, xTicks: params.xTicks, yTicks: params.yTicks, xStep: params.xStep, yStep: params.yStep, yAxisLeft: params.yAxis === 'left', xLabelBelow: xBelowOf(params) });
+        /* item 361: xFormat / yFormat "percent" (or "%") label ticks as percentages (0.05 reads 5%) */
+        const pct = (f) => f === '%' || f === 'percent';
+        const fmtPct = (v, st) => (v < 0 ? '−' : '') + K.fmtTick(Math.abs(v) * 100, st * 100) + '%';
+        const fmtYp = pct(params.yFormat) ? fmtPct : params.yFormat === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || '£') + K.fmtTick(Math.abs(v), st) : null;
+        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp, fmtX: pct(params.xFormat) ? fmtPct : null, xTicks: params.xTicks, yTicks: params.yTicks, xStep: params.xStep, yStep: params.yStep, yAxisLeft: params.yAxis === 'left', xAxisBottom: params.xAxis === 'bottom', xLabelBelow: xBelowOf(params) });
         const fixed = axInfo.boxes.slice();
-        if (params.axes !== false) { const ax = !sy.log && yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
+        if (params.axes !== false) { const ax = params.xAxis !== 'bottom' && !sy.log && yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
         const clip = R.clipRect(px0, py1 - 2, px1 - px0, py0 - py1 + 4);
         const plot = svg('g', { 'clip-path': clip }); g.append(plot);
         const tickTop = svg('g', { class: 'cvb-ticktop' }); g.append(tickTop); // item 204: tick labels move here, above the curves
@@ -729,6 +761,23 @@
           const fin = vals.map((v) => v[2]).filter(Number.isFinite), lo = fd.range ? fd.range[0] : Math.min(...fin), hi = fd.range ? fd.range[1] : Math.max(...fin);
           const o = K.obj(fd.id, 'cvb-heat', fd.colour || 1), cw = (px1 - px0) / nx, ch = (py0 - py1) / ny;
           vals.forEach(([i, j, v]) => { if (!Number.isFinite(v)) return; const t = K.clamp((v - lo) / ((hi - lo) || 1), 0, 1); o.append(svg('rect', { x: (px0 + i * cw).toFixed(1), y: (py0 - (j + 1) * ch).toFixed(1), width: (cw + 0.6).toFixed(1), height: (ch + 0.6).toFixed(1), 'fill-opacity': (0.04 + 0.5 * t).toFixed(3) })); });
+          plot.append(o);
+        }
+
+        /* item 460: a classified-region layer, cells: { x: [x0, x1], y: [y0, y1], values: [[...], ...] } (values[0] is the
+           bottom row): each cell washed in the series colour of its class (0 -> slot 1, 1 -> slot 2, ...; null leaves it
+           clear); colours: [slots] maps classes to other slots. A k-NN decision region, precomputed */
+        for (const fd of functionsOf(view).filter((f) => f.cells && typeof f.cells === 'object' && !(view.hide || []).includes(f.id))) {
+          const cl = fd.cells, vals = Array.isArray(cl.values) ? cl.values : [], ny = vals.length, nx = Math.max(0, ...vals.map((r) => (Array.isArray(r) ? r.length : 0)));
+          if (!ny || !nx) continue;
+          const [ax0, ax1] = cl.x || xr, [ay0, ay1] = cl.y || yr, cw = (ax1 - ax0) / nx, chh = (ay1 - ay0) / ny;
+          const o = K.obj(fd.id, 'cvb-cells');
+          vals.forEach((row, j) => (row || []).forEach((v, i) => {
+            if (v == null || !Number.isFinite(+v)) return;
+            const slot = Array.isArray(cl.colours) ? cl.colours[+v] ?? (+v + 1) : +v + 1;
+            const x0 = sx(ax0 + i * cw), x1 = sx(ax0 + (i + 1) * cw), y0 = sy(ay0 + j * chh), y1 = sy(ay0 + (j + 1) * chh);
+            o.append(svg('rect', { x: Math.min(x0, x1).toFixed(1), y: Math.min(y0, y1).toFixed(1), width: (Math.abs(x1 - x0) + 0.6).toFixed(1), height: (Math.abs(y1 - y0) + 0.6).toFixed(1), class: 'cvb-cell ' + K.colourCls(Math.min(6, Math.max(1, slot))), 'fill-opacity': cl.opacity ?? 0.16 }));
+          }));
           plot.append(o);
         }
 
@@ -855,6 +904,22 @@
         for (const [id, cv] of Object.entries(curves)) {
           if (hidden.has(id)) continue;
           const fd = cv.def;
+          if (cv.kind === 'steps') { // item 469: flat pieces with a closed dot at one end and an open dot at the other
+            const o = K.obj(id, 'cvb-fn cvb-steps', fd.slot);
+            cv.pieces.forEach((q, k) => {
+              const d = `M${sx(q.a).toFixed(1)},${sy(q.y).toFixed(1)}L${sx(q.b).toFixed(1)},${sy(q.y).toFixed(1)}`;
+              o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : '') }));
+              fixed.push(...K.lineBoxes([[sx(q.a), sy(q.y)], [sx(q.b), sy(q.y)]], 10));
+              if (fd.dots !== false) {
+                const first = k === 0 && fd.steps && fd.steps.from == null, last = k === cv.pieces.length - 1 && fd.steps && fd.steps.to == null;
+                if (!first) over.append(svg('circle', { cx: sx(q.a), cy: sy(q.y), r: 4, class: 'cvb-end ' + K.colourCls(fd.slot) + (cv.closedRight ? ' open' : '') }));
+                if (!last) over.append(svg('circle', { cx: sx(q.b), cy: sy(q.y), r: 4, class: 'cvb-end ' + K.colourCls(fd.slot) + (cv.closedRight ? '' : ' open') }));
+              }
+            });
+            plot.append(o);
+            if (fd.label && cv.pieces.length) { const q = cv.pieces[cv.pieces.length - 1]; labels.push({ x: sx(q.b) - 4, y: sy(q.y) - 14, text: fd.label, id, anchor: 'end' }); }
+            continue;
+          }
           if (cv.kind === 'contour') { // one path per level, joined; levelLabels (default true) writes each level on its curve
             const o = K.obj(id, 'cvb-fn cvb-contour', fd.slot);
             cv.levels.forEach(({ lv, segs }, k) => {

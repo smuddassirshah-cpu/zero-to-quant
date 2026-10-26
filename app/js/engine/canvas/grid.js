@@ -125,7 +125,7 @@
     /* item 457: the text of each cell a route passes is repeated above the routes with a halo, so numbers stay readable */
     const textTop = svg('g', { class: 'cv-ctext-top', 'aria-hidden': 'true' }); g.append(textTop);
     let routeCells = new Set();
-    const refreshTop = () => { textTop.replaceChildren(...[...routeCells].filter(id => ctext.has(id) && ctext.get(id).textContent).map(id => { const c = ctext.get(id).cloneNode(true); c.classList.add('cv-ctext-halo'); return c; })); };
+    const refreshTop = () => { textTop.replaceChildren(...[...routeCells].filter(id => ctext.has(id) && ctext.get(id).textContent && !cell.get(id).classList.contains('has-cmark')).map(id => { const c = ctext.get(id).cloneNode(true); c.classList.add('cv-ctext-halo'); return c; })); };
     /* item 410: a cell text with a newline is drawn on two lines ("£5\n£20": a fee and a running total) */
     const setText = (el, txt) => {
       if (el.tagName !== 'text') { el.textContent = txt; return; }
@@ -255,10 +255,12 @@
       /* mark: { id: "✓" | { text, tone, pos } } glyph badges; item 418: null (or "") removes a badge, and pos: "centre" (or
          params.markPos) draws the glyph large in the middle of the cell (a queen, a cross on a ruled-out square) */
       markLayer.replaceChildren();
+      cell.forEach(n => n.classList.remove('has-cmark'));
       for (const [id, v] of Object.entries(st.mark || {})) {
         if (!cell.has(id) || v == null || v === '' || (typeof v === 'object' && (v.text == null || v.text === ''))) continue;
         const t = typeof v === 'object' && v ? v : { text: String(v) }, [i, j] = rc(id);
         if ((t.pos || P.markPos) === 'centre' || (t.pos || P.markPos) === 'center') {
+          cell.get(id).classList.add('has-cmark');
           markLayer.append(svg('g', { class: 'cv-mark cv-mark-c' + (t.tone ? ' tone-' + t.tone : '') + (instant ? '' : ' pop'), 'data-for': id }, [C.label(cx(j, i) + s / 2, cy(i) + s / 2 + 1, String(t.text), { size: Math.round(Math.min(28, s * 0.5)), cls: 'cv-mark-t' })]));
           continue;
         }

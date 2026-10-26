@@ -209,7 +209,7 @@
    "skills": [
     "ts-stationary"
    ],
-   "prose": "A colleague fits a line to the FTSE 100's log level over ten years, subtracts it, and calls the residual a \"mean-reverting signal\". The residual's ADF p-value is 0.38.",
+   "prose": "A colleague fits a line to ten years of the FTSE 100's log level and subtracts it. He calls the residual a \"mean-reverting signal\". The residual's ADF p-value is 0.38.",
    "question": "What is the right verdict?",
    "widget": {
     "kind": "choice",
@@ -252,7 +252,7 @@
     "ts-stationary"
    ],
    "title": "A Dickey-Fuller table by simulation",
-   "prose": "Rebuild the Dickey-Fuller table from nothing. For each of `sims` seeded walks of `n` days, regress $\\Delta x_t$ on a constant and $x_{t-1}$, form the t statistic of the slope, and return its 1%, 5% and 10% quantiles. Do it for all walks at once with array sums; a loop over 2,000 regressions also works but is slow.",
+   "prose": "Rebuild the Dickey-Fuller table from nothing. For each of `sims` seeded walks of `n` days, regress $\\Delta x_t$ on a constant and $x_{t-1}$. Form the t statistic of the slope, and return its 1%, 5% and 10% quantiles. Do it for all walks at once with array sums; a loop over 2,000 regressions also works but is slow.",
    "question": "Complete `df_quantiles(n, sims, seed)`.",
    "widget": {
     "kind": "code",
@@ -311,7 +311,7 @@
     "ts-stationary"
    ],
    "title": "Integration order and trend type",
-   "prose": "A research pipeline must decide, for every new series, how to make it stationary: leave it, detrend it, or difference it $d$ times. Write the classifier that drives that decision from two ADF tests, one with a constant and one with a constant and trend.",
+   "prose": "A research pipeline must decide, for every new series, how to make it stationary: leave it, detrend it, or difference it $d$ times. Write the classifier behind that decision. It uses two ADF tests: one with a constant, one with a constant and trend.",
    "question": "Complete `classify_series(series, alpha, max_d)`.",
    "widget": {
     "kind": "code",
@@ -381,7 +381,7 @@
     "generic": "Some tests failed. Test the level with \"c\", then with \"ct\", and only then start differencing, testing each difference with \"c\"."
    },
    "explain": {
-    "text": "The order matters: testing with \"ct\" before differencing is what stops a straight trend being over-differenced. With two tests at 5%, 3 of 40 seeded walks were misclassified in a trial run, which is why the planted cases avoid the unlucky ones. In production, report the p-values with the label."
+    "text": "The order matters: testing with \"ct\" before differencing is what stops a straight trend being over-differenced. With two tests at 5%, 3 of 40 seeded walks were misclassified in a trial run. The planted cases avoid those unlucky seeds. In production, report the p-values with the label."
    }
   },
   {
@@ -392,12 +392,12 @@
    ],
    "title": "Proof of predictability?",
    "kind": "longform",
-   "prompt": "A colleague regresses the FTSE 100 closing level on the previous day's close over ten years of daily data and finds $\\text{close}_t = 6.1 + 0.9991\\,\\text{close}_{t-1}$ with $R^2 = 0.998$ and a slope t statistic above 1,000. The note is titled \"Proof of predictability\" and proposes trading on the model's forecasts.\n\n(a) Explain what is wrong with reading $R^2 = 0.998$ as predictive power.\n\n(b) What does a slope of 0.9991 suggest about the series, and why is its t statistic against 0 meaningless here?\n\n(c) Which test would you run, on which series, with which settings, and what result do you expect?\n\n(d) What does the model imply for the long-horizon forecast, and why is that dangerous?\n\n(e) Describe the honest model, and how you would judge whether it predicts anything.\n\n(f) Give the one sentence you would say in an interview.",
+   "prompt": "A colleague regresses the FTSE 100 close on the previous close, over ten years of daily data. He finds $\\text{close}_t = 6.1 + 0.9991\\,\\text{close}_{t-1}$ with $R^2 = 0.998$ and a slope t statistic above 1,000. The note is titled \"Proof of predictability\" and proposes trading on the model's forecasts.\n\n(a) Explain what is wrong with reading $R^2 = 0.998$ as predictive power.\n\n(b) What does a slope of 0.9991 suggest about the series? Why is its t statistic against 0 meaningless here?\n\n(c) Which test would you run, on which series, with which settings, and what result do you expect?\n\n(d) What does the model imply for the long-horizon forecast, and why is that dangerous?\n\n(e) Describe the honest model, and how you would judge whether it predicts anything.\n\n(f) Give the one sentence you would say in an interview.",
    "model": "**(a) The $R^2$.** Today's close is yesterday's close plus a small change, so the scatter of $\\text{close}_t$ against $\\text{close}_{t-1}$ hugs the diagonal whatever the change does. A pure random walk, whose changes cannot be predicted at all, gives an $R^2$ of about 0.998 on the same regression (lesson 1, where a seeded walk scored 0.9977). The $R^2$ measures how much of the *level* carries over, not how well the *change*, which is what a trade earns, is predicted.\n\n**(b) The slope.** A slope of 0.9991 is $\\hat\\phi$ in $x_t = c + \\phi x_{t-1} + \\varepsilon_t$, a hair from 1: the signature of a unit root. Testing it against 0 asks whether yesterday's level matters at all, which is trivially true for any persistent series. The question that matters is whether $\\phi = 1$, and under that null the usual t distribution does not apply.\n\n**(c) The test.** Run the augmented Dickey-Fuller test, `adfuller(x, autolag=\"AIC\")`, on the log level (because the index's swings grow with its level), with a constant; with a constant and trend (`regression=\"ct\"`) as a check, since an index drifts upward. Compare with Dickey-Fuller critical values, about −2.86 (constant) or −3.41 (trend) at 5%, never −1.645. Expect a failure to reject (p well above 0.05). Then run it on the daily log returns: expect a statistic far below −3.4 and $p \\approx 0$. KPSS on the level should reject stationarity, confirming the picture.\n\n**(d) The long-horizon forecast.** With $b < 1$ the fitted model reverts to $a/(1 - b) = 6.1/0.0009 \\approx 6{,}780$, a level learnt from the sample period. Run forward, its forecasts are pulled towards that number whatever the index does next, as lesson 1's Desk A was pulled to £144.48. A trader following it would bet on reversion to an accident of history.\n\n**(e) The honest model.** Model the daily log return $r_t = \\ln p_t - \\ln p_{t-1}$, which is stationary. Regress $r_t$ on $r_{t-1}$ (or on any proposed signal); expect a slope near 0 and an $R^2$ near 0. Judge it out of sample with a walk-forward split, against the benchmark of a zero (or drift-only) forecast, with the MSE of returns or a strategy's net P&L after costs. Only an improvement over that benchmark, robust across periods, would count as predictability. Watch the variance too: index returns cluster in volatility, so use robust standard errors or a GARCH model.\n\n**(f) The interview sentence.** \"Models are fitted to returns because returns are stationary and prices are not: a price on its own lag scores an $R^2$ near 1 even when it is a random walk, so the fit says nothing about predictability.\"",
    "rubric": [
     {
      "points": 2,
-     "text": "Explains that a random walk gives the same $R^2$, so it measures persistence of the level, not prediction of the change"
+     "text": "Explains that a random walk gives the same $R^2$: it measures how the level persists, not prediction"
     },
     {
      "points": 1,
@@ -405,7 +405,7 @@
     },
     {
      "points": 2,
-     "text": "Names the ADF test on the (log) level with the right deterministic terms and Dickey-Fuller critical values, and the expected non-rejection"
+     "text": "Names the ADF test on the log level, its deterministic terms, Dickey-Fuller critical values and the expected non-rejection"
     },
     {
      "points": 1,
