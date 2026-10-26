@@ -125,7 +125,7 @@
     const e = FN.Phi(x) - p, u = e * Math.sqrt(2 * Math.PI) * Math.exp(x * x / 2); x = x - u / (1 + x * u / 2);
     return mu + sd * x;
   };
-  FN.pnorm = FN.normcdf; FN.dnorm = FN.normpdf; FN.PhiInv = FN.qnorm; FN.NormInv = FN.qnorm; // inbox (fin-ml 3): the names authors reach for
+  FN.pnorm = FN.normcdf; FN.dnorm = FN.normpdf; FN.PhiInv = FN.qnorm; FN.NormInv = FN.qnorm; FN.Phiinv = FN.qnorm; // inbox (fin-ml 3): the names authors reach for
   /* sum(k, a, b, term) becomes F.sum(a, b, (k) => term): split the call's arguments at top-level commas */
   const sumCalls = (src) => {
     for (let guard = 0; guard < 20; guard++) {
@@ -167,7 +167,7 @@
     return src;
   };
   const compile = (expr, paramNames = []) => {
-    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact|lgamma|erfc|erf|PhiInv|Phi|NormInv|normcdf|normpdf|pnorm|dnorm|qnorm)\b(?!\s*[:\w])/g, 'F.$1'));
+    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact|lgamma|erfc|erf|PhiInv|Phiinv|Phi|NormInv|normcdf|normpdf|pnorm|dnorm|qnorm)\b(?!\s*[:\w])/g, 'F.$1'));
     if (!paramNames.includes('e')) src = src.replace(/(^|[^\w.])e(?![\w(])/g, '$1F.e'); // Euler's number, not the e of 1e5
     src = wrapUnaryPow(src);
     if (/[^\w\s+\-*/().,<>=?:!&|%]/.test(src.replace(/F\./g, ''))) throw new Error('Bad expression: ' + expr);
@@ -526,7 +526,7 @@
   DERIVE_FN.prod = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), ['k', ...Object.keys(names)]); let s = 1; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s *= f(0, { ...names, k }); return s; };
   DERIVE_FN.lgamma = FN.lgamma; DERIVE_FN.erf = FN.erf; DERIVE_FN.Phi = FN.Phi;
   /* items 341, 380: the normal family in derive and captions as in curve formulas */
-  ['erfc', 'normcdf', 'normpdf', 'pnorm', 'dnorm', 'qnorm', 'PhiInv', 'NormInv'].forEach((k) => { DERIVE_FN[k] = FN[k]; });
+  ['erfc', 'normcdf', 'normpdf', 'pnorm', 'dnorm', 'qnorm', 'PhiInv', 'NormInv', 'Phiinv'].forEach((k) => { DERIVE_FN[k] = FN[k]; });
   /* inbox (fin-ml 3, arma 1): list arithmetic for series a derive writes (arrow functions are not allowed):
      vadd(a, b), vsub(a, b), vmul(a, b) element by element (a number counts as a constant list), vscale(a, k),
      cumsum(a), diff(a) (first differences, one shorter), rolling(a, w, "mean" | "sd" | "sum") (null until w values) */
@@ -556,6 +556,11 @@
   DERIVE_FN.obj = (...kv) => { const o = {}; for (let i = 0; i + 1 < kv.length; i += 2) o[String(kv[i])] = kv[i + 1]; return o; };
   DERIVE_FN.range = (a, b) => ({ range: [a, b] });
   /* item 382: seq(a, b, step) is the list a, a + step, ..., b (categories that follow a slider) */
+  /* inbox (backtest 3): cummax(a), cummin(a) (running peak and trough), vmax(a), vmin(a) (of a list); JavaScript's own
+     a.slice(i, j) works on lists */
+  DERIVE_FN.cummax = (a) => { let m = -Infinity; return (a || []).map((x) => (x == null ? null : (m = Math.max(m, +x)))); };
+  DERIVE_FN.cummin = (a) => { let m = Infinity; return (a || []).map((x) => (x == null ? null : (m = Math.min(m, +x)))); };
+  DERIVE_FN.vmax = (a) => Math.max(...(a || []).filter((x) => x != null).map(Number)); DERIVE_FN.vmin = (a) => Math.min(...(a || []).filter((x) => x != null).map(Number));
   DERIVE_FN.seq = (a, b, st = 1) => { const out = []; if (!(+st > 0)) return out; for (let v = +a, k = 0; v <= +b + 1e-9 && k < 1000; v += +st, k++) out.push(+v.toFixed(10)); return out; };
   /* item 367: seeded noise for live series: randn(n, seed) is n standard normal draws, ar1(phi, n, seed, sigma, x0) an
      AR(1) path x_t = phi x_(t-1) + sigma e_t on the same draws, so a slider on phi redraws the same shocks */
@@ -675,10 +680,11 @@
     wrap.append(row, cap); host.append(wrap);
     const side = {}, active = SIDES.includes(spec.active) ? spec.active : 'left';
     /* item 155: two tables side by side are compact, and stack (each at full width) whenever either would overflow */
-    const twoTables = SIDES.every(k => (spec[k] || {}).kind === 'table');
+    /* inbox (backtest 4): two consoles side by side stack as two tables do when a line would scroll */
+    const twoTables = SIDES.every(k => ['table', 'console'].includes((spec[k] || {}).kind)) && SIDES.some(k => (spec[k] || {}).kind === 'table') === SIDES.every(k => (spec[k] || {}).kind === 'table');
     const hosts = {};
     /* item 185: shareMargins lines up the plot areas of two series (or other kinds with margins()) */
-    const build = (k, extra) => { const sp = spec[k] || { kind: 'table', params: {} }; return create(hosts[k], { ...sp, params: { ...(twoTables ? { compact: true } : {}), ...(sp.kind === 'matrix' ? { fit: true } : {}), ...(sp.params || {}), ...(extra || {}) } }, ctx); };
+    const build = (k, extra) => { const sp = spec[k] || { kind: 'table', params: {} }; return create(hosts[k], { ...sp, params: { ...(twoTables && sp.kind === 'table' ? { compact: true } : {}), ...(sp.kind === 'matrix' ? { fit: true } : {}), ...(sp.params || {}), ...(extra || {}) } }, ctx); };
     for (const k of SIDES) {
       const h = document.createElement('div'); h.className = 'cv-pair-side cv-pair-' + k; row.append(h); hosts[k] = h;
       side[k] = build(k);
@@ -691,7 +697,7 @@
       const fit = () => {
         if (!wrap.isConnected) return;
         wrap.classList.remove('is-stacked');
-        const over = SIDES.some(k => { const sc = side[k] && side[k].el && side[k].el.querySelector('.cv-tbl-wrap'); return sc && sc.scrollWidth > sc.clientWidth + 1; });
+        const over = SIDES.some(k => { const sc = side[k] && side[k].el && side[k].el.querySelector('.cv-tbl-wrap, .cv-con'); return sc && sc.scrollWidth > sc.clientWidth + 1; });
         wrap.classList.toggle('is-stacked', over);
       };
       if (typeof ResizeObserver === 'function') { let lastW = -1; new ResizeObserver(() => { const w = wrap.clientWidth; if (w !== lastW) { lastW = w; fit(); } }).observe(wrap); }

@@ -1,0 +1,483 @@
+{
+ "id": "homework-3",
+ "course": "opt-dash",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h3-steps",
+   "difficulty": 4,
+   "skills": [
+    "od-iv"
+   ],
+   "prose": "For the results note we want to show how plain Newton behaves, step by step. Return the list of iterates, starting with `sigma0`. Stop when the price gap is below `tol` or after `max_steps` steps. Raise `ValueError` if vega is exactly 0.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> iv_newton_steps(12.0, 100, 100, 0.05, 1)",
+      "[0.2, 0.2412913067729737, 0.24111689547354206, 0.2411168936821648]"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `iv_newton_steps(price, S, K, r, T, kind=\"call\", q=0.0, sigma0=0.2, tol=1e-12, max_steps=50)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from math import erf, exp, log, sqrt, pi\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n",
+    "starter": "# bs_price(S, K, r, sigma, T, kind, q) and bs_vega(S, K, r, sigma, T, q) are loaded.\n\ndef iv_newton_steps(price, S, K, r, T, kind=\"call\", q=0.0, sigma0=0.2, tol=1e-12, max_steps=50):\n    \"\"\"Plain Newton iterates for the implied vol, starting with sigma0.\"\"\"\n    steps = [sigma0]\n    ...\n    return steps\n",
+    "solution": "# bs_price(S, K, r, sigma, T, kind, q) and bs_vega(S, K, r, sigma, T, q) are loaded.\n\ndef iv_newton_steps(price, S, K, r, T, kind=\"call\", q=0.0, sigma0=0.2, tol=1e-12, max_steps=50):\n    \"\"\"Plain Newton iterates for the implied vol, starting with sigma0.\"\"\"\n    steps = [sigma0]\n    sigma = sigma0\n    for _ in range(max_steps):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < tol:\n            break\n        v = bs_vega(S, K, r, sigma, T, q)\n        if v == 0:\n            raise ValueError(\"vega is zero: Newton cannot step\")\n        sigma = sigma - diff / v\n        steps.append(sigma)\n    return steps\n",
+    "examples": [
+     {
+      "call": "len(iv_newton_steps(12.0, 100, 100, 0.05, 1))",
+      "expect": "4"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(iv_newton_steps(12.0, 100, 100, 0.05, 1))",
+      "expect": "4"
+     },
+     {
+      "call": "[round(s, 6) for s in iv_newton_steps(12.0, 100, 100, 0.05, 1)]",
+      "expect": "[0.2, 0.241291, 0.241117, 0.241117]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(iv_newton_steps(12.0, 100, 100, 0.05, 1)[-1], 10)",
+      "expect": "0.2411168937",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(iv_newton_steps(12.0, 100, 100, 0.05, 1, sigma0=0.05)[1], 4)",
+      "expect": "0.3347",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(iv_newton_steps(12.0, 100, 100, 0.05, 1, max_steps=1))",
+      "expect": "2"
+     },
+     {
+      "call": "[round(s, 4) for s in iv_newton_steps(0.04, 100, 80, 0.05, 1/12, 'put', 0.01, max_steps=5)]",
+      "expect": "[0.2, 8.7361, -4.5014, 2.1133, 0.7186, 0.4973]",
+      "compare": "isclose"
+     },
+     {
+      "call": "iv_newton_steps(0.04, 100, 75, 0.05, 1/12, 'put', 0.01)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "iv_newton_steps(10.450583572185565, 100, 100, 0.05, 1)",
+      "expect": "[0.2]"
+     }
+    ],
+    "how": "Check runs 8 hidden tests: the £12.00 call from two starts, a step limit, the 80 put's wild iterates and the 75 put's zero vega. Pure Python: nothing to load."
+   },
+   "feedback": {
+    "correct": "Your iterates match: three steps for the £12.00 call, chaos for the 80 put.",
+    "generic": "Not quite right. Check where you test the gap: before each step, so a solved start returns `[sigma0]`."
+   },
+   "explain": {
+    "text": "Testing the gap before stepping means an exact start returns at once. The 80 put's list, 0.2, 8.74, −4.50, 2.11, is the evidence for the bracket in the dashboard's solver."
+   }
+  },
+  {
+   "id": "h3-svi",
+   "difficulty": 5,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "A quadratic in $m$ bends the wrong way far out. Raw **SVI** writes total variance as $w(k) = a + b\\,(\\rho(k - m) + \\sqrt{(k - m)^2 + s^2})$, linear in the wings. Fit it with `scipy.optimize.least_squares`, using the start and bounds in the starter.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.45,
+      0.3
+     ],
+     "y": [
+      0.04,
+      0.075
+     ],
+     "xLabel": "Log-moneyness $k$",
+     "yLabel": "Total variance $w$",
+     "xStep": 0.1,
+     "functions": [
+      {
+       "id": "svi",
+       "expr": "0.031125 + 0.057847*(-0.999*(x + 0.201794) + sqrt((x + 0.201794)^2 + 0.445403^2))",
+       "domain": [
+        -0.45,
+        0.3
+       ],
+       "label": "SVI fit"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p0",
+       "x": -0.3967,
+       "y": 0.07043716000000001,
+       "tap": false
+      },
+      {
+       "id": "p1",
+       "x": -0.3277,
+       "y": 0.06533135999999999,
+       "tap": false
+      },
+      {
+       "id": "p2",
+       "x": -0.2631,
+       "y": 0.06071296,
+       "tap": false
+      },
+      {
+       "id": "p3",
+       "x": -0.1454,
+       "y": 0.053777609999999997,
+       "tap": false
+      },
+      {
+       "id": "p4",
+       "x": -0.0913,
+       "y": 0.05112121,
+       "tap": false
+      },
+      {
+       "id": "p5",
+       "x": -0.04,
+       "y": 0.048841,
+       "tap": false
+      },
+      {
+       "id": "p6",
+       "x": 0.0088,
+       "y": 0.048048640000000004,
+       "tap": false
+      },
+      {
+       "id": "p7",
+       "x": 0.0998,
+       "y": 0.044732249999999994,
+       "tap": false
+      },
+      {
+       "id": "p8",
+       "x": 0.1423,
+       "y": 0.04376464,
+       "tap": false
+      },
+      {
+       "id": "p9",
+       "x": 0.1831,
+       "y": 0.042973290000000004,
+       "tap": false
+      },
+      {
+       "id": "p10",
+       "x": 0.2224,
+       "y": 0.042148090000000006,
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "Complete `svi_fit(k, w)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nimport pandas as pd   # own line: the app loads packages from the imports it can read\nimport numpy as np, pandas as pd\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef true_iv(K, T, S=100.0, r=0.05, q=0.01):\n    m = log(K / (S * exp((r - q) * T))) / sqrt(T)       # moneyness per root year\n    atm = 0.22 - 0.045 * exp(-T / 0.3)                   # term structure: rises with T\n    return atm - 0.08 * m + 0.10 * m * m                 # skew and smile\n\ndef make_chain(seed=2320, S=100.0, r=0.05, q=0.01):\n    rng = np.random.default_rng(seed)\n    rows = []\n    for T in [1 / 12, 2 / 12, 3 / 12, 6 / 12, 1.0]:\n        for K in range(70, 131, 5):\n            for kind in (\"call\", \"put\"):\n                mid = bs_price(S, K, r, true_iv(K, T, S, r, q), T, kind, q)\n                half = max(0.025, 0.03 * mid)\n                noise = 0.2 * half * rng.standard_normal()\n                bid = max(round(mid - half + noise, 2), 0.0)\n                ask = round(mid + half + noise, 2)\n                rows.append([T, K, kind, bid, ask, int(rng.integers(0, 5000)), 0.0])\n    df = pd.DataFrame(rows, columns=[\"T\", \"strike\", \"type\", \"bid\", \"ask\", \"volume\", \"age_min\"])\n    bad = rng.choice(len(df), 9, replace=False)\n    df.loc[bad[:3], \"bid\"] = 0.0                                          # zero bids\n    df.loc[bad[3:5], \"bid\"] = df.loc[bad[3:5], \"ask\"] + 0.05              # crossed\n    df.loc[bad[5:7], \"age_min\"] = 240.0                                   # stale\n    df.loc[bad[7:], \"ask\"] = (df.loc[bad[7:], \"ask\"] * 1.6).round(2)      # wide\n    return df\n\ndef mid(df):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    return m.where(df[\"bid\"] > 0)\n\ndef clean_quotes(df, max_age_min=30, max_rel_spread=0.5):\n    m = (df[\"bid\"] + df[\"ask\"]) / 2\n    keep = ((df[\"bid\"] > 0) & (df[\"bid\"] <= df[\"ask\"])\n            & (df[\"age_min\"] <= max_age_min)\n            & ((df[\"ask\"] - df[\"bid\"]) / m < max_rel_spread))\n    return df[keep].reset_index(drop=True)\n\ndef implied_forward(df_T, r, T):\n    w = df_T.assign(mid=mid(df_T)).pivot(index=\"strike\", columns=\"type\", values=\"mid\")\n    if \"call\" not in w or \"put\" not in w:\n        return float(\"nan\")\n    w = w.dropna(subset=[\"call\", \"put\"])\n    if len(w) < 3:\n        return float(\"nan\")\n    F = w.index + exp(r * T) * (w[\"call\"] - w[\"put\"])\n    return float(np.median(F))\n\ndef otm_quotes(df_T, F):\n    keep = ((df_T[\"type\"] == \"put\") & (df_T[\"strike\"] < F)) | ((df_T[\"type\"] == \"call\") & (df_T[\"strike\"] >= F))\n    return df_T[keep].sort_values(\"strike\").reset_index(drop=True)\n\nfrom math import pi\n\ndef bs_vega(S, K, r, sigma, T, q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * exp(-q * T) * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\ndef implied_vol(price, S, K, r, T, kind=\"call\", q=0.0):\n    \"\"\"Volatility at which bs_price matches price, by Newton's method with a bisection fallback.\"\"\"\n    if kind == \"call\":\n        lower, upper = max(S * exp(-q * T) - K * exp(-r * T), 0.0), S * exp(-q * T)\n    elif kind == \"put\":\n        lower, upper = max(K * exp(-r * T) - S * exp(-q * T), 0.0), K * exp(-r * T)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi, sigma = 1e-4, 5.0, 0.2\n    for _ in range(50):\n        diff = bs_price(S, K, r, sigma, T, kind, q) - price\n        if abs(diff) < 1e-12:\n            return sigma\n        if diff > 0:\n            hi = sigma            # price too high: the answer is below sigma\n        else:\n            lo = sigma            # price too low: the answer is above sigma\n        v = bs_vega(S, K, r, sigma, T, q)\n        new = sigma - diff / v if v > 1e-12 else hi + 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2   # Newton left the bracket: bisect instead\n        if abs(new - sigma) < 1e-14:\n            return new\n        sigma = new\n    return sigma\n\ndef smile(clean, T, S, r, q):\n    \"\"\"OTM quotes of one expiry with standardised moneyness m and the implied vol of the mid.\"\"\"\n    df_T = clean[np.isclose(clean[\"T\"], T)]\n    F = S * exp((r - q) * T)\n    otm = otm_quotes(df_T, F)\n    rows = []\n    for K, kind, b, a in zip(otm[\"strike\"], otm[\"type\"], otm[\"bid\"], otm[\"ask\"]):\n        try:\n            iv = implied_vol((b + a) / 2, S, K, r, T, kind, q)\n        except ValueError:\n            iv = float(\"nan\")\n        rows.append([K, log(K / F) / sqrt(T), iv])\n    return pd.DataFrame(rows, columns=[\"strike\", \"m\", \"iv\"])\n\nclean = clean_quotes(make_chain())\nsm1 = smile(clean, 1.0, 100.0, 0.05, 0.01).dropna()\nk1 = np.log(sm1['strike'] / (100 * np.exp(0.04))).to_numpy()\nw1 = (sm1['iv'] ** 2 * 1.0).to_numpy()\n",
+    "starter": "import numpy as np\nfrom scipy.optimize import least_squares\n\ndef svi_w(k, a, b, rho, m, s):\n    \"\"\"Raw SVI total variance at log-moneyness k.\"\"\"\n    k = np.asarray(k, dtype=float)\n    return a + b * (rho * (k - m) + np.sqrt((k - m) ** 2 + s * s))\n\ndef svi_fit(k, w):\n    \"\"\"Least squares fit of raw SVI to total variances; returns (a, b, rho, m, s).\"\"\"\n    k = np.asarray(k, dtype=float)\n    w = np.asarray(w, dtype=float)\n    ...  # drop NaN; ValueError below five points\n    x0 = [0.5 * w.min(), 0.1, -0.5, 0.0, 0.1]\n    lo = [-1.0, 0.0, -0.999, -1.0, 1e-4]\n    hi = [1.0, 5.0, 0.999, 1.0, 2.0]\n    ...  # least_squares on the residuals svi_w(k, *p) - w\n",
+    "solution": "import numpy as np\nfrom scipy.optimize import least_squares\n\ndef svi_w(k, a, b, rho, m, s):\n    \"\"\"Raw SVI total variance at log-moneyness k.\"\"\"\n    k = np.asarray(k, dtype=float)\n    return a + b * (rho * (k - m) + np.sqrt((k - m) ** 2 + s * s))\n\ndef svi_fit(k, w):\n    \"\"\"Least squares fit of raw SVI to total variances; returns (a, b, rho, m, s).\"\"\"\n    k = np.asarray(k, dtype=float)\n    w = np.asarray(w, dtype=float)\n    ok = ~(np.isnan(k) | np.isnan(w))\n    k, w = k[ok], w[ok]\n    if len(k) < 5:\n        raise ValueError(\"SVI has five parameters: need at least five quotes\")\n    x0 = [0.5 * w.min(), 0.1, -0.5, 0.0, 0.1]\n    lo = [-1.0, 0.0, -0.999, -1.0, 1e-4]\n    hi = [1.0, 5.0, 0.999, 1.0, 2.0]\n    res = least_squares(lambda p: svi_w(k, *p) - w, x0, bounds=(lo, hi), xtol=1e-14, ftol=1e-14, gtol=1e-14)\n    return tuple(float(v) for v in res.x)\n",
+    "budget": 20000,
+    "examples": [
+     {
+      "setup": "kk = np.linspace(-0.5, 0.5, 21); ww = svi_w(kk, 0.02, 0.1, -0.4, 0.05, 0.15)",
+      "call": "[round(v, 4) for v in svi_fit(kk, ww)]",
+      "expect": "[0.02, 0.1, -0.4, 0.05, 0.15]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "kk = np.linspace(-0.5, 0.5, 21); ww = svi_w(kk, 0.02, 0.1, -0.4, 0.05, 0.15)",
+      "call": "[round(v, 4) for v in svi_fit(kk, ww)]",
+      "expect": "[0.02, 0.1, -0.4, 0.05, 0.15]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "kk = np.linspace(-0.5, 0.5, 21); ww = svi_w(kk, 0.02, 0.1, -0.4, 0.05, 0.15)",
+      "call": "len(svi_fit(kk, ww)), isinstance(svi_fit(kk, ww), tuple)",
+      "expect": "(5, True)"
+     },
+     {
+      "setup": "kk = np.linspace(-0.5, 0.5, 21); ww = svi_w(kk, 0.02, 0.1, -0.4, 0.05, 0.15)",
+      "call": "[round(v, 4) for v in svi_fit(np.append(kk, 0.6), np.append(ww, np.nan))]",
+      "expect": "[0.02, 0.1, -0.4, 0.05, 0.15]",
+      "compare": "isclose"
+     },
+     {
+      "call": "svi_fit([0.0, 0.1, 0.2, 0.3], [0.04, 0.04, 0.04, 0.04])",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "float(np.max(np.abs(svi_w(k1, *svi_fit(k1, w1)) - w1))) < 1e-3",
+      "expect": "True"
+     },
+     {
+      "call": "abs(float(np.sqrt(svi_w(0.0, *svi_fit(k1, w1)))) - 0.2185) < 0.001",
+      "expect": "True"
+     },
+     {
+      "setup": "p = svi_fit(k1, w1)",
+      "call": "bool(0 <= p[1] and -1 < p[2] < 1 and p[4] > 0)",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: synthetic SVI data, NaN, too few points, and the seeded one-year smile (`k1`, `w1` are loaded). The first run loads numpy, pandas and SciPy: allow 30 to 40 seconds."
+   },
+   "feedback": {
+    "correct": "Your SVI fit recovers synthetic parameters and fits the one-year smile within $10^{-3}$ in total variance.",
+    "generic": "Not quite right. Check the NaN filter, the five-point minimum, and that you pass `bounds=(lo, hi)`."
+   },
+   "explain": {
+    "text": "SVI's wings are straight lines in $k$, as theory says total variance should be far out. On the seeded one-year smile it lands at $\\rho = -0.999$, on its bound: eleven quotes cannot pin five parameters well. Say so in the note."
+   }
+  },
+  {
+   "id": "h3-order",
+   "difficulty": 3,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "Derive the forward vol from the returns themselves. Write $R_{a,b}$ for the log return from time $a$ to time $b$.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$R_{0,T_2} = R_{0,T_1} + R_{T_1,T_2}$ (log returns add)"
+     },
+     {
+      "id": "d2",
+      "text": "$\\text{Var}(R_{0,T_2}) = \\text{Var}(R_{0,T_1}) + \\text{Var}(R_{T_1,T_2})$ (the two returns are uncorrelated)"
+     },
+     {
+      "id": "d3",
+      "text": "$\\sigma_2^2 T_2 = \\sigma_1^2 T_1 + \\sigma_{1,2}^2 (T_2 - T_1)$ (each variance is vol squared times time)"
+     },
+     {
+      "id": "d4",
+      "text": "$\\sigma_{1,2}^2 = \\dfrac{w_2 - w_1}{T_2 - T_1}$ with $w_i = \\sigma_i^2 T_i$ (rearrange)"
+     },
+     {
+      "id": "d5",
+      "text": "$\\sigma_{1,2}$ is real only if $w_2 \\ge w_1$: total variance must not fall (a variance is never negative)"
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5"
+    ]
+   },
+   "feedback": {
+    "correct": "From returns to variances to the calendar condition.",
+    "generic": "Not quite right. Returns first, then variances, then vols, then the condition.",
+    "byKey": {
+     "d2": "The variance line needs the sum of returns before it. Start from how log returns combine."
+    }
+   },
+   "explain": {
+    "text": "Log returns add, and uncorrelated returns have variances that add. So forward variance is the slope of $w$, and a falling $w$ would need a negative variance."
+   }
+  },
+  {
+   "id": "h3-event",
+   "difficulty": 4,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "Results are due in 10 days. The 7-day option trades at 30% vol and the 14-day option at 45%. Assume an ordinary day's vol is 30%.",
+   "question": "What one-day move, as a standard deviation, is priced for the results?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0657,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "%",
+    "label": "Results-day move",
+    "accept": "6.57%: $\\sqrt{(0.45^2 - 0.30^2) \\times 14/365}$",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 0.0881,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pts",
+      "value": 0.15,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 6.57%.",
+    "generic": "Not quite right. Find the 14-day variance beyond 30% vol, then take its root.",
+    "byKey": {
+     "all": "That is the whole 14-day variance's root. Remove the ordinary days' share first.",
+     "pts": "15 vol points is the annual gap. Convert it to variance over 14 days."
+    }
+   },
+   "explain": {
+    "text": "Extra variance: $(0.2025 - 0.09) \\times 14/365 = 0.00432$, a 6.57% one-day move. The 7-day option, which ends before the results, shows the ordinary vol."
+   }
+  },
+  {
+   "id": "h3-skew",
+   "difficulty": 3,
+   "skills": [
+    "od-iv",
+    "od-surface"
+   ],
+   "prose": "The one-month skew IV(90) − IV(110) is 0.0596. Suppose the skew per unit of $m$ is the same at one year.",
+   "question": "What one-year IV(90) − IV(110) does that predict, to first order?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0172,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "One-year skew",
+    "accept": "0.0172: $0.0596/\\sqrt{12}$; the planted surface gives 0.0179",
+    "wrong": [
+     {
+      "id": "twelve",
+      "value": 0.00497,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "same",
+      "value": 0.0596,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.0596/\\sqrt{12} = 0.0172$, close to the planted 0.0179.",
+    "generic": "Not quite right. A £ of strike is worth $1/\\sqrt{T}$ in $m$.",
+    "byKey": {
+     "twelve": "You divided by 12. Moneyness scales with $\\sqrt{T}$, so divide by $\\sqrt{12}$.",
+     "same": "Equal in $m$ does not mean equal in strike."
+    }
+   },
+   "explain": {
+    "text": "Dividing by $\\sqrt{12} = 3.46$ gives 0.0172. The planted value, 0.0179, differs because curvature and the moving forward add second-order terms."
+   }
+  },
+  {
+   "id": "h3-crisis",
+   "difficulty": 4,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "At the money: one month at 50%, one year at 25%. Total variances: 0.02083 and 0.0625.",
+   "question": "What three-month vol does linear interpolation in total variance give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3371,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Vol",
+    "accept": "0.3371: $w = 0.02083 + \\tfrac{2}{11}(0.04167) = 0.02841$",
+    "wrong": [
+     {
+      "id": "vol",
+      "value": 0.4545,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "33.71%.",
+    "generic": "Not quite right. Move $2/11$ of the way from $w_1$ to $w_2$, then take $\\sqrt{w/T}$.",
+    "byKey": {
+     "vol": "You interpolated vols. At six months that rule gives $w = 0.0746$, above the one-year 0.0625: an arbitrage."
+    }
+   },
+   "explain": {
+    "text": "Three months is $(0.25 - 0.0833)/(1 - 0.0833) = 2/11$ of the way, so $w = 0.02841$ and $\\sigma = \\sqrt{0.02841/0.25} = 0.3371$. Linear vols give 45.5% here and break the calendar condition by six months."
+   }
+  },
+  {
+   "id": "h3-note",
+   "difficulty": 4,
+   "skills": [
+    "od-iv",
+    "od-surface"
+   ],
+   "prose": "Your dashboard shows a one-month skew three times the one-year skew in strike terms, and a forward vol between six months and one year below zero.",
+   "question": "Explain the first with standardised moneyness. Diagnose the second: what it means and what could cause it. Then write the surface section of the results note, with one thing that failed.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Explain the skew ratio, diagnose the negative forward variance, and write the surface section of the results note.",
+    "model": "**1. The skew that looks three times steeper.** IV(90) − IV(110) is 0.0596 at one month and 0.0179 at one year, a ratio of 3.33. Standardised moneyness $m = \\ln(K/F)/\\sqrt{T}$ divides by $\\sqrt{T}$, so £20 of strike is $\\sqrt{12} = 3.46$ times more $m$ at one month. In $m$ the fitted skews are $b = -0.0767$ and $-0.0799$: the same within the noise. The one-month smile is steeper per £ because the same £ is a bigger move in standard deviations, not because short-dated puts are richer. Nothing to trade.\n\n**2. The negative forward variance.** Total variance must not fall with expiry at a fixed $k = \\ln(K/F)$: $\\sigma_{1,2}^2 = (w_2 - w_1)/(T_2 - T_1) < 0$ means $w_{1Y} < w_{6M}$, a calendar arbitrage if the prices were real. Likely causes, in the order I would check them:\n- a stale or bad one-year quote (check `age_min`, the spread, the bid-ask vols);\n- the two vols read at different points: one at the spot, one at the forward (at one year $F = 104.08$, so the spot strike is 0.34 vol points higher on the skew);\n- a wrong $q$ or $r$ for one expiry, which moves its forward and so its $m$;\n- vols interpolated linearly in $T$ somewhere upstream, which can bulge $w$;\n- an extrapolated wing: the queried strike lies outside one expiry's quotes.\nThe fix is in the data, not the formula: `forward_vol` should raise, the dashboard should log the pair, and the surface should not be published until the check passes.\n\n**3. Results note: Implied volatility surface.**\nSmiles were fitted per expiry as $\\sigma(m) = a + bm + cm^2$ to out-of-the-money mids after cleaning (4, 7, 9, 11 and 11 quotes). Skew and curvature are stable across expiries ($b \\approx -0.08$, $c \\approx 0.10$); the level rises from 0.185 at one month to 0.219 at one year. Expiries are joined by linear interpolation of total variance in $T$ at fixed log-moneyness, which preserves calendar order when the nodes are ordered; outside the nodes the vol is held flat and flagged. What failed: the one-month fit rests on four quotes between 90 and 105, so its wings are extrapolated (1.97 vol points low at £70); and the forward vol between six months and one year came out negative on the first run, traced to [the cause found above]. Next: weight fits by the bid-ask vol band, fit SVI for the wings, and run the arbitrage checks of l15 before publishing.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Explains the 3.3 ratio with $m = \\ln(K/F)/\\sqrt{T}$ and $\\sqrt{12} = 3.46$"
+     },
+     {
+      "points": 1,
+      "text": "Quotes the fitted skews in $m$ (about $-0.077$ and $-0.080$) and concludes there is no trade"
+     },
+     {
+      "points": 2,
+      "text": "States that negative forward variance means total variance falls: a calendar arbitrage or bad data"
+     },
+     {
+      "points": 2,
+      "text": "Lists at least three concrete causes (stale quote, spot against forward, wrong $q$ or $r$, vol interpolation, extrapolated wing)"
+     },
+     {
+      "points": 2,
+      "text": "Writes a surface section with method, interpolation rule, extrapolation flag and numbers"
+     },
+     {
+      "points": 1,
+      "text": "The section includes a concrete \"what failed\" item"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and tick the rubric.",
+    "generic": "Open the model answer and mark your work against the rubric."
+   },
+   "explain": {
+    "text": "The ratio is a change of units; the negative forward variance is a data problem the dashboard must catch, log and report."
+   }
+  }
+ ]
+}

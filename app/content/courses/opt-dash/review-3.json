@@ -1,0 +1,463 @@
+{
+ "id": "review-3",
+ "course": "opt-dash",
+ "level": 3,
+ "items": [
+  {
+   "id": "r3-newton",
+   "difficulty": 2,
+   "skills": [
+    "od-iv"
+   ],
+   "prose": "A put trades at £5.00. At $\\sigma_0 = 0.30$ the model gives £5.60, and vega is 12.",
+   "question": "What is Newton's next guess $\\sigma_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.25,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "sigma 1",
+    "accept": "0.25: $0.30 - 0.60/12$",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.35,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.30 - 0.60/12 = 0.25$.",
+    "generic": "Not quite right. Subtract the price gap divided by vega.",
+    "byKey": {
+     "sign": "You added the step. The model price is too high, so $\\sigma$ must fall."
+    }
+   },
+   "explain": {
+    "text": "The gap is $5.60 - 5.00 = 0.60$ and $0.60/12 = 0.05$. Too high a price means too high a vol, so $\\sigma$ falls to 0.25."
+   }
+  },
+  {
+   "id": "r3-bracket",
+   "difficulty": 3,
+   "skills": [
+    "od-iv"
+   ],
+   "prose": "The safe solver starts at $\\sigma_0 = 0.2$ with bracket $[0.0001, 5]$. At 0.2 the model price is above the quote, and the Newton step lands at $-3.1$.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5
+    },
+    "state": {
+     "points": [
+      {
+       "id": "s0",
+       "x": 0.2,
+       "label": "$\\sigma_0$"
+      }
+     ],
+     "intervals": [
+      {
+       "id": "br",
+       "from": 0.0001,
+       "to": 5,
+       "label": "starting bracket",
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "Where does the solver put its next guess?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.10005,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Next guess",
+    "accept": "0.1: the midpoint of $[0.0001, 0.2]$",
+    "wrong": [
+     {
+      "id": "old",
+      "value": 2.50005,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "upper",
+      "value": 2.6,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "newton",
+      "value": -3.1,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The bracket becomes $[0.0001, 0.2]$, so the fallback is about 0.1.",
+    "generic": "Not quite right. Shrink the bracket first: is the answer above or below 0.2?",
+    "byKey": {
+     "old": "You bisected the starting bracket. A price that is too high moves $hi$ down to 0.2 first.",
+     "upper": "You moved $lo$ up to 0.2. The price at 0.2 is too high, so the answer is below 0.2.",
+     "newton": "A negative vol is outside the bracket, so the solver throws the step away."
+    }
+   },
+   "explain": {
+    "text": "Too high a price at 0.2 means the answer is below it: $hi = 0.2$. Newton's $-3.1$ is outside $[0.0001, 0.2]$, so the solver bisects to 0.10005."
+   }
+  },
+  {
+   "id": "r3-nan",
+   "difficulty": 3,
+   "skills": [
+    "od-iv"
+   ],
+   "prose": "`iv_frame` on the cleaned seeded chain gives NaN for 8 of 102 quotes. One is the one-month 70 call, mid £30.205.",
+   "question": "Why does no volatility fit it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "bound",
+      "text": "Its mid is below the call's lower bound, £30.208",
+      "correct": true
+     },
+     {
+      "id": "newton",
+      "text": "Newton diverges for deep in-the-money calls",
+      "why": "The solver checks the bounds before any step. This quote never reached Newton."
+     },
+     {
+      "id": "clean",
+      "text": "It should have been removed by cleaning",
+      "why": "Its bid is positive, the quote is fresh and the spread is 6%. Cleaning keeps it; the bounds check catches it."
+     },
+     {
+      "id": "high",
+      "text": "Its mid is above $S e^{-qT}$",
+      "why": "£30.205 is far below £99.92. The problem is at the other bound."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.3p below the price at zero vol.",
+    "generic": "Not quite right. Compare the mid with $S e^{-qT} - K e^{-rT}$."
+   },
+   "explain": {
+    "text": "$100 e^{-0.01/12} - 70 e^{-0.05/12} = 30.208$, and the mid is £30.205. Even zero vol prices the call higher. Deep in-the-money mids often sit this close to the bound."
+   }
+  },
+  {
+   "id": "r3-m",
+   "difficulty": 2,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "Six-month expiry, $S = 100$, $r = 5\\%$, $q = 1\\%$, so $F = 102.02$.",
+   "question": "What is the standardised moneyness $m$ of the 90 strike?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.1773,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "m",
+    "accept": "−0.1773: $\\ln(90/102.02)/\\sqrt{0.5}$",
+    "wrong": [
+     {
+      "id": "k",
+      "value": -0.1254,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "spot",
+      "value": -0.149,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$m = -0.1254/0.7071 = -0.1773$.",
+    "generic": "Not quite right. Take $\\ln(K/F)$ and divide by $\\sqrt{T}$.",
+    "byKey": {
+     "k": "That is $\\ln(K/F)$. Divide by $\\sqrt{0.5}$.",
+     "spot": "You measured from the spot. Use the forward, £102.02."
+    }
+   },
+   "explain": {
+    "text": "$\\ln(90/102.02) = -0.1254$, and $\\sqrt{0.5} = 0.7071$, so $m = -0.1773$."
+   }
+  },
+  {
+   "id": "r3-ratio",
+   "difficulty": 4,
+   "skills": [
+    "od-iv",
+    "od-surface"
+   ],
+   "prose": "Two expiries, one month and four months, have the same skew $b$ per unit of $m$ and the same level.",
+   "question": "About how many times steeper per £ of strike is the one-month smile near the money?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.05
+    },
+    "label": "Ratio",
+    "accept": "2: $\\sqrt{4/1}$",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{4} = 2$.",
+    "generic": "Not quite right. A £ of strike is worth $1/\\sqrt{T}$ units of $m$.",
+    "byKey": {
+     "four": "You scaled with $T$. Moneyness divides by $\\sqrt{T}$, so the ratio is $\\sqrt{4}$.",
+     "one": "Equal in $m$ is not equal in strike. Short expiries pack more $m$ into each £."
+    }
+   },
+   "explain": {
+    "text": "Near the money $dm/dK \\approx 1/(K\\sqrt{T})$, so the slope per £ is $b/(K\\sqrt{T})$. One month against four gives $\\sqrt{4/1} = 2$."
+   }
+  },
+  {
+   "id": "r3-fwd",
+   "difficulty": 3,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "At the money: three months at 22%, six months at 24%.",
+   "question": "What is the forward vol from three to six months?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2585,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Forward vol",
+    "accept": "0.2585: $\\sqrt{(0.0288 - 0.0121)/0.25}$",
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 0.23,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "voladd",
+      "value": 0.26,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "25.85% for the second quarter.",
+    "generic": "Not quite right. Subtract total variances, divide by the gap in time, take the root.",
+    "byKey": {
+     "avg": "You averaged the vols. Use total variances.",
+     "voladd": "You treated vol as additive in time: $(0.24 \\times 0.5 - 0.22 \\times 0.25)/0.25$. Square the vols first."
+    }
+   },
+   "explain": {
+    "text": "$w_1 = 0.22^2 \\times 0.25 = 0.0121$, $w_2 = 0.24^2 \\times 0.5 = 0.0288$. $(0.0288 - 0.0121)/0.25 = 0.0668$, whose root is 0.2585."
+   }
+  },
+  {
+   "id": "r3-cal",
+   "difficulty": 3,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "At one strike the two-month option shows 30% vol and the three-month 24%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Expiry",
+      "Vol",
+      "$w = \\sigma^2 T$"
+     ],
+     "rows": [
+      [
+       "2 months",
+       "30%",
+       "0.0150"
+      ],
+      [
+       "3 months",
+       "24%",
+       "0.0144"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What do these quotes say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "arb",
+      "text": "Total variance falls: a calendar arbitrage, or stale data",
+      "correct": true
+     },
+     {
+      "id": "inv",
+      "text": "An inverted term structure, which is normal in a sell-off",
+      "why": "Vols may fall with expiry; total variance may not. Here it falls from 0.0150 to 0.0144."
+     },
+     {
+      "id": "low",
+      "text": "A low forward vol for the third month",
+      "why": "The forward variance is negative, so no real forward vol exists."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: each vol is plausible on its own",
+      "why": "Each is plausible; together they are inconsistent."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Falling total variance cannot be a real market.",
+    "generic": "Not quite right. Compare the total variances, not the vols."
+   },
+   "explain": {
+    "text": "Sell the two-month option and buy the three-month one: you collect more than you pay, for less variance. `forward_vol` raises `ValueError` here, and the dashboard should log it.",
+    "canvas": {
+     "highlight": {
+      "cols": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "r3-interp",
+   "difficulty": 3,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "At a fixed $k = \\ln(K/F)$, the three-month node has total variance 0.0110 and the six-month node 0.0230.",
+   "question": "What vol does the surface give at $T = 0.375$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2129,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Vol",
+    "accept": "0.2129: $w = 0.017$, $\\sqrt{0.017/0.375}$",
+    "wrong": [
+     {
+      "id": "w",
+      "value": 0.017,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sqrtw",
+      "value": 0.1304,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$w = 0.017$, so $\\sigma = 0.2129$.",
+    "generic": "Not quite right. Interpolate $w$ halfway, then take $\\sqrt{w/T}$.",
+    "byKey": {
+     "w": "0.017 is the total variance. Divide by 0.375 and take the root.",
+     "sqrtw": "You took $\\sqrt{w}$ without dividing by $T$."
+    }
+   },
+   "explain": {
+    "text": "Halfway in time, $w = (0.0110 + 0.0230)/2 = 0.0170$. Then $\\sigma = \\sqrt{0.0170/0.375} = 0.2129$."
+   }
+  },
+  {
+   "id": "r3-wing",
+   "difficulty": 4,
+   "skills": [
+    "od-surface"
+   ],
+   "prose": "The seeded one-month smile rests on clean quotes at 90 to 105. A trader asks the surface for the one-month £70 put's vol and gets 42.1%; the planted value is 44.1%.",
+   "question": "What should the dashboard do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "flag",
+      "text": "Return the vol but flag it as extrapolated beyond the quoted strikes",
+      "correct": true
+     },
+     {
+      "id": "trust",
+      "text": "Return 42.1%: the fit is a smooth curve, so it is fine",
+      "why": "Smooth is not right. Beyond the quotes the quadratic follows its own shape: 2 points low here."
+     },
+     {
+      "id": "refit",
+      "text": "Add the £70 quote with a bid of 0.01 and refit",
+      "why": "Inventing a bid invents the wing. The l2 trap again."
+     },
+     {
+      "id": "zero",
+      "text": "Return NaN for any strike outside the quotes",
+      "why": "The book still needs a price. A flagged number is more useful than none."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Price it, and say it is a guess.",
+    "generic": "Not quite right. Where did the data stop?"
+   },
+   "explain": {
+    "text": "Inside the quoted range the one-month fit is within 0.31 vol points; at £70 it is 1.97 low. The results note should list every expiry's quoted range and every flagged query."
+   }
+  }
+ ]
+}

@@ -248,12 +248,17 @@ __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(
   /* Script mode harness: the learner's source runs once per case in a fresh namespace (see the header) */
   /* The worker loads packages from the imports it can see (loadPackagesFromImports); in script mode the learner's code is
      a string, so its import lines are repeated, never run, under if False */
-  const importsOf = (src) => String(src).split('\n').map(l => l.match(/^\s*(?:import\s+([\w.]+(?:\s*,\s*[\w.]+)*)|from\s+([\w.]+)\s+import\b)/)).filter(Boolean)
-    .flatMap(m => (m[1] ? m[1].split(',') : [m[2]]).map(x => x.trim())).filter(x => x && !x.startsWith('.'));
+  /* inbox (backtest 1, alpha 1, opt-dash 1): "import numpy as np, pandas as pd" names both packages (an alias used to end
+     the list, so pandas never loaded) */
+  const importsOf = (src) => String(src).split('\n').map(l => l.match(/^\s*(?:import\s+([\w.]+(?:\s+as\s+\w+)?(?:\s*,\s*[\w.]+(?:\s+as\s+\w+)?)*)|from\s+([\w.]+)\s+import\b)/)).filter(Boolean)
+    .flatMap(m => (m[1] ? m[1].split(',').map(x => x.replace(/\s+as\s+\w+\s*$/, '')) : [m[2]]).map(x => x.trim())).filter(x => x && !x.startsWith('.'));
   const importHint = (...srcs) => { const im = [...new Set(srcs.flatMap(importsOf))]; return im.length ? 'if False:\n' + im.map(x => '    import ' + x).join('\n') + '\n' : ''; };
   /* item 163: prelude (hidden Python run in the learner's namespace before their code) and postlude (run after it).
      With either, the learner's code is carried as a string and compiled as solution.py, so its line numbers stay true. */
-  const loadHarness = (src, pre, post) => `${importHint(src, pre, post)}import linecache as _zlc
+  /* inbox (backtest 2): files: { "engine_lib.py": "..." } are written into the run's working directory (on sys.path)
+     before the prelude, so the learner's code and a pytest file can import helper modules */
+  const filesCode = (files) => (files && typeof files === 'object' && Object.keys(files).length ? `import sys as _zfs\nif '' not in _zfs.path: _zfs.path.insert(0, '')\nfor _zn, _zt in __import__('json').loads(${JSON.stringify(JSON.stringify(files))}).items():\n    open(_zn, 'w').write(_zt)\n` : '');
+  const loadHarness = (src, pre, post, files) => `${importHint(src, pre, post, ...Object.values(files || {}))}${filesCode(files)}import linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 __ZQ_PRE = ${JSON.stringify(pre)}
 __ZQ_POST = ${JSON.stringify(post)}
@@ -270,8 +275,8 @@ def __zq_load():
 
 __zq_load()
 `;
-  const scriptHarness = (src, cases, pre = '', post = '') => `
-${importHint(src, pre, post)}import sys as _zs, io as _zio, linecache as _zlc
+  const scriptHarness = (src, cases, pre = '', post = '', files = null) => `
+${importHint(src, pre, post, ...Object.values(files || {}))}${filesCode(files)}import sys as _zs, io as _zio, linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 __ZQ_PRE = ${JSON.stringify(pre)}
 __ZQ_POST = ${JSON.stringify(post)}
@@ -425,13 +430,14 @@ def __zq_case(_i):
     const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
     const runCases = (cases) => new Promise((resolve) => {
       const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
-      const code = script ? scriptHarness(ed.value, cases, pre, post) : (pre || post ? loadHarness(ed.value, pre, post) : ed.value) + harness(cases, ed.value);
+      const files = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? spec.files : null;
+      const code = script ? scriptHarness(ed.value, cases, pre, post, files) : (pre || post || files ? loadHarness(ed.value, pre, post, files) : ed.value) + harness(cases, ed.value);
       const rows = cases.map(c => ({ tol: tolOf(c), argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
       let loadErr = null, loaded = '';
       /* item 143: spec.budget (ms) is added to the run's limit; code importing numpy, pandas or scipy gets 30 s on top
          without one, so the first package load is not charged against the 5 s per case */
-      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(ed.value + '\n' + String(spec.prelude || '') + '\n' + String(spec.postlude || ''));
-      const extra = spec.budget != null ? Math.max(0, +spec.budget || 0) : heavy ? 30000 : 0;
+      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(ed.value + '\n' + String(spec.prelude || '') + '\n' + String(spec.postlude || '') + '\n' + Object.values(spec.files || {}).join('\n'));
+      const extra = (spec.budget != null ? Math.max(0, +spec.budget || 0) : 0) + (heavy ? 30000 : 0); // inbox (alpha 4): budget adds to the heavy-import allowance
       const limit = TEST_MS * Math.max(1, cases.length) + extra;
       /* the load gets 5 s plus the widget's budget (or 30 s for heavy imports); each case 5 s plus its own budget, the
          widget's caseBudget, or, when the widget has a budget, that budget again (a slow numpy case keeps its room) */

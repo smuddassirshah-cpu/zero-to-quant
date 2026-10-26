@@ -195,7 +195,7 @@
           cats.forEach((c, i) => { if (i % every) return; g.append(K.lab(x(i) + bw / 2, H - mb + 15, c.label, { cls: 'cvb-tick', size: 12, h: 22 })); });
         }
         if (groups) { // legend, top right
-          let lx = W - mr; [...groups].reverse().forEach((q) => { const w = K.tw(q.label, 12) + 22; lx -= w; const o = K.obj('legend-' + q.id, '', q.colour); o.append(svg('rect', { x: lx, y: 8, width: 11, height: 11, rx: 2, class: 'cvb-bar' }), K.txt(lx + 15, 14, q.label, { anchor: 'start', size: 12 })); g.append(o); });
+          let lx = W - mr; [...groups].reverse().forEach((q) => { const w = K.tw(String(q.label).replace(/\$|\\[a-zA-Z]+|[{}^_]/g, ''), 12) * 1.08 + 26; lx -= w; const o = K.obj('legend-' + q.id, '', q.colour); o.append(svg('rect', { x: lx, y: 8, width: 11, height: 11, rx: 2, class: 'cvb-bar' }), K.lab(lx + 15, 14, q.label, { anchor: 'start', size: 12, w: w + 10, h: 20 })); g.append(o); }); // inbox (garch 1, alpha 3): KaTeX labels, spacing from each label's width
         }
         const sel = new Set(view.selected || []);
         /* item 322: cut: { at, side: "above" | "below", colour } recolours every bar beyond a cut on the category value
