@@ -286,8 +286,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "import numpy as np\n\ndef make_shift(seed, n=200, p=6):\n    \"\"\"n share-days in time order, p features. The second half is a\n    busier regime: each feature is twice as spread out and 1.5 higher.\n    y is the next-day return; only the first three features matter.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    X[n // 2:] = X[n // 2:] * 2.0 + 1.5\n    beta = np.array([0.5, -0.4, 0.3] + [0.0] * (p - 3))\n    y = X @ beta + 2.0 * rng.standard_normal(n)\n    return X, y\n",
-        "starter": "from sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef scale_leak_gap(X, y, n_train):\n    def test_mse(scaler):\n        Z = scaler.transform(X)\n        model = Ridge(alpha=10.0).fit(Z[:n_train], y[:n_train])\n        pred = model.predict(Z[n_train:])\n        return round(float(mean_squared_error(y[n_train:], pred)), 4)\n    leaky = test_mse(StandardScaler().fit(...))   # every row\n    clean = test_mse(StandardScaler().fit(...))   # training rows only\n    return leaky, clean\n",
-        "solution": "from sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef scale_leak_gap(X, y, n_train):\n    def test_mse(scaler):\n        Z = scaler.transform(X)\n        model = Ridge(alpha=10.0).fit(Z[:n_train], y[:n_train])\n        pred = model.predict(Z[n_train:])\n        return round(float(mean_squared_error(y[n_train:], pred)), 4)\n    leaky = test_mse(StandardScaler().fit(X))   # every row\n    clean = test_mse(StandardScaler().fit(X[:n_train]))   # training rows only\n    return leaky, clean\n",
+        "starter": "from sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef scale_leak_gap(X, y, n_train):\n    def test_mse(scaler):\n        Z = scaler.transform(X)\n        model = Ridge(alpha=10.0).fit(Z[:n_train], y[:n_train])\n        pred = model.predict(Z[n_train:])\n        mse = mean_squared_error(y[n_train:], pred)\n        return round(float(mse), 4)\n    leaky = test_mse(StandardScaler().fit(...))  # all\n    clean = test_mse(StandardScaler().fit(...))  # train\n    return leaky, clean\n",
+        "solution": "from sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef scale_leak_gap(X, y, n_train):\n    def test_mse(scaler):\n        Z = scaler.transform(X)\n        model = Ridge(alpha=10.0).fit(Z[:n_train], y[:n_train])\n        pred = model.predict(Z[n_train:])\n        mse = mean_squared_error(y[n_train:], pred)\n        return round(float(mse), 4)\n    leaky = test_mse(StandardScaler().fit(X))\n    clean = test_mse(StandardScaler().fit(X[:n_train]))\n    return leaky, clean\n",
         "examples": [
           {
             "setup": "X, y = make_shift(2)",
@@ -384,43 +384,43 @@
             {
               "id": "load",
               "label": "load prices",
-              "x": 0.12,
-              "y": 0.2,
+              "x": 0.15,
+              "y": 0.22,
               "shape": "rect"
             },
             {
               "id": "log",
               "label": "log(volume)",
-              "x": 0.42,
-              "y": 0.2,
+              "x": 0.5,
+              "y": 0.22,
               "shape": "rect"
             },
             {
               "id": "fill",
               "label": "fill gaps: median\nof all rows",
-              "x": 0.75,
-              "y": 0.2,
+              "x": 0.85,
+              "y": 0.22,
               "shape": "rect"
             },
             {
               "id": "split",
               "label": "walk-forward\nsplit",
-              "x": 0.12,
-              "y": 0.75,
+              "x": 0.15,
+              "y": 0.8,
               "shape": "rect"
             },
             {
               "id": "scale",
               "label": "scale: fit on\ntrain fold",
-              "x": 0.42,
-              "y": 0.75,
+              "x": 0.5,
+              "y": 0.8,
               "shape": "rect"
             },
             {
               "id": "fit",
               "label": "fit Ridge on\ntrain fold",
-              "x": 0.75,
-              "y": 0.75,
+              "x": 0.85,
+              "y": 0.8,
               "shape": "rect"
             }
           ],
@@ -446,7 +446,7 @@
               "to": "fit"
             }
           ],
-          "height": 240
+          "height": 260
         },
         "state": {}
       },
@@ -505,7 +505,8 @@
         "params": {
           "title": "Python",
           "lines": [
-            ">>> pipe = Pipeline([(\"scale\", StandardScaler()), (\"model\", Ridge())])",
+            ">>> pipe = Pipeline([(\"scale\", StandardScaler()),",
+            "...                  (\"model\", Ridge())])",
             ">>> # inside each fold: pipe.fit(X[train], y[train])",
             ">>> #   scale.fit(X[train]), then model.fit(...)",
             ">>> # then pipe.predict(X[test]) reuses that scaler"
@@ -518,8 +519,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "import numpy as np\n\ndef make_shift(seed, n=200, p=6):\n    \"\"\"n share-days in time order, p features. The second half is a\n    busier regime: each feature is twice as spread out and 1.5 higher.\n    y is the next-day return; only the first three features matter.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    X[n // 2:] = X[n // 2:] * 2.0 + 1.5\n    beta = np.array([0.5, -0.4, 0.3] + [0.0] * (p - 3))\n    y = X @ beta + 2.0 * rng.standard_normal(n)\n    return X, y\n",
-        "starter": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\n\ndef pipeline_cv(X, y, folds):\n    pipe = ...   # scale, then Ridge(), as one estimator\n    scores = cross_val_score(pipe, X, y, cv=TimeSeriesSplit(n_splits=folds),\n                             scoring=\"neg_mean_squared_error\")\n    return round(float(-scores.mean()), 4)\n",
-        "solution": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\n\ndef pipeline_cv(X, y, folds):\n    pipe = Pipeline([(\"scale\", StandardScaler()), (\"model\", Ridge())])\n    scores = cross_val_score(pipe, X, y, cv=TimeSeriesSplit(n_splits=folds),\n                             scoring=\"neg_mean_squared_error\")\n    return round(float(-scores.mean()), 4)\n",
+        "starter": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.model_selection import cross_val_score\n\ndef pipeline_cv(X, y, folds):\n    pipe = ...   # scale, then Ridge()\n    cv = TimeSeriesSplit(n_splits=folds)\n    scores = cross_val_score(pipe, X, y, cv=cv,\n                             scoring=\"neg_mean_squared_error\")\n    return round(float(-scores.mean()), 4)\n",
+        "solution": "from sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import TimeSeriesSplit\nfrom sklearn.model_selection import cross_val_score\n\ndef pipeline_cv(X, y, folds):\n    pipe = Pipeline([(\"scale\", StandardScaler()),\n                     (\"model\", Ridge())])\n    cv = TimeSeriesSplit(n_splits=folds)\n    scores = cross_val_score(pipe, X, y, cv=cv,\n                             scoring=\"neg_mean_squared_error\")\n    return round(float(-scores.mean()), 4)\n",
         "examples": [
           {
             "setup": "X, y = make_shift(1)",
@@ -627,7 +628,8 @@
             "pca": 0.0,
             "te": 0.45,
             "sel": 0.74
-          }
+          },
+          "caption": "Scale: 0.00. PCA: 0.00. Target encoding: 0.45. Selection: 0.74."
         }
       },
       "question": "What do the two large leaks have in common?",
@@ -706,13 +708,14 @@
             "((100, 500), (100,))",
             ">>> sel = SelectKBest(f_regression, k=10).fit(X, y)",
             ">>> X_10 = sel.transform(X)",
-            ">>> cross_val_score(LinearRegression(), X_10, y, cv=KFold(5)).mean()",
+            ">>> cross_val_score(LinearRegression(), X_10, y,",
+            "...                 cv=KFold(5)).mean()",
             "0.403"
           ]
         },
         "state": {
           "tone": {
-            "l6": "err"
+            "l7": "err"
           }
         }
       },
@@ -775,7 +778,8 @@
             "((100, 500), (100,))",
             ">>> sel = SelectKBest(f_regression, k=10).fit(X, y)",
             ">>> X_10 = sel.transform(X)",
-            ">>> cross_val_score(LinearRegression(), X_10, y, cv=KFold(5)).mean()",
+            ">>> cross_val_score(LinearRegression(), X_10, y,",
+            "...                 cv=KFold(5)).mean()",
             "0.403",
             ">>> pipe = Pipeline([(\"select\", SelectKBest(f_regression, k=10)),",
             "...                  (\"model\", LinearRegression())])",
@@ -783,8 +787,8 @@
             "-0.005"
           ],
           "tone": {
-            "l6": "err",
-            "l10": "ok"
+            "l7": "err",
+            "l11": "ok"
           }
         }
       }
@@ -827,8 +831,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "import numpy as np\n\ndef make_noise(seed, n=100, p=500):\n    \"\"\"n rows, p candidate signals and a target: all independent noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    return rng.standard_normal((n, p)), rng.standard_normal(n)\n",
-        "starter": "from sklearn.feature_selection import SelectKBest, f_regression\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import KFold, cross_val_score\nfrom sklearn.pipeline import Pipeline\n\ndef select_then_cv_vs_cv_then_select(X, y, k_features, folds):\n    cv = KFold(n_splits=folds)\n    # leaky: choose the columns on all rows, then cross-validate\n    X_k = SelectKBest(f_regression, k=k_features).fit_transform(X, y)\n    leaky = cross_val_score(LinearRegression(), X_k, y, cv=cv).mean()\n    # honest: the choice happens inside each fold\n    pipe = ...\n    honest = ...\n    return round(float(leaky), 3), round(float(honest), 3)\n",
-        "solution": "from sklearn.feature_selection import SelectKBest, f_regression\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import KFold, cross_val_score\nfrom sklearn.pipeline import Pipeline\n\ndef select_then_cv_vs_cv_then_select(X, y, k_features, folds):\n    cv = KFold(n_splits=folds)\n    # leaky: choose the columns on all rows, then cross-validate\n    X_k = SelectKBest(f_regression, k=k_features).fit_transform(X, y)\n    leaky = cross_val_score(LinearRegression(), X_k, y, cv=cv).mean()\n    # honest: the choice happens inside each fold\n    pipe = Pipeline([(\"select\", SelectKBest(f_regression, k=k_features)),\n                     (\"model\", LinearRegression())])\n    honest = cross_val_score(pipe, X, y, cv=cv).mean()\n    return round(float(leaky), 3), round(float(honest), 3)\n",
+        "starter": "from sklearn.feature_selection import SelectKBest\nfrom sklearn.feature_selection import f_regression\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import KFold\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import Pipeline\n\ndef select_then_cv_vs_cv_then_select(X, y,\n                                     k_features, folds):\n    cv = KFold(n_splits=folds)\n    # leaky: choose columns on all rows, then CV\n    sel = SelectKBest(f_regression, k=k_features)\n    X_k = sel.fit_transform(X, y)\n    leaky = cross_val_score(LinearRegression(), X_k, y,\n                            cv=cv).mean()\n    # honest: choose inside each fold\n    pipe = ...\n    honest = ...\n    return round(float(leaky), 3), round(float(honest), 3)\n",
+        "solution": "from sklearn.feature_selection import SelectKBest\nfrom sklearn.feature_selection import f_regression\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.model_selection import KFold\nfrom sklearn.model_selection import cross_val_score\nfrom sklearn.pipeline import Pipeline\n\ndef select_then_cv_vs_cv_then_select(X, y,\n                                     k_features, folds):\n    cv = KFold(n_splits=folds)\n    # leaky: choose columns on all rows, then CV\n    sel = SelectKBest(f_regression, k=k_features)\n    X_k = sel.fit_transform(X, y)\n    leaky = cross_val_score(LinearRegression(), X_k, y,\n                            cv=cv).mean()\n    # honest: choose inside each fold\n    pipe = Pipeline([\n        (\"select\", SelectKBest(f_regression, k=k_features)),\n        (\"model\", LinearRegression())])\n    honest = cross_val_score(pipe, X, y, cv=cv).mean()\n    return round(float(leaky), 3), round(float(honest), 3)\n",
         "examples": [
           {
             "setup": "X, y = make_noise(1)",

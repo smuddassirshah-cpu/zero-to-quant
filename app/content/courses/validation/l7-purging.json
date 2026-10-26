@@ -1,0 +1,2576 @@
+{
+  "id": "l7-purging",
+  "course": "validation",
+  "title": "Purging and embargo",
+  "minutes": 14,
+  "objectives": [
+    "Purge training labels that overlap the test period and add an embargo",
+    "Build a forward label with the right alignment",
+    "Measure how much purging changes an honest score"
+  ],
+  "skills": [
+    "vl-time",
+    "vl-leakage",
+    "vl-cv"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Each row is a day $t$, and its label is the return over the next five days, $t + 1$ to $t + 5$. Rows 7 to 10 are the test block. Rows 1 to 6 train the model.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            17
+          ],
+          "y": [
+            0,
+            11
+          ],
+          "xStep": 1,
+          "yStep": 1,
+          "xTicks": "integer",
+          "yTicks": "integer",
+          "xLabel": "Day",
+          "yLabel": "Row (the day the prediction is made)",
+          "grid": false,
+          "height": 320
+        },
+        "state": {
+          "points": [
+            {
+              "id": "t1",
+              "x": 1,
+              "y": 1,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t2",
+              "x": 2,
+              "y": 2,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t3",
+              "x": 3,
+              "y": 3,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t4",
+              "x": 4,
+              "y": 4,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t5",
+              "x": 5,
+              "y": 5,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t6",
+              "x": 6,
+              "y": 6,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t7",
+              "x": 7,
+              "y": 7,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t8",
+              "x": 8,
+              "y": 8,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t9",
+              "x": 9,
+              "y": 9,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t10",
+              "x": 10,
+              "y": 10,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            }
+          ],
+          "segments": [
+            {
+              "id": "w1",
+              "from": [
+                1.6,
+                1
+              ],
+              "to": [
+                6.4,
+                1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w2",
+              "from": [
+                2.6,
+                2
+              ],
+              "to": [
+                7.4,
+                2
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w3",
+              "from": [
+                3.6,
+                3
+              ],
+              "to": [
+                8.4,
+                3
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w4",
+              "from": [
+                4.6,
+                4
+              ],
+              "to": [
+                9.4,
+                4
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w5",
+              "from": [
+                5.6,
+                5
+              ],
+              "to": [
+                10.4,
+                5
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w6",
+              "from": [
+                6.6,
+                6
+              ],
+              "to": [
+                11.4,
+                6
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w7",
+              "from": [
+                7.6,
+                7
+              ],
+              "to": [
+                12.4,
+                7
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w8",
+              "from": [
+                8.6,
+                8
+              ],
+              "to": [
+                13.4,
+                8
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w9",
+              "from": [
+                9.6,
+                9
+              ],
+              "to": [
+                14.4,
+                9
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w10",
+              "from": [
+                10.6,
+                10
+              ],
+              "to": [
+                15.4,
+                10
+              ],
+              "colour": 4
+            }
+          ],
+          "polygons": [
+            {
+              "id": "band",
+              "points": [
+                [
+                  7.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  10.7
+                ],
+                [
+                  7.5,
+                  10.7
+                ]
+              ],
+              "colour": 4
+            }
+          ],
+          "caption": "Dots: the day each row is made. Bars: the five days its label uses. Shaded: days 8 to 15, used by the test labels (rows 7 to 10)"
+        }
+      },
+      "question": "Tap every training row whose label uses a day the test labels also use.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "t3",
+          "t4",
+          "t5",
+          "t6"
+        ],
+        "only": [
+          "t1",
+          "t2",
+          "t3",
+          "t4",
+          "t5",
+          "t6"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "with-2",
+            "set": [
+              "t2",
+              "t3",
+              "t4",
+              "t5",
+              "t6"
+            ]
+          },
+          {
+            "id": "last-only",
+            "set": [
+              "t6"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow each training row's bar to the right."
+        },
+        {
+          "rung": "point",
+          "text": "A bar that reaches the shaded days shares them with a test label.",
+          "highlight": [
+            "t3",
+            "t4",
+            "t5",
+            "t6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 6 uses days 7 to 11, row 3 uses days 4 to 8. Row 2 stops at day 7, just short of the shading."
+        }
+      ],
+      "feedback": {
+        "correct": "Rows 3 to 6: four rows, one fewer than the horizon of five.",
+        "generic": "Not quite right. Tap the training rows whose bar reaches day 8 or later.",
+        "byKey": {
+          "with-2": "Row 2 uses days 3 to 7. The test labels start at day 8, so row 2 is clean.",
+          "last-only": "Row 6 is not alone. Rows 3, 4 and 5 also reach day 8 or later.",
+          "t1": "Row 1 uses days 2 to 6, well before the test labels.",
+          "t2": "Row 2 uses days 3 to 7. The test labels start at day 8, so row 2 is clean."
+        }
+      },
+      "explain": {
+        "text": "Rows 3 to 6 were trained on returns that the test rows are asked to predict. With a label of $h$ days, $h - 1$ training rows before each test block carry test-period information.",
+        "canvas": {
+          "highlight": [
+            "w3",
+            "w4",
+            "w5",
+            "w6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 1,
+      "prose": "Same picture, longer label. A desk predicts the return over the next 20 trading days.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            17
+          ],
+          "y": [
+            0,
+            11
+          ],
+          "xStep": 1,
+          "yStep": 1,
+          "xTicks": "integer",
+          "yTicks": "integer",
+          "xLabel": "Day",
+          "yLabel": "Row (the day the prediction is made)",
+          "grid": false,
+          "height": 320
+        },
+        "state": {
+          "points": [
+            {
+              "id": "t1",
+              "x": 1,
+              "y": 1,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t2",
+              "x": 2,
+              "y": 2,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t3",
+              "x": 3,
+              "y": 3,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t4",
+              "x": 4,
+              "y": 4,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t5",
+              "x": 5,
+              "y": 5,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t6",
+              "x": 6,
+              "y": 6,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t7",
+              "x": 7,
+              "y": 7,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t8",
+              "x": 8,
+              "y": 8,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t9",
+              "x": 9,
+              "y": 9,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t10",
+              "x": 10,
+              "y": 10,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            }
+          ],
+          "segments": [
+            {
+              "id": "w1",
+              "from": [
+                1.6,
+                1
+              ],
+              "to": [
+                6.4,
+                1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w2",
+              "from": [
+                2.6,
+                2
+              ],
+              "to": [
+                7.4,
+                2
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w3",
+              "from": [
+                3.6,
+                3
+              ],
+              "to": [
+                8.4,
+                3
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w4",
+              "from": [
+                4.6,
+                4
+              ],
+              "to": [
+                9.4,
+                4
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w5",
+              "from": [
+                5.6,
+                5
+              ],
+              "to": [
+                10.4,
+                5
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w6",
+              "from": [
+                6.6,
+                6
+              ],
+              "to": [
+                11.4,
+                6
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w7",
+              "from": [
+                7.6,
+                7
+              ],
+              "to": [
+                12.4,
+                7
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w8",
+              "from": [
+                8.6,
+                8
+              ],
+              "to": [
+                13.4,
+                8
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w9",
+              "from": [
+                9.6,
+                9
+              ],
+              "to": [
+                14.4,
+                9
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w10",
+              "from": [
+                10.6,
+                10
+              ],
+              "to": [
+                15.4,
+                10
+              ],
+              "colour": 4
+            }
+          ],
+          "polygons": [
+            {
+              "id": "band",
+              "points": [
+                [
+                  7.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  10.7
+                ],
+                [
+                  7.5,
+                  10.7
+                ]
+              ],
+              "colour": 4
+            }
+          ],
+          "caption": "Dots: the day each row is made. Bars: the five days its label uses. Shaded: days 8 to 15, used by the test labels (rows 7 to 10)"
+        }
+      },
+      "question": "How many training rows just before each test block have a label that overlaps the test labels?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "19, which is $h - 1$ for $h = 20$.",
+        "label": "Overlapping rows",
+        "unit": "rows",
+        "wrong": [
+          {
+            "id": "h",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With five days you found four rows."
+        },
+        {
+          "rung": "point",
+          "text": "The row just before the block shares $h - 1$ days with the first test label.",
+          "highlight": [
+            "t6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The count is always $h - 1$: here $20 - 1 = 19$."
+        }
+      ],
+      "feedback": {
+        "correct": "19 rows, $h - 1$.",
+        "generic": "Not quite right. Count as you did for five days: one fewer than the horizon.",
+        "byKey": {
+          "h": "Row $s - 20$ uses days $s - 19$ to $s$; the test labels start at $s + 1$. So 19 rows overlap, not 20.",
+          "four": "Four was for a five-day label. This label is 20 days."
+        }
+      },
+      "explain": {
+        "text": "The row just before the block shares 19 days with the first test label, and each earlier row one day fewer. Removing those training rows is called **purging**."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "In $k$-fold with blocks, training rows also come *after* the test block. Test rows 4 to 7 use days 5 to 12. Look at rows 8 to 12.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            18
+          ],
+          "y": [
+            0,
+            13
+          ],
+          "xStep": 1,
+          "yStep": 1,
+          "xTicks": "integer",
+          "yTicks": "integer",
+          "xLabel": "Day",
+          "yLabel": "Row (the day the prediction is made)",
+          "grid": false,
+          "height": 320
+        },
+        "state": {
+          "points": [
+            {
+              "id": "t1",
+              "x": 1,
+              "y": 1,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t2",
+              "x": 2,
+              "y": 2,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t3",
+              "x": 3,
+              "y": 3,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t4",
+              "x": 4,
+              "y": 4,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t5",
+              "x": 5,
+              "y": 5,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t6",
+              "x": 6,
+              "y": 6,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t7",
+              "x": 7,
+              "y": 7,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t8",
+              "x": 8,
+              "y": 8,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t9",
+              "x": 9,
+              "y": 9,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t10",
+              "x": 10,
+              "y": 10,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t11",
+              "x": 11,
+              "y": 11,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t12",
+              "x": 12,
+              "y": 12,
+              "colour": 2,
+              "label": ""
+            }
+          ],
+          "segments": [
+            {
+              "id": "w1",
+              "from": [
+                1.6,
+                1
+              ],
+              "to": [
+                6.4,
+                1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w2",
+              "from": [
+                2.6,
+                2
+              ],
+              "to": [
+                7.4,
+                2
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w3",
+              "from": [
+                3.6,
+                3
+              ],
+              "to": [
+                8.4,
+                3
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w4",
+              "from": [
+                4.6,
+                4
+              ],
+              "to": [
+                9.4,
+                4
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w5",
+              "from": [
+                5.6,
+                5
+              ],
+              "to": [
+                10.4,
+                5
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w6",
+              "from": [
+                6.6,
+                6
+              ],
+              "to": [
+                11.4,
+                6
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w7",
+              "from": [
+                7.6,
+                7
+              ],
+              "to": [
+                12.4,
+                7
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w8",
+              "from": [
+                8.6,
+                8
+              ],
+              "to": [
+                13.4,
+                8
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w9",
+              "from": [
+                9.6,
+                9
+              ],
+              "to": [
+                14.4,
+                9
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w10",
+              "from": [
+                10.6,
+                10
+              ],
+              "to": [
+                15.4,
+                10
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w11",
+              "from": [
+                11.6,
+                11
+              ],
+              "to": [
+                16.4,
+                11
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w12",
+              "from": [
+                12.6,
+                12
+              ],
+              "to": [
+                17.4,
+                12
+              ],
+              "colour": 2
+            }
+          ],
+          "polygons": [
+            {
+              "id": "band",
+              "points": [
+                [
+                  4.5,
+                  0.3
+                ],
+                [
+                  12.5,
+                  0.3
+                ],
+                [
+                  12.5,
+                  12.7
+                ],
+                [
+                  4.5,
+                  12.7
+                ]
+              ],
+              "colour": 4
+            }
+          ],
+          "caption": "Test rows 4 to 7 (gold); their labels use days 5 to 12, shaded"
+        }
+      },
+      "question": "Tap every training row after the block whose label overlaps the test labels.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "t8",
+          "t9",
+          "t10",
+          "t11"
+        ],
+        "only": [
+          "t8",
+          "t9",
+          "t10",
+          "t11",
+          "t12"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "all-after",
+            "set": [
+              "t8",
+              "t9",
+              "t10",
+              "t11",
+              "t12"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which bars start inside the shading?"
+        },
+        {
+          "rung": "point",
+          "text": "Row 8 uses days 9 to 13, and day 12 is the last shaded day.",
+          "highlight": [
+            "t8",
+            "t11"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows 8 to 11 start on or before day 12. Row 12 starts at day 13."
+        }
+      ],
+      "feedback": {
+        "correct": "Four more rows, $h - 1$ again, on the other side.",
+        "generic": "Not quite right. Tap the rows after the block whose bar starts on day 12 or earlier.",
+        "byKey": {
+          "all-after": "Row 12 uses days 13 to 17, all after the shading. It overlaps nothing."
+        }
+      },
+      "explain": {
+        "text": "Rows 8 to 11 share days with test row 7's label, so they are purged too. Rows after the block have a second problem: their moving-average features are built from test days. An **embargo** drops a further gap of rows after the block for that.",
+        "canvas": {
+          "highlight": [
+            "w8",
+            "w9",
+            "w10",
+            "w11"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Line up the label",
+      "prose": "First build the label correctly. The return over days $t + 1$ to $t + h$ is $p_{t+h}/p_t - 1$. The last $h$ rows have no future prices, so we fill them with NaN and drop them before fitting.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            17
+          ],
+          "y": [
+            0,
+            11
+          ],
+          "xStep": 1,
+          "yStep": 1,
+          "xTicks": "integer",
+          "yTicks": "integer",
+          "xLabel": "Day",
+          "yLabel": "Row (the day the prediction is made)",
+          "grid": false,
+          "height": 320
+        },
+        "state": {
+          "points": [
+            {
+              "id": "t1",
+              "x": 1,
+              "y": 1,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t2",
+              "x": 2,
+              "y": 2,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t3",
+              "x": 3,
+              "y": 3,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t4",
+              "x": 4,
+              "y": 4,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t5",
+              "x": 5,
+              "y": 5,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t6",
+              "x": 6,
+              "y": 6,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t7",
+              "x": 7,
+              "y": 7,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t8",
+              "x": 8,
+              "y": 8,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t9",
+              "x": 9,
+              "y": 9,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t10",
+              "x": 10,
+              "y": 10,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            }
+          ],
+          "segments": [
+            {
+              "id": "w1",
+              "from": [
+                1.6,
+                1
+              ],
+              "to": [
+                6.4,
+                1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w2",
+              "from": [
+                2.6,
+                2
+              ],
+              "to": [
+                7.4,
+                2
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w3",
+              "from": [
+                3.6,
+                3
+              ],
+              "to": [
+                8.4,
+                3
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w4",
+              "from": [
+                4.6,
+                4
+              ],
+              "to": [
+                9.4,
+                4
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w5",
+              "from": [
+                5.6,
+                5
+              ],
+              "to": [
+                10.4,
+                5
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w6",
+              "from": [
+                6.6,
+                6
+              ],
+              "to": [
+                11.4,
+                6
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w7",
+              "from": [
+                7.6,
+                7
+              ],
+              "to": [
+                12.4,
+                7
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w8",
+              "from": [
+                8.6,
+                8
+              ],
+              "to": [
+                13.4,
+                8
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w9",
+              "from": [
+                9.6,
+                9
+              ],
+              "to": [
+                14.4,
+                9
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w10",
+              "from": [
+                10.6,
+                10
+              ],
+              "to": [
+                15.4,
+                10
+              ],
+              "colour": 4
+            }
+          ],
+          "polygons": [
+            {
+              "id": "band",
+              "points": [
+                [
+                  7.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  10.7
+                ],
+                [
+                  7.5,
+                  10.7
+                ]
+              ],
+              "colour": 4
+            }
+          ],
+          "caption": "Dots: the day each row is made. Bars: the five days its label uses. Shaded: days 8 to 15, used by the test labels (rows 7 to 10)"
+        }
+      },
+      "question": "Complete `forward_label(prices, h)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef forward_label(prices, h):\n    \"\"\"label[t] = prices[t + h] / prices[t] - 1, the return over days\n    t + 1 to t + h. The last h rows have no label: fill them with NaN.\"\"\"\n    p = np.asarray(prices, float)\n    ...\n",
+        "solution": "import numpy as np\n\ndef forward_label(prices, h):\n    \"\"\"label[t] = prices[t + h] / prices[t] - 1, the return over days\n    t + 1 to t + h. The last h rows have no label: fill them with NaN.\"\"\"\n    p = np.asarray(prices, float)\n    out = np.full(len(p), np.nan)\n    out[:-h] = p[h:] / p[:-h] - 1\n    return out\n",
+        "examples": [
+          {
+            "call": "[round(v, 6) for v in forward_label([100, 101, 103, 102, 105, 104], 2)[:4]]",
+            "expect": "[0.03, 0.009901, 0.019417, 0.019608]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(v, 6) for v in forward_label([100, 101, 103, 102, 105, 104], 2)[:4]]",
+            "expect": "[0.03, 0.009901, 0.019417, 0.019608]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.isnan(forward_label([100, 101, 103, 102, 105, 104], 2)[4:]).tolist()",
+            "expect": "[True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(forward_label([100, 101, 103, 102, 105, 104], 2))",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in forward_label([100, 101, 103, 102, 105, 104], 1)[:5]]",
+            "expect": "[0.01, 0.019802, -0.009709, 0.029412, -0.009524]",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(forward_label([100, 101, 103, 102, 105, 104], 5)[0], 6)",
+            "expect": "0.04",
+            "compare": "isclose"
+          },
+          {
+            "call": "int(np.isnan(forward_label(list(range(100, 130)), 5)).sum())",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: values compared with math.isclose after rounding to 6 places, and the NaN tail and length compared exactly. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from an array of NaN as long as the prices."
+        },
+        {
+          "rung": "point",
+          "text": "Fill positions `0` to `n - h - 1` with `p[h:] / p[:-h] - 1`.",
+          "highlight": [
+            "w1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`out = np.full(len(p), np.nan)`, then `out[:-h] = p[h:] / p[:-h] - 1`."
+        }
+      ],
+      "feedback": {
+        "correct": "Row $t$ holds the return from $t$ to $t + h$; the last $h$ rows are NaN.",
+        "generic": "Some tests failed. For prices `[100, 101, 103, 102, 105, 104]` and $h = 2$ the first label is $103/100 - 1 = 0.03$.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check the two slices have the same length."
+        }
+      },
+      "explain": {
+        "text": "Your label for day 0 with $h = 2$ is $103/100 - 1 = 0.03$, using days 1 and 2 only. A label built backwards, $p_t/p_{t-h} - 1$, would be a feature, not a target.\n\n```python\nout[:-h] = p[h:] / p[:-h] - 1\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Purge in code",
+      "prose": "Now the purge. For a test block of rows `test_start` to `test_end - 1`, drop $h - 1$ rows before it, the block itself, $h - 1$ rows after it, and then `embargo` more.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            18
+          ],
+          "y": [
+            0,
+            13
+          ],
+          "xStep": 1,
+          "yStep": 1,
+          "xTicks": "integer",
+          "yTicks": "integer",
+          "xLabel": "Day",
+          "yLabel": "Row (the day the prediction is made)",
+          "grid": false,
+          "height": 320
+        },
+        "state": {
+          "points": [
+            {
+              "id": "t1",
+              "x": 1,
+              "y": 1,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t2",
+              "x": 2,
+              "y": 2,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t3",
+              "x": 3,
+              "y": 3,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t4",
+              "x": 4,
+              "y": 4,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t5",
+              "x": 5,
+              "y": 5,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t6",
+              "x": 6,
+              "y": 6,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t7",
+              "x": 7,
+              "y": 7,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t8",
+              "x": 8,
+              "y": 8,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t9",
+              "x": 9,
+              "y": 9,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t10",
+              "x": 10,
+              "y": 10,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t11",
+              "x": 11,
+              "y": 11,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t12",
+              "x": 12,
+              "y": 12,
+              "colour": 2,
+              "label": ""
+            }
+          ],
+          "segments": [
+            {
+              "id": "w1",
+              "from": [
+                1.6,
+                1
+              ],
+              "to": [
+                6.4,
+                1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w2",
+              "from": [
+                2.6,
+                2
+              ],
+              "to": [
+                7.4,
+                2
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w3",
+              "from": [
+                3.6,
+                3
+              ],
+              "to": [
+                8.4,
+                3
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w4",
+              "from": [
+                4.6,
+                4
+              ],
+              "to": [
+                9.4,
+                4
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w5",
+              "from": [
+                5.6,
+                5
+              ],
+              "to": [
+                10.4,
+                5
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w6",
+              "from": [
+                6.6,
+                6
+              ],
+              "to": [
+                11.4,
+                6
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w7",
+              "from": [
+                7.6,
+                7
+              ],
+              "to": [
+                12.4,
+                7
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w8",
+              "from": [
+                8.6,
+                8
+              ],
+              "to": [
+                13.4,
+                8
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w9",
+              "from": [
+                9.6,
+                9
+              ],
+              "to": [
+                14.4,
+                9
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w10",
+              "from": [
+                10.6,
+                10
+              ],
+              "to": [
+                15.4,
+                10
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w11",
+              "from": [
+                11.6,
+                11
+              ],
+              "to": [
+                16.4,
+                11
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w12",
+              "from": [
+                12.6,
+                12
+              ],
+              "to": [
+                17.4,
+                12
+              ],
+              "colour": 2
+            }
+          ],
+          "polygons": [
+            {
+              "id": "band",
+              "points": [
+                [
+                  4.5,
+                  0.3
+                ],
+                [
+                  12.5,
+                  0.3
+                ],
+                [
+                  12.5,
+                  12.7
+                ],
+                [
+                  4.5,
+                  12.7
+                ]
+              ],
+              "colour": 4
+            }
+          ],
+          "caption": "Test rows 4 to 7 (gold); their labels use days 5 to 12, shaded"
+        }
+      },
+      "question": "Complete `purged_train_idx(n, test_start, test_end, h, embargo)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def purged_train_idx(n, test_start, test_end, h, embargo):\n    \"\"\"Training rows for the test block test_start <= t < test_end, when\n    row t's label uses days t + 1 to t + h. Drop the h - 1 rows on each\n    side whose labels overlap the test labels, and `embargo` more rows\n    after the block. Return a sorted list.\"\"\"\n    ...\n",
+        "solution": "def purged_train_idx(n, test_start, test_end, h, embargo):\n    \"\"\"Training rows for the test block test_start <= t < test_end, when\n    row t's label uses days t + 1 to t + h. Drop the h - 1 rows on each\n    side whose labels overlap the test labels, and `embargo` more rows\n    after the block. Return a sorted list.\"\"\"\n    lo = max(0, test_start - (h - 1))\n    hi = min(n, test_end + (h - 1) + embargo)\n    return list(range(0, lo)) + list(range(hi, n))\n",
+        "examples": [
+          {
+            "call": "purged_train_idx(20, 8, 12, 5, 0)",
+            "expect": "[0, 1, 2, 3, 16, 17, 18, 19]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "purged_train_idx(20, 8, 12, 5, 0)",
+            "expect": "[0, 1, 2, 3, 16, 17, 18, 19]",
+            "compare": "equal"
+          },
+          {
+            "call": "purged_train_idx(20, 8, 12, 1, 0)",
+            "expect": "[0, 1, 2, 3, 4, 5, 6, 7, 12, 13, 14, 15, 16, 17, 18, 19]",
+            "compare": "equal"
+          },
+          {
+            "call": "purged_train_idx(20, 8, 12, 5, 3)",
+            "expect": "[0, 1, 2, 3, 19]",
+            "compare": "equal"
+          },
+          {
+            "call": "purged_train_idx(20, 0, 5, 5, 2)",
+            "expect": "[11, 12, 13, 14, 15, 16, 17, 18, 19]",
+            "compare": "equal"
+          },
+          {
+            "call": "purged_train_idx(20, 15, 20, 5, 2)",
+            "expect": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
+            "compare": "equal"
+          },
+          {
+            "call": "purged_train_idx(30, 10, 13, 3, 6)",
+            "expect": "[0, 1, 2, 3, 4, 5, 6, 7, 21, 22, 23, 24, 25, 26, 27, 28, 29]",
+            "compare": "equal"
+          },
+          {
+            "call": "purged_train_idx(12, 4, 8, 2, 0)",
+            "expect": "[0, 1, 2, 9, 10, 11]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, including blocks at the start and end of the data and an embargo longer than the block. Each list is compared exactly. Pure Python: nothing to load."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out the first and last row you drop."
+        },
+        {
+          "rung": "point",
+          "text": "Drop from `test_start - (h - 1)` up to, not including, `test_end + (h - 1) + embargo`.",
+          "highlight": [
+            "t3",
+            "t11"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Clip those two ends to `0` and `n`, then keep `range(0, lo)` and `range(hi, n)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Rows 4 to 15 go for the block 8 to 11 with $h = 5$.",
+        "generic": "Some tests failed. For `(20, 8, 12, 5, 0)` the answer is `[0, 1, 2, 3, 16, 17, 18, 19]`."
+      },
+      "explain": {
+        "text": "With $h = 5$ and no embargo the block 8 to 11 loses rows 4 to 7 and 12 to 15 from training. With $h = 1$ nothing extra goes: a one-day label overlaps nothing.\n\n```python\nlo = max(0, test_start - (h - 1))\nhi = min(n, test_end + (h - 1) + embargo)\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "How much does it matter? The volatility share from the last lesson (seed 7), now with a 5-day label: next week's average volatility. Blocked 50-fold CV, one block per month, with a 5-neighbour model.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "naive",
+              "label": "No purge",
+              "colour": 2
+            },
+            {
+              "id": "purged",
+              "label": "Purge + embargo 5",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMin": 0,
+          "yMax": 8,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "naive": 5.8928,
+            "purged": 7.0351
+          },
+          "caption": "Same model and folds; only the training rows differ"
+        }
+      },
+      "question": "By what percentage does purging raise the error? Give one decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19.4,
+        "tol": {
+          "abs": 0.3
+        },
+        "accept": "19.4%: 7.0351 / 5.8928 − 1.",
+        "label": "Rise in MSE",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "down",
+            "value": 16.2,
+            "tol": {
+              "abs": 0.3
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the purged error by the unpurged one."
+        },
+        {
+          "rung": "point",
+          "text": "7.0351 / 5.8928.",
+          "highlight": [
+            "purged"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The ratio is about 1.194, a rise of 19.4%."
+        }
+      ],
+      "feedback": {
+        "correct": "The unpurged score was about 19% too kind.",
+        "generic": "Not quite right. Compute the purged MSE over the unpurged MSE, minus 1.",
+        "byKey": {
+          "down": "You divided by the purged error. The rise is measured from the unpurged score."
+        }
+      },
+      "explain": {
+        "text": "Purging alone gives 7.0581; the embargo of 5 moves it to 7.0351, a change of under 1%. Each month loses 8 of its leaky neighbours, and that is where the 19.4% comes from.",
+        "canvas": {
+          "highlight": [
+            "purged"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague is told to purge the monthly blocks of 20 rows, with $h = 5$. She drops the last 4 rows of every test block, since their labels run past it, and leaves training as it was.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            17
+          ],
+          "y": [
+            0,
+            11
+          ],
+          "xStep": 1,
+          "yStep": 1,
+          "xTicks": "integer",
+          "yTicks": "integer",
+          "xLabel": "Day",
+          "yLabel": "Row (the day the prediction is made)",
+          "grid": false,
+          "height": 320
+        },
+        "state": {
+          "points": [
+            {
+              "id": "t1",
+              "x": 1,
+              "y": 1,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t2",
+              "x": 2,
+              "y": 2,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t3",
+              "x": 3,
+              "y": 3,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t4",
+              "x": 4,
+              "y": 4,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t5",
+              "x": 5,
+              "y": 5,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t6",
+              "x": 6,
+              "y": 6,
+              "colour": 2,
+              "label": ""
+            },
+            {
+              "id": "t7",
+              "x": 7,
+              "y": 7,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t8",
+              "x": 8,
+              "y": 8,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t9",
+              "x": 9,
+              "y": 9,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "t10",
+              "x": 10,
+              "y": 10,
+              "colour": 4,
+              "label": "",
+              "tap": false
+            }
+          ],
+          "segments": [
+            {
+              "id": "w1",
+              "from": [
+                1.6,
+                1
+              ],
+              "to": [
+                6.4,
+                1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w2",
+              "from": [
+                2.6,
+                2
+              ],
+              "to": [
+                7.4,
+                2
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w3",
+              "from": [
+                3.6,
+                3
+              ],
+              "to": [
+                8.4,
+                3
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w4",
+              "from": [
+                4.6,
+                4
+              ],
+              "to": [
+                9.4,
+                4
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w5",
+              "from": [
+                5.6,
+                5
+              ],
+              "to": [
+                10.4,
+                5
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w6",
+              "from": [
+                6.6,
+                6
+              ],
+              "to": [
+                11.4,
+                6
+              ],
+              "colour": 2
+            },
+            {
+              "id": "w7",
+              "from": [
+                7.6,
+                7
+              ],
+              "to": [
+                12.4,
+                7
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w8",
+              "from": [
+                8.6,
+                8
+              ],
+              "to": [
+                13.4,
+                8
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w9",
+              "from": [
+                9.6,
+                9
+              ],
+              "to": [
+                14.4,
+                9
+              ],
+              "colour": 4
+            },
+            {
+              "id": "w10",
+              "from": [
+                10.6,
+                10
+              ],
+              "to": [
+                15.4,
+                10
+              ],
+              "colour": 4
+            }
+          ],
+          "polygons": [
+            {
+              "id": "band",
+              "points": [
+                [
+                  7.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  0.3
+                ],
+                [
+                  15.5,
+                  10.7
+                ],
+                [
+                  7.5,
+                  10.7
+                ]
+              ],
+              "colour": 4
+            }
+          ],
+          "caption": "Dots: the day each row is made. Bars: the five days its label uses. Shaded: days 8 to 15, used by the test labels (rows 7 to 10)"
+        }
+      },
+      "question": "Does her change remove the leak from the training rows before each block?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the 4 training rows before each block still train the model, and their labels still use test days",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: the overlap is gone once the long labels are out of the test block",
+            "why": "Trimming the test block removes overlap on its far side only. The 4 training rows before the block still use test days, and she left them in."
+          },
+          {
+            "id": "half",
+            "text": "Half of it: she should have dropped 2 rows, not 4",
+            "why": "The number is not the problem. Purging removes training rows, not test rows."
+          },
+          {
+            "id": "worse",
+            "text": "It makes no difference either way, since the model is the same",
+            "why": "The model is the same, but what it was trained on decides what it can copy. The 4 rows before each block still carry the answer."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows did she change: training or test?"
+        },
+        {
+          "rung": "point",
+          "text": "The leaky rows are the training rows 3 to 6.",
+          "highlight": [
+            "t3",
+            "t4",
+            "t5",
+            "t6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Shrinking the test block leaves those 4 rows in training, still using test days, as rows 3 to 6 do in the picture."
+        }
+      ],
+      "feedback": {
+        "correct": "Purging removes **training** rows. Trimming the test block only throws away test data.",
+        "generic": "Not quite right. Find the rows whose labels overlap the test labels, then ask if she removed them.",
+        "byKey": {
+          "yes": "You trimmed the test block, as she did. The overlap lives in the training rows before it, which are untouched."
+        }
+      },
+      "explain": {
+        "text": "Her test blocks are shorter, but the rows before each block still train on returns from inside it, as rows 3 to 6 do here. Her fix spends test data and leaves the leak. Purge the training side.",
+        "canvas": {
+          "highlight": [
+            "w3",
+            "w4",
+            "w5",
+            "w6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Edge cases",
+      "prose": "Two edge cases. With $h = 1$ each label is tomorrow alone. With embargo 30 and monthly blocks of 20 rows, the embargo is longer than the block itself.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "naive",
+              "label": "No purge",
+              "colour": 2
+            },
+            {
+              "id": "purged",
+              "label": "Purged",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMin": 0,
+          "yMax": 8,
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "naive": 4.9685,
+            "purged": 4.9685
+          },
+          "caption": "Next-day label, $h = 1$, no embargo"
+        }
+      },
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "With $h = 1$ the purge removes nothing; a 30-row embargo is allowed but costs 30 training rows per block",
+            "correct": true
+          },
+          {
+            "id": "h1",
+            "text": "With $h = 1$ one row must still be purged",
+            "why": "Row $s - 1$ uses day $s$ alone, and the first test label starts at $s + 1$. No overlap, so $h - 1 = 0$ rows go."
+          },
+          {
+            "id": "emb",
+            "text": "An embargo longer than the test block is an error",
+            "why": "It is legal; it just throws away training data. Size it by how far the features look back, not by the block."
+          },
+          {
+            "id": "none",
+            "text": "Both cases need no change to ordinary k-fold",
+            "why": "The 30-row embargo does change training: 30 more rows go after every block."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count $h - 1$ for $h = 1$."
+        },
+        {
+          "rung": "point",
+          "text": "Zero rows overlap with a one-day label.",
+          "highlight": [
+            "naive",
+            "purged"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The embargo simply removes more rows; nothing forbids it being long."
+        }
+      ],
+      "feedback": {
+        "correct": "Zero purge for a one-day label; a long embargo is legal and costly.",
+        "generic": "Not quite right. Work out $h - 1$, then ask what a long embargo removes."
+      },
+      "explain": {
+        "text": "With $h = 1$ the two scores are identical, 4.9685. An embargo is a choice about features: size it to their lookback, even if it is longer than the block."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The whole experiment",
+      "prose": "Put it together. Blocked k-fold on the monthly blocks, once with every other block in training and once purged. `purged_train_idx` is given.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "naive",
+              "label": "No purge",
+              "colour": 2
+            },
+            {
+              "id": "purged",
+              "label": "Purge + embargo 5",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Mean squared error",
+          "yMin": 0,
+          "yMax": 8,
+          "showValues": true,
+          "decimals": 2,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "naive": 5.8928,
+            "purged": 7.0351
+          },
+          "caption": "Your function should return these two numbers for $h = 5$, embargo 5"
+        }
+      },
+      "question": "Complete `purged_cv_mse(X, y, n_splits, h, embargo)` so it returns `(naive_mse, purged_mse)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef _ma(v, w):\n    c = np.cumsum(np.insert(v, 0, 0.0))\n    out = np.full(len(v), np.nan)\n    out[w - 1:] = (c[w:] - c[:-w]) / w\n    return out\n\ndef make_vol(seed=7, n=1000, h=1, phi=0.98):\n    \"\"\"Daily volatility of a share, in % a year: a slow AR(1) level plus daily noise.\n    X: 5-, 20- and 60-day averages up to day t. y: mean volatility over days t+1 to t+h.\"\"\"\n    rng = np.random.default_rng(seed)\n    N = n + 100\n    e = rng.normal(0, 1, N)\n    m = np.empty(N)\n    m[0] = e[0]\n    for t in range(1, N):\n        m[t] = phi * m[t - 1] + 0.2 * e[t]\n    v = 20 + 5 * m + rng.normal(0, 1, N)\n    X = np.column_stack([_ma(v, w)[59:59 + n] for w in (5, 20, 60)])\n    y = np.array([v[t + 1:t + 1 + h].mean() for t in range(59, 59 + n)])\n    return X, y\n",
+        "starter": "import numpy as np\nfrom sklearn.model_selection import KFold\nfrom sklearn.neighbors import KNeighborsRegressor\n\ndef purged_train_idx(n, test_start, test_end, h, embargo):\n    lo = max(0, test_start - (h - 1))\n    hi = min(n, test_end + (h - 1) + embargo)\n    return list(range(0, lo)) + list(range(hi, n))\n\ndef purged_cv_mse(X, y, n_splits, h, embargo):\n    \"\"\"Blocked k-fold (KFold without shuffling) with a 5-neighbour model.\n    Return (naive_mse, purged_mse): the MSE of all out-of-fold\n    predictions without and with purging, each rounded to 4 places.\"\"\"\n    n = len(y)\n    naive, purged = np.empty(n), np.empty(n)\n    for train, test in KFold(n_splits=n_splits).split(X):\n        s, e = test[0], test[-1] + 1\n        ...\n    ...\n",
+        "solution": "import numpy as np\nfrom sklearn.model_selection import KFold\nfrom sklearn.neighbors import KNeighborsRegressor\n\ndef purged_train_idx(n, test_start, test_end, h, embargo):\n    lo = max(0, test_start - (h - 1))\n    hi = min(n, test_end + (h - 1) + embargo)\n    return list(range(0, lo)) + list(range(hi, n))\n\ndef purged_cv_mse(X, y, n_splits, h, embargo):\n    \"\"\"Blocked k-fold (KFold without shuffling) with a 5-neighbour model.\n    Return (naive_mse, purged_mse): the MSE of all out-of-fold\n    predictions without and with purging, each rounded to 4 places.\"\"\"\n    n = len(y)\n    naive, purged = np.empty(n), np.empty(n)\n    for train, test in KFold(n_splits=n_splits).split(X):\n        s, e = test[0], test[-1] + 1\n        m = KNeighborsRegressor(n_neighbors=5).fit(X[train], y[train])\n        naive[s:e] = m.predict(X[s:e])\n        keep = purged_train_idx(n, s, e, h, embargo)\n        m = KNeighborsRegressor(n_neighbors=5).fit(X[keep], y[keep])\n        purged[s:e] = m.predict(X[s:e])\n    score = lambda p: round(float(((p - y) ** 2).mean()), 4)\n    return score(naive), score(purged)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_vol(7, h=5)",
+            "call": "list(purged_cv_mse(X, y, 50, 5, 5))",
+            "expect": "[5.8928, 7.0351]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_vol(7, h=5)",
+            "call": "list(purged_cv_mse(X, y, 50, 5, 5))",
+            "expect": "[5.8928, 7.0351]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7, h=5)",
+            "call": "list(purged_cv_mse(X, y, 50, 5, 0))",
+            "expect": "[5.8928, 7.0581]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7, h=1)",
+            "call": "list(purged_cv_mse(X, y, 50, 1, 0))",
+            "expect": "[4.9685, 4.9685]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(7, h=20)",
+            "call": "list(purged_cv_mse(X, y, 50, 20, 5))",
+            "expect": "[10.3097, 14.467]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_vol(2, h=5)",
+            "call": "list(purged_cv_mse(X, y, 25, 5, 5))",
+            "expect": "[5.9233, 6.0251]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_vol(seed, h=...)`, already defined, which returns features and the $h$-day forward average. Each pair is compared with math.isclose against the solution run in this browser's scikit-learn 1.6.1. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In each fold fit twice: on `train`, and on `purged_train_idx(n, s, e, h, embargo)`."
+        },
+        {
+          "rung": "point",
+          "text": "Store each model's predictions for rows `s` to `e - 1` in `naive` and `purged`.",
+          "highlight": [
+            "naive",
+            "purged"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After the loop, return the MSE of each array against `y`, rounded to 4 places."
+        }
+      ],
+      "feedback": {
+        "correct": "(5.8928, 7.0351) for $h = 5$; for $h = 20$ the gap widens to (10.3097, 14.467).",
+        "generic": "Some tests failed. For `make_vol(7, h=5)`, 50 blocks and embargo 5 the answer is (5.8928, 7.0351).",
+        "byKey": {
+          "error": "Your code stopped with an error. Check you index rows with the list from `purged_train_idx`."
+        }
+      },
+      "explain": {
+        "text": "With $h = 20$ the unpurged error is 10.31 and the purged 14.47, about 40% higher: 19 leaky rows a side swamp a 20-row block. The leak grows as the horizon nears the block length."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The rule you coded, from López de Prado's *Advances in Financial Machine Learning*. The folds are blocks in time; for a test block of rows $s$ to $e - 1$, horizon $h$ and embargo $b$, the training rows are\n\n$$\\{\\, i : i < s - (h - 1) \\,\\} \\cup \\{\\, i : i \\ge e + (h - 1) + b \\,\\}$$\n\nIn walk-forward only the first set exists, and `TimeSeriesSplit(gap=h - 1)` is the purge.",
+      "question": "Walk-forward with a 10-day label and moving-average features that look back 5 days. Which `gap` is the smallest honest one?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nine",
+            "text": "`gap=9`",
+            "correct": true
+          },
+          {
+            "id": "ten",
+            "text": "`gap=10`",
+            "why": "Row $s - 10$ uses days $s - 9$ to $s$, and the first test label starts at $s + 1$. It is clean, so 9 rows are enough."
+          },
+          {
+            "id": "five",
+            "text": "`gap=5`",
+            "why": "Five matches the features, but the overlap comes from the 10-day labels: $h - 1 = 9$ rows."
+          },
+          {
+            "id": "zero",
+            "text": "`gap=0`, since walk-forward never trains on the future",
+            "why": "The training rows are earlier, but their labels are not. The last 9 use test days."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In walk-forward, which side of the block has training rows?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the rows before the block; their labels look ahead $h$ days."
+        },
+        {
+          "rung": "step",
+          "text": "The gap must cover $h - 1 = 9$ rows. Features looking back do not matter here, as training rows after the block do not exist."
+        }
+      ],
+      "feedback": {
+        "correct": "`gap=h - 1`: nine rows. The embargo only matters when training rows come after the block.",
+        "generic": "Not quite right. Count $h - 1$ for a 10-day label."
+      },
+      "explain": {
+        "text": "In walk-forward every training row is before the block, so only the label overlap matters, and `gap=9` removes it. The embargo is for blocked k-fold, where rows after the block have features built from test days."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A research template walks forward monthly with `TimeSeriesSplit(n_splits=60, test_size=21)` on a 20-day forward-return label. Every fold trained on 19 rows whose labels ran into its test month, and the reported hit rate was 56%.",
+      "question": "What is the one-line fix in the template?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gap",
+            "text": "`TimeSeriesSplit(n_splits=60, test_size=21, gap=19)`",
+            "correct": true
+          },
+          {
+            "id": "shuffle",
+            "text": "`KFold(n_splits=60, shuffle=True)`",
+            "why": "That brings back the leak from two lessons ago and many more. Keep the time order and add a gap."
+          },
+          {
+            "id": "drop",
+            "text": "Drop the first 19 rows of each test month",
+            "why": "That trims test data and leaves the 19 leaky rows in training, the trap from earlier."
+          },
+          {
+            "id": "label",
+            "text": "Use a 1-day label instead",
+            "why": "That avoids the overlap by changing the question. The desk trades 20-day holds, so the label should stay."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows leak, and on which side of the test month?"
+        },
+        {
+          "rung": "point",
+          "text": "The 19 training rows just before each test month."
+        },
+        {
+          "rung": "step",
+          "text": "`gap=19` drops exactly those rows: $h - 1$ for $h = 20$."
+        }
+      ],
+      "feedback": {
+        "correct": "`gap=19` is the purge for walk-forward. Expect the 56% to fall.",
+        "generic": "Not quite right. Remove the 19 training rows before each test month and keep everything else."
+      },
+      "explain": {
+        "text": "On our volatility data the same change for a 20-day label raised the error from 10.31 to 14.47. A hit rate earned partly from overlapping labels should be rerun before anyone trades it."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A label over days $t + 1$ to $t + h$ overlaps the test labels for $h - 1$ training rows on each side of a test block.",
+      "Purging removes those training rows; an embargo removes more rows after the block, whose features were built from test days.",
+      "In walk-forward the purge is `TimeSeriesSplit(gap=h - 1)`; the leak grows as $h$ nears the test block length."
+    ],
+    "formula": {
+      "name": "Purged training set",
+      "tex": "\\{\\, i < s - (h - 1) \\,\\} \\cup \\{\\, i \\ge e + (h - 1) + b \\,\\}",
+      "note": "Test rows $s$ to $e - 1$, horizon $h$, embargo $b$."
+    },
+    "trap": "Purging means removing training rows, not trimming the test block."
+  },
+  "quiz": [
+    {
+      "id": "q-ridge",
+      "difficulty": 2,
+      "prose": "On the same 5-day volatility data a three-coefficient ridge model scores 3.3600 without purging and 3.3755 with it.",
+      "question": "What should you conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "keep",
+            "text": "Ridge cannot copy neighbours, so the leak barely moves it; purge anyway, as it costs almost nothing",
+            "correct": true
+          },
+          {
+            "id": "skip",
+            "text": "Purging is unnecessary in general",
+            "why": "It was unnecessary for this model. The 5-neighbour model moved 19.4%; you cannot know in advance which kind you have."
+          },
+          {
+            "id": "worse",
+            "text": "Purging makes models worse, so avoid it",
+            "why": "The purged score is higher because it is honest. A lower score from leaked rows is not better."
+          },
+          {
+            "id": "bug",
+            "text": "The two numbers show the purge was coded wrongly",
+            "why": "The code is right. A model that fits one line through all rows simply gains little from a few leaky ones."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Small leak for a rigid model, large for a flexible one. Purge both.",
+        "generic": "Not quite right. Ask how a three-coefficient model could use eight leaky rows."
+      },
+      "explain": {
+        "text": "A purge removes a few rows, so a rigid model hardly changes. A flexible model that reads answers off nearby rows changes a lot. Purging is cheap insurance either way."
+      }
+    },
+    {
+      "id": "q-embargo",
+      "difficulty": 3,
+      "prose": "Blocked k-fold. Each row's features include a 60-day moving average over days $t - 59$ to $t$.",
+      "question": "How many training rows just after a test block have a feature window that includes a test day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 59,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "59: rows $e$ to $e + 58$ have windows reaching back to day $e - 1$ or earlier.",
+        "label": "Rows after the block",
+        "unit": "rows",
+        "wrong": [
+          {
+            "id": "sixty",
+            "value": 60,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "59 rows, so an embargo of 0 leaves them in.",
+        "generic": "Not quite right. Find the last row whose window still reaches day $e - 1$.",
+        "byKey": {
+          "sixty": "Row $e + 59$ looks back to day $e$, which is after the block. The last affected row is $e + 58$.",
+          "zero": "You assumed rows after the block are clean. Their moving averages include test days."
+        }
+      },
+      "explain": {
+        "text": "Row $i$ looks back to $i - 59$, which is a test day while $i \\le e + 58$. Those 59 rows have features built from test days, which is what an embargo removes."
+      }
+    },
+    {
+      "id": "q-align",
+      "difficulty": 2,
+      "prose": "You build `y = forward_label(prices, 5)` on 1,000 days and the features `X` on the same days.",
+      "question": "Which rows can you train on?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "first",
+            "text": "Rows 0 to 994; rows 995 to 999 have no label yet",
+            "correct": true
+          },
+          {
+            "id": "last",
+            "text": "Rows 5 to 999; the first 5 rows have no label",
+            "why": "You lined the label up backwards. A forward label is missing at the end, where the future has not happened."
+          },
+          {
+            "id": "all",
+            "text": "All 1,000 rows, filling the missing labels with 0",
+            "why": "A filled 0 is a made-up return. Drop the rows instead."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The NaN tail goes; the first 995 rows are usable.",
+        "generic": "Not quite right. Ask which days have five more days after them."
+      },
+      "explain": {
+        "text": "Day 999 has no future prices, so its 5-day label does not exist. The last five rows are NaN and are dropped before fitting."
+      }
+    },
+    {
+      "id": "q-why-h1",
+      "difficulty": 2,
+      "prose": "Your label is the next day's return, $h = 1$, and you walk forward with `gap=0`.",
+      "question": "Is a purge needed?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the last training row's label is day $s$, and the first test label is day $s + 1$",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "Yes, one row",
+            "why": "With $h = 1$, $h - 1 = 0$ rows overlap. Day $s$ is not part of any test label."
+          },
+          {
+            "id": "always",
+            "text": "Yes, always purge 5 rows to be safe",
+            "why": "Purging more than needed only wastes data. Size the purge by the horizon."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One-day labels do not overlap.",
+        "generic": "Not quite right. Compare the last training label's day with the first test label's day."
+      },
+      "explain": {
+        "text": "Row $s - 1$ is labelled with day $s$ alone, and the test labels start at day $s + 1$. Nothing is shared, so $h - 1 = 0$ rows go."
+      }
+    }
+  ]
+}

@@ -393,7 +393,7 @@
         "params": {
           "title": "Python",
           "lines": [
-            ">>> feature_time = {'mom_12_1': 0, 'vol_20d': 0, 'volume_next': ...}",
+            ">>> feature_time = {'mom_12_1': 0, ..., 'size': 0}",
             ">>> known_at(feature_time, 0)",
             "?"
           ]
@@ -404,8 +404,8 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "def known_at(feature_time, label_time):\n    \"\"\"Names of the features known by label_time, sorted.\n\n    feature_time maps a feature name to the day it is known.\n    label_time is the day the prediction is made.\n    \"\"\"\n    ...\n",
-        "solution": "def known_at(feature_time, label_time):\n    \"\"\"Names of the features known by label_time, sorted.\n\n    feature_time maps a feature name to the day it is known.\n    label_time is the day the prediction is made.\n    \"\"\"\n    return sorted(name for name, t in feature_time.items() if t <= label_time)\n",
+        "starter": "def known_at(feature_time, label_time):\n    \"\"\"Features known by label_time, sorted by name.\n\n    feature_time maps a name to the day it is known.\n    label_time is the day the prediction is made.\n    \"\"\"\n    ...\n",
+        "solution": "def known_at(feature_time, label_time):\n    \"\"\"Features known by label_time, sorted by name.\n\n    feature_time maps a name to the day it is known.\n    label_time is the day the prediction is made.\n    \"\"\"\n    return sorted(name for name, t in feature_time.items()\n                  if t <= label_time)\n",
         "examples": [
           {
             "call": "known_at({'mom': 0, 'vol_next': 21, 'pe': -2}, 0)",
@@ -466,7 +466,7 @@
         },
         {
           "rung": "step",
-          "text": "`sorted(name for name, t in feature_time.items() if t <= label_time)`."
+          "text": "`sorted(n for n, t in feature_time.items() if t <= label_time)`."
         }
       ],
       "feedback": {
@@ -530,8 +530,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "import numpy as np\n\ndef make_prices(seed, n=60):\n    \"\"\"n daily closes of one share, starting near 100p, with 2% daily volatility.\"\"\"\n    rng = np.random.default_rng(seed)\n    return list(np.round(100 * np.cumprod(1 + 0.02 * rng.standard_normal(n)), 2))\n",
-        "starter": "import pandas as pd\n\ndef centred_vs_trailing(prices, w):\n    r = pd.Series(prices, dtype=float).pct_change()\n    trailing = ...   # window of w returns ending on day t\n    centred = ...    # window of w returns centred on day t\n    return pd.DataFrame({\"trailing\": trailing, \"centred\": centred})\n",
-        "solution": "import pandas as pd\n\ndef centred_vs_trailing(prices, w):\n    r = pd.Series(prices, dtype=float).pct_change()\n    trailing = r.rolling(w).std()               # window of w returns ending on day t\n    centred = r.rolling(w, center=True).std()   # window of w returns centred on day t\n    return pd.DataFrame({\"trailing\": trailing, \"centred\": centred})\n",
+        "starter": "import pandas as pd\n\ndef centred_vs_trailing(prices, w):\n    r = pd.Series(prices, dtype=float).pct_change()\n    trailing = ...   # w returns ending on day t\n    centred = ...    # w returns centred on day t\n    return pd.DataFrame({\"trailing\": trailing,\n                         \"centred\": centred})\n",
+        "solution": "import pandas as pd\n\ndef centred_vs_trailing(prices, w):\n    r = pd.Series(prices, dtype=float).pct_change()\n    trailing = r.rolling(w).std()\n    centred = r.rolling(w, center=True).std()\n    return pd.DataFrame({\"trailing\": trailing,\n                         \"centred\": centred})\n",
         "examples": [
           {
             "call": "[round(v, 6) if v == v else None for v in centred_vs_trailing([100, 102, 99, 103, 101, 104, 100], 3)['centred']]",
@@ -774,7 +774,7 @@
         "language": "python",
         "prelude": "import numpy as np\n\ndef make_leak(seed, n=600):\n    \"\"\"n share-months in month order; y is the return over days 1 to 21, in %.\n    X_clean: momentum and value z-scores. X_leaky adds ret_m10_p10,\n    the return from day -9 to day 10, which overlaps the label.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = rng.standard_normal(n)\n    value = rng.standard_normal(n)\n    daily = rng.standard_normal((n, 31)) * 6 / np.sqrt(21)   # days -9 to 21\n    y = 0.5 * mom + 0.3 * value + daily[:, 10:].sum(1)        # days 1 to 21\n    ret_m10_p10 = daily[:, :20].sum(1)                        # days -9 to 10\n    X_clean = np.column_stack([mom, value])\n    X_leaky = np.column_stack([mom, value, ret_m10_p10])\n    return X_clean, X_leaky, y\n",
         "starter": "from sklearn.linear_model import LinearRegression\n\ndef leak_score_gap(X_clean, X_leaky, y, n_train):\n    scores = []\n    for X in (X_clean, X_leaky):\n        model = ...   # fit on the first n_train rows\n        r2 = ...      # model.score on the rows after them\n        scores.append(round(float(r2), 3))\n    return tuple(scores)\n",
-        "solution": "from sklearn.linear_model import LinearRegression\n\ndef leak_score_gap(X_clean, X_leaky, y, n_train):\n    scores = []\n    for X in (X_clean, X_leaky):\n        model = LinearRegression().fit(X[:n_train], y[:n_train])\n        r2 = model.score(X[n_train:], y[n_train:])\n        scores.append(round(float(r2), 3))\n    return tuple(scores)\n",
+        "solution": "from sklearn.linear_model import LinearRegression\n\ndef leak_score_gap(X_clean, X_leaky, y, n_train):\n    scores = []\n    for X in (X_clean, X_leaky):\n        model = LinearRegression()\n        model.fit(X[:n_train], y[:n_train])\n        r2 = model.score(X[n_train:], y[n_train:])\n        scores.append(round(float(r2), 3))\n    return tuple(scores)\n",
         "examples": [
           {
             "setup": "Xc, Xl, y = make_leak(3)",

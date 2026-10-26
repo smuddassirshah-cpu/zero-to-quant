@@ -93,7 +93,7 @@
             },
             {
               "id": "L",
-              "x": 14.5,
+              "x": 17.5,
               "y": 20,
               "drag": true,
               "lockX": true,
@@ -147,7 +147,7 @@
           {
             "id": "L",
             "target": [
-              14.5,
+              17.5,
               13
             ],
             "tol": [
@@ -10784,8 +10784,7 @@
           "vlines": [
             {
               "id": "q",
-              "x": 60,
-              "label": "60%"
+              "x": 60
             }
           ]
         }
@@ -11023,8 +11022,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "import numpy as np\n\ndef make_vol(seed, n=300):\n    \"\"\"n days: yesterday's realised vol (%, annualised) and volume (z-score);\n    target: next day's realised vol (%). Three calm-to-stressed regimes.\"\"\"\n    rng = np.random.default_rng(seed)\n    vol = np.round(rng.uniform(8, 40, n), 2)\n    volume = np.round(rng.standard_normal(n), 2)\n    level = np.where(vol < 16, 12.0, np.where(vol < 26, 20.0, 32.0))\n    y = np.round(level + 1.5 * (volume > 1) + rng.normal(0, 2.5, n), 2)\n    return np.column_stack([vol, volume]), y\n\ndef make_linear(seed, n=100):\n    \"\"\"One feature x in [8, 40]; target 4 + 0.8 x plus noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.round(rng.uniform(8, 40, n), 2)\n    y = np.round(4 + 0.8 * x + rng.normal(0, 3, n), 2)\n    return x.reshape(-1, 1), y\n\ndef make_step(seed, n=100):\n    \"\"\"One feature x in [8, 40]; target jumps by 12 at x = 25.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.round(rng.uniform(8, 40, n), 2)\n    y = np.round(14 + 12 * (x > 25) + rng.normal(0, 3, n), 2)\n    return x.reshape(-1, 1), y\n",
-        "starter": "def leaf_mean_predict(x_train, y_train, threshold, x_query):\n    left = [y for x, y in zip(x_train, y_train) if x <= threshold]\n    right = ...\n    mean_left = ...\n    mean_right = ...\n    return [round(mean_left if q <= threshold else mean_right, 6) for q in x_query]\n",
-        "solution": "def leaf_mean_predict(x_train, y_train, threshold, x_query):\n    left = [y for x, y in zip(x_train, y_train) if x <= threshold]\n    right = [y for x, y in zip(x_train, y_train) if x > threshold]\n    mean_left = sum(left) / len(left)\n    mean_right = sum(right) / len(right)\n    return [round(mean_left if q <= threshold else mean_right, 6) for q in x_query]\n",
+        "starter": "def leaf_mean_predict(x_train, y_train, threshold,\n                      x_query):\n    pairs = list(zip(x_train, y_train))\n    left = [y for x, y in pairs if x <= threshold]\n    right = ...\n    mean_left = ...\n    mean_right = ...\n    return [round(mean_left if q <= threshold else mean_right, 6)\n            for q in x_query]\n",
+        "solution": "def leaf_mean_predict(x_train, y_train, threshold,\n                      x_query):\n    pairs = list(zip(x_train, y_train))\n    left = [y for x, y in pairs if x <= threshold]\n    right = [y for x, y in pairs if x > threshold]\n    mean_left = sum(left) / len(left)\n    mean_right = sum(right) / len(right)\n    return [round(mean_left if q <= threshold else mean_right, 6)\n            for q in x_query]\n",
         "examples": [
           {
             "call": "leaf_mean_predict([10, 13, 16, 19, 22, 26, 30, 34], [11, 13, 12, 16, 24, 27, 22, 23], 20.5, [15, 25, 50])",
@@ -11067,7 +11066,7 @@
         },
         {
           "rung": "step",
-          "text": "`right = [y for x, y in zip(x_train, y_train) if x > threshold]`, then the two means."
+          "text": "`right = [y for x, y in pairs if x > threshold]`, then the two means."
         }
       ],
       "feedback": {
@@ -11193,8 +11192,8 @@
         "kind": "code",
         "language": "python",
         "prelude": "import numpy as np\n\ndef make_vol(seed, n=300):\n    \"\"\"n days: yesterday's realised vol (%, annualised) and volume (z-score);\n    target: next day's realised vol (%). Three calm-to-stressed regimes.\"\"\"\n    rng = np.random.default_rng(seed)\n    vol = np.round(rng.uniform(8, 40, n), 2)\n    volume = np.round(rng.standard_normal(n), 2)\n    level = np.where(vol < 16, 12.0, np.where(vol < 26, 20.0, 32.0))\n    y = np.round(level + 1.5 * (volume > 1) + rng.normal(0, 2.5, n), 2)\n    return np.column_stack([vol, volume]), y\n\ndef make_linear(seed, n=100):\n    \"\"\"One feature x in [8, 40]; target 4 + 0.8 x plus noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.round(rng.uniform(8, 40, n), 2)\n    y = np.round(4 + 0.8 * x + rng.normal(0, 3, n), 2)\n    return x.reshape(-1, 1), y\n\ndef make_step(seed, n=100):\n    \"\"\"One feature x in [8, 40]; target jumps by 12 at x = 25.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.round(rng.uniform(8, 40, n), 2)\n    y = np.round(14 + 12 * (x > 25) + rng.normal(0, 3, n), 2)\n    return x.reshape(-1, 1), y\n",
-        "starter": "from sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef tree_vs_line_mse(X_train, y_train, X_test, y_test, depth):\n    tree = ...\n    line = ...\n    tree_mse = mean_squared_error(y_test, tree.predict(X_test))\n    line_mse = mean_squared_error(y_test, line.predict(X_test))\n    return round(float(tree_mse), 4), round(float(line_mse), 4)\n",
-        "solution": "from sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef tree_vs_line_mse(X_train, y_train, X_test, y_test, depth):\n    tree = DecisionTreeRegressor(max_depth=depth, random_state=0).fit(X_train, y_train)\n    line = LinearRegression().fit(X_train, y_train)\n    tree_mse = mean_squared_error(y_test, tree.predict(X_test))\n    line_mse = mean_squared_error(y_test, line.predict(X_test))\n    return round(float(tree_mse), 4), round(float(line_mse), 4)\n",
+        "starter": "from sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef tree_vs_line_mse(X_train, y_train, X_test, y_test,\n                     depth):\n    tree = ...\n    line = ...\n    tree_mse = mean_squared_error(y_test, tree.predict(X_test))\n    line_mse = mean_squared_error(y_test, line.predict(X_test))\n    return round(float(tree_mse), 4), round(float(line_mse), 4)\n",
+        "solution": "from sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\nfrom sklearn.tree import DecisionTreeRegressor\n\ndef tree_vs_line_mse(X_train, y_train, X_test, y_test,\n                     depth):\n    tree = DecisionTreeRegressor(max_depth=depth, random_state=0).fit(X_train, y_train)\n    line = LinearRegression().fit(X_train, y_train)\n    tree_mse = mean_squared_error(y_test, tree.predict(X_test))\n    line_mse = mean_squared_error(y_test, line.predict(X_test))\n    return round(float(tree_mse), 4), round(float(line_mse), 4)\n",
         "examples": [
           {
             "call": "tree_vs_line_mse([[1], [2], [3], [4]], [1, 2, 3, 4], [[5]], [5], 1)",
@@ -11332,7 +11331,7 @@
         }
       },
       "explain": {
-        "text": "The forecast is 31.2%, the mean of the stressed leaf. A tree's forecast never exceeds its largest leaf mean, here 32.7%, and never the largest training value. In a crisis beyond the data it will understate risk: pair it with a model that can extrapolate, or a hard floor.",
+        "text": "The forecast is 31.2%, the mean of the stressed leaf. A tree's forecast never exceeds its largest leaf mean, here 32.7%, itself below the largest training day, 38.8%. In a crisis beyond the data it will understate risk: pair it with a model that can extrapolate, or a hard floor.",
         "canvas": {
           "highlight": [
             "l9",
