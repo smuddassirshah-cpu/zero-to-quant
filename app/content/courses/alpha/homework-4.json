@@ -16,56 +16,62 @@
     "kind": "code",
     "language": "python",
     "prelude": "import math\nfrom statistics import NormalDist\nimport numpy as np\nimport pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef rebalance_dates(index, rebalance=\"M\"):\n    \"\"\"The last day of each day (\"D\"), week (\"W\") or month (\"M\") in the index.\"\"\"\n    if rebalance == \"D\":\n        return index\n    per = index.to_period(rebalance)\n    last = np.append(per[:-1] != per[1:], True)\n    return index[last]\n\ndef portfolio_returns(weights, ret, rebalance=\"M\"):\n    dates = rebalance_dates(weights.index, rebalance)\n    held = weights.loc[dates].reindex(weights.index).ffill().shift(1)\n    r = ret.reindex(index=weights.index, columns=weights.columns).fillna(0.0)\n    out = (held.fillna(0.0) * r).sum(axis=1)\n    live = held.abs().sum(axis=1) > 0\n    if not live.any():\n        return out.iloc[0:0]\n    return out.loc[live.idxmax():]\n\ndef trade_costs(weights, half_spread_bp, adv_gbp, sigma, book_gbp, c=1.0):\n    w = weights.fillna(0.0)\n    dw = (w - w.shift(1).fillna(0.0)).abs()\n    impact = c * (dw * book_gbp).div(adv_gbp).pow(0.5).mul(sigma)\n    rate = impact.add(half_spread_bp / 1e4)\n    return (dw * rate).sum(axis=1)\n\ndef charge_next_day(cost, index):\n    \"\"\"Spread a cost per rebalance date onto the next day of the index.\"\"\"\n    out = pd.Series(0.0, index=index)\n    pos = index.get_indexer(cost.index) + 1\n    ok = pos < len(index)\n    out.iloc[pos[ok]] = cost.to_numpy()[ok]\n    return out\n\ndef sharpe(returns, periods):\n    x = pd.Series(returns, dtype=float).dropna()\n    if len(x) < 2:\n        return 0.0\n    s = x.std(ddof=1)\n    if not s > 0:\n        return 0.0\n    return float(math.sqrt(periods) * x.mean() / s)\n\ndef reversal_5d(ret):\n    logret = np.log1p(ret)\n    past5 = logret.rolling(5, min_periods=5).sum()\n    return -past5\n\ndef long_short_weights(signal, min_names=10):\n    r = signal.rank(axis=1)\n    d = r.sub(r.mean(axis=1), axis=0)\n    gross = d.abs().sum(axis=1)\n    n = signal.notna().sum(axis=1)\n    w = d.div(gross.where((gross > 0) & (n >= min_names)), axis=0)\n    return w.fillna(0.0)\n\n",
-    "starter": "import numpy as np\nimport pandas as pd\n\ndef capacity_curve(weights, ret, half_spread_bp, adv_gbp, sigma, books, rebalance=\"M\"):\n    \"\"\"Net Sharpe (3 places) at each book size, and the first book at which\n    it is at most half the gross Sharpe (None if it never is).\"\"\"\n    ...\n",
-    "solution": "import numpy as np\nimport pandas as pd\n\ndef capacity_curve(weights, ret, half_spread_bp, adv_gbp, sigma, books, rebalance=\"M\"):\n    dates = rebalance_dates(weights.index, rebalance)\n    gross = portfolio_returns(weights, ret, rebalance)\n    sg = sigma.loc[dates] if isinstance(sigma, pd.DataFrame) else sigma\n    target = sharpe(gross, 252) / 2\n    nets, first = [], None\n    for book in books:\n        cost = trade_costs(weights.loc[dates], half_spread_bp, adv_gbp, sg, book)\n        net = gross - charge_next_day(cost, weights.index).reindex(gross.index)\n        sr = round(sharpe(net, 252), 3)\n        nets.append(sr)\n        if first is None and sr <= target:\n            first = book\n    return nets, first\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef capacity_curve(weights, ret, half_spread_bp, adv_gbp, sigma, books, rebalance=\"M\"):\n    \"\"\"Net Sharpe (3 places) at each book size, and the first book at which\n    it is at most half the gross Sharpe (None if it never is, or if the\n    gross Sharpe is not positive).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef capacity_curve(weights, ret, half_spread_bp, adv_gbp, sigma, books, rebalance=\"M\"):\n    dates = rebalance_dates(weights.index, rebalance)\n    gross = portfolio_returns(weights, ret, rebalance)\n    sg = sigma.loc[dates] if isinstance(sigma, pd.DataFrame) else sigma\n    gross_sr = sharpe(gross, 252)\n    nets, first = [], None\n    for book in books:\n        cost = trade_costs(weights.loc[dates], half_spread_bp, adv_gbp, sg, book)\n        net = gross - charge_next_day(cost, weights.index).reindex(gross.index)\n        sr = round(sharpe(net, 252), 3)\n        nets.append(sr)\n        if first is None and gross_sr > 0 and sr <= gross_sr / 2:\n            first = book\n    return nets, first\n",
     "examples": [
      {
-      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
-      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e6, 3e7], 'W')",
-      "expect": "([-0.248, -3.357], 1000000.0)",
+      "setup": "P = make_panel(40, 400, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e5, 1e6, 1e7, 1e8], 'M')",
+      "expect": "([1.698, 1.532, 0.997, -0.504], 100000000.0)",
       "compare": "isclose"
      }
     ],
     "tests": [
      {
-      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "setup": "P = make_panel(40, 400, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
       "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e5, 1e6, 1e7, 1e8], 'M')",
-      "expect": "([-0.525, -0.685, -1.158, -2.223], 100000.0)",
+      "expect": "([1.698, 1.532, 0.997, -0.504], 100000000.0)",
       "compare": "isclose"
      },
      {
-      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "setup": "P = make_panel(40, 400, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
       "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'] * 0, P['adv_gbp'], sg * 0, [1e6, 1e9], 'M')",
-      "expect": "([-0.282, -0.282], 1000000.0)",
+      "expect": "([1.96, 1.96], None)",
       "compare": "isclose"
      },
      {
-      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
-      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e6, 3e7], 'W')",
-      "expect": "([-0.248, -3.357], 1000000.0)",
+      "setup": "P = make_panel(60, 500, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e5, 1e6, 1e7], 'W')",
+      "expect": "([0.2, -0.634, -2.814], 100000.0)",
       "compare": "isclose"
      },
      {
-      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
-      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], 0.02, [1e6, 1e8], 'M')",
-      "expect": "([-0.688, -2.233], 1000000.0)",
+      "setup": "P = make_panel(40, 400, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], 0.02, [1e6, 1e7, 1e8], 'M')",
+      "expect": "([1.532, 0.998, -0.503], 100000000.0)",
       "compare": "isclose"
      },
      {
-      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "setup": "P = make_panel(40, 400, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
       "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [], 'M')",
       "expect": "([], None)",
       "compare": "equal"
+     },
+     {
+      "setup": "P = make_panel(30, 300, 5); Wt = long_short_weights(reversal_5d(P['ret'])); sg = P['ret'].rolling(60, min_periods=20).std().ffill()",
+      "call": "capacity_curve(Wt, P['ret'], P['half_spread_bp'], P['adv_gbp'], sg, [1e5, 1e8], 'M')",
+      "expect": "([-0.525, -2.223], None)",
+      "compare": "isclose"
      }
     ],
-    "how": "Check runs 5 hidden tests on a monthly and a weekly reversal book from `make_panel(30, 300, 5)`: four book sizes, a cost-free case (None), `sigma` as one number, and an empty list of books. Compared with math.isclose. NumPy and pandas load on the first run."
+    "how": "Check runs 6 hidden tests on reversal books from small seeded panels: monthly at four book sizes, a cost-free case (None), a weekly book, `sigma` as one number, an empty list of books, and a book whose gross Sharpe is negative (None). Compared with math.isclose. NumPy and pandas load on the first run."
    },
    "feedback": {
     "correct": "All tests pass.",
     "generic": "Not quite. Check the halving target (half the gross Sharpe) and the shapes of `sigma`."
    },
    "explain": {
-    "text": "The gross series is the same for every book; only the cost changes, growing with $\\sqrt{B}$ through impact. With no spread and no volatility the book never halves, so the answer is None."
+    "text": "The gross series is the same for every book; only the cost changes, growing with $\\sqrt{B}$ through impact. With no spread and no volatility the book never halves, so the answer is None; with a negative gross Sharpe, halving means nothing and the answer is None too."
    }
   },
   {
@@ -390,12 +396,10 @@
     "al-ic",
     "al-costs"
    ],
-   "kind": "longform",
-   "prose": "Write the one-page research note for this course's study, 12−1 momentum on the seeded panel, under the ten headings. Use your own `run_research` output. Include the real-data paragraph under Next steps.",
-   "question": "Write the note.",
+   "question": "Write the research note.",
    "widget": {
     "kind": "longform",
-    "prompt": "Write the research note: Question, Data, Signals, Measurement, Portfolio, Costs, Results, Variants tried, What failed, Next steps.",
+    "prompt": "Write the one-page research note for this course's study, 12−1 momentum on the seeded panel, under the ten headings: Question, Data, Signals, Measurement, Portfolio, Costs, Results, Variants tried, What failed, Next steps. Use your own `run_research` output, and put the real-data paragraph under Next steps.",
     "model": "# Research note: 12-minus-1 momentum across 200 shares\n\n## Question\nDoes 12-minus-1 momentum predict next month's returns across shares well enough to trade after costs?\n\n## Data\nSeeded `make_panel` (seed 2310): 200 shares, 1,260 business days from 2 January 2019. Universe on each date: listed, with trailing 60-day average £ volume of at least £5m. Total returns from raw closes, splits and cash dividends; delisting returns kept and dead shares leave the universe the next day. Research period 2 January 2019 to 11 November 2022; held-out year 14 November 2022 to 31 October 2023, opened once.\n\n## Signals\nSum of log returns from 251 to 21 days ago (at least 200 days of history), masked to the universe, ranked across shares on each date.\n\n## Measurement\nMonthly rank IC against the next 21 days' return, 35 month-end dates: mean 0.0377, t 2.30, hit rate 63%. Quintile returns a month, low to high: 0.22%, 0.81%, 0.75%, 0.83%, 1.52%: higher at the top, not monotone in the middle.\n\n## Portfolio\nRank weights, longs +0.5 and shorts −0.5 per £ of gross, rebalanced at each month end and held constant between rebalances; £100m gross. Book beta stayed small (−0.01 on the equal-weighted index).\n\n## Costs\nTurnover 2.34 a year. Costs 165 bp a year at £100m: each share's half spread plus square-root impact ($c = 1$, 60-day volatility, daily £ volume). Break-even 112 bp per £ traded. Borrow costs are not included.\n\n## Results\nResearch: Sharpe gross 1.82, net 1.23 (95% interval 0.10 to 2.35, Lo's formula; a 21-day block bootstrap gives 0.13 to 2.36); maximum drawdown −3.6%. Held-out year: net −0.49 (95% interval −2.45 to 1.47).\n\n## Variants tried\n37: six signals (12−1 and 12−0 momentum; reversal over 1, 5 and 21 days; a 50/50 combination) × two neutralisations × three rebalance frequencies, plus one quintile book. Expected best net Sharpe under no skill 1.24; ours is 1.23, so the deflated check fails.\n\n## What failed\n- Daily reversal: gross Sharpe 3.42, net −18.8 at £100m; break-even 6 bp per £ traded, below the median half spread of 7.3 bp.\n- The 50/50 combination: gross 2.15, net −0.00; its reversal leg turned the book over 6.1 times a year.\n- The held-out year: net −0.49, against 1.23 in research; one year cannot separate them.\n- The deflated check at $N = 37$.\n\n## Next steps\nRun the same code on real data: prices, splits and dividends from yfinance cached to disk with `auto_adjust` set explicitly, or Nasdaq Data Link with the key in an environment variable; a point-in-time universe with delisted shares (Nasdaq Data Link's US equity tables or CRSP: free data cannot do this well, since yfinance has current tickers only); sectors as of each date; quoted spreads and real volumes; a few hundred shares; the same held-out rule. The synthetic panel plants its momentum, so expect a much lower Sharpe on real shares.\n",
     "rubric": [
      {
@@ -425,8 +429,8 @@
     ]
    },
    "feedback": {
-    "correct": "Marked.",
-    "generic": "Compare your note with the model, section by section."
+    "correct": "Compare your note with the model answer and mark it against the rubric.",
+    "generic": "Compare your note with the model answer and mark it against the rubric."
    },
    "explain": {
     "text": "A note a committee can act on lets every number be checked: net of costs, with intervals, with the search counted and the failures named."

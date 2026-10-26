@@ -201,3 +201,16 @@ Raised later (alpha level 1):
 
 - bars validator: for object categories (`{ "id": "all", "label": "..." }`) the canvas ids are the category's own ids, but the validator also accepts `x`-prefixed ids such as `xall` in `hints[].highlight` and `explain.canvas.highlight`, which then highlight nothing (alpha l3 hook, l4 forward-return bars). Workaround: use the plain category ids. Wanted: an error when a bars highlight id is neither a category id nor `x{label}` of a plain category.
 - code widget import scan (already raised by backtest level 1): `import numpy as np, pandas as pd`, the first line of the brief's shared `make_panel` generator, loads numpy only, so every alpha prelude-based test failed with key "error" and "No module named 'pandas'". Workaround: every alpha level 1 prelude puts `import numpy as np` and `import pandas as pd` on their own lines above the verbatim generator. Later alpha levels copying the generator need the same two lines until the scan is fixed.
+
+Raised later (alpha level 3):
+
+- bars with `groups`: the legend entries are spaced at a fixed width, so at 540 px "Momentum" runs into the next swatch (alpha l10 hook, l12 monthly-mix ladder). Workaround: accepted, still legible. Wanted: legend spacing measured from each label's width, or wrapping.
+- boxes with `itemKind: "card"`: ten cards labelled like "S01 +0.42" in one container overlap each other at 540 px (alpha l11 quintile sort). Workaround: cards show only the signal value ("+0.42") and the hints name values instead of shares. Wanted: a container that grows rows to fit its cards, or a validator warning when they cannot fit.
+- series `revealAt` control on an `x: "dates"` axis: the readout shows the index, not the date reached, so "Months shown 12" is the best label available (alpha l9 explore, l11 explore). Workaround: `indexFrom: 1` so the count reads naturally. Wanted: a readout format that shows the date at the reveal point.
+- plane points: no grouping or legend for two sets of measured dots (alpha l12 trap: research-period and held-out ICs by weight). Workaround: two point colours explained in the caption. Wanted: point groups with a label, or a series-style polyline of points on a plane.
+
+Raised later (alpha level 2):
+
+- validator: a point-hint `highlight` of `fit` on a scatter is rejected as "not a plausible id" (README-B lists `fit` as a scatter id), so alpha l8's scatter and pair screens keep point hints with no highlight. Wanted: accept `fit`, `line` and `r-p{i}` on scatter, and `left:`/`right:` ids on a pair of scatters.
+- validator: an `explain.canvas` patch that sets a bars canvas's `state.params` (the value a control drives, here `k`, which a derive reads to set every bar) is warned as "looks like a whole canvas". alpha l8's sector-demeaning Why? sheet needs `"params": { "k": 1 }` so the derive does not reset the bars to their raw heights; it renders correctly. Wanted: no warning for a `params` key without `kind`.
+- series: a `window` driven by two controls (`window.from`, `window.to`) is the only way to let the learner move a look-back window, and the sliders read in array indices, not "days ago". alpha l5's explore labels them "(index)" and puts the days-ago reading in a derive caption. Wanted: draggable window ends on the series itself, or a control `display` expression for the readout.
