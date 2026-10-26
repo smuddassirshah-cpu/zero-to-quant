@@ -64,3 +64,5 @@ Raised later (stat-learning level 3):
 - controls: no categorical control. l13's model switch is a 0-to-1 slider whose readout shows "0" and "1", with the model's name only in a ternary caption. Wanted: `options: ["logistic", "k-NN, k = 3"]` on a control, binding the index.
 - series: lines cannot be shown or hidden by a control, and `reveal` applies to every series at once. l14's P&L explore wanted "toggle costs on" and "add the coin" steps. Wanted: `hide` bindable to a control (one more vote for the stat-learning level 1 request for plane points).
 - code widget (Python): `isclose` is fixed at rel 1e-9, so scikit-learn outputs are rounded to 4 places in each call and a value on a rounding boundary could fail across platforms (none did in Pyodide). One more vote for per-case `tol` (raised for C++ in cpp-pricing level 2).
+
+Content note (cpp-pricing): level 2 names its payoff classes Call/Put and level 3 CallPayoff/PutPayoff; the cpp course never teaches inheritance, so cpp-pricing l5 teaches virtual functions from scratch. The topic 1.9 second reader should check the handover and decide whether cpp level 3 needs one screen on inheritance and `virtual`.
