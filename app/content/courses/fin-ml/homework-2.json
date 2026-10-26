@@ -1,0 +1,418 @@
+{
+  "id": "homework-2",
+  "course": "fin-ml",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-builder",
+      "difficulty": 5,
+      "skills": [
+        "fm-features",
+        "fm-eval"
+      ],
+      "title": "A leak-free feature builder",
+      "prose": "`make_universe()` gives a long panel of 20 seeded stocks over 120 business days, with a planted column `smooth`, and a fundamentals table with publication dates. Build the features with no look-ahead:\n- `ret_1`, `vol_20`: daily log return and its trailing 20-day sd, per stock\n- `fd`: log close differenced at $d = 0.4$, threshold $10^{-2}$, per stock\n- `mom_rank`: percentile rank of the 20-day log return across stocks each date\n- `fund`: latest value published on or before each date",
+      "question": "Complete `build_features` and `count_planted_leaks`. `summary` returns the frame's shape, the mean of `fund`, and the leak count.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef frac_diff(x, d, threshold=1e-2):\n    w = ffd_weights(d, threshold)\n    x = np.asarray(x, dtype=float)\n    out = np.full(len(x), np.nan)\n    if len(w) <= len(x):\n        out[len(w) - 1:] = np.convolve(x, w, mode='valid')\n    return out\n\ndef build_features(prices, fundamentals, d=0.4):\n    df = prices.sort_values(['stock', 'date']).reset_index(drop=True)\n    logc = np.log(df['close'])\n    g = logc.groupby(df['stock'])\n    df['ret_1'] = g.diff()\n    df['vol_20'] = ...    # trailing 20-day sd of ret_1, per stock\n    df['fd'] = ...        # frac_diff of log close at d, per stock\n    r20 = g.diff(20)      # trailing 20-day log return\n    # mom_rank: (rank - 1) / (n - 1) of r20 across stocks on each date, 0.5 for a lone stock\n    df['mom_rank'] = ...\n    # fund: latest value published on or before each date, per stock\n    df = df.sort_values('date')\n    f = fundamentals.sort_values('published')\n    df = pd.merge_asof(df, f[['stock', 'value', 'published']], left_on='date', right_on='published', by='stock', direction=...)\n    df = df.rename(columns={'value': 'fund'})\n    cols = ['date', 'stock', 'ret_1', 'vol_20', 'fd', 'mom_rank', 'fund']\n    return df[cols].sort_values(['date', 'stock']).reset_index(drop=True)\n\ndef count_planted_leaks(prices):\n    df = prices.sort_values(['stock', 'date'])\n    trailing = df.groupby('stock')['close'].transform(lambda c: c.rolling(5).mean())\n    ahead = trailing.groupby(df['stock']).shift(-2)   # trailing mean moved back 2 days\n    return ...   # rows where smooth exists and equals `ahead`\n\ndef summary(prices, fundamentals):\n    f = build_features(prices, fundamentals)\n    return f.shape, round(float(f['fund'].mean()), 6), count_planted_leaks(prices)\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef frac_diff(x, d, threshold=1e-2):\n    w = ffd_weights(d, threshold)\n    x = np.asarray(x, dtype=float)\n    out = np.full(len(x), np.nan)\n    if len(w) <= len(x):\n        out[len(w) - 1:] = np.convolve(x, w, mode='valid')\n    return out\n\ndef build_features(prices, fundamentals, d=0.4):\n    df = prices.sort_values(['stock', 'date']).reset_index(drop=True)\n    logc = np.log(df['close'])\n    g = logc.groupby(df['stock'])\n    df['ret_1'] = g.diff()\n    df['vol_20'] = df.groupby('stock')['ret_1'].transform(lambda r: r.rolling(20).std())\n    df['fd'] = g.transform(lambda c: pd.Series(frac_diff(c.to_numpy(), d), index=c.index))\n    r20 = g.diff(20)      # trailing 20-day log return\n    # mom_rank: (rank - 1) / (n - 1) of r20 across stocks on each date, 0.5 for a lone stock\n    gr = r20.groupby(df['date'])\n    n = gr.transform('count')\n    df['mom_rank'] = ((gr.rank() - 1) / (n - 1)).where(n > 1, 0.5).where(r20.notna())\n    # fund: latest value published on or before each date, per stock\n    df = df.sort_values('date')\n    f = fundamentals.sort_values('published')\n    df = pd.merge_asof(df, f[['stock', 'value', 'published']], left_on='date', right_on='published', by='stock', direction='backward')\n    df = df.rename(columns={'value': 'fund'})\n    cols = ['date', 'stock', 'ret_1', 'vol_20', 'fd', 'mom_rank', 'fund']\n    return df[cols].sort_values(['date', 'stock']).reset_index(drop=True)\n\ndef count_planted_leaks(prices):\n    df = prices.sort_values(['stock', 'date'])\n    trailing = df.groupby('stock')['close'].transform(lambda c: c.rolling(5).mean())\n    ahead = trailing.groupby(df['stock']).shift(-2)   # trailing mean moved back 2 days\n    return int((df['smooth'].notna() & np.isclose(df['smooth'], ahead)).sum())\n\ndef summary(prices, fundamentals):\n    f = build_features(prices, fundamentals)\n    return f.shape, round(float(f['fund'].mean()), 6), count_planted_leaks(prices)\n",
+        "examples": [
+          {
+            "setup": "p, fu = make_universe()",
+            "call": "summary(p, fu)",
+            "expect": "((2400, 7), 0.980591, 2320)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "p, fu = make_universe()",
+            "call": "summary(p, fu)",
+            "expect": "((2400, 7), 0.980591, 2320)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p, fu = make_universe()",
+            "call": "list(build_features(p, fu).columns)",
+            "expect": "['date', 'stock', 'ret_1', 'vol_20', 'fd', 'mom_rank', 'fund']"
+          },
+          {
+            "setup": "p, fu = make_universe(); f = build_features(p, fu); a = f[f.stock == 'S00']",
+            "call": "[int(a['ret_1'].isna().sum()), int(a['vol_20'].isna().sum()), int(a['fd'].isna().sum()), int(a['mom_rank'].isna().sum())]",
+            "expect": "[1, 20, 10, 20]"
+          },
+          {
+            "setup": "p, fu = make_universe(); f = build_features(p, fu); pub = fu[(fu.stock == 'S03') & (fu.quarter_end == '2024-03-31')].iloc[0]; a = f[f.stock == 'S03'].set_index('date')['fund']",
+            "call": "[float(a[a.index >= pub.published].iloc[0]) == float(pub.value), float(a[a.index < pub.published].iloc[-1]) == float(pub.value)]",
+            "expect": "[True, False]"
+          },
+          {
+            "setup": "p, fu = make_universe(); f = build_features(p, fu)",
+            "call": "round(float(f.loc[(f.date == '2024-03-01') & (f.stock == 'S07'), 'mom_rank'].iloc[0]), 6)",
+            "expect": "0.052632",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p, fu = make_universe(); f = build_features(p, fu)",
+            "call": "round(float(f.loc[(f.date == '2024-06-14') & (f.stock == 'S11'), 'fd'].iloc[0]), 6)",
+            "expect": "1.013183",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p, fu = make_universe(); f = build_features(p, fu)",
+            "call": "round(float(f.loc[(f.date == '2024-04-02') & (f.stock == 'S05'), 'vol_20'].iloc[0]), 6)",
+            "expect": "0.017077",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p, fu = make_universe(5, 6, 60)",
+            "call": "summary(p, fu)",
+            "expect": "((360, 7), 0.836083, 336)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "p, fu = make_universe(5, 6, 60); p.loc[p.stock == 'S01', 'smooth'] = p.loc[p.stock == 'S01', 'close']",
+            "call": "count_planted_leaks(p)",
+            "expect": "280"
+          }
+        ],
+        "how": "Check runs 9 hidden tests on `make_universe(seed, n_stocks, n_days)`, already defined with `ffd_weights`: the summary tuple, the column order, NaN counts per stock, the fundamental on and before its publication day, three single cells rounded to 6 places, and the leak count on a panel where one stock's `smooth` is made honest. The first run loads NumPy and pandas, which takes a few seconds.",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_universe(seed=2, n_stocks=20, n_days=120):\n    \"\"\"Seeded long-format closes for 20 stocks on 120 business days from 2 January 2024,\n    with a planted column `smooth`: a centred 5-day mean of each stock's close.\n    Also a fundamentals table: one value per stock and quarter end, with its publication date.\"\"\"\n    rng = np.random.default_rng(seed)\n    dates = pd.bdate_range('2024-01-02', periods=n_days)\n    rows, fund = [], []\n    for i in range(n_stocks):\n        s = f'S{i:02d}'\n        close = 50 * np.exp(np.cumsum(0.0003 + 0.015 * rng.standard_normal(n_days)))\n        rows.append(pd.DataFrame({'date': dates, 'stock': s, 'close': close}))\n        for qe, base in (('2023-12-31', '2024-01-20'), ('2024-03-31', '2024-04-20')):\n            pub = pd.Timestamp(base) + pd.Timedelta(days=int(rng.integers(0, 30)))\n            fund.append((s, pd.Timestamp(qe), round(float(rng.normal(1.0, 0.3)), 3), pub))\n    prices = pd.concat(rows, ignore_index=True)\n    prices['smooth'] = prices.groupby('stock')['close'].transform(lambda c: c.rolling(5, center=True).mean())\n    fundamentals = pd.DataFrame(fund, columns=['stock', 'quarter_end', 'value', 'published'])\n    return prices, fundamentals\n\ndef ffd_weights(d, threshold):\n    w, k = [1.0], 1\n    while k < 100000:\n        nxt = -w[-1] * (d - k + 1) / k\n        if abs(nxt) < threshold:\n            break\n        w.append(nxt)\n        k += 1\n    return np.array(w)\n",
+        "budget": 20000
+      },
+      "feedback": {
+        "correct": "Correct. The frame is 2,400 by 7, `fund` averages 0.9806, and 2,320 planted values look ahead.",
+        "generic": "Some tests failed. Check each column's window is trailing and per stock, the rank is per date, and the join is backward on `published`."
+      },
+      "explain": {
+        "text": "Every column is trailing and grouped by stock, the rank is grouped by date, and the fundamental arrives on its publication date. The planted centred mean equals the trailing mean moved back 2 days on every row where it exists: 2,320 rows, 116 per stock. A detector that compares with a shifted trailing version finds such leaks without reading the code."
+      }
+    },
+    {
+      "id": "h-pit",
+      "difficulty": 4,
+      "skills": [
+        "fm-features",
+        "fm-eval"
+      ],
+      "title": "As of a date",
+      "prose": "A point-in-time table `acme` keeps every version of each figure with its `as_of` date, including a restatement of ACME's March quarter on 2 August.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "quarter_end",
+            "eps",
+            "as_of"
+          ],
+          "rows": [
+            [
+              "ACME",
+              "2024-03-31",
+              "1.35",
+              "2024-05-08"
+            ],
+            [
+              "ACME",
+              "2024-03-31",
+              "1.31",
+              "2024-08-02"
+            ],
+            [
+              "ACME",
+              "2024-06-30",
+              "1.40",
+              "2024-08-01"
+            ],
+            [
+              "BOLT",
+              "2024-03-31",
+              "0.80",
+              "2024-04-25"
+            ],
+            [
+              "BOLT",
+              "2024-06-30",
+              "0.85",
+              "2024-07-30"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `point_in_time(table, as_of_date)`: the EPS a backtest may use on that date, one per ticker and quarter, sorted by ticker then quarter.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef point_in_time(table, as_of_date):\n    known = table[...]   # rows known on or before as_of_date\n    known = known.sort_values('as_of')\n    latest = known.groupby(['ticker', 'quarter_end']).tail(1)\n    return latest.sort_values(['ticker', 'quarter_end'])['eps'].tolist()\n",
+        "solution": "import pandas as pd\n\ndef point_in_time(table, as_of_date):\n    known = table[table['as_of'] <= pd.Timestamp(as_of_date)]\n    known = known.sort_values('as_of')\n    latest = known.groupby(['ticker', 'quarter_end']).tail(1)\n    return latest.sort_values(['ticker', 'quarter_end'])['eps'].tolist()\n",
+        "examples": [
+          {
+            "call": "point_in_time(acme, '2024-07-15')",
+            "expect": "[1.35, 0.8]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "point_in_time(acme, '2024-07-15')",
+            "expect": "[1.35, 0.8]"
+          },
+          {
+            "call": "point_in_time(acme, '2024-08-01')",
+            "expect": "[1.35, 1.4, 0.8, 0.85]"
+          },
+          {
+            "call": "point_in_time(acme, '2024-08-02')",
+            "expect": "[1.31, 1.4, 0.8, 0.85]"
+          },
+          {
+            "call": "point_in_time(acme, '2024-04-01')",
+            "expect": "[]"
+          },
+          {
+            "call": "point_in_time(acme, '2024-05-08')",
+            "expect": "[1.35, 0.8]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `acme`, already defined, at five dates around the reports and the restatement, compared exactly. The first run loads pandas, which takes a few seconds.",
+        "prelude": "import pandas as pd\n\nacme = pd.DataFrame({'ticker': ['ACME', 'ACME', 'ACME', 'BOLT', 'BOLT'],\n                     'quarter_end': pd.to_datetime(['2024-03-31', '2024-03-31', '2024-06-30', '2024-03-31', '2024-06-30']),\n                     'eps': [1.35, 1.31, 1.40, 0.80, 0.85],\n                     'as_of': pd.to_datetime(['2024-05-08', '2024-08-02', '2024-08-01', '2024-04-25', '2024-07-30'])})\n"
+      },
+      "feedback": {
+        "correct": "Correct. On 1 August ACME's March quarter is still £1.35; the restatement appears on 2 August.",
+        "generic": "Some tests failed. Keep rows with `as_of` on or before the date, then the latest version of each quarter."
+      },
+      "explain": {
+        "text": "Filtering on `as_of` first, then taking the latest version, is exactly what the market knew. Filtering on `quarter_end` would hand July the June figure; taking the final version would hand it the restatement."
+      }
+    },
+    {
+      "id": "h-order",
+      "difficulty": 3,
+      "skills": [
+        "fm-features",
+        "fm-eval"
+      ],
+      "prose": "A leak-free daily feature pipeline for a cross-sectional model.",
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "p1",
+            "text": "Sort the panel by stock and date, oldest first, and assert the dates increase"
+          },
+          {
+            "id": "p2",
+            "text": "Compute trailing features per stock: returns, rolling volatility, ratios to moving averages"
+          },
+          {
+            "id": "p3",
+            "text": "Join fundamentals backward on their publication date"
+          },
+          {
+            "id": "p4",
+            "text": "Rank each feature across stocks within each date"
+          },
+          {
+            "id": "p5",
+            "text": "Shift every feature one day against the next-day label"
+          },
+          {
+            "id": "p6",
+            "text": "Split by time, then fit scalers and the differencing order on training rows only"
+          }
+        ],
+        "answer": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5",
+          "p6"
+        ],
+        "same": [
+          [
+            "p2",
+            "p3"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Order the rows, build trailing values, join by knowledge time, rank by date, align with the label, then fit on training only.",
+        "generic": "Not quite. Nothing that uses `shift` or `rolling` can come before the sort; nothing fitted can come before the split."
+      },
+      "explain": {
+        "text": "Sorting first makes every `shift` and `rolling` look backward. Ranking needs every feature present on each date. Anything fitted, scalers or $d$, is fitted after the time split, on training rows."
+      }
+    },
+    {
+      "id": "h-vr",
+      "difficulty": 3,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "For a differenced series, the variance of 20-day changes is $0.0036$ and the variance of 1-day changes is $0.0006$.",
+      "question": "What is the variance ratio, and does it pass our rule of VR below 0.2?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pass",
+            "text": "VR = 0.3: it fails, so try a larger $d$",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "VR = 6: it fails badly",
+            "why": "You divided without the factor 20. VR divides by 20 times the 1-day variance."
+          },
+          {
+            "id": "ok",
+            "text": "VR = 0.3: it passes",
+            "why": "0.3 is above the 0.2 cutoff."
+          },
+          {
+            "id": "tiny",
+            "text": "VR = 0.015: it passes",
+            "why": "You multiplied by 20 somewhere instead of dividing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. $0.0036 / (20 \\times 0.0006) = 0.3$, above 0.2.",
+        "generic": "Not quite. VR is the 20-day variance over 20 times the 1-day variance."
+      },
+      "explain": {
+        "text": "$20 \\times 0.0006 = 0.012$, and $0.0036/0.012 = 0.3$. A random walk would give 1, noise $0.05$. The series is still too walk-like, so raise $d$ one step and test again."
+      }
+    },
+    {
+      "id": "h-sector",
+      "difficulty": 4,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "A desk ranks momentum within each date and sector. One sector, utilities, has only two shares in the universe.",
+      "question": "What happens to the utilities' sector-neutral ranks?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "binary",
+            "text": "Every day one scores 0 and the other 1, however close their momentum",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "They are as informative as any other sector's",
+            "why": "With two shares the rank can only say which is higher, not by how much or how unusual."
+          },
+          {
+            "id": "half",
+            "text": "Both always score 0.5",
+            "why": "Two shares give ranks 1 and 2, so 0 and 1. Only a lone share gets 0.5."
+          },
+          {
+            "id": "nan",
+            "text": "They become NaN",
+            "why": "Two shares are enough to rank; the result is just coarse."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Tiny sectors make sector-neutral ranks almost binary noise.",
+        "generic": "Not quite. Work out the ranks of two shares."
+      },
+      "explain": {
+        "text": "With $n = 2$ the formula gives 0 and 1 only. A 0.1% gap becomes the full range of the feature. Merge small sectors into a broader group before neutralising."
+      }
+    },
+    {
+      "id": "h-long-review",
+      "difficulty": 4,
+      "skills": [
+        "fm-features",
+        "fm-eval"
+      ],
+      "title": "Reviewing a feature list",
+      "kind": "longform",
+      "prompt": "A colleague proposes twelve features for a daily stock-selection model trained on 2012 to 2019 and tested on 2020 to 2023. For each, say whether it drifts, leaks, or is a level in disguise (or is fine), and give a replacement where needed.\n\n1. Closing price in £\n2. 5-day log return\n3. 200-day moving average of the close\n4. Close over its 50-day mean, minus 1\n5. 20-day volatility from `rolling(20, center=True).std()`\n6. Market cap in £bn\n7. Volume over its 20-day mean\n8. Cumulative volume since listing\n9. Quarterly EPS joined on quarter end\n10. Momentum ranked with `groupby('stock').rank(pct=True)`\n11. Price z-scored with the 2012 to 2023 mean and sd\n12. 12-month return ranked across stocks each date",
+      "model": "**Fine as they are:** 2 (a return), 4 (a ratio to a trailing mean), 7 (relative volume) and 12 (a cross-sectional rank of a trailing return).\n\n**Levels that drift:** 1, the price: replace with a return or feature 4. 6, market cap in £bn: rank it across stocks each date, or take its log change. These are visible levels.\n\n**Levels in disguise:** 3, the 200-day average, is a smoothed price in pounds: use close over the 200-day mean, minus 1. 8, cumulative volume, only grows: use feature 7.\n\n**Leaks:** 5 uses a centred window, so each value includes 9 or 10 future days: use `rolling(20).std()`. 9 dates EPS at quarter end, five or more weeks before publication: join backward on the publication date. 10 ranks each stock against its own whole history, future included: rank across stocks with `groupby('date')`, or use a trailing time-series rank.\n\n**Both:** 11 is a rescaled level, so it still drifts, and its mean and sd include 2020 to 2023, so it leaks: use a trailing rolling z-score.\n\n**The test behind every verdict:** what is the feature's unit, does a value mean the same in 2012 and 2023, and was it known on the date it carries?",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Identifies 2, 4, 7 and 12 as fine"
+        },
+        {
+          "points": 2,
+          "text": "Flags 1 and 6 as drifting levels and gives a unit-free replacement for each"
+        },
+        {
+          "points": 2,
+          "text": "Flags 3 and 8 as levels in disguise, with ratio or relative-volume replacements"
+        },
+        {
+          "points": 2,
+          "text": "Flags 5, 9 and 10 as leaks and names the fix: trailing window, publication-date join, `groupby('date')`"
+        },
+        {
+          "points": 1,
+          "text": "Says 11 both drifts and leaks, and replaces it with a trailing z-score"
+        },
+        {
+          "points": 1,
+          "text": "States the general test: unit, same meaning across years, known at the date"
+        }
+      ]
+    },
+    {
+      "id": "h-d-test",
+      "difficulty": 4,
+      "skills": [
+        "fm-features",
+        "fm-eval"
+      ],
+      "prose": "On the seeded walk of lesson 6, three rules give the smallest passing $d$ as 0.3 (ADF, one lag), 0.4 (VR below 0.2) and 0.45 (ADF, lags by AIC).",
+      "question": "What should a research note report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "state",
+            "text": "The chosen $d$ together with the test, cutoff and training window used to choose it",
+            "correct": true
+          },
+          {
+            "id": "min",
+            "text": "0.3, the smallest, since smaller keeps more memory",
+            "why": "Picking the most flattering rule after seeing all three is a choice fitted on the results."
+          },
+          {
+            "id": "one",
+            "text": "$d = 1$, to be safe",
+            "why": "That throws away the memory all three rules agree can be kept."
+          },
+          {
+            "id": "avg",
+            "text": "The average, 0.38",
+            "why": "An average of rules is not itself a test; the note still has to say what was done."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. $d$ is only meaningful with the rule that chose it.",
+        "generic": "Not quite. Think about how a reader would reproduce the number."
+      },
+      "explain": {
+        "text": "Different stationarity tests weigh long memory differently, so they disagree. The note should fix one rule in advance, fit $d$ on training data, and report both. Shopping among rules afterwards is a small selection bias."
+      }
+    }
+  ]
+}

@@ -1,0 +1,395 @@
+{
+  "id": "review-2",
+  "course": "fin-ml",
+  "level": 2,
+  "items": [
+    {
+      "id": "r-unit",
+      "difficulty": 2,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "A model for UK banks uses **total deposits in £bn** as a feature, trained on 2008 to 2016.",
+      "question": "Which replacement passes the unit test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "growth",
+            "text": "Deposit growth over the last four quarters",
+            "correct": true
+          },
+          {
+            "id": "log",
+            "text": "The log of deposits in £bn",
+            "why": "A log compresses the level but still drifts as deposits grow."
+          },
+          {
+            "id": "lag",
+            "text": "Deposits a year ago, in £bn",
+            "why": "A lagged level is still a level."
+          },
+          {
+            "id": "smooth",
+            "text": "A four-quarter moving average of deposits",
+            "why": "Smoothing a level keeps its unit and its drift."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. A growth rate has no unit and means the same in 2008 and today.",
+        "generic": "Not quite. Find the option whose unit cancels."
+      },
+      "explain": {
+        "text": "Deposits grow with the economy and with inflation, so a 2016 value lies beyond the training range. A growth rate, or a ratio such as deposits over assets, keeps the information without the unit."
+      }
+    },
+    {
+      "id": "r-w3",
+      "difficulty": 2,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "Fractional differencing at $d = 0.3$: $w_0 = 1$, $w_1 = -0.3$, $w_2 = -0.105$.",
+      "question": "What is $w_3$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0595,
+        "tol": {
+          "abs": 0.0002
+        },
+        "placeholder": "a decimal",
+        "accept": "−0.0595",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.0595,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. $w_3 = -(-0.105)(0.3 - 2)/3 = -0.0595$.",
+        "generic": "Not quite. Use $w_k = -w_{k-1}(d - k + 1)/k$ with $k = 3$.",
+        "byKey": {
+          "sign": "You lost a minus sign: $0.105 \\times (-1.7)/3 = -0.0595$."
+        }
+      },
+      "explain": {
+        "text": "The factor is $(0.3 - 3 + 1)/3 = -1.7/3$. Then $-w_2 \\times (-1.7/3) = 0.105 \\times (-0.5667) = -0.0595$."
+      }
+    },
+    {
+      "id": "r-tie-rank",
+      "difficulty": 3,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "Five shares score 4, 7, 7, 1 and 9 on a feature today.",
+      "question": "What percentile rank $(\\text{rank} - 1)/(n - 1)$ does each share scoring 7 get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.625,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a decimal",
+        "accept": "0.625",
+        "wrong": [
+          {
+            "id": "low",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "high",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. They cover ranks 3 and 4, so each gets 3.5 and $q = 2.5/4 = 0.625$.",
+        "generic": "Not quite. Average the two ranks the tied shares cover.",
+        "byKey": {
+          "low": "You gave both the lower rank, 3. Ties take the average, 3.5.",
+          "high": "You gave both the higher rank, 4. Ties take the average, 3.5."
+        }
+      },
+      "explain": {
+        "text": "Sorted: 1, 4, 7, 7, 9. The sevens hold ranks 3 and 4, average 3.5, and $(3.5 - 1)/(5 - 1) = 0.625$."
+      }
+    },
+    {
+      "id": "r-scaler",
+      "difficulty": 3,
+      "skills": [
+        "fm-features",
+        "fm-eval"
+      ],
+      "prose": "A pipeline, top to bottom. The backtest is far better than live trading.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "height": 340,
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "Daily closes",
+              "x": 0.5,
+              "y": 0.1,
+              "shape": "rect"
+            },
+            {
+              "id": "n2",
+              "label": "Trailing 60-day momentum",
+              "x": 0.5,
+              "y": 0.3,
+              "shape": "rect"
+            },
+            {
+              "id": "n3",
+              "label": "StandardScaler fit on 2015 to 2023",
+              "x": 0.5,
+              "y": 0.5,
+              "shape": "rect"
+            },
+            {
+              "id": "n4",
+              "label": "Rank across stocks by date",
+              "x": 0.5,
+              "y": 0.7,
+              "shape": "rect"
+            },
+            {
+              "id": "n5",
+              "label": "Split: train to 2020, test after",
+              "x": 0.5,
+              "y": 0.9,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2"
+            },
+            {
+              "from": "n2",
+              "to": "n3"
+            },
+            {
+              "from": "n3",
+              "to": "n4"
+            },
+            {
+              "from": "n4",
+              "to": "n5"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the step that leaks.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "n3"
+        ],
+        "max": 1,
+        "countWord": "steps"
+      },
+      "feedback": {
+        "correct": "Correct. A scaler fitted on 2015 to 2023 gives every training row the test years' mean and sd.",
+        "generic": "Not quite. Ask which step saw data from after its row's date.",
+        "byKey": {
+          "n2": "A trailing window uses only the past.",
+          "n4": "Ranking within each date is safe.",
+          "n5": "Splitting by time is the right procedure."
+        }
+      },
+      "explain": {
+        "text": "Fitting the scaler on all years is validation lesson 10's leak inside a feature pipeline. Fit it on the training rows, then apply it to the test rows."
+      }
+    },
+    {
+      "id": "r-fullz",
+      "difficulty": 3,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "A feature is the price z-scored with the mean and sd of 2010 to 2023, and the model is tested on 2021 to 2023.",
+      "question": "How many separate problems does it have?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "Two: it still drifts, and its scale used the test years",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "None: mean 0 and sd 1",
+            "why": "Mean 0 and sd 1 hold over the whole sample by construction, not within each period."
+          },
+          {
+            "id": "drift",
+            "text": "One: it drifts",
+            "why": "It drifts, and its mean and sd also came from the test years: a leak too."
+          },
+          {
+            "id": "leak",
+            "text": "One: it leaks",
+            "why": "It leaks, and a rescaled level still drifts as the price does."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Replace it with a trailing rolling z-score, which fixes both.",
+        "generic": "Not quite. Check drift and look-ahead separately."
+      },
+      "explain": {
+        "text": "Rescaling cannot remove a trend, so the drift remains. The mean and sd include the test years, so it leaks. A trailing 20-day z-score is stationary and uses only the past."
+      }
+    },
+    {
+      "id": "r-window",
+      "difficulty": 4,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "A series has 250 days. At $d = 0.5$ with threshold $10^{-4}$ the fixed-width window holds 200 weights.",
+      "question": "How many days of differenced values does `frac_diff` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 51,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "51",
+        "wrong": [
+          {
+            "id": "off",
+            "value": 50,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 250,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Days 200 to 250: 51 values.",
+        "generic": "Not quite. The first value needs a full window.",
+        "byKey": {
+          "off": "You forgot to count both ends. Add 1.",
+          "all": "Each value needs the window's worth of earlier days."
+        }
+      },
+      "explain": {
+        "text": "The first full window ends on day 200. So $250 - 200 + 1 = 51$ days get a value. On a short history, raise the threshold or use a larger $d$."
+      }
+    },
+    {
+      "id": "r-groupby",
+      "difficulty": 3,
+      "skills": [
+        "fm-features"
+      ],
+      "prose": "Two lines of pandas on a long panel with `date`, `stock` and `mom`.\n```python\na = df.groupby('date')['mom'].rank(pct=True)\nb = df.groupby('stock')['mom'].rank(pct=True)\n```",
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ab",
+            "text": "`a` ranks across shares each day; `b` ranks each share against its own full history, future included",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "They are the same feature",
+            "why": "Grouping by date compares shares; grouping by stock compares days."
+          },
+          {
+            "id": "swap",
+            "text": "`a` ranks over time; `b` across shares",
+            "why": "You swapped them. Each group in `a` is one date: a cross-section."
+          },
+          {
+            "id": "bsafe",
+            "text": "`b` is a safe trailing rank",
+            "why": "A group rank sees every row of the group, later dates included."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. `b` is a time-series rank with look-ahead.",
+        "generic": "Not quite. Ask what rows share a group in each line."
+      },
+      "explain": {
+        "text": "`groupby('date')` puts one day's shares in each group, the cross-section. `groupby('stock')` puts one share's whole history in each group, so every rank knows the future."
+      }
+    },
+    {
+      "id": "r-pub",
+      "difficulty": 4,
+      "skills": [
+        "fm-features",
+        "fm-eval"
+      ],
+      "prose": "A quarter ends on 30 June. The company reports before the open on 6 August. A backtest joins the figure with `merge_asof(daily, reports, left_on='date', right_on='quarter_end')`.",
+      "question": "What is wrong, and what fixes it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pub",
+            "text": "It joins on quarter end, so July sees the figure early; join on the publication date instead",
+            "correct": true
+          },
+          {
+            "id": "dir",
+            "text": "It needs `direction='forward'`",
+            "why": "Forward hands each day the next report: more look-ahead, not less."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: backward joins are safe",
+            "why": "Backward is safe only on the time the row became known. Quarter end is not that time."
+          },
+          {
+            "id": "shift",
+            "text": "Shift the whole joined column by one day",
+            "why": "One day is not enough: the figure arrives five weeks after quarter end."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Re-date each figure to 6 August and join backward on that.",
+        "generic": "Not quite. Ask when the market first saw the figure."
+      },
+      "explain": {
+        "text": "A backward as-of join is only as honest as its time column. Keyed on quarter end, it hands July's rows a figure published in August. Key on publication date, or an `as_of` column."
+      }
+    }
+  ]
+}
