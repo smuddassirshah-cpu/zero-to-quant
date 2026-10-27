@@ -274,8 +274,7 @@
       "Oct",
       "Nov",
       "Dec"
-     ],
-     "compact": true
+     ]
     },
     "state": {}
    },
@@ -548,11 +547,11 @@
        "Return over the 12 months to this month-end"
       ],
       [
-       "`eps_surprise`",
+       "`surprise`",
        "Q1 earnings surprise: EPS reported on 14 May, dated 30 April"
       ],
       [
-       "`in_ftse100`",
+       "`in_index`",
        "Whether the share is in today's FTSE 100, used as the universe for 2005 to 2024"
       ],
       [
@@ -880,7 +879,7 @@
     "vl-time"
    ],
    "title": "A forest that scores itself too kindly",
-   "prose": "A random forest of 500 trees predicts whether the next 10 days' return is positive, from 1,200 daily rows in date order. Its out-of-bag accuracy is 0.71. A walk-forward test on the same rows gives 0.52, against a base rate of 0.50.",
+   "prose": "A random forest of 500 trees predicts the sign of the next 10 days' return. It uses 1,200 daily rows in date order. Its out-of-bag accuracy is 0.71. A walk-forward test on the same rows gives 0.52, against a base rate of 0.50.",
    "question": "Why do the two scores differ so much?",
    "widget": {
     "kind": "choice",
@@ -1034,8 +1033,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingRegressor\n\ndef early_stop_round(X, y, n_train, learning_rate):\n    \"\"\"Rows are in date order. Fit 300 depth-2 trees on the first n_train\n    rows, score every stage on the rows after them, and return\n    (best_round, validation_mse): the 1-based round with the lowest\n    validation MSE, and that MSE rounded to 4 places.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingRegressor\n\ndef early_stop_round(X, y, n_train, learning_rate):\n    \"\"\"Rows are in date order. Fit 300 depth-2 trees on the first n_train\n    rows, score every stage on the rows after them, and return\n    (best_round, validation_mse): the 1-based round with the lowest\n    validation MSE, and that MSE rounded to 4 places.\"\"\"\n    model = GradientBoostingRegressor(n_estimators=300, learning_rate=learning_rate,\n                                      max_depth=2, random_state=0)\n    model.fit(X[:n_train], y[:n_train])\n    mse = [float(np.mean((p - y[n_train:]) ** 2)) for p in model.staged_predict(X[n_train:])]\n    best = int(np.argmin(mse))\n    return best + 1, round(mse[best], 4)\n",
+    "starter": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingRegressor\n\ndef early_stop_round(X, y, n_train, learning_rate):\n    \"\"\"Rows are in date order. Fit 300 depth-2 trees on\n    the first n_train rows, score every stage on the\n    rows after them, and return (best_round,\n    validation_mse): the 1-based round with the lowest\n    validation MSE, and that MSE rounded to 4 places.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingRegressor\n\ndef early_stop_round(X, y, n_train, learning_rate):\n    \"\"\"Rows are in date order. Fit 300 depth-2 trees on\n    the first n_train rows, score every stage on the\n    rows after them, and return (best_round,\n    validation_mse): the 1-based round with the lowest\n    validation MSE, and that MSE rounded to 4 places.\"\"\"\n    model = GradientBoostingRegressor(n_estimators=300, learning_rate=learning_rate,\n                                      max_depth=2, random_state=0)\n    model.fit(X[:n_train], y[:n_train])\n    mse = [float(np.mean((p - y[n_train:]) ** 2)) for p in model.staged_predict(X[n_train:])]\n    best = int(np.argmin(mse))\n    return best + 1, round(mse[best], 4)\n",
     "examples": [
      {
       "call": "early_stop_round(X, y, 250, 0.1)",
@@ -1137,7 +1136,8 @@
       "df = df.merge(eps, on=['stock', 'quarter_end'])"
      ],
      "numbers": true,
-     "compact": true
+     "compact": true,
+     "wrap": true
     },
     "state": {}
    },
@@ -1196,7 +1196,7 @@
     "sl-linear"
    ],
    "title": "A lasso on raw units",
-   "prose": "A desk fits a lasso for next-month return on raw features: momentum in %, volatility in %, size in £ millions (sd about 7,400), turnover as a fraction (sd about 0.004) and value.",
+   "prose": "A desk fits a lasso for next-month return on raw features. Momentum and volatility are in %, and value is a ratio. Size is in £ millions, with sd about 7,400. Turnover is a fraction, with sd about 0.004.",
    "question": "Which statements are true? Select all that apply.",
    "widget": {
     "kind": "multi",
@@ -1530,8 +1530,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_interaction_test_mse(X, y, alpha, n_train):\n    \"\"\"Rows are in date order. Train on the first n_train rows, test on the rest.\n    Add one column: the product of the first two RAW columns.\n    Standardise every column with the training rows' mean and sd\n    (population sd; a constant column keeps divisor 1).\n    Fit Ridge(alpha=alpha) and return the test MSE rounded to 4 places.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_interaction_test_mse(X, y, alpha, n_train):\n    \"\"\"Rows are in date order. Train on the first n_train rows, test on the rest.\n    Add one column: the product of the first two RAW columns.\n    Standardise every column with the training rows' mean and sd\n    (population sd; a constant column keeps divisor 1).\n    Fit Ridge(alpha=alpha) and return the test MSE rounded to 4 places.\"\"\"\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    X = np.column_stack([X, X[:, 0] * X[:, 1]])\n    mu = X[:n_train].mean(axis=0)\n    sd = X[:n_train].std(axis=0)\n    sd = np.where(sd == 0, 1.0, sd)\n    Z = (X - mu) / sd\n    model = Ridge(alpha=alpha).fit(Z[:n_train], y[:n_train])\n    err = model.predict(Z[n_train:]) - y[n_train:]\n    return round(float(np.mean(err ** 2)), 4)\n",
+    "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_interaction_test_mse(X, y, alpha, n_train):\n    \"\"\"Rows are in date order. Train on the first n_train\n    rows, test on the rest. Add one column: the\n    product of the first two RAW columns. Standardise\n    every column with the training rows' mean and sd\n    (population sd; a constant column keeps divisor\n    1). Fit Ridge(alpha=alpha) and return the test MSE\n    rounded to 4 places.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_interaction_test_mse(X, y, alpha, n_train):\n    \"\"\"Rows are in date order. Train on the first n_train\n    rows, test on the rest. Add one column: the\n    product of the first two RAW columns. Standardise\n    every column with the training rows' mean and sd\n    (population sd; a constant column keeps divisor\n    1). Fit Ridge(alpha=alpha) and return the test MSE\n    rounded to 4 places.\"\"\"\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    X = np.column_stack([X, X[:, 0] * X[:, 1]])\n    mu = X[:n_train].mean(axis=0)\n    sd = X[:n_train].std(axis=0)\n    sd = np.where(sd == 0, 1.0, sd)\n    Z = (X - mu) / sd\n    model = Ridge(alpha=alpha).fit(Z[:n_train], y[:n_train])\n    err = model.predict(Z[n_train:]) - y[n_train:]\n    return round(float(np.mean(err ** 2)), 4)\n",
     "examples": [
      {
       "call": "ridge_interaction_test_mse(X, y, 10.0, 200)",
@@ -1598,14 +1598,14 @@
     "correct": "The product is built from raw columns, scaled with training statistics, and scored on later months.",
     "generic": "Some tests failed. Split by position, build the product of the raw columns, then scale with training mean and sd only.",
     "byKey": {
-     "test-1": "Test 1 checks the whole recipe on 300 months. A shuffled split, no product, a product of z-scores or a scaler fitted on every row all change the answer.",
+     "test-1": "Test 1 checks the whole recipe. Each of these changes the answer: a shuffled split, no product, a product of z-scores, a scaler fitted on all rows.",
      "test-4": "Test 4 passes plain lists. Convert them with `np.asarray` before slicing columns.",
      "test-5": "Test 5 has a constant column. Its sd is 0, so keep a divisor of 1 there.",
      "error": "If the starter stopped, fill in the function body first. Python reports the line."
     }
    },
    "explain": {
-    "text": "The product uses the raw columns, and every column is then standardised with the mean and sd of the training rows. Test rows reuse those numbers, so the future shapes nothing. Fitting on the early rows and scoring the later ones keeps the split in time order."
+    "text": "The product uses the raw columns. Then every column is standardised with the training rows' mean and sd. Test rows reuse those numbers, so the future shapes nothing."
    }
   },
   {
@@ -1641,7 +1641,8 @@
       "fit   turnover_5"
      ],
      "numbers": true,
-     "compact": true
+     "compact": true,
+     "wrap": true
     },
     "state": {}
    },
@@ -1712,8 +1713,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import math\n\ndef meta_labels_trade(prices, vol, sides, pt, sl, h):\n    \"\"\"One meta-label per entry day t = 0 .. len(prices) - h - 1,\n    skipping days where vol[t] is nan. sides[t] is +1 (long) or -1 (short).\n    Profit target pt * vol[t] and stop sl * vol[t], both measured from\n    the entry close prices[t]. A long profits above, a short below.\n    Read the next h closes in order. Return 1 if the profit target is\n    touched first; 0 if the stop is touched first or neither is.\"\"\"\n    ...\n",
-    "solution": "import math\n\ndef meta_labels_trade(prices, vol, sides, pt, sl, h):\n    \"\"\"One meta-label per entry day t = 0 .. len(prices) - h - 1,\n    skipping days where vol[t] is nan. sides[t] is +1 (long) or -1 (short).\n    Profit target pt * vol[t] and stop sl * vol[t], both measured from\n    the entry close prices[t]. A long profits above, a short below.\n    Read the next h closes in order. Return 1 if the profit target is\n    touched first; 0 if the stop is touched first or neither is.\"\"\"\n    out = []\n    for t in range(len(prices) - h):\n        if math.isnan(vol[t]):\n            continue\n        s = sides[t]\n        up = prices[t] * (1 + (pt if s == 1 else sl) * vol[t])\n        down = prices[t] * (1 - (sl if s == 1 else pt) * vol[t])\n        label = 0\n        for d in range(1, h + 1):\n            p = prices[t + d]\n            profit = p >= up if s == 1 else p <= down\n            stop = p <= down if s == 1 else p >= up\n            if stop:\n                break\n            if profit:\n                label = 1\n                break\n        out.append(label)\n    return out\n",
+    "starter": "import math\n\ndef meta_labels_trade(prices, vol, sides, pt, sl, h):\n    \"\"\"One meta-label per entry day t = 0 .. len(prices)\n    - h - 1, skipping days where vol[t] is nan.\n    sides[t] is +1 (long) or -1 (short). Profit target\n    pt * vol[t] and stop sl * vol[t], both measured\n    from the entry close prices[t]. A long profits\n    above, a short below. Read the next h closes in\n    order. Return 1 if the profit target is touched\n    first; 0 if the stop is touched first or neither\n    is.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef meta_labels_trade(prices, vol, sides, pt, sl, h):\n    \"\"\"One meta-label per entry day t = 0 .. len(prices)\n    - h - 1, skipping days where vol[t] is nan.\n    sides[t] is +1 (long) or -1 (short). Profit target\n    pt * vol[t] and stop sl * vol[t], both measured\n    from the entry close prices[t]. A long profits\n    above, a short below. Read the next h closes in\n    order. Return 1 if the profit target is touched\n    first; 0 if the stop is touched first or neither\n    is.\"\"\"\n    out = []\n    for t in range(len(prices) - h):\n        if math.isnan(vol[t]):\n            continue\n        s = sides[t]\n        up = prices[t] * (1 + (pt if s == 1 else sl) * vol[t])\n        down = prices[t] * (1 - (sl if s == 1 else pt) * vol[t])\n        label = 0\n        for d in range(1, h + 1):\n            p = prices[t + d]\n            profit = p >= up if s == 1 else p <= down\n            stop = p <= down if s == 1 else p >= up\n            if stop:\n                break\n            if profit:\n                label = 1\n                break\n        out.append(label)\n    return out\n",
     "examples": [
      {
       "call": "meta_labels_trade([100, 99, 98.1, 97.9], [0.02] * 4, [1] * 4, 2, 1, 3)",
@@ -1835,7 +1836,7 @@
      },
      {
       "id": "s4",
-      "text": "Tune depth and learning rate by walk-forward folds with a gap of $h - 1$, stopping the trees early on each later block."
+      "text": "Tune depth and learning rate with walk-forward folds and a gap of $h - 1$. Stop the trees early on each later block."
      },
      {
       "id": "s5",
@@ -1843,7 +1844,7 @@
      },
      {
       "id": "s6",
-      "text": "Score the test block once, against the base rate and net of costs, and report the number of settings tried."
+      "text": "Score the test block once, against the base rate and net of costs. Report the number of settings tried."
      }
     ],
     "answer": [
@@ -1882,8 +1883,8 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "def walk_forward_folds(n, n_splits, test_size, h, window=None):\n    \"\"\"Walk-forward folds for a label that looks h days ahead (row t is\n    labelled with days t + 1 to t + h). The last n_splits * test_size\n    rows are the test blocks, in order, each test_size rows long.\n    A fold trains on the rows before its block, minus the h - 1 rows\n    whose labels reach into it; with window given, only the latest\n    `window` of those rows. Return a list of\n    (train_start, train_end, test_start, test_end), half-open ranges.\n    Raise ValueError if any fold would have no training rows.\"\"\"\n    ...\n",
-    "solution": "def walk_forward_folds(n, n_splits, test_size, h, window=None):\n    \"\"\"Walk-forward folds for a label that looks h days ahead (row t is\n    labelled with days t + 1 to t + h). The last n_splits * test_size\n    rows are the test blocks, in order, each test_size rows long.\n    A fold trains on the rows before its block, minus the h - 1 rows\n    whose labels reach into it; with window given, only the latest\n    `window` of those rows. Return a list of\n    (train_start, train_end, test_start, test_end), half-open ranges.\n    Raise ValueError if any fold would have no training rows.\"\"\"\n    folds = []\n    for start in range(n - n_splits * test_size, n, test_size):\n        train_end = start - (h - 1)\n        if train_end <= 0:\n            raise ValueError(\"a fold has no training rows\")\n        train_start = 0 if window is None else max(0, train_end - window)\n        folds.append((train_start, train_end, start, start + test_size))\n    return folds\n",
+    "starter": "def walk_forward_folds(n, n_splits, test_size, h, window=None):\n    \"\"\"Walk-forward folds for a label that looks h days\n    ahead (row t is labelled with days t + 1 to t +\n    h). The last n_splits * test_size rows are the\n    test blocks, in order, each test_size rows long. A\n    fold trains on the rows before its block, minus\n    the h - 1 rows whose labels reach into it; with\n    window given, only the latest `window` of those\n    rows. Return a list of (train_start, train_end,\n    test_start, test_end), half-open ranges. Raise\n    ValueError if any fold would have no training\n    rows.\"\"\"\n    ...\n",
+    "solution": "def walk_forward_folds(n, n_splits, test_size, h, window=None):\n    \"\"\"Walk-forward folds for a label that looks h days\n    ahead (row t is labelled with days t + 1 to t +\n    h). The last n_splits * test_size rows are the\n    test blocks, in order, each test_size rows long. A\n    fold trains on the rows before its block, minus\n    the h - 1 rows whose labels reach into it; with\n    window given, only the latest `window` of those\n    rows. Return a list of (train_start, train_end,\n    test_start, test_end), half-open ranges. Raise\n    ValueError if any fold would have no training\n    rows.\"\"\"\n    folds = []\n    for start in range(n - n_splits * test_size, n, test_size):\n        train_end = start - (h - 1)\n        if train_end <= 0:\n            raise ValueError(\"a fold has no training rows\")\n        train_start = 0 if window is None else max(0, train_end - window)\n        folds.append((train_start, train_end, start, start + test_size))\n    return folds\n",
     "examples": [
      {
       "call": "walk_forward_folds(12, 4, 2, 1)",
@@ -1962,7 +1963,7 @@
     }
    },
    "explain": {
-    "text": "Row $t$ has its label over days $t + 1$ to $t + h$, so the last $h - 1$ rows before a block overlap its labels. Dropping them is `TimeSeriesSplit(gap=h - 1)`, and the window is `max_train_size`. A fold with nothing left to train on is an error, not an empty list."
+    "text": "Row $t$ is labelled with days $t + 1$ to $t + h$, so $h - 1$ rows before a block overlap its labels. Dropping them is `TimeSeriesSplit(gap=h - 1)`, and the window is `max_train_size`. A fold with no training rows is an error."
    }
   },
   {
@@ -2034,13 +2035,13 @@
     "vl-leakage"
    ],
    "title": "One tabular problem, end to end",
-   "prose": "A desk predicts whether the index closes up tomorrow from four features known at today's close. It wants the whole honest recipe in one function: a time split, a scaler inside the pipeline, a penalty tuned by time-ordered cross-validation, one test score, and the base rate beside it.",
+   "prose": "A desk predicts whether the index closes up tomorrow, from four features known at today's close. It wants the honest recipe in one function:\n\n- split by time;\n- scale inside the pipeline;\n- tune the penalty on time-ordered folds;\n- score the test block once, beside its base rate.",
    "question": "Complete `honest_report(X, y, Cs)`.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\n\ndef honest_report(X, y, Cs):\n    \"\"\"Rows are in date order; y is 0 or 1.\n    1. Test = the last 30% of rows (train = the first int(0.7 * n)).\n    2. Tune C on the training rows only: a scaler then\n       LogisticRegression(C=C), scored by mean accuracy over\n       TimeSeriesSplit(n_splits=4). Ties keep the earlier C in Cs.\n    3. Refit the best pipeline on all training rows.\n    4. Return (best_C, test_hit_rate, base_rate), each rounded to\n       4 places. base_rate is the share of test rows whose y equals\n       the training rows' majority class (1 if the training mean >= 0.5).\"\"\"\n    ...\n",
-    "solution": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\n\ndef honest_report(X, y, Cs):\n    \"\"\"Rows are in date order; y is 0 or 1.\n    1. Test = the last 30% of rows (train = the first int(0.7 * n)).\n    2. Tune C on the training rows only: a scaler then\n       LogisticRegression(C=C), scored by mean accuracy over\n       TimeSeriesSplit(n_splits=4). Ties keep the earlier C in Cs.\n    3. Refit the best pipeline on all training rows.\n    4. Return (best_C, test_hit_rate, base_rate), each rounded to\n       4 places. base_rate is the share of test rows whose y equals\n       the training rows' majority class (1 if the training mean >= 0.5).\"\"\"\n    n_train = int(len(y) * 0.7)\n    X_tr, X_te = X[:n_train], X[n_train:]\n    y_tr, y_te = y[:n_train], y[n_train:]\n\n    def make(C):\n        return Pipeline([(\"scale\", StandardScaler()), (\"clf\", LogisticRegression(C=C))])\n\n    best_C, best = None, -1.0\n    for C in Cs:\n        score = cross_val_score(make(C), X_tr, y_tr, cv=TimeSeriesSplit(n_splits=4),\n                                scoring=\"accuracy\").mean()\n        if score > best:\n            best_C, best = C, score\n    model = make(best_C).fit(X_tr, y_tr)\n    hit = float((model.predict(X_te) == y_te).mean())\n    majority = 1 if y_tr.mean() >= 0.5 else 0\n    base = float((y_te == majority).mean())\n    return best_C, round(hit, 4), round(base, 4)\n",
+    "starter": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\n\ndef honest_report(X, y, Cs):\n    \"\"\"Rows are in date order; y is 0 or 1.\n    1. Test = the last 30% of rows (train = the first\n       int(0.7 * n)).\n    2. Tune C on the training rows only: a scaler then\n       LogisticRegression(C=C), scored by mean\n       accuracy over TimeSeriesSplit(n_splits=4). Ties\n       keep the earlier C in Cs.\n    3. Refit the best pipeline on all training rows.\n    4. Return (best_C, test_hit_rate, base_rate), each\n       rounded to 4 places. base_rate is the share of\n       test rows whose y equals the training rows'\n       majority class (1 if the training mean >= 0.5).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\n\ndef honest_report(X, y, Cs):\n    \"\"\"Rows are in date order; y is 0 or 1.\n    1. Test = the last 30% of rows (train = the first\n       int(0.7 * n)).\n    2. Tune C on the training rows only: a scaler then\n       LogisticRegression(C=C), scored by mean\n       accuracy over TimeSeriesSplit(n_splits=4). Ties\n       keep the earlier C in Cs.\n    3. Refit the best pipeline on all training rows.\n    4. Return (best_C, test_hit_rate, base_rate), each\n       rounded to 4 places. base_rate is the share of\n       test rows whose y equals the training rows'\n       majority class (1 if the training mean >= 0.5).\"\"\"\n    n_train = int(len(y) * 0.7)\n    X_tr, X_te = X[:n_train], X[n_train:]\n    y_tr, y_te = y[:n_train], y[n_train:]\n\n    def make(C):\n        return Pipeline([(\"scale\", StandardScaler()), (\"clf\", LogisticRegression(C=C))])\n\n    best_C, best = None, -1.0\n    for C in Cs:\n        score = cross_val_score(make(C), X_tr, y_tr, cv=TimeSeriesSplit(n_splits=4),\n                                scoring=\"accuracy\").mean()\n        if score > best:\n            best_C, best = C, score\n    model = make(best_C).fit(X_tr, y_tr)\n    hit = float((model.predict(X_te) == y_te).mean())\n    majority = 1 if y_tr.mean() >= 0.5 else 0\n    base = float((y_te == majority).mean())\n    return best_C, round(hit, 4), round(base, 4)\n",
     "examples": [
      {
       "call": "honest_report(X, y, CS)",
@@ -2122,17 +2123,17 @@
     "budget": 60000
    },
    "feedback": {
-    "correct": "Tuning sees only the early rows, the scaler is refitted in every fold, and the test block is scored once beside its base rate.",
+    "correct": "Tuning sees only early rows, the scaler lives in the pipeline, and the test block is scored once.",
     "generic": "Some tests failed. Split by position, tune `C` with `TimeSeriesSplit` inside a `Pipeline`, and score the last 30% once.",
     "byKey": {
-     "test-1": "Test 1 checks the chosen `C`, the test hit rate and the base rate. A shuffled split, a scaler fitted on every row, `C` chosen on the test block or shuffled folds change at least one of them.",
+     "test-1": "Test 1 checks the chosen `C`, the hit rate and the base rate. Each of these fails one: a shuffled split, a scaler fitted on all rows, `C` chosen on the test block, shuffled folds.",
      "test-6": "Test 6 lists the values of `C` in reverse. Equal scores keep the earlier `C` in the list, so use a strict `>`.",
      "test-7": "Test 7 has tied scores. Equal scores keep the earlier `C` in the list.",
      "error": "If the starter stopped, fill in the function body first. Python reports the line."
     }
    },
    "explain": {
-    "text": "The test block is cut by position, and `C` is chosen from the training rows alone with folds that move forward in time. Because the scaler sits inside the pipeline, each fold learns its own means and sds. The base rate says what always predicting the training majority class would have scored, so the hit rate means something."
+    "text": "The test block is cut by position, and `C` comes from earlier rows with forward-moving folds. The scaler sits in the pipeline, so each fold learns its own means and sds. The base rate shows what always predicting the majority class would score."
    }
   },
   {
@@ -2217,7 +2218,7 @@
     }
    },
    "explain": {
-    "text": "Overlap makes the 1,000 labels worth 100, so the honest standard error is 0.0495, three times the naive 0.0157. The 5-point edge is then 1.0 standard errors, not 3.2. Reaching $z = 2$ needs about 3,900 labels, ten times the effective number."
+    "text": "Overlap makes the 1,000 labels worth 100. The honest standard error is 0.0495, three times the naive 0.0157. So the 5-point edge is 1.0 standard errors, not 3.2, and $z = 2$ needs about 3,900 labels."
    }
   },
   {
@@ -2233,8 +2234,8 @@
    ],
    "title": "Explaining a model note",
    "kind": "longform",
-   "prompt": "A new analyst sends this note about a model of next-month returns for 500 shares, built from 60 features on 2010 to 2024 data.\n\n> I standardised every feature on the full sample, then split the rows at random: 70% to train and 30% to test. A boosted tree model with 2,000 deep trees scored an R-squared of 0.45 on the training rows and 0.02 on the test rows. I tried 40 settings of the learning rate and the depth. The best test R-squared was 0.09, so the model works. Next I will add more features.\n\nWrite a short reply that covers four things.\n\n(a) Explain the gap between 0.45 and 0.02 in terms of bias and variance, and say what regularisation would do about it.\n\n(b) Name two leaks in the pipeline and say how each flatters the score.\n\n(c) Say what the 0.09 is worth.\n\n(d) Describe the validation you would use instead, in order.",
-   "model": "**(a) Bias and variance.** Deep trees on 60 features have low bias and high variance. They fit noise as well as signal, so the training R-squared of 0.45 measures how well they memorised the rows. The test R-squared of 0.02 shows what carries over to new months, and that is almost nothing. Adding features adds flexibility and so adds variance.\n\nRegularisation accepts a little more bias for much less variance. For trees that means shallower trees, a smaller learning rate with fewer trees, a larger minimum leaf size or early stopping. For a linear model it would be a ridge or lasso penalty. The strength is chosen on validation data, never on the test rows.\n\n**(b) Two leaks.**\n\n- *Scaling on the full sample.* The means and standard deviations include the test months, so the test period shapes the inputs. The scaler must be fitted inside each training fold, for example in a pipeline.\n- *A random split of time-ordered data.* Returns and features overlap across neighbouring months, so rows next to a test month sit in the training set and carry its answer. The model also trains on months after the ones it is tested on. Both flatter the test score.\n\nThe test rows were also used to choose among 40 settings, which is a third leak: the test set was no longer unseen.\n\n**(c) What 0.09 is worth.** It is the best of 40 tries scored on the same rows, so it is inflated by selection. Even noise would give the best of 40 a positive score. The 0.09 is an upper bound, not an estimate, and the honest figure is probably near the 0.02.\n\n**(d) Validation in order.**\n\n1. Hold out the last block of months as the test period, with a purge of the labels that reach into it.\n2. Build the scaler and the model inside a pipeline.\n3. Tune the depth and the learning rate, and stop the trees early, with walk-forward folds on the earlier block, using a gap for the label horizon.\n4. Refit the chosen model on the whole earlier block.\n5. Score the test block once. Report it against a simple baseline, net of costs, with the number of settings tried.",
+   "prompt": "A new analyst sends this note. The model predicts next-month returns for 500 shares from 60 features, on 2010 to 2024 data.\n\n*I standardised every feature on the full sample, then split the rows at random: 70% to train and 30% to test. A boosted model of 2,000 deep trees scored an R-squared of 0.45 on the training rows. On the test rows it scored 0.02. I tried 40 settings of the learning rate and the depth. The best test R-squared was 0.09, so the model works. Next I will add more features.*\n\nWrite a short reply that covers four things.\n\n(a) Explain the gap between 0.45 and 0.02 using bias and variance. Say what regularisation would do about it.\n\n(b) Name two leaks in the pipeline and say how each flatters the score.\n\n(c) Say what the 0.09 is worth.\n\n(d) Describe the validation you would use instead, in order.",
+   "model": "**(a) Bias and variance.** Deep trees on 60 features have low bias and high variance. They fit noise as well as signal. So the training R-squared of 0.45 measures how well they memorised the rows. The test R-squared of 0.02 shows what carries over to new months, and that is almost nothing. Adding features adds flexibility and so adds variance.\n\nRegularisation accepts a little more bias for much less variance. For trees that means shallower trees, a smaller learning rate, bigger leaves or early stopping. For a linear model it would be a ridge or lasso penalty. The strength is chosen on validation data, never on the test rows.\n\n**(b) Two leaks.**\n\n- *Scaling on the full sample.* The means and sds include the test months, so the test period shapes the inputs. Fit the scaler inside each training fold, for example in a pipeline.\n- *A random split of time-ordered data.* Neighbouring months overlap, so training rows next to a test month carry its answer. The model also trains on months after the ones it is tested on. Both flatter the score.\n\nThe test rows were also used to choose among 40 settings, which is a third leak: the test set was no longer unseen.\n\n**(c) What 0.09 is worth.** It is the best of 40 tries on the same rows, so selection inflates it. Even noise would give the best of 40 a positive score. The 0.09 is an upper bound, not an estimate, and the honest figure is probably near the 0.02.\n\n**(d) Validation in order.**\n\n1. Hold out the last block of months as the test period. Purge the labels that reach into it.\n2. Build the scaler and the model inside a pipeline.\n3. Tune depth and learning rate with walk-forward folds on the earlier block. Use a gap for the label horizon, and stop the trees early.\n4. Refit the chosen model on the whole earlier block.\n5. Score the test block once. Report it against a simple baseline, net of costs, with the number of settings tried.",
    "rubric": [
     {
      "points": 2,
@@ -2242,15 +2243,15 @@
     },
     {
      "points": 2,
-     "text": "Says regularisation trades a little bias for much less variance (shallower trees, smaller learning rate, early stopping or a penalty), tuned on validation data."
+     "text": "Says regularisation trades a little bias for much less variance. Gives an example, and tunes it on validation data."
     },
     {
      "points": 2,
-     "text": "Names two leaks: full-sample scaling, and a random split of time-ordered, overlapping data (or tuning on the test rows), each with the way it flatters the score."
+     "text": "Names two leaks, such as full-sample scaling and a random split of time-ordered data. Says how each flatters the score."
     },
     {
      "points": 1,
-     "text": "Says 0.09 is the best of 40 tries on the test rows, so it is inflated by selection and is not an honest estimate."
+     "text": "Says 0.09 is the best of 40 tries on the test rows. It is inflated by selection, so it is not an honest estimate."
     },
     {
      "points": 2,
