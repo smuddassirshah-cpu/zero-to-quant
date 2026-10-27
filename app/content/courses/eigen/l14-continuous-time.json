@@ -1,0 +1,1320 @@
+{
+ "id": "l14-continuous-time",
+ "course": "eigen",
+ "title": "Systems of differential equations",
+ "minutes": 15,
+ "objectives": [
+  "Solve $d\\mathbf{u}/dt = \\mathbf{A}\\mathbf{u}$ with $e^{\\mathbf{A}t}$.",
+  "Read stability and the half-life from the eigenvalues.",
+  "Compute the matrix exponential in NumPy through the eigenvalues."
+ ],
+ "skills": [
+  "eg-diag",
+  "eg-eigen"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two spreads that pull on each other",
+   "prose": "Two spreads pull on each other: $u_1' = -2u_1 + u_2$ and $u_2' = u_1 - 2u_2$. At $t = 0$ we have $u_1 = 1$ and $u_2 = 0$. Slide time forward and watch both.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      5
+     ],
+     "y": [
+      -0.1,
+      1.05
+     ],
+     "xLabel": "$t$",
+     "yLabel": "spread",
+     "height": 300,
+     "functions": [
+      {
+       "id": "u1",
+       "expr": "0.5*(exp(-x) + exp(-3*x))",
+       "label": "$u_1$",
+       "colour": 1,
+       "labelAt": 2.5,
+       "labelSide": "above"
+      },
+      {
+       "id": "u2",
+       "expr": "0.5*(exp(-x) - exp(-3*x))",
+       "label": "$u_2$",
+       "colour": 2,
+       "labelAt": 2.5,
+       "labelSide": "above"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 0,
+       "y": 1,
+       "colour": 1,
+       "label": "$u_1$",
+       "labelPos": "ne"
+      },
+      {
+       "id": "p2",
+       "x": 0,
+       "y": 0,
+       "colour": 2,
+       "label": "$u_2$",
+       "labelPos": "ne"
+      }
+     ],
+     "params": {
+      "t": 0
+     }
+    },
+    "derive": {
+     "p1.x": "t",
+     "p1.y": "0.5 * (exp(-t) + exp(-3 * t))",
+     "p2.x": "t",
+     "p2.y": "0.5 * (exp(-t) - exp(-3 * t))",
+     "caption": "$t$ = {{fixed(t, 1)}}: $u_1$ = {{fixed(0.5 * (exp(-t) + exp(-3 * t)), 3)}}, $u_2$ = {{fixed(0.5 * (exp(-t) - exp(-3 * t)), 3)}}"
+    },
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "start": 0,
+      "label": "$t$",
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "Where do the two spreads head?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "Both die away to 0, with $u_2$ rising first",
+      "correct": true
+     },
+     {
+      "id": "half",
+      "text": "Both settle at 0.5",
+      "why": "You split the starting total, 1, evenly. The caption shows both falling well below 0.5."
+     },
+     {
+      "id": "grow",
+      "text": "$u_2$ keeps growing, fed by $u_1$",
+      "why": "$u_2$ does rise at first, but the $-2u_2$ term wins once $u_2$ is large enough. Slide past $t = 1$."
+     },
+     {
+      "id": "swap",
+      "text": "They swap places and oscillate",
+      "why": "Neither curve crosses 0 or turns back up. Each rise or fall is smooth."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Both spreads decay to 0. $u_2$ rises to about 0.16 near $t = 0.55$ before falling.",
+    "generic": "Not quite right. Slide $t$ from 0 to 5 and read both values in the caption."
+   },
+   "explain": {
+    "text": "Both spreads shrink to 0, and $u_2$ peaks early because $u_1$ feeds it. What we want is a formula for $\\mathbf{u}(t)$. The matrix form $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$ with $\\mathbf{A} = \\begin{pmatrix} -2 & 1 \\\\ 1 & -2 \\end{pmatrix}$ will give it.",
+    "canvas": {
+     "params": {
+      "t": 3
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Along an eigenvector the system decouples",
+   "prose": "In matrix form the system is $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$. Try the eigenvector matrix $\\mathbf{X}$, with columns $(1, 1)$ and $(1, -1)$. Multiply $\\mathbf{A}\\mathbf{X}$ and read what each column is.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         -2,
+         1
+        ],
+        [
+         1,
+         -2
+        ]
+       ],
+       "label": "$\\mathbf{A}$"
+      },
+      {
+       "id": "X",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         1,
+         -1
+        ]
+       ],
+       "label": "$\\mathbf{X}$"
+      },
+      {
+       "id": "AX",
+       "rows": [
+        [
+         -1,
+         -3
+        ],
+        [
+         -1,
+         3
+        ]
+       ],
+       "label": "$\\mathbf{A}\\mathbf{X}$"
+      }
+     ],
+     "ops": [
+      "",
+      "="
+     ]
+    },
+    "state": {
+     "hidden": [
+      "AX"
+     ]
+    }
+   },
+   "question": "Fill in $\\mathbf{A}\\mathbf{X}$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "",
+     "column 1",
+     "column 2"
+    ],
+    "rows": [
+     [
+      "row 1",
+      {
+       "edit": true,
+       "answer": -1,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": -3,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "row 2",
+      {
+       "edit": true,
+       "answer": -1,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Column 1 of $\\mathbf{A}\\mathbf{X}$ is $\\mathbf{A}$ times $(1, 1)$."
+    },
+    {
+     "rung": "point",
+     "text": "Row 1 of $\\mathbf{A}$ is $(-2, 1)$ and row 2 is $(1, -2)$.",
+     "highlight": [
+      "A",
+      "X-c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathbf{A}(1, 1) = (-2 + 1, 1 - 2) = (-1, -1)$ and $\\mathbf{A}(1, -1) = (-2 - 1, 1 + 2) = (-3, 3)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Column 1 is $-1 \\times (1, 1)$ and column 2 is $-3 \\times (1, -1)$.",
+    "generic": "Not quite right. Multiply $\\mathbf{A}$ by each column of $\\mathbf{X}$ in turn.",
+    "byKey": {
+     "r0c1": "$-2 \\times 1 + 1 \\times 1 = -1$.",
+     "r1c1": "$1 \\times 1 + (-2) \\times 1 = -1$.",
+     "r0c2": "$-2 \\times 1 + 1 \\times (-1) = -3$.",
+     "r1c2": "$1 \\times 1 + (-2) \\times (-1) = 3$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{A}$ sends $(1, 1)$ to $-1(1, 1)$ and $(1, -1)$ to $-3(1, -1)$, so the eigenvalues are $-1$ and $-3$. Along $(1, 1)$ the system is just $u' = -u$, and along $(1, -1)$ it is $u' = -3u$. Each one-variable equation is solved by $e^{\\lambda t}$.",
+    "canvas": {
+     "hidden": []
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Split the start into eigenvectors",
+   "prose": "The start $\\mathbf{u}_0 = (1, 0)$ is a mix of the two eigenvectors: $\\mathbf{u}_0 = c_1(1, 1) + c_2(1, -1)$. Each part then follows its own equation, $c_i(t) = c_i e^{\\lambda_i t}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "X",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         1,
+         -1
+        ]
+       ],
+       "label": "$\\mathbf{X}$"
+      },
+      {
+       "id": "c",
+       "rows": [
+        [
+         0.5
+        ],
+        [
+         0.5
+        ]
+       ],
+       "label": "$\\mathbf{c}$"
+      },
+      {
+       "id": "u0",
+       "rows": [
+        [
+         1
+        ],
+        [
+         0
+        ]
+       ],
+       "label": "$\\mathbf{u}_0$"
+      }
+     ],
+     "ops": [
+      "",
+      "="
+     ]
+    },
+    "state": {
+     "hidden": [
+      "c"
+     ]
+    }
+   },
+   "question": "Find $c_1$ and $c_2$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "",
+     "value"
+    ],
+    "rows": [
+     [
+      "$c_1$",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$c_2$",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $c_1 + c_2 = 1$ and $c_1 - c_2 = 0$."
+    },
+    {
+     "rung": "point",
+     "text": "The second equation says $c_1 = c_2$.",
+     "highlight": [
+      "u0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then $2c_1 = 1$, so $c_1 = c_2 = \\tfrac{1}{2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$c_1 = c_2 = \\tfrac12$, so $\\mathbf{u}(t) = \\tfrac12e^{-t}(1, 1) + \\tfrac12e^{-3t}(1, -1)$.",
+    "generic": "Not quite right. Solve $c_1 + c_2 = 1$ and $c_1 - c_2 = 0$.",
+    "byKey": {
+     "r0c1": "The two rows give $c_1 + c_2 = 1$ and $c_1 - c_2 = 0$. Adding them gives $2c_1 = 1$.",
+     "r1c1": "$c_1 = c_2$ from row 2, and $c_1 + c_2 = 1$ from row 1."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{c} = \\mathbf{X}^{-1}\\mathbf{u}_0 = (\\tfrac12, \\tfrac12)$. The solution is $\\mathbf{u}(t) = \\tfrac12e^{-t}\\begin{pmatrix} 1 \\\\ 1 \\end{pmatrix} + \\tfrac12e^{-3t}\\begin{pmatrix} 1 \\\\ -1 \\end{pmatrix}$. At $t = 0$ it returns $(1, 0)$.",
+    "canvas": {
+     "hidden": []
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Put $t = 1$ into $\\mathbf{u}(t) = \\tfrac12e^{-t}(1, 1) + \\tfrac12e^{-3t}(1, -1)$. You know $e^{-1} \\approx 0.3679$ and $e^{-3} \\approx 0.0498$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      5
+     ],
+     "y": [
+      -0.1,
+      1.05
+     ],
+     "xLabel": "$t$",
+     "yLabel": "spread",
+     "height": 260,
+     "functions": [
+      {
+       "id": "u1",
+       "expr": "0.5*(exp(-x) + exp(-3*x))",
+       "label": "$u_1$",
+       "colour": 1,
+       "labelAt": 2.5,
+       "labelSide": "above"
+      },
+      {
+       "id": "u2",
+       "expr": "0.5*(exp(-x) - exp(-3*x))",
+       "label": "$u_2$",
+       "colour": 2,
+       "labelAt": 2.5,
+       "labelSide": "above"
+      }
+     ]
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "one",
+       "x": 1,
+       "label": "$t = 1$"
+      }
+     ]
+    }
+   },
+   "question": "What is $u_1(1)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2088,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "u1 at t = 1",
+    "accept": "0.2088: $\\tfrac12(0.3679 + 0.0498)$",
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "diag",
+      "value": 0.1353,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nohalf",
+      "value": 0.4177,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "slow",
+      "value": 0.3679,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$u_1$ is the first entry of both parts."
+    },
+    {
+     "rung": "point",
+     "text": "The first entry of each eigenvector is 1, so $u_1(t) = \\tfrac12e^{-t} + \\tfrac12e^{-3t}$.",
+     "highlight": [
+      "u1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(0.3679 + 0.0498) = 0.2088$."
+    }
+   ],
+   "feedback": {
+    "correct": "$u_1(1) = 0.2088$ and $u_2(1) = 0.1590$.",
+    "generic": "Not quite right. Add the two parts, each with its factor $\\tfrac12$.",
+    "byKey": {
+     "diag": "$e^{-2} = 0.1353$ uses the diagonal entry of $\\mathbf{A}$ as the rate. The rates are the eigenvalues, $-1$ and $-3$.",
+     "nohalf": "You left out the factor $\\tfrac12$ on each part.",
+     "slow": "$e^{-1}$ is the slow part alone, without the $\\tfrac12$ and without the fast part."
+    }
+   },
+   "explain": {
+    "text": "$u_1(1) = \\tfrac12(0.3679 + 0.0498) = 0.2088$ and $u_2(1) = \\tfrac12(0.3679 - 0.0498) = 0.1590$. That is $e^{\\mathbf{A}}\\mathbf{u}_0$, the first column of $e^{\\mathbf{A}}$."
+   },
+   "title": "Read off one value"
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "The two spreads always add to $u_1 + u_2 = e^{-t}$, because the fast parts cancel. Stability needs every eigenvalue to be negative, and the slowest one sets how long the system lingers.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3
+     ],
+     "y": [
+      0,
+      1.05
+     ],
+     "xLabel": "$t$",
+     "yLabel": "$u_1 + u_2$",
+     "height": 260,
+     "functions": [
+      {
+       "id": "s",
+       "expr": "exp(-x)",
+       "label": "$e^{-t}$",
+       "colour": 3,
+       "labelAt": 2
+      }
+     ],
+     "hlines": [
+      {
+       "id": "half",
+       "y": 0.5,
+       "label": "half"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "After how long has $u_1 + u_2$ halved?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6931,
+    "tol": {
+     "abs": 0.005
+    },
+    "label": "Half-life",
+    "accept": "$\\ln 2 / 1 \\approx 0.693$: set by the eigenvalue $-1$",
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "fast",
+      "value": 0.231,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "diag",
+      "value": 0.3466,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $e^{-t} = \\tfrac12$."
+    },
+    {
+     "rung": "point",
+     "text": "Take logs: $-t = \\ln\\tfrac12 = -\\ln 2$.",
+     "highlight": [
+      "s"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$t = \\ln 2 = 0.693$. The decay rate is the eigenvalue $-1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$t = \\ln 2 / 1 \\approx 0.693$.",
+    "generic": "Not quite right. Solve $e^{-t} = \\tfrac12$.",
+    "byKey": {
+     "fast": "$\\ln 2 / 3$ uses the fast eigenvalue. The fast part dies quickly, so the slow one sets the half-life.",
+     "diag": "$\\ln 2 / 2$ uses the diagonal entry $-2$ of $\\mathbf{A}$, which is not an eigenvalue.",
+     "one": "$t = 1$ is where $e^{-t}$ is $0.37$, past a half."
+    }
+   },
+   "explain": {
+    "text": "The half-life is $\\ln 2 / |\\lambda_{\\text{slow}}| = 0.693$. Every solution decays when every eigenvalue has a negative real part, and the one closest to 0 sets the pace."
+   },
+   "title": "The slow mode sets the pace"
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now $\\mathbf{A} = \\begin{pmatrix} 0 & -1 \\\\ 1 & 0 \\end{pmatrix}$, the 90 degree rotation from the last lesson, with eigenvalues $\\pm i$. Start from $\\mathbf{u}_0 = (1, 0)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.5,
+      1.5
+     ],
+     "y": [
+      -1.5,
+      1.5
+     ],
+     "equal": true,
+     "height": 280,
+     "xLabel": "$u_1$",
+     "yLabel": "$u_2$",
+     "functions": [
+      {
+       "id": "orbit",
+       "x": "cos(t)",
+       "y": "sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "path",
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "s",
+       "x": 1,
+       "y": 0,
+       "label": "start",
+       "labelPos": "ne"
+      }
+     ]
+    }
+   },
+   "question": "What does the solution do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "circle",
+      "text": "It circles the origin for ever, at constant distance",
+      "correct": true
+     },
+     {
+      "id": "spiral",
+      "text": "It spirals in to the origin",
+      "why": "Decay needs a negative real part. $\\pm i$ has real part 0, so nothing shrinks."
+     },
+     {
+      "id": "grow",
+      "text": "It spirals outwards",
+      "why": "Growth needs a positive real part. Here the real part is 0."
+     },
+     {
+      "id": "stay",
+      "text": "It stays at $(1, 0)$",
+      "why": "$\\mathbf{A}\\mathbf{u}_0 = (0, 1)$ is not zero, so the point moves."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which direction is $\\mathbf{u}'$ at $(1, 0)$?"
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf{A}(1, 0) = (0, 1)$: straight up, at right angles to the position.",
+     "highlight": [
+      "orbit"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A velocity always at right angles to the position moves you round a circle."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{u}(t) = (\\cos t, \\sin t)$: a circle, because $e^{it}$ has size 1.",
+    "generic": "Not quite right. Check the direction of $\\mathbf{A}\\mathbf{u}$ against $\\mathbf{u}$."
+   },
+   "explain": {
+    "text": "The solution is $(\\cos t, \\sin t)$, since $e^{\\pm it}$ always has size 1. Real part 0 means neither decay nor growth. For stability the real parts must be strictly negative."
+   },
+   "title": "Eigenvalues with no decay"
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague computes $e^{\\mathbf{A}}$ by applying $\\exp$ to every entry of $\\mathbf{A}$. We want the top right entry of $e^{\\mathbf{A}}$, the true matrix exponential at $t = 1$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         -2,
+         1
+        ],
+        [
+         1,
+         -2
+        ]
+       ],
+       "label": "$\\mathbf{A}$"
+      }
+     ]
+    },
+    "state": {
+     "caption": "True $e^{\\mathbf{A}} = \\tfrac12\\begin{pmatrix} e^{-1} + e^{-3} & e^{-1} - e^{-3} \\\\ e^{-1} - e^{-3} & e^{-1} + e^{-3} \\end{pmatrix}$"
+    }
+   },
+   "question": "What is the top right entry of $e^{\\mathbf{A}}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "$\\tfrac12(e^{-1} - e^{-3}) \\approx 0.1590$",
+      "correct": true
+     },
+     {
+      "id": "entry",
+      "text": "$e^{1} \\approx 2.7183$",
+      "why": "You took $\\exp$ of the entry 1. That is not $e^{\\mathbf{A}}$: the series mixes entries through $\\mathbf{A}^2$, $\\mathbf{A}^3$ and so on."
+     },
+     {
+      "id": "slow",
+      "text": "$e^{-1} \\approx 0.3679$",
+      "why": "That is the slow part alone. The entry is half the difference of the slow and fast parts."
+     },
+     {
+      "id": "fast",
+      "text": "$e^{-3} \\approx 0.0498$",
+      "why": "That is the fast part alone. It enters with a minus sign and a factor $\\tfrac12$ next to the slow part."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $e^{\\mathbf{A}} = \\mathbf{X}e^{\\boldsymbol{\\Lambda}}\\mathbf{X}^{-1}$ with $\\boldsymbol{\\Lambda} = \\mathrm{diag}(-1, -3)$."
+    },
+    {
+     "rung": "point",
+     "text": "The top right entry is $\\tfrac12e^{-1}(1)(1) \\cdot 1 + \\tfrac12e^{-3}(1)(-1)$.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(0.3679 - 0.0498) = 0.1590$."
+    }
+   ],
+   "feedback": {
+    "correct": "The true entry is $0.1590$; entrywise $\\exp$ would give $2.7183$.",
+    "generic": "Not quite right. Use $\\mathbf{X}e^{\\boldsymbol{\\Lambda}}\\mathbf{X}^{-1}$, not $\\exp$ on entries.",
+    "byKey": {
+     "entry": "You exponentiated the entry. The result $2.7183$ would even grow, while every solution of this system decays.",
+     "slow": "You kept only $e^{-1}$. Both modes contribute, with weights $\\tfrac12$ and $-\\tfrac12$."
+    }
+   },
+   "explain": {
+    "text": "Entrywise $\\exp$ gives $\\begin{pmatrix} 0.1353 & 2.7183 \\\\ 2.7183 & 0.1353 \\end{pmatrix}$, which blows up the off-diagonal. The true $e^{\\mathbf{A}}$ has diagonal $0.2088$ and off-diagonal $0.1590$. Only a diagonal matrix can be exponentiated entry by entry, and then only on the diagonal."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Link $e^{\\mathbf{A}t}$ to lesson 3. We know $e^x = 1 + x + \\tfrac{x^2}{2!} + \\cdots$, and we replace $x$ by the matrix $\\mathbf{A}t$.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "series",
+      "text": "$e^{\\mathbf{A}t} = \\mathbf{I} + \\mathbf{A}t + \\tfrac{(\\mathbf{A}t)^2}{2!} + \\cdots$, the series for $e^x$ with $x = \\mathbf{A}t$"
+     },
+     {
+      "id": "powers",
+      "text": "$(\\mathbf{A}t)^k = \\mathbf{X}(\\boldsymbol{\\Lambda}t)^k\\mathbf{X}^{-1}$, since $\\mathbf{A}^k = \\mathbf{X}\\boldsymbol{\\Lambda}^k\\mathbf{X}^{-1}$"
+     },
+     {
+      "id": "pull",
+      "text": "$e^{\\mathbf{A}t} = \\mathbf{X}\\big(\\mathbf{I} + \\boldsymbol{\\Lambda}t + \\tfrac{(\\boldsymbol{\\Lambda}t)^2}{2!} + \\cdots\\big)\\mathbf{X}^{-1}$, taking $\\mathbf{X}$ and $\\mathbf{X}^{-1}$ out of every term"
+     },
+     {
+      "id": "diag",
+      "text": "The bracket is diagonal, with entries $1 + \\lambda_it + \\tfrac{(\\lambda_it)^2}{2!} + \\cdots = e^{\\lambda_it}$"
+     },
+     {
+      "id": "done",
+      "text": "$e^{\\mathbf{A}t} = \\mathbf{X}e^{\\boldsymbol{\\Lambda}t}\\mathbf{X}^{-1}$, with $e^{\\boldsymbol{\\Lambda}t} = \\mathrm{diag}(e^{\\lambda_1t}, e^{\\lambda_2t})$"
+     }
+    ],
+    "answer": [
+     "series",
+     "powers",
+     "pull",
+     "diag",
+     "done"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the definition by series, then bring in the powers from lesson 3."
+    },
+    {
+     "rung": "point",
+     "text": "Pull the common factors $\\mathbf{X}$ and $\\mathbf{X}^{-1}$ out of the sum before reading the diagonal."
+    },
+    {
+     "rung": "step",
+     "text": "Series, powers, pull out, read the diagonal, name the result."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^{\\mathbf{A}t} = \\mathbf{X}e^{\\boldsymbol{\\Lambda}t}\\mathbf{X}^{-1}$, and $\\mathbf{u}(t) = e^{\\mathbf{A}t}\\mathbf{u}_0$.",
+    "generic": "Not quite right. Each line should follow from the one before.",
+    "byKey": {
+     "pull": "You can pull $\\mathbf{X}$ out only after each power has been written with $\\mathbf{X}$ and $\\mathbf{X}^{-1}$.",
+     "diag": "You read the diagonal only after the sum is inside the bracket.",
+     "done": "The conclusion comes last."
+    }
+   },
+   "explain": {
+    "text": "Differentiating the series term by term gives $\\tfrac{d}{dt}e^{\\mathbf{A}t} = \\mathbf{A}e^{\\mathbf{A}t}$, so $\\mathbf{u}(t) = e^{\\mathbf{A}t}\\mathbf{u}_0$ solves $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$ and starts at $\\mathbf{u}_0$. For your example this is the formula you found by splitting into eigenvectors."
+   },
+   "title": "From the series to the eigenvalues"
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Build e^(At) in NumPy",
+   "prose": "`np.linalg.eig` returns the eigenvalues and the matrix $\\mathbf{X}$ of eigenvectors. For a rotation they are complex, and the imaginary parts cancel in $\\mathbf{X}e^{\\boldsymbol{\\Lambda}t}\\mathbf{X}^{-1}$. We avoid SciPy's `expm` and build the exponential from the eigenvalues.",
+   "question": "Complete `expm_eig(A, t)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef expm_eig(A, t):\n    \"\"\"Return e^(At), assuming A is diagonalisable.\"\"\"\n    A = np.asarray(A, dtype=float)\n    vals, X = np.linalg.eig(A)\n    E = ...       # diagonal matrix of e^(lambda * t)\n    return ...    # X E X^-1, keeping the real part\n",
+    "solution": "import numpy as np\n\ndef expm_eig(A, t):\n    \"\"\"Return e^(At), assuming A is diagonalisable.\"\"\"\n    A = np.asarray(A, dtype=float)\n    vals, X = np.linalg.eig(A)\n    E = np.diag(np.exp(vals * t))\n    return np.real(X @ E @ np.linalg.inv(X))\n",
+    "examples": [
+     {
+      "call": "np.round(expm_eig([[-2, 1], [1, -2]], 1.0), 4).tolist()",
+      "expect": "[[0.2088, 0.159], [0.159, 0.2088]]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(expm_eig([[-2, 1], [1, -2]], 1.0), 4).tolist()",
+      "expect": "[[0.2088, 0.159], [0.159, 0.2088]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(expm_eig([[-2, 1], [1, -2]], 0.0), 4).tolist()",
+      "expect": "[[1.0, 0.0], [0.0, 1.0]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(expm_eig([[-1, 0], [0, 2]], 0.5), 4).tolist()",
+      "expect": "[[0.6065, 0.0], [0.0, 2.7183]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(expm_eig([[-0.1, 0.3], [0.1, -0.3]], 1.0), 4).tolist()",
+      "expect": "[[0.9176, 0.2473], [0.0824, 0.7527]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(expm_eig([[0, -1], [1, 0]], 1.0), 4).tolist()",
+      "expect": "[[0.5403, -0.8415], [0.8415, 0.5403]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(expm_eig([[-0.1, 0.3], [0.1, -0.3]], 2.5).sum(axis=0), 4).tolist()",
+      "expect": "[1.0, 1.0]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests, with entries rounded to 4 decimal places (tolerance 0.00005). The first run loads NumPy: NLOAD. This function assumes A is diagonalisable. Real matrices with complex eigenvalues work: the imaginary parts cancel."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$e^{\\boldsymbol{\\Lambda}t}$ is a diagonal matrix with $e^{\\lambda_it}$ on its diagonal."
+    },
+    {
+     "rung": "point",
+     "text": "`np.diag(np.exp(vals * t))` builds it from the eigenvalue array."
+    },
+    {
+     "rung": "step",
+     "text": "Return `np.real(X @ E @ np.linalg.inv(X))`."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^{\\mathbf{A}t} = \\mathbf{X}e^{\\boldsymbol{\\Lambda}t}\\mathbf{X}^{-1}$, in three lines.",
+    "generic": "Some tests failed. Build the diagonal matrix of exponentials, then sandwich it between $\\mathbf{X}$ and $\\mathbf{X}^{-1}$.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace each `...` with an expression."
+    }
+   },
+   "explain": {
+    "text": "The exponential is a sandwich: the eigenvector matrix, the diagonal of $e^{\\lambda t}$, then the inverse.\n\n```python\nE = np.diag(np.exp(vals * t))\nreturn np.real(X @ E @ np.linalg.inv(X))\n```"
+   },
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "numpy",
+     "lines": [
+      ">>> vals, X = np.linalg.eig(A)",
+      ">>> vals",
+      "array([-1., -3.])",
+      ">>> np.diag(np.exp(vals * 1.0)).round(4)",
+      "array([[0.3679, 0.    ],",
+      "       [0.    , 0.0498]])"
+     ]
+    },
+    "state": {}
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Solve the system",
+   "prose": "`expm_eig` from the last screen is in place. $\\mathbf{u}(t) = e^{\\mathbf{A}t}\\mathbf{u}_0$, so the solver is one line. The last test uses a triangular $\\mathbf{A}$ with eigenvalues $-3$ and $-1$.",
+   "question": "Complete `solve_system(A, u0, t)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef expm_eig(A, t):\n    \"\"\"Return e^(At), assuming A is diagonalisable.\"\"\"\n    A = np.asarray(A, dtype=float)\n    vals, X = np.linalg.eig(A)\n    E = np.diag(np.exp(vals * t))\n    return np.real(X @ E @ np.linalg.inv(X))\n\n\ndef solve_system(A, u0, t):\n    \"\"\"Return u(t) for u' = A u, starting at u0.\"\"\"\n    return ...    # e^(At) applied to u0\n",
+    "solution": "import numpy as np\n\ndef expm_eig(A, t):\n    \"\"\"Return e^(At), assuming A is diagonalisable.\"\"\"\n    A = np.asarray(A, dtype=float)\n    vals, X = np.linalg.eig(A)\n    E = np.diag(np.exp(vals * t))\n    return np.real(X @ E @ np.linalg.inv(X))\n\n\ndef solve_system(A, u0, t):\n    \"\"\"Return u(t) for u' = A u, starting at u0.\"\"\"\n    return expm_eig(A, t) @ np.asarray(u0, dtype=float)\n",
+    "examples": [
+     {
+      "call": "np.round(solve_system([[-2, 1], [1, -2]], [1, 0], 1.0), 4).tolist()",
+      "expect": "[0.2088, 0.159]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(solve_system([[-2, 1], [1, -2]], [1, 0], 1.0), 4).tolist()",
+      "expect": "[0.2088, 0.159]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(solve_system([[-2, 1], [1, -2]], [1, 0], 0.0), 4).tolist()",
+      "expect": "[1.0, 0.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(solve_system([[-0.1, 0.3], [0.1, -0.3]], [1, 0], 1.0), 4).tolist()",
+      "expect": "[0.9176, 0.0824]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(solve_system([[-0.1, 0.3], [0.1, -0.3]], [0.4, 0.6], 60.0), 4).tolist()",
+      "expect": "[0.75, 0.25]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(solve_system([[0, -1], [1, 0]], [1, 0], 1.5707963267948966), 4).tolist()",
+      "expect": "[0.0, 1.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(solve_system([[-3, 2], [0, -1]], [1, 1], 0.7), 4).tolist()",
+      "expect": "[0.4966, 0.4966]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests, with values rounded to 4 decimal places (tolerance 0.00005). Two tests use the generator from the transfer screen. NumPy is already loaded."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Apply $e^{\\mathbf{A}t}$ to the starting vector."
+    },
+    {
+     "rung": "point",
+     "text": "`@` multiplies a matrix by a vector."
+    },
+    {
+     "rung": "step",
+     "text": "`return expm_eig(A, t) @ np.asarray(u0, dtype=float)`"
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{u}(t) = e^{\\mathbf{A}t}\\mathbf{u}_0$.",
+    "generic": "Some tests failed. Multiply $e^{\\mathbf{A}t}$ by the starting vector $\\mathbf{u}_0$.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace the `...` with a product."
+    }
+   },
+   "explain": {
+    "text": "The solution map is the matrix exponential applied to the start. At $t = 0$ it returns $\\mathbf{u}_0$, and for a stable $\\mathbf{A}$ it tends to $\\mathbf{0}$ as $t$ grows.\n\n```python\nreturn expm_eig(A, t) @ np.asarray(u0, dtype=float)\n```"
+   },
+   "canvas": null
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A credit rating in continuous time",
+   "prose": "A loan is Good or Bad. Column $j$ of the generator $\\mathbf{Q}$ holds the yearly rates out of state $j$, Good then Bad, so each column adds to 0. $\\mathbf{P}(t) = e^{\\mathbf{Q}t}$ is a Markov matrix for every $t$. $\\mathbf{Q}$ has eigenvalues $0$ and $-0.4$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      10
+     ],
+     "y": [
+      0,
+      1.05
+     ],
+     "xLabel": "years $t$",
+     "yLabel": "chance of Good",
+     "height": 280,
+     "functions": [
+      {
+       "id": "fromGood",
+       "expr": "0.75 + 0.25*exp(-0.4*x)",
+       "label": "start Good",
+       "colour": 1,
+       "labelAt": 6
+      },
+      {
+       "id": "fromBad",
+       "expr": "0.75 - 0.75*exp(-0.4*x)",
+       "label": "start Bad",
+       "colour": 2,
+       "labelAt": 6
+      }
+     ],
+     "hlines": [
+      {
+       "id": "steady",
+       "y": 0.75,
+       "label": "steady 0.75"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "A loan is Good now. What is the chance it is Bad after 1 year?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0824,
+    "tol": {
+     "abs": 0.0006
+    },
+    "label": "Chance of Bad after 1 year",
+    "accept": "0.0824: the (Bad, Good) entry of $e^{\\mathbf{Q}}$, $0.25(1 - e^{-0.4})$",
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "rate",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.0006
+      }
+     },
+     {
+      "id": "noreturn",
+      "value": 0.0952,
+      "tol": {
+       "abs": 0.0006
+      }
+     },
+     {
+      "id": "steady",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $\\mathbf{P}(1) = \\mathbf{X}e^{\\boldsymbol{\\Lambda}}\\mathbf{X}^{-1}$ with $\\boldsymbol{\\Lambda} = \\mathrm{diag}(0, -0.4)$."
+    },
+    {
+     "rung": "point",
+     "text": "The eigenvector for 0 is $(3, 1)$, which is the steady state $(0.75, 0.25)$ after scaling. The one for $-0.4$ is $(1, -1)$.",
+     "highlight": [
+      "fromGood"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$P_{\\text{Bad,Good}}(t) = 0.25(1 - e^{-0.4t})$. At $t = 1$, $e^{-0.4} = 0.6703$, so the entry is $0.25 \\times 0.3297 = 0.0824$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{P}(1)$ has top left entry $0.9176$, so Bad has chance $1 - 0.9176 = 0.0824$.",
+    "generic": "Not quite right. Read the (Bad, Good) entry of $e^{\\mathbf{Q}}$: $0.25(1 - e^{-0.4})$.",
+    "byKey": {
+     "rate": "0.1 is the rate, not a chance over a year. The chance must allow for loans that recover.",
+     "noreturn": "$1 - e^{-0.1} = 0.0952$ ignores recovery from Bad, which the 0.3 rate allows.",
+     "steady": "0.25 is the long-run chance, reached only as $t$ grows."
+    }
+   },
+   "explain": {
+    "text": "The eigenvalue 0 gives a part that never moves, the steady state $(0.75, 0.25)$. The eigenvalue $-0.4$ sets the pace: half the distance to it is gone in $\\ln 2 / 0.4 \\approx 1.73$ years. $\\mathbf{P}(1)$ is a yearly Markov matrix like lesson 3's, with eigenvalue $e^{-0.4} = 0.670$ in place of $0.85$."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Along an eigenvector the system $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$ decouples: each part moves as $e^{\\lambda t}$.",
+   "$e^{\\mathbf{A}t} = \\mathbf{X}e^{\\boldsymbol{\\Lambda}t}\\mathbf{X}^{-1}$, from the series for $e^x$ and $\\mathbf{A}^k = \\mathbf{X}\\boldsymbol{\\Lambda}^k\\mathbf{X}^{-1}$. The solution is $\\mathbf{u}(t) = e^{\\mathbf{A}t}\\mathbf{u}_0$.",
+   "Every solution decays when every eigenvalue has a negative real part. The slowest one sets the half-life, and an eigenvalue 0 gives a steady state."
+  ],
+  "formula": {
+   "name": "Matrix exponential",
+   "tex": "\\mathbf{u}(t) = e^{\\mathbf{A}t}\\mathbf{u}_0 = \\mathbf{X}e^{\\boldsymbol{\\Lambda}t}\\mathbf{X}^{-1}\\mathbf{u}_0",
+   "note": "Exponentiate the eigenvalues, never the entries."
+  },
+  "trap": "Applying $\\exp$ to each entry of $\\mathbf{A}$ does not give $e^{\\mathbf{A}}$, and the fast eigenvalue does not set the half-life."
+ },
+ "quiz": [
+  {
+   "id": "q-half",
+   "difficulty": 2,
+   "prose": "A system $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$ has eigenvalues $-0.5$ and $-4$.",
+   "question": "How long does the slow part take to halve?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.3863,
+    "tol": {
+     "abs": 0.01
+    },
+    "label": "Half-life",
+    "accept": "$\\ln 2 / 0.5 \\approx 1.386$",
+    "wrong": [
+     {
+      "id": "fast",
+      "value": 0.1733,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "one",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln 2 / 0.5 = 1.386$.",
+    "generic": "Not quite right. The slow part decays as $e^{-0.5t}$. Solve $e^{-0.5t} = \\tfrac12$.",
+    "byKey": {
+     "fast": "$\\ln 2 / 4$ is the fast part, which is gone quickly. The slow part sets the half-life."
+    }
+   },
+   "explain": {
+    "text": "$e^{-0.5t} = \\tfrac12$ gives $t = \\ln 2 / 0.5 = 1.386$."
+   }
+  },
+  {
+   "id": "q-sign",
+   "difficulty": 2,
+   "prose": "A system $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$ has eigenvalues $0.2$ and $-3$, and a generic start.",
+   "question": "What happens to the solution?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "grow",
+      "text": "It grows, slowly, because one eigenvalue is positive",
+      "correct": true
+     },
+     {
+      "id": "decay",
+      "text": "It decays, since the larger eigenvalue in size, $-3$, is negative",
+      "why": "You went by the biggest eigenvalue in size. The $-3$ part dies fast, and the $e^{0.2t}$ part is what is left."
+     },
+     {
+      "id": "const",
+      "text": "It settles at a nonzero constant",
+      "why": "Only an eigenvalue exactly 0 gives a part that stays put."
+     },
+     {
+      "id": "osc",
+      "text": "It oscillates",
+      "why": "Oscillation needs complex eigenvalues. These are real."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The $e^{0.2t}$ part grows and the $e^{-3t}$ part vanishes.",
+    "generic": "Not quite right. Each part moves as $e^{\\lambda t}$ for its own $\\lambda$."
+   },
+   "explain": {
+    "text": "After a short time the $e^{-3t}$ part is negligible, and $e^{0.2t}$ keeps rising. One positive eigenvalue makes the system unstable."
+   }
+  },
+  {
+   "id": "q-diag",
+   "difficulty": 3,
+   "prose": "$\\mathbf{A} = \\begin{pmatrix} -1 & 0 \\\\ 0 & 2 \\end{pmatrix}$.",
+   "question": "Which is $e^{\\mathbf{A}}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "$\\begin{pmatrix} e^{-1} & 0 \\\\ 0 & e^{2} \\end{pmatrix}$",
+      "correct": true
+     },
+     {
+      "id": "entry",
+      "text": "$\\begin{pmatrix} e^{-1} & 1 \\\\ 1 & e^{2} \\end{pmatrix}$",
+      "why": "You applied $\\exp$ to the zero entries and got $e^0 = 1$. $e^{\\mathbf{A}}$ of a diagonal matrix keeps its zeros."
+     },
+     {
+      "id": "same",
+      "text": "$\\begin{pmatrix} -1 & 0 \\\\ 0 & 2 \\end{pmatrix}$",
+      "why": "$e^{\\mathbf{A}}$ is not $\\mathbf{A}$. The series $\\mathbf{I} + \\mathbf{A} + \\cdots$ changes the diagonal."
+     },
+     {
+      "id": "swap",
+      "text": "$\\begin{pmatrix} e^{2} & 0 \\\\ 0 & e^{-1} \\end{pmatrix}$",
+      "why": "You swapped the eigenvalues. The first diagonal entry of $e^{\\mathbf{A}}$ comes from $-1$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A diagonal matrix has $\\mathbf{X} = \\mathbf{I}$, so $e^{\\mathbf{A}} = \\mathrm{diag}(e^{-1}, e^{2})$.",
+    "generic": "Not quite right. For a diagonal matrix, exponentiate the diagonal entries and keep the zeros."
+   },
+   "explain": {
+    "text": "The series $\\mathbf{I} + \\mathbf{A} + \\tfrac{\\mathbf{A}^2}{2!} + \\cdots$ stays diagonal, with $1 + a + \\tfrac{a^2}{2!} + \\cdots = e^{a}$ down the diagonal. The zeros stay zero."
+   }
+  },
+  {
+   "id": "q-zero",
+   "difficulty": 3,
+   "prose": "A generator has eigenvalues $0$ and $-2$, with eigenvectors $\\mathbf{x}_1$ and $\\mathbf{x}_2$.",
+   "question": "As $t \\to \\infty$, what happens to the part of the solution along $\\mathbf{x}_1$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "const",
+      "text": "It stays exactly where it started",
+      "correct": true
+     },
+     {
+      "id": "decay",
+      "text": "It decays to 0",
+      "why": "Decay needs a negative eigenvalue. This part follows $e^{0t} = 1$."
+     },
+     {
+      "id": "grow",
+      "text": "It grows without limit",
+      "why": "Growth needs a positive eigenvalue. $e^{0t}$ stays at 1."
+     },
+     {
+      "id": "half",
+      "text": "It halves every $\\ln 2$ time units",
+      "why": "That would be the $-1$ eigenvalue. A zero eigenvalue has no half-life."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$e^{0t} = 1$, so the part along $\\mathbf{x}_1$ never moves.",
+    "generic": "Not quite right. Each part moves as $e^{\\lambda t}$ with its own $\\lambda$."
+   },
+   "explain": {
+    "text": "The eigenvalue 0 gives the steady state. In the rating generator, the part along $(3, 1)$ stays, while the $-0.4$ part fades away."
+   }
+  }
+ ]
+}
