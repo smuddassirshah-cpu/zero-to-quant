@@ -360,3 +360,12 @@ Raised later (topic 2.1 exam):
 - Cross-platform drift in scikit-learn: `GradientBoostingRegressor(max_depth=2)` gave a validation MSE of 14.9285 in CPython 3.13 (NumPy 2.5.3, scikit-learn 1.6.1) and 14.9527 in Pyodide 0.27.7 on one seeded case, while four other cases matched to 4 places. Authors should take every scikit-learn expected value from Pyodide, or compare several seeds across both before keeping a test. A line in `AUTHORING.md` section 3 would save the next author the surprise.
 - Table widget: a cell's own `wrong[]` ids still cannot be `byKey` keys (another vote, as in the topic 1.9 exam). Items 7, 9, 21 and 29 use `r{i}c{j}` keys instead.
 - The exam's `--why` result screenshot is a single 30,000 px tall page, so it cannot be reviewed as an image. A per-item crop or a paged result view would help authors check 30 explanations.
+
+Raised later (topic 2.2 exam):
+
+- `examMinutes` gives 45 minutes for topic 2.2 (60 hours). This 22-item paper has three statsmodels or SciPy code items (first load 20 to 40 s each time Pyodide starts) and a longform, so 45 minutes is tight. The file follows `examMinutes`; 60 would suit.
+- Table widget: five columns with two or more input cells overflow a 390 px phone and scroll sideways with no hint (the BIC column of an AIC and BIC grid was off screen). Workaround: three columns, with the log-likelihood folded into the model label as KaTeX.
+- `bars` with `groups` and no `yLabel` draws a default "Count" axis title, wrong for a correlogram. Setting `yLabel` fixes it, but a correlogram default of "ACF" would save every author the step.
+- Code editor shows about 54 characters a line before it scrolls sideways, with no wrap. Starters and docstrings had to be rewrapped by hand; a soft-wrap option for docstrings would help.
+- The exam `--why` result screenshot is one page about 24,000 px tall (22 items), unreadable as an image (another vote for the earlier bullet).
+- `series` tap-regions on markers: markers that sit within a day or two of each other on a 60-day chart overlap on a phone, so I spaced the eight dots at least 2 days apart by choosing the window.
