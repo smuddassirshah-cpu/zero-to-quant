@@ -1,0 +1,437 @@
+{
+  "id": "review-4",
+  "course": "opt-dash",
+  "level": 4,
+  "items": [
+    {
+      "id": "r4-vega-book",
+      "difficulty": 2,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "A desk is long 300 six-month £100 calls on one share each: $S = \\text{£}100$, $r = 5\\%$, $\\sigma = 20\\%$. `bs_greeks` gives vega 27.36 for each, per 1.00 of vol. Overnight, implied vol falls two points.",
+      "question": "About how much does the book lose from vega?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 164.15,
+        "tol": {
+          "abs": 0.6
+        },
+        "unit": "£",
+        "label": "Vega loss",
+        "accept": "About £164: $300 \\times 0.2736 \\times 2$",
+        "wrong": [
+          {
+            "id": "per-unit",
+            "value": 16415,
+            "tol": {
+              "abs": 30
+            }
+          },
+          {
+            "id": "one-point",
+            "value": 82.08,
+            "tol": {
+              "abs": 0.3
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About £164.",
+        "generic": "Not quite right. Convert vega to £ per vol point, then multiply by the points and the options.",
+        "byKey": {
+          "per-unit": "You used vega per 1.00 of vol. Two points is 0.02, so each call loses $27.36 \\times 0.02$.",
+          "one-point": "That is one point's loss. Vol fell two points."
+        }
+      },
+      "explain": {
+        "text": "Per vol point each call moves $27.36 \\times 0.01 = 0.2736$. Two points on 300 calls is $300 \\times 0.2736 \\times 2 \\approx \\text{£}164.15$."
+      }
+    },
+    {
+      "id": "r4-central",
+      "difficulty": 2,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "A pricer you cannot differentiate returns these prices for our one-year £100 call, at three share prices.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share price (£)",
+            "Call price (£)"
+          ],
+          "rows": [
+            [
+              "99",
+              "9.8232"
+            ],
+            [
+              "100",
+              "10.4506"
+            ],
+            [
+              "101",
+              "11.0967"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What delta does the central difference with $h = \\text{£}1$ give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6368,
+        "tol": {
+          "abs": 0.0006
+        },
+        "unit": "",
+        "label": "Bumped delta",
+        "accept": "0.6368: $(11.0967 - 9.8232)/2$",
+        "wrong": [
+          {
+            "id": "forward",
+            "value": 0.6461,
+            "tol": {
+              "abs": 0.0006
+            }
+          },
+          {
+            "id": "no-half",
+            "value": 1.2735,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.6368, matching the closed form to four places.",
+        "generic": "Not quite right. Take the price at £101 minus the price at £99, over $2h$.",
+        "byKey": {
+          "forward": "You used the one-sided difference from £100 to £101. It errs like $h$; the central one like $h^2$.",
+          "no-half": "You divided by $h$, not $2h$. The two prices are £2 apart."
+        }
+      },
+      "explain": {
+        "text": "$(11.0967 - 9.8232)/2 = 0.6368$, against 0.6461 for the one-sided chord. The central chord cancels the curvature term, so even $h = \\text{£}1$ gives four places."
+      }
+    },
+    {
+      "id": "r4-tiny-bump",
+      "difficulty": 3,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "A colleague computes gamma for the same call with $h = 10^{-7}$ and gets $-0.71$. The closed form says 0.0188.",
+      "question": "What went wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "round",
+            "text": "The three prices agree to about 15 digits, so their difference is mostly rounding, divided by $h^2 = 10^{-14}$",
+            "correct": true
+          },
+          {
+            "id": "trunc",
+            "text": "The bump is too large, so the chord smooths the curvature away",
+            "why": "Large bumps err like $h^2$. At $10^{-7}$ that error is negligible; the trouble is the other end."
+          },
+          {
+            "id": "formula",
+            "text": "The second difference is the wrong formula for gamma",
+            "why": "The formula is right: at $h = \\text{£}0.01$ it gives 0.018762."
+          },
+          {
+            "id": "sign",
+            "text": "Gamma of a long call can be negative near the money",
+            "why": "A long call's price is convex in $S$, so its gamma is never negative."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Rounding, magnified by $1/h^2$.",
+        "generic": "Not quite right. Think about what dividing by $10^{-14}$ does to tiny errors.",
+        "byKey": {
+          "trunc": "You blamed truncation. That error shrinks with $h$; the error that grows as $h$ shrinks is rounding."
+        }
+      },
+      "explain": {
+        "text": "Each price carries a rounding error near $10^{-15}$. Divided by $h^2 = 10^{-14}$, that becomes an error of order 0.1 to 1. The dashboard's £0.01 bump sits between the two failures."
+      }
+    },
+    {
+      "id": "r4-put-explain",
+      "difficulty": 3,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "Our one-year £100 put has delta $-0.3632$, gamma 0.018762, vega 37.52 per 1.00 and theta $-1.658$ a year. In one day the share falls £3 and implied vol rises two points.",
+      "question": "What P&L does the four-term explain give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.9199,
+        "tol": {
+          "abs": 0.003
+        },
+        "unit": "£",
+        "label": "Explained P&L",
+        "accept": "£1.9199: $1.0895 + 0.0844 + 0.7505 - 0.0045$",
+        "wrong": [
+          {
+            "id": "no-gamma",
+            "value": 1.8355,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "theta-year",
+            "value": 0.2665,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£1.9199, against £1.9302 from full revaluation.",
+        "generic": "Not quite right. Add $\\Delta\\,dS$, $\\tfrac12\\Gamma\\,dS^2$, vega $d\\sigma$ and $\\Theta\\,dt$, with $dt = 1/365$.",
+        "byKey": {
+          "no-gamma": "You left out the gamma term, $\\tfrac12 \\times 0.018762 \\times 9 = 0.0844$.",
+          "theta-year": "You charged a whole year of theta. One day is $1.658/365$."
+        }
+      },
+      "explain": {
+        "text": "Delta earns $-0.3632 \\times -3 = 1.0895$, gamma 0.0844, vega $37.52 \\times 0.02 = 0.7505$, theta $-0.0045$. The total is £1.9199; revaluation gives £1.9302, a residual of 0.0104 from vanna and higher orders."
+      }
+    },
+    {
+      "id": "r4-gamma-time",
+      "difficulty": 3,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "Two at-the-money £100 calls on the same share, $r = 5\\%$, $\\sigma = 20\\%$. With one year left gamma is 0.018762; with three months left it is 0.039288.",
+      "question": "What rule of thumb does the ratio of the two gammas match?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sqrt",
+            "text": "Gamma grows like $1/\\sqrt{T}$: a quarter of the time, about twice the gamma",
+            "correct": true
+          },
+          {
+            "id": "lin",
+            "text": "Gamma grows like $1/T$: a quarter of the time, four times the gamma",
+            "why": "The ratio is $0.039288/0.018762 = 2.09$, not 4."
+          },
+          {
+            "id": "flat",
+            "text": "Gamma does not depend on time to expiry",
+            "why": "The two gammas differ by a factor of about 2."
+          },
+          {
+            "id": "down",
+            "text": "Gamma shrinks as expiry nears, like vega",
+            "why": "Vega shrinks like $\\sqrt{T}$. Gamma moves the other way."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A ratio of 2.09: close to $\\sqrt{4} = 2$.",
+        "generic": "Not quite right. Divide the two gammas and compare with 4 and with 2.",
+        "byKey": {
+          "lin": "You scaled gamma with $1/T$. The ratio is 2.09, which is $1/\\sqrt{T}$ scaling."
+        }
+      },
+      "explain": {
+        "text": "At the money gamma is about $\\varphi(d_1)/(S\\sigma\\sqrt{T})$, so a quarter of the time roughly doubles it. The rate and $d_1$ move a little with $T$, which is why the ratio is 2.09 rather than exactly 2."
+      }
+    },
+    {
+      "id": "r4-uneven-fly",
+      "difficulty": 3,
+      "skills": [
+        "od-surface"
+      ],
+      "prose": "Calls at one expiry, after cleaning dropped the £100 strike: £12.10 at £90, £9.40 at £95 and £2.90 at £105.",
+      "question": "By how much does the £95 call sit above the chord between its neighbours?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3667,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "£",
+        "label": "Gap above the chord",
+        "accept": "£0.3667: chord $\\tfrac23 \\times 12.10 + \\tfrac13 \\times 2.90 = 9.0333$",
+        "wrong": [
+          {
+            "id": "equal",
+            "value": 1.9,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "swapped",
+            "value": -2.8333,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£0.3667 above the chord: a butterfly failure.",
+        "generic": "Not quite right. Weight the nearer neighbour more: $w = (105 - 95)/(105 - 90)$.",
+        "byKey": {
+          "equal": "You gave both neighbours weight one half. £95 is a third of the way from £90 to £105, so £90 gets $\\tfrac23$.",
+          "swapped": "You put the larger weight on the far neighbour. The nearer strike, £90, gets $w = \\tfrac23$."
+        }
+      },
+      "explain": {
+        "text": "The chord at £95 is $\\tfrac23 \\times 12.10 + \\tfrac13 \\times 2.90 = 9.0333$. The quote sits 0.3667 above it, so the prices are not convex there. `butterfly_violations` reports twice that, 0.7333, in its butterfly units."
+      }
+    },
+    {
+      "id": "r4-calendar",
+      "difficulty": 3,
+      "skills": [
+        "od-surface"
+      ],
+      "prose": "At the forward, the one-month vol is 25% and the two-month vol is 17%.",
+      "question": "Is this a calendar arbitrage?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: total variance falls from 0.00521 to 0.00482",
+            "correct": true
+          },
+          {
+            "id": "no-vol",
+            "text": "No: an inverted term structure is normal after a scare",
+            "why": "Inverted vol is allowed. Here total variance $\\sigma^2 T$ falls as well, which is not."
+          },
+          {
+            "id": "no-small",
+            "text": "No: an eight-point drop is too small to matter",
+            "why": "The size of the vol drop is not the test. Compare $\\sigma^2 T$ at the two expiries."
+          },
+          {
+            "id": "yes-vol",
+            "text": "Yes: vol must never fall with expiry",
+            "why": "Vol may fall with expiry. What must not fall is total variance."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Total variance falls, so the forward variance is negative.",
+        "generic": "Not quite right. Compute $\\sigma^2 T$ for each expiry and compare.",
+        "byKey": {
+          "no-vol": "You checked the vol curve. At one month $w = 0.25^2/12 = 0.00521$; at two months $0.17^2/6 = 0.00482$: it falls."
+        }
+      },
+      "explain": {
+        "text": "$w$ is $0.0625/12 = 0.00521$ at one month and $0.0289/6 = 0.00482$ at two. The forward variance between them would be negative, so a two-month option is priced below a one-month one at the same $k$."
+      }
+    },
+    {
+      "id": "r4-deribit",
+      "difficulty": 2,
+      "skills": [
+        "od-data"
+      ],
+      "prose": "You point the dashboard at Deribit. A BTC call's mid is 0.031 BTC, and the index price is 58,000 US dollars.",
+      "question": "What price, in US dollars, should the implied-vol solver see?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1798,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "USD",
+        "label": "Price in USD",
+        "accept": "1,798: $0.031 \\times 58{,}000$",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 0.031,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1,798 dollars.",
+        "generic": "Not quite right. Multiply the BTC price by the index price.",
+        "byKey": {
+          "raw": "That is still in BTC. The strike is in dollars, so the price must be too."
+        }
+      },
+      "explain": {
+        "text": "Deribit quotes options in BTC, so $0.031 \\times 58{,}000 = 1{,}798$ dollars. Feed the solver 0.031 against a dollar strike and every implied vol collapses towards zero."
+      }
+    },
+    {
+      "id": "r4-what-failed",
+      "difficulty": 4,
+      "skills": [
+        "od-greeks",
+        "od-surface",
+        "od-data"
+      ],
+      "prose": "Lines from a draft results note for the dashboard on the seeded chain.",
+      "question": "Select all that apply: which lines belong under What failed?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mc",
+            "text": "Bumped Monte Carlo delta came out $-0.30$ with a fresh seed per price; with one seed it was 0.6359",
+            "correct": true
+          },
+          {
+            "id": "tree",
+            "text": "A £0.01 bump of the 500-step tree gave gamma 3.35 against 0.0188, so tree Greeks come from its first two steps",
+            "correct": true
+          },
+          {
+            "id": "fly-raw",
+            "text": "Four butterfly failures in the raw mids, every one smaller than the middle call's spread",
+            "why": "That is a finding of the arbitrage check, and it is reassuring: none can be traded. It belongs under Arbitrage checks."
+          },
+          {
+            "id": "bs",
+            "text": "Closed-form and bumped Greeks agree within $10^{-4}$",
+            "why": "That is a passing check. It belongs under Greeks."
+          },
+          {
+            "id": "keys",
+            "text": "The dashboard returned all eight panels",
+            "why": "Running is the minimum, not a failure."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two things that broke or could not be trusted.",
+        "generic": "Not quite right. Keep what went wrong; send passing checks to their own sections."
+      },
+      "explain": {
+        "text": "The Monte Carlo delta and the tree bump are weaknesses a reader must know about. The raw butterfly failures and the agreement of the Greeks are results. Each belongs in the section it tests."
+      }
+    }
+  ]
+}
