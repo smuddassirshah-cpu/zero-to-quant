@@ -62,8 +62,8 @@
     const ids = () => items().map(n => n.dataset.id);
     const out = () => spareItems().map(n => n.dataset.id);
     const number = () => {
-      items().forEach((n, i) => { const b = n.querySelector('.wd-line-n'); b.textContent = i + 1; b.style.display = ''; });
-      spareItems().forEach(n => { n.querySelector('.wd-line-n').style.display = 'none'; });
+      items().forEach((n, i) => { const b = n.querySelector('.wd-line-n'); b.textContent = i + 1; b.style.display = ''; n.querySelector('.wd-grip').style.display = ''; n.style.cursor = ''; });
+      spareItems().forEach(n => { n.querySelector('.wd-line-n').style.display = 'none'; n.querySelector('.wd-grip').style.display = 'none'; n.style.cursor = 'default'; }); // left-out lines are not draggable
       if (spareEmpty) spareEmpty.hidden = spareItems().length > 0;
     };
     number();
