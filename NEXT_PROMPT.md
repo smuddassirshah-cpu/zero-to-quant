@@ -1,16 +1,20 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 2b, first item: the breadth plan. The user asked (27 Oct) for the maths breadth pass to run before the rest of Stage 3; momentum-rep L1 is done, and L2 waits until task 2b is complete.
+Task: PLAN.md task 2b, second item: the engine item for the maths breadth pass. Launch one `engine-dev` agent (Sonnet). The main session plans and reviews only.
 
-Context: `docs/curriculum.md` now has new items 0.6 (proof), 1.10 (analysis, proof-based linear algebra), 1.11 (complex numbers, vector calculus, ODEs), 2.5 (numerical methods, optimisation), 2.6 (statistical modelling), additions to 3.2 (measure theory, PDEs), 3.4 (algebra, topology), and a 1.5 gap level for markov (Poisson process, martingales, optional stopping). Each item is tagged [Quant] or [Pure maths]. The previous gap pass is the pattern: `docs/briefs/gaps-plan.md`. Topics shown in the app: `app/content/curriculum.json`.
+Context: the breadth plan is done (`docs/briefs/breadth-plan.md`, read its `## Engine notes` section). Thirteen new course maps (`proof`, `analysis`, `linear-maps`, `complex`, `vector-calc`, `odes`, `numerics`, `convex`, `stat-models`, `measure-prob`, `pdes`, `algebra`, `topology`) carry top-level `strand` ("quant" or "pure") and `strandNote` (roles). The validator accepts these fields without checking them and the app ignores them. Topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 and the 3.2 additions are in `app/content/curriculum.json`; every new lesson is unwritten. Stage hours and exit lines in curriculum.json were left unchanged.
 
-Do:
-1. Launch one Sonnet agent (`general-purpose` or `content-author`, planning only). It writes `docs/briefs/breadth-plan.md`: for each course, the levels, lesson ids, titles, objectives, prerequisites and the existing lessons each one builds on. It writes the new `course.json` maps, each with `strand` ("quant" or "pure") and `strandNote`, plus the topic entries in `app/content/curriculum.json`, and appends the markov gap level to `markov/course.json` without renaming any id. It writes no lessons and does not commit.
-2. Replace the "Levels: placeholder" line in PLAN.md task 2b with one line per level, each marked [Quant] or [Pure maths], ordered Stage 0, then 1, 2, 3.
+The agent must:
+1. Show the new topics with targets on the Learn screen (`app/js/screens/learn.js`); exams list them; nothing throws on a course with no written lessons.
+2. Validator accepts and checks `strand` (only "quant" or "pure") and `strandNote` (non-empty string when `strand` is set).
+3. Add a "Pure maths" or "Quant" badge, with `strandNote` as its detail, on course cards, the lesson start screen, topic chips and exam chips; distinct in light and dark themes; untagged courses show no badge.
+4. Add a "Quant path only" setting that hides pure courses and drops them from stage-exam gating and stage progress.
+5. Document it in `docs/AUTHORING.md`; number any inbox bullets it adds per CLAUDE.md.
 
-Files likely touched: `docs/briefs/breadth-plan.md`, `app/content/courses/<new>/course.json`, `app/content/courses/markov/course.json`, `app/content/curriculum.json`, `app/content/manifest.json`, PLAN.md, state files.
+Files likely touched: `app/js/screens/learn.js`, course card and lesson start screens, settings screen, exam list, `app/css/`, `app/tools/validate.mjs`, `docs/AUTHORING.md`, `docs/ENGINE-BACKLOG.md`.
 
 Acceptance:
-- From `app/`, `node tools/validate.mjs 2>&1 | tail -5` reports 0 errors. New lessons show as "not yet written". If it rejects `strand`, note it for the engine item and keep the field.
-- No existing lesson id changes (`git diff` on existing course.json files shows additions only).
-- PLAN.md ticks the breadth plan and lists every level; NEXT_PROMPT.md names the engine item of task 2b.
+- From `app/`, `node tools/validate.mjs 2>&1 | tail -5` reports 0 errors, and a bad `strand` value in a scratch copy is rejected.
+- Playthrough of one existing lesson per stage and the routes is green (`--routes-only`, with `--local-cdn` built by `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`).
+- Screenshots in both themes show the badge on a pure and a quant course and none on a core course; with "Quant path only" on, pure courses vanish.
+- PLAN.md ticks the engine item; NEXT_PROMPT.md names the briefs item for 0.6, 1.10, 1.11 and markov L5.

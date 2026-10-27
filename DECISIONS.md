@@ -23,6 +23,7 @@ Content process
 - Topic exams stay at 30 items or fewer (validator cap); when an extension needs more asks, pack them into multi-part table items rather than raise the cap (27 Oct, exam extension 1.3 to 1.5).
 - Conventions fixed by fix passes: "hit rate" means P(right | call); P(flash | up) is the "detection rate". Per cent widgets store the fraction with `unit: "%"` (the engine divides typed input by 100). Singularity is checked by `matrix_rank` or `cond`, never a determinant threshold.
 - Content agents ran on Opus through 26 Oct; from the migration, implementation agents run on Sonnet and the main session only plans and reviews (user instruction).
+- Breadth plan (27 Oct): 13 courses, 49 levels, 218 lessons; markov L5 covers martingales and optional stopping only, because the Poisson process is already markov l16; stage hours and exit lines in curriculum.json are left for the engine item.
 
 Engine process
 - Backlog items are numbered in `docs/ENGINE-BACKLOG.md`; integration passes fix a range and write a status block. Content agents never edit engine files; engine passes never edit content.
