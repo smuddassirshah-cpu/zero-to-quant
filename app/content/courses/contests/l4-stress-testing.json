@@ -200,7 +200,10 @@
         },
         {
           "rung": "point",
-          "text": "Compare the last two columns on each row."
+          "text": "Compare the last two columns on each row.",
+          "highlight": [
+            "l2"
+          ]
         },
         {
           "rung": "step",
@@ -237,7 +240,7 @@
       "type": "problem",
       "difficulty": 2,
       "title": "Stress testing",
-      "prose": "What you just watched is **stress testing**: a **brute force** you trust (slow, obviously correct), a **generator** of small random cases with a **seed**, and a loop that compares the two.",
+      "prose": "What you just watched is **stress testing**. A **brute force** you trust, slow but obviously correct, runs beside the fast code. A **generator** makes small random cases from a **seed**, and a loop compares the two.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -303,11 +306,14 @@
         },
         {
           "rung": "point",
-          "text": "Each trial makes a case, then compares."
+          "text": "Each trial makes a case, then compares.",
+          "highlight": [
+            "l3"
+          ]
         },
         {
           "rung": "step",
-          "text": "Seed the generator, loop, make a case, compare, return the case if they differ, and return `None` if no trial did."
+          "text": "Seed the generator, loop, make a case and compare. Return the case if they differ, and `None` if no trial did."
         }
       ],
       "feedback": {
@@ -315,14 +321,14 @@
         "generic": "Not quite right. Follow one trial: make a case, then compare."
       },
       "explain": {
-        "text": "Seeding once makes the whole run repeatable: the same seed gives the same cases, so a failure can be found again. The loop stops at the first disagreement, which is the case we want to read."
+        "text": "Seeding once makes the run repeatable: the same seed gives the same cases. So a failure can always be found again. The loop stops at the first disagreement, which is the case we want to read."
       }
     },
     {
       "type": "ladder",
       "difficulty": 2,
       "title": "Which generator?",
-      "prose": "The bug is `<` where problem H needs `<=`, so it shows only when a pair sums to exactly $k$. Two generators, both with $n$ from 1 to 6.",
+      "prose": "The bug is `<` where problem H needs `<=`. It shows only when a pair sums to exactly $k$. Two generators, both with $n$ from 1 to 6.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -381,7 +387,7 @@
         }
       },
       "explain": {
-        "text": "We ran both: gen B found the bug on trial 5 with seed 1, and gen A found nothing in 100,000 trials for each of four seeds. Values from 1 to 3 found it within 7 trials. Small ranges make the collisions where bugs live."
+        "text": "With seed 1, gen B found the bug on trial 5. Gen A found nothing in 100,000 trials on each of four seeds. Small ranges make the ties where this bug lives."
       }
     },
     {
@@ -614,7 +620,7 @@
       "type": "ladder",
       "difficulty": 3,
       "title": "Write the stress loop",
-      "prose": "Write `stress(fast, brute, gen, trials, seed)`. Call `gen(rng)` once per trial with one `random.Random(seed)`, and return the first case where the two differ, or `None`. Some fast functions sort their input in place, so give each function its own copy.",
+      "prose": "Write `stress(fast, brute, gen, trials, seed)`. Make one `random.Random(seed)` and call `gen(rng)` once per trial. Return the first case where the two differ, or `None`. Some fast functions sort their input in place, so give each function its own copy.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -732,7 +738,7 @@
       "type": "ladder",
       "difficulty": 3,
       "title": "A stress test in pytest",
-      "prose": "Write `brute_pair_sums(xs, k)` straight from problem H's statement. Then write `test_against_brute()`: a generator with $n$ from 1 to 6, values from −5 to 5 and $k$ from −10 to 10, and an assert that `stress` finds no difference in 500 trials.",
+      "prose": "Write `brute_pair_sums(xs, k)` straight from problem H's statement. Then write `test_against_brute()`. Its generator draws $n$ from 1 to 6, values from −5 to 5 and $k$ from −10 to 10. It asserts that `stress` finds no difference in 500 trials.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -818,7 +824,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 11 hidden tests. Tests 1 to 4 call your brute force. Test 5 runs your test on the correct `pair_sums_at_most`, and tests 6 to 10 each swap in a wrong one: your test must pass on the first and fail on every other. Run examples runs pytest on your file."
+        "how": "Check runs 11 hidden tests. Tests 1 to 4 call your brute force. Test 5 runs your test on the correct `pair_sums_at_most`, where it must pass. Tests 6 to 10 each swap in a wrong one, where it must fail. Run examples runs pytest on your file."
       },
       "hints": [
         {
@@ -827,7 +833,10 @@
         },
         {
           "rung": "point",
-          "text": "Wrap the two functions so each takes one `case`: `lambda case: pair_sums_at_most(*case)`."
+          "text": "Wrap the two functions so each takes one `case`: `lambda case: pair_sums_at_most(*case)`.",
+          "highlight": [
+            "l4"
+          ]
         },
         {
           "rung": "step",
@@ -840,7 +849,7 @@
         "byKey": {
           "test-1": "Test 1 calls `brute_pair_sums([1, 2, 3], 4)` and expects 2: the pairs summing to 3 and 4.",
           "test-5": "Test 5 runs your test on the correct function and it failed. Check the brute force and the generator.",
-          "test-6": "Test 6 swapped in a version with `<`. Your test passed it: does it call `stress` and assert `is None`?",
+          "test-6": "Test 6 swapped in a version with `<`, and your test passed it. Assert `is None`, and do not let `brute_pair_sums` call `pair_sums_at_most`.",
           "test-10": "Test 10's wrong version fails only when $k < 0$. Let your generator's $k$ go negative."
         }
       },
@@ -914,7 +923,7 @@
         }
       },
       "explain": {
-        "text": "A loop from the definition is the brute force, random short paths are the generator, and trial 3 is the failing case to shrink. A fast option pricer is checked the same way, against Black-Scholes where a closed form exists.",
+        "text": "A loop from the definition is the brute force, and random short paths are the generator. Trial 3 is the failing case to shrink. A fast option pricer is checked the same way, against Black-Scholes where a closed form exists.",
         "canvas": {
           "tone": {
             "l5": "err"

@@ -1,0 +1,539 @@
+{
+  "id": "homework-1",
+  "course": "contests",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw1-pairs-to-k",
+      "difficulty": 4,
+      "skills": [
+        "cn-impl"
+      ],
+      "prose": "Write `count_pairs(xs, k)`, the answer to problem P. Decide the complexity from the constraints first.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "P. Matching days   (1 s, 256 MB)",
+            "n (1 ≤ n ≤ 2·10⁵) daily P&L values aᵢ",
+            "(−10⁹ ≤ aᵢ ≤ 10⁹) and an integer k.",
+            "Count the pairs of days i < j with",
+            "aᵢ + aⱼ = k exactly."
+          ],
+          "title": "Problem P"
+        },
+        "state": {}
+      },
+      "question": "Write `count_pairs(xs, k)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "class _Counted(list):\n    reads = 0\n\n    def __getitem__(self, i):\n        _Counted.reads += 1\n        return list.__getitem__(self, i)\n\n    def __iter__(self):\n        _Counted.reads += len(self)\n        return list.__iter__(self)\n\n\ndef reads_for(fn, xs, *args):\n    _Counted.reads = 0\n    fn(_Counted(xs), *args)\n    return _Counted.reads\n",
+        "starter": "def count_pairs(xs, k):\n    ...\n",
+        "solution": "def count_pairs(xs, k):\n    seen = {}\n    count = 0\n    for x in xs:\n        count += seen.get(k - x, 0)\n        seen[x] = seen.get(x, 0) + 1\n    return count\n",
+        "examples": [
+          {
+            "call": "count_pairs([1, 5, 3, 3, 4], 6)",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_pairs([1, 5, 3, 3, 4], 6)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([3, 3, 3, 3], 6)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([7], 14)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([-2, 2, 0, 0], 0)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([10**9, -10**9, 0], 0)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([1, 2, 3], 100)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([5, 1, 5, 1], 6)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([-3, -3, -6], -6)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random; r = random.Random(21); ys = [r.randint(-50, 50) for _ in range(1000)]",
+            "call": "reads_for(count_pairs, ys, 0) <= 4000",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random; r = random.Random(22); zs = [r.randint(-1000, 1000) for _ in range(200000)]",
+            "call": "count_pairs(zs, 0)",
+            "expect": "9998990",
+            "compare": "equal"
+          },
+          {
+            "call": "count_pairs([7] * 200000, 14)",
+            "expect": "19999900000",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: hand cases with repeats, negative values, $n = 1$ and $k = 0$. Test 9 passes 1,000 values in a list that counts its reads; at most 4,000 pass. Tests 10 and 11 have 200,000 values; test 11 is all equal, so its answer is near $2 \\cdot 10^{10}$."
+      },
+      "feedback": {
+        "correct": "One pass with a dictionary of counts: $O(n)$.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is four 3s with $k = 6$: every one of the 6 pairs counts. Count how many earlier values match, not whether one does.",
+          "test-9": "Test 9 read the list far more than 4,000 times. Checking every pair is $O(n^2)$; remember the values seen so far.",
+          "test-10": "Test 10 has 200,000 values. `xs.count(k - x)` in a loop is $O(n^2)$, even though the counter does not see it.",
+          "test-11": "Test 11 has 200,000 equal values. Counting pairs one by one is too slow; add the number of earlier matches at once."
+        }
+      },
+      "explain": {
+        "text": "Walking left to right, each value pairs with every earlier value equal to $k - x$. The dictionary knows how many there are, so each day costs one lookup and one update. Test 11's answer, $\\binom{200000}{2} = 19{,}999{,}900{,}000$, needs 64 bits in C++."
+      }
+    },
+    {
+      "id": "hw1-window",
+      "difficulty": 5,
+      "skills": [
+        "cn-impl"
+      ],
+      "prose": "Write `longest_window(tickers, k)`, the answer to problem W. The obvious solution restarts at every day; the constraints rule that out.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "W. Focused stretch   (1 s, 256 MB)",
+            "A desk's fills, in time order: n tickers",
+            "(1 ≤ n ≤ 2·10⁵), and k (1 ≤ k ≤ n).",
+            "Print the length of the longest run of",
+            "consecutive fills that uses at most k",
+            "distinct tickers."
+          ],
+          "title": "Problem W"
+        },
+        "state": {}
+      },
+      "question": "Write `longest_window(tickers, k)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "class _Counted(list):\n    reads = 0\n\n    def __getitem__(self, i):\n        _Counted.reads += 1\n        return list.__getitem__(self, i)\n\n    def __iter__(self):\n        _Counted.reads += len(self)\n        return list.__iter__(self)\n\n\ndef reads_for(fn, xs, *args):\n    _Counted.reads = 0\n    fn(_Counted(xs), *args)\n    return _Counted.reads\n",
+        "starter": "def longest_window(tickers, k):\n    ...\n",
+        "solution": "def longest_window(tickers, k):\n    counts = {}\n    best = 0\n    left = 0\n    for right in range(len(tickers)):\n        t = tickers[right]\n        counts[t] = counts.get(t, 0) + 1\n        while len(counts) > k:\n            u = tickers[left]\n            counts[u] -= 1\n            if counts[u] == 0:\n                del counts[u]\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n",
+        "examples": [
+          {
+            "call": "longest_window(['AAPL', 'MSFT', 'AAPL', 'TSLA', 'MSFT', 'MSFT'], 2)",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "longest_window(['AAPL', 'MSFT', 'AAPL', 'TSLA', 'MSFT', 'MSFT'], 2)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['X'], 1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['A', 'B', 'C', 'D'], 1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['A', 'B', 'C', 'D'], 4)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['A', 'B', 'A', 'C', 'A', 'B', 'B'], 2)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['A', 'A', 'A'], 1)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['V', 'W', 'V', 'W', 'X', 'W', 'X', 'X'], 2)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['A', 'B', 'C'], 5)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "alt = ['AB'[i % 2] for i in range(1000)]",
+            "call": "reads_for(longest_window, alt, 2) <= 4000",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random; r = random.Random(31); big = [r.choice(['T%d' % i for i in range(8)]) for _ in range(200000)]",
+            "call": "longest_window(big, 4)",
+            "expect": "22",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_window(['AB'[i % 2] for i in range(200000)], 2)",
+            "expect": "200000",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: hand cases with $n = 1$, $k = 1$, $k$ above the number of tickers, and repeats. Test 9 counts reads of 1,000 alternating tickers; at most 4,000 pass. Tests 10 and 11 have 200,000 fills; in test 11 the whole list is the answer."
+      },
+      "feedback": {
+        "correct": "A sliding window with a dictionary of counts: each fill enters and leaves once, $O(n)$.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 3: `AAPL MSFT AAPL` or `TSLA MSFT MSFT`. Count distinct tickers, not fills.",
+          "test-8": "Test 8 has $k = 5$ but only 3 tickers, so the whole list fits.",
+          "test-9": "Test 9 read the list far more than 4,000 times. Restarting at every day is $O(n^2)$ when windows are long.",
+          "test-11": "Test 11's window is all 200,000 fills. Restarting at every day costs $2 \\cdot 10^{10}$ steps; slide the left end instead."
+        }
+      },
+      "explain": {
+        "text": "The right end adds one fill at a time. While more than $k$ tickers are in the window, the left end drops fills. Each fill enters once and leaves at most once, so the work is $O(n)$ even when the window spans everything."
+      }
+    },
+    {
+      "id": "hw1-range-sums",
+      "difficulty": 4,
+      "skills": [
+        "cn-impl"
+      ],
+      "prose": "Write `range_sums(xs, queries)`: for each query `(l, r)`, counted from 1, the sum $a_l + \\dots + a_r$, in order.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Q. Period P&L   (2 s, 256 MB)",
+            "n daily values (1 ≤ n ≤ 2·10⁵,",
+            "|aᵢ| ≤ 10⁹) and q queries (0 ≤ q ≤ 2·10⁵),",
+            "each l r with 1 ≤ l ≤ r ≤ n.",
+            "For each query print aₗ + … + aᵣ."
+          ],
+          "title": "Problem Q"
+        },
+        "state": {}
+      },
+      "question": "Write `range_sums(xs, queries)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def range_sums(xs, queries):\n    ...\n",
+        "solution": "def range_sums(xs, queries):\n    pre = [0]\n    for x in xs:\n        pre.append(pre[-1] + x)\n    return [pre[r] - pre[l - 1] for l, r in queries]\n",
+        "examples": [
+          {
+            "call": "range_sums([3, -1, 4, 1, 5], [(1, 5), (2, 3), (4, 4), (1, 1)])",
+            "expect": "[12, 3, 1, 3]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "range_sums([3, -1, 4, 1, 5], [(1, 5), (2, 3), (4, 4), (1, 1)])",
+            "expect": "[12, 3, 1, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "range_sums([7], [(1, 1), (1, 1)])",
+            "expect": "[7, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "range_sums([-5, -5, -5], [(1, 3), (2, 2)])",
+            "expect": "[-15, -5]",
+            "compare": "equal"
+          },
+          {
+            "call": "range_sums([10**9] * 4, [(1, 4)])",
+            "expect": "[4000000000]",
+            "compare": "equal"
+          },
+          {
+            "call": "range_sums([1, 2, 3], [])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(41)\nxs = [r.randint(-10**9, 10**9) for _ in range(200000)]\nqs = []\nfor _ in range(200000):\n    a = r.randint(1, 200000); b = r.randint(1, 200000); qs.append((min(a, b), max(a, b)))",
+            "call": "(lambda out: (len(out), out[0], out[-1], sum(out)))(range_sums(xs, qs))",
+            "expect": "(200000, 72467895261, -47294927164, -2563652091193897)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: hand cases, a single day, losses, sums past $2^{31}$ and no queries. Test 6 has $n = q = 2 \\cdot 10^5$ random queries, so summing each range afresh is stopped."
+      },
+      "feedback": {
+        "correct": "Prefix sums: $O(n + q)$.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Test 1's query `(2, 3)` expects $-1 + 4 = 3$. Count positions from 1, and include both ends.",
+          "test-6": "Test 6 has $2 \\cdot 10^5$ queries over $2 \\cdot 10^5$ values. `sum(xs[l - 1:r])` per query is about $10^{10}$ steps; build prefix sums once."
+        }
+      },
+      "explain": {
+        "text": "With `pre[i]` the sum of the first $i$ values, a query is `pre[r] - pre[l - 1]`: one subtraction. Building `pre` is one pass, so the whole problem is $O(n + q)$ (`ds`, Prefix sums)."
+      }
+    },
+    {
+      "id": "hw1-routine",
+      "difficulty": 3,
+      "skills": [
+        "cn-strategy"
+      ],
+      "prose": "This level's habits, as one routine for one problem.",
+      "question": "Put the steps in the order you would use them in a contest.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Read the constraints, then the output, then the legend"
+          },
+          {
+            "id": "s2",
+            "text": "Restate the task in one sentence with its limits"
+          },
+          {
+            "id": "s3",
+            "text": "Choose the complexity the limits allow"
+          },
+          {
+            "id": "s4",
+            "text": "Choose the data structure that meets it"
+          },
+          {
+            "id": "s5",
+            "text": "Write the code, with fast input and output"
+          },
+          {
+            "id": "s6",
+            "text": "Test the examples and the edge cases: $n = 1$, ties, extremes"
+          },
+          {
+            "id": "s7",
+            "text": "Submit; on a wrong answer, stress test against a brute force"
+          },
+          {
+            "id": "s8",
+            "text": "Write the problem up: idea, complexity, edge cases, mistakes"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6",
+          "s7",
+          "s8"
+        ]
+      },
+      "feedback": {
+        "correct": "Read, restate, budget, design, code, test, submit, write up.",
+        "generic": "Not quite right. Each step needs the one before it: you cannot budget before you know the limits."
+      },
+      "explain": {
+        "text": "The order follows the information: limits give the budget, the budget picks the algorithm, the algorithm picks the data structure. Testing comes before submitting, and the write-up comes last, while the mistakes are fresh."
+      }
+    },
+    {
+      "id": "hw1-writeup",
+      "difficulty": 4,
+      "skills": [
+        "cn-strategy"
+      ],
+      "question": "Write up problem W.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A write-up turns one solved problem into a pattern you will recognise next time. Write up problem W, the longest window, while the details are fresh: the statement in one line, the idea, why it is correct, the complexity with the step count at the limit, the edge cases you tested, and one mistake you made or nearly made.",
+        "model": "**Problem W, longest window with at most $k$ distinct tickers.**\n\n**Statement in one line.** Given $n \\le 2 \\cdot 10^5$ tickers in order and $k$, find the longest run of consecutive fills with at most $k$ distinct tickers.\n\n**Idea.** Slide a window $[l, r]$. Move $r$ right one fill at a time and add its ticker to a dictionary of counts. While the dictionary has more than $k$ keys, remove the ticker at $l$ (deleting it when its count reaches 0) and move $l$ right. After each step the window is the longest valid one ending at $r$, so the answer is the largest $r - l + 1$ seen.\n\n**Why it is correct.** If $[l, r]$ has more than $k$ tickers, so does every window that starts at or before $l$ and ends at $r$. So $l$ never needs to move back.\n\n**Complexity.** Each fill enters the window once and leaves at most once: $O(n)$ time, $O(k)$ extra memory. At $n = 2 \\cdot 10^5$ that is well under a second in Python. Restarting at every $l$ is $O(n^2)$, $2 \\cdot 10^{10}$ steps when the window is long, which is what tests 9 to 11 punish.\n\n**Edge cases.** $n = 1$ gives 1. $k$ at least the number of tickers gives $n$. All fills the same ticker gives $n$. Two alternating tickers with $k = 1$ give 1.\n\n**Mistake made or nearly made.** I first checked `len(counts) > k` without deleting tickers whose count reached 0, so the dictionary kept dead keys and the window shrank too far. A stress test against the restart-at-every-day brute force, with $n$ up to 8 and 3 tickers, found it on a case of five fills.",
+        "rubric": [
+          {
+            "points": 1,
+            "text": "States the task in one line with its limits ($n \\le 2 \\cdot 10^5$, at most $k$ distinct)"
+          },
+          {
+            "points": 2,
+            "text": "Describes the sliding window: extend the right end, shrink the left while more than $k$ tickers"
+          },
+          {
+            "points": 1,
+            "text": "Says why the left end never moves back"
+          },
+          {
+            "points": 2,
+            "text": "Gives $O(n)$ with the reason (each fill enters and leaves once) and compares it with the $O(n^2)$ restart"
+          },
+          {
+            "points": 2,
+            "text": "Lists at least three edge cases: $n = 1$, $k$ at least the number of tickers, one repeated ticker"
+          },
+          {
+            "points": 2,
+            "text": "Names a specific mistake made or nearly made, and how it was found or avoided"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your write-up with the model, part by part.",
+        "generic": "Compare your write-up with the model, part by part."
+      },
+      "explain": {
+        "text": "A good write-up is short and specific: the statement, the idea, a complexity with numbers, the edge cases, the mistake. The mistake is the part you will reuse."
+      }
+    },
+    {
+      "id": "hw1-count-in-range",
+      "difficulty": 4,
+      "skills": [
+        "cn-reading"
+      ],
+      "prose": "Problem R: $n \\le 2 \\cdot 10^5$ prices and $q \\le 2 \\cdot 10^5$ queries. Each query gives $L \\le U$ and asks how many prices lie between them. 1 s limit.",
+      "question": "Which plan fits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sort",
+            "text": "Sort once, then two binary searches per query: $O((n + q) \\log n)$",
+            "correct": true
+          },
+          {
+            "id": "scan",
+            "text": "Scan all prices per query: $O(nq)$",
+            "why": "That is $4 \\cdot 10^{10}$ steps at the limits."
+          },
+          {
+            "id": "set",
+            "text": "Put the prices in a set and test every value from $L$ to $U$",
+            "why": "Prices are values, not positions: $U - L$ can be $10^9$ per query."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About $(2 \\cdot 10^5 + 2 \\cdot 10^5) \\cdot 18 \\approx 7 \\cdot 10^6$ steps.",
+        "generic": "Not quite right. Put the limits into each plan's step count."
+      },
+      "explain": {
+        "text": "After one sort, the count in $[L, U]$ is the gap between two binary search positions. Use `bisect_left` for $L$ and `bisect_right` for $U$. The sort costs $n \\log n$ and each query $2 \\log n$."
+      }
+    },
+    {
+      "id": "hw1-rebuild",
+      "difficulty": 3,
+      "skills": [
+        "cn-reading"
+      ],
+      "prose": "A solution answers each of $q = 2 \\cdot 10^5$ queries with `if v in set(xs):`, where `xs` has $n = 2 \\cdot 10^5$ values.",
+      "question": "How many insertions does building the set cost over all the queries?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40000000000,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "$4 \\cdot 10^{10}$: the set is rebuilt, $n$ insertions, for every query.",
+        "label": "Insertions",
+        "wrong": [
+          {
+            "id": "once",
+            "value": 200000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "lookups",
+            "value": 400000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 \\cdot 10^5 \\times 2 \\cdot 10^5 = 4 \\cdot 10^{10}$: build the set once, outside the loop.",
+        "generic": "Not quite right. `set(xs)` runs again for every query.",
+        "byKey": {
+          "once": "That is the cost of building it once. The expression is inside the loop, so it is built $q$ times.",
+          "lookups": "You counted the lookups. Each query first builds a whole new set of $n$ values."
+        }
+      },
+      "explain": {
+        "text": "`set(xs)` inside the loop costs $n$ insertions per query, so $nq = 4 \\cdot 10^{10}$ in all. Built once before the loop, it costs $2 \\cdot 10^5$, and each lookup is then $O(1)$."
+      }
+    },
+    {
+      "id": "hw1-overflow",
+      "difficulty": 4,
+      "skills": [
+        "cn-impl"
+      ],
+      "prose": "Your C++ solution to problem P passes 10,000 stress trials against a brute force, with $n \\le 6$ and values from −5 to 5. The judge says *Wrong answer on test 15*, which has $n = 2 \\cdot 10^5$ equal values.",
+      "question": "What is the most likely bug that the small cases could not show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "int",
+            "text": "The count is an `int`: $\\binom{200000}{2} \\approx 2 \\cdot 10^{10}$ overflows it",
+            "correct": true
+          },
+          {
+            "id": "slow",
+            "text": "The solution is too slow at that size",
+            "why": "Too slow gives *Time limit exceeded*, not *Wrong answer*."
+          },
+          {
+            "id": "brute",
+            "text": "The brute force is wrong",
+            "why": "The brute force agreed on 10,000 small cases, and the judge's answer is the reference here."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Small cases never reach the overflow; bound the answer as lesson 1 did.",
+        "generic": "Not quite right. Ask what differs at $n = 2 \\cdot 10^5$ besides speed."
+      },
+      "explain": {
+        "text": "With $n \\le 6$ the count never passes 15, so an `int` looks fine. At the limit it reaches $19{,}999{,}900{,}000$, far past $2.1 \\cdot 10^9$. Stress tests find logic bugs; bounding the answer finds overflow."
+      }
+    }
+  ]
+}
