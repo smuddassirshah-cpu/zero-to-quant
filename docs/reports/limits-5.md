@@ -29,7 +29,13 @@ Exam items supported: `c-lhopital` and `c-slope-graph` (l17 and l20 add the tang
 
 `node tools/playthrough.mjs --lesson limits/l17-somewhere-in-between --lesson limits/l18-rates-in-step --lesson limits/l19-running-backwards --lesson limits/l20-which-way-it-bends --set limits/review-5 --set limits/homework-5 --shots <scratchpad>/gap-limits/final2 --why --local-cdn <scratchpad>/pkgs`:
 
-- PLAYTHROUGH_RESULT
+- l17: ok, 15 checks, quiz 4/4
+- l18: ok, 15 checks, quiz 4/4
+- l19: ok, 16 checks, quiz 4/4
+- l20: ok, 16 checks, quiz 4/4
+- review-5: ok, 8 of 8 recorded
+- homework-5: ok, 10 of 10, 46 of 46 marks
+- No console errors. l17 was replayed once more after a final label move (ok, 15 checks, quiz 4/4).
 
 An earlier run of the same command with `--mobile` also passed every file (390 px screenshots fit: l17 hook, l18 slider, l19 mirror, l20 pair, sign chart and sketch were looked at).
 
