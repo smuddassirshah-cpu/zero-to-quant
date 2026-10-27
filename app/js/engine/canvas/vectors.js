@@ -15,6 +15,21 @@
     const sx = C.scale(xr, [m.l, W - m.r]), sy = C.scale(yr, [H - m.b, m.t]);
     const base = (params.vectors || []).map((v, i) => ({ ...v, id: v.id || 'v' + i, slot: v.colour || i + 1 }));
     const add = (a, b) => [a[0] + b[0], a[1] + b[1]], mul = (k, a) => [k * a[0], k * a[1]], dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+    /* item 249: state.matrix [[a, b], [c, d]] (or transform { angle, shear, scale }) gives the basis (its columns).
+       Item 435: the same matrix is applied to every vector that is not fixed: true (applyM), and read back as
+       "inverse" for drags (a singular matrix uses the pseudo-inverse, so a head moves along the image line) */
+    const matOf = (st) => {
+      if (st.transform) { const t = st.transform, a = (+t.angle || 0) * Math.PI / 180, k = +t.shear || 0, sc = t.scale ?? 1; const c = Math.cos(a) * sc, s2 = Math.sin(a) * sc; return [[c, c * k - s2], [s2, s2 * k + c]]; }
+      const m = st.matrix; return Array.isArray(m) && Array.isArray(m[0]) && Array.isArray(m[1]) && [m[0][0], m[0][1], m[1][0], m[1][1]].every((q) => Number.isFinite(+q)) ? [[+m[0][0], +m[0][1]], [+m[1][0], +m[1][1]]] : null;
+    };
+    const applyM = (M, p) => (M ? [M[0][0] * p[0] + M[0][1] * p[1], M[1][0] * p[0] + M[1][1] * p[1]] : p);
+    const unapplyM = (M, p) => {
+      if (!M) return p;
+      const det = M[0][0] * M[1][1] - M[0][1] * M[1][0], fro = M[0][0] ** 2 + M[0][1] ** 2 + M[1][0] ** 2 + M[1][1] ** 2;
+      if (Math.abs(det) > 1e-9 * Math.max(1, fro)) return [(M[1][1] * p[0] - M[0][1] * p[1]) / det, (-M[1][0] * p[0] + M[0][0] * p[1]) / det];
+      if (fro > 1e-12) return [(M[0][0] * p[0] + M[1][0] * p[1]) / fro, (M[0][1] * p[0] + M[1][1] * p[1]) / fro]; // rank 1: M^T / ||M||^2 is the pseudo-inverse
+      return [0, 0];
+    };
 
     const def = {
       kind: 'vectors', aria: params.aria || 'Vectors on a plane',
@@ -27,14 +42,13 @@
            vector names, so two vectors never share a colour by accident */
         const used = new Set((view.vectors || []).map((v) => v.colour).filter((c) => c != null));
         let nextSlot = 1; const freeSlot = () => { while (used.has(nextSlot)) nextSlot++; used.add(nextSlot); return nextSlot; };
-        const vs = (view.vectors || []).map((v) => ({ ...v, slot: v.colour ?? freeSlot() }));
+        const mtx = matOf(view);
+        const vs = (view.vectors || []).map((v) => ({ ...v, slot: v.colour ?? freeSlot(), ...(mtx && !v.fixed ? { v: applyM(mtx, v.v), from: Array.isArray(v.from) ? applyM(mtx, v.from) : v.from } : {}) }));
         const g = R.F.g, byId = Object.fromEntries(vs.map((v) => [v.id, v]));
         const show = new Set([].concat(view.show || []));
         const x0 = m.l, x1 = W - m.r, y0 = H - m.b, y1 = m.t;
         /* basis grid replaces the standard grid when given */
-        /* item 249: state.matrix [[a, b], [c, d]] (or transform { angle, shear, scale }) gives the basis (its columns)
-           and draws the image of the unit square */
-        const mtx = view.transform ? (() => { const t = view.transform, a = (+t.angle || 0) * Math.PI / 180, k = +t.shear || 0, sc = t.scale ?? 1; const c = Math.cos(a) * sc, s2 = Math.sin(a) * sc; return [[c, c * k - s2], [s2, s2 * k + c]]; })() : view.matrix;
+        /* item 249: the matrix gives the basis and draws the image of the unit square */
         const basis = mtx ? [[mtx[0][0], mtx[1][0]], [mtx[0][1], mtx[1][1]]] : view.basis;
         if (basis) {
           K.planeAxes(g, sx, sy, { grid: false, xLabel: params.xLabel, yLabel: params.yLabel });
@@ -175,7 +189,7 @@
       drag: {
         start: (id, p, R) => ((R.state.vectors || []).some((v) => v.id === id) ? { id } : null),
         move(info, p, R, end) { setHead(R, info.id, sx.invert(p.x), sy.invert(p.y), end); },
-        key(id, dx, dy, R) { const v = (R.state.vectors || []).find((q) => q.id === id); if (!v) return; const st = params.snap || 0.5; const k = (R.state.scale && R.state.scale[id]) ?? 1; setHead(R, id, v.v[0] * k + dx * st, v.v[1] * k + dy * st, true); },
+        key(id, dx, dy, R) { const v = (R.state.vectors || []).find((q) => q.id === id); if (!v) return; const st = params.snap || 0.5; const k = (R.state.scale && R.state.scale[id]) ?? 1; const h = applyM(v.fixed ? null : matOf(R.state), v.v); setHead(R, id, h[0] * k + dx * st, h[1] * k + dy * st, true); },
       },
       methods: (R) => ({
         /* item 249: controls bind m11, m12, m21, m22 (state.matrix) or angle, shear, scale (state.transform) */
@@ -186,21 +200,39 @@
           R.inst.set(Z.canvas.paramPatch(n, v), { instant: true });
         },
         getParam: (name) => { const n = String(name), mm = n.match(/^m([12])([12])$/); if (mm) return ((R.state.matrix || [[1, 0], [0, 1]])[+mm[1] - 1] || [])[+mm[2] - 1]; if (['angle', 'shear', 'scale'].includes(n)) return (R.state.transform || {})[n] ?? (n === 'scale' ? 1 : 0); return (R.state.params || {})[n]; },
-        points: () => Object.fromEntries((R.state.vectors || []).map((v) => [v.id, { x: v.v[0], y: v.v[1] }])),
-        place: (id, pos, opts = {}) => R.inst.set({ vectors: { [id]: { v: [pos[0], pos[1]] } } }, opts),
+        /* item 435: with a matrix set, points() reads the head as drawn and place() takes a drawn position */
+        points: () => Object.fromEntries((R.state.vectors || []).map((v) => { const h = applyM(v.fixed ? null : matOf(R.state), v.v); return [v.id, { x: h[0], y: h[1] }]; })),
+        place: (id, pos, opts = {}) => { const me = (R.state.vectors || []).find((q) => q.id === id), v = unapplyM(me && me.fixed ? null : matOf(R.state), [pos[0], pos[1]]); return R.inst.set({ vectors: { [id]: { v } } }, opts); },
       }),
     };
     const setHead = (R, id, x, y, end) => {
       x = K.clamp(x, xr[0], xr[1]); y = K.clamp(y, yr[0], yr[1]);
       /* items 227, 262: lockTo: "u" (a vector id) or [dx, dy] holds the dragged head to that line through the origin */
       const me = (R.state.vectors || []).find((q) => q.id === id), lk = me && me.lockTo;
-      if (lk) { const dir = Array.isArray(lk) ? lk : ((R.state.vectors || []).find((q) => q.id === lk) || {}).v; if (dir && (dir[0] || dir[1])) { const t = (x * dir[0] + y * dir[1]) / (dir[0] * dir[0] + dir[1] * dir[1]); x = t * dir[0]; y = t * dir[1]; } }
+      /* item 435: with a matrix set the pointer is in the image plane, so the stored vector is the preimage */
+      const M = me && me.fixed ? null : matOf(R.state);
+      const lockIt = (px, py) => { const dir = Array.isArray(lk) ? lk : ((R.state.vectors || []).find((q) => q.id === lk) || {}).v; if (dir && (dir[0] || dir[1])) { const t = (px * dir[0] + py * dir[1]) / (dir[0] * dir[0] + dir[1] * dir[1]); return [t * dir[0], t * dir[1]]; } return [px, py]; };
+      if (lk && !M) [x, y] = lockIt(x, y);
       if (params.snap) { x = K.snapTo(x, params.snap); y = K.snapTo(y, params.snap); }
+      if (M) { [x, y] = unapplyM(M, [x, y]); if (lk) [x, y] = lockIt(x, y); }
       const k = (R.state.scale && R.state.scale[id]) ?? 1;
       const v = [K.round(x / k, 6), K.round(y / k, 6)];
       R.commit({ vectors: { [id]: { v } } });
       R.emit({ type: 'drag', id, v, x: v[0], y: v[1], phase: end ? 'end' : 'move' });
     };
-    return K.make(host, params, ctx, def);
+    const inst = K.make(host, params, ctx, def);
+    /* item 435: derive reads what the matrix does. With state.matrix (or transform) set, get() adds to state.params, which
+       a derive reads by name: matrix, m11, m12, m21, m22, det, trace, and image.<id> (each vector's arrow as drawn: the
+       matrix applied unless the vector is fixed, then the scale). The state itself is untouched. */
+    const baseGet = inst.get;
+    inst.get = () => {
+      const st = baseGet(), M = matOf(st);
+      if (!M) return st;
+      const image = {};
+      (st.vectors || []).forEach((v) => { if (v && v.id != null && Array.isArray(v.v)) { const k = (st.scale && st.scale[v.id]) ?? 1, h = applyM(v.fixed ? null : M, v.v); image[v.id] = [k * h[0], k * h[1]]; } });
+      st.params = { ...(st.params || {}), matrix: M, m11: M[0][0], m12: M[0][1], m21: M[1][0], m22: M[1][1], det: M[0][0] * M[1][1] - M[0][1] * M[1][0], trace: M[0][0] + M[1][1], image };
+      return st;
+    };
+    return inst;
   });
 })();
