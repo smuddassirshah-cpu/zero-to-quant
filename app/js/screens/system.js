@@ -28,6 +28,8 @@
     "array": {"params": {"cells": [2, 5, 8, 12, 16, 23, 38, 56]}, "state": {"pointers": [{"id": "lo", "at": 0, "label": "lo"}, {"id": "mid", "at": 3, "label": "mid"}, {"id": "hi", "at": 7, "label": "hi"}], "highlight": {"range": [0, 3]}}},
     "payoff": {"params": {"legs": [{"id": "c1", "type": "call", "side": "long", "strike": 95, "premium": 7, "label": "long 95 call"}, {"id": "c2", "type": "call", "side": "short", "strike": 105, "premium": 2.5, "label": "short 105 call"}], "range": [80, 120], "label": "bull spread"}, "state": {"spot": 102}},
     "orderbook": {"params": {"bids": [[99.98, 300], [99.97, 500], [99.96, 200]], "asks": [[100.0, 200], [100.01, 400], [100.02, 300]]}, "state": {"order": {"side": "buy", "size": 750}}},
+    "complex-map": {"params": {"f": "z^2", "x": [-2, 2], "y": [-2, 2], "wx": [-4, 4], "wy": [-4, 4], "grid": "cartesian", "unitCircle": true, "zLabel": "z-plane", "wLabel": "$w = z^2$"}, "state": {"points": [{"id": "p1", "x": 1, "y": 0.5, "label": "$z$", "drag": true}]}},
+    "space": {"params":{"x":[-4,4],"y":[-4,4],"z":[-4,4],"equal":true,"camera":{"az":-55,"el":24},"vectors":[{"id":"u","v":[3,0,1],"label":"$\\mathbf{u}$"},{"id":"v","v":[0,3,2],"label":"$\\mathbf{v}$"},{"id":"n","v":[-1,-2,3],"label":"$\\mathbf{n}$","colour":4}],"planes":[{"id":"cs","span":["u","v"],"label":"column space"}],"points":[{"id":"b","p":[-2,3,3],"label":"$\\mathbf{b}$","drop":true}]},"state":{}},
   };
   const CANVAS_ABOUT = {
     grid: 'Cell grid: sample spaces, two-dice tables, area models', tree: 'Probability and decision trees', venn: 'Two or three set Venn diagrams',
@@ -37,6 +39,7 @@
     scatter: 'Points, a fitted line and residuals', series: 'Time series with markers and shaded drawdowns', walk: 'Random walks and price paths',
     matrix: 'Matrices with highlighted rows, columns and pivots', vectors: '2D vectors, sums and projections', graph: 'Nodes and edges, Markov chains',
     array: 'Array cells with index labels and pointers', payoff: 'Option payoff and P&L against the underlying', orderbook: 'Bid and ask ladder with a market order',
+    'complex-map': 'A z-plane beside the image of its grid under f(z)', space: 'Rotatable 3D view: vectors, curves, surfaces, planes and fields',
   };
 
   /* One item per widget kind (docs/AUTHORING.md 3). Canvas-bound kinds carry their canvas. */
@@ -110,8 +113,8 @@
       state: { current: 'H-T', highlight: ['H-T'] } } },
     { name: 'plane (contours and heat)', about: 'A heat map of f(x, y) behind a contour family (levels), each level labelled on its curve', spec: { kind: 'plane',
       params: { x: [-3, 3], y: [-3, 3], equal: true, functions: [{ id: 'h', heat: 'x^2 + y^2', range: [0, 12], colour: 1 }, { id: 'c', contour: 'x^2 + y^2', levels: [1, 4, 9], colour: 1, labelAvoid: false }] } } },
-    { name: 'vectors (transform)', about: 'state.transform { angle, shear } turns the basis, the grid and the unit square; an angle mark between two arrows', spec: { kind: 'vectors',
-      params: { range: [-3, 3] }, state: { transform: { angle: 30, shear: 0.5 }, vectors: [{ id: 'u', v: [2, 0], label: '$\\mathbf{u}$' }, { id: 'w', v: [1, 1.5], label: '$\\mathbf{w}$', colour: 3 }], angles: [{ id: 'th', a: 'u', b: 'w', label: '$\\theta$' }] },
+    { name: 'vectors (transform)', about: 'state.transform { angle, shear } turns the basis, the grid and the unit square, and now maps every vector too (fixed: true opts one out); the angle mark follows the images', spec: { kind: 'vectors',
+      params: { range: [-3, 3] }, state: { transform: { angle: 30, shear: 0.5 }, vectors: [{ id: 'u', v: [2, 0], label: '$T\\mathbf{u}$' }, { id: 'w', v: [1, 1.5], label: '$T\\mathbf{w}$', colour: 3 }], angles: [{ id: 'th', a: 'u', b: 'w', label: '$\\theta$' }] },
       controls: [{ bind: 'angle', min: 0, max: 90, step: 5, label: 'Angle' }, { bind: 'shear', min: -1, max: 1, step: 0.25, label: 'Shear' }] } },
     { name: 'matrix (groups and labels)', about: 'Two highlight groups in their own colours, row and column labels, a scale factor and an augmented bar', spec: { kind: 'matrix',
       params: { matrices: [{ id: 'A', rows: [[2, -1, 0, 3], [1, 3, -2, 5], [0, 1, 4, -1]], rowLabels: ['$R_1$', '$R_2$', '$R_3$'], colLabels: ['$x$', '$y$', '$z$', ''], bar: 3 }, { id: 'Q', rows: [[1, -1], [1, 1]], scale: '\\tfrac{1}{\\sqrt{2}}' }], ops: ['$\\quad$'] },
@@ -191,6 +194,69 @@
       params: { rows: 3, cols: 4, rowHeads: false, colHeads: false, cells: [['1', '3', '1', '2'], ['1', '5', '1', '3'], ['£5\n£20', '2', '3', '1']] }, state: { paths: [{ id: 'route', cells: ['r1c1', 'r1c2', 'r2c2', 'r3c2', 'r3c3', 'r3c4'] }], mark: { r1c4: { text: '♛', pos: 'centre' } } } } },
     { name: 'boxes (wrapped containers)', about: 'Five containers wrap onto two rows; code-like card labels use the code face; state.labels relabels a card', spec: { kind: 'boxes',
       params: { containers: [0, 1, 2, 3, 4].map((k) => ({ id: 'b' + k, kind: 'box', cols: 2, label: '→ row ' + k, items: [{ id: 'a' + k, kind: 'card', label: 'set_bid(b)' }, { id: 'c' + k, kind: 'card', label: 'k' + k }] })) }, state: { labels: { c0: 'You 300' } } } },
+    /* engine breadth pass 2 (items 429 to 437, 241) */
+    { name: 'plane (vector field)', about: 'params.field: arrows of (P, Q) on a grid, normalise: true gives equal arrows, colourBy: "magnitude" ramps the colour; a bound slider redraws the field', spec: { kind: 'plane',
+      params: { x: [-4, 4], y: [-4, 4], equal: true, height: 360, params: { a: 0.2 }, field: { id: 'F', P: 'a*x - y', Q: 'x + a*y', grid: 15, colourBy: 'magnitude', range: [0, 6] } },
+      controls: [{ bind: 'a', min: -0.5, max: 0.5, step: 0.05, label: 'Spiral $a$', start: 0.2 }] } },
+    { name: 'plane (slope field)', about: 'params.slopeField: segments of slope f(x, y) = sin(x) - a*y; two solution curves traced by RK4 forward and back; a slider on a', spec: { kind: 'plane',
+      params: { x: [-6, 6], y: [-4, 4], params: { a: 0.5 }, xLabel: '$x$', yLabel: '$y$', slopeField: { id: 'S', f: 'sin(x) - a*y', grid: 17 }, trajectory: { id: 'T', in: 'S', starts: [[0, 2], [0, -1.5], [-4, 0]], back: true, colour: 2 } },
+      controls: [{ bind: 'a', min: 0, max: 2, step: 0.1, label: 'Damping $a$', start: 0.5 }] } },
+    { name: 'plane (dragged trajectory)', about: 'A damped pendulum field (y, -sin(x) - c*y) with a draggable start P; the RK4 trajectory runs forward and back and redraws as P or c moves', spec: { kind: 'plane',
+      params: { x: [-6.3, 6.3], y: [-4, 4], params: { c: 0.3 }, xLabel: '$\\theta$', yLabel: '$\\omega$', field: { id: 'F', P: 'y', Q: '-sin(x) - c*y', grid: 19, normalise: true, colour: 'muted' }, trajectory: { id: 'T', in: 'F', from: 'P', length: 30, step: 0.05, back: 6 } },
+      state: { points: [{ id: 'P', x: 1.5, y: 1.2, drag: true, label: 'P' }] }, derive: { caption: 'Ends near ({{round(values.TEndX, 2)}}, {{round(values.TEndY, 2)}})' },
+      controls: [{ bind: 'c', min: 0, max: 1, step: 0.05, label: 'Friction $c$', start: 0.3 }] } },
+    { name: 'complex-map (slider f, dragged z)', about: 'f(z) = z + a/z: a Cartesian and polar grid, the unit circle and a draggable z; the slider a reshapes f, derive reads p1.u and p1.v', spec: { kind: 'complex-map',
+      params: { f: 'z + a/z', params: { a: 1 }, x: [-2, 2], y: [-2, 2], wx: [-3, 3], wy: [-3, 3], grid: 'both', rays: 12, unitCircle: true, zLabel: '$z$-plane', wLabel: '$w = z + a/z$' },
+      state: { points: [{ id: 'p1', x: 0.8, y: 0.6, label: '$z$', drag: true }], caption: 'Drag $z$.' },
+      derive: { caption: 'z = {{fixed(p1.x, 2)}} + {{fixed(p1.y, 2)}}i, f(z) = {{fixed(p1.u, 2)}} + {{fixed(p1.v, 2)}}i, a = {{a}}' },
+      controls: [{ bind: 'a', min: 0.2, max: 1.6, step: 0.1, start: 1, label: 'a' }] } },
+    { name: 'complex-map (side by side)', about: 'stack: false keeps the panels side by side whatever the width', spec: { kind: 'complex-map',
+      params: { f: 'z^2', stack: false, x: [-2, 2], y: [-2, 2], wx: [-4, 4], wy: [-4, 4], grid: 'cartesian', unitCircle: true, wLabel: '$w = z^2$' },
+      state: { points: [{ id: 'p1', x: 1, y: 0.5, label: '$z$', drag: true }] } } },
+    { name: 'complex-map (1/z, poles)', about: 'f(z) = 1/z: the grid lines through 0 run off to infinity without spikes; circles map to circles; a dragged z lands pinned to the edge when 1/z leaves the view', spec: { kind: 'complex-map',
+      params: { f: '1/z', x: [-2, 2], y: [-2, 2], wx: [-2, 2], wy: [-2, 2], grid: 'both', rays: 8, unitCircle: true, wLabel: '$w = 1/z$' },
+      state: { points: [{ id: 'p1', x: 0.5, y: 0.25, label: '$z$', drag: true }] } } },
+    { name: 'complex-map (exp and log)', about: 'exp maps horizontal lines to rays and vertical lines to circles; the curve is the line Im z = 2 and its image', spec: { kind: 'complex-map',
+      params: { f: 'exp(z)', x: [-2, 2], y: [-4, 4], wx: [-4, 4], wy: [-4, 4], gridStep: 1, curves: [{ id: 'line', z: 't + 2i', t: [-4, 4] }], wLabel: '$w = e^z$' },
+      state: { points: [{ id: 'p1', x: 0, y: 1, label: '$z$', drag: true }] } } },
+    { name: 'complex-map (log, branch cut)', about: 'Principal log: the polar grid maps to a rectangle and the cut along the negative real axis is not joined', spec: { kind: 'complex-map',
+      params: { f: 'log(z)', x: [-3, 3], y: [-3, 3], wx: [-3, 3], wy: [-4, 4], grid: 'polar', rays: 16, wLabel: '$w = \\operatorname{Log} z$' } } },
+    { name: 'vectors (matrix moves every vector)', about: 'state.matrix maps every vector as well as the grid and unit square (fixed: true opts one out); sliders bind m11..m22; derive reads det, trace and image.u', spec: { kind: 'vectors',
+      params: { x: [-4, 4], y: [-4, 4] },
+      state: { matrix: [[1, 0], [0, 1]], vectors: [{ id: 'u', v: [1, 1], label: '$T\\mathbf{u}$' }, { id: 'w', v: [-1, 0.5], label: '$T\\mathbf{w}$' }, { id: 'x', v: [0.5, 1.5], label: '$\\mathbf{x}$ (fixed)', fixed: true, dashed: true }], show: ['sum'], sumLabel: '$T(\\mathbf{u}+\\mathbf{w})$' },
+      derive: { caption: 'det = {{fixed(det, 2)}}, trace = {{fixed(trace, 2)}}, image of u = ({{fixed(image.u[0], 2)}}, {{fixed(image.u[1], 2)}})' },
+      controls: [{ bind: 'm11', min: -2, max: 2, step: 0.25, start: 1, label: 'a' }, { bind: 'm12', min: -2, max: 2, step: 0.25, start: 0, label: 'b' }, { bind: 'm21', min: -2, max: 2, step: 0.25, start: 0, label: 'c' }, { bind: 'm22', min: -2, max: 2, step: 0.25, start: 1, label: 'd' }] } },
+    { name: 'vectors (derived matrix, dragged head)', about: 'derive writes state.matrix from a slider t (a rotation); the head of u drags in the image plane and the stored vector is its preimage', spec: { kind: 'vectors',
+      params: { x: [-3, 3], y: [-3, 3], params: { t: 0.6 } },
+      state: { matrix: [[1, 0], [0, 1]], vectors: [{ id: 'u', v: [1.5, 0.5], label: '$T\\mathbf{u}$' }], drag: ['u'] },
+      derive: { matrix: '[[cos(t), -sin(t)], [sin(t), cos(t)]]', caption: 'angle = {{round(t * 180 / pi)}} degrees, T u = ({{fixed(image.u[0], 2)}}, {{fixed(image.u[1], 2)}}), |T u| = {{fixed(hypot(image.u[0], image.u[1]), 2)}}' },
+      controls: [{ bind: 't', min: 0, max: 3.1416, step: 0.1, start: 0.6, label: 't' }] } },
+    { name: 'walk (overlays under the walk)', about: 'overlays plot S_n^2 - n, (q/p)^S_n and a doubling bankroll against n, each on its own panel; chips toggle them; p and the base stake are sliders', spec: { kind: 'walk',
+      params: { steps: 60, p: 0.45, paths: 25, xStep: 10, height: 240, overlays: ['sq', 'ratio', { id: 'bankroll', bet: 'double' }], bankroll: 100, stake: 2, sim: { seed: 4 } },
+      state: { showMean: true },
+      controls: [{ bind: 'p', min: 0.3, max: 0.7, step: 0.05, label: '$p$' }, { bind: 'stake', min: 1, max: 10, step: 1, label: 'Base stake' }] } },
+    { name: 'walk (stopped average, slider barriers)', about: 'barriers bound to sliders (lower, upper) re-stop 300 paths live; the average of S_tau settles on the start value; derive reads values.stopped and values.hitsUp', spec: { kind: 'walk',
+      params: { steps: 80, p: 0.5, paths: 300, drawn: 30, height: 240, barriers: [-8, 8], sim: { seed: 7 } },
+      state: { stopAtBarrier: true, showHits: true, showStopped: true },
+      derive: { caption: 'Mean of S at the stop: {{fixed(values.stopped, 2)}} (start 0). At step 80 without stopping: {{fixed(values.endMean, 2)}}. {{values.hitsUp}} hit the top, {{values.hitsDown}} the bottom.' },
+      controls: [{ bind: 'upper', min: 2, max: 20, step: 1, label: 'Upper barrier' }, { bind: 'lower', min: -20, max: -2, step: 1, label: 'Lower barrier' }, { reseed: true, label: 'New paths' }] } },
+    { name: 'walk (optional stopping with drift)', about: 'at p = 0.45 the average of S_tau misses the start, while the average of (q/p)^S_tau still settles on 1', spec: { kind: 'walk',
+      params: { steps: 80, p: 0.45, paths: 300, drawn: 25, height: 220, barriers: [-8, 8], overlays: ['sq', 'ratio'], sim: { seed: 11 } },
+      state: { stopAtBarrier: true, showStopped: ['walk', 'ratio'], overlays: ['ratio'] },
+      derive: { caption: 'S at the stop averages {{fixed(values.stopped, 2)}}; (q/p)^S at the stop averages {{fixed(values.stoppedRatio, 3)}}.' },
+      controls: [{ bind: 'p', min: 0.3, max: 0.7, step: 0.05, label: '$p$' }] } },
+    { name: 'walk (mean-reverting)', about: 'model "ou": X(n+1) = X(n) + theta (mu - X(n)) + sigma Z; theta, mu and sigma are sliders; the expected path, a 2 sd band and the level mu are dashed', spec: { kind: 'walk',
+      params: { model: 'ou', steps: 60, theta: 0.15, mu: 2, sigma: 1, start: -3, paths: 12, xStep: 10, height: 280, y: [-6, 10], sim: { seed: 3 } },
+      state: { showMean: true, showSpread: 2 },
+      controls: [{ bind: 'theta', min: 0, max: 0.6, step: 0.05, label: '$\\theta$' }, { bind: 'mu', min: -3, max: 3, step: 0.5, label: '$\\mu$' }, { bind: 'sigma', min: 0.2, max: 2, step: 0.2, label: '$\\sigma$' }] } },
+    { name: 'walk (custom overlay, fixed stop)', about: 'an expr overlay (the cubic martingale S^3 - 3nS) with a fixed stopping step stopAt; both stopped averages are shown', spec: { kind: 'walk',
+      params: { steps: 40, p: 0.5, paths: 40, stopAt: 25, height: 220, overlays: [{ id: 'cube', expr: 'S^3 - 3 * n * S', label: '$S_n^3-3nS_n$', chip: 'S³ − 3nS' }], sim: { seed: 2 } },
+      state: { showStopped: ['walk', 'cube'], stopAtBarrier: true } } },
+  {"name":"space (vectors and a span)","about":"Two vectors, the plane they span (column space) and its normal; drag to rotate, arrow keys turn the view, Reset view returns it","spec":{"kind":"space","params":{"x":[-4,4],"y":[-4,4],"z":[-4,4],"equal":true,"camera":{"az":-55,"el":24},"vectors":[{"id":"u","v":[3,0,1],"label":"$\\mathbf{u}$"},{"id":"v","v":[0,3,2],"label":"$\\mathbf{v}$"},{"id":"n","v":[-1,-2,3],"label":"$\\mathbf{n}$","colour":4}],"planes":[{"id":"cs","span":["u","v"],"label":"column space"}],"points":[{"id":"b","p":[-2,3,3],"label":"$\\mathbf{b}$","drop":true}]},"state":{"caption":"The normal $\\mathbf{n}$ is perpendicular to both $\\mathbf{u}$ and $\\mathbf{v}$."}}},
+  {"name":"space (helix and tangent)","about":"A parametric curve r(t) with a slider on the pitch b and one on the point t0; the tangent vector is built from the same parameters","spec":{"kind":"space","params":{"x":[-3,3],"y":[-3,3],"z":[-4,4],"equal":true,"camera":{"az":-50,"el":22},"params":{"b":0.3,"t0":4},"curves":[{"id":"h","x":"2*cos(t)","y":"2*sin(t)","z":"b*(t - 6.2832)","t":[0,12.5664],"label":"$\\mathbf{r}(t)$","colour":1}],"points":[{"id":"P","at":"h","t":"t0","label":"P","drop":true}],"vectors":[{"id":"T","from":"P","v":["-2*sin(t0)","2*cos(t0)","b"],"label":"$\\mathbf{r}'$","colour":2}]},"controls":[{"bind":"b","min":0.1,"max":0.6,"step":0.05,"label":"Pitch $b$","start":0.3},{"bind":"t0","min":0,"max":12.5,"step":0.25,"label":"Point $t_0$","start":4}]}},
+  {"name":"space (surface z = f(x, y))","about":"A shaded saddle with a slider on a, a point riding it (on: \"s\"), height shown by a drop line","spec":{"kind":"space","params":{"x":[-2,2],"y":[-2,2],"z":[-4,4],"camera":{"az":-62,"el":28},"params":{"a":1},"surfaces":[{"id":"s","z":"a*(x^2 - y^2)/2","n":26,"colour":1,"label":"$z = \\tfrac{a}{2}(x^2 - y^2)$"}],"points":[{"id":"P","p":[1,0.5,0],"on":"s","label":"P","drop":true,"colour":2}]},"controls":[{"bind":"a","min":-2,"max":2,"step":0.1,"label":"$a$","start":1}]}},
+  {"name":"space (mesh, height and a sphere)","about":"Hidden-line wireframe (wire: \"only\"), height colouring with a mesh, and a parametric sphere cut open by a plane","spec":{"kind":"space","params":{"x":[-3,3],"y":[-3,3],"z":[-3,3],"equal":true,"camera":{"az":-40,"el":30},"perspective":0.35,"surfaces":[{"id":"bowl","z":"x^2/3 + y^2/3 - 2","n":22,"x":[-3,3],"y":[-3,3],"shade":"height","wire":true,"colour":1,"colour2":4,"opacity":1},{"id":"ball","x":"1.5*sin(u)*cos(v)","y":"1.5*sin(u)*sin(v)","z":"1.5*cos(u) + 0.5","u":[0,3.1416],"v":[0,6.2832],"n":20,"wire":"only","colour":2}],"planes":[{"id":"cut","normal":[0,0,1],"d":1.2,"colour":3,"opacity":0.2,"label":"$z = 1.2$"}]}}},
+  {"name":"space (vector field)","about":"Arrows of F = (-y, x, 0.3) on a 5 by 5 by 3 grid with a circle through it; a slider on az turns the camera","spec":{"kind":"space","params":{"x":[-3,3],"y":[-3,3],"z":[-2,2],"equal":true,"camera":{"az":-45,"el":30},"fields":[{"id":"F","F":["-y","x","0.3"],"n":[5,5,3],"label":"$\\mathbf{F}$","colour":1}],"curves":[{"id":"c","x":"2*cos(t)","y":"2*sin(t)","z":"0","t":[0,6.2832],"colour":2,"dashed":true}]},"controls":[{"bind":"az","min":-180,"max":180,"step":5,"label":"Azimuth","start":-45}]}},
   ];
   const WIDGET_EXTRAS = [
     { name: 'balance (signed)', kind: 'balance', item: { question: 'Solve $7 - 3x = 22$ on the scale.', canvas: { kind: 'balance', params: { left: [{ id: 'w7', kind: 'weight', value: 7 }, { id: 'x', kind: 'unknown', coef: -3 }], right: [{ id: 'w22', kind: 'weight', value: 22 }] } },
@@ -203,6 +269,16 @@
       widget: { kind: 'tap-regions', answer: ['l3'], countWord: 'tapped' } } },
     { name: 'tap-regions (vectors)', kind: 'tap-regions', item: { question: 'Tap the vector that points up and to the left.', canvas: { kind: 'vectors', params: { x: [-4, 4], y: [-1, 4], vectors: [{ id: 'u', v: [3, 1], label: '$\\mathbf{u}$' }, { id: 'w', v: [-2, 3], label: '$\\mathbf{w}$' }] } },
       widget: { kind: 'tap-regions', answer: ['w'], countWord: 'tapped' } } },
+    /* engine pass (items 429, 430, 433, 434, 437): complex and vector expressions, order with distractors, complex code */
+    { name: 'expression (complex)', kind: 'expression', item: { question: 'Write $\\dfrac{1}{1+i}$ as $a + bi$.', widget: { kind: 'expression', answer: '\\frac{1-i}{2}', accept: ['(1-i)/2', '0.5-0.5i'], wrong: [{ id: 'conj', tex: '\\frac{1+i}{2}' }], keyboard: 'algebra', label: 'The value' } } },
+    { name: 'expression (vector)', kind: 'expression', item: { question: 'Type $\\mathbf{a} \\times \\mathbf{b}$ for $\\mathbf{a} = (1, 2, 0)$ and $\\mathbf{b} = (0, 1, 3)$ as a vector.', widget: { kind: 'expression', answer: '(6, -3, 1)', accept: ['(6,-3,1)'], wrong: [{ id: 'flipped', tex: '(-6, 3, -1)' }], keyboard: 'algebra', label: 'The cross product' } } },
+    { name: 'order (distractors)', kind: 'order', item: { question: 'Put the steps of the proof in order. Leave out the lines that do not belong.', widget: { kind: 'order', lines: [
+      { id: 's1', text: 'Write the two odd numbers as $2a + 1$ and $2b + 1$' }, { id: 's2', text: 'Add them: $2a + 2b + 2$' }, { id: 's3', text: 'Factor out 2: $2(a + b + 1)$, which is even' },
+      { id: 'd1', text: 'Add them: $2a + 2b + 1$', why: 'The two ones add to 2, not 1.' }, { id: 'd2', text: 'Two odd numbers are both prime' }], answer: ['s1', 's2', 's3'], distractors: ['d1', 'd2'] } } },
+    { name: 'code (complex)', kind: 'code', item: { question: 'Return the product of the two complex numbers.', widget: { kind: 'code', language: 'python', starter: 'def cmul(z, w):\n    return 0\n', solution: 'def cmul(z, w):\n    return z * w\n',
+      examples: [{ call: 'cmul(1+2j, 3-1j)', expect: '(5+5j)', compare: 'isclose' }], tests: [{ call: 'cmul(1+2j, 3-1j)', expect: '(5+5j)', compare: 'isclose' }, { call: 'cmul(1j, 1j)', expect: '-1', compare: 'isclose' }, { call: 'cmul(0.1+0.2j, 0.3)', expect: '(0.03+0.06j)', compare: 'isclose', tol: { rel: 1e-9, abs: 1e-12 } }], how: 'Check runs 3 hidden tests.' } } },
+    { name: 'code (C++ complex)', kind: 'code', item: { question: 'Return the product of the two complex numbers.', widget: { kind: 'code', language: 'cpp', starter: '#include <complex>\n\nstd::complex<double> cmul(std::complex<double> z, std::complex<double> w) {\n    return 0;\n}\n', solution: '#include <complex>\n\nstd::complex<double> cmul(std::complex<double> z, std::complex<double> w) {\n    return z * w;\n}\n',
+      examples: [{ call: 'cmul({1, 2}, {3, -1})', expect: { re: 5, im: 5 }, compare: 'isclose' }], tests: [{ call: 'cmul({1, 2}, {3, -1})', expect: { re: 5, im: 5 }, compare: 'isclose' }, { call: 'cmul({0, 1}, {0, 1})', expect: -1, compare: 'isclose' }], how: 'Check runs 2 hidden tests.' } } },
     /* item 304: the C++ mode in both shapes; they load the compiler (about 26 MB) only on request */
     { name: 'code (C++ function)', kind: 'code', item: { question: 'Write `double mean(const std::vector<double>& xs)`.', widget: { kind: 'code', language: 'cpp', starter: '#include <vector>\n\ndouble mean(const std::vector<double>& xs) {\n    return 0;\n}\n',
       solution: '#include <vector>\n\ndouble mean(const std::vector<double>& xs) {\n    double total = 0;\n    for (double x : xs) total += x;\n    return xs.empty() ? 0 : total / xs.size();\n}\n',
@@ -359,7 +435,7 @@
         const extra = variants.find(x => x.name === name);
         const kind = name, item = extra ? extra.item : WIDGET_SAMPLES[kind];
         if (!item) { wg.append(missing(kind, 'item')); return; }
-        const lazy = kind === 'code', cpp = !!(extra && extra.item.widget && extra.item.widget.language === 'cpp'); // item 304: C++ cards load the compiler on request too
+        const lazy = kind === 'code' || (!!(item.widget && item.widget.kind === 'code' && item.widget.language !== 'cpp')), cpp = !!(extra && extra.item.widget && extra.item.widget.language === 'cpp'); // item 304: C++ cards load the compiler on request too
         const el = card(kind, null, item.widget || item, `<div class="ds-acts">
             ${lazy || cpp ? `<button type="button" class="btn secondary" data-load>${cpp ? 'Load the C++ compiler and render' : 'Load Python and render'}</button>` : ''}
             <button type="button" class="btn secondary" data-fill${lazy || cpp ? ' hidden' : ''}>Fill answer</button>
@@ -383,7 +459,7 @@
               const r = await el._h.check();
               if (r && r.pending) { out.textContent = 'Opened the next step. Check again to grade it.'; return; }
               out.className = 't-caption ds-out ' + (r && r.ok ? 'is-ok' : 'is-no');
-              out.textContent = r ? (r.ok ? 'Correct.' : `Not yet${r.key != null ? `, key "${r.key}"` : ''}.`) : 'Nothing to check yet.';
+              out.textContent = r ? (r.ok ? 'Correct.' : `Not yet${r.key != null ? `, key "${r.key}"` : ''}.${r.line ? ' ' + r.line : ''}`) : 'Nothing to check yet.';
             } catch (err) { out.textContent = 'Check threw: ' + err.message; }
           }
         });

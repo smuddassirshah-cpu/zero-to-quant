@@ -279,7 +279,7 @@
     const em = C.emitter();
     let state = deep(def.init ? def.init(params) : {});
     let shown = state, gen = 0, mode = null, modeOpts = {}, locked = false, destroyed = false, lastTap = null;
-    const isStatic = !!ctx.static;
+    const isStatic = !!(ctx.static || ctx.mode === 'static'); /* engine pass 2: the Why? sheet passes mode 'static' */
     if (isStatic) F.wrap.classList.add('cv-static', 'cvb-static');
     const hl = new Set(), marks = new Map();
     const modes = def.modes || [];

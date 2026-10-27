@@ -13,6 +13,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '..');
@@ -30,7 +32,7 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform']);
-const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console']);
+const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'complex-map', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console', 'space']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
 const CANVAS_BOUND = new Set(['tap-regions', 'drag-point', 'sketch', 'balance', 'slider', 'sliders']);
@@ -88,8 +90,11 @@ const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
    function name with args as JSON values and optional types), expect as a JSON value. Script mode (a stdout case,
    stdin, argv, or a raises case without call): the program's own main runs once per case. */
 const CPP_TYPES = ['int', 'long long', 'double', 'bool', 'std::string', 'std::vector<int>', 'std::vector<double>', 'std::vector<std::string>', 'std::vector<std::vector<double>>'];
+/* engine pass (item 430): a std::complex result is expected as { re, im } (alone, or inside a list) */
+const cppComplex = (v) => !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 2 && Number.isFinite(v.re) && Number.isFinite(v.im);
+const cppExpect = (v) => cppValue(v) || cppComplex(v) || (Array.isArray(v) && v.every(cppExpect));
 const cppValue = (v) => (typeof v === 'number' && Number.isFinite(v)) || typeof v === 'boolean' || typeof v === 'string' || (Array.isArray(v) && v.every(cppValue));
-const cppNumbers = (v) => (typeof v === 'number' && Number.isFinite(v)) || (Array.isArray(v) && v.every(cppNumbers));
+const cppNumbers = (v) => (typeof v === 'number' && Number.isFinite(v)) || cppComplex(v) || (Array.isArray(v) && v.every(cppNumbers));
 /* items 378, 425, 464: a case's tol is { rel, abs } (either or both, numbers 0 or more), for isclose */
 const tolCase = (file, at, t) => {
   if (t.tol == null) return;
@@ -140,7 +145,7 @@ const cppCodeWidget = (file, where, w) => {
     } else {
       if (typeof t.call !== 'string' || !t.call.trim()) err(file, `${at}.call`, 'a value case needs call: a C++ expression ("mean({1.0, 2.0})") or a function name with args');
       if (t.expect === undefined || t.expect === null) err(file, `${at}.expect`, 'a value case needs expect, a JSON value (2.5, true, "abc", [1, 2])');
-      else if (!cppValue(t.expect)) err(file, `${at}.expect`, 'expect is a number, a boolean, a string or a list of those');
+      else if (!cppExpect(t.expect)) err(file, `${at}.expect`, 'expect is a number, a boolean, a string, a complex { re, im } or a list of those');
       else if (t.compare === 'isclose' && !cppNumbers(t.expect)) err(file, `${at}.expect`, 'isclose needs a number (or a list of numbers) as expect, not text: write 2.5, not "2.5"');
       else if (typeof t.expect === 'string' && t.text !== true && /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(t.expect.trim())) warn(file, `${at}.expect`, `expect is the text "${t.expect}": is the call's result a std::string? If so add "text": true to this case; if it is a number, write it without quotes`); // item 472
       if (typeof t.expect === 'number' && !Number.isInteger(t.expect) && t.compare !== 'isclose') warn(file, `${at}.compare`, 'equal compares a double exactly; use compare: "isclose" for a computed double');
@@ -266,6 +271,11 @@ const regionIds = (canvas) => {
     if (canvas.kind === 'plane') { [st.segments, st.vectors, st.vlines, st.hlines, pp.vlines, pp.hlines, pp.functions, st.functions, st.polygons, pp.polygons, en.polygons, st.angles, pp.angles, en.points].forEach(L => (Array.isArray(L) ? L : []).forEach(q => { if (isObj(q) && q.id) ids.add(String(q.id)); })); [].concat(st.area || [], st.riemann || []).forEach(q => { if (isObj(q) && q.id) ids.add(String(q.id)); }); ['tangent', 'area', 'riemann', 'target', 'sketch'].forEach(k => ids.add(k)); }
     return ids;
   }
+  if (canvas.kind === 'space') { // every object id, from params, state and enter (tap mode: points, vectors, curves, lines, surfaces, planes, fields)
+    const st = canvas.state || {}, en = canvas.enter || {}, ids = new Set();
+    ['points', 'vectors', 'curves', 'lines', 'surfaces', 'planes', 'fields'].forEach(k => [p[k], st[k], en[k]].forEach(L => { if (Array.isArray(L)) L.forEach(q => { if (isObj(q) && q.id != null) ids.add(String(q.id)); }); else if (isObj(L)) Object.keys(L).forEach(id => ids.add(id)); }));
+    return ids.size ? ids : null;
+  }
   if (canvas.kind === 'console' && (Array.isArray(p.lines) || typeof p.text === 'string')) { // one-based line ids
     const st = canvas.state || {}, n = Array.isArray(st.lines) ? Math.max(st.lines.length, (p.lines || String(p.text || '').replace(/\n$/, '').split('\n')).length) : (p.lines || String(p.text).replace(/\n$/, '').split('\n')).length;
     return new Set(range(1, n).map(i => `l${i}`));
@@ -285,7 +295,7 @@ const PLAUSIBLE = {
   table: /^(r\d+|c\d+|r\d+c\d+)$/,
   console: /^l\d+$/,
   matrix: /^[A-Za-z][A-Za-z0-9]*(-(r\d+|c\d+|\d+-\d+))?$/,
-  walk: /^(path\d+|barrier-up|barrier-down|mean|spread|envelope)$/, // inbox (arma 1): README-B's mean and spread
+  walk: /^(path\d+|barrier-up|barrier-down|mean|mean-level|spread|envelope|stop-time|stopped-ref|stopped-[\w-]+|ov-[\w-]+)$/, // inbox (arma 1): README-B's mean and spread; item 436: overlays and the stopped average
   orderbook: /^(bid\d+|ask\d+|spread)$/,
   distribution: /^(mean|median|sd|prob|curve|cdf|rug|shade\d*|observed\d*|x-?[\d.]+|overlay\d+)$/,
   scatter: /^(p\d+|line|line\d+|fit|r-p\d+|legend-.+|curve|[A-Za-z][\w-]*)$/, // item 351: the fit, curve ids and residuals r-p{i}
@@ -351,8 +361,8 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
     case 'expression':
       if (typeof w.answer !== 'string' || !w.answer) err(file, `${where}.answer`, 'expression answer must be a TeX string');
       if (!Array.isArray(w.accept) || !w.accept.length) warn(file, `${where}.accept`, 'list the accepted plain-text forms for the fallback grader');
-      /* inbox (validation 3): the Compute Engine reads a lone capital N (and D) as its own functions, so the answer never grades */
-      if (typeof w.answer === 'string' && /(^|[^\\A-Za-z])[ND](?![A-Za-z])/.test(w.answer)) warn(file, `${where}.answer`, 'a capital N or D in an expression answer is read by the maths engine as its numeric-evaluation (or derivative) function, so the answer may never grade; use another letter (n, m, T) or an order or choice widget');
+      /* engine pass (items 433, 437): a capital N or D, \min, \max and \epsilon now grade; a vector or matrix answer has the key "length" for a wrong size */
+      if (typeof w.answer === 'string' && /^\s*(\\left\s*)?[(\[][^]*,|\\begin\{[pbv]?matrix\}/.test(w.answer)) keys.add('length');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
       if (w.form != null) { if (!['expanded', 'factorised', 'simplified'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised" or "simplified"'); keys.add('form'); }
@@ -458,7 +468,13 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       const lines = ids(w.lines, 'lines');
       lines.forEach(k => keys.add(String(k)));
       const a = w.answer || [];
-      if (!Array.isArray(a) || a.length !== lines.size || new Set(a).size !== a.length || a.some(x => !lines.has(x))) err(file, `${where}.answer`, 'answer must be a permutation of the line ids');
+      /* engine pass (item 434): distractors lists lines that must be left out; answer is a permutation of the rest */
+      let dis = [];
+      if (w.distractors != null) {
+        if (!Array.isArray(w.distractors) || !w.distractors.length || w.distractors.some(x => !lines.has(x)) || new Set(w.distractors).size !== w.distractors.length) err(file, `${where}.distractors`, 'distractors lists one or more line ids, each once');
+        else { dis = w.distractors; keys.add('left-out'); }
+      }
+      if (!Array.isArray(a) || a.length !== lines.size - dis.length || new Set(a).size !== a.length || a.some(x => !lines.has(x) || dis.includes(x))) err(file, `${where}.answer`, dis.length ? 'answer must be a permutation of the line ids that are not distractors' : 'answer must be a permutation of the line ids');
       (w.lines || []).forEach((l, i) => text(l.text, `${where}.lines[${i}].text`));
       if (w.same != null) { const gs = Array.isArray(w.same) && w.same.length && Array.isArray(w.same[0]) ? w.same : [w.same]; gs.forEach((g, i) => { if (!Array.isArray(g) || g.length < 2 || g.some(x => !lines.has(x))) err(file, `${where}.same[${i}]`, 'each same group lists two or more line ids'); }); }
       break;
@@ -556,6 +572,108 @@ const checkLongform = (file, where, x) => {
   }
 };
 
+/* space canvas (docs/AUTHORING.md section 4, README-B "space"): shapes and formula names only, never a crash */
+const SPACE_LISTS = ['points', 'vectors', 'curves', 'lines', 'surfaces', 'planes', 'fields'];
+const SPACE_FNS = new Set(['sin', 'cos', 'tan', 'exp', 'ln', 'log', 'log10', 'sqrt', 'abs', 'max', 'min', 'floor', 'ceil', 'pow', 'pi', 'e', 'atan', 'asin', 'acos', 'sinh', 'cosh', 'tanh', 'sign', 'round', 'fact', 'lgamma', 'erf', 'erfc', 'Phi', 'PhiInv', 'Phiinv', 'NormInv', 'normcdf', 'normpdf', 'pnorm', 'dnorm', 'qnorm']);
+const checkSpace = (file, where, P, S) => {
+  const E = (at, msg) => err(file, `${where}${at}`, msg);
+  const num = (v) => typeof v === 'number' && Number.isFinite(v);
+  const names = new Set(Object.keys({ ...(isObj(P.params) ? P.params : {}), ...(isObj(S.params) ? S.params : {}) }));
+  /* a coordinate or formula: a number, or a string using only its variables, the params and the curve-formula functions */
+  const formula = (v, at, vars = []) => {
+    if (num(v)) return true;
+    if (typeof v !== 'string' || !v.trim()) { E(at, 'a coordinate is a number or a formula string'); return false; }
+    if (/\b(sum|prod)\s*\(/.test(v)) return true; // sum(k, a, b, term) binds its own name
+    const bad = [...v.replace(/\d+\.?\d*(e[+-]?\d+)?/gi, ' ').matchAll(/[A-Za-z_]\w*/g)].map(m => m[0]).find(w => !SPACE_FNS.has(w) && !vars.includes(w) && !names.has(w));
+    if (bad) { E(at, `unknown name "${bad}" in "${v}": a formula here may use ${vars.length ? vars.join(', ') + ', ' : ''}the params${[...names].length ? ' (' + [...names].join(', ') + ')' : ''} and the usual functions`); return false; }
+    let d = 0; for (const ch of v) { if (ch === '(') d++; else if (ch === ')' && --d < 0) break; }
+    if (d !== 0) { E(at, `unbalanced brackets in "${v}"`); return false; }
+    return true;
+  };
+  const triple = (v, at, vars) => { if (!(Array.isArray(v) && v.length === 3)) { E(at, 'a point or vector is three coordinates [x, y, z] (numbers or formulas)'); return; } v.forEach((q, i) => formula(q, `${at}[${i}]`, vars)); };
+  const pair = (v, at, what) => { if (!(Array.isArray(v) && v.length === 2)) { E(at, `${what} is [from, to]`); return; } v.forEach((q, i) => formula(q, `${at}[${i}]`)); };
+  const slotOk = (v) => v == null || (Number.isInteger(v) && v >= 1 && v <= 6);
+  ['x', 'y', 'z'].forEach(k => { if (P[k] != null && !(Array.isArray(P[k]) && P[k].length === 2 && P[k].every(num) && P[k][1] > P[k][0])) E(`.params.${k}`, `${k} is [min, max] with min below max`); });
+  if (P.aspect != null && !(Array.isArray(P.aspect) && P.aspect.length === 3 && P.aspect.every(v => num(v) && v > 0))) E('.params.aspect', 'aspect is three positive numbers [x, y, z]');
+  if (P.height != null && !(num(P.height) && P.height >= 240 && P.height <= 640)) E('.params.height', 'height is 240 to 640');
+  [['params', P], ['state', S]].forEach(([w, o]) => { if (o.perspective != null && !(num(o.perspective) && o.perspective >= 0 && o.perspective <= 1)) E(`.${w}.perspective`, 'perspective is 0 (flat, the default) to 1'); });
+  [['params', P], ['state', S]].forEach(([w, o]) => { if (o.grid != null && !['back', 'floor', false].includes(o.grid)) E(`.${w}.grid`, 'grid is "back", "floor" or false'); ['box', 'axes', 'ticks'].forEach(k => { if (o[k] != null && typeof o[k] !== 'boolean') E(`.${w}.${k}`, `${k} is true or false`); }); });
+  if (P.axisLabels != null && !(Array.isArray(P.axisLabels) && P.axisLabels.length === 3 && P.axisLabels.every(v => typeof v === 'string'))) E('.params.axisLabels', 'axisLabels is three strings, such as ["$x_1$", "$x_2$", "$x_3$"]');
+  [['params', P.camera], ['state', S.camera]].forEach(([w, cam]) => {
+    if (cam == null) return;
+    if (!isObj(cam)) { E(`.${w}.camera`, 'camera is { az, el, zoom } (degrees, degrees, 0.4 to 3)'); return; }
+    if (cam.az != null && !num(cam.az)) E(`.${w}.camera.az`, 'az (azimuth) is a number of degrees');
+    if (cam.el != null && !(num(cam.el) && cam.el >= -89 && cam.el <= 89)) E(`.${w}.camera.el`, 'el (elevation) is -89 to 89 degrees');
+    if (cam.zoom != null && !(num(cam.zoom) && cam.zoom >= 0.4 && cam.zoom <= 3)) E(`.${w}.camera.zoom`, 'zoom is 0.4 to 3');
+  });
+  /* every list entry, from params (whole entries) and state (whole lists, or keyed patches by id) */
+  const all = {}, seen = new Map();
+  const entries = (k, src, at) => (Array.isArray(src[k]) ? src[k].map((q, i) => [q, `${at}.${k}[${i}]`, true]) : isObj(src[k]) ? Object.entries(src[k]).map(([id, q]) => [isObj(q) ? { id, ...q } : q, `${at}.${k}.${id}`, false]) : []);
+  SPACE_LISTS.forEach(k => { all[k] = new Set(); [[P, '.params'], [S, '.state']].forEach(([src, at]) => entries(k, src, at).forEach(([q]) => { if (isObj(q) && q.id != null) all[k].add(String(q.id)); })); });
+  SPACE_LISTS.forEach(k => [[P, '.params'], [S, '.state']].forEach(([src, at]) => {
+    if (src[k] != null && !Array.isArray(src[k]) && !isObj(src[k])) E(`${at}.${k}`, `${k} is a list of objects with ids`);
+    entries(k, src, at).forEach(([q, w, full]) => {
+      if (q === null && !full) return; // a keyed patch removing an item
+      if (!isObj(q)) { E(w, 'each entry is an object'); return; }
+      if (full && (typeof q.id !== 'string' || !q.id)) E(`${w}.id`, 'every entry needs an id (a string), so hints, taps and patches can name it');
+      else if (full && at === '.params') { if (seen.has(q.id)) E(`${w}.id`, `duplicate id "${q.id}" (also in ${seen.get(q.id)})`); else seen.set(q.id, `${k}`); }
+      if (!slotOk(q.colour)) E(`${w}.colour`, 'colour is a slot 1 to 6');
+      if (q.hidden != null && typeof q.hidden !== 'boolean') E(`${w}.hidden`, 'hidden is true or false (state.show: ["id"] reveals it)');
+      const need = (cond, msg) => { if (full && !cond) E(w, msg); };
+      if (k === 'points') {
+        need(q.p != null || (q.x != null && q.y != null) || q.at != null, 'a point needs p: [x, y, z] (or x, y and z, or at and t on a curve)');
+        if (q.p != null) triple(q.p, `${w}.p`); else ['x', 'y', 'z'].forEach(a => { if (q[a] != null) formula(q[a], `${w}.${a}`); });
+        if (q.on != null && !all.surfaces.has(String(q.on))) E(`${w}.on`, `on names a surface id (one of ${[...all.surfaces].join(', ') || 'none defined'}); the point's z is read from it`);
+        if (q.at != null && !all.curves.has(String(q.at))) E(`${w}.at`, `at names a curve id (one of ${[...all.curves].join(', ') || 'none defined'}); t is the parameter value`);
+        if (q.at != null && q.t != null) formula(q.t, `${w}.t`);
+        if (q.at != null && q.t == null) E(`${w}.t`, 'a point on a curve needs t');
+        if (q.labelPos != null && !['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'].includes(q.labelPos)) E(`${w}.labelPos`, 'labelPos is a compass point: n, ne, e, se, s, sw, w or nw');
+      } else if (k === 'vectors') {
+        need(q.v != null, 'a vector needs v: [dx, dy, dz]');
+        if (q.v != null) triple(q.v, `${w}.v`);
+        if (q.from != null) { if (Array.isArray(q.from)) triple(q.from, `${w}.from`); else if (!all.points.has(String(q.from)) && !all.vectors.has(String(q.from))) E(`${w}.from`, 'from is [x, y, z] or the id of a point or another vector (a chain starts at its tip)'); }
+        if (q.labelPos != null && !['end', 'mid'].includes(q.labelPos)) E(`${w}.labelPos`, 'labelPos is "end" or "mid"');
+      } else if (k === 'curves') {
+        need(typeof q.x === 'string' && typeof q.y === 'string', 'a curve needs x and y formulas in t (z too, for a space curve), and t: [from, to]');
+        ['x', 'y', 'z'].forEach(a => { if (q[a] != null) formula(q[a], `${w}.${a}`, ['t']); });
+        if (q.t != null) pair(q.t, `${w}.t`, 't'); else need(false, 'a curve needs t: [from, to]');
+        if (q.n != null && !(Number.isInteger(q.n) && q.n >= 8 && q.n <= 600)) E(`${w}.n`, 'n is 8 to 600 samples');
+      } else if (k === 'lines') {
+        need(Array.isArray(q.pts) && q.pts.length >= 2, 'a line needs pts: at least two [x, y, z] points');
+        if (Array.isArray(q.pts)) q.pts.forEach((p, i) => triple(p, `${w}.pts[${i}]`));
+      } else if (k === 'surfaces') {
+        const param = typeof q.x === 'string';
+        if (param) { ['x', 'y', 'z'].forEach(a => { if (typeof q[a] !== 'string') E(`${w}.${a}`, 'a parametric surface has x, y and z formulas in u and v'); else formula(q[a], `${w}.${a}`, ['u', 'v']); }); if (q.u != null) pair(q.u, `${w}.u`, 'u'); if (q.v != null) pair(q.v, `${w}.v`, 'v'); need(q.u != null && q.v != null, 'a parametric surface needs u: [from, to] and v: [from, to]'); }
+        else { need(typeof q.z === 'string', 'a surface needs z (a formula in x and y), or x, y and z formulas in u and v'); if (q.z != null) formula(q.z, `${w}.z`, ['x', 'y']); ['x', 'y'].forEach(a => { if (q[a] != null && !(Array.isArray(q[a]) && q[a].length === 2 && q[a].every(num) && q[a][1] > q[a][0])) E(`${w}.${a}`, `${a} is the range [min, max] the surface covers`); }); }
+        if (q.n != null && !((Number.isInteger(q.n) && q.n >= 2 && q.n <= 40) || (Array.isArray(q.n) && q.n.length === 2 && q.n.every(v => Number.isInteger(v) && v >= 2 && v <= 40)))) E(`${w}.n`, 'n is 2 to 40 cells each way (or [nu, nv])');
+        if (q.shade != null && !['light', 'flat', 'height'].includes(q.shade)) E(`${w}.shade`, 'shade is "light" (default), "flat" or "height"');
+        if (q.wire != null && q.wire !== true && q.wire !== 'only' && q.wire !== false) E(`${w}.wire`, 'wire is true (edges over the shading) or "only" (hidden-line wireframe)');
+        if (q.opacity != null && !(num(q.opacity) && q.opacity >= 0.05 && q.opacity <= 1)) E(`${w}.opacity`, 'opacity is 0.05 to 1');
+        if (q.clip != null && !['clamp', 'drop', 'none'].includes(q.clip)) E(`${w}.clip`, 'clip is "clamp", "drop" or "none"');
+        if (q.colour2 != null && !slotOk(q.colour2)) E(`${w}.colour2`, 'colour2 is a slot 1 to 6');
+        if (q.labelAt != null && !(Array.isArray(q.labelAt) && q.labelAt.length === 2 && q.labelAt.every(num))) E(`${w}.labelAt`, 'labelAt is [x, y]');
+      } else if (k === 'planes') {
+        const sp = Array.isArray(q.span) ? q.span : null;
+        need(sp || Array.isArray(q.normal), 'a plane needs span (one or two vectors: ids or [x, y, z]) or normal: [a, b, c] with through or d');
+        if (sp && !(sp.length >= 1 && sp.length <= 2)) E(`${w}.span`, 'span is one vector (a line) or two (a plane)');
+        (sp || []).forEach((e, i) => { if (Array.isArray(e)) triple(e, `${w}.span[${i}]`); else if (!all.vectors.has(String(e))) E(`${w}.span[${i}]`, `"${e}" is not a vector id on this canvas`); });
+        if (q.normal != null) triple(q.normal, `${w}.normal`);
+        if (q.through != null) triple(q.through, `${w}.through`);
+        if (q.d != null) formula(q.d, `${w}.d`);
+        if (q.extent != null && !(Array.isArray(q.extent) && [2, 4].includes(q.extent.length) && q.extent.every(num))) E(`${w}.extent`, 'extent is [lo, hi] (both coefficients) or [a0, a1, b0, b1], for a finite patch of a span');
+        if (q.res != null && !(Number.isInteger(q.res) && q.res >= 3 && q.res <= 24)) E(`${w}.res`, 'res is 3 to 24 cells each way');
+        if (q.opacity != null && !(num(q.opacity) && q.opacity >= 0.03 && q.opacity <= 1)) E(`${w}.opacity`, 'opacity is 0.03 to 1');
+      } else if (k === 'fields') {
+        need(Array.isArray(q.F) && q.F.length === 3, 'a field needs F: three formulas in x, y and z (the arrow at each grid point)');
+        if (Array.isArray(q.F)) q.F.forEach((f, i) => formula(f, `${w}.F[${i}]`, ['x', 'y', 'z']));
+        if (q.n != null && !((Number.isInteger(q.n) && q.n >= 1 && q.n <= 7) || (Array.isArray(q.n) && q.n.length === 3 && q.n.every(v => Number.isInteger(v) && v >= 1 && v <= 9)))) E(`${w}.n`, 'n is 1 to 7 arrows each way (or [nx, ny, nz], 1 to 9; the grid is capped at 343 arrows)');
+        if (q.at != null && !(Array.isArray(q.at) && q.at.length === 3 && q.at.every(num))) E(`${w}.at`, 'at is [x, y, z]: where a one-arrow-deep grid sits');
+        if (q.scale != null && !(num(q.scale) && q.scale > 0)) E(`${w}.scale`, 'scale is a positive number');
+      }
+    });
+  }));
+  [S.show, S.hide].forEach((l, i) => { if (l != null && !Array.isArray(l)) E(`.state.${i ? 'hide' : 'show'}`, `${i ? 'hide' : 'show'} is a list of ids`); });
+};
 const checkCanvas = (file, where, c) => {
   if (c == null) return;
   if (!isObj(c)) { err(file, where, 'canvas must be an object'); return; }
@@ -569,6 +687,7 @@ const checkCanvas = (file, where, c) => {
   /* pass 3 canvas options (items 89 to 107): shapes only, never a crash */
   const P = isObj(c.params) ? c.params : {}, S = isObj(c.state) ? c.state : {};
   const slotOk = (v) => v == null || (Number.isInteger(+v) && +v >= 1 && +v <= 6);
+  if (c.kind === 'space') checkSpace(file, where, P, S);
   if (c.kind === 'grid') {
     if (P.rowOffsets != null && !(Array.isArray(P.rowOffsets) && P.rowOffsets.every(v => typeof v === 'number' && v >= 0))) err(file, `${where}.params.rowOffsets`, 'rowOffsets is a list of offsets in cell widths, one per row, 0 or more');
     if (S.cells != null && !Array.isArray(S.cells) && !isObj(S.cells)) err(file, `${where}.state.cells`, 'state.cells is { "r1c2": "5" } or a 2D array of strings');
@@ -602,6 +721,57 @@ const checkCanvas = (file, where, c) => {
       if (f.t != null && !(Array.isArray(f.t) && f.t.length === 2 && f.t.every(x => typeof x === 'number'))) err(file, `${where}.params.functions[${i}].t`, 't is [from, to]');
     });
     listOf(S.points).forEach((q, i) => { if (isObj(q) && q.tap != null && typeof q.tap !== 'boolean') err(file, `${where}.state.points[${i}].tap`, 'tap is true or false'); if (isObj(q) && q.trace != null && ![true, false, 'x'].includes(q.trace)) err(file, `${where}.state.points[${i}].trace`, 'trace is true (the path as it went) or "x" (sorted by x)'); });
+    /* item 431: field, slopeField and trajectory layers on a plane (in params or state; an object or a list of objects) */
+    {
+      const COLOURS = ['ink', 'manip', 'hint', 'neg', 'pos', 'muted'], colourOk = (v) => v == null || slotOk(v) || COLOURS.includes(v);
+      const num = (v, lo, hi) => typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi, pair = (v) => Array.isArray(v) && v.length === 2 && v.every((x) => typeof x === 'number');
+      const exprOk = (v) => typeof v === 'string' || typeof v === 'number';
+      const merged = (key) => { // as the engine does: a state entry merges over the params entry with the same id
+        const m = new Map();
+        [['params', P], ['state', S]].forEach(([w, o]) => {
+          if (o[key] == null) return;
+          const list = Array.isArray(o[key]);
+          [].concat(o[key]).forEach((q, i) => {
+            const at = `${where}.${w}.${key}${list ? `[${i}]` : ''}`;
+            if (!isObj(q)) { err(file, at, `${key} is an object (or a list of objects)`); return; }
+            const id = q.id != null ? String(q.id) : i ? `${key}-${i}` : key;
+            m.set(id, { ...(m.get(id) || {}), ...q, id, at });
+          });
+        });
+        return m;
+      };
+      const fields = merged('field'), slopes = merged('slopeField'), trajs = merged('trajectory'), known = new Set([...fields.keys(), ...slopes.keys()]);
+      const common = (q) => {
+        if (q.grid != null && !(Array.isArray(q.grid) ? q.grid.length === 2 && q.grid.every((n) => num(n, 2, 60)) : num(q.grid, 2, 60))) err(file, `${q.at}.grid`, 'grid is a number of columns (2 to 60) or [columns, rows]');
+        if (q.spacing != null && !(Array.isArray(q.spacing) ? q.spacing.length === 2 && q.spacing.every((n) => num(n, 1e-9, Infinity)) : num(q.spacing, 1e-9, Infinity))) err(file, `${q.at}.spacing`, 'spacing is a positive step in data units, or [dx, dy]');
+        if (q.length != null && !num(q.length, 1e-9, Infinity)) err(file, `${q.at}.length`, 'length is a positive number (px for arrows and segments; the range of the variable for a trajectory)');
+        if (q.maxArrows != null && !num(q.maxArrows, 4, 600)) err(file, `${q.at}.maxArrows`, 'maxArrows is 4 to 600');
+        if (q.colourBy != null && q.colourBy !== 'magnitude' && q.colourBy !== true) err(file, `${q.at}.colourBy`, 'colourBy is "magnitude"');
+        if (q.range != null && !(pair(q.range) && q.range[0] < q.range[1])) err(file, `${q.at}.range`, 'range is [lo, hi] with lo below hi');
+        if (q.anchor != null && !['mid', 'tail'].includes(q.anchor)) err(file, `${q.at}.anchor`, 'anchor is "mid" or "tail"');
+        if (q.normalise != null && typeof q.normalise !== 'boolean') err(file, `${q.at}.normalise`, 'normalise is true or false');
+        if (!colourOk(q.colour) || !colourOk(q.colourHigh)) err(file, `${q.at}.colour`, 'colour and colourHigh are a slot 1 to 6 or ink, manip, hint, neg, pos, muted');
+      };
+      fields.forEach((q) => { ['P', 'Q'].forEach((k) => { if (!exprOk(q[k])) err(file, `${q.at}.${k}`, `a field needs P and Q: formulas in x, y and the params`); }); common(q); });
+      slopes.forEach((q) => { if (!exprOk(q.f)) err(file, `${q.at}.f`, 'a slopeField needs f: the slope dy/dx as a formula in x, y and the params'); common(q); });
+      const ptIds = new Set(listOf(S.points).filter(isObj).map((p) => String(p.id)));
+      trajs.forEach((q) => {
+        const startOk = (v) => (typeof v === 'string' && v !== '') || (pair(v));
+        if (q.from == null && q.starts == null) err(file, q.at, 'a trajectory needs from (a point id or [x, y]) or starts (a list of them)');
+        if (q.from != null && !startOk(q.from)) err(file, `${q.at}.from`, 'from is a point id or [x, y]');
+        if (q.starts != null && !(Array.isArray(q.starts) && q.starts.length >= 1 && q.starts.length <= 24 && q.starts.every(startOk))) err(file, `${q.at}.starts`, 'starts is a list of 1 to 24 point ids or [x, y] pairs');
+        [].concat(q.from ?? [], Array.isArray(q.starts) ? q.starts : []).forEach((s) => { if (typeof s === 'string' && !ptIds.has(s)) warn(file, `${q.at}`, `"${s}" is not a point id in state.points (a later patch may add it)`); });
+        if (!known.size) err(file, q.at, 'a trajectory needs a field or slopeField layer to run in');
+        else if (q.in != null && !known.has(String(q.in))) err(file, `${q.at}.in`, `in names a field or slopeField id (${[...known].join(', ')})`);
+        if (q.step != null && !num(q.step, 1e-12, Infinity)) err(file, `${q.at}.step`, 'step is a positive number');
+        if (q.length != null && !num(q.length, 1e-9, Infinity)) err(file, `${q.at}.length`, 'length is a positive number');
+        if (q.back != null && typeof q.back !== 'boolean' && !num(q.back, 0, Infinity)) err(file, `${q.at}.back`, 'back is true (as far as length) or a length');
+        if (q.by != null && !['arc', 'time'].includes(q.by)) err(file, `${q.at}.by`, 'by is "time" (the default; x for a slope field) or "arc" (length along the curve)');
+        if (q.maxSteps != null && !(Number.isInteger(q.maxSteps) && q.maxSteps >= 10 && q.maxSteps <= 5000)) err(file, `${q.at}.maxSteps`, 'maxSteps is a whole number from 10 to 5000');
+        ['arrow', 'dashed'].forEach((k) => { if (q[k] != null && typeof q[k] !== 'boolean') err(file, `${q.at}.${k}`, `${k} is true or false`); });
+        if (!colourOk(q.colour)) err(file, `${q.at}.colour`, 'colour is a slot 1 to 6 or ink, manip, hint, neg, pos, muted');
+      });
+    }
   }
   if (c.kind === 'series') {
     if (P.y2 != null && !(Array.isArray(P.y2) && P.y2.length === 2)) err(file, `${where}.params.y2`, 'y2 is [min, max] for the right-hand axis');
@@ -625,6 +795,33 @@ const checkCanvas = (file, where, c) => {
   if (c.kind === 'table' && P.tap != null && P.tap !== 'rows') err(file, `${where}.params.tap`, 'tap is "rows" (or leave it out to tap cells)');
   if (c.kind === 'tree' && S.current != null && typeof S.current !== 'string') err(file, `${where}.state.current`, 'current is a branch path such as "a-b", or "root"');
   if (c.kind === 'vectors' && P.points != null && !(Array.isArray(P.points) && P.points.every(q => isObj(q) && typeof q.x === 'number' && typeof q.y === 'number'))) err(file, `${where}.params.points`, 'points is a list of { id, x, y, label }');
+  /* item 435: vectors state.matrix [[a, b], [c, d]] (or transform { angle, shear, scale }) moves every vector not marked fixed: true */
+  if (c.kind === 'vectors') {
+    const okNum = (v) => typeof v === 'number' && Number.isFinite(v);
+    if (S.matrix != null && !(Array.isArray(S.matrix) && S.matrix.length === 2 && S.matrix.every(r => Array.isArray(r) && r.length === 2 && r.every(okNum)))) err(file, `${where}.state.matrix`, 'matrix is [[a, b], [c, d]], four numbers (a derive may write it: "matrix": "[[a, b], [c, d]]")');
+    if (S.transform != null && !(isObj(S.transform) && Object.values(S.transform).every(okNum))) err(file, `${where}.state.transform`, 'transform is { angle (degrees), shear, scale }, all numbers');
+    [...listOf(P.vectors), ...listOf(S.vectors)].forEach((v, i) => { if (isObj(v) && v.fixed != null && typeof v.fixed !== 'boolean') err(file, `${where}.vectors[${i}].fixed`, 'fixed is true or false (true: the matrix does not move this vector)'); });
+  }
+  /* item 432: complex-map, a z-plane beside the w-plane image of f(z) */
+  if (c.kind === 'complex-map') {
+    const okNum = (v) => typeof v === 'number' && Number.isFinite(v);
+    ['x', 'y', 'wx', 'wy'].forEach(k => { if (P[k] != null && !(Array.isArray(P[k]) && P[k].length === 2 && P[k].every(okNum) && P[k][0] < P[k][1])) err(file, `${where}.params.${k}`, `${k} is [min, max] with min below max`); });
+    [['params', P.grid], ['state', S.grid]].forEach(([w, v]) => { if (v != null && !['cartesian', 'polar', 'both', 'none'].includes(v)) err(file, `${where}.${w}.grid`, 'grid is "cartesian", "polar", "both" or "none"'); });
+    ['gridStep', 'rStep'].forEach(k => { [['params', P[k]], ['state', S[k]]].forEach(([w, v]) => { if (v != null && !(okNum(v) && v > 0)) err(file, `${where}.${w}.${k}`, `${k} is a number above 0`); }); });
+    [['params', P.rays], ['state', S.rays]].forEach(([w, v]) => { if (v != null && !(Number.isInteger(v) && v >= 0)) err(file, `${where}.${w}.rays`, 'rays is a whole number, 0 or more'); });
+    [['params', P.unitCircle], ['state', S.unitCircle], ['params', P.stack]].forEach(([w, v], i) => { if (v != null && typeof v !== 'boolean') err(file, `${where}.${w}.${i === 2 ? 'stack' : 'unitCircle'}`, 'true or false'); });
+    const named = { ...(isObj(P.params) ? P.params : {}), ...(isObj(S.params) ? S.params : {}) };
+    Object.entries(named).forEach(([k, v]) => { if (!(okNum(v) || (Array.isArray(v) && v.length === 2 && v.every(okNum)))) err(file, `${where}.params.params.${k}`, 'a name in f is a number (or [re, im])'); if (!/^[A-Za-z_][A-Za-z_0-9]*$/.test(k) || ['z', 'i', 'e', 'pi'].includes(k)) err(file, `${where}.params.params.${k}`, 'a name in f is letters, digits and _, and not z, i, e or pi'); });
+    const names = ['z', ...Object.keys(named).filter(k => k !== 'z')];
+    [['params.f', P.f], ['state.f', S.f]].forEach(([w, v]) => { if (v == null) return; if (typeof v !== 'string') { err(file, `${where}.${w}`, 'f is a formula in z, such as "(z - 1)/(z + 1)"'); return; } try { cmap.compile(v, names); } catch (er) { err(file, `${where}.${w}`, `f does not read: ${er.message}`); } });
+    [['params', P.curves], ['state', S.curves]].forEach(([w, list]) => listOf(list).forEach((q, i) => {
+      if (!isObj(q)) return;
+      if (typeof q.z !== 'string') err(file, `${where}.${w}.curves[${i}].z`, 'a curve is { z: "formula in t", t: [from, to] }');
+      else { try { cmap.compile(q.z, ['t', ...names.filter(k => k !== 'z')]); } catch (er) { err(file, `${where}.${w}.curves[${i}].z`, `does not read: ${er.message}`); } }
+      if (q.t != null && !(Array.isArray(q.t) && q.t.length === 2 && q.t.every(okNum))) err(file, `${where}.${w}.curves[${i}].t`, 't is [from, to]');
+    }));
+    [['params', P.points], ['state', S.points]].forEach(([w, list]) => listOf(list).forEach((q, i) => { if (isObj(q) && !(okNum(q.x) && okNum(q.y))) err(file, `${where}.${w}.points[${i}]`, 'a point is { id, x, y, label, drag }: x and y are the real and imaginary parts of z'); }));
+  }
   (c.controls || []).forEach((k, i) => {
     if (!k.bind && !k.reseed && k.frames == null) err(file, `${where}.controls[${i}].bind`, 'required');
     if (k.frames != null && !(Array.isArray(k.frames) && k.frames.length >= 2 && k.frames.every(isObj))) err(file, `${where}.controls[${i}].frames`, 'frames is a list of at least two state patches');
@@ -643,6 +840,46 @@ const checkCanvas = (file, where, c) => {
   if (c.kind === 'series') listOf(P.series).forEach((q, i) => { if (isObj(q) && isObj(q.sim)) checkSim(file, `${where}.params.series[${i}].sim`, q.sim, Object.keys(P.params || {})); });
   if (c.kind === 'distribution' && P.family != null && !['binomial', 'geometric', 'poisson', 'uniform', 'exponential', 't', 'normal', 'hypergeometric', 'discrete', 'custom', 'lognormal', 'beta'].includes(P.family)) err(file, `${where}.params.family`, 'family is binomial, geometric, poisson, hypergeometric, discrete, uniform, normal, lognormal, beta, exponential or t');
   if (c.kind === 'distribution' && ['discrete', 'custom'].includes(P.family)) { const v = P.values ?? (P.params || {}).values, pr = P.probs ?? (P.params || {}).probs; if (!Array.isArray(v) || !v.length) err(file, `${where}.params.values`, 'a discrete family lists its values'); else if (Array.isArray(pr) && Math.abs(pr.reduce((t, x) => t + +x, 0) - 1) > 1e-6) warn(file, `${where}.params.probs`, 'the probabilities do not add to 1'); }
+  /* item 436: walk overlays, the average at stopping, slider-bound barriers and the mean-reverting model */
+  if (c.kind === 'walk') {
+    const num = (v) => typeof v === 'number' && Number.isFinite(v);
+    if (P.model != null && !['coin', 'normal', 'markov', 'ou', 'mean-reverting', 'ar1'].includes(P.model)) err(file, `${where}.params.model`, 'model is coin, normal, markov, ou (also mean-reverting or ar1)');
+    ['theta', 'stopAt', 'stake', 'fraction', 'bankroll', 'maxBet', 'overlayHeight', 'drawn'].forEach(k => { if (P[k] != null && !(num(P[k]) && P[k] >= 0)) err(file, `${where}.params.${k}`, `${k} is a number, 0 or more`); });
+    ['lower', 'upper'].forEach(k => { if (P[k] != null && !num(P[k])) err(file, `${where}.params.${k}`, `${k} is a number (a barrier level; a slider may bind it)`); });
+    if (num(P.lower) && num(P.upper) && P.lower >= P.upper) err(file, `${where}.params`, 'lower must be below upper');
+    if (P.bet != null && !['fixed', 'double', 'fraction'].includes(P.bet)) err(file, `${where}.params.bet`, 'bet is "fixed", "double" or "fraction"');
+    if (P.model === 'ou' || P.model === 'mean-reverting' || P.model === 'ar1') { if (P.p != null || P.step != null) warn(file, `${where}.params`, 'a mean-reverting walk reads theta, mu, sigma and start; p and step are ignored'); }
+    const ids = [];
+    if (P.overlays != null) {
+      if (!Array.isArray(P.overlays)) err(file, `${where}.params.overlays`, 'overlays is a list of "sq", "ratio", "bankroll" or objects { id, type, label, chip, colour, y, expr }');
+      else P.overlays.forEach((o, i) => {
+        const w = `${where}.params.overlays[${i}]`, ob = isObj(o) ? o : { id: o }, type = ob.type || (ob.expr ? 'expr' : ob.id);
+        if (typeof o !== 'string' && !isObj(o)) { err(file, w, 'an overlay is an id string or an object'); return; }
+        if (!['sq', 'ratio', 'bankroll', 'expr'].includes(type)) err(file, w, 'an overlay is "sq", "ratio" or "bankroll", or has an expr (type "expr")');
+        if (type === 'expr' && typeof ob.expr !== 'string') err(file, `${w}.expr`, 'an expr overlay needs a formula in S, n, x, p, q, start, step and the numeric params');
+        if (type === 'expr' && typeof ob.expr === 'string') { try { new Function('F', 'x', 'S', 'n', 'p', 'q', 'start', 'step', 'mu', 'sigma', 'theta', 'return (' + ob.expr.replace(/\^/g, '**') + ');'); } catch { err(file, `${w}.expr`, 'the formula does not parse'); } }
+        if (type === 'expr' && !ob.id) warn(file, w, 'give an expr overlay an id (it names the chip, the highlight id ov-<id> and showStopped)');
+        if (ob.bet != null && !['fixed', 'double', 'fraction'].includes(ob.bet)) err(file, `${w}.bet`, 'bet is "fixed", "double" or "fraction"');
+        if (ob.y != null && !(Array.isArray(ob.y) && ob.y.length === 2 && ob.y.every(num))) err(file, `${w}.y`, 'y is [min, max] for the overlay panel');
+        if (ob.colour != null && !(Number.isInteger(ob.colour) && ob.colour >= 1 && ob.colour <= 6)) err(file, `${w}.colour`, 'colour is a series slot, 1 to 6');
+        const id = String(ob.id || type); if (ids.includes(id)) err(file, w, `two overlays share the id "${id}"`); ids.push(id);
+      });
+      if (P.model === 'markov') warn(file, `${where}.params.overlays`, 'overlays are not drawn for a markov walk');
+      if (P.model === 'normal' || P.model === 'ou' || P.model === 'mean-reverting' || P.model === 'ar1') { if ((P.overlays || []).some(o => (isObj(o) ? o.type || o.id : o) === 'ratio') && (P.model !== 'normal')) warn(file, `${where}.params.overlays`, 'the ratio overlay is defined for the coin and normal models only'); }
+    }
+    const known = (id) => id === 'walk' || ids.includes(id);
+    if (S.overlays != null && typeof S.overlays !== 'boolean' && !(Array.isArray(S.overlays) && S.overlays.every(x => typeof x === 'string'))) err(file, `${where}.state.overlays`, 'overlays is true, false or a list of overlay ids');
+    if (Array.isArray(S.overlays)) S.overlays.forEach(id => { if (typeof id === 'string' && !ids.includes(id)) err(file, `${where}.state.overlays`, `no overlay "${id}" in params.overlays`); });
+    if (S.showStopped != null) {
+      const list = S.showStopped === true ? ['walk'] : [].concat(S.showStopped);
+      if (S.showStopped !== false && !list.every(x => typeof x === 'string')) err(file, `${where}.state.showStopped`, 'showStopped is true ("walk"), an overlay id, or a list of them');
+      else list.forEach(id => { if (!known(id)) err(file, `${where}.state.showStopped`, `"${id}" is not "walk" or an overlay id`); });
+      if (S.showStopped !== false && !(Array.isArray(P.barriers) || P.lower != null || P.upper != null || P.stopAt != null)) warn(file, `${where}.state.showStopped`, 'showStopped without barriers or stopAt averages the value at the last step');
+      if (S.showStopped !== false && !(num(P.paths) && P.paths >= 2)) warn(file, `${where}.params.paths`, 'the average at stopping needs several paths (use 100 or more, and drawn to draw fewer)');
+    }
+    if (S.bet != null && !['fixed', 'double', 'fraction'].includes(S.bet)) err(file, `${where}.state.bet`, 'bet is "fixed", "double" or "fraction"');
+    if (Array.isArray(P.barriers) && (num(P.lower) || num(P.upper))) warn(file, `${where}.params`, 'lower and upper replace the matching entry of barriers');
+  }
   if (c.kind === 'walk' && P.model === 'markov' && !(Array.isArray(P.states) && Array.isArray(P.P) && P.P.length === P.states.length)) err(file, `${where}.params`, 'a markov walk needs states and a P matrix with one row per state');
   if (c.kind === 'number-line' && P.scale != null && !['log', 'log-odds'].includes(P.scale)) err(file, `${where}.params.scale`, 'scale is "log" or "log-odds"');
   if (c.kind === 'number-line' && P.scale === 'log-odds' && (P.min != null && !(P.min > 0 && P.min < 1) || P.max != null && !(P.max > 0 && P.max < 1))) err(file, `${where}.params`, 'a log-odds line runs between probabilities strictly inside 0 and 1');

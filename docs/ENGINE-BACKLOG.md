@@ -298,7 +298,7 @@ Fifth pass (items 195 to 206, 208 to 229, 232 to 271, and the pytest level 2 and
 238. Done: matrix `bar: k` (augmented bar), a pivot ring that grows with wide entries, and `rowOp` defaulting to the matrix that has the rows.
 239. Done: plane point labels substitute `{x}` and `{y}` only outside `$...$`.
 240. Done: vectors chains resolve the full tail, to any depth.
-241. Deferred: a 3D projected view is a new canvas (camera, depth order, rotation by drag) rather than an option on `vectors`; worth designing with the linear algebra level that needs it.
+241. Done (engine breadth pass 2, item 432): the `space` canvas gives the 3D projected view: spans and planes as translucent patches, vectors from the origin or a base, rotation by drag and keys.
 242. Done: matrix highlight groups with their own `colour` (a list per matrix).
 243. Done: a keyed patch that adds a new polygon id (or point, segment, vector) draws on the live canvas.
 244. Done: polygon vertex labels follow derived points (they always did; now documented), and `glyph: true` draws an F in the shape's frame to show orientation flips.
@@ -1211,12 +1211,26 @@ Raised later (maths breadth pass, task 2b):
 
 Raised later (breadth briefs 0.6, 1.10, 1.11, markov L5; PLAN task 2b engine item "breadth visuals and complex grading"):
 
-429. Open: expression grader and complex values: `exprEqual` compares real parts only, so 3 − 4i passes for 3 + 4i and 0 passes for (1 + i)²; Compute Engine 0.30.2 also rejects the correct 1/(1 + i). Compare real and imaginary parts at every seeded point (complex brief).
-430. Open: code `isclose` on complex results: `float(complex)` fails and the harness falls back to `==`; complex-aware `isclose` with tolerance in Python and C++ (complex brief).
-431. Open: `plane` has no vector-field or slope-field layer and cannot trace a trajectory from a dragged start; add slider-bound field layers and an RK4 trajectory (vector-calc, odes briefs).
-432. Open: no 3D canvas (with 241) and no complex-mapping canvas; vector-calc level 3 uses fixed oblique projections, complex uses a pair of planes. A rotatable 3D canvas (drag, depth order, vectors, curves, surfaces, field arrows) and a z-plane grid beside its image under f.
-433. Open: `expression` grades one scalar only: a 3D curl or cross product is graded per component; accept a vector answer in one widget (vector-calc brief).
-434. Open: `order` grades one fixed sequence and has no distractor lines; proofs with interchangeable steps need `same` groups, flawed-line spotting needs `choice` or a tapped `table` (proof, linear-maps briefs).
-435. Open: `vectors` canvas: `derive` cannot read `state.matrix`, and other vectors do not move through the matrix (linear-maps brief).
-436. Open: `walk` draws only the walk: no S_n² − n, (q/p)^S_n, bankroll or stopped-average overlay, no slider-bound barriers, no mean-reverting model (markov L5, odes briefs).
-437. Open: expression answers cannot use `\min` or a capital N; `\epsilon` and `\varepsilon` may differ as symbols (analysis brief).
+429. Done (engine breadth pass 2, grading): `exprEqual` compares real and imaginary parts at every seeded point when an `i` appears (own complex evaluator over MathJSON; `1/(1+i)` = `(1-i)/2`; `3-4i` and `0` rejected); real-only grading unchanged (1,837 pairs identical).
+430. Done: complex-aware `isclose` in the Python harness (`cmath.isclose`, same tolerances, NumPy complex too) and the C++ harness (`std::complex` printed as `{ re, im }`, `expect: { re, im }`, `CHECK_CLOSE` takes complex); defaults kept (rel 1e-9, abs 1e-12), per-case `tol` already existed.
+431. Done (plane): `field`, `slopeField` and `trajectory` layers (slider-bound formulas, `normalise`, `colourBy: "magnitude"`, fixed-step RK4 from a draggable point or fixed `starts`, `values()` `<id>EndX` and `<id>EndY` for derive); arrow and step counts capped.
+432. Done: the `space` canvas (rotatable 3D in SVG: drag, keys and pinch rotate and zoom; points, vectors, curves, surfaces, spans and planes, fields; slider-bound formulas; depth order by painter's algorithm) and the `complex-map` canvas (a z-plane beside the image of its grid under f(z), slider-bound f, draggable z, `p1.u` and `p1.v` for derive).
+433. Done: one `expression` takes a vector or matrix (`(2, -1, 3)`, a `pmatrix`, `\langle\rangle`), compared entry by entry; wrong size returns key `length` with a line.
+434. Done: `order` `distractors` (a "Left out" list, keys: distractor ids and `left-out`); `same` groups already existed (item 201).
+435. Done (vectors): `state.matrix` (or `transform`) maps every vector not marked `fixed: true`, drags store the preimage (pseudo-inverse when singular), and derive reads `matrix`, `m11` to `m22`, `det`, `trace` and `image.<id>`, and can write `matrix`.
+436. Done (walk): overlays `sq`, `ratio`, `bankroll` and `expr` as panels under the walk, average at stopping (`showStopped`, `stopAt`, `drawn`), `lower` and `upper` bindable to sliders, `model: "ou"`, and `values()` for derive.
+437. Done: `\min`/`\max` (rewritten to (a+b-/+|a-b|)/2), capital `N` and `D`, and `\epsilon` = `\varepsilon` in expression answers (text fallback too).
+
+Raised by engine breadth pass 2 (the `space` canvas, `complex-map`, grading):
+
+438. `space`: drag in 3D. A draggable point or vector head (held to a plane or an axis, for example the xy-plane at fixed z) with `points()` and `place()`, so the `drag-point` widget works on a 3D point; the camera basis for the ray to plane maths is already in `space.js`.
+439. `space`: true 3D arrowheads. Heads are flat screen-space triangles, so a vector pointing at the viewer shows only a dot-sized head; a small cone built from quads would also help depth cues.
+440. `space`: exact intersections. Painter's order is per piece, so two large interpenetrating pieces (a plane and a surface cutting through each other's middles) can show a jagged seam; a cut line (plane against surface, level curves, contours on a surface) would fix it and is useful in its own right.
+441. `space`: opt-in `wheel: true` zoom and an `autoRotate` camera patch (left out so a wheel does not hijack page scroll).
+442. `space`: a `tangent: { surface, at }` shorthand for tangent planes and gradient helpers (authors can build them from `planes` with `through` and `normal` formulas today).
+443. `space`: smooth shading. Cells are flat-shaded in 16 levels, so a coarse surface shows its cells; Gouraud shading needs per-vertex colour, so the likely route is more cells within the budget or a bitmap for surfaces only.
+444. `space`: highlight glow across interleaved pieces. The glow is a filter per run of pieces, so when other objects sort between an object's pieces the later run lies over the earlier one (cosmetic, seen on a vector lying in a highlighted plane).
+445. Done by `complex-map` (item 432): the other half of the 3D item, a z-plane grid beside its image under f.
+446. `expression`: a bare `i` is now the imaginary unit, so a real answer that uses `i` as an index or variable is read as complex and both parts are compared. Only `markov/homework-3` does this (`i(20-i)`, `20i-i^2`: identical polynomials, so it still passes); authors should use `k`, `j` or `n`. A warning in the validator for a bare `i` in a real answer would catch new cases.
+447. `drill.js` keeps its own Python `isclose`, which compares floats only; it needs the same `cmath` branch if a drill ever returns complex values.
+448. `complex-map`: tap mode, a domain restriction on the grid (lines span the whole visible z-plane), curve labels, and a conformal-grid option for unequal units are not built.

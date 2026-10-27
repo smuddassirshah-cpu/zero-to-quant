@@ -1,4 +1,4 @@
-# Canvases B: plane, bars, distribution, scatter, series, walk, matrix, vectors, graph, array, payoff, orderbook
+# Canvases B: plane, bars, distribution, scatter, series, walk, matrix, vectors, complex-map, graph, array, payoff, orderbook, space
 
 Authors write `canvas: { "kind", "params", "state", "controls" }` (AUTHORING.md section 4). This file gives, per kind, the exact params, state keys, highlightable ids and the `change` events each one emits, with one JSON example each. It also covers the `slider` and `sketch` widgets.
 
@@ -118,6 +118,25 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - `state.ci: { n, size, mu, sigma, seed, level, known, label }` draws n confidence intervals from repeated seeded samples, one per row (give `y: [0, n + 1]`), the misses in the negative colour, mu dashed, and "k of n miss" at the top (`label: "{misses} of {n} miss"`); `values().misses` and `values().covered` feed a derive caption, and a control on `ci.n` adds samples (the same draws each time).
 - Segments are tap targets in tap mode (by id; `tap: false` opts out).
 - Derive targets for `vlines` and `hlines` work by id like any list item: `"derive": { "v1.x": "mu + 1.96 * se" }`.
+
+**Integration pass 8 additions: vector fields, slope fields and trajectories (item 431)**
+
+Three optional layers on a `plane`, in `params` (fixed) or `state` (a state entry merges over the params entry with the same `id`; give the whole entry with its `id` when patching). Each is one object or a list of objects. Formulas use the same expression language as curves: `x`, `y`, the `params` (so a slider bound to a param redraws the layer, like a slider-bound curve), `+ - * / ^` and the usual functions. `hide: ["F"]` hides a layer by id but it still runs, so a trajectory can follow a field that is not drawn. All three are untouched by existing planes: a plane without these keys draws exactly as before.
+
+- `field: { id, P, Q, grid, spacing, normalise, length, colour, colourBy, colourHigh, range, anchor, maxArrows }`: arrows of (P(x, y), Q(x, y)).
+  - `grid` is the number of columns (default about one per 34 px of the plot) or `[columns, rows]`. Arrows sit at multiples of a nice step (so the origin and integers are nodes) and are kept clear of the frame. `spacing: s | [dx, dy]` sets the step in data units instead.
+  - `normalise: true` draws every arrow the same length (`length` px, default 80% of the cell, 8 to 30); otherwise length grows with magnitude, the largest arrow (or `range[1]`) taking the full length.
+  - `colour` is a slot 1 to 6 or a named colour (default `"muted"`, a quiet grey, so a trajectory stands out). `colourBy: "magnitude"` ramps the colour from `colour` (default slot 1) at the weakest arrow to `colourHigh` (default slot 2) at the strongest, in eight steps (one path element per step, so it stays cheap). `range: [lo, hi]` fixes the magnitudes at the two ends, so the colours and lengths do not shift as a slider moves.
+  - `anchor: "tail"` puts each arrow's tail on its node (default: centred). `maxArrows` (default 360, at most 600) caps the count: the step widens until the grid fits, so a phone never draws more.
+  - Arrow directions are drawn in screen space, so use `equal: true` for true angles. A zero or undefined vector leaves its node empty.
+- `slopeField: { id, f, grid, spacing, length, colour, colourBy, colourHigh, range, maxArrows }`: for dy/dx = f(x, y), a short segment of that slope at each node, all the same length (`length` px). `colourBy: "magnitude"` colours by steepness (the angle, by default; `range` instead gives |f| for the two ends). Same grid options as `field`.
+- `trajectory: { id, in, from, starts, step, length, back, by, maxSteps, arrow, dashed, colour, label }`: the solution curve through a start, by fixed-step RK4.
+  - `in` is the id of a `field` or `slopeField` (default: the first field, else the first slope field).
+  - `from` is a point id (a point with `drag: true`, or one a `drag-point` widget moves, so the curve redraws on every pointer frame) or `[x, y]`. `starts: [[x, y] | pointId, ...]` adds fixed starts (up to 24), each drawn the same way with a dot where it begins.
+  - A field is followed in time: `dx/dt = P, dy/dt = Q`. A slope field is followed in x. `length` is how far to go (default 10 for a field, the plot width for a slope field); `step` the RK4 step (default `length / 200`; the steps are adjusted to divide `length` exactly, so a full orbit closes). `back: true` also runs backwards for the same distance, or `back: 4` for that distance. `by: "arc"` follows the field normalised, so `length` and `step` are distances along the curve (default length three times the plot diagonal): use it for fields whose speed varies wildly, or for steep slope fields.
+  - `maxSteps` (default 2000, at most 5000) caps the work per curve and direction: a curve that would need more is cut short. The curve stops at the plot's edge (the last step is cut exactly at the edge), at a stationary point and where the field is undefined (a square root of a negative number).
+  - `arrow: false` removes the arrowhead at the forward end. `label` sits at the forward end.
+  - `values()` gives `<id>EndX` and `<id>EndY`, the forward end of the `from` curve, to `derive` (`values.TEndX`) and captions.
 
 ## bars
 
@@ -345,6 +364,32 @@ Random walks or price paths from the seeded RNG.
 
 **Integration pass 6 additions:** `model: "markov"` with `states: ["Bull", "Flat", "Bear"]`, `P` (row-stochastic) and `start` (a state or an index) simulates state paths, drawn as steps on a y axis labelled with the states. `xStep: 1` gives whole-number step ticks. With both barriers, `showHits` counts the top and the bottom separately ("6 hit the top, 11 the bottom (of 20)"; `{up}` and `{down}` in `hitsLabel`; method `hitCounts()`). A control `{ "reseed": true, "label": "New paths" }` is a button that draws the next seeded run.
 
+**Integration pass 8 additions (item 436)**
+
+- `model: "ou"` (also `"mean-reverting"`, `"ar1"`): X(n+1) = X(n) + `theta` (`mu` - X(n)) + `sigma` Z on the seeded normal draws, from `start`. `theta`, `mu` and `sigma` are slider-bindable, and sliding them morphs the same paths. The level `mu` is a dashed line labelled "mu = 2" (`meanLine: false` hides it, `levelLabel` renames it). `showMean` draws the expected path mu + (start - mu)(1 - theta)^n; `showSpread: k` draws the +/- k sd band of the AR(1) variance. Give `y: [lo, hi]` so the axis holds still while sliders move.
+- `lower`, `upper` (params): barrier levels that replace `barriers[0]` and `barriers[1]`. A control `{ "bind": "upper", "min": 2, "max": 20, "step": 1 }` moves the barrier; hit dots, counts, `stopAtBarrier` paths and the stopped average redraw live, and the slider opens on the barrier. The held y range resets when a barrier moves.
+- `stopAt: n` (param): a fixed stopping step; tau = min(first barrier hit, `stopAt`, `steps`). A dashed line marks it (`stopLabel` renames "stop"). With `stopAtBarrier` paths end at tau.
+- `drawn: n` (param): draw only n paths (and the bold one); all `paths` still count in hits, stopped values and the running average. Use 300 paths with `drawn: 30`.
+- `overlays` (params): the panels that can sit under the walk, each on the walk's step axis and its own y scale. An entry is an id string or `{ id, type, label, chip, colour, y, ... }`:
+  - `"sq"`: (S_n - n m)^2 - n v^2 for the walk's drift m and variance v^2; at p = 1/2 and step 1 it is S_n^2 - n. `centred: false` gives the literal S_n^2 - n.
+  - `"ratio"`: (q/p)^S_n with p and q the walk's own step probabilities (coin); for the normal model exp(-2 mu S_n / sigma^2). Not defined for markov or ou, or p of 0 or 1.
+  - `"bankroll"`: `bankroll` (start, default 100) plus the winnings of a bet every step. `bet` (param, overlay key or `state.bet`): `"fixed"` (`stake`, default 1), `"double"` (stake, doubled after each loss, back to stake after a win), `"fraction"` (`fraction` of the bankroll, default 0.1). A bet never exceeds the bankroll or `maxBet`; at zero the bankroll stays ruined. `bankroll`, `stake` and `fraction` take sliders.
+  - `{ "id": "cube", "expr": "S^3 - 3 * n * S" }`: any formula in `n` (step), `x` (position), `S` (position less start, in steps for the coin), `p`, `q`, `start`, `step` and the numeric params; `label` and `stopLabel` take `$...$`.
+  - `y: [lo, hi]` fixes an overlay's range; otherwise ratio and bankroll trim the top at the 95th percentile of the per-path maxima. `overlayHeight` (default 84) is each panel's plot height in px. `toggles: false` hides the chips.
+- `state.overlays`: the ids shown (a list; `true` for all, the default; `false` for none). Each overlay also has a chip under the canvas (`chip` renames it). A chip emits `{ type: "overlay", id, on, overlays }`.
+- `state.showStopped`: `true` or `"walk"` (S_tau), an overlay id, or a list. Adds a panel per entry: the running mean of the stopped value over the first k paths against k, a dashed line at the start value, and "start" and "mean" labels; stopped values are dots at tau on the paths. Needs several seeded paths (100 or more).
+- `state.bet`: the bankroll rule, patchable.
+- **ids:** also `mean-level` (ou), `stop-time`, `ov-{id}` (an overlay), `stopped-{key}` (a running-mean line), `stopped-ref`.
+- **methods:** also `values()` (numbers for derive: `paths`, `hits`, `hitsUp`, `hitsDown`, `stopAt`, `tau`, `tauMean`, `endMean`, `stopped`, `stoppedSE`, `stoppedValues`, `runningMean`, and `stopped<Id>`, `stopped<Id>SE`, `runningMean<Id>`, `ruined<Id>` per overlay, for example `stoppedRatio`), `stopTimes()`, `stopped(key)`, `runningMean(key)` (key `"walk"` or an overlay id) and `getParam(name)`.
+
+```json
+{ "kind": "walk",
+  "params": { "steps": 80, "p": 0.5, "paths": 300, "drawn": 30, "barriers": [-8, 8], "overlays": ["sq"], "sim": { "seed": 7 } },
+  "state": { "stopAtBarrier": true, "showStopped": true },
+  "derive": { "caption": "Mean at the stop: {{fixed(values.stopped, 2)}}" },
+  "controls": [{ "bind": "upper", "min": 2, "max": 20, "step": 1, "label": "Upper barrier" }] }
+```
+
 ## matrix
 
 **params**
@@ -414,9 +459,41 @@ Random walks or price paths from the seeded RNG.
 - `angles: [{ id, a, b, label, right: true, radius }]`: an arc (or a right-angle square) between two arrows at `a`'s tail.
 - `lines: [ids]`: each vector's span as its own band (several eigen-lines at once). `segments: [{ id, from: [x, y] | vectorId, to: [x, y] | vectorId, dashed, colour, label }]`: plain lines without heads. `head: false` on a vector drops its arrowhead.
 - `lockTo: "u"` (a vector id) or `[dx, dy]` on a vector holds its dragged head to that line through the origin, for projection drags.
-- `state.matrix: [[a, b], [c, d]]` or `state.transform: { angle (degrees), shear, scale }` gives the basis (its columns): the grid, `b1`, `b2` and the image of the unit square (`unitsq`) follow. Controls bind `m11`, `m12`, `m21`, `m22`, `angle`, `shear`, `scale`.
+- `state.matrix: [[a, b], [c, d]]` or `state.transform: { angle (degrees), shear, scale }` gives the basis (its columns): the grid, `b1`, `b2` and the image of the unit square (`unitsq`) follow. Item 435: the matrix also acts on every vector, each drawn as its image (a `from: [x, y]` tail is mapped too, a chain follows its vector), so `sum`, `project`, `span`, `lines`, `angles` and `segments` that name vectors work on the images; `fixed: true` on a vector keeps it where it is (an input shown beside its image). Points and bare-coordinate segment ends are not mapped. `state.basis` alone still draws the grid and leaves vectors alone. Controls bind `m11`, `m12`, `m21`, `m22`, `angle`, `shear`, `scale`, or a derive writes `"matrix": "[[a, b], [c, d]]"` from params `a` to `d`.
+- Dragging a mapped vector moves its head in the image plane and stores the preimage; a singular matrix (det 0) uses the pseudo-inverse, so the head slides along the image line. `points()` gives heads as drawn and `place(id, [x, y])` takes a drawn position.
+- Derive reads (names, from `state.params`, only while a matrix is set): `matrix`, `m11`, `m12`, `m21`, `m22`, `det`, `trace`, and `image.<id>` (each vector's arrow as drawn: the matrix applied unless `fixed`, then `scale`), for example `"caption": "det = {{fixed(det, 2)}}, T u = ({{fixed(image.u[0], 2)}}, {{fixed(image.u[1], 2)}})"`.
 - Default colours: a vector without `colour` takes the next slot no other vector uses, so two never share by accident. A vector added by a keyed patch gets its colour too.
 - A `sumLabel` that would sit on a vector label moves below; a scaled plain-text label reads "0.6 × Equity fund".
+
+## complex-map
+
+A z-plane beside a w-plane showing what `w = f(z)` does to a grid, the unit circle, curves and points. Panels are side by side at 540 px and stack (one above the other) under 500 px wide; both use equal units, so angles stay true and `x`, `y`, `wx`, `wy` are minimum ranges.
+
+**params**
+- `f`: a formula in `z` (default `"z"`). Operators `+ - * /`, `^` or `**`, unary minus, implicit multiplication (`2z`, `a z`, `2(z + 1)`); constants `i`, `pi`, `e`; functions `exp`, `log` (alias `ln`, principal branch, arg in (-pi, pi]), `sqrt` (principal), `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh`, `conj`, `abs`, `arg`, `re`, `im` (the last three return a real number), `pow(a, b)`. Whole powers up to 64 use repeated multiplication. A pole or an undefined value is not drawn.
+- `params: { "a": 1 }`: numbers (or `[re, im]`) usable by name in `f` and in curve formulas; state.params overrides, so controls bind them (`{ "bind": "a" }`).
+- `x`, `y` (z-plane, default `[-2, 2]`), `wx`, `wy` (w-plane, default as `x`, `y`), `height` (panel height in px), `stack` (`true` or `false` forces the layout), `xLabel`, `yLabel` (default Re, Im), `zLabel`, `wLabel` (panel titles, KaTeX allowed; default "z-plane", "w-plane").
+- `grid`: `"cartesian"` (default), `"polar"`, `"both"` or `"none"`; `gridStep` (default a round number giving about eight lines), `rStep` (polar circles, default `gridStep`), `rays` (polar rays, default 12); `unitCircle: true` draws |z| = 1 and its image dashed.
+- `curves: [{ id, z: "formula in t", t: [from, to], colour, dashed, n }]`: any curve z(t) and its image, such as `"t + 2i"` (a line) or `"2 exp(i t)"` (a circle).
+- `points: [{ id, x, y, label, imageLabel, colour, drag }]` (also in state): `x`, `y` are the real and imaginary parts of z.
+
+**state**: `f`, `grid`, `gridStep`, `rStep`, `rays`, `unitCircle` (patchable; a frames control can switch `f`), `params` (numbers for `f`), `points` and `curves` (keyed patches by id), `hide: [ids]`, `highlight`, `caption`.
+
+**ids**: `grid-x` (lines Re z = const), `grid-y` (Im z = const), `grid-r` (circles), `grid-th` (rays), `unit`, curve ids, point ids (z) and `<id>-image` (f(z)). A group's id lights it in both panels.
+
+**modes**: `drag` (a point with `drag: true`, or those named by a `drag-point` widget; emits `{ type: "drag", id, x, y, phase }`) and `slider`. **methods**: `points()`, `place(id, [x, y])`, `evaluate(z)` (z an id or `[re, im]`, returns `[re, im]`), `setParam`, `getParam`.
+
+**derive**: each point carries `u` and `v`, the real and imaginary parts of f(z) (`p1.u`, `p1.v`), for captions such as `"f(z) = {{fixed(p1.u, 2)}} + {{fixed(p1.v, 2)}}i"`.
+
+Sampling: each curve starts with 180 to 240 samples, is subdivided where the image moves more than 9 px between samples, clipped to the panel, and broken at poles and at jumps such as the branch cut of `log`. A point whose image is outside the w-plane is drawn hollow at the edge.
+
+```json
+{ "kind": "complex-map",
+  "params": { "f": "z + a/z", "params": { "a": 1 }, "x": [-2, 2], "y": [-2, 2], "wx": [-3, 3], "wy": [-3, 3], "grid": "both", "unitCircle": true, "wLabel": "$w = z + a/z$" },
+  "state": { "points": [{ "id": "p1", "x": 0.8, "y": 0.6, "label": "$z$", "drag": true }] },
+  "derive": { "caption": "f(z) = {{fixed(p1.u, 2)}} + {{fixed(p1.v, 2)}}i" },
+  "controls": [{ "bind": "a", "min": 0.2, "max": 1.6, "step": 0.1, "start": 1, "label": "a" }] }
+```
 
 ## graph
 
@@ -584,6 +661,51 @@ Payoff or profit and loss at expiry against the price of the underlying.
 - `bids` and `asks` live in state, seeded from params: a list replaces a side; a map keyed by price sets a size (`{ "100.5": 300 }`), adds a level or removes one (`null`); a map keyed by level index patches a level (`{ "0": { "1": 350 } }`, which a control bound to `bids.0.1` writes). A level's third entry is a label (`[100.5, 300, "#17"]`, an order id), shown beside its size. Give `depth` to reserve rows for levels that arrive.
 - `state.quotes: { "bid": [p, s], "ask": [p, s] }` merges the learner's own quotes into the book, labelled "You" (`youLabel`), in the manipulable colour; `state.fair` (or `params.fair`) adds a fair value to the spread row, so sliders on fair, half-spread and skew (with a derive writing `quotes`) move the learner's quotes in the book.
 - `decimals` for the average fill price, `midDecimals` for the mid (default: one more place when the mid falls between ticks), `spreadUnit: "pence" | "bp"` for the spread.
+
+## space
+
+A rotatable 3D view in plain SVG: axes, a box and grid, points, vectors, curves, polylines, surfaces, planes and spans, and a vector field. Orthographic by default. Drawn with a painter's algorithm (far pieces first), so a vector through a surface, a curve over a surface or a plane cutting a bowl all read correctly. Built on `ZQ.cvb`; code in `space.js`.
+
+**Camera**
+- `params.camera: { az, el, zoom }` is the opening view: azimuth and elevation in degrees (z is up; az -60, el 25 by default; el stays within -89 and 89), zoom 0.4 to 3. `state.camera` patches it and tweens. `params.perspective` (0 to 1, default 0) adds weak perspective; patchable as `state.perspective`.
+- Drag (mouse, pen or touch) rotates: right and left turn the azimuth, down and up the elevation. A drag starts after 5 px, so a tap on a target still taps. Two fingers pinch-zoom. With the picture focused: arrow keys rotate 5 degrees (Shift 15), `+` and `-` zoom, `0` or Home resets. A "Reset view" button (off with `resetButton: false`) animates back to the first-drawn camera. Controls may bind `az`, `el` and `zoom`.
+- `touchScroll: true` lets a vertical touch scroll the page (touch then turns the azimuth only). Otherwise a finger on the picture never scrolls.
+- The svg has `role="group"`, an `aria-label` made from `params.aria` plus the object names and the key help, and a polite live region that reads the angles after a key press.
+
+**params**
+- `x`, `y`, `z`: ranges `[min, max]` (default -5 to 5 each). `equal: true` keeps equal units on all three axes (use it when perpendicular must look perpendicular); `aspect: [a, b, c]` sets the box proportions; otherwise the box is a cube whatever the ranges. `height` 240 to 640 (default 420; the width is 540 like the other canvases).
+- `axes`, `ticks`, `box` (true by default; patchable, and `state.hide: ["axes", "ticks", "box", "grid"]` hides them), `grid: "back"` (default: a faint grid on the three faces turned away from you), `"floor"` or `false`, `axisLabels: ["$x$", "$y$", "$z$"]`.
+- `params: { "a": 1 }`: numbers usable in every formula; `state.params` overrides them, and a bound slider writes there.
+- The lists below, each an array of objects with an `id`. Each is also patchable by id from state (`{ "vectors": { "u": { "v": [1, 2, 3] } } }`; a new id adds, `null` removes). Items may be `hidden: true` and revealed with `state.show: ["id"]`, or hidden with `state.hide`. Colour is `colour: 1..6`; unset items take the first free slot (a plane takes the colour of the first vector in its span).
+
+**Formulas** are curve formulas as in `plane` (`^` is a power, `-x^2` is -(x^2), `pi`, `e`, `sin`, `exp`, `sqrt`, `sum(k, 0, n, term)` ...). A coordinate may be a number or a formula string (`"v": ["a", "b", "a + b"]`). The variable is `t` in a curve, `x` and `y` in `z = f(x, y)`, `u` and `v` in a parametric surface, `x`, `y`, `z` in a field; every name in `params.params` is available everywhere.
+
+**Lists**
+- `points: [{ id, p: [x, y, z], label, labelPos, open, drop, r, colour }]`. `x`, `y`, `z` may replace `p`. `on: "s"` takes z from surface `s` (give x and y); `at: "r", t: 1.5` rides curve `r` at parameter `t` (a number or a formula such as `"t0"`). `drop: true` adds a dashed line to the floor. `labelPos` is a compass point (default `ne`).
+- `vectors: [{ id, v: [dx, dy, dz], from, label, labelPos, dashed, head, drop, colour }]`. `from` is `[x, y, z]`, a point id, or another vector's id (the arrow starts at that vector's tip, so chains work to any depth). `labelPos: "end"` (default) or `"mid"`. `head: false` draws a plain segment.
+- `curves: [{ id, x, y, z, t: [from, to], n, label, labelAt, dashed, width, colour }]`: r(t) = (x(t), y(t), z(t)); `z` defaults to 0. The `t` ends may be formulas (`[0, "T"]`), so a slider grows the curve. `n` samples, 8 to 600 (default 160). `labelAt` is a `t`. `width: "bold"`.
+- `lines: [{ id, pts: [[x, y, z], ...], closed, dashed, label, colour }]`: a polyline through given points.
+- `surfaces: [{ id, z: "x^2 - y^2", x: [lo, hi], y: [lo, hi], n, ... }]` is z = f(x, y) over the given ranges (default: the box). `{ id, x: "...", y: "...", z: "...", u: [a, b], v: [c, d], n }` is parametric (a sphere is `1.5*sin(u)*cos(v)`, `1.5*sin(u)*sin(v)`, `1.5*cos(u)`). `n` is cells each way, 2 to 40 (default 24; `[nu, nv]` too). `shade: "light"` (default), `"flat"`, or `"height"` (colour runs from `colour` to `colour2` with z). `wire: true` draws the cell edges over the shading; `wire: "only"` is a hidden-line wireframe. `opacity` 0.05 to 1. `clip: "clamp"` (default for z = f: a surface leaving the box is cut flat at the top and bottom), `"drop"` (cells with a corner outside are dropped) or `"none"` (default for parametric). `label` sits at the highest point of the surface on screen (or at `labelAt: [x, y]`).
+- `planes: [{ id, span: ["u", "v"], through, ... }]`: the plane spanned by two vectors (ids of vectors on this canvas, or `[x, y, z]`), through the origin or `through: [x, y, z]`, clipped to the box. One vector gives a line. Or `normal: [a, b, c]` with `through` (a point on it) or `d` (the plane `n . p = d`). `extent: [lo, hi]` (or `[a0, a1, b0, b1]`) draws a finite parallelogram patch of a span instead (`a u + b v` with the coefficients in the range). `res` cells each way, 3 to 24 (default 10). `opacity` (default 0.22). `labelAt: [x, y, z]`.
+- `fields: [{ id, F: ["-y", "x", "0.3"], n: 5, normalise, scale, at, label, colour }]`: an arrow F(x, y, z) at each point of an n by n by n grid (1 to 7 each way, or `[nx, ny, nz]` up to 9, capped at 343 arrows). Lengths follow the size of F (the longest is 0.9 of a grid cell); `normalise: true` makes them equal; `scale` multiplies them. `n: [6, 6, 1]` with `at: [0, 0, 1]` is a flat slice at z = 1.
+
+**state**
+- `camera`, `perspective`, `params`, every list (patchable by id), `show`, `hide`, `highlight`, `caption`, `selected`.
+- Object ids are the item ids; `highlight` glows every piece of the object, `mark` recolours it (graded classes, no badge).
+
+**modes:** `tap` (every object is one target; a dot or arrow on a surface wins over the surface; tap-regions `answer` and `among` name item ids; emits `{ type: "tap", id, on, selected }`), `slider`. Rotation works without `enable` (and is off in a still copy: the Why? sheet, `clone`).
+**events:** `change` with `{ type: "rotate", az, el, zoom, end }` on every rotation frame (`end: true` on release, a key press or reset). **methods:** `setParam(name, v)` (`az`, `el`, `zoom`, a dotted state path, or a param), `getParam(name)`, `camera()` (`{ az, el, zoom }`), `reset()`, `project(x, y, z)` (a data point's position in the 540-wide drawing: `{ x, y, depth }`), `values()`.
+
+**derive:** items are read by id (`u.v`, `P.p`, `s.z`, `camera.az`) and written like any list (`"w.v.2": "a * 2"`). `values.P` is a point's resolved `[x, y, z]` (a point `on` a surface or `at` a curve included) and `values.u` a vector's tip: `"caption": "P is at height {{round(values.P[2], 2)}}"`.
+
+**Limits:** the cells of all surfaces and planes together are held near 1,600 (every `n` is scaled down together above that), fields at 343 arrows, curves at 600 samples. Typical scenes redraw in under 10 ms; keep a phone in mind before asking for 40 by 40 and a wire.
+
+```json
+{ "kind": "space",
+  "params": { "x": [-4, 4], "y": [-4, 4], "z": [-4, 4], "equal": true, "camera": { "az": -55, "el": 24 },
+    "vectors": [{ "id": "u", "v": [3, 0, 1], "label": "$\\mathbf{u}$" }, { "id": "v", "v": [0, 3, 2], "label": "$\\mathbf{v}$" }],
+    "planes": [{ "id": "cs", "span": ["u", "v"], "label": "column space" }] } }
+```
 
 ## Widget: slider
 
