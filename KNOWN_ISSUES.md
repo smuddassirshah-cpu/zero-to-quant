@@ -1,7 +1,7 @@
 # KNOWN ISSUES
 
 Open at migration (27 Oct 2026)
-- The full playthrough has not finished since 26 Oct; the 27 Oct run reached 223 of 1,108 items, all green, before the session limit.
+- Full playthrough (27 Oct): lessons and sets all green; the browser closed at exam topic-1.3 (after about 1,100 items in one browser), so the remaining exams and routes threw. A background command is killed at 2 hours; split the run (lessons, `--sets`, `--exams` plus `--routes-only`).
 - `docs/BACKLOG-INBOX.md` holds about 136 unnumbered engine bullets awaiting pass 7.
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
 - Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams.
