@@ -1,0 +1,2269 @@
+{
+ "id": "topic-2.1",
+ "topic": "2.1",
+ "name": "Machine learning topic exam",
+ "minutes": 90,
+ "pass": 0.7,
+ "skills": {
+  "sl-setup": "Prediction and generalisation",
+  "sl-tradeoff": "Bias-variance trade-off",
+  "sl-linear": "Linear models and features",
+  "sl-regularise": "Regularisation",
+  "sl-classify": "Classification",
+  "vl-cv": "Cross-validation",
+  "vl-time": "Time-ordered validation",
+  "vl-leakage": "Leakage",
+  "vl-overfit": "Selection and overfitting",
+  "en-trees": "Decision trees",
+  "en-bagging": "Bagging and random forests",
+  "en-boosting": "Boosting",
+  "en-interpret": "Interpreting models",
+  "fm-labels": "Labelling",
+  "fm-features": "Financial features",
+  "fm-sizing": "From prediction to position",
+  "fm-eval": "Evaluating strategies"
+ },
+ "items": [
+  {
+   "id": "e-gap-reading",
+   "difficulty": 2,
+   "skills": [
+    "sl-setup",
+    "sl-tradeoff"
+   ],
+   "title": "Choosing a degree",
+   "prose": "A desk fits polynomials to 24 intraday spread snapshots and scores each fit on 500 fresh ones. Errors are in pence squared.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Degree",
+      "Training MSE",
+      "Test MSE"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.25",
+       "0.32"
+      ],
+      [
+       "2",
+       "0.13",
+       "0.18"
+      ],
+      [
+       "6",
+       "0.10",
+       "0.49"
+      ],
+      [
+       "10",
+       "0.09",
+       "2.57"
+      ]
+     ],
+     "align": [
+      "center",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which degree should the desk trade on?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "d2",
+      "text": "Degree 2",
+      "correct": true
+     },
+     {
+      "id": "d10",
+      "text": "Degree 10",
+      "why": "You picked the lowest training MSE. Training error falls with every extra term, so it cannot rank models."
+     },
+     {
+      "id": "d1",
+      "text": "Degree 1",
+      "why": "You chose the simplest model. It underfits: its test MSE of 0.32 is well above degree 2's 0.18."
+     },
+     {
+      "id": "d6",
+      "text": "Degree 6",
+      "why": "You took the middle of the range without reading the test column. Its test MSE of 0.49 is nearly triple degree 2's."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Degree 2 has the lowest test MSE, 0.18.",
+    "generic": "Compare the test column, not the training one."
+   },
+   "explain": {
+    "text": "Training MSE falls from 0.25 to 0.09 as the degree rises, which says nothing about new data. Test MSE bottoms at degree 2, then climbs to 2.57 at degree 10. The best fit to the training points has memorised their noise.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "e-gini-node",
+   "difficulty": 2,
+   "skills": [
+    "en-trees"
+   ],
+   "title": "Impurity of a node",
+   "prose": "A credit tree has a node holding 20 loans. Six defaulted and fourteen repaid.",
+   "question": "What is the node's Gini impurity? Give two decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.42,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a number between 0 and 0.5",
+    "label": "Gini impurity",
+    "accept": "0.42: $1 - 0.3^2 - 0.7^2$",
+    "wrong": [
+     {
+      "id": "rate",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.21,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The Gini impurity is $1 - 0.3^2 - 0.7^2 = 0.42$.",
+    "generic": "Use $G = 1 - \\sum_k p_k^2$ with the shares of defaults and repayments.",
+    "byKey": {
+     "rate": "You gave the default rate, 0.3. Gini is $1 - p_D^2 - p_R^2$, which is not $p_D$.",
+     "half": "You computed $p(1-p) = 0.21$. With two classes the Gini is twice that, $2p(1-p)$."
+    }
+   },
+   "explain": {
+    "text": "The class shares are $p_D = 0.3$ and $p_R = 0.7$, so $G = 1 - 0.09 - 0.49 = 0.42$. A pure node scores 0. An even split scores the maximum, 0.5."
+   }
+  },
+  {
+   "id": "e-first-touch",
+   "difficulty": 2,
+   "skills": [
+    "fm-labels"
+   ],
+   "title": "Which barrier first?",
+   "prose": "A long trade enters at £50.00. Volatility at entry is 1.5%, and the barriers sit $2\\sigma$ either side. The time limit is 8 days.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "px",
+       "label": "Close",
+       "values": [
+        50.0,
+        50.8,
+        49.9,
+        49.2,
+        48.4,
+        49.6,
+        51.2,
+        52.1,
+        51.8
+       ]
+      }
+     ],
+     "money": "£",
+     "y": [
+      47.5,
+      53
+     ],
+     "hlines": [
+      {
+       "id": "up",
+       "y": 51.5,
+       "label": "profit £51.50"
+      },
+      {
+       "id": "lo",
+       "y": 48.5,
+       "label": "stop £48.50"
+      }
+     ],
+     "xLabel": "Days after entry",
+     "indexFrom": 0,
+     "height": 260
+    },
+    "state": {}
+   },
+   "question": "What is the triple-barrier label?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "stop",
+      "text": "−1, stopped out on day 4",
+      "correct": true
+     },
+     {
+      "id": "late",
+      "text": "+1, because the path later closes above the upper barrier",
+      "why": "You read the whole path. Only the first barrier touched counts, and the stop came first."
+     },
+     {
+      "id": "end",
+      "text": "0, because the path ends only £1.80 above the entry",
+      "why": "You used the final close. A time-out is labelled 0 only when no barrier is touched."
+     },
+     {
+      "id": "below",
+      "text": "−1, stopped out on day 3",
+      "why": "You treated any close below £50.00 as the stop. The stop is £48.50, first crossed on day 4."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The lower barrier is touched first, on day 4.",
+    "generic": "Find each barrier in pounds, then read the closes in order until one is touched."
+   },
+   "explain": {
+    "text": "The barriers are $50 \\times 1.03$, which is £51.50, and $50 \\times 0.97$, which is £48.50. Day 4 closes at £48.40 and touches the lower one first. Later closes cannot change the label."
+   }
+  },
+  {
+   "id": "e-walk-first-test",
+   "difficulty": 2,
+   "skills": [
+    "vl-time",
+    "vl-cv"
+   ],
+   "title": "The first walk-forward fold",
+   "prose": "Twelve monthly rows, January to December. A researcher calls `TimeSeriesSplit(n_splits=4, test_size=2)`.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 1,
+     "cols": 12,
+     "rowHeads": false,
+     "colHeads": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Tap the two months in the first fold's test block.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1c5",
+     "r1c6"
+    ],
+    "countWord": "months",
+    "wrong": [
+     {
+      "id": "first-two",
+      "set": [
+       "r1c1",
+       "r1c2"
+      ]
+     },
+     {
+      "id": "last-block",
+      "set": [
+       "r1c11",
+       "r1c12"
+      ]
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Fold 1 tests May and June.",
+    "generic": "The four test blocks of two rows fill the end of the sample. Fold 1 is the earliest block.",
+    "byKey": {
+     "first-two": "You took the first two rows. A walk-forward test needs training rows before it, so the blocks sit at the end.",
+     "last-block": "You tapped the last block, which is fold 4. Fold 1 is the earliest of the four.",
+     "r1c1": "January is a training month in every fold, so it cannot be in a test block.",
+     "r1c2": "February is a training month in every fold, so it cannot be in a test block."
+    }
+   },
+   "explain": {
+    "text": "Four blocks of two rows take the last 8 rows, May to December. Fold 1 tests May and June and trains on January to April. Each later fold trains on everything before its block.",
+    "canvas": {
+     "shade": {
+      "train": {
+       "ids": [
+        "r1c1",
+        "r1c2",
+        "r1c3",
+        "r1c4"
+       ],
+       "colour": 2
+      },
+      "test": {
+       "ids": [
+        "r1c5",
+        "r1c6"
+       ],
+       "colour": 4
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "e-kelly-odds",
+   "difficulty": 2,
+   "skills": [
+    "fm-sizing"
+   ],
+   "title": "Staking a coin flip with odds",
+   "prose": "A model says a trade wins with probability 0.5. A win pays £1.50 per £1 staked, and a loss costs the £1.",
+   "question": "What fraction of capital does full Kelly stake? Give three decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.167,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a fraction of capital",
+    "label": "Kelly fraction",
+    "accept": "0.167: $0.5 - 0.5/1.5$",
+    "wrong": [
+     {
+      "id": "even-odds",
+      "value": 0.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "edge",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.083,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Kelly stakes $f = 0.5 - 0.5/1.5 = 0.167$ of capital.",
+    "generic": "Use $f = p - (1-p)/b$ with $b = 1.5$.",
+    "byKey": {
+     "even-odds": "You used $2p - 1$, which holds only when a win pays £1 per £1. Here $b = 1.5$, so the bet has an edge.",
+     "edge": "You gave the expected profit per £1, 0.25. Kelly divides that edge by the odds $b$.",
+     "half": "You halved the answer. That is half Kelly, not the full Kelly fraction."
+    }
+   },
+   "explain": {
+    "text": "Kelly is $f = p - (1-p)/b = 0.5 - 0.5/1.5 = 0.167$. The bet has an edge although $p = 0.5$, because a win pays more than a loss costs. At even odds the formula would give 0."
+   }
+  },
+  {
+   "id": "e-fit-count",
+   "difficulty": 2,
+   "skills": [
+    "vl-cv",
+    "vl-overfit"
+   ],
+   "title": "Counting fits",
+   "prose": "A researcher tunes a ridge penalty on 800 loans. `GridSearchCV` tries 6 values of alpha with 5-fold cross-validation and the default `refit=True`.",
+   "question": "How many times is a Ridge model fitted in total?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 31,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "label": "Number of fits",
+    "accept": "31: $6 \\times 5 + 1$",
+    "wrong": [
+     {
+      "id": "no-refit",
+      "value": 30,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "values",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "added",
+      "value": 11,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "per-fold",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "There are $6 \\times 5 = 30$ fold fits plus one refit.",
+    "generic": "Count one fit for each pair of alpha and fold, then add what `refit=True` does at the end.",
+    "byKey": {
+     "no-refit": "You counted $6 \\times 5 = 30$ and stopped. With `refit=True` the winner is fitted once more on all training rows.",
+     "values": "You counted the alphas only. Each alpha is fitted once per fold.",
+     "added": "You added 6 and 5. Every alpha meets every fold, so multiply.",
+     "per-fold": "You counted the folds only. The search repeats them for each alpha."
+    }
+   },
+   "explain": {
+    "text": "Each of the 6 values is fitted on 5 training folds, which is 30 fits. The search then refits the best alpha once on all the rows. That makes 31."
+   }
+  },
+  {
+   "id": "e-bias-var-table",
+   "difficulty": 3,
+   "skills": [
+    "sl-tradeoff"
+   ],
+   "title": "Which model has the lower expected test error?",
+   "prose": "Noise in next-day volume has variance 4. Three models were refitted on 200 resamples, which gave each one's bias and variance at one point. Expected test MSE is noise plus bias squared plus variance.",
+   "question": "Fill in the expected test MSE of each model.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Model",
+     "Bias",
+     "Variance",
+     "Expected test MSE"
+    ],
+    "rows": [
+     [
+      "Degree-9 polynomial",
+      "0.7",
+      "5.51",
+      {
+       "edit": true,
+       "answer": 10.0,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "Ridge, alpha = 10",
+      "1.2",
+      "2.06",
+      {
+       "edit": true,
+       "answer": 7.5,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "Mean only",
+      "2.4",
+      "0.34",
+      {
+       "edit": true,
+       "answer": 10.1,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Ridge has the lowest expected test error, 7.50.",
+    "generic": "Add the noise variance 4, the squared bias and the variance.",
+    "byKey": {
+     "r0c3": "Square the bias first: $0.7^2 = 0.49$. Then add $4 + 0.49 + 5.51$.",
+     "r1c3": "Square the bias first: $1.2^2 = 1.44$. Then add $4 + 1.44 + 2.06$.",
+     "r2c3": "Square the bias first: $2.4^2 = 5.76$. Then add $4 + 5.76 + 0.34$."
+    }
+   },
+   "explain": {
+    "text": "Expected test MSE is $4 + \\text{bias}^2 + \\text{variance}$, which gives 10.00, 7.50 and 10.10. Ridge accepts some bias to cut variance by more than the bias costs. The noise of 4 is a floor that no model can beat."
+   }
+  },
+  {
+   "id": "e-leak-rows",
+   "difficulty": 3,
+   "skills": [
+    "vl-leakage",
+    "vl-time"
+   ],
+   "title": "Features that know too much",
+   "prose": "A model predicts each share's return over the next month. Every feature is dated at a month-end, and the model may use only what was known at that close.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Feature",
+      "How it is built"
+     ],
+     "rows": [
+      [
+       "`mom12`",
+       "Return over the 12 months to this month-end"
+      ],
+      [
+       "`eps_surprise`",
+       "Q1 earnings surprise: EPS reported on 14 May, dated 30 April"
+      ],
+      [
+       "`in_ftse100`",
+       "Whether the share is in today's FTSE 100, used as the universe for 2005 to 2024"
+      ],
+      [
+       "`vol20`",
+       "Sd of the last 20 daily returns to this month-end"
+      ],
+      [
+       "`z_mom`",
+       "`mom12` minus its 2005 to 2024 mean, over its 2005 to 2024 sd"
+      ],
+      [
+       "`rating`",
+       "Analyst consensus read on 1 June, dated 31 May"
+      ],
+      [
+       "`ratio50`",
+       "Close over its 50-day mean, minus 1"
+      ],
+      [
+       "`rank_mom`",
+       "`mom12` ranked across all shares listed on this date"
+      ]
+     ],
+     "tap": "rows",
+     "align": [
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Tap every feature that uses information from after its date.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r1",
+     "r2",
+     "r4",
+     "r5"
+    ],
+    "countWord": "features",
+    "wrong": [
+     {
+      "id": "dated-only",
+      "set": [
+       "r1",
+       "r5"
+      ]
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Four features use facts from after their date.",
+    "generic": "For each feature, ask whether you could have computed it at the close of the month it is dated.",
+    "byKey": {
+     "dated-only": "You caught the two features published after their dates. Today's index list and the full-sample z-score also use later facts.",
+     "r0": "Twelve months of closes up to the month-end are all known at that close.",
+     "r3": "Twenty daily returns up to the month-end are all known at that close.",
+     "r6": "A close over its own trailing mean uses past closes only.",
+     "r7": "A rank across shares on one date uses only that date's values."
+    }
+   },
+   "explain": {
+    "text": "The earnings surprise and the rating were published after their dates. Today's index list drops firms that later died, and the z-score uses later years' mean and sd. The other four use closes up to the date only."
+   }
+  },
+  {
+   "id": "e-boost-residuals",
+   "difficulty": 3,
+   "skills": [
+    "en-boosting"
+   ],
+   "title": "Shrunk boosting by hand",
+   "prose": "Six trades of sizes 1 to 6 have impact $y$ in basis points: 2, 4, 3, 8, 9, 10. Round 1 fits one stump, which splits between sizes 3 and 4 and predicts the mean of each side. Boosting starts from 0 and shrinks each tree by a learning rate of 0.5.",
+   "question": "Fill in the missing cells after round 1.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Size",
+     "y",
+     "Round 1 prediction",
+     "Residual"
+    ],
+    "rows": [
+     [
+      "1",
+      "2",
+      {
+       "edit": true,
+       "answer": 1.5,
+       "tol": {
+        "abs": 0.005
+       }
+      },
+      "0.5"
+     ],
+     [
+      "2",
+      "4",
+      "1.5",
+      "2.5"
+     ],
+     [
+      "3",
+      "3",
+      "1.5",
+      "1.5"
+     ],
+     [
+      "4",
+      "8",
+      {
+       "edit": true,
+       "answer": 4.5,
+       "tol": {
+        "abs": 0.005
+       }
+      },
+      {
+       "edit": true,
+       "answer": 3.5,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "5",
+      "9",
+      "4.5",
+      "4.5"
+     ],
+     [
+      "6",
+      "10",
+      "4.5",
+      "5.5"
+     ],
+     [
+      "Sum of squared residuals",
+      "",
+      "",
+      {
+       "edit": true,
+       "answer": 71.5,
+       "tol": {
+        "abs": 0.05
+       }
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "The stump predicts 1.5 and 4.5 after shrinking, and the squared residuals sum to 71.5.",
+    "generic": "Take each side's mean, multiply by 0.5, then subtract from $y$.",
+    "byKey": {
+     "r0c2": "The left mean is $(2 + 4 + 3)/3 = 3$. The learning rate scales it: $0.5 \\times 3 = 1.5$.",
+     "r3c2": "The right mean is $(8 + 9 + 10)/3 = 9$. The learning rate scales it: $0.5 \\times 9 = 4.5$.",
+     "r3c3": "A residual is $y$ minus the shrunk prediction: $8 - 4.5 = 3.5$. Using the unshrunk 9 would give $-1$.",
+     "r6c3": "Square the six residuals and add: 0.25, 6.25, 2.25, 12.25, 20.25 and 30.25."
+    }
+   },
+   "explain": {
+    "text": "The stump predicts 3 on the left and 9 on the right, and shrinking halves both. Each residual is $y$ minus that shrunk value. The squared residuals sum to 71.5, down from 274 with no model."
+   }
+  },
+  {
+   "id": "e-frac-diff",
+   "difficulty": 3,
+   "skills": [
+    "fm-features"
+   ],
+   "title": "Choosing d",
+   "prose": "A desk fractionally differences the log of a price, with weights cut off below $10^{-4}$. Its rule keeps the smallest $d$ whose variance ratio is below 0.2. That is the most memory the series can keep and still pass. The table comes from 1,500 seeded days.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "d",
+      "Variance ratio",
+      "Correlation with level"
+     ],
+     "rows": [
+      [
+       "0.30",
+       "0.263",
+       "0.95"
+      ],
+      [
+       "0.40",
+       "0.202",
+       "0.89"
+      ],
+      [
+       "0.45",
+       "0.166",
+       "0.85"
+      ],
+      [
+       "0.50",
+       "0.139",
+       "0.79"
+      ],
+      [
+       "1.00",
+       "0.049",
+       "0.04"
+      ]
+     ],
+     "align": [
+      "center",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which $d$ does the rule choose?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "d45",
+      "text": "$d = 0.45$",
+      "correct": true
+     },
+     {
+      "id": "d30",
+      "text": "$d = 0.3$",
+      "why": "You kept the most memory, with correlation 0.95. But its variance ratio of 0.263 fails the rule."
+     },
+     {
+      "id": "d40",
+      "text": "$d = 0.4$",
+      "why": "You rounded 0.202 down to 0.2. The ratio must be below 0.2, so $d = 0.4$ just fails."
+     },
+     {
+      "id": "d50",
+      "text": "$d = 0.5$",
+      "why": "It passes, but 0.45 also passes and keeps more memory. The rule asks for the smallest passing $d$."
+     },
+     {
+      "id": "d1",
+      "text": "$d = 1$",
+      "why": "You chose the plain return. It passes, but its correlation with the level is 0.04, so the memory is gone."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The smallest $d$ below 0.2 is $d = 0.45$.",
+    "generic": "Find the first row whose variance ratio is under 0.2."
+   },
+   "explain": {
+    "text": "The ratio is 0.202 at $d = 0.4$, which fails, and 0.166 at $d = 0.45$, which passes. Larger $d$ also passes but throws memory away. The correlation with the level falls from 0.85 to 0.04 at $d = 1$.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "e-ridge-shrink",
+   "difficulty": 3,
+   "skills": [
+    "sl-regularise"
+   ],
+   "title": "How far does ridge shrink?",
+   "prose": "A return model uses z-scored features that are uncorrelated, over 250 months. Each column has mean 0 and sum of squares 250. The least squares slope on momentum is 0.60. We refit with `Ridge(alpha=100)`.",
+   "question": "What is the ridge slope on momentum? Give three decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.429,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "a slope",
+    "label": "Ridge slope",
+    "accept": "0.429: $0.60 \\times 250/(250 + 100)$",
+    "wrong": [
+     {
+      "id": "subtract",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "divide",
+      "value": 0.006,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "unchanged",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Ridge scales the slope to $0.6 \\times 250/350 = 0.429$.",
+    "generic": "With these columns, ridge gives $\\hat\\beta = \\sum xy / (250 + \\alpha)$.",
+    "byKey": {
+     "subtract": "You subtracted $\\alpha/n = 0.4$, as the lasso would. Ridge scales the slope instead of cutting it by a fixed amount.",
+     "divide": "You divided by $1 + \\alpha$. The 250 rows sit in the denominator too: $250/(250 + 100)$.",
+     "unchanged": "A penalty acts on every coefficient, large or small. Here it multiplies the slope by 0.714."
+    }
+   },
+   "explain": {
+    "text": "For uncorrelated z-scored columns, ridge multiplies each slope by $n/(n + \\alpha) = 250/350 = 0.714$. So $0.60$ becomes $0.429$. The lasso would subtract a fixed amount instead."
+   }
+  },
+  {
+   "id": "e-oob-overlap",
+   "difficulty": 3,
+   "skills": [
+    "en-bagging",
+    "vl-time"
+   ],
+   "title": "A forest that scores itself too kindly",
+   "prose": "A random forest of 500 trees predicts whether the next 10 days' return is positive, from 1,200 daily rows in date order. Its out-of-bag accuracy is 0.71. A walk-forward test on the same rows gives 0.52, against a base rate of 0.50.",
+   "question": "Why do the two scores differ so much?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "overlap",
+      "text": "Neighbouring days share most of their 10-day labels, so rows next to an out-of-bag day carry its answer",
+      "correct": true
+     },
+     {
+      "id": "train",
+      "text": "Out-of-bag rows were used to fit the trees, so 0.71 is a training score",
+      "why": "You treated out-of-bag as training error. Each row is scored only by trees that never saw it; the leak comes from its neighbours."
+     },
+     {
+      "id": "few",
+      "text": "500 trees is too few for the out-of-bag estimate to settle",
+      "why": "You blamed the tree count. More trees steady the estimate but cannot remove a bias from overlapping labels."
+     },
+     {
+      "id": "fewer-rows",
+      "text": "Walk-forward trains on fewer rows, so it understates the forest",
+      "why": "You trusted the larger training sets. Fewer rows cost a little accuracy, not 19 points."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Overlapping labels let out-of-bag rows borrow their neighbours' answers.",
+    "generic": "Ask which rows a random bootstrap leaves in the bag, and what they share with an out-of-bag day."
+   },
+   "explain": {
+    "text": "A bootstrap draws rows at random, so each out-of-bag day has near-twins in the bag. Yesterday and tomorrow share most of its 10-day label. That is the leak of shuffled cross-validation, so the walk-forward 0.52 is the honest score."
+   }
+  },
+  {
+   "id": "e-break-even-cost",
+   "difficulty": 3,
+   "skills": [
+    "fm-eval"
+   ],
+   "title": "What cost can the smoothed signal bear?",
+   "prose": "A signal earns 3.6 basis points a day gross and trades 0.45 of capital a day. A no-trade band smooths it: turnover falls to 0.30 and gross falls to 3.3 basis points a day. Costs are charged on every unit traded.",
+   "question": "At what one-way cost, in basis points per unit traded, does the smoothed signal break even?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11,
+    "tol": {
+     "abs": 0.1
+    },
+    "placeholder": "basis points per unit traded",
+    "label": "Break-even cost",
+    "unit": "bp",
+    "accept": "11: $3.3/0.30$",
+    "wrong": [
+     {
+      "id": "unsmoothed",
+      "value": 8,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "no-turnover",
+      "value": 3.3,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "product",
+      "value": 0.99,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Break-even is $3.3/0.30 = 11$ basis points per unit.",
+    "generic": "Net P&L a day is gross minus cost times turnover. Set it to zero.",
+    "byKey": {
+     "unsmoothed": "You used the unsmoothed numbers, $3.6/0.45 = 8$. The band changes both gross and turnover.",
+     "no-turnover": "You gave the gross, 3.3. Costs fall on the units traded, so divide by the turnover of 0.30.",
+     "product": "You multiplied gross by turnover. Break-even divides: the gross per day over the units traded per day."
+    }
+   },
+   "explain": {
+    "text": "Net P&L per day is gross minus cost times turnover, and it is zero at $c^* = 3.3/0.30 = 11$ basis points. The unsmoothed signal breaks even at 8. Smoothing buys 3 basis points of room."
+   }
+  },
+  {
+   "id": "e-odds-update",
+   "difficulty": 3,
+   "skills": [
+    "sl-classify"
+   ],
+   "title": "Reading a logistic coefficient",
+   "prose": "A logistic model for loan default has a coefficient of 0.45 on leverage, in log-odds per turn of leverage. A loan at leverage 2 has a default probability of 10%. Nothing else changes.",
+   "question": "What is the default probability at leverage 4? Give a percentage to one decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.215,
+    "tol": {
+     "abs": 0.0015
+    },
+    "placeholder": "a percentage",
+    "label": "Default probability",
+    "unit": "%",
+    "accept": "21.5%: odds $0.111 \\times e^{0.9} = 0.273$",
+    "wrong": [
+     {
+      "id": "prob-times",
+      "value": 0.246,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "odds-as-prob",
+      "value": 0.273,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The odds rise from 0.111 to 0.273, a probability of 21.5%.",
+    "generic": "The coefficient acts on the log-odds, so two more turns multiply the odds by $e^{0.9}$.",
+    "byKey": {
+     "prob-times": "You multiplied the probability by $e^{0.9}$. The coefficient multiplies the odds, not the probability.",
+     "odds-as-prob": "You stopped at the odds, 0.273. Convert them: probability is odds over one plus odds."
+    }
+   },
+   "explain": {
+    "text": "At leverage 2 the odds are $0.10/0.90 = 0.111$. Two more turns multiply them by $e^{0.45 \\times 2} = 2.46$, which gives 0.273. The probability is $0.273/1.273 = 21.5\\%$."
+   }
+  },
+  {
+   "id": "e-code-gbm-stop",
+   "difficulty": 3,
+   "skills": [
+    "en-boosting",
+    "en-trees",
+    "vl-time"
+   ],
+   "title": "How many trees?",
+   "prose": "A desk forecasts next-day volatility with boosted trees. The rows are in date order, and the last rows must stay unseen when the trees are fitted.",
+   "question": "Complete `early_stop_round(X, y, n_train, learning_rate)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingRegressor\n\ndef early_stop_round(X, y, n_train, learning_rate):\n    \"\"\"Rows are in date order. Fit 300 depth-2 trees on the first n_train\n    rows, score every stage on the rows after them, and return\n    (best_round, validation_mse): the 1-based round with the lowest\n    validation MSE, and that MSE rounded to 4 places.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom sklearn.ensemble import GradientBoostingRegressor\n\ndef early_stop_round(X, y, n_train, learning_rate):\n    \"\"\"Rows are in date order. Fit 300 depth-2 trees on the first n_train\n    rows, score every stage on the rows after them, and return\n    (best_round, validation_mse): the 1-based round with the lowest\n    validation MSE, and that MSE rounded to 4 places.\"\"\"\n    model = GradientBoostingRegressor(n_estimators=300, learning_rate=learning_rate,\n                                      max_depth=2, random_state=0)\n    model.fit(X[:n_train], y[:n_train])\n    mse = [float(np.mean((p - y[n_train:]) ** 2)) for p in model.staged_predict(X[n_train:])]\n    best = int(np.argmin(mse))\n    return best + 1, round(mse[best], 4)\n",
+    "examples": [
+     {
+      "call": "early_stop_round(X, y, 250, 0.1)",
+      "expect": "(143, 11.3048)",
+      "compare": "isclose",
+      "setup": "X, y = make_vol(3)",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "early_stop_round(X, y, 250, 0.1)",
+      "expect": "(143, 11.3048)",
+      "compare": "isclose",
+      "setup": "X, y = make_vol(3)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "early_stop_round(X, y, 250, 0.02)",
+      "expect": "(142, 11.788)",
+      "compare": "isclose",
+      "setup": "X, y = make_vol(3)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "early_stop_round(X, y, 300, 0.1)",
+      "expect": "(119, 11.2883)",
+      "compare": "isclose",
+      "setup": "X, y = make_vol(5)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "early_stop_round(X, y, 300, 0.5)",
+      "expect": "(10, 11.7553)",
+      "compare": "isclose",
+      "setup": "X, y = make_vol(5)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "early_stop_round(X, y, 200, 0.05)",
+      "expect": "(69, 12.8732)",
+      "compare": "isclose",
+      "setup": "X, y = make_vol(11)",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "how": "Check runs 5 hidden tests on seeded data. The first run loads scikit-learn, which can take 20 to 40 seconds. Later runs take a second or so.",
+    "prelude": "import numpy as np\n\ndef make_vol(seed, n=400):\n    \"\"\"Next-day volatility of a share (% a year), days in date order.\n    Five z-scored signals; two of them interact; noise sd 3.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 5))\n    y = 20 + 3 * np.tanh(2 * X[:, 0]) + 2 * X[:, 1] * X[:, 2] + 2 * X[:, 3] + rng.normal(0, 3, n)\n    return X, y\n",
+    "budget": 40000
+   },
+   "feedback": {
+    "correct": "The trees train on the early rows and the stage curve is read on the later ones.",
+    "generic": "Some tests failed. Fit on the first `n_train` rows only, then score every stage on the rows after them.",
+    "byKey": {
+     "test-1": "Test 1 fits on the first 250 days and scores the last 150. A shuffled split or a training score gives a different round.",
+     "test-3": "Test 3 expects the round counted from 1. `argmin` counts from 0.",
+     "error": "If the starter stopped, fill in the function body first. Python reports the line."
+    }
+   },
+   "explain": {
+    "text": "`staged_predict` gives the forecast after each tree, so one fit yields the whole validation curve. The best round is the position of the lowest value plus one, because rounds count from 1. The validation rows come after the training rows, so the choice never uses the future."
+   }
+  },
+  {
+   "id": "e-lookahead-lines",
+   "difficulty": 3,
+   "skills": [
+    "fm-features",
+    "vl-leakage"
+   ],
+   "title": "Hidden look-ahead in a feature script",
+   "prose": "A feature script builds a panel of daily features, one row per stock and date. Each feature at date $t$ may use only data up to the close of $t$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "features.py",
+     "lines": [
+      "g = df.groupby('stock')",
+      "df['r5'] = g['close'].pct_change(5)",
+      "df['sm'] = df['ret'].rolling(5, center=True).mean()",
+      "df['q'] = df.groupby('date')['mom'].rank(pct=True)",
+      "df['q2'] = g['mom'].rank(pct=True)",
+      "df['z'] = (df.vol - df.vol.mean()) / df.vol.std()",
+      "df['v20'] = g['ret'].transform(lambda s: s.rolling(20).std())",
+      "df['back'] = g['close'].shift(1) / df['close'] - 1",
+      "# eps is published 6 weeks after quarter_end",
+      "df = df.merge(eps, on=['stock', 'quarter_end'])"
+     ],
+     "numbers": true,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Tap every line that lets a feature see data after its date.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l3",
+     "l5",
+     "l6",
+     "l10"
+    ],
+    "countWord": "lines",
+    "wrong": [
+     {
+      "id": "no-merge",
+      "set": [
+       "l3",
+       "l5",
+       "l6"
+      ]
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Four lines look ahead.",
+    "generic": "Check each window, each ranking group and each statistic: which dates does it read?",
+    "byKey": {
+     "no-merge": "You found three. The merge on `quarter_end` also looks ahead, because earnings come out weeks after that date.",
+     "l2": "`pct_change(5)` looks back five days, which is allowed.",
+     "l4": "Ranking within one date compares shares on that day only.",
+     "l7": "A trailing 20-day window ends on the current day.",
+     "l8": "`shift(1)` brings in yesterday's close, a lag.",
+     "l1": "This line only groups the rows."
+    }
+   },
+   "explain": {
+    "text": "A centred window reads two days past the date. Ranking by stock compares each day with that stock's whole history. The full-sample mean and sd read every date, and the merge attaches earnings weeks before they were published.",
+    "canvas": {
+     "shade": {
+      "leak": [
+       "l3",
+       "l5",
+       "l6",
+       "l10"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "e-lasso-raw-units",
+   "difficulty": 3,
+   "skills": [
+    "sl-regularise",
+    "sl-linear"
+   ],
+   "title": "A lasso on raw units",
+   "prose": "A desk fits a lasso for next-month return on raw features: momentum in %, volatility in %, size in £ millions (sd about 7,400), turnover as a fraction (sd about 0.004) and value.",
+   "question": "Which statements are true? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Size has a tiny coefficient per £1m, so the lasso charges it almost nothing for staying in.",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Turnover needs a very large coefficient, so the lasso is likely to cut it even if it matters.",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "Quoting size in £ billions instead would leave the lasso fit unchanged.",
+      "why": "You assumed units do not matter. A £1bn unit makes the coefficient 1,000 times bigger, and so its penalty."
+     },
+     {
+      "id": "d",
+      "text": "Standardising each column with the training rows' mean and sd puts the penalty on a common scale.",
+      "correct": true
+     },
+     {
+      "id": "e",
+      "text": "Fitting the scaler on all rows is harmless, because a scaler has no coefficients.",
+      "why": "You overlooked that its means and sds come from the rows. Test rows then shape the inputs."
+     },
+     {
+      "id": "f",
+      "text": "Rescaling a column changes the forecasts of ordinary least squares as much as the lasso's.",
+      "why": "You applied the penalty argument to least squares. Without a penalty, its forecasts do not change when a column is rescaled."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The penalty depends on units, and training-only standardising fixes that.",
+    "generic": "Ask what each unit does to the size of a coefficient, and what the lasso charges for size."
+   },
+   "explain": {
+    "text": "A penalty on coefficient size depends on each feature's units. Size is huge, so its coefficient is tiny and nearly free. Turnover is tiny, so it needs a huge coefficient and gets cut."
+   }
+  },
+  {
+   "id": "e-importance-claims",
+   "difficulty": 3,
+   "skills": [
+    "en-interpret",
+    "en-bagging"
+   ],
+   "title": "Reading feature importance",
+   "prose": "A random forest predicts 20-day returns for 400 shares. Its feature list includes `ticker_id`, a unique number for each share.",
+   "question": "Which statements are true? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Impurity importance can rank `ticker_id` high, because trees can split on a unique number to memorise rows.",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Permutation importance on the training rows is a fair guide to what predicts new data.",
+      "why": "You permuted rows the trees have memorised. Use a held-out block to see what carries over."
+     },
+     {
+      "id": "c",
+      "text": "Permutation importance on a held-out block is near zero, or below, for a useless feature.",
+      "correct": true
+     },
+     {
+      "id": "d",
+      "text": "Two near-copies of a signal share the credit, so each looks weaker than the pair together.",
+      "correct": true
+     },
+     {
+      "id": "e",
+      "text": "A feature with zero importance has no relationship with the target.",
+      "why": "You read zero as no link. If a near-copy is in the model, permuting one feature costs little."
+     },
+     {
+      "id": "f",
+      "text": "Impurity importance is computed on the test set.",
+      "why": "You swapped the methods. Impurity importance comes from the training splits; permutation importance uses rows you choose."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Impurity importance can reward memorising, and held-out permutation exposes it.",
+    "generic": "Ask which rows each method reads, and what happens when two features carry the same information."
+   },
+   "explain": {
+    "text": "Impurity importance counts splits on the training rows, so a unique id can look useful. Permutation on held-out rows scores a useless feature near zero. Near-copies share the credit, so a low score does not prove no link."
+   }
+  },
+  {
+   "id": "e-interaction-slope",
+   "difficulty": 3,
+   "skills": [
+    "sl-linear"
+   ],
+   "title": "When the effect depends on another feature",
+   "prose": "A linear model forecasts next-month return from z-scored features: $\\hat y = 0.2 + 0.5\\,\\text{mom} - 0.3\\,\\text{vol} + 0.6\\,\\text{mom}\\times\\text{vol}$. A share has $\\text{vol} = 1.5$.",
+   "question": "By how much does the forecast change when its momentum rises by one sd?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.4,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "a number",
+    "label": "Change in forecast",
+    "accept": "1.4: $0.5 + 0.6 \\times 1.5$",
+    "wrong": [
+     {
+      "id": "main",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "product",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "added",
+      "value": 1.1,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The slope on momentum is $0.5 + 0.6 \\times 1.5 = 1.4$.",
+    "generic": "Hold vol fixed and collect every term that contains mom.",
+    "byKey": {
+     "main": "You used the main effect only. The interaction adds $0.6 \\times \\text{vol}$ to momentum's slope.",
+     "product": "You gave the interaction part alone, $0.6 \\times 1.5$. The main effect of 0.5 still applies.",
+     "added": "You added 0.5 and 0.6 without using vol. The interaction coefficient multiplies vol."
+    }
+   },
+   "explain": {
+    "text": "With vol fixed, momentum's slope is $0.5 + 0.6\\,\\text{vol}$. At vol = 1.5 that is $0.5 + 0.9 = 1.4$. The interaction makes momentum matter more when volatility is high."
+   }
+  },
+  {
+   "id": "e-rf-variance",
+   "difficulty": 3,
+   "skills": [
+    "en-bagging",
+    "en-trees"
+   ],
+   "title": "Variance of a forest",
+   "prose": "Each tree's prediction for one loan has variance $\\sigma^2 = 9$. Any two trees' predictions have correlation $\\rho = 0.25$. A forest averages $B = 200$ trees.",
+   "question": "What is the variance of the forest's prediction? Give two decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.28,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "a variance",
+    "label": "Forest variance",
+    "accept": "2.28: $0.25 \\times 9 + 0.75 \\times 9/200$",
+    "wrong": [
+     {
+      "id": "independent",
+      "value": 0.045,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "floor",
+      "value": 2.25,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "one-tree",
+      "value": 9,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "mixed",
+      "value": 6.75,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The variance is $\\rho\\sigma^2 + (1-\\rho)\\sigma^2/B = 2.28$.",
+    "generic": "Use $\\text{Var} = \\rho\\sigma^2 + (1-\\rho)\\sigma^2/B$ for an average of correlated predictions.",
+    "byKey": {
+     "independent": "You divided $\\sigma^2$ by $B$, as for independent trees. Correlated trees keep the part $\\rho\\sigma^2$.",
+     "floor": "You gave $\\rho\\sigma^2$ alone. The second term, $(1-\\rho)\\sigma^2/B = 0.034$, is small but not zero.",
+     "one-tree": "That is one tree's variance. Averaging 200 trees must lower it.",
+     "mixed": "You gave $(1-\\rho)\\sigma^2$. Dividing it by $B$ is what averaging does."
+    }
+   },
+   "explain": {
+    "text": "The average of correlated predictions has variance $\\rho\\sigma^2 + (1-\\rho)\\sigma^2/B$. Here that is $2.25 + 0.034 = 2.28$. More trees shrink only the second term, which is why random forests decorrelate their trees."
+   }
+  },
+  {
+   "id": "e-precision-recall",
+   "difficulty": 3,
+   "skills": [
+    "sl-classify"
+   ],
+   "title": "A crash detector that is mostly right",
+   "prose": "A classifier flags crash days over 1,000 trading days. It raised 40 alarms and caught 10 of the 25 crashes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "Crash",
+      "No crash"
+     ],
+     "rows": [
+      [
+       "Alarm",
+       "10",
+       "30"
+      ],
+      [
+       "No alarm",
+       "15",
+       "945"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ],
+     "rowHeads": true
+    },
+    "state": {}
+   },
+   "question": "Fill in the four measures as decimals.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Measure",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Precision",
+      {
+       "edit": true,
+       "answer": 0.25,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Recall",
+      {
+       "edit": true,
+       "answer": 0.4,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Accuracy",
+      {
+       "edit": true,
+       "answer": 0.955,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Accuracy of always saying no crash",
+      {
+       "edit": true,
+       "answer": 0.975,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Precision 0.25, recall 0.40, and accuracy of 0.955 against 0.975 for never alarming.",
+    "generic": "Read the counts: 10 caught, 30 false alarms, 15 missed, 945 quiet days called right.",
+    "byKey": {
+     "r0c1": "Precision is the share of alarms that were real: 10 of 40.",
+     "r1c1": "Recall is the share of crashes caught: 10 of 25.",
+     "r2c1": "Accuracy counts both kinds of right call: $(10 + 945)/1000$.",
+     "r3c1": "Never alarming is right on all 975 quiet days."
+    }
+   },
+   "explain": {
+    "text": "Precision is 10/40 = 0.25 and recall is 10/25 = 0.40. Accuracy is 955/1,000, yet saying no crash every day scores 975/1,000. For rare events, accuracy hides a poor detector."
+   }
+  },
+  {
+   "id": "e-code-ridge-inter",
+   "difficulty": 4,
+   "skills": [
+    "sl-linear",
+    "sl-regularise",
+    "sl-setup"
+   ],
+   "title": "An interaction, scaled and shrunk",
+   "prose": "A desk thinks momentum pays more when volatility is high. It adds their product as a feature and regularises with ridge. The rows are share-months in date order.",
+   "question": "Complete `ridge_interaction_test_mse(X, y, alpha, n_train)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_interaction_test_mse(X, y, alpha, n_train):\n    \"\"\"Rows are in date order. Train on the first n_train rows, test on the rest.\n    Add one column: the product of the first two RAW columns.\n    Standardise every column with the training rows' mean and sd\n    (population sd; a constant column keeps divisor 1).\n    Fit Ridge(alpha=alpha) and return the test MSE rounded to 4 places.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_interaction_test_mse(X, y, alpha, n_train):\n    \"\"\"Rows are in date order. Train on the first n_train rows, test on the rest.\n    Add one column: the product of the first two RAW columns.\n    Standardise every column with the training rows' mean and sd\n    (population sd; a constant column keeps divisor 1).\n    Fit Ridge(alpha=alpha) and return the test MSE rounded to 4 places.\"\"\"\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    X = np.column_stack([X, X[:, 0] * X[:, 1]])\n    mu = X[:n_train].mean(axis=0)\n    sd = X[:n_train].std(axis=0)\n    sd = np.where(sd == 0, 1.0, sd)\n    Z = (X - mu) / sd\n    model = Ridge(alpha=alpha).fit(Z[:n_train], y[:n_train])\n    err = model.predict(Z[n_train:]) - y[n_train:]\n    return round(float(np.mean(err ** 2)), 4)\n",
+    "examples": [
+     {
+      "call": "ridge_interaction_test_mse(X, y, 10.0, 200)",
+      "expect": "1.1465",
+      "compare": "isclose",
+      "setup": "X, y = make_months(1)",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "ridge_interaction_test_mse(X, y, 10.0, 200)",
+      "expect": "1.1465",
+      "compare": "isclose",
+      "setup": "X, y = make_months(1)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "ridge_interaction_test_mse(X, y, 1.0, 200)",
+      "expect": "1.0307",
+      "compare": "isclose",
+      "setup": "X, y = make_months(2)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "ridge_interaction_test_mse(X, y, 50.0, 150)",
+      "expect": "0.9306",
+      "compare": "isclose",
+      "setup": "X, y = make_months(3)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "ridge_interaction_test_mse(X.tolist(), y.tolist(), 10.0, 200)",
+      "expect": "1.1465",
+      "compare": "isclose",
+      "setup": "X, y = make_months(1)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "ridge_interaction_test_mse(X, y, 5.0, 220)",
+      "expect": "1.1684",
+      "compare": "isclose",
+      "setup": "X, y = make_months(4)\nX = X.copy(); X[:, 2] = 0.6",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "how": "Check runs 5 hidden tests on seeded data. The first run loads scikit-learn, which can take 20 to 40 seconds. Test 4 passes lists, and test 5 has a constant column.",
+    "prelude": "import numpy as np\n\ndef make_months(seed, n=300):\n    \"\"\"Share-months in date order. Columns: momentum (%), volatility (%), value (book-to-price).\n    y: next-month return in %. Momentum pays more when volatility is high.\"\"\"\n    rng = np.random.default_rng(seed)\n    mom = 8.0 * rng.standard_normal(n)\n    vol = 30 + 10 * rng.standard_normal(n)\n    value = 0.6 + 0.3 * rng.standard_normal(n)\n    y = (0.5 + 0.06 * mom - 0.02 * (vol - 30) + 0.8 * (value - 0.6)\n         + 0.005 * mom * (vol - 30) + 1.0 * rng.standard_normal(n))\n    return np.column_stack([mom, vol, value]), y\n",
+    "budget": 40000
+   },
+   "feedback": {
+    "correct": "The product is built from raw columns, scaled with training statistics, and scored on later months.",
+    "generic": "Some tests failed. Split by position, build the product of the raw columns, then scale with training mean and sd only.",
+    "byKey": {
+     "test-1": "Test 1 checks the whole recipe on 300 months. A shuffled split, no product, a product of z-scores or a scaler fitted on every row all change the answer.",
+     "test-4": "Test 4 passes plain lists. Convert them with `np.asarray` before slicing columns.",
+     "test-5": "Test 5 has a constant column. Its sd is 0, so keep a divisor of 1 there.",
+     "error": "If the starter stopped, fill in the function body first. Python reports the line."
+    }
+   },
+   "explain": {
+    "text": "The product uses the raw columns, and every column is then standardised with the mean and sd of the training rows. Test rows reuse those numbers, so the future shapes nothing. Fitting on the early rows and scoring the later ones keeps the split in time order."
+   }
+  },
+  {
+   "id": "e-best-of-n",
+   "difficulty": 4,
+   "skills": [
+    "vl-overfit",
+    "fm-eval"
+   ],
+   "title": "What is left of the best Sharpe?",
+   "prose": "A researcher's log for a trend study is shown. A trial is any idea that met the data, whether fitted or only looked at. Her best signal has a Sharpe of 1.15 over 4 years of daily data. Her note says the best of the four we kept.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "research_log.txt",
+     "lines": [
+      "look  mom_20",
+      "fit   mom_20",
+      "look  mom_60",
+      "fit   mom_60",
+      "drop  mom_60",
+      "look  rev_5",
+      "fit   rev_5",
+      "fit   rev_5",
+      "look  value_chart",
+      "look  vol_ratio",
+      "fit   vol_ratio",
+      "note  try seasonality later",
+      "look  size_chart",
+      "fit   skew_20",
+      "fit   skew_20",
+      "drop  skew_20",
+      "fit   turnover_5"
+     ],
+     "numbers": true,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Subtract the rule-of-thumb bar $\\sqrt{2\\ln N}/\\sqrt{T}$ for the log's trials from 1.15. How much is left? Give two decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.13,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "a number",
+    "label": "Sharpe left",
+    "accept": "0.13: $1.15 - \\sqrt{2\\ln 8}/\\sqrt 4 = 1.15 - 1.02$",
+    "wrong": [
+     {
+      "id": "kept",
+      "value": 0.32,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "lines",
+      "value": -0.04,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "fitted-only",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "one",
+      "value": 1.15,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "There are 8 trials, a bar of 1.02, and 0.13 left.",
+    "generic": "Count the distinct ideas that were fitted or looked at, then apply the bar with $T = 4$.",
+    "byKey": {
+     "kept": "You counted the four signals she kept. Dropped and chart-only ideas met the data too, so they count.",
+     "lines": "You counted log lines, 17. Refitting an idea, a note or a drop adds no new trial.",
+     "fitted-only": "You counted the six fitted configs. `value_chart` and `size_chart` were judged by eye, and that counts.",
+     "one": "You took $N = 1$, which has no selection to remove. This search tried several ideas."
+    }
+   },
+   "explain": {
+    "text": "The log has 8 distinct trials: six fitted and two judged by eye. Noise alone gives the best of 8 over 4 years about $\\sqrt{2\\ln 8}/\\sqrt 4 = 1.02$. So $1.15 - 1.02 = 0.13$ is what is left."
+   }
+  },
+  {
+   "id": "e-code-meta-short",
+   "difficulty": 4,
+   "skills": [
+    "fm-labels"
+   ],
+   "title": "Labels for a long-and-short desk",
+   "prose": "A desk trades a moving-average crossover, long or short. A meta-label model decides whether to take each call, so it needs a label per call: 1 if the profit target was touched before the stop. This desk sets the target at $2\\sigma$ and the stop at $1\\sigma$.",
+   "question": "Complete `meta_labels_trade(prices, vol, sides, pt, sl, h)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef meta_labels_trade(prices, vol, sides, pt, sl, h):\n    \"\"\"One meta-label per entry day t = 0 .. len(prices) - h - 1,\n    skipping days where vol[t] is nan. sides[t] is +1 (long) or -1 (short).\n    Profit target pt * vol[t] and stop sl * vol[t], both measured from\n    the entry close prices[t]. A long profits above, a short below.\n    Read the next h closes in order. Return 1 if the profit target is\n    touched first; 0 if the stop is touched first or neither is.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef meta_labels_trade(prices, vol, sides, pt, sl, h):\n    \"\"\"One meta-label per entry day t = 0 .. len(prices) - h - 1,\n    skipping days where vol[t] is nan. sides[t] is +1 (long) or -1 (short).\n    Profit target pt * vol[t] and stop sl * vol[t], both measured from\n    the entry close prices[t]. A long profits above, a short below.\n    Read the next h closes in order. Return 1 if the profit target is\n    touched first; 0 if the stop is touched first or neither is.\"\"\"\n    out = []\n    for t in range(len(prices) - h):\n        if math.isnan(vol[t]):\n            continue\n        s = sides[t]\n        up = prices[t] * (1 + (pt if s == 1 else sl) * vol[t])\n        down = prices[t] * (1 - (sl if s == 1 else pt) * vol[t])\n        label = 0\n        for d in range(1, h + 1):\n            p = prices[t + d]\n            profit = p >= up if s == 1 else p <= down\n            stop = p <= down if s == 1 else p >= up\n            if stop:\n                break\n            if profit:\n                label = 1\n                break\n        out.append(label)\n    return out\n",
+    "examples": [
+     {
+      "call": "meta_labels_trade([100, 99, 98.1, 97.9], [0.02] * 4, [1] * 4, 2, 1, 3)",
+      "expect": "[0]",
+      "compare": "equal"
+     },
+     {
+      "call": "meta_labels_trade([100, 101, 102.2, 98, 95], [0.02] * 5, [-1] * 5, 2, 1, 4)",
+      "expect": "[0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "meta_labels_trade([100, 99, 98.1, 97.9], [0.02] * 4, [1] * 4, 2, 1, 3)",
+      "expect": "[0]",
+      "compare": "equal"
+     },
+     {
+      "call": "meta_labels_trade([100, 101, 102, 104.5, 103], [0.02] * 5, [1] * 5, 2, 1, 3)",
+      "expect": "[1, 0]",
+      "compare": "equal"
+     },
+     {
+      "call": "meta_labels_trade([100, 101, 102.2, 98, 95], [0.02] * 5, [-1] * 5, 2, 1, 4)",
+      "expect": "[0]",
+      "compare": "equal"
+     },
+     {
+      "call": "meta_labels_trade([100, 99, 97, 95.5], [0.02] * 4, [-1] * 4, 2, 1, 3)",
+      "expect": "[1]",
+      "compare": "equal"
+     },
+     {
+      "call": "meta_labels_trade([100, 100.5, 99.5, 100, 99.8, 100.2], [float(\"nan\"), 0.02, 0.02, 0.02, 0.02, 0.02], [1, -1, 1, -1, 1, -1], 2, 1, 3)",
+      "expect": "[0, 0]",
+      "compare": "equal"
+     },
+     {
+      "call": "meta_labels_trade([100, 150, 100, 100], [0.25] * 4, [1] * 4, 2, 1, 1)",
+      "expect": "[1, 0, 0]",
+      "compare": "equal"
+     },
+     {
+      "call": "meta_labels_trade([100, 75, 160, 100], [0.25] * 4, [1] * 4, 2, 1, 3)",
+      "expect": "[0]",
+      "compare": "equal"
+     },
+     {
+      "call": "len(meta_labels_trade(p, v, s, 2.0, 1.0, 10))",
+      "expect": "971",
+      "compare": "equal",
+      "setup": "p = make_prices(1000, 21); v = rolling_vol(p, 20); s = [1 if (t // 7) % 2 == 0 else -1 for t in range(len(p))]"
+     },
+     {
+      "call": "sum(meta_labels_trade(p, v, s, 2.0, 1.0, 10))",
+      "expect": "329",
+      "compare": "equal",
+      "setup": "p = make_prices(1000, 21); v = rolling_vol(p, 20); s = [1 if (t // 7) % 2 == 0 else -1 for t in range(len(p))]"
+     },
+     {
+      "call": "meta_labels_trade(p, v, s, 1.5, 1.0, 5)[:30]",
+      "expect": "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]",
+      "compare": "equal",
+      "setup": "p = make_prices(1000, 21); v = rolling_vol(p, 20); s = [1 if (t // 7) % 2 == 0 else -1 for t in range(len(p))]"
+     },
+     {
+      "call": "sum(meta_labels_trade(p, v, [-1] * len(p), 2.0, 1.0, 10))",
+      "expect": "271",
+      "compare": "equal",
+      "setup": "p = make_prices(1000, 21); v = rolling_vol(p, 20)"
+     }
+    ],
+    "how": "Check runs 11 hidden tests, compared with ==. Tests 6 and 7 put a close exactly on a barrier. The last four run on a seeded 1,000-day price series with sides that flip every 7 days.",
+    "prelude": "import math\nimport numpy as np\n\ndef make_prices(n=750, seed=21, mu=0.0003, sigma=0.012):\n    \"\"\"n + 1 daily closes from 100: daily log returns mu + sigma * noise.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = mu + sigma * rng.standard_normal(n)\n    return np.round(100 * np.exp(np.concatenate([[0.0], np.cumsum(r)])), 4).tolist()\n\ndef rolling_vol(prices, window=20):\n    \"\"\"vol[t]: sample sd of the last `window` simple returns ending on day t (nan before).\"\"\"\n    p = np.asarray(prices, dtype=float)\n    r = p[1:] / p[:-1] - 1\n    vol = [float('nan')] * len(p)\n    for t in range(window, len(p)):\n        vol[t] = float(np.std(r[t - window:t], ddof=1))\n    return vol\n"
+   },
+   "feedback": {
+    "correct": "Each call has its own profit side and stop side, and a time-out counts as 0.",
+    "generic": "Some tests failed. Build the two prices from the side, then read the closes in order and stop at the first touch.",
+    "byKey": {
+     "test-1": "Test 1 is a long that falls to its stop, a price of 98, before it can profit.",
+     "test-3": "Test 3 is a short. Its stop is above the entry and its profit target is below.",
+     "test-6": "Test 6 puts a close exactly on the profit barrier. A touch counts, so use $\\ge$ and $\\le$.",
+     "test-7": "Test 7 puts a close exactly on the stop. A touch counts, so the stop wins.",
+     "error": "If the starter stopped, fill in the function body first. Python reports the line."
+    }
+   },
+   "explain": {
+    "text": "A short profits below its entry and is stopped above it. The target and stop widths differ, so each side needs its own multiples of the volatility. A call that touches neither barrier in $h$ days is labelled 0."
+   }
+  },
+  {
+   "id": "e-boost-recipe",
+   "difficulty": 4,
+   "skills": [
+    "en-boosting",
+    "fm-labels",
+    "fm-features",
+    "vl-time",
+    "fm-eval"
+   ],
+   "title": "An honest boosted-tree study",
+   "prose": "A researcher builds a boosted-tree model of 10-day returns from daily data. The study must use time-ordered validation from the first step.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Label each entry day with the triple-barrier method and record the day each label ends."
+     },
+     {
+      "id": "s2",
+      "text": "Build features from trailing windows, so each uses closes up to its entry day only."
+     },
+     {
+      "id": "s3",
+      "text": "Hold out the last block of days as the test period, and purge the labels that reach into it."
+     },
+     {
+      "id": "s4",
+      "text": "Tune depth and learning rate by walk-forward folds with a gap of $h - 1$, stopping the trees early on each later block."
+     },
+     {
+      "id": "s5",
+      "text": "Refit the chosen model on the whole earlier block."
+     },
+     {
+      "id": "s6",
+      "text": "Score the test block once, against the base rate and net of costs, and report the number of settings tried."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ],
+    "same": [
+     [
+      "s1",
+      "s2"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Labels and features first, then the held-out test, tuning, the refit and one test score.",
+    "generic": "Cut the test block before anything is tuned, and score it once at the end."
+   },
+   "explain": {
+    "text": "Labels come first because the purge needs each label's end day. The test block is cut before any tuning, so no setting is chosen by looking at it. Tuning uses walk-forward folds with a gap, the refit uses every earlier row, and the test is scored once."
+   }
+  },
+  {
+   "id": "e-code-purged-roll",
+   "difficulty": 4,
+   "skills": [
+    "vl-time",
+    "vl-leakage"
+   ],
+   "title": "Walk-forward folds with a purge and a window",
+   "prose": "A desk walks forward over daily rows with a label that looks $h$ days ahead. It wants a rolling training window and a purge of the labels that reach into each test block.",
+   "question": "Complete `walk_forward_folds(n, n_splits, test_size, h, window=None)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def walk_forward_folds(n, n_splits, test_size, h, window=None):\n    \"\"\"Walk-forward folds for a label that looks h days ahead (row t is\n    labelled with days t + 1 to t + h). The last n_splits * test_size\n    rows are the test blocks, in order, each test_size rows long.\n    A fold trains on the rows before its block, minus the h - 1 rows\n    whose labels reach into it; with window given, only the latest\n    `window` of those rows. Return a list of\n    (train_start, train_end, test_start, test_end), half-open ranges.\n    Raise ValueError if any fold would have no training rows.\"\"\"\n    ...\n",
+    "solution": "def walk_forward_folds(n, n_splits, test_size, h, window=None):\n    \"\"\"Walk-forward folds for a label that looks h days ahead (row t is\n    labelled with days t + 1 to t + h). The last n_splits * test_size\n    rows are the test blocks, in order, each test_size rows long.\n    A fold trains on the rows before its block, minus the h - 1 rows\n    whose labels reach into it; with window given, only the latest\n    `window` of those rows. Return a list of\n    (train_start, train_end, test_start, test_end), half-open ranges.\n    Raise ValueError if any fold would have no training rows.\"\"\"\n    folds = []\n    for start in range(n - n_splits * test_size, n, test_size):\n        train_end = start - (h - 1)\n        if train_end <= 0:\n            raise ValueError(\"a fold has no training rows\")\n        train_start = 0 if window is None else max(0, train_end - window)\n        folds.append((train_start, train_end, start, start + test_size))\n    return folds\n",
+    "examples": [
+     {
+      "call": "walk_forward_folds(12, 4, 2, 1)",
+      "expect": "[(0, 4, 4, 6), (0, 6, 6, 8), (0, 8, 8, 10), (0, 10, 10, 12)]",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(20, 3, 4, 5, 6)",
+      "expect": "[(0, 4, 8, 12), (2, 8, 12, 16), (6, 12, 16, 20)]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "walk_forward_folds(12, 4, 2, 1)",
+      "expect": "[(0, 4, 4, 6), (0, 6, 6, 8), (0, 8, 8, 10), (0, 10, 10, 12)]",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(12, 4, 2, 3)",
+      "expect": "[(0, 2, 4, 6), (0, 4, 6, 8), (0, 6, 8, 10), (0, 8, 10, 12)]",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(20, 3, 4, 5, 6)",
+      "expect": "[(0, 4, 8, 12), (2, 8, 12, 16), (6, 12, 16, 20)]",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(20, 3, 4, 5, 50)",
+      "expect": "[(0, 4, 8, 12), (0, 8, 12, 16), (0, 12, 16, 20)]",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(250, 6, 21, 20)",
+      "expect": "[(0, 105, 124, 145), (0, 126, 145, 166), (0, 147, 166, 187), (0, 168, 187, 208), (0, 189, 208, 229), (0, 210, 229, 250)]",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(250, 6, 21, 20, 60)",
+      "expect": "[(45, 105, 124, 145), (66, 126, 145, 166), (87, 147, 166, 187), (108, 168, 187, 208), (129, 189, 208, 229), (150, 210, 229, 250)]",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(1000, 10, 50, 5, 100)[-1]",
+      "expect": "(846, 946, 950, 1000)",
+      "compare": "equal"
+     },
+     {
+      "call": "walk_forward_folds(12, 4, 2, 6)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "walk_forward_folds(10, 5, 2, 1)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "all(tr_end - 1 + 7 == te_start for tr_s, tr_end, te_start, te_end in walk_forward_folds(300, 5, 20, 7, 80))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 10 hidden tests, compared with ==. Two expect a ValueError. The folds must match scikit-learn's TimeSeriesSplit with gap = h - 1 and max_train_size = window."
+   },
+   "feedback": {
+    "correct": "Each fold ends its training $h - 1$ rows before the block and keeps at most the latest `window` rows.",
+    "generic": "Some tests failed. The purge is $h - 1$ rows, and the window counts back from the end of the purged training rows.",
+    "byKey": {
+     "test-1": "Test 1 has $h = 1$, so nothing is purged: training ends where the block starts.",
+     "test-2": "Test 2 has $h = 3$. Two training rows before each block have labels that reach into it.",
+     "test-3": "Test 3 has a window of 6 rows. Count it back from the purged end, not from the block start.",
+     "test-8": "Test 8 expects a `ValueError` when a fold would have no training rows.",
+     "error": "If the starter stopped, fill in the function body first. Python reports the line."
+    }
+   },
+   "explain": {
+    "text": "Row $t$ has its label over days $t + 1$ to $t + h$, so the last $h - 1$ rows before a block overlap its labels. Dropping them is `TimeSeriesSplit(gap=h - 1)`, and the window is `max_train_size`. A fold with nothing left to train on is an error, not an empty list."
+   }
+  },
+  {
+   "id": "e-kelly-wrong",
+   "difficulty": 4,
+   "skills": [
+    "fm-sizing",
+    "sl-classify"
+   ],
+   "title": "Betting a miscalibrated edge",
+   "prose": "A model says a trade wins with probability 0.58 at even odds, so the desk stakes full Kelly. A calibration check later shows such trades win only 52% of the time. Growth per bet is $g(f) = p\\ln(1+f) + (1-p)\\ln(1-f)$.",
+   "question": "What is the true expected log growth per bet, as a percentage, at $p = 0.52$? Give two decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.0065,
+    "tol": {
+     "abs": 0.0002
+    },
+    "placeholder": "a percentage, negative if it shrinks",
+    "label": "Growth per bet",
+    "unit": "%",
+    "accept": "-0.65%: $0.52\\ln 1.16 + 0.48\\ln 0.84$",
+    "wrong": [
+     {
+      "id": "believed",
+      "value": 0.0129,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "right-stake",
+      "value": 0.0008,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.0065,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Growth is $-0.65\\%$ a bet: the stake is four times the true Kelly.",
+    "generic": "Full Kelly at even odds is $2p - 1$ for the model's $p$. Then score that stake with the true $p$.",
+    "byKey": {
+     "believed": "You scored the stake with the model's own 0.58, which gives +1.29%. The true chance is 0.52.",
+     "right-stake": "That is the growth from staking 0.04, the true Kelly. The desk staked 0.16.",
+     "sign": "You lost the sign. $0.52\\ln 1.16 + 0.48\\ln 0.84$ is negative."
+    }
+   },
+   "explain": {
+    "text": "Full Kelly for the model's $p = 0.58$ is $2p - 1 = 0.16$. At the true $p = 0.52$, growth is $0.52\\ln 1.16 + 0.48\\ln 0.84 = -0.0065$. The true Kelly stake is 0.04, so the desk bets four times it, and an edge becomes a loss."
+   }
+  },
+  {
+   "id": "e-code-honest-report",
+   "difficulty": 5,
+   "skills": [
+    "sl-setup",
+    "sl-classify",
+    "sl-regularise",
+    "vl-cv",
+    "vl-time",
+    "vl-leakage"
+   ],
+   "title": "One tabular problem, end to end",
+   "prose": "A desk predicts whether the index closes up tomorrow from four features known at today's close. It wants the whole honest recipe in one function: a time split, a scaler inside the pipeline, a penalty tuned by time-ordered cross-validation, one test score, and the base rate beside it.",
+   "question": "Complete `honest_report(X, y, Cs)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\n\ndef honest_report(X, y, Cs):\n    \"\"\"Rows are in date order; y is 0 or 1.\n    1. Test = the last 30% of rows (train = the first int(0.7 * n)).\n    2. Tune C on the training rows only: a scaler then\n       LogisticRegression(C=C), scored by mean accuracy over\n       TimeSeriesSplit(n_splits=4). Ties keep the earlier C in Cs.\n    3. Refit the best pipeline on all training rows.\n    4. Return (best_C, test_hit_rate, base_rate), each rounded to\n       4 places. base_rate is the share of test rows whose y equals\n       the training rows' majority class (1 if the training mean >= 0.5).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import TimeSeriesSplit, cross_val_score\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\n\ndef honest_report(X, y, Cs):\n    \"\"\"Rows are in date order; y is 0 or 1.\n    1. Test = the last 30% of rows (train = the first int(0.7 * n)).\n    2. Tune C on the training rows only: a scaler then\n       LogisticRegression(C=C), scored by mean accuracy over\n       TimeSeriesSplit(n_splits=4). Ties keep the earlier C in Cs.\n    3. Refit the best pipeline on all training rows.\n    4. Return (best_C, test_hit_rate, base_rate), each rounded to\n       4 places. base_rate is the share of test rows whose y equals\n       the training rows' majority class (1 if the training mean >= 0.5).\"\"\"\n    n_train = int(len(y) * 0.7)\n    X_tr, X_te = X[:n_train], X[n_train:]\n    y_tr, y_te = y[:n_train], y[n_train:]\n\n    def make(C):\n        return Pipeline([(\"scale\", StandardScaler()), (\"clf\", LogisticRegression(C=C))])\n\n    best_C, best = None, -1.0\n    for C in Cs:\n        score = cross_val_score(make(C), X_tr, y_tr, cv=TimeSeriesSplit(n_splits=4),\n                                scoring=\"accuracy\").mean()\n        if score > best:\n            best_C, best = C, score\n    model = make(best_C).fit(X_tr, y_tr)\n    hit = float((model.predict(X_te) == y_te).mean())\n    majority = 1 if y_tr.mean() >= 0.5 else 0\n    base = float((y_te == majority).mean())\n    return best_C, round(hit, 4), round(base, 4)\n",
+    "examples": [
+     {
+      "call": "honest_report(X, y, CS)",
+      "expect": "(0.1, 0.6074, 0.4815)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(1)",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "honest_report(X, y, CS)",
+      "expect": "(0.1, 0.6074, 0.4815)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(1)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "honest_report(X, y, CS)",
+      "expect": "(1.0, 0.5926, 0.4593)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(2)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "honest_report(X, y, CS)",
+      "expect": "(0.01, 0.5889, 0.4889)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(3)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "honest_report(X, y, CS)",
+      "expect": "(1.0, 0.5704, 0.563)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(6)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "honest_report(X, y, CS)",
+      "expect": "(0.1, 0.5296, 0.5037)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(4)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "honest_report(X, y, CS[::-1])",
+      "expect": "(1.0, 0.5926, 0.4593)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(2)",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "honest_report(X, y, [0.0001, 0.00001])",
+      "expect": "(0.0001, 0.4593, 0.4593)",
+      "compare": "isclose",
+      "setup": "X, y = make_days(2)",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "how": "Check runs 7 hidden tests on seeded data. The first run loads scikit-learn, which can take 20 to 40 seconds. Each test fits up to 25 small models.",
+    "prelude": "import numpy as np\n\ndef make_days(seed, n=900):\n    \"\"\"Daily index returns with a little mean reversion; volatility doubles after 60% of the sample.\n    X: yesterday's return, the 5-day and 20-day returns, and 20-day volatility, all in %,\n    known at the close of day t. y: 1 if day t + 1 closes up. Rows are in date order.\"\"\"\n    rng = np.random.default_rng(seed)\n    N = n + 21\n    sig = np.where(np.arange(N) < int(0.6 * N), 0.008, 0.016)\n    r = np.zeros(N)\n    for t in range(1, N):\n        r[t] = 0.0004 - 0.25 * r[t - 1] + sig[t] * rng.standard_normal()\n    c = np.cumsum(r)\n    rows, ys = [], []\n    for t in range(20, N - 1):\n        rows.append([100 * r[t], 100 * (c[t] - c[t - 5]), 100 * (c[t] - c[t - 20]),\n                     100 * np.std(r[t - 19:t + 1], ddof=1)])\n        ys.append(1 if r[t + 1] > 0 else 0)\n    return np.array(rows), np.array(ys)\n\nCS = [0.001, 0.01, 0.1, 1.0, 10.0]\n",
+    "budget": 60000
+   },
+   "feedback": {
+    "correct": "Tuning sees only the early rows, the scaler is refitted in every fold, and the test block is scored once beside its base rate.",
+    "generic": "Some tests failed. Split by position, tune `C` with `TimeSeriesSplit` inside a `Pipeline`, and score the last 30% once.",
+    "byKey": {
+     "test-1": "Test 1 checks the chosen `C`, the test hit rate and the base rate. A shuffled split, a scaler fitted on every row, `C` chosen on the test block or shuffled folds change at least one of them.",
+     "test-6": "Test 6 lists the values of `C` in reverse. Equal scores keep the earlier `C` in the list, so use a strict `>`.",
+     "test-7": "Test 7 has tied scores. Equal scores keep the earlier `C` in the list.",
+     "error": "If the starter stopped, fill in the function body first. Python reports the line."
+    }
+   },
+   "explain": {
+    "text": "The test block is cut by position, and `C` is chosen from the training rows alone with folds that move forward in time. Because the scaler sits inside the pipeline, each fold learns its own means and sds. The base rate says what always predicting the training majority class would have scored, so the hit rate means something."
+   }
+  },
+  {
+   "id": "e-honest-t",
+   "difficulty": 5,
+   "skills": [
+    "fm-labels",
+    "fm-eval",
+    "sl-classify"
+   ],
+   "title": "How strong is a 57% hit rate?",
+   "prose": "A triple-barrier study makes one label per day: 1,000 labels. Each label lasts 10 days, so away from the ends every day is covered by 10 labels. Labels hit the profit barrier 57% of the time, against 52% for always saying +1.",
+   "question": "Fill in the table. Use $\\sqrt{p(1-p)/n}$ for a standard error, with $p = 0.57$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Naive standard error, $n = 1{,}000$",
+      {
+       "edit": true,
+       "answer": 0.0157,
+       "tol": {
+        "abs": 0.0003
+       }
+      }
+     ],
+     [
+      "Effective number of labels",
+      {
+       "edit": true,
+       "answer": 100,
+       "tol": {
+        "abs": 1
+       }
+      }
+     ],
+     [
+      "Honest standard error",
+      {
+       "edit": true,
+       "answer": 0.0495,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "Honest $z$ for 0.57 against 0.52",
+      {
+       "edit": true,
+       "answer": 1.01,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "Labels needed for $z = 2$ at the same overlap",
+      {
+       "edit": true,
+       "answer": 3920,
+       "tol": {
+        "abs": 40
+       }
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "The honest $z$ is 1.0, not 3.2, and about 3,900 labels would be needed for $z = 2$.",
+    "generic": "Each label shares its days with 9 others, so it owns a tenth of them. Use the effective number in the standard error.",
+    "byKey": {
+     "r0c1": "The naive standard error is $\\sqrt{0.57 \\times 0.43/1000} = 0.0157$.",
+     "r1c1": "Each day is shared by 10 labels, so each label owns $1/10$ of its days. The effective number is $1000 \\times 0.1$.",
+     "r2c1": "Use the effective number: $\\sqrt{0.57 \\times 0.43/100}$.",
+     "r3c1": "Divide the 5-point edge, $0.57 - 0.52$, by the honest standard error.",
+     "r4c1": "For $z = 2$ the standard error must be $0.05/2 = 0.025$. That needs 392 effective labels, and each costs 10 labels."
+    }
+   },
+   "explain": {
+    "text": "Overlap makes the 1,000 labels worth 100, so the honest standard error is 0.0495, three times the naive 0.0157. The 5-point edge is then 1.0 standard errors, not 3.2. Reaching $z = 2$ needs about 3,900 labels, ten times the effective number."
+   }
+  },
+  {
+   "id": "e-explain-note",
+   "difficulty": 5,
+   "skills": [
+    "sl-tradeoff",
+    "sl-regularise",
+    "vl-leakage",
+    "vl-time",
+    "vl-overfit",
+    "en-boosting"
+   ],
+   "title": "Explaining a model note",
+   "kind": "longform",
+   "prompt": "A new analyst sends this note about a model of next-month returns for 500 shares, built from 60 features on 2010 to 2024 data.\n\n> I standardised every feature on the full sample, then split the rows at random: 70% to train and 30% to test. A boosted tree model with 2,000 deep trees scored an R-squared of 0.45 on the training rows and 0.02 on the test rows. I tried 40 settings of the learning rate and the depth. The best test R-squared was 0.09, so the model works. Next I will add more features.\n\nWrite a short reply that covers four things.\n\n(a) Explain the gap between 0.45 and 0.02 in terms of bias and variance, and say what regularisation would do about it.\n\n(b) Name two leaks in the pipeline and say how each flatters the score.\n\n(c) Say what the 0.09 is worth.\n\n(d) Describe the validation you would use instead, in order.",
+   "model": "**(a) Bias and variance.** Deep trees on 60 features have low bias and high variance. They fit noise as well as signal, so the training R-squared of 0.45 measures how well they memorised the rows. The test R-squared of 0.02 shows what carries over to new months, and that is almost nothing. Adding features adds flexibility and so adds variance.\n\nRegularisation accepts a little more bias for much less variance. For trees that means shallower trees, a smaller learning rate with fewer trees, a larger minimum leaf size or early stopping. For a linear model it would be a ridge or lasso penalty. The strength is chosen on validation data, never on the test rows.\n\n**(b) Two leaks.**\n\n- *Scaling on the full sample.* The means and standard deviations include the test months, so the test period shapes the inputs. The scaler must be fitted inside each training fold, for example in a pipeline.\n- *A random split of time-ordered data.* Returns and features overlap across neighbouring months, so rows next to a test month sit in the training set and carry its answer. The model also trains on months after the ones it is tested on. Both flatter the test score.\n\nThe test rows were also used to choose among 40 settings, which is a third leak: the test set was no longer unseen.\n\n**(c) What 0.09 is worth.** It is the best of 40 tries scored on the same rows, so it is inflated by selection. Even noise would give the best of 40 a positive score. The 0.09 is an upper bound, not an estimate, and the honest figure is probably near the 0.02.\n\n**(d) Validation in order.**\n\n1. Hold out the last block of months as the test period, with a purge of the labels that reach into it.\n2. Build the scaler and the model inside a pipeline.\n3. Tune the depth and the learning rate, and stop the trees early, with walk-forward folds on the earlier block, using a gap for the label horizon.\n4. Refit the chosen model on the whole earlier block.\n5. Score the test block once. Report it against a simple baseline, net of costs, with the number of settings tried.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Reads the gap as overfitting: low bias and high variance from deep trees and many features, so training R-squared measures memorised noise."
+    },
+    {
+     "points": 2,
+     "text": "Says regularisation trades a little bias for much less variance (shallower trees, smaller learning rate, early stopping or a penalty), tuned on validation data."
+    },
+    {
+     "points": 2,
+     "text": "Names two leaks: full-sample scaling, and a random split of time-ordered, overlapping data (or tuning on the test rows), each with the way it flatters the score."
+    },
+    {
+     "points": 1,
+     "text": "Says 0.09 is the best of 40 tries on the test rows, so it is inflated by selection and is not an honest estimate."
+    },
+    {
+     "points": 2,
+     "text": "Gives a time-ordered plan: test block last, purge or gap, scaler inside the pipeline, walk-forward tuning on the earlier block, one test score."
+    },
+    {
+     "points": 1,
+     "text": "Asks for a baseline or base rate, costs and the number of trials beside the final score."
+    }
+   ],
+   "explain": {
+    "text": "A large gap between training and test scores is variance, and regularisation is the cure. The leaks make the test score look better than the truth. An honest study keeps the test block last and scores it once."
+   }
+  }
+ ]
+}
