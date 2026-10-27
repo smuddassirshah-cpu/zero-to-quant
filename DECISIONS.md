@@ -14,6 +14,7 @@ Content process
 - Stage 0 gets topic exams topic-0.1 to topic-0.5 like every other stage (27 Oct); the original Stage 0 plan wrote only the stage exam, so the Learn screen's topic chips led nowhere.
 - One level per agent from a brief in `docs/briefs/<course>.md`; the agent validates, plays through with screenshots, writes `docs/reports/<course>-<level>.md`, appends engine limits to `docs/BACKLOG-INBOX.md`, hands back six lines. Reason: orchestrator context stays small.
 - Briefs are written by brief-writer agents from `course.json`, `curriculum.md` and `docs/briefs/EXAMPLE.md`; the orchestrator never writes per-lesson design.
+- Content agents check a brief's own numbers before using them and record departures (27 Oct: multivar L5's 10% target under a 50% cap was infeasible, max 9.5%).
 - Every stated number is computed twice (generator plus independent check, or CPython plus Pyodide). Every code solution passes its hidden tests and the starter fails them.
 - Second reader per completed topic writes `docs/reviews/review-<topic>.md`; a fix agent applies targeted edits and appends `## Fix pass`. Coverage gaps become new levels, not edits to existing lessons.
 - Voice rules (AUTHORING.md): British English, no exclamation marks, sentences under 20 words, explanations of at most three sentences, £ for money, `\operatorname{Var}`, `\text{£}` inside maths. Trees course: (1 + r) per step in l5 and the first screens of l7, e^{rΔt} from l6 onwards (stated).

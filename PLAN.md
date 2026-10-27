@@ -31,7 +31,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [x] eigen L4
 - [x] random-vars L5
 - [x] limits-thm L4
-- [ ] markov L4
+- [x] markov L4
 - [ ] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (items listed in `docs/briefs/gaps-plan.md`)
 
 ### 3. Stage 3 content (briefs in `docs/briefs/`)
