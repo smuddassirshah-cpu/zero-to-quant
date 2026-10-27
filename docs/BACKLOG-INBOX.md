@@ -369,3 +369,14 @@ Raised later (topic 2.2 exam):
 - Code editor shows about 54 characters a line before it scrolls sideways, with no wrap. Starters and docstrings had to be rewrapped by hand; a soft-wrap option for docstrings would help.
 - The exam `--why` result screenshot is one page about 24,000 px tall (22 items), unreadable as an image (another vote for the earlier bullet).
 - `series` tap-regions on markers: markers that sit within a day or two of each other on a 60-day chart overlap on a phone, so I spaced the eight dots at least 2 days apart by choosing the window.
+
+Raised later (exam 2.4):
+
+- code widget, script mode and large stdin: a hidden `stdin` must be written inline, so e-code-pairs carries 32,000 values (about 95 KB of JSON) to make a quadratic count stop at the 5 s limit. Wanted: a `stdinGen` (a seeded generator line run before the case) or a `prelude` that can set the case's stdin.
+- code widget, no import ban: the numpy slice loop passes e-code-quiet's size case in about 1.8 s, so test 8 also checks `'numpy' not in __learner_source__` inside the same case as the value. Wanted: a widget field `forbid: ["numpy"]` that refuses the import with a plain message.
+- exam timing: topic 2.4 has 140 hours, so `examMinutes` gives 60 minutes for 26 items with 6 code items and a longform. A learner who writes each program from scratch will not finish; the file follows `examMinutes`. Same request as the 1.9 bullet: a `minutes` the exam file may raise, or weights for code items.
+- grid canvas, small cells on a phone: the 6 by 10 sieve grid (e-sieve-tap) draws cells about 22 px wide at 390 px. They stay tappable but the numbers are small. Wanted: a `cols` layout that wraps to two rows of five on a narrow screen, or a larger minimum cell.
+
+Raised later (exam 2.3):
+- Code tests that use exact float equality on a pandas frame (`DataFrame.equals` on a slice of a result) passed in CPython (pandas 3.0.5) and failed in Pyodide (pandas 2.2.3) for the same correct code, because row sums differ in the last bit. Authors should compare with `np.allclose`; a line in `AUTHORING.md` section 3 would help, and the validator could warn on `.equals(` in a test `call`.
+- `order` grading returns only the first line out of place, so `byKey` cannot say which pair was swapped. With `same` groups the key is the first line whose group differs. A per-pair `byKey` form (`"s5>s3"`) would let an item name the exact misordering.
