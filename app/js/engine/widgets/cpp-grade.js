@@ -234,6 +234,8 @@ inline void str(std::string& o, const std::string& s) {
 }
 template <class T, class = void> struct seq : std::false_type {};
 template <class T> struct seq<T, std::void_t<decltype(std::begin(std::declval<const T&>())), decltype(std::end(std::declval<const T&>()))>> : std::true_type {};
+template <class T, class = void> struct cplx : std::false_type {};
+template <class T> struct cplx<T, std::void_t<decltype(std::declval<const T&>().real()), decltype(std::declval<const T&>().imag())>> : std::true_type {};
 template <class T> struct pair : std::false_type {};
 template <class A, class B> struct pair<std::pair<A, B>> : std::true_type {};
 template <class T> void put(std::string& o, const T& v) {
@@ -244,6 +246,7 @@ template <class T> void put(std::string& o, const T& v) {
   else if constexpr (std::is_floating_point_v<U>) num(o, (double)v);
   else if constexpr (std::is_enum_v<U>) o += std::to_string((long long)v);
   else if constexpr (std::is_convertible_v<const U&, std::string>) str(o, std::string(v));
+  else if constexpr (cplx<U>::value) { o += "{\"re\":"; num(o, (double)v.real()); o += ",\"im\":"; num(o, (double)v.imag()); o += '}'; }
   else if constexpr (pair<U>::value) { o += '['; put(o, v.first); o += ','; put(o, v.second); o += ']'; }
   else if constexpr (seq<U>::value) { o += '['; bool first = true; for (const auto& x : v) { if (!first) o += ','; first = false; put(o, x); } o += ']'; }
   else o += "{\"$unprintable\":true}";
@@ -305,8 +308,12 @@ void operator delete[](void* p, std::size_t) noexcept { zq_leak::put(p, 1); }
 `;
   const TESTKIT = String.raw`#include <cmath>
 #include <cstdio>
+#include <type_traits>
 #include <vector>
 namespace zq_tk {
+template <class T> inline double re_(const T& v) { if constexpr (std::is_arithmetic_v<T>) return (double)v; else return (double)v.real(); }
+template <class T> inline double im_(const T& v) { if constexpr (std::is_arithmetic_v<T>) return 0.0; else return (double)v.imag(); }
+inline double dist_(double dr, double di) { return di == 0 ? std::fabs(dr) : std::hypot(dr, di); }
 struct T { const char* name; void (*fn)(); };
 inline std::vector<T>& all() { static std::vector<T> v; return v; }
 inline int& fails() { static int f = 0; return f; }
@@ -315,7 +322,7 @@ struct Reg { Reg(const char* n, void (*f)()) { all().push_back({ n, f }); } };
 }
 #define TEST(name) static void name(); static zq_tk::Reg zq_reg_##name(#name, name); static void name()
 #define CHECK(cond) do { if (!(cond)) { ++zq_tk::fails(); std::printf("FAILED %s: CHECK(%s), line %d\n", zq_tk::cur(), #cond, __LINE__); } } while (0)
-#define CHECK_CLOSE(a, b, tol) do { double zq_a_ = (a), zq_b_ = (b); if (!(std::fabs(zq_a_ - zq_b_) <= (tol))) { ++zq_tk::fails(); std::printf("FAILED %s: CHECK_CLOSE(%s, %s) got %.10g and %.10g, line %d\n", zq_tk::cur(), #a, #b, zq_a_, zq_b_, __LINE__); } } while (0)
+#define CHECK_CLOSE(a, b, tol) do { auto zq_a_ = (a); auto zq_b_ = (b); double zq_ar_ = zq_tk::re_(zq_a_), zq_br_ = zq_tk::re_(zq_b_), zq_ai_ = zq_tk::im_(zq_a_), zq_bi_ = zq_tk::im_(zq_b_); if (!(zq_tk::dist_(zq_ar_ - zq_br_, zq_ai_ - zq_bi_) <= (tol))) { ++zq_tk::fails(); if (zq_ai_ == 0 && zq_bi_ == 0) std::printf("FAILED %s: CHECK_CLOSE(%s, %s) got %.10g and %.10g, line %d\n", zq_tk::cur(), #a, #b, zq_ar_, zq_br_, __LINE__); else std::printf("FAILED %s: CHECK_CLOSE(%s, %s) got (%.10g,%.10g) and (%.10g,%.10g), line %d\n", zq_tk::cur(), #a, #b, zq_ar_, zq_ai_, zq_br_, zq_bi_, __LINE__); } } while (0)
 inline int run_tests() { int bad = 0; for (auto& t : zq_tk::all()) { int before = zq_tk::fails(); zq_tk::cur() = t.name; t.fn(); if (zq_tk::fails() > before) ++bad; } std::printf("%d of %d tests passed\n", (int)zq_tk::all().size() - bad, (int)zq_tk::all().size()); return bad; }
 inline int test_count() { return (int)zq_tk::all().size(); }
 `;
@@ -365,15 +372,21 @@ inline int test_count() { return (int)zq_tk::all().size(); }
     if (v === null || v === undefined) return 'nothing (void)';
     if (Array.isArray(v)) return '{' + v.map(fmt).join(', ') + '}';
     if (typeof v === 'string') return JSON.stringify(v);
+    if (isCx(v)) return `(${fmt(v.re)},${fmt(v.im)})`;
     if (typeof v === 'number') return Number.isNaN(v) ? 'nan' : v === Infinity ? 'inf' : v === -Infinity ? '-inf' : String(v);
     if (v && typeof v === 'object' && v.$unprintable) return '(a value the tests cannot print)';
     return String(v);
   };
+  const isCx = (v) => !!v && typeof v === 'object' && !Array.isArray(v) && 're' in v && 'im' in v;
+  const closeCx = (a, e, tol) => { const d = Math.hypot(a.re - e.re, a.im - e.im), m = Math.max(Math.hypot(a.re, a.im), Math.hypot(e.re, e.im)); return a.re === e.re && a.im === e.im || (isFinite(d) && d <= (tol ? Math.max(tol[0] * m, tol[1]) : Math.max(1e-9 * m, 1e-12))); };
   const close = (a, e, tol) => a === e || (isFinite(a) && isFinite(e) && Math.abs(a - e) <= (tol ? Math.max(tol[0] * Math.max(Math.abs(a), Math.abs(e)), tol[1]) : Math.max(1e-9 * Math.max(Math.abs(a), Math.abs(e)), 1e-12)));
   const tolOf = (c) => (c && c.tol && typeof c.tol === 'object' && (Number.isFinite(+c.tol.rel) || Number.isFinite(+c.tol.abs)) ? [Math.max(0, +c.tol.rel || 0), Math.max(0, +c.tol.abs || 0)] : c && typeof c.tol === 'number' && c.tol >= 0 ? [0, c.tol] : null);
   const same = (a, e, mode, tol) => {
     if (Array.isArray(e)) return Array.isArray(a) && a.length === e.length && a.every((x, i) => same(x, e[i], mode, tol));
+    if (typeof e === 'number' && isCx(a)) return same(a, { re: e, im: 0 }, mode, tol);
     if (typeof e === 'number') return typeof a === 'number' && (mode === 'isclose' ? close(a, e, tol) : a === e);
+    /* item 430: a std::complex result is { re, im }; expect may be a number when the imaginary part is 0 */
+    if (isCx(e)) return isCx(a) && (mode === 'isclose' ? closeCx(a, e, tol) : a.re === e.re && a.im === e.im);
     return a === e;
   };
   const norm = (t) => { const ls = String(t).replace(/\r\n/g, '\n').split('\n').map(l => l.replace(/\s+$/, '')); while (ls.length && !ls[0]) ls.shift(); while (ls.length && !ls[ls.length - 1]) ls.pop(); return ls.join('\n'); };

@@ -7,6 +7,8 @@
    MathJSON of the input: expanded has no sum inside a product or power (an Add of monomials, or one monomial);
    factorised is a Multiply with a sum among its factors, or a power of a sum (a leading minus is allowed);
    simplified has no more nodes than its own simplify(). An equal answer in the wrong shape returns key "form".
+   Complex answers (an i in either side) compare real and imaginary parts at every seeded point; a vector or matrix
+   answer ((2, -1, 3) or a pmatrix) compares entry by entry and a wrong size returns key "length" (grade.js).
    Without the engine the text fallback already demands a normalised match with answer or accept[], which authors
    write in the asked form. */
 (function () {
@@ -121,7 +123,11 @@
         const shaped = same && formOk(L);
         let key = null, line;
         if (same && !shaped) { key = 'form'; line = FORM_LINE[spec.form]; }
-        else if (!same) { const w = (spec.wrong || []).find(x => x.tex && equal(L, A, x.tex)); key = w ? w.id : null; }
+        else if (!same) {
+          const w = (spec.wrong || []).find(x => x.tex && equal(L, A, x.tex)); key = w ? w.id : null;
+          /* item 433: a vector or matrix answer of the wrong size gets its own key and a line saying how many entries */
+          if (!w && ce) { const sl = G().exprShapeLine(ce, spec.answer, L); if (sl) { key = 'length'; line = sl; } }
+        }
         return { ok: shaped, key, line, detail: { latex: L, ascii: A, engine: ce ? 'compute-engine' : 'text', form: spec.form || null } };
       },
       lock() { locked = true; lockNow(true); },

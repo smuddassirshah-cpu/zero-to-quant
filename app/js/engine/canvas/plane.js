@@ -731,6 +731,111 @@
     /* One-sided slopes, to find a corner (a piecewise-linear function at its join) */
     const sides = (f, x) => { const h = Math.max(1e-6, (xr[1] - xr[0]) * 1e-5); return [(f(x) - f(x - h)) / h, (f(x + h) - f(x)) / h]; };
 
+    /* item 431: field layers. field { id, P, Q } draws arrows of (P(x, y), Q(x, y)) on a grid, slopeField { id, f } short
+       segments of slope f(x, y), and trajectory { id, in, from | starts } traces solution curves through them by fixed-step
+       RK4. Each is one object or a list, in params or state (a state entry merges over the params entry with the same id).
+       Formulas use x, y and the params, so a bound slider redraws them. Arrow counts are capped for phones. */
+    const FIELD_CAP = 600, STEP_CAP = 5000;
+    const layersOf = (view, key) => {
+      const out = [];
+      for (const src of [params[key], view[key]]) [].concat(src == null ? [] : src).forEach((q, i) => {
+        if (!K.isObj(q)) return;
+        const id = q.id != null ? String(q.id) : i ? key + '-' + i : key, j = out.findIndex((o) => o.id === id);
+        if (j >= 0) out[j] = { ...out[j], ...q, id }; else out.push({ ...q, id });
+      });
+      return out;
+    };
+    /* F(x, y) -> [dx, dy]: a vector field, or (1, f) for a slope field (x is then the independent variable) */
+    const flowFn = (l, view, slope) => {
+      if (slope ? l.f == null : l.P == null || l.Q == null) return null;
+      const P = exprParams(view), names = Object.keys(P).filter((n) => n !== 'y'), env = { ...P, y: 0 }, all = ['y', ...names];
+      if (slope) { const c = K.fnOf(String(l.f), all); return (x, y) => { env.y = y; return [1, c(x, env)]; }; }
+      const cp = K.fnOf(String(l.P), all), cq = K.fnOf(String(l.Q), all);
+      return (x, y) => { env.y = y; return [cp(x, env), cq(x, env)]; };
+    };
+    const colourVar = (c) => (Number.isInteger(+c) && +c >= 1 && +c <= 6 ? `var(--s${+c})` : { ink: 'var(--ink)', manip: 'var(--manip)', hint: 'var(--hint)', neg: 'var(--div-neg)', pos: 'var(--div-pos)', muted: 'var(--text-muted)' }[c] || 'var(--ink)');
+    const niceStepNear = (target) => { const mag = Math.pow(10, Math.floor(Math.log10(target))); let best = mag, bd = Infinity; for (const m of [1, 2, 2.5, 5, 10]) { const d = Math.abs(Math.log(m * mag / target)); if (d < bd) { bd = d; best = m * mag; } } return best; };
+    /* nodes at multiples of a nice step (the origin is a node), inset from the frame by an arrow's half length; the step grows until the count fits the cap */
+    const latticeOf = (l, sx, sy, W, H) => {
+      const kx = W / ((xr[1] - xr[0]) || 1), ky = H / ((yr[1] - yr[0]) || 1), g = Array.isArray(l.grid) ? l.grid : [l.grid, null], sp = l.spacing != null ? [].concat(l.spacing) : null;
+      const cap = Math.min(FIELD_CAP, Math.max(4, Math.round(+l.maxArrows || 360)));
+      const inset = (+l.length > 0 ? +l.length / 2 : 14) + 1; // px: the arrow's half length, so edge arrows are not clipped
+      const list = (lo, hi, d) => { const out = []; for (let k = Math.ceil(lo / d - 1e-9); k * d <= hi + 1e-9; k++) out.push(+(k * d).toFixed(10)); return out; };
+      let out = null;
+      for (let f = 1, n = 0; n < 40; f *= 1.2, n++) {
+        let dx, dy;
+        if (sp && +sp[0] > 0) { dx = +sp[0] * f; dy = +(sp[1] ?? sp[0]) * f; }
+        else if (+g[0] > 1 && +g[1] > 1) { dx = niceStepNear((xr[1] - xr[0]) / (+g[0]) * f); dy = niceStepNear((yr[1] - yr[0]) / (+g[1]) * f); }
+        else if (!sx.log && !sy.log && Math.max(kx, ky) / Math.min(kx, ky) <= 4) dx = dy = niceStepNear((+g[0] > 1 ? W / +g[0] : 34) * f / Math.sqrt(kx * ky));
+        else { const t = (+g[0] > 1 ? W / +g[0] : 34) * f; dx = niceStepNear(t / kx); dy = niceStepNear(t / ky); }
+        out = { dx, dy, cx: dx * kx, cy: dy * ky, xs: list(xr[0] + inset / kx, xr[1] - inset / kx, dx), ys: list(yr[0] + inset / ky, yr[1] - inset / ky, dy) };
+        if (out.xs.length * out.ys.length <= cap) break;
+      }
+      return out;
+    };
+    /* unit direction on screen of the data direction (vx, vy) at (x, y); null where the scale is undefined */
+    const dirPx = (sx, sy, x, y, vx, vy) => {
+      const n = Math.hypot(vx, vy), h = 1e-4 * Math.max(xr[1] - xr[0], yr[1] - yr[0]) / n;
+      const ax = sx(x + vx * h) - sx(x), ay = sy(y + vy * h) - sy(y), m = Math.hypot(ax, ay);
+      return m > 0 && Number.isFinite(m) ? [ax / m, ay / m] : null;
+    };
+    const drawField = (l, F, slope, plot, sx, sy, W, H) => {
+      const lat = latticeOf(l, sx, sy, W, H), px0 = sx(xr[0]), items = [];
+      const len0 = +l.length > 0 ? +l.length : K.clamp(0.8 * Math.min(lat.cx, lat.cy), 8, 30), rng = Array.isArray(l.range) && l.range.length === 2 ? l.range.map(Number) : null;
+      let lo = Infinity, hi = -Infinity;
+      for (const y of lat.ys) for (const x of lat.xs) {
+        const v = F(x, y); if (!Number.isFinite(v[0]) || !Number.isFinite(v[1])) continue;
+        const mag = slope ? Math.abs(v[1]) : Math.hypot(v[0], v[1]); if (!slope && !(mag > 0)) continue;
+        const u = dirPx(sx, sy, x, y, v[0], v[1]); if (!u) continue;
+        items.push({ x, y, u, mag }); lo = Math.min(lo, mag); hi = Math.max(hi, mag);
+      }
+      const a = rng ? rng[0] : lo, b = rng ? rng[1] : hi, ramp = l.colourBy === 'magnitude' || l.colourBy === true;
+      const top = rng ? rng[1] : hi, bins = new Map(), BIN = 8;
+      for (const it of items) {
+        const len = slope || l.normalise ? len0 : len0 * K.clamp(it.mag / (top || 1), 0.12, 1), t = slope && !rng ? 2 / Math.PI * Math.atan(it.mag) : K.clamp((it.mag - a) / ((b - a) || 1), 0, 1);
+        const cxp = sx(it.x), cyp = sy(it.y), [ux, uy] = it.u, tail = l.anchor === 'tail' && !slope ? [cxp, cyp] : [cxp - ux * len / 2, cyp - uy * len / 2], tip = [tail[0] + ux * len, tail[1] + uy * len];
+        let d = `M${tail[0].toFixed(1)},${tail[1].toFixed(1)}L${tip[0].toFixed(1)},${tip[1].toFixed(1)}`;
+        if (!slope) { const hl = Math.min(6, len * 0.42); for (const s of [-0.5, 0.5]) { const c = Math.cos(s), sn = Math.sin(s); d += `M${(tip[0] + hl * (-ux * c + uy * sn)).toFixed(1)},${(tip[1] + hl * (-ux * sn - uy * c)).toFixed(1)}L${tip[0].toFixed(1)},${tip[1].toFixed(1)}`; } }
+        const k = ramp ? Math.min(BIN - 1, Math.floor(t * BIN)) : 0; bins.set(k, (bins.get(k) || '') + d);
+      }
+      const o = K.obj(l.id, 'cvb-field' + (slope ? ' cvb-slopefield' : ''), l.colour || 'muted'); o.style.pointerEvents = 'none';
+      for (const [k, d] of [...bins].sort((p, q) => p[0] - q[0])) o.append(svg('path', { d, class: 'cvb-ln', style: 'stroke-width:1.5' + (ramp ? `;stroke:color-mix(in srgb, ${colourVar(l.colourHigh ?? 2)} ${Math.round((k + 0.5) / BIN * 100)}%, ${colourVar(l.colour ?? 1)})` : '') }));
+      plot.append(o);
+      return items.length;
+    };
+    const startOf = (view, ref) => {
+      if (Array.isArray(ref)) return Number.isFinite(+ref[0]) && Number.isFinite(+ref[1]) ? [+ref[0], +ref[1]] : null;
+      const p = typeof ref === 'string' ? (view.points || []).find((q) => q.id === ref) : null;
+      return p && Number.isFinite(p.x) && Number.isFinite(p.y) ? [p.x, p.y] : null;
+    };
+    /* RK4 from (x0, y0) with signed step h over at most T of the independent variable and maxSteps steps; by "arc" the field
+       is normalised, so T and h are lengths along the curve. Stops at the view's edge (the last step is cut to the edge),
+       at a stationary point and where the field is undefined. */
+    const traceFlow = (F, x0, y0, h, T, arc, maxSteps) => {
+      const G = arc ? (x, y) => { const v = F(x, y), n = Math.hypot(v[0], v[1]); return n > 1e-12 ? [v[0] / n, v[1] / n] : [NaN, NaN]; } : F;
+      const inView = (x, y) => x >= xr[0] && x <= xr[1] && y >= yr[0] && y <= yr[1], reach = 20 * Math.max(xr[1] - xr[0], yr[1] - yr[0]);
+      const n0 = Math.max(1, Math.ceil(T / Math.abs(h) - 1e-9)), n = Math.min(maxSteps, n0), pts = [[x0, y0]];
+      if (n0 <= maxSteps) h = Math.sign(h) * T / n0; // the steps divide T exactly, so a full period lands back on the start
+      let x = x0, y = y0, entered = inView(x, y), exited = false;
+      for (let i = 0; i < n; i++) {
+        const k1 = G(x, y); if (!Number.isFinite(k1[0] + k1[1]) || Math.hypot(k1[0], k1[1]) < 1e-12) break;
+        const k2 = G(x + h / 2 * k1[0], y + h / 2 * k1[1]), k3 = G(x + h / 2 * k2[0], y + h / 2 * k2[1]), k4 = G(x + h * k3[0], y + h * k3[1]);
+        const nx = x + h / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]), ny = y + h / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+        if (!Number.isFinite(nx) || !Number.isFinite(ny)) break;
+        pts.push([nx, ny]); x = nx; y = ny;
+        if (inView(x, y)) entered = true;
+        else if (entered || Math.abs(x - xr[0]) > reach || Math.abs(y - yr[0]) > reach) { exited = entered; break; }
+      }
+      const m = pts.length;
+      if (exited && m > 1 && inView(pts[m - 2][0], pts[m - 2][1])) { // cut the last step at the edge
+        const a = pts[m - 2], b = pts[m - 1]; let t = 1;
+        if (b[0] < xr[0]) t = Math.min(t, (xr[0] - a[0]) / (b[0] - a[0])); if (b[0] > xr[1]) t = Math.min(t, (xr[1] - a[0]) / (b[0] - a[0]));
+        if (b[1] < yr[0]) t = Math.min(t, (yr[0] - a[1]) / (b[1] - a[1])); if (b[1] > yr[1]) t = Math.min(t, (yr[1] - a[1]) / (b[1] - a[1]));
+        if (Number.isFinite(t) && t >= 0) pts[m - 1] = [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])];
+      }
+      return pts;
+    };
+
     const def = {
       kind: 'plane', aria: params.aria || 'Coordinate plane',
       modes: ['drag', 'slider', 'sketch', 'tap'],
@@ -824,6 +929,16 @@
             o.append(svg('rect', { x: Math.min(x0, x1).toFixed(1), y: Math.min(y0, y1).toFixed(1), width: (Math.abs(x1 - x0) + 0.6).toFixed(1), height: (Math.abs(y1 - y0) + 0.6).toFixed(1), class: 'cvb-cell ' + K.colourCls(Math.min(6, Math.max(1, slot))), 'fill-opacity': cl.opacity ?? 0.16 }));
           }));
           plot.append(o);
+        }
+
+        /* item 431: vector-field and slope-field layers sit under the curves; trajectories (below) sit over them */
+        const flows = [];
+        for (const [key, slope] of [['field', false], ['slopeField', true]]) {
+          for (const l of layersOf(view, key)) {
+            const F = flowFn(l, view, slope); if (!F) continue;
+            flows.push({ id: l.id, F, slope });
+            if (!isHidden(l)) drawField(l, F, slope, plot, sx, sy, px1 - px0, py0 - py1);
+          }
         }
 
         /* Sketch band and target under everything else */
@@ -984,6 +1099,44 @@
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : ''), 'stroke-linecap': 'round' }));
           plot.append(o);
           if (fd.label && fd.labelAt) { const [lx, ly] = Array.isArray(fd.labelAt) ? fd.labelAt : cv.kind === 'param' ? cv.at(+fd.labelAt) : [0, 0]; labels.push({ x: sx(lx) + 8, y: sy(ly) - 12, text: fd.label, id, anchor: 'start' }); }
+        }
+
+        /* item 431: trajectories { id, in, from: pointId | [x, y], starts: [...], step, length, back, by, maxSteps, arrow,
+           dashed, colour, label }: fixed-step RK4 solution curves in a field or slope field, clipped to the view. A point
+           id follows the point, so a dragged start redraws the curve live. values: <id>EndX and <id>EndY (the forward end of
+           the "from" curve) */
+        for (const t of layersOf(view, 'trajectory')) {
+          const fl = flows.find((q) => q.id === t.in) || flows[0]; if (!fl || isHidden(t)) continue;
+          const starts = [], mark = [];
+          if (t.from != null) { const s = startOf(view, t.from); if (s) { starts.push(s); if (Array.isArray(t.from)) mark.push(s); } }
+          [].concat(t.starts || []).slice(0, 24).forEach((r) => { const s = startOf(view, r); if (s) { starts.push(s); if (Array.isArray(r)) mark.push(s); } });
+          if (!starts.length) continue;
+          const arc = t.by === 'arc', diag = Math.hypot(xr[1] - xr[0], yr[1] - yr[0]);
+          const T = +t.length > 0 ? +t.length : fl.slope ? xr[1] - xr[0] : arc ? 3 * diag : 10, h = +t.step > 0 ? +t.step : T / 200;
+          const back = t.back === true ? T : +t.back > 0 ? +t.back : 0, maxSteps = K.clamp(Math.round(+t.maxSteps || 2000), 10, STEP_CAP);
+          const o = K.obj(t.id, 'cvb-traj', t.colour || 2), allPx = [];
+          o.style.pointerEvents = 'none';
+          starts.forEach((s, k) => {
+            const fwd = traceFlow(fl.F, s[0], s[1], h, T, arc, maxSteps), bwd = back ? traceFlow(fl.F, s[0], s[1], -h, back, arc, maxSteps) : [s];
+            const line = bwd.slice(1).reverse().concat(fwd), px = [];
+            for (const q of line) { const X = sx(q[0]), Y = sy(q[1]); if (!Number.isFinite(X) || !Number.isFinite(Y)) continue; const l0 = px[px.length - 1]; if (!l0 || Math.hypot(X - l0[0], Y - l0[1]) >= 0.75) px.push([X, Y]); }
+            if (px.length < 2) return;
+            const d = 'M' + px.map((q) => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join('L');
+            o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (t.dashed ? ' cvb-dash' : ''), style: 'stroke-width:2.5' }));
+            allPx.push(...px, [NaN, NaN]);
+            const e = fwd[fwd.length - 1];
+            if (k === 0 && t.from != null) { areaVals[t.id + 'EndX'] = K.round(e[0], 6); areaVals[t.id + 'EndY'] = K.round(e[1], 6); }
+            if (t.arrow !== false && fwd.length > 1) { // arrowhead at the forward end, pointing along the curve
+              const tip = [sx(e[0]), sy(e[1])]; let j = fwd.length - 2, tail = [sx(fwd[j][0]), sy(fwd[j][1])];
+              while (j > 0 && Math.hypot(tip[0] - tail[0], tip[1] - tail[1]) < 7) { j--; tail = [sx(fwd[j][0]), sy(fwd[j][1])]; }
+              const L = Math.hypot(tip[0] - tail[0], tip[1] - tail[1]);
+              if (L >= 7) { const ux = (tip[0] - tail[0]) / L, uy = (tip[1] - tail[1]) / L, hl = 10, bx = tip[0] - ux * hl, by = tip[1] - uy * hl; o.append(svg('path', { d: `M${tip[0].toFixed(1)},${tip[1].toFixed(1)}L${(bx - uy * hl * 0.4).toFixed(1)},${(by + ux * hl * 0.4).toFixed(1)}L${(bx + uy * hl * 0.4).toFixed(1)},${(by - ux * hl * 0.4).toFixed(1)}Z`, class: 'cvb-head' })); }
+            }
+            if (k === 0 && t.label) labels.push({ x: sx(e[0]) + 8, y: sy(e[1]) - 10, text: t.label, anchor: 'start', id: t.id });
+          });
+          mark.forEach((s) => o.append(svg('circle', { cx: sx(s[0]), cy: sy(s[1]), r: 3.5, class: 'cvb-dot' })));
+          plot.append(o);
+          fixed.push(...K.lineBoxes(allPx.filter((q) => !Number.isFinite(q[0]) || (q[1] >= py1 && q[1] <= py0 && q[0] >= px0 && q[0] <= px1)).map((q) => (Number.isFinite(q[0]) ? q : [0, NaN]))));
         }
 
         /* Tangent lines */

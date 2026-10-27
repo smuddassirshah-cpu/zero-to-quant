@@ -13,6 +13,8 @@
    captured lines as a list). input() prompts are not part of the output. Any case may carry setup (Python run before
    call); compare "raises" passes when the call (or, in script mode with no call, the program) raises the named
    exception or a subclass.
+   Item 430: isclose is complex-aware (cmath.isclose, same tolerances): a function may return a complex number or a
+   NumPy complex array and the case's expect can be written as a complex literal such as (0.5-0.5j).
    Pass 7: a case may carry tol: { rel, abs } for isclose (items 378, 425, 464), shown in its row; each case has its own
    time limit (5 s, plus the case's budget or the widget's caseBudget) reported against the case that hit it, so a slow
    attempt stops after one case (items 394, 419); __learner_source__ is always defined (item 395); a stdout case may
@@ -214,6 +216,14 @@ def __zq_cmp(_a, _exp, _cmp, _ns, _tol=None):
             return isinstance(_x, (list, tuple)) and isinstance(_y, (list, tuple)) and len(_x) == len(_y) and all(_close(_p, _q) for _p, _q in zip(_x, _y))
         if isinstance(_x, (str, bytes)) and not isinstance(_y, (str, bytes)):
             return False  # item 121: "0.05" is text, not the number 0.05
+        # item 430: a complex value (Python, or a NumPy complex scalar) compares as cmath.isclose, with the same tolerances
+        if any(isinstance(_v, complex) or type(_v).__name__.startswith('complex') for _v in (_x, _y)):
+            try:
+                import cmath as _cm
+                _rt, _at = (float(_tol[0]), float(_tol[1])) if _tol else (1e-9, 1e-12)
+                return _cm.isclose(complex(_x), complex(_y), rel_tol=_rt, abs_tol=_at)
+            except Exception:
+                return _x == _y
         try:
             if _tol:
                 return _m.isclose(float(_x), float(_y), rel_tol=float(_tol[0]), abs_tol=float(_tol[1]))

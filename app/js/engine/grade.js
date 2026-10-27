@@ -8,7 +8,10 @@
      normExpr(s)                   normalised typed expression for the fallback comparison
      loadScript(url, ms)           lazy script loader with a timeout; one promise per url
      maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget, 6 s budget
-     exprEqual(ce, a, b)           symbolic equivalence after simplify, with a 5-point numeric second opinion
+     exprEqual(ce, a, b)           symbolic equivalence after simplify, with a 6-point numeric second opinion; real and
+                                   imaginary parts both compared when an i appears; vectors and matrices entry by entry
+     exprShape(ce, s)              undefined (no parse), null (one value) or { n, r, c, vec } for a vector or matrix
+     exprShapeLine(ce, ans, input) the "wrong size" feedback line for a vector or matrix answer, else null
      fmtNum(v), fmtFrac(v), fmtAs(v, format)   a number for display; fmtFrac writes 0.375 as 3/8; fmtAs applies a slider
                                    or control `format`: "fraction" (3/8) or "percent" (37.5%)
      correctValue(spec)            the authored answer in the shape the widget's set() takes (test hook)
@@ -74,7 +77,7 @@
     .replace(/\\cdot|\\times/g, '*').replace(/\\div/g, '/').replace(/\\,|\;|\\!|\\ /g, '')
     .replace(/[{]/g, '(').replace(/[}]/g, ')').replace(/\\/g, '')
     .replace(/\*\*/g, '^').replace(/×|·/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-')
-    .replace(/\s+/g, '').replace(/^\((-?[\w.]+)\)\/\((-?[\w.]+)\)$/, '$1/$2');
+    .replace(/\s+/g, '').replace(/varepsilon|ε|ϵ/g, 'epsilon').replace(/^\((-?[\w.]+)\)\/\((-?[\w.]+)\)$/, '$1/$2');
 
   const scripts = {};
   const loadScript = (url, ms = 6000) => {
@@ -122,17 +125,146 @@
     }
     return t;
   };
-  const exprEqual = (ce, a, b) => {
-    if (!ce || a == null || b == null || a === '' || b === '') return false;
-    let A, B;
-    const counting = /!|\\[dt]?binom|\\choose/.test(String(a) + String(b)); // factorials only evaluate at whole numbers
-    try { A = ce.parse(unbinom(a)); B = ce.parse(unbinom(b)); } catch { return false; }
-    if (A.isValid === false || B.isValid === false) return false;
+  /* Item 437: lone capital N and D (the engine reads them as its own functions), \epsilon and \varepsilon (and the
+     Unicode letters) as one symbol, and \min and \max (whose result type the engine will not add to anything) as
+     (a + b -/+ |a - b|)/2, folded over any number of arguments. Item 429: with an imaginary unit on either side, i
+     becomes the symbol \iota (the engine folds 1/(1 + i) into a wrong constant at parse time) and \bar is \overline. */
+  const IMAG = /(?<![A-Za-z\\])(?<!_)(?<!_\{)i/;
+  const normI = (s) => String(s).replace(/\\mathrm\{i\}|\\imaginaryI(?![A-Za-z])/g, 'i');
+  const hasImag = (s) => IMAG.test(normI(s));
+  const matching = (t, from) => {
+    const args = []; let depth = 1, last = from;
+    for (let k = from; k < t.length; k++) {
+      const c = t[k];
+      if (c === '(' || c === '[' || c === '{') depth++;
+      else if (c === ')' || c === ']' || c === '}') {
+        if (--depth === 0) { args.push(t.slice(last, k)); return { end: k + 1, args: args.map((x, n) => (n === args.length - 1 ? x.replace(/\\right\s*\\?$/, '') : x)) }; }
+      } else if (c === ',' && depth === 1) { args.push(t.slice(last, k)); last = k + 1; }
+    }
+    return null;
+  };
+  const minmax = (t) => {
+    const re = /\\(min|max)(?![A-Za-z])|\\operatorname\{(min|max)\}/g;
+    let out = '', pos = 0, m;
+    while ((m = re.exec(t))) {
+      if (m.index < pos) continue;
+      const fn = m[1] || m[2], after = m.index + m[0].length;
+      const o = /^\s*(?:\\left\s*)?(\(|\[|\\\{|\\lbrace)/.exec(t.slice(after));
+      const g = o && matching(t, after + o[0].length);
+      if (!g) continue;
+      const args = g.args.map(minmax).filter(x => x.trim());
+      if (!args.length) continue;
+      const sign = fn === 'min' ? '-' : '+';
+      const one = args.reduce((a, x) => `\\frac{(${a})+(${x})${sign}\\left|(${a})-(${x})\\right|}{2}`);
+      out += t.slice(pos, m.index) + `\\left(${one}\\right)`;
+      pos = re.lastIndex = g.end;
+    }
+    return out + t.slice(pos);
+  };
+  const prep = (s, cx) => {
+    let t = normI(s).replace(/\\epsilon(?![A-Za-z])|[εϵ]/g, '\\varepsilon')
+      .replace(/(?<![A-Za-z\\])(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?![A-Za-z])/g, '\\mathrm{$1}');
+    t = unbinom(minmax(t));
+    if (cx) t = t.replace(/(?<![A-Za-z\\])(?<!_)(?<!_\{)i/g, '\\iota ').replace(/\\bar\s*\{/g, '\\overline{');
+    return t;
+  };
+  /* Complex arithmetic on [re, im] pairs. Our own evaluator over MathJSON, because the engine's complex division is wrong. */
+  const cxm = (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const cxd = (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; };
+  const cxln = (a) => [Math.log(Math.hypot(a[0], a[1])), Math.atan2(a[1], a[0])];
+  const cxexp = (a) => { const r = Math.exp(a[0]); return [r * Math.cos(a[1]), r * Math.sin(a[1])]; };
+  const cxsqrt = (a) => { const r = Math.hypot(a[0], a[1]), re = Math.sqrt((r + a[0]) / 2), im = Math.sqrt(Math.max(0, (r - a[0]) / 2)); return [re, a[1] < 0 ? -im : im]; };
+  const cxpow = (a, b) => {
+    if (b[1] === 0 && Number.isInteger(b[0]) && Math.abs(b[0]) <= 64) { let r = [1, 0]; for (let k = Math.abs(b[0]); k > 0; k--) r = cxm(r, a); return b[0] < 0 ? cxd([1, 0], r) : r; }
+    if (a[1] === 0 && a[0] > 0 && b[1] === 0) return [Math.pow(a[0], b[0]), 0];
+    if (a[0] === 0 && a[1] === 0) return b[0] > 0 ? [0, 0] : [NaN, NaN];
+    return cxexp(cxm(b, cxln(a)));
+  };
+  const cxsin = (a) => [Math.sin(a[0]) * Math.cosh(a[1]), Math.cos(a[0]) * Math.sinh(a[1])];
+  const cxcos = (a) => [Math.cos(a[0]) * Math.cosh(a[1]), -Math.sin(a[0]) * Math.sinh(a[1])];
+  const cxsinh = (a) => [Math.sinh(a[0]) * Math.cos(a[1]), Math.cosh(a[0]) * Math.sin(a[1])];
+  const cxcosh = (a) => [Math.cosh(a[0]) * Math.cos(a[1]), Math.sinh(a[0]) * Math.sin(a[1])];
+  const NOPE = new Error('unsupported');
+  const cxEval = (j, env) => {
+    if (typeof j === 'number') return [j, 0];
+    if (j && typeof j === 'object' && !Array.isArray(j)) { if (j.num != null) return [parseFloat(j.num), 0]; if (j.sym != null) return cxEval(j.sym, env); throw NOPE; }
+    if (typeof j === 'string') {
+      if (j in env) return env[j];
+      if (j === 'ExponentialE') return [Math.E, 0];
+      if (j === 'Pi') return [Math.PI, 0];
+      if (j === 'ImaginaryUnit') return [0, 1];
+      throw NOPE;
+    }
+    if (!Array.isArray(j)) throw NOPE;
+    const h = j[0], v = j.slice(1).map(x => cxEval(x, env)), x = v[0];
+    switch (h) {
+      case 'Complex': return [v[0][0], v[1][0]];
+      case 'Rational': case 'Divide': return v.slice(1).reduce(cxd, x);
+      case 'Add': return v.reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]);
+      case 'Subtract': return v.slice(1).reduce((a, b) => [a[0] - b[0], a[1] - b[1]], x);
+      case 'Negate': return [-x[0], -x[1]];
+      case 'Multiply': return v.reduce(cxm, [1, 0]);
+      case 'Square': return cxm(x, x);
+      case 'Power': return cxpow(x, v[1]);
+      case 'Sqrt': return cxsqrt(x);
+      case 'Root': { const n = v[1][0]; if (x[1] === 0 && x[0] < 0 && Number.isInteger(n) && n % 2) return [-Math.pow(-x[0], 1 / n), 0]; return cxpow(x, [1 / n, 0]); }
+      case 'Exp': return cxexp(x);
+      case 'Ln': return cxln(x);
+      case 'Log': return cxd(cxln(x), v[1] ? cxln(v[1]) : [Math.LN10, 0]);
+      case 'Lb': return cxd(cxln(x), [Math.LN2, 0]);
+      case 'Sin': return cxsin(x);
+      case 'Cos': return cxcos(x);
+      case 'Tan': return cxd(cxsin(x), cxcos(x));
+      case 'Sinh': return cxsinh(x);
+      case 'Cosh': return cxcosh(x);
+      case 'Tanh': return cxd(cxsinh(x), cxcosh(x));
+      case 'Abs': return [Math.hypot(x[0], x[1]), 0];
+      case 'Conjugate': case 'OverBar': return [x[0], -x[1]];
+      case 'Re': return [x[0], 0];
+      case 'Im': return [x[1], 0];
+      case 'Arg': case 'Argument': return [Math.atan2(x[1], x[0]), 0];
+      default: throw NOPE;
+    }
+  };
+  /* Vectors and matrices (item 433): a Tuple, List or Matrix. A column, a row and (a, b, c) are the same vector. */
+  const itemsOf = (ce, E) => {
+    const j = E.json; const h = Array.isArray(j) ? j[0] : null, a = Array.isArray(j) ? j.slice(1) : [];
+    let list = null, r = 0, c = 0;
+    if ((h === 'Tuple' || h === 'List') && a.length > 1 && !a.some(x => Array.isArray(x) && x[0] === 'List')) { list = a; r = 1; c = a.length; }
+    else if (h === 'Matrix' && Array.isArray(a[0])) { const rows = a[0].slice(1).map(x => x.slice(1)); r = rows.length; c = r ? rows[0].length : 0; list = [].concat(...rows); }
+    if (!list || !list.length) return null;
+    return { items: list.map(x => ce.box(x)), vec: r === 1 || c === 1, n: list.length, r, c };
+  };
+  const sameShape = (p, q) => p.vec && q.vec ? p.n === q.n : !p.vec && !q.vec && p.r === q.r && p.c === q.c;
+  const parseLatex = (ce, s) => { const cx = hasImag(s); const E = ce.parse(prep(s, cx)); return E.isValid === false ? undefined : E; };
+  /* exprShape: undefined when the input does not parse, null for one value, else { n, r, c, vec } */
+  const exprShape = (ce, s) => {
+    try { const E = parseLatex(ce, s); if (!E) return undefined; const it = itemsOf(ce, E); return it ? { n: it.n, r: it.r, c: it.c, vec: it.vec } : null; } catch { return undefined; }
+  };
+  const shapeWord = (p) => p.vec ? `${p.n} component${p.n === 1 ? '' : 's'}` : `${p.r} rows and ${p.c} columns`;
+  /* The feedback line when the learner's vector or matrix has the wrong shape (key "length"), else null */
+  const exprShapeLine = (ce, answer, input) => {
+    const want = exprShape(ce, answer), got = exprShape(ce, input);
+    if (got === undefined || want === undefined || (!want && !got)) return null;
+    if (want && got && sameShape(want, got)) return null;
+    if (want && !got) return `That is a single value. The answer has ${shapeWord(want)}.`;
+    if (!want && got) return `The answer is a single value, not ${got.vec ? 'a vector' : 'a matrix'}.`;
+    return `Your answer has ${shapeWord(got)}. The answer has ${shapeWord(want)}.`;
+  };
+  const scalarEqual = (ce, A, B, counting, cx) => {
     let sym = false;
     try { sym = !!A.simplify().isEqual(B.simplify()); } catch { sym = false; }
     let vars = [];
-    try { vars = [...new Set([...(A.unknowns || []), ...(B.unknowns || [])])]; } catch { vars = []; }
+    try { vars = [...new Set([...(A.unknowns || []), ...(B.unknowns || [])])].filter(v => !(cx && v === 'iota')); } catch { vars = []; }
     const num = (E, sub) => { try { const v = (sub ? E.subs(sub) : E).N(); const x = v.re ?? v.valueOf(); return typeof x === 'number' ? x : NaN; } catch { return NaN; } };
+    /* complex mode: [re, im] from our evaluator; an unsupported function falls back to the engine's N() */
+    const val = (E, p) => {
+      if (!cx) return [num(E, p), 0];
+      const env = { iota: [0, 1] }; for (const k in p || {}) env[k] = [p[k], 0];
+      try { return cxEval(E.json, env); } catch { /* engine fallback below */ }
+      try { const v = E.subs({ ...(p || {}), iota: ce.box(['Complex', 0, 1]) }).N(); return [typeof v.re === 'number' ? v.re : NaN, typeof v.im === 'number' ? v.im : 0]; } catch { return [NaN, NaN]; }
+    };
+    const fin = (z) => Number.isFinite(z[0]) && Number.isFinite(z[1]);
     const close = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(x), Math.abs(y));
     let seed = 20240531; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
     const draw = () => { let v; do { v = 0.3 + 2.7 * rnd(); } while (Math.abs(v - 1) < 0.08); return +v.toFixed(6); };
@@ -140,15 +272,29 @@
     const pts = !vars.length ? [null] : counting ? Array.from({ length: 24 }, () => Object.fromEntries(vars.map(v => [v, drawInt()]))) : Array.from({ length: 6 }, () => Object.fromEntries(vars.map(v => [v, draw()])));
     let checked = 0, numeric = true;
     for (const p of pts) {
-      const x = num(A, p), y = num(B, p), fx = Number.isFinite(x), fy = Number.isFinite(y);
+      const x = val(A, p), y = val(B, p), fx = fin(x), fy = fin(y);
       if (!fx && !fy) continue;
       if (counting && (!fx || !fy)) continue; // outside a factorial's domain (a negative factorial): not a counting point
-      if (fx !== fy || !close(x, y)) { numeric = false; break; }
+      if (fx !== fy || !close(x[0], y[0]) || !close(x[1], y[1])) { numeric = false; break; }
       checked++;
     }
     if (!checked && numeric) return sym; // nothing numeric to compare: the symbolic answer stands
     if (counting && checked < 4 && numeric) return sym; // too few whole-number points where both sides are defined
     return numeric;
+  };
+  /* Item 429: real and imaginary parts are both compared at every seeded point. Item 433: a vector or matrix answer is
+     compared entry by entry (the same shape is required), each entry by the same seeded-point method. */
+  const exprEqual = (ce, a, b) => {
+    if (!ce || a == null || b == null || a === '' || b === '') return false;
+    let A, B;
+    const counting = /!|\\[dt]?binom|\\choose/.test(String(a) + String(b)); // factorials only evaluate at whole numbers
+    const cx = hasImag(a) || hasImag(b);
+    try { A = ce.parse(prep(a, cx)); B = ce.parse(prep(b, cx)); } catch { return false; }
+    if (A.isValid === false || B.isValid === false) return false;
+    let IA = null, IB = null;
+    try { IA = itemsOf(ce, A); IB = itemsOf(ce, B); } catch { IA = IB = null; }
+    if (IA || IB) return !!(IA && IB && sameShape(IA, IB) && IA.items.every((x, k) => scalarEqual(ce, x, IB.items[k], counting, cx)));
+    return scalarEqual(ce, A, B, counting, cx);
   };
 
   /* Item 200: equal up to an added constant (antiderivatives). Symbols in the learner's answer that the target lacks
@@ -156,7 +302,7 @@
   const exprEqualUpToConstant = (ce, a, b) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
     let A, B;
-    try { A = ce.parse(unbinom(a)); B = ce.parse(unbinom(b)); } catch { return false; }
+    try { A = ce.parse(prep(a)); B = ce.parse(prep(b)); } catch { return false; }
     if (A.isValid === false || B.isValid === false) return false;
     let va = [], vb = [];
     try { va = [...(A.unknowns || [])]; vb = [...(B.unknowns || [])]; } catch { /* none */ }
@@ -360,5 +506,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, exprEqual, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, exprEqual, exprShape, exprShapeLine, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();
