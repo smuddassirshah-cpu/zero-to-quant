@@ -15,12 +15,12 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [x] garch L3
 - [x] coint L1
 - [x] coint L2
-- [ ] coint L3 (files on disk, see triage 2)
+- [x] coint L3 (triage 2)
 - [x] opt-dash L4
 - [x] contests L1
-- [ ] contests L2 (files on disk, see triage 2)
-- [ ] contests L3 (files on disk, see triage 2)
-- [ ] contests L4 (files on disk, see triage 2)
+- [x] contests L2 (triage 2)
+- [x] contests L3 (triage 2)
+- [x] contests L4 (triage 2)
 
 ### 2. Stage 1 gap levels (briefs: `docs/briefs/gap-<course>.md`; plan in `docs/briefs/gaps-plan.md`)
 - [ ] limits L5
