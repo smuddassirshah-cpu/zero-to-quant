@@ -263,7 +263,7 @@ ${heightCss}
       }
       for (const l of list('lines')) {
         if (!vis(l) || !Array.isArray(l.pts)) continue;
-        let pts = l.pts.map((p) => { const q = vec(p); return fin(q) ? toS(q) : null; });
+        let pts = l.pts.slice(0, 2000).map((p) => { const q = vec(p); return fin(q) ? toS(q) : null; });
         if (l.closed && pts.length > 2) pts = pts.concat([pts[0]]);
         const g = G(l); sampleLine(pts, g, { dashed: l.dashed, cls: 'cvs-ln' + (l.width === 'bold' ? ' bold' : '') });
         const q = pts.filter(Boolean);
@@ -398,7 +398,11 @@ ${heightCss}
       /* a line, dot or arrow lying on a curved surface may sit a little under its cells' far corners: lift it by a tenth of a cell */
       for (const p of prims) if (p.k !== 'q') p.bias += 0.1 * cellMax;
       const desc = ['vectors', 'points', 'curves', 'lines', 'surfaces', 'planes', 'fields'].map((k) => { const l = list(k).filter(vis); return l.length ? `${k} ${l.map((it) => stripTex(it.label || it.id)).join(', ')}` : ''; }).filter(Boolean).join('; ');
-      return { prims, labels, taps, axes, axisNames, desc };
+      /* what derive reads as values.<id>: a point's [x, y, z] (as placed on its curve or surface) and a vector's tip */
+      const values = {};
+      for (const pt of list('points')) if (fin(ptPos[pt.id])) values[pt.id] = ptPos[pt.id].map((v) => +v.toFixed(6));
+      for (const v of vAll) if (fin(vecEnd[v.id].tip)) values[v.id] = vecEnd[v.id].tip.map((q) => +q.toFixed(6));
+      return { prims, labels, taps, axes, axisNames, desc, values };
     };
 
     /* ---------- Frame: project, sort, draw ---------- */
@@ -418,7 +422,7 @@ ${heightCss}
       }
       return el;
     };
-    const geo = { proj: null, cam: null };
+    const geo = { proj: null, cam: null, label: '' };
 
     const def = {
       kind: 'space', aria: params.aria || 'Three-dimensional view',
@@ -543,7 +547,9 @@ ${heightCss}
 
         g.append(bg, layer, tapL, labL);
         geo.proj = proj; geo.cam = cam;
-        if (ui.sync) ui.sync(cam, sc);
+        const label = `${params.aria || 'Three-dimensional view'}. ${sc.desc ? 'Shows ' + sc.desc + '. ' : ''}${R.static ? '' : 'Drag, or use the arrow keys, to rotate; plus and minus zoom; 0 resets.'}`;
+        if (label !== geo.label) { geo.label = label; R.F.svg.setAttribute('aria-label', label); }
+        if (ui.sync) ui.sync(cam);
       },
       methods: (R) => {
         const el = R.F.svg;
@@ -558,7 +564,7 @@ ${heightCss}
           const reset = () => { R.inst.set({ camera: { ...HOME } }, { ms: 420 }); R.emit({ type: 'rotate', ...HOME, end: true }); live.textContent = 'View reset.'; };
           chip.addEventListener('click', reset);
           ui.reset = reset;
-          ui.sync = (cam, sc) => { chip.disabled = sameCam(cam, HOME); el.setAttribute('aria-label', `${params.aria || 'Three-dimensional view'}. ${sc.desc ? 'Shows ' + sc.desc + '. ' : ''}Drag, or use the arrow keys, to rotate; plus and minus zoom; 0 resets.`); };
+          ui.sync = (cam) => { chip.disabled = sameCam(cam, HOME); };
           const ptrs = new Map(); let drag = null, pinch = null, pend = null, raf = 0;
           const flush = (end) => { raf = 0; if (pend) { const p = pend; pend = null; rotate(p.az, p.el, p.zoom, end); } };
           el.addEventListener('pointerdown', (e) => {
@@ -615,6 +621,8 @@ ${heightCss}
             else R.inst.set(C.paramPatch(n, v), { instant: true });
           },
           getParam: (name) => { const n = String(name); if (n === 'az' || n === 'el' || n === 'zoom') return camOf(R.state)[n]; if (n.includes('.')) { let o = R.state; for (const k of n.split('.')) o = o == null ? undefined : Array.isArray(o) ? o.find((q) => q && q.id === k) : o[k]; return typeof o === 'number' ? o : undefined; } return (R.state.params || {})[n]; },
+          /* positions for derive: values.P is the point P as [x, y, z] (a point on a curve or surface included), values.u a vector's tip */
+          values: () => ({ ...sceneOf(R.state).values }),
           /* the camera as { az, el, zoom }, the home view, and a way back to it */
           camera: () => ({ ...camOf(R.state) }),
           reset: () => { R.inst.set({ camera: { ...HOME } }, { ms: 420 }); },
@@ -623,6 +631,7 @@ ${heightCss}
         };
       },
     };
-    return K.make(host, params, ctx, def);
+    /* the player's Why? sheet passes ctx.mode 'static' (not ctx.static, which is all ZQ.cvb.make reads): a still copy */
+    return K.make(host, params, ctx.mode === 'static' && !ctx.static ? { ...ctx, static: true } : ctx, def);
   });
 })();

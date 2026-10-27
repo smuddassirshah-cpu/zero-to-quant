@@ -162,7 +162,7 @@
     return out + t.slice(pos);
   };
   const prep = (s, cx) => {
-    let t = normI(s).replace(/\\epsilon(?![A-Za-z])|[εϵ]/g, '\\varepsilon')
+    let t = normI(s).replace(/(?:\\left\s*)?\\langle\s*/g, '(').replace(/(?:\\right\s*)?\\rangle/g, ')').replace(/\\epsilon(?![A-Za-z])|[εϵ]/g, '\\varepsilon')
       .replace(/(?<![A-Za-z\\])(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?![A-Za-z])/g, '\\mathrm{$1}');
     t = unbinom(minmax(t));
     if (cx) t = t.replace(/(?<![A-Za-z\\])(?<!_)(?<!_\{)i/g, '\\iota ').replace(/\\bar\s*\{/g, '\\overline{');
