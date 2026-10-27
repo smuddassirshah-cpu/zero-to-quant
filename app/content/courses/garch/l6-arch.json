@@ -1,0 +1,2682 @@
+{
+ "id": "l6-arch",
+ "course": "garch",
+ "title": "Variance from past shocks",
+ "minutes": 14,
+ "objectives": [
+  "Write down the ARCH(1) model and simulate it.",
+  "Derive its unconditional variance and see why one lag of memory is too short."
+ ],
+ "skills": [
+  "gv-models"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Share B taught us that big days follow big days, of either sign. Here is a rule that builds that in. Today's variance is a floor of 0.5 %² plus half of yesterday's squared return. Drag yesterday's return $r_{t-1}$ along the curve.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      4
+     ],
+     "y": [
+      0,
+      9
+     ],
+     "height": 260,
+     "grid": true,
+     "xLabel": "$r_{t-1}$ (%)",
+     "yLabel": "Today's variance (%²)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "0.5 + 0.5*x^2",
+       "label": "$\\sigma_t^2$",
+       "labelAt": 3.3
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.5,
+       "y": 0.625,
+       "drag": true,
+       "on": "f",
+       "snap": 0.1,
+       "label": ""
+      }
+     ],
+     "hlines": [
+      {
+       "id": "floor",
+       "y": 0.5,
+       "label": "floor 0.5"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Yesterday {{fixed(P.x, 1)}}%: today's variance {{fixed(0.5 + 0.5 * P.x * P.x, 2)}} %², a daily volatility of {{fixed(sqrt(0.5 + 0.5 * P.x * P.x), 2)}}%."
+    }
+   },
+   "question": "Drag to a return that makes today's variance 2.5 %².",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "P",
+      "target": {
+       "expr": "y",
+       "value": 2.5,
+       "show": [
+        2,
+        2.5
+       ]
+      },
+      "tol": 0.1
+     }
+    ],
+    "wrong": [
+     {
+      "id": "lin",
+      "region": {
+       "x": [
+        3.85,
+        4.0
+       ]
+      }
+     },
+     {
+      "id": "vol",
+      "region": {
+       "x": [
+        2.4,
+        2.6
+       ]
+      }
+     },
+     {
+      "id": "volneg",
+      "region": {
+       "x": [
+        -2.6,
+        -2.4
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $0.5 + 0.5\\,r^2 = 2.5$ for $r$."
+    },
+    {
+     "rung": "point",
+     "text": "Read the caption as you drag: it prints today's variance.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$r^2 = 4$, so $r = 2$ or $r = -2$. Either works."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A move of 2%, up or down, lifts today's variance from the floor to 2.5 %².",
+    "generic": "Not quite right. Drag until the caption reads a variance of 2.50 %².",
+    "byKey": {
+     "lin": "You found where $0.5 + 0.5\\,r = 2.5$, without squaring. The rule squares yesterday's return.",
+     "vol": "You dragged to a move of 2.5%. The variance there is 3.63 %²; 2.5 is the variance asked for, not the move.",
+     "volneg": "You dragged to a move of −2.5%. The variance there is 3.63 %²; 2.5 is the variance asked for, not the move.",
+     "P": "Not yet. Watch the caption: stop where today's variance reads 2.50 %²."
+    }
+   },
+   "explain": {
+    "text": "$0.5 + 0.5 \\times 2^2 = 2.5$ %², a daily volatility of 1.58%. A fall of 2% gives the same, because the rule squares the move. Big news of either sign raises tomorrow's risk.",
+    "canvas": {
+     "points": {
+      "P": {
+       "x": 2,
+       "y": 2.5
+      },
+      "Q": {
+       "x": -2,
+       "y": 2.5,
+       "label": "−2%",
+       "colour": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Simulate the rule. Each day draw a fresh shock $z_t$ from N(0, 1) and set $r_t = \\sigma_t z_t$. The three settings use the same shocks, and $\\omega = 1 - \\alpha$ keeps the long-run variance at 1 %². The chart shows days 900 to 1,149; the caption scores all 2,000.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "height": 240,
+     "yLabel": "Daily return (%)",
+     "indexFrom": 900,
+     "y": [
+      -7,
+      7
+     ],
+     "baseline": 0,
+     "decimals": 1,
+     "series": [
+      {
+       "id": "a0",
+       "label": "α = 0",
+       "values": [
+        0.852,
+        0.382,
+        2.44,
+        0.094,
+        -0.46,
+        0.153,
+        -1.355,
+        0.486,
+        -0.096,
+        0.345,
+        0.374,
+        -1.045,
+        1.33,
+        -1.001,
+        0.902,
+        -1.579,
+        0.386,
+        -0.806,
+        0.057,
+        -0.637,
+        -2.168,
+        -1.1,
+        0.084,
+        0.639,
+        -1.454,
+        -2.11,
+        -0.857,
+        -0.196,
+        -0.618,
+        -0.794,
+        0.866,
+        0.981,
+        0.757,
+        -0.923,
+        0.092,
+        -0.178,
+        -1.412,
+        0.898,
+        0.103,
+        -0.47,
+        1.433,
+        0.779,
+        0.871,
+        1.215,
+        0.733,
+        -1.25,
+        -0.374,
+        1.018,
+        -0.754,
+        0.052,
+        0.412,
+        1.456,
+        1.313,
+        0.913,
+        -0.172,
+        0.929,
+        0.542,
+        -0.148,
+        1.371,
+        0.508,
+        -0.743,
+        1.279,
+        -0.242,
+        0.606,
+        -1.512,
+        -0.007,
+        -0.934,
+        -0.961,
+        -1.899,
+        2.154,
+        -0.139,
+        0.249,
+        1.118,
+        -0.112,
+        0.524,
+        -1.349,
+        0.206,
+        -0.404,
+        0.51,
+        0.19,
+        -1.376,
+        -1.843,
+        -1.006,
+        0.746,
+        0.434,
+        0.412,
+        -2.011,
+        -2.682,
+        -0.616,
+        -0.326,
+        -0.597,
+        0.361,
+        -0.165,
+        -1.18,
+        -0.875,
+        0.148,
+        0.077,
+        -0.07,
+        2.272,
+        -0.259,
+        0.124,
+        -0.993,
+        -0.356,
+        0.527,
+        0.569,
+        -0.155,
+        0.397,
+        0.057,
+        -1.88,
+        -3.274,
+        2.311,
+        0.831,
+        -0.057,
+        -1.738,
+        -1.275,
+        1.356,
+        -2.788,
+        -0.324,
+        0.869,
+        0.143,
+        0.755,
+        -0.131,
+        2.393,
+        -1.028,
+        -1.362,
+        0.275,
+        1.43,
+        -0.056,
+        1.049,
+        -0.531,
+        -1.185,
+        1.4,
+        1.569,
+        1.533,
+        -0.438,
+        -1.155,
+        -1.169,
+        -0.225,
+        0.582,
+        0.509,
+        -1.434,
+        0.195,
+        0.018,
+        0.09,
+        -0.024,
+        -0.202,
+        0.593,
+        0.127,
+        0.225,
+        -0.691,
+        0.396,
+        -0.121,
+        -2.115,
+        0.484,
+        -0.264,
+        0.926,
+        -0.162,
+        -0.096,
+        0.212,
+        -0.012,
+        -0.447,
+        -1.793,
+        1.843,
+        -1.579,
+        -0.342,
+        0.653,
+        0.38,
+        0.567,
+        0.769,
+        1.263,
+        0.297,
+        2.907,
+        -1.013,
+        0.227,
+        -0.361,
+        -0.545,
+        0.287,
+        1.458,
+        -0.71,
+        -0.711,
+        0.724,
+        0.544,
+        1.958,
+        1.028,
+        0.23,
+        -0.329,
+        0.215,
+        -0.175,
+        -1.365,
+        0.008,
+        -0.175,
+        -0.233,
+        -0.429,
+        1.69,
+        0.696,
+        0.937,
+        -0.608,
+        -1.023,
+        -0.283,
+        0.244,
+        -0.345,
+        -0.188,
+        0.961,
+        0.299,
+        -0.984,
+        -0.428,
+        -0.658,
+        0.181,
+        -1.167,
+        -0.179,
+        0.693,
+        0.029,
+        -0.914,
+        -0.616,
+        0.124,
+        0.483,
+        0.837,
+        -0.145,
+        -1.317,
+        1.425,
+        0.298,
+        0.406,
+        0.306,
+        -1.037,
+        -0.319,
+        0.257,
+        1.033,
+        0.06,
+        -3.12,
+        -0.241,
+        0.353,
+        1.294,
+        0.711,
+        2.49,
+        1.424,
+        1.348,
+        0.943,
+        -1.382,
+        0.847,
+        0.599,
+        -0.526,
+        0.587,
+        0.418,
+        -0.465,
+        -0.123,
+        -0.263,
+        0.23,
+        -0.425,
+        0.545,
+        -1.918
+       ],
+       "colour": 1,
+       "thin": true
+      },
+      {
+       "id": "a1",
+       "label": "α = 0.3",
+       "values": [
+        1.649,
+        0.47,
+        2.136,
+        0.136,
+        -0.386,
+        0.132,
+        -1.138,
+        0.507,
+        -0.084,
+        0.289,
+        0.319,
+        -0.893,
+        1.289,
+        -1.096,
+        0.929,
+        -1.546,
+        0.459,
+        -0.704,
+        0.053,
+        -0.533,
+        -1.922,
+        -1.479,
+        0.097,
+        0.536,
+        -1.289,
+        -2.31,
+        -1.3,
+        -0.215,
+        -0.522,
+        -0.702,
+        0.797,
+        0.926,
+        0.741,
+        -0.858,
+        0.088,
+        -0.149,
+        -1.187,
+        0.951,
+        0.102,
+        -0.394,
+        1.238,
+        0.839,
+        0.832,
+        1.158,
+        0.77,
+        -1.171,
+        -0.394,
+        0.88,
+        -0.728,
+        0.048,
+        0.345,
+        1.249,
+        1.419,
+        1.043,
+        -0.174,
+        0.782,
+        0.51,
+        -0.131,
+        1.152,
+        0.532,
+        -0.658,
+        1.166,
+        -0.255,
+        0.514,
+        -1.335,
+        -0.008,
+        -0.782,
+        -0.903,
+        -1.846,
+        2.827,
+        -0.245,
+        0.211,
+        0.945,
+        -0.11,
+        0.439,
+        -1.174,
+        0.218,
+        -0.342,
+        0.437,
+        0.166,
+        -1.158,
+        -1.935,
+        -1.359,
+        0.835,
+        0.414,
+        0.357,
+        -1.728,
+        -3.387,
+        -1.254,
+        -0.352,
+        -0.512,
+        0.319,
+        -0.141,
+        -0.992,
+        -0.872,
+        0.143,
+        0.065,
+        -0.058,
+        1.902,
+        -0.346,
+        0.106,
+        -0.833,
+        -0.339,
+        0.452,
+        0.497,
+        -0.137,
+        0.333,
+        0.048,
+        -1.574,
+        -3.934,
+        5.342,
+        2.529,
+        -0.092,
+        -1.457,
+        -1.475,
+        1.577,
+        -3.353,
+        -0.654,
+        0.791,
+        0.135,
+        0.634,
+        -0.119,
+        2.009,
+        -1.421,
+        -1.557,
+        0.328,
+        1.223,
+        -0.06,
+        0.878,
+        -0.512,
+        -1.046,
+        1.42,
+        1.792,
+        1.977,
+        -0.6,
+        -1.038,
+        -1.183,
+        -0.238,
+        0.493,
+        0.448,
+        -1.251,
+        0.211,
+        0.015,
+        0.075,
+        -0.02,
+        -0.169,
+        0.499,
+        0.112,
+        0.189,
+        -0.582,
+        0.354,
+        -0.104,
+        -1.774,
+        0.62,
+        -0.239,
+        0.784,
+        -0.152,
+        -0.081,
+        0.177,
+        -0.01,
+        -0.374,
+        -1.545,
+        2.193,
+        -2.311,
+        -0.518,
+        0.577,
+        0.34,
+        0.486,
+        0.675,
+        1.156,
+        0.312,
+        2.482,
+        -1.618,
+        0.277,
+        -0.307,
+        -0.465,
+        0.251,
+        1.236,
+        -0.764,
+        -0.665,
+        0.661,
+        0.496,
+        1.722,
+        1.296,
+        0.252,
+        -0.279,
+        0.183,
+        -0.148,
+        -1.147,
+        0.009,
+        -0.147,
+        -0.195,
+        -0.362,
+        1.453,
+        0.804,
+        0.886,
+        -0.588,
+        -0.917,
+        -0.276,
+        0.208,
+        -0.292,
+        -0.16,
+        0.809,
+        0.283,
+        -0.837,
+        -0.408,
+        -0.569,
+        0.162,
+        -0.982,
+        -0.178,
+        0.583,
+        0.026,
+        -0.765,
+        -0.577,
+        0.111,
+        0.405,
+        0.725,
+        -0.134,
+        -1.106,
+        1.472,
+        0.346,
+        0.348,
+        0.262,
+        -0.881,
+        -0.308,
+        0.22,
+        0.873,
+        0.058,
+        -2.612,
+        -0.4,
+        0.305,
+        1.104,
+        0.734,
+        2.312,
+        2.162,
+        1.954,
+        1.281,
+        -1.509,
+        0.996,
+        0.599,
+        -0.473,
+        0.514,
+        0.369,
+        -0.4,
+        -0.107,
+        -0.221,
+        0.195,
+        -0.358,
+        0.468,
+        -1.678
+       ],
+       "colour": 1,
+       "thin": true
+      },
+      {
+       "id": "a2",
+       "label": "α = 0.5",
+       "values": [
+        2.925,
+        0.834,
+        2.247,
+        0.164,
+        -0.33,
+        0.114,
+        -0.965,
+        0.477,
+        -0.075,
+        0.244,
+        0.272,
+        -0.766,
+        1.185,
+        -1.097,
+        0.947,
+        -1.538,
+        0.501,
+        -0.637,
+        0.048,
+        -0.451,
+        -1.682,
+        -1.522,
+        0.108,
+        0.455,
+        -1.129,
+        -2.25,
+        -1.492,
+        -0.249,
+        -0.45,
+        -0.616,
+        0.719,
+        0.855,
+        0.704,
+        -0.798,
+        0.083,
+        -0.126,
+        -1.006,
+        0.901,
+        0.098,
+        -0.334,
+        1.068,
+        0.806,
+        0.791,
+        1.096,
+        0.769,
+        -1.115,
+        -0.396,
+        0.774,
+        -0.674,
+        0.044,
+        0.292,
+        1.073,
+        1.362,
+        1.091,
+        -0.18,
+        0.667,
+        0.461,
+        -0.115,
+        0.976,
+        0.502,
+        -0.588,
+        1.049,
+        -0.248,
+        0.442,
+        -1.169,
+        -0.008,
+        -0.661,
+        -0.814,
+        -1.732,
+        3.047,
+        -0.315,
+        0.185,
+        0.804,
+        -0.101,
+        0.372,
+        -1.018,
+        0.208,
+        -0.292,
+        0.376,
+        0.144,
+        -0.983,
+        -1.828,
+        -1.482,
+        0.943,
+        0.421,
+        0.316,
+        -1.491,
+        -3.405,
+        -1.546,
+        -0.424,
+        -0.458,
+        0.281,
+        -0.121,
+        -0.841,
+        -0.808,
+        0.135,
+        0.055,
+        -0.049,
+        1.608,
+        -0.347,
+        0.093,
+        -0.705,
+        -0.308,
+        0.39,
+        0.432,
+        -0.12,
+        0.283,
+        0.042,
+        -1.331,
+        -3.854,
+        6.507,
+        3.868,
+        -0.16,
+        -1.245,
+        -1.44,
+        1.681,
+        -3.856,
+        -0.914,
+        0.832,
+        0.132,
+        0.538,
+        -0.105,
+        1.702,
+        -1.435,
+        -1.685,
+        0.38,
+        1.081,
+        -0.058,
+        0.743,
+        -0.468,
+        -0.925,
+        1.349,
+        1.862,
+        2.292,
+        -0.775,
+        -1.033,
+        -1.189,
+        -0.247,
+        0.424,
+        0.391,
+        -1.089,
+        0.204,
+        0.013,
+        0.064,
+        -0.017,
+        -0.143,
+        0.424,
+        0.097,
+        0.16,
+        -0.495,
+        0.312,
+        -0.09,
+        -1.502,
+        0.617,
+        -0.22,
+        0.671,
+        -0.138,
+        -0.068,
+        0.15,
+        -0.008,
+        -0.316,
+        -1.33,
+        2.168,
+        -2.665,
+        -0.687,
+        0.56,
+        0.308,
+        0.42,
+        0.59,
+        1.037,
+        0.303,
+        2.147,
+        -1.698,
+        0.317,
+        -0.268,
+        -0.399,
+        0.219,
+        1.056,
+        -0.73,
+        -0.622,
+        0.603,
+        0.449,
+        1.518,
+        1.321,
+        0.269,
+        -0.241,
+        0.157,
+        -0.125,
+        -0.973,
+        0.008,
+        -0.124,
+        -0.166,
+        -0.308,
+        1.25,
+        0.788,
+        0.844,
+        -0.562,
+        -0.83,
+        -0.26,
+        0.178,
+        -0.248,
+        -0.137,
+        0.686,
+        0.257,
+        -0.718,
+        -0.373,
+        -0.496,
+        0.143,
+        -0.834,
+        -0.165,
+        0.496,
+        0.023,
+        -0.646,
+        -0.519,
+        0.099,
+        0.343,
+        0.626,
+        -0.121,
+        -0.938,
+        1.382,
+        0.359,
+        0.305,
+        0.226,
+        -0.752,
+        -0.283,
+        0.189,
+        0.743,
+        0.053,
+        -2.209,
+        -0.414,
+        0.27,
+        0.948,
+        0.693,
+        2.142,
+        2.381,
+        2.461,
+        1.771,
+        -1.988,
+        1.333,
+        0.706,
+        -0.455,
+        0.456,
+        0.325,
+        -0.346,
+        -0.092,
+        -0.187,
+        0.166,
+        -0.304,
+        0.403,
+        -1.462
+       ],
+       "colour": 1,
+       "thin": true
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "k": 0
+     },
+     "hide": [
+      "a1",
+      "a2"
+     ]
+    },
+    "derive": {
+     "let": {
+      "ids": "['a0', 'a1', 'a2']"
+     },
+     "hide": "ids.slice(0, k).concat(ids.slice(k + 1))",
+     "caption": "$\\alpha$ = {{k < 0.5 ? '0' : k < 1.5 ? '0.3' : '0.5'}}: sample sd {{k < 0.5 ? '1.00' : k < 1.5 ? '1.01' : '1.00'}}% a day, raw kurtosis {{k < 0.5 ? '3.02' : k < 1.5 ? '3.74' : '5.29'}}."
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "options": [
+       "α = 0",
+       "α = 0.3",
+       "α = 0.5"
+      ],
+      "label": "Weight on news $\\alpha$",
+      "start": 0
+     }
+    ]
+   },
+   "question": "With the long-run variance held at 1 %², what does raising $\\alpha$ change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "burst",
+      "text": "Big days arrive in bursts: one large move makes the next few days larger too.",
+      "correct": true
+     },
+     {
+      "id": "bigger",
+      "text": "Every day moves more.",
+      "why": "You read the spikes as a bigger scale. The sample sd stays near 1% a day at every setting; calm days get calmer."
+     },
+     {
+      "id": "trend",
+      "text": "Moves start to run in one direction.",
+      "why": "You saw a run of big days as a trend. The sign comes from $z_t$, which has no memory; only the size clusters."
+     },
+     {
+      "id": "same",
+      "text": "Nothing: the same shocks give the same path.",
+      "why": "The shocks are the same, but $\\sigma_t$ now depends on yesterday, so each shock is scaled differently."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Switch between the three settings and watch days 1,000 to 1,020."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. With $\\alpha = 0.5$, the 6.5% day on day 1,010 comes straight after a 3.9% fall.",
+    "generic": "Not quite right. Compare the caption sd at each setting, then look at where the big days sit.",
+    "byKey": {
+     "bigger": "You read the spikes as a bigger scale. The caption sd stays near 1% a day at every setting."
+    }
+   },
+   "explain": {
+    "text": "At $\\alpha = 0$ the path is plain normal noise. At $\\alpha = 0.5$ a big shock lifts the next day's $\\sigma_t$, so big days come in bursts. The sd stays near 1%, but the raw kurtosis rises from 3.02 to 5.29.",
+    "canvas": {
+     "params": {
+      "k": 2
+     },
+     "markers": [
+      {
+       "id": "big",
+       "i": 110,
+       "series": "a2",
+       "label": "day 1,010"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "ARCH(1)",
+   "prose": "You have just simulated **ARCH(1)**, Engle's model of 1982: $$r_t = \\sigma_t z_t,\\qquad \\sigma_t^2 = \\omega + \\alpha\\,r_{t-1}^2,$$ with each $z_t$ independent N(0, 1). The name stands for autoregressive conditional heteroskedasticity. $\\sigma_t$ is fixed by yesterday; only $z_t$ is new. Take $\\omega = 0.5$ and $\\alpha = 0.5$, in %², and a rise of 3% yesterday.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      4
+     ],
+     "y": [
+      0,
+      9
+     ],
+     "height": 220,
+     "grid": true,
+     "xLabel": "$r_{t-1}$ (%)",
+     "yLabel": "Today's variance (%²)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "0.5 + 0.5*x^2",
+       "label": "$\\sigma_t^2$",
+       "labelAt": -3.3
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 3,
+       "y": 5,
+       "label": "$r_{t-1} = 3$"
+      }
+     ]
+    }
+   },
+   "question": "What is today's daily volatility $\\sigma_t$, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.2361,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "%",
+    "label": "Daily volatility in per cent",
+    "accept": "2.24%: $\\sqrt{0.5 + 0.5 \\times 9} = \\sqrt{5}$.",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 5.0,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "nosq",
+      "value": 1.4142,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "noomega",
+      "value": 2.1213,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the variance first, then its square root."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma_t^2 = 0.5 + 0.5 \\times 3^2$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5 + 4.5 = 5$ %², and $\\sqrt 5 = 2.236$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The variance is 5 %², so $\\sigma_t = 2.24\\%$ a day.",
+    "generic": "Not quite right. Square the 3%, apply the rule, then take the square root.",
+    "byKey": {
+     "var": "That is the variance, 5 %². The volatility is its square root.",
+     "nosq": "You used 3 rather than $3^2 = 9$. The rule weights the squared return.",
+     "noomega": "You left out $\\omega = 0.5$, the floor that every day gets."
+    }
+   },
+   "explain": {
+    "text": "$\\sigma_t^2 = 0.5 + 0.5 \\times 9 = 5$ %², so $\\sigma_t = \\sqrt 5 = 2.24\\%$. That is known the evening before: today only draws $z_t$. A typical day then moves about 2.2% either way.",
+    "canvas": {
+     "highlight": [
+      "P"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Take expectations of the rule. Since $z_t$ is independent of $\\sigma_t$ with variance 1, $E[r_t^2] = E[\\sigma_t^2]$. So the expected variance follows $$E[\\sigma^2_{t+1}] = \\omega + \\alpha\\,E[\\sigma^2_t].$$ The dots run it from 5 %² with $\\omega = \\alpha = 0.5$: the gap halves each day.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      12.5
+     ],
+     "y": [
+      0,
+      5.5
+     ],
+     "height": 220,
+     "grid": true,
+     "xTicks": "integer",
+     "xLabel": "Days ahead",
+     "yLabel": "Expected variance (%²)"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e0",
+       "x": 0,
+       "y": 5.0,
+       "label": "5"
+      },
+      {
+       "id": "e1",
+       "x": 1,
+       "y": 3.0,
+       "label": ""
+      },
+      {
+       "id": "e2",
+       "x": 2,
+       "y": 2.0,
+       "label": ""
+      },
+      {
+       "id": "e3",
+       "x": 3,
+       "y": 1.5,
+       "label": ""
+      },
+      {
+       "id": "e4",
+       "x": 4,
+       "y": 1.25,
+       "label": ""
+      },
+      {
+       "id": "e5",
+       "x": 5,
+       "y": 1.125,
+       "label": ""
+      },
+      {
+       "id": "e6",
+       "x": 6,
+       "y": 1.0625,
+       "label": ""
+      },
+      {
+       "id": "e7",
+       "x": 7,
+       "y": 1.0312,
+       "label": ""
+      },
+      {
+       "id": "e8",
+       "x": 8,
+       "y": 1.0156,
+       "label": ""
+      },
+      {
+       "id": "e9",
+       "x": 9,
+       "y": 1.0078,
+       "label": ""
+      },
+      {
+       "id": "e10",
+       "x": 10,
+       "y": 1.0039,
+       "label": ""
+      },
+      {
+       "id": "e11",
+       "x": 11,
+       "y": 1.002,
+       "label": ""
+      },
+      {
+       "id": "e12",
+       "x": 12,
+       "y": 1.001,
+       "label": ""
+      }
+     ]
+    }
+   },
+   "question": "With $\\omega = 0.2$ and $\\alpha = 0.6$ instead, where would the dots settle, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.005
+    },
+    "label": "Variance in %²",
+    "accept": "0.5: $V = 0.2 + 0.6V$ gives $V = 0.2/0.4$.",
+    "wrong": [
+     {
+      "id": "omega",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "plus",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "alpha",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where the dots settle, the next value equals the last: $V = \\omega + \\alpha V$."
+    },
+    {
+     "rung": "point",
+     "text": "With these numbers, $V = 0.2 + 0.6\\,V$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.4\\,V = 0.2$, so $V = 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The level is $\\omega/(1 - \\alpha) = 0.2/0.4 = 0.5$ %².",
+    "generic": "Not quite right. At the level, $V = \\omega + \\alpha V$; solve for $V$.",
+    "byKey": {
+     "omega": "You took $\\omega$ as the level. $\\omega$ is the floor added each day; the level also holds what $\\alpha$ carries over.",
+     "plus": "You divided by $1 + \\alpha$. Moving $\\alpha V$ across gives $(1 - \\alpha)V = \\omega$.",
+     "alpha": "You divided $\\omega$ by $\\alpha$. The level is $\\omega/(1 - \\alpha)$."
+    }
+   },
+   "explain": {
+    "text": "At the level nothing changes: $V = 0.2 + 0.6V$, so $V = 0.5$ %². In general $V = \\omega/(1 - \\alpha)$, the **unconditional variance**. Each day the gap to it shrinks by the factor $\\alpha$.",
+    "canvas": {
+     "hlines": [
+      {
+       "id": "L",
+       "y": 1,
+       "label": "$\\omega/(1 - \\alpha) = 1$"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Write the simulation. Start $\\sigma_0^2$ at the unconditional variance $\\omega/(1 - \\alpha)$, and draw the shocks with `np.random.default_rng(seed).standard_normal(n)`. In decimals the chart's path has $\\omega = 0.00005$ and $\\alpha = 0.5$; in % both read 0.5. Seed 11 gives a sample sd of 0.010013, against a theory of 1%.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "height": 190,
+     "yLabel": "Daily return (%)",
+     "indexFrom": 900,
+     "y": [
+      -7,
+      7
+     ],
+     "baseline": 0,
+     "decimals": 1,
+     "series": [
+      {
+       "id": "a2",
+       "label": "ARCH(1)",
+       "values": [
+        2.925,
+        0.834,
+        2.247,
+        0.164,
+        -0.33,
+        0.114,
+        -0.965,
+        0.477,
+        -0.075,
+        0.244,
+        0.272,
+        -0.766,
+        1.185,
+        -1.097,
+        0.947,
+        -1.538,
+        0.501,
+        -0.637,
+        0.048,
+        -0.451,
+        -1.682,
+        -1.522,
+        0.108,
+        0.455,
+        -1.129,
+        -2.25,
+        -1.492,
+        -0.249,
+        -0.45,
+        -0.616,
+        0.719,
+        0.855,
+        0.704,
+        -0.798,
+        0.083,
+        -0.126,
+        -1.006,
+        0.901,
+        0.098,
+        -0.334,
+        1.068,
+        0.806,
+        0.791,
+        1.096,
+        0.769,
+        -1.115,
+        -0.396,
+        0.774,
+        -0.674,
+        0.044,
+        0.292,
+        1.073,
+        1.362,
+        1.091,
+        -0.18,
+        0.667,
+        0.461,
+        -0.115,
+        0.976,
+        0.502,
+        -0.588,
+        1.049,
+        -0.248,
+        0.442,
+        -1.169,
+        -0.008,
+        -0.661,
+        -0.814,
+        -1.732,
+        3.047,
+        -0.315,
+        0.185,
+        0.804,
+        -0.101,
+        0.372,
+        -1.018,
+        0.208,
+        -0.292,
+        0.376,
+        0.144,
+        -0.983,
+        -1.828,
+        -1.482,
+        0.943,
+        0.421,
+        0.316,
+        -1.491,
+        -3.405,
+        -1.546,
+        -0.424,
+        -0.458,
+        0.281,
+        -0.121,
+        -0.841,
+        -0.808,
+        0.135,
+        0.055,
+        -0.049,
+        1.608,
+        -0.347,
+        0.093,
+        -0.705,
+        -0.308,
+        0.39,
+        0.432,
+        -0.12,
+        0.283,
+        0.042,
+        -1.331,
+        -3.854,
+        6.507,
+        3.868,
+        -0.16,
+        -1.245,
+        -1.44,
+        1.681,
+        -3.856,
+        -0.914,
+        0.832,
+        0.132,
+        0.538,
+        -0.105,
+        1.702,
+        -1.435,
+        -1.685,
+        0.38,
+        1.081,
+        -0.058,
+        0.743,
+        -0.468,
+        -0.925,
+        1.349,
+        1.862,
+        2.292,
+        -0.775,
+        -1.033,
+        -1.189,
+        -0.247,
+        0.424,
+        0.391,
+        -1.089,
+        0.204,
+        0.013,
+        0.064,
+        -0.017,
+        -0.143,
+        0.424,
+        0.097,
+        0.16,
+        -0.495,
+        0.312,
+        -0.09,
+        -1.502,
+        0.617,
+        -0.22,
+        0.671,
+        -0.138,
+        -0.068,
+        0.15,
+        -0.008,
+        -0.316,
+        -1.33,
+        2.168,
+        -2.665,
+        -0.687,
+        0.56,
+        0.308,
+        0.42,
+        0.59,
+        1.037,
+        0.303,
+        2.147,
+        -1.698,
+        0.317,
+        -0.268,
+        -0.399,
+        0.219,
+        1.056,
+        -0.73,
+        -0.622,
+        0.603,
+        0.449,
+        1.518,
+        1.321,
+        0.269,
+        -0.241,
+        0.157,
+        -0.125,
+        -0.973,
+        0.008,
+        -0.124,
+        -0.166,
+        -0.308,
+        1.25,
+        0.788,
+        0.844,
+        -0.562,
+        -0.83,
+        -0.26,
+        0.178,
+        -0.248,
+        -0.137,
+        0.686,
+        0.257,
+        -0.718,
+        -0.373,
+        -0.496,
+        0.143,
+        -0.834,
+        -0.165,
+        0.496,
+        0.023,
+        -0.646,
+        -0.519,
+        0.099,
+        0.343,
+        0.626,
+        -0.121,
+        -0.938,
+        1.382,
+        0.359,
+        0.305,
+        0.226,
+        -0.752,
+        -0.283,
+        0.189,
+        0.743,
+        0.053,
+        -2.209,
+        -0.414,
+        0.27,
+        0.948,
+        0.693,
+        2.142,
+        2.381,
+        2.461,
+        1.771,
+        -1.988,
+        1.333,
+        0.706,
+        -0.455,
+        0.456,
+        0.325,
+        -0.346,
+        -0.092,
+        -0.187,
+        0.166,
+        -0.304,
+        0.403,
+        -1.462
+       ],
+       "colour": 1,
+       "thin": true
+      }
+     ]
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "big",
+       "i": 110,
+       "label": "day 1,010: {value}%"
+      }
+     ]
+    }
+   },
+   "question": "Complete `simulate_arch1(omega, alpha, n, seed)` and `arch1_uncond_var(omega, alpha)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\n# Share B: 2,000 days of a simulated share's daily returns (decimals),\n# from a GARCH(1,1) whose parameters we know; s2 holds its true variances.\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\nrp = 100 * r      # B in %\ns2p = 1e4 * s2    # B's true variances in %^2\n# Series A: independent normal returns with sd 1%, no clustering.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n",
+    "starter": "import numpy as np\n\ndef simulate_arch1(omega, alpha, n, seed):\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = ...           # start at the unconditional variance\n    for t in range(n):\n        if t > 0:\n            s2[t] = ...   # from yesterday's return\n        r[t] = ...        # today's return\n    return r\n\ndef arch1_uncond_var(omega, alpha):\n    # raise ValueError when alpha >= 1: there is no level to settle at\n    return ...\n",
+    "solution": "import numpy as np\n\ndef simulate_arch1(omega, alpha, n, seed):\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r\n\ndef arch1_uncond_var(omega, alpha):\n    if alpha >= 1:\n        raise ValueError(\"no unconditional variance for alpha >= 1\")\n    return omega / (1 - alpha)\n",
+    "examples": [
+     {
+      "call": "round(float(simulate_arch1(5e-5, 0.5, 2000, 11).std(ddof=1)), 6)",
+      "expect": "0.010013",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_uncond_var(0.2, 0.6)",
+      "expect": "0.5",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(simulate_arch1(5e-5, 0.5, 2000, 11).std(ddof=1)), 6)",
+      "expect": "0.010013",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(simulate_arch1(5e-5, 0.5, 5, 11), 9).tolist()",
+      "expect": "[0.000341928, 0.009620486, 0.012017059, -0.005641256, -0.002419099]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(simulate_arch1(5e-5, 0.5, 2000, 11)[1010]), 9)",
+      "expect": "0.065069989",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(simulate_arch1(5e-5, 0.5, 300, 4))",
+      "compare": "equal",
+      "expect": "300"
+     },
+     {
+      "call": "bool(np.allclose(simulate_arch1(1e-4, 0.0, 500, 3), 0.01 * np.random.default_rng(3).standard_normal(500)))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "bool(np.allclose(simulate_arch1(0.5, 0.5, 2000, 11), 100 * simulate_arch1(5e-5, 0.5, 2000, 11)))",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "arch1_uncond_var(5e-5, 0.5)",
+      "expect": "0.0001",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_uncond_var(0.2, 0.6)",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_uncond_var(1.0, 0.0)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_uncond_var(0.5, 1.0)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "arch1_uncond_var(0.5, 1.2)",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "how": "Check runs 11 hidden tests, each value rounded to 9 places. Six test `simulate_arch1`: the sd and day 1,010 on seed 11, the first five days and the length. Two more check $\\alpha = 0$ (plain normal noise) and % against decimals. Five test `arch1_uncond_var`, two of them with $\\alpha \\ge 1$. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Day $t$ uses `r[t - 1]`, which the loop drew the day before."
+    },
+    {
+     "rung": "point",
+     "text": "`s2[0] = omega / (1 - alpha)` and `s2[t] = omega + alpha * r[t - 1] ** 2`."
+    },
+    {
+     "rung": "step",
+     "text": "`r[t] = np.sqrt(s2[t]) * z[t]`. In `arch1_uncond_var`, raise `ValueError` first when `alpha >= 1`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Seed 11 gives a sample sd of 0.010013, a whisker above the theory of 1%.",
+    "generic": "Some tests failed. Check the start, that day $t$ reads `r[t - 1]`, and the error for $\\alpha \\ge 1$."
+   },
+   "explain": {
+    "text": "The loop is the model: yesterday sets $\\sigma_t$, then a fresh $z_t$ sets $r_t$. With $\\alpha = 0$ it is $\\sqrt{\\omega}\\,z_t$, plain normal noise. In % units both parameters read 0.5, because $\\omega$ scales by $100^2$ and $\\alpha$ has no units.",
+    "canvas": {
+     "highlight": [
+      "big"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "ARCH fattens the tails, though every $z_t$ is normal. Theory gives the raw kurtosis $$\\kappa = \\frac{3(1 - \\alpha^2)}{1 - 3\\alpha^2},$$ finite only while $3\\alpha^2 < 1$, so $\\alpha < 1/\\sqrt 3 = 0.577$. Above that the fourth moment is infinite. The path's sample raw kurtosis is 5.29.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 2,
+     "max": 14,
+     "step": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "nrm",
+       "x": 3,
+       "label": "normal 3",
+       "labelPos": "below"
+      },
+      {
+       "id": "smp",
+       "x": 5.29,
+       "label": "seed 11: 5.29",
+       "labelPos": "above"
+      },
+      {
+       "id": "avg",
+       "x": 6.06,
+       "label": "20 seeds: 6.06",
+       "labelPos": "below"
+      }
+     ],
+     "caption": "Raw kurtosis of ARCH(1) paths with $\\alpha = 0.5$, 2,000 days each."
+    }
+   },
+   "question": "Complete `arch1_kurtosis(alpha)`, the theoretical raw kurtosis.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\n",
+    "starter": "import math\n\ndef arch1_kurtosis(alpha):\n    # math.inf when 3 * alpha ** 2 >= 1:\n    # the fourth moment does not exist there\n    return ...\n",
+    "solution": "import math\n\ndef arch1_kurtosis(alpha):\n    if 3 * alpha ** 2 >= 1:\n        return math.inf\n    return 3 * (1 - alpha ** 2) / (1 - 3 * alpha ** 2)\n",
+    "examples": [
+     {
+      "call": "arch1_kurtosis(0.5)",
+      "expect": "9.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "arch1_kurtosis(0.0)",
+      "expect": "3.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_kurtosis(0.25)",
+      "expect": "3.4615384615384617",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_kurtosis(0.5)",
+      "expect": "9.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_kurtosis(0.55)",
+      "expect": "22.62162162162167",
+      "compare": "isclose"
+     },
+     {
+      "call": "arch1_kurtosis(0.6)",
+      "compare": "equal",
+      "expect": "math.inf"
+     },
+     {
+      "call": "arch1_kurtosis(1 / math.sqrt(3))",
+      "compare": "equal",
+      "expect": "math.inf"
+     },
+     {
+      "call": "arch1_kurtosis(1.2)",
+      "compare": "equal",
+      "expect": "math.inf"
+     },
+     {
+      "call": "arch1_kurtosis(0.3) > arch1_kurtosis(0.2) > 3",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 8 hidden tests. Four take $\\alpha$ = 0, 0.25, 0.5 and 0.55, to 9 significant figures. Three at or above $1/\\sqrt 3$ must give `math.inf`, and one checks the order. No packages to load."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the edge first: when is the denominator $1 - 3\\alpha^2$ zero or negative?"
+    },
+    {
+     "rung": "point",
+     "text": "Return `math.inf` when `3 * alpha ** 2 >= 1`."
+    },
+    {
+     "rung": "step",
+     "text": "Otherwise `3 * (1 - alpha ** 2) / (1 - 3 * alpha ** 2)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. At $\\alpha = 0.5$ the theory says 9, three times a normal.",
+    "generic": "Some tests failed. Return `math.inf` from $3\\alpha^2 \\ge 1$ on, and the formula below it."
+   },
+   "explain": {
+    "text": "At $\\alpha = 0.5$ the theory gives $3 \\times 0.75/0.25 = 9$, yet seed 11 shows 5.29 and 20 seeds average 6.06 (4.12 to 13.62). The fourth moment hangs on rare huge days, which 2,000 days seldom hold enough of. Lesson 3 met the same noise in share B's kurtosis.",
+    "canvas": {
+     "points": {
+      "th": {
+       "x": 9,
+       "label": "theory 9",
+       "colour": 3,
+       "labelPos": "above"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Compare memory. The bars are the ACF of $r_t^2$ at lags 1 to 10: the ARCH path against share B. ARCH(1) remembers one day, so its theory is $\\alpha^k$: 0.5, 0.25, 0.125. The dashed line is the 5% band, $1.96/\\sqrt{2000} = 0.0438$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "k1",
+       "label": "1"
+      },
+      {
+       "id": "k2",
+       "label": "2"
+      },
+      {
+       "id": "k3",
+       "label": "3"
+      },
+      {
+       "id": "k4",
+       "label": "4"
+      },
+      {
+       "id": "k5",
+       "label": "5"
+      },
+      {
+       "id": "k6",
+       "label": "6"
+      },
+      {
+       "id": "k7",
+       "label": "7"
+      },
+      {
+       "id": "k8",
+       "label": "8"
+      },
+      {
+       "id": "k9",
+       "label": "9"
+      },
+      {
+       "id": "k10",
+       "label": "10"
+      }
+     ],
+     "groups": [
+      {
+       "id": "arch",
+       "label": "ARCH(1), α = 0.5",
+       "colour": 2
+      },
+      {
+       "id": "B",
+       "label": "share B",
+       "colour": 1
+      }
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "ACF of $r^2$",
+     "height": 230,
+     "yMin": -0.05,
+     "yMax": 0.45,
+     "hlines": [
+      {
+       "id": "band",
+       "y": 0.0438,
+       "label": "band 0.0438"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "arch": {
+       "k1": 0.4246,
+       "k2": 0.1376,
+       "k3": 0.0505,
+       "k4": 0.0069,
+       "k5": 0.0351,
+       "k6": 0.0954,
+       "k7": 0.0456,
+       "k8": 0.0085,
+       "k9": -0.018,
+       "k10": -0.0309
+      },
+      "B": {
+       "k1": 0.3596,
+       "k2": 0.2879,
+       "k3": 0.2672,
+       "k4": 0.2265,
+       "k5": 0.2766,
+       "k6": 0.3337,
+       "k7": 0.229,
+       "k8": 0.198,
+       "k9": 0.2374,
+       "k10": 0.2292
+      }
+     }
+    }
+   },
+   "question": "What does the chart say about ARCH(1) as a model for share B?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "short",
+      "text": "Its memory is too short. ARCH's bars fall to about 0.05 by lag 3; B's are still 0.23 at lag 10.",
+      "correct": true
+     },
+     {
+      "id": "fits",
+      "text": "It fits: both start near 0.4 at lag 1.",
+      "why": "You matched lag 1 only. By lag 3 ARCH is at 0.05 and B at 0.27."
+     },
+     {
+      "id": "alpha",
+      "text": "It fits once $\\alpha$ is raised to 0.9.",
+      "why": "You raised $\\alpha$ to stretch the memory. Lag 1 would then sit near 0.9, far above B's 0.36, and the kurtosis would be infinite."
+     },
+     {
+      "id": "noise",
+      "text": "The gap is sampling noise.",
+      "why": "You put it down to chance. B's bars stay far outside the band for ten lags; noise of that size and length is not plausible."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two colours at lags 3 to 10, not only at lag 1."
+    },
+    {
+     "rung": "point",
+     "text": "At lag 10 ARCH is below 0, B near 0.23."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. One lag of news cannot carry memory for weeks.",
+    "generic": "Not quite right. Look at how fast each set of bars falls after lag 1.",
+    "byKey": {
+     "fits": "You matched lag 1 only. From lag 3 on, ARCH is near zero and B is not."
+    }
+   },
+   "explain": {
+    "text": "ARCH(1)'s $r^2$ memory dies within three days, but B's barely fades over ten. ARCH($q$) adds $q$ lags of $r^2$, and real data need many lags, each a parameter to fit. Lesson 7 adds yesterday's variance instead, one parameter that carries the memory.",
+    "canvas": {
+     "highlight": [
+      "k3-arch",
+      "k3-B",
+      "k10-arch",
+      "k10-B"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague writes the simulation with `r = np.zeros(n)`, same seed and parameters. His path has none of the bursts you saw. His summary is in the box.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "A colleague's loop",
+     "lines": [
+      "r = np.zeros(n); s2 = np.zeros(n)",
+      "s2[0] = omega / (1 - alpha)",
+      "for t in range(n):",
+      "    if t > 0:",
+      "        s2[t] = omega + alpha * r[t] ** 2",
+      "    r[t] = np.sqrt(s2[t]) * z[t]",
+      "",
+      ">>> r.std(ddof=1), kurtosis(r, fisher=False), acf(r**2)[1]",
+      "(0.007084, 3.0205, 0.0149)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why does his path show no clustering?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "today",
+      "text": "Line 5 reads `r[t]`, today's return, before it is drawn. It is still 0, so every day's variance is just $\\omega$.",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "$\\alpha = 0.5$ is too small to show clustering.",
+      "why": "You blamed $\\alpha$. Your loop with the same $\\alpha$ and seed gave a lag-1 ACF of 0.42 in $r^2$."
+     },
+     {
+      "id": "seed",
+      "text": "Seed 11 happens to be a calm draw.",
+      "why": "You blamed the luck of the draw. The same seed in your loop has the 6.5% day and its bursts."
+     },
+     {
+      "id": "empty",
+      "text": "He should use `np.empty`, not `np.zeros`.",
+      "why": "`np.empty` would read leftover memory in `r[t]` instead of 0. The fix is to read `r[t - 1]`."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "On day $t$, which entries of `r` has the loop already filled?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 5 runs before line 6 on the same day.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So `r[t]` is still 0 when line 5 reads it, and `s2[t] = omega`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Today's variance must come from yesterday's return.",
+    "generic": "Not quite right. Trace one pass of the loop and ask what `r[t]` holds when line 5 reads it.",
+    "byKey": {
+     "small": "You blamed $\\alpha$. The same $\\alpha$ and seed cluster clearly in your loop; his reads today's return, which is still 0."
+    }
+   },
+   "explain": {
+    "text": "Line 5 reads `r[t]` before line 6 sets it, so $\\sigma_t^2 = \\omega$ every day. The path is $\\sqrt{\\omega}\\,z_t$: sd $\\sqrt{0.00005} = 0.71\\%$, normal tails and no memory. $\\sigma_t$ is known the evening before, from `r[t - 1]`.",
+    "canvas": {
+     "shade": {
+      "bug": [
+       "l5"
+      ]
+     },
+     "tone": {
+      "l9": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now fit ARCH(1) to the path, as if we did not know (0.5, 0.5). Lesson 7 fits the GARCH(1,1) model, which adds $\\beta\\,\\sigma^2_{t-1}$; ARCH(1) is that model with $\\beta$ held at 0. `neg_loglik` (minus the normal log-likelihood) is loaded, and `rap` is the path in %. Fill in the bounds.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 1,
+     "step": 0.1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "tw",
+       "x": 0.5,
+       "label": "true $\\omega$ and $\\alpha$: 0.5",
+       "labelPos": "above"
+      }
+     ],
+     "caption": "ARCH(1) parameters in % units."
+    }
+   },
+   "question": "Complete the bounds in `fit_arch1(r)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\ndef garch_variance(params, r):\n    \"\"\"Conditional variances for returns r (in %): sigma2_0 is the sample variance of r.\"\"\"\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\ndef neg_loglik(params, r):\n    \"\"\"Minus the Gaussian log-likelihood, zero mean: 0.5 * sum(ln 2pi + ln s2 + r^2 / s2).\"\"\"\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n\ndef simulate_arch1(omega, alpha, n, seed):\n    \"\"\"ARCH(1) returns: r_t = sigma_t z_t, sigma2_t = omega + alpha r_{t-1}^2,\n    started at the unconditional variance omega / (1 - alpha).\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r\n\n# Share B: 2,000 days of a simulated share's daily returns (decimals),\n# from a GARCH(1,1) whose parameters we know; s2 holds its true variances.\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\nrp = 100 * r      # B in %\ns2p = 1e4 * s2    # B's true variances in %^2\n# Series A: independent normal returns with sd 1%, no clustering.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n\n# The ARCH(1) path: omega = 0.00005, alpha = 0.5 (decimals), seed 11; in % it is (0.5, 0.5).\nra = simulate_arch1(5e-5, 0.5, 2000, 11)\nrap = 100 * ra    # the ARCH path in %\n",
+    "starter": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_arch1(r):\n    \"\"\"ARCH(1): GARCH(1,1) with beta held at 0 (r in %).\"\"\"\n    bounds = [(1e-6, 10.0),   # omega\n              ...,            # alpha: from 0 to 1\n              ...]            # beta: held at 0\n    cons = [{\"type\": \"ineq\",\n             \"fun\": lambda p: 0.9999 - p[1] - p[2]}]\n    return minimize(neg_loglik, x0=np.array([0.05, 0.05, 0.0]),\n                    args=(r,), method=\"SLSQP\", bounds=bounds,\n                    constraints=cons,\n                    options={\"ftol\": 1e-10, \"maxiter\": 500})\n",
+    "solution": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_arch1(r):\n    \"\"\"ARCH(1): GARCH(1,1) with beta held at 0 (r in %).\"\"\"\n    bounds = [(1e-6, 10.0),   # omega\n              (0.0, 1.0),     # alpha: from 0 to 1\n              (0.0, 0.0)]     # beta: held at 0\n    cons = [{\"type\": \"ineq\",\n             \"fun\": lambda p: 0.9999 - p[1] - p[2]}]\n    return minimize(neg_loglik, x0=np.array([0.05, 0.05, 0.0]),\n                    args=(r,), method=\"SLSQP\", bounds=bounds,\n                    constraints=cons,\n                    options={\"ftol\": 1e-10, \"maxiter\": 500})\n",
+    "examples": [
+     {
+      "call": "round(float(fit_arch1(rap).x[1]), 3)",
+      "expect": "np.float64(0.535)",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(fit_arch1(rap).x[0]), 3)",
+      "expect": "np.float64(0.487)",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(fit_arch1(rap).x[1]), 3)",
+      "expect": "np.float64(0.535)",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "float(fit_arch1(rap).x[2])",
+      "expect": "0.0",
+      "tol": {
+       "abs": 1e-09
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "bool(fit_arch1(rap).success)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "bool(0.4 < fit_arch1(rap).x[1] < 0.65)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "round(float(fit_arch1(rp).x[1]), 3)",
+      "expect": "np.float64(0.225)",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(fit_arch1(rp).x[0]), 3)",
+      "expect": "np.float64(0.793)",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Five fit `rap`: $\\hat\\omega$ and $\\hat\\alpha$ rounded to 3 places, each within 0.003, $\\hat\\beta = 0$, convergence, and $0.4 < \\hat\\alpha < 0.65$. Two fit share B. Fitted values can differ in the fourth place between optimisers, so each is checked to within 0.003. The first run loads NumPy and SciPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each parameter gets a `(low, high)` pair, in the order $\\omega$, $\\alpha$, $\\beta$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\alpha$ runs from 0 to 1: `(0.0, 1.0)`."
+    },
+    {
+     "rung": "step",
+     "text": "Holding $\\beta$ at 0 means both its bounds are 0: `(0.0, 0.0)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The fit lands near the truth: $\\hat\\omega = 0.487$, $\\hat\\alpha = 0.535$.",
+    "generic": "Some tests failed. Give $\\alpha$ the bounds `(0.0, 1.0)` and $\\beta$ the bounds `(0.0, 0.0)`."
+   },
+   "explain": {
+    "text": "$\\hat\\omega = 0.487$ and $\\hat\\alpha = 0.535$ against a true 0.5 and 0.5: close, not equal, as 2,000 days allow. On share B the same fit gives $\\hat\\alpha = 0.225$ and $\\hat\\omega = 0.793$. One lag cannot hold B's long memory, so the fit spreads it thin.",
+    "canvas": {
+     "points": {
+      "fa": {
+       "x": 0.535,
+       "label": "$\\hat\\alpha$ = 0.535",
+       "colour": 3,
+       "labelPos": "below"
+      },
+      "fw": {
+       "x": 0.487,
+       "label": "$\\hat\\omega$ = 0.487",
+       "colour": 2,
+       "labelPos": "below"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Edge cases. The curve is the expected variance after a day at 4 %², with $\\omega = 0.5$. It is $V + \\alpha^h(4 - V)$, where $V = \\omega/(1 - \\alpha)$ needs $\\alpha \\neq 1$. Step $\\alpha$ through its stops.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      30
+     ],
+     "y": [
+      0,
+      8
+     ],
+     "height": 230,
+     "grid": true,
+     "xLabel": "Days ahead $h$",
+     "yLabel": "Expected variance (%²)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "w/(1-a) + a^x*(4 - w/(1-a))",
+       "label": "$E[\\sigma^2_{t+h}]$",
+       "domain": [
+        0,
+        30
+       ],
+       "labelAt": 24
+      }
+     ],
+     "params": {
+      "w": 0.5,
+      "a": 0.5
+     }
+    },
+    "state": {
+     "params": {
+      "a": 0.5
+     }
+    },
+    "derive": {
+     "caption": "$\\alpha$ = {{fixed(a, 1)}}: {{a < 1 ? 'the variance settles at ' + fixed(w / (1 - a), 2) + ' %²' : 'no level: the expected variance grows by ' + fixed(100 * (a - 1), 0) + '% a day and more'}}."
+    },
+    "controls": [
+     {
+      "bind": "a",
+      "stops": [
+       0,
+       0.5,
+       0.9,
+       1.1,
+       1.3
+      ],
+      "label": "$\\alpha$",
+      "start": 0.5
+     }
+    ]
+   },
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "$\\alpha = 0$: returns are independent normal with constant variance $\\omega$.",
+      "correct": true
+     },
+     {
+      "id": "nine",
+      "text": "$\\alpha = 0.9$: the variance settles, at $\\omega/(1 - \\alpha) = 5$ %².",
+      "correct": true
+     },
+     {
+      "id": "grow",
+      "text": "$\\alpha = 1.1$: the expected variance grows without limit, so there is no unconditional variance.",
+      "correct": true
+     },
+     {
+      "id": "neg",
+      "text": "$\\alpha = 1.1$: the long-run variance is $\\omega/(1 - \\alpha) = -5$ %².",
+      "why": "You applied the formula past its edge. A variance cannot be negative; the formula needs $\\alpha < 1$."
+     },
+     {
+      "id": "zerovar",
+      "text": "$\\alpha = 0$: the variance is 0, since nothing feeds it.",
+      "why": "You dropped $\\omega$. With no news term, each day still has variance $\\omega = 0.5$ %²."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set each stop and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "At 1.1 the curve leaves the chart instead of flattening."
+    },
+    {
+     "rung": "step",
+     "text": "Three statements are right: $\\alpha = 0$, $\\alpha = 0.9$ and the growth at 1.1."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Below 1 there is a level; from 1 up there is none.",
+    "generic": "Not quite right. Check each statement against the caption at that stop.",
+    "byKey": {
+     "neg": "You applied the formula past its edge. At $\\alpha = 1.1$ the caption shows growth, not a level."
+    }
+   },
+   "explain": {
+    "text": "At $\\alpha = 0$ ARCH is plain noise with variance $\\omega$. Below 1 the gap shrinks by $\\alpha$ a day, so 0.9 settles at 5 %², slowly. From $\\alpha = 1$ the expected variance never settles, though a single simulated path can look calm for a while.",
+    "canvas": {
+     "params": {
+      "a": 1.1
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Put the argument of the dots in order. Assume the process is stationary: $E[r_t^2]$ is the same every day. Each line must follow from the ones before it.",
+   "question": "Order the steps from the model to $V = \\omega/(1 - \\alpha)$.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Take expectations of $\\sigma_t^2 = \\omega + \\alpha r_{t-1}^2$: $E[\\sigma_t^2] = \\omega + \\alpha E[r_{t-1}^2]$, since expectations are linear"
+     },
+     {
+      "id": "s2",
+      "text": "$E[r_t^2] = E[\\sigma_t^2 z_t^2] = E[\\sigma_t^2]\\,E[z_t^2] = E[\\sigma_t^2]$, since $z_t$ is independent of $\\sigma_t$ with variance 1"
+     },
+     {
+      "id": "s3",
+      "text": "Stationarity: $E[r_t^2] = E[r_{t-1}^2] = V$"
+     },
+     {
+      "id": "s4",
+      "text": "So $V = \\omega + \\alpha V$"
+     },
+     {
+      "id": "s5",
+      "text": "$V = \\omega/(1 - \\alpha)$, a positive variance only when $\\alpha < 1$"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "same": [
+     [
+      "s1",
+      "s2"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the model and take expectations of both sides."
+    },
+    {
+     "rung": "point",
+     "text": "You need $E[r_t^2] = E[\\sigma_t^2]$ before stationarity can name one $V$."
+    },
+    {
+     "rung": "step",
+     "text": "Expectations, then $E[r^2] = E[\\sigma^2]$, then stationarity, then solve."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Each step uses one fact: linearity, independence, stationarity, algebra.",
+    "generic": "Not quite right. Both expectations must be in place before stationarity names them $V$.",
+    "byKey": {
+     "s5": "Solving for $V$ comes last: it needs $V = \\omega + \\alpha V$ first.",
+     "s3": "Stationarity names one $V$ for both days; it comes after both expectations are written."
+    }
+   },
+   "explain": {
+    "text": "Linearity gives the expected rule and independence turns $E[r^2]$ into $E[\\sigma^2]$. Stationarity makes both days share one $V$, and algebra solves for it. The last line needs $\\alpha < 1$, the edge you saw on the last screen."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A share's ARCH(1) fit in % gives $\\omega = 1.2$ and $\\alpha = 0.4$. Its long-run variance is 2 %², or 1.41% a day. Today it reported earnings and fell 9%. An options desk is pricing contracts that expire tomorrow.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 7,
+     "step": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "lr",
+       "x": 1.4142,
+       "label": "long run 1.41%",
+       "labelPos": "below"
+      }
+     ],
+     "caption": "Daily volatility in %."
+    }
+   },
+   "question": "What daily volatility does the model give for tomorrow, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.7966,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "%",
+    "label": "Daily volatility in per cent",
+    "accept": "5.80%: $\\sqrt{1.2 + 0.4 \\times 81} = \\sqrt{33.6}$.",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 33.6,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "nosq",
+      "value": 2.1909,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "lr",
+      "value": 1.4142,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Square the 9% fall before you weight it."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma^2 = 1.2 + 0.4 \\times 81$.",
+     "highlight": [
+      "lr"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1.2 + 32.4 = 33.6$ %², and its square root is 5.80%."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Tomorrow carries about four times the usual daily risk.",
+    "generic": "Not quite right. Apply the ARCH rule to the 9% fall, then take the square root.",
+    "byKey": {
+     "var": "That is the variance, 33.6 %². The volatility is its square root.",
+     "nosq": "You used 9 rather than $9^2 = 81$.",
+     "lr": "That is the long-run level. ARCH says tomorrow is far above it after a 9% day."
+    }
+   },
+   "explain": {
+    "text": "$1.2 + 0.4 \\times 81 = 33.6$ %², so 5.80% a day, four times the long run: the desk marks tomorrow's options up. The gap to the long run shrinks by $\\alpha = 0.4$ a day, so ARCH expects it mostly gone within three days. Engle shared the 2003 Nobel prize in economics for this model.",
+    "canvas": {
+     "points": {
+      "nx": {
+       "x": 5.7966,
+       "label": "tomorrow 5.80%",
+       "colour": 3,
+       "labelPos": "above"
+      }
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "ARCH(1) sets today's variance from yesterday's squared return: $\\sigma_t^2 = \\omega + \\alpha r_{t-1}^2$, then $r_t = \\sigma_t z_t$ with a fresh normal $z_t$.",
+   "Taking expectations gives the unconditional variance $\\omega/(1 - \\alpha)$, which needs $\\alpha < 1$. The kurtosis is finite only for $\\alpha < 0.577$.",
+   "ARCH(1)'s memory in $r^2$ decays like $\\alpha^k$, gone within days. Share B's lasts weeks: the reason for GARCH."
+  ],
+  "formula": {
+   "name": "ARCH(1)",
+   "tex": "\\sigma_t^2 = \\omega + \\alpha\\,r_{t-1}^2, \\qquad E[r_t^2] = \\dfrac{\\omega}{1 - \\alpha}",
+   "note": "Normal shocks, yet raw kurtosis $3(1 - \\alpha^2)/(1 - 3\\alpha^2)$."
+  },
+  "trap": "Today's variance uses yesterday's return. A loop that reads `r[t]` before drawing it sees 0 and loses the clustering."
+ },
+ "quiz": [
+  {
+   "id": "q1",
+   "difficulty": 2,
+   "prose": "An ARCH(1) model in % has $\\omega = 0.3$ and $\\alpha = 0.4$.",
+   "question": "What is its unconditional variance, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.005
+    },
+    "label": "Variance in %²",
+    "accept": "0.5: $0.3/(1 - 0.4)$.",
+    "wrong": [
+     {
+      "id": "omega",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "plus",
+      "value": 0.2143,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. The level solves $V = \\omega + \\alpha V$.",
+    "byKey": {
+     "omega": "You took $\\omega$ as the level. Divide it by $1 - \\alpha$.",
+     "plus": "You divided by $1 + \\alpha$."
+    }
+   },
+   "explain": {
+    "text": "$V = 0.3/(1 - 0.4) = 0.5$ %², a daily volatility of 0.71%. The floor $\\omega$ is topped up by what $\\alpha$ carries over each day."
+   }
+  },
+  {
+   "id": "q2",
+   "difficulty": 3,
+   "prose": "An ARCH(1) path with $\\alpha = 0.5$ has a sample raw kurtosis of 5.29 over 2,000 days. Theory says 9.",
+   "question": "What explains the gap?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rare",
+      "text": "The fourth moment depends on rare huge days, so a sample of 2,000 usually falls short.",
+      "correct": true
+     },
+     {
+      "id": "wrong",
+      "text": "The simulation must have a bug.",
+      "why": "You distrusted the code. Twenty clean seeds range from 4.1 to 13.6: the statistic is just noisy."
+     },
+     {
+      "id": "normal",
+      "text": "The shocks are normal, so the true kurtosis is 3.",
+      "why": "You forgot the varying $\\sigma_t$. Mixing calm and stormy days fattens the tails even with normal shocks."
+     },
+     {
+      "id": "excess",
+      "text": "Theory quotes excess kurtosis, so it means 6.",
+      "why": "You mixed the conventions. The formula $3(1 - \\alpha^2)/(1 - 3\\alpha^2)$ is the raw kurtosis."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Ask which days drive a fourth power.",
+    "byKey": {
+     "normal": "You forgot that $\\sigma_t$ varies. ARCH mixes calm and stormy days, and that fattens the tails."
+    }
+   },
+   "explain": {
+    "text": "A fourth power is dominated by the few largest days. Most 2,000-day samples hold too few of them. So sample kurtosis usually sits below 9, and now and then far above."
+   }
+  },
+  {
+   "id": "q3",
+   "difficulty": 2,
+   "prose": "An ARCH(1) model in % has $\\omega = 0.2$ and $\\alpha = 0.3$. Yesterday the share fell 2%.",
+   "question": "What is today's variance, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.4,
+    "tol": {
+     "abs": 0.005
+    },
+    "label": "Variance in %²",
+    "accept": "1.4: $0.2 + 0.3 \\times 4$.",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": -0.4,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "abs",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Square yesterday's return, weight it by $\\alpha$, add $\\omega$.",
+    "byKey": {
+     "sign": "You used −2 unsquared. A fall raises the variance as a rise does.",
+     "abs": "You used 2 rather than $2^2 = 4$."
+    }
+   },
+   "explain": {
+    "text": "$0.2 + 0.3 \\times (-2)^2 = 1.4$ %², a daily volatility of 1.18%. The sign of the move does not matter."
+   }
+  },
+  {
+   "id": "q4",
+   "difficulty": 3,
+   "prose": "Four ARCH(1) models differ only in $\\alpha$.",
+   "question": "Which one has a finite variance but an infinite kurtosis?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a3",
+      "text": "$\\alpha = 0.3$",
+      "why": "$3 \\times 0.09 = 0.27 < 1$, so its kurtosis is finite: 3.74."
+     },
+     {
+      "id": "a5",
+      "text": "$\\alpha = 0.5$",
+      "why": "$3 \\times 0.25 = 0.75 < 1$, so its kurtosis is finite: 9."
+     },
+     {
+      "id": "a7",
+      "text": "$\\alpha = 0.7$",
+      "correct": true
+     },
+     {
+      "id": "a12",
+      "text": "$\\alpha = 1.2$",
+      "why": "At $\\alpha \\ge 1$ the variance itself is infinite."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. The variance needs $\\alpha < 1$; the kurtosis needs $3\\alpha^2 < 1$."
+   },
+   "explain": {
+    "text": "The variance is finite for $\\alpha < 1$ and the kurtosis for $\\alpha < 0.577$. Only 0.7 lies between the two edges."
+   }
+  }
+ ]
+}
