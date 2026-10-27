@@ -1,10 +1,10 @@
 # KNOWN ISSUES
 
 Open at migration (27 Oct 2026)
-- Unreported after a container restart (27 Oct): coint L3, contests L2, L3, L4 (all files on disk, validator 0 errors). Engine pass 7 never wrote its "Seventh pass" status block; its edits are in WIP commits, and the full playthrough ran 663 items green before the restart. See PLAN.md triage 2.
+- Unreported at the session limit (27 Oct): exams topic-2.1, 2.2, 2.3, 2.4 (agents stopped mid-task; files may be partial). The full playthrough ran 137 items green before it stopped. See PLAN.md triage 3.
 - `docs/BACKLOG-INBOX.md` holds about 136 unnumbered engine bullets awaiting pass 7.
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
-- Stage 1, 2 and 3 have no stage exams; topics 2.x and 3.x have no topic exams.
+- Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams; topic 2.x exams are in triage 3.
 
 Engine gotchas
 - `unit: "%"` on a numeric widget divides the typed value by 100: store the fraction.

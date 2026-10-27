@@ -8,7 +8,8 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 
 ### 0. Triage
 - [x] Triage work left in flight on 27 Oct: arma L3 and opt-dash L4 lessons green with reports; garch l5, l9, coint l1, contests l1 kept (`docs/reports/triage-27oct.md`); nothing removed. Pass 7 left no status block; its edits sit in WIP commits; full playthrough 663 of ~1,050 ok, 0 failures, before a container restart stopped it.
-- [ ] Triage 2 (container restart, 27 Oct): coint L3, contests L2, L3, L4 have all six files each on disk (validator 0 errors) but no report. Per level: playthrough with `--local-cdn`, numbers twice, starters fail; keep and report, or fix, or delete. Then finish `playthrough.mjs --all --local-cdn <pkgs>` (it covers the new exams too).
+- [x] Triage 2 (27 Oct): coint L3, contests L2, L3, L4 green with reports (`docs/reports/coint-3.md`, `contests-2.md` to `contests-4.md`); nothing removed.
+- [ ] Triage 3 (session limit, 27 Oct): exams topic-2.1 to topic-2.4 were in flight with no reports (files may be partial or missing). Per exam: validate, `--exam` playthrough with `--local-cdn`, numbers twice, starters fail; keep and report to `docs/reports/exam-2.x.md`, finish, or rewrite. Then the full `playthrough.mjs --all --local-cdn <pkgs>` (it had run 137 items green, 0 failures, when stopped).
 
 ### 1. Stage 2 content (brief: `docs/briefs/<course>.md`, section `## Level n`)
 - [x] garch L2

@@ -1,0 +1,3072 @@
+{
+  "id": "topic-2.2",
+  "topic": "2.2",
+  "name": "Time series topic exam",
+  "minutes": 45,
+  "pass": 0.7,
+  "skills": {
+    "ts-stationary": "Stationarity",
+    "ts-acf": "Autocorrelation",
+    "ts-models": "AR, MA and ARMA models",
+    "ts-forecast": "Forecasting",
+    "gv-clustering": "Volatility clustering",
+    "gv-models": "EWMA and GARCH",
+    "gv-forecast": "Volatility forecasts",
+    "gv-risk": "Value at risk",
+    "co-spurious": "Spurious regression",
+    "co-test": "Cointegration tests",
+    "co-spread": "Spreads and hedge ratios",
+    "co-pairs": "Pairs trading"
+  },
+  "items": [
+    {
+      "id": "e-adf-read",
+      "difficulty": 2,
+      "skills": [
+        "ts-stationary"
+      ],
+      "title": "Closes or returns",
+      "prose": "Here are 500 seeded daily closes of one share. The console runs the augmented Dickey-Fuller test on the closes, then on the daily log returns.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> adfuller(close)[:2]",
+            "(-1.4365, 0.5647)",
+            ">>> adfuller(np.diff(np.log(close)))[:2]",
+            "(-17.4129, 4.87e-30)"
+          ]
+        }
+      },
+      "question": "Which series should a time-series model be fitted to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The closes. A p-value of 0.56 means the closes are stationary with probability 0.56.",
+            "why": "You read the p-value as the chance that the series is stationary. It is the chance of a statistic this extreme if there were a unit root."
+          },
+          {
+            "id": "b",
+            "text": "The returns. The closes cannot reject a unit root, and the returns reject it.",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "The closes. The test did not reject, so there is no sign of a unit root.",
+            "why": "You took no rejection as stationary. The null of the test is a unit root, so a failure to reject leaves it standing."
+          },
+          {
+            "id": "d",
+            "text": "Neither. A p-value of 0.0 for the returns means the test has broken.",
+            "why": "You read a tiny p-value as an error. A statistic of −17 is far past every critical value, so the p-value is simply very small."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The closes keep a unit root. The returns reject it.",
+        "generic": "Start from the null hypothesis of the test. Then ask which series rejects it."
+      },
+      "explain": {
+        "text": "The null of the test is a unit root. The closes do not reject it (p = 0.56), while the returns reject it at once. So the model goes on the returns, which are stationary."
+      }
+    },
+    {
+      "id": "e-garch-step",
+      "difficulty": 2,
+      "skills": [
+        "gv-models"
+      ],
+      "title": "One step of GARCH",
+      "prose": "A share follows a GARCH(1,1) model with returns in per cent: $\\sigma_{t+1}^2 = \\omega + \\alpha r_t^2 + \\beta \\sigma_t^2$. Here $\\omega = 0.02$, $\\alpha = 0.07$ and $\\beta = 0.91$. Today's return was $-2.4$ and today's variance was $\\sigma_t^2 = 1.6$.",
+      "question": "What is tomorrow's volatility forecast, in % a day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.37,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "placeholder": "% a day",
+        "label": "Tomorrow's volatility",
+        "accept": "1.37 ± 0.01",
+        "wrong": [
+          {
+            "id": "variance",
+            "value": 1.88,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "abs",
+            "value": 1.28,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "sigma",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The variance is 1.8792, so the volatility is 1.37% a day.",
+        "generic": "Work out tomorrow's variance first. Then take its square root.",
+        "byKey": {
+          "variance": "You stopped at the variance, 1.88. Volatility is its square root.",
+          "abs": "You used $|r_t|$ where the model has $r_t^2$. The recursion feeds in the squared return.",
+          "sigma": "You used $\\sigma_t$ in the last term. Both $r_t^2$ and $\\sigma_t^2$ are variances, so square the 1.6 as given."
+        }
+      },
+      "explain": {
+        "text": "The variance is $0.02 + 0.07 \\times 2.4^2 + 0.91 \\times 1.6 = 0.02 + 0.4032 + 1.456 = 1.8792$. Its square root is 1.37% a day."
+      }
+    },
+    {
+      "id": "e-spurious-fit",
+      "difficulty": 2,
+      "skills": [
+        "co-spurious"
+      ],
+      "title": "A convincing fit",
+      "prose": "Two share prices, A and B, over 500 days. Regressing B on A in levels gives a slope of $-0.38$, $R^2 = 0.67$ and a slope $t$ statistic of $-32$. The residual's correlation with the day before is 0.95. Regressing B's daily changes on A's gives $R^2 = 0.0008$.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "A",
+              "label": "A",
+              "values": [
+                60.24,
+                59.99,
+                60.09,
+                61.18,
+                61.33,
+                60.27,
+                61.09,
+                60.42,
+                59.13,
+                59.28,
+                59.84,
+                62.18,
+                61.21,
+                61.49,
+                63.37,
+                65.01,
+                63.61,
+                64.05,
+                65.07,
+                63.71,
+                63.94,
+                66.01,
+                68.2,
+                68.17,
+                69.4,
+                68.78,
+                67.9,
+                67.74,
+                68.36,
+                68.22,
+                67.75,
+                68.02,
+                67.7,
+                66.32,
+                67.79,
+                68.99,
+                69.35,
+                67.35,
+                66.21,
+                66.98,
+                68.35,
+                65.86,
+                65.62,
+                64.49,
+                63.18,
+                64.53,
+                64.06,
+                63.76,
+                64.28,
+                65.27,
+                66.51,
+                66.49,
+                67.45,
+                65.92,
+                66.24,
+                65.84,
+                65.56,
+                64.48,
+                65.28,
+                65.18,
+                64.31,
+                65.24,
+                64.64,
+                65.63,
+                64.91,
+                65.25,
+                65.83,
+                65.63,
+                64.37,
+                63.53,
+                63.94,
+                63.29,
+                61.77,
+                63.3,
+                64.5,
+                63.0,
+                62.22,
+                63.05,
+                65.58,
+                67.72,
+                67.24,
+                68.16,
+                67.01,
+                66.73,
+                65.9,
+                66.32,
+                66.47,
+                66.76,
+                67.82,
+                66.75,
+                67.47,
+                67.35,
+                68.17,
+                66.88,
+                68.4,
+                67.14,
+                66.86,
+                66.63,
+                65.61,
+                66.58,
+                66.59,
+                67.04,
+                67.95,
+                70.27,
+                69.19,
+                70.04,
+                69.93,
+                70.35,
+                70.37,
+                70.08,
+                71.11,
+                70.22,
+                70.1,
+                68.04,
+                68.81,
+                68.76,
+                68.45,
+                68.21,
+                68.94,
+                69.37,
+                68.85,
+                69.91,
+                69.64,
+                69.78,
+                69.5,
+                69.21,
+                70.03,
+                70.88,
+                71.08,
+                72.06,
+                72.2,
+                69.34,
+                70.12,
+                70.7,
+                71.14,
+                70.56,
+                70.92,
+                71.74,
+                71.77,
+                70.9,
+                72.14,
+                71.54,
+                71.39,
+                71.63,
+                71.78,
+                71.28,
+                69.68,
+                70.19,
+                70.34,
+                70.01,
+                72.14,
+                73.23,
+                73.98,
+                74.25,
+                74.13,
+                74.17,
+                73.27,
+                73.22,
+                73.5,
+                73.56,
+                74.45,
+                75.51,
+                76.31,
+                75.88,
+                76.05,
+                76.77,
+                77.1,
+                76.14,
+                74.98,
+                73.74,
+                71.49,
+                70.22,
+                69.54,
+                70.35,
+                70.99,
+                70.36,
+                69.57,
+                69.64,
+                68.89,
+                69.43,
+                68.63,
+                69.06,
+                69.08,
+                68.06,
+                69.77,
+                70.58,
+                70.49,
+                70.58,
+                70.64,
+                72.31,
+                72.2,
+                70.92,
+                71.32,
+                71.02,
+                71.83,
+                72.88,
+                74.27,
+                73.93,
+                74.25,
+                74.71,
+                76.22,
+                77.27,
+                77.59,
+                76.6,
+                76.62,
+                75.95,
+                76.77,
+                77.6,
+                77.39,
+                78.52,
+                80.57,
+                79.96,
+                81.38,
+                79.26,
+                77.29,
+                77.3,
+                76.39,
+                77.52,
+                78.3,
+                79.17,
+                78.64,
+                77.94,
+                79.03,
+                78.9,
+                78.39,
+                77.94,
+                78.6,
+                78.95,
+                78.5,
+                79.59,
+                79.2,
+                78.36,
+                78.54,
+                80.7,
+                81.18,
+                80.61,
+                79.74,
+                80.88,
+                81.95,
+                82.4,
+                83.57,
+                84.86,
+                84.71,
+                84.31,
+                85.32,
+                84.71,
+                84.28,
+                85.32,
+                86.19,
+                88.89,
+                88.72,
+                87.69,
+                87.19,
+                86.13,
+                84.73,
+                85.1,
+                85.64,
+                86.41,
+                87.14,
+                89.99,
+                90.04,
+                91.68,
+                90.42,
+                89.4,
+                88.62,
+                89.33,
+                90.16,
+                90.68,
+                90.9,
+                91.36,
+                90.28,
+                91.15,
+                90.95,
+                91.47,
+                91.19,
+                90.16,
+                90.43,
+                90.13,
+                88.54,
+                86.88,
+                87.3,
+                85.67,
+                86.75,
+                87.55,
+                88.71,
+                89.94,
+                88.68,
+                87.92,
+                86.66,
+                87.11,
+                87.35,
+                87.54,
+                89.85,
+                88.67,
+                89.32,
+                89.7,
+                89.83,
+                89.91,
+                90.43,
+                92.29,
+                92.79,
+                93.29,
+                91.53,
+                92.9,
+                93.39,
+                92.23,
+                92.84,
+                92.73,
+                93.07,
+                93.47,
+                93.75,
+                94.4,
+                95.65,
+                95.45,
+                95.44,
+                96.96,
+                96.09,
+                95.29,
+                96.53,
+                96.96,
+                95.09,
+                94.92,
+                96.59,
+                96.13,
+                96.57,
+                95.3,
+                94.23,
+                94.81,
+                94.43,
+                96.34,
+                95.58,
+                93.15,
+                92.25,
+                91.81,
+                92.67,
+                92.74,
+                92.96,
+                92.07,
+                93.44,
+                93.33,
+                94.42,
+                95.58,
+                95.17,
+                97.77,
+                98.03,
+                97.42,
+                96.15,
+                94.88,
+                94.23,
+                94.64,
+                95.73,
+                95.49,
+                95.47,
+                96.07,
+                94.8,
+                95.01,
+                94.41,
+                94.98,
+                96.32,
+                96.23,
+                96.32,
+                96.22,
+                95.81,
+                96.65,
+                97.08,
+                95.46,
+                95.85,
+                95.57,
+                95.8,
+                95.81,
+                95.44,
+                94.7,
+                94.03,
+                93.7,
+                93.88,
+                95.72,
+                95.22,
+                92.62,
+                92.24,
+                92.53,
+                93.51,
+                94.34,
+                94.25,
+                94.04,
+                93.44,
+                93.36,
+                93.47,
+                94.02,
+                93.58,
+                93.24,
+                90.88,
+                89.98,
+                89.77,
+                90.75,
+                92.13,
+                91.87,
+                91.91,
+                93.03,
+                91.62,
+                91.14,
+                94.1,
+                94.75,
+                95.32,
+                95.64,
+                94.87,
+                95.5,
+                94.78,
+                94.24,
+                95.53,
+                95.75,
+                96.26,
+                96.53,
+                96.02,
+                95.42,
+                95.9,
+                96.82,
+                97.17,
+                98.94,
+                99.49,
+                99.33,
+                98.6,
+                98.46,
+                98.79,
+                99.16,
+                99.85,
+                101.26,
+                101.69,
+                102.0,
+                100.52,
+                100.96,
+                101.69,
+                103.49,
+                103.22,
+                103.57,
+                103.57,
+                104.31,
+                104.32,
+                104.71,
+                103.51,
+                104.57,
+                105.03,
+                103.31,
+                103.7,
+                102.66,
+                100.81,
+                100.72,
+                101.55,
+                103.44,
+                105.69,
+                104.45,
+                106.61,
+                105.05,
+                105.2,
+                105.65,
+                105.49,
+                106.15,
+                107.98,
+                107.21,
+                106.53,
+                104.95,
+                105.35,
+                103.82,
+                104.47,
+                104.79,
+                103.55,
+                104.82,
+                105.36,
+                104.41,
+                103.97,
+                103.12,
+                103.54,
+                103.9,
+                103.42,
+                103.74,
+                103.08,
+                104.14,
+                102.45,
+                100.72,
+                99.71,
+                98.71,
+                97.32,
+                96.44,
+                99.17,
+                100.24,
+                99.75,
+                100.29,
+                101.86,
+                101.83,
+                101.36,
+                98.8,
+                98.71,
+                99.29,
+                97.5,
+                98.3,
+                97.54,
+                97.85,
+                97.93,
+                98.8,
+                98.99,
+                101.43
+              ]
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "values": [
+                59.01,
+                59.5,
+                57.7,
+                59.48,
+                58.54,
+                57.51,
+                57.54,
+                56.25,
+                56.68,
+                55.93,
+                56.21,
+                56.54,
+                58.55,
+                57.86,
+                57.65,
+                57.88,
+                58.23,
+                57.0,
+                56.72,
+                55.75,
+                56.65,
+                56.49,
+                55.76,
+                56.13,
+                54.08,
+                54.16,
+                55.32,
+                55.1,
+                54.47,
+                53.79,
+                55.62,
+                55.28,
+                57.16,
+                58.3,
+                56.8,
+                57.03,
+                56.61,
+                57.42,
+                58.2,
+                56.96,
+                57.89,
+                59.81,
+                61.58,
+                63.01,
+                61.88,
+                61.46,
+                62.46,
+                60.64,
+                60.24,
+                61.52,
+                59.84,
+                59.93,
+                60.93,
+                59.93,
+                59.0,
+                58.92,
+                57.0,
+                58.2,
+                58.05,
+                56.43,
+                58.89,
+                59.35,
+                57.67,
+                56.09,
+                55.3,
+                55.62,
+                55.3,
+                55.72,
+                54.87,
+                55.87,
+                54.82,
+                54.53,
+                55.52,
+                55.51,
+                55.78,
+                55.54,
+                56.97,
+                58.86,
+                59.03,
+                59.9,
+                60.92,
+                62.11,
+                62.76,
+                60.67,
+                59.22,
+                57.47,
+                57.85,
+                57.85,
+                57.99,
+                57.81,
+                58.03,
+                58.16,
+                57.9,
+                57.85,
+                56.56,
+                58.24,
+                57.45,
+                57.85,
+                57.33,
+                57.43,
+                56.94,
+                55.61,
+                54.55,
+                53.42,
+                53.41,
+                54.86,
+                54.99,
+                54.77,
+                54.18,
+                55.78,
+                54.67,
+                53.93,
+                53.31,
+                52.7,
+                51.62,
+                52.62,
+                53.21,
+                52.62,
+                52.55,
+                53.24,
+                53.1,
+                53.37,
+                51.86,
+                51.22,
+                52.92,
+                52.48,
+                53.66,
+                53.54,
+                55.92,
+                57.05,
+                56.01,
+                57.61,
+                57.58,
+                58.0,
+                58.38,
+                57.99,
+                57.71,
+                59.35,
+                58.56,
+                56.23,
+                56.42,
+                55.35,
+                55.82,
+                54.97,
+                53.73,
+                54.13,
+                52.99,
+                54.24,
+                54.09,
+                52.76,
+                53.47,
+                53.47,
+                53.87,
+                53.15,
+                54.49,
+                52.44,
+                53.34,
+                53.61,
+                53.26,
+                51.93,
+                50.92,
+                50.66,
+                50.86,
+                50.28,
+                49.99,
+                49.63,
+                47.4,
+                47.18,
+                48.46,
+                48.1,
+                46.46,
+                45.73,
+                46.39,
+                46.86,
+                47.06,
+                45.54,
+                45.55,
+                43.93,
+                44.87,
+                45.8,
+                45.79,
+                46.57,
+                47.47,
+                47.98,
+                47.59,
+                46.62,
+                45.83,
+                45.13,
+                45.41,
+                45.3,
+                45.16,
+                43.55,
+                44.58,
+                44.64,
+                44.41,
+                44.09,
+                44.27,
+                44.33,
+                44.4,
+                45.27,
+                45.13,
+                43.84,
+                44.69,
+                46.63,
+                45.74,
+                44.8,
+                46.01,
+                48.21,
+                48.56,
+                50.41,
+                49.83,
+                50.45,
+                49.58,
+                49.12,
+                48.28,
+                49.7,
+                47.77,
+                47.89,
+                47.51,
+                49.21,
+                48.17,
+                47.45,
+                48.05,
+                47.39,
+                46.19,
+                48.34,
+                49.76,
+                49.54,
+                48.79,
+                49.68,
+                49.48,
+                48.88,
+                49.32,
+                51.07,
+                51.01,
+                49.74,
+                48.06,
+                48.12,
+                47.23,
+                46.9,
+                46.33,
+                46.86,
+                47.38,
+                47.88,
+                47.44,
+                46.4,
+                45.49,
+                43.87,
+                45.6,
+                45.5,
+                46.28,
+                46.2,
+                46.42,
+                45.75,
+                46.07,
+                46.43,
+                45.89,
+                45.32,
+                44.68,
+                45.1,
+                44.36,
+                43.79,
+                44.97,
+                42.63,
+                41.9,
+                40.91,
+                40.6,
+                41.0,
+                40.83,
+                40.92,
+                40.85,
+                42.97,
+                41.51,
+                41.82,
+                40.9,
+                41.1,
+                40.42,
+                41.05,
+                41.04,
+                42.73,
+                40.41,
+                39.77,
+                38.75,
+                39.46,
+                39.39,
+                40.1,
+                40.64,
+                42.05,
+                43.55,
+                41.62,
+                39.2,
+                40.53,
+                40.65,
+                40.16,
+                40.19,
+                38.85,
+                40.16,
+                39.99,
+                40.77,
+                41.02,
+                40.68,
+                41.6,
+                42.74,
+                43.89,
+                41.85,
+                41.07,
+                43.64,
+                42.71,
+                41.91,
+                43.2,
+                45.33,
+                46.38,
+                46.76,
+                44.67,
+                46.43,
+                46.32,
+                45.99,
+                45.83,
+                47.04,
+                47.2,
+                47.31,
+                47.12,
+                46.11,
+                45.64,
+                45.65,
+                45.45,
+                47.27,
+                45.55,
+                43.46,
+                41.86,
+                41.16,
+                39.78,
+                39.33,
+                39.25,
+                40.97,
+                40.17,
+                41.1,
+                41.52,
+                41.86,
+                44.44,
+                43.72,
+                44.26,
+                44.3,
+                44.59,
+                44.83,
+                46.82,
+                47.19,
+                45.74,
+                44.37,
+                44.28,
+                44.45,
+                43.91,
+                44.74,
+                44.29,
+                44.11,
+                45.36,
+                45.29,
+                45.22,
+                44.25,
+                43.99,
+                43.86,
+                45.14,
+                46.61,
+                45.8,
+                46.68,
+                46.86,
+                47.75,
+                46.77,
+                45.49,
+                47.52,
+                46.96,
+                49.29,
+                50.27,
+                48.94,
+                51.74,
+                53.03,
+                53.08,
+                52.4,
+                51.86,
+                50.81,
+                50.9,
+                51.79,
+                51.22,
+                51.02,
+                49.51,
+                47.99,
+                48.77,
+                49.33,
+                49.17,
+                46.83,
+                45.94,
+                45.83,
+                46.33,
+                46.3,
+                46.71,
+                46.16,
+                44.28,
+                42.14,
+                42.89,
+                43.26,
+                44.1,
+                44.4,
+                45.78,
+                46.93,
+                46.06,
+                43.6,
+                43.42,
+                44.16,
+                45.39,
+                45.72,
+                46.22,
+                45.2,
+                44.14,
+                42.8,
+                41.86,
+                41.57,
+                42.25,
+                41.73,
+                42.47,
+                40.33,
+                40.28,
+                39.86,
+                39.8,
+                38.85,
+                37.65,
+                36.61,
+                37.39,
+                36.39,
+                38.82,
+                38.84,
+                39.95,
+                39.91,
+                38.98,
+                38.38,
+                40.31,
+                41.59,
+                40.82,
+                39.45,
+                39.5,
+                39.08,
+                39.86,
+                39.03,
+                41.58,
+                42.85,
+                43.74,
+                43.66,
+                43.32,
+                41.58,
+                43.9,
+                44.52,
+                44.37,
+                43.59,
+                43.3,
+                43.48,
+                43.15,
+                44.24,
+                43.79,
+                42.26,
+                41.5,
+                40.99,
+                42.1,
+                41.76,
+                41.65,
+                41.21,
+                42.55,
+                43.41,
+                40.75,
+                40.67,
+                40.41,
+                40.85,
+                41.1,
+                42.55,
+                43.43,
+                42.57,
+                42.13,
+                40.92,
+                40.57,
+                40.82,
+                42.11,
+                41.63,
+                39.1,
+                39.35,
+                40.3,
+                40.71,
+                41.92,
+                40.89,
+                43.41,
+                44.5,
+                45.73,
+                46.87,
+                46.72,
+                47.75,
+                46.75,
+                44.49,
+                43.98,
+                45.21,
+                45.77,
+                46.54,
+                46.91,
+                46.37
+              ]
+            }
+          ],
+          "money": "£",
+          "xLabel": "Day",
+          "indexFrom": 1,
+          "height": 210
+        }
+      },
+      "question": "What should we conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A is a good hedge for B, since $t = -32$ is far beyond 1.96.",
+            "why": "You trusted the t statistic. When the residual is itself a walk, the usual standard errors are far too small."
+          },
+          {
+            "id": "b",
+            "text": "A explains 67% of B's movement, so the shares are related.",
+            "why": "You read $R^2$ as explained variation. Two trending series give a large $R^2$ even when nothing links them."
+          },
+          {
+            "id": "c",
+            "text": "Nothing yet. Levels of walks give inflated t statistics, so test the residual for a unit root.",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "The pair cannot be cointegrated, since the daily changes are uncorrelated.",
+            "why": "You treated uncorrelated changes as proof against cointegration. A cointegrated pair can have weakly correlated daily returns."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The residual is highly persistent, so the t statistic cannot be trusted.",
+        "generic": "Ask what the residual of a levels regression looks like when the two series are unrelated walks."
+      },
+      "explain": {
+        "text": "A residual with day-to-day correlation 0.95 behaves like a random walk, which breaks the standard errors. The $t$ of $-32$ and the $R^2$ of 0.67 are then no evidence. The changes regression, with $R^2 = 0.0008$, finds no link either."
+      }
+    },
+    {
+      "id": "e-band-lags",
+      "difficulty": 2,
+      "skills": [
+        "ts-acf"
+      ],
+      "title": "Bars outside the band",
+      "prose": "This is the sample ACF of 400 days of a seeded series. The dashed lines are the band $\\pm 1.96/\\sqrt{400} = \\pm 0.098$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "xLabel": "Lag $k$",
+          "yLabel": "$\\hat\\rho_k$",
+          "height": 240,
+          "hlines": [
+            {
+              "id": "up",
+              "y": 0.098,
+              "label": "band"
+            },
+            {
+              "id": "dn",
+              "y": -0.098
+            }
+          ],
+          "yMin": -0.2,
+          "yMax": 0.6
+        },
+        "state": {
+          "values": {
+            "1": 0.5193,
+            "2": 0.2407,
+            "3": -0.0036,
+            "4": -0.0431,
+            "5": -0.026,
+            "6": -0.0233,
+            "7": 0.0294,
+            "8": 0.0754,
+            "9": 0.1251,
+            "10": 0.041,
+            "11": 0.0206,
+            "12": -0.0604
+          }
+        }
+      },
+      "question": "Tap every lag whose bar leaves the band.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "x1",
+          "x2",
+          "x9"
+        ],
+        "countWord": "lags",
+        "wrong": [
+          {
+            "id": "two",
+            "set": [
+              "x1",
+              "x2"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Lags 1, 2 and 9 leave the band.",
+        "generic": "Tap each bar that reaches beyond a dashed line, up or down.",
+        "byKey": {
+          "two": "You left out lag 9. Its bar is 0.125, beyond the band, even though one bar in twenty leaves a band by chance."
+        }
+      },
+      "explain": {
+        "text": "Lags 1 and 2 are far outside the band, at 0.52 and 0.24. Lag 9 is also outside, at 0.125. With twelve lags, one chance exit is not surprising, but it still leaves the band.",
+        "canvas": {
+          "highlight": [
+            "x1",
+            "x2",
+            "x9"
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-ar1-table",
+      "difficulty": 3,
+      "skills": [
+        "ts-models",
+        "ts-acf"
+      ],
+      "title": "An AR(1) with a negative coefficient",
+      "prose": "A series follows $x_t = -0.7\\,x_{t-1} + \\varepsilon_t$, where the shocks have standard deviation $\\sigma = 2$. The bars are the sample ACF of 500 seeded days. Fill in the theoretical values.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "xLabel": "Lag $k$",
+          "yLabel": "$\\hat\\rho_k$",
+          "height": 200,
+          "yMin": -0.8,
+          "yMax": 0.6
+        },
+        "state": {
+          "values": {
+            "1": -0.6561,
+            "2": 0.4157,
+            "3": -0.2068,
+            "4": 0.078,
+            "5": -0.0283,
+            "6": -0.0089,
+            "7": 0.0337,
+            "8": -0.0319
+          }
+        }
+      },
+      "question": "Complete the table to 2 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\rho_1$",
+            {
+              "edit": true,
+              "answer": -0.7,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$\\rho_2$",
+            {
+              "edit": true,
+              "answer": 0.49,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$\\rho_3$",
+            {
+              "edit": true,
+              "answer": -0.343,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$\\mathrm{Var}(x_t)$",
+            {
+              "edit": true,
+              "answer": 7.8431,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "PACF at lag 2",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "The ACF is $\\phi^k$, the variance is $\\sigma^2/(1-\\phi^2)$ and the PACF stops after lag 1.",
+        "generic": "For an AR(1), $\\rho_k = \\phi^k$. The variance is $\\sigma^2/(1 - \\phi^2)$, and the PACF is zero beyond lag 1.",
+        "byKey": {
+          "r0c1": "$\\rho_1 = \\phi$, so it keeps the negative sign.",
+          "r1c1": "$\\rho_2 = \\phi^2 = 0.49$ is positive: the bars alternate in sign.",
+          "r2c1": "$\\rho_3 = \\phi^3 = -0.343$, negative again.",
+          "r3c1": "You may have used $\\sigma^2 = 4$. The variance is $4/(1 - 0.49)$, which is larger.",
+          "r4c1": "An AR(1) has no direct link from two days back, so its PACF is zero after lag 1."
+        }
+      },
+      "explain": {
+        "text": "The ACF of an AR(1) is $\\phi^k$, so $-0.7$, $0.49$ and $-0.343$. The variance is $4/(1 - 0.49) = 7.84$. The PACF is $-0.7$ at lag 1 and zero from lag 2."
+      }
+    },
+    {
+      "id": "e-clusters-multi",
+      "difficulty": 3,
+      "skills": [
+        "gv-clustering",
+        "ts-acf"
+      ],
+      "title": "Memory in sizes, not signs",
+      "prose": "The bars are the ACF of 1,500 seeded daily returns, of their absolute values and of their squares. The band is $\\pm 0.051$. A Ljung-Box test at 10 lags gives $p = 0.31$ for the returns and $p < 0.0001$ for the squared returns.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "xLabel": "Lag $k$",
+          "yLabel": "ACF",
+          "height": 230,
+          "yMin": -0.1,
+          "yMax": 0.3,
+          "groups": [
+            {
+              "id": "r",
+              "label": "r"
+            },
+            {
+              "id": "abs",
+              "label": "|r|"
+            },
+            {
+              "id": "sq",
+              "label": "r²"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "up",
+              "y": 0.0506,
+              "label": ""
+            },
+            {
+              "id": "dn",
+              "y": -0.0506,
+              "label": ""
+            }
+          ]
+        },
+        "state": {
+          "values": {
+            "r": {
+              "1": 0.0273,
+              "2": 0.0266,
+              "3": -0.009,
+              "4": -0.0271,
+              "5": -0.0301,
+              "6": -0.0088,
+              "7": -0.0405,
+              "8": -0.0138,
+              "9": 0.0383,
+              "10": 0.0346
+            },
+            "abs": {
+              "1": 0.1644,
+              "2": 0.199,
+              "3": 0.2002,
+              "4": 0.1696,
+              "5": 0.1867,
+              "6": 0.1821,
+              "7": 0.2061,
+              "8": 0.1893,
+              "9": 0.1402,
+              "10": 0.1663
+            },
+            "sq": {
+              "1": 0.1572,
+              "2": 0.201,
+              "3": 0.2249,
+              "4": 0.144,
+              "5": 0.2003,
+              "6": 0.1972,
+              "7": 0.2054,
+              "8": 0.1901,
+              "9": 0.1397,
+              "10": 0.1519
+            }
+          }
+        }
+      },
+      "question": "Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The returns are uncorrelated, but they are not independent.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "A flat ACF for the returns shows that volatility is constant.",
+            "why": "You read the ACF of the returns as a test of the variance. It only tests for linear memory in the returns themselves."
+          },
+          {
+            "id": "c",
+            "text": "A large move, up or down, makes a large move more likely tomorrow.",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "A big fall today makes another fall tomorrow more likely.",
+            "why": "You read memory in size as memory in direction. The bars for the returns themselves are inside the band, so the sign has no memory."
+          },
+          {
+            "id": "e",
+            "text": "Volatility clustering means the series cannot be stationary.",
+            "why": "You mixed up a moving variance with a moving mean. A GARCH series is stationary, with a fixed long-run variance and a conditional variance that moves."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The returns have no linear memory, but their sizes do.",
+        "generic": "Compare the first group of bars with the other two. One group tests the sign, the others test the size."
+      },
+      "explain": {
+        "text": "The bars for the returns are all inside the band, so they are uncorrelated. The absolute and squared returns have bars from 0.14 to 0.23, so large moves follow large moves. That is memory in the size of moves, not their direction."
+      }
+    },
+    {
+      "id": "e-eg-critical",
+      "difficulty": 3,
+      "skills": [
+        "co-test"
+      ],
+      "title": "Which table for the residual",
+      "prose": "A researcher tests 400 days of a seeded pair, $y$ on $x$, for cointegration at the 5% level. This is her console.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> res = sm.OLS(y, sm.add_constant(x)).fit().resid",
+            ">>> adfuller(res)[:2]",
+            "(-3.1241, 0.0248)",
+            ">>> coint(y, x)",
+            "(-3.1282, 0.0828, array([-3.9241, -3.3515, -3.0551]))"
+          ]
+        }
+      },
+      "question": "What should she conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Cointegrated: the ADF p-value on the residual is 0.0248, below 0.05.",
+            "why": "You used the ordinary ADF p-value. The residual comes from a fitted regression, so it needs the stricter Engle-Granger values."
+          },
+          {
+            "id": "b",
+            "text": "Cointegrated: the statistic of −3.13 is below the critical value −3.06.",
+            "why": "You compared with the last number, the 10% value. The 5% value is the middle one, −3.35."
+          },
+          {
+            "id": "c",
+            "text": "Not cointegrated: the p-value of 0.083 proves the spread has a unit root.",
+            "why": "You took a failure to reject as proof. It is only a lack of evidence, and the test has low power on 400 days."
+          },
+          {
+            "id": "d",
+            "text": "No rejection at 5%: the statistic −3.13 is above the Engle-Granger value −3.35, so p = 0.083.",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The Engle-Granger p-value is the one to read. It is 0.083.",
+        "generic": "Which critical values suit a residual from a fitted regression, and which column is 5%?"
+      },
+      "explain": {
+        "text": "The `coint` output uses Engle-Granger critical values: −3.92, −3.35 and −3.06 at 1%, 5% and 10%. The statistic −3.13 passes only the 10% value, so it does not reject at 5%. The ADF p-value on the residual is too small because the regression has already pulled the residual towards stationarity."
+      }
+    },
+    {
+      "id": "e-ma-identify",
+      "difficulty": 3,
+      "skills": [
+        "ts-models",
+        "ts-acf"
+      ],
+      "title": "Reading the ACF and the PACF",
+      "prose": "These are the ACF (left) and PACF (right) of 500 seeded days of a stationary series. The band is $\\pm 0.088$ in both.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10
+            ],
+            "xLabel": "Lag",
+            "yLabel": "ACF",
+            "height": 170,
+            "yMin": -0.6,
+            "yMax": 0.2,
+            "hlines": [
+              {
+                "id": "u1",
+                "y": 0.0877
+              },
+              {
+                "id": "d1",
+                "y": -0.0877
+              }
+            ]
+          },
+          "state": {
+            "values": {
+              "1": -0.485,
+              "2": 0.0204,
+              "3": -0.0036,
+              "4": 0.0112,
+              "5": -0.016,
+              "6": 0.0098,
+              "7": -0.0327,
+              "8": 0.0444,
+              "9": -0.0436,
+              "10": 0.0432
+            }
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10
+            ],
+            "xLabel": "Lag",
+            "yLabel": "PACF",
+            "height": 170,
+            "yMin": -0.6,
+            "yMax": 0.2,
+            "hlines": [
+              {
+                "id": "u2",
+                "y": 0.0877
+              },
+              {
+                "id": "d2",
+                "y": -0.0877
+              }
+            ]
+          },
+          "state": {
+            "values": {
+              "1": -0.485,
+              "2": -0.2809,
+              "3": -0.1806,
+              "4": -0.1039,
+              "5": -0.0818,
+              "6": -0.0504,
+              "7": -0.0788,
+              "8": -0.0203,
+              "9": -0.0521,
+              "10": -0.0012
+            }
+          }
+        }
+      },
+      "question": "Which model do the two plots point to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "An AR(1) with a negative coefficient.",
+            "why": "You matched the negative lag-1 bar to an AR(1). An AR(1) ACF alternates in sign and decays over many lags, but lag 2 is inside the band here."
+          },
+          {
+            "id": "b",
+            "text": "An AR(4), since four PACF bars leave the band.",
+            "why": "You counted PACF bars. A PACF that fades gradually is a moving-average sign; an AR(4) would have a PACF that stops after lag 4."
+          },
+          {
+            "id": "c",
+            "text": "An MA(1) with a positive coefficient.",
+            "why": "You ignored the sign of the lag-1 bar. For an MA(1), the sign of the ACF spike is the sign of the coefficient, and here it is negative."
+          },
+          {
+            "id": "d",
+            "text": "An MA(1) with a negative coefficient.",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One negative ACF spike and a fading PACF mean an MA(1) with a negative coefficient.",
+        "generic": "Which plot stops, which one fades, and what sign does the first ACF bar have?"
+      },
+      "explain": {
+        "text": "The ACF stops after lag 1, where it is $-0.49$. The PACF fades towards zero with the same sign. That pair is the mark of an MA(1), and the negative spike means $\\theta < 0$."
+      }
+    },
+    {
+      "id": "e-breach-days",
+      "difficulty": 3,
+      "skills": [
+        "gv-risk"
+      ],
+      "title": "Which days breached",
+      "prose": "A GARCH model gives each evening a 95% one-day VaR for the next day. The chart shows 60 seeded days: the daily return and the day's −VaR line. The dots mark the eight largest losses.\n\n| Dot | Day | Return | −VaR |\n|---|---|---|---|\n| A | 17 | −1.19% | −0.98% |\n| B | 21 | −1.55% | −1.35% |\n| C | 37 | −1.07% | −1.70% |\n| D | 42 | −1.27% | −1.61% |\n| E | 48 | −0.93% | −1.40% |\n| F | 51 | −1.75% | −1.38% |\n| G | 58 | −1.15% | −1.85% |\n| H | 60 | −1.32% | −1.75% |",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "ret",
+              "label": "Return",
+              "values": [
+                0.00397,
+                0.0016,
+                -0.00742,
+                -0.00136,
+                0.00475,
+                0.00407,
+                0.00871,
+                0.00075,
+                -0.00199,
+                -0.00255,
+                0.00215,
+                -0.00432,
+                -0.00422,
+                0.00707,
+                0.00193,
+                0.00511,
+                -0.01194,
+                0.00558,
+                -0.00117,
+                0.01655,
+                -0.01548,
+                0.0091,
+                0.01975,
+                0.01404,
+                -0.00343,
+                -0.00108,
+                -0.00293,
+                -0.00279,
+                0.01462,
+                -0.00688,
+                0.01376,
+                0.01082,
+                0.01153,
+                0.0105,
+                -0.00508,
+                0.01349,
+                -0.01069,
+                0.00777,
+                0.00019,
+                0.00819,
+                0.01234,
+                -0.01265,
+                -0.00191,
+                0.00115,
+                -0.00305,
+                -0.00406,
+                -0.00878,
+                -0.00932,
+                0.0049,
+                0.00815,
+                -0.01753,
+                0.01896,
+                0.00971,
+                0.01908,
+                -0.00486,
+                0.0003,
+                0.01495,
+                -0.0115,
+                -0.00205,
+                -0.01324
+              ]
+            },
+            {
+              "id": "nv",
+              "label": "−VaR",
+              "values": [
+                -0.01129,
+                -0.01104,
+                -0.01065,
+                -0.01096,
+                -0.01056,
+                -0.01047,
+                -0.01032,
+                -0.01094,
+                -0.01053,
+                -0.0102,
+                -0.00993,
+                -0.00967,
+                -0.00963,
+                -0.00958,
+                -0.00999,
+                -0.00971,
+                -0.00977,
+                -0.01131,
+                -0.01124,
+                -0.01082,
+                -0.01351,
+                -0.01519,
+                -0.0152,
+                -0.01772,
+                -0.01831,
+                -0.01742,
+                -0.01652,
+                -0.01574,
+                -0.01502,
+                -0.01618,
+                -0.01577,
+                -0.0166,
+                -0.01672,
+                -0.01695,
+                -0.01697,
+                -0.01631,
+                -0.01699,
+                -0.01704,
+                -0.01665,
+                -0.01579,
+                -0.01559,
+                -0.01614,
+                -0.01667,
+                -0.01584,
+                -0.01505,
+                -0.0144,
+                -0.01387,
+                -0.01398,
+                -0.01418,
+                -0.01374,
+                -0.01377,
+                -0.01598,
+                -0.01809,
+                -0.01786,
+                -0.01961,
+                -0.01872,
+                -0.01771,
+                -0.01849,
+                -0.0185,
+                -0.01754
+              ],
+              "dashed": true
+            }
+          ],
+          "format": "pct",
+          "baseline": 0,
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "height": 250,
+          "y": [
+            -0.025,
+            0.025
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "mA",
+              "i": 16,
+              "series": "ret",
+              "label": "A"
+            },
+            {
+              "id": "mB",
+              "i": 20,
+              "series": "ret",
+              "label": "B"
+            },
+            {
+              "id": "mC",
+              "i": 36,
+              "series": "ret",
+              "label": "C"
+            },
+            {
+              "id": "mD",
+              "i": 41,
+              "series": "ret",
+              "label": "D"
+            },
+            {
+              "id": "mE",
+              "i": 47,
+              "series": "ret",
+              "label": "E"
+            },
+            {
+              "id": "mF",
+              "i": 50,
+              "series": "ret",
+              "label": "F"
+            },
+            {
+              "id": "mG",
+              "i": 57,
+              "series": "ret",
+              "label": "G"
+            },
+            {
+              "id": "mH",
+              "i": 59,
+              "series": "ret",
+              "label": "H"
+            }
+          ]
+        }
+      },
+      "question": "Tap every dot that is a breach.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "mA",
+          "mB",
+          "mF"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "size",
+            "set": [
+              "mB",
+              "mF",
+              "mH"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Dots A, B and F lost more than that evening's VaR.",
+        "generic": "A breach is a return below its own day's −VaR. Compare each row of the table.",
+        "byKey": {
+          "size": "You picked the three largest losses. H lost 1.32%, but its VaR was 1.75%. A lost only 1.19%, yet its VaR was 0.98%.",
+          "mH": "Dot H lost 1.32%, less than its VaR of 1.75%.",
+          "mC": "Dot C lost 1.07%, less than its VaR of 1.70%.",
+          "mD": "Dot D lost 1.27%, less than its VaR of 1.61%.",
+          "mE": "Dot E lost 0.93%, less than its VaR of 1.40%.",
+          "mG": "Dot G lost 1.15%, less than its VaR of 1.85%."
+        }
+      },
+      "explain": {
+        "text": "A breach compares each loss with that day's own VaR. A, B and F fall below their lines, by 0.22, 0.20 and 0.38 points. H is the third largest loss, but the VaR that day was 1.75% and covered it.",
+        "canvas": {
+          "highlight": [
+            "mA",
+            "mB",
+            "mF"
+          ]
+        }
+      }
+    },
+    {
+      "id": "e-hedge-flip",
+      "difficulty": 3,
+      "skills": [
+        "co-spread"
+      ],
+      "title": "Regressing the other way",
+      "prose": "For a pair of shares over 300 days, regressing $y$ on $x$ gives a slope of 0.8626 and $R^2 = 0.8073$. A colleague regresses $x$ on $y$, then inverts his slope to get a hedge ratio in shares of $x$ per share of $y$.",
+      "question": "What hedge ratio does the colleague get? Give it to 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.07,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "shares of x per share of y",
+        "label": "Hedge ratio",
+        "accept": "1.07 ± 0.01",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 0.86,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "inverse",
+            "value": 1.16,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "uninverted",
+            "value": 0.94,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "product",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "His slope is $R^2/0.8626 = 0.936$, and its inverse is 1.07.",
+        "generic": "The two slopes multiply to $R^2$. Find his slope, then invert it.",
+        "byKey": {
+          "same": "You assumed the direction does not matter. It does, unless $R^2$ is 1.",
+          "inverse": "You inverted 0.8626. The product of the two slopes is $R^2$, not 1.",
+          "uninverted": "That is his slope, 0.94, in shares of $y$ per share of $x$. The hedge ratio needs its inverse.",
+          "product": "You multiplied the slope by $R^2$. His slope is $R^2$ divided by the first slope."
+        }
+      },
+      "explain": {
+        "text": "The slope of $y$ on $x$ times the slope of $x$ on $y$ equals $R^2$. His slope is $0.8073/0.8626 = 0.936$. Inverted, that is 1.07 shares of $x$, against 0.86 from the first regression."
+      }
+    },
+    {
+      "id": "e-unit-root-steps",
+      "difficulty": 3,
+      "skills": [
+        "ts-stationary",
+        "ts-models"
+      ],
+      "title": "From closes to a forecast",
+      "prose": "A new analyst has 500 daily closes of a share and wants a forecast model. These are the steps she should follow, in a shuffled order.",
+      "question": "Put the steps in the right order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Plot the closes and their daily changes."
+          },
+          {
+            "id": "s2",
+            "text": "Run the ADF test on the closes and fail to reject a unit root."
+          },
+          {
+            "id": "s3",
+            "text": "Take log returns, the first difference of log price."
+          },
+          {
+            "id": "s4",
+            "text": "Run the ADF test on the returns and reject the unit root."
+          },
+          {
+            "id": "s5",
+            "text": "Read the returns' ACF and PACF, fit candidate ARMA models and compare AIC."
+          },
+          {
+            "id": "s6",
+            "text": "Run a Ljung-Box test on the chosen model's residuals."
+          },
+          {
+            "id": "s7",
+            "text": "Forecast the returns, and cumulate them into a price path if needed."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6",
+          "s7"
+        ]
+      },
+      "feedback": {
+        "correct": "Check stationarity, difference, identify, fit, check residuals, then forecast.",
+        "generic": "Test for a unit root before differencing, and check the residuals before forecasting.",
+        "byKey": {
+          "s4": "The test on the returns confirms the differencing worked. It comes after the returns exist and before the ARMA search.",
+          "s6": "Residual checks come after the model is chosen and before it is used to forecast.",
+          "s5": "You cannot read an ACF of the returns before taking them, and the order search comes before the residual check."
+        }
+      },
+      "explain": {
+        "text": "The ADF test on the closes shows a unit root, so we difference. The ADF test on the returns confirms it worked. Then we choose the orders, check the residuals and only then forecast."
+      }
+    },
+    {
+      "id": "e-vol-ahead",
+      "difficulty": 3,
+      "skills": [
+        "gv-forecast",
+        "gv-models"
+      ],
+      "title": "Volatility ten days past tomorrow",
+      "prose": "A GARCH(1,1) model in per cent has $\\omega = 0.03$, $\\alpha = 0.07$ and $\\beta = 0.90$. After today's close, the forecast for tomorrow's variance is $\\sigma_{t+1}^2 = 2.5$.",
+      "question": "What volatility does the model forecast for day $t+11$, ten days after tomorrow, in % a day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.45,
+        "tol": {
+          "abs": 0.004
+        },
+        "unit": "%",
+        "placeholder": "% a day",
+        "label": "Volatility forecast",
+        "accept": "1.45 ± 0.004",
+        "wrong": [
+          {
+            "id": "longrun",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "tomorrow",
+            "value": 1.58,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "off-by-one",
+            "value": 1.44,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "variance",
+            "value": 2.11,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The excess variance of 1.5 shrinks by 0.97 each day for ten days.",
+        "generic": "The long-run variance is $\\omega/(1 - \\alpha - \\beta)$. The gap to it shrinks by $\\alpha + \\beta$ each day.",
+        "byKey": {
+          "longrun": "You jumped to the long-run volatility. After ten days a good part of the excess remains.",
+          "tomorrow": "You used tomorrow's forecast, 1.58. The forecast reverts towards the long run each day.",
+          "off-by-one": "You applied eleven steps. Tomorrow is $t+1$, so day $t+11$ is ten steps on.",
+          "variance": "You stopped at the variance, 2.11. Volatility is its square root."
+        }
+      },
+      "explain": {
+        "text": "The long-run variance is $0.03/0.03 = 1$. After ten steps the gap shrinks to $1.5 \\times 0.97^{10} = 1.106$, so the variance is 2.106. The volatility is $\\sqrt{2.106} = 1.45\\%$ a day."
+      }
+    },
+    {
+      "id": "e-pair-positions",
+      "difficulty": 3,
+      "skills": [
+        "co-pairs"
+      ],
+      "title": "A week of positions",
+      "prose": "A pair trade uses the spread's $z$-score. Entry: short the spread ($-1$) when $2 \\le z < 4$, long ($+1$) when $-4 < z \\le -2$. Exit: a short closes at $z \\le 0$ or $z \\ge 4$. A long closes at $z \\ge 0$ or $z \\le -4$. A trade closed today is not reopened today. Positions are set at each close.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "z",
+              "label": "z",
+              "values": [
+                0.8,
+                2.0,
+                1.4,
+                0.3,
+                -0.1,
+                -1.9,
+                -2.6,
+                -4.3,
+                -3.1
+              ]
+            }
+          ],
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "height": 190,
+          "y": [
+            -5,
+            3
+          ],
+          "hlines": [
+            {
+              "id": "e1",
+              "y": 2,
+              "label": "entry"
+            },
+            {
+              "id": "e2",
+              "y": -2
+            },
+            {
+              "id": "s1",
+              "y": 4,
+              "label": "stop"
+            },
+            {
+              "id": "s2",
+              "y": -4
+            },
+            {
+              "id": "zero",
+              "y": 0,
+              "dashed": false
+            }
+          ]
+        }
+      },
+      "question": "Fill in the five missing positions: −1, 0 or +1.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "z",
+          "Position after the close"
+        ],
+        "rows": [
+          [
+            "1",
+            "0.8",
+            "0"
+          ],
+          [
+            "2",
+            "2.0",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            "1.4",
+            "−1"
+          ],
+          [
+            "4",
+            "0.3",
+            "−1"
+          ],
+          [
+            "5",
+            "−0.1",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "6",
+            "−1.9",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "7",
+            "−2.6",
+            "+1"
+          ],
+          [
+            "8",
+            "−4.3",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "9",
+            "−3.1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Short on day 2, flat on day 5, long on day 7, stopped on day 8, long again on day 9.",
+        "generic": "Take each day in turn. Ask what you held yesterday, then apply the entry, exit and stop rules.",
+        "byKey": {
+          "r1c2": "z = 2.0 meets the entry rule $z \\ge 2$, so the short opens that evening.",
+          "r4c2": "z = −0.1 is at or below 0, so the short closes. Nothing reopens the same day.",
+          "r5c2": "z = −1.9 has not reached −2, so no long opens.",
+          "r7c2": "z = −4.3 is at or below −4, so the stop closes the long. It does not reopen that day.",
+          "r8c2": "z = −3.1 lies between −4 and −2, and you are flat, so a long opens."
+        }
+      },
+      "explain": {
+        "text": "Day 2 opens a short at z = 2.0, which closes on day 5 at z = −0.1. Day 7 opens a long at −2.6. Day 8 stops it at −4.3, and day 9 opens a long again at −3.1."
+      }
+    },
+    {
+      "id": "e-aic-bic",
+      "difficulty": 3,
+      "skills": [
+        "ts-models"
+      ],
+      "title": "Scoring five ARMA fits",
+      "prose": "Five ARMA models with a constant are fitted to 400 seeded days. Here $k$ counts the constant, the ARMA coefficients and $\\sigma^2$, and $\\ell$ is the log-likelihood. Use $\\mathrm{AIC} = 2k - 2\\ell$ and $\\mathrm{BIC} = k\\ln n - 2\\ell$, with $\\ln 400 = 5.99$.",
+      "question": "Fill in the four missing scores to 2 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Model",
+          "ℓ",
+          "AIC",
+          "BIC"
+        ],
+        "rows": [
+          [
+            "AR(1), k = 3",
+            "−571.34",
+            "1148.67",
+            "1160.65"
+          ],
+          [
+            "AR(2), k = 4",
+            "−560.97",
+            "1129.94",
+            "1145.91"
+          ],
+          [
+            "MA(1), k = 3",
+            "−554.25",
+            {
+              "edit": true,
+              "answer": 1114.49,
+              "tol": {
+                "abs": 0.03
+              }
+            },
+            {
+              "edit": true,
+              "answer": 1126.47,
+              "tol": {
+                "abs": 0.03
+              }
+            }
+          ],
+          [
+            "MA(2), k = 4",
+            "−552.63",
+            "1113.27",
+            "1129.23"
+          ],
+          [
+            "ARMA(1,1), k = 4",
+            "−552.51",
+            {
+              "edit": true,
+              "answer": 1113.02,
+              "tol": {
+                "abs": 0.03
+              }
+            },
+            {
+              "edit": true,
+              "answer": 1128.98,
+              "tol": {
+                "abs": 0.03
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "AIC prefers ARMA(1,1) by 1.47 points. BIC prefers the MA(1) by 2.51.",
+        "generic": "Use $k$ as listed. The AIC penalty is $2k$ and the BIC penalty is $k \\times 5.99$.",
+        "byKey": {
+          "r2c2": "AIC for the MA(1) is $2 \\times 3 + 2 \\times 554.25$.",
+          "r2c3": "BIC for the MA(1) is $3 \\times 5.99 + 2 \\times 554.25$.",
+          "r4c2": "AIC for the ARMA(1,1) is $2 \\times 4 + 2 \\times 552.51$.",
+          "r4c3": "BIC for the ARMA(1,1) is $4 \\times 5.99 + 2 \\times 552.51$."
+        }
+      },
+      "explain": {
+        "text": "The MA(1) scores 1114.49 (AIC) and 1126.47 (BIC); the ARMA(1,1) scores 1113.02 and 1128.98. AIC prefers ARMA(1,1) by only 1.47, less than 2, while BIC prefers the MA(1) by 2.51. So the simpler MA(1) is the sensible choice."
+      }
+    },
+    {
+      "id": "e-fan-width",
+      "difficulty": 3,
+      "skills": [
+        "ts-forecast"
+      ],
+      "title": "Three days ahead",
+      "prose": "An overnight funding spread is an AR(1) around a mean of 20bp: $x_t - 20 = 0.8\\,(x_{t-1} - 20) + \\varepsilon_t$, with shock sd 3bp. Today it closed at 28bp.",
+      "question": "What is the upper end of the 95% forecast interval for three days ahead, in bp?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32.51,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "bp",
+        "placeholder": "bp",
+        "label": "Upper end",
+        "accept": "32.51 ± 0.05",
+        "wrong": [
+          {
+            "id": "one-step",
+            "value": 29.98,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "sqrt-h",
+            "value": 34.28,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "no-reversion",
+            "value": 36.42,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "point",
+            "value": 24.1,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The forecast is 24.10bp and the half-width is 8.42bp.",
+        "generic": "The forecast reverts: $20 + 0.8^3 \\times 8$. The forecast variance is $\\sigma^2(1 + \\phi^2 + \\phi^4)$.",
+        "byKey": {
+          "one-step": "You used the one-day half-width, 5.88. The interval widens with the horizon.",
+          "sqrt-h": "You scaled by $\\sqrt{3}$, as a random walk would. Mean reversion makes the interval widen more slowly.",
+          "no-reversion": "You centred the interval on today's 28bp. The forecast has already reverted part of the way.",
+          "point": "That is the centre of the interval. Add the half-width."
+        }
+      },
+      "explain": {
+        "text": "The forecast is $20 + 0.512 \\times 8 = 24.10$bp. The half-width is $1.96 \\times 3\\sqrt{1 + 0.64 + 0.4096} = 8.42$bp. The upper end is 32.51bp."
+      }
+    },
+    {
+      "id": "e-code-ar-fan",
+      "difficulty": 4,
+      "skills": [
+        "ts-forecast",
+        "ts-models"
+      ],
+      "title": "A forecast fan from an AR(1)",
+      "prose": "A desk models a funding spread as an AR(1) with a constant. Write the fit and the forecast fan. Each horizon needs a point forecast and a 95% half-width.",
+      "question": "Complete `ar1_fan(x, h)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n",
+        "starter": "import numpy as np\n\ndef ar1_fan(x, h):\n    \"\"\"Fit x_t = c + phi * x_{t-1} + e_t by least squares, then look h days ahead.\n    Return (forecasts, half_widths): two lists of length h, the point\n    forecast and the 95% half-width (1.96 forecast sds) for k = 1 ... h.\n    Take sigma^2 as the mean squared residual. Assume |phi| < 1.\"\"\"\n    x = np.asarray(x, dtype=float)\n    c, phi = ...        # least squares of x[1:] on a constant and x[:-1]\n    sigma2 = ...        # mean squared residual\n    mu = ...            # the level the series reverts to\n    forecasts, half_widths = [], []\n    for k in range(1, h + 1):\n        forecasts.append(...)\n        half_widths.append(...)\n    return forecasts, half_widths\n",
+        "solution": "import numpy as np\n\ndef ar1_fan(x, h):\n    \"\"\"Fit x_t = c + phi * x_{t-1} + e_t by least squares, then look h days ahead.\n    Return (forecasts, half_widths): two lists of length h, the point\n    forecast and the 95% half-width (1.96 forecast sds) for k = 1 ... h.\n    Take sigma^2 as the mean squared residual. Assume |phi| < 1.\"\"\"\n    x = np.asarray(x, dtype=float)\n    A = np.column_stack([np.ones(len(x) - 1), x[:-1]])\n    c, phi = np.linalg.lstsq(A, x[1:], rcond=None)[0]\n    sigma2 = np.mean((x[1:] - A @ np.array([c, phi])) ** 2)\n    mu = c / (1 - phi)\n    forecasts, half_widths = [], []\n    for k in range(1, h + 1):\n        forecasts.append(float(mu + phi ** k * (x[-1] - mu)))\n        var_k = sigma2 * sum(phi ** (2 * j) for j in range(k))\n        half_widths.append(float(1.96 * np.sqrt(var_k)))\n    return forecasts, half_widths\n",
+        "examples": [
+          {
+            "call": "[round(v, 6) for v in ar1_fan(make_ar1(0.7, 400, 12), 5)[0]]",
+            "expect": "[0.737225, 0.535501, 0.397195, 0.302369, 0.237354]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-05
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(v, 6) for v in ar1_fan(make_ar1(0.7, 400, 12), 5)[0]]",
+            "expect": "[0.737225, 0.535501, 0.397195, 0.302369, 0.237354]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-05
+            }
+          },
+          {
+            "call": "[round(v, 6) for v in ar1_fan(make_ar1(0.7, 400, 12), 5)[1]]",
+            "expect": "[1.947825, 2.361674, 2.532958, 2.609593, 2.64485]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-05
+            }
+          },
+          {
+            "call": "[len(a) for a in ar1_fan(make_ar1(0.7, 400, 12), 1)]",
+            "expect": "[1, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in fc + hw]",
+            "expect": "[-0.150724, 0.130649, -0.029093, 1.967741, 2.262737, 2.349939]",
+            "compare": "isclose",
+            "setup": "fc, hw = ar1_fan(make_ar1(-0.5, 300, 3), 3)",
+            "tol": {
+              "abs": 2e-05
+            }
+          },
+          {
+            "call": "[round(fc[-1], 6), all(b > a for a, b in zip(hw, hw[1:]))]",
+            "expect": "[10.906728, True]",
+            "compare": "isclose",
+            "setup": "fc, hw = ar1_fan(make_ar1(0.9, 500, 5, c=1.0), 10)",
+            "tol": {
+              "abs": 2e-05
+            }
+          },
+          {
+            "call": "[round(fc[-1], 5), round(hw[-1] / hw[0], 5)]",
+            "expect": "[5.03962, 1.29655]",
+            "compare": "isclose",
+            "setup": "fc, hw = ar1_fan(make_ar1(0.6, 250, 8, c=2.0), 60)",
+            "tol": {
+              "abs": 2e-05
+            }
+          },
+          {
+            "call": "[round(v, 6) for v in fc + hw]",
+            "expect": "[0.000428, 0.110738, 1.971333, 1.975458]",
+            "compare": "isclose",
+            "setup": "fc, hw = ar1_fan(make_ar1(0.0, 300, 4), 2)",
+            "tol": {
+              "abs": 2e-05
+            }
+          },
+          {
+            "call": "[round(v, 6) for v in fc + hw]",
+            "expect": "[-6.50852, -6.515737, -6.522036, -6.527534, 1.864368, 2.474577, 2.853126, 3.110719]",
+            "compare": "isclose",
+            "setup": "fc, hw = ar1_fan(make_ar1(0.85, 600, 21, c=-1.0), 4)",
+            "tol": {
+              "abs": 2e-05
+            }
+          }
+        ],
+        "how": "Check runs 8 hidden tests on seeded AR(1) series: forecasts, half-widths, a one-day horizon, a negative coefficient, a long horizon and a series with a constant. `make_ar1` is already defined. Values are rounded to 6 places and must agree within 0.00002. The first run loads NumPy, which takes a few seconds."
+      },
+      "feedback": {
+        "correct": "Your forecasts revert to the mean, and the half-widths widen towards a limit.",
+        "generic": "Some tests failed. Fit by least squares first. The forecast reverts to $\\mu$ and the variance sums powers of $\\phi^2$.",
+        "byKey": {
+          "test-1": "The point forecast at horizon $k$ is $\\mu + \\phi^k(x_T - \\mu)$, with $\\mu = c/(1 - \\phi)$.",
+          "test-2": "The forecast variance at horizon $k$ is $\\sigma^2(1 + \\phi^2 + \\dots + \\phi^{2k-2})$, not $k\\sigma^2$.",
+          "test-3": "With h = 1 each list has one value.",
+          "error": "Your code stopped with an error. Read the last line of the message under the editor."
+        }
+      },
+      "explain": {
+        "text": "Least squares of $x_t$ on a constant and $x_{t-1}$ gives $c$ and $\\phi$. The forecast is $\\mu + \\phi^k(x_T - \\mu)$ with $\\mu = c/(1 - \\phi)$. Its variance is $\\sigma^2\\sum_{j<k}\\phi^{2j}$, so the half-width grows to a limit."
+      }
+    },
+    {
+      "id": "e-kupiec",
+      "difficulty": 4,
+      "skills": [
+        "gv-risk"
+      ],
+      "title": "Ten breaches in 500 days",
+      "prose": "A desk's 99% one-day VaR is backtested over 500 days and breached on 10 of them. If the model is right, the number of breaches is Binomial(500, 0.01). Kupiec's test compares the likelihood of $p = 0.01$ with that of the observed rate.",
+      "question": "What is the Kupiec likelihood-ratio statistic, to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.91,
+        "tol": {
+          "abs": 0.02
+        },
+        "placeholder": "LR",
+        "label": "Kupiec LR",
+        "accept": "3.91 ± 0.02",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 1.96,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "z-squared",
+            "value": 5.05,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "z",
+            "value": 2.25,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "LR = 3.91, just above the 5% point 3.841 of a chi-squared with one degree of freedom.",
+        "generic": "The observed rate is 10/500. Compare the log-likelihood at 0.01 with that at the observed rate, then multiply by −2.",
+        "byKey": {
+          "half": "You left out the factor 2 in front of the log-likelihood difference.",
+          "z-squared": "You squared the normal-approximation z of the breach count. It is close, but it is not the likelihood ratio.",
+          "z": "That is the z-score of the breach count, (10 − 5)/2.22. Kupiec's statistic is a likelihood ratio."
+        }
+      },
+      "explain": {
+        "text": "The log-likelihood is −50.98 at $p = 0.01$ and −49.02 at the observed rate 0.02. The difference is 1.957, so $LR = 3.91$. That is above 3.841, so the model is rejected at 5%, though only just."
+      }
+    },
+    {
+      "id": "e-johansen-rank",
+      "difficulty": 4,
+      "skills": [
+        "co-test"
+      ],
+      "title": "Reading a trace table",
+      "prose": "Two share prices and an index are tested together over 500 seeded days. The Johansen trace test (constant, one lagged difference) gives this table. Each row tests the null that the rank is at most the value shown.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Null hypothesis",
+            "Trace statistic",
+            "95% critical value"
+          ],
+          "rows": [
+            [
+              "rank = 0",
+              "64.22",
+              "29.80"
+            ],
+            [
+              "rank ≤ 1",
+              "12.91",
+              "15.49"
+            ],
+            [
+              "rank ≤ 2",
+              "4.43",
+              "3.84"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        }
+      },
+      "question": "How many cointegrating relations does the test find at 5%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "0",
+            "why": "You read the first row as the answer. Its statistic, 64.22, beats 29.80, so the null of rank 0 is rejected."
+          },
+          {
+            "id": "b",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "2",
+            "why": "You counted the rows whose statistic is above its critical value. The sequence stops at the first row that fails to reject, and 12.91 is below 15.49."
+          },
+          {
+            "id": "d",
+            "text": "3",
+            "why": "You took the number of series. Full rank would make every price stationary, and prices are not."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Rank 1: the first row rejects and the second does not.",
+        "generic": "Start at the top row. Stop at the first row whose statistic is below its critical value."
+      },
+      "explain": {
+        "text": "Row one rejects rank 0, since 64.22 is above 29.80. Row two does not reject rank at most 1, since 12.91 is below 15.49. We stop there: the rank is 1, whatever the last row says.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              "r0",
+              "r1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "e-code-garch-report",
+      "difficulty": 4,
+      "skills": [
+        "gv-models",
+        "gv-forecast",
+        "gv-risk"
+      ],
+      "title": "Fit, then size the risk",
+      "prose": "The `arch` package is not available, so we fit GARCH(1,1) by hand. The variance recursion and the likelihood are given. Write the fit and three outputs a risk report needs.",
+      "question": "Complete `garch_report(r, position)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n",
+        "starter": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef garch_variance(params, r):\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\ndef neg_loglik(params, r):\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n\ndef garch_report(r, position):\n    \"\"\"r: daily returns in %. Fit a zero-mean GARCH(1,1) by maximum\n    likelihood: SLSQP from (0.05, 0.05, 0.90), omega in (1e-6, 10),\n    alpha and beta in (0, 1), alpha + beta <= 0.9999.\n    Return (persistence, long_run_vol, var99): alpha + beta, the long-run\n    volatility in % a year (252 days), and tomorrow's 99% one-day\n    normal VaR in pounds on a position of `position` pounds.\"\"\"\n    fit = ...\n    omega, alpha, beta = ...\n    s2_tomorrow = ...\n    return ..., ..., ...\n",
+        "solution": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef garch_variance(params, r):\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\ndef neg_loglik(params, r):\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n\ndef garch_report(r, position):\n    \"\"\"r: daily returns in %. Fit a zero-mean GARCH(1,1) by maximum\n    likelihood: SLSQP from (0.05, 0.05, 0.90), omega in (1e-6, 10),\n    alpha and beta in (0, 1), alpha + beta <= 0.9999.\n    Return (persistence, long_run_vol, var99): alpha + beta, the long-run\n    volatility in % a year (252 days), and tomorrow's 99% one-day\n    normal VaR in pounds on a position of `position` pounds.\"\"\"\n    fit = minimize(neg_loglik, x0=np.array([0.05, 0.05, 0.90]), args=(r,),\n                   method=\"SLSQP\", bounds=[(1e-6, 10.0), (0.0, 1.0), (0.0, 1.0)],\n                   constraints=[{\"type\": \"ineq\", \"fun\": lambda p: 0.9999 - p[1] - p[2]}],\n                   options={\"ftol\": 1e-10, \"maxiter\": 500})\n    omega, alpha, beta = fit.x\n    s2_tomorrow = omega + alpha * r[-1] ** 2 + beta * garch_variance(fit.x, r)[-1]\n    long_run_var = omega / (1 - alpha - beta)\n    return (float(alpha + beta),\n            float(np.sqrt(252 * long_run_var)),\n            float(2.326347874 * np.sqrt(s2_tomorrow) / 100 * position))\n",
+        "examples": [
+          {
+            "setup": "rp = 100 * simulate_garch(4e-6, 0.09, 0.88, 1500, 19)[0]",
+            "call": "garch_report(rp, 1_000_000)[0]",
+            "expect": "0.953117",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ],
+        "tests": [
+          {
+            "setup": "rp = 100 * simulate_garch(4e-6, 0.09, 0.88, 1500, 19)[0]",
+            "call": "garch_report(rp, 1_000_000)[0]",
+            "expect": "0.953117",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(1e-6, 0.06, 0.92, 2000, 5)[0]",
+            "call": "garch_report(rp, 1_000_000)[0]",
+            "expect": "0.980929",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(8e-6, 0.12, 0.80, 1200, 41)[0]",
+            "call": "garch_report(rp, 1_000_000)[0]",
+            "expect": "0.944968",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(4e-6, 0.09, 0.88, 1500, 19)[0]",
+            "call": "garch_report(rp, 1_000_000)[1]",
+            "expect": "17.88799",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(4e-6, 0.09, 0.88, 1500, 23)[0]",
+            "call": "garch_report(rp, 1_000_000)[1]",
+            "expect": "17.54909",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(1e-6, 0.06, 0.92, 2000, 5)[0]",
+            "call": "garch_report(rp, 1_000_000)[1]",
+            "expect": "10.4237",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(4e-6, 0.09, 0.88, 1500, 19)[0]",
+            "call": "garch_report(rp, 1_000_000)[2]",
+            "expect": "22653.488",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(8e-6, 0.12, 0.80, 1200, 41)[0]",
+            "call": "garch_report(rp, 250_000)[2]",
+            "expect": "8920.128",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "setup": "rp = 100 * simulate_garch(4e-6, 0.09, 0.88, 1500, 23)[0]",
+            "call": "garch_report(rp, 3_000_000)[2] / garch_report(rp, 1_000_000)[2]",
+            "expect": "3.0",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          }
+        ],
+        "budget": 20000,
+        "how": "Check runs 9 hidden tests on four seeded GARCH series of 1,200 to 2,000 days, in % units: persistence, long-run volatility and VaR. `simulate_garch` is already defined. Fitted values must agree within 0.2 to 1%. The first run loads SciPy, which takes a few seconds."
+      },
+      "feedback": {
+        "correct": "Your fit gives the persistence, the long-run volatility and tomorrow's VaR.",
+        "generic": "Some tests failed. Fit with SLSQP from the stated start. Tomorrow's variance comes from the last return and the last variance.",
+        "byKey": {
+          "test-1": "Persistence is $\\alpha + \\beta$ from the fitted parameters.",
+          "test-4": "The long-run variance is $\\omega/(1 - \\alpha - \\beta)$ in %². Multiply by 252 and take the root.",
+          "test-7": "Tomorrow's variance is $\\omega + \\alpha r_T^2 + \\beta\\sigma_T^2$. The VaR uses its square root, the 99% point 2.326 and the position.",
+          "error": "Your code stopped with an error. Read the last line of the message under the editor."
+        }
+      },
+      "explain": {
+        "text": "The fit gives $\\omega$, $\\alpha$ and $\\beta$. Persistence is $\\alpha + \\beta$ and the long-run annual volatility is $\\sqrt{252\\,\\omega/(1 - \\alpha - \\beta)}$. Tomorrow's variance gives a VaR of $2.326\\,\\sigma_{T+1}$ times the position."
+      }
+    },
+    {
+      "id": "e-lookahead-multi",
+      "difficulty": 4,
+      "skills": [
+        "co-pairs"
+      ],
+      "title": "Where the future leaks",
+      "prose": "A researcher backtests a pairs strategy on 1,500 days of two shares. She wants an honest result. Several design choices are on the table.",
+      "question": "Select all that apply: which choices let the future leak into a day's trade?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The hedge ratio comes from a regression on all 1,500 days and is used from day 1.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The hedge ratio is refitted each day on the 250 days ending that day.",
+            "why": "You flagged a rolling fit. Its window ends today, so it uses only the past, and it is the honest version."
+          },
+          {
+            "id": "c",
+            "text": "The z-score uses the mean and sd of the whole 1,500-day spread.",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "A signal at today's close earns tomorrow's change in the spread.",
+            "why": "You flagged the one-day delay. Trading after seeing the close and earning the next change is the honest timing."
+          },
+          {
+            "id": "e",
+            "text": "The pair was picked because it passed an Engle-Granger test on all 1,500 days.",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Full-sample hedge ratios, full-sample z-scores and selection on the same days all leak.",
+        "generic": "For each choice, ask whether the number could have been known on the day of the trade."
+      },
+      "explain": {
+        "text": "A full-sample hedge ratio and a full-sample z-score both use days after the trade. So does picking the pair on all 1,500 days: it is a survivor of the very test period. A rolling window and a next-day fill use only the past."
+      }
+    },
+    {
+      "id": "e-code-pair-verdict",
+      "difficulty": 5,
+      "skills": [
+        "co-test",
+        "co-spread",
+        "co-pairs",
+        "co-spurious"
+      ],
+      "title": "A verdict on a pair",
+      "prose": "A desk screens pairs with one function. It must reject a leg that is not I(1), a pair with no cointegration, and a spread that reverts too slowly. Only the survivors are traded.",
+      "question": "Complete `pair_verdict(y, x)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_ar1(phi, n, seed, c=0.0):\n    \"\"\"Seeded AR(1): x_t = c + phi * x_{t-1} + e_t, e_t ~ N(0, 1), x_0 = e_0.\"\"\"\n    e = np.random.default_rng(seed).standard_normal(n)\n    x = np.empty(n)\n    x[0] = e[0]\n    for t in range(1, n):\n        x[t] = c + phi * x[t - 1] + e[t]\n    return x\n\ndef make_two_walks(seed, n=500):\n    \"\"\"Two independent Gaussian random walks from 0 (columns of one draw).\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    return np.cumsum(z[:, 0]), np.cumsum(z[:, 1])\n\ndef make_pair(seed, n=1000, alpha=5.0, beta=1.5, phi=0.95, sd_u=0.5, x0=40.0, vol=0.015):\n    \"\"\"A cointegrated pair of share prices in pounds. x starts at x0 and is a log random walk\n    with daily sd vol; y = alpha + beta * x + u, u an AR(1) with coefficient phi and shock sd sd_u.\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    x = x0 * np.exp(np.cumsum(vol * z[:, 0]))\n    u = np.empty(n); u[0] = sd_u * z[0, 1]\n    for t in range(1, n):\n        u[t] = phi * u[t - 1] + sd_u * z[t, 1]\n    return x, alpha + beta * x + u\n",
+        "starter": "import numpy as np\nimport statsmodels.api as sm\nfrom statsmodels.tsa.stattools import adfuller, coint\n\ndef pair_verdict(y, x, alpha=0.05, max_half_life=60):\n    \"\"\"Classify the pair (y, x) of price series. Check in this order:\n    \"not I(1)\"  if adfuller(level)[1] < alpha for y or for x\n    \"no link\"   if coint(y, x)[1] >= alpha\n    \"too slow\"  if the half-life of the OLS residual is above max_half_life\n    \"tradable\"  otherwise\n    Half-life: regress the residual's change on a constant and its\n    lagged level, slope b; ln(0.5) / ln(1 + b), and infinite if b >= 0.\"\"\"\n    y = np.asarray(y, dtype=float)\n    x = np.asarray(x, dtype=float)\n    ...\n",
+        "solution": "import numpy as np\nimport statsmodels.api as sm\nfrom statsmodels.tsa.stattools import adfuller, coint\n\ndef pair_verdict(y, x, alpha=0.05, max_half_life=60):\n    \"\"\"Classify the pair (y, x) of price series. Check in this order:\n    \"not I(1)\"  if adfuller(level)[1] < alpha for y or for x\n    \"no link\"   if coint(y, x)[1] >= alpha\n    \"too slow\"  if the half-life of the OLS residual is above max_half_life\n    \"tradable\"  otherwise\n    Half-life: regress the residual's change on a constant and its\n    lagged level, slope b; ln(0.5) / ln(1 + b), and infinite if b >= 0.\"\"\"\n    y = np.asarray(y, dtype=float)\n    x = np.asarray(x, dtype=float)\n    if adfuller(y)[1] < alpha or adfuller(x)[1] < alpha:\n        return \"not I(1)\"\n    if coint(y, x)[1] >= alpha:\n        return \"no link\"\n    res = sm.OLS(y, sm.add_constant(x)).fit().resid\n    b = sm.OLS(np.diff(res), sm.add_constant(res[:-1])).fit().params[1]\n    half_life = np.log(0.5) / np.log(1 + b) if b < 0 else np.inf\n    return \"too slow\" if half_life > max_half_life else \"tradable\"\n",
+        "examples": [
+          {
+            "setup": "x, y = make_pair(3, 1000)",
+            "call": "pair_verdict(y, x)",
+            "expect": "'tradable'",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "pair_verdict(y, x)",
+            "expect": "'tradable'",
+            "compare": "equal",
+            "setup": "x, y = make_pair(3, 1000)"
+          },
+          {
+            "call": "pair_verdict(y, x)",
+            "expect": "'tradable'",
+            "compare": "equal",
+            "setup": "x, y = make_pair(11, 1000)"
+          },
+          {
+            "call": "pair_verdict(b, a)",
+            "expect": "'no link'",
+            "compare": "equal",
+            "setup": "a, b = make_two_walks(103, 500)"
+          },
+          {
+            "call": "pair_verdict(y, x)",
+            "expect": "'no link'",
+            "compare": "equal",
+            "setup": "e = np.random.default_rng(6).standard_normal((1000, 2))\nx = 50 + np.cumsum(e[:, 0])\ny = 50 + np.cumsum(0.8 * e[:, 0] + 0.6 * e[:, 1])"
+          },
+          {
+            "call": "pair_verdict(y, x)",
+            "expect": "'not I(1)'",
+            "compare": "equal",
+            "setup": "x = 40 + 3 * make_ar1(0.6, 800, 4)\ny = 5 + 1.5 * x + 0.5 * make_ar1(0.9, 800, 5)"
+          },
+          {
+            "call": "pair_verdict(y, x)",
+            "expect": "'not I(1)'",
+            "compare": "equal",
+            "setup": "x = 40 + 3 * make_ar1(0.6, 800, 4)\ny = 50 + np.cumsum(make_ar1(0.0, 800, 6))"
+          },
+          {
+            "call": "pair_verdict(y, x)",
+            "expect": "'too slow'",
+            "compare": "equal",
+            "setup": "x, y = make_pair(8, 3000, phi=0.995, sd_u=0.3)"
+          },
+          {
+            "call": "pair_verdict(y, x, max_half_life=10)",
+            "expect": "'too slow'",
+            "compare": "equal",
+            "setup": "x, y = make_pair(3, 1000)"
+          },
+          {
+            "call": "[pair_verdict(y, x), pair_verdict(y, x, alpha=0.01)]",
+            "expect": "['tradable', 'no link']",
+            "compare": "equal",
+            "setup": "x, y = make_pair(9, 500, phi=0.96)"
+          }
+        ],
+        "budget": 90000,
+        "how": "Check runs 9 hidden tests on seeded pairs: a tradable pair, independent walks, correlated walks, a stationary leg, a slow spread and two changed thresholds. `make_pair`, `make_two_walks` and `make_ar1` are already defined. Answers must equal the text. The first run loads statsmodels with NumPy, SciPy and pandas, which takes 20 to 40 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Your function applies the checks in order and reads the Engle-Granger p-value from `coint`.",
+        "generic": "Some tests failed. Check the legs first, then `coint(y, x)`, then the half-life of the OLS residual.",
+        "byKey": {
+          "test-5": "A stationary leg must be refused first, even when the pair looks tied. Test each level with `adfuller`.",
+          "test-3": "Independent walks should end at \"no link\". Use the `coint` p-value, not an ADF test on the residual.",
+          "test-7": "The half-life comes from the residual's change on its lagged level: $\\ln 0.5/\\ln(1 + b)$.",
+          "test-9": "`alpha` is a parameter of both the leg checks and the cointegration check.",
+          "error": "Your code stopped with an error. Read the last line of the message under the editor."
+        }
+      },
+      "explain": {
+        "text": "A level that rejects a unit root is not I(1), so such a pair is refused first. Then `coint(y, x)` supplies the Engle-Granger p-value, and the half-life of the OLS residual screens out slow spreads. Only a pair that passes all three is tradable."
+      }
+    },
+    {
+      "id": "e-returns-note",
+      "difficulty": 5,
+      "skills": [
+        "ts-stationary",
+        "co-spurious",
+        "co-test"
+      ],
+      "title": "A note on returns and a pair",
+      "kind": "longform",
+      "prompt": "A junior analyst sends you two share prices, $y$ and $x$, with 750 seeded daily closes. She writes: *\"I will fit an ARMA model to the prices, because prices are what we trade. The regression of $y$ on $x$ has $R^2 = 0.95$ and $t = 117$, so the pair is linked. The residual's ADF p-value of 0.0057 shows it is stationary at 1%. I plan to trade it.\"*\n\nHer output:\n\n| Result | $y$ | $x$ |\n|---|---|---|\n| ADF p-value, prices | 0.47 | 0.46 |\n| ADF p-value, daily changes | < 0.0001 | < 0.0001 |\n| AR(1) coefficient of the price | 0.9906 | |\n\n- Regression of $y$ on $x$: $\\hat\\beta = 1.4532$, $R^2 = 0.9482$, slope $t = 117$.\n- Correlation of daily returns: 0.88.\n- Residual: Engle-Granger statistic $-3.605$ with $p = 0.0241$. The 1%, 5% and 10% values are $-3.911$, $-3.344$ and $-3.050$.\n- Residual: ADF $p = 0.0057$, from the ordinary ADF table.\n- Half-life of the residual: 19.6 days.\n\nWrite her a short note.\n\n(a) Explain why models are fitted to returns and not to prices, using her output.\n\n(b) Say what is wrong with reading $R^2 = 0.95$ and $t = 117$ as proof of a link.\n\n(c) State which test and critical values suit the residual, and what the result is.\n\n(d) Say what the half-life tells us, and what else to check before trading.",
+      "model": "**(a) Returns, not prices.** Neither price rejects a unit root (p = 0.47 and 0.46). An AR(1) fitted to $y$ has $\\hat\\phi = 0.9906$, too close to 1 to tell from a walk. A walk has no fixed mean and its variance grows with time. The ACF, the t tests and the AIC all assume a stable process. The daily changes reject a unit root at once (p < 0.0001), so ARMA, Ljung-Box and GARCH belong on the returns. An ARMA fitted to prices would only say that tomorrow is about today.\n\n**(b) The regression.** Two unrelated random walks also give a large $R^2$ and a huge $t$. The residual of a levels regression is itself a walk when nothing ties the series, so the usual standard errors are far too small. A return correlation of 0.88 does not prove cointegration either. Only a test on the residual can.\n\n**(c) The right test.** Both prices are I(1), as shown above. The residual of the regression is tested with Engle-Granger, which uses stricter critical values because $\\hat\\beta$ was fitted to make the residual look stationary. The statistic is $-3.605$. It beats the 5% value $-3.344$, so we reject at 5% ($p = 0.024$). It misses the 1% value $-3.911$.\n\n**The ADF p-value.** Her p = 0.0057 comes from the ordinary table, where the 1% value is about $-3.43$. That table is too lenient here. It would claim 1% evidence that the data do not support.\n\n**(d) Half-life and checks.** The half-life is $\\ln 0.5/\\ln(1 + b) = 19.6$ days, so a trade lasts weeks. The spread is a stationary series in levels, so we model it in levels and do not difference it. Before trading we should estimate the hedge ratio on a formation window and test on later days, with costs. We should also watch for a break, since the evidence at 5% is only moderate.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Shows from the output that prices keep a unit root (ADF p about 0.47, AR(1) about 0.99) while returns reject it, and says the usual tools need a stable mean and variance."
+        },
+        {
+          "points": 2,
+          "text": "Explains that a levels regression of one walk on another gives a large R² and t even with no link, because the residual is a walk."
+        },
+        {
+          "points": 2,
+          "text": "Names the Engle-Granger test on the residual and uses its critical values (−3.344 at 5%, −3.911 at 1%)."
+        },
+        {
+          "points": 1,
+          "text": "Reads the result honestly: statistic −3.605, p about 0.024, rejects at 5% and not at 1%."
+        },
+        {
+          "points": 1,
+          "text": "Says the ordinary ADF p-value of 0.0057 is too optimistic, because the residual comes from a fitted regression."
+        },
+        {
+          "points": 1,
+          "text": "Gives the half-life of about 19.6 days and says what it implies for holding time."
+        },
+        {
+          "points": 1,
+          "text": "Adds a sensible check before trading, such as an out-of-sample test, costs or a watch for a break."
+        }
+      ]
+    }
+  ]
+}
