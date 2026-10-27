@@ -42,7 +42,12 @@ Screenshots (all in `/tmp/claude-0/-home-user-zero-to-quant/b05d2d5c-c0fd-5be4-a
 
 ## Playthrough (local CDN, `--local-cdn` on the pkgs folder)
 
-RESULTS_PLACEHOLDER
+All green with `--local-cdn`, run split as KNOWN_ISSUES advises:
+- (a) lessons: 775 of 775 ok, in three shards. A container restart stopped the shards at 467 ok with no failures; the remaining 308 were re-run and passed.
+- (b) `--sets`: 370 of 370 ok (every review and homework).
+- (c) `--exams`: 19 of 19 passed.
+- (d) `--routes-only`: 82 of 82 ok, re-run after the `complex-map` label fix (axes and tick labels now draw above the grid, so minus signs show).
+- `validate.mjs`: 0 errors, 365 warnings; `git diff app/content` is empty (the manifest is unchanged).
 
 ## Follow-ups
 

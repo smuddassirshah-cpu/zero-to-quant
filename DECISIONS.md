@@ -24,7 +24,7 @@ Content process
 - Conventions fixed by fix passes: "hit rate" means P(right | call); P(flash | up) is the "detection rate". Per cent widgets store the fraction with `unit: "%"` (the engine divides typed input by 100). Singularity is checked by `matrix_rank` or `cond`, never a determinant threshold.
 - Content agents ran on Opus through 26 Oct; from the migration, implementation agents run on Sonnet and the main session only plans and reviews (user instruction).
 - Breadth plan (27 Oct): 13 courses, 49 levels, 218 lessons; markov L5 covers martingales and optional stopping only, because the Poisson process is already markov l16; stage hours and exit lines in curriculum.json are left for the engine item.
-- Breadth briefs (27 Oct): pure courses never grade a free-form proof; each proof step is graded by `order`, `choice`/`multi` or a fill-in widget, and whole proofs go to `longform` homework with a 10-point rubric. Complex answers are graded as Re and Im (or modulus and argument) parts, never as a complex `expression`. Brief-writers ran on Opus (user instruction for this item).
+- Breadth briefs (27 Oct): pure courses never grade a free-form proof; each proof step is graded by `order`, `choice`/`multi` or a fill-in widget, and whole proofs go to `longform` homework with a 10-point rubric. Complex answers are graded as Re and Im (or modulus and argument) parts, never as a complex `expression`. Brief-writers ran on Opus (user instruction for this item). Superseded by the breadth engine item: `expression` now grades complex values by real and imaginary parts at every seeded point, and vectors entry by entry, so the brief revision may use one complex or vector `expression`.
 
 Engine process
 - Backlog items are numbered in `docs/ENGINE-BACKLOG.md`; integration passes fix a range and write a status block. Content agents never edit engine files; engine passes never edit content.
@@ -38,3 +38,4 @@ Rejected
 - Long hand-back reports (cost orchestrator context); replaced by files plus six lines.
 - Removing duplicate lessons flagged by readers (breaks progress ids); duplicates stay, new levels add what is missing.
 - Shuffled or random cross-validation anywhere in finance courses; time-ordered only.
+- Breadth engine item (27 Oct): five parallel engine agents each owned disjoint files and wrote shared-file changes into their reports; one integration agent applied them. 3D is its own SVG canvas `space` (painter's order, no WebGL), capped at about 1,600 surface cells for smooth mobile drag; complex maps are a separate `complex-map` canvas rather than a `plane` mode. A bare `i` in an expression answer is the imaginary unit.
