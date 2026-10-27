@@ -34,6 +34,14 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [x] markov L4
 - [x] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (each now 30 items, the validator cap; reports `docs/reports/exam-1.3-gap.md`, `exam-1.4-gap.md`, `exam-1.5-gap.md`)
 
+### 2b. Maths breadth pass (user request, 27 Oct; runs before the rest of task 3)
+Fills seven gaps against a traditional maths degree, now written into `docs/curriculum.md`: proof (0.6), analysis and proof-based linear algebra (1.10), complex numbers, vector calculus and ODEs (1.11), numerical methods and optimisation (2.5), statistical modelling (2.6), measure theory and PDEs (added to 3.2), pure mathematics (3.4, optional), plus a 1.5 gap level (Poisson process, martingales, optional stopping). Suggested courses: `proof`; `analysis`, `linear-maps`; `complex`, `vector-calc`, `odes`; `numerics`, `convex`; `stat-models`; `measure-prob`, `pdes`; `algebra`, `topology`; a new markov level.
+- [ ] Breadth plan: `docs/briefs/breadth-plan.md` (pattern `docs/briefs/gaps-plan.md`): per course the levels, lesson ids, titles, objectives, prerequisites and the existing lessons each builds on; write the `course.json` maps and add topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (and the 3.2 courses) to `app/content/curriculum.json`; the markov gap level appended to `markov/course.json`; validate at 0 errors with the new lessons shown as unwritten; replace the level placeholder below with one line per level
+- [ ] Engine: the Learn screen shows the new topics with targets (`app/js/screens/learn.js`), exams list them, nothing throws on an empty course; validator and playthrough accept them
+- [ ] Briefs for 0.6, 1.10, 1.11 courses and the markov gap level (one brief-writer per course, pattern `docs/briefs/EXAMPLE.md`; names this session's paths)
+- [ ] Briefs for 2.5, 2.6, 3.2 additions and 3.4 courses
+- [ ] Levels: placeholder, replaced by the breadth plan (order: Stage 0, then 1, then 2, then 3; within a stage by topic number)
+
 ### 3. Stage 3 content (briefs in `docs/briefs/`)
 - [ ] momentum-rep L1
 - [ ] momentum-rep L2
@@ -65,6 +73,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [ ] topic-3.1 (momentum-rep, pairs-rep)
 - [ ] topic-3.2 (ito)
 - [ ] topic-3.3 (puzzles, mm-games, mental-pressure)
+- [ ] Breadth exams: topic-0.6, topic-1.10, topic-1.11, topic-2.5, topic-2.6, topic-3.4; topic-3.2 covers ito, measure-prob and pdes; topic-1.5 is at the 30-item cap, so the markov gap level packs into multi-part items
 - [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`)
 
 ### 5. Second readers and fix passes (reader pattern: `docs/reviews/review-1.5.md`; fix pattern: its `## Fix pass` section)
@@ -74,6 +83,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [ ] Second reader 2.2 then fix pass
 - [ ] Second reader 2.3 and 2.4 then fix pass
 - [ ] Second reader 3.1 to 3.3 then fix pass
+- [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.2 additions, 3.4
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
 ### 6. Engine
