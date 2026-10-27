@@ -26,7 +26,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 
 ### 2. Stage 1 gap levels (briefs: `docs/briefs/gap-<course>.md`; plan in `docs/briefs/gaps-plan.md`)
 - [x] limits L5
-- [ ] integrals L4
+- [x] integrals L4
 - [x] multivar L5 (brief's 10% target under a 50% cap was infeasible, max 9.5%; transfer uses long-only at 10% and a 45% cap at 9%)
 - [x] eigen L4
 - [ ] random-vars L5
