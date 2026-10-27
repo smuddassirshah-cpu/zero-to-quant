@@ -243,8 +243,8 @@
           const pg = svg('g'); root.append(pg);
           pg.append(svg('rect', { x: P.x0, y: P.y0, width: P.w, height: P.h, class: 'cvb-axis thin', fill: 'none', rx: 2 }));
           const inner = svg('g', { 'clip-path': R.clipRect(P.x0, P.y0, P.w, P.h, key) });
+          pg.append(inner); // axes and their haloed tick labels go above the grid and curves, so a minus sign is never hidden
           K.planeAxes(pg, P.sx, P.sy, { grid: false, xLabel: params.xLabel ?? 'Re', yLabel: params.yLabel ?? 'Im' });
-          pg.append(inner);
           const title = key === 'z' ? (params.zLabel ?? 'z-plane') : (params.wLabel ?? 'w-plane');
           pg.append(K.lab(P.x0 + 2, P.y0 - 13, title, { anchor: 'start', cls: 'cvb-strong', halo: true, w: P.w }));
           planes[key] = { P, inner, over: svg('g') };
