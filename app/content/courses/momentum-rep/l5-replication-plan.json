@@ -1,0 +1,1158 @@
+{
+  "id": "l5-replication-plan",
+  "course": "momentum-rep",
+  "title": "A replication plan",
+  "minutes": 15,
+  "objectives": [
+    "Write a plan with data, steps and checks before any code."
+  ],
+  "skills": [
+    "rm-paper",
+    "rm-stats"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A log with a bug",
+      "prose": "A replication of Jegadeesh and Titman (1993), \"Returns to Buying Winners and Selling Losers\" (JT), prints a line after each step. This run ranks on 6 months and holds 1 month, on our seeded panel. Something is wrong.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ python replicate.py --J 6 --K 1",
+            "universe: 500 shares, months 0 to 299",
+            "returns panel: shape (300, 500), NaN 0",
+            "ranking window for month 120: months 115 to 120",
+            "decile sizes: 50 50 50 50 50 50 50 50 50 50",
+            "weights: sum 0.000000, gross 2.000000",
+            "6/1 spread: 17.06% a month, t 41.20"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "Tap the line that shows the cause.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l4"
+        ],
+        "max": 1,
+        "countWord": "lines"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which months may a ranking at the start of month 120 use?"
+        },
+        {
+          "rung": "point",
+          "text": "Only returns known before month 120 starts: up to month 119.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Line 4 ranks on months 115 to 120, which includes the month being traded."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The window includes month 120 itself.",
+        "generic": "Not quite. Find the step that uses information from the future.",
+        "byKey": {
+          "l7": "That line shows the symptom, an absurd spread. The cause is earlier: which months feed the ranking?",
+          "l6": "The weights pass their check. The bug is in what they are built from.",
+          "l5": "The decile sizes pass their check. The bug is in what the deciles rank."
+        }
+      },
+      "explain": {
+        "text": "A ranking at the start of month 120 can use months 114 to 119 only. This window includes month 120, the month it then trades, so it sorts on the answer. That is a look-ahead bug, and it makes 17.06% a month from nothing.",
+        "canvas": {
+          "tone": {
+            "l4": "err",
+            "l7": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The steps",
+      "prose": "A plan is the replication written down before any code: what you will compute, in which order, and how you will know each step worked. Here are its eight main steps, out of order.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "universe",
+              "label": "Universe",
+              "x": 0.75,
+              "y": 0.37,
+              "shape": "rect"
+            },
+            {
+              "id": "returns",
+              "label": "Returns panel",
+              "x": 0.25,
+              "y": 0.87,
+              "shape": "rect"
+            },
+            {
+              "id": "formation",
+              "label": "Formation returns",
+              "x": 0.75,
+              "y": 0.12,
+              "shape": "rect"
+            },
+            {
+              "id": "deciles",
+              "label": "Deciles",
+              "x": 0.25,
+              "y": 0.37,
+              "shape": "rect"
+            },
+            {
+              "id": "cohorts",
+              "label": "Cohort weights",
+              "x": 0.75,
+              "y": 0.87,
+              "shape": "rect"
+            },
+            {
+              "id": "composite",
+              "label": "Composite",
+              "x": 0.25,
+              "y": 0.12,
+              "shape": "rect"
+            },
+            {
+              "id": "table",
+              "label": "J × K table",
+              "x": 0.75,
+              "y": 0.62,
+              "shape": "rect"
+            },
+            {
+              "id": "tstats",
+              "label": "t statistics",
+              "x": 0.25,
+              "y": 0.62,
+              "shape": "rect"
+            }
+          ],
+          "edges": [],
+          "directed": true,
+          "height": 260
+        },
+        "state": {}
+      },
+      "question": "Tap the steps in the order the replication runs them.",
+      "widget": {
+        "kind": "tap-regions",
+        "ordered": true,
+        "answer": [
+          "universe",
+          "returns",
+          "formation",
+          "deciles",
+          "cohorts",
+          "composite",
+          "table",
+          "tstats"
+        ],
+        "countWord": "steps"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each step needs only what came before it."
+        },
+        {
+          "rung": "point",
+          "text": "You need returns before formation returns, and deciles before weights.",
+          "highlight": [
+            "universe"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Universe, returns panel, formation returns, deciles, cohort weights, composite, J × K table, t statistics."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. Each step uses only what came before.",
+        "generic": "Not quite. Each step must use only what earlier steps made.",
+        "byKey": {
+          "order": "You have every step, in a different order. Ranks need formation returns, and weights need deciles."
+        }
+      },
+      "explain": {
+        "text": "Data first, then the signal, then portfolios, then the statistics. Each arrow is a dependency: no step can run before the one it points from. A plan in this order can be checked one step at a time.",
+        "canvas": {
+          "nodes": {
+            "universe": {
+              "x": 0.25,
+              "y": 0.12
+            },
+            "returns": {
+              "x": 0.75,
+              "y": 0.12
+            },
+            "formation": {
+              "x": 0.75,
+              "y": 0.37
+            },
+            "deciles": {
+              "x": 0.25,
+              "y": 0.37
+            },
+            "cohorts": {
+              "x": 0.25,
+              "y": 0.62
+            },
+            "composite": {
+              "x": 0.75,
+              "y": 0.62
+            },
+            "table": {
+              "x": 0.75,
+              "y": 0.87
+            },
+            "tstats": {
+              "x": 0.25,
+              "y": 0.87
+            }
+          },
+          "edges": {
+            "e-universe-returns": {
+              "from": "universe",
+              "to": "returns"
+            },
+            "e-returns-formation": {
+              "from": "returns",
+              "to": "formation"
+            },
+            "e-formation-deciles": {
+              "from": "formation",
+              "to": "deciles"
+            },
+            "e-deciles-cohorts": {
+              "from": "deciles",
+              "to": "cohorts"
+            },
+            "e-cohorts-composite": {
+              "from": "cohorts",
+              "to": "composite"
+            },
+            "e-composite-table": {
+              "from": "composite",
+              "to": "table"
+            },
+            "e-table-tstats": {
+              "from": "table",
+              "to": "tstats"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A check after each step",
+      "prose": "Each step gets a **check**: a fact that must hold if the step worked. Checks catch a bug at the step that made it, before it reaches the table.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "step 3  formation returns   check: ?",
+            "step 4  deciles             check: ?",
+            "step 5  cohort weights      check: ?",
+            "step 6  composite spread    check: ?"
+          ],
+          "title": "PLAN.md"
+        },
+        "state": {}
+      },
+      "question": "Give each step its check.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "c1",
+            "text": "Window ends at month t − 1"
+          },
+          {
+            "id": "c2",
+            "text": "Decile sizes sum to n"
+          },
+          {
+            "id": "c3",
+            "text": "Weights sum to 0, gross 2"
+          },
+          {
+            "id": "c4",
+            "text": "Shuffled panel gives about 0"
+          }
+        ],
+        "slots": [
+          {
+            "id": "formation",
+            "label": "Formation",
+            "accepts": [
+              "c1"
+            ]
+          },
+          {
+            "id": "deciles",
+            "label": "Deciles",
+            "accepts": [
+              "c2"
+            ]
+          },
+          {
+            "id": "cohorts",
+            "label": "Weights",
+            "accepts": [
+              "c3"
+            ]
+          },
+          {
+            "id": "composite",
+            "label": "Spread",
+            "accepts": [
+              "c4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which fact can each step get wrong?"
+        },
+        {
+          "rung": "point",
+          "text": "Formation can look ahead; deciles can lose shares; weights can fail to balance.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Window to formation, sizes to deciles, sum and gross to weights, the shuffled panel to the spread."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. One check per step.",
+        "generic": "Not quite. Match each check to the step whose output it tests.",
+        "byKey": {
+          "c1": "The window is what formation builds. That is where look-ahead creeps in.",
+          "c2": "Decile sizes are what the decile step makes. They must add back to n.",
+          "c3": "Sum and gross describe the weights, so they check the weights step.",
+          "c4": "Only the final spread can be compared with zero on a shuffled panel."
+        }
+      },
+      "explain": {
+        "text": "Each check tests the output of one step, so a failure points at that step. The shuffled panel is a **placebo**: with the months mixed up there is no momentum to find. This lesson's code screens build two of them."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The weights check",
+      "prose": "On a small panel of 200 shares, one cohort's deciles are `rank * 10 // 200`. Winners get weight $+1/m$ and losers $-1/m$, where $m$ is the decile size.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> n = 200",
+            ">>> dec = rank * 10 // n",
+            ">>> w = np.where(dec == 9, 1 / m, 0) - np.where(dec == 0, 1 / m, 0)"
+          ],
+          "title": "Python"
+        },
+        "state": {}
+      },
+      "question": "Fill in what a correct cohort must show.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Shares in each decile, m",
+            {
+              "edit": true,
+              "answer": 20,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Weight of each winner",
+            {
+              "edit": true,
+              "answer": 0.05,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ],
+          [
+            "Sum of all weights",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ],
+          [
+            "Gross, the sum of |w|",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ten deciles share 200 shares."
+        },
+        {
+          "rung": "point",
+          "text": "Each decile has 200 / 10 = 20 shares, so each winner has 1/20.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "20 shares; 0.05 each; 20 × 0.05 − 20 × 0.05 = 0; 20 × 0.05 + 20 × 0.05 = 2."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. 20, 0.05, 0 and 2.",
+        "generic": "Not quite. Work out the decile size first, then the weights."
+      },
+      "explain": {
+        "text": "Twenty winners at +0.05 and twenty losers at −0.05 sum to 0 and gross to 2. A cohort that fails either number has lost shares or mixed up a sign. The check costs one line and runs every month."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Reading the placebo",
+      "prose": "The plan runs the same code twice: on our seeded panel, and on a copy where each share's 300 months are shuffled. Shuffling keeps each share's returns but destroys their order.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ python replicate.py --J 6 --K 1 --shuffle-seed 0",
+            "placebo 6/1 spread: 0.04% a month, t 0.25",
+            "$ python replicate.py --J 6 --K 6",
+            "planted 6/6 spread: 0.96% a month, t 2.74"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "What does the placebo line tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pass",
+            "text": "The code makes no spread from shuffled data, so the check passes",
+            "correct": true
+          },
+          {
+            "id": "loses",
+            "text": "The strategy earns nothing",
+            "why": "The shuffled panel has no strategy to earn on. The placebo tests the code, not momentum."
+          },
+          {
+            "id": "fail",
+            "text": "The check fails, because the spread is not exactly 0",
+            "why": "Noise moves a shuffled spread a little. A t near 0 is what working code shows."
+          },
+          {
+            "id": "disproved",
+            "text": "Momentum is disproved on this panel",
+            "why": "The planted run on the next line still finds 0.96%. The placebo only removes the order."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What should a shuffled panel contain?"
+        },
+        {
+          "rung": "point",
+          "text": "Shuffling months removes any link between past and future returns.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.04% with t 0.25 is noise around 0: the code does not invent a spread."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The placebo passes.",
+        "generic": "Not quite. Ask what a shuffled panel can contain."
+      },
+      "explain": {
+        "text": "A shuffled panel has no momentum, so working code should find a spread near 0, and it finds 0.04% with t 0.25. The planted panel gives 0.96%, the spread we put in. Both checks together say the code finds what is there and nothing more.",
+        "canvas": {
+          "tone": {
+            "l2": "ok",
+            "l4": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "No placebo",
+      "prose": "The buggy code from the first screen, run on both panels. A colleague who never ran the placebo saw only the first result line.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ python replicate.py --J 6 --K 1",
+            "6/1 spread: 17.06% a month, t 41.20",
+            "$ python replicate.py --J 6 --K 1 --shuffle-seed 0",
+            "placebo 6/1 spread: 17.86% a month, t 137.79"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "What do the two runs show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bug",
+            "text": "The code makes the spread itself: a look-ahead bug, not momentum",
+            "correct": true
+          },
+          {
+            "id": "strong",
+            "text": "Momentum is very strong in this panel",
+            "why": "You read the spread's size as evidence. The shuffled panel has no momentum, yet the code finds 17.86% there."
+          },
+          {
+            "id": "shuffle",
+            "text": "The shuffle is broken",
+            "why": "The shuffle worked for the correct code, which found 0.04%. Only this code finds a spread in it."
+          },
+          {
+            "id": "t",
+            "text": "Fine: a t of 41 is very significant",
+            "why": "A t of 41 on monthly returns is a red flag. Real spreads give t statistics of about 3."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What should the second line be if the code were right?"
+        },
+        {
+          "rung": "point",
+          "text": "A shuffled panel should give a spread near 0.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The code finds 17.86% where there is nothing to find, so the code is the cause."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The spread comes from the code.",
+        "generic": "Not quite. Compare the result on data with no momentum.",
+        "byKey": {
+          "strong": "You read the spread's size as evidence. The shuffled panel has no momentum, yet the code finds 17.86% there."
+        }
+      },
+      "explain": {
+        "text": "Ranking on a window that includes month t sorts shares on the return being traded. That works on any panel, shuffled or not, so the placebo exposes it at once. Without the placebo the bug becomes a headline.",
+        "canvas": {
+          "tone": {
+            "l2": "err",
+            "l4": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The plan in order",
+      "prose": "The whole plan, with its checks. Two robustness steps do not depend on each other, so either may come first.",
+      "question": "Put the plan in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "p1",
+            "text": "Universe and dates. Check: 500 shares, months 0 to 299"
+          },
+          {
+            "id": "p2",
+            "text": "Returns panel. Check: shape (300, 500), no NaN"
+          },
+          {
+            "id": "p3",
+            "text": "Formation returns. Check: the window ends at t − 1"
+          },
+          {
+            "id": "p4",
+            "text": "Deciles. Check: sizes sum to n"
+          },
+          {
+            "id": "p5",
+            "text": "Cohort weights. Check: sum 0, gross 2"
+          },
+          {
+            "id": "p6",
+            "text": "Composite spread. Check: shuffled near 0, planted near the plant"
+          },
+          {
+            "id": "p7",
+            "text": "J × K table and t statistics"
+          },
+          {
+            "id": "p8",
+            "text": "Robustness: the skip panel"
+          },
+          {
+            "id": "p9",
+            "text": "Robustness: first and second halves"
+          },
+          {
+            "id": "p10",
+            "text": "Extension, then the replication note"
+          }
+        ],
+        "answer": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5",
+          "p6",
+          "p7",
+          "p8",
+          "p9",
+          "p10"
+        ],
+        "same": [
+          [
+            "p8",
+            "p9"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Data first, statistics later."
+        },
+        {
+          "rung": "point",
+          "text": "The checks travel with their steps; the table comes after the composite."
+        },
+        {
+          "rung": "step",
+          "text": "Universe, returns, formation, deciles, weights, composite, table, the two robustness steps, then extension and note."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. That is the plan.",
+        "generic": "Not quite. Each step may use only what came before it."
+      },
+      "explain": {
+        "text": "Each line is a step and the check that proves it worked. Robustness runs only once the main table exists. The extension and the note come last, as in the alpha and backtest courses."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The weights check in code",
+      "prose": "Write the check from the earlier screen. Floating-point sums are rarely exact, so allow a tolerance of $10^{-12}$ on both numbers.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> 0.1 + 0.2",
+            "0.30000000000000004",
+            ">>> 0.1 + 0.2 == 0.3",
+            "False"
+          ],
+          "title": "Python"
+        },
+        "state": {}
+      },
+      "question": "Complete `weights_ok(w)`: True when the weights sum to 0 and gross to 2, each within 1e-12.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def weights_ok(w):\n    total = ...\n    gross = ...\n    return ...\n",
+        "solution": "def weights_ok(w):\n    total = sum(w)\n    gross = sum(abs(x) for x in w)\n    return abs(total) <= 1e-12 and abs(gross - 2) <= 1e-12\n",
+        "examples": [
+          {
+            "call": "weights_ok([1, -1])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([1, -0.5])",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "weights_ok([1, -1])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([1, -0.5])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([0.05] * 20 + [0.0] * 160 + [-0.05] * 20)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([0.02] * 50 + [0.0] * 400 + [-0.02] * 50)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([0.5, 0.5, 0.5, -0.5, -0.5, -0.5])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([0.02] * 50 + [-0.02] * 49)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([])",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "weights_ok([0.5, 0.5, -1.0])",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 8 hidden tests: balanced books, a book with gross 3, one with a share missing, and an empty list."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two numbers: the plain sum and the sum of absolute values."
+        },
+        {
+          "rung": "point",
+          "text": "Compare each with its target using a tolerance, not ==.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return abs(total) <= 1e-12 and abs(gross - 2) <= 1e-12`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The check catches both kinds of failure.",
+        "generic": "Not quite. Test the sum against 0 and the gross against 2, each with the tolerance."
+      },
+      "explain": {
+        "text": "A book can sum to 0 and still be wrong, as the gross-3 test shows. A missing loser breaks both numbers. The tolerance stops a correct book failing on rounding, as 0.1 + 0.2 shows."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The placebo in code",
+      "prose": "`momentum_panel` and `formation_returns(r, J)` are loaded. The function shuffles each share's months, then ranks on the past J months and holds one month. Fill in the ranking and the weights.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> r_small, *_ = momentum_panel(n=200, T=120)",
+            ">>> r_small.shape",
+            "(120, 200)"
+          ],
+          "title": "Python"
+        },
+        "state": {}
+      },
+      "question": "Complete `placebo_spread(r, J, seed)`, the mean one-month spread on the shuffled panel.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\ndef momentum_panel(n=500, T=300, seed=2, c=0.015, e=0.03, d=0.006, nf=4, fsd=0.035,\n                   c_after=None, t_pub=300, crash=None):\n    TMAX, L = 480, 36\n    rng = np.random.default_rng(seed)\n    size = rng.normal(0.0, 1.0, n)                 # log size as a z-score\n    sig = 0.09 - 0.02 * np.tanh(size)              # small shares are noisier\n    beta = rng.uniform(0.5, 1.5, n)\n    lam = rng.standard_normal((n, nf))             # loadings on nf style factors\n    s = rng.standard_normal((TMAX + L, n))[:T + L] * sig   # news shocks, 36 months burn-in\n    m = (0.006 + 0.045 * rng.standard_normal(TMAX))[:T]    # market excess return\n    F = (fsd * rng.standard_normal((TMAX, nf)))[:T]        # factor returns\n    if crash is not None:                          # a bear market, then a rebound\n        m[crash - 12:crash] = -0.03; F[crash - 12:crash, 0] = -0.03\n        m[crash:crash + 3] = [0.12, 0.06, 0.04]; F[crash:crash + 3, 0] = [0.12, 0.06, 0.04]\n    ct = np.full(T, c)\n    if c_after is not None:\n        ct[t_pub:] = c_after                       # the effect after publication\n    cont = sum(s[L - k:L - k + T] for k in range(2, 13))   # lags 2 to 12: continuation\n    rev = sum(s[L - k:L - k + T] for k in range(13, 37))   # lags 13 to 36: reversal\n    idio = s[L:L + T] - e * s[L - 1:L - 1 + T] + ct[:, None] * cont - d * rev\n    r = 0.004 + beta * m[:, None] + F @ lam.T + idio\n    return r, size, m, F                           # r is (T, n) simple monthly returns\n\ndef formation_returns(r, J, skip=0):\n    \"\"\"Compounded return over months t - skip - J to t - skip - 1, known at the start of month t.\"\"\"\n    T, n = r.shape\n    C = np.vstack([np.zeros(n), np.cumsum(np.log1p(r), axis=0)])\n    f = np.full((T, n), np.nan)\n    if J + skip < T:\n        f[J + skip:] = np.expm1(C[J:T - skip] - C[:T - skip - J])\n    return f\n",
+        "starter": "import numpy as np\n\ndef placebo_spread(r, J, seed):\n    rng = np.random.default_rng(seed)\n    # shuffle each share's months on its own\n    s = np.column_stack([rng.permutation(r[:, j]) for j in range(r.shape[1])])\n    f = formation_returns(s, J)\n    spreads = []\n    for t in range(J, s.shape[0]):\n        rank = ...    # 0 = worst, n - 1 = best, stable ties\n        dec = rank * 10 // len(rank)\n        w = ...       # +1/size top decile, -1/size bottom\n        spreads.append(w @ s[t])\n    return float(np.mean(spreads))\n",
+        "solution": "import numpy as np\n\ndef placebo_spread(r, J, seed):\n    rng = np.random.default_rng(seed)\n    # shuffle each share's months on its own\n    s = np.column_stack([rng.permutation(r[:, j]) for j in range(r.shape[1])])\n    f = formation_returns(s, J)\n    spreads = []\n    for t in range(J, s.shape[0]):\n        rank = np.argsort(np.argsort(f[t], kind=\"stable\"), kind=\"stable\")\n        dec = rank * 10 // len(rank)\n        w = np.where(dec == 9, 1 / np.sum(dec == 9), 0.0) - np.where(dec == 0, 1 / np.sum(dec == 0), 0.0)\n        spreads.append(w @ s[t])\n    return float(np.mean(spreads))\n",
+        "examples": [
+          {
+            "setup": "r_small, *_ = momentum_panel(n=200, T=120)",
+            "call": "placebo_spread(r_small, 6, 0)",
+            "expect": "-0.004169196946233567",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "setup": "r_small, *_ = momentum_panel(n=200, T=120)",
+            "call": "placebo_spread(r_small, 6, 0)",
+            "expect": "-0.004169196946233567",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "setup": "r_small, *_ = momentum_panel(n=200, T=120)",
+            "call": "placebo_spread(r_small, 6, 1)",
+            "expect": "0.0011316064404247182",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "setup": "r_small, *_ = momentum_panel(n=200, T=120)",
+            "call": "placebo_spread(r_small, 3, 0)",
+            "expect": "-0.004339038269288437",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "setup": "r_small, *_ = momentum_panel(n=200, T=120)",
+            "call": "placebo_spread(r_small, 12, 5)",
+            "expect": "-0.0030219509796605573",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "setup": "flat = np.tile(0.001 * np.arange(20), (12, 1))",
+            "call": "placebo_spread(flat, 6, 0)",
+            "expect": "0.018",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "setup": "r_small, *_ = momentum_panel(n=200, T=120)",
+            "call": "isinstance(placebo_spread(r_small, 6, 0), float)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 6 hidden tests on `momentum_panel(n=200, T=120)` and on a panel where share j earns 0.1% × j every month. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The rank is the position of each share in the sorted order."
+        },
+        {
+          "rung": "point",
+          "text": "`np.argsort(np.argsort(x, kind=\"stable\"), kind=\"stable\")` gives each share's rank.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`w = np.where(dec == 9, 1 / np.sum(dec == 9), 0.0) - np.where(dec == 0, 1 / np.sum(dec == 0), 0.0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. −0.42% a month with seed 0: noise around 0.",
+        "generic": "Not quite. Check the double argsort and the signs of the two deciles."
+      },
+      "explain": {
+        "text": "With seed 0 the placebo gives −0.42% a month, t −1.17 over 114 months: no spread beyond noise. On the flat panel every month ranks shares 18 and 19 against 0 and 1, so the spread is exactly 1.8%. That test pins down the deciles and the signs."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The first commit",
+      "prose": "The curriculum's exit is a replication on GitHub with an out-of-sample extension and a plain note. You create the repository today.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ git log --oneline",
+            "a1f3c09 Add PLAN.md: targets, tolerance, steps, checks"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "What should the first commit hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "plan",
+            "text": "PLAN.md: the targets, the tolerance rule, the steps and their checks, before any code",
+            "correct": true
+          },
+          {
+            "id": "after",
+            "text": "The working pipeline, with the plan written from what worked",
+            "why": "A plan written after the results can be fitted to them. Committed first, its date proves it came first."
+          },
+          {
+            "id": "licence",
+            "text": "An empty repository with a licence",
+            "why": "A licence is useful, but it commits you to nothing. The plan does."
+          },
+          {
+            "id": "table",
+            "text": "The results table",
+            "why": "Results before a plan invite choosing targets after seeing them."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What should be on record before you see any results?"
+        },
+        {
+          "rung": "point",
+          "text": "The targets and the tolerance rule must predate the table.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The plan, committed first, with its date in the history."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct. The plan goes first.",
+        "generic": "Not quite. Choose what must exist before any result does."
+      },
+      "explain": {
+        "text": "Git dates every commit, so a plan committed first proves the targets came before the results. Anyone reading the repository can then check the note against the plan. That is the honesty a replication rests on."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Write the plan before any code: targets, tolerance, steps and a check after each.",
+      "A shuffled-panel placebo should give a spread near 0; a planted panel the planted spread.",
+      "Every cohort's weights sum to 0 and gross to 2."
+    ],
+    "formula": {
+      "name": "The weights check",
+      "tex": "\\textstyle\\sum_i w_i = 0, \\qquad \\sum_i |w_i| = 2",
+      "note": "Each within a small tolerance, every month."
+    },
+    "trap": "Skipping the placebo: a bug that ranks on month-t returns makes 17% a month from nothing."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "Your plan lists \"delisting returns for shares that died\". The free source you will use has none.",
+      "question": "What goes in the plan?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "name",
+            "text": "Name the gap, its likely effect on the spread, and mark that target out of reach",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "Delete the step and say nothing",
+            "why": "A gap left out of the plan is a gap nobody can check later."
+          },
+          {
+            "id": "invent",
+            "text": "Fill the missing returns with zero",
+            "why": "Zero is a guess presented as data. It changes the losers' returns silently."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. A gap is named, not hidden.",
+        "generic": "Not quite. A plan records what the data cannot do."
+      },
+      "explain": {
+        "text": "Writing the gap down keeps the claim honest. It tells a reader which result to trust less. Level 2 looks at what such gaps do to the spread."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "A cohort ranks 300 shares into deciles of equal size.",
+      "question": "What weight does each winner get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.03333,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "",
+        "accept": "1/30, about 0.0333",
+        "wrong": [
+          {
+            "id": "fifty",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. 1/30.",
+        "generic": "Not quite. Find the decile size first.",
+        "byKey": {
+          "fifty": "That is 1/50, for 500 shares. 300 shares give deciles of 30.",
+          "tenth": "That is the decile's share of the universe. Each of its 30 winners gets 1/30."
+        }
+      },
+      "explain": {
+        "text": "300 / 10 = 30 shares a decile, so each winner has +1/30 and each loser −1/30. The weights sum to 0 and gross to 2."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "A bug lets the ranking window include the month being traded.",
+      "question": "Which check catches it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "placebo",
+            "text": "The shuffled-panel placebo",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "Weights sum to 0",
+            "why": "A look-ahead bug leaves the weights perfectly balanced."
+          },
+          {
+            "id": "sizes",
+            "text": "Decile sizes sum to n",
+            "why": "The deciles still hold the right number of shares. They hold the wrong shares."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Only the placebo sees it.",
+        "generic": "Not quite. Which check looks at the spread itself?"
+      },
+      "explain": {
+        "text": "The bug finds a large spread even where there is no momentum, so the placebo fails loudly. The weights and the decile sizes are still right. The window check catches it too, one step earlier."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "A correct cohort has 50 winners at +0.02 and 50 losers at −0.02.",
+      "question": "What is its gross exposure, the sum of |w|?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "",
+        "accept": "2",
+        "wrong": [
+          {
+            "id": "net",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. 50 × 0.02 + 50 × 0.02 = 2.",
+        "generic": "Not quite. Add the absolute weights.",
+        "byKey": {
+          "net": "That is the sum of the weights. Gross adds their absolute values.",
+          "one": "That counts one side only. Gross counts both legs."
+        }
+      },
+      "explain": {
+        "text": "Each leg has 50 × 0.02 = 1. The two legs together gross 2 while the net is 0. That is the zero-cost position of lesson 1."
+      }
+    }
+  ]
+}

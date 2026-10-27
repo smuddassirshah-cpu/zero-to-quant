@@ -1,0 +1,406 @@
+{
+  "id": "homework-1",
+  "course": "momentum-rep",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-layout",
+      "difficulty": 5,
+      "skills": [
+        "rm-paper"
+      ],
+      "prose": "Turn a replication's results into the paper's printed layout. `table` maps `(J, K)` to `(sell, buy)`, the two legs' mean returns in % a month. Return a list of rows: for each J in ascending order, a Sell row, a Buy row and a Buy-Sell row, each `[J, label]` followed by one value per K in ascending order. Round every value to 2 places, with Buy-Sell taken from the unrounded legs. A missing cell gives `None` in all three rows.",
+      "question": "Complete `jt_layout(table)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def jt_layout(table):\n    Js = sorted({J for J, K in table})\n    Ks = ...      # every K in the table, ascending\n    rows = []\n    for J in Js:\n        # three rows: Sell, Buy, Buy-Sell\n        ...\n    return rows\n",
+        "solution": "def jt_layout(table):\n    Js = sorted({J for J, K in table})\n    Ks = sorted({K for J, K in table})\n    rows = []\n    for J in Js:\n        sell, buy, diff = [J, \"Sell\"], [J, \"Buy\"], [J, \"Buy-Sell\"]\n        for K in Ks:\n            if (J, K) in table:\n                s, b = table[(J, K)]\n                sell.append(round(s, 2))\n                buy.append(round(b, 2))\n                # spread from the unrounded legs\n                diff.append(round(b - s, 2))\n            else:\n                sell.append(None)\n                buy.append(None)\n                diff.append(None)\n        rows += [sell, buy, diff]\n    return rows\n",
+        "examples": [
+          {
+            "setup": "t2 = {(3, 3): (1.2520, 1.7662), (3, 6): (1.1816, 1.7852), (6, 3): (1.0179, 1.9240), (6, 6): (1.0420, 2.0059)}",
+            "call": "jt_layout(t2)",
+            "expect": "[[3, 'Sell', 1.25, 1.18], [3, 'Buy', 1.77, 1.79], [3, 'Buy-Sell', 0.51, 0.6], [6, 'Sell', 1.02, 1.04], [6, 'Buy', 1.92, 2.01], [6, 'Buy-Sell', 0.91, 0.96]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "t2 = {(3, 3): (1.2520, 1.7662), (3, 6): (1.1816, 1.7852), (6, 3): (1.0179, 1.9240), (6, 6): (1.0420, 2.0059)}",
+            "call": "jt_layout(t2)",
+            "expect": "[[3, 'Sell', 1.25, 1.18], [3, 'Buy', 1.77, 1.79], [3, 'Buy-Sell', 0.51, 0.6], [6, 'Sell', 1.02, 1.04], [6, 'Buy', 1.92, 2.01], [6, 'Buy-Sell', 0.91, 0.96]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = {(3, 3): (1.2520, 1.7662), (3, 6): (1.1816, 1.7852), (6, 3): (1.0179, 1.9240), (6, 6): (1.0420, 2.0059)}",
+            "call": "len(jt_layout(t2))",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = {(3, 3): (1.2520, 1.7662), (3, 6): (1.1816, 1.7852), (6, 3): (1.0179, 1.9240), (6, 6): (1.0420, 2.0059)}",
+            "call": "[row[1] for row in jt_layout(t2)]",
+            "expect": "['Sell', 'Buy', 'Buy-Sell', 'Sell', 'Buy', 'Buy-Sell']",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2r = {(6, 6): (1.0420, 2.0059), (6, 3): (1.0179, 1.9240), (3, 6): (1.1816, 1.7852), (3, 3): (1.2520, 1.7662)}",
+            "call": "jt_layout(t2r)",
+            "expect": "[[3, 'Sell', 1.25, 1.18], [3, 'Buy', 1.77, 1.79], [3, 'Buy-Sell', 0.51, 0.6], [6, 'Sell', 1.02, 1.04], [6, 'Buy', 1.92, 2.01], [6, 'Buy-Sell', 0.91, 0.96]]",
+            "compare": "equal"
+          },
+          {
+            "call": "jt_layout({(6, 6): (1.0420, 2.0059)})",
+            "expect": "[[6, 'Sell', 1.04], [6, 'Buy', 2.01], [6, 'Buy-Sell', 0.96]]",
+            "compare": "equal"
+          },
+          {
+            "call": "jt_layout({(12, 12): (1.50, 1.20)})",
+            "expect": "[[12, 'Sell', 1.5], [12, 'Buy', 1.2], [12, 'Buy-Sell', -0.3]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = {(3, 3): (1.2520, 1.7662), (6, 3): (1.0179, 1.9240), (6, 6): (1.0420, 2.0059)}",
+            "call": "jt_layout(t3)",
+            "expect": "[[3, 'Sell', 1.25, None], [3, 'Buy', 1.77, None], [3, 'Buy-Sell', 0.51, None], [6, 'Sell', 1.02, 1.04], [6, 'Buy', 1.92, 2.01], [6, 'Buy-Sell', 0.91, 0.96]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = {(3, 3): (1.2520, 1.7662), (3, 6): (1.1816, 1.7852), (6, 3): (1.0179, 1.9240), (6, 6): (1.0420, 2.0059)}",
+            "call": "jt_layout(t2)[5][3]",
+            "expect": "0.96",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 8 hidden tests: the planted 2 × 2 table, the same table in another key order, one cell, a negative spread and a missing cell. Rows are compared exactly."
+      },
+      "feedback": {
+        "correct": "Correct. The table prints in the paper's layout.",
+        "generic": "Not quite. Check the K order, the rounding of Buy-Sell from the unrounded legs, and missing cells."
+      },
+      "explain": {
+        "text": "Sorting the keys fixes the layout whatever order the results arrived in. Buy-Sell from the unrounded legs gives 0.96 for 6/6, where the rounded legs would give 0.97. A missing cell prints as None, never as a 0 that looks like a result."
+      }
+    },
+    {
+      "id": "h-calendar",
+      "difficulty": 4,
+      "skills": [
+        "rm-paper"
+      ],
+      "prose": "A desk wants a calendar of the book: for each holding month from 0 to T − 1, the months whose cohorts are live, oldest first. A cohort ranked in month s exists only from month J + skip on, and is held K months.",
+      "question": "Complete `cohort_calendar(T, J, K, skip=0)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def cohort_calendar(T, J, K, skip=0):\n    first = J + skip\n    return [[] for t in range(T)]\n",
+        "solution": "def cohort_calendar(T, J, K, skip=0):\n    first = J + skip\n    return [list(range(max(first, t - K + 1), t + 1)) for t in range(T)]\n",
+        "examples": [
+          {
+            "call": "cohort_calendar(6, 3, 2)",
+            "expect": "[[], [], [], [3], [3, 4], [4, 5]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "cohort_calendar(10, 3, 2)",
+            "expect": "[[], [], [], [3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9]]",
+            "compare": "equal"
+          },
+          {
+            "call": "cohort_calendar(8, 3, 2, skip=1)",
+            "expect": "[[], [], [], [], [4], [4, 5], [5, 6], [6, 7]]",
+            "compare": "equal"
+          },
+          {
+            "call": "cohort_calendar(6, 2, 1)",
+            "expect": "[[], [], [2], [3], [4], [5]]",
+            "compare": "equal"
+          },
+          {
+            "call": "cohort_calendar(5, 6, 6)",
+            "expect": "[[], [], [], [], []]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(cohort_calendar(300, 6, 6))",
+            "expect": "300",
+            "compare": "equal"
+          },
+          {
+            "call": "cohort_calendar(300, 6, 6)[11]",
+            "expect": "[6, 7, 8, 9, 10, 11]",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(len(c) == 6 for c in cohort_calendar(300, 6, 6))",
+            "expect": "289",
+            "compare": "equal"
+          },
+          {
+            "call": "cohort_calendar(300, 12, 3, skip=1)[13]",
+            "expect": "[13]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 8 hidden tests, including the 300-month 6/6 calendar and a skip of 1. Lists are compared exactly."
+      },
+      "feedback": {
+        "correct": "Correct. One list per month, the staircase in code.",
+        "generic": "Not quite. Each month's list runs from max(J + skip, t − K + 1) to t."
+      },
+      "explain": {
+        "text": "Each entry is the live set from lesson 2. On 300 months the 6/6 calendar has all six cohorts in 289 months, from month 11 on. That is why the 6/6 series has 289 returns."
+      }
+    },
+    {
+      "id": "h-order",
+      "difficulty": 3,
+      "skills": [
+        "rm-paper"
+      ],
+      "prose": "You have a new momentum paper and one hour.",
+      "question": "Put the sections in the order you read them.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "Abstract: the claim and its headline number"
+          },
+          {
+            "id": "b",
+            "text": "Data: universe, dates and source"
+          },
+          {
+            "id": "c",
+            "text": "Main table: the cells behind the claim"
+          },
+          {
+            "id": "d",
+            "text": "Robustness: whether it survives other choices"
+          },
+          {
+            "id": "e",
+            "text": "Introduction: the authors' case for the result"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Claim, data, numbers, robustness, story.",
+        "generic": "Not quite. Each section should answer the question the one before raised.",
+        "byKey": {
+          "e": "The introduction sells the result. Read it once you can judge the sale."
+        }
+      },
+      "explain": {
+        "text": "The abstract says what to test and the data section whether you can. The table and robustness say how strong and how fragile it is. The introduction comes last."
+      }
+    },
+    {
+      "id": "h-colleague",
+      "difficulty": 5,
+      "skills": [
+        "rm-paper"
+      ],
+      "question": "Reply to a colleague.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A colleague says: \"Jegadeesh and Titman report 12.01% a year, so I can make 12% a year on my £50,000.\" Write a reply of about 250 words. Say what the number is, what it is not, which costs and capital it ignores, what risks it carries, and what you would replicate first.",
+        "model": "**What the number is.** The paper reports that the 6-month/6-month strategy earns about 0.95% a month, a compounded 12.01% a year. It is the return of the winner decile minus the loser decile, ranked on past 6-month returns and held 6 months, on NYSE and AMEX shares from 1965 to 1989. It is an average over that sample, before costs.\n\n**What it is not.** It is not a return on capital. The position is zero-cost: each £1 of winners is paid for by £1 of losers sold short. What £50,000 earns depends on how much gross exposure it is allowed to support. At £50,000 long and £50,000 short the gross spread would be about £6,000 a year; at £25,000 a side, about £3,000. The 12% is a choice of leverage, not a property of the strategy. Nor is it a forecast for today.\n\n**What it ignores.** Trading costs: the design rolls a sixth of the book each month. On our seeded panel it trades 0.577 of the book a month, so 25 bp a side takes the 6/6 spread from 0.96% to 0.82% a month. Shorting costs: borrowing fees on the losers, some of which are small and hard to borrow. Margin: the broker holds collateral against the short side. Taxes and the time to run it.\n\n**What it risks.** The spread is noisy: our seeded 6/6 series has a monthly sd of about 6%, so single years can lose. The paper's t statistics are about 3 to 4: strong evidence for 1965 to 1989, not a guarantee after it. Part of the first-year gain reverses in years two and three.\n\n**What I would replicate first.** The 6/6 cell, with a tolerance rule fixed in advance (within two standard errors), on stated data, with a plan committed before any code and a shuffled-panel placebo. Then the 12/3 cell. Only after that, costs and data after 1989.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Says what the number is: the paper's compounded 6/6 winners-minus-losers spread, about 0.95% a month, NYSE and AMEX, 1965 to 1989, before costs"
+          },
+          {
+            "points": 2,
+            "text": "Explains the zero-cost position: no capital is needed, and the £ result scales with the gross exposure chosen, with a worked £ example"
+          },
+          {
+            "points": 2,
+            "text": "Names costs and capital it ignores: trading costs with a turnover or bp figure, borrowing fees on the short side, and margin"
+          },
+          {
+            "points": 2,
+            "text": "Names the risks: a volatile spread, a 1965 to 1989 sample, and part of the gain reversing later"
+          },
+          {
+            "points": 2,
+            "text": "Says what to replicate first: the 6/6 cell with a tolerance rule fixed in advance, a plan before code, and a placebo"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and mark it against the rubric.",
+        "generic": "Compare your answer with the model and mark it against the rubric."
+      },
+      "explain": {
+        "text": "The 12.01% is a spread on a zero-cost position over one historical sample, before costs. Turning it into £ needs a choice of exposure and a cost model. The first step is to reproduce it, not to invest in it."
+      }
+    },
+    {
+      "id": "h-months",
+      "difficulty": 4,
+      "skills": [
+        "rm-paper"
+      ],
+      "prose": "Our 12/12 cell has mean 0.66% a month and sd 6.21%, and its t over 277 months is 1.77. Suppose the mean and sd stayed the same.",
+      "question": "How many months would its t need to reach 1.96?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 341,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "",
+        "accept": "341 months: (1.96 × 6.21 / 0.66)² = 340.1",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 307,
+            "tol": {
+              "abs": 2
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. About 341 months, 64 more.",
+        "generic": "Not quite. Solve 1.96 = 0.66 / (6.21 / √n) for n.",
+        "byKey": {
+          "ratio": "You scaled n by 1.96 / 1.77. The t grows with √n, so scale by the square of that ratio."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt{n} = 1.96 \\times 6.21 / 0.66 = 18.44$, so $n = 340.1$, which rounds up to 341 months. The t grows only with √n, so more data is a slow cure for noise. That is why a cell's t matters as much as its mean."
+      }
+    },
+    {
+      "id": "h-annual",
+      "difficulty": 3,
+      "skills": [
+        "rm-paper"
+      ],
+      "prose": "The paper reports its most profitable cell, 12/3, at about 1.31% a month.",
+      "question": "What is that compounded over a year, in %?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.169,
+        "tol": {
+          "abs": 0.0003
+        },
+        "unit": "%",
+        "accept": "16.90%: (1.0131)^12 − 1",
+        "wrong": [
+          {
+            "id": "simple",
+            "value": 0.1572,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. 16.90% a year.",
+        "generic": "Not quite. Compound: (1.0131)^12 − 1.",
+        "byKey": {
+          "simple": "You multiplied by 12. Returns compound."
+        }
+      },
+      "explain": {
+        "text": "$(1.0131)^{12} - 1 = 0.1690$. Multiplying by 12 gives 15.72%. The difference grows with the monthly return."
+      }
+    },
+    {
+      "id": "h-placebo",
+      "difficulty": 4,
+      "skills": [
+        "rm-paper",
+        "rm-stats"
+      ],
+      "prose": "A replication has one of the bugs below.",
+      "question": "Which would the shuffled-panel placebo catch? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "window",
+            "text": "The ranking window includes the month being traded",
+            "correct": true
+          },
+          {
+            "id": "next",
+            "text": "The signal is computed from next month's return",
+            "correct": true
+          },
+          {
+            "id": "weights",
+            "text": "Winners get +1/45 each instead of +1/50",
+            "why": "The placebo spread barely moves with an unbalanced book. The weights check catches it."
+          },
+          {
+            "id": "cell",
+            "text": "The result is compared with the wrong paper cell",
+            "why": "That error is in the comparison, after the code has run. No data check sees it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. Both look-ahead bugs.",
+        "generic": "Not quite. The placebo catches code that finds a spread where none exists."
+      },
+      "explain": {
+        "text": "Both look-ahead bugs rank on the return being traded, so they find a spread even on shuffled data. An unbalanced book needs the weights check. A wrong comparison needs a careful reader."
+      }
+    },
+    {
+      "id": "h-costs",
+      "difficulty": 4,
+      "skills": [
+        "rm-paper"
+      ],
+      "prose": "Our 6/6 cell earns 0.96% a month before costs and trades 0.577 of its book a month, counting both sides.",
+      "question": "What does it earn at 50 bp per £1 traded, in % a month?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.006715,
+        "tol": {
+          "abs": 6e-05
+        },
+        "unit": "%",
+        "accept": "0.67%: 0.96 − 0.577 × 0.50",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 0.008158,
+            "tol": {
+              "abs": 6e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Correct. About 0.67% a month.",
+        "generic": "Not quite. Charge 0.50% on all 0.577 traded.",
+        "byKey": {
+          "one-side": "You charged half the trading. The 0.577 counts both sides already."
+        }
+      },
+      "explain": {
+        "text": "Costs are 0.577 × 0.50% = 0.29% a month, so 0.96% becomes 0.67%. From the unrounded 0.9639% the result is 0.68% a month. At higher costs a third of the spread is gone."
+      }
+    }
+  ]
+}
