@@ -1,0 +1,1443 @@
+{
+ "id": "l19-many-constraints",
+ "course": "multivar",
+ "title": "Lagrange with several constraints",
+ "minutes": 15,
+ "objectives": [
+  "Optimise a function of three variables under one or two constraints, such as portfolio variance at a target return.",
+  "Read the multiplier on the return constraint as the slope of the efficient frontier."
+ ],
+ "skills": [
+  "mv-lagrange"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Closest point on a plane",
+   "prose": "Find the point of the plane $x + 2y + 3z = 14$ closest to the origin. Choosing $x$ and $y$ fixes $z = \\tfrac{14 - x - 2y}{3}$. The contours show $x^2 + y^2 + z^2$ over the $xy$-plane. Drag P.",
+   "canvas": {
+    "kind": "plane",
+    "maxHeight": 300,
+    "params": {
+     "x": [
+      -4,
+      7
+     ],
+     "y": [
+      -3,
+      8
+     ],
+     "equal": true,
+     "grid": 1,
+     "height": 270,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "functions": [
+      {
+       "id": "c",
+       "contour": "x^2+y^2+((14-x-2*y)/3)^2",
+       "levels": [
+        16,
+        20,
+        30,
+        45,
+        70
+       ],
+       "colour": 1,
+       "levelLabels": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 3,
+       "y": 0,
+       "drag": true,
+       "snap": 0.5,
+       "label": "P",
+       "labelPos": "ne"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$(x, y, z)$ = ({{fixed(P.x, 1)}}, {{fixed(P.y, 1)}}, {{fixed((14 - P.x - 2 * P.y) / 3, 2)}}); $x^2 + y^2 + z^2$ = {{fixed(P.x * P.x + P.y * P.y + pow((14 - P.x - 2 * P.y) / 3, 2), 2)}}"
+    }
+   },
+   "question": "What is the smallest value of $x^2 + y^2 + z^2$ you can reach?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 14,
+    "tol": {
+     "abs": 0.05
+    },
+    "label": "Smallest squared distance",
+    "accept": "14, at $(x, y, z) = (1, 2, 3)$.",
+    "wrong": [
+     {
+      "id": "dist",
+      "value": 3.7417,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "start",
+      "value": 22.44,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the caption. Move P towards the middle of the contours."
+    },
+    {
+     "rung": "point",
+     "text": "The contours close in on one point. Try whole-number coordinates.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At $P = (1, 2)$, $z = \\tfrac{14 - 1 - 4}{3} = 3$ and $1 + 4 + 9 = 14$."
+    }
+   ],
+   "feedback": {
+    "correct": "14, at $(1, 2, 3)$.",
+    "generic": "Not quite right. Drag P until the caption stops falling.",
+    "byKey": {
+     "dist": "$\\sqrt{14} = 3.74$ is the distance. The caption shows its square, $x^2 + y^2 + z^2$.",
+     "start": "22.44 is where P starts, at $(3, 0)$. Drag it towards the centre of the contours."
+    }
+   },
+   "explain": {
+    "text": "The closest point is $(1, 2, 3)$, where $x^2 + y^2 + z^2 = 14$. Every contour round it is higher, so it is the lowest point on the plane. This used two free variables; with Lagrange we need no substitution.",
+    "canvas": {
+     "points": {
+      "P": {
+       "x": 1,
+       "y": 2
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The same, with a multiplier",
+   "prose": "Now use Lagrange directly in three variables. Minimise $f = x^2 + y^2 + z^2$ on $g = x + 2y + 3z = 14$. Then $\\nabla f = (2x, 2y, 2z)$ and $\\nabla g = (1, 2, 3)$, and we solve $\\nabla f = \\lambda\\nabla g$ with $g = 14$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "gf",
+       "rows": [
+        [
+         "$2x$"
+        ],
+        [
+         "$2y$"
+        ],
+        [
+         "$2z$"
+        ]
+       ],
+       "label": "$\\nabla f$"
+      },
+      {
+       "id": "gg",
+       "rows": [
+        [
+         "1"
+        ],
+        [
+         "2"
+        ],
+        [
+         "3"
+        ]
+       ],
+       "label": "$\\nabla g$"
+      }
+     ],
+     "ops": [
+      "$=\\lambda$"
+     ]
+    },
+    "state": {
+     "caption": "Together with $x + 2y + 3z = 14$: four equations, four unknowns"
+    }
+   },
+   "question": "What is $\\lambda$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "The multiplier",
+    "accept": "$\\lambda = 2$, so $(x, y, z) = (1, 2, 3)$.",
+    "wrong": [
+     {
+      "id": "f",
+      "value": 14,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "seven",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write $x$, $y$ and $z$ in terms of $\\lambda$."
+    },
+    {
+     "rung": "point",
+     "text": "$x = \\tfrac\\lambda2$, $y = \\lambda$, $z = \\tfrac{3\\lambda}{2}$. Put them into the plane.",
+     "highlight": [
+      "gf-r0",
+      "gg-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac\\lambda2 + 2\\lambda + \\tfrac{9\\lambda}{2} = 7\\lambda = 14$, so $\\lambda = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\lambda = 2$. Then $(x, y, z) = (1, 2, 3)$ and the minimum is 14.",
+    "generic": "Not quite right. Substitute $x = \\tfrac\\lambda2$, $y = \\lambda$, $z = \\tfrac{3\\lambda}2$ into $x + 2y + 3z = 14$.",
+    "byKey": {
+     "f": "14 is the value of $f$ at the minimum, not $\\lambda$. The multiplier comes from the plane equation.",
+     "seven": "7 is the coefficient of $\\lambda$ in $7\\lambda = 14$. Divide by it."
+    }
+   },
+   "explain": {
+    "text": "The three gradient equations give $(x, y, z) = \\tfrac\\lambda2(1, 2, 3)$. The plane then says $7\\lambda = 14$, so $\\lambda = 2$ and the point is $(1, 2, 3)$. It is the same point the drag found, with $f = 14$.",
+    "canvas": {
+     "highlight": [
+      "gf",
+      "gg"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Two constraints",
+   "prose": "Two constraints cut a line out of space. Find the point of the line $x + y + z = 3$, $x + 2y + 3z = 4$ closest to the origin. Each constraint gets its own multiplier: $\\nabla f = \\lambda\\nabla g + \\mu\\nabla h$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Equation",
+      "Source"
+     ],
+     "rows": [
+      [
+       "$2x = \\lambda + \\mu$",
+       "$x$-part of $\\nabla f = \\lambda\\nabla g + \\mu\\nabla h$"
+      ],
+      [
+       "$2y = \\lambda + 2\\mu$",
+       "$y$-part"
+      ],
+      [
+       "$2z = \\lambda + 3\\mu$",
+       "$z$-part"
+      ],
+      [
+       "$x + y + z = 3$",
+       "constraint $g$"
+      ],
+      [
+       "$x + 2y + 3z = 4$",
+       "constraint $h$"
+      ]
+     ],
+     "align": [
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the minimum value of $x^2 + y^2 + z^2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "The minimum",
+    "accept": "5, at $(2, 1, 0)$.",
+    "wrong": [
+     {
+      "id": "g-only",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "h-only",
+      "value": 1.1429,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve the first three for $x$, $y$ and $z$ in terms of $\\lambda$ and $\\mu$."
+    },
+    {
+     "rung": "point",
+     "text": "Put them into both constraints: $\\lambda + 2\\mu = 2$ and $3\\lambda + 7\\mu = 4$.",
+     "highlight": [
+      "r3",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mu = -2$, $\\lambda = 6$, so $(x, y, z) = (2, 1, 0)$ and $f = 5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(2, 1, 0)$, with $f = 5$, $\\lambda = 6$ and $\\mu = -2$.",
+    "generic": "Not quite right. Five equations: solve for $\\lambda$ and $\\mu$ from the two constraints.",
+    "byKey": {
+     "g-only": "3 is the answer for the first constraint alone, at $(1, 1, 1)$. That point is not on the second plane.",
+     "h-only": "$\\tfrac{16}{14} = 1.14$ is the answer for the second constraint alone. That point is not on the first plane."
+    }
+   },
+   "explain": {
+    "text": "Each constraint alone gives a smaller minimum, 3 or 1.14, because it leaves more room. Both together confine us to a line, where the closest point is $(2, 1, 0)$ with $f = 5$. Five unknowns ($x$, $y$, $z$, $\\lambda$, $\\mu$), five equations.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       3,
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Redundant and contradictory constraints",
+   "prose": "Constraints can fail to work as a pair. Suppose the second is just the first doubled: $x + y + z = 3$ and $2x + 2y + 2z = 6$. We still minimise $x^2 + y^2 + z^2$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Equation",
+      "Source"
+     ],
+     "rows": [
+      [
+       "$2x = \\lambda + 2\\mu$",
+       "$x$-part"
+      ],
+      [
+       "$2y = \\lambda + 2\\mu$",
+       "$y$-part"
+      ],
+      [
+       "$2z = \\lambda + 2\\mu$",
+       "$z$-part"
+      ],
+      [
+       "$x + y + z = 3$",
+       "constraint $g$"
+      ],
+      [
+       "$2x + 2y + 2z = 6$",
+       "constraint $h$"
+      ]
+     ],
+     "align": [
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "It is one plane twice: the answer is $(1, 1, 1)$ with value 3, and $\\lambda$ and $\\mu$ are not unique",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "No point satisfies both constraints",
+      "why": "You took them for parallel planes. Parallel planes such as $x + y + z = 3$ and $x + y + z = 5$ never meet, but these two coincide."
+     },
+     {
+      "id": "old",
+      "text": "The point is $(2, 1, 0)$, as before",
+      "why": "You carried over the previous pair of constraints. This second plane is different, so the answer changes."
+     },
+     {
+      "id": "six",
+      "text": "The minimum is 6",
+      "why": "You read the 6 on the right-hand side as the value. It is only the constant in the second equation."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the second constraint by 2."
+    },
+    {
+     "rung": "point",
+     "text": "It becomes $x + y + z = 3$, the first one again.",
+     "highlight": [
+      "r3",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "One constraint: the answer is $(1, 1, 1)$, $f = 3$. Any $\\lambda + 2\\mu = 2$ fits the first three equations."
+    }
+   ],
+   "feedback": {
+    "correct": "Same plane twice: $(1, 1, 1)$, value 3.",
+    "generic": "Not quite right. Divide the second constraint by 2 and compare.",
+    "byKey": {
+     "none": "Parallel planes never meet. These planes are identical, so they meet everywhere.",
+     "old": "The pair of constraints has changed, so the point changes too.",
+     "six": "The value is $x^2 + y^2 + z^2 = 3$ at $(1, 1, 1)$."
+    }
+   },
+   "explain": {
+    "text": "The second constraint adds nothing. We are back to one plane, with minimum 3 at $(1, 1, 1)$, and any $\\lambda + 2\\mu = 2$ works, so the multipliers are not unique. Contradictory constraints, such as $x + y + z = 3$ and $x + y + z = 5$, leave no point at all.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       3,
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Three assets, one budget",
+   "prose": "Three uncorrelated assets have volatilities 20%, 30% and 40%. With only the budget $\\sum w_i = 1$, the conditions are $2\\sigma_i^2 w_i = \\lambda$. So each weight is proportional to $\\dfrac{1}{\\sigma_i^2}$. Fill in the weights and the variance $\\sigma_p^2 = \\sum \\sigma_i^2 w_i^2$.",
+   "canvas": {
+    "kind": "bars",
+    "maxHeight": 190,
+    "params": {
+     "categories": [
+      "A",
+      "B",
+      "C"
+     ],
+     "yLabel": "weight",
+     "yMax": 1,
+     "showValues": true,
+     "decimals": 4
+    },
+    "state": {
+     "values": {
+      "A": 0,
+      "B": 0,
+      "C": 0
+     },
+     "caption": "Weights, drawn as you type"
+    }
+   },
+   "question": "Fill in the table to four decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Asset",
+     "$\\sigma$",
+     "$1/\\sigma^2$",
+     "Weight $w_i$"
+    ],
+    "rows": [
+     [
+      "A",
+      "0.20",
+      "25.00",
+      {
+       "edit": true,
+       "answer": 0.5902,
+       "tol": {
+        "abs": 0.0005
+       },
+       "bind": "values.A"
+      }
+     ],
+     [
+      "B",
+      "0.30",
+      "11.11",
+      {
+       "edit": true,
+       "answer": 0.2623,
+       "tol": {
+        "abs": 0.0005
+       },
+       "bind": "values.B"
+      }
+     ],
+     [
+      "C",
+      "0.40",
+      "6.25",
+      {
+       "edit": true,
+       "answer": 0.1475,
+       "tol": {
+        "abs": 0.0005
+       },
+       "bind": "values.C"
+      }
+     ],
+     [
+      "Variance",
+      "",
+      "",
+      {
+       "edit": true,
+       "answer": 0.0236,
+       "tol": {
+        "abs": 0.0002
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The three numbers $1/\\sigma^2$ add to 42.36. Each weight is its share."
+    },
+    {
+     "rung": "point",
+     "text": "$w_A = \\tfrac{25}{42.36}$.",
+     "highlight": [
+      "xA"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$w = (0.5902, 0.2623, 0.1475)$. The variance is $\\tfrac{1}{42.36} = 0.0236$."
+    }
+   ],
+   "feedback": {
+    "correct": "$w = (0.5902, 0.2623, 0.1475)$ and $\\sigma_p^2 = \\tfrac{1}{42.36} = 0.02361$, a volatility of 15.36%.",
+    "generic": "Not quite right. Divide each $1/\\sigma^2$ by their sum, 42.36.",
+    "byKey": {
+     "r0c3": "$w_A = \\tfrac{25}{42.36} = 0.5902$. The calmest asset gets the largest share.",
+     "r1c3": "$w_B = \\tfrac{11.11}{42.36} = 0.2623$.",
+     "r2c3": "$w_C = \\tfrac{6.25}{42.36} = 0.1475$.",
+     "r3c3": "The variance is $\\tfrac{1}{\\sum 1/\\sigma^2} = \\tfrac{1}{42.36} = 0.0236$, not a volatility."
+    }
+   },
+   "explain": {
+    "text": "$\\sum 1/\\sigma_i^2 = 25 + 11.11 + 6.25 = 42.36$, so $w = (0.5902, 0.2623, 0.1475)$. The portfolio variance is $\\tfrac{1}{42.36} = 0.02361$, a volatility of 15.36%, below even the calmest asset's 20%.",
+    "canvas": {
+     "values": {
+      "A": 0.5902,
+      "B": 0.2623,
+      "C": 0.1475
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Setting up two constraints",
+   "prose": "Now add a target return of 8%, with expected returns $m = (5\\%, 8\\%, 11\\%)$. The budget and the target are two constraints, so the conditions are $2\\sigma_i^2 w_i = \\lambda + \\mu m_i$. Rearrange each as $2\\sigma_i^2 w_i - \\lambda - m_i\\mu = 0$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "S",
+       "rows": [
+        [
+         "$2\\sigma_1^2$",
+         "0",
+         "0",
+         "$-1$",
+         "$-m_1$",
+         "0"
+        ],
+        [
+         "0",
+         "$2\\sigma_2^2$",
+         "0",
+         "$-1$",
+         "$-m_2$",
+         "0"
+        ],
+        [
+         "0",
+         "0",
+         "$2\\sigma_3^2$",
+         "$-1$",
+         "$-m_3$",
+         "0"
+        ],
+        [
+         "1",
+         "1",
+         "1",
+         "0",
+         "0",
+         "1"
+        ],
+        [
+         "$m_1$",
+         "$m_2$",
+         "$m_3$",
+         "0",
+         "0",
+         "0.08"
+        ]
+       ],
+       "label": "the system",
+       "colLabels": [
+        "$w_1$",
+        "$w_2$",
+        "$w_3$",
+        "$\\lambda$",
+        "$\\mu$",
+        "="
+       ],
+       "bar": 5
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the coefficients of $w_i$ and $\\mu$ in each equation.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Equation",
+     "$w_i$ coefficient",
+     "$\\mu$ coefficient"
+    ],
+    "rows": [
+     [
+      "Asset A",
+      {
+       "edit": true,
+       "answer": 0.08,
+       "tol": {
+        "abs": 0.0005
+       }
+      },
+      {
+       "edit": true,
+       "answer": -0.05,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "Asset B",
+      {
+       "edit": true,
+       "answer": 0.18,
+       "tol": {
+        "abs": 0.0005
+       }
+      },
+      {
+       "edit": true,
+       "answer": -0.08,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "Asset C",
+      {
+       "edit": true,
+       "answer": 0.32,
+       "tol": {
+        "abs": 0.0005
+       }
+      },
+      {
+       "edit": true,
+       "answer": -0.11,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sigma_1 = 0.2$, so $2\\sigma_1^2 = 2 \\times 0.04$."
+    },
+    {
+     "rung": "point",
+     "text": "$2\\sigma^2$ is $0.08$, $0.18$ and $0.32$ for the three assets.",
+     "highlight": [
+      "S-0-0",
+      "S-1-1",
+      "S-2-2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The $\\mu$ coefficient is $-m_i$: $-0.05$, $-0.08$, $-0.11$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.08$, $0.18$, $0.32$ for $2\\sigma_i^2$, and $-0.05$, $-0.08$, $-0.11$ for $-m_i$.",
+    "generic": "Not quite right. $2\\sigma^2$ uses the variance, not the volatility.",
+    "byKey": {
+     "r0c1": "$2\\sigma_1^2 = 2 \\times 0.2^2 = 0.08$. Square the volatility first.",
+     "r1c1": "$2\\sigma_2^2 = 2 \\times 0.3^2 = 0.18$.",
+     "r2c1": "$2\\sigma_3^2 = 2 \\times 0.4^2 = 0.32$.",
+     "r0c2": "The coefficient of $\\mu$ is $-m_1 = -0.05$, with its minus sign.",
+     "r1c2": "The coefficient of $\\mu$ is $-m_2 = -0.08$.",
+     "r2c2": "The coefficient of $\\mu$ is $-m_3 = -0.11$."
+    }
+   },
+   "explain": {
+    "text": "Each asset gives one equation: $2\\sigma_i^2$ on its weight, $-1$ on $\\lambda$ and $-m_i$ on $\\mu$. With the budget and target rows that is five equations in five unknowns.",
+    "canvas": {
+     "highlight": {
+      "S": {
+       "cells": [
+        [
+         0,
+         0
+        ],
+        [
+         1,
+         1
+        ],
+        [
+         2,
+         2
+        ]
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Solving for the weights",
+   "prose": "Here is the system with the numbers in. Write each weight as $w_i = \\tfrac{\\lambda + \\mu m_i}{2\\sigma_i^2}$ and put it into the budget and target rows. That leaves two equations in $\\lambda$ and $\\mu$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "S",
+       "rows": [
+        [
+         "0.08",
+         "0",
+         "0",
+         "$-1$",
+         "$-0.05$",
+         "0"
+        ],
+        [
+         "0",
+         "0.18",
+         "0",
+         "$-1$",
+         "$-0.08$",
+         "0"
+        ],
+        [
+         "0",
+         "0",
+         "0.32",
+         "$-1$",
+         "$-0.11$",
+         "0"
+        ],
+        [
+         "1",
+         "1",
+         "1",
+         "0",
+         "0",
+         "1"
+        ],
+        [
+         "0.05",
+         "0.08",
+         "0.11",
+         "0",
+         "0",
+         "0.08"
+        ]
+       ],
+       "label": "the system",
+       "colLabels": [
+        "$w_1$",
+        "$w_2$",
+        "$w_3$",
+        "$\\lambda$",
+        "$\\mu$",
+        "="
+       ],
+       "bar": 5
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Solve the system. What is the middle weight, $w_2$? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3571,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "The weight w2",
+    "accept": "$\\tfrac{10}{28} = 0.3571$.",
+    "wrong": [
+     {
+      "id": "budget",
+      "value": 0.2623,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "w1",
+      "value": 0.3214,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "third",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Reduce to two unknowns: $\\lambda$ and $\\mu$."
+    },
+    {
+     "rung": "point",
+     "text": "$21.18\\lambda + 1.413\\mu = 1$ and $1.413\\lambda + 0.1046\\mu = 0.08$, from $\\sum \\tfrac{1}{2\\sigma_i^2}$ and the like.",
+     "highlight": [
+      "S-1-1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\lambda = -0.03857$, $\\mu = 1.2857$. Then $w_2 = \\tfrac{-0.03857 + 0.08 \\times 1.2857}{0.18} = 0.3571$."
+    }
+   ],
+   "feedback": {
+    "correct": "$w = (\\tfrac{9}{28}, \\tfrac{10}{28}, \\tfrac{9}{28})$, with variance $\\tfrac{9}{280} = 0.03214$, a volatility of 17.93%.",
+    "generic": "Not quite right. Solve for $\\lambda$ and $\\mu$ from the two constraint rows, then find $w_2$.",
+    "byKey": {
+     "budget": "0.2623 is the middle weight with the budget alone. The target return changes it.",
+     "w1": "0.3214 is $w_1$. The middle weight is the larger of the three.",
+     "third": "$\\tfrac13$ is the equal-weight answer. The conditions do not give equal weights here."
+    }
+   },
+   "explain": {
+    "text": "Solving gives $\\lambda = -0.03857$ and $\\mu = 1.2857$, so $w = (0.3214, 0.3571, 0.3214)$. The return is $\\tfrac{0.05 \\cdot 9 + 0.08 \\cdot 10 + 0.11 \\cdot 9}{28} = 8\\%$. The variance $\\tfrac{9}{280} = 0.03214$ is a volatility of 17.93%, against 15.36% with no target.",
+    "canvas": {
+     "highlight": {
+      "S": {
+       "rows": [
+        3,
+        4
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Forgetting a constraint",
+   "prose": "A colleague wants the minimum-variance portfolio for an 8% target and uses the budget alone, getting $w = (0.5902, 0.2623, 0.1475)$. The expected returns are 5%, 8% and 11%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Asset",
+      "$w_i$",
+      "$m_i$"
+     ],
+     "rows": [
+      [
+       "A",
+       "0.5902",
+       "5%"
+      ],
+      [
+       "B",
+       "0.2623",
+       "8%"
+      ],
+      [
+       "C",
+       "0.1475",
+       "11%"
+      ]
+     ],
+     "align": [
+      "center",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What return does that portfolio actually earn?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0667,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "%",
+    "label": "The portfolio's expected return",
+    "accept": "6.67%, not 8%.",
+    "wrong": [
+     {
+      "id": "target",
+      "value": 0.08,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The return is $\\sum w_i m_i$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.5902 \\times 5\\% = 2.95\\%$.",
+     "highlight": [
+      "r0",
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2.95\\% + 2.10\\% + 1.62\\% = 6.67\\%$."
+    }
+   ],
+   "feedback": {
+    "correct": "6.67%: the budget alone ignores the target. It finds the minimum-variance portfolio, whose return is 6.67%.",
+    "generic": "Not quite right. Compute $\\sum w_i m_i$.",
+    "byKey": {
+     "target": "You trusted the label, or averaged the three returns, which is also 8%. The budget-only solution never saw the target, and the portfolio weights the returns by $w_i$."
+    }
+   },
+   "explain": {
+    "text": "The budget alone gives the one portfolio of least variance, which earns $0.05(0.5902) + 0.08(0.2623) + 0.11(0.1475) = 6.67\\%$. To earn 8% we must give up some variance, and that needs the second constraint and its multiplier $\\mu$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "With $n$ variables and $m$ constraints $g_k = c_k$ we solve $$\\nabla f = \\lambda_1\\nabla g_1 + \\dots + \\lambda_m\\nabla g_m, \\qquad g_k = c_k.$$ That is $n$ equations plus $m$ equations in $n + m$ unknowns. A negative weight is a short position, not an error; a long-only mandate clips it, as in the two-asset case.",
+   "question": "A fund holds 4 assets with a budget and a target return. How many unknowns and equations?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Number of unknowns",
+    "accept": "4 weights plus 2 multipliers.",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the weights, then the multipliers."
+    },
+    {
+     "rung": "point",
+     "text": "There are four weights."
+    },
+    {
+     "rung": "step",
+     "text": "Two constraints, so two multipliers: $4 + 2 = 6$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4 + 2 = 6$ unknowns and 6 equations.",
+    "generic": "Not quite right. Add the weights and the multipliers.",
+    "byKey": {
+     "four": "You counted the weights only. Each constraint adds a multiplier.",
+     "five": "You counted one multiplier. A budget and a target are two constraints."
+    }
+   },
+   "explain": {
+    "text": "Each constraint adds one multiplier and one equation. So the system stays square: $n + m$ unknowns and $n + m$ equations. That is why it is solvable by elimination."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "We now prove the inverse-variance rule for uncorrelated assets with only the budget.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "setup",
+      "text": "Minimise $\\sum_i \\sigma_i^2 w_i^2$ subject to $\\sum_i w_i = 1$, so $\\nabla f = \\lambda\\nabla g$"
+     },
+     {
+      "id": "cond",
+      "text": "$2\\sigma_i^2 w_i = \\lambda$ for every $i$, matching components"
+     },
+     {
+      "id": "wi",
+      "text": "$w_i = \\dfrac{\\lambda}{2\\sigma_i^2}$, dividing by $2\\sigma_i^2$"
+     },
+     {
+      "id": "budget",
+      "text": "$\\dfrac\\lambda2\\sum_j \\dfrac{1}{\\sigma_j^2} = 1$, from the budget, so $\\dfrac\\lambda2 = \\dfrac{1}{\\sum_j 1/\\sigma_j^2}$"
+     },
+     {
+      "id": "final",
+      "text": "$w_i = \\dfrac{1/\\sigma_i^2}{\\sum_j 1/\\sigma_j^2}$, substituting $\\dfrac\\lambda2$"
+     },
+     {
+      "id": "var",
+      "text": "$\\sigma_p^2 = \\left(\\tfrac\\lambda2\\right)^2\\sum_i \\dfrac1{\\sigma_i^2} = \\dfrac{1}{\\sum_j 1/\\sigma_j^2}$"
+     }
+    ],
+    "answer": [
+     "setup",
+     "cond",
+     "wi",
+     "budget",
+     "final",
+     "var"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the problem, then the equations it gives."
+    },
+    {
+     "rung": "point",
+     "text": "The budget is used after $w_i$ is written in terms of $\\lambda$."
+    },
+    {
+     "rung": "step",
+     "text": "Setup, condition, $w_i$, budget, final weights, variance."
+    }
+   ],
+   "feedback": {
+    "correct": "For 20%, 30% and 40% this gives $\\sigma_p^2 = \\tfrac{1}{42.36} = 0.02361$.",
+    "generic": "Not quite right. The budget comes after $w_i = \\tfrac{\\lambda}{2\\sigma_i^2}$.",
+    "byKey": {
+     "budget": "Using the budget needs $w_i$ in terms of $\\lambda$ first.",
+     "var": "The variance uses $\\tfrac\\lambda2$ from the budget line, so it comes last."
+    }
+   },
+   "explain": {
+    "text": "The rule $w_i \\propto \\tfrac{1}{\\sigma_i^2}$ comes straight from $2\\sigma_i^2 w_i = \\lambda$: the riskier the asset, the smaller its weight. The variance $\\tfrac{1}{\\sum 1/\\sigma_j^2}$ is below every single $\\sigma_i^2$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The efficient frontier",
+   "prose": "The curve is the best volatility for each target, with the uncorrelated 20%, 30% and 40% assets. Its lowest point, 6.67%, is the budget-only portfolio. At an 8% target the multiplier on the return constraint is $\\mu = \\tfrac97 \\approx 1.2857$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      5,
+      10
+     ],
+     "y": [
+      14,
+      24
+     ],
+     "grid": true,
+     "height": 280,
+     "xLabel": "Target return (%)",
+     "yLabel": "Volatility (%)",
+     "functions": [
+      {
+       "id": "fr",
+       "expr": "100*sqrt(0.02360656 + 48.412698*(x/100 - 0.06672131)^2)",
+       "domain": [
+        5.2,
+        9.6
+       ],
+       "colour": 1
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p6",
+       "x": 6.0,
+       "y": 16.06,
+       "label": "6%: {y:.2f}%",
+       "labelPos": "nw",
+       "tap": false
+      },
+      {
+       "id": "p7",
+       "x": 7.000000000000001,
+       "y": 15.53,
+       "label": "7%: {y:.2f}%",
+       "labelPos": "ne",
+       "tap": false
+      },
+      {
+       "id": "p8",
+       "x": 8.0,
+       "y": 17.93,
+       "label": "8%: {y:.2f}%",
+       "labelPos": "nw",
+       "tap": false
+      },
+      {
+       "id": "p9",
+       "x": 9.0,
+       "y": 22.33,
+       "label": "9%: {y:.2f}%",
+       "labelPos": "nw",
+       "tap": false
+      },
+      {
+       "id": "mv",
+       "x": 6.67,
+       "y": 15.36,
+       "label": "min variance",
+       "labelPos": "s",
+       "tap": false,
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "The target moves from 8% to 8.2%, a rise of 0.002. Use $\\mu$ to estimate the rise in portfolio variance.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0026,
+    "tol": {
+     "abs": 0.0003
+    },
+    "label": "Rise in variance",
+    "accept": "About $1.2857 \\times 0.002 = 0.0026$.",
+    "wrong": [
+     {
+      "id": "pct",
+      "value": 0.2571,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mu",
+      "value": 1.2857,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The multiplier is variance gained per unit of extra target."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply $\\mu$ by the change in target, in decimals.",
+     "highlight": [
+      "fr"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1.2857 \\times 0.002 = 0.00257$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.0026. The exact rise is 0.00277, because the frontier curves upwards.",
+    "generic": "Not quite right. The rise in variance is $\\mu$ times the rise in the target, 0.002.",
+    "byKey": {
+     "pct": "You multiplied by 0.2, the target change in percent. The target is measured as a decimal, 0.002.",
+     "mu": "You gave $\\mu$ itself. The rise is $\\mu$ times the change in the target, 0.002."
+    }
+   },
+   "explain": {
+    "text": "$\\mu = \\tfrac{d\\sigma_p^2}{d(\\text{target})}$ is the frontier's slope in variance terms. $1.2857 \\times 0.002 = 0.00257$, close to the exact $0.00277$. The frontier volatilities are 16.06%, 15.53%, 17.93% and 22.33% at 6%, 7%, 8% and 9%.",
+    "canvas": {
+     "highlight": [
+      "fr"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "With $m$ constraints solve $\\nabla f = \\sum \\lambda_k\\nabla g_k$ together with every $g_k = c_k$: $n + m$ equations in $n + m$ unknowns. Drop a constraint and the answer is wrong.",
+   "Uncorrelated assets under a budget have weights $\\propto \\tfrac{1}{\\sigma_i^2}$ and variance $\\tfrac{1}{\\sum 1/\\sigma_i^2}$. For 20%, 30%, 40% that is 0.02361, a volatility of 15.36%, earning 6.67%.",
+   "A target return adds $\\mu$. At 8% the weights are $(\\tfrac{9}{28}, \\tfrac{10}{28}, \\tfrac{9}{28})$ with variance $\\tfrac{9}{280}$, and $\\mu = \\tfrac97$ is the extra variance per unit of target."
+  ],
+  "formula": {
+   "name": "Two constraints",
+   "tex": "\\nabla f = \\lambda\\nabla g + \\mu\\nabla h,\\quad g = c_1,\\quad h = c_2",
+   "note": "Five unknowns for three variables: $x$, $y$, $z$, $\\lambda$, $\\mu$."
+  },
+  "trap": "A budget-only solution ignores the target. It is a valid portfolio, but it earns 6.67%, not 8%."
+ },
+ "quiz": [
+  {
+   "id": "q19-plane",
+   "difficulty": 2,
+   "prose": "Minimise $x^2 + y^2 + z^2$ on the plane $x + y + z = 6$.",
+   "question": "What is the minimum value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "The minimum",
+    "accept": "12, at $(2, 2, 2)$.",
+    "wrong": [
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\nabla f = \\lambda(1, 1, 1)$ gives $x = y = z = 2$, so $f = 12$.",
+    "generic": "Not quite right. Put $x = y = z = \\tfrac\\lambda2$ into the plane.",
+    "byKey": {
+     "six": "6 is the plane's constant. The minimum is the sum of squares, $4 + 4 + 4$.",
+     "four": "4 is $\\lambda$. The question asks for the minimum value of $f$."
+    }
+   },
+   "explain": {
+    "text": "$2x = 2y = 2z = \\lambda$, so $x = y = z$ and $3x = 6$. The point is $(2, 2, 2)$ and $f = 12$."
+   }
+  },
+  {
+   "id": "q19-count",
+   "difficulty": 2,
+   "prose": "A fund holds 5 assets with a budget constraint and a target return.",
+   "question": "How many unknowns does the Lagrange system have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Unknowns",
+    "accept": "5 weights and 2 multipliers.",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5 + 2 = 7$.",
+    "generic": "Not quite right. Add the weights and the multipliers.",
+    "byKey": {
+     "five": "You counted the weights only.",
+     "six": "You counted one multiplier. There are two constraints."
+    }
+   },
+   "explain": {
+    "text": "Each constraint adds one multiplier: $n + m = 5 + 2 = 7$ unknowns and 7 equations."
+   }
+  },
+  {
+   "id": "q19-weights",
+   "difficulty": 3,
+   "prose": "Three uncorrelated assets have volatilities 10%, 20% and 20%. The only constraint is that weights sum to 1.",
+   "question": "What is the minimum-variance weight in the 10% asset?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Weight",
+    "accept": "$\\tfrac23$.",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "third",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac{100}{100 + 25 + 25} = \\tfrac23$.",
+    "generic": "Not quite right. The weights are proportional to $\\tfrac{1}{\\sigma^2}$: 100, 25, 25.",
+    "byKey": {
+     "half": "You used $\\tfrac1\\sigma$ (10, 5, 5), which gives $\\tfrac{10}{20} = \\tfrac12$. The weights follow $\\tfrac{1}{\\sigma^2}$.",
+     "third": "That is equal weighting. The calm asset should get more."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1}{\\sigma^2} = 100, 25, 25$, which sum to 150. The first weight is $\\tfrac{100}{150} = \\tfrac23$."
+   }
+  },
+  {
+   "id": "q19-lambda",
+   "difficulty": 3,
+   "prose": "The minimum of $x^2 + y^2 + z^2$ on $x + y + z = 6$ is 12, with $\\lambda = 4$ for $\\nabla f = \\lambda\\nabla g$. The constraint moves to $x + y + z = 6.3$.",
+   "question": "Use $\\lambda$ to estimate the rise in the minimum.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2,
+    "tol": {
+     "abs": 0.05
+    },
+    "label": "The rise",
+    "accept": "$4 \\times 0.3 = 1.2$. The exact rise is 1.23.",
+    "wrong": [
+     {
+      "id": "lam",
+      "value": 4,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "new",
+      "value": 13.2,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\lambda \\times 0.3 = 1.2$.",
+    "generic": "Not quite right. The rise is $\\lambda$ times the change in the constant, 0.3.",
+    "byKey": {
+     "lam": "You gave $\\lambda$ itself. The rise is $\\lambda$ times the 0.3 change.",
+     "new": "13.2 is the new minimum. The question asks for the rise."
+    }
+   },
+   "explain": {
+    "text": "$\\lambda$ is the gain per unit of constraint. A rise of 0.3 gives about $4 \\times 0.3 = 1.2$. The exact minimum is $\\tfrac{6.3^2}{3} = 13.23$, a rise of 1.23."
+   }
+  }
+ ]
+}
