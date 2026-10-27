@@ -1,21 +1,20 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 0, "Full `playthrough.mjs --all --local-cdn <pkgs>` green", then PLAN.md task 2, the Stage 1 gap levels.
+Task: PLAN.md task 2, last item: extend exams topic-1.3, topic-1.4 and topic-1.5 with items for the seven new gap levels.
 
-Context: Stage 2 content and exams topic-2.1 to 2.4 are green and reported. The 27 Oct full playthrough passed all 739 lessons, 354 sets and 7 exams. Then the browser closed at exam topic-1.3, so the remaining exams and routes threw. A background command is killed at 2 hours.
+Context: task 0 is done (all 739 lessons, 354 sets, 19 exams and every route green with `--local-cdn`). All seven gap levels are written, green and reported (`docs/reports/limits-5.md`, `integrals-4.md`, `multivar-5.md`, `eigen-4.md`, `random-vars-5.md`, `limits-thm-4.md`, `markov-4.md`). The items each exam needs are listed in `docs/briefs/gaps-plan.md`, section "For the exam extension". Gap briefs name stale scratchpad paths; give agents this session's paths.
 
 First, build the local CDN if it is missing: from the repo root, `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
 
 Do:
-1. From `app/`, run `node tools/validate.mjs 2>&1 | tail -5`, then run `node tools/playthrough.mjs --exams --local-cdn <pkgs> > <scratchpad>/exams.log 2>&1` and `--routes-only` in the background. If topic-1.3 closes the browser again, run it alone and hand it to a `test-fixer`. A fresh full run must be split (lessons, `--sets`, `--exams`), each under 2 hours. Grep logs for non-ok lines; never read them whole.
-2. While it runs, start the gap levels in waves of four, one `content-author` (Sonnet) per level, in PLAN.md order: limits L5, integrals L4, multivar L5, eigen L4, then random-vars L5, limits-thm L4, markov L4. Each gets its brief `docs/briefs/gap-<course>.md`, `docs/briefs/gaps-plan.md`, `docs/LEVEL-BRIEF.md`, the `--local-cdn` path, and the report pattern `docs/reports/coint-2.md`. Commit each level as it lands.
-3. Stop launching at about 85% of the session limit.
+1. Launch three `content-author` agents (Sonnet) in parallel, one per exam. Each gets: its exam file `app/content/exams/topic-1.<n>.json` (append items only, never rename or remove existing item ids), its bullet in `docs/briefs/gaps-plan.md`, the matching gap reports, `docs/LEVEL-BRIEF.md`, `docs/AUTHORING.md`, the `--local-cdn` path, and the report pattern `docs/reports/exam-2.2.md`. Reports go to `docs/reports/exam-1.<n>-gap.md`. Each agent checks every new number twice and plays its exam alone.
+2. Commit each exam as it lands.
+3. Optional if time remains: a `test-fixer` adds the limits-thm l18 cite to markov l16 (KNOWN_ISSUES).
 
-Files likely touched: `app/content/courses/{limits,integrals,multivar,eigen,random-vars,limits-thm,markov}/`, `docs/reports/`, `docs/BACKLOG-INBOX.md`, `app/content/manifest.json`, state files.
+Files likely touched: `app/content/exams/topic-1.3.json`, `topic-1.4.json`, `topic-1.5.json`, `docs/reports/`, `docs/BACKLOG-INBOX.md`, `app/content/manifest.json`, state files.
 
 Acceptance:
-- `node tools/validate.mjs` reports 0 errors.
-- Every exam and route passes with `--local-cdn`; lessons and sets passed on 27 Oct.
-- Each launched gap level is green with a report, or removed and relisted in PLAN.md.
-- PLAN.md ticks the playthrough task and the finished levels.
-- NEXT_PROMPT.md names the next task.
+- From `app/`, `node tools/validate.mjs` reports 0 errors.
+- `node tools/playthrough.mjs --exam topic-1.3 --exam topic-1.4 --exam topic-1.5 --local-cdn <pkgs>` passes.
+- Each exam covers every bullet in its gaps-plan list, or the report names what was left out and why.
+- PLAN.md ticks the exam extension; NEXT_PROMPT.md names the next task (Stage 3 content, momentum-rep L1).
