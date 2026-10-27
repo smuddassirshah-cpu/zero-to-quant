@@ -325,46 +325,52 @@
     ],
     "tests": [
      {
-      "setup": "x, y = make_pair(3, 1500)",
-      "call": "pairs_pipeline(y, x)",
-      "expect": "{'pnl': 10.56, 'sharpe': 1.24, 'trades': 9, 'stop_day': None}",
+      "setup": "x, y = make_pair(3, 1500); r = pairs_pipeline(y, x)",
+      "call": "[r['pnl'], r['sharpe'], r['trades']]",
+      "expect": "[10.56, 1.24, 9]",
       "compare": "isclose"
      },
      {
-      "setup": "x, y = make_pair(5, 1500)",
-      "call": "pairs_pipeline(y, x)",
-      "expect": "{'pnl': 14.99, 'sharpe': 1.806, 'trades': 16, 'stop_day': None}",
-      "compare": "isclose"
-     },
-     {
-      "setup": "x, y = make_pair(7, 1500)",
-      "call": "pairs_pipeline(y, x)",
-      "expect": "{'pnl': 10.34, 'sharpe': 1.463, 'trades': 12, 'stop_day': None}",
-      "compare": "isclose"
-     },
-     {
-      "setup": "x, y = make_broken_pair(3)",
-      "call": "pairs_pipeline(y, x)",
-      "expect": "{'pnl': 11.45, 'sharpe': 0.799, 'trades': 14, 'stop_day': 1249}",
-      "compare": "isclose"
-     },
-     {
-      "setup": "x, y = make_broken_pair(3)",
-      "call": "pairs_pipeline(y, x)['stop_day']",
-      "expect": "1249",
+      "setup": "x, y = make_pair(3, 1500); r = pairs_pipeline(y, x)",
+      "call": "r['stop_day'] is None",
+      "expect": "True",
       "compare": "equal"
      },
      {
-      "setup": "x, y = make_broken_pair(3)",
-      "call": "pairs_pipeline(y, x, formation=800)",
-      "expect": "{'pnl': 2.69, 'sharpe': 0.103, 'trades': 19, 'stop_day': 1390}",
+      "setup": "x, y = make_pair(5, 1500); r = pairs_pipeline(y, x)",
+      "call": "[r['pnl'], r['sharpe'], r['trades']]",
+      "expect": "[14.99, 1.806, 16]",
       "compare": "isclose"
      },
      {
-      "setup": "x, y = make_pair(3, 1500)",
-      "call": "pairs_pipeline(y, x, dd_limit=2.5)",
-      "expect": "{'pnl': 1.74, 'sharpe': 0.439, 'trades': 3, 'stop_day': 1255}",
+      "setup": "x, y = make_pair(7, 1500); r = pairs_pipeline(y, x)",
+      "call": "[r['pnl'], r['sharpe'], r['trades']]",
+      "expect": "[10.34, 1.463, 12]",
       "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_broken_pair(3); r = pairs_pipeline(y, x)",
+      "call": "[r['pnl'], r['sharpe'], r['trades'], r['stop_day']]",
+      "expect": "[11.45, 0.799, 14, 1249]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_broken_pair(3); r = pairs_pipeline(y, x, formation=800)",
+      "call": "[r['pnl'], r['sharpe'], r['trades'], r['stop_day']]",
+      "expect": "[2.69, 0.103, 19, 1390]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(3, 1500); r = pairs_pipeline(y, x, dd_limit=2.5)",
+      "call": "[r['pnl'], r['sharpe'], r['trades'], r['stop_day']]",
+      "expect": "[1.74, 0.439, 3, 1255]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(3, 1500); r = pairs_pipeline(y, x)",
+      "call": "sorted(r)",
+      "expect": "['pnl', 'sharpe', 'stop_day', 'trades']",
+      "compare": "equal"
      },
      {
       "setup": "x, y = make_case('A', 1500)",
@@ -373,14 +379,14 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 8 hidden tests: three healthy pairs, the broken pair twice and a tight loss limit. Lesson 2's pair A must be refused. The first run loads statsmodels, which takes 20 to 40 seconds; each case then takes about a second."
+    "how": "Check runs 9 hidden tests: three healthy pairs, the broken pair twice and a tight loss limit. Lesson 2's pair A must be refused. The first run loads statsmodels, which takes 20 to 40 seconds; each case then takes about a second."
    },
    "feedback": {
     "correct": "Correct. The broken pair stops on day 1,249 with £11.45 kept, and pair A is refused.",
     "generic": "Some tests failed. Check the refusal first, then the check days (`end - 1`). P&L and trades stop at the stop day."
    },
    "explain": {
-    "text": "On the broken pair the ADF rule fires on day 1,249, before the loss limit. It keeps £11.45 of trading P&L. With an 800-day formation the check at day 1,300 reads 0.14, so the loss limit fires first, on day 1,390. Pair A never reaches trading: its formation test gives $p = 0.80$."
+    "text": "On the broken pair the ADF rule fires first, on day 1,249, keeping £11.45 of trading P&L. With an 800-day formation the check at day 1,300 reads 0.14, so the loss limit fires first, on day 1,390. Pair A never reaches trading: its formation test gives $p = 0.80$."
    }
   },
   {
