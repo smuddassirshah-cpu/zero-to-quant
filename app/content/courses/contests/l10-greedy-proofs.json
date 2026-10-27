@@ -1081,7 +1081,7 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "prelude": "def gen_coins(rng):\n    coins = sorted([1] + rng.sample(range(2, 10), 2))\n    return coins, rng.randint(1, 20)\n\n\ndef gen_canonical(rng):\n    return [1, 2, 5, 10], rng.randint(1, 40)\n\n\ndef greedy_coins(case):\n    coins, amount = case\n    used = 0\n    for c in sorted(coins, reverse=True):\n        used += amount // c\n        amount %= c\n    return used\n\n\ndef min_coins_brute(case):\n    coins, amount = case\n    best = [0] + [float(\"inf\")] * amount\n    for a in range(1, amount + 1):\n        for c in coins:\n            if c <= a and best[a - c] + 1 < best[a]:\n                best[a] = best[a - c] + 1\n    return best[amount]\n",
+        "prelude": "def gen_coins(rng):\n    coins = sorted([1] + rng.sample(range(2, 10), 2))\n    return coins, rng.randint(1, 20)\n\n\ndef gen_canonical(rng):\n    return [1, 2, 5, 10], rng.randint(1, 40)\n\n\ndef greedy_coins(case):\n    coins, amount = case\n    used = 0\n    for c in sorted(coins, reverse=True):\n        used += amount // c\n        amount %= c\n    return used\n\n\ndef min_coins_brute(case):\n    coins, amount = case\n    best = [0] + [float(\"inf\")] * amount\n    for a in range(1, amount + 1):\n        for c in coins:\n            if c <= a and best[a - c] + 1 < best[a]:\n                best[a] = best[a - c] + 1\n    return best[amount]\n\n\ndef trials_run(gen, trials, seed):\n    # the learner's answer, and how many times gen was called\n    calls = [0]\n\n    def counting_gen(rng):\n        calls[0] += 1\n        return gen(rng)\n\n    found = greedy_counterexample(greedy_coins, min_coins_brute, counting_gen, trials, seed)\n    return found, calls[0]\n",
         "starter": "import random\n\n\ndef greedy_counterexample(greedy, brute, gen, trials, seed):\n    ...\n",
         "solution": "import random\n\n\ndef greedy_counterexample(greedy, brute, gen, trials, seed):\n    rng = random.Random(seed)\n    best = None\n    for _ in range(trials):\n        case = gen(rng)\n        if greedy(case) != brute(case):\n            if best is None or case[1] < best[1]:\n                best = case\n    return best\n",
         "examples": [
@@ -1113,8 +1113,8 @@
             "compare": "equal"
           },
           {
-            "call": "greedy_counterexample(greedy_coins, min_coins_brute, gen_coins, 10, 1)",
-            "expect": "None",
+            "call": "trials_run(gen_coins, 10, 1)",
+            "expect": "(None, 10)",
             "compare": "equal"
           },
           {
@@ -1123,12 +1123,12 @@
             "compare": "equal"
           },
           {
-            "call": "greedy_counterexample(greedy_coins, min_coins_brute, gen_canonical, 300, 1)",
-            "expect": "None",
+            "call": "trials_run(gen_canonical, 300, 1)",
+            "expect": "(None, 300)",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests with seeds 1 to 4 and the generators above. Each case is `(coins, amount)`, compared exactly. Make one `random.Random(seed)` and call `gen(rng)` once per trial, so your cases match ours."
+        "how": "Check runs 7 hidden tests with seeds 1 to 4 and the generators above. Each case is `(coins, amount)`, compared exactly. Make one `random.Random(seed)` and call `gen(rng)` once per trial, so your cases match ours. Tests 5 and 7 expect `None` and also count your calls to `gen`."
       },
       "hints": [
         {
@@ -1153,8 +1153,8 @@
         "generic": "Not quite right. Look at the first failing test.",
         "byKey": {
           "test-1": "Test 1 expects `([1, 4, 6], 8)`. Returning the first failure gives `([1, 5, 8], 15)`: keep going and keep the smallest amount.",
-          "test-5": "Test 5 runs 10 trials with seed 1, and none fails: return `None`.",
-          "test-7": "Test 7 uses coins 1, 2, 5 and 10, where the greedy is always right: return `None`."
+          "test-5": "Test 5 runs 10 trials with seed 1, and none fails: call `gen` ten times, then return `None`.",
+          "test-7": "Test 7 uses coins 1, 2, 5 and 10, where the greedy is always right: run all 300 trials, then return `None`."
         }
       },
       "explain": {
