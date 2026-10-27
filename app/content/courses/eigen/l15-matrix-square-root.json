@@ -1,0 +1,1408 @@
+{
+ "id": "l15-matrix-square-root",
+ "course": "eigen",
+ "title": "The Cholesky factorisation",
+ "minutes": 15,
+ "objectives": [
+  "Factor a positive definite matrix as $\\mathbf{L}\\mathbf{L}^T$ by hand and in code.",
+  "Use the factor to simulate correlated returns.",
+  "Spot a matrix that has no factor."
+ ],
+ "skills": [
+  "eg-pd"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Mix two independent draws",
+   "prose": "A simulation needs returns $x_1, x_2$ with variances 4 and 5 and covariance 2. It has independent draws $z_1, z_2$, each with variance 1. Try $x_1 = a z_1$ and $x_2 = b z_1 + c z_2$, and match $\\boldsymbol{\\Sigma}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "L",
+       "rows": [
+        [
+         "$a$",
+         0
+        ],
+        [
+         "$b$",
+         "$c$"
+        ]
+       ],
+       "label": "$\\mathbf{L}$"
+      },
+      {
+       "id": "S",
+       "rows": [
+        [
+         4,
+         2
+        ],
+        [
+         2,
+         5
+        ]
+       ],
+       "label": "$\\boldsymbol{\\Sigma}$"
+      }
+     ],
+     "ops": [
+      "$\\to$"
+     ]
+    },
+    "state": {
+     "caption": "Match $\\mathbf{L}\\mathbf{L}^T$ to $\\boldsymbol{\\Sigma}$."
+    }
+   },
+   "question": "Find $a$, $b$ and $c$, all positive.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Weight",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$a$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$b$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$c$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\mathrm{Var}(x_1) = a^2$, because $z_1$ has variance 1."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathrm{Cov}(x_1, x_2) = ab$ and $\\mathrm{Var}(x_2) = b^2 + c^2$.",
+     "highlight": [
+      "S"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$a^2 = 4$ gives $a = 2$. Then $2b = 2$ gives $b = 1$. Then $1 + c^2 = 5$ gives $c = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$a = 2$, $b = 1$, $c = 2$, so $\\mathbf{L} = \\begin{pmatrix} 2 & 0 \\\\ 1 & 2 \\end{pmatrix}$ and $\\mathbf{L}\\mathbf{L}^T = \\boldsymbol{\\Sigma}$.",
+    "generic": "Not quite right. Match $a^2 = 4$ first, then $ab = 2$, then $b^2 + c^2 = 5$.",
+    "byKey": {
+     "r0c1": "$a^2 = 4$, so $a = 2$, not 4. The variance is $a$ squared.",
+     "r1c1": "With $a = 2$, $ab = 2$ gives $b = 1$.",
+     "r2c1": "$b^2 + c^2 = 5$ with $b = 1$ leaves $c^2 = 4$, so $c = 2$."
+    }
+   },
+   "explain": {
+    "text": "The weights fill a lower triangular matrix $\\mathbf{L}$ with $\\mathbf{L}\\mathbf{L}^T = \\boldsymbol{\\Sigma}$. Writing a positive definite matrix like this is the **Cholesky factorisation**. We took $x_1$ first, then added what $x_2$ needs that $x_1$ lacks."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which cloud has this covariance?",
+   "prose": "The cloud shows many days of $(x_1, x_2)$ with standard deviations $2$ and $\\sqrt5 \\approx 2.24$. The draws must have covariance 2. Slide the correlation until the cloud matches $\\boldsymbol{\\Sigma}$.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "sim": {
+      "n": 400,
+      "rho": 0,
+      "seed": 3,
+      "mx": 0,
+      "my": 0,
+      "sx": 2,
+      "sy": 2.236068
+     },
+     "x": [
+      -8,
+      8
+     ],
+     "y": [
+      -8,
+      8
+     ],
+     "xLabel": "$x_1$",
+     "yLabel": "$x_2$",
+     "height": 300
+    },
+    "state": {
+     "params": {
+      "rho": 0
+     }
+    }
+   },
+   "question": "Set the correlation $\\rho = \\dfrac{\\mathrm{Cov}(x_1, x_2)}{\\sigma_1\\sigma_2}$ that gives covariance 2.",
+   "widget": {
+    "kind": "slider",
+    "min": 0,
+    "max": 0.95,
+    "step": 0.01,
+    "start": 0,
+    "bind": "rho",
+    "answer": 0.4472,
+    "tol": 0.03,
+    "label": "Correlation",
+    "wrong": [
+     {
+      "id": "ratio",
+      "from": 0.36,
+      "to": 0.41
+     },
+     {
+      "id": "half",
+      "from": 0.47,
+      "to": 0.53
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The correlation divides the covariance by both standard deviations."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma_1 = 2$ and $\\sigma_2 = \\sqrt5$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\rho = 2 / (2\\sqrt5) = 1/\\sqrt5 \\approx 0.447$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\rho = 1/\\sqrt5 \\approx 0.447$. The same $\\boldsymbol{\\Sigma}$ fixes the cloud.",
+    "generic": "Not quite right. Divide the covariance 2 by $\\sigma_1\\sigma_2 = 2\\sqrt5$.",
+    "byKey": {
+     "ratio": "$2/5 = 0.4$ divides by the variance of $x_2$. The correlation divides by the two standard deviations.",
+     "half": "0.5 would be the correlation if the standard deviations multiplied to 4. Here they multiply to $2\\sqrt5 \\approx 4.47$."
+    }
+   },
+   "explain": {
+    "text": "$\\rho = 2/(2 \\times 2.236) = 0.447$. The same cloud comes from $x_1 = 2z_1$ and $x_2 = z_1 + 2z_2$: the covariance matrix fixes the cloud, and $\\mathbf{L}$ is one recipe that produces it.",
+    "canvas": {
+     "params": {
+      "rho": 0.4472
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A three by three by hand",
+   "prose": "Build $\\mathbf{L}$ for a $3 \\times 3$ matrix column by column. Take $\\sqrt{\\Sigma_{11}}$, then divide the rest of column 1 by it. In column 2, $L_{22} = \\sqrt{\\Sigma_{22} - L_{21}^2}$ and $L_{32} = (\\Sigma_{32} - L_{31}L_{21})/L_{22}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "S",
+       "rows": [
+        [
+         4,
+         2,
+         2
+        ],
+        [
+         2,
+         5,
+         3
+        ],
+        [
+         2,
+         3,
+         6
+        ]
+       ],
+       "label": "$\\boldsymbol{\\Sigma}$"
+      },
+      {
+       "id": "L",
+       "rows": [
+        [
+         2,
+         0,
+         0
+        ],
+        [
+         1,
+         2,
+         0
+        ],
+        [
+         1,
+         1,
+         2
+        ]
+       ],
+       "label": "$\\mathbf{L}$"
+      }
+     ],
+     "ops": [
+      "$\\to$"
+     ]
+    },
+    "state": {
+     "hidden": [
+      "L"
+     ],
+     "caption": "$\\boldsymbol{\\Sigma} = \\mathbf{L}\\mathbf{L}^T$"
+    }
+   },
+   "question": "Fill in $\\mathbf{L}$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "",
+     "col 1",
+     "col 2",
+     "col 3"
+    ],
+    "rows": [
+     [
+      "row 1",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      "0",
+      "0"
+     ],
+     [
+      "row 2",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      "0"
+     ],
+     [
+      "row 3",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Column 1 is $(4, 2, 2)/\\sqrt4 = (2, 1, 1)$."
+    },
+    {
+     "rung": "point",
+     "text": "$L_{22} = \\sqrt{5 - 1} = 2$. Then $L_{32} = (3 - 1 \\times 1)/2 = 1$.",
+     "highlight": [
+      "S"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$L_{33} = \\sqrt{6 - L_{31}^2 - L_{32}^2} = \\sqrt{6 - 1 - 1} = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{L} = \\begin{pmatrix} 2 & 0 & 0 \\\\ 1 & 2 & 0 \\\\ 1 & 1 & 2 \\end{pmatrix}$.",
+    "generic": "Not quite right. Work down column 1, then column 2, then the last pivot.",
+    "byKey": {
+     "r0c1": "$\\sqrt{4} = 2$.",
+     "r1c1": "$\\Sigma_{21}/L_{11} = 2/2 = 1$.",
+     "r2c1": "$\\Sigma_{31}/L_{11} = 2/2 = 1$.",
+     "r1c2": "$\\sqrt{5 - 1^2} = 2$.",
+     "r2c2": "$(3 - 1 \\times 1)/2 = 1$.",
+     "r2c3": "$\\sqrt{6 - 1 - 1} = 2$."
+    }
+   },
+   "explain": {
+    "text": "Each new entry is what $\\boldsymbol{\\Sigma}$ still needs after the columns to its left have been used. Check $\\mathbf{L}\\mathbf{L}^T$: row 3 against itself gives $1 + 1 + 4 = 6$.",
+    "canvas": {
+     "hidden": []
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two assets with a correlation",
+   "prose": "Annual vols of 20% and 30% with correlation 0.5 give $\\boldsymbol{\\Sigma} = \\begin{pmatrix} 0.04 & 0.03 \\\\ 0.03 & 0.09 \\end{pmatrix}$. The first column of $\\mathbf{L}$ is $(0.2, 0.15)$: $\\sqrt{0.04} = 0.2$ and $0.03 / 0.2 = 0.15$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "S",
+       "rows": [
+        [
+         0.04,
+         0.03
+        ],
+        [
+         0.03,
+         0.09
+        ]
+       ],
+       "label": "$\\boldsymbol{\\Sigma}$"
+      },
+      {
+       "id": "L",
+       "rows": [
+        [
+         0.2,
+         0
+        ],
+        [
+         0.15,
+         "$?$"
+        ]
+       ],
+       "label": "$\\mathbf{L}$"
+      }
+     ],
+     "ops": [
+      "$\\to$"
+     ]
+    },
+    "state": {
+     "caption": "$\\boldsymbol{\\Sigma} = \\mathbf{L}\\mathbf{L}^T$"
+    }
+   },
+   "question": "What is $L_{22}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2598,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "L22",
+    "accept": "0.2598: $\\sqrt{0.09 - 0.15^2} = \\sqrt{0.0675}$",
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "vol",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.0675,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.09,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$L_{22}^2 = \\Sigma_{22} - L_{21}^2$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.15^2 = 0.0225$.",
+     "highlight": [
+      "S"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$L_{22} = \\sqrt{0.09 - 0.0225} = \\sqrt{0.0675} = 0.2598$."
+    }
+   ],
+   "feedback": {
+    "correct": "$L_{22} = \\sqrt{0.0675} \\approx 0.2598$.",
+    "generic": "Not quite right. Subtract $L_{21}^2 = 0.0225$ from 0.09, then take the root.",
+    "byKey": {
+     "vol": "0.3 is asset 2's full volatility. Part of it, $0.15$, is already carried by $z_1$.",
+     "nosqrt": "0.0675 is $L_{22}^2$. $\\mathbf{L}$ holds the roots.",
+     "var": "0.09 is the full variance of asset 2. Subtract what $z_1$ already supplies, $0.15^2$."
+    }
+   },
+   "explain": {
+    "text": "Asset 2 takes $0.15\\,z_1$ from the shared draw and $0.2598\\,z_2$ of its own. Check: $0.15^2 + 0.2598^2 = 0.0225 + 0.0675 = 0.09$.",
+    "canvas": {
+     "values": {
+      "L-1-1": 0.2598
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Elimination with roots",
+   "prose": "Elimination on $\\boldsymbol{\\Sigma} = \\begin{pmatrix} 9 & 3 \\\\ 3 & 5 \\end{pmatrix}$ subtracts $\\tfrac13$ of row 1 from row 2 and leaves pivots 9 and 4. So $\\boldsymbol{\\Sigma} = \\mathbf{L}_u\\mathbf{D}\\mathbf{L}_u^T$, and Cholesky takes the square root of each pivot.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "S",
+       "rows": [
+        [
+         9,
+         3
+        ],
+        [
+         3,
+         5
+        ]
+       ],
+       "label": "$\\boldsymbol{\\Sigma}$"
+      },
+      {
+       "id": "U",
+       "rows": [
+        [
+         9,
+         3
+        ],
+        [
+         0,
+         4
+        ]
+       ],
+       "label": "$\\mathbf{U}$"
+      }
+     ],
+     "ops": [
+      "$\\to$"
+     ]
+    },
+    "state": {
+     "pivot": [
+      "U-0-0",
+      "U-1-1"
+     ],
+     "caption": "Row 2 minus $\\tfrac13$ of row 1."
+    }
+   },
+   "question": "What is $L_{22}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "L22",
+    "accept": "2: the square root of the second pivot, 4",
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 2.2361,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pivot",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "l21",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The pivots are the squares of the diagonal of $\\mathbf{L}$."
+    },
+    {
+     "rung": "point",
+     "text": "The second pivot is $5 - 3 \\times \\tfrac13 \\times 3 / 3$, which is 4.",
+     "highlight": [
+      "U-1-1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$L_{22} = \\sqrt{4} = 2$, and $L_{11} = 3$, $L_{21} = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{L} = \\begin{pmatrix} 3 & 0 \\\\ 1 & 2 \\end{pmatrix}$. The pivots 9 and 4 are the squares of 3 and 2.",
+    "generic": "Not quite right. Take the square root of the second pivot.",
+    "byKey": {
+     "raw": "$\\sqrt5$ ignores what column 1 already supplies. The pivot is $5 - 1^2 = 4$, not 5.",
+     "pivot": "4 is the pivot. $\\mathbf{L}$ holds its square root.",
+     "l21": "1 is $L_{21}$. The diagonal entry is the root of the pivot."
+    }
+   },
+   "explain": {
+    "text": "Cholesky is elimination in disguise, with the pivots square-rooted. All pivots positive is lesson 6's test for positive definite. A pivot of 0 or below means the root fails, and the matrix is not positive definite."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Two triangular solves",
+   "prose": "A factor also solves $\\boldsymbol{\\Sigma}\\mathbf{w} = \\mathbf{b}$ cheaply. With $\\mathbf{L} = \\begin{pmatrix} 2 & 0 \\\\ 1 & 2 \\end{pmatrix}$ and $\\mathbf{b} = (6, 9)$: solve $\\mathbf{L}\\mathbf{y} = \\mathbf{b}$ from the top, then $\\mathbf{L}^T\\mathbf{w} = \\mathbf{y}$ from the bottom.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "L",
+       "rows": [
+        [
+         2,
+         0
+        ],
+        [
+         1,
+         2
+        ]
+       ],
+       "label": "$\\mathbf{L}$"
+      },
+      {
+       "id": "y",
+       "rows": [
+        [
+         "$y_1$"
+        ],
+        [
+         "$y_2$"
+        ]
+       ],
+       "label": "$\\mathbf{y}$"
+      },
+      {
+       "id": "b",
+       "rows": [
+        [
+         6
+        ],
+        [
+         9
+        ]
+       ],
+       "label": "$\\mathbf{b}$"
+      }
+     ],
+     "ops": [
+      "",
+      "="
+     ]
+    },
+    "state": {}
+   },
+   "question": "Find $\\mathbf{y}$ and then $\\mathbf{w}$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "",
+     "value"
+    ],
+    "rows": [
+     [
+      "$y_1$",
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$y_2$",
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$w_2$",
+      {
+       "edit": true,
+       "answer": 1.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$w_1$",
+      {
+       "edit": true,
+       "answer": 0.75,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row 1 of $\\mathbf{L}\\mathbf{y} = \\mathbf{b}$ is $2y_1 = 6$. Row 2 is $y_1 + 2y_2 = 9$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathbf{L}^T = \\begin{pmatrix} 2 & 1 \\\\ 0 & 2 \\end{pmatrix}$, so $2w_2 = y_2$ and $2w_1 + w_2 = y_1$.",
+     "highlight": [
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$y = (3, 3)$. Then $w_2 = 1.5$ and $2w_1 = 3 - 1.5$, so $w_1 = 0.75$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{w} = (0.75, 1.5)$. Check: $\\boldsymbol{\\Sigma}\\mathbf{w} = (4(0.75) + 2(1.5), 2(0.75) + 5(1.5)) = (6, 9)$.",
+    "generic": "Not quite right. Solve down the first system, then up the second.",
+    "byKey": {
+     "r0c1": "$2y_1 = 6$, so $y_1 = 3$.",
+     "r1c1": "$1 \\times 3 + 2y_2 = 9$, so $y_2 = 3$.",
+     "r2c1": "$2w_2 = y_2 = 3$, so $w_2 = 1.5$.",
+     "r3c1": "$2w_1 + 1.5 = 3$, so $w_1 = 0.75$."
+    }
+   },
+   "explain": {
+    "text": "Each solve is a triangle, so every unknown comes from one division. That is why risk systems factor $\\boldsymbol{\\Sigma}$ once and reuse it, rather than inverting it."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Transposing the factor",
+   "prose": "A colleague uses $\\mathbf{x} = \\mathbf{L}^T\\mathbf{z}$ instead of $\\mathbf{L}\\mathbf{z}$, with $\\mathbf{L} = \\begin{pmatrix} 0.2 & 0 \\\\ 0.15 & 0.2598 \\end{pmatrix}$ from the 20% and 30% example. Then $x_1 = 0.2z_1 + 0.15z_2$ and $x_2 = 0.2598z_2$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "L",
+       "rows": [
+        [
+         0.2,
+         0
+        ],
+        [
+         0.15,
+         0.2598
+        ]
+       ],
+       "label": "$\\mathbf{L}$"
+      },
+      {
+       "id": "LT",
+       "rows": [
+        [
+         0.2,
+         0.15
+        ],
+        [
+         0,
+         0.2598
+        ]
+       ],
+       "label": "$\\mathbf{L}^T$"
+      }
+     ],
+     "ops": [
+      ""
+     ]
+    },
+    "state": {
+     "highlight": {
+      "LT": {
+       "rows": [
+        0
+       ]
+      }
+     }
+    }
+   },
+   "question": "What is the covariance matrix of the colleague's draws?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "$\\mathbf{L}^T\\mathbf{L} = \\begin{pmatrix} 0.0625 & 0.0390 \\\\ 0.0390 & 0.0675 \\end{pmatrix}$",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "$\\boldsymbol{\\Sigma} = \\begin{pmatrix} 0.04 & 0.03 \\\\ 0.03 & 0.09 \\end{pmatrix}$",
+      "why": "You treated $\\mathbf{L}^T$ as interchangeable with $\\mathbf{L}$. The covariance is $\\mathbf{L}^T(\\mathbf{L}^T)^T = \\mathbf{L}^T\\mathbf{L}$, which is a different matrix."
+     },
+     {
+      "id": "diag",
+      "text": "$\\begin{pmatrix} 0.04 & 0 \\\\ 0 & 0.0675 \\end{pmatrix}$",
+      "why": "You squared the diagonal of $\\mathbf{L}^T$ and ignored $0.15$. Variance of $x_1$ is $0.2^2 + 0.15^2$."
+     },
+     {
+      "id": "ident",
+      "text": "$\\mathbf{I}$",
+      "why": "The draws are mixed by $\\mathbf{L}^T$, so they are no longer independent with variance 1."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For $\\mathbf{x} = \\mathbf{B}\\mathbf{z}$ the covariance is $\\mathbf{B}\\mathbf{B}^T$. Here $\\mathbf{B} = \\mathbf{L}^T$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathrm{Var}(x_1) = 0.2^2 + 0.15^2 = 0.0625$.",
+     "highlight": [
+      "LT-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathbf{B}\\mathbf{B}^T = \\mathbf{L}^T\\mathbf{L}$. Its diagonal is $0.0625$ and $0.0675$, and its off-diagonal is $0.15 \\times 0.2598 = 0.039$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{L}^T\\mathbf{L}$ has variances 0.0625 and 0.0675, not 0.04 and 0.09.",
+    "generic": "Not quite right. Compute $\\mathrm{Var}(x_1)$ from $x_1 = 0.2z_1 + 0.15z_2$.",
+    "byKey": {
+     "same": "You assumed the transpose is harmless. It gives variances 0.0625 and 0.0675 instead of 0.04 and 0.09.",
+     "diag": "You dropped the $0.15z_2$ term in $x_1$.",
+     "ident": "The $z$s are independent, but $x_1$ and $x_2$ share $z_2$."
+    }
+   },
+   "explain": {
+    "text": "Always use $\\mathbf{L}\\mathbf{z}$, with $\\mathbf{L}$ lower triangular. The transposed factor reverses the roles of the rows, and its covariance is $\\mathbf{L}^T\\mathbf{L}$. Both $\\mathbf{L}\\mathbf{L}^T$ and $\\mathbf{L}^T\\mathbf{L}$ are symmetric, which hides the slip."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Show why $\\mathbf{x} = \\mathbf{L}\\mathbf{z}$ has covariance $\\mathbf{L}\\mathbf{L}^T$, for independent $z_i$ with mean 0 and variance 1.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "def",
+      "text": "$\\mathrm{Cov}(\\mathbf{x}) = E[\\mathbf{x}\\mathbf{x}^T]$, since $E[\\mathbf{x}] = \\mathbf{L}E[\\mathbf{z}] = \\mathbf{0}$"
+     },
+     {
+      "id": "sub",
+      "text": "$= E[\\mathbf{L}\\mathbf{z}(\\mathbf{L}\\mathbf{z})^T]$, substituting $\\mathbf{x} = \\mathbf{L}\\mathbf{z}$"
+     },
+     {
+      "id": "tr",
+      "text": "$= E[\\mathbf{L}\\mathbf{z}\\mathbf{z}^T\\mathbf{L}^T]$, since $(\\mathbf{L}\\mathbf{z})^T = \\mathbf{z}^T\\mathbf{L}^T$"
+     },
+     {
+      "id": "lin",
+      "text": "$= \\mathbf{L}\\,E[\\mathbf{z}\\mathbf{z}^T]\\,\\mathbf{L}^T$, since $\\mathbf{L}$ is constant and expectation is linear"
+     },
+     {
+      "id": "id",
+      "text": "$= \\mathbf{L}\\mathbf{I}\\mathbf{L}^T = \\mathbf{L}\\mathbf{L}^T$, since $E[\\mathbf{z}\\mathbf{z}^T] = \\mathbf{I}$ for independent unit variances"
+     }
+    ],
+    "answer": [
+     "def",
+     "sub",
+     "tr",
+     "lin",
+     "id"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the definition of a covariance matrix of a mean-zero vector."
+    },
+    {
+     "rung": "point",
+     "text": "Take the constant matrix $\\mathbf{L}$ outside the expectation."
+    },
+    {
+     "rung": "step",
+     "text": "Definition, substitute, transpose, pull out $\\mathbf{L}$, use $E[\\mathbf{z}\\mathbf{z}^T] = \\mathbf{I}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathrm{Cov}(\\mathbf{L}\\mathbf{z}) = \\mathbf{L}\\,\\mathrm{Cov}(\\mathbf{z})\\,\\mathbf{L}^T$.",
+    "generic": "Not quite right. Each line should follow from the one before.",
+    "byKey": {
+     "lin": "You can take $\\mathbf{L}$ outside only after writing the transpose of the product.",
+     "id": "The identity matrix appears last, once $\\mathbf{L}$ has left the expectation."
+    }
+   },
+   "explain": {
+    "text": "For a general $\\mathbf{x}$ the same steps give $\\mathrm{Cov}(\\mathbf{B}\\mathbf{x}) = \\mathbf{B}\\,\\mathrm{Cov}(\\mathbf{x})\\,\\mathbf{B}^T$. A single row $\\mathbf{B} = \\mathbf{w}^T$ gives lesson 7's portfolio variance $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$."
+   },
+   "title": "Why the factor works"
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The 2 by 2 factor in code",
+   "prose": "Write the 2 by 2 factor from the formulas, with no NumPy. It must refuse a matrix that is not positive definite: lesson 7's suspect matrix would need the root of a negative number.",
+   "question": "Complete `cholesky_2x2(S)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef cholesky_2x2(S):\n    \"\"\"Return lower triangular L with L L^T = S, as nested lists.\n    Raise ValueError when S is not positive definite.\"\"\"\n    a, b, c = S[0][0], S[1][0], S[1][1]\n    l11 = ...      # root of the first variance\n    l21 = ...      # covariance over l11\n    rest = ...     # c minus l21 squared\n    # raise ValueError here when a or rest is not positive\n    return [[l11, 0.0], [l21, math.sqrt(rest)]]\n",
+    "solution": "import math\n\ndef cholesky_2x2(S):\n    \"\"\"Return lower triangular L with L L^T = S, as nested lists.\n    Raise ValueError when S is not positive definite.\"\"\"\n    a, b, c = S[0][0], S[1][0], S[1][1]\n    if a <= 0:\n        raise ValueError(\"S is not positive definite\")\n    l11 = math.sqrt(a)\n    l21 = b / l11\n    rest = c - l21 ** 2\n    if rest <= 0:\n        raise ValueError(\"S is not positive definite\")\n    return [[l11, 0.0], [l21, math.sqrt(rest)]]\n",
+    "examples": [
+     {
+      "call": "[[round(v, 4) for v in row] for row in cholesky_2x2([[4, 2], [2, 5]])]",
+      "expect": "[[2.0, 0.0], [1.0, 2.0]]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[[round(v, 4) for v in row] for row in cholesky_2x2([[4, 2], [2, 5]])]",
+      "expect": "[[2.0, 0.0], [1.0, 2.0]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[[round(v, 4) for v in row] for row in cholesky_2x2([[0.04, 0.03], [0.03, 0.09]])]",
+      "expect": "[[0.2, 0.0], [0.15, 0.2598]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[[round(v, 4) for v in row] for row in cholesky_2x2([[9, 3], [3, 5]])]",
+      "expect": "[[3.0, 0.0], [1.0, 2.0]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[[round(v, 4) for v in row] for row in cholesky_2x2([[2.5, 1], [1, 3]])]",
+      "expect": "[[1.5811, 0.0], [0.6325, 1.6125]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "cholesky_2x2([[1, 1.2], [1.2, 1]])",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "cholesky_2x2([[1, 1], [1, 1]])",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "cholesky_2x2([[0, 0], [0, 1]])",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Entries are rounded to 4 decimal places and must match. Three tests pass a matrix that is not positive definite and expect a ValueError. No packages are needed, so it runs at once."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow lesson 15's recipe: $\\sqrt{a}$, then $b / L_{11}$, then $\\sqrt{c - L_{21}^2}$."
+    },
+    {
+     "rung": "point",
+     "text": "Check `a <= 0` before the first root and `rest <= 0` before the second."
+    },
+    {
+     "rung": "step",
+     "text": "`l11 = math.sqrt(a)`, `l21 = b / l11`, `rest = c - l21 ** 2`, with a `ValueError` for each bad case."
+    }
+   ],
+   "feedback": {
+    "correct": "A matrix is positive definite exactly when both roots are of positive numbers.",
+    "generic": "Some tests failed. Compute the three quantities in order, and raise `ValueError` when a root would need a number at or below zero.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace each `...` with an expression, and add the checks."
+    }
+   },
+   "explain": {
+    "text": "The factor exists only when both numbers under the roots are positive. That is positive definiteness read off one pivot at a time.\n\n```python\nif a <= 0:\n    raise ValueError(\"S is not positive definite\")\n```"
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Correlated draws in NumPy",
+   "prose": "Now simulate: $\\mathbf{x} = \\mathbf{L}\\mathbf{z}$ for many rows $\\mathbf{z}$ at once. With rows as draws, $\\mathbf{x}^T = \\mathbf{z}^T\\mathbf{L}^T$, so the whole table is `Z @ L.T`. The cloud shows 400 draws for $\\boldsymbol{\\Sigma} = \\begin{pmatrix} 4 & 2 \\\\ 2 & 5 \\end{pmatrix}$.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "sim": {
+      "n": 400,
+      "rho": 0.4472,
+      "seed": 9,
+      "mx": 0,
+      "my": 0,
+      "sx": 2,
+      "sy": 2.236068
+     },
+     "x": [
+      -8,
+      8
+     ],
+     "y": [
+      -8,
+      8
+     ],
+     "xLabel": "$x_1$",
+     "yLabel": "$x_2$",
+     "height": 260
+    },
+    "state": {}
+   },
+   "question": "Complete `correlated_draws(Sigma, n, seed)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef correlated_draws(Sigma, n, seed):\n    \"\"\"Return an n x 2 array whose rows have covariance Sigma.\"\"\"\n    L = ...                            # lower triangular Cholesky factor\n    rng = np.random.default_rng(seed)\n    Z = rng.standard_normal((n, 2))    # independent, variance 1\n    return ...                         # each row is L z\n",
+    "solution": "import numpy as np\n\ndef correlated_draws(Sigma, n, seed):\n    \"\"\"Return an n x 2 array whose rows have covariance Sigma.\"\"\"\n    L = np.linalg.cholesky(np.asarray(Sigma, dtype=float))\n    rng = np.random.default_rng(seed)\n    Z = rng.standard_normal((n, 2))    # independent, variance 1\n    return Z @ L.T                     # each row is L z\n",
+    "examples": [
+     {
+      "call": "list(correlated_draws([[4, 2], [2, 5]], 5, 1).shape)",
+      "expect": "[5, 2]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(correlated_draws([[4, 2], [2, 5]], 5, 1).shape)",
+      "expect": "[5, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(correlated_draws([[4, 2], [2, 5]], 3, 42), 4).tolist()",
+      "expect": "[[0.6094, -1.7753], [1.5009, 2.6316], [-3.9021, -4.5554]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.cov(correlated_draws([[4, 2], [2, 5]], 10000, 7).T).tolist()",
+      "expect": "[[4, 2], [2, 5]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.25
+      }
+     },
+     {
+      "call": "np.cov(correlated_draws([[0.04, 0.03], [0.03, 0.09]], 10000, 11).T).tolist()",
+      "expect": "[[0.04, 0.03], [0.03, 0.09]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.004
+      }
+     },
+     {
+      "call": "correlated_draws([[4, 2], [2, 5]], 10000, 7).mean(axis=0).tolist()",
+      "expect": "[0, 0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "call": "round(float(np.corrcoef(correlated_draws([[1, 0.8], [0.8, 1]], 10000, 5).T)[0, 1]), 1)",
+      "expect": "0.8",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.03
+      }
+     }
+    ],
+    "how": "Check runs 6 hidden tests. One compares a fixed seed's first draws to 4 decimal places, so call `rng.standard_normal((n, 2))` once. Three compare the sample covariance of 10,000 draws within a stated tolerance. The first run loads NumPy: 1 to 3 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "NumPy has a function for the factor."
+    },
+    {
+     "rung": "point",
+     "text": "`np.linalg.cholesky(Sigma)` returns the lower triangular factor."
+    },
+    {
+     "rung": "step",
+     "text": "`L = np.linalg.cholesky(np.asarray(Sigma, dtype=float))` and `return Z @ L.T`."
+    }
+   ],
+   "feedback": {
+    "correct": "Each row of `Z @ L.T` is $\\mathbf{L}\\mathbf{z}$ for one draw.",
+    "generic": "Some tests failed. Build `L` from `Sigma`, then multiply the table of draws by `L.T`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace each `...` with an expression."
+    }
+   },
+   "explain": {
+    "text": "The table of draws is `Z`, one row per draw. Each row of `Z @ L.T` is $\\mathbf{L}\\mathbf{z}$, so its sample covariance approaches $\\mathbf{L}\\mathbf{L}^T = \\boldsymbol{\\Sigma}$.\n\n```python\nL = np.linalg.cholesky(Sigma)\nreturn Z @ L.T\n```"
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Monte Carlo VaR for a two-asset position",
+   "prose": "A £1m position is split 60/40 across the two assets of the 20% and 30% example. Daily covariance is $\\boldsymbol{\\Sigma}/252$. A seeded run of 100,000 correlated days gave the Monte Carlo output below. $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = 0.0432$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Monte Carlo one-day VaR",
+     "lines": [
+      ">>> L = np.linalg.cholesky(Sigma / 252)",
+      ">>> R = rng.standard_normal((100000, 2)) @ L.T",
+      ">>> pnl = 1_000_000 * (R @ [0.6, 0.4])",
+      ">>> print(round(np.quantile(pnl, 0.01)))",
+      "-30514"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the formula $2.33\\sqrt{\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}/252}$ give, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 30507,
+    "tol": {
+     "abs": 100
+    },
+    "label": "Parametric one-day 99% VaR",
+    "accept": "£30,507: $2.33 \\times 1{,}000{,}000 \\times \\sqrt{0.0432/252} = 2.33 \\times 13{,}093$",
+    "unit": "£",
+    "placeholder": "to the nearest pound",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 13093,
+      "tol": {
+       "abs": 60
+      }
+     },
+     {
+      "id": "annual",
+      "value": 484281,
+      "tol": {
+       "abs": 500
+      }
+     },
+     {
+      "id": "nocov",
+      "value": 24909,
+      "tol": {
+       "abs": 100
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Scale the annual variance 0.0432 to a day, take the root, and multiply by £1m and 2.33."
+    },
+    {
+     "rung": "point",
+     "text": "$0.0432 / 252 = 0.000171$, whose root is $0.01309$.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.01309 \\times 1{,}000{,}000 = £13{,}093$ a day. Times 2.33 is about £30{,}507."
+    }
+   ],
+   "feedback": {
+    "correct": "£30,507 by formula, against £30,514 from the simulation. They agree within sampling error.",
+    "generic": "Not quite right. Divide $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ by 252 before the root.",
+    "byKey": {
+     "sd": "£13,093 is one standard deviation. A 99% VaR is 2.33 of them.",
+     "annual": "You skipped the $\\tfrac{1}{252}$, which gives an annual figure.",
+     "nocov": "£24,909 leaves out the covariance term, so it understates the risk of two assets that move together."
+    }
+   },
+   "explain": {
+    "text": "The simulation gives £30,514 and the formula £30,507, because both use the correlation. With 100,000 days the 1% quantile is still noisy by about £100. Another seed would change it slightly."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A positive definite $\\boldsymbol{\\Sigma}$ factors as $\\mathbf{L}\\mathbf{L}^T$, with $\\mathbf{L}$ lower triangular and positive on the diagonal. This is the Cholesky factorisation: elimination with square-rooted pivots.",
+   "If $\\mathbf{z}$ has independent unit-variance entries, then $\\mathbf{L}\\mathbf{z}$ has covariance $\\mathbf{L}\\mathbf{L}^T = \\boldsymbol{\\Sigma}$. That simulates correlated returns.",
+   "$\\mathbf{L}^T\\mathbf{z}$ is wrong, because its covariance is $\\mathbf{L}^T\\mathbf{L}$. A matrix that is not positive definite has no factor."
+  ],
+  "formula": {
+   "name": "Cholesky factor",
+   "tex": "\\boldsymbol{\\Sigma} = \\mathbf{L}\\mathbf{L}^T, \\qquad \\mathrm{Cov}(\\mathbf{L}\\mathbf{z}) = \\mathbf{L}\\mathbf{L}^T = \\boldsymbol{\\Sigma}",
+   "note": "In code: `Z @ L.T` for a table of draws, one per row."
+  },
+  "trap": "Using $\\mathbf{L}^T\\mathbf{z}$ gives covariance $\\mathbf{L}^T\\mathbf{L}$, which is not $\\boldsymbol{\\Sigma}$."
+ },
+ "quiz": [
+  {
+   "id": "q-l22",
+   "difficulty": 2,
+   "prose": "$\\boldsymbol{\\Sigma} = \\begin{pmatrix} 1 & 0.5 \\\\ 0.5 & 1 \\end{pmatrix}$ has unit variances and correlation 0.5.",
+   "question": "What is $L_{22}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.866,
+    "tol": {
+     "abs": 0.002
+    },
+    "label": "L22",
+    "accept": "0.866: $\\sqrt{1 - 0.5^2} = \\sqrt{0.75}$",
+    "wrong": [
+     {
+      "id": "rho",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$L_{22} = \\sqrt{1 - 0.25} = 0.866$.",
+    "generic": "Not quite right. $L_{21} = 0.5$, so $L_{22} = \\sqrt{1 - L_{21}^2}$.",
+    "byKey": {
+     "rho": "0.5 is $L_{21}$, the share of $z_1$ in the second asset.",
+     "var": "0.75 is $L_{22}^2$. Take the root."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{L} = \\begin{pmatrix} 1 & 0 \\\\ 0.5 & 0.866 \\end{pmatrix}$. Check: $0.5^2 + 0.866^2 = 1$."
+   }
+  },
+  {
+   "id": "q-var",
+   "difficulty": 2,
+   "prose": "$x_1 = 2z_1$ and $x_2 = z_1 + 2z_2$, with $z_1, z_2$ independent of variance 1.",
+   "question": "What is $\\mathrm{Var}(x_2)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Var(x2)",
+    "accept": "5: $1^2 + 2^2$",
+    "wrong": [
+     {
+      "id": "l22",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sd",
+      "value": 2.2361,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathrm{Var}(x_2) = 1 + 4 = 5$.",
+    "generic": "Not quite right. The variances of independent terms add, each scaled by its weight squared.",
+    "byKey": {
+     "l22": "4 counts only the $z_2$ term. $z_1$ adds $1^2 = 1$ as well."
+    }
+   },
+   "explain": {
+    "text": "$\\mathrm{Var}(z_1 + 2z_2) = \\mathrm{Var}(z_1) + 4\\,\\mathrm{Var}(z_2) = 5$. It is row 2 of $\\mathbf{L}$ dotted with itself."
+   }
+  },
+  {
+   "id": "q-psd",
+   "difficulty": 3,
+   "prose": "$\\boldsymbol{\\Sigma} = \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}$ has two perfectly correlated assets, and eigenvalues 2 and 0.",
+   "question": "What happens when we try to find a Cholesky factor with positive diagonal?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "$L_{22}^2 = 1 - 1^2 = 0$, so there is no factor with a positive diagonal",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "It works and gives $\\mathbf{L} = \\begin{pmatrix} 1 & 0 \\\\ 1 & 1 \\end{pmatrix}$",
+      "why": "That $\\mathbf{L}$ gives $\\mathbf{L}\\mathbf{L}^T = \\begin{pmatrix} 1 & 1 \\\\ 1 & 2 \\end{pmatrix}$, not $\\boldsymbol{\\Sigma}$."
+     },
+     {
+      "id": "neg",
+      "text": "$L_{22}$ needs the root of a negative number",
+      "why": "The number under the root is 0, not negative. The matrix is on the edge."
+     },
+     {
+      "id": "ident",
+      "text": "$\\mathbf{L} = \\mathbf{I}$",
+      "why": "$\\mathbf{I}\\mathbf{I}^T = \\mathbf{I}$, which has no covariance between the assets."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A zero pivot means the matrix is only positive semidefinite, and the second asset is a copy of the first.",
+    "generic": "Not quite right. Compute $L_{22}^2 = \\Sigma_{22} - L_{21}^2$."
+   },
+   "explain": {
+    "text": "The second asset adds no new randomness, so $L_{22} = 0$. A factor with a zero on the diagonal exists here, but the standard routines stop. Larger semidefinite matrices can have several such factors."
+   }
+  },
+  {
+   "id": "q-suspect",
+   "difficulty": 3,
+   "prose": "Lesson 7's suspect matrix $\\begin{pmatrix} 1 & 1.2 \\\\ 1.2 & 1 \\end{pmatrix}$ is sent to a Cholesky routine.",
+   "question": "What number would the routine have to take the square root of for $L_{22}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.44,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Number under the root",
+    "accept": "$-0.44$: $1 - 1.2^2$",
+    "wrong": [
+     {
+      "id": "pos",
+      "value": 0.44,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "cov",
+      "value": -1.44,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 1.44 = -0.44$, so no data could produce this matrix.",
+    "generic": "Not quite right. $L_{21} = 1.2$, so the number is $1 - L_{21}^2$.",
+    "byKey": {
+     "pos": "You dropped the sign. $1 - 1.44$ is negative.",
+     "cov": "$-1.44$ is $-L_{21}^2$. Add back the variance 1."
+    }
+   },
+   "explain": {
+    "text": "A negative number under the root means the matrix is not positive definite. The portfolio $(1, -1)$ would have variance $-0.4$, as lesson 7 found."
+   }
+  }
+ ]
+}

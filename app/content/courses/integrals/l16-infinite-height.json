@@ -1,0 +1,1405 @@
+{
+  "id": "l16-infinite-height",
+  "course": "integrals",
+  "title": "Integrands that blow up",
+  "minutes": 14,
+  "objectives": [
+    "Evaluate an improper integral whose integrand is unbounded at an endpoint",
+    "Show that $\\int_0^1 x^{-p}\\,dx$ converges exactly when $p < 1$",
+    "Use the midpoint rule in code where the trapezium rule fails"
+  ],
+  "skills": [
+    "in-techniques",
+    "in-apply"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "The curve $\\frac{1}{\\sqrt{x}}$ rises without limit as $x$ approaches 0. The shaded strip runs from $a$ to 1. Slide $a$ towards 0 and watch the area.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.05
+          ],
+          "y": [
+            0,
+            10
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1/sqrt(x)",
+              "label": "$\\frac{1}{\\sqrt{x}}$",
+              "domain": [
+                0.0001,
+                1
+              ],
+              "labelAt": 0.3,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ],
+          "params": {
+            "a": 0.5
+          }
+        },
+        "state": {
+          "area": {
+            "id": "area",
+            "f": "f",
+            "from": 0.5,
+            "to": 1
+          }
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "stops": [
+              0.5,
+              0.25,
+              0.1,
+              0.01,
+              0.001,
+              0.0001
+            ],
+            "label": "$a$",
+            "start": 0.5
+          }
+        ],
+        "derive": {
+          "area.from": "a",
+          "caption": "Area from {{a}} to 1: {{fixed(2 - 2 * sqrt(a), 4)}}"
+        }
+      },
+      "question": "As $a$ slides to 0 and the curve at $a$ shoots up, what happens to the area?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "It settles towards 2",
+            "correct": true
+          },
+          {
+            "id": "grows",
+            "text": "It grows without limit, because the curve rises without limit",
+            "why": "The curve is unbounded, but it rises over a strip of width $a$. The caption stalls near 2: it reads 1.9800 at $a = 0.0001$."
+          },
+          {
+            "id": "one",
+            "text": "It stops at 1, the width of the interval",
+            "why": "You multiplied the width 1 by a height of 1. The curve is above 1 for $x < 1$, and the caption passes 1 by $a = 0.25$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the caption at $a = 0.01$, 0.001 and 0.0001."
+        },
+        {
+          "rung": "point",
+          "text": "The area gains less and less as $a$ shrinks: 1.8, 1.9368, 1.98.",
+          "highlight": [
+            "area"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The values close in on 2 and never pass it."
+        }
+      ],
+      "feedback": {
+        "correct": "The area closes in on 2. An unbounded curve can enclose a finite area.",
+        "generic": "Not quite right. Read the caption for smaller and smaller $a$.",
+        "byKey": {
+          "grows": "You followed the curve's height instead of the area. The strip it rises over is only $a$ wide.",
+          "one": "The caption reads 1.0000 at $a = 0.25$ and 1.8000 at $a = 0.01$, so it passes 1."
+        }
+      },
+      "explain": {
+        "text": "The caption reads $2 - 2\\sqrt{a}$: 1.0000 at 0.25, 1.8000 at 0.01, 1.9800 at 0.0001. The curve climbs to infinity, but the strip beneath it thins faster. The area closes in on 2.",
+        "canvas": {
+          "params": {
+            "a": 0.0001
+          },
+          "area": {
+            "from": 0.0001
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The caption computed $\\int_a^1 \\frac{dx}{\\sqrt{x}}$. Its limit as $a \\to 0^+$ is written $\\int_0^1 \\frac{dx}{\\sqrt{x}}$, an **improper integral** with trouble at an endpoint: $$\\int_0^1 f(x)\\,dx = \\lim_{a \\to 0^+}\\int_a^1 f(x)\\,dx.$$ It mirrors l11: integrate to $a$ first, then take the limit.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.05
+          ],
+          "y": [
+            0,
+            10
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^(-1/3)",
+              "label": "$x^{-1/3}$",
+              "domain": [
+                0.001,
+                1
+              ],
+              "labelAt": 0.25,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "area",
+            "f": "f",
+            "from": 0.001,
+            "to": 1
+          }
+        }
+      },
+      "question": "Evaluate $\\displaystyle\\int_0^1 \\frac{dx}{\\sqrt[3]{x}}$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Value of the integral",
+        "accept": "$\\frac32$: $\\int_a^1 x^{-1/3}\\,dx = \\frac32\\left(1 - a^{2/3}\\right) \\to \\frac32$.",
+        "placeholder": "A number",
+        "wrong": [
+          {
+            "id": "multiplied",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "l11-rule",
+            "value": -1.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "An antiderivative of $x^{-1/3}$ raises the power to $\\frac23$ and divides by it."
+        },
+        {
+          "rung": "point",
+          "text": "$\\left[\\frac32 x^{2/3}\\right]_a^1 = \\frac32 - \\frac32 a^{2/3}$.",
+          "highlight": [
+            "area"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "As $a \\to 0^+$, $a^{2/3} \\to 0$, so the limit is $\\frac32$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\frac32$: the term $a^{2/3}$ vanishes as $a \\to 0^+$.",
+        "generic": "Not quite right. Integrate from $a$ to 1, then let $a \\to 0^+$.",
+        "byKey": {
+          "multiplied": "You multiplied by $\\frac23$. Integrating $x^{-1/3}$ divides by the new power $\\frac23$, which multiplies by $\\frac32$.",
+          "l11-rule": "You used $\\frac{1}{p - 1}$, the rule for $\\int_1^\\infty$. At 0 the area is positive, and the value is $\\frac{1}{1 - p}$."
+        }
+      },
+      "explain": {
+        "text": "$\\int_a^1 x^{-1/3}\\,dx = \\frac32 - \\frac32 a^{2/3}$, and $a^{2/3} \\to 0$. So the improper integral converges to $\\frac32$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Not every blow-up is a power. $\\ln x$ plunges to $-\\infty$ at 0. Parts (l10) with $u = \\ln x$ and $dv = dx$ gives $\\int_a^1 \\ln x\\,dx = \\left[x\\ln x - x\\right]_a^1 = -1 - a\\ln a + a$. And $a\\ln a \\to 0$ (limits l16).",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.05
+          ],
+          "y": [
+            -5,
+            1
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "ln(x)",
+              "label": "$\\ln x$",
+              "domain": [
+                0.007,
+                1
+              ],
+              "labelAt": 0.4,
+              "labelSide": "below",
+              "labelAnchor": "start"
+            }
+          ],
+          "xAxis": "bottom"
+        },
+        "state": {
+          "area": {
+            "id": "area",
+            "f": "f",
+            "from": 0.007,
+            "to": 1
+          }
+        }
+      },
+      "question": "Evaluate $\\displaystyle\\int_0^1 \\ln x\\,dx$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Value of the integral",
+        "accept": "$-1$: the area is below the axis, so the integral is negative.",
+        "placeholder": "A number",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "forgot-minus-x",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take the limit of $-1 - a\\ln a + a$ as $a \\to 0^+$."
+        },
+        {
+          "rung": "point",
+          "text": "$a\\ln a \\to 0$ and $a \\to 0$.",
+          "highlight": [
+            "area"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "What remains is $-1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$-1$: a finite area below the axis, though the curve plunges to $-\\infty$.",
+        "generic": "Not quite right. Let $a \\to 0^+$ in $-1 - a\\ln a + a$.",
+        "byKey": {
+          "sign": "You gave the area as a positive number. The curve is below the axis, so the signed area is negative.",
+          "forgot-minus-x": "You used $x\\ln x$ alone as the antiderivative. Differentiating it gives $\\ln x + 1$, so you need the $-x$ as well."
+        }
+      },
+      "explain": {
+        "text": "As $a \\to 0^+$ both $a\\ln a$ and $a$ tend to 0, leaving $-1$. The curve plunges to $-\\infty$ at 0, yet the signed area is finite."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Some integrals have no formula. For $\\int_0^1 \\frac{e^{-x}}{\\sqrt{x}}\\,dx$, compare. On $(0, 1]$, $e^{-x} \\le 1$, so the curve sits under $\\frac{1}{\\sqrt{x}}$, the dashed one.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.05
+          ],
+          "y": [
+            0,
+            10
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-x)/sqrt(x)",
+              "label": "$\\frac{e^{-x}}{\\sqrt{x}}$",
+              "domain": [
+                0.0001,
+                1
+              ],
+              "labelAt": 0.45,
+              "labelSide": "below",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "g",
+              "expr": "1/sqrt(x)",
+              "label": "$\\frac{1}{\\sqrt{x}}$",
+              "domain": [
+                0.0001,
+                1
+              ],
+              "dashed": true,
+              "colour": 3,
+              "labelAt": 0.15,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "area",
+            "f": "f",
+            "from": 0.0001,
+            "to": 1
+          }
+        }
+      },
+      "question": "What can we say about $\\displaystyle\\int_0^1 \\frac{e^{-x}}{\\sqrt{x}}\\,dx$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "conv",
+            "text": "It converges, because it lies below $\\frac{1}{\\sqrt{x}}$, whose area is 2",
+            "correct": true
+          },
+          {
+            "id": "div",
+            "text": "It diverges, because it still blows up at 0",
+            "why": "Blowing up at an endpoint does not make an area infinite. $\\frac{1}{\\sqrt{x}}$ blows up too, and its area is 2."
+          },
+          {
+            "id": "compute",
+            "text": "We cannot say without finding an antiderivative",
+            "why": "A bound is enough. A positive curve under a curve with finite area has finite area itself."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two heights at each $x$. Which curve is higher?"
+        },
+        {
+          "rung": "point",
+          "text": "The area under $\\frac{1}{\\sqrt{x}}$ from 0 to 1 is 2.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A positive curve below it has area at most 2, so the integral converges."
+        }
+      ],
+      "feedback": {
+        "correct": "It converges, with area at most 2. A comparison settles convergence without an antiderivative.",
+        "generic": "Not quite right. Ask which curve is higher, and what the higher one's area is.",
+        "byKey": {
+          "div": "You judged by the blow-up alone. The question is whether the area is finite, and $\\frac{1}{\\sqrt{x}}$ already answers it.",
+          "compute": "You looked for a formula. Convergence only needs a bound, and the dashed curve supplies one."
+        }
+      },
+      "explain": {
+        "text": "The integrand is positive and at most $\\frac{1}{\\sqrt{x}}$, so its area is at most 2. The exact value is $\\sqrt{\\pi}\\,\\text{erf}(1) \\approx 1.4936$. Also $e^{-x} \\ge e^{-1}$ gives a lower bound of $\\frac{2}{e} = 0.7358$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "The trapezium rule needs $f$ at the ends of each strip, and at $x = 0$ the curve is infinite. The **midpoint rule** uses the centre of each strip instead, $h\\sum f\\left(a + (i + \\tfrac12)h\\right)$, so it never touches an end.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> trapezium(lambda x: x**-0.5, 0, 1, 10)",
+            "Traceback (most recent call last):",
+            "  File \"<stdin>\", line 1, in <module>",
+            "  File \"<stdin>\", line 5, in trapezium",
+            "ZeroDivisionError: 0.0 cannot be raised to a negative power"
+          ],
+          "numbers": true,
+          "wrap": true,
+          "title": "Your trapezium from l12"
+        },
+        "state": {
+          "tone": {
+            "l5": "err"
+          }
+        }
+      },
+      "question": "Write `midpoint(f, a, b, n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\ndef midpoint(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    # add f at the centre of each of the n strips\n\n    return h * total\n",
+        "solution": "import math\n\ndef midpoint(f, a, b, n):\n    h = (b - a) / n\n    total = 0.0\n    for i in range(n):\n        total += f(a + (i + 0.5) * h)\n    return h * total\n",
+        "prelude": "import math\n",
+        "examples": [
+          {
+            "call": "midpoint(lambda x: x**2, 0, 1, 4)",
+            "expect": "0.328125",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "midpoint(lambda x: x**2, 0, 1, 4)",
+            "expect": "0.328125",
+            "compare": "isclose"
+          },
+          {
+            "call": "midpoint(lambda x: 2*x + 1, 0, 3, 1)",
+            "expect": "12.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "midpoint(lambda x: 5, 2, 7, 8)",
+            "expect": "25.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "midpoint(math.cos, 0, 1, 10)",
+            "expect": "0.8418217000072957",
+            "compare": "isclose"
+          },
+          {
+            "call": "midpoint(lambda x: x**3, -1, 2, 3)",
+            "expect": "3.375",
+            "compare": "isclose"
+          },
+          {
+            "call": "midpoint(lambda x: x**-0.5, 0, 1, 10)",
+            "expect": "1.808922359730434",
+            "compare": "isclose"
+          },
+          {
+            "call": "midpoint(lambda x: x**-0.5, 0, 1, 100)",
+            "expect": "1.9395122189683847",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, including $\\frac{1}{\\sqrt{x}}$ on $[0, 1]$. Each answer is accepted when `math.isclose(result, expected, rel_tol=1e-9)`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop `i` over `range(n)`, one pass per strip."
+        },
+        {
+          "rung": "point",
+          "text": "The centre of strip `i` is `a + (i + 0.5) * h`.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inside the loop: `total += f(a + (i + 0.5) * h)`. Return `h * total`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each strip is judged by its centre, so $f$ is never evaluated at 0.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 0.328125 for $x^2$ on $[0, 1]$ with 4 strips: the centres are 0.125, 0.375, 0.625, 0.875.",
+          "test-6": "Test 6 is $\\frac{1}{\\sqrt{x}}$ with 10 strips. If you evaluate at an end of a strip, the first call divides by zero.",
+          "error": "Your code stopped with an error. Read the last line of the message under the editor."
+        }
+      },
+      "explain": {
+        "text": "The loop evaluates the strip centres $0.05, 0.15, \\dots, 0.95$ and never $x = 0$. With 10 strips the estimate for $\\frac{1}{\\sqrt{x}}$ is 1.8089, about 0.19 below the true 2."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Run `midpoint` on $\\frac{1}{\\sqrt{x}}$ and, for comparison, on the smooth $\\cos x$ over $[0, 1]$. Each row multiplies $n$ by 10.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$n$",
+            "$M_n$ for $\\frac{1}{\\sqrt{x}}$",
+            "Error from 2",
+            "Error for $\\cos x$"
+          ],
+          "rows": [
+            [
+              "10",
+              "1.8089",
+              "0.1911",
+              "$3.5\\times10^{-4}$"
+            ],
+            [
+              "100",
+              "1.9395",
+              "0.0605",
+              "$3.5\\times10^{-6}$"
+            ],
+            [
+              "1000",
+              "1.9809",
+              "0.0191",
+              "$3.5\\times10^{-8}$"
+            ]
+          ],
+          "align": [
+            "center",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Midpoint estimates and their errors"
+        }
+      },
+      "question": "By about what factor does the error for $\\frac{1}{\\sqrt{x}}$ shrink when $n$ grows tenfold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "root",
+            "text": "About 3.2, which is $\\sqrt{10}$",
+            "correct": true
+          },
+          {
+            "id": "hundred",
+            "text": "About 100, as it does for $\\cos x$",
+            "why": "You carried the smooth curve's speed over. For $\\cos x$ the error does fall 100-fold, but the blow-up at 0 slows $\\frac{1}{\\sqrt{x}}$ down."
+          },
+          {
+            "id": "ten",
+            "text": "About 10",
+            "why": "You expected error proportional to $\\frac1n$. The table has 0.1911 then 0.0605, a factor of 3.2, not 10."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide each error by the next: $0.1911 \\div 0.0605$."
+        },
+        {
+          "rung": "point",
+          "text": "Then $0.0605 \\div 0.0191$.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both ratios are 3.16, and $\\sqrt{10} = 3.162$."
+        }
+      ],
+      "feedback": {
+        "correct": "The error shrinks like $\\frac{1}{\\sqrt{n}}$: 3.16 per tenfold step.",
+        "generic": "Not quite right. Divide each error by the one below it.",
+        "byKey": {
+          "hundred": "You used the smooth-curve column. The $\\frac{1}{\\sqrt{x}}$ column goes 0.1911, 0.0605, 0.0191.",
+          "ten": "Divide: $0.1911 \\div 0.0605 = 3.16$. A factor of 10 would give 0.0191 at $n = 100$."
+        }
+      },
+      "explain": {
+        "text": "Almost all the error sits in the first strip. Its true area is $2\\sqrt{h}$ but the midpoint estimate is $\\sqrt{2h}$, so the error is about $\\frac{0.59}{\\sqrt{n}}$. A blow-up costs accuracy: smooth integrands gain 100 times per tenfold $n$, this one only 3.2."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A learner applies the fundamental theorem to $\\int_{-1}^{1} \\frac{dx}{x^2}$: $\\left[-\\frac{1}{x}\\right]_{-1}^{1} = -1 - 1 = -2$. The curve is positive everywhere. Slide $a$ towards 0 and watch each half.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.3,
+            1.3
+          ],
+          "y": [
+            0,
+            12
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1/x^2",
+              "label": "$\\frac{1}{x^2}$",
+              "domain": [
+                -1.2,
+                1.2
+              ],
+              "labelAt": 0.5,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ],
+          "params": {
+            "a": 0.5
+          }
+        },
+        "state": {
+          "area": [
+            {
+              "id": "ar",
+              "f": "f",
+              "from": 0.5,
+              "to": 1
+            },
+            {
+              "id": "al",
+              "f": "f",
+              "from": -1,
+              "to": -0.5
+            }
+          ]
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "stops": [
+              0.5,
+              0.2,
+              0.1,
+              0.05,
+              0.02
+            ],
+            "label": "$a$",
+            "start": 0.5
+          }
+        ],
+        "derive": {
+          "ar.from": "a",
+          "al.to": "-a",
+          "caption": "Each half, from $a = {{a}}$: area {{fixed(1 / a - 1, 2)}}"
+        }
+      },
+      "question": "What is true of $\\displaystyle\\int_{-1}^{1} \\frac{dx}{x^2}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "diverges",
+            "text": "It diverges: it must be split at 0, and each half is infinite",
+            "correct": true
+          },
+          {
+            "id": "minus",
+            "text": "It equals $-2$, as the fundamental theorem says",
+            "why": "You applied the theorem across the blow-up at 0, where $-\\frac{1}{x}$ is not defined. A positive curve cannot enclose a negative area."
+          },
+          {
+            "id": "plus",
+            "text": "It equals 2, the positive version of the theorem's answer",
+            "why": "You flipped the sign to fix the answer. Each half is $\\frac{1}{a} - 1$, which grows without limit as $a \\to 0^+$, so no finite number is right."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check the caption: what is each half's area at $a = 0.02$?"
+        },
+        {
+          "rung": "point",
+          "text": "It is $\\frac{1}{a} - 1 = 49$, and it grows as $a$ shrinks.",
+          "highlight": [
+            "ar"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each half diverges, so the whole integral diverges."
+        }
+      ],
+      "feedback": {
+        "correct": "Each half is $\\frac{1}{a} - 1 \\to \\infty$, so the integral diverges.",
+        "generic": "Not quite right. Watch each half's area as $a$ shrinks.",
+        "byKey": {
+          "minus": "The theorem needs a continuous antiderivative on the whole interval. $-\\frac{1}{x}$ jumps from $+\\infty$ to $-\\infty$ at 0.",
+          "plus": "The area is not 2. The caption reaches 49 at $a = 0.02$ and keeps growing."
+        }
+      },
+      "explain": {
+        "text": "The integrand is infinite at 0, inside the interval. So split: $\\int_{-1}^{0} + \\int_0^1$, each a limit. The right half is $\\frac{1}{a} - 1 \\to \\infty$, so the integral diverges. Checking for a blow-up inside the interval comes before any antiderivative."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "A blow-up inside the interval can still converge. Split $\\int_{-1}^{1} \\frac{dx}{\\sqrt{|x|}}$ at 0. The right half is $\\int_0^1 x^{-1/2}\\,dx = 2$, from the first screen. The curve is symmetric.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.2,
+            1.2
+          ],
+          "y": [
+            0,
+            8
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1/sqrt(abs(x))",
+              "label": "$\\frac{1}{\\sqrt{|x|}}$",
+              "domain": [
+                -1.1,
+                1.1
+              ],
+              "labelAt": 0.45,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ]
+        },
+        "state": {
+          "area": [
+            {
+              "id": "ar",
+              "f": "f",
+              "from": 0.0005,
+              "to": 1
+            },
+            {
+              "id": "al",
+              "f": "f",
+              "from": -1,
+              "to": -0.0005
+            }
+          ]
+        }
+      },
+      "question": "Evaluate $\\displaystyle\\int_{-1}^{1} \\frac{dx}{\\sqrt{|x|}}$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Value of the integral",
+        "accept": "$2 + 2 = 4$: both halves converge.",
+        "placeholder": "A number",
+        "wrong": [
+          {
+            "id": "one-half",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "cancel",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "By symmetry the left half equals the right half."
+        },
+        {
+          "rung": "point",
+          "text": "The right half is 2.",
+          "highlight": [
+            "ar"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add the two halves: $2 + 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 + 2 = 4$. Each half is a finite limit, so the whole integral converges.",
+        "generic": "Not quite right. Both halves count, and both are positive.",
+        "byKey": {
+          "one-half": "That is the right half alone. The left half, from $-1$ to 0, adds another 2.",
+          "cancel": "You treated the left half as negative. The curve is positive on both sides, so the areas add."
+        }
+      },
+      "explain": {
+        "text": "Unlike $\\frac{1}{x^2}$, this blow-up is mild: $p = \\frac12 < 1$ on each side of 0. Both halves converge, so the integral is 4. The test is the $p$ at the blow-up, not the blow-up itself."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "For $p \\ne 1$, $$\\int_a^1 x^{-p}\\,dx = \\frac{1 - a^{1-p}}{1 - p}.$$ The term $a^{1-p}$ decides everything as $a \\to 0^+$. The table puts the result beside l11's, where the trouble was at infinity.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$p$",
+            "$\\int_1^\\infty x^{-p}\\,dx$ (l11)",
+            "$\\int_0^1 x^{-p}\\,dx$"
+          ],
+          "rows": [
+            [
+              "$\\frac12$",
+              "diverges",
+              "2"
+            ],
+            [
+              "1",
+              "diverges",
+              "diverges"
+            ],
+            [
+              "$\\frac32$",
+              "2",
+              "diverges"
+            ],
+            [
+              "2",
+              "1",
+              "diverges"
+            ]
+          ],
+          "align": [
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "At infinity the condition is $p > 1$. At 0 it is the mirror image"
+        }
+      },
+      "question": "For which $p$ does $\\displaystyle\\int_0^1 x^{-p}\\,dx$ converge?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "lt",
+            "text": "$p < 1$",
+            "correct": true
+          },
+          {
+            "id": "gt",
+            "text": "$p > 1$",
+            "why": "You used l11's condition, which is for $\\int_1^\\infty$. At 0 the roles flip: a larger $p$ means a steeper blow-up."
+          },
+          {
+            "id": "le",
+            "text": "$p \\le 1$",
+            "why": "You included $p = 1$. There $\\int_a^1 \\frac{dx}{x} = -\\ln a$, which grows without limit as $a \\to 0^+$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When does $a^{1-p}$ shrink to 0 as $a \\to 0^+$? The power must be positive."
+        },
+        {
+          "rung": "point",
+          "text": "That needs $1 - p > 0$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So $p < 1$. Then the value is $\\frac{1}{1 - p}$."
+        }
+      ],
+      "feedback": {
+        "correct": "For $p < 1$, $a^{1-p} \\to 0$ and the value is $\\frac{1}{1 - p}$.",
+        "generic": "Not quite right. Check $p = \\frac12$ and $p = \\frac32$ in the table.",
+        "byKey": {
+          "gt": "At $p = \\frac32$ the table says the area is infinite, so $p > 1$ is wrong.",
+          "le": "The row $p = 1$ says diverges at both ends."
+        }
+      },
+      "explain": {
+        "text": "At infinity we need $p > 1$ and at 0 we need $p < 1$. Only $p = 1$ fails at both ends. No power of $x$ converges at both ends of $(0, \\infty)$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Show why $p < 1$ gives $\\frac{1}{1 - p}$. Put the reasons in order.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "anti",
+            "text": "For $p \\ne 1$, $\\int_a^1 x^{-p}\\,dx = \\left[\\frac{x^{1-p}}{1 - p}\\right]_a^1$, by the power rule"
+          },
+          {
+            "id": "eval",
+            "text": "Evaluating at 1 and at $a$: $\\frac{1 - a^{1-p}}{1 - p}$"
+          },
+          {
+            "id": "lim",
+            "text": "If $p < 1$ then $1 - p > 0$, so $a^{1-p} \\to 0$ as $a \\to 0^+$"
+          },
+          {
+            "id": "val",
+            "text": "So $\\int_0^1 x^{-p}\\,dx = \\lim_{a \\to 0^+}\\frac{1 - a^{1-p}}{1 - p} = \\frac{1}{1 - p}$"
+          }
+        ],
+        "answer": [
+          "anti",
+          "eval",
+          "lim",
+          "val"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Integrate first, then evaluate, then take the limit."
+        },
+        {
+          "rung": "point",
+          "text": "The limit line needs the evaluated expression."
+        },
+        {
+          "rung": "step",
+          "text": "Power rule, evaluate, limit of $a^{1-p}$, then the value."
+        }
+      ],
+      "feedback": {
+        "correct": "The limit applies to the evaluated expression, so the order is integrate, evaluate, limit, value.",
+        "generic": "Not quite right. Start with the power rule and finish with the value.",
+        "byKey": {
+          "lim": "You cannot take the limit of $a^{1-p}$ until it appears from the evaluation.",
+          "val": "The value is the last line: it needs the limit of $a^{1-p}$."
+        }
+      },
+      "explain": {
+        "text": "If $p > 1$, then $1 - p < 0$ and $a^{1-p} \\to \\infty$, so the integral diverges. If $p = 1$ the antiderivative is $\\ln x$ and $-\\ln a \\to \\infty$. Only $p < 1$ lets the first term vanish."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "For a standard normal shock $Z$, $X = Z^2$ has the chi-square(1) density $f(x) = \\frac{x^{-1/2}e^{-x/2}}{\\sqrt{2\\pi}}$ for $x > 0$. It is infinite at 0, yet its total area is 1 (topic 1.5). Put $x = z^2$ to find $P(X \\le 1)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            5
+          ],
+          "y": [
+            0,
+            2
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^(-1/2)*exp(-x/2)/sqrt(2*pi)",
+              "label": "$f(x)$",
+              "domain": [
+                0.01,
+                5
+              ],
+              "labelAt": 1.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "area",
+            "f": "f",
+            "from": 0.01,
+            "to": 1
+          }
+        }
+      },
+      "question": "What is $P(X \\le 1) = \\displaystyle\\int_0^1 f(x)\\,dx$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6827,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Probability",
+        "accept": "$0.6827$: with $x = z^2$, $dx = 2z\\,dz$, the integral is $2\\int_0^1 \\frac{e^{-z^2/2}}{\\sqrt{2\\pi}}\\,dz = P(|Z| \\le 1)$.",
+        "placeholder": "A number",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 0.3413,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-exp",
+            "value": 0.7979,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $x = z^2$, so $z$ runs from 0 to 1 and $\\sqrt{x} = z$."
+        },
+        {
+          "rung": "point",
+          "text": "$dx = 2z\\,dz$, and the $\\frac{1}{\\sqrt{x}} = \\frac{1}{z}$ cancels the $z$. You get $2\\int_0^1 \\frac{e^{-z^2/2}}{\\sqrt{2\\pi}}\\,dz$.",
+          "highlight": [
+            "area"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is twice the normal area from 0 to 1, which is $P(|Z| \\le 1) = 0.6827$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.6827 = P(|Z| \\le 1)$: $X \\le 1$ exactly when $|Z| \\le 1$.",
+        "generic": "Not quite right. After $x = z^2$ the integrand has no blow-up.",
+        "byKey": {
+          "one-side": "That is $P(0 \\le Z \\le 1)$. The substitution gives a factor 2, because $X \\le 1$ means $-1 \\le Z \\le 1$.",
+          "no-exp": "That drops $e^{-x/2}$: $\\frac{2}{\\sqrt{2\\pi}} = 0.7979$. The exponential pulls the area down a little."
+        }
+      },
+      "explain": {
+        "text": "The substitution $x = z^2$ removes the blow-up and turns the integral into the normal curve's area between $-1$ and 1. So a squared shock is at most 1 with probability 0.6827."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "The share $X$ of time a fair game's P&L is positive has the arcsine density $\\frac{1}{\\pi\\sqrt{x(1 - x)}}$ on $(0, 1)$. It blows up at both ends. Use $x = \\sin^2\\theta$, from l15.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            4
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1/(pi*sqrt(x*(1-x)))",
+              "label": "$f(x)$",
+              "domain": [
+                0.003,
+                0.997
+              ],
+              "labelAt": 0.55,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "area",
+            "f": "f",
+            "from": 0.003,
+            "to": 0.1
+          }
+        }
+      },
+      "question": "What is $P(X \\le 0.1)$: the chance the P&L is positive for at most 10% of the time?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2048,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Probability",
+        "accept": "$\\frac{2}{\\pi}\\arcsin\\sqrt{0.1} \\approx 0.2048$.",
+        "placeholder": "A number",
+        "wrong": [
+          {
+            "id": "uniform-habit",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-two-pi",
+            "value": 0.3217,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With $x = \\sin^2\\theta$: $dx = 2\\sin\\theta\\cos\\theta\\,d\\theta$ and $\\sqrt{x(1 - x)} = \\sin\\theta\\cos\\theta$."
+        },
+        {
+          "rung": "point",
+          "text": "The integrand becomes $\\frac{2}{\\pi}\\,d\\theta$, from $\\theta = 0$ to $\\arcsin\\sqrt{0.1}$.",
+          "highlight": [
+            "area"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\frac{2}{\\pi} \\times 0.3218 = 0.2048$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\frac{2}{\\pi}\\arcsin\\sqrt{0.1} = 0.2048$. The whole range gives $\\frac{2}{\\pi}\\cdot\\frac{\\pi}{2} = 1$.",
+        "generic": "Not quite right. After the substitution the integrand is the constant $\\frac{2}{\\pi}$.",
+        "byKey": {
+          "uniform-habit": "You treated the share as uniform. The density is highest at the ends, so a share below 10% is twice as likely as that.",
+          "no-two-pi": "That is $\\arcsin\\sqrt{0.1}$ alone. Multiply by $\\frac{2}{\\pi}$, the constant left by the substitution."
+        }
+      },
+      "explain": {
+        "text": "A fair game is ahead at most 10% of the time on about 20% of paths. It is ahead at least 90% of the time on as many. Long one-sided stretches are normal, not a sign of skill. Markov Chains and Random Walks shows the walk itself."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An integrand that blows up at an endpoint is a limit: $\\int_0^1 f = \\lim_{a \\to 0^+}\\int_a^1 f$. The area can still be finite.",
+      "$\\int_0^1 x^{-p}\\,dx$ converges exactly when $p < 1$, to $\\frac{1}{1 - p}$. At infinity the condition is $p > 1$, and $p = 1$ fails at both.",
+      "A positive integrand below a convergent one converges. A blow-up inside the interval forces a split first."
+    ],
+    "formula": {
+      "name": "Improper integral at 0",
+      "tex": "\\int_0^1 x^{-p}\\,dx = \\frac{1}{1 - p} \\quad (p < 1)",
+      "note": "Integrate from $a$, then let $a \\to 0^+$."
+    },
+    "trap": "Applying the fundamental theorem across a blow-up gave $-2$ for a positive curve. Split at the blow-up first."
+  },
+  "quiz": [
+    {
+      "id": "q-p08",
+      "difficulty": 2,
+      "prose": "Use $\\int_0^1 x^{-p}\\,dx = \\frac{1}{1 - p}$ for $p < 1$.",
+      "question": "Evaluate $\\displaystyle\\int_0^1 x^{-0.8}\\,dx$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Value of the integral",
+        "accept": "$\\frac{1}{1 - 0.8} = 5$.",
+        "placeholder": "A number",
+        "wrong": [
+          {
+            "id": "l11-rule",
+            "value": -5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "p-times",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\frac{1}{1 - 0.8} = 5$.",
+        "generic": "Not quite right. Use $\\frac{1}{1 - p}$ with $p = 0.8$.",
+        "byKey": {
+          "l11-rule": "You used $\\frac{1}{p - 1}$, the rule for $\\int_1^\\infty$. The area is positive, so it is $\\frac{1}{1 - p}$.",
+          "p-times": "You used $p$ itself. The integral divides by $1 - p$, so $\\frac{1}{0.2}$."
+        }
+      },
+      "explain": {
+        "text": "The antiderivative is $\\frac{x^{0.2}}{0.2} = 5x^{0.2}$, which is 5 at 1 and 0 at 0."
+      }
+    },
+    {
+      "id": "q-which-conv",
+      "difficulty": 3,
+      "prose": "Four improper integrals, with trouble at 0 or at infinity.",
+      "question": "Which one converges?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\displaystyle\\int_0^1 x^{-0.9}\\,dx$",
+            "correct": true
+          },
+          {
+            "id": "gt",
+            "text": "$\\displaystyle\\int_0^1 x^{-1.5}\\,dx$",
+            "why": "Here $p = 1.5 > 1$, the condition for convergence at infinity. At 0, $p$ must be below 1."
+          },
+          {
+            "id": "one",
+            "text": "$\\displaystyle\\int_0^1 \\frac{dx}{x}$",
+            "why": "At $p = 1$ the area is $-\\ln a$, which grows without limit."
+          },
+          {
+            "id": "inf",
+            "text": "$\\displaystyle\\int_1^\\infty x^{-0.9}\\,dx$",
+            "why": "This trouble is at infinity, where $p$ must exceed 1. With $p = 0.9$ the area grows like $a^{0.1}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$p = 0.9 < 1$, so it converges to $\\frac{1}{0.1} = 10$.",
+        "generic": "Not quite right. At 0, $p$ must be below 1."
+      },
+      "explain": {
+        "text": "Only $p = 0.9$ at 0 satisfies the condition there. The value is $\\frac{1}{1 - 0.9} = 10$."
+      }
+    },
+    {
+      "id": "q-root9",
+      "difficulty": 2,
+      "prose": "The antiderivative of $x^{-1/2}$ is $2\\sqrt{x}$.",
+      "question": "Evaluate $\\displaystyle\\int_0^9 \\frac{dx}{\\sqrt{x}}$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Value of the integral",
+        "accept": "$2\\sqrt{9} - 2\\sqrt{0} = 6$.",
+        "placeholder": "A number",
+        "wrong": [
+          {
+            "id": "no-two",
+            "value": 3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-root",
+            "value": 18,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2\\sqrt{9} = 6$, and the value at 0 is 0.",
+        "generic": "Not quite right. Evaluate $2\\sqrt{x}$ at 9, then subtract its limit at 0.",
+        "byKey": {
+          "no-two": "You dropped the 2 in $2\\sqrt{x}$. Check by differentiating: $\\frac{d}{dx}\\sqrt{x} = \\frac{1}{2\\sqrt{x}}$.",
+          "no-root": "You evaluated $2x$ at 9. The antiderivative is $2\\sqrt{x}$, so the 9 goes inside the root."
+        }
+      },
+      "explain": {
+        "text": "$\\frac{d}{dx}2\\sqrt{x} = \\frac{1}{\\sqrt{x}}$. The area up to 9 is $2 \\times 3 = 6$, and the value at 0 is 0."
+      }
+    },
+    {
+      "id": "q-compare-1px",
+      "difficulty": 3,
+      "prose": "Look at $\\displaystyle\\int_0^1 \\frac{dx}{\\sqrt{x}(1 + x)}$. The factor $1 + x$ is at least 1 on $[0, 1]$.",
+      "question": "What can we say about it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "conv",
+            "text": "It converges, because it is at most $\\frac{1}{\\sqrt{x}}$",
+            "correct": true
+          },
+          {
+            "id": "div",
+            "text": "It diverges, because it blows up at 0",
+            "why": "A blow-up at an endpoint can have finite area. This one is below $\\frac{1}{\\sqrt{x}}$, whose area is 2."
+          },
+          {
+            "id": "change",
+            "text": "We cannot compare, because $1 + x$ changes the power of $x$",
+            "why": "The extra factor does not change the exponent at 0. Since $1 + x \\ge 1$, the integrand is smaller."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The integrand is at most $\\frac{1}{\\sqrt{x}}$, so its area is at most 2.",
+        "generic": "Not quite right. Compare with $\\frac{1}{\\sqrt{x}}$."
+      },
+      "explain": {
+        "text": "Dividing by $1 + x \\ge 1$ can only shrink the curve. The area is below 2, so it converges. Its exact value is $\\frac{\\pi}{2}$."
+      }
+    }
+  ]
+}

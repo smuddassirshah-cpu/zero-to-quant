@@ -1,0 +1,1369 @@
+{
+ "id": "l17-best-possible-inverse",
+ "course": "eigen",
+ "title": "The pseudoinverse",
+ "minutes": 15,
+ "objectives": [
+  "Build $\\mathbf{A}^+$ from the SVD and use it for least squares when $\\mathbf{A}^T\\mathbf{A}$ is singular.",
+  "Cut off tiny singular values.",
+  "Read $\\mathbf{A}\\mathbf{A}^+$ and $\\mathbf{A}^+\\mathbf{A}$ as projections."
+ ],
+ "skills": [
+  "eg-svd"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Many equally good fits",
+   "prose": "Two factor columns are the same: a value factor and a copy built from the same stocks. $\\mathbf{X}$ has columns $(1, 2, 3)$ twice, and $\\mathbf{y} = (1, 2, 2)$. Every pair with $\\beta_1 + \\beta_2 = \\tfrac{11}{14}$ fits equally well. Drag $\\boldsymbol{\\beta}$ along that line to the fit with the smallest length.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.4,
+      1.3
+     ],
+     "y": [
+      -0.4,
+      1.3
+     ],
+     "equal": true,
+     "height": 250,
+     "xLabel": "$\\beta_1$",
+     "yLabel": "$\\beta_2$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "11/14 - x",
+       "label": "every best fit",
+       "colour": 1,
+       "labelAt": 1.1
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 1.1,
+       "y": -0.3143,
+       "drag": true,
+       "on": "f",
+       "label": "$\\boldsymbol{\\beta}$"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Length of $\\boldsymbol{\\beta}$ = {{fixed(hypot(p.x, p.y), 3)}}"
+    }
+   },
+   "question": "Drag $\\boldsymbol{\\beta}$ to the shortest best fit.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "p",
+      "target": [
+       0.3929,
+       0.3929
+      ],
+      "tol": 0.06
+     }
+    ],
+    "wrong": [
+     {
+      "id": "one",
+      "region": {
+       "x": [
+        -0.1,
+        0.12
+       ]
+      }
+     },
+     {
+      "id": "two",
+      "region": {
+       "y": [
+        -0.1,
+        0.12
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The length of $\\boldsymbol{\\beta}$ is the distance from the origin. The caption shows it."
+    },
+    {
+     "rung": "point",
+     "text": "The shortest point on a line is where the perpendicular from the origin meets it.",
+     "highlight": [
+      "f",
+      "p"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "By symmetry that is $\\beta_1 = \\beta_2 = \\tfrac{11}{28} \\approx 0.393$."
+    }
+   ],
+   "feedback": {
+    "correct": "The shortest best fit is $\\tfrac{11}{28}(1, 1)$: half the weight on each copy.",
+    "generic": "Not quite right. Watch the length in the caption fall as you slide, and stop at the smallest.",
+    "byKey": {
+     "one": "You put all the weight on one factor, $(0, \\tfrac{11}{14})$. Its length is 0.786, longer than the 0.556 at the middle.",
+     "two": "You put all the weight on the other copy. By symmetry the shortest point is halfway between the two ends."
+    }
+   },
+   "explain": {
+    "text": "The two ends of the line have length $\\tfrac{11}{14} = 0.786$ and the middle has length $\\tfrac{11}{28}\\sqrt2 = 0.556$. The shortest of all the equally good fits is $(0.3929, 0.3929)$. Choosing it has a name: the pseudoinverse."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "When the normal equations fail",
+   "prose": "Least squares from lesson 10 solves $\\mathbf{X}^T\\mathbf{X}\\hat{\\boldsymbol{\\beta}} = \\mathbf{X}^T\\mathbf{y}$. Form both sides for this $\\mathbf{X}$. $\\mathbf{X}^T\\mathbf{y} = (11, 11)$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "XT",
+       "rows": [
+        [
+         1,
+         2,
+         3
+        ],
+        [
+         1,
+         2,
+         3
+        ]
+       ],
+       "label": "$\\mathbf{X}^T$"
+      },
+      {
+       "id": "X",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         2,
+         2
+        ],
+        [
+         3,
+         3
+        ]
+       ],
+       "label": "$\\mathbf{X}$"
+      },
+      {
+       "id": "G",
+       "rows": [
+        [
+         14,
+         14
+        ],
+        [
+         14,
+         14
+        ]
+       ],
+       "label": "$\\mathbf{X}^T\\mathbf{X}$"
+      }
+     ],
+     "ops": [
+      "",
+      "="
+     ]
+    },
+    "state": {
+     "highlight": {
+      "G": {
+       "rows": [
+        0,
+        1
+       ]
+      }
+     }
+    }
+   },
+   "question": "Why can we not solve the normal equations?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sing",
+      "text": "$\\mathbf{X}^T\\mathbf{X}$ is singular: its two equations, $14\\beta_1 + 14\\beta_2 = 11$, are the same",
+      "correct": true
+     },
+     {
+      "id": "outside",
+      "text": "$\\mathbf{y}$ is not in the column space of $\\mathbf{X}$",
+      "why": "It is not, which is why this is least squares. The normal equations are built for that case. The fault is in $\\mathbf{X}^T\\mathbf{X}$."
+     },
+     {
+      "id": "nofit",
+      "text": "There is no best fit",
+      "why": "Every pair with $\\beta_1 + \\beta_2 = \\tfrac{11}{14}$ is a best fit. There are too many, not too few."
+     },
+     {
+      "id": "rows",
+      "text": "$\\mathbf{X}$ has more rows than columns",
+      "why": "Tall matrices are the normal case in least squares. A tall matrix with independent columns gives an invertible $\\mathbf{X}^T\\mathbf{X}$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the two rows of $\\mathbf{X}^T\\mathbf{X}$."
+    },
+    {
+     "rung": "point",
+     "text": "The rows are equal, so the determinant is $14 \\times 14 - 14 \\times 14 = 0$.",
+     "highlight": [
+      "G"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A singular matrix has no inverse, so $(\\mathbf{X}^T\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{y}$ does not exist."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\det\\mathbf{X}^T\\mathbf{X} = 0$: the two equations are one equation.",
+    "generic": "Not quite right. Compute the determinant of $\\mathbf{X}^T\\mathbf{X}$.",
+    "byKey": {
+     "outside": "You blamed $\\mathbf{y}$. Least squares expects $\\mathbf{y}$ to lie off the column space.",
+     "nofit": "You expected no solution. The system has a whole line of them."
+    }
+   },
+   "explain": {
+    "text": "The columns of $\\mathbf{X}$ are dependent, so $\\mathbf{X}^T\\mathbf{X}$ is singular and the normal equations give one equation for two unknowns. NumPy's `inv` returns a matrix of `nan` here, or raises an error. We need a rule that picks one answer."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "$\\mathbf{X}$ has rank 1, so one singular value is nonzero. Its square is the nonzero eigenvalue of $\\mathbf{X}^T\\mathbf{X} = \\begin{pmatrix} 14 & 14 \\\\ 14 & 14 \\end{pmatrix}$, which is the trace, 28.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "G",
+       "rows": [
+        [
+         14,
+         14
+        ],
+        [
+         14,
+         14
+        ]
+       ],
+       "label": "$\\mathbf{X}^T\\mathbf{X}$"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Eigenvalues 28 and 0."
+    }
+   },
+   "question": "What is the nonzero singular value $\\sigma_1$ of $\\mathbf{X}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.2915,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "sigma 1",
+    "accept": "5.2915: $\\sqrt{28}$",
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sq",
+      "value": 28,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 3.7417,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "trace",
+      "value": 14,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Singular values are the square roots of the eigenvalues of $\\mathbf{X}^T\\mathbf{X}$."
+    },
+    {
+     "rung": "point",
+     "text": "The eigenvalues are 28 and 0 (trace 28, determinant 0).",
+     "highlight": [
+      "G"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sigma_1 = \\sqrt{28} = 5.2915$, and $\\sigma_2 = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sigma_1 = \\sqrt{28} \\approx 5.2915$.",
+    "generic": "Not quite right. Take the square root of the eigenvalue 28.",
+    "byKey": {
+     "sq": "28 is $\\sigma_1^2$. Take the root.",
+     "half": "3.7417 is $\\sqrt{14}$, the root of one entry of $\\mathbf{X}^T\\mathbf{X}$. The eigenvalue is 28.",
+     "trace": "14 is a diagonal entry. The eigenvalue is the trace, 28."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{X} = \\sigma_1\\mathbf{u}_1\\mathbf{v}_1^T$ with $\\mathbf{u}_1 = (1, 2, 3)/\\sqrt{14}$ and $\\mathbf{v}_1 = (1, 1)/\\sqrt2$. A matrix is inverted by inverting each stretch. The stretch $\\sigma_1$ inverts to $1/\\sigma_1 = 0.189$; the zero has no inverse."
+   },
+   "title": "The one stretch in the matrix"
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "The **pseudoinverse** is $\\mathbf{A}^+ = \\mathbf{V}\\boldsymbol{\\Sigma}^+\\mathbf{U}^T$, where $\\boldsymbol{\\Sigma}^+$ inverts each nonzero singular value and leaves each zero at zero. Try $\\boldsymbol{\\Sigma} = \\mathrm{diag}(3, 0, 2)$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "S",
+       "rows": [
+        [
+         3,
+         0,
+         0
+        ],
+        [
+         0,
+         0,
+         0
+        ],
+        [
+         0,
+         0,
+         2
+        ]
+       ],
+       "label": "$\\boldsymbol{\\Sigma}$"
+      },
+      {
+       "id": "Sp",
+       "rows": [
+        [
+         "$\\tfrac13$",
+         0,
+         0
+        ],
+        [
+         0,
+         0,
+         0
+        ],
+        [
+         0,
+         0,
+         "$\\tfrac12$"
+        ]
+       ],
+       "label": "$\\boldsymbol{\\Sigma}^+$"
+      }
+     ],
+     "ops": [
+      "$\\to$"
+     ]
+    },
+    "state": {
+     "hidden": [
+      "Sp"
+     ]
+    }
+   },
+   "question": "Fill in the diagonal of $\\boldsymbol{\\Sigma}^+$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "",
+     "value"
+    ],
+    "rows": [
+     [
+      "entry 1",
+      {
+       "edit": true,
+       "answer": 0.3333,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "entry 2",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "entry 3",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Invert the nonzero entries: $1/3$ and $1/2$."
+    },
+    {
+     "rung": "point",
+     "text": "The middle entry is 0 and has no inverse.",
+     "highlight": [
+      "S"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Leave it at 0: the diagonal of $\\boldsymbol{\\Sigma}^+$ is $(\\tfrac13, 0, \\tfrac12)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\boldsymbol{\\Sigma}^+ = \\mathrm{diag}(\\tfrac13, 0, \\tfrac12)$.",
+    "generic": "Not quite right. Invert each nonzero entry and keep each zero as zero.",
+    "byKey": {
+     "r1c1": "A zero stretch cannot be undone, so we put 0 in its place, not $1/0$."
+    }
+   },
+   "explain": {
+    "text": "Leaving the zero at zero means $\\mathbf{A}^+$ does nothing along directions that $\\mathbf{A}$ crushes. That is what makes the answer the shortest one: it adds nothing in the crushed direction.",
+    "canvas": {
+     "hidden": []
+    }
+   },
+   "title": "Invert what can be inverted"
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "For your $\\mathbf{X}$, $\\mathbf{X}^+ = \\mathbf{V}\\boldsymbol{\\Sigma}^+\\mathbf{U}^T = \\tfrac{1}{28}\\begin{pmatrix} 1 & 2 & 3 \\\\ 1 & 2 & 3 \\end{pmatrix}$. Apply it to $\\mathbf{y} = (1, 2, 2)$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "Xp",
+       "rows": [
+        [
+         1,
+         2,
+         3
+        ],
+        [
+         1,
+         2,
+         3
+        ]
+       ],
+       "label": "$\\mathbf{X}^+$",
+       "scale": "\\tfrac{1}{28}"
+      },
+      {
+       "id": "y",
+       "rows": [
+        [
+         1
+        ],
+        [
+         2
+        ],
+        [
+         2
+        ]
+       ],
+       "label": "$\\mathbf{y}$"
+      },
+      {
+       "id": "b",
+       "rows": [
+        [
+         0.3929
+        ],
+        [
+         0.3929
+        ]
+       ],
+       "label": "$\\boldsymbol{\\beta}$"
+      }
+     ],
+     "ops": [
+      "",
+      "="
+     ]
+    },
+    "state": {
+     "hidden": [
+      "b"
+     ]
+    }
+   },
+   "question": "What is $\\beta_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3929,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "beta 1",
+    "accept": "0.3929: $(1 + 4 + 6)/28 = 11/28$",
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 0.7857,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "first",
+      "value": 0.0357,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "mean",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row 1 of $\\mathbf{X}^+$ is $(1, 2, 3)/28$."
+    },
+    {
+     "rung": "point",
+     "text": "$1 \\times 1 + 2 \\times 2 + 3 \\times 2 = 11$.",
+     "highlight": [
+      "Xp-r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\beta_1 = 11/28 = 0.3929$, and $\\beta_2$ is the same."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\boldsymbol{\\beta} = \\mathbf{X}^+\\mathbf{y} = (0.3929, 0.3929)$: the point you dragged to.",
+    "generic": "Not quite right. Dot row 1, $(1, 2, 3)/28$, with $\\mathbf{y}$.",
+    "byKey": {
+     "sum": "0.7857 is $\\beta_1 + \\beta_2$. Each coefficient takes half.",
+     "first": "0.0357 is the first entry of $\\mathbf{X}^+$, not the product.",
+     "mean": "0.5 is not a product of the matrix with $\\mathbf{y}$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{A}^+\\mathbf{b}$ is the least-squares solution of smallest length, the shortest point on the line of best fits. You found the same point by dragging.",
+    "canvas": {
+     "hidden": []
+    }
+   },
+   "title": "The shortest best fit by formula"
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "$\\mathbf{X}\\mathbf{X}^+$ is the projection onto the column space, the $\\mathbf{P}$ of lesson 6. Here the column space is the line through $(1, 2, 3)$, and $\\mathbf{X}\\mathbf{X}^+ = \\tfrac{1}{14}\\begin{pmatrix} 1 & 2 & 3 \\\\ 2 & 4 & 6 \\\\ 3 & 6 & 9 \\end{pmatrix}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "P",
+       "rows": [
+        [
+         1,
+         2,
+         3
+        ],
+        [
+         2,
+         4,
+         6
+        ],
+        [
+         3,
+         6,
+         9
+        ]
+       ],
+       "label": "$\\mathbf{X}\\mathbf{X}^+$",
+       "scale": "\\tfrac{1}{14}"
+      },
+      {
+       "id": "y",
+       "rows": [
+        [
+         1
+        ],
+        [
+         2
+        ],
+        [
+         2
+        ]
+       ],
+       "label": "$\\mathbf{y}$"
+      }
+     ],
+     "ops": [
+      ""
+     ]
+    },
+    "state": {
+     "highlight": {
+      "P": {
+       "rows": [
+        2
+       ]
+      }
+     }
+    }
+   },
+   "question": "What is the fitted value for day 3, the third entry of $\\mathbf{X}\\mathbf{X}^+\\mathbf{y}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.3571,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Fitted value on day 3",
+    "accept": "2.3571: $(3 + 12 + 18)/14 = 33/14$",
+    "placeholder": "a decimal",
+    "wrong": [
+     {
+      "id": "actual",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "col",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "proj",
+      "value": 0.6429,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Dot row 3 of the matrix with $\\mathbf{y}$."
+    },
+    {
+     "rung": "point",
+     "text": "Row 3 is $(3, 6, 9)/14$.",
+     "highlight": [
+      "P-r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(3 \\times 1 + 6 \\times 2 + 9 \\times 2)/14 = 33/14 = 2.3571$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\hat{y}_3 = 33/14 \\approx 2.3571$, against the actual 2.",
+    "generic": "Not quite right. Row 3 is $(3, 6, 9)/14$. Dot it with $(1, 2, 2)$.",
+    "byKey": {
+     "actual": "2 is $y_3$ itself. The fit is its projection onto the column space.",
+     "col": "3 is the column value on day 3. The fit multiplies it by $\\tfrac{11}{14}$.",
+     "proj": "0.6429 is $9/14$, one entry of the matrix."
+    }
+   },
+   "explain": {
+    "text": "The fitted vector is $\\tfrac{11}{14}(1, 2, 3)$, so the fit on day 3 is $\\tfrac{33}{14}$. The pseudoinverse leaves the projection unchanged however you choose $\\boldsymbol{\\beta}$. $\\mathbf{X}^+\\mathbf{X} = \\tfrac12\\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}$ is the projection onto the row space, the line $(1, 1)$ where the shortest $\\boldsymbol{\\beta}$ lives."
+   },
+   "title": "Two projections"
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A near-copy replaces the duplicate: $\\mathbf{X}_\\delta = \\begin{pmatrix} 1 & 1 \\\\ 2 & 2 \\\\ 3 & 3.000001 \\end{pmatrix}$. Its singular values are 5.29 and 0.00000042. Invert both, as the formula says.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "s1",
+       "label": "$\\sigma_1$"
+      },
+      {
+       "id": "s2",
+       "label": "$\\sigma_2$"
+      }
+     ],
+     "groups": [
+      {
+       "id": "sv",
+       "label": "singular value",
+       "colour": 1
+      },
+      {
+       "id": "inv",
+       "label": "its reciprocal",
+       "colour": 2
+      }
+     ],
+     "yScale": "log",
+     "yLabel": "size (log scale)",
+     "showValues": false,
+     "height": 260
+    },
+    "state": {
+     "values": {
+      "sv": {
+       "s1": 5.2915,
+       "s2": 4.2258e-07
+      },
+      "inv": {
+       "s1": 0.18898,
+       "s2": 2366432
+      }
+     },
+     "caption": "$1/\\sigma_2 = 2{,}366{,}432$"
+    }
+   },
+   "question": "What do the least-squares coefficients for $\\mathbf{y} = (1, 2, 2)$ look like?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "huge",
+      "text": "Huge and opposite in sign: about $+1{,}000{,}001$ and $-1{,}000{,}000$",
+      "correct": true
+     },
+     {
+      "id": "close",
+      "text": "Close to $0.39$ each, as for the exact duplicate",
+      "why": "You expected a tiny change in $\\mathbf{X}$ to give a tiny change in $\\boldsymbol{\\beta}$. The inverse of $0.00000042$ is 2.4 million, which magnifies everything."
+     },
+     {
+      "id": "err",
+      "text": "An error, because $\\mathbf{X}_\\delta$ is singular",
+      "why": "$\\mathbf{X}_\\delta$ is not singular: its second singular value is tiny but nonzero, so the formula runs without complaint."
+     },
+     {
+      "id": "half",
+      "text": "About $0.79$ and $0$",
+      "why": "Nothing in the formula favours one copy. The coefficients come from the tiny direction, not from a tidy split."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The tiny direction carries a leftover part of $\\mathbf{y}$. The pseudoinverse multiplies that part by $1/\\sigma_2$."
+    },
+    {
+     "rung": "point",
+     "text": "$1/\\sigma_2 \\approx 2.4 \\times 10^6$.",
+     "highlight": [
+      "s2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The leftover is about $0.4$. The coefficients are of order $10^6$, and opposite in sign because the columns are nearly equal."
+    }
+   ],
+   "feedback": {
+    "correct": "The fit chases a small leftover, with coefficients near a million in opposite directions.",
+    "generic": "Not quite right. Ask what inverting $0.00000042$ does.",
+    "byKey": {
+     "close": "You expected continuity. A tiny singular value is nearly zero, but its reciprocal is huge unless we treat it as zero.",
+     "err": "No error: the matrix is invertible in exact arithmetic, only barely."
+    }
+   },
+   "explain": {
+    "text": "The cure is a cut-off: treat any singular value below $\\text{tol} \\times \\sigma_1$ as zero. With tol $= 10^{-5}$ the ratio $8 \\times 10^{-8}$ is cut, and $\\boldsymbol{\\beta} = (0.3929, 0.3929)$ again. Never use `np.linalg.inv(X.T @ X)` here: squaring the matrix squares the problem."
+   },
+   "title": "A near-copy and a tiny singular value"
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Check the pseudoinverse against lesson 10 when $\\mathbf{A}$ has full column rank. Use $\\mathbf{A} = \\mathbf{U}\\boldsymbol{\\Sigma}\\mathbf{V}^T$ with $\\boldsymbol{\\Sigma}$ square and invertible.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "ata",
+      "text": "$\\mathbf{A}^T\\mathbf{A} = \\mathbf{V}\\boldsymbol{\\Sigma}\\mathbf{U}^T\\mathbf{U}\\boldsymbol{\\Sigma}\\mathbf{V}^T = \\mathbf{V}\\boldsymbol{\\Sigma}^2\\mathbf{V}^T$, since $\\mathbf{U}^T\\mathbf{U} = \\mathbf{I}$"
+     },
+     {
+      "id": "inv",
+      "text": "$(\\mathbf{A}^T\\mathbf{A})^{-1} = \\mathbf{V}\\boldsymbol{\\Sigma}^{-2}\\mathbf{V}^T$, since $\\mathbf{V}$ is orthogonal and $\\boldsymbol{\\Sigma}$ is invertible"
+     },
+     {
+      "id": "mul",
+      "text": "$(\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T = \\mathbf{V}\\boldsymbol{\\Sigma}^{-2}\\mathbf{V}^T\\,\\mathbf{V}\\boldsymbol{\\Sigma}\\mathbf{U}^T$, using $\\mathbf{A}^T = \\mathbf{V}\\boldsymbol{\\Sigma}\\mathbf{U}^T$"
+     },
+     {
+      "id": "sim",
+      "text": "$= \\mathbf{V}\\boldsymbol{\\Sigma}^{-1}\\mathbf{U}^T$, since $\\mathbf{V}^T\\mathbf{V} = \\mathbf{I}$ and $\\boldsymbol{\\Sigma}^{-2}\\boldsymbol{\\Sigma} = \\boldsymbol{\\Sigma}^{-1}$"
+     },
+     {
+      "id": "name",
+      "text": "$= \\mathbf{A}^+$, because with no zero singular values $\\boldsymbol{\\Sigma}^+ = \\boldsymbol{\\Sigma}^{-1}$"
+     }
+    ],
+    "answer": [
+     "ata",
+     "inv",
+     "mul",
+     "sim",
+     "name"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with $\\mathbf{A}^T\\mathbf{A}$ in terms of the SVD."
+    },
+    {
+     "rung": "point",
+     "text": "Invert it, then multiply by $\\mathbf{A}^T$."
+    },
+    {
+     "rung": "step",
+     "text": "Form, invert, multiply, simplify, name."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{A}^+ = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T$ when the columns are independent.",
+    "generic": "Not quite right. Each line should follow from the one before.",
+    "byKey": {
+     "inv": "You can invert only after $\\mathbf{A}^T\\mathbf{A}$ has been written as $\\mathbf{V}\\boldsymbol{\\Sigma}^2\\mathbf{V}^T$.",
+     "sim": "Simplify after you have multiplied by $\\mathbf{A}^T$."
+    }
+   },
+   "explain": {
+    "text": "With independent columns nothing changes: the pseudoinverse is the normal-equations answer. Edge case: if $\\mathbf{A}$ is square and invertible, $\\mathbf{U}$ and $\\mathbf{V}$ are square, and $\\mathbf{V}\\boldsymbol{\\Sigma}^{-1}\\mathbf{U}^T = (\\mathbf{U}\\boldsymbol{\\Sigma}\\mathbf{V}^T)^{-1} = \\mathbf{A}^{-1}$. The pseudoinverse extends the inverse."
+   },
+   "title": "Nothing changes when columns are independent"
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The pseudoinverse in NumPy",
+   "prose": "Build $\\mathbf{A}^+$ from `np.linalg.svd`, with a cut-off for tiny singular values. The tests also check that you did not call NumPy's own pseudoinverse or `lstsq`.",
+   "question": "Complete `pinv_svd(A, tol)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef pinv_svd(A, tol=1e-10):\n    \"\"\"Pseudoinverse from the SVD. A singular value below\n    tol times the largest one is treated as zero.\"\"\"\n    A = np.asarray(A, dtype=float)\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    keep = ...        # True where s is above the cut-off\n    s_inv = ...       # 1 / s where kept, 0 elsewhere\n    return ...        # V diag(s_inv) U^T\n",
+    "solution": "import numpy as np\n\ndef pinv_svd(A, tol=1e-10):\n    \"\"\"Pseudoinverse from the SVD. A singular value below\n    tol times the largest one is treated as zero.\"\"\"\n    A = np.asarray(A, dtype=float)\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    keep = s > tol * s.max()\n    s_inv = np.zeros_like(s)\n    s_inv[keep] = 1.0 / s[keep]\n    return Vt.T @ np.diag(s_inv) @ U.T\n",
+    "examples": [
+     {
+      "call": "np.round(pinv_svd([[1, 2], [3, 4]], 1e-10), 4).tolist()",
+      "expect": "[[-2.0, 1.0], [1.5, -0.5]]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(pinv_svd([[1, 2], [3, 4]], 1e-10), 4).tolist()",
+      "expect": "[[-2.0, 1.0], [1.5, -0.5]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(pinv_svd([[1, 1], [2, 2], [3, 3]], 1e-10), 4).tolist()",
+      "expect": "[[0.0357, 0.0714, 0.1071], [0.0357, 0.0714, 0.1071]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(pinv_svd([[1, 2, 3], [2, 4, 6], [1, 0, 1]], 1e-10), 4).tolist()",
+      "expect": "[[-0.0333, -0.0667, 0.8333], [0.0667, 0.1333, -0.6667], [0.0333, 0.0667, 0.1667]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(pinv_svd([[1, 0], [1, 1], [1, 2]], 1e-10), 4).tolist()",
+      "expect": "[[0.8333, 0.3333, -0.1667], [-0.5, -0.0, 0.5]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(pinv_svd([[1, 2, 3]], 1e-10), 4).tolist()",
+      "expect": "[[0.0714], [0.1429], [0.2143]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(pinv_svd([[1, 1], [2, 2], [3, 3.000001]], 1e-5), 4).tolist() == [[0.0357, 0.0714, 0.1071], [0.0357, 0.0714, 0.1071]] and 'np.linalg.pinv' not in __learner_source__ and 'lstsq' not in __learner_source__",
+      "expect": "True",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(X @ pinv_svd(X) @ X, 4).tolist() == np.round(X, 4).tolist() and 'np.linalg.pinv' not in __learner_source__ and 'lstsq' not in __learner_source__",
+      "setup": "X = np.array([[1.0, 2.0, 3.0], [2.0, 4.0, 6.0], [1.0, 0.0, 1.0]])",
+      "expect": "True",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 7 hidden tests, with entries rounded to 4 decimal places, against a rank-deficient matrix, a tall full-rank matrix, a wide one and the near-copy from the trap. Two tests also fail if your source calls NumPy's own pseudoinverse or `lstsq`. The first run loads NumPy: 1 to 3 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A singular value is kept when it exceeds `tol` times the largest."
+    },
+    {
+     "rung": "point",
+     "text": "`s.max()` is the largest singular value. Fill `s_inv` only at the kept positions."
+    },
+    {
+     "rung": "step",
+     "text": "`keep = s > tol * s.max()`, then `s_inv[keep] = 1.0 / s[keep]`, then `Vt.T @ np.diag(s_inv) @ U.T`."
+    }
+   ],
+   "feedback": {
+    "correct": "Invert what is large enough, drop the rest.",
+    "generic": "Some tests failed. Mark the singular values above the cut-off, invert only those, and rebuild with $\\mathbf{V}$ and $\\mathbf{U}^T$.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace each `...` with an expression."
+    }
+   },
+   "explain": {
+    "text": "The cut-off decides which stretches count as zero. Everything else is the SVD in reverse.\n\n```python\nkeep = s > tol * s.max()\ns_inv = np.zeros_like(s)\ns_inv[keep] = 1.0 / s[keep]\nreturn Vt.T @ np.diag(s_inv) @ U.T\n```"
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Minimum-norm hedge ratios",
+   "prose": "`pinv_svd` is in place. A hedge with the shortest ratios is $\\mathbf{X}^+\\mathbf{y}$. The tests use the duplicate factors, a three-future book and the near-copy. In the book, the third future is the sum of the first two.",
+   "question": "Complete `hedge_min_norm(X, y, tol)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef pinv_svd(A, tol=1e-10):\n    \"\"\"Pseudoinverse from the SVD. A singular value below\n    tol times the largest one is treated as zero.\"\"\"\n    A = np.asarray(A, dtype=float)\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    keep = s > tol * s.max()\n    s_inv = np.zeros_like(s)\n    s_inv[keep] = 1.0 / s[keep]\n    return Vt.T @ np.diag(s_inv) @ U.T\n\n\ndef hedge_min_norm(X, y, tol=1e-6):\n    \"\"\"Least-squares hedge ratios of smallest length.\"\"\"\n    return ...       # the pseudoinverse applied to y\n",
+    "solution": "import numpy as np\n\ndef pinv_svd(A, tol=1e-10):\n    \"\"\"Pseudoinverse from the SVD. A singular value below\n    tol times the largest one is treated as zero.\"\"\"\n    A = np.asarray(A, dtype=float)\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    keep = s > tol * s.max()\n    s_inv = np.zeros_like(s)\n    s_inv[keep] = 1.0 / s[keep]\n    return Vt.T @ np.diag(s_inv) @ U.T\n\n\ndef hedge_min_norm(X, y, tol=1e-6):\n    \"\"\"Least-squares hedge ratios of smallest length.\"\"\"\n    return pinv_svd(X, tol) @ np.asarray(y, dtype=float)\n",
+    "examples": [
+     {
+      "call": "np.round(hedge_min_norm([[1, 1], [2, 2], [3, 3]], [1, 2, 2]), 4).tolist()",
+      "expect": "[0.3929, 0.3929]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(hedge_min_norm([[1, 1], [2, 2], [3, 3]], [1, 2, 2]), 4).tolist()",
+      "expect": "[0.3929, 0.3929]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(hedge_min_norm([[1, 0, 1], [0, 1, 1], [1, 1, 2], [2, 1, 3]], [2, 3, 5, 6]), 4).tolist()",
+      "expect": "[0.1111, 1.4444, 1.5556]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(hedge_min_norm([[1, 0, 1], [0, 1, 1], [1, 1, 2], [2, 1, 3]], [4, 5, 9, 13]), 4).tolist()",
+      "expect": "[1.0, 2.0, 3.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(hedge_min_norm([[1, 0], [0, 1], [1, 1]], [1, 2, 3]), 4).tolist()",
+      "expect": "[1.0, 2.0]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(hedge_min_norm([[1, 1], [2, 2], [3, 3.000001]], [1, 2, 2]), 4).tolist()",
+      "expect": "[0.3929, 0.3929]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(np.linalg.norm(hedge_min_norm([[1, 0, 1], [0, 1, 1], [1, 1, 2], [2, 1, 3]], [2, 3, 5, 6]))), 4)",
+      "expect": "2.1257",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 6 hidden tests, with ratios rounded to 4 decimal places. The default cut-off is 1e-6. NumPy is already loaded."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The shortest least-squares solution is $\\mathbf{X}^+\\mathbf{y}$."
+    },
+    {
+     "rung": "point",
+     "text": "Call `pinv_svd(X, tol)` and multiply by `y` with `@`."
+    },
+    {
+     "rung": "step",
+     "text": "`return pinv_svd(X, tol) @ np.asarray(y, dtype=float)`"
+    }
+   ],
+   "feedback": {
+    "correct": "$\\boldsymbol{\\beta} = \\mathbf{X}^+\\mathbf{y}$, whatever the rank.",
+    "generic": "Some tests failed. Apply the pseudoinverse, with the same cut-off, to $\\mathbf{y}$.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace the `...` with a product."
+    }
+   },
+   "explain": {
+    "text": "One line, because the work is in the pseudoinverse. It matches the normal equations when the columns are independent. It gives the shortest answer when they are not.\n\n```python\nreturn pinv_svd(X, tol) @ np.asarray(y, dtype=float)\n```"
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Hedging with a redundant instrument",
+   "prose": "A desk hedges a book with three futures, and $F_3$ is always $F_1 + F_2$. The table gives each future's P&L per unit in four scenarios, and the book's P&L in £k. Each hedge below fits the book exactly. Trading cost grows with the square of each position.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Scenario",
+      "$F_1$",
+      "$F_2$",
+      "$F_3$",
+      "Book (£k)"
+     ],
+     "rows": [
+      [
+       "1",
+       "1",
+       "0",
+       "1",
+       "4"
+      ],
+      [
+       "2",
+       "0",
+       "1",
+       "1",
+       "5"
+      ],
+      [
+       "3",
+       "1",
+       "1",
+       "2",
+       "9"
+      ],
+      [
+       "4",
+       "2",
+       "1",
+       "3",
+       "13"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which hedge $(b_1, b_2, b_3)$ has the smallest sum of squared positions?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "min",
+      "text": "$(1, 2, 3)$, with squares summing to 14",
+      "correct": true
+     },
+     {
+      "id": "skip",
+      "text": "$(-1, 0, 5)$, which skips $F_2$",
+      "why": "You chose the hedge that skips a future. It has squares summing to 26, the largest of the four."
+     },
+     {
+      "id": "gross",
+      "text": "$(0, 1, 4)$, with the smallest gross size, 5",
+      "why": "You minimised the sum of sizes, 5 against 6. The squares sum to 17, which is more than 14."
+     },
+     {
+      "id": "mix",
+      "text": "$(2, 3, 2)$",
+      "why": "This fits too, but its squares sum to 17."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "All four hedges differ by multiples of $(1, 1, -1)$, which nets to nothing because $F_3 = F_1 + F_2$."
+    },
+    {
+     "rung": "point",
+     "text": "The shortest one is perpendicular to $(1, 1, -1)$, so $b_1 + b_2 = b_3$."
+    },
+    {
+     "rung": "step",
+     "text": "Only $(1, 2, 3)$ has $b_1 + b_2 = b_3$. It is $\\mathbf{X}^+\\mathbf{y}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1, 2, 3)$ is the minimum-norm hedge, $\\mathbf{X}^+\\mathbf{y}$.",
+    "generic": "Not quite right. Add the squares of each hedge, or find the one with $b_1 + b_2 = b_3$.",
+    "byKey": {
+     "skip": "Skipping a future does not make a hedge small. Add the squares: $1 + 0 + 25 = 26$.",
+     "gross": "Gross size is $|b_1| + |b_2| + |b_3|$. We are asked for squares.",
+     "mix": "$4 + 9 + 4 = 17$."
+    }
+   },
+   "explain": {
+    "text": "Every hedge in the line $(1, 2, 3) + t(1, 1, -1)$ hedges equally well, because $F_1 + F_2 - F_3$ is always zero. The pseudoinverse picks $t = 0$, the smallest total square, so it trades the least when cost grows with size squared. It also stays stable when the data change a little."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "$\\mathbf{A}^+ = \\mathbf{V}\\boldsymbol{\\Sigma}^+\\mathbf{U}^T$: invert each nonzero singular value and leave each zero at zero. $\\mathbf{A}^+\\mathbf{b}$ is the least-squares solution of smallest length.",
+   "With independent columns $\\mathbf{A}^+ = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T$, and for a square invertible matrix $\\mathbf{A}^+ = \\mathbf{A}^{-1}$. $\\mathbf{A}\\mathbf{A}^+$ projects onto the column space and $\\mathbf{A}^+\\mathbf{A}$ onto the row space.",
+   "A tiny singular value has a huge reciprocal. Treat anything below $\\text{tol} \\times \\sigma_1$ as zero, and never invert $\\mathbf{X}^T\\mathbf{X}$ for near-duplicate columns."
+  ],
+  "formula": {
+   "name": "Pseudoinverse",
+   "tex": "\\mathbf{A}^+ = \\mathbf{V}\\boldsymbol{\\Sigma}^+\\mathbf{U}^T, \\qquad \\hat{\\boldsymbol{\\beta}} = \\mathbf{X}^+\\mathbf{y}",
+   "note": "$\\boldsymbol{\\Sigma}^+$ has $1/\\sigma_i$ where $\\sigma_i$ is kept, and 0 elsewhere."
+  },
+  "trap": "Inverting every nonzero singular value, however small, gives coefficients of size $1/\\sigma$, so set tiny ones to zero."
+ },
+ "quiz": [
+  {
+   "id": "q-diag",
+   "difficulty": 2,
+   "prose": "$\\mathbf{A} = \\mathrm{diag}(4, 0, 0.5)$.",
+   "question": "What is the third diagonal entry of $\\mathbf{A}^+$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Entry",
+    "accept": "2: $1/0.5$",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\mathbf{A}^+ = \\mathrm{diag}(0.25, 0, 2)$.",
+    "generic": "Not quite right. Invert each nonzero diagonal entry and keep zeros as zeros.",
+    "byKey": {
+     "same": "0.5 is the entry of $\\mathbf{A}$ itself.",
+     "zero": "The zero is the second entry. The third entry is $1/0.5$.",
+     "quarter": "0.25 is the inverse of the first entry, 4."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{A}^+ = \\mathrm{diag}(\\tfrac14, 0, 2)$. Only the zero stays zero."
+   }
+  },
+  {
+   "id": "q-square",
+   "difficulty": 2,
+   "prose": "$\\mathbf{A} = \\begin{pmatrix} 2 & 0 \\\\ 0 & 4 \\end{pmatrix}$ is square and invertible.",
+   "question": "What is the $(2, 2)$ entry of $\\mathbf{A}^+$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.25,
+    "tol": {
+     "abs": 0.001
+    },
+    "label": "Entry",
+    "accept": "0.25: $\\mathbf{A}^+ = \\mathbf{A}^{-1}$",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "For an invertible matrix $\\mathbf{A}^+ = \\mathbf{A}^{-1}$, so the entry is $\\tfrac14$.",
+    "generic": "Not quite right. Both singular values are nonzero, so the pseudoinverse is the inverse.",
+    "byKey": {
+     "same": "4 is the entry of $\\mathbf{A}$. Take its reciprocal.",
+     "zero": "Neither singular value is zero here, so nothing is left at zero."
+    }
+   },
+   "explain": {
+    "text": "Nothing is crushed by $\\mathbf{A}$, so $\\mathbf{A}^+ = \\mathbf{A}^{-1} = \\mathrm{diag}(\\tfrac12, \\tfrac14)$."
+   }
+  },
+  {
+   "id": "q-full",
+   "difficulty": 3,
+   "prose": "$\\mathbf{A}$ is a tall matrix with independent columns.",
+   "question": "Which expression equals $\\mathbf{A}^+$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "$(\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T$",
+      "correct": true
+     },
+     {
+      "id": "row",
+      "text": "$\\mathbf{A}^T(\\mathbf{A}\\mathbf{A}^T)^{-1}$",
+      "why": "That is the formula for independent rows. For a tall matrix $\\mathbf{A}\\mathbf{A}^T$ is singular."
+     },
+     {
+      "id": "other",
+      "text": "$(\\mathbf{A}\\mathbf{A}^T)^{-1}\\mathbf{A}$",
+      "why": "The factors are in the wrong places: the sizes do not even multiply for a tall matrix."
+     },
+     {
+      "id": "inv",
+      "text": "$\\mathbf{A}^{-1}$",
+      "why": "A tall matrix is not square, so it has no inverse."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "This is the normal-equations solution of lesson 10.",
+    "generic": "Not quite right. For independent columns, $\\mathbf{A}^T\\mathbf{A}$ is invertible."
+   },
+   "explain": {
+    "text": "$\\hat{\\boldsymbol{\\beta}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{y}$ is the least-squares answer, so $\\mathbf{A}^+ = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T$ in this case."
+   }
+  },
+  {
+   "id": "q-cut",
+   "difficulty": 3,
+   "prose": "A matrix has singular values $12$, $3$ and $0.000002$. A routine treats a value as zero when it is below $\\text{tol} \\times 12$, with $\\text{tol} = 10^{-4}$.",
+   "question": "How many singular values does it keep?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Kept",
+    "accept": "2: the cut-off is $0.0012$",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The cut-off is $10^{-4} \\times 12 = 0.0012$, and 12 and 3 exceed it.",
+    "generic": "Not quite right. Compute the cut-off, then compare each value with it.",
+    "byKey": {
+     "all": "You kept every nonzero value. $0.000002$ is nonzero, but it is below $0.0012$.",
+     "one": "3 is above $0.0012$, so it is kept too."
+    }
+   },
+   "explain": {
+    "text": "The third value is below $0.0012$ and is set to zero, so its reciprocal $500{,}000$ never enters $\\mathbf{A}^+$."
+   }
+  }
+ ]
+}
