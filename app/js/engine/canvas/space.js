@@ -408,7 +408,7 @@ ${heightCss}
     /* ---------- Frame: project, sort, draw ---------- */
     let cache = { key: null, sc: null };
     const sceneOf = (view) => {
-      const { camera, highlight, selected, caption, ...rest } = view; void camera; void highlight; void selected; void caption;
+      const rest = { ...view }; for (const k of ['camera', 'highlight', 'selected', 'caption']) delete rest[k]; // only the camera, highlight and tap selection change without a rebuild
       const key = JSON.stringify(rest);
       if (cache.key !== key) cache = { key, sc: build(view) };
       return cache.sc;
@@ -535,7 +535,7 @@ ${heightCss}
         const cardinal = { n: [0, -13], ne: [11, -12], e: [13, 0], se: [11, 13], s: [0, 15], sw: [-11, 13], w: [-13, 0], nw: [-11, -12] };
         for (const lb of sc.labels) {
           const A = lb.p ? proj(lb.p) : [0, 0]; let x = A[0], y = A[1], anchor = 'middle';
-          if (lb.mode === 'dir' && lb.q) { const B = proj(lb.q); let dx = A[0] - B[0], dy = A[1] - B[1]; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L; x += dx * lb.off + (dy < 0 ? 0 : 0); y += dy * lb.off - 2; anchor = dx > 0.35 ? 'start' : dx < -0.35 ? 'end' : 'middle'; }
+          if (lb.mode === 'dir' && lb.q) { const B = proj(lb.q); let dx = A[0] - B[0], dy = A[1] - B[1]; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L; x += dx * lb.off; y += dy * lb.off - 2; anchor = dx > 0.35 ? 'start' : dx < -0.35 ? 'end' : 'middle'; }
           else if (lb.mode === 'top') { let best = A, by = Infinity; for (const c of lb.cands) { const q = proj(c); if (q[1] < by) { by = q[1]; best = q; } } x = best[0]; y = best[1] - 13; }
           else if (lb.mode === 'side' && lb.mid) { const A2 = proj(lb.mid[0]), B2 = proj(lb.mid[1]); let dx = B2[0] - A2[0], dy = B2[1] - A2[1]; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L; x = (A2[0] + B2[0]) / 2 + dy * 13; y = (A2[1] + B2[1]) / 2 - dx * 13; anchor = dy > 0.35 ? 'start' : dy < -0.35 ? 'end' : 'middle'; }
           else { const o = cardinal[lb.pos] || cardinal.ne; x += o[0]; y += o[1]; anchor = o[0] > 0 ? 'start' : o[0] < 0 ? 'end' : 'middle'; }
