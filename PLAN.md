@@ -29,7 +29,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [x] integrals L4
 - [x] multivar L5 (brief's 10% target under a 50% cap was infeasible, max 9.5%; transfer uses long-only at 10% and a 45% cap at 9%)
 - [x] eigen L4
-- [ ] random-vars L5
+- [x] random-vars L5
 - [ ] limits-thm L4
 - [ ] markov L4
 - [ ] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (items listed in `docs/briefs/gaps-plan.md`)

@@ -1,0 +1,1269 @@
+{
+ "id": "l17-variance-given-information",
+ "course": "random-vars",
+ "title": "Conditional variance",
+ "minutes": 15,
+ "objectives": [
+  "Use the law of total variance, $\\mathrm{Var}(Y) = E[\\mathrm{Var}(Y \\mid X)] + \\mathrm{Var}(E[Y \\mid X])$."
+ ],
+ "skills": [
+  "rv-condexp",
+  "rv-variance"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "A strategy's daily P&L depends on the market regime. On calm days (80% of days) the average is £120 and the sd is £100. On volatile days (20%) the average is −£180 and the sd is £300.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "levels": [
+      {
+       "label": "Regime",
+       "branches": [
+        {
+         "id": "c",
+         "label": "Calm",
+         "p": "0.8"
+        },
+        {
+         "id": "v",
+         "label": "Volatile",
+         "p": "0.2"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "c": "mean £120, var 10,000",
+      "v": "mean −£180, var 90,000"
+     }
+    },
+    "state": {}
+   },
+   "question": "Weight each regime's variance by how often it occurs and add. What do you get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 26000,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "26,000: $0.8(10{,}000) + 0.2(90{,}000)$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 50000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "sdmix",
+      "value": 19600,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "vol",
+      "value": 90000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "calm",
+      "value": 10000,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each regime has a variance, the sd squared."
+    },
+    {
+     "rung": "point",
+     "text": "Calm: $100^2 = 10{,}000$. Volatile: $300^2 = 90{,}000$.",
+     "highlight": [
+      "c",
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compute $0.8 \\times 10{,}000 + 0.2 \\times 90{,}000$."
+    }
+   ],
+   "feedback": {
+    "correct": "26,000. That is the average variance inside a regime.",
+    "generic": "Not quite right. Square each sd, then weight by 0.8 and 0.2.",
+    "byKey": {
+     "plain": "You gave the two variances equal weight. Calm days are four times as common as volatile ones.",
+     "sdmix": "You averaged the sds first and then squared. Average the variances instead.",
+     "vol": "That is the volatile regime alone. It happens on only one day in five.",
+     "calm": "That is the calm regime alone. The volatile days add to the average too."
+    }
+   },
+   "explain": {
+    "text": "Weighting the variances by the regime chances gives $0.8(10{,}000) + 0.2(90{,}000) = 26{,}000$. We will call this the average variance inside a regime."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Each simulated day is drawn from its regime, one sd either side of the regime's average. The curve is the variance of all days so far. The dashed line is your 26,000.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "v",
+       "label": "Variance so far",
+       "sim": {
+        "outcome": "u() < 0.2 ? (coin() ? 120 : -480) : (coin() ? 220 : 20)",
+        "n": 5000,
+        "seed": 1,
+        "running": "varp"
+       }
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "xLabel": "Days simulated",
+     "yLabel": "Variance (£²)",
+     "y": [
+      0,
+      60000
+     ],
+     "height": 280,
+     "hlines": [
+      {
+       "id": "avg",
+       "y": 26000,
+       "label": "Inside-regime average: 26,000"
+      }
+     ]
+    },
+    "state": {
+     "reveal": 0.2
+    },
+    "derive": {
+     "caption": "Days shown: {{round(reveal * 5000)}}"
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.02,
+      "max": 1,
+      "step": 0.02,
+      "label": "Share of 5,000 days",
+      "start": 0.2,
+      "format": "percent"
+     }
+    ]
+   },
+   "question": "As more days are added, where does the variance settle?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "above",
+      "text": "Above the dashed line",
+      "correct": true
+     },
+     {
+      "id": "on",
+      "text": "On the dashed line",
+      "why": "You expected the average of the two variances to be the whole story. Drag to 5,000 days: the curve stays well above it."
+     },
+     {
+      "id": "never",
+      "text": "It never settles",
+      "why": "Early swings are sampling noise. After a few thousand days the curve stays near one level, and that level is not 26,000."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Above it. Something besides the noise inside each regime adds variance.",
+    "generic": "Not quite. Drag the slider to the right and see where the curve ends up."
+   },
+   "explain": {
+    "text": "The curve settles near 40,000, well above 26,000. The two regimes also have different averages, and that spread adds variance of its own.",
+    "canvas": {
+     "hlines": [
+      {
+       "id": "tot",
+       "y": 40400,
+       "label": "Exact: 40,400"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The regime average $E[Y \\mid X]$ is a random variable: £120 with chance 0.8, and −£180 with chance 0.2. Its centre is the overall average, £60.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "c",
+       "label": "Calm (80%)"
+      },
+      {
+       "id": "v",
+       "label": "Volatile (20%)"
+      }
+     ],
+     "yLabel": "Average P&L (£)",
+     "showValues": true,
+     "money": "£",
+     "decimals": 0,
+     "yMin": -200,
+     "yMax": 150,
+     "hlines": [
+      {
+       "id": "m",
+       "y": 60,
+       "label": "Overall average £60"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "c": 120,
+      "v": -180
+     }
+    }
+   },
+   "question": "What is the variance of the regime average?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 14400,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "14,400: $0.8(60)^2 + 0.2(240)^2$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "unweighted",
+      "value": 30600,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "sd",
+      "value": 120,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "gap",
+      "value": 90000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "centre",
+      "value": 3600,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Variance is the average squared distance from the centre, £60."
+    },
+    {
+     "rung": "point",
+     "text": "Calm is 60 above £60. Volatile is 240 below.",
+     "highlight": [
+      "c",
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compute $0.8 \\times 60^2 + 0.2 \\times 240^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "14,400. That is the spread of the regime averages.",
+    "generic": "Not quite right. Square each distance from £60 and weight by the regime chance.",
+    "byKey": {
+     "unweighted": "You gave both distances equal weight. Calm days carry 0.8 and volatile days 0.2.",
+     "sd": "That is the standard deviation, the square root of 14,400. The question asks for the variance.",
+     "gap": "You squared the whole gap of 300 between the regimes. Measure each regime from the centre, £60, and weight it.",
+     "centre": "You squared the overall average. Variance squares the distances from it."
+    }
+   },
+   "explain": {
+    "text": "The distances from £60 are 60 and −240, with squares 3,600 and 57,600. Weighting by 0.8 and 0.2 gives 2,880 + 11,520 = 14,400."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "You now have two pieces: noise inside a regime (26,000) and the regime itself (14,400). The **law of total variance** adds them: $\\mathrm{Var}(Y) = E[\\mathrm{Var}(Y \\mid X)] + \\mathrm{Var}(E[Y \\mid X])$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "inside",
+       "label": "Inside regimes"
+      },
+      {
+       "id": "between",
+       "label": "Regimes themselves"
+      },
+      {
+       "id": "total",
+       "label": "Total"
+      }
+     ],
+     "yLabel": "Variance (£²)",
+     "showValues": true,
+     "decimals": 0,
+     "yMax": 45000
+    },
+    "state": {
+     "values": {
+      "inside": 26000,
+      "between": 14400,
+      "total": 0
+     }
+    }
+   },
+   "question": "What is the variance of the strategy's daily P&L?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 40400,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "40,400: $26{,}000 + 14{,}400$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "stopped",
+      "value": 26000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "between",
+      "value": 14400,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "sd",
+      "value": 201,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the two pieces."
+    },
+    {
+     "rung": "point",
+     "text": "The first piece is the weighted average of the regime variances. The second is the variance of the regime averages.",
+     "highlight": [
+      "inside",
+      "between",
+      "total"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$26{,}000 + 14{,}400$."
+    }
+   ],
+   "feedback": {
+    "correct": "40,400, which matches where the simulation settled.",
+    "generic": "Not quite right. The law adds the two pieces you found.",
+    "byKey": {
+     "stopped": "You stopped at the average variance inside a regime. The regime averages differ, and that adds a second piece.",
+     "between": "That is the second piece alone. Add the noise inside each regime as well.",
+     "sd": "That is the sd, about 201. The question asks for the variance."
+    }
+   },
+   "explain": {
+    "text": "$26{,}000 + 14{,}400 = 40{,}400$, so the sd is £201. The 26,000 alone would suggest £161.",
+    "canvas": {
+     "values": {
+      "inside": 26000,
+      "between": 14400,
+      "total": 40400
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Back to the market and stock table from lesson 15. Its rows have averages −0.8, 0.2 and 1.0. Each row is a distribution with a spread of its own, found from the rescaled row.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 4,
+     "cols": 4,
+     "rowLabel": "Market move X",
+     "colLabel": "Stock move Y",
+     "rowHeads": [
+      "−1%",
+      "0%",
+      "+1%",
+      "Total"
+     ],
+     "colHeads": [
+      "−2%",
+      "0%",
+      "+2%",
+      "Total"
+     ],
+     "cells": [
+      [
+       "0.10",
+       "0.08",
+       "0.02",
+       "0.20"
+      ],
+      [
+       "0.10",
+       "0.25",
+       "0.15",
+       "0.50"
+      ],
+      [
+       "0.03",
+       "0.09",
+       "0.18",
+       "0.30"
+      ],
+      [
+       "0.23",
+       "0.42",
+       "0.35",
+       "1"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the conditional variance for the other two rows.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "$x$",
+     "$\\mathrm{Var}(Y \\mid X = x)$"
+    ],
+    "rows": [
+     [
+      "−1%",
+      "1.76"
+     ],
+     [
+      "0%",
+      {
+       "edit": true,
+       "answer": 1.96,
+       "tol": {
+        "abs": 0.001
+       },
+       "accept": "$E[Y^2 \\mid X=0] = 4(0.2) + 4(0.3) = 2.0$, minus $0.2^2$"
+      }
+     ],
+     [
+      "+1%",
+      {
+       "edit": true,
+       "answer": 1.8,
+       "tol": {
+        "abs": 0.001
+       },
+       "accept": "$E[Y^2 \\mid X=1] = 4(0.1) + 4(0.6) = 2.8$, minus $1^2$"
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rescale the row, find $E[Y^2 \\mid X = x]$, then subtract the square of the row's average."
+    },
+    {
+     "rung": "point",
+     "text": "For $x = 0$ the rescaled row is 0.2, 0.5, 0.3 at $y = -2, 0, 2$.",
+     "highlight": [
+      "r2c1",
+      "r2c2",
+      "r2c3",
+      "r2c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$E[Y^2 \\mid X = 0] = 4(0.2) + 0 + 4(0.3) = 2.0$, and $2.0 - 0.2^2 = 1.96$."
+    }
+   ],
+   "feedback": {
+    "correct": "Both rows are right: 1.96 and 1.8.",
+    "generic": "Not quite right. Take the average of $y^2$ in the row, then subtract the row's average squared.",
+    "byKey": {
+     "r1c1": "Check the row for $x = 0$. If you got 2.0, you stopped at $E[Y^2 \\mid X = 0]$: subtract the row's average squared, $0.2^2 = 0.04$.",
+     "r2c1": "Check the row for $x = 1$. If you got 2.8, you stopped at $E[Y^2 \\mid X = 1]$: subtract the row's average squared, $1^2 = 1$."
+    }
+   },
+   "explain": {
+    "text": "The row for $x = 0$ has $E[Y^2 \\mid X = 0] = 2.0$ and mean 0.2, so its variance is $2.0 - 0.04 = 1.96$. The row for $x = 1$ gives $2.8 - 1 = 1.8$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "A fair die shows $N$. Toss that many fair coins and let $H$ count the heads. Given $N = n$, the heads have mean $n/2$ and variance $n/4$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$n$",
+      "$E[H \\mid N = n]$",
+      "$\\mathrm{Var}(H \\mid N = n)$"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.25"
+      ],
+      [
+       "2",
+       "1",
+       "0.5"
+      ],
+      [
+       "3",
+       "1.5",
+       "0.75"
+      ],
+      [
+       "4",
+       "2",
+       "1"
+      ],
+      [
+       "5",
+       "2.5",
+       "1.25"
+      ],
+      [
+       "6",
+       "3",
+       "1.5"
+      ]
+     ],
+     "align": [
+      "center",
+      "right",
+      "right"
+     ],
+     "compact": true
+    },
+    "state": {},
+    "maxHeight": 230
+   },
+   "question": "Fill in the two pieces of the law, and the total.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$E[\\mathrm{Var}(H \\mid N)]$",
+      {
+       "edit": true,
+       "answer": 0.875,
+       "tol": {
+        "abs": 0.0005
+       },
+       "accept": "$E[N]/4 = 3.5/4 = 7/8$"
+      }
+     ],
+     [
+      "$\\mathrm{Var}(E[H \\mid N])$",
+      {
+       "edit": true,
+       "answer": 0.7292,
+       "tol": {
+        "abs": 0.0005
+       },
+       "accept": "$\\mathrm{Var}(N/2) = \\tfrac14 \\cdot \\tfrac{35}{12} = 35/48$"
+      }
+     ],
+     [
+      "$\\mathrm{Var}(H)$",
+      {
+       "edit": true,
+       "answer": 1.6042,
+       "tol": {
+        "abs": 0.0005
+       },
+       "accept": "$7/8 + 35/48 = 77/48$"
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The law has two pieces. Find each, then add."
+    },
+    {
+     "rung": "point",
+     "text": "The first piece averages the last column. The second is the variance of the $n/2$ column.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$E[N]/4 = 3.5/4$, and $\\mathrm{Var}(N/2) = \\tfrac14 \\mathrm{Var}(N)$ with $\\mathrm{Var}(N) = 35/12$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.875, 0.7292 and 1.6042: the heads have variance $\\tfrac{77}{48}$.",
+    "generic": "Not quite right. Average the conditional variances, then add the variance of the conditional means.",
+    "byKey": {
+     "r0c1": "A fair coin has variance $\\tfrac14$, so given $N = n$ the heads have variance $n/4$. A value of 1.75 uses $n/2$ instead.",
+     "r1c1": "The conditional mean is $N/2$. Scaling by $\\tfrac12$ divides $\\mathrm{Var}(N) = \\tfrac{35}{12}$ by 4, not by 2.",
+     "r2c1": "Add both pieces: the average of the conditional variances and the variance of the conditional means."
+    }
+   },
+   "explain": {
+    "text": "$E[N/4] = 0.875$ and $\\mathrm{Var}(N/2) = \\tfrac{35}{48} \\approx 0.7292$. Their sum is $\\tfrac{77}{48} \\approx 1.6042$, the variance of $H$ found from its own distribution."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Like $E[Y \\mid X]$ in lesson 15, $\\mathrm{Var}(Y \\mid X)$ is a random variable until $X$ is known. It takes the three values below.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "xm1",
+       "label": "x = −1"
+      },
+      {
+       "id": "x0",
+       "label": "x = 0"
+      },
+      {
+       "id": "xp1",
+       "label": "x = +1"
+      }
+     ],
+     "xLabel": "Market move x (%)",
+     "yLabel": "Var(Y | X = x)",
+     "showValues": true,
+     "decimals": 2,
+     "yMax": 2.4
+    },
+    "state": {
+     "values": {
+      "xm1": 1.76,
+      "x0": 1.96,
+      "xp1": 1.8
+     },
+     "caption": "$P(X = x)$: 0.2, 0.5 and 0.3"
+    }
+   },
+   "question": "What is $E[\\mathrm{Var}(Y \\mid X)]$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.872,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1.872: $0.2(1.76) + 0.5(1.96) + 0.3(1.8)$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 1.84,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mode",
+      "value": 1.96,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Weight each value by the chance of its market move."
+    },
+    {
+     "rung": "point",
+     "text": "The chances are 0.2, 0.5 and 0.3.",
+     "highlight": [
+      "xm1",
+      "x0",
+      "xp1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.2(1.76) + 0.5(1.96) + 0.3(1.8)$."
+    }
+   ],
+   "feedback": {
+    "correct": "1.872.",
+    "generic": "Not quite right. Weight each conditional variance by $P(X = x)$.",
+    "byKey": {
+     "plain": "You gave the three variances equal weight. The 0% day happens half the time.",
+     "mode": "That is the variance on the most likely day only. The other two days count as well."
+    }
+   },
+   "explain": {
+    "text": "$0.2(1.76) + 0.5(1.96) + 0.3(1.8) = 1.872$. The conditional means $-0.8$, $0.2$ and $1.0$ add $\\mathrm{Var}(E[Y \\mid X]) = 0.3904$, so $\\mathrm{Var}(Y) = 2.2624$, which matches the variance read from the column totals."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A risk team measures the P&L variance on calm days (10,000) and on volatile days (90,000). It reports the 80/20 average, 26,000. The realised variance turns out to be about 40,000.",
+   "question": "What did the report leave out?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "The spread of the regime averages, 14,400",
+      "correct": true
+     },
+     {
+      "id": "freq",
+      "text": "The true share of volatile days",
+      "why": "You changed the 20%. With weights 0.8 and 0.2 the average is 26,000 whatever the regime averages are."
+     },
+     {
+      "id": "noise",
+      "text": "Sampling noise over the year",
+      "why": "You blamed chance. The simulation ran 5,000 days and the gap stayed: it is built in."
+     },
+     {
+      "id": "equal",
+      "text": "Equal weights for the two regimes",
+      "why": "Equal weights give 50,000, which overshoots. The weights 0.8 and 0.2 were right."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The report weighted the variances correctly."
+    },
+    {
+     "rung": "point",
+     "text": "Look at the two regime averages, £120 and −£180."
+    },
+    {
+     "rung": "step",
+     "text": "They differ, so the regime itself moves the P&L. That is the piece 14,400."
+    }
+   ],
+   "feedback": {
+    "correct": "The regime averages differ, and that spread was missing.",
+    "generic": "Not quite. The weights were right; something else was left out.",
+    "byKey": {
+     "freq": "The 80/20 split was an input, not the gap. Try the averages of the two regimes.",
+     "noise": "A year of data does shake the figure, but the gap stays however long we wait.",
+     "equal": "Equal weights would give 50,000. Keep 0.8 and 0.2 and look for a missing piece."
+    }
+   },
+   "explain": {
+    "text": "The report averaged the variances inside the regimes and stopped. The regime averages, £120 and −£180, are far apart, and that spread adds 14,400. Dropping it makes the strategy look about 20% steadier in sd: £161 against £201."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Another strategy, in £k. Calm days (80%) average 0.1 with sd 1. Volatile days (20%) average −0.4 with sd 3. The overall average is 0.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "levels": [
+      {
+       "label": "Regime",
+       "branches": [
+        {
+         "id": "c",
+         "label": "Calm",
+         "p": "0.8"
+        },
+        {
+         "id": "v",
+         "label": "Volatile",
+         "p": "0.2"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "c": "mean 0.1, var 1",
+      "v": "mean −0.4, var 9"
+     }
+    },
+    "state": {}
+   },
+   "question": "What is $\\mathrm{Var}(Y)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.64,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "2.64: $0.8(1) + 0.2(9) + 0.04$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "stopped",
+      "value": 2.6,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "means",
+      "value": 0.04,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the average variance inside a regime, then the variance of the regime averages."
+    },
+    {
+     "rung": "point",
+     "text": "Inside: $0.8(1) + 0.2(9) = 2.6$.",
+     "highlight": [
+      "c",
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Between: $0.8(0.1)^2 + 0.2(0.4)^2 = 0.04$. Add them."
+    }
+   ],
+   "feedback": {
+    "correct": "2.64. Here the regime averages are close, so the second piece is small.",
+    "generic": "Not quite right. Add the inside piece and the between piece.",
+    "byKey": {
+     "stopped": "You stopped at the average variance inside a regime. Add the spread of the regime averages, 0.04.",
+     "means": "That is the spread of the regime averages alone. Add the noise inside the regimes, 2.6."
+    }
+   },
+   "explain": {
+    "text": "The inside piece is 2.6 and the between piece only 0.04, because the regime averages 0.1 and −0.4 are close. If they agreed exactly the second piece would be 0. If $Y$ were fixed by $X$, the first piece would be 0."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "Prove the law. The two ingredients are $\\mathrm{Var}(Y) = E[Y^2] - (E[Y])^2$ and the law of total expectation from lesson 16.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "$\\mathrm{Var}(Y) = E[Y^2] - (E[Y])^2$, the definition of variance"
+     },
+     {
+      "id": "d2",
+      "text": "$E[Y] = E\\big[E[Y \\mid X]\\big]$, the law of total expectation applied to $Y$"
+     },
+     {
+      "id": "d3",
+      "text": "$E[Y^2] = E\\big[E[Y^2 \\mid X]\\big]$, the law of total expectation applied to $Y^2$"
+     },
+     {
+      "id": "d4",
+      "text": "$E[Y^2 \\mid X] = \\mathrm{Var}(Y \\mid X) + (E[Y \\mid X])^2$, the variance formula inside each condition"
+     },
+     {
+      "id": "d5",
+      "text": "$E[Y^2] = E[\\mathrm{Var}(Y \\mid X)]$ $+ E\\big[(E[Y \\mid X])^2\\big]$, linearity of expectation"
+     },
+     {
+      "id": "d6",
+      "text": "Subtract $(E[Y])^2 = \\big(E[E[Y \\mid X]]\\big)^2$: the last two terms make $\\mathrm{Var}(E[Y \\mid X])$, so $\\mathrm{Var}(Y) = E[\\mathrm{Var}(Y \\mid X)]$ $+ \\mathrm{Var}(E[Y \\mid X])$"
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5",
+     "d6"
+    ],
+    "same": [
+     [
+      "d2",
+      "d3"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the definition, then write $E[Y]$ and $E[Y^2]$ by conditioning."
+    },
+    {
+     "rung": "point",
+     "text": "The variance formula holds inside each condition before you average over $X$."
+    },
+    {
+     "rung": "step",
+     "text": "Definition, total expectation on $Y$ and $Y^2$ in either order, variance formula inside, linearity, subtract."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathrm{Var}(Y) = E[\\mathrm{Var}(Y \\mid X)] + \\mathrm{Var}(E[Y \\mid X])$.",
+    "generic": "Not quite right. Condition on $X$ for $E[Y]$ and $E[Y^2]$ first, then split the inside.",
+    "byKey": {
+     "d4": "The variance formula inside each condition has to come before you split $E[Y^2]$ into two terms.",
+     "d6": "The subtraction needs $E[Y^2]$ and $(E[Y])^2$ both written out first."
+    }
+   },
+   "explain": {
+    "text": "We applied the law of total expectation twice. What remains after subtracting is the variance of the conditional average, so both pieces appear."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A desk's daily P&L has variance 40,400, built from its two regimes. A risk model fitted on calm days alone reports an sd of £100.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "levels": [
+      {
+       "label": "Regime",
+       "branches": [
+        {
+         "id": "c",
+         "label": "Calm",
+         "p": "0.8"
+        },
+        {
+         "id": "v",
+         "label": "Volatile",
+         "p": "0.2"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "c": "mean £120, var 10,000",
+      "v": "mean −£180, var 90,000"
+     }
+    },
+    "state": {}
+   },
+   "question": "What share of the desk's variance comes from the regimes having different averages?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3564,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "35.6%: $14{,}400 / 40{,}400$",
+    "placeholder": "percent",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "inside",
+      "value": 0.6436,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 0.5538,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "volatile",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The regimes' own averages account for the second piece, 14,400."
+    },
+    {
+     "rung": "point",
+     "text": "Divide that piece by the total variance, not by the first piece.",
+     "highlight": [
+      "c",
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$14{,}400 / 40{,}400$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 36%. Over a third of the desk's risk is the switch itself.",
+    "generic": "Not quite right. Divide the between piece by the total variance.",
+    "byKey": {
+     "inside": "That is the share from noise inside the regimes, 26,000 out of 40,400. The question asks for the other piece.",
+     "ratio": "You divided by the inside piece, 26,000. The share of the whole divides by the total, 40,400.",
+     "volatile": "That is the share of volatile days, not the share of variance."
+    }
+   },
+   "explain": {
+    "text": "$14{,}400 / 40{,}400 = 0.356$. With calm sd £100, a −£480 day is 6 sds below the calm mean. It is only one sd below the volatile mean, which is why a mixture has fatter tails than either regime."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Total variance has two pieces: the noise inside each condition, and the spread of the conditional averages.",
+   "Weight the regime variances by their chances for the inside piece: 26,000. Add the variance of the regime averages, 14,400, for 40,400.",
+   "If the conditional averages agree, the second piece is 0. If $Y$ is fixed by $X$, the first piece is 0."
+  ],
+  "formula": {
+   "name": "Law of total variance",
+   "tex": "\\mathrm{Var}(Y) = E[\\mathrm{Var}(Y \\mid X)] + \\mathrm{Var}(E[Y \\mid X])",
+   "note": "Noise inside the condition, plus the spread between conditions."
+  },
+  "trap": "Averaging the conditional variances and stopping misses the spread of the regime averages."
+ },
+ "quiz": [
+  {
+   "id": "q-add",
+   "difficulty": 2,
+   "prose": "$E[\\mathrm{Var}(Y \\mid X)] = 5$ and $\\mathrm{Var}(E[Y \\mid X]) = 3$.",
+   "question": "What is $\\mathrm{Var}(Y)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "8: $5 + 3$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "product",
+      "value": 15,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "first",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "diff",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5 + 3 = 8$.",
+    "generic": "Not quite right. The law of total variance adds the two pieces.",
+    "byKey": {
+     "product": "You multiplied the pieces. The law adds them.",
+     "first": "You stopped at the first piece. Add the second.",
+     "diff": "You subtracted. Both pieces are variances and each adds spread."
+    }
+   },
+   "explain": {
+    "text": "The law of total variance is a sum: $5 + 3 = 8$."
+   }
+  },
+  {
+   "id": "q-equal",
+   "difficulty": 3,
+   "prose": "Two regimes are equally likely. Their averages are 0 and 10, and each has variance 4.",
+   "question": "What is $\\mathrm{Var}(Y)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 29,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "29: $4 + 25$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "inside",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "means",
+      "value": 25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "double",
+      "value": 33,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$4 + 25 = 29$.",
+    "generic": "Not quite right. Add the average inside variance and the variance of the regime averages.",
+    "byKey": {
+     "inside": "You stopped at the variance inside a regime. The averages 0 and 10 add a second piece.",
+     "means": "That is the spread of the averages alone. Add the variance inside the regimes, 4.",
+     "double": "You added both regime variances, 4 and 4. Weight them by 0.5 each: the inside piece is 4."
+    }
+   },
+   "explain": {
+    "text": "Inside: $0.5(4) + 0.5(4) = 4$. Between: both averages sit 5 from the centre, so the variance is 25. The total is 29."
+   }
+  },
+  {
+   "id": "q-fixed",
+   "difficulty": 3,
+   "prose": "$Y = X^2$, so once $X$ is known $Y$ is fixed.",
+   "question": "What is $E[\\mathrm{Var}(Y \\mid X)]$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "zero",
+      "text": "0",
+      "correct": true
+     },
+     {
+      "id": "vary",
+      "text": "$\\mathrm{Var}(Y)$",
+      "why": "That holds only if $X$ tells you nothing about $Y$. Here it tells you everything."
+     },
+     {
+      "id": "varx",
+      "text": "$\\mathrm{Var}(X)$",
+      "why": "$\\mathrm{Var}(X)$ is the spread of the condition. The question is the spread of $Y$ left over once it is known."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "0. The whole variance of $Y$ comes from $E[Y \\mid X]$.",
+    "generic": "Not quite. Ask how much spread is left once $X$ is known."
+   },
+   "explain": {
+    "text": "Given $X$, $Y$ has one value, so $\\mathrm{Var}(Y \\mid X) = 0$ for every $x$. The first piece vanishes and $\\mathrm{Var}(Y) = \\mathrm{Var}(E[Y \\mid X])$."
+   }
+  },
+  {
+   "id": "q-ineq",
+   "difficulty": 3,
+   "prose": "Only one of these holds for every $X$ and $Y$.",
+   "question": "Which one?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ge",
+      "text": "$\\mathrm{Var}(Y) \\ge E[\\mathrm{Var}(Y \\mid X)]$",
+      "correct": true
+     },
+     {
+      "id": "le",
+      "text": "$\\mathrm{Var}(Y) \\le E[\\mathrm{Var}(Y \\mid X)]$",
+      "why": "You thought conditioning can only add spread. The second piece is a variance, so it is at least 0, and it adds to the first."
+     },
+     {
+      "id": "eq",
+      "text": "$\\mathrm{Var}(Y) = E[\\mathrm{Var}(Y \\mid X)]$ when the regimes are equally likely",
+      "why": "Equal chances do not remove the second piece. It vanishes only when the regime averages agree."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The second piece is a variance, so it can only add.",
+    "generic": "Not quite. Compare the law's two pieces."
+   },
+   "explain": {
+    "text": "$\\mathrm{Var}(Y) = E[\\mathrm{Var}(Y \\mid X)] + \\mathrm{Var}(E[Y \\mid X])$, and the last term is at least 0."
+   }
+  }
+ ]
+}

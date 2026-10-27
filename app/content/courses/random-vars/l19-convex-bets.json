@@ -1,0 +1,1458 @@
+{
+ "id": "l19-convex-bets",
+ "course": "random-vars",
+ "title": "Jensen’s inequality",
+ "minutes": 15,
+ "objectives": [
+  "Compare $E[g(X)]$ with $g(E[X])$ for convex and concave $g$, and see why volatility drags on growth."
+ ],
+ "skills": [
+  "rv-expect"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "A share moves up 10% or down 10% each day with equal chance, so its average daily return is 0. You hold £100 over two days: up on one, down on the other.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "w",
+       "label": "Wealth",
+       "values": [
+        100,
+        110,
+        99
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 0,
+     "xLabel": "Day",
+     "money": "£",
+     "y": [
+      90,
+      115
+     ],
+     "height": 240,
+     "hlines": [
+      {
+       "id": "start",
+       "y": 100
+      }
+     ]
+    },
+    "state": {
+     "caption": "The dashed line is your starting £100."
+    }
+   },
+   "question": "What is your £100 worth after the two days?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 99,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£99: $100 \\times 1.1 \\times 0.9$",
+    "placeholder": "number",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "flat",
+      "value": 100,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "ten",
+      "value": 90,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "up",
+      "value": 110,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Returns multiply: each day scales your wealth."
+    },
+    {
+     "rung": "point",
+     "text": "Up 10% is a factor 1.1. Down 10% is a factor 0.9.",
+     "highlight": [
+      "w"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$100 \\times 1.1 \\times 0.9$."
+    }
+   ],
+   "feedback": {
+    "correct": "£99. The average return is 0, yet your wealth has fallen.",
+    "generic": "Not quite right. Multiply the two daily factors.",
+    "byKey": {
+     "flat": "You added +10% and −10% to get 0%. Returns multiply, so the factors 1.1 and 0.9 give 0.99.",
+     "ten": "That is the down day alone. Include the up day.",
+     "up": "That is the up day alone. The down day follows."
+    }
+   },
+   "explain": {
+    "text": "Up 10% makes £110, and down 10% then takes £11 off: £99. In the other order £100 falls to £90 and rises £9 to £99."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A share rises or falls by $a$ each day with equal chance. The chord joins the two outcomes on the curve of $\\ln(1 + x)$. Its midpoint is the average of the two log returns.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.6,
+      0.6
+     ],
+     "y": [
+      -0.9,
+      0.5
+     ],
+     "grid": true,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "ln(1 + x)",
+       "label": "$\\ln(1 + x)$",
+       "domain": [
+        -0.6,
+        0.6
+       ],
+       "labelSide": "below",
+       "labelAt": 0.55
+      }
+     ],
+     "params": {
+      "a": 0.4
+     },
+     "xLabel": "return $x$",
+     "yLabel": "log return"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": -0.4,
+       "y": -0.5108256237659907,
+       "label": "down",
+       "labelPos": "sw"
+      },
+      {
+       "id": "p2",
+       "x": 0.4,
+       "y": 0.3364722366212129,
+       "label": "up",
+       "labelPos": "ne"
+      },
+      {
+       "id": "mid",
+       "x": 0,
+       "y": -0.08717669357238891,
+       "label": "chord midpoint",
+       "labelPos": "se"
+      },
+      {
+       "id": "c",
+       "x": 0,
+       "y": 0,
+       "label": "curve at 0",
+       "labelPos": "nw"
+      }
+     ],
+     "segments": [
+      {
+       "id": "chord",
+       "from": "p1",
+       "to": "p2",
+       "dashed": true
+      }
+     ],
+     "params": {
+      "a": 0.4
+     }
+    },
+    "derive": {
+     "p1.x": "-a",
+     "p1.y": "ln(1 - a)",
+     "p2.x": "a",
+     "p2.y": "ln(1 + a)",
+     "mid.y": "(ln(1 + a) + ln(1 - a)) / 2",
+     "caption": "Up or down {{round(a * 100)}}%: average log return {{fixed((ln(1 + a) + ln(1 - a)) / 2, 4)}}, against ln(1 + 0) = 0"
+    },
+    "controls": [
+     {
+      "bind": "a",
+      "min": 0.05,
+      "max": 0.5,
+      "step": 0.05,
+      "label": "Daily move $a$",
+      "start": 0.4
+     }
+    ]
+   },
+   "question": "Where is the chord's midpoint, compared with the curve above $x = 0$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "below",
+      "text": "Below the curve",
+      "correct": true
+     },
+     {
+      "id": "above",
+      "text": "Above the curve",
+      "why": "You expected the average of the logs to beat the log of the average. Slide $a$ down and watch the midpoint stay under the curve."
+     },
+     {
+      "id": "on",
+      "text": "On the curve",
+      "why": "The midpoint touches the curve only at $a = 0$, which means no move at all."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Below it, at every $a$ above 0.",
+    "generic": "Not quite. Slide $a$ and compare the two dots at $x = 0$."
+   },
+   "explain": {
+    "text": "The curve bends down, so the chord between two of its points always lies below it. The average log return is below $\\ln(1 + 0) = 0$.",
+    "canvas": {
+     "params": {
+      "a": 0.4
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A curve that bends down, like $\\ln(1 + x)$, is **concave**: its chords lie below it. One that bends up is **convex**. For concave $g$, $E[g(X)] \\le g(E[X])$: **Jensen's inequality**.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.15,
+      0.15
+     ],
+     "y": [
+      -0.13,
+      0.13
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "ln(1 + x)",
+       "label": "$\\ln(1 + x)$"
+      }
+     ],
+     "grid": true,
+     "xLabel": "return $x$"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": -0.1,
+       "y": -0.10536051565782628,
+       "label": "−10%",
+       "labelPos": "sw"
+      },
+      {
+       "id": "p2",
+       "x": 0.1,
+       "y": 0.09531017980432493,
+       "label": "+10%",
+       "labelPos": "ne"
+      },
+      {
+       "id": "mid",
+       "x": 0,
+       "y": -0.005025167926750673,
+       "label": "average",
+       "labelPos": "se"
+      },
+      {
+       "id": "c",
+       "x": 0,
+       "y": 0,
+       "label": "ln(1 + 0)",
+       "labelPos": "nw"
+      }
+     ],
+     "segments": [
+      {
+       "id": "chord",
+       "from": "p1",
+       "to": "p2",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "For $\\pm 10\\%$, what is $E[\\ln(1 + R)] = \\tfrac12(\\ln 1.1 + \\ln 0.9)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.00503,
+    "tol": {
+     "abs": 0.0002
+    },
+    "accept": "$-0.00503$: $\\tfrac12 \\ln 0.99$",
+    "placeholder": "decimal",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.00503,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "up",
+      "value": 0.0953,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find $\\ln 1.1$ and $\\ln 0.9$, then average them."
+    },
+    {
+     "rung": "point",
+     "text": "$\\ln 1.1 \\approx 0.0953$ and $\\ln 0.9 \\approx -0.1054$.",
+     "highlight": [
+      "p1",
+      "p2",
+      "mid"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(0.0953 - 0.1054)$, or $\\tfrac12 \\ln(1.1 \\times 0.9)$."
+    }
+   ],
+   "feedback": {
+    "correct": "−0.00503, below $\\ln(1 + 0) = 0$, as Jensen says for a concave curve.",
+    "generic": "Not quite right. Average the two logs, not the two returns.",
+    "byKey": {
+     "zero": "You took the log of the average return, $\\ln(1 + 0) = 0$. Average the logs instead: it is lower.",
+     "sign": "That has the right size and the wrong sign. For a concave curve the average of the logs is below the log of the average.",
+     "up": "That is $\\ln 1.1$ alone. Average it with $\\ln 0.9$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac12(\\ln 1.1 + \\ln 0.9) = \\tfrac12 \\ln 0.99 = -0.00503$. That is below $\\ln(1 + E[R]) = 0$, and it is the daily growth rate of your £100."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Squaring is convex. $X$ is 2 or 8 with equal chance. The chord's midpoint is $E[X^2]$, and the curve above $E[X] = 5$ is $(E[X])^2$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      10
+     ],
+     "y": [
+      0,
+      70
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "label": "$x^2$"
+      }
+     ],
+     "grid": true,
+     "xLabel": "$x$"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 2,
+       "y": 4,
+       "label": "x = 2",
+       "labelPos": "nw"
+      },
+      {
+       "id": "p2",
+       "x": 8,
+       "y": 64,
+       "label": "x = 8",
+       "labelPos": "nw"
+      },
+      {
+       "id": "mid",
+       "x": 5,
+       "y": 34,
+       "label": "E[X²] = 34",
+       "labelPos": "nw"
+      },
+      {
+       "id": "c",
+       "x": 5,
+       "y": 25,
+       "label": "(E[X])² = 25",
+       "labelPos": "se"
+      }
+     ],
+     "segments": [
+      {
+       "id": "chord",
+       "from": "p1",
+       "to": "p2",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "What is the gap $E[X^2] - (E[X])^2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "9: $34 - 25$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "second",
+      "value": 34,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "square",
+      "value": 25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sd",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find $E[X^2]$ and $(E[X])^2$ separately."
+    },
+    {
+     "rung": "point",
+     "text": "$E[X^2] = \\tfrac12(4 + 64)$ and $E[X] = 5$.",
+     "highlight": [
+      "p1",
+      "p2",
+      "mid"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$34 - 25$."
+    }
+   ],
+   "feedback": {
+    "correct": "9, which is $\\mathrm{Var}(X)$.",
+    "generic": "Not quite right. Subtract the square of the average from the average of the squares.",
+    "byKey": {
+     "second": "That is $E[X^2]$ alone. Subtract $(E[X])^2 = 25$.",
+     "square": "That is $(E[X])^2$ alone. Subtract it from $E[X^2] = 34$.",
+     "sd": "That is the sd. The gap is the variance, 9."
+    }
+   },
+   "explain": {
+    "text": "$E[X^2] = 34$ and $(E[X])^2 = 25$, so the gap is 9, which is $\\mathrm{Var}(X)$. Jensen for $x^2$ says $E[X^2] \\ge (E[X])^2$: a variance is never negative."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "You invest £100 a month. The share costs £10, £20 and £40 in three months. The function $1/x$ is convex, and shares bought per pound is $1/X$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      5,
+      45
+     ],
+     "y": [
+      0,
+      0.12
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "1/x",
+       "label": "$1/x$"
+      }
+     ],
+     "grid": true,
+     "xLabel": "price $x$ (£)"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 10,
+       "y": 0.1,
+       "label": "£10",
+       "labelPos": "ne"
+      },
+      {
+       "id": "p2",
+       "x": 20,
+       "y": 0.05,
+       "label": "£20",
+       "labelPos": "ne"
+      },
+      {
+       "id": "p3",
+       "x": 40,
+       "y": 0.025,
+       "label": "£40",
+       "labelPos": "ne"
+      },
+      {
+       "id": "c",
+       "x": 23.333333333333332,
+       "y": 0.04285714285714286,
+       "label": "1/E[X]",
+       "labelPos": "ne"
+      }
+     ],
+     "segments": [],
+     "hlines": [
+      {
+       "id": "h",
+       "y": 0.058333333333333334,
+       "label": "E[1/X] = 0.0583"
+      }
+     ]
+    }
+   },
+   "question": "What average price per share did you pay, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 17.14,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£17.14: £300 for 17.5 shares",
+    "placeholder": "number",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 23.33,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "mid",
+      "value": 20,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "shares",
+      "value": 17.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the shares you bought each month."
+    },
+    {
+     "rung": "point",
+     "text": "£100 buys 10, 5 and 2.5 shares.",
+     "highlight": [
+      "p1",
+      "p2",
+      "p3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "£300 divided by 17.5 shares."
+    }
+   ],
+   "feedback": {
+    "correct": "£17.14, below the £23.33 average of the three prices.",
+    "generic": "Not quite right. Divide the money spent by the shares bought.",
+    "byKey": {
+     "mean": "That is the average of the three prices. You bought more shares when the price was low.",
+     "mid": "That is the middle price. Total spent over total shares is the average you paid.",
+     "shares": "That is the number of shares, not their price."
+    }
+   },
+   "explain": {
+    "text": "You bought $10 + 5 + 2.5 = 17.5$ shares for £300, so £17.14 each. Because $1/x$ is convex, $E[1/X] \\ge 1/E[X]$: a fixed sum buys more shares than at the average price."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "A call option pays $(X - 100)^+ = \\max(X - 100, 0)$, a convex function. The share ends at £80 or £120 with equal chance.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      70,
+      130
+     ],
+     "y": [
+      -3,
+      35
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "max(x - 100, 0)",
+       "label": "$(x - 100)^+$"
+      }
+     ],
+     "grid": true,
+     "xLabel": "price $x$ (£)"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 80,
+       "y": 0,
+       "label": "£80",
+       "labelPos": "nw"
+      },
+      {
+       "id": "p2",
+       "x": 120,
+       "y": 20,
+       "label": "£120",
+       "labelPos": "nw"
+      },
+      {
+       "id": "mid",
+       "x": 100,
+       "y": 10,
+       "label": "average payoff",
+       "labelPos": "nw"
+      },
+      {
+       "id": "c",
+       "x": 100,
+       "y": 0,
+       "label": "payoff at £100",
+       "labelPos": "n"
+      }
+     ],
+     "segments": [
+      {
+       "id": "chord",
+       "from": "p1",
+       "to": "p2",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "What is $E[(X - 100)^+]$, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£10: $\\tfrac12(0) + \\tfrac12(20)$",
+    "placeholder": "number",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 0,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "up",
+      "value": 20,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "price",
+      "value": 100,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the payoff at each price."
+    },
+    {
+     "rung": "point",
+     "text": "At £80 the payoff is 0. At £120 it is 20.",
+     "highlight": [
+      "p1",
+      "p2",
+      "mid"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(0) + \\tfrac12(20)$."
+    }
+   ],
+   "feedback": {
+    "correct": "£10, although the payoff at the average price, £100, is 0.",
+    "generic": "Not quite right. Average the two payoffs.",
+    "byKey": {
+     "mean": "That is the payoff at the average price. Average the payoffs instead.",
+     "up": "That is the payoff when the share rises. It happens half the time.",
+     "price": "That is the average price, not a payoff."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac12(0) + \\tfrac12(20) = 10$, against 0 at the average price. A convex payoff is worth at least its value at the expected price."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "$X$ is a positive random price, not constant. A colleague says $E[\\sqrt{X}]$ and $\\sqrt{E[X]}$ agree, because the square root is nearly a straight line.",
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "less",
+      "text": "$E[\\sqrt{X}] < \\sqrt{E[X]}$, because the root is concave",
+      "correct": true
+     },
+     {
+      "id": "equal",
+      "text": "They are equal when the root is nearly linear",
+      "why": "Nearly linear is not linear. The gap is small but never zero unless $X$ is constant."
+     },
+     {
+      "id": "more",
+      "text": "$E[\\sqrt{X}] > \\sqrt{E[X]}$, because the root is increasing",
+      "why": "You used the convex direction. The root bends down, so the chord lies below it."
+     },
+     {
+      "id": "dep",
+      "text": "It depends on the distribution of $X$",
+      "why": "The direction depends only on how the curve bends. The root is concave, so one direction holds for every positive $X$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does the square root bend up or down?"
+    },
+    {
+     "rung": "point",
+     "text": "It bends down, so it is concave."
+    },
+    {
+     "rung": "step",
+     "text": "For $X = 1$ or 9: $E[\\sqrt{X}] = 2$ and $\\sqrt{E[X]} = \\sqrt{5}$."
+    }
+   ],
+   "feedback": {
+    "correct": "The root is concave, so the average of the roots is below the root of the average.",
+    "generic": "Not quite. Decide whether the root is convex or concave first.",
+    "byKey": {
+     "equal": "'Nearly linear' is the trap. The gap is about $\\sigma^2$ over a few times the mean: small, never 0.",
+     "more": "That is the convex direction. A root bends down.",
+     "dep": "The direction is fixed by the bend of the curve, not by the distribution."
+    }
+   },
+   "explain": {
+    "text": "For $X = 1$ or 9, $E[\\sqrt{X}] = (1 + 3)/2 = 2$, while $\\sqrt{E[X]} = \\sqrt{5} \\approx 2.236$. Concave means the average of the function is at most the function of the average."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Stat 110 style: which side is larger? For each pair, place the verdict. Left means the first expression.",
+   "question": "Place a verdict on each pair.",
+   "widget": {
+    "kind": "place",
+    "mode": "assign",
+    "byText": true,
+    "tokens": [
+     {
+      "id": "t1",
+      "text": "left ≥ right"
+     },
+     {
+      "id": "t2",
+      "text": "left ≥ right"
+     },
+     {
+      "id": "t3",
+      "text": "left ≤ right"
+     },
+     {
+      "id": "t4",
+      "text": "either way"
+     }
+    ],
+    "slots": [
+     {
+      "id": "a",
+      "label": "$E[e^X]$ against $e^{E[X]}$",
+      "accepts": [
+       "t1"
+      ]
+     },
+     {
+      "id": "b",
+      "label": "$E[\\sqrt{X}]$ against $\\sqrt{E[X]}$, for $X > 0$",
+      "accepts": [
+       "t3"
+      ]
+     },
+     {
+      "id": "c",
+      "label": "$E[X^3]$ against $(E[X])^3$, for $X > 0$",
+      "accepts": [
+       "t2"
+      ]
+     },
+     {
+      "id": "d",
+      "label": "$E[X]\\,E[Y]$ against $E[XY]$",
+      "accepts": [
+       "t4"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask of each function: does it bend up, down, or neither way across all of $X$?"
+    },
+    {
+     "rung": "point",
+     "text": "The exponential and the cube on positive numbers bend up. The root bends down."
+    },
+    {
+     "rung": "step",
+     "text": "The product pair has no curve at all: the gap is $\\mathrm{Cov}(X, Y)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Convex gives left ≥ right, concave gives left ≤ right, and the product pair can go either way.",
+    "generic": "Not quite right. Check each function's bend.",
+    "byKey": {
+     "t1": "A convex function gives left ≥ right. Check the exponential and the cube on positive numbers.",
+     "t2": "A convex function gives left ≥ right. Check the exponential and the cube on positive numbers.",
+     "t3": "Only the concave root gives left ≤ right.",
+     "t4": "'Either way' belongs only to the product pair: its gap is the covariance, which can have either sign."
+    }
+   },
+   "explain": {
+    "text": "$e^x$ and $x^3$ on positive $x$ are convex, so the left side is at least the right. The root is concave, so the left side is at most the right. $E[XY] - E[X]E[Y] = \\mathrm{Cov}(X, Y)$, which can be positive or negative."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "Prove Jensen for a convex $g$. Write $\\mu = E[X]$. Convexity says the curve lies above its tangent line at $\\mu$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      10
+     ],
+     "y": [
+      0,
+      70
+     ],
+     "grid": true,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "label": "$g(x)$"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "m",
+       "x": 5,
+       "y": 25,
+       "label": "E[X]",
+       "labelPos": "se"
+      }
+     ],
+     "tangent": {
+      "f": "f",
+      "x": 5,
+      "label": "tangent",
+      "length": 6
+     }
+    },
+    "maxHeight": 230
+   },
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "j1",
+      "text": "$g(x) \\ge g(\\mu) + g'(\\mu)(x - \\mu)$ for every $x$, a convex curve lies above its tangent at $\\mu$"
+     },
+     {
+      "id": "j2",
+      "text": "$g(X) \\ge g(\\mu) + g'(\\mu)(X - \\mu)$, put the random value $X$ in for $x$"
+     },
+     {
+      "id": "j3",
+      "text": "$E[g(X)] \\ge g(\\mu) + g'(\\mu)(E[X] - \\mu)$, expectation keeps $\\ge$ and is linear"
+     },
+     {
+      "id": "j4",
+      "text": "$E[X] - \\mu = 0$, so the last term vanishes: $E[g(X)] \\ge g(\\mu) = g(E[X])$"
+     }
+    ],
+    "answer": [
+     "j1",
+     "j2",
+     "j3",
+     "j4"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the tangent line at $E[X]$."
+    },
+    {
+     "rung": "point",
+     "text": "The tangent line is below the curve at every outcome.",
+     "highlight": [
+      "m"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Tangent bound, put in $X$, take expectations, the last term vanishes."
+    }
+   ],
+   "feedback": {
+    "correct": "$E[g(X)] \\ge g(E[X])$.",
+    "generic": "Not quite right. Bound $g(X)$ by the tangent first, then take expectations.",
+    "byKey": {
+     "j3": "Taking expectations needs the bound for $g(X)$ written first.",
+     "j4": "The term $E[X] - \\mu$ vanishes only after the expectation is taken."
+    }
+   },
+   "explain": {
+    "text": "The tangent at $E[X]$ lies under the curve, and taking the average keeps that order. Its average is the tangent's height at the mean, $g(E[X])$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "The cube bends down for $x < 0$ and up for $x > 0$, so it is neither convex nor concave. $X$ is $-3$ or $1$ with equal chance. The dots mark $E[X^3]$ on the chord and $(E[X])^3$ on the curve.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      4
+     ],
+     "y": [
+      -30,
+      30
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^3",
+       "label": "$x^3$"
+      }
+     ],
+     "grid": true,
+     "xLabel": "$x$"
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": -3,
+       "y": -27,
+       "label": "x = −3",
+       "labelPos": "se"
+      },
+      {
+       "id": "p2",
+       "x": 1,
+       "y": 1,
+       "label": "x = 1",
+       "labelPos": "nw"
+      },
+      {
+       "id": "mid",
+       "x": -1,
+       "y": -13,
+       "label": "E[X³]",
+       "labelPos": "se"
+      },
+      {
+       "id": "c",
+       "x": -1,
+       "y": -1,
+       "label": "(E[X])³",
+       "labelPos": "ne"
+      }
+     ],
+     "segments": [
+      {
+       "id": "chord",
+       "from": "p1",
+       "to": "p2",
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "What is $E[X^3] - (E[X])^3$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -12,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "−12: $-13 - (-1)$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 12,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "first",
+      "value": -13,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find $E[X^3]$ and $E[X]$ separately."
+    },
+    {
+     "rung": "point",
+     "text": "$E[X^3] = \\tfrac12(-27 + 1)$ and $E[X] = -1$.",
+     "highlight": [
+      "p1",
+      "p2",
+      "mid"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-13 - (-1)^3$."
+    }
+   ],
+   "feedback": {
+    "correct": "−12, so here the left side is smaller.",
+    "generic": "Not quite right. Subtract $(E[X])^3$ from $E[X^3]$.",
+    "byKey": {
+     "sign": "You used the convex direction. This $X$ lives where the cube bends down.",
+     "zero": "They are not equal here. $X$ is not constant.",
+     "first": "That is $E[X^3]$ alone. Subtract $(E[X])^3 = -1$."
+    }
+   },
+   "explain": {
+    "text": "$-13 - (-1) = -12$. For $X = -1$ or 3 the same gap is $+12$, so with $X$ of either sign no inequality holds in general."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Cauchy–Schwarz says $|E[UV]| \\le \\sqrt{E[U^2]\\,E[V^2]}$. Apply it to the centred returns $U = X - \\mu_X$ and $V = Y - \\mu_Y$, as in lesson 11.",
+   "question": "Two returns have sds 2% and 3%. What is the largest possible $|\\mathrm{Cov}(X, Y)|$, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "6: $\\sqrt{4 \\times 9}$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "square",
+      "value": 36,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$E[U^2]$ and $E[V^2]$ are the two variances."
+    },
+    {
+     "rung": "point",
+     "text": "The bound is the square root of their product."
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{4 \\times 9}$."
+    }
+   ],
+   "feedback": {
+    "correct": "6, which is $\\mathrm{sd}_X\\,\\mathrm{sd}_Y$. It gives $|\\rho| \\le 1$.",
+    "generic": "Not quite right. Take the square root of the product of the two variances.",
+    "byKey": {
+     "sum": "You added the sds. The bound is their product.",
+     "square": "That is the product of the variances. Take its square root.",
+     "ratio": "That is the ratio of the sds. The bound uses their product."
+    }
+   },
+   "explain": {
+    "text": "$|\\mathrm{Cov}| \\le \\sqrt{4 \\times 9} = 6$, so $|\\rho| = |\\mathrm{Cov}|/(\\mathrm{sd}_X\\,\\mathrm{sd}_Y) \\le 1$. Equality holds only when one return is a straight-line function of the other."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A strategy has arithmetic mean return 1% a month and sd 6%. Model it as +7% or −5% with equal chance.",
+   "question": "What is its average monthly log return, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.818,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "0.818%: $\\tfrac12(\\ln 1.07 + \\ln 0.95)$",
+    "placeholder": "percent",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "arith",
+      "value": 1,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "nohalf",
+      "value": 0.64,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "drag",
+      "value": 0.18,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Average the log of each growth factor."
+    },
+    {
+     "rung": "point",
+     "text": "The factors are 1.07 and 0.95."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(\\ln 1.07 + \\ln 0.95)$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.818% a month, below the 1% arithmetic mean.",
+    "generic": "Not quite right. Average the logs of 1.07 and 0.95.",
+    "byKey": {
+     "arith": "That is the arithmetic mean. Volatility drag takes the growth rate below it.",
+     "nohalf": "You subtracted $\\sigma^2$ in full. The drag is $\\sigma^2/2$, which is 0.18%.",
+     "drag": "That is the drag alone. Subtract it from the 1% mean."
+    }
+   },
+   "explain": {
+    "text": "Exactly 0.818%, close to the second-order approximation $\\mu - \\sigma^2/2 = 1\\% - 0.18\\% = 0.82\\%$ from the Taylor series. Over 120 months that is $e^{0.982} = 2.67$ times your money, not $1.01^{120} = 3.30$. Kelly (limits lesson 14) maximises $E[\\ln W]$, not $E[W]$, because only the log counts this drag."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "For a concave $g$ a chord lies below the curve, so $E[g(X)] \\le g(E[X])$. For a convex $g$ the inequality reverses.",
+   "Equality needs $X$ constant. The gap for $x^2$ is the variance, and for $\\ln(1 + R)$ it is about $\\sigma^2/2$: volatility drag.",
+   "If $g$ bends both ways, as $x^3$ does across zero, no inequality holds for every $X$."
+  ],
+  "formula": {
+   "name": "Jensen's inequality",
+   "tex": "g \\text{ convex: } E[g(X)] \\ge g(E[X])",
+   "note": "Concave $g$ reverses the inequality."
+  },
+  "trap": "Using the convex direction for a concave function is wrong. A nearly linear function still has a gap: small, but real."
+ },
+ "quiz": [
+  {
+   "id": "q-conc",
+   "difficulty": 2,
+   "prose": "$g(x) = \\ln x$ is concave. $X$ is positive and not constant.",
+   "question": "Which is true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lt",
+      "text": "$E[\\ln X] < \\ln E[X]$",
+      "correct": true
+     },
+     {
+      "id": "gt",
+      "text": "$E[\\ln X] > \\ln E[X]$",
+      "why": "You used the convex direction. The log bends down."
+     },
+     {
+      "id": "eq",
+      "text": "$E[\\ln X] = \\ln E[X]$",
+      "why": "Equality needs $X$ constant, or a straight-line $g$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The chord lies below a concave curve.",
+    "generic": "Not quite. Decide whether the log bends up or down."
+   },
+   "explain": {
+    "text": "The log is concave, so $E[\\ln X] \\le \\ln E[X]$, with strict inequality unless $X$ is constant."
+   }
+  },
+  {
+   "id": "q-var",
+   "difficulty": 2,
+   "prose": "$X$ is 1 or 3 with equal chance.",
+   "question": "What is $E[X^2] - (E[X])^2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1: $5 - 4$",
+    "placeholder": "number",
+    "wrong": [
+     {
+      "id": "first",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "second",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sd",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1, which is $\\mathrm{Var}(X)$.",
+    "generic": "Not quite right. Subtract $(E[X])^2$ from $E[X^2]$.",
+    "byKey": {
+     "first": "That is $E[X^2]$ alone.",
+     "second": "That is $(E[X])^2$ alone.",
+     "sd": "Half the range is not the variance. Compute $5 - 4$."
+    }
+   },
+   "explain": {
+    "text": "$E[X^2] = \\tfrac12(1 + 9) = 5$ and $(E[X])^2 = 4$, so the gap is 1."
+   }
+  },
+  {
+   "id": "q-pca",
+   "difficulty": 3,
+   "prose": "You invest £100 a month. The share costs £5, then £20.",
+   "question": "What average price per share did you pay, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£8: £200 for 25 shares",
+    "placeholder": "number",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 12.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "shares",
+      "value": 25,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£8, below the £12.50 average price.",
+    "generic": "Not quite right. Divide the money spent by the shares bought.",
+    "byKey": {
+     "mean": "That is the average of the two prices. You bought more shares at £5.",
+     "shares": "That is the number of shares."
+    }
+   },
+   "explain": {
+    "text": "£100 buys 20 shares and then 5, so £200 buys 25 shares: £8 each."
+   }
+  },
+  {
+   "id": "q-cube",
+   "difficulty": 3,
+   "prose": "$X$ takes positive and negative values.",
+   "question": "How does $E[X^3]$ compare with $(E[X])^3$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "none",
+      "text": "No inequality holds in general",
+      "correct": true
+     },
+     {
+      "id": "ge",
+      "text": "$E[X^3] \\ge (E[X])^3$, because the cube is convex",
+      "why": "The cube is convex only for $x > 0$. With negative values in play, the direction can flip."
+     },
+     {
+      "id": "le",
+      "text": "$E[X^3] \\le (E[X])^3$, because the cube is odd",
+      "why": "Being odd does not fix the direction. It depends on where $X$ lives."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The cube bends both ways, so the answer depends on $X$.",
+    "generic": "Not quite. Does the cube bend one way everywhere?"
+   },
+   "explain": {
+    "text": "For $X = -3$ or 1 the left side is smaller, and for $X = -1$ or 3 it is larger."
+   }
+  }
+ ]
+}
