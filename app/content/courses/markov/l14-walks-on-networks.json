@@ -1,0 +1,1956 @@
+{
+ "id": "l14-walks-on-networks",
+ "course": "markov",
+ "title": "Random walks on networks",
+ "minutes": 14,
+ "objectives": [
+  "Find the stationary distribution of a random walk on a weighted network",
+  "Compute mean return times as the reciprocal of the share",
+  "Use the degree count for the knight's return time"
+ ],
+ "skills": [
+  "mc-longrun",
+  "mc-walks"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Where does the router spend its time?",
+   "prose": "Four venues are linked as shown. An order router starts at D and hops along a random link each step. Slide through one seeded run and watch each venue fill with its share of visits.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodes": [
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.42,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.78,
+       "y": 0.15
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.78,
+       "y": 0.85
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "B"
+      },
+      {
+       "from": "A",
+       "to": "C"
+      },
+      {
+       "from": "A",
+       "to": "D"
+      },
+      {
+       "from": "B",
+       "to": "C"
+      }
+     ]
+    },
+    "state": {
+     "current": "D",
+     "distribution": {
+      "A": 0,
+      "B": 0,
+      "C": 0,
+      "D": 0
+     },
+     "caption": "The walker starts at D."
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "current": "B",
+        "distribution": {
+         "A": 0.4,
+         "B": 0.2,
+         "C": 0.2,
+         "D": 0.2
+        },
+        "caption": "After 10 steps the walker is at B."
+       },
+       {
+        "current": "C",
+        "distribution": {
+         "A": 0.34,
+         "B": 0.26,
+         "C": 0.3,
+         "D": 0.1
+        },
+        "caption": "After 50 steps the walker is at C."
+       },
+       {
+        "current": "C",
+        "distribution": {
+         "A": 0.34,
+         "B": 0.245,
+         "C": 0.31,
+         "D": 0.105
+        },
+        "caption": "After 200 steps the walker is at C."
+       },
+       {
+        "current": "B",
+        "distribution": {
+         "A": 0.374,
+         "B": 0.244,
+         "C": 0.259,
+         "D": 0.123
+        },
+        "caption": "After 1,000 steps the walker is at B."
+       },
+       {
+        "current": "A",
+        "distribution": {
+         "A": 0.369,
+         "B": 0.251,
+         "C": 0.258,
+         "D": 0.122
+        },
+        "caption": "After 10,000 steps the walker is at A."
+       }
+      ],
+      "frameLabels": [
+       "10 steps",
+       "50 steps",
+       "200 steps",
+       "1,000 steps",
+       "10,000 steps"
+      ],
+      "label": "Length of run",
+      "start": 0
+     }
+    ]
+   },
+   "question": "After 10,000 steps, which venue has the largest share of visits?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "A, the venue with the most links",
+      "correct": true
+     },
+     {
+      "id": "equal",
+      "text": "None: every venue is near 0.25",
+      "why": "You expected an even split. At 10,000 steps A holds about 0.37 and D only 0.12."
+     },
+     {
+      "id": "start",
+      "text": "D, where the walker began",
+      "why": "A start is forgotten in the long run. D has the smallest share, about 0.12."
+     },
+     {
+      "id": "bc",
+      "text": "B and C, because they are linked to each other",
+      "why": "B and C share a link, but A has three. B and C each sit near 0.25."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to the longest run and read the four shares."
+    },
+    {
+     "rung": "point",
+     "text": "Compare the shares with how many links each venue has.",
+     "highlight": [
+      "A",
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A has 3 links, B and C have 2, and D has 1."
+    }
+   ],
+   "feedback": {
+    "correct": "A has the most links and the largest share.",
+    "generic": "Not quite right. Slide to 10,000 steps and read the four shares."
+   },
+   "explain": {
+    "text": "At 10,000 steps the shares are about 0.37, 0.25, 0.26 and 0.12 for A, B, C and D. The venue with more links is visited more. D has one link and is visited least.",
+    "canvas": {
+     "highlight": [
+      "A"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Count the links",
+   "prose": "A link joins two venues, so it counts for both of them. The number of links at a venue is its **degree**. The shares were near 0.37, 0.25, 0.25 and 0.12.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodes": [
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.42,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.78,
+       "y": 0.15
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.78,
+       "y": 0.85
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "B"
+      },
+      {
+       "from": "A",
+       "to": "C"
+      },
+      {
+       "from": "A",
+       "to": "D"
+      },
+      {
+       "from": "B",
+       "to": "C"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Four links in all."
+    }
+   },
+   "question": "Count each venue's degree, and the total over all four.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Venue",
+     "Degree"
+    ],
+    "rows": [
+     [
+      "A",
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "B",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "C",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "D",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "Total",
+      {
+       "edit": true,
+       "answer": 8,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the lines touching each venue."
+    },
+    {
+     "rung": "point",
+     "text": "B touches A and C. The total adds the four degrees.",
+     "highlight": [
+      "A",
+      "B",
+      "C",
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Degrees 3, 2, 2 and 1 add to 8."
+    }
+   ],
+   "feedback": {
+    "correct": "The degrees are 3, 2, 2 and 1, and they add to 8.",
+    "generic": "Not quite right. Count the lines touching each venue, and add the four counts.",
+    "byKey": {
+     "r4c1": "The total adds the four degrees, 3 + 2 + 2 + 1. It is not the number of links, which is 4."
+    }
+   },
+   "explain": {
+    "text": "The degrees add to 8, twice the 4 links, because every link has two ends. The shares $\\tfrac38, \\tfrac28, \\tfrac28, \\tfrac18$ match 0.37, 0.25, 0.25 and 0.12."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Test the guess",
+   "prose": "The shares look like degree over total degree: $\\pi_i = \\tfrac{\\deg(i)}{8}$. We test that guess. A fifth venue E joins, linked to A only.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodes": [
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.42,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.78,
+       "y": 0.15
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.78,
+       "y": 0.85
+      },
+      {
+       "id": "E",
+       "label": "E",
+       "x": 0.42,
+       "y": 0.05
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "B"
+      },
+      {
+       "from": "A",
+       "to": "C"
+      },
+      {
+       "from": "A",
+       "to": "D"
+      },
+      {
+       "from": "B",
+       "to": "C"
+      },
+      {
+       "from": "A",
+       "to": "E"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "E"
+     ]
+    }
+   },
+   "question": "What share of the time is the walker at D now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1/10, or 0.1 ± 0.001",
+    "wrong": [
+     {
+      "id": "unchanged",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nodes",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "links",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "D still has 1 link. What is the new total of degrees?"
+    },
+    {
+     "rung": "point",
+     "text": "E adds one link, which adds 2 to the total.",
+     "highlight": [
+      "E",
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The total is 10, so D gets $\\tfrac{1}{10}$."
+    }
+   ],
+   "feedback": {
+    "correct": "D has degree 1 of a total of 10, so $\\tfrac{1}{10}$.",
+    "generic": "Not quite right. Find the new degree of each venue, add them, and take D's share.",
+    "byKey": {
+     "unchanged": "You kept the old total 8. The new link adds 1 to the degree of A and 1 to E, so the total is 10.",
+     "nodes": "You gave every venue an equal share. Shares follow degree, not headcount.",
+     "links": "You used 1 over the 4 old links. Divide by the total degree 10."
+    }
+   },
+   "explain": {
+    "text": "The degrees are $4, 2, 2, 1, 1$ for A, B, C, D, E, adding to 10. So D gets $\\tfrac{1}{10}$, down from $\\tfrac18$. Adding a link anywhere takes time from every other venue.",
+    "canvas": {
+     "highlight": [
+      "D"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why degree over total",
+   "prose": "Why does degree over total work? We check detailed balance for the weights $\\deg(i)$. Write $|E|$ for the number of links.",
+   "question": "Put the lines of the argument in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "From $i$ the walker picks one of its $\\deg(i)$ links evenly, so $P_{ij} = \\tfrac{1}{\\deg(i)}$ for each neighbour $j$"
+     },
+     {
+      "id": "o2",
+      "text": "For linked $i, j$: $\\deg(i)P_{ij} = 1$ and $\\deg(j)P_{ji} = 1$, since each is a degree times its own $\\tfrac{1}{\\deg}$"
+     },
+     {
+      "id": "o3",
+      "text": "So $\\deg(i)P_{ij} = \\deg(j)P_{ji}$: detailed balance holds, and for unlinked pairs both sides are 0"
+     },
+     {
+      "id": "o4",
+      "text": "Each link has two ends, so $\\sum_i \\deg(i) = 2|E|$"
+     },
+     {
+      "id": "o5",
+      "text": "Divide by that total: $\\pi_i = \\dfrac{\\deg(i)}{2|E|}$ adds to 1 and is stationary by detailed balance"
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the walker's rule for choosing a link."
+    },
+    {
+     "rung": "point",
+     "text": "Check balance first, then normalise."
+    },
+    {
+     "rung": "step",
+     "text": "Rule, equal products, balance, total degree, shares."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\pi_i = \\deg(i)/2|E|$ satisfies detailed balance, so it is stationary.",
+    "generic": "Not quite right. Begin with the choice of link, then check balance, then divide by the total.",
+    "byKey": {
+     "o2": "The products need the formula for $P_{ij}$ first.",
+     "o3": "Balance follows from the two products, so they come first.",
+     "o4": "The total comes after balance holds for the weights.",
+     "o5": "Normalising is the last line."
+    }
+   },
+   "explain": {
+    "text": "The walker chooses links evenly, so $\\deg(i)P_{ij} = 1$ in both directions. Balance holds for the weights $\\deg(i)$. Dividing by their total $2|E|$ gives shares that add to 1."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Return times",
+   "prose": "Back to the four venues, with $\\pi_D = \\tfrac18$. Over 800 steps the router is at D about 100 times. Visits to D are spread out in time.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodes": [
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.42,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.78,
+       "y": 0.15
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.78,
+       "y": 0.85
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "B"
+      },
+      {
+       "from": "A",
+       "to": "C"
+      },
+      {
+       "from": "A",
+       "to": "D"
+      },
+      {
+       "from": "B",
+       "to": "C"
+      }
+     ]
+    },
+    "state": {
+     "highlight": [
+      "D"
+     ],
+     "caption": "D holds 1/8 of the steps."
+    }
+   },
+   "question": "On average, how many steps pass between one visit to D and the next?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "8, which is 1 / π_D",
+    "wrong": [
+     {
+      "id": "share",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nodes",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "between",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "degree-ratio",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "About 100 visits in 800 steps. How far apart are they?"
+    },
+    {
+     "rung": "point",
+     "text": "800 divided by 100.",
+     "highlight": [
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The mean gap is $1/\\pi_D = 8$."
+    }
+   ],
+   "feedback": {
+    "correct": "The mean return time to D is $1/\\pi_D = 8$ steps.",
+    "generic": "Not quite right. If D holds a share $\\pi$ of the steps, visits come every $1/\\pi$ steps.",
+    "byKey": {
+     "share": "That is the share of steps at D. The gap between visits is its reciprocal.",
+     "nodes": "You used the number of venues. The gap depends on D's share, $\\tfrac18$.",
+     "between": "You counted the steps strictly between visits. The return time counts the step that arrives, so it is 8.",
+     "degree-ratio": "You used A's degree. D has degree 1, so $\\pi_D = \\tfrac18$ and the gap is 8."
+    }
+   },
+   "explain": {
+    "text": "D holds $\\tfrac18$ of all steps, so visits come once per 8 steps on average. In general the mean return time to a state is $1/\\pi_i$. For A it is $\\tfrac83$, so the router passes A often.",
+    "canvas": {
+     "highlight": [
+      "D"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Links with strengths",
+   "prose": "Links now have strengths. The walker leaves a venue along a link with chance proportional to its strength. Then $\\pi_i$ is proportional to the total strength at $i$, in place of $\\deg(i)$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 230,
+     "nodes": [
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.5,
+       "y": 0.08
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.9,
+       "y": 0.85
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.1,
+       "y": 0.85
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "B",
+       "w": 1
+      },
+      {
+       "from": "B",
+       "to": "C",
+       "w": 2
+      },
+      {
+       "from": "A",
+       "to": "C",
+       "w": 3
+      }
+     ]
+    },
+    "state": {
+     "caption": "Link strengths are on the edges."
+    }
+   },
+   "question": "What is the mean number of steps between visits to B?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "4, since π_B = 3/12",
+    "wrong": [
+     {
+      "id": "nodes",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "half-total",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "share",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the strengths of the links touching B. Then add the strengths at all three venues."
+    },
+    {
+     "rung": "point",
+     "text": "B has 1 + 2 = 3. A has 1 + 3 = 4, and C has 2 + 3 = 5.",
+     "highlight": [
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The total is 12, so $\\pi_B = \\tfrac{3}{12}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\pi_B = \\tfrac{3}{12} = \\tfrac14$, so the return time is 4.",
+    "generic": "Not quite right. Find B's total strength and the all-venue total, then invert the share.",
+    "byKey": {
+     "nodes": "You used the number of venues. The return time is $1/\\pi_B$.",
+     "half-total": "You divided by the sum of link strengths, 6. Each link counts at both ends, so the total is 12.",
+     "share": "That is $\\pi_B$. The return time is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "B's strength is $1 + 2 = 3$ and the total is $2 \\times (1 + 2 + 3) = 12$. So $\\pi_B = \\tfrac14$ and the router returns to B every 4 steps. The sum of strengths over venues is twice the sum over links.",
+    "canvas": {
+     "highlight": [
+      "B"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The knight's degrees",
+   "prose": "A knight on a chessboard moves to a random legal square each step. The board shows the number of moves from each square. A corner has 2.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 8,
+     "cols": 8,
+     "compact": true,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "colHeads": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h"
+     ],
+     "cells": [
+      [
+       "2",
+       "3",
+       "4",
+       "4",
+       "4",
+       "4",
+       "3",
+       "2"
+      ],
+      [
+       "3",
+       "4",
+       "6",
+       "6",
+       "6",
+       "6",
+       "4",
+       "3"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "3",
+       "4",
+       "6",
+       "6",
+       "6",
+       "6",
+       "4",
+       "3"
+      ],
+      [
+       "2",
+       "3",
+       "4",
+       "4",
+       "4",
+       "4",
+       "3",
+       "2"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Each square shows the number of squares a knight can reach from it."
+    },
+    "maxHeight": 300
+   },
+   "question": "Add up the degrees of all 64 squares by type.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Moves from the square",
+     "Squares",
+     "Moves added"
+    ],
+    "rows": [
+     [
+      "2",
+      "4",
+      {
+       "edit": true,
+       "answer": 8,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "3",
+      "8",
+      {
+       "edit": true,
+       "answer": 24,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "4",
+      "20",
+      {
+       "edit": true,
+       "answer": 80,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "6",
+      "16",
+      {
+       "edit": true,
+       "answer": 96,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "8",
+      "16",
+      {
+       "edit": true,
+       "answer": 128,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "Total",
+      "64",
+      {
+       "edit": true,
+       "answer": 336,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply the number of moves by the number of squares of that type."
+    },
+    {
+     "rung": "point",
+     "text": "For degree 3: 8 squares, each with 3 moves.",
+     "highlight": [
+      "r1c3",
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The five products are 8, 24, 80, 96 and 128. Add them."
+    }
+   ],
+   "feedback": {
+    "correct": "The total degree is 336.",
+    "generic": "Not quite right. For each row, multiply moves by squares, then add the five products.",
+    "byKey": {
+     "r0c2": "Four corner squares with 2 moves each add 8.",
+     "r1c2": "Eight squares with 3 moves each add 24.",
+     "r2c2": "Twenty squares with 4 moves each add 80.",
+     "r3c2": "Sixteen squares with 6 moves each add 96.",
+     "r4c2": "Sixteen squares with 8 moves each add 128.",
+     "r5c2": "Add the five products 8, 24, 80, 96 and 128."
+    }
+   },
+   "explain": {
+    "text": "The products are $8, 24, 80, 96$ and $128$, and they add to 336. That is $2|E|$ for the knight's graph, so there are 168 legal moves from square to square."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A corner's return time",
+   "prose": "The knight starts in a corner. On this graph $\\pi_i = \\deg(i)/336$. A famous interview question asks how long it takes the knight to return to its starting square, on average.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 8,
+     "cols": 8,
+     "compact": true,
+     "rowHeads": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "colHeads": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h"
+     ],
+     "cells": [
+      [
+       "2",
+       "3",
+       "4",
+       "4",
+       "4",
+       "4",
+       "3",
+       "2"
+      ],
+      [
+       "3",
+       "4",
+       "6",
+       "6",
+       "6",
+       "6",
+       "4",
+       "3"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "4",
+       "6",
+       "8",
+       "8",
+       "8",
+       "8",
+       "6",
+       "4"
+      ],
+      [
+       "3",
+       "4",
+       "6",
+       "6",
+       "6",
+       "6",
+       "4",
+       "3"
+      ],
+      [
+       "2",
+       "3",
+       "4",
+       "4",
+       "4",
+       "4",
+       "3",
+       "2"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Each square shows the number of squares a knight can reach from it."
+    }
+   },
+   "question": "What is the mean return time to a corner?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 168,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "168 = 336 / 2",
+    "wrong": [
+     {
+      "id": "squares",
+      "value": 64,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "total",
+      "value": 336,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "interior",
+      "value": 42,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 84,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A corner has degree 2. What is its share of the 336?"
+    },
+    {
+     "rung": "point",
+     "text": "$\\pi_{\\text{corner}} = \\tfrac{2}{336}$.",
+     "highlight": [
+      "r1c1",
+      "r1c8",
+      "r8c1",
+      "r8c8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The mean return time is $1/\\pi = 336/2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{1}{\\pi} = \\tfrac{336}{2} = 168$ moves.",
+    "generic": "Not quite right. Take the corner's share $\\tfrac{2}{336}$ and invert it.",
+    "byKey": {
+     "squares": "You used the number of squares. Squares are not equally likely, so the return time uses the corner's own share.",
+     "total": "You forgot to divide by the corner's degree 2.",
+     "interior": "You used a degree-8 square: 336/8. The corner has degree 2.",
+     "four": "You divided by 4, the number of corners. Use the degree of one corner, 2."
+    }
+   },
+   "explain": {
+    "text": "A corner has share $\\tfrac{2}{336}$, so the knight returns every $\\tfrac{336}{2} = 168$ moves on average. A central square with degree 8 is revisited every 42 moves. The board does not need solving: degrees are enough."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A square has period 2",
+   "prose": "Four venues form a square. Every degree is 2, so $\\pi = (\\tfrac14, \\tfrac14, \\tfrac14, \\tfrac14)$ is stationary. The walker starts at A and takes exactly 1,001 steps.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 210,
+     "nodes": [
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.25,
+       "y": 0.2
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.75,
+       "y": 0.2
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.75,
+       "y": 0.8
+      },
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.25,
+       "y": 0.8
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "B"
+      },
+      {
+       "from": "B",
+       "to": "C"
+      },
+      {
+       "from": "C",
+       "to": "D"
+      },
+      {
+       "from": "D",
+       "to": "A"
+      }
+     ]
+    },
+    "state": {
+     "current": "A",
+     "caption": "Four venues in a square."
+    }
+   },
+   "question": "What is the chance the walker is at A at step 1,001?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "0",
+    "wrong": [
+     {
+      "id": "pi",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "two",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every step moves between the pair {A, C} and the pair {B, D}."
+    },
+    {
+     "rung": "point",
+     "text": "After an odd number of steps the walker is at B or D.",
+     "highlight": [
+      "B",
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "1,001 is odd, so it cannot be at A."
+    }
+   ],
+   "feedback": {
+    "correct": "After an odd number of steps the walker is at B or D, never at A.",
+    "generic": "Not quite right. Track which pair the walker is in after each step.",
+    "byKey": {
+     "pi": "That is the long-run share of time at A, which is right. But the chance at one fixed step never settles at it.",
+     "half": "Half is the chance of each of B and D. A is impossible at odd steps.",
+     "two": "You divided $\\tfrac14$ by 2. At step 1,001 the walker cannot be at A."
+    }
+   },
+   "explain": {
+    "text": "Each step swaps between {A, C} and {B, D}, so $P^k$ alternates and never converges. The time share at A is still $\\tfrac14$, as in lesson 6. A walk on a network with no odd cycles is periodic like this.",
+    "canvas": {
+     "highlight": [
+      "B",
+      "D"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Not equal time",
+   "prose": "A colleague models orders hopping between a hub H and three leaf venues. Each leaf links only to H. She says: a random walk spends the same time at every venue, so the hub gets $\\tfrac14$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 230,
+     "nodes": [
+      {
+       "id": "H",
+       "label": "H",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "L1",
+       "label": "L1",
+       "x": 0.12,
+       "y": 0.15
+      },
+      {
+       "id": "L2",
+       "label": "L2",
+       "x": 0.88,
+       "y": 0.15
+      },
+      {
+       "id": "L3",
+       "label": "L3",
+       "x": 0.5,
+       "y": 0.92
+      }
+     ],
+     "edges": [
+      {
+       "from": "H",
+       "to": "L1"
+      },
+      {
+       "from": "H",
+       "to": "L2"
+      },
+      {
+       "from": "H",
+       "to": "L3"
+      }
+     ]
+    },
+    "state": {
+     "caption": "A hub H with three leaves."
+    }
+   },
+   "question": "What share of the time is the walker at the hub?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "$\\tfrac12$",
+      "correct": true
+     },
+     {
+      "id": "equal",
+      "text": "$\\tfrac14$",
+      "why": "You gave every venue the same share. The hub has three links and each leaf has one."
+     },
+     {
+      "id": "nodes",
+      "text": "$\\tfrac34$",
+      "why": "You divided the hub's degree 3 by the number of venues, 4. Degrees add to 6, since each link has two ends."
+     },
+     {
+      "id": "leaf",
+      "text": "$\\tfrac16$",
+      "why": "That is a leaf's share, $\\tfrac16$. The hub has degree 3 of the total 6."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the degree of the hub and of each leaf."
+    },
+    {
+     "rung": "point",
+     "text": "The hub has degree 3 and each leaf has degree 1.",
+     "highlight": [
+      "H"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The degrees add to $3 + 1 + 1 + 1 = 6$."
+    }
+   ],
+   "feedback": {
+    "correct": "Degree 3 out of a total of 6 gives $\\tfrac12$.",
+    "generic": "Not quite right. Divide the hub's degree by the total degree, not by the number of venues.",
+    "byKey": {
+     "equal": "You gave every venue the same share. The hub has three links and each leaf has one.",
+     "nodes": "You divided by the number of venues, 4. The shares would then add to more than 1: the total to divide by is $2|E| = 6$.",
+     "leaf": "That is a leaf's share, not the hub's."
+    }
+   },
+   "explain": {
+    "text": "Every second step is at the hub: leaves can only go to H, and H goes to a leaf. So the share at H is $\\tfrac12$, matching $\\tfrac{3}{6}$. Equal shares hold only when every degree is equal.",
+    "canvas": {
+     "highlight": [
+      "H"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Shares and return times in code",
+   "prose": "Two functions finish the picture. `network_pi` returns the exact stationary shares from an edge list. `return_time_mc` simulates the walk and averages the gaps between visits. One line is missing in each.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 220,
+     "nodes": [
+      {
+       "id": "D",
+       "label": "D",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "A",
+       "label": "A",
+       "x": 0.42,
+       "y": 0.5
+      },
+      {
+       "id": "B",
+       "label": "B",
+       "x": 0.78,
+       "y": 0.15
+      },
+      {
+       "id": "C",
+       "label": "C",
+       "x": 0.78,
+       "y": 0.85
+      }
+     ],
+     "edges": [
+      {
+       "from": "A",
+       "to": "B"
+      },
+      {
+       "from": "A",
+       "to": "C"
+      },
+      {
+       "from": "A",
+       "to": "D"
+      },
+      {
+       "from": "B",
+       "to": "C"
+      }
+     ]
+    },
+    "state": {
+     "caption": "The venue network of this lesson."
+    },
+    "maxHeight": 150
+   },
+   "question": "Replace both `...` lines.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\nfrom fractions import Fraction\n\ndef network_pi(edges):\n    \"\"\"edges: list of (u, v, w), with w a whole number.\"\"\"\n    strength = {}\n    for u, v, w in edges:\n        ...                      # add w to both ends\n    total = sum(strength.values())\n    return {node: Fraction(s, total) for node, s in strength.items()}\n\ndef return_time_mc(edges, start, steps, seed):\n    \"\"\"Mean number of steps between visits to start.\"\"\"\n    nbrs = {}\n    for u, v, w in edges:\n        nbrs.setdefault(u, []).append((v, w))\n        nbrs.setdefault(v, []).append((u, w))\n    rng = random.Random(seed)\n    here, last, gaps = start, 0, []\n    for t in range(1, steps + 1):\n        options = nbrs[here]\n        here = ...               # choose a neighbour, chance proportional to w\n        if here == start:\n            gaps.append(t - last)\n            last = t\n    return sum(gaps) / len(gaps)\n",
+    "solution": "import random\nfrom fractions import Fraction\n\ndef network_pi(edges):\n    \"\"\"edges: list of (u, v, w), with w a whole number.\"\"\"\n    strength = {}\n    for u, v, w in edges:\n        strength[u] = strength.get(u, 0) + w\n        strength[v] = strength.get(v, 0) + w\n    total = sum(strength.values())\n    return {node: Fraction(s, total) for node, s in strength.items()}\n\ndef return_time_mc(edges, start, steps, seed):\n    \"\"\"Mean number of steps between visits to start.\"\"\"\n    nbrs = {}\n    for u, v, w in edges:\n        nbrs.setdefault(u, []).append((v, w))\n        nbrs.setdefault(v, []).append((u, w))\n    rng = random.Random(seed)\n    here, last, gaps = start, 0, []\n    for t in range(1, steps + 1):\n        options = nbrs[here]\n        here = rng.choices([n for n, _ in options], weights=[w for _, w in options])[0]\n        if here == start:\n            gaps.append(t - last)\n            last = t\n    return sum(gaps) / len(gaps)\n",
+    "examples": [
+     {
+      "call": "network_pi([('A', 'B', 1), ('B', 'C', 1)])",
+      "expect": "{'A': Fraction(1, 4), 'B': Fraction(1, 2), 'C': Fraction(1, 4)}",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "V = [(\"A\", \"B\", 1), (\"A\", \"C\", 1), (\"A\", \"D\", 1), (\"B\", \"C\", 1)]",
+      "call": "network_pi(V) == {'A': Fraction(3, 8), 'B': Fraction(1, 4), 'C': Fraction(1, 4), 'D': Fraction(1, 8)}",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "T = [(\"A\", \"B\", 1), (\"B\", \"C\", 2), (\"A\", \"C\", 3)]",
+      "call": "network_pi(T) == {'A': Fraction(1, 3), 'B': Fraction(1, 4), 'C': Fraction(5, 12)}",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "S = [(\"H\", \"L1\", 1), (\"H\", \"L2\", 1), (\"H\", \"L3\", 1)]",
+      "call": "network_pi(S) == {'H': Fraction(1, 2), 'L1': Fraction(1, 6), 'L2': Fraction(1, 6), 'L3': Fraction(1, 6)}",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "V = [(\"A\", \"B\", 1), (\"A\", \"C\", 1), (\"A\", \"D\", 1), (\"B\", \"C\", 1)]",
+      "call": "sum(network_pi(V).values())",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "setup": "V = [(\"A\", \"B\", 1), (\"A\", \"C\", 1), (\"A\", \"D\", 1), (\"B\", \"C\", 1)]",
+      "call": "return_time_mc(V, 'D', 1000, 7)",
+      "expect": "9.045454545454545",
+      "compare": "isclose"
+     },
+     {
+      "setup": "T = [(\"A\", \"B\", 1), (\"B\", \"C\", 2), (\"A\", \"C\", 3)]",
+      "call": "return_time_mc(T, 'B', 20000, 3)",
+      "expect": "3.993409227082085",
+      "compare": "isclose"
+     },
+     {
+      "setup": "V = [(\"A\", \"B\", 1), (\"A\", \"C\", 1), (\"A\", \"D\", 1), (\"B\", \"C\", 1)]",
+      "call": "abs(return_time_mc(V, 'D', 100000, 1) - 8) < 0.3",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "S = [(\"H\", \"L1\", 1), (\"H\", \"L2\", 1), (\"H\", \"L3\", 1)]",
+      "call": "return_time_mc(S, 'H', 1000, 1)",
+      "expect": "2.0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 8 hidden tests. Shares are exact fractions. Use `rng.choices(nodes, weights=weights)[0]` so seeded runs match."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For `network_pi`, each edge adds its weight to both end venues."
+    },
+    {
+     "rung": "point",
+     "text": "Use `strength.get(u, 0) + w` for each end. For the walk, `rng.choices` takes a list of nodes and a list of weights.",
+     "highlight": [
+      "A",
+      "D"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`here = rng.choices([n for n, _ in options], weights=[w for _, w in options])[0]`"
+    }
+   ],
+   "feedback": {
+    "correct": "Exact shares from degrees, and a simulation that agrees with $1/\\pi$.",
+    "generic": "Some tests failed. Add the weight to both ends, and pick the next venue with `rng.choices`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that both `...` lines are replaced."
+    }
+   },
+   "explain": {
+    "text": "Each edge adds its weight to both ends, so the strengths add to $2|E|$. The simulation chooses along a link in proportion to its weight, and the mean return to D comes out near 8, which is $1/\\pi_D$.\n\n```python\nstrength[u] = strength.get(u, 0) + w\nstrength[v] = strength.get(v, 0) + w\n```"
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A dealer network",
+   "prose": "Five dealers pass quotes only along the links shown. Each quote moves to a random linked dealer, one hop at a time. Over a long day the flow through each dealer follows its degree.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 250,
+     "nodes": [
+      {
+       "id": "D1",
+       "label": "D1",
+       "x": 0.5,
+       "y": 0.3
+      },
+      {
+       "id": "D2",
+       "label": "D2",
+       "x": 0.1,
+       "y": 0.15
+      },
+      {
+       "id": "D3",
+       "label": "D3",
+       "x": 0.9,
+       "y": 0.55
+      },
+      {
+       "id": "D4",
+       "label": "D4",
+       "x": 0.5,
+       "y": 0.9
+      },
+      {
+       "id": "D5",
+       "label": "D5",
+       "x": 0.1,
+       "y": 0.7
+      }
+     ],
+     "edges": [
+      {
+       "from": "D1",
+       "to": "D2"
+      },
+      {
+       "from": "D1",
+       "to": "D3"
+      },
+      {
+       "from": "D1",
+       "to": "D4"
+      },
+      {
+       "from": "D1",
+       "to": "D5"
+      },
+      {
+       "from": "D2",
+       "to": "D3"
+      },
+      {
+       "from": "D3",
+       "to": "D4"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Quotes pass along links between dealers."
+    }
+   },
+   "question": "What share of all quote visits goes through dealer D1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3333,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "4/12 = 1/3",
+    "wrong": [
+     {
+      "id": "equal",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "links",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the links at D1, then every dealer's links."
+    },
+    {
+     "rung": "point",
+     "text": "D1 has 4. The others have 2, 3, 2 and 1.",
+     "highlight": [
+      "D1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The degrees add to 12, so D1 gets $\\tfrac{4}{12}$."
+    }
+   ],
+   "feedback": {
+    "correct": "D1 has degree 4 of a total of 12, a third of all visits.",
+    "generic": "Not quite right. Divide D1's degree by the total degree of all five dealers.",
+    "byKey": {
+     "equal": "You gave each dealer an equal share. D1 has the most links.",
+     "links": "You divided D1's 4 links by the 6 links. Divide by the total degree, 12."
+    }
+   },
+   "explain": {
+    "text": "The degrees are 4, 2, 3, 2 and 1, adding to 12, so D1 sees $\\tfrac13$ of all quote flow. One dealer carries a third of the flow, a single point of failure. That is an argument for a central counterparty.",
+    "canvas": {
+     "highlight": [
+      "D1"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A random walk on an undirected network is reversible with $\\pi_i = \\dfrac{\\deg(i)}{2|E|}$. With link strengths, replace the degree by the total strength at $i$.",
+   "The mean return time to a state is $1/\\pi_i$. For the knight, a corner has degree 2 of a total 336, so it returns every 168 moves.",
+   "Shares follow degree, not headcount. A bipartite network has a stationary $\\pi$ but its $P^k$ does not converge. A network in two pieces has more than one $\\pi$."
+  ],
+  "formula": {
+   "name": "Walk on a network",
+   "tex": "\\pi_i = \\frac{\\deg(i)}{2|E|}, \\qquad E[\\text{return time to } i] = \\frac{1}{\\pi_i}",
+   "note": "Weighted: $\\pi_i$ is the strength at $i$ over the total strength."
+  },
+  "trap": "Dividing a degree by the number of venues. The degrees add to $2|E|$, so that is the divisor."
+ },
+ "quiz": [
+  {
+   "id": "q-star-leaf",
+   "difficulty": 2,
+   "prose": "A hub H links to three leaves. A router hops to a random linked venue each step and starts at a leaf L1.",
+   "question": "What is the mean number of steps between visits to L1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "6, since π = 1/6",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\pi_{L1} = \\tfrac16$, so the mean return time is 6.",
+    "generic": "Not quite right. Find the leaf's share of the total degree 6, then invert it.",
+    "byKey": {
+     "two": "That is the hub's return time, $\\tfrac{1}{1/2}$. A leaf has a smaller share.",
+     "four": "You used the number of venues. The leaf's share is $\\tfrac16$.",
+     "three": "You used the hub's degree. The leaf has degree 1 of 6."
+    }
+   },
+   "explain": {
+    "text": "The leaf has degree 1 and the total is 6, so $\\pi = \\tfrac16$ and the return time is 6. The walker goes L1, H, a leaf, H, and so on, so it takes a while to find L1 again."
+   }
+  },
+  {
+   "id": "q-two-pieces",
+   "difficulty": 3,
+   "prose": "A network has two separate pieces: a single link A to B, and a path C to D to E. The walker starts at A.",
+   "question": "What is its long-run share of time at B?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "right",
+      "text": "$\\tfrac12$",
+      "correct": true
+     },
+     {
+      "id": "whole",
+      "text": "$\\tfrac16$",
+      "why": "You used degree over $2|E|$ for the whole network. The walker never leaves its own piece, A and B."
+     },
+     {
+      "id": "zero",
+      "text": "0",
+      "why": "B is linked to A, so the walker visits it every second step."
+     },
+     {
+      "id": "third",
+      "text": "$\\tfrac13$",
+      "why": "You counted three links in the network. The walker lives on the single link A to B."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The walker only ever visits A and B, alternating between them.",
+    "generic": "Not quite right. Work out which venues the walker can reach."
+   },
+   "explain": {
+    "text": "The walker alternates A, B, A, B, so each gets $\\tfrac12$ of the time. The formula degree over $2|E|$ needs one connected network. With two pieces there are two stationary distributions, as in lesson 6."
+   }
+  },
+  {
+   "id": "q-weighted-return",
+   "difficulty": 3,
+   "prose": "Link strengths are A to B 2, B to C 2, C to D 1 and D to A 1. The walker moves along a link in proportion to its strength.",
+   "question": "What is the mean return time to D?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "6, since π_D = 2/12",
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "twelve",
+      "value": 12,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "D's strength is $1 + 1 = 2$ of a total 12, so $\\pi_D = \\tfrac16$.",
+    "generic": "Not quite right. Add the strengths at D, add all the strengths at the four venues, then invert the share.",
+    "byKey": {
+     "three": "You divided the link total 6 by D's strength 2. Each link counts at both ends: the total is 12.",
+     "four": "You used the number of venues.",
+     "twelve": "That is the total strength. Divide it by D's strength 2."
+    }
+   },
+   "explain": {
+    "text": "Strengths at the venues are 3, 4, 3 and 2, adding to 12. So $\\pi_D = \\tfrac{2}{12}$ and the mean return time is 6."
+   }
+  },
+  {
+   "id": "q-uniform",
+   "difficulty": 2,
+   "prose": "A random walk on a connected network has the same long-run share at every venue.",
+   "question": "When does this happen?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "When every venue has the same degree",
+      "correct": true
+     },
+     {
+      "id": "always",
+      "text": "Always, since the walker moves at random",
+      "why": "Random moves do not mean equal shares. The share follows the degree."
+     },
+     {
+      "id": "bip",
+      "text": "Only when the network is bipartite",
+      "why": "A star is bipartite and has very unequal shares. Equal degrees are what matter."
+     },
+     {
+      "id": "big",
+      "text": "Only when there are many venues",
+      "why": "Size does not matter. A square with 4 venues has equal shares, a star with 100 does not."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Shares are proportional to degrees, so they are equal exactly when the degrees are.",
+    "generic": "Not quite right. Recall that the share is the degree over $2|E|$."
+   },
+   "explain": {
+    "text": "The share of venue $i$ is $\\deg(i)/2|E|$. Shares are equal exactly when all degrees are equal, as on a square."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1241 @@
+{
+ "id": "l16-adding-densities",
+ "course": "limits-thm",
+ "title": "Sums and convolution",
+ "minutes": 14,
+ "objectives": [
+  "Find the density of a sum of independent variables by convolution",
+  "Handle limits, discrete sums and mixtures"
+ ],
+ "skills": [
+  "dl-continuous"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two fills in a second",
+   "prose": "Two independent orders each fill at a uniform moment inside a 1-second window. Add the two fill times, $U_1 + U_2$, and run the simulation.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": 0,
+      "max": 2,
+      "width": 0.2
+     },
+     "proportion": true,
+     "yLabel": "Share of trials",
+     "xLabel": "Total $U_1 + U_2$",
+     "yMax": 0.25,
+     "height": 300,
+     "sim": {
+      "trials": [
+       100,
+       1000,
+       10000
+      ],
+      "outcome": "u() + u()",
+      "seed": 161
+     }
+    },
+    "state": {
+     "ran": 0,
+     "caption": "Two flat fills, added. Run the draws and read the shape."
+    }
+   },
+   "question": "What shape does the total have?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "flat",
+      "text": "Flat from 0 to 2, like each fill",
+      "why": "A total near 0 needs both fills early, which is rare. A total near 1 can happen many ways, so it is more likely."
+     },
+     {
+      "id": "bell",
+      "text": "A smooth bell centred at 1",
+      "why": "The sides are straight lines and the peak is sharp. A bell takes many terms to appear."
+     },
+     {
+      "id": "ends",
+      "text": "Highest at 0 and at 2",
+      "why": "Both extreme totals need both fills at the same end of the window. The middle is far easier to reach."
+     },
+     {
+      "id": "tri",
+      "text": "A triangle with its peak at 1",
+      "correct": true
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Run 10,000 draws and watch where the bars pile up."
+    },
+    {
+     "rung": "point",
+     "text": "Totals near 1 are common and totals near 0 or 2 are rare.",
+     "highlight": [
+      "b4",
+      "b5"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The bars rise to a peak at 1 and fall away in straight lines: a triangle.",
+    "generic": "Not quite right. Run the draws and compare the bars near 1 with those near 0 and 2.",
+    "byKey": {
+     "flat": "A total near 0 needs both fills early, which is rare.",
+     "bell": "The sides are straight and the peak is sharp, which is a triangle.",
+     "ends": "Both extremes need both fills at the same end of the window."
+    }
+   },
+   "explain": {
+    "text": "Few pairs add to near 0 or 2, and many add to near 1. The exact shape is a triangle: $t$ on $[0, 1]$ and $2 - t$ on $[1, 2]$. Next we find it by sliding.",
+    "canvas": {
+     "curves": [
+      {
+       "id": "tri",
+       "expr": "(1 - abs(x - 1)) * w",
+       "dashed": true,
+       "label": "triangle"
+      }
+     ],
+     "ran": 10000
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 2,
+   "title": "Slide one density over the other",
+   "prose": "Fix $t$ and ask how many ways the two fills can add to $t$. Flip $Y$'s density, slide it so it is centred on $t$, and measure the overlap with $X$'s density. Slide $t$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.2,
+      2.2
+     ],
+     "y": [
+      0,
+      1.5
+     ],
+     "functions": [
+      {
+       "id": "fx",
+       "expr": "1",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$f_X(x)$"
+      },
+      {
+       "id": "fy",
+       "expr": "1",
+       "domain": [
+        "t - 1",
+        "t"
+       ],
+       "label": "$f_Y(t - x)$",
+       "colour": 2,
+       "labelSide": "below"
+      }
+     ],
+     "xLabel": "$x$",
+     "yLabel": "density",
+     "height": 260
+    },
+    "state": {
+     "params": {
+      "t": 0.5
+     },
+     "area": {
+      "id": "A",
+      "f": "fx",
+      "from": 0,
+      "to": 0.5,
+      "colour": 3
+     }
+    },
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "start": 0.5,
+      "label": "$t$",
+      "decimals": 1
+     }
+    ],
+    "derive": {
+     "A.from": "max(0, t - 1)",
+     "A.to": "min(1, t)",
+     "caption": "At $t = {{fixed(t, 1)}}$ the overlap has width {{fixed(max(0, min(1, t) - max(0, t - 1)), 2)}}."
+    }
+   },
+   "question": "Set $t = 1.5$. How wide is the overlap, and so what is the height of the triangle at 1.5?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "A decimal",
+    "label": "Overlap at t = 1.5",
+    "accept": "Overlap width 0.5.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Move the slider to 1.5 and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "The copy of $f_Y$ covers $[0.5, 1.5]$ and $f_X$ covers $[0, 1]$.",
+     "highlight": [
+      "A"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The two densities overlap on $[0.5, 1]$, width 0.5.",
+    "generic": "Not quite right. Set $t = 1.5$ and read the width of the shaded overlap.",
+    "byKey": {
+     "one": "1 is the overlap at $t = 1$, where the two copies sit exactly on top of each other.",
+     "zero": "0 would mean the totals never reach 1.5. They do: both fills can be late."
+    }
+   },
+   "explain": {
+    "text": "At $t = 1.5$ the copy covers $[0.5, 1.5]$ and meets $f_X$ on $[0.5, 1]$, width 0.5. The overlap measures the density of the total: it climbs to 1 at $t = 1$, then falls again.",
+    "canvas": {
+     "params": {
+      "t": 1.5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A probability from the triangle",
+   "prose": "The overlap traces a triangle: $f(t) = t$ on $[0, 1]$ and $2 - t$ on $[1, 2]$. The shaded tail is $P(U_1 + U_2 > 1.5)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.2,
+      2.2
+     ],
+     "y": [
+      0,
+      1.2
+     ],
+     "functions": [
+      {
+       "id": "tri",
+       "expr": "1 - abs(x - 1)",
+       "domain": [
+        0,
+        2
+       ],
+       "label": "$f_{X+Y}(t)$"
+      }
+     ],
+     "xLabel": "$t$",
+     "yLabel": "density",
+     "height": 240
+    },
+    "state": {
+     "area": {
+      "id": "tail",
+      "f": "tri",
+      "from": 1.5,
+      "to": 2,
+      "colour": 3
+     }
+    }
+   },
+   "question": "What is $P(U_1 + U_2 \\le 1.5)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.875,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "A decimal",
+    "label": "P(U1 + U2 <= 1.5)",
+    "accept": "$1 - \\tfrac18 = 0.875$.",
+    "wrong": [
+     {
+      "id": "unif",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "tail",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the small shaded triangle first."
+    },
+    {
+     "rung": "point",
+     "text": "Its base is 0.5 and its height is $f(1.5) = 0.5$.",
+     "highlight": [
+      "tail"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Area $= \\tfrac12 \\cdot 0.5 \\cdot 0.5 = 0.125$. Subtract from 1."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - 0.125 = 0.875$.",
+    "generic": "Not quite right. Take the shaded tail away from the total area 1.",
+    "byKey": {
+     "unif": "0.75 treats the total as uniform on $[0, 2]$. Totals pile up near 1, so more than 0.75 lies below 1.5.",
+     "tail": "0.125 is the shaded tail. We want the part to its left."
+    }
+   },
+   "explain": {
+    "text": "The tail triangle has base 0.5 and height 0.5, so area $\\tfrac18$. The rest, 0.875, lies below 1.5. A uniform total would have given only 0.75."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The convolution",
+   "prose": "You slid, overlapped and measured. For independent $X$ and $Y$, the sum has the **convolution** density $$f_{X+Y}(t) = \\int f_X(x)\\,f_Y(t - x)\\,dx.$$ Where either factor is zero, the integrand is zero.",
+   "question": "For two $U(0, 1)$ variables at $t = 1.5$, over which $x$ is the integrand non-zero?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "whole",
+      "text": "$0 \\le x \\le 1.5$",
+      "why": "You ran $x$ up to $t$. But $f_X(x)$ is zero for $x > 1$, so the integrand stops at 1."
+     },
+     {
+      "id": "unit",
+      "text": "$0 \\le x \\le 1$",
+      "why": "You kept $x$'s whole range. But $f_Y(1.5 - x)$ is zero when $1.5 - x > 1$, that is for $x < 0.5$."
+     },
+     {
+      "id": "shift",
+      "text": "$0.5 \\le x \\le 1.5$",
+      "why": "That range suits $f_Y(1.5 - x)$ alone. $f_X(x)$ is also needed, and it is zero past 1."
+     },
+     {
+      "id": "half",
+      "text": "$0.5 \\le x \\le 1$",
+      "correct": true
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Both $f_X(x)$ and $f_Y(1.5 - x)$ must be non-zero."
+    },
+    {
+     "rung": "point",
+     "text": "$f_X(x) \\ne 0$ needs $0 \\le x \\le 1$. $f_Y(1.5 - x) \\ne 0$ needs $0.5 \\le x \\le 1.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "The two conditions overlap on $[0.5, 1]$.",
+    "generic": "Not quite right. Find the $x$ where both $f_X(x)$ and $f_Y(1.5 - x)$ are non-zero.",
+    "byKey": {
+     "whole": "$f_X(x)$ is zero for $x > 1$.",
+     "unit": "$f_Y(1.5 - x)$ is zero for $x < 0.5$.",
+     "shift": "$f_X(x)$ is zero for $x > 1$."
+    }
+   },
+   "explain": {
+    "text": "The limits are where both densities are non-zero: $[0.5, 1]$, width 0.5, the overlap you measured. For $t \\le 1$ the limits are $[0, t]$ and for $t \\ge 1$ they are $[t - 1, 1]$: two pieces of the triangle."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Two waits added",
+   "prose": "The wait for the second trade is the sum of two independent exponential gaps, each with rate $\\lambda$. The densities are zero for negative arguments, so the limits run from 0 to $t$.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "def",
+      "text": "$f_T(t) = \\int_0^t f_X(x)\\,f_Y(t - x)\\,dx$, the convolution, with limits from where both densities are non-zero"
+     },
+     {
+      "id": "plug",
+      "text": "$= \\int_0^t \\lambda e^{-\\lambda x}\\cdot\\lambda e^{-\\lambda(t - x)}\\,dx$, putting in the two exponential densities"
+     },
+     {
+      "id": "cancel",
+      "text": "$= \\int_0^t \\lambda^2 e^{-\\lambda t}\\,dx$, since $e^{-\\lambda x}e^{-\\lambda(t - x)} = e^{-\\lambda t}$ does not depend on $x$"
+     },
+     {
+      "id": "res",
+      "text": "$= \\lambda^2 t\\,e^{-\\lambda t}$, integrating a constant over a stretch of length $t$"
+     }
+    ],
+    "answer": [
+     "def",
+     "plug",
+     "cancel",
+     "res"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the convolution first, then insert the densities."
+    },
+    {
+     "rung": "point",
+     "text": "The exponents combine to something free of $x$."
+    },
+    {
+     "rung": "step",
+     "text": "Convolution, insert, combine, integrate."
+    }
+   ],
+   "feedback": {
+    "correct": "Convolution, insert, combine exponents, integrate.",
+    "generic": "Not quite right. Insert the densities before simplifying the exponents.",
+    "byKey": {
+     "cancel": "The exponents can only be combined once the two densities are written in.",
+     "res": "Integrating comes last, once the integrand is a constant in $x$."
+    }
+   },
+   "explain": {
+    "text": "The integrand is constant in $x$, so the integral is just its height times the length $t$. The result $\\lambda^2 t e^{-\\lambda t}$ is not exponential: it starts at 0, because two short gaps are needed for a short total."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The second trade",
+   "prose": "Trades arrive at 2 a minute, so $\\lambda = 2$ and the wait $T$ for the second trade has density $4te^{-2t}$. Integrating gives $P(T > t) = e^{-2t}(1 + 2t)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3
+     ],
+     "y": [
+      0,
+      1
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "4*x*exp(-2*x)",
+       "domain": [
+        0,
+        3
+       ],
+       "label": "$4te^{-2t}$"
+      }
+     ],
+     "xLabel": "$t$ (minutes)",
+     "yLabel": "density",
+     "height": 240
+    },
+    "state": {
+     "area": {
+      "id": "tail",
+      "f": "f",
+      "from": 1,
+      "to": 3,
+      "colour": 3
+     }
+    }
+   },
+   "question": "What is the chance the second trade takes longer than 1 minute?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.406,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "P(T > 1)",
+    "accept": "$e^{-2}(1 + 2) = 3e^{-2} \\approx 0.4060$.",
+    "wrong": [
+     {
+      "id": "single",
+      "value": 0.1353,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "mid",
+      "value": 0.2707,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $t = 1$ into $e^{-2t}(1 + 2t)$."
+    },
+    {
+     "rung": "point",
+     "text": "$e^{-2} = 0.1353$ and $1 + 2 = 3$.",
+     "highlight": [
+      "tail"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$3e^{-2} = 0.4060$.",
+    "generic": "Not quite right. Use $P(T > t) = e^{-2t}(1 + 2t)$ at $t = 1$.",
+    "byKey": {
+     "single": "0.1353 is the chance that the first trade takes over a minute. The second trade takes at least as long.",
+     "mid": "0.2707 is $2e^{-2}$: the factor $(1 + 2t)$ should be 3, not 2."
+    }
+   },
+   "explain": {
+    "text": "$e^{-2} \\times 3 = 0.4060$. The second trade is slower than the first, so its tail is heavier than $e^{-2}$. This density is the Gamma with $a = 2$, which a later lesson names."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The same idea for dice",
+   "prose": "For whole-number variables the integral becomes a sum: $P(X + Y = s) = \\sum_k P(X = k)\\,P(Y = s - k)$. Two dice give the triangle of totals below.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "xLabel": "Total of two dice",
+     "yLabel": "Ways out of 36",
+     "height": 220,
+     "showValues": true,
+     "yMax": 7
+    },
+    "state": {
+     "values": {
+      "2": 1,
+      "3": 2,
+      "4": 3,
+      "5": 4,
+      "6": 5,
+      "7": 6,
+      "8": 5,
+      "9": 4,
+      "10": 3,
+      "11": 2,
+      "12": 1
+     }
+    }
+   },
+   "question": "Write `convolve_pmf(p, q)` for two lists of probabilities on $0, 1, 2, \\dots$",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def convolve_pmf(p, q):\n    # p[i] = P(X = i), q[j] = P(Y = j), both starting at 0.\n    # Return r with r[k] = P(X + Y = k).\n    r = [0.0] * (len(p) + len(q) - 1)\n    ...\n    return r\n",
+    "solution": "def convolve_pmf(p, q):\n    # p[i] = P(X = i), q[j] = P(Y = j); r[k] = P(X + Y = k)\n    r = [0.0] * (len(p) + len(q) - 1)\n    for i, a in enumerate(p):\n        for j, b in enumerate(q):\n            r[i + j] += a * b\n    return r\n",
+    "examples": [
+     {
+      "call": "convolve_pmf([0.5, 0.5], [0.5, 0.5])",
+      "expect": "[0.25, 0.5, 0.25]"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "die = [0] + [1 / 6] * 6",
+      "call": "convolve_pmf(die, die)",
+      "expect": "[0.0, 0.0, 0.027777777777777776, 0.05555555555555555, 0.08333333333333333, 0.1111111111111111, 0.1388888888888889, 0.16666666666666669, 0.1388888888888889, 0.1111111111111111, 0.08333333333333333, 0.05555555555555555, 0.027777777777777776]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "convolve_pmf([0.5, 0.5], [0.5, 0.5])",
+      "expect": "[0.25, 0.5, 0.25]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "b = [0.7, 0.3]",
+      "call": "convolve_pmf(convolve_pmf(b, b), b)",
+      "expect": "[0.343, 0.441, 0.189, 0.027]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "convolve_pmf([0.2, 0.8], [0.5, 0.25, 0.25])",
+      "expect": "[0.1, 0.45, 0.25, 0.2]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "len(convolve_pmf([1], [0.5, 0.5]))",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "setup": "die = [0] + [1 / 6] * 6",
+      "call": "abs(sum(convolve_pmf(die, die)) - 1) < 1e-9",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests: two dice, two coins, three Bernoulli trials giving the binomial, two lists of different lengths, a length check and a total of 1. Each answer is accepted within 1e-12."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over every pair of positions $i$ and $j$."
+    },
+    {
+     "rung": "point",
+     "text": "The pair $(i, j)$ contributes `p[i] * q[j]` to total $i + j$.",
+     "highlight": [
+      "x7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`r[i + j] += p[i] * q[j]` inside two loops."
+    }
+   ],
+   "feedback": {
+    "correct": "Totals, weights and the length all match: this is the discrete convolution.",
+    "generic": "Not quite right. Add `p[i] * q[j]` to `r[i + j]` for every pair."
+   },
+   "explain": {
+    "text": "Each pair $(i, j)$ adds its probability to the total $i + j$. Three Bernoulli trials convolved give the binomial, so the binomial's formula is a repeated convolution."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Multiplying the densities",
+   "prose": "A learner says: the density of the sum at $t$ is the product $f_X(t)\\,f_Y(t)$. At $t = 0.5$ the two uniform densities are both 1, so the product is 1.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.2,
+      2.2
+     ],
+     "y": [
+      0,
+      1.5
+     ],
+     "functions": [
+      {
+       "id": "fx",
+       "expr": "1",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$f_X(x)$"
+      },
+      {
+       "id": "fy",
+       "expr": "1",
+       "domain": [
+        "t - 1",
+        "t"
+       ],
+       "label": "$f_Y(t - x)$",
+       "colour": 2,
+       "labelSide": "below"
+      }
+     ],
+     "xLabel": "$x$",
+     "yLabel": "density",
+     "height": 240
+    },
+    "state": {
+     "params": {
+      "t": 0.5
+     },
+     "area": {
+      "id": "A",
+      "f": "fx",
+      "from": 0,
+      "to": 0.5,
+      "colour": 3
+     }
+    }
+   },
+   "question": "What is the density of $U_1 + U_2$ at $t = 0.5$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "prod",
+      "text": "$1$, the product $f_X(0.5)\\,f_Y(0.5)$",
+      "why": "You multiplied the heights at one point. That only counts the case where both fills are at 0.5, and ignores every other way to add to 0.5."
+     },
+     {
+      "id": "sum",
+      "text": "$2$, the sum $f_X(0.5) + f_Y(0.5)$",
+      "why": "A sum of variables is not a sum of densities. The density would exceed what the triangle allows."
+     },
+     {
+      "id": "quarter",
+      "text": "$0.25$, the chance both fills are before 0.5",
+      "why": "That is a probability, $P(U_1 \\le 0.5, U_2 \\le 0.5)$, not a density at a point."
+     },
+     {
+      "id": "half",
+      "text": "$0.5$, the width of the overlap",
+      "correct": true
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The density at $t$ adds up every way to split $t$ into $x$ and $t - x$."
+    },
+    {
+     "rung": "point",
+     "text": "At $t = 0.5$ the splits run over $x$ from 0 to 0.5.",
+     "highlight": [
+      "A"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The splits of 0.5 into two parts cover width 0.5, so the density is 0.5.",
+    "generic": "Not quite right. Count every split $x$ and $0.5 - x$, not just $x = 0.5$.",
+    "byKey": {
+     "prod": "You multiplied the heights at one point. Every other split of 0.5 is missed.",
+     "sum": "A sum of variables is not a sum of densities.",
+     "quarter": "That is a probability of a region, not a density at a point."
+    }
+   },
+   "explain": {
+    "text": "The product at $t$ uses the same value of $t$ for both variables. The convolution lets $x$ run over every split of $t$ and adds them up. At $t = 0.5$ that is width 0.5, and the product 1 is twice too big."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Normals add",
+   "prose": "The sum of independent normals is normal: means add and variances add. We prove it in the last lesson. Two strategies' daily P&L, in £k, are $X \\sim N(2, 3^2)$ and $Y \\sim N(1, 4^2)$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 3,
+      "sigma": 5
+     },
+     "x": [
+      -12,
+      18
+     ],
+     "variable": "T",
+     "xLabel": "Combined P&L (£k)",
+     "height": 240
+    },
+    "state": {
+     "shade": {
+      "from": 8,
+      "to": null
+     },
+     "showProb": false
+    }
+   },
+   "question": "What is the chance that the combined P&L exceeds £8k?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1587,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "P(X + Y > 8)",
+    "accept": "Mean 3, sd 5, so $z = 1$ and the tail is $0.1587$.",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 0.2375,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the mean and sd of $X + Y$ first."
+    },
+    {
+     "rung": "point",
+     "text": "The mean is $2 + 1 = 3$. The variance is $9 + 16 = 25$.",
+     "highlight": [
+      "shade"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$z = \\tfrac{8 - 3}{5} = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "Mean 3, sd 5, $z = 1$, tail $0.1587$.",
+    "generic": "Not quite right. Add the means and add the variances, then standardise.",
+    "byKey": {
+     "sd": "You added the sds, $3 + 4 = 7$. Variances add: $9 + 16 = 25$, so the sd is 5.",
+     "half": "0.5 is the chance of beating the mean 3. £8k is a full standard deviation above it."
+    }
+   },
+   "explain": {
+    "text": "The sum is $N(3, 5^2)$, so $z = 1$ and $P = 1 - \\Phi(1) = 0.1587$. Using $3 + 4 = 7$ for the sd gives 0.2375, which overstates the risk because the two strategies partly cancel."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A jump plus a normal move",
+   "prose": "A stock's daily move is normal with mean £0 and sd £1. With chance 0.2 it also goes ex-dividend and drops a further £1, independently. Sum a discrete part and a continuous part: the density is a weighted mix of shifted normals.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -5,
+      4
+     ],
+     "y": [
+      0,
+      0.5
+     ],
+     "functions": [
+      {
+       "id": "mix",
+       "expr": "0.8*normpdf(x, 0, 1) + 0.2*normpdf(x, -1, 1)",
+       "label": "density of the move",
+       "labelAt": -2.2
+      },
+      {
+       "id": "plain",
+       "expr": "normpdf(x, 0, 1)",
+       "dashed": true,
+       "label": "no dividend",
+       "labelAt": 1.6
+      }
+     ],
+     "xLabel": "Price change (£)",
+     "yLabel": "density",
+     "height": 240
+    },
+    "state": {}
+   },
+   "question": "What is the chance the stock finishes the day no higher than it started?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5683,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "P(change <= 0)",
+    "accept": "$0.8\\,\\Phi(0) + 0.2\\,\\Phi(1) = 0.5683$.",
+    "wrong": [
+     {
+      "id": "never",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "always",
+      "value": 0.8413,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Split on whether the dividend drop happens."
+    },
+    {
+     "rung": "point",
+     "text": "With no drop, $P(N \\le 0) = 0.5$. With the drop, $P(N - 1 \\le 0) = P(N \\le 1)$.",
+     "highlight": [
+      "mix"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Weight them by 0.8 and 0.2."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.8 \\times 0.5 + 0.2 \\times 0.8413 = 0.5683$.",
+    "generic": "Not quite right. Weight the two cases by 0.8 and 0.2.",
+    "byKey": {
+     "never": "0.5 ignores the dividend. A drop makes a non-positive day more likely.",
+     "always": "0.8413 assumes the dividend is always paid. It is paid with chance 0.2 only."
+    }
+   },
+   "explain": {
+    "text": "Condition on the jump: $P = 0.8\\,\\Phi(0) + 0.2\\,\\Phi(1) = 0.4 + 0.1683 = 0.5683$. For a discrete $D$ and continuous $X$, $f_{X+D}(t) = \\sum_d P(D = d)\\,f_X(t - d)$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Two desks, one limit",
+   "prose": "Desk A's daily P&L $A$ is uniform between a £1k loss and a £1k gain. Desk B only loses: its loss $L$ has density $e^{-l}$, mean £1k. The combined P&L is $A - L$, and the limit is a loss of £2k.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -2,
+      4
+     ],
+     "y": [
+      0,
+      1.1
+     ],
+     "functions": [
+      {
+       "id": "fa",
+       "expr": "0.5",
+       "domain": [
+        -1,
+        1
+       ],
+       "label": "desk A"
+      },
+      {
+       "id": "fl",
+       "expr": "exp(-x)",
+       "domain": [
+        0,
+        4
+       ],
+       "label": "desk B loss $L$",
+       "colour": 2
+      }
+     ],
+     "xLabel": "£k",
+     "yLabel": "density",
+     "height": 240
+    },
+    "state": {}
+   },
+   "question": "What is $P(L - A > 2)$, the chance the combined day loses over £2k?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.159,
+    "tol": {
+     "abs": 0.0006
+    },
+    "placeholder": "A decimal",
+    "label": "P(loss > 2k)",
+    "accept": "$\\tfrac12\\left(e^{-1} - e^{-3}\\right) \\approx 0.1590$.",
+    "wrong": [
+     {
+      "id": "ignore",
+      "value": 0.1353,
+      "tol": {
+       "abs": 0.0006
+      }
+     },
+     {
+      "id": "worst",
+      "value": 0.3679,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Condition on $A = a$. Then $L$ must exceed $2 + a$."
+    },
+    {
+     "rung": "point",
+     "text": "$P(L > 2 + a) = e^{-(2 + a)}$, and $A$ has density $\\tfrac12$ on $[-1, 1]$.",
+     "highlight": [
+      "fa"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Integrate $\\tfrac12 e^{-(2+a)}$ over $a$ from $-1$ to 1."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac12\\left(e^{-1} - e^{-3}\\right) = 0.1590$.",
+    "generic": "Not quite right. Average $e^{-(2+a)}$ over $a$ uniform on $[-1, 1]$.",
+    "byKey": {
+     "ignore": "0.1353 is $e^{-2}$, the answer if desk A made exactly 0. Desk A's spread matters.",
+     "worst": "0.3679 is $e^{-1}$, the case where desk A always loses £1k. It is only the worst case."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac12\\int_{-1}^{1}e^{-(2+a)}\\,da = \\tfrac12\\left(e^{-1} - e^{-3}\\right) = \\tfrac12(0.3679 - 0.0498) = 0.1590$. Desk A's noise lifts the chance slightly above $e^{-2} = 0.1353$, because $e^{-x}$ is convex."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The density of a sum of independent variables is the convolution: slide one density over the other and measure the overlap.",
+   "Take the limits where both densities are non-zero. Two uniforms give a triangle, and two exponentials give $\\lambda^2 t e^{-\\lambda t}$.",
+   "Whole-number variables convolve by a sum, and independent normals give a normal with the means and the variances added."
+  ],
+  "formula": {
+   "name": "Convolution",
+   "tex": "f_{X+Y}(t) = \\int f_X(x)\\,f_Y(t - x)\\,dx, \\qquad P(X + Y = s) = \\sum_k P(X = k)\\,P(Y = s - k)",
+   "note": "A sum with a discrete part is a mixture: $f_{X+D}(t) = \\sum_d P(D = d)\\,f_X(t - d)$."
+  },
+  "trap": "The density of a sum is not the product $f_X(t)f_Y(t)$ and not the sum of densities. Variances of normals add, not standard deviations."
+ },
+ "quiz": [
+  {
+   "id": "q-small",
+   "difficulty": 2,
+   "prose": "$U_1$ and $U_2$ are independent and uniform on $[0, 1]$, and the density of the sum is $t$ on $[0, 1]$.",
+   "question": "What is $P(U_1 + U_2 \\le 0.5)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.125,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "A decimal",
+    "label": "P(sum <= 0.5)",
+    "accept": "A triangle of base and height 0.5: area $\\tfrac18$.",
+    "wrong": [
+     {
+      "id": "unif",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\int_0^{0.5} t\\,dt = 0.125$.",
+    "generic": "Not quite right. Integrate $t$ from 0 to 0.5.",
+    "byKey": {
+     "unif": "0.25 treats the sum as uniform on $[0, 2]$. Small totals are rarer than that."
+    }
+   },
+   "explain": {
+    "text": "The area under $f(t) = t$ from 0 to 0.5 is $\\tfrac{0.5^2}{2} = 0.125$."
+   }
+  },
+  {
+   "id": "q-dice",
+   "difficulty": 2,
+   "prose": "Two fair dice, independent.",
+   "question": "What is $P(\\text{total} = 9)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1111,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A fraction or decimal",
+    "label": "P(total = 9)",
+    "accept": "$\\tfrac{4}{36}$.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.0278,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "six",
+      "value": 0.1667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The pairs $(3,6), (4,5), (5,4), (6,3)$ give $\\tfrac{4}{36}$.",
+    "generic": "Not quite right. Add $P(X = k)\\,P(Y = 9 - k)$ over the values of $k$ that work.",
+    "byKey": {
+     "one": "$\\tfrac{1}{36}$ is the chance of one particular pair. Four pairs give a total of 9.",
+     "six": "$\\tfrac16$ is the chance of a total of 7, the most common one."
+    }
+   },
+   "explain": {
+    "text": "$k$ runs from 3 to 6, so four terms of $\\tfrac16 \\cdot \\tfrac16$: $\\tfrac{4}{36} = 0.1111$."
+   }
+  },
+  {
+   "id": "q-sd",
+   "difficulty": 3,
+   "prose": "$X \\sim N(0, 2^2)$ and $Y \\sim N(0, 3^2)$ are independent.",
+   "question": "What is the standard deviation of $X + Y$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.606,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "A decimal",
+    "label": "sd of X + Y",
+    "accept": "$\\sqrt{4 + 9} = \\sqrt{13} \\approx 3.606$.",
+    "wrong": [
+     {
+      "id": "add",
+      "value": 5,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "var",
+      "value": 13,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{4 + 9} = 3.606$.",
+    "generic": "Not quite right. Add the variances, then take the square root.",
+    "byKey": {
+     "add": "You added the sds. Variances add for independent variables, not standard deviations.",
+     "var": "13 is the variance. The question asks for the standard deviation."
+    }
+   },
+   "explain": {
+    "text": "The variance is $4 + 9 = 13$, so the sd is $\\sqrt{13} = 3.606$, less than $2 + 3 = 5$."
+   }
+  },
+  {
+   "id": "q-second",
+   "difficulty": 3,
+   "prose": "The wait for the second of two independent exponential gaps (rate 1) has density $te^{-t}$.",
+   "question": "What is its density at $t = 2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2707,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "Density at t = 2",
+    "accept": "$2e^{-2} = 0.2707$.",
+    "wrong": [
+     {
+      "id": "prod",
+      "value": 0.0183,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "single",
+      "value": 0.1353,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2e^{-2} = 0.2707$.",
+    "generic": "Not quite right. Put $t = 2$ into $te^{-t}$.",
+    "byKey": {
+     "prod": "0.0183 is $e^{-2}\\cdot e^{-2}$, the product of the two single densities at 2. The convolution adds the factor $t$.",
+     "single": "0.1353 is $e^{-2}$, one exponential density. The sum has the extra factor $t = 2$."
+    }
+   },
+   "explain": {
+    "text": "$2 \\times e^{-2} = 2 \\times 0.1353 = 0.2707$."
+   }
+  }
+ ]
+}

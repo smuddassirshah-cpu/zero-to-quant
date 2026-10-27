@@ -1,0 +1,3560 @@
+{
+ "id": "l15-sampling-by-chain",
+ "course": "markov",
+ "title": "Markov chain Monte Carlo",
+ "minutes": 14,
+ "objectives": [
+  "Build a Metropolis chain whose long-run shares are a chosen target",
+  "Explain why detailed balance makes the unknown constant cancel",
+  "Sample a posterior in code and read an estimate from the visit shares"
+ ],
+ "skills": [
+  "mc-longrun",
+  "mc-chains"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "One step by hand",
+   "prose": "A strategy won 12 of 20 trades. With a flat prior on seven hit rates, the posterior is proportional to $w(p) = p^{12}(1-p)^8$. We cannot sum $w$ easily, but we can compute it. A chain at 0.60 proposes 0.65 or 0.55, each with chance $\\tfrac12$. It moves to a value with weight $w_{\\text{new}}$ with chance $\\min(1, w_{\\text{new}}/w_{\\text{old}})$, else it stays.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "p0",
+       "label": "0.40"
+      },
+      {
+       "id": "p1",
+       "label": "0.45"
+      },
+      {
+       "id": "p2",
+       "label": "0.50"
+      },
+      {
+       "id": "p3",
+       "label": "0.55"
+      },
+      {
+       "id": "p4",
+       "label": "0.60"
+      },
+      {
+       "id": "p5",
+       "label": "0.65"
+      },
+      {
+       "id": "p6",
+       "label": "0.70"
+      }
+     ],
+     "yLabel": "$w(p) \\times 10^6$",
+     "xLabel": "Hit rate $p$",
+     "showValues": true,
+     "decimals": 3,
+     "yMax": 1.6
+    },
+    "state": {
+     "values": {
+      "p0": 0.282,
+      "p1": 0.577,
+      "p2": 0.954,
+      "p3": 1.288,
+      "p4": 1.427,
+      "p5": 1.281,
+      "p6": 0.908
+     },
+     "highlight": [
+      "p4",
+      "p5"
+     ],
+     "caption": "The weight $w(p) = p^{12}(1-p)^8$ is known. Its total is not."
+    }
+   },
+   "question": "The chain proposes 0.65. What is the chance it moves?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.898,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "0.898 ± 0.002, which is w(0.65)/w(0.60)",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "inverse",
+      "value": 1.1138,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.449,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "bigger",
+      "value": 0.0,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the weight at 0.65 with the weight at 0.60."
+    },
+    {
+     "rung": "point",
+     "text": "The move goes to a smaller weight, so the chance is the ratio.",
+     "highlight": [
+      "p4",
+      "p5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$w(0.65)/w(0.60) = 1.281 / 1.427$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{1.281}{1.427} \\approx 0.898$: a move to a lower weight is accepted with the ratio.",
+    "generic": "Not quite right. The new weight is smaller than the old one, so use the ratio new over old.",
+    "byKey": {
+     "one": "You treated a move to a lower weight as certain. Only moves to a higher weight are certain.",
+     "inverse": "You divided old by new. That ratio exceeds 1, and the chance of a downhill move is new over old.",
+     "half": "You included the proposal chance $\\tfrac12$. That is the chance of proposing 0.65, which the question gives."
+    }
+   },
+   "explain": {
+    "text": "The weight falls from 1.427 to 1.281, so the chance of moving is $\\tfrac{1.281}{1.427} = 0.898$. A move uphill would be accepted with chance 1. We never needed the total of the weights.",
+    "canvas": {
+     "highlight": [
+      "p4",
+      "p5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A chain you can watch",
+   "prose": "A chain built by this rule is a **Metropolis chain**. Its path steps up and down the grid of hit rates, and sometimes stays flat for a step or more. Press New path a few times.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "markov",
+     "states": [
+      "0.40",
+      "0.45",
+      "0.50",
+      "0.55",
+      "0.60",
+      "0.65",
+      "0.70"
+     ],
+     "P": [
+      [
+       0.5,
+       0.5,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.244,
+       0.256,
+       0.5,
+       0.0,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.3027,
+       0.1973,
+       0.5,
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.3701,
+       0.1299,
+       0.5,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.4516,
+       0.0995,
+       0.4489,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.5,
+       0.1455,
+       0.3545
+      ],
+      [
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.0,
+       0.5,
+       0.5
+      ]
+     ],
+     "start": "0.40",
+     "steps": 80,
+     "paths": 1,
+     "xStep": 10,
+     "height": 260,
+     "sim": {
+      "seed": 11
+     }
+    },
+    "state": {
+     "caption": "One run of the chain, started at 0.40."
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New path"
+     }
+    ]
+   },
+   "question": "What does a flat stretch of the path mean?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Each flat step is a rejected proposal: the chain stays, and that step still counts",
+      "correct": true
+     },
+     {
+      "id": "skip",
+      "text": "The chain paused, and those steps are not part of the sample",
+      "why": "You treated a rejection as a missing step. The chain is at that value for that step, so it counts again."
+     },
+     {
+      "id": "done",
+      "text": "The chain has converged and has stopped moving",
+      "why": "A converged chain keeps moving. Flat steps are rejections, which are common near the peak."
+     },
+     {
+      "id": "bug",
+      "text": "A proposal fell off the grid, which is an error",
+      "why": "A proposal off the grid is just a rejection. The chain stays put and carries on."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch a flat stretch on a few paths. Does the chain stop for ever?"
+    },
+    {
+     "rung": "point",
+     "text": "At a flat step the chain proposed a move and did not take it.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A rejected proposal leaves the chain where it was. The step still happens, so the state is recorded again."
+    }
+   ],
+   "feedback": {
+    "correct": "A flat step is a rejection: the chain stays and the state counts again.",
+    "generic": "Not quite right. Recall what the chain does when it rejects a proposal."
+   },
+   "explain": {
+    "text": "On a flat step the chain proposed a move, drew a number above the acceptance chance and stayed. The state is recorded again, because the chain is still there. Counting these repeats is what makes the visit shares come out right."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Forgetting the start",
+   "prose": "The bars show where a chain started at 0.40 is after $k$ steps, against the posterior (dashed). Early on the chain is still near its start. Slide $k$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "p0",
+       "label": "0.40"
+      },
+      {
+       "id": "p1",
+       "label": "0.45"
+      },
+      {
+       "id": "p2",
+       "label": "0.50"
+      },
+      {
+       "id": "p3",
+       "label": "0.55"
+      },
+      {
+       "id": "p4",
+       "label": "0.60"
+      },
+      {
+       "id": "p5",
+       "label": "0.65"
+      },
+      {
+       "id": "p6",
+       "label": "0.70"
+      }
+     ],
+     "yLabel": "Chance at step $k$",
+     "xLabel": "Hit rate $p$",
+     "showValues": true,
+     "decimals": 3,
+     "yMax": 1,
+     "exact": [
+      {
+       "x": "0.40",
+       "y": 0.042
+      },
+      {
+       "x": "0.45",
+       "y": 0.086
+      },
+      {
+       "x": "0.50",
+       "y": 0.142
+      },
+      {
+       "x": "0.55",
+       "y": 0.1918
+      },
+      {
+       "x": "0.60",
+       "y": 0.2124
+      },
+      {
+       "x": "0.65",
+       "y": 0.1907
+      },
+      {
+       "x": "0.70",
+       "y": 0.1352
+      }
+     ],
+     "exactLabel": false,
+     "params": {
+      "P": [
+       [
+        0.5,
+        0.5,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ],
+       [
+        0.244,
+        0.256,
+        0.5,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ],
+       [
+        0.0,
+        0.3027,
+        0.1973,
+        0.5,
+        0.0,
+        0.0,
+        0.0
+       ],
+       [
+        0.0,
+        0.0,
+        0.3701,
+        0.1299,
+        0.5,
+        0.0,
+        0.0
+       ],
+       [
+        0.0,
+        0.0,
+        0.0,
+        0.4516,
+        0.0995,
+        0.4489,
+        0.0
+       ],
+       [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.1455,
+        0.3545
+       ],
+       [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.5
+       ]
+      ]
+     }
+    },
+    "state": {
+     "values": {
+      "p0": 1,
+      "p1": 0,
+      "p2": 0,
+      "p3": 0,
+      "p4": 0,
+      "p5": 0,
+      "p6": 0
+     },
+     "params": {
+      "k": 0
+     }
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "label": "Steps $k$",
+      "start": 0
+     }
+    ],
+    "derive": {
+     "let": {
+      "d": "vecmat([1, 0, 0, 0, 0, 0, 0], matpow(P, k))"
+     },
+     "values.p0": "round(d[0], 4)",
+     "values.p1": "round(d[1], 4)",
+     "values.p2": "round(d[2], 4)",
+     "values.p3": "round(d[3], 4)",
+     "values.p4": "round(d[4], 4)",
+     "values.p5": "round(d[5], 4)",
+     "values.p6": "round(d[6], 4)",
+     "caption": "After {{k}} steps from 0.40. Dashed: the posterior."
+    }
+   },
+   "question": "At what step does the chance of still being at 0.40 first fall below 0.06?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "18, give or take 1",
+    "wrong": [
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "fifty",
+      "value": 50,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the first bar as you slide $k$ upward."
+    },
+    {
+     "rung": "point",
+     "text": "At $k = 10$ the bar is 0.099, still more than twice the target 0.042.",
+     "highlight": [
+      "p0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The bar first reads below 0.06 near $k = 18$."
+    }
+   ],
+   "feedback": {
+    "correct": "After about 18 steps the start is forgotten.",
+    "generic": "Not quite right. Slide $k$ until the first bar is below 0.06.",
+    "byKey": {
+     "ten": "At $k = 10$ the bar still reads 0.099. Keep sliding.",
+     "fifty": "That is far beyond what is needed. The bar drops below 0.06 earlier.",
+     "five": "At $k = 5$ the bar reads 0.187. Keep sliding."
+    }
+   },
+   "explain": {
+    "text": "The chance at 0.40 falls from 1 to 0.099 by $k = 10$ and below 0.06 near $k = 18$. Samples from the first twenty or so steps over-represent the start, so they are discarded: the **burn-in**. After that the chain behaves as if it began at the posterior.",
+    "canvas": {
+     "params": {
+      "k": 18
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why it works",
+   "prose": "Why does the chain sample the posterior? We check detailed balance for the target $\\pi_i = w_i/Z$. A proposal off the grid is a rejection, which only changes $P_{ii}$. Take neighbours $i \\ne j$.",
+   "question": "Put the lines of the argument in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "$P_{ij} = \\tfrac12\\min\\left(1, \\tfrac{w_j}{w_i}\\right)$: propose $j$ with chance $\\tfrac12$, then accept"
+     },
+     {
+      "id": "o2",
+      "text": "$\\pi_iP_{ij} = \\tfrac{w_i}{Z}\\cdot\\tfrac12\\min\\left(1, \\tfrac{w_j}{w_i}\\right) = \\tfrac{1}{2Z}\\min(w_i, w_j)$: multiply $w_i$ into the minimum"
+     },
+     {
+      "id": "o3",
+      "text": "$\\pi_jP_{ji} = \\tfrac{w_j}{Z}\\cdot\\tfrac12\\min\\left(1, \\tfrac{w_i}{w_j}\\right) = \\tfrac{1}{2Z}\\min(w_j, w_i)$: the same steps with $i$ and $j$ swapped"
+     },
+     {
+      "id": "o4",
+      "text": "$\\min(w_i, w_j) = \\min(w_j, w_i)$, so $\\pi_iP_{ij} = \\pi_jP_{ji}$: detailed balance, and $Z$ is never used"
+     },
+     {
+      "id": "o5",
+      "text": "A balanced $\\pi$ that adds to 1 is stationary, by lesson 13, so the chain's long-run shares are the posterior"
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the chance of a move first, then the flow in each direction."
+    },
+    {
+     "rung": "point",
+     "text": "The flow $i \\to j$ and the flow $j \\to i$ are computed the same way."
+    },
+    {
+     "rung": "step",
+     "text": "Move chance, flow one way, flow the other way, compare, conclude."
+    }
+   ],
+   "feedback": {
+    "correct": "Detailed balance holds with the unknown constant $Z$ cancelled, so the chain is stationary at the posterior.",
+    "generic": "Not quite right. Write the chance of a move, then the two flows, then compare them.",
+    "byKey": {
+     "o2": "The flow needs the chance of a move first.",
+     "o3": "The reverse flow is built the same way as the first, so it follows the first.",
+     "o4": "Comparing the two flows needs both of them first.",
+     "o5": "The conclusion comes last."
+    }
+   },
+   "explain": {
+    "text": "Both flows equal $\\tfrac{1}{2Z}\\min(w_i, w_j)$, so they match. The constant $Z$ appears in both and cancels, which is why we only need $w$. By the shortcut of lesson 13 the posterior is stationary."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Always accepting",
+   "prose": "A colleague skips the acceptance test. The chain always moves to its proposal, and a proposal off the grid is refused. She expects the visits to follow the posterior, which peaks at 0.60.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "p0",
+       "label": "0.40"
+      },
+      {
+       "id": "p1",
+       "label": "0.45"
+      },
+      {
+       "id": "p2",
+       "label": "0.50"
+      },
+      {
+       "id": "p3",
+       "label": "0.55"
+      },
+      {
+       "id": "p4",
+       "label": "0.60"
+      },
+      {
+       "id": "p5",
+       "label": "0.65"
+      },
+      {
+       "id": "p6",
+       "label": "0.70"
+      }
+     ],
+     "yLabel": "Long-run share",
+     "showValues": true,
+     "decimals": 3,
+     "yMax": 0.3,
+     "exact": [
+      {
+       "x": "0.40",
+       "y": 0.042
+      },
+      {
+       "x": "0.45",
+       "y": 0.086
+      },
+      {
+       "x": "0.50",
+       "y": 0.142
+      },
+      {
+       "x": "0.55",
+       "y": 0.1918
+      },
+      {
+       "x": "0.60",
+       "y": 0.2124
+      },
+      {
+       "x": "0.65",
+       "y": 0.1907
+      },
+      {
+       "x": "0.70",
+       "y": 0.1352
+      }
+     ],
+     "exactLabel": "posterior"
+    },
+    "state": {
+     "values": {
+      "p0": 0,
+      "p1": 0,
+      "p2": 0,
+      "p3": 0,
+      "p4": 0,
+      "p5": 0,
+      "p6": 0
+     },
+     "caption": "Dashed: the posterior the chain was meant to sample."
+    }
+   },
+   "question": "What share of the long run does this chain spend at 0.60?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "$\\tfrac17 \\approx 0.143$, the same as every other value",
+      "correct": true
+     },
+     {
+      "id": "post",
+      "text": "$0.212$, the posterior",
+      "why": "You assumed the chain finds the target on its own. Without the test, up and down are equally likely, and nothing favours 0.60."
+     },
+     {
+      "id": "ends",
+      "text": "More than any other value, because the walls hold it back",
+      "why": "The walls hold the end values back, and for only half of their steps. They balance the flows exactly, so shares stay equal."
+     },
+     {
+      "id": "mid",
+      "text": "More than the ends, because middle values have two neighbours",
+      "why": "Every value proposes one neighbour on each side, so flows in and out match: $\\pi_i \\times \\tfrac12 = \\pi_j \\times \\tfrac12$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Without the test, how likely is a move up compared with a move down?"
+    },
+    {
+     "rung": "point",
+     "text": "Both have chance $\\tfrac12$, whatever the weights.",
+     "highlight": [
+      "p4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Equal flows both ways mean equal shares: balance gives $\\pi_i = \\pi_j$."
+    }
+   ],
+   "feedback": {
+    "correct": "Every value gets $\\tfrac17$: the chain samples the proposal's own stationary distribution, which is uniform.",
+    "generic": "Not quite right. Check detailed balance for a chain that always accepts.",
+    "byKey": {
+     "post": "You assumed the chain finds the target on its own. Without the test, nothing favours 0.60.",
+     "ends": "The walls hold the end values back, but only for half their steps. Shares stay equal.",
+     "mid": "Every value proposes one neighbour on each side, so flows in and out match."
+    }
+   },
+   "explain": {
+    "text": "With every proposal accepted, $P_{ij} = P_{ji} = \\tfrac12$ for neighbours, so balance forces $\\pi_i = \\pi_j$. The visits are uniform, each $\\tfrac17 \\approx 0.143$. The acceptance test is what tilts the chain towards the weights.",
+    "canvas": {
+     "values": {
+      "p0": 0.1429,
+      "p1": 0.1429,
+      "p2": 0.1429,
+      "p3": 0.1429,
+      "p4": 0.1429,
+      "p5": 0.1429,
+      "p6": 0.1429
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Dropping the rejected steps",
+   "prose": "Two values with weights 1 and 3. From L the proposal to H is always accepted. From H the proposal to L is accepted with chance $\\tfrac13$. Another colleague records only the steps where the chain moved, and drops the rejections.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "markov": true,
+     "height": 200,
+     "nodes": [
+      {
+       "id": "L",
+       "label": "$w = 1$",
+       "x": 0.2,
+       "y": 0.5
+      },
+      {
+       "id": "H",
+       "label": "$w = 3$",
+       "x": 0.8,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "L",
+       "to": "L",
+       "w": 0.5
+      },
+      {
+       "from": "L",
+       "to": "H",
+       "w": 0.5
+      },
+      {
+       "from": "H",
+       "to": "L",
+       "w": 0.1667
+      },
+      {
+       "from": "H",
+       "to": "H",
+       "w": 0.8333
+      }
+     ]
+    },
+    "state": {
+     "distribution": {
+      "L": 0.25,
+      "H": 0.75
+     },
+     "caption": "The chain does sample $(\\tfrac14, \\tfrac34)$."
+    }
+   },
+   "question": "In her record, what share of entries is the heavy value H?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "0.5",
+    "wrong": [
+     {
+      "id": "target",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "third",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "If every recorded step is a move, which value follows an L?"
+    },
+    {
+     "rung": "point",
+     "text": "After a move from L the chain is at H, and after a move from H it is at L.",
+     "highlight": [
+      "L",
+      "H"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The record reads L, H, L, H, and so on."
+    }
+   ],
+   "feedback": {
+    "correct": "Her record alternates L, H, L, H, so each makes half of it.",
+    "generic": "Not quite right. List a few moves in a row and count each value.",
+    "byKey": {
+     "target": "You assumed the target survives the dropping. The extra time spent at H comes from the rejected steps she threw away.",
+     "quarter": "That is L's share of the true target. Her record alternates, so it is neither.",
+     "third": "You used the acceptance chance back from H. Her record alternates strictly."
+    }
+   },
+   "explain": {
+    "text": "With only moves kept, the chain must switch value every entry, so the record is L, H, L, H. The share of H is $\\tfrac12$, not $\\tfrac34$. The heavy value earns its extra share through repeated, rejected steps, so they must be kept."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Why averaging works",
+   "prose": "For independent draws with mean $\\mu$, the **strong law** says the running average converges to $\\mu$ with probability 1. That is stronger than the weak law. The **ergodic theorem** says the same of an irreducible chain: $\\tfrac1n\\sum f(X_t)$ tends to $\\sum_i \\pi_i f(i)$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "iid",
+       "label": "Independent draws",
+       "values": [
+        0.5,
+        0.55,
+        0.5333,
+        0.5625,
+        0.57,
+        0.5667,
+        0.5714,
+        0.575,
+        0.5611,
+        0.565,
+        0.5682,
+        0.5708,
+        0.5808,
+        0.5857,
+        0.5833,
+        0.5781,
+        0.5735,
+        0.5778,
+        0.5816,
+        0.5825,
+        0.581,
+        0.5818,
+        0.5783,
+        0.5792,
+        0.576,
+        0.5769,
+        0.5778,
+        0.5786,
+        0.5759,
+        0.5717,
+        0.571,
+        0.5734,
+        0.5742,
+        0.5765,
+        0.5757,
+        0.575,
+        0.5784,
+        0.5763,
+        0.5744,
+        0.575,
+        0.5756,
+        0.575,
+        0.5756,
+        0.575,
+        0.5756,
+        0.5783,
+        0.5798,
+        0.5802,
+        0.5806,
+        0.583,
+        0.5824,
+        0.5827,
+        0.5849,
+        0.5861,
+        0.5855,
+        0.5866,
+        0.5868,
+        0.5888,
+        0.589,
+        0.5892,
+        0.591,
+        0.5911,
+        0.5905,
+        0.5922,
+        0.5938,
+        0.5924,
+        0.5903,
+        0.5912,
+        0.5928,
+        0.5921,
+        0.5908,
+        0.5917,
+        0.5932,
+        0.5919,
+        0.5913,
+        0.5914,
+        0.5903,
+        0.5897,
+        0.5886,
+        0.5888,
+        0.5877,
+        0.586,
+        0.5855,
+        0.5845,
+        0.5829,
+        0.582,
+        0.5816,
+        0.5813,
+        0.582,
+        0.5817,
+        0.5808,
+        0.5799,
+        0.5796,
+        0.5803,
+        0.5795,
+        0.5797,
+        0.5804,
+        0.5811,
+        0.5813,
+        0.582,
+        0.5822,
+        0.5814,
+        0.5801,
+        0.5793,
+        0.58,
+        0.5797,
+        0.5804,
+        0.5815,
+        0.5826,
+        0.5827,
+        0.5811,
+        0.5808,
+        0.5801,
+        0.5803,
+        0.5809,
+        0.5819,
+        0.5825,
+        0.5835,
+        0.5836,
+        0.5838,
+        0.5843,
+        0.584,
+        0.5846,
+        0.5851,
+        0.586,
+        0.5849,
+        0.5843,
+        0.5852,
+        0.5845,
+        0.5842,
+        0.5844,
+        0.5845,
+        0.5853,
+        0.5862,
+        0.5859,
+        0.5853,
+        0.5861,
+        0.5859,
+        0.5853,
+        0.5846,
+        0.5833,
+        0.5835,
+        0.5832,
+        0.5833,
+        0.5841,
+        0.5842,
+        0.585,
+        0.5841,
+        0.5846,
+        0.585,
+        0.5858,
+        0.5845,
+        0.5846,
+        0.5847,
+        0.5848,
+        0.5849,
+        0.5847,
+        0.5854,
+        0.5862,
+        0.5866,
+        0.5873,
+        0.5873,
+        0.5865,
+        0.5869,
+        0.5861,
+        0.5864,
+        0.5865,
+        0.586,
+        0.5855,
+        0.5847,
+        0.5842,
+        0.5849,
+        0.5844,
+        0.5851,
+        0.5846,
+        0.5844,
+        0.5845,
+        0.5843,
+        0.5849,
+        0.5844,
+        0.5845,
+        0.5841,
+        0.5833,
+        0.5837,
+        0.5835,
+        0.5836,
+        0.584,
+        0.5832,
+        0.5825,
+        0.5829,
+        0.5835,
+        0.5826,
+        0.5824,
+        0.583,
+        0.5833,
+        0.5839,
+        0.584,
+        0.5846,
+        0.5839,
+        0.584,
+        0.5843,
+        0.5842,
+        0.584,
+        0.5838,
+        0.5837,
+        0.584,
+        0.5845,
+        0.5841,
+        0.584,
+        0.5843,
+        0.5846,
+        0.5849,
+        0.5852,
+        0.5857,
+        0.586,
+        0.5861,
+        0.5859,
+        0.5853,
+        0.5856,
+        0.5859,
+        0.5864,
+        0.586,
+        0.5863,
+        0.5868,
+        0.5864,
+        0.5856,
+        0.5852,
+        0.5849,
+        0.5852,
+        0.5854,
+        0.5857,
+        0.586,
+        0.5865,
+        0.587,
+        0.5868,
+        0.5873,
+        0.5876,
+        0.5872,
+        0.5872,
+        0.5869,
+        0.5867,
+        0.587,
+        0.5862,
+        0.5863,
+        0.5861,
+        0.586,
+        0.5854,
+        0.5855,
+        0.5853,
+        0.5848,
+        0.5847,
+        0.5849,
+        0.5844,
+        0.5846,
+        0.5841,
+        0.5842,
+        0.584,
+        0.5843,
+        0.5847,
+        0.585,
+        0.5849,
+        0.5847,
+        0.585,
+        0.585,
+        0.5851,
+        0.5853,
+        0.585,
+        0.5849,
+        0.5853,
+        0.5852,
+        0.5854,
+        0.5851,
+        0.5844,
+        0.5845,
+        0.5844,
+        0.5844,
+        0.5847,
+        0.584,
+        0.5841,
+        0.5839,
+        0.5843,
+        0.5846,
+        0.585,
+        0.5852,
+        0.5851,
+        0.5851,
+        0.5852,
+        0.5851,
+        0.5849,
+        0.585,
+        0.5854,
+        0.5851,
+        0.585,
+        0.5847,
+        0.5846,
+        0.5845,
+        0.584,
+        0.5841,
+        0.5839,
+        0.5842,
+        0.5839,
+        0.5841,
+        0.5845,
+        0.5842,
+        0.5841,
+        0.5845,
+        0.5844,
+        0.5843,
+        0.584,
+        0.5842,
+        0.5841,
+        0.5845,
+        0.5845,
+        0.5842,
+        0.5846,
+        0.585,
+        0.5852,
+        0.5852,
+        0.5854,
+        0.5858,
+        0.5855,
+        0.5852,
+        0.5854,
+        0.5853,
+        0.5857,
+        0.5859,
+        0.5859,
+        0.5857,
+        0.5857,
+        0.5858,
+        0.5858,
+        0.586,
+        0.586,
+        0.5864,
+        0.5864,
+        0.5862,
+        0.5864,
+        0.5861,
+        0.5864,
+        0.5868,
+        0.5865,
+        0.5863,
+        0.5864,
+        0.5863,
+        0.5862,
+        0.5864,
+        0.5863,
+        0.5861,
+        0.5861,
+        0.5864,
+        0.5868,
+        0.5864,
+        0.5865,
+        0.5864,
+        0.5868,
+        0.5867,
+        0.5863,
+        0.5862,
+        0.5862,
+        0.586,
+        0.5861,
+        0.586,
+        0.5862,
+        0.586,
+        0.586,
+        0.5861,
+        0.5858,
+        0.5857,
+        0.5859,
+        0.5858,
+        0.5857,
+        0.5858,
+        0.5859,
+        0.5861,
+        0.5861,
+        0.5863,
+        0.5866,
+        0.5869,
+        0.5872,
+        0.5874,
+        0.5875,
+        0.5874,
+        0.5871,
+        0.5874,
+        0.5873,
+        0.5872,
+        0.5872,
+        0.5874,
+        0.5875,
+        0.5872,
+        0.5873,
+        0.5876,
+        0.5879,
+        0.5882,
+        0.5882,
+        0.5885,
+        0.5885,
+        0.5887,
+        0.589,
+        0.5889,
+        0.5885,
+        0.5887,
+        0.589,
+        0.5892,
+        0.5893,
+        0.5892,
+        0.5888,
+        0.589,
+        0.5889,
+        0.5885,
+        0.5882,
+        0.5885,
+        0.5884,
+        0.5885,
+        0.5882,
+        0.5882,
+        0.5884,
+        0.5885,
+        0.5883,
+        0.5883,
+        0.5885,
+        0.5887,
+        0.5884,
+        0.5884,
+        0.5887,
+        0.5887,
+        0.5889,
+        0.5888,
+        0.5888,
+        0.5884,
+        0.5885,
+        0.5885,
+        0.5883,
+        0.5886,
+        0.5884,
+        0.588,
+        0.5881,
+        0.5878,
+        0.5878,
+        0.5876,
+        0.5872,
+        0.5873,
+        0.5874,
+        0.5874,
+        0.5875,
+        0.5877,
+        0.5875,
+        0.5874,
+        0.5874,
+        0.5877,
+        0.5877,
+        0.5877,
+        0.5879,
+        0.588,
+        0.5878,
+        0.5876,
+        0.5872,
+        0.5874,
+        0.5873,
+        0.5873,
+        0.5873,
+        0.5873,
+        0.5876,
+        0.5876,
+        0.5874,
+        0.5873,
+        0.5872,
+        0.5871,
+        0.5872,
+        0.5872,
+        0.5873,
+        0.5874,
+        0.5876,
+        0.5874,
+        0.5876,
+        0.5876,
+        0.5872,
+        0.5874,
+        0.5874,
+        0.5874,
+        0.5872,
+        0.5871,
+        0.5869,
+        0.5871,
+        0.5867,
+        0.5864,
+        0.5866,
+        0.5866,
+        0.5865,
+        0.5867,
+        0.5869,
+        0.5868,
+        0.5869,
+        0.5871,
+        0.5874,
+        0.5873,
+        0.5874,
+        0.5872,
+        0.5872,
+        0.5874,
+        0.5875,
+        0.5875,
+        0.5875,
+        0.5874,
+        0.5875,
+        0.5875,
+        0.5875,
+        0.5874,
+        0.5876,
+        0.5877,
+        0.5876,
+        0.5875,
+        0.5877,
+        0.5878,
+        0.5879,
+        0.5879,
+        0.5877,
+        0.5877,
+        0.5879,
+        0.5878,
+        0.5877,
+        0.5876,
+        0.5877,
+        0.5875,
+        0.5876,
+        0.5874,
+        0.5875,
+        0.5875,
+        0.5873,
+        0.5872,
+        0.587,
+        0.5868,
+        0.5871,
+        0.587,
+        0.5867,
+        0.5868,
+        0.587,
+        0.5869,
+        0.5867,
+        0.5868,
+        0.5867,
+        0.5866,
+        0.5866,
+        0.5869,
+        0.5868,
+        0.5867,
+        0.5868,
+        0.5869,
+        0.5871,
+        0.587,
+        0.587,
+        0.587,
+        0.5871,
+        0.5871,
+        0.5869,
+        0.5867,
+        0.5866,
+        0.5868,
+        0.5869,
+        0.5869,
+        0.5868,
+        0.5869,
+        0.5869,
+        0.5868,
+        0.5867,
+        0.5867,
+        0.5868,
+        0.5868,
+        0.587,
+        0.5869,
+        0.587,
+        0.5872,
+        0.5873,
+        0.5874,
+        0.5875,
+        0.5873,
+        0.5873,
+        0.5873,
+        0.5872,
+        0.5871,
+        0.5872,
+        0.5874,
+        0.5875,
+        0.5874,
+        0.5876,
+        0.5877,
+        0.5877,
+        0.5878,
+        0.5879,
+        0.5876,
+        0.5876,
+        0.5877,
+        0.5876,
+        0.5877,
+        0.5878,
+        0.5876,
+        0.5875,
+        0.5872,
+        0.5871,
+        0.5869,
+        0.5866,
+        0.5865,
+        0.5867,
+        0.5865,
+        0.5867,
+        0.5866,
+        0.5867,
+        0.5866,
+        0.5868,
+        0.5868,
+        0.5869,
+        0.5868,
+        0.5868,
+        0.587,
+        0.5867,
+        0.5865,
+        0.5864,
+        0.5864,
+        0.5865,
+        0.5864,
+        0.5864,
+        0.5865,
+        0.5862,
+        0.5863,
+        0.5862,
+        0.5859,
+        0.5859,
+        0.5858,
+        0.5858,
+        0.5858,
+        0.5855,
+        0.5855,
+        0.5854,
+        0.5856,
+        0.5856,
+        0.5855,
+        0.5855,
+        0.5854,
+        0.5852,
+        0.5853,
+        0.5853,
+        0.5854,
+        0.5855,
+        0.5856,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5858,
+        0.5859,
+        0.586,
+        0.586,
+        0.586,
+        0.5859,
+        0.5858,
+        0.5856,
+        0.5856,
+        0.5857,
+        0.5855,
+        0.5855,
+        0.5856,
+        0.5855,
+        0.5855,
+        0.5856,
+        0.5856,
+        0.5855,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5855,
+        0.5853,
+        0.5853,
+        0.5852,
+        0.5853,
+        0.5854,
+        0.5852,
+        0.5851,
+        0.5851,
+        0.5851,
+        0.5851,
+        0.5852,
+        0.5849,
+        0.5849,
+        0.585,
+        0.5849,
+        0.5846,
+        0.5846,
+        0.5845,
+        0.5843,
+        0.5844,
+        0.5845,
+        0.5845,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5848,
+        0.585,
+        0.5851,
+        0.5853,
+        0.5854,
+        0.5855,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5858,
+        0.5859,
+        0.5857,
+        0.5857,
+        0.5856,
+        0.5854,
+        0.5854,
+        0.5853,
+        0.5851,
+        0.5851,
+        0.5851,
+        0.5851,
+        0.5849,
+        0.5848,
+        0.5848,
+        0.5846,
+        0.5844,
+        0.5844,
+        0.5845,
+        0.5846,
+        0.5848,
+        0.5849,
+        0.5847,
+        0.5848,
+        0.5848,
+        0.585,
+        0.5848,
+        0.5847,
+        0.5845,
+        0.5845,
+        0.5844,
+        0.5844,
+        0.5845,
+        0.5846,
+        0.5848,
+        0.5846,
+        0.5845,
+        0.5845,
+        0.5845,
+        0.5846,
+        0.5847,
+        0.5845,
+        0.5846,
+        0.5844,
+        0.5845,
+        0.5846,
+        0.5845,
+        0.5845,
+        0.5843,
+        0.5844,
+        0.5844,
+        0.5843,
+        0.5843,
+        0.5842,
+        0.5843,
+        0.5845,
+        0.5845,
+        0.5845,
+        0.5845,
+        0.5846,
+        0.5844,
+        0.5843,
+        0.5844,
+        0.5843,
+        0.5844,
+        0.5842,
+        0.5841,
+        0.5843,
+        0.5844,
+        0.5844,
+        0.5845,
+        0.5844,
+        0.5844,
+        0.5846,
+        0.5846,
+        0.5843,
+        0.5843,
+        0.5845,
+        0.5843,
+        0.5843,
+        0.5844,
+        0.5844,
+        0.5845,
+        0.5845,
+        0.5845,
+        0.5845,
+        0.5845,
+        0.5846,
+        0.5846,
+        0.5846,
+        0.5845,
+        0.5846,
+        0.5845,
+        0.5845,
+        0.5844,
+        0.5842,
+        0.5843,
+        0.5841,
+        0.5841,
+        0.5841,
+        0.5842,
+        0.5843,
+        0.5844,
+        0.5842,
+        0.5843,
+        0.5843,
+        0.5844,
+        0.5846,
+        0.5844,
+        0.5842,
+        0.5844,
+        0.5845,
+        0.5844,
+        0.5844,
+        0.5845,
+        0.5845,
+        0.5843,
+        0.5842,
+        0.5843,
+        0.5842,
+        0.5841,
+        0.5842,
+        0.5841,
+        0.5841,
+        0.584,
+        0.5839,
+        0.584,
+        0.584,
+        0.584,
+        0.5839,
+        0.584,
+        0.5841,
+        0.5838,
+        0.5838,
+        0.5839,
+        0.584,
+        0.584,
+        0.584,
+        0.5839,
+        0.5839,
+        0.5837,
+        0.5836,
+        0.5837,
+        0.5837,
+        0.5839,
+        0.584,
+        0.584,
+        0.5839,
+        0.584,
+        0.584,
+        0.5838,
+        0.5838,
+        0.584,
+        0.5841,
+        0.5841,
+        0.5842,
+        0.5841,
+        0.584,
+        0.5841,
+        0.5842,
+        0.5841,
+        0.5841,
+        0.5842,
+        0.5843,
+        0.5841,
+        0.5841,
+        0.5841,
+        0.5842,
+        0.5843,
+        0.5842,
+        0.5841,
+        0.5841,
+        0.5842,
+        0.5842,
+        0.5842,
+        0.5842,
+        0.5841,
+        0.5842,
+        0.5842,
+        0.5842,
+        0.5843,
+        0.5843,
+        0.5841,
+        0.5841,
+        0.5839,
+        0.5838,
+        0.584,
+        0.584,
+        0.5842,
+        0.5841,
+        0.5842,
+        0.5842,
+        0.5842,
+        0.5843,
+        0.5841,
+        0.5842,
+        0.5844,
+        0.5843,
+        0.5841,
+        0.5843,
+        0.5843,
+        0.5844,
+        0.5844,
+        0.5843,
+        0.5842,
+        0.5842,
+        0.5842,
+        0.5843,
+        0.5844,
+        0.5844,
+        0.5846,
+        0.5846,
+        0.5846,
+        0.5846,
+        0.5846,
+        0.5844,
+        0.5843,
+        0.5842,
+        0.584,
+        0.5841,
+        0.5841,
+        0.584,
+        0.5839,
+        0.584,
+        0.5839,
+        0.584,
+        0.584,
+        0.5839,
+        0.584,
+        0.5841,
+        0.5841,
+        0.5842,
+        0.5842,
+        0.584,
+        0.5839,
+        0.5839,
+        0.5839,
+        0.5839,
+        0.584,
+        0.5838,
+        0.5837,
+        0.5836,
+        0.5836,
+        0.5837,
+        0.5836,
+        0.5834,
+        0.5834,
+        0.5833,
+        0.5832,
+        0.5832,
+        0.5833,
+        0.5834,
+        0.5834,
+        0.5834,
+        0.5834,
+        0.5834,
+        0.5832,
+        0.5833,
+        0.5834,
+        0.5834,
+        0.5834,
+        0.5832,
+        0.5833,
+        0.5834,
+        0.5836,
+        0.5834,
+        0.5835,
+        0.5834,
+        0.5835,
+        0.5836,
+        0.5835,
+        0.5835,
+        0.5836,
+        0.5837,
+        0.5837,
+        0.5837,
+        0.5838,
+        0.5838,
+        0.5838,
+        0.5839,
+        0.5839,
+        0.584,
+        0.584,
+        0.584,
+        0.5839,
+        0.5839,
+        0.5839,
+        0.5837,
+        0.5839,
+        0.5838,
+        0.5838,
+        0.5839,
+        0.5838,
+        0.5836,
+        0.5838
+       ]
+      },
+      {
+       "id": "chain",
+       "label": "Metropolis chain",
+       "values": [
+        0.4,
+        0.4,
+        0.4167,
+        0.425,
+        0.42,
+        0.4167,
+        0.4143,
+        0.4125,
+        0.4167,
+        0.425,
+        0.4318,
+        0.4333,
+        0.4385,
+        0.4464,
+        0.4567,
+        0.4625,
+        0.4647,
+        0.4694,
+        0.4763,
+        0.48,
+        0.4857,
+        0.4886,
+        0.4913,
+        0.4917,
+        0.492,
+        0.4942,
+        0.4944,
+        0.4929,
+        0.4914,
+        0.4883,
+        0.4855,
+        0.4828,
+        0.4818,
+        0.4809,
+        0.4814,
+        0.4833,
+        0.4865,
+        0.4895,
+        0.4923,
+        0.4938,
+        0.4939,
+        0.4929,
+        0.493,
+        0.4932,
+        0.4944,
+        0.4957,
+        0.4979,
+        0.501,
+        0.5051,
+        0.508,
+        0.5098,
+        0.5125,
+        0.5142,
+        0.5148,
+        0.5164,
+        0.517,
+        0.5167,
+        0.5155,
+        0.5153,
+        0.5158,
+        0.5156,
+        0.5161,
+        0.5175,
+        0.5195,
+        0.5208,
+        0.5227,
+        0.5246,
+        0.5257,
+        0.5261,
+        0.5257,
+        0.5261,
+        0.5271,
+        0.5288,
+        0.5311,
+        0.5333,
+        0.5349,
+        0.5357,
+        0.5359,
+        0.5367,
+        0.5381,
+        0.5401,
+        0.5421,
+        0.5434,
+        0.544,
+        0.5441,
+        0.5448,
+        0.5448,
+        0.5443,
+        0.5444,
+        0.5439,
+        0.544,
+        0.5446,
+        0.5457,
+        0.5473,
+        0.5489,
+        0.55,
+        0.5515,
+        0.5531,
+        0.554,
+        0.5545,
+        0.5545,
+        0.5549,
+        0.5549,
+        0.5553,
+        0.5562,
+        0.5566,
+        0.557,
+        0.5579,
+        0.5583,
+        0.5591,
+        0.5595,
+        0.5603,
+        0.5615,
+        0.5623,
+        0.5635,
+        0.5642,
+        0.5645,
+        0.5644,
+        0.5647,
+        0.5654,
+        0.5665,
+        0.5672,
+        0.5675,
+        0.5681,
+        0.5684,
+        0.569,
+        0.5697,
+        0.5707,
+        0.5717,
+        0.5723,
+        0.5725,
+        0.5731,
+        0.5741,
+        0.575,
+        0.5756,
+        0.5757,
+        0.5763,
+        0.5764,
+        0.577,
+        0.5775,
+        0.5777,
+        0.5782,
+        0.579,
+        0.5795,
+        0.5797,
+        0.5798,
+        0.5796,
+        0.5791,
+        0.5789,
+        0.579,
+        0.5791,
+        0.5789,
+        0.5791,
+        0.5795,
+        0.5797,
+        0.5795,
+        0.5796,
+        0.5794,
+        0.5796,
+        0.58,
+        0.5801,
+        0.5799,
+        0.5794,
+        0.579,
+        0.5782,
+        0.5777,
+        0.5772,
+        0.5765,
+        0.5757,
+        0.575,
+        0.574,
+        0.573,
+        0.572,
+        0.5713,
+        0.5703,
+        0.5693,
+        0.5686,
+        0.5683,
+        0.5676,
+        0.5672,
+        0.5671,
+        0.5673,
+        0.5672,
+        0.5674,
+        0.5678,
+        0.568,
+        0.5684,
+        0.5689,
+        0.569,
+        0.5689,
+        0.5686,
+        0.5685,
+        0.5687,
+        0.5691,
+        0.5692,
+        0.5691,
+        0.5693,
+        0.5697,
+        0.5704,
+        0.5708,
+        0.5709,
+        0.5708,
+        0.5704,
+        0.5699,
+        0.569,
+        0.5682,
+        0.5674,
+        0.5666,
+        0.5658,
+        0.5652,
+        0.5649,
+        0.5649,
+        0.565,
+        0.5654,
+        0.566,
+        0.5667,
+        0.5673,
+        0.5679,
+        0.5685,
+        0.5689,
+        0.5695,
+        0.5698,
+        0.5704,
+        0.571,
+        0.5713,
+        0.5717,
+        0.572,
+        0.5721,
+        0.5721,
+        0.572,
+        0.5716,
+        0.5713,
+        0.571,
+        0.5707,
+        0.5702,
+        0.5697,
+        0.5694,
+        0.5693,
+        0.5695,
+        0.5694,
+        0.5691,
+        0.569,
+        0.5691,
+        0.5691,
+        0.5692,
+        0.5695,
+        0.57,
+        0.5704,
+        0.5707,
+        0.5712,
+        0.5717,
+        0.5722,
+        0.5727,
+        0.5732,
+        0.5737,
+        0.5742,
+        0.5747,
+        0.575,
+        0.5753,
+        0.5758,
+        0.5761,
+        0.5761,
+        0.576,
+        0.5761,
+        0.576,
+        0.5758,
+        0.5757,
+        0.5757,
+        0.5757,
+        0.5756,
+        0.5755,
+        0.5756,
+        0.5755,
+        0.5755,
+        0.5756,
+        0.5757,
+        0.576,
+        0.5761,
+        0.5763,
+        0.5768,
+        0.577,
+        0.5771,
+        0.5772,
+        0.5775,
+        0.5775,
+        0.5774,
+        0.5775,
+        0.5774,
+        0.5773,
+        0.5774,
+        0.5777,
+        0.5781,
+        0.5785,
+        0.5789,
+        0.5793,
+        0.5796,
+        0.5796,
+        0.5797,
+        0.5799,
+        0.58,
+        0.5802,
+        0.5806,
+        0.581,
+        0.5814,
+        0.5816,
+        0.5817,
+        0.5819,
+        0.582,
+        0.5819,
+        0.5816,
+        0.5812,
+        0.5809,
+        0.5807,
+        0.5804,
+        0.5803,
+        0.5802,
+        0.58,
+        0.5799,
+        0.5799,
+        0.5798,
+        0.5798,
+        0.5795,
+        0.5794,
+        0.5792,
+        0.5791,
+        0.5788,
+        0.5787,
+        0.5788,
+        0.579,
+        0.5792,
+        0.5796,
+        0.5798,
+        0.5799,
+        0.5801,
+        0.5801,
+        0.5804,
+        0.5807,
+        0.5811,
+        0.5814,
+        0.5818,
+        0.5821,
+        0.5825,
+        0.5827,
+        0.583,
+        0.5832,
+        0.5832,
+        0.5831,
+        0.5832,
+        0.5831,
+        0.5831,
+        0.5833,
+        0.5837,
+        0.5839,
+        0.5842,
+        0.5844,
+        0.5844,
+        0.5846,
+        0.5849,
+        0.5851,
+        0.5851,
+        0.5852,
+        0.5854,
+        0.5854,
+        0.5856,
+        0.5856,
+        0.5855,
+        0.5856,
+        0.5857,
+        0.586,
+        0.5864,
+        0.5867,
+        0.5868,
+        0.5871,
+        0.5874,
+        0.5877,
+        0.5879,
+        0.5881,
+        0.5881,
+        0.588,
+        0.5878,
+        0.5874,
+        0.587,
+        0.5867,
+        0.5865,
+        0.5864,
+        0.5864,
+        0.5863,
+        0.5862,
+        0.5862,
+        0.5864,
+        0.5867,
+        0.587,
+        0.5872,
+        0.5872,
+        0.5872,
+        0.5871,
+        0.5869,
+        0.5867,
+        0.5865,
+        0.5862,
+        0.5862,
+        0.5859,
+        0.5857,
+        0.5855,
+        0.5854,
+        0.5852,
+        0.5851,
+        0.5852,
+        0.5852,
+        0.5851,
+        0.5852,
+        0.5853,
+        0.5854,
+        0.5854,
+        0.5855,
+        0.5858,
+        0.5861,
+        0.5864,
+        0.5866,
+        0.5868,
+        0.5868,
+        0.5867,
+        0.5868,
+        0.5869,
+        0.5872,
+        0.5873,
+        0.5874,
+        0.5874,
+        0.5873,
+        0.5873,
+        0.5875,
+        0.5877,
+        0.5879,
+        0.5879,
+        0.588,
+        0.5883,
+        0.5886,
+        0.5887,
+        0.5887,
+        0.5889,
+        0.5889,
+        0.5888,
+        0.5886,
+        0.5883,
+        0.5879,
+        0.5874,
+        0.587,
+        0.5866,
+        0.5863,
+        0.5859,
+        0.5855,
+        0.5851,
+        0.5847,
+        0.5843,
+        0.5838,
+        0.5836,
+        0.5832,
+        0.5828,
+        0.5824,
+        0.5821,
+        0.5818,
+        0.5816,
+        0.5815,
+        0.5814,
+        0.5813,
+        0.5812,
+        0.5813,
+        0.5812,
+        0.5811,
+        0.581,
+        0.5807,
+        0.5805,
+        0.5804,
+        0.5805,
+        0.5804,
+        0.5803,
+        0.5802,
+        0.5802,
+        0.5804,
+        0.5806,
+        0.5809,
+        0.581,
+        0.5813,
+        0.5814,
+        0.5814,
+        0.5814,
+        0.5812,
+        0.5811,
+        0.581,
+        0.5809,
+        0.5808,
+        0.5807,
+        0.5805,
+        0.5805,
+        0.5803,
+        0.58,
+        0.5798,
+        0.5794,
+        0.5792,
+        0.579,
+        0.5789,
+        0.5789,
+        0.5788,
+        0.5789,
+        0.5788,
+        0.5789,
+        0.579,
+        0.5791,
+        0.5793,
+        0.5795,
+        0.5797,
+        0.58,
+        0.5801,
+        0.5802,
+        0.5802,
+        0.5803,
+        0.5806,
+        0.5807,
+        0.5807,
+        0.5809,
+        0.5811,
+        0.5813,
+        0.5815,
+        0.5817,
+        0.5819,
+        0.582,
+        0.5823,
+        0.5824,
+        0.5824,
+        0.5825,
+        0.5826,
+        0.5827,
+        0.5827,
+        0.5828,
+        0.5827,
+        0.5826,
+        0.5825,
+        0.5825,
+        0.5825,
+        0.5824,
+        0.5824,
+        0.5824,
+        0.5824,
+        0.5825,
+        0.5826,
+        0.5825,
+        0.5825,
+        0.5827,
+        0.5827,
+        0.5826,
+        0.5825,
+        0.5822,
+        0.5821,
+        0.582,
+        0.5821,
+        0.582,
+        0.5819,
+        0.5818,
+        0.5817,
+        0.5816,
+        0.5816,
+        0.5816,
+        0.5816,
+        0.5816,
+        0.5814,
+        0.5814,
+        0.5812,
+        0.581,
+        0.5807,
+        0.5804,
+        0.5803,
+        0.5802,
+        0.5802,
+        0.5802,
+        0.5803,
+        0.5805,
+        0.5805,
+        0.5806,
+        0.5808,
+        0.581,
+        0.5812,
+        0.5814,
+        0.5816,
+        0.5818,
+        0.5819,
+        0.5821,
+        0.5823,
+        0.5825,
+        0.5827,
+        0.5829,
+        0.583,
+        0.5832,
+        0.5834,
+        0.5835,
+        0.5835,
+        0.5835,
+        0.5833,
+        0.5831,
+        0.583,
+        0.5828,
+        0.5828,
+        0.5826,
+        0.5826,
+        0.5826,
+        0.5826,
+        0.5824,
+        0.5823,
+        0.5822,
+        0.5821,
+        0.582,
+        0.5818,
+        0.5816,
+        0.5813,
+        0.581,
+        0.5807,
+        0.5804,
+        0.5802,
+        0.58,
+        0.5798,
+        0.5796,
+        0.5793,
+        0.5791,
+        0.579,
+        0.5789,
+        0.579,
+        0.5791,
+        0.5792,
+        0.5792,
+        0.5793,
+        0.5794,
+        0.5796,
+        0.5797,
+        0.5799,
+        0.5801,
+        0.5803,
+        0.5804,
+        0.5805,
+        0.5804,
+        0.5803,
+        0.5802,
+        0.58,
+        0.5798,
+        0.5797,
+        0.5797,
+        0.5795,
+        0.5793,
+        0.5792,
+        0.5791,
+        0.579,
+        0.5789,
+        0.579,
+        0.579,
+        0.5789,
+        0.5788,
+        0.5786,
+        0.5785,
+        0.5784,
+        0.5782,
+        0.5781,
+        0.578,
+        0.5779,
+        0.5779,
+        0.5779,
+        0.5779,
+        0.5779,
+        0.5779,
+        0.5779,
+        0.578,
+        0.5782,
+        0.5784,
+        0.5785,
+        0.5787,
+        0.5788,
+        0.5789,
+        0.5789,
+        0.5788,
+        0.5789,
+        0.579,
+        0.579,
+        0.579,
+        0.5789,
+        0.5787,
+        0.5785,
+        0.5784,
+        0.5783,
+        0.5782,
+        0.5782,
+        0.5782,
+        0.5783,
+        0.5785,
+        0.5787,
+        0.5788,
+        0.5789,
+        0.579,
+        0.5792,
+        0.5793,
+        0.5793,
+        0.5793,
+        0.5793,
+        0.5793,
+        0.5792,
+        0.5792,
+        0.5792,
+        0.5792,
+        0.5792,
+        0.5792,
+        0.5792,
+        0.5792,
+        0.5792,
+        0.5793,
+        0.5795,
+        0.5796,
+        0.5797,
+        0.5799,
+        0.58,
+        0.58,
+        0.5801,
+        0.5802,
+        0.5801,
+        0.5801,
+        0.5802,
+        0.5803,
+        0.5804,
+        0.5804,
+        0.5803,
+        0.5802,
+        0.5802,
+        0.5802,
+        0.5803,
+        0.5803,
+        0.5803,
+        0.5802,
+        0.5801,
+        0.58,
+        0.5799,
+        0.5799,
+        0.5799,
+        0.5798,
+        0.5798,
+        0.5798,
+        0.5798,
+        0.5798,
+        0.5799,
+        0.5799,
+        0.58,
+        0.5802,
+        0.5803,
+        0.5803,
+        0.5805,
+        0.5807,
+        0.5808,
+        0.581,
+        0.5811,
+        0.5812,
+        0.5814,
+        0.5815,
+        0.5817,
+        0.5818,
+        0.5819,
+        0.582,
+        0.5821,
+        0.5822,
+        0.5822,
+        0.5821,
+        0.5822,
+        0.5821,
+        0.5821,
+        0.5822,
+        0.5824,
+        0.5825,
+        0.5826,
+        0.5826,
+        0.5827,
+        0.5826,
+        0.5826,
+        0.5827,
+        0.5826,
+        0.5825,
+        0.5823,
+        0.5822,
+        0.5822,
+        0.5821,
+        0.5821,
+        0.582,
+        0.5819,
+        0.5819,
+        0.5819,
+        0.5818,
+        0.5817,
+        0.5816,
+        0.5815,
+        0.5814,
+        0.5812,
+        0.581,
+        0.5809,
+        0.5809,
+        0.5809,
+        0.581,
+        0.5811,
+        0.5812,
+        0.5813,
+        0.5814,
+        0.5814,
+        0.5815,
+        0.5816,
+        0.5816,
+        0.5815,
+        0.5816,
+        0.5815,
+        0.5815,
+        0.5815,
+        0.5815,
+        0.5816,
+        0.5817,
+        0.5817,
+        0.5818,
+        0.5818,
+        0.5819,
+        0.582,
+        0.5821,
+        0.5822,
+        0.5822,
+        0.5823,
+        0.5823,
+        0.5824,
+        0.5826,
+        0.5826,
+        0.5828,
+        0.5829,
+        0.5829,
+        0.5829,
+        0.5829,
+        0.583,
+        0.5831,
+        0.5832,
+        0.5832,
+        0.5833,
+        0.5834,
+        0.5835,
+        0.5836,
+        0.5837,
+        0.5838,
+        0.5839,
+        0.5841,
+        0.5841,
+        0.5843,
+        0.5844,
+        0.5846,
+        0.5847,
+        0.5848,
+        0.5849,
+        0.585,
+        0.5851,
+        0.5851,
+        0.5851,
+        0.5852,
+        0.5852,
+        0.5852,
+        0.5852,
+        0.5853,
+        0.5853,
+        0.5853,
+        0.5854,
+        0.5855,
+        0.5857,
+        0.5857,
+        0.5858,
+        0.5858,
+        0.5858,
+        0.5858,
+        0.5857,
+        0.5856,
+        0.5854,
+        0.5852,
+        0.585,
+        0.5848,
+        0.5845,
+        0.5843,
+        0.5842,
+        0.5841,
+        0.5841,
+        0.584,
+        0.584,
+        0.5841,
+        0.5841,
+        0.5842,
+        0.5842,
+        0.5843,
+        0.5843,
+        0.5843,
+        0.5842,
+        0.584,
+        0.5839,
+        0.5839,
+        0.5839,
+        0.584,
+        0.584,
+        0.5841,
+        0.5841,
+        0.5841,
+        0.5841,
+        0.5841,
+        0.5843,
+        0.5844,
+        0.5845,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5848,
+        0.5849,
+        0.585,
+        0.5851,
+        0.5853,
+        0.5854,
+        0.5855,
+        0.5856,
+        0.5856,
+        0.5856,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5858,
+        0.5858,
+        0.5858,
+        0.5859,
+        0.5858,
+        0.5858,
+        0.5858,
+        0.5858,
+        0.5857,
+        0.5855,
+        0.5854,
+        0.5852,
+        0.585,
+        0.5848,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5847,
+        0.5849,
+        0.585,
+        0.5851,
+        0.5852,
+        0.5852,
+        0.5853,
+        0.5854,
+        0.5855,
+        0.5855,
+        0.5854,
+        0.5853,
+        0.5853,
+        0.5853,
+        0.5854,
+        0.5854,
+        0.5855,
+        0.5856,
+        0.5857,
+        0.5857,
+        0.5857,
+        0.5858,
+        0.5858,
+        0.5859,
+        0.5861,
+        0.5861,
+        0.5862,
+        0.5864,
+        0.5864,
+        0.5865,
+        0.5866,
+        0.5866,
+        0.5866,
+        0.5865,
+        0.5865,
+        0.5865,
+        0.5864,
+        0.5863,
+        0.5863,
+        0.5863,
+        0.5864,
+        0.5864,
+        0.5865,
+        0.5865,
+        0.5865,
+        0.5866,
+        0.5866,
+        0.5866,
+        0.5866,
+        0.5866,
+        0.5866,
+        0.5865,
+        0.5863,
+        0.5863,
+        0.5862,
+        0.5862,
+        0.5863
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "y": [
+      0.4,
+      0.7
+     ],
+     "xLabel": "Steps",
+     "yLabel": "Running mean of $p$",
+     "decimals": 3,
+     "height": 240,
+     "hlines": [
+      {
+       "id": "mu",
+       "y": 0.578,
+       "label": "posterior mean 0.578",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which statement justifies averaging one Metropolis run?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "The ergodic theorem: time averages of an irreducible chain converge to the $\\pi$-average",
+      "correct": true
+     },
+     {
+      "id": "iid",
+      "text": "The strong law, since each step is a fresh draw",
+      "why": "MCMC steps are dependent: each starts where the last ended. The strong law needs independent draws."
+     },
+     {
+      "id": "aper",
+      "text": "Only aperiodic chains have averages that converge",
+      "why": "Time averages need only irreducibility, as the swap chain of lesson 6 showed. Aperiodicity is needed for $P^k$ itself."
+     },
+     {
+      "id": "burn",
+      "text": "Averages converge only after the first 1,000 steps are dropped",
+      "why": "The theorem holds from step 1. Dropping a burn-in helps in practice, but it is not what the theorem needs."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Time averages of an irreducible chain converge to the target average, with probability 1.",
+    "generic": "Not quite right. Compare what each theorem assumes about the draws."
+   },
+   "explain": {
+    "text": "Both lines settle at the posterior mean 0.578. The chain's line is slower, because neighbouring steps are alike. The ergodic theorem is why one long run is enough."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "An unfair proposal",
+   "prose": "Our rule needs a symmetric proposal: up and down equally likely. If $q_{ij}$ is the chance of proposing $j$ from $i$, the **Metropolis-Hastings** rule accepts a move with chance $\\min\\left(1, \\dfrac{w_jq_{ji}}{w_iq_{ij}}\\right)$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "markov": true,
+     "height": 190,
+     "nodes": [
+      {
+       "id": "i",
+       "label": "$i$: $w = 2$",
+       "x": 0.2,
+       "y": 0.5
+      },
+      {
+       "id": "j",
+       "label": "$j$: $w = 3$",
+       "x": 0.8,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "i",
+       "to": "j",
+       "w": 0.7,
+       "label": "propose 0.7"
+      },
+      {
+       "from": "j",
+       "to": "i",
+       "w": 0.3,
+       "label": "propose 0.3"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Proposal chances, not move chances."
+    }
+   },
+   "question": "A chain at $i$ proposes $j$. What is the chance it moves?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6429,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "9/14, or 0.6429 ± 0.002",
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "w-only",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "q-only",
+      "value": 0.4286,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "flip",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write $w_jq_{ji}$ on top and $w_iq_{ij}$ below."
+    },
+    {
+     "rung": "point",
+     "text": "Here $w_j = 3$, $q_{ji} = 0.3$, $w_i = 2$ and $q_{ij} = 0.7$.",
+     "highlight": [
+      "i",
+      "j"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\dfrac{3 \\times 0.3}{2 \\times 0.7} = \\dfrac{0.9}{1.4}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{0.9}{1.4} = \\tfrac{9}{14} \\approx 0.643$.",
+    "generic": "Not quite right. Use the weights and the proposal chances in the Hastings ratio.",
+    "byKey": {
+     "plain": "That is the plain Metropolis answer, since $3/2 > 1$. The proposal favours up, so it must be corrected downwards.",
+     "w-only": "That is $w_j/w_i$ without the cap or the proposal chances. A chance cannot exceed 1.",
+     "q-only": "That is the proposal ratio on its own. The weights matter too.",
+     "flip": "You put the proposal chances the wrong way up. Reverse move $q_{ji}$ is on top."
+    }
+   },
+   "explain": {
+    "text": "The ratio is $\\tfrac{3 \\times 0.3}{2 \\times 0.7} = \\tfrac{9}{14}$. The chain proposes up often, so it must accept up less often than the weights alone would say. With $q_{ij} = q_{ji}$ the $q$ terms cancel and we recover the rule above."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The sampler in code",
+   "prose": "Write the sampler. `metropolis(weights, steps, seed, start)` returns the share of steps spent in each value, counting repeated states. `exact_posterior(weights)` normalises the weights. Two lines are missing.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "p0",
+       "label": "0.40"
+      },
+      {
+       "id": "p1",
+       "label": "0.45"
+      },
+      {
+       "id": "p2",
+       "label": "0.50"
+      },
+      {
+       "id": "p3",
+       "label": "0.55"
+      },
+      {
+       "id": "p4",
+       "label": "0.60"
+      },
+      {
+       "id": "p5",
+       "label": "0.65"
+      },
+      {
+       "id": "p6",
+       "label": "0.70"
+      }
+     ],
+     "yLabel": "$w(p) \\times 10^6$",
+     "xLabel": "Hit rate $p$",
+     "showValues": true,
+     "decimals": 3,
+     "yMax": 1.6
+    },
+    "state": {
+     "values": {
+      "p0": 0.282,
+      "p1": 0.577,
+      "p2": 0.954,
+      "p3": 1.288,
+      "p4": 1.427,
+      "p5": 1.281,
+      "p6": 0.908
+     },
+     "highlight": [
+      "p4",
+      "p5"
+     ],
+     "caption": "The weight $w(p) = p^{12}(1-p)^8$ is known. Its total is not."
+    },
+    "maxHeight": 150
+   },
+   "question": "Replace both `...` expressions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\n\ndef exact_posterior(weights):\n    \"\"\"Normalise the weights so they add to 1.\"\"\"\n    return ...\n\ndef metropolis(weights, steps, seed, start):\n    \"\"\"Visit shares of a Metropolis chain with +/-1 proposals.\"\"\"\n    rng = random.Random(seed)\n    k = len(weights)\n    state = start\n    visits = [0] * k\n    for _ in range(steps):\n        proposal = state + (1 if rng.random() < 0.5 else -1)\n        if 0 <= proposal < k:\n            if rng.random() < ...:   # chance min(1, w_new / w_old)\n                state = proposal\n        visits[state] += 1\n    return [round(v / steps, 4) for v in visits]\n",
+    "solution": "import random\n\ndef exact_posterior(weights):\n    \"\"\"Normalise the weights so they add to 1.\"\"\"\n    total = sum(weights)\n    return [w / total for w in weights]\n\ndef metropolis(weights, steps, seed, start):\n    \"\"\"Visit shares of a Metropolis chain with +/-1 proposals.\"\"\"\n    rng = random.Random(seed)\n    k = len(weights)\n    state = start\n    visits = [0] * k\n    for _ in range(steps):\n        proposal = state + (1 if rng.random() < 0.5 else -1)\n        if 0 <= proposal < k:\n            if rng.random() < min(1, weights[proposal] / weights[state]):\n                state = proposal\n        visits[state] += 1\n    return [round(v / steps, 4) for v in visits]\n",
+    "examples": [
+     {
+      "call": "exact_posterior([1, 1, 2])",
+      "expect": "[0.25, 0.25, 0.5]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "exact_posterior([1, 3])",
+      "expect": "[0.25, 0.75]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "W = [p ** 12 * (1 - p) ** 8 for p in (0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)]",
+      "call": "[round(x, 4) for x in exact_posterior(W)]",
+      "expect": "[0.042, 0.086, 0.142, 0.1918, 0.2124, 0.1907, 0.1352]",
+      "compare": "equal"
+     },
+     {
+      "setup": "W = [p ** 12 * (1 - p) ** 8 for p in (0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)]",
+      "call": "metropolis(W, 1000, 5, 0)",
+      "expect": "[0.035, 0.061, 0.126, 0.213, 0.214, 0.195, 0.156]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "W = [p ** 12 * (1 - p) ** 8 for p in (0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)]",
+      "call": "metropolis(W, 2000, 11, 3)",
+      "expect": "[0.037, 0.072, 0.1215, 0.1695, 0.203, 0.2175, 0.1795]",
+      "compare": "isclose"
+     },
+     {
+      "call": "abs(metropolis([1, 3], 20000, 2, 0)[1] - 0.75) < 0.02",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "W = [p ** 12 * (1 - p) ** 8 for p in (0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)]",
+      "call": "max(abs(a - b) for a, b in zip(metropolis(W, 100000, 1, 0), exact_posterior(W))) < 0.01",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "W = [p ** 12 * (1 - p) ** 8 for p in (0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)]",
+      "call": "max(abs(a - b) for a, b in zip(metropolis(W, 100000, 3, 0), metropolis(W, 100000, 3, 6))) < 0.015",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Two use fixed seeds and must match exactly, so keep the order of the two `rng.random()` calls. Three compare against the exact posterior."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The first blank is the weights divided by their total."
+    },
+    {
+     "rung": "point",
+     "text": "For the second, a move to a higher weight is certain. A move to a lower weight has chance new over old.",
+     "highlight": [
+      "p4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`weights[proposal] / weights[state]`, capped at 1 with `min`."
+    }
+   ],
+   "feedback": {
+    "correct": "A sampler that needs only weights, and shares that match the exact posterior.",
+    "generic": "Some tests failed. Normalise by the total, and accept with $\\min(1, w_{\\text{new}}/w_{\\text{old}})$.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that both `...` expressions are replaced."
+    }
+   },
+   "explain": {
+    "text": "The acceptance test compares a uniform draw with $\\min(1, w_{\\text{new}}/w_{\\text{old}})$. A rejected step still adds one to the current state's count. With 100,000 steps the shares agree with the exact posterior to about 0.003.\n\n```python\nif rng.random() < min(1, weights[proposal] / weights[state]):\n    state = proposal\n```"
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A committee question",
+   "prose": "A risk committee asks how likely it is that the strategy's true hit rate exceeds 0.5. The bars are the visit shares from a run of 100,000 steps. Each share estimates the posterior chance of that value.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "p0",
+       "label": "0.40"
+      },
+      {
+       "id": "p1",
+       "label": "0.45"
+      },
+      {
+       "id": "p2",
+       "label": "0.50"
+      },
+      {
+       "id": "p3",
+       "label": "0.55"
+      },
+      {
+       "id": "p4",
+       "label": "0.60"
+      },
+      {
+       "id": "p5",
+       "label": "0.65"
+      },
+      {
+       "id": "p6",
+       "label": "0.70"
+      }
+     ],
+     "yLabel": "Share of 100,000 steps",
+     "xLabel": "Hit rate $p$",
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 0.3
+    },
+    "state": {
+     "values": {
+      "p0": 0.042,
+      "p1": 0.0857,
+      "p2": 0.1426,
+      "p3": 0.1921,
+      "p4": 0.2105,
+      "p5": 0.191,
+      "p6": 0.136
+     },
+     "caption": "Visit shares from one seeded run, started at 0.40."
+    }
+   },
+   "question": "Estimate $P(p > 0.5)$ from the bars.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7301,
+    "tol": {
+     "abs": 0.004
+    },
+    "accept": "About 0.73: the exact grid sum is 0.7301",
+    "wrong": [
+     {
+      "id": "with-half",
+      "value": 0.8722,
+      "tol": {
+       "abs": 0.004
+      }
+     },
+     {
+      "id": "count",
+      "value": 0.5714,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "top-two",
+      "value": 0.3269,
+      "tol": {
+       "abs": 0.004
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which grid values are above 0.5? Is 0.50 itself included?"
+    },
+    {
+     "rung": "point",
+     "text": "Add the bars for 0.55, 0.60, 0.65 and 0.70.",
+     "highlight": [
+      "p3",
+      "p4",
+      "p5",
+      "p6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.1921 + 0.2105 + 0.1910 + 0.1360$"
+    }
+   ],
+   "feedback": {
+    "correct": "About 0.73, close to the exact grid sum 0.7301.",
+    "generic": "Not quite right. Add the shares for 0.55 up to 0.70, and leave out 0.50.",
+    "byKey": {
+     "with-half": "You included the bar at 0.50. The question asks for values above 0.5.",
+     "count": "You counted 4 of the 7 grid values. They are not equally likely, so add their shares.",
+     "top-two": "You added only the two highest values. All four values above 0.5 count."
+    }
+   },
+   "explain": {
+    "text": "The four bars add to 0.7296, against the exact sum $0.1918 + 0.2124 + 0.1907 + 0.1352 = 0.7301$. The chain moved on 79% of its steps. A real model has many parameters and no grid, so a chain like this is the practical route."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A Metropolis chain proposes a neighbour and accepts with chance $\\min(1, w_{\\text{new}}/w_{\\text{old}})$, otherwise it stays and the state counts again. It needs the weights only, not their total.",
+   "The chain satisfies detailed balance with $\\pi_i = w_i/Z$, so its long-run shares are the target. Early steps before burn-in over-represent the start.",
+   "Time averages of the chain converge to the target average (the ergodic theorem). An asymmetric proposal needs the Hastings ratio $\\frac{w_jq_{ji}}{w_iq_{ij}}$."
+  ],
+  "formula": {
+   "name": "Metropolis acceptance",
+   "tex": "a_{ij} = \\min\\left(1, \\frac{w_j}{w_i}\\right)",
+   "note": "Hastings: $\\min\\left(1, \\dfrac{w_jq_{ji}}{w_iq_{ij}}\\right)$."
+  },
+  "trap": "Always accepting samples the proposal's own uniform distribution. Dropping rejected steps flattens the shares."
+ },
+ "quiz": [
+  {
+   "id": "q-accept",
+   "difficulty": 2,
+   "prose": "A Metropolis chain stands at a value with weight 5 and proposes a value with weight 2.",
+   "question": "What is the chance it moves?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "0.4 = 2/5",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "inverse",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "diff",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Moving to a lower weight is accepted with chance new over old: $\\tfrac25$.",
+    "generic": "Not quite right. The new weight is lower, so use new over old.",
+    "byKey": {
+     "one": "Only a move to a higher weight is certain.",
+     "inverse": "You divided old by new. A chance cannot exceed 1.",
+     "diff": "You subtracted. The rule uses the ratio of the weights."
+    }
+   },
+   "explain": {
+    "text": "The ratio is $\\tfrac{2}{5} = 0.4$. A move back up from 2 to 5 would have chance $\\min(1, 2.5) = 1$."
+   }
+  },
+  {
+   "id": "q-record",
+   "difficulty": 3,
+   "prose": "A chain visits values A and B. Over 10 steps it records A, A, A, B, B, A, A, A, A, B.",
+   "question": "How should the rejected steps be treated?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Keep every step, so A appears 7 times and B 3 times",
+      "correct": true
+     },
+     {
+      "id": "drop",
+      "text": "Drop repeats, so the record is A, B, A, B",
+      "why": "That treats a rejection as a missing step. The chain was at that value on that step."
+     },
+     {
+      "id": "first",
+      "text": "Keep only the first visit to each value",
+      "why": "That discards almost all the information. Every step is a draw."
+     },
+     {
+      "id": "burn",
+      "text": "Drop the first half because of burn-in, and no more",
+      "why": "Burn-in removes the start, but the repeats inside the kept steps stay in."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Every step counts, repeats included.",
+    "generic": "Not quite right. Count steps, not moves."
+   },
+   "explain": {
+    "text": "Each step is a draw of the chain's state, so repeats are counted. Here A has share 0.7 and B 0.3 in this short record."
+   }
+  },
+  {
+   "id": "q-target",
+   "difficulty": 3,
+   "prose": "A Metropolis chain on three values has weights 1, 2 and 5. Proposals go one step up or down, and off-grid proposals are rejected.",
+   "question": "What long-run share does it give the third value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.625,
+    "tol": {
+     "abs": 0.003
+    },
+    "accept": "5/8",
+    "wrong": [
+     {
+      "id": "third",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "weight",
+      "value": 5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Shares are weights over their total: $\\tfrac{5}{8}$.",
+    "generic": "Not quite right. The long-run shares are the weights divided by their total.",
+    "byKey": {
+     "third": "You split the time evenly. The shares follow the weights.",
+     "half": "You used one half. Divide 5 by the total of the weights, 8.",
+     "weight": "That is the weight, not the share. Divide by the total 8."
+    }
+   },
+   "explain": {
+    "text": "The total is $1 + 2 + 5 = 8$, so the shares are $\\tfrac18, \\tfrac28, \\tfrac58$. The chain's detailed balance gives $\\pi \\propto w$."
+   }
+  },
+  {
+   "id": "q-hastings",
+   "difficulty": 3,
+   "prose": "A proposal chooses $j$ from $i$ with chance 0.25, and $i$ from $j$ with chance 0.75. The two weights are equal.",
+   "question": "What is the chance the chain moves from $j$ to $i$ when it proposes $i$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3333,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "1/3",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "q",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\min\\left(1, \\tfrac{w_iq_{ij}}{w_jq_{ji}}\\right) = \\tfrac{0.25}{0.75} = \\tfrac13$.",
+    "generic": "Not quite right. Use the Hastings ratio with the reverse proposal chance on top.",
+    "byKey": {
+     "one": "Equal weights give 1 only when the proposal is symmetric. Here the proposal favours $i$.",
+     "q": "That is the proposal chance, not the acceptance chance.",
+     "quarter": "You used the reverse proposal chance only. Divide by the forward one: $0.25/0.75$."
+    }
+   },
+   "explain": {
+    "text": "Moving from $j$ to $i$ the ratio is $\\tfrac{w_iq_{ij}}{w_jq_{ji}} = \\tfrac{0.25}{0.75}$. The chain proposes $i$ often, so it accepts it less often."
+   }
+  }
+ ]
+}

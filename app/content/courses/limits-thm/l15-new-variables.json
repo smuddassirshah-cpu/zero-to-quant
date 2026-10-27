@@ -1,0 +1,1232 @@
+{
+ "id": "l15-new-variables",
+ "course": "limits-thm",
+ "title": "Transforming a continuous variable",
+ "minutes": 14,
+ "objectives": [
+  "Find the density of a transformed variable with the CDF method and with $|dx/dy|$",
+  "Use a Jacobian to transform two variables, and simulate with inverse transforms"
+ ],
+ "skills": [
+  "dl-continuous",
+  "dl-normal"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Uniform in, what comes out?",
+   "prose": "A uniform draw $U$ on $(0, 1)$ is turned into a wait $Y = -\\tfrac12\\ln U$. Half of all draws have $u > 0.5$. The graph shows where they land.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      2.4
+     ],
+     "functions": [
+      {
+       "id": "g",
+       "expr": "-log(x)/2",
+       "domain": [
+        0.02,
+        1
+       ],
+       "label": "$y = -\\tfrac12\\ln u$",
+       "labelAt": 0.45
+      }
+     ],
+     "xLabel": "$u$ (the uniform draw)",
+     "yLabel": "$y$ (the wait)",
+     "height": 300
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "half",
+       "x": 0.5,
+       "label": "$u = 0.5$"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "land",
+       "y": 0.3466,
+       "label": "$y = 0.35$"
+      }
+     ]
+    }
+   },
+   "question": "What shape does the density of $Y$ have?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "flat",
+      "text": "Flat, like $U$",
+      "why": "Half of the draws land below $y = 0.35$, a short stretch. A flat density could not pack half the draws into so little room."
+     },
+     {
+      "id": "bell",
+      "text": "A bell around 0.35",
+      "why": "The curve is steep near $u = 0$ and flat near $u = 1$. That squeezes draws together near 0 and stretches a few far to the right, not into a bell."
+     },
+     {
+      "id": "pile",
+      "text": "Piled up near 0, with a long tail to the right",
+      "correct": true
+     },
+     {
+      "id": "far",
+      "text": "Piled at large values, thinning towards 0",
+      "why": "Large $y$ comes only from $u$ near 0, a thin slice of the draws. Most of them land at small $y$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where do the draws with $u > 0.5$ end up on the $y$ axis?"
+    },
+    {
+     "rung": "point",
+     "text": "They fill $y$ from 0 to 0.35. The other half is spread over everything above 0.35.",
+     "highlight": [
+      "g"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Half the draws land in $[0, 0.35]$ and the rest are spread thinly out to the right.",
+    "generic": "Not quite right. Compare how much of $y$ the top half of $u$ covers with how much the bottom half covers.",
+    "byKey": {
+     "flat": "Half of the draws land below $y = 0.35$, a short stretch. A flat density could not do that.",
+     "bell": "The curve is steep near $u = 0$ and flat near $u = 1$: draws bunch near 0 and a few stretch far right.",
+     "far": "Large $y$ comes only from $u$ near 0, a thin slice of the draws."
+    }
+   },
+   "explain": {
+    "text": "The upper half of $u$, which holds half the probability, maps onto $y$ in $[0, 0.35]$. The lower half is stretched over the whole rest of the axis. The density is therefore tall near 0 and thin in the tail.",
+    "canvas": {
+     "highlight": [
+      "half",
+      "land"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Run it and see",
+   "prose": "Each run draws more uniforms and transforms them. The dashed curve is an exponential density from the uniform and exponential lesson.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": 0,
+      "max": 3,
+      "width": 0.25
+     },
+     "proportion": true,
+     "yLabel": "Share of draws",
+     "xLabel": "$Y = -\\tfrac12\\ln U$",
+     "yMax": 0.55,
+     "height": 300,
+     "curves": [
+      {
+       "id": "exp",
+       "expr": "2*exp(-2*x)*w",
+       "dashed": true,
+       "label": "exponential"
+      }
+     ],
+     "sim": {
+      "trials": [
+       100,
+       1000,
+       10000
+      ],
+      "outcome": "-log(u())/2",
+      "seed": 151
+     }
+    },
+    "state": {
+     "ran": 0,
+     "caption": "Run the draws and watch the bars settle onto the dashed curve."
+    }
+   },
+   "question": "The bars centre near 0.5. Which rate $\\lambda$ makes an exponential have mean 0.5?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "A number",
+    "label": "Rate lambda",
+    "accept": "$\\lambda = \\tfrac{1}{0.5} = 2$.",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The mean of an exponential is $\\tfrac{1}{\\lambda}$."
+    },
+    {
+     "rung": "point",
+     "text": "Solve $\\tfrac1\\lambda = 0.5$.",
+     "highlight": [
+      "b0",
+      "b1",
+      "b2"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$\\lambda = 2$: the transformed uniform is exponential with rate 2.",
+    "generic": "Not quite right. The mean of an exponential is $\\tfrac1\\lambda$.",
+    "byKey": {
+     "mean": "0.5 is the mean, not the rate. The rate is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "$-\\tfrac12\\ln U$ has the same density as a wait with $\\lambda = 2$, mean $\\tfrac12$. The next screen derives that from the CDF."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The CDF method",
+   "prose": "Instead of guessing, find the CDF of $Y = -\\tfrac12\\ln U$ and differentiate it. This is the **CDF method**.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "def",
+      "text": "$P(Y \\le y) = P\\left(-\\tfrac12\\ln U \\le y\\right)$, the definition of the CDF of $Y$"
+     },
+     {
+      "id": "flip",
+      "text": "$= P\\left(U \\ge e^{-2y}\\right)$, multiplying by $-2$ flips the inequality, then exponentiating"
+     },
+     {
+      "id": "unif",
+      "text": "$= 1 - e^{-2y}$, since $P(U \\ge c) = 1 - c$ for a uniform $U$"
+     },
+     {
+      "id": "diff",
+      "text": "$f_Y(y) = \\dfrac{d}{dy}\\left(1 - e^{-2y}\\right) = 2e^{-2y}$, the density is the slope of the CDF"
+     }
+    ],
+    "answer": [
+     "def",
+     "flip",
+     "unif",
+     "diff"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from what $P(Y \\le y)$ means, then rewrite the event in terms of $U$."
+    },
+    {
+     "rung": "point",
+     "text": "The slope of the CDF is the last step."
+    },
+    {
+     "rung": "step",
+     "text": "Definition, rewrite, uniform probability, differentiate."
+    }
+   ],
+   "feedback": {
+    "correct": "Definition, rewrite in $U$, uniform chance, then differentiate.",
+    "generic": "Not quite right. Rewrite the event in terms of $U$ before using that $U$ is uniform.",
+    "byKey": {
+     "unif": "The uniform chance $1 - c$ applies once the event is written as $U \\ge e^{-2y}$.",
+     "diff": "Differentiating comes last, once the CDF is known."
+    }
+   },
+   "explain": {
+    "text": "The CDF is $1 - e^{-2y}$, the exponential with rate 2, and its slope is $2e^{-2y}$. The dashed curve on the last screen was this density."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Change of variables",
+   "prose": "You went from $U$ to $Y$ through the CDF. For $Y = g(X)$ with $g$ monotone and $x = g^{-1}(y)$, the chain rule on $F_Y(y) = F_X(x)$ gives $$f_Y(y) = f_X(x)\\left|\\frac{dx}{dy}\\right|.$$",
+   "question": "For $Y = -\\tfrac12\\ln U$, we have $x = u = e^{-2y}$ and $f_U = 1$. What does the formula give?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nofac",
+      "text": "$f_Y(y) = e^{-2y}$",
+      "why": "You used $f_U(x)\\cdot x$. The factor is the slope $\\left|\\tfrac{dx}{dy}\\right| = 2e^{-2y}$, not $x$ itself."
+     },
+     {
+      "id": "neg",
+      "text": "$f_Y(y) = -2e^{-2y}$",
+      "why": "You kept the sign of $\\tfrac{dx}{dy}$. A density cannot be negative, so take the absolute value."
+     },
+     {
+      "id": "right",
+      "text": "$f_Y(y) = 2e^{-2y}$",
+      "correct": true
+     },
+     {
+      "id": "inv",
+      "text": "$f_Y(y) = \\tfrac12 e^{-2y}$",
+      "why": "You used $\\tfrac{dy}{dx}$ upside down. The formula needs how fast $x$ changes with $y$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Differentiate $x = e^{-2y}$ with respect to $y$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\dfrac{dx}{dy} = -2e^{-2y}$, so its absolute value is $2e^{-2y}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 \\times 2e^{-2y}$, the same density as the CDF method.",
+    "generic": "Not quite right. Multiply $f_U(x) = 1$ by $\\left|\\tfrac{dx}{dy}\\right|$.",
+    "byKey": {
+     "nofac": "The factor is the slope of $x$ in $y$, not $x$.",
+     "neg": "A density is never negative, so the absolute value is needed.",
+     "inv": "The slope is $\\tfrac{dx}{dy}$, not $\\tfrac{dy}{dx}$."
+    }
+   },
+   "explain": {
+    "text": "$\\left|\\tfrac{dx}{dy}\\right|$ says how much a small stretch of $y$ corresponds in $x$. Where $y$ is stretched, the density thins by exactly that factor. It reproduces the CDF method's answer."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The lognormal density",
+   "prose": "A price $S = e^X$ with $X$ standard normal is lognormal. Here $x = \\ln s$, so $\\left|\\tfrac{dx}{ds}\\right| = \\tfrac1s$, and $f_S(s) = f_X(\\ln s)\\cdot\\tfrac1s$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      6
+     ],
+     "y": [
+      0,
+      0.8
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "normpdf(ln(x), 0, 1) / x",
+       "domain": [
+        0.05,
+        6
+       ],
+       "label": "$f_S(s)$"
+      }
+     ],
+     "xLabel": "$s$",
+     "yLabel": "density",
+     "height": 280
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "at",
+       "x": 2,
+       "label": "$s = 2$"
+      }
+     ]
+    }
+   },
+   "question": "What is the density $f_S(2)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1569,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "f_S(2)",
+    "accept": "$\\dfrac{\\varphi(\\ln 2)}{2} \\approx 0.1569$.",
+    "wrong": [
+     {
+      "id": "nofac",
+      "value": 0.3138,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "wayround",
+      "value": 0.6276,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find $f_X(\\ln 2)$, the standard normal density at $\\ln 2 = 0.6931$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\varphi(0.6931) = 0.3138$. Now apply the factor $\\tfrac1s$.",
+     "highlight": [
+      "at"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide by $s = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{0.3138}{2} = 0.1569$.",
+    "generic": "Not quite right. Evaluate the normal density at $\\ln s$, then divide by $s$.",
+    "byKey": {
+     "nofac": "0.3138 is $f_X(\\ln 2)$ alone. The factor $\\tfrac1s$ is missing.",
+     "wayround": "You multiplied by $s$ instead of dividing. The factor is $\\left|\\tfrac{dx}{ds}\\right| = \\tfrac1s$."
+    }
+   },
+   "explain": {
+    "text": "$f_S(2) = \\varphi(\\ln 2)\\cdot\\tfrac12 = 0.3138 \\times 0.5 = 0.1569$. The earlier lognormal density is this rule: a normal density in $\\ln s$, times $\\tfrac1s$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Inverse-transform sampling",
+   "prose": "Run the CDF backwards. If $U$ is uniform, $F^{-1}(U)$ has CDF $F$. For rate $\\lambda$, $F(y) = 1 - e^{-\\lambda y}$, so $F^{-1}(u) = -\\dfrac{\\ln(1 - u)}{\\lambda}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "2*exp(-2*x)",
+       "domain": [
+        0,
+        3
+       ],
+       "label": "$2e^{-2y}$"
+      }
+     ],
+     "xLabel": "$y$",
+     "yLabel": "density",
+     "height": 240
+    },
+    "state": {}
+   },
+   "question": "Write `exp_sample(rate, n, seed)`, returning `n` exponential draws.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\n\ndef exp_sample(rate, n, seed):\n    # n draws from an exponential with the given rate.\n    # Use one rng.random() per draw and the inverse CDF.\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import math\nimport random\n\n\ndef exp_sample(rate, n, seed):\n    # n draws from an exponential with the given rate\n    rng = random.Random(seed)\n    return [-math.log(1 - rng.random()) / rate for _ in range(n)]\n",
+    "examples": [
+     {
+      "call": "len(exp_sample(1, 5, 1))",
+      "expect": "5"
+     }
+    ],
+    "tests": [
+     {
+      "call": "exp_sample(2, 3, 42)",
+      "expect": "[0.5100301436374005, 0.012664419521369446, 0.1608120320374828]",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(exp_sample(1, 5, 1))",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "call": "min(exp_sample(3, 1000, 2)) > 0",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "sum(exp_sample(2, 100000, 7)) / 100000",
+      "expect": "0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "sum(1 for y in exp_sample(2, 100000, 8) if y > 1) / 100000",
+      "expect": "0.1353",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "call": "sum(exp_sample(0.02, 100000, 9)) / 100000",
+      "expect": "50",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1.0
+      }
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. Three check exact draws and the list length. Three check the sample mean and a tail share against the exact values, within stated tolerances."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draw $u$ with `rng.random()` and apply $F^{-1}$."
+    },
+    {
+     "rung": "point",
+     "text": "In Python, `math.log` is the natural log. Divide by `rate`.",
+     "highlight": [
+      "f"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return [-math.log(1 - rng.random()) / rate for _ in range(n)]`"
+    }
+   ],
+   "feedback": {
+    "correct": "`exp_sample` matches the exact draws, and its sample mean is close to $\\tfrac{1}{\\text{rate}}$.",
+    "generic": "Not quite right. Apply $F^{-1}(u) = -\\ln(1 - u)/\\lambda$ to each uniform draw."
+   },
+   "explain": {
+    "text": "Each draw is one uniform pushed through $F^{-1}$. The sample mean at 100,000 draws is within a percent of $\\tfrac{1}{\\text{rate}}$, as the law of large numbers promises. Any CDF you can invert gives a sampler this way."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Two branches",
+   "prose": "Let $Z$ be standard normal and $Y = Z^2$. Both $z = \\sqrt y$ and $z = -\\sqrt y$ give the same $y$, so add the two branches, each with its own factor $\\left|\\tfrac{dz}{dy}\\right| = \\tfrac{1}{2\\sqrt y}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      4
+     ],
+     "y": [
+      0,
+      1.6
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "normpdf(sqrt(x), 0, 1) / sqrt(x)",
+       "domain": [
+        0.04,
+        4
+       ],
+       "label": "$f_Y(y)$"
+      }
+     ],
+     "xLabel": "$y$",
+     "yLabel": "density",
+     "height": 280
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "at",
+       "x": 1,
+       "label": "$y = 1$"
+      }
+     ]
+    }
+   },
+   "question": "What is $f_Y(1)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.242,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "f_Y(1)",
+    "accept": "$2\\,\\varphi(1)\\cdot\\tfrac12 = \\varphi(1) \\approx 0.2420$.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.121,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nofac",
+      "value": 0.4839,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$f_Y(y) = \\varphi(\\sqrt y)\\tfrac{1}{2\\sqrt y} + \\varphi(-\\sqrt y)\\tfrac{1}{2\\sqrt y}$. Put $y = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "At $y = 1$ both branches equal $0.2420 \\times \\tfrac12$.",
+     "highlight": [
+      "at"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Two branches of $0.1210$ give $0.2420$.",
+    "generic": "Not quite right. Add the contribution of $z = 1$ and of $z = -1$.",
+    "byKey": {
+     "one": "0.1210 is one branch. The value $y = 1$ comes from both $z = 1$ and $z = -1$.",
+     "nofac": "0.4839 adds the two branches but leaves out the factor $\\tfrac{1}{2\\sqrt y}$ on each."
+    }
+   },
+   "explain": {
+    "text": "$f_Y(y) = \\dfrac{1}{\\sqrt{2\\pi y}}e^{-y/2}$, so $f_Y(1) = 0.2420$. This is the **chi-square** density with one degree of freedom. It blows up at $y = 0$ yet its area is 1, as in the improper-integral lesson."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Forgetting the stretch",
+   "prose": "$X$ is uniform on $[0, 1]$ with $f_X = 1$, and $Y = 3X$ runs over $[0, 3]$. A learner writes $f_Y(y) = f_X(y/3) = 1$ on $[0, 3]$ and checks the area on the graph.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.4
+     ],
+     "y": [
+      0,
+      1.2
+     ],
+     "functions": [
+      {
+       "id": "bad",
+       "expr": "1",
+       "domain": [
+        0,
+        3
+       ],
+       "label": "candidate $f_Y$"
+      }
+     ],
+     "xLabel": "$y$",
+     "yLabel": "density",
+     "height": 240
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "bad",
+      "from": 0,
+      "to": 3,
+      "label": "area = {value}"
+     }
+    }
+   },
+   "question": "Which is the density of $Y$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "$f_Y(y) = 1$ on $[0, 3]$",
+      "why": "You substituted $x = y/3$ and stopped. The area under it is 3, so it is not a density."
+     },
+     {
+      "id": "three",
+      "text": "$f_Y(y) = 3$ on $[0, 3]$",
+      "why": "You multiplied by $\\tfrac{dy}{dx} = 3$ instead of $\\left|\\tfrac{dx}{dy}\\right| = \\tfrac13$. The area would be 9."
+     },
+     {
+      "id": "short",
+      "text": "$f_Y(y) = \\tfrac13$ on $[0, 1]$",
+      "why": "The height is right but $Y$ reaches 3, not 1. That area is only $\\tfrac13$."
+     },
+     {
+      "id": "third",
+      "text": "$f_Y(y) = \\tfrac13$ on $[0, 3]$",
+      "correct": true
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A density must have area 1. What is the area under height 1 over $[0, 3]$?"
+    },
+    {
+     "rung": "point",
+     "text": "The factor is $\\left|\\tfrac{dx}{dy}\\right| = \\tfrac13$.",
+     "highlight": [
+      "A"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Height $\\tfrac13$ over width 3 gives area 1.",
+    "generic": "Not quite right. Check that the area under your candidate is 1.",
+    "byKey": {
+     "one": "You substituted $x = y/3$ and stopped. The area is 3.",
+     "three": "You multiplied by $\\tfrac{dy}{dx}$. The factor is $\\left|\\tfrac{dx}{dy}\\right|$.",
+     "short": "The height is right but $Y$ reaches 3."
+    }
+   },
+   "explain": {
+    "text": "Stretching by 3 spreads the same probability over three times the width, so the height drops to $\\tfrac13$. Always check the area: a candidate that does not integrate to 1 has lost its $\\left|\\tfrac{dx}{dy}\\right|$."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Box and Muller",
+   "prose": "Two independent uniforms $U_1, U_2$ give $R = \\sqrt{-2\\ln U_1}$ and $\\Theta = 2\\pi U_2$. In two dimensions the factor is the Jacobian determinant. Find the density of $(R, \\Theta)$, then of $X = R\\cos\\Theta$, $Y = R\\sin\\Theta$.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "inv",
+      "text": "$u_1 = e^{-r^2/2}$ and $u_2 = \\tfrac{\\theta}{2\\pi}$, solving the map for the uniforms"
+     },
+     {
+      "id": "jac",
+      "text": "$\\left|\\dfrac{\\partial(u_1, u_2)}{\\partial(r, \\theta)}\\right| = \\left|-re^{-r^2/2}\\right|\\cdot\\dfrac{1}{2\\pi}$, a triangular determinant: $u_1$ depends on $r$ only and $u_2$ on $\\theta$ only"
+     },
+     {
+      "id": "rt",
+      "text": "$f(r, \\theta) = 1 \\cdot \\dfrac{re^{-r^2/2}}{2\\pi}$, the uniform density 1 times the Jacobian"
+     },
+     {
+      "id": "xy",
+      "text": "$f(x, y) = \\dfrac{f(r, \\theta)}{r} = \\dfrac{e^{-r^2/2}}{2\\pi}$, because $dx\\,dy = r\\,dr\\,d\\theta$"
+     },
+     {
+      "id": "fac",
+      "text": "$= \\dfrac{e^{-x^2/2}}{\\sqrt{2\\pi}}\\cdot\\dfrac{e^{-y^2/2}}{\\sqrt{2\\pi}}$, using $r^2 = x^2 + y^2$: two independent standard normals"
+     }
+    ],
+    "answer": [
+     "inv",
+     "jac",
+     "rt",
+     "xy",
+     "fac"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Express the old variables in terms of the new ones first."
+    },
+    {
+     "rung": "point",
+     "text": "The Jacobian multiplies the old density 1. Polar area then brings in a factor $r$."
+    },
+    {
+     "rung": "step",
+     "text": "Invert, Jacobian, density in $(r, \\theta)$, divide by $r$, factor."
+    }
+   ],
+   "feedback": {
+    "correct": "Invert, take the Jacobian, convert the area element, then factor.",
+    "generic": "Not quite right. You need the uniforms in terms of $r, \\theta$ before the determinant.",
+    "byKey": {
+     "jac": "The Jacobian needs $u_1$ and $u_2$ written in terms of $r$ and $\\theta$ first.",
+     "xy": "The division by $r$ comes after the density in $(r, \\theta)$ is known.",
+     "fac": "Factoring is the last step, once $f(x, y)$ is written in $r^2 = x^2 + y^2$."
+    }
+   },
+   "explain": {
+    "text": "The density factors into two standard normal densities, so $X$ and $Y$ are independent $N(0, 1)$. Every simulator that needs normals can start from two uniforms this way."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Normals from uniforms",
+   "prose": "Turn the derivation into a sampler. Each pair of uniforms gives two normals, $R\\cos\\Theta$ and then $R\\sin\\Theta$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 0,
+      "sigma": 1
+     },
+     "x": [
+      -4,
+      4
+     ],
+     "variable": "Z",
+     "xLabel": "$z$",
+     "height": 240
+    },
+    "state": {}
+   },
+   "question": "Write `box_muller(n, seed)`, returning a list of $2n$ standard normal draws.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\n\ndef box_muller(n, seed):\n    # a list of 2n standard normal draws, cosine then sine for each pair\n    rng = random.Random(seed)\n    out = []\n    for _ in range(n):\n        u1 = 1 - rng.random()  # in (0, 1], so the log is safe\n        u2 = rng.random()\n        ...\n    return out\n",
+    "solution": "import math\nimport random\n\n\ndef box_muller(n, seed):\n    # a list of 2n standard normal draws\n    rng = random.Random(seed)\n    out = []\n    for _ in range(n):\n        u1 = 1 - rng.random()\n        u2 = rng.random()\n        r = math.sqrt(-2 * math.log(u1))\n        theta = 2 * math.pi * u2\n        out.append(r * math.cos(theta))\n        out.append(r * math.sin(theta))\n    return out\n",
+    "examples": [
+     {
+      "call": "len(box_muller(5, 1))",
+      "expect": "10"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(box_muller(5, 1))",
+      "expect": "10",
+      "compare": "equal"
+     },
+     {
+      "call": "box_muller(1, 3)",
+      "expect": "[-0.7089558856646401, -0.20225270986763713]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "z = box_muller(50000, 5)",
+      "call": "abs(sum(z) / len(z)) < 0.02",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "z = box_muller(50000, 5)",
+      "call": "abs(sum(v * v for v in z) / len(z) - 1) < 0.03",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "z = box_muller(50000, 5)",
+      "call": "abs(sum(1 for v in z if abs(v) < 1.96) / len(z) - 0.95) < 0.005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "z = box_muller(50000, 5)",
+      "call": "abs(sum(z[i] * z[i + 1] for i in range(0, len(z), 2)) / 50000) < 0.03",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "z = box_muller(50000, 5)",
+      "call": "abs(sum(v ** 4 for v in z) / len(z) - 3) < 0.15",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests: the length, one exact pair, and the sample mean, variance, 95% share, pair correlation and fourth moment of 100,000 draws, each within a stated tolerance."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $r = \\sqrt{-2\\ln u_1}$ and $\\theta = 2\\pi u_2$, then append two values."
+    },
+    {
+     "rung": "point",
+     "text": "Append `r * math.cos(theta)` and then `r * math.sin(theta)`.",
+     "highlight": [
+      "curve"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The draws have mean 0, variance 1 and 95% inside $\\pm 1.96$.",
+    "generic": "Not quite right. Each pair should add the cosine draw and then the sine draw."
+   },
+   "explain": {
+    "text": "The sample mean, variance and the 95% share all sit where $N(0, 1)$ puts them, and neighbouring draws are uncorrelated. Two uniforms in, two independent normals out, with no rejection step."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A lump of probability",
+   "prose": "A call with strike £105 pays $\\max(S - 105, 0)$. The price at expiry is $N(100, 10^2)$. The map $g(s) = \\max(s - 105, 0)$ is constant for every $s \\le 105$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 100,
+      "sigma": 10
+     },
+     "x": [
+      60,
+      140
+     ],
+     "variable": "S",
+     "xLabel": "Price at expiry $S$"
+    },
+    "state": {
+     "shade": {
+      "from": null,
+      "to": 105
+     },
+     "showProb": false
+    }
+   },
+   "question": "What is $P(\\text{payoff} = 0)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6915,
+    "tol": {
+     "abs": 0.0006
+    },
+    "placeholder": "A decimal",
+    "label": "P(payoff = 0)",
+    "accept": "$P(S \\le 105) = \\Phi(0.5) \\approx 0.6915$.",
+    "wrong": [
+     {
+      "id": "tail",
+      "value": 0.3085,
+      "tol": {
+       "abs": 0.0006
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The payoff is 0 exactly when $S \\le 105$."
+    },
+    {
+     "rung": "point",
+     "text": "Standardise: $z = \\tfrac{105 - 100}{10} = 0.5$.",
+     "highlight": [
+      "shade"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$\\Phi(0.5) = 0.6915$ of the probability sits at 0.",
+    "generic": "Not quite right. The payoff is 0 whenever $S \\le 105$.",
+    "byKey": {
+     "tail": "0.3085 is the chance the call finishes in the money. The question asks about a payoff of 0.",
+     "zero": "A single value of $S$ has chance 0, but the payoff piles every $S \\le 105$ onto the value 0."
+    }
+   },
+   "explain": {
+    "text": "A non-constant monotone $g$ keeps a density. A $g$ that is constant on an interval collapses that interval's probability onto a single value, here 0.6915 at 0. The payoff has an **atom** at 0 and a density above it."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Simulating a loan book",
+   "prose": "A Monte Carlo engine simulates a book of 100 names, each with default hazard 2% a year. For each name it draws a uniform $U$ and sets $T = -\\dfrac{\\ln(1 - U)}{0.02}$ years.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "exponential",
+     "params": {
+      "lambda": 0.02
+     },
+     "x": [
+      0,
+      150
+     ],
+     "variable": "T",
+     "xLabel": "Years until default"
+    },
+    "state": {
+     "shade": {
+      "from": 0,
+      "to": 5
+     },
+     "showProb": false
+    }
+   },
+   "question": "How many of the 100 names should default within 5 years, on average?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9.516,
+    "tol": {
+     "abs": 0.02
+    },
+    "placeholder": "A number",
+    "label": "Expected defaults within 5 years",
+    "accept": "$100\\left(1 - e^{-0.1}\\right) = 9.516$.",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 10,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "prob",
+      "value": 0.0952,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A name defaults within 5 years when $T \\le 5$."
+    },
+    {
+     "rung": "point",
+     "text": "$P(T \\le 5) = 1 - e^{-0.02 \\times 5}$.",
+     "highlight": [
+      "shade"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Multiply by 100 names."
+    }
+   ],
+   "feedback": {
+    "correct": "$100 \\times 0.0952 = 9.516$ defaults on average.",
+    "generic": "Not quite right. Use $P(T \\le 5) = 1 - e^{-0.1}$ and multiply by 100.",
+    "byKey": {
+     "linear": "10 is rate times time times names. For a chance, use $1 - e^{-\\lambda t}$, which is a little smaller.",
+     "prob": "0.0952 is the chance for one name. Multiply by 100 names."
+    }
+   },
+   "explain": {
+    "text": "The draw triggers a default when $U < 1 - e^{-0.1} = 0.0952$, so about 9.5 of 100 names default. Every Monte Carlo engine starts from uniforms because $F^{-1}(U)$ turns them into any distribution with an invertible CDF."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The CDF method finds $P(Y \\le y)$ and differentiates. For monotone $g$ it gives $f_Y(y) = f_X(x)\\left|\\tfrac{dx}{dy}\\right|$.",
+   "A map that is not one-to-one (like $Z^2$) needs one term per branch. A map constant on an interval leaves an atom.",
+   "In two dimensions the factor is the Jacobian determinant. Box and Muller turn two uniforms into two independent normals."
+  ],
+  "formula": {
+   "name": "Change of variables",
+   "tex": "f_Y(y) = f_X(x)\\left|\\dfrac{dx}{dy}\\right|, \\qquad f_{V,W} = f_{X,Y}\\left|\\dfrac{\\partial(x, y)}{\\partial(v, w)}\\right|",
+   "note": "Check that the new density has area 1. If it does not, a factor is missing."
+  },
+  "trap": "Leaving out $\\left|\\tfrac{dx}{dy}\\right|$ gives a curve that does not integrate to 1. Taking one branch of $Z^2$ halves the density."
+ },
+ "quiz": [
+  {
+   "id": "q-stretch",
+   "difficulty": 2,
+   "prose": "$X$ is uniform on $[0, 1]$ and $Y = 2X$.",
+   "question": "What is the height of the density of $Y$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "A decimal",
+    "label": "Height of f_Y",
+    "accept": "$\\tfrac12$ over $[0, 2]$.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$f_Y = f_X \\cdot \\tfrac12 = \\tfrac12$ on $[0, 2]$.",
+    "generic": "Not quite right. $Y$ is spread over $[0, 2]$ and the area must stay 1.",
+    "byKey": {
+     "one": "Height 1 over width 2 has area 2.",
+     "two": "Height 2 over width 2 has area 4."
+    }
+   },
+   "explain": {
+    "text": "$\\left|\\tfrac{dx}{dy}\\right| = \\tfrac12$, so the height is $\\tfrac12$. Width 2 times height $\\tfrac12$ is 1."
+   }
+  },
+  {
+   "id": "q-inverse",
+   "difficulty": 2,
+   "prose": "A wait is exponential with rate $\\lambda = 0.5$. Use $F^{-1}(u) = -\\ln(1 - u)/\\lambda$.",
+   "question": "What wait does the uniform draw $u = 0.9$ give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.605,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "A decimal",
+    "label": "Wait for u = 0.9",
+    "accept": "$-\\ln(0.1)/0.5 = 4.605$.",
+    "wrong": [
+     {
+      "id": "u",
+      "value": 0.2107,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-\\ln(0.1)/0.5 = 4.605$.",
+    "generic": "Not quite right. Put $1 - u = 0.1$ inside the log.",
+    "byKey": {
+     "u": "You put $u = 0.9$ inside the log instead of $1 - u$. That gives the 10th percentile, not the 90th."
+    }
+   },
+   "explain": {
+    "text": "$\\ln(0.1) = -2.3026$, and $2.3026 / 0.5 = 4.605$. Large uniform draws give long waits."
+   }
+  },
+  {
+   "id": "q-square",
+   "difficulty": 3,
+   "prose": "$Z$ is standard normal and $Y = Z^2$.",
+   "question": "What is $P(Y \\le 1)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6827,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "P(Y <= 1)",
+    "accept": "$P(-1 \\le Z \\le 1) = 0.6827$.",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.3413,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "upper",
+      "value": 0.8413,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$Y \\le 1$ means $-1 \\le Z \\le 1$, chance 0.6827.",
+    "generic": "Not quite right. $Z^2 \\le 1$ allows $Z$ on both sides of 0.",
+    "byKey": {
+     "half": "0.3413 is only the branch $0 \\le Z \\le 1$. $Z$ may also be between $-1$ and 0.",
+     "upper": "0.8413 is $P(Z \\le 1)$. That includes every negative $Z$, even those with $Z^2 > 1$."
+    }
+   },
+   "explain": {
+    "text": "$Z^2 \\le 1$ holds for $|Z| \\le 1$, which has chance $2\\Phi(1) - 1 = 0.6827$. Both branches count."
+   }
+  },
+  {
+   "id": "q-bm",
+   "difficulty": 3,
+   "prose": "In Box and Muller, $R^2 = -2\\ln U_1$ and $X^2 + Y^2 = R^2$ for two independent standard normals.",
+   "question": "What is $E[R^2]$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "A number",
+    "label": "E[R^2]",
+    "accept": "$E[X^2] + E[Y^2] = 1 + 1 = 2$.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$E[X^2] + E[Y^2] = 2$.",
+    "generic": "Not quite right. $R^2$ is the sum of two squared standard normals.",
+    "byKey": {
+     "one": "1 is the mean of one squared normal. $R^2$ adds two of them.",
+     "four": "4 would need each squared normal to have mean 2. Each has mean 1."
+    }
+   },
+   "explain": {
+    "text": "Each standard normal has $E[Z^2] = 1$, so $E[R^2] = 2$. Check from the uniform: $-\\ln U_1$ has mean 1, so $-2\\ln U_1$ has mean 2."
+   }
+  }
+ ]
+}

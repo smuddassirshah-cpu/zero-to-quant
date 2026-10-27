@@ -1,0 +1,1128 @@
+{
+ "id": "l18-gamma-beta",
+ "course": "limits-thm",
+ "title": "The Gamma and Beta families",
+ "minutes": 14,
+ "objectives": [
+  "Use the Gamma, chi-square and t distributions and the stories that produce them",
+  "Use the Beta family and update a Beta prior"
+ ],
+ "skills": [
+  "dl-continuous",
+  "dl-normal"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Waiting for the third trade",
+   "prose": "Trades arrive at 2 a minute, so each gap is exponential with mean half a minute. The wait $T$ for the **third** trade is the sum of three gaps. The dashed curve is a single exponential. Run the trials.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": 0,
+      "max": 6,
+      "width": 0.25
+     },
+     "proportion": true,
+     "yLabel": "Share of trials",
+     "xLabel": "Minutes until the third trade",
+     "yMax": 0.4,
+     "height": 300,
+     "curves": [
+      {
+       "id": "exp",
+       "expr": "2*exp(-2*x)*w",
+       "dashed": true,
+       "label": "exponential"
+      }
+     ],
+     "sim": {
+      "trials": [
+       100,
+       1000,
+       10000
+      ],
+      "outcome": "sum(3, -log(1 - u()) / 2)",
+      "seed": 181
+     }
+    },
+    "state": {
+     "ran": 0,
+     "caption": "Trades arrive at 2 a minute. Each trial adds three exponential gaps."
+    }
+   },
+   "question": "Where do the bars peak?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "At 0, like each gap",
+      "why": "A single gap is most likely short. Three gaps together are rarely all short, so the peak moves right."
+     },
+     {
+      "id": "mean",
+      "text": "At the mean, 1.5 minutes",
+      "why": "The right tail pulls the mean above the peak. The bars crest earlier, near 1 minute."
+     },
+     {
+      "id": "one",
+      "text": "Near 1 minute, below the mean of 1.5",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "Near 3 minutes",
+      "why": "Three gaps of mean 0.5 add to a mean of 1.5, not 3."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Run 10,000 trials and find the tallest bar."
+    },
+    {
+     "rung": "point",
+     "text": "Compare it with where the dashed exponential peaks.",
+     "highlight": [
+      "b3",
+      "b4",
+      "b5"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The bars crest near 1 minute and trail off to the right.",
+    "generic": "Not quite right. Run the trials and find the tallest bar.",
+    "byKey": {
+     "zero": "A single gap is most likely short. Three gaps together are rarely all short.",
+     "mean": "The right tail pulls the mean above the peak.",
+     "three": "Three gaps of mean 0.5 add to 1.5."
+    }
+   },
+   "explain": {
+    "text": "The wait is not exponential: it starts at 0, crests near 1 and has a mean of 1.5. It is a **Gamma** distribution, the sum of three exponentials. The density is $4t^2e^{-2t}$, with peak at $t = 1$.",
+    "canvas": {
+     "ran": 10000,
+     "showMean": true
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Spread of the wait",
+   "prose": "Each gap has mean $\\tfrac12$ minute and variance $\\tfrac14$. The three gaps are independent, and $T$ is their sum, whose mean is $1.5$ minutes.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": 0,
+      "max": 6,
+      "width": 0.25
+     },
+     "proportion": true,
+     "yLabel": "Share of trials",
+     "xLabel": "Minutes until the third trade",
+     "yMax": 0.4,
+     "height": 300,
+     "curves": [
+      {
+       "id": "exp",
+       "expr": "2*exp(-2*x)*w",
+       "dashed": true,
+       "label": "exponential"
+      }
+     ],
+     "sim": {
+      "trials": [
+       100,
+       1000,
+       10000
+      ],
+      "outcome": "sum(3, -log(1 - u()) / 2)",
+      "seed": 181
+     }
+    },
+    "state": {
+     "ran": 10000,
+     "showMean": true
+    }
+   },
+   "question": "What is $\\mathrm{Var}(T)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.75,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "A decimal",
+    "label": "Var(T)",
+    "accept": "$3 \\times \\tfrac14 = 0.75$.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "scaled",
+      "value": 2.25,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Variances of independent variables add."
+    },
+    {
+     "rung": "point",
+     "text": "Three gaps, each with variance $\\tfrac14$.",
+     "highlight": [
+      "b3",
+      "b4"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$3 \\times \\tfrac14 = 0.75$.",
+    "generic": "Not quite right. Add the three variances.",
+    "byKey": {
+     "one": "0.25 is the variance of one gap. $T$ adds three independent gaps.",
+     "scaled": "2.25 is $3^2 \\times \\tfrac14$: that treats three gaps as one gap tripled. Independent gaps add variances, not sds."
+    }
+   },
+   "explain": {
+    "text": "$\\mathrm{Var}(T) = 3 \\times \\tfrac14 = 0.75$, an sd of 0.87 minutes. In general the wait for the $a$th trade has mean $\\tfrac{a}{\\lambda}$ and variance $\\tfrac{a}{\\lambda^2}$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A tail through the count",
+   "prose": "The third trade comes after 2 minutes exactly when fewer than 3 trades arrive in the first 2 minutes. The count of trades in 2 minutes is Poisson with mean $2 \\times 2 = 4$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "poisson",
+     "params": {
+      "lambda": 4
+     },
+     "x": [
+      0,
+      12
+     ],
+     "variable": "N",
+     "xLabel": "Trades in the first 2 minutes",
+     "height": 240
+    },
+    "state": {}
+   },
+   "question": "What is $P(T > 2)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2381,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A decimal",
+    "label": "P(T > 2)",
+    "accept": "$e^{-4}\\left(1 + 4 + \\tfrac{16}{2}\\right) = 13e^{-4} \\approx 0.2381$.",
+    "wrong": [
+     {
+      "id": "single",
+      "value": 0.0183,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "off",
+      "value": 0.4335,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$T > 2$ means the count $N$ is 0, 1 or 2."
+    },
+    {
+     "rung": "point",
+     "text": "$P(N = k) = e^{-4}\\dfrac{4^k}{k!}$.",
+     "highlight": [
+      "x0",
+      "x1",
+      "x2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Add $k = 0, 1, 2$: $e^{-4}(1 + 4 + 8)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$13e^{-4} = 0.2381$.",
+    "generic": "Not quite right. Add the Poisson chances of 0, 1 and 2 trades.",
+    "byKey": {
+     "single": "0.0183 is $e^{-4}$, the chance of no trades. One or two trades still mean the third has not come.",
+     "off": "0.4335 includes $N = 3$. If three trades have arrived, the third has come by minute 2."
+    }
+   },
+   "explain": {
+    "text": "$P(T > 2) = P(N \\le 2) = e^{-4}(1 + 4 + 8) = 0.2381$. The Gamma tail is a Poisson sum. Counts and waits describe the same arrivals."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The Gamma family",
+   "prose": "The wait for the $a$th arrival at rate $\\lambda$ has the **Gamma** density $$f(t) = \\frac{\\lambda^a}{\\Gamma(a)}t^{a-1}e^{-\\lambda t},\\quad t > 0,$$ with mean $\\tfrac{a}{\\lambda}$. Here $\\Gamma(n) = (n - 1)!$ and $\\Gamma(\\tfrac12) = \\sqrt\\pi$. Libraries often ask for the **scale** $\\tfrac1\\lambda$.",
+   "question": "A package takes a shape and a scale. Which settings give the wait for the third trade at 2 a minute?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rate",
+      "text": "Shape 3, scale 2",
+      "why": "You passed the rate as the scale. The mean would be $3 \\times 2 = 6$ minutes, not 1.5."
+     },
+     {
+      "id": "swap",
+      "text": "Shape 2, scale 3",
+      "why": "You swapped the two numbers. The shape counts arrivals, the scale is the mean gap."
+     },
+     {
+      "id": "right",
+      "text": "Shape 3, scale 0.5",
+      "correct": true
+     },
+     {
+      "id": "half",
+      "text": "Shape 0.5, scale 3",
+      "why": "You used the mean gap as the shape. The shape is the number of arrivals, 3."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The shape counts the arrivals we wait for."
+    },
+    {
+     "rung": "point",
+     "text": "The scale is the mean gap: $\\tfrac1\\lambda = 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Shape 3, scale 0.5, mean $3 \\times 0.5 = 1.5$.",
+    "generic": "Not quite right. The shape is the number of arrivals, and the scale is $\\tfrac1\\lambda$.",
+    "byKey": {
+     "rate": "With scale 2 the mean would be 6 minutes.",
+     "swap": "The shape counts arrivals: 3.",
+     "half": "The shape is the number of arrivals, not the mean gap."
+    }
+   },
+   "explain": {
+    "text": "Shape $a = 3$, scale $\\tfrac1\\lambda = 0.5$ gives mean 1.5, as simulated. At $t = 1$ the density is $\\tfrac{8}{2}\\,e^{-2} = 0.5413$. Some software uses the rate and some the scale, so always check the mean."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Sums of squares",
+   "prose": "Add the squares of $n$ independent standard normals: $V = Z_1^2 + \\dots + Z_n^2$. This is the **chi-square** with $n$ degrees of freedom, a Gamma with $a = \\tfrac n2$ and $\\lambda = \\tfrac12$. One degree is the $Z^2$ density of an earlier lesson.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      20
+     ],
+     "y": [
+      0,
+      0.5
+     ],
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp((n/2 - 1)*ln(x) - x/2 - (n/2)*ln(2) - lgamma(n/2))",
+       "domain": [
+        0.02,
+        20
+       ],
+       "label": "chi-square"
+      }
+     ],
+     "xLabel": "$v$",
+     "yLabel": "density",
+     "height": 260
+    },
+    "state": {
+     "params": {
+      "n": 6
+     }
+    },
+    "controls": [
+     {
+      "bind": "n",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "start": 6,
+      "label": "degrees of freedom $n$",
+      "decimals": 0
+     }
+    ]
+   },
+   "question": "Six independent standardised returns are squared and added. What is $\\mathrm{Var}(V)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 12,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "A number",
+    "label": "Var(V)",
+    "accept": "$6 \\times 2 = 12$, since $\\mathrm{Var}(Z^2) = E[Z^4] - 1 = 3 - 1 = 2$.",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 6,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "one",
+      "value": 2,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find $\\mathrm{Var}(Z^2)$ first. The fourth moment of a standard normal is 3."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathrm{Var}(Z^2) = E[Z^4] - (E[Z^2])^2 = 3 - 1$.",
+     "highlight": [
+      "f"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Six independent terms add: $6 \\times 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$6 \\times 2 = 12$, which is $2n$.",
+    "generic": "Not quite right. Each squared normal has variance 2, and six independent ones add.",
+    "byKey": {
+     "mean": "6 is the mean of $V$, which equals $n$. The variance is $2n$.",
+     "one": "2 is the variance of one squared normal. There are six."
+    }
+   },
+   "explain": {
+    "text": "Each $Z^2$ has mean 1 and variance 2, so $V$ has mean $n$ and variance $2n$: 6 and 12. As a Gamma, $a/\\lambda = \\tfrac{n/2}{1/2} = n$ and $a/\\lambda^2 = 2n$ agree."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Estimating the sd costs you",
+   "prose": "A $t$-ratio divides by an estimated sd. With $V$ chi-square on $n$ degrees of freedom, $t = \\dfrac{Z}{\\sqrt{V/n}}$ has the **$t$ distribution**, with heavier tails than the normal. The shaded tails are beyond $\\pm 2$, with $n = 5$. The normal puts 0.0455 there.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "t",
+     "params": {
+      "nu": 5
+     },
+     "x": [
+      -6,
+      6
+     ],
+     "variable": "t",
+     "xLabel": "$t$",
+     "height": 260
+    },
+    "state": {
+     "shade": [
+      {
+       "from": null,
+       "to": -2
+      },
+      {
+       "from": 2,
+       "to": null
+      }
+     ],
+     "overlay": [
+      {
+       "id": "nrm",
+       "family": "normal",
+       "params": {
+        "mu": 0,
+        "sigma": 1
+       },
+       "label": "normal"
+      }
+     ]
+    }
+   },
+   "question": "How many times larger is the $t_5$ two-tail chance beyond $\\pm 2$ than the normal's 0.0455?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.24,
+    "tol": {
+     "abs": 0.02
+    },
+    "placeholder": "A decimal",
+    "label": "Ratio of tail chances",
+    "accept": "$\\tfrac{0.1019}{0.0455} \\approx 2.24$.",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 1,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "inv",
+      "value": 0.446,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the shaded probability on the canvas, both tails together."
+    },
+    {
+     "rung": "point",
+     "text": "Divide it by the normal's 0.0455.",
+     "highlight": [
+      "shade"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{0.1019}{0.0455} = 2.24$: more than twice as likely.",
+    "generic": "Not quite right. Divide the $t_5$ two-tail chance by 0.0455.",
+    "byKey": {
+     "same": "1 would mean the two tails are equal. The label shows the $t_5$ tail is much bigger.",
+     "inv": "0.446 is the ratio upside down. The $t$ is the larger tail."
+    }
+   },
+   "explain": {
+    "text": "With only 5 degrees of freedom, a $|t|$ above 2 has chance 0.1019, over twice the normal's 0.0455. The sample sd is itself uncertain, which fattens the tails. The gap closes as $n$ grows."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A short track record",
+   "prose": "A strategy has six monthly returns. The sd is estimated from them, and the $t$-ratio is 2.3. The normal table says the two-tail chance is 0.021. The cut-off for a 5% test with 5 degrees of freedom is 2.57.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "t",
+     "params": {
+      "nu": 5
+     },
+     "x": [
+      -6,
+      6
+     ],
+     "variable": "t",
+     "xLabel": "$t$",
+     "height": 240
+    },
+    "state": {
+     "shade": [
+      {
+       "from": null,
+       "to": -2.3
+      },
+      {
+       "from": 2.3,
+       "to": null
+      }
+     ],
+     "overlay": [
+      {
+       "id": "nrm",
+       "family": "normal",
+       "params": {
+        "mu": 0,
+        "sigma": 1
+       },
+       "label": "normal"
+      }
+     ]
+    }
+   },
+   "question": "Is the track record significant at the 5% level, two-sided?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "normal",
+      "text": "Yes: 2.3 exceeds 1.96",
+      "why": "You used the normal cut-off. With the sd estimated from six points, the right cut-off is 2.57."
+     },
+     {
+      "id": "no",
+      "text": "No: 2.3 is below the cut-off of 2.57 for 5 degrees of freedom",
+      "correct": true
+     },
+     {
+      "id": "p",
+      "text": "Yes: the chance is only 0.021",
+      "why": "0.021 comes from the normal. The $t_5$ two-tail chance is 0.0698, above 0.05."
+     },
+     {
+      "id": "small",
+      "text": "The $t$ distribution cannot be used with so few points",
+      "why": "It is exact for normal data at any size. It is the normal table that is wrong for small samples."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which table matches a sd estimated from six points?"
+    },
+    {
+     "rung": "point",
+     "text": "With 5 degrees of freedom the shaded two-tail area is what counts.",
+     "highlight": [
+      "shade"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The two-tail chance is 0.0698, above 0.05.",
+    "generic": "Not quite right. Use the $t$ distribution with 5 degrees of freedom.",
+    "byKey": {
+     "normal": "The normal cut-off 1.96 is too low for six observations.",
+     "p": "0.021 is the normal's tail. The $t_5$ tail is 0.0698.",
+     "small": "The $t$ is exact for normal data at any size."
+    }
+   },
+   "explain": {
+    "text": "The $t_5$ two-tail chance at 2.3 is 0.0698, so the result is not significant at 5%. Normal tables flatter short track records. With 30 observations the gap is much smaller."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Distributions on $[0, 1]$",
+   "prose": "The **Beta** density is $\\dfrac{x^{a-1}(1 - x)^{b-1}}{B(a, b)}$ on $[0, 1]$, with mean $\\tfrac{a}{a+b}$. Beta(1, 1) is the uniform. The $k$th smallest of $n$ uniforms is Beta($k$, $n - k + 1$): the density from the order statistics lesson.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 2,
+      "b": 4
+     },
+     "x": [
+      0,
+      1
+     ],
+     "variable": "X",
+     "xLabel": "$x$",
+     "height": 240
+    },
+    "state": {
+     "showMean": true
+    }
+   },
+   "question": "The second smallest of five uniforms is Beta(2, 4). What is its mean?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3333,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A fraction or decimal",
+    "label": "Mean of Beta(2, 4)",
+    "accept": "$\\tfrac{2}{2 + 4} = \\tfrac13$.",
+    "wrong": [
+     {
+      "id": "kn",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The mean is $\\tfrac{a}{a + b}$."
+    },
+    {
+     "rung": "point",
+     "text": "$a = 2$ and $b = 4$.",
+     "highlight": [
+      "mean"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac26 = \\tfrac13$.",
+    "generic": "Not quite right. Use $\\tfrac{a}{a + b}$ with $a = 2$, $b = 4$.",
+    "byKey": {
+     "kn": "0.4 is $\\tfrac{k}{n} = \\tfrac25$. The mean is $\\tfrac{k}{n+1}$, because Beta($k$, $n - k + 1$) has $a + b = n + 1$.",
+     "half": "0.5 would be the mean of Beta(2, 2). Here $b$ is larger, which pulls the mass left."
+    }
+   },
+   "explain": {
+    "text": "$a + b = n + 1 = 6$, so the mean is $\\tfrac{2}{6} = \\tfrac13$, the value found in the order statistics lesson. A Beta suits any quantity trapped between 0 and 1, such as a hit rate or a share."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Highest at the ends",
+   "prose": "Beta(0.5, 0.5) has density $\\dfrac{1}{\\pi\\sqrt{x(1 - x)}}$. It is unbounded at 0 and 1 and still integrates to 1, as in the improper-integral lesson. Its mean is $\\tfrac12$, yet 0.5 is the least likely region.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 0.5,
+      "b": 0.5
+     },
+     "x": [
+      0,
+      1
+     ],
+     "variable": "X",
+     "xLabel": "$x$",
+     "height": 240
+    },
+    "state": {
+     "shade": {
+      "from": 0,
+      "to": 0.25
+     },
+     "showProb": false
+    }
+   },
+   "question": "What is $P(X \\le 0.25)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3333,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A fraction or decimal",
+    "label": "P(X <= 0.25)",
+    "accept": "$\\dfrac{2}{\\pi}\\arcsin\\sqrt{0.25} = \\dfrac{2}{\\pi}\\cdot\\dfrac\\pi6 = \\tfrac13$.",
+    "wrong": [
+     {
+      "id": "unif",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The CDF is $\\tfrac{2}{\\pi}\\arcsin\\sqrt x$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\arcsin\\sqrt{0.25} = \\arcsin 0.5 = \\tfrac\\pi6$.",
+     "highlight": [
+      "shade"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{2}{\\pi}\\cdot\\tfrac\\pi6 = \\tfrac13$.",
+    "generic": "Not quite right. Use the CDF $\\tfrac{2}{\\pi}\\arcsin\\sqrt x$.",
+    "byKey": {
+     "unif": "0.25 is the answer for a uniform. This density piles up at the ends, so a third of the mass lies below 0.25.",
+     "half": "0.5 is the chance of being below the mean. Below 0.25 is only a quarter of the interval."
+    }
+   },
+   "explain": {
+    "text": "A third of the probability lies in the first quarter of the interval, and a third in the last quarter. This **arcsine** law describes, for example, the share of time a fair random walk spends positive."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Updating a Beta prior",
+   "prose": "A strategy's hit rate $p$ has a Beta(2, 2) prior. It then wins 14 of 20 trades. Find the posterior density of $p$.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "prior",
+      "text": "Prior: $f(p) \\propto p^{2-1}(1 - p)^{2-1} = p(1 - p)$, the Beta(2, 2) density without its constant"
+     },
+     {
+      "id": "like",
+      "text": "Likelihood of 14 wins in 20: $\\binom{20}{14}p^{14}(1 - p)^6 \\propto p^{14}(1 - p)^6$, since the binomial coefficient does not depend on $p$"
+     },
+     {
+      "id": "post",
+      "text": "Posterior $\\propto$ prior $\\times$ likelihood $= p^{15}(1 - p)^7$, by Bayes' rule, adding the exponents"
+     },
+     {
+      "id": "name",
+      "text": "$p^{15}(1 - p)^7 = p^{16-1}(1 - p)^{8-1}$, the Beta(16, 8) density, so the posterior is Beta(16, 8)"
+     }
+    ],
+    "answer": [
+     "prior",
+     "like",
+     "post",
+     "name"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the prior and the likelihood before combining them."
+    },
+    {
+     "rung": "point",
+     "text": "Constants that do not depend on $p$ can be dropped."
+    },
+    {
+     "rung": "step",
+     "text": "Prior, likelihood, product, recognise."
+    }
+   ],
+   "feedback": {
+    "correct": "Prior, likelihood, product, recognise the Beta.",
+    "generic": "Not quite right. Write the prior and the likelihood before multiplying.",
+    "byKey": {
+     "post": "The product needs both the prior and the likelihood written out.",
+     "name": "Naming the Beta is the last step, once the exponents are added."
+    }
+   },
+   "explain": {
+    "text": "Wins add to $a$ and losses add to $b$: $2 + 14 = 16$ and $2 + 6 = 8$. A Beta prior stays a Beta after binomial data, which is why it is called **conjugate**."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "How sure of a hit rate above 50%?",
+   "prose": "The posterior for the hit rate is Beta(16, 8), with mean $\\tfrac{16}{24} = 0.667$. That sits between the prior mean 0.5 and the raw rate 0.70. The shaded area is $p > 0.5$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 16,
+      "b": 8
+     },
+     "x": [
+      0,
+      1
+     ],
+     "variable": "p",
+     "xLabel": "Hit rate $p$",
+     "height": 240
+    },
+    "state": {
+     "shade": {
+      "from": 0.5,
+      "to": null
+     }
+    }
+   },
+   "question": "Which statement does the posterior support?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ninefive",
+      "text": "There is about a 95% chance that the true hit rate exceeds 0.5",
+      "correct": true
+     },
+     {
+      "id": "raw",
+      "text": "The true hit rate is 0.70",
+      "why": "0.70 is the raw rate from 20 trades. The posterior is a whole distribution, centred lower at 0.667 and still wide."
+     },
+     {
+      "id": "mean",
+      "text": "There is a 67% chance that the hit rate exceeds 0.5",
+      "why": "0.667 is the posterior mean of $p$. The chance that $p > 0.5$ is the shaded area, 0.9534."
+     },
+     {
+      "id": "flip",
+      "text": "There is a 95% chance that the hit rate is below 0.5",
+      "why": "You reversed the tail. The shaded area is $p > 0.5$, which holds 0.9534 of the probability."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the shaded area on the canvas."
+    },
+    {
+     "rung": "point",
+     "text": "It is the area of the Beta(16, 8) density to the right of 0.5.",
+     "highlight": [
+      "shade"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The shaded tail is 0.9534.",
+    "generic": "Not quite right. Read the area right of 0.5 under the Beta(16, 8) density.",
+    "byKey": {
+     "raw": "0.70 is the raw hit rate, not a statement about $p$.",
+     "mean": "0.667 is the posterior mean, not the chance that $p > 0.5$.",
+     "flip": "The shaded area is $p > 0.5$."
+    }
+   },
+   "explain": {
+    "text": "The posterior puts 95.3% on $p > 0.5$, though the sd of $p$ is still 0.094. When there is no closed form, the Markov chain Monte Carlo of the Markov course samples such a posterior instead."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The wait for the $a$th arrival at rate $\\lambda$ is Gamma, with mean $\\tfrac a\\lambda$ and variance $\\tfrac{a}{\\lambda^2}$. Check whether software wants the rate or the scale $\\tfrac1\\lambda$.",
+   "A sum of $n$ squared standard normals is chi-square (Gamma with $a = \\tfrac n2$, $\\lambda = \\tfrac12$). The $t$ distribution $\\tfrac{Z}{\\sqrt{V/n}}$ has heavier tails than the normal.",
+   "Beta($a$, $b$) lives on $[0, 1]$. A Beta prior with binomial data gives a Beta posterior: wins add to $a$ and losses add to $b$."
+  ],
+  "formula": {
+   "name": "Gamma and Beta densities",
+   "tex": "\\dfrac{\\lambda^a}{\\Gamma(a)}t^{a-1}e^{-\\lambda t}, \\qquad \\dfrac{x^{a-1}(1 - x)^{b-1}}{B(a, b)}",
+   "note": "Gamma mean $\\tfrac a\\lambda$, variance $\\tfrac a{\\lambda^2}$. Beta mean $\\tfrac{a}{a+b}$."
+  },
+  "trap": "Using normal critical values for a $t$-ratio from a few observations understates the chance of a fluke."
+ },
+ "quiz": [
+  {
+   "id": "q-gamma-mean",
+   "difficulty": 2,
+   "prose": "Orders arrive at 4 a minute, as a Poisson process.",
+   "question": "What is the mean wait for the fifth order, in minutes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.25,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "A decimal",
+    "label": "Mean wait for the fifth order",
+    "accept": "$\\tfrac{a}{\\lambda} = \\tfrac54 = 1.25$.",
+    "wrong": [
+     {
+      "id": "gap",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "twenty",
+      "value": 20,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac{5}{4} = 1.25$ minutes.",
+    "generic": "Not quite right. Use $\\tfrac{a}{\\lambda}$ with $a = 5$, $\\lambda = 4$.",
+    "byKey": {
+     "gap": "0.25 is the mean of one gap. The fifth order needs five gaps.",
+     "twenty": "20 is $a \\times \\lambda$. The mean divides by the rate."
+    }
+   },
+   "explain": {
+    "text": "Five gaps of mean $\\tfrac14$ minute give $1.25$ minutes."
+   }
+  },
+  {
+   "id": "q-chi-sd",
+   "difficulty": 2,
+   "prose": "$V$ is chi-square with 10 degrees of freedom, so its mean is 10 and its variance is $2n$.",
+   "question": "What is the standard deviation of $V$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.472,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "A decimal",
+    "label": "sd of V",
+    "accept": "$\\sqrt{20} \\approx 4.472$.",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 20,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "mean",
+      "value": 10,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{20} = 4.472$.",
+    "generic": "Not quite right. Take the square root of the variance $2n = 20$.",
+    "byKey": {
+     "var": "20 is the variance. The question asks for the standard deviation.",
+     "mean": "10 is the mean of $V$."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{2 \\times 10} = 4.472$."
+   }
+  },
+  {
+   "id": "q-t-tails",
+   "difficulty": 2,
+   "prose": "A $t$ distribution with 5 degrees of freedom is compared with the standard normal.",
+   "question": "Which statement is true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "They give the same tail probabilities",
+      "why": "They agree only when the degrees of freedom are large. At 5 the $t$ tails are over twice as heavy."
+     },
+     {
+      "id": "heavy",
+      "text": "The $t$ puts more probability beyond $\\pm 2$",
+      "correct": true
+     },
+     {
+      "id": "lighter",
+      "text": "The $t$ has lighter tails because it uses an estimate",
+      "why": "The estimate adds uncertainty, which makes tails heavier, not lighter."
+     },
+     {
+      "id": "narrow",
+      "text": "The $t$ is narrower and taller in the middle",
+      "why": "The $t$ is a little lower at the centre and heavier in the tails."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The $t_5$ has heavier tails: 0.1019 beyond $\\pm 2$ against 0.0455.",
+    "generic": "Not quite right. Compare the shaded tails of the two curves."
+   },
+   "explain": {
+    "text": "A $t$-ratio uses an estimated sd, which adds noise to the denominator. That fattens both tails."
+   }
+  },
+  {
+   "id": "q-beta-update",
+   "difficulty": 3,
+   "prose": "A hit rate has a uniform prior, Beta(1, 1). The strategy wins 3 of 4 trades.",
+   "question": "What is the posterior mean of the hit rate?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "A fraction or decimal",
+    "label": "Posterior mean",
+    "accept": "Posterior Beta(4, 2), mean $\\tfrac46 \\approx 0.6667$.",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "prior",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Beta(4, 2) has mean $\\tfrac46 = 0.6667$.",
+    "generic": "Not quite right. Add the wins to $a$ and the losses to $b$.",
+    "byKey": {
+     "raw": "0.75 is the raw hit rate. The prior pulls the posterior mean towards 0.5.",
+     "prior": "0.5 is the prior mean. The data have moved it."
+    }
+   },
+   "explain": {
+    "text": "$a = 1 + 3 = 4$ and $b = 1 + 1 = 2$, so the mean is $\\tfrac{4}{6}$. With so little data the prior still counts for a lot."
+   }
+  }
+ ]
+}
