@@ -1,0 +1,1527 @@
+{
+ "id": "topic-1.9",
+ "topic": "1.9",
+ "name": "C++ topic exam",
+ "minutes": 60,
+ "pass": 0.7,
+ "skills": {
+  "cp-basics": "Types and control flow",
+  "cp-references": "References and const",
+  "cp-memory": "Memory and ownership",
+  "cp-classes": "Classes and templates",
+  "cp-stl": "The standard library",
+  "cp-build": "Building and testing",
+  "cx-numeric": "Numerical code",
+  "cx-pricers": "Pricers in C++",
+  "cx-perf": "Performance",
+  "cx-testing": "Testing pricers"
+ },
+ "items": [
+  {
+   "id": "e-negative-split",
+   "difficulty": 2,
+   "skills": [
+    "cp-basics"
+   ],
+   "title": "Splitting a loss",
+   "prose": "A desk lost 11 pence over 4 trades, and we split the loss.\n\n```cpp\nint loss = -11, trades = 4;\nstd::cout << loss / trades << \" \"\n          << loss / 4.0 << \" \"\n          << loss % trades << \"\\n\";\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "trunc",
+      "text": "`-2 -2.75 -3`",
+      "correct": true
+     },
+     {
+      "id": "python",
+      "text": "`-3 -2.75 1`",
+      "why": "That is Python's `//` and `%`, which round down. C++ integer division truncates towards zero, and `%` keeps the sign of `loss`."
+     },
+     {
+      "id": "int-double",
+      "text": "`-2 -2 -3`",
+      "why": "`4.0` is a `double`, so `loss` is converted and the division keeps its fraction."
+     },
+     {
+      "id": "all-double",
+      "text": "`-2.75 -2.75 -2.75`",
+      "why": "Two `int`s divide as integers in C++. Only the middle division has a `double` operand, and `%` needs integers."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Integer division truncates towards zero, and the remainder takes the sign of the dividend.",
+    "generic": "Check the type of each operand. Which divisions are between two `int`s?"
+   },
+   "explain": {
+    "text": "$-11 / 4 = -2.75$, which integer division truncates towards zero: $-2$. With `4.0` the division is done in `double`, so $-2.75$ survives. The remainder satisfies $(-2)(4) + (-3) = -11$."
+   }
+  },
+  {
+   "id": "e-trim-copy",
+   "difficulty": 2,
+   "skills": [
+    "cp-references"
+   ],
+   "title": "Trimming a position",
+   "prose": "```cpp\nvoid trim(double pos) {\n    pos -= 300;\n}\nvoid trim_ref(double& pos) {\n    pos -= 300;\n}\n\ndouble position = 1000;\ntrim(position);\ntrim_ref(position);\ntrim(position);\n```",
+   "question": "What is `position` after the three calls?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 700,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "shares",
+    "label": "position after the calls",
+    "accept": "700: only `trim_ref` changes the caller's variable.",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "none",
+      "value": 1000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only `trim_ref` reaches the caller's variable: $1000 - 300 = 700$.",
+    "generic": "Which function gets the caller's `position`, and which gets a copy?",
+    "byKey": {
+     "all": "You subtracted three times. `trim` takes a `double` by value, so it changes its own copy.",
+     "none": "`trim_ref` takes `double&`, so its `pos` is the caller's `position` itself."
+    }
+   },
+   "explain": {
+    "text": "`trim` copies its argument and changes the copy, which dies at its `}`. `trim_ref` binds `pos` to `position` itself. One real subtraction leaves 700."
+   }
+  },
+  {
+   "id": "e-seeded-draws",
+   "difficulty": 2,
+   "skills": [
+    "cx-numeric"
+   ],
+   "title": "Same seed, two builds",
+   "prose": "A Monte Carlo test seeds its generator so that every run sees the same draws.\n\n```cpp\nstd::mt19937 gen(2024);\nstd::normal_distribution<double> z;\nfor (int i = 0; i < 3; ++i)\n    std::cout << z(gen) << \" \";\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./draws   # g++, libstdc++",
+      "0.809774 0.872203 0.895505",
+      "$ ./draws",
+      "0.809774 0.872203 0.895505",
+      "$ ./draws   # clang, libc++",
+      "0.872203 0.809774 0.216707"
+     ],
+     "title": "Terminal"
+    }
+   },
+   "question": "Each build repeats itself run after run, but the two builds disagree. Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dist",
+      "text": "The standard fixes the integers `std::mt19937` produces, but not how `normal_distribution` turns them into normals.",
+      "correct": true
+     },
+     {
+      "id": "clock",
+      "text": "One library ignores the seed and draws from the clock.",
+      "why": "Both builds repeat themselves exactly, run after run, so both use the seed."
+     },
+     {
+      "id": "engine",
+      "text": "`std::mt19937` produces different integers in each library.",
+      "why": "The engine's output is fixed by the standard: from seed 2024 both builds return 2,525,503,112 first. Only the conversion to normals differs."
+     },
+     {
+      "id": "rounding",
+      "text": "The two compilers round floating-point arithmetic differently.",
+      "why": "Rounding would change the last digits, not swap whole draws. The libraries use different algorithms."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The engine is portable; the distribution is not.",
+    "generic": "Compare the two outputs. Which part of the code does the C++ standard pin down exactly?"
+   },
+   "explain": {
+    "text": "`std::mt19937` is specified exactly, so seed 2024 gives the same integers everywhere. `normal_distribution` may use any algorithm: libc++ returns the polar method's pair in the other order. A test that must match across machines stores the draws, or tests statistics with a tolerance."
+   }
+  },
+  {
+   "id": "e-scale-order",
+   "difficulty": 2,
+   "skills": [
+    "cp-classes"
+   ],
+   "title": "Scaling a fee",
+   "prose": "```cpp\nstruct Money {\n    long long pence;\n    // scales, rounding to whole pence\n    Money operator*(double k) const;\n};\n\nMoney fee{250};\n```",
+   "question": "With only this member operator, which expressions compile?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "left",
+      "text": "`fee * 1.5` only",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "Both `fee * 1.5` and `1.5 * fee`",
+      "why": "A member operator needs a `Money` on its left. For `1.5 * fee` the compiler looks for `operator*(double, Money)`, which does not exist."
+     },
+     {
+      "id": "right",
+      "text": "`1.5 * fee` only",
+      "why": "That reverses the rule. The left operand becomes `this`, so it must be the `Money`."
+     },
+     {
+      "id": "neither",
+      "text": "Neither: `operator*` must be a free function",
+      "why": "Member operators are legal. This one handles `fee * 1.5`."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`fee * 1.5` is `fee.operator*(1.5)`; nothing handles a `double` on the left.",
+    "generic": "Rewrite each expression as a function call. Which object would be `this`?"
+   },
+   "explain": {
+    "text": "`fee * 1.5` calls `fee.operator*(1.5)`. `1.5 * fee` needs a free function, such as `Money operator*(double k, const Money& m) { return m * k; }`. That is why symmetric operators are usually free functions."
+   }
+  },
+  {
+   "id": "e-link-stage",
+   "difficulty": 2,
+   "skills": [
+    "cp-build"
+   ],
+   "title": "A build that stops at the end",
+   "prose": "`main.cpp` includes `mid.h`, which declares `double mid_price(double bid, double ask);`. The body is in `mid.cpp`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ g++ main.cpp -o quote",
+      "/usr/bin/ld: /tmp/ccenz8If.o: in function `main':",
+      "main.cpp:(.text+0x21): undefined reference to `mid_price(double, double)'",
+      "collect2: error: ld returned 1 exit status"
+     ],
+     "title": "Terminal",
+     "wrap": true
+    }
+   },
+   "question": "Which stage failed, and what fixes it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "linker",
+      "text": "The linker: no object file defines `mid_price`. Build with `g++ main.cpp mid.cpp -o quote`.",
+      "correct": true
+     },
+     {
+      "id": "include",
+      "text": "The compiler: `main.cpp` is missing `#include \"mid.h\"`.",
+      "why": "A missing declaration stops the compiler with \"was not declared in this scope\". Here `main.cpp` compiled, and `ld` is the linker."
+     },
+     {
+      "id": "types",
+      "text": "The compiler: `mid_price` is called with the wrong types.",
+      "why": "A type mismatch is a compile error naming a line of `main.cpp`. This message comes from `ld`, after compiling finished."
+     },
+     {
+      "id": "runtime",
+      "text": "The program crashed when it ran.",
+      "why": "No program was produced. `ld returned 1 exit status` means linking failed, so there is nothing to run."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`undefined reference` is the linker's message: a declaration without a definition.",
+    "generic": "Read the first word of each line. Which tool is talking?"
+   },
+   "explain": {
+    "text": "The header declared `mid_price`, so `main.cpp` compiled. The linker then found no definition, because `mid.cpp` was never compiled. Naming both files, or `add_executable(quote main.cpp mid.cpp)` in CMake, fixes it.",
+    "canvas": {
+     "tone": {
+      "l3": "err"
+     }
+    }
+   }
+  },
+  {
+   "id": "e-volume-wrap",
+   "difficulty": 3,
+   "skills": [
+    "cp-basics"
+   ],
+   "title": "Counters past their limits",
+   "prose": "A share counter and a lot counter, each 32 bits:\n\n```cpp\n// the largest int32_t\nstd::int32_t shares = 2147483647;\nstd::uint32_t lots = 0;\nshares = shares + 1;\nlots = lots - 1;\n```",
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`shares + 1` is undefined behaviour; `lots - 1` is defined and gives 4,294,967,295.",
+      "correct": true
+     },
+     {
+      "id": "both-wrap",
+      "text": "Both wrap: `shares` becomes −2,147,483,648 and `lots` becomes 4,294,967,295.",
+      "why": "Hardware usually wraps, but the language promises nothing for signed types. The optimiser may assume signed overflow never happens."
+     },
+     {
+      "id": "both-ub",
+      "text": "Both lines are undefined behaviour.",
+      "why": "Unsigned arithmetic is defined modulo $2^{32}$, so `0 - 1` is exactly $2^{32} - 1$."
+     },
+     {
+      "id": "swapped",
+      "text": "`shares + 1` wraps to −2,147,483,648; `lots - 1` is undefined.",
+      "why": "That swaps the rules. Unsigned types wrap by definition; signed overflow is undefined."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Unsigned wraps by rule; signed overflow has no defined result.",
+    "generic": "The two variables differ only in being signed or unsigned. What does the standard promise for each?"
+   },
+   "explain": {
+    "text": "Unsigned types do arithmetic modulo $2^{32}$, so `lots` becomes $2^{32} - 1 = 4{,}294{,}967{,}295$. Signed overflow has no defined result, and the compiler may assume it never happens. A counter that can pass $2^{31} - 1$ needs `std::int64_t`."
+   }
+  },
+  {
+   "id": "e-quote-binds",
+   "difficulty": 3,
+   "skills": [
+    "cp-references"
+   ],
+   "title": "What binds to what",
+   "prose": "```cpp\nstruct Quote { double px; };\nvoid amend(Quote& q);\nvoid show(const Quote& q);\nvoid price(Quote q);\n\nconst Quote best{101.5};\n```",
+   "question": "Select all that apply: which calls compile?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "amend-const",
+      "text": "`amend(best)`",
+      "why": "`amend` could change `q`, so it cannot bind to a `const Quote`."
+     },
+     {
+      "id": "show-const",
+      "text": "`show(best)`",
+      "correct": true
+     },
+     {
+      "id": "price-const",
+      "text": "`price(best)`",
+      "correct": true
+     },
+     {
+      "id": "amend-temp",
+      "text": "`amend(Quote{101.6})`",
+      "why": "A temporary cannot bind to a non-const `Quote&`. Any change would vanish with it, so C++ refuses."
+     },
+     {
+      "id": "show-temp",
+      "text": "`show(Quote{101.6})`",
+      "correct": true
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`const Quote&` and a copy accept anything; `Quote&` needs a named, non-const object.",
+    "generic": "Could the function change something that must not change? Could it change something about to vanish?"
+   },
+   "explain": {
+    "text": "`const Quote&` binds to anything, a `const` object or a temporary, because it promises not to write. A by-value parameter takes a copy of anything. `Quote&` binds only to a named object that is not `const`."
+   }
+  },
+  {
+   "id": "e-parity-put",
+   "difficulty": 3,
+   "skills": [
+    "cx-pricers"
+   ],
+   "title": "A put from parity",
+   "prose": "Our tested `bs_call(50, 52, 0.04, 0.3, 0.5)` returns £3.79674: spot 50, strike 52, rate 4%, volatility 30%, half a year. A colleague's `bs_put` returns £6.5003 for the same inputs. Their $d_1$ uses $\\sigma$ where it needs $\\sigma\\sqrt{T}$.",
+   "question": "What should `bs_put` return? Give it to 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.7671,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "£",
+    "label": "put price",
+    "accept": "£4.7671 ± 0.0005: $3.79674 - 50 + 52e^{-0.02}$.",
+    "wrong": [
+     {
+      "id": "slip",
+      "value": 6.5003,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nodisc",
+      "value": 5.7967,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "oneyear",
+      "value": 3.7578,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 2.8264,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Parity gives $P = C - S + Ke^{-rT} = 3.79674 - 50 + 50.97033 = 4.76707$.",
+    "generic": "Use put-call parity, $C - P = S - Ke^{-rT}$, with $T = 0.5$.",
+    "byKey": {
+     "slip": "That is the colleague's value. With $\\sigma$ in place of $\\sigma\\sqrt{T}$ the put is £1.73 too high, and parity fails.",
+     "nodisc": "You left the strike undiscounted. Parity uses $Ke^{-rT}$, the strike's value today.",
+     "oneyear": "You discounted over a whole year. Here $T = 0.5$, so the factor is $e^{-0.02}$.",
+     "sign": "You swapped the signs of $S$ and $Ke^{-rT}$. Rearrange $C - P = S - Ke^{-rT}$ for $P$."
+    }
+   },
+   "explain": {
+    "text": "Parity holds in any model, so it is the cheapest test of a put. $Ke^{-rT} = 52e^{-0.02} = 50.97033$, so $P = 3.79674 - 50 + 50.97033 = 4.76707$. At $T = 1$ the slip would hide, since $\\sqrt{1} = 1$."
+   }
+  },
+  {
+   "id": "e-dangling-best",
+   "difficulty": 3,
+   "skills": [
+    "cp-memory"
+   ],
+   "title": "Who still owns the answer",
+   "prose": "`Bids` is `std::vector<double>`. Each function returns the best (highest) bid, and `v` is never empty.",
+   "question": "Select all that apply: which results may the caller use after the call, while its vector lives on unchanged?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "local-ptr",
+      "text": "```cpp\nconst double* a(const Bids& v) {\n    double x = *std::max_element(\n        v.begin(), v.end());\n    return &x;\n}\n```",
+      "why": "`x` is a local. Its storage is gone at the `}`, so the pointer dangles."
+     },
+     {
+      "id": "value",
+      "text": "```cpp\ndouble b(const Bids& v) {\n    return *std::max_element(\n        v.begin(), v.end());\n}\n```",
+      "correct": true
+     },
+     {
+      "id": "into-caller",
+      "text": "```cpp\nconst double* c(const Bids& v) {\n    return &*std::max_element(\n        v.begin(), v.end());\n}\n```",
+      "correct": true
+     },
+     {
+      "id": "into-copy",
+      "text": "```cpp\nconst double& d(Bids v) {\n    return *std::max_element(\n        v.begin(), v.end());\n}\n```",
+      "why": "`v` is a copy, destroyed when the function returns. The reference points into that copy."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A value is copied out; a pointer into the caller's vector lives as long as that vector.",
+    "generic": "For each pointer or reference, find the object it points into. Does that object outlive the call?"
+   },
+   "explain": {
+    "text": "Returning a value copies it out, and `c` points into the caller's vector, which outlives the call. `a` and `d` point into storage that dies at the `}`. That is undefined behaviour, even when it prints the right number."
+   }
+  },
+  {
+   "id": "e-larger-twice",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes"
+   ],
+   "title": "One template, several functions",
+   "prose": "```cpp\ntemplate <typename T>\nT larger(T a, T b) {\n    return a < b ? b : a;\n}\n\nauto A = larger(101, 99);\nauto B = larger(101.5, 99.0);\nauto C = larger<double>(101, 99.5);\nauto D = larger(9LL, 7LL);\nauto E = larger(101, 99.5);\n```",
+   "question": "Which line does not compile, and how many functions does the compiler make from `larger` for the others?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "E fails; three functions: for `int`, `double` and `long long`.",
+      "correct": true
+     },
+     {
+      "id": "four",
+      "text": "E fails; four functions.",
+      "why": "C names `double` itself, so it reuses B's `larger<double>`. There is one function per distinct `T`."
+     },
+     {
+      "id": "convert",
+      "text": "Nothing fails, since E converts 101 to `double`.",
+      "why": "Deduction does no conversions. From E, `T` would be `int` and `double` at once, so it fails. C works because `T` is given."
+     },
+     {
+      "id": "c-fails",
+      "text": "C fails, because 101 is not a `double`.",
+      "why": "With `T` given as `double`, `larger<double>` is an ordinary function and 101 converts. Only deduction refuses mixed types."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One instantiation per distinct `T`, and deduction never converts.",
+    "generic": "Work out `T` for each line. Which line gives two different answers for `T`?"
+   },
+   "explain": {
+    "text": "Each distinct `T` gives one function: `int` from A, `double` from B and C, `long long` from D. E deduces `T` as `int` from 101 and `double` from 99.5, a conflict. `larger<double>(101, 99.5)` or `larger(101.0, 99.5)` fixes it."
+   }
+  },
+  {
+   "id": "e-batch-clock",
+   "difficulty": 3,
+   "skills": [
+    "cx-perf"
+   ],
+   "title": "Timing with a coarse clock",
+   "prose": "In this browser `steady_clock` ticks every 100 µs. One pricer call takes about 0.25 µs, and one tick should be at most 1% of a batch. The loop adds every price into `total`, which we print. Seven batches take 10.2, 10.0, 10.1, 13.8, 10.0, 10.3 and 10.1 ms.",
+   "question": "Fill in the table.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Calls per batch, at least",
+      {
+       "edit": true,
+       "answer": 40000,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "Median batch time (ms)",
+      {
+       "edit": true,
+       "answer": 10.1,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Time per call from the median (ns)",
+      {
+       "edit": true,
+       "answer": 252.5,
+       "tol": {
+        "abs": 0.5
+       }
+      }
+     ],
+     [
+      "If `total` were never printed, could an `-O2` batch read near 0 ms? (yes or no)",
+      {
+       "edit": true,
+       "answer": "yes",
+       "accept": [
+        "y",
+        "true"
+       ]
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "40,000 calls, a 10.1 ms median and 252.5 ns a call, as long as the result is used.",
+    "generic": "A batch must last 100 ticks. Then sort the seven times and take the middle one.",
+    "byKey": {
+     "r0c1": "A batch must last 100 ticks of 100 µs, which is 10 ms. 400 calls last a single tick, so the clock's step would swamp the measurement.",
+     "r1c1": "Sort the seven times and take the fourth. The mean, 10.64 ms, is pulled up by the interrupted 13.8 ms batch.",
+     "r2c1": "Divide the median, 10.1 ms, by 40,000 calls, then convert to nanoseconds. The mean would give 266.1 ns.",
+     "r3c1": "Yes. A result that is never used lets the optimiser delete the loop that makes it."
+    }
+   },
+   "explain": {
+    "text": "100 ticks of 100 µs is 10 ms, and 10 ms / 0.25 µs is 40,000 calls. The median, 10.1 ms, ignores the interrupted 13.8 ms batch, and 10.1 ms / 40,000 is 252.5 ns. If `total` is never used, the optimiser may delete the loop and time nothing."
+   }
+  },
+  {
+   "id": "e-code-worst-day",
+   "difficulty": 3,
+   "skills": [
+    "cp-basics"
+   ],
+   "title": "The worst day in a price file",
+   "prose": "Closing prices arrive on standard input, separated by spaces or line breaks, and we do not know how many. A day's return is $(p_t - p_{t-1}) / p_{t-1}$. For `100 98 99.5 95.52` the worst day is −4.00%.",
+   "question": "Write the program. Print the worst day as `Worst day: -4.00%`, or `Need two prices` when there are fewer than two.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <iomanip>\n#include <iostream>\n\nint main() {\n    // read prices with std::cin until the input runs out\n    // print \"Worst day: \" and the lowest daily return in percent,\n    // using std::fixed and std::setprecision(2), then \"%\"\n    // with fewer than two prices, print \"Need two prices\"\n    return 0;\n}\n",
+    "solution": "#include <iomanip>\n#include <iostream>\n\nint main() {\n    double prev, px;\n    if (!(std::cin >> prev)) {\n        std::cout << \"Need two prices\\n\";\n        return 0;\n    }\n    bool any = false;\n    double worst = 0.0;\n    while (std::cin >> px) {\n        double r = (px - prev) / prev;\n        if (!any || r < worst) worst = r;\n        any = true;\n        prev = px;\n    }\n    if (!any) {\n        std::cout << \"Need two prices\\n\";\n        return 0;\n    }\n    std::cout << std::fixed << std::setprecision(2)\n              << \"Worst day: \" << worst * 100 << \"%\\n\";\n    return 0;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "100\n98\n99.5\n95.52\n",
+      "expect": "Worst day: -4.00%\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "100\n98\n99.5\n95.52\n",
+      "expect": "Worst day: -4.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "250\n",
+      "expect": "Need two prices\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "",
+      "expect": "Need two prices\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "50 50.5 51.25 52\n",
+      "expect": "Worst day: 1.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "72.4 72.4\n",
+      "expect": "Worst day: 0.00%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "101.2  99.8\n100.4\n\n97.1 98.0\n",
+      "expect": "Worst day: -3.29%\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "250.00 247.68 243.01 239.55 239.11 231.48 237.32 236.93 238.49 238.34 240.56 239.49 241.50 243.51 245.13 243.70 247.22 247.56 248.65 249.75 253.33 249.55 252.69 253.72 250.74 254.68 257.56 257.67 254.57 253.17 251.02 255.93 252.96 254.92 247.59 247.99 251.70 251.07 245.69 244.45 245.47 244.50 243.52 243.42 243.09 239.89 240.82 243.23 245.51 242.68 242.68 247.32 243.71 245.40 244.00 246.81 247.28 250.78 253.86 253.73 255.32 254.67 257.71 257.40 253.98 252.53 256.85 258.88 259.48 257.49 252.72 253.62 254.29 249.83 249.67 252.86 253.19 252.99 254.25 255.44 257.65 256.17 256.48 251.88 247.62 247.17 246.15 243.66 240.33 243.17 243.33 239.22 233.47 236.75 235.16 229.12 225.45 226.24 229.38 233.78 235.61 234.50 232.91 234.02 237.25 237.27 235.73 234.22 237.24 236.82 242.71 241.58 234.44 231.75 228.49 227.77 230.93 228.08 229.42 234.37 236.46 238.24 240.85 243.99 242.50 244.03 242.36 239.58 240.16 238.91 241.37 236.13 237.97 239.22 238.99 237.25 234.21 233.52 233.94 232.36 234.22 231.69 234.46 232.88 234.61 233.43 241.05 235.01 239.77 241.92 245.62 241.25 239.72 233.89 233.37 232.63 232.18 230.60 227.12 227.25 231.67 232.82 230.89 232.25 234.10 231.52 229.91 232.62 233.96 230.43 229.37 226.44 230.23 229.28 227.37 223.83 228.86 229.40 232.35 231.12 234.58 234.98 233.59 233.96 234.91 237.31 239.77 232.85 233.32 230.05 231.03 232.98 233.31 232.55 234.49 235.18 232.33 234.59 237.22 238.24 239.76 238.81 238.05 238.18 235.11 238.99 240.68 245.27 244.11 247.88 241.97 241.52 244.83 244.67 241.72 244.70 244.06 245.36 245.54 245.02 245.27 237.95 232.08 239.55 236.10 236.11 237.90 243.86 246.76 247.89 248.08 244.49 238.30 237.29 237.07 242.21 243.39 242.44 240.12 242.45 242.21 246.72 252.91 255.62 256.62 258.50 262.51 260.12 260.29 259.26 258.20 263.59 263.01 264.10 268.22 267.65 271.81 270.92 272.97 271.71 271.78 277.52 277.26 277.90 282.36 283.27 285.11 281.08 284.66 291.93 295.39 295.37 297.49 289.77 290.36 286.63 288.79 293.02 292.67 291.37 293.23 288.31 287.65 285.75 284.52 293.35 294.06 291.51 285.25 287.21 284.17 287.57 295.76 296.80 296.00 293.13 290.11 294.57 295.27 293.01 289.91 289.67 296.92 295.56 293.03 294.38 286.76 283.33 286.20 287.72 288.75 293.83 286.74 288.52 287.70 286.67 283.39 284.96 292.03 293.22 294.04 292.88 294.48 290.50 293.47 285.57 284.82 282.92 283.12 282.42 282.20 281.13 279.46 275.87 276.15 277.72 276.98 276.38 279.28 275.99 275.58 283.08 282.18 286.91 285.14 286.37 282.20 282.81 284.77 286.94 292.40 291.95 291.14 290.78 292.10 288.93 288.44 285.13 285.49 282.39 284.51 284.80 283.54 283.76 279.25 279.76 277.87 276.14 283.16 285.78 285.08 282.87 285.03 281.11 288.35 284.71 284.67 288.66 285.86 290.45 288.52 287.21 287.71 283.52 283.60 278.72 274.36 271.60 274.67 278.30 271.01 272.15 269.87 272.04 267.67 266.05 269.77 271.36 265.67 265.81 269.50 268.47 266.78 267.27 261.63 254.81 251.05 250.06 252.28 256.40 255.65 258.92 259.05 256.66 261.93 263.61 263.32 260.60 255.07 257.55 259.76 262.61 263.22 258.91 256.49 255.81 260.26 257.45 256.48 250.95 250.75 251.51 248.46 249.32 246.22 244.13 244.49 243.48 243.49 245.08 242.75 239.11 243.48 242.22 239.27 241.79 238.82 240.25 238.52 240.03 233.20 229.36 232.08 235.75 235.13 235.19 233.83 237.77 241.26 241.47 239.81 240.24 238.69 242.61 237.21 234.86 234.39 234.78 229.13 230.86 233.46 230.64 226.86 231.75 232.21 228.53 224.93 226.85 228.89 224.76 220.67 215.29 218.45 212.72 211.64 212.66 212.51 213.13 215.27 211.28 210.43 208.50 207.23 208.41 210.80 212.46 212.37 213.76 216.63 218.64\n",
+      "expect": "Worst day: -3.19%\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Each is a whole run of your program with its own input, and one input is empty. The output must match exactly, apart from trailing spaces."
+   },
+   "feedback": {
+    "correct": "`while (std::cin >> px)` stops cleanly when the input runs out, and the guard catches a short file.",
+    "generic": "Some tests failed. Read until `std::cin >>` fails, and keep the lowest return seen so far.",
+    "byKey": {
+     "test-2": "One price gives no return, so print `Need two prices`. A −100% day means a failed read set `px` to 0: test the read itself.",
+     "test-3": "An empty input has no first price either. Check the first read before using it.",
+     "test-4": "Every day rose: +1.00%, +1.49% and +1.46%, so the worst is 1.00%. Seed `worst` with the first return, and read every number as a price.",
+     "test-1": "100, 98, 99.5, 95.52 gives −2%, +1.53% and −4%, so print `Worst day: -4.00%`.",
+     "compile": "Your code did not compile. The compiler's message is under the editor."
+    }
+   },
+   "explain": {
+    "text": "`std::cin >> px` is false once the input runs out, so it belongs in the loop condition. Testing `eof()` first reads one value too many: the failed read sets `px` to 0, a −100% day. The first return seeds `worst`, so a file of rising prices reports its smallest rise."
+   }
+  },
+  {
+   "id": "e-level-maps",
+   "difficulty": 3,
+   "skills": [
+    "cp-stl"
+   ],
+   "title": "A container for each job",
+   "prose": "Job A keeps the bid side of a book by price level. It reads the best bid on every tick and walks the levels in price order. Job B keeps the last price of each of 8,000 tickers and looks one up on every tick.",
+   "question": "Which containers fit, and what does one update or lookup cost?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "A: `std::map<double, Level, std::greater<double>>`, best bid at `begin()`, $O(\\log n)$ per update. B: `std::unordered_map`, $O(1)$ per lookup on average.",
+      "correct": true
+     },
+     {
+      "id": "hash-both",
+      "text": "A: `std::unordered_map`, since $O(1)$ beats $O(\\log n)$. B: `std::unordered_map`.",
+      "why": "An unordered map keeps no order, so finding the best bid scans every level: $O(n)$ on each tick."
+     },
+     {
+      "id": "map-both",
+      "text": "A: `std::map`. B: `std::map`, also $O(1)$ per lookup.",
+      "why": "A `std::map` is a balanced tree: a lookup is $O(\\log n)$, about 13 steps for 8,000 keys. It works, but the hash map is faster when order is not needed."
+     },
+     {
+      "id": "vector",
+      "text": "A: a `std::vector` of levels, sorted once. B: `std::unordered_map`.",
+      "why": "Levels appear and vanish all day. Inserting into a sorted vector shifts the elements after it: $O(n)$ per change."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Ordered when order is the job, hashed when it is not.",
+    "generic": "Which job needs the keys in order? Ordered containers pay $O(\\log n)$ for it."
+   },
+   "explain": {
+    "text": "`std::map` keeps its keys sorted, so with `std::greater` the best bid is `begin()`, and changes cost $O(\\log n)$. `std::unordered_map` hashes each ticker to a bucket, $O(1)$ on average, with no order. Choose the hash map unless the job needs order."
+   }
+  },
+  {
+   "id": "e-curve-owners",
+   "difficulty": 3,
+   "skills": [
+    "cp-memory"
+   ],
+   "title": "Owners of a curve",
+   "prose": "```cpp\nauto yc = std::make_shared<Curve>();\nauto a = yc;\n{\n    auto b = a;\n    auto c = std::move(b);\n    // first print\n    std::cout << yc.use_count();\n}\nauto d = std::move(a);\n// second print\nstd::cout << yc.use_count();\n```",
+   "question": "Fill in the two counts.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Print",
+     "`use_count()`"
+    ],
+    "rows": [
+     [
+      "first",
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "second",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "This app printed `3 2`.",
+    "generic": "A copy adds an owner, a move hands one over, and the `}` destroys what was made inside it.",
+    "byKey": {
+     "r0c1": "Count the owners inside the braces: `yc`, `a` and `b`. If you had 4, you counted `std::move(b)` as a new owner. A move hands `b`'s share to `c`.",
+     "r1c1": "Count again after the `}`: `c` dies there. Moving `a` into `d` then swaps one owner for another."
+    }
+   },
+   "explain": {
+    "text": "Copies add owners: `yc`, `a` and `b` make 3, and moving `b` into `c` keeps 3. At the `}` `c` is destroyed, leaving 2. Moving `a` into `d` replaces one owner with another, so it is still 2."
+   }
+  },
+  {
+   "id": "e-cmake-include",
+   "difficulty": 3,
+   "skills": [
+    "cp-build"
+   ],
+   "title": "A header the desk cannot see",
+   "prose": "`include/pricing/bs.h` declares `bs_call`, and `src/bs.cpp` starts with `assert(sigma > 0 && t > 0);`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "# CMakeLists.txt",
+      "add_library(pricing src/bs.cpp)",
+      "target_include_directories(pricing PRIVATE include)",
+      "add_executable(desk main.cpp)",
+      "target_link_libraries(desk PRIVATE pricing)",
+      "",
+      "$ cmake --build build",
+      "main.cpp:2:10: fatal error: pricing/bs.h: No such file or directory"
+     ],
+     "title": "Terminal",
+     "wrap": true
+    }
+   },
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "public",
+      "text": "Changing `PRIVATE` to `PUBLIC` in `target_include_directories` fixes the build.",
+      "correct": true
+     },
+     {
+      "id": "link-public",
+      "text": "Changing `target_link_libraries(desk PRIVATE pricing)` to `PUBLIC` fixes the build.",
+      "why": "That keyword says what `desk` passes on to targets that link `desk`. The include path is still private to `pricing`."
+     },
+     {
+      "id": "release",
+      "text": "In a `Release` build `NDEBUG` is defined, so `bs_call` with `sigma = 0` runs past its `assert`.",
+      "correct": true
+     },
+     {
+      "id": "debug",
+      "text": "A `Debug` build defines `NDEBUG`, so its asserts are off.",
+      "why": "It is the other way round. `Debug` keeps asserts; `Release`, `RelWithDebInfo` and `MinSizeRel` add `-DNDEBUG`."
+     },
+     {
+      "id": "relwithdeb",
+      "text": "`RelWithDebInfo` keeps asserts on, because it has debug information.",
+      "why": "Debug information is `-g`. `RelWithDebInfo` is `-O2 -g -DNDEBUG`, so its asserts vanish too."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`PUBLIC` exports the include path; the release build types switch `assert` off.",
+    "generic": "Which target owns the `include` folder, and who is allowed to see it?"
+   },
+   "explain": {
+    "text": "`PRIVATE` include directories serve only `pricing`'s own build; `PUBLIC` ones also pass to every target that links it. The release build types add `-DNDEBUG`, which turns `assert` into nothing. Our Release run priced `sigma = 0` at 4.87706 instead of stopping."
+   }
+  },
+  {
+   "id": "e-quote-lines",
+   "difficulty": 3,
+   "skills": [
+    "cx-perf"
+   ],
+   "title": "Bids inside quotes",
+   "prose": "A cache line is 64 bytes, and no line is fetched twice.\n\n```cpp\nstruct Quote {\n    double bid, ask;     // 16 bytes\n    long long ts;        // 8\n    int venue, qty;      // 8\n};\n// sizeof(Quote) == 32\n\nstd::vector<Quote> day(1'000'000);\ndouble s = 0;\nfor (const Quote& q : day) s += q.bid;\n```",
+   "question": "How many cache lines does the loop fetch?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 500000,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "lines",
+    "label": "cache lines fetched",
+    "accept": "500,000: two 32-byte quotes per 64-byte line.",
+    "wrong": [
+     {
+      "id": "bids-only",
+      "value": 125000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-per",
+      "value": 1000000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$10^6 \\times 32 / 64 = 500{,}000$ lines.",
+    "generic": "The loop reads one field, but the cache fetches whole 64-byte lines. How many lines does the vector span?",
+    "byKey": {
+     "bids-only": "That is a vector of bids alone, 8 per line. Here each bid brings its quote's other 24 bytes with it.",
+     "one-per": "Two quotes share each 64-byte line, so one fetch serves two bids."
+    }
+   },
+   "explain": {
+    "text": "Two 32-byte quotes fit in a line, so a million quotes span 500,000 lines. Only 8 of every 32 bytes fetched are used. A separate `std::vector<double>` of bids would need 125,000 lines, a quarter of the traffic."
+   }
+  },
+  {
+   "id": "e-code-credit-line",
+   "difficulty": 3,
+   "skills": [
+    "cp-classes"
+   ],
+   "title": "A credit line that stays valid",
+   "prose": "A counterparty's credit line has a `limit` and an amount `used`. The invariant is $limit > 0$ and $0 \\le used \\le limit$. Every amount drawn or repaid must be positive.",
+   "question": "Complete `CreditLine` so the constructor and every mutator refuse a change that would break the invariant, with `throw std::invalid_argument`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <stdexcept>\n\n// Invariant: limit_ > 0 and 0 <= used_ <= limit_.\n// Amounts drawn or repaid must be positive.\nclass CreditLine {\npublic:\n    explicit CreditLine(double limit) : limit_(limit), used_(0.0) {}\n    void draw(double x) { used_ += x; }\n    void repay(double x) { used_ -= x; }\n    void set_limit(double limit) { limit_ = limit; }\n    double used() const { return used_; }\n    double headroom() const { return limit_ - used_; }\n\nprivate:\n    double limit_;\n    double used_;\n};\n",
+    "solution": "#include <stdexcept>\n\nclass CreditLine {\npublic:\n    explicit CreditLine(double limit) : limit_(limit), used_(0.0) {\n        if (!(limit_ > 0)) throw std::invalid_argument(\"limit must be positive\");\n    }\n    void draw(double x) {\n        if (!(x > 0) || used_ + x > limit_) throw std::invalid_argument(\"bad draw\");\n        used_ += x;\n    }\n    void repay(double x) {\n        if (!(x > 0) || x > used_) throw std::invalid_argument(\"bad repayment\");\n        used_ -= x;\n    }\n    void set_limit(double limit) {\n        if (!(limit > 0) || limit < used_) throw std::invalid_argument(\"bad limit\");\n        limit_ = limit;\n    }\n    double used() const { return used_; }\n    double headroom() const { return limit_ - used_; }\n\nprivate:\n    double limit_;\n    double used_;\n};\n",
+    "examples": [
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(250000.0);",
+      "call": "c.headroom()",
+      "expect": 750000.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(250000.0);",
+      "call": "c.headroom()",
+      "expect": 750000.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "CreditLine(0.0).used()",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(600000.0);",
+      "call": "(c.draw(500000.0), c.used())",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(100000.0);",
+      "call": "(c.repay(200000.0), c.used())",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(600000.0);",
+      "call": "(c.set_limit(500000.0), c.used())",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "setup": "CreditLine c(1000000.0);",
+      "call": "(c.draw(-100000.0), c.used())",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(400000.0); c.draw(600000.0);",
+      "call": "c.headroom()",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(600000.0); c.set_limit(600000.0);",
+      "call": "c.headroom()",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "setup": "CreditLine c(1000000.0); c.draw(300000.0); c.repay(100000.0); c.set_limit(500000.0); c.draw(200000.0);",
+      "call": "c.headroom()",
+      "expect": 100000.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "CreditLine c(500000.0); c.draw(100000.0);",
+      "call": "(c.repay(0.0), c.used())",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 10 hidden tests. Six expect the program to stop with `std::invalid_argument`. This browser build cannot catch exceptions, so a `throw` ends the test, and that is what those tests check. Drawing exactly up to the limit is allowed."
+   },
+   "feedback": {
+    "correct": "Each mutator checks before it changes anything, so no outside call can break the invariant.",
+    "generic": "Some tests failed. Write one check per mutator, and make it before the member changes.",
+    "byKey": {
+     "test-2": "A limit of 0 breaks $limit > 0$. The constructor must refuse it.",
+     "test-3": "Drawing £500,000 on £600,000 used takes `used` past the £1,000,000 limit.",
+     "test-4": "Repaying £200,000 of £100,000 used would make `used` negative.",
+     "test-5": "A new limit below `used` breaks $used \\le limit$.",
+     "test-6": "A negative draw would quietly add headroom. Refuse amounts that are not positive.",
+     "test-7": "Drawing exactly to the limit leaves `used` equal to `limit`, which the invariant allows. Use `>`, not `>=`.",
+     "compile": "Your code did not compile. The compiler's message is under the editor."
+    }
+   },
+   "explain": {
+    "text": "The invariant must hold after every public call, so each of the four entry points checks its own case. Checking before the change also leaves the object untouched when a check fails. The edge, `used` equal to `limit`, is valid, so the draw test is `used_ + x > limit_`."
+   }
+  },
+  {
+   "id": "e-fill-specials",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes"
+   ],
+   "title": "Two defaults, five members",
+   "prose": "```cpp\nstruct Fill {\n    std::string venue;\n    double px;\n    Fill(std::string v, double p)\n        : venue(v), px(p) {}\n    Fill(const Fill&) = default;\n    Fill(Fill&&) = default;\n};\n\nFill a(\"LSE\", 101.5);\nFill b(\"CBOE\", 101.6);\n```",
+   "question": "Select all that apply: which lines compile?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "copy",
+      "text": "`Fill c = a;`",
+      "correct": true
+     },
+     {
+      "id": "move",
+      "text": "`Fill d = std::move(b);`",
+      "correct": true
+     },
+     {
+      "id": "copy-assign",
+      "text": "`a = b;`",
+      "why": "Declaring a move constructor deletes the implicit copy assignment, and `= default` still counts as declaring it."
+     },
+     {
+      "id": "move-assign",
+      "text": "`a = Fill(\"BATS\", 101.4);`",
+      "why": "A declared copy or move constructor stops the compiler writing a move assignment, and copy assignment is deleted. No assignment is left."
+     },
+     {
+      "id": "default",
+      "text": "`Fill e;`",
+      "why": "Any user-declared constructor removes the implicit default constructor, and `Fill` declares three."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Both constructions work, and no assignment does.",
+    "generic": "Which special members does the compiler still write once a move constructor is declared?"
+   },
+   "explain": {
+    "text": "Defaulting the two constructors keeps both constructions working. But a declared move constructor deletes copy assignment and suppresses move assignment, so no `=` compiles. Default all five, or declare none and let the compiler write them all."
+   }
+  },
+  {
+   "id": "e-time-bump",
+   "difficulty": 4,
+   "skills": [
+    "cx-numeric"
+   ],
+   "title": "A tiny bump in time",
+   "prose": "To bump time to expiry, we need how much $\\sqrt{T}$ grows when $T = 1$ year gains $\\delta = 10^{-10}$, held in `d`. The true value is $4.99999999998750 \\times 10^{-11}$. Two versions, run in this app:",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "naive   = sqrt(T + d) - sqrt(T);",
+      "rewrite = d / (sqrt(T + d) + sqrt(T));",
+      "",
+      "naive   5.000000413701855e-11",
+      "rewrite 4.999999999875e-11"
+     ],
+     "title": "bump.cpp, then its output"
+    }
+   },
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "The naive result can be trusted to only about 6 significant figures; the rewrite to nearly 16.",
+      "correct": true
+     },
+     {
+      "id": "sqrt-exact",
+      "text": "Both are good to about 16 figures, because each `std::sqrt` is correctly rounded.",
+      "why": "Each root is within about $10^{-16}$ of the truth, but that error is absolute. Subtracting two numbers near 1 leaves $5 \\times 10^{-11}$, so the relative error grows to about $2 \\times 10^{-6}$."
+     },
+     {
+      "id": "divide",
+      "text": "The naive result is right; the rewrite loses digits by dividing by a small number.",
+      "why": "The rewrite divides by about 2, not by anything small. Only the naive version subtracts nearly equal numbers."
+     },
+     {
+      "id": "tiny",
+      "text": "Neither can be trusted, since $10^{-10}$ is below the precision of a double.",
+      "why": "A double near $10^{-10}$ has as many significant figures as one near 1. The trouble is only the subtraction of two numbers near 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Cancellation keeps the absolute error but shrinks the answer, so the relative error grows.",
+    "generic": "How many leading digits do $\\sqrt{T + \\delta}$ and $\\sqrt{T}$ share? The subtraction removes them."
+   },
+   "explain": {
+    "text": "$\\sqrt{T + \\delta}$ and $\\sqrt{T}$ share their first 10 digits, and the subtraction cancels them. Each carries an absolute error near $10^{-16}$, about $2 \\times 10^{-6}$ of the $5 \\times 10^{-11}$ result: about 6 good figures, and this run got 7. The rewrite multiplies by the conjugate, so it never subtracts nearly equal numbers."
+   }
+  },
+  {
+   "id": "e-cancel-erase",
+   "difficulty": 4,
+   "skills": [
+    "cp-stl"
+   ],
+   "title": "Removing cancelled orders",
+   "prose": "`v` is a `std::vector<int>` of resting order ids, and `bool cancelled(int id)` says whether one was cancelled. This loop is meant to remove the cancelled ones:\n\n```cpp\nfor (auto it = v.begin();\n     it != v.end(); ++it)\n    if (cancelled(*it))\n        v.erase(it);\n```",
+   "question": "Which version removes every cancelled id, with no undefined behaviour?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "return",
+      "text": "```cpp\nauto it = v.begin();\nwhile (it != v.end())\n    if (cancelled(*it))\n        it = v.erase(it);\n    else\n        ++it;\n```",
+      "correct": true
+     },
+     {
+      "id": "postfix",
+      "text": "```cpp\nauto it = v.begin();\nwhile (it != v.end())\n    if (cancelled(*it))\n        v.erase(it++);\n    else\n        ++it;\n```",
+      "why": "`it++` saves the next position, but erasing from a vector invalidates every iterator from the erased one on. That idiom is safe for `std::list` and `std::map`, not `std::vector`."
+     },
+     {
+      "id": "index",
+      "text": "```cpp\nfor (std::size_t i = 0;\n     i < v.size(); ++i)\n    if (cancelled(v[i]))\n        v.erase(v.begin() + i);\n```",
+      "why": "This is defined, but after an erase the next id slides into slot `i`, and `++i` skips it. Two cancelled ids in a row leave the second behind."
+     },
+     {
+      "id": "remove-if",
+      "text": "```cpp\nauto e = std::remove_if(\n    v.begin(), v.end(),\n    cancelled);\n```",
+      "why": "`remove_if` moves the kept ids to the front and returns the new end, `e`, but cannot shrink the vector. Without `v.erase(e, v.end())` the size is unchanged."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`erase` returns the next valid iterator; step only when nothing was erased.",
+    "generic": "After `v.erase(it)`, which iterators are still valid, and what does `erase` return?"
+   },
+   "explain": {
+    "text": "`erase` invalidates the erased iterator and every one after it, and returns an iterator to the next element. Taking that return value, and stepping only when nothing was erased, visits each id once. The one-line form is `v.erase(std::remove_if(v.begin(), v.end(), cancelled), v.end());`."
+   }
+  },
+  {
+   "id": "e-code-grid-owner",
+   "difficulty": 4,
+   "skills": [
+    "cp-memory"
+   ],
+   "title": "A scenario grid with an owner",
+   "prose": "`worst_pnl` scores a position under price shocks, using a heap `Grid`. Its two early returns leak the grid. `Grid`'s destructor is private to all but `std::unique_ptr`, so `delete g` does not compile. `Grid::live` counts grids alive.",
+   "question": "Rewrite `worst_pnl` so a `std::unique_ptr` owns the grid, and it is freed on every path out.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cstddef>\n#include <memory>\n#include <vector>\nclass Grid {\npublic:\n    static int live;\n    explicit Grid(std::size_t n) : pnl(n, 0.0) { ++live; }\n    Grid(const Grid&) = delete;\n    Grid& operator=(const Grid&) = delete;\n    std::vector<double> pnl;\nprivate:\n    ~Grid() { --live; }\n    friend struct std::default_delete<Grid>;\n};\nint Grid::live = 0;\n",
+    "starter": "#include <algorithm>\n#include <memory>\n#include <vector>\n\n// Supplied: Grid (pnl, and the counter Grid::live).\n// Its destructor is private: only a std::unique_ptr may delete a Grid.\ndouble worst_pnl(const std::vector<double>& shocks, double qty,\n                 double spot, double limit) {\n    Grid* g = new Grid(shocks.size());\n    if (shocks.empty()) return 0.0;              // leaks g\n    for (std::size_t i = 0; i < shocks.size(); ++i) {\n        g->pnl[i] = qty * spot * shocks[i];\n        if (g->pnl[i] < -limit) return -limit;   // stop-loss hit: leaks g\n    }\n    double worst = *std::min_element(g->pnl.begin(), g->pnl.end());\n    // delete g;   would free it here, but no longer compiles\n    return worst;\n}\n",
+    "solution": "#include <algorithm>\n#include <memory>\n#include <vector>\n\ndouble worst_pnl(const std::vector<double>& shocks, double qty,\n                 double spot, double limit) {\n    auto g = std::make_unique<Grid>(shocks.size());\n    if (shocks.empty()) return 0.0;\n    for (std::size_t i = 0; i < shocks.size(); ++i) {\n        g->pnl[i] = qty * spot * shocks[i];\n        if (g->pnl[i] < -limit) return -limit;   // stop-loss hit\n    }\n    return *std::min_element(g->pnl.begin(), g->pnl.end());\n}\n",
+    "examples": [
+     {
+      "call": "worst_pnl({-0.02, 0.01, -0.05}, 1000.0, 50.0, 1e9)",
+      "expect": -2500.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "worst_pnl({-0.02, 0.01, -0.05}, 1000.0, 50.0, 1e9)",
+      "expect": -2500.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "worst_pnl({-0.02, 0.01, -0.05}, 1000.0, 50.0, 1e9);",
+      "call": "Grid::live",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "worst_pnl({}, 1000.0, 50.0, 1e9)",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "setup": "worst_pnl({}, 1000.0, 50.0, 1e9);",
+      "call": "Grid::live",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "worst_pnl({-0.01, -0.2, 0.03}, 1000.0, 50.0, 5000.0)",
+      "expect": -5000.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "worst_pnl({-0.01, -0.2, 0.03}, 1000.0, 50.0, 5000.0);",
+      "call": "Grid::live",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "worst_pnl({0.04, 0.02}, -200.0, 75.0, 1e9)",
+      "expect": -600.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "for (int k = 0; k < 300; ++k) { worst_pnl({}, 1.0, 1.0, 1.0); worst_pnl({-0.5}, 10.0, 10.0, 1.0); worst_pnl({0.1, -0.1}, 10.0, 10.0, 1e9); }",
+      "call": "Grid::live",
+      "expect": 0,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. Four of them call `worst_pnl` on each path, then expect `Grid::live` to be 0."
+   },
+   "feedback": {
+    "correct": "The grid is freed by `unique_ptr`'s destructor at every `return`, the early ones included.",
+    "generic": "Some tests failed. Make `std::make_unique<Grid>(...)` the only owner, and return as before.",
+    "byKey": {
+     "test-2": "A grid is still alive after the normal path. Something must delete it, and only a `unique_ptr` may.",
+     "test-4": "The empty-shocks path returns early. A raw pointer leaks there; an owning `unique_ptr` does not.",
+     "test-6": "The stop-loss path returns early too, and must free the grid.",
+     "test-5": "The stop-loss returns `-limit`, a loss of £5,000, not `limit`.",
+     "compile": "Your code did not compile. `delete g` is refused, and so is `make_shared`: only `std::default_delete<Grid>` may destroy a `Grid`."
+    }
+   },
+   "explain": {
+    "text": "A `std::unique_ptr` deletes its object in its destructor, which runs at every exit from the scope. The early returns therefore free the grid with no extra code. Ownership that lives in an object's lifetime is RAII; `release()` would hand it back and leak again."
+   }
+  },
+  {
+   "id": "e-code-rank-fills",
+   "difficulty": 4,
+   "skills": [
+    "cp-stl"
+   ],
+   "title": "A fill report",
+   "prose": "A report lists fills by venue A to Z, and within a venue the largest size first. No two fills share both a venue and a size. `Fill` is supplied: `{ int id; std::string venue; int qty; double px; }`. The notional of a fill is `qty * px`.",
+   "question": "Write `ranked_ids` with `std::sort` and a lambda, and `notional_at_least` with `std::accumulate` and a lambda that captures `min_qty`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <string>\n#include <vector>\nstruct Fill {\n    int id;\n    std::string venue;\n    int qty;\n    double px;\n};\nlong long weighted(const std::vector<int>& ids) {\n    long long s = 0;\n    for (std::size_t i = 0; i < ids.size(); ++i) s += (long long)(i + 1) * ids[i];\n    return s;\n}\n",
+    "starter": "#include <algorithm>\n#include <numeric>\n#include <string>\n#include <vector>\n\n// Supplied: struct Fill { int id; std::string venue; int qty; double px; };\n\nstd::vector<int> ranked_ids(std::vector<Fill> fills) {\n    // sort: venue A to Z, then the largest qty first\n    std::vector<int> ids;\n    for (const Fill& f : fills) ids.push_back(f.id);\n    return ids;\n}\n\ndouble notional_at_least(const std::vector<Fill>& fills, int min_qty) {\n    // qty * px summed over the fills with qty >= min_qty\n    return 0.0;\n}\n",
+    "solution": "#include <algorithm>\n#include <numeric>\n#include <string>\n#include <vector>\n\nstd::vector<int> ranked_ids(std::vector<Fill> fills) {\n    std::sort(fills.begin(), fills.end(), [](const Fill& a, const Fill& b) {\n        if (a.venue != b.venue) return a.venue < b.venue;\n        return a.qty > b.qty;\n    });\n    std::vector<int> ids;\n    for (const Fill& f : fills) ids.push_back(f.id);\n    return ids;\n}\n\ndouble notional_at_least(const std::vector<Fill>& fills, int min_qty) {\n    return std::accumulate(fills.begin(), fills.end(), 0.0,\n        [min_qty](double total, const Fill& f) {\n            return f.qty >= min_qty ? total + f.qty * f.px : total;\n        });\n}\n",
+    "examples": [
+     {
+      "setup": "std::vector<Fill> f = {{1, \"LSE\", 310, 101.25}, {2, \"CBOE\", 500, 101.21}, {3, \"LSE\", 800, 101.33}, {4, \"AQX\", 200, 101.15}, {5, \"CBOE\", 100, 101.35}, {6, \"LSE\", 150, 101.47}};",
+      "call": "ranked_ids(f)",
+      "expect": [
+       4,
+       2,
+       5,
+       3,
+       1,
+       6
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "std::vector<Fill> f = {{1, \"LSE\", 310, 101.25}, {2, \"CBOE\", 500, 101.21}, {3, \"LSE\", 800, 101.33}, {4, \"AQX\", 200, 101.15}, {5, \"CBOE\", 100, 101.35}, {6, \"LSE\", 150, 101.47}};",
+      "call": "ranked_ids(f)",
+      "expect": [
+       4,
+       2,
+       5,
+       3,
+       1,
+       6
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "ranked_ids({}).size()",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Fill> f = {{11, \"LSE\", 120, 99.5}, {12, \"LSE\", 900, 99.6}, {13, \"LSE\", 450, 99.4}, {14, \"LSE\", 50, 99.7}};",
+      "call": "ranked_ids(f)",
+      "expect": [
+       12,
+       13,
+       11,
+       14
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Fill> f = {{21, \"XLON\", 100, 10.0}, {22, \"TRQX\", 200, 10.0}, {23, \"CHIX\", 300, 10.0}, {24, \"BATS\", 400, 10.0}};",
+      "call": "ranked_ids(f)",
+      "expect": [
+       24,
+       23,
+       22,
+       21
+      ],
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Fill> f; f.reserve(20000); for (int i = 0; i < 20000; ++i) f.push_back({i, std::string(1, char('A' + i % 7)), (i * 7919) % 20011 + 1, 100.0 + (i % 50) * 0.25});",
+      "call": "weighted(ranked_ids(f))",
+      "expect": 2000062470091,
+      "compare": "equal"
+     },
+     {
+      "setup": "std::vector<Fill> f = {{1, \"LSE\", 310, 101.25}, {2, \"CBOE\", 500, 101.21}, {3, \"LSE\", 800, 101.33}, {4, \"AQX\", 200, 101.15}, {5, \"CBOE\", 100, 101.35}, {6, \"LSE\", 150, 101.47}};",
+      "call": "notional_at_least(f, 250)",
+      "expect": 163056.5,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<Fill> f = {{1, \"LSE\", 310, 101.25}, {2, \"CBOE\", 500, 101.21}, {3, \"LSE\", 800, 101.33}, {4, \"AQX\", 200, 101.15}, {5, \"CBOE\", 100, 101.35}, {6, \"LSE\", 150, 101.47}};",
+      "call": "notional_at_least(f, 0)",
+      "expect": 208642.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<Fill> f = {{1, \"LSE\", 310, 101.25}, {2, \"CBOE\", 500, 101.21}, {3, \"LSE\", 800, 101.33}, {4, \"AQX\", 200, 101.15}, {5, \"CBOE\", 100, 101.35}, {6, \"LSE\", 150, 101.47}};",
+      "call": "notional_at_least(f, 310)",
+      "expect": 163056.5,
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<Fill> f = {{1, \"LSE\", 310, 101.25}, {2, \"CBOE\", 500, 101.21}, {3, \"LSE\", 800, 101.33}, {4, \"AQX\", 200, 101.15}, {5, \"CBOE\", 100, 101.35}, {6, \"LSE\", 150, 101.47}};",
+      "call": "notional_at_least(f, 10000)",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "notional_at_least({}, 1)",
+      "expect": 0.0,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 10 hidden tests: rankings compared exactly, one of 20,000 fills, and notionals within a relative 1e-9."
+   },
+   "feedback": {
+    "correct": "Two keys in one strict comparator, and a `0.0` start so the sum stays a `double`.",
+    "generic": "Some tests failed. Compare venues first and sizes only on a tie; start the sum at `0.0`.",
+    "byKey": {
+     "test-1": "AQX comes first, then CBOE 500 and 100, then LSE 800, 310 and 150: ids 4, 2, 5, 3, 1, 6.",
+     "test-3": "Within one venue, the largest size comes first.",
+     "test-6": "The notional lost its pence. With a start of `0`, `accumulate` keeps an `int` total and truncates each step.",
+     "test-8": "A fill of exactly `min_qty` counts: use `>=`.",
+     "compile": "Your code did not compile. The compiler's message is under the editor."
+    }
+   },
+   "explain": {
+    "text": "A comparator must be a strict weak ordering: `a.venue < b.venue || a.qty > b.qty` is not, since two fills can each come before the other. `std::accumulate` takes its total's type from the start value, so `0` makes an `int` and drops every fraction. The lambda's `[min_qty]` copies the threshold in."
+   }
+  },
+  {
+   "id": "e-code-knockout",
+   "difficulty": 5,
+   "skills": [
+    "cx-pricers"
+   ],
+   "title": "An up-and-out option on a tree",
+   "prose": "An up-and-out option dies once spot reaches the barrier, and is then worth 0. On a CRR tree $d = 1/u$ and node $(i, j)$ has spot $S u^{2j - i}$. `growth` is what £1 grows to in one step. Every node with spot at or above the barrier is worth 0, leaves included.",
+   "question": "Write `Straddle`, paying $|S - K|$, and `up_and_out` on one vector of $n + 1$ values. Refuse $q$ outside $(0, 1)$ with `std::invalid_argument`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\n",
+    "starter": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n#include <vector>\n\n// Supplied: Payoff (virtual double operator()(double spot) const), Call, Put.\n\nclass Straddle : public Payoff {\npublic:\n    explicit Straddle(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return 0.0; }  // pays |spot - strike|\nprivate:\n    double strike_;\n};\n\ndouble up_and_out(const Payoff& payoff, double s, double barrier,\n                  double u, double growth, int n) {\n    // d = 1 / u; q = (growth - d) / (u - d), refused outside (0, 1)\n    // one vector of n + 1 values: leaves, then n steps back\n    // a node whose spot s * u^(2j - i) is at or above the barrier is worth 0\n    return 0.0;\n}\n",
+    "solution": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n#include <vector>\n\nclass Straddle : public Payoff {\npublic:\n    explicit Straddle(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::abs(spot - strike_); }\nprivate:\n    double strike_;\n};\n\ndouble up_and_out(const Payoff& payoff, double s, double barrier,\n                  double u, double growth, int n) {\n    double d = 1.0 / u;\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j) {\n        double spot = s * std::pow(u, 2 * j - n);\n        v[j] = spot >= barrier ? 0.0 : payoff(spot);\n    }\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            double spot = s * std::pow(u, 2 * j - i);\n            v[j] = spot >= barrier ? 0.0 : (q * v[j + 1] + (1 - q) * v[j]) / growth;\n        }\n    return v[0];\n}\n",
+    "examples": [
+     {
+      "call": "up_and_out(Call(100.0), 100.0, 120.0, 1.1, 1.02, 3)",
+      "expect": 2.665470802744939,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "Straddle(100.0)(93.5)",
+      "expect": 6.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "up_and_out(Call(100.0), 100.0, 120.0, 1.1, 1.02, 3)",
+      "expect": 2.665470802744939,
+      "compare": "isclose"
+     },
+     {
+      "call": "up_and_out(Put(100.0), 100.0, 120.0, 1.1, 1.02, 3)",
+      "expect": 4.346180679074471,
+      "compare": "isclose"
+     },
+     {
+      "call": "up_and_out(Straddle(100.0), 100.0, 125.0, 1.08, 1.01, 4)",
+      "expect": 7.432324890651018,
+      "compare": "isclose"
+     },
+     {
+      "call": "up_and_out(Straddle(95.0), 100.0, 118.0, 1.05, 1.005, 10)",
+      "expect": 6.10278124303481,
+      "compare": "isclose"
+     },
+     {
+      "call": "up_and_out(Call(100.0), 130.0, 120.0, 1.1, 1.02, 3)",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "up_and_out(Call(100.0), 100.0, 1e9, 1.1, 1.02, 6)",
+      "expect": 15.085858838715394,
+      "compare": "isclose"
+     },
+     {
+      "setup": "struct Cash : Payoff { double operator()(double) const override { return 1.0; } };",
+      "call": "up_and_out(Cash(), 100.0, 1e9, 1.1, 1.02, 5)",
+      "expect": 0.9057308098299155,
+      "compare": "isclose"
+     },
+     {
+      "setup": "double u = std::exp(0.2 * std::sqrt(0.001)), g = std::exp(0.05 * 0.001);",
+      "call": "up_and_out(Call(100.0), 100.0, 130.0, u, g, 1000)",
+      "expect": 3.4282998451942586,
+      "compare": "isclose"
+     },
+     {
+      "setup": "double u = std::exp(0.2 * std::sqrt(0.001)), g = std::exp(0.05 * 0.001);",
+      "call": "up_and_out(Straddle(100.0), 100.0, 125.0, u, g, 1000)",
+      "expect": 7.791918933668559,
+      "compare": "isclose"
+     },
+     {
+      "call": "up_and_out(Call(100.0), 100.0, 150.0, 1.1, 1.2, 3)",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 12 hidden tests, with prices compared within a relative 1e-9. They include 1,000-step trees and a payoff class the tests define. One expects the program to stop with `std::invalid_argument`. This browser build cannot catch exceptions, so a `throw` ends the test, and that is what those tests check."
+   },
+   "feedback": {
+    "correct": "The barrier is checked at every node, and the payoff is reached only through `const Payoff&`.",
+    "generic": "Some tests failed. Zero every node at or above the barrier, at every step, and divide by `growth`.",
+    "byKey": {
+     "test-1": "A straddle pays the distance from the strike either way: $|93.5 - 100| = 6.5$.",
+     "test-2": "Spot 121 at step 2 is above the barrier, so that node is worth 0. That holds even though its child 110 is below.",
+     "test-4": "Check the node at step 2 with spot 116.64 and its children: 125.97 is out, 108 is not.",
+     "test-6": "Spot 130 starts above the barrier of 120: the option is dead at once and worth 0.",
+     "test-12": "With growth 1.2, $q = 1.52$ is not a probability. Throw `std::invalid_argument`.",
+     "compile": "Your code did not compile. `Payoff` is abstract, so take it by `const Payoff&`, never by value."
+    }
+   },
+   "explain": {
+    "text": "Each step back discounts by `growth`, then zeroes every node at or above the barrier, leaves included. Checking only the leaves prices an option that can die only at expiry, which is worth more. Through `const Payoff&` the same loop prices any payoff, even one a test defines."
+   }
+  },
+  {
+   "id": "e-code-digital-tests",
+   "difficulty": 5,
+   "skills": [
+    "cx-testing"
+   ],
+   "title": "Tests that catch three bugs",
+   "prose": "`digital_call(s, k, r, sigma, t)` pays £1 at expiry if $S_T > K$, and is worth $e^{-rT}N(d_2)$. `digital_put` pays £1 if $S_T < K$. The desk's reference: `digital_call(100, 105, 0.03, 0.25, 1.0)` is £0.408245. Three bugs are planted in turn, and each slips past at least one natural test.",
+   "question": "Write `TEST`s that pass the real pricers and fail on each planted bug.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <cmath>\n#include <cstdio>\n#include <string>\n#include <vector>\n\nstruct ZqTest { const char* name; void (*fn)(); };\nstd::vector<ZqTest>& zq_registry() { static std::vector<ZqTest> t; return t; }\nstruct ZqAdd { ZqAdd(const char* n, void (*f)()) { zq_registry().push_back({n, f}); } };\nint zq_bad = 0;\n\n#define TEST(name) void name(); static ZqAdd name##_zq(#name, name); void name()\n#define CHECK(cond) do { if (!(cond)) { ++zq_bad; std::printf(\"  %s:%d: CHECK(%s) failed\\n\", __FILE__, __LINE__, #cond); } } while (0)\n#define CHECK_CLOSE(a, b, tol) do { double zq_a = (a), zq_b = (b); if (!(std::fabs(zq_a - zq_b) <= (tol))) { ++zq_bad; std::printf(\"  %s:%d: CHECK_CLOSE(%s, %s, %s) failed: %.10g and %.10g\\n\", __FILE__, __LINE__, #a, #b, #tol, zq_a, zq_b); } } while (0)\n\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\nstatic double zq_d2(double s, double k, double r, double v, double t) {\n    return (std::log(s / k) + (r - 0.5 * v * v) * t) / (v * std::sqrt(t));\n}\ndouble dcall_ok(double s, double k, double r, double v, double t) { return std::exp(-r * t) * norm_cdf(zq_d2(s, k, r, v, t)); }\ndouble dput_ok(double s, double k, double r, double v, double t) { return std::exp(-r * t) * norm_cdf(-zq_d2(s, k, r, v, t)); }\ndouble dput_alt(double s, double k, double r, double v, double t) { return std::exp(-r * t) * 0.5 * std::erfc(zq_d2(s, k, r, v, t) / std::sqrt(2.0)); }\ndouble dcall_alt(double s, double k, double r, double v, double t) { return std::exp(-r * t) - dput_alt(s, k, r, v, t); }\ndouble dcall_d1(double s, double k, double r, double v, double t) { return std::exp(-r * t) * norm_cdf(zq_d2(s, k, r, v, t) + v * std::sqrt(t)); }\ndouble dcall_nodisc(double s, double k, double r, double v, double t) { return norm_cdf(zq_d2(s, k, r, v, t)); }\ndouble dput_nodisc(double s, double k, double r, double v, double t) { return norm_cdf(-zq_d2(s, k, r, v, t)); }\nstatic double zq_d2_sig(double s, double k, double r, double v, double t) { return (std::log(s / k) + (r - 0.5 * v * v) * t) / v; }\ndouble dcall_sig(double s, double k, double r, double v, double t) { return std::exp(-r * t) * norm_cdf(zq_d2_sig(s, k, r, v, t)); }\ndouble dput_sig(double s, double k, double r, double v, double t) { return std::exp(-r * t) * norm_cdf(-zq_d2_sig(s, k, r, v, t)); }\ntypedef double (*Pricer)(double, double, double, double, double);\nPricer digital_call = dcall_ok, digital_put = dput_ok;\n",
+    "postlude": "\nbool all_pass() {\n    int failed = 0;\n    for (const ZqTest& t : zq_registry()) {\n        int before = zq_bad;\n        t.fn();\n        if (zq_bad != before) { ++failed; std::printf(\"FAIL %s\\n\", t.name); }\n        else std::printf(\"PASS %s\\n\", t.name);\n    }\n    return failed == 0;\n}\n",
+    "starter": "#include <cmath>\n\n// Loaded: digital_call, digital_put, norm_cdf, TEST, CHECK, CHECK_CLOSE.\n\nTEST(test_digital) {\n    // checks that the real pricers pass and each planted bug fails\n}\n",
+    "solution": "#include <cmath>\n\n// Loaded: digital_call, digital_put, norm_cdf, TEST, CHECK, CHECK_CLOSE.\n\nTEST(test_reference_value) {\n    CHECK_CLOSE(digital_call(100, 105, 0.03, 0.25, 1.0), 0.408245, 1e-6);\n}\n\nTEST(test_digital_parity) {\n    // call + put pays £1 for sure, so it is worth exp(-rT) today\n    for (double t : {0.25, 1.0, 2.0})\n        CHECK_CLOSE(digital_call(100, 105, 0.03, 0.25, t) + digital_put(100, 105, 0.03, 0.25, t),\n                    std::exp(-0.03 * t), 1e-12);\n}\n\nTEST(test_near_expiry) {\n    // a day from expiry, far from the strike: worth almost nothing, or almost exp(-rT)\n    CHECK(digital_call(100, 105, 0.03, 0.25, 1.0 / 365) < 1e-3);\n    CHECK(digital_call(110, 105, 0.03, 0.25, 1.0 / 365) > 0.99);\n}\n",
+    "tests": [
+     {
+      "call": "all_pass()",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "setup": "digital_call = dcall_alt; digital_put = dput_alt;",
+      "call": "all_pass()",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "setup": "digital_call = dcall_d1;",
+      "call": "all_pass()",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "setup": "digital_call = dcall_nodisc; digital_put = dput_nodisc;",
+      "call": "all_pass()",
+      "expect": false,
+      "compare": "equal"
+     },
+     {
+      "setup": "digital_call = dcall_sig; digital_put = dput_sig;",
+      "call": "all_pass()",
+      "expect": false,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Five hidden runs. Your tests must pass on the real pricers and on a second correct version. At least one must fail on each of three planted bugs. `CHECK(cond)` and `CHECK_CLOSE(a, b, tol)` are loaded, as in C++ for Pricing level 3."
+   },
+   "feedback": {
+    "correct": "A known value, parity and a limit: each bug breaks at least one of them.",
+    "generic": "Some runs went the wrong way. Each kind of test misses one bug, so combine kinds.",
+    "byKey": {
+     "test-1": "A test fails on the real pricers. Is a tolerance too tight, or a formula in the test wrong? The parity sum is $e^{-rT}$, not 1.",
+     "test-2": "A test fails on a correct pricer written another way. Compare with a tolerance, never with `==`.",
+     "test-3": "Using $N(d_1)$ in the call went unnoticed. The reference value or digital parity catches it.",
+     "test-4": "Dropping the discount from both pricers went unnoticed. Parity with $r > 0$ catches it: the sum becomes 1.",
+     "test-5": "Using $\\sigma$ for $\\sigma\\sqrt{T}$ in both pricers went unnoticed. It agrees at $T = 1$ and keeps parity; a limit near expiry exposes it.",
+     "compile": "Your code did not compile. The compiler's message is under the editor."
+    }
+   },
+   "explain": {
+    "text": "Parity, $C + P = e^{-rT}$, catches a wrong call or a missing discount, but not a slip made in both pricers. The reference at $T = 1$ cannot see a $\\sigma\\sqrt{T}$ slip, since $\\sqrt{1} = 1$. A day from expiry, an option 5% out of the money must be worth almost nothing; the slipped version says £0.42."
+   }
+  },
+  {
+   "id": "e-port-note",
+   "difficulty": 5,
+   "skills": [
+    "cx-testing",
+    "cx-perf"
+   ],
+   "title": "A note on the C++ port",
+   "kind": "longform",
+   "prompt": "You have ported the desk's Python binomial pricer to C++: European and American, on one vector, `growth` per step. Write the note for the pull request. Its reader will trust the C++ price and the speed-up only if you show your evidence.\n\n(a) How do you show the C++ and Python pricers agree? Name the inputs, the tolerance and why that tolerance.\n\n(b) Name two checks that need no Python at all.\n\n(c) How do you time each version so the comparison is fair? Cover the clock, warm-up, repeats, the build and what stops the compiler deleting the work.\n\n(d) Name three caveats a reader must see beside the speed-up.",
+   "model": "**(a) Agreement.** I run both pricers on the same grid of inputs. It has calls and puts, European and American, and spot from 80 to 120 with strike 100. Rates are 0 and 5%, volatilities 10% and 40%, expiries 0.25 and 2 years, and steps 1 to 1,000. That is several hundred cases. They cover deep in and out of the money, and the region where early exercise pays. Both use IEEE doubles and the same formulas, so they should agree to rounding error. I require a relative difference of at most $10^{-9}$. It is far above the $10^{-15}$ that reordering sums can cause, and far below any price difference that matters. An absolute floor of $10^{-12}$ covers prices near zero.\n\n**(b) Checks without Python.**\n\n- *Put-call parity* for European options: $C - P = S - Ke^{-rT}$ to $10^{-10}$ at every input.\n- *Convergence*: at 1,000 steps the European call is within 0.005 of Black-Scholes, and the error shrinks as steps grow.\n- *Limits*: $\\sigma \\to 0$ gives the discounted intrinsic value, and the American put is never below the European one.\n\n**(c) Timing.**\n\n- The clock is coarse, 100 µs in a browser. So I time batches that span at least 100 ticks, and divide by the count.\n- I run one untimed batch first, to warm caches, Python's interpreter and the CPU clock.\n- I take the median of at least 7 batches, so one interrupted batch does not move the result.\n- The C++ is a Release build (`-O2 -DNDEBUG`), never Debug. I state the flags and the compiler.\n- Every price is added into a total that is printed, so the optimiser cannot delete the loop.\n- Python is timed the same way, with `time.perf_counter`, on the same inputs and machine.\n\nAt 1,000 steps each price does $1000 \\times 1001 / 2 = 500{,}500$ node updates. I also report time per node, which compares across step counts.\n\n**(d) Caveats.**\n\n- The ratio depends on the machine, the compiler and the flags; I quote both times, not just the ratio.\n- A WebAssembly build in a browser runs slower than native code, and this app compiles at `-O1`.\n- A pure-Python loop is the slowest Python; a NumPy version would close much of the gap.\n- Timing one input size says nothing about others: the tree is $O(n^2)$ in both languages.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Agreement on a stated grid covering both option types, both exercise styles and edge regions. A relative tolerance near $10^{-9}$, or similar, with a reason."
+    },
+    {
+     "points": 2,
+     "text": "Two checks that need no Python: parity, convergence to Black-Scholes, or limits such as $\\sigma \\to 0$ or American at least European."
+    },
+    {
+     "points": 2,
+     "text": "Batches that span many clock ticks, a warm-up, and the median (or another robust statistic) of several repeats."
+    },
+    {
+     "points": 2,
+     "text": "Times an optimised Release build with `NDEBUG` and states the flags. Keeps the result in use so the work is not removed."
+    },
+    {
+     "points": 2,
+     "text": "At least three caveats: machine and compiler dependence, WebAssembly or `-O1` against native, pure Python against NumPy, or one input size."
+    }
+   ],
+   "explain": {
+    "text": "A speed-up means nothing unless both programs compute the same thing, so agreement comes first. Timing needs long batches, repeats and an optimised build whose work the compiler cannot discard. The caveats tell the reader how far the number travels."
+   }
+  }
+ ]
+}

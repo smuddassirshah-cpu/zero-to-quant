@@ -1,0 +1,1562 @@
+{
+ "id": "l8-long-run-variance",
+ "course": "garch",
+ "title": "Where volatility returns to",
+ "minutes": 14,
+ "objectives": [
+  "Compute the long-run variance from GARCH parameters.",
+  "Turn it into a long-run volatility and half-life, and say how far to trust it."
+ ],
+ "skills": [
+  "gv-models",
+  "gv-forecast"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Two GARCH models after the same shock. Model S is share B's truth: $\\omega = 0.02$, $\\alpha = 0.08$, $\\beta = 0.90$. Model F has $\\omega = 0.10$, $\\alpha = 0.10$, $\\beta = 0.80$. Both expect 4 %² tomorrow, and the curves are their expected variances after that.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      120
+     ],
+     "y": [
+      0,
+      4.5
+     ],
+     "height": 240,
+     "grid": true,
+     "xLabel": "Days ahead",
+     "yLabel": "Expected variance (%²)",
+     "functions": [
+      {
+       "id": "S",
+       "expr": "1 + 3*0.98^(x-1)",
+       "domain": [
+        1,
+        120
+       ],
+       "label": "S",
+       "labelAt": 60
+      },
+      {
+       "id": "F",
+       "expr": "1 + 3*0.9^(x-1)",
+       "domain": [
+        1,
+        120
+       ],
+       "label": "F",
+       "labelAt": 8,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "L",
+       "x": 112,
+       "y": 3,
+       "drag": true,
+       "lockX": true,
+       "label": "level?"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Your level: {{fixed(L.y, 2)}} %²."
+    }
+   },
+   "question": "Drag the marker to the level both models are heading for.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "L",
+      "target": [
+       112,
+       1.0
+      ],
+      "tol": [
+       1,
+       0.1
+      ]
+     }
+    ],
+    "wrong": [
+     {
+      "id": "omega",
+      "region": {
+       "y": [
+        -0.1,
+        0.25
+       ]
+      }
+     },
+     {
+      "id": "end",
+      "region": {
+       "y": [
+        1.15,
+        1.45
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Model F has nearly flattened. Where?"
+    },
+    {
+     "rung": "point",
+     "text": "Read where F sits after day 60.",
+     "highlight": [
+      "F"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Both settle at 1 %²."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Both head for 1 %², a daily volatility of 1%.",
+    "generic": "Not quite right. Follow the faster curve until it goes flat.",
+    "byKey": {
+     "omega": "You went near $\\omega$, 0.02 or 0.10. The level is where the curves flatten, far above either.",
+     "end": "That is where S has reached by day 120. It is still falling; F shows where both end.",
+     "L": "Not yet. Drag until the marker sits where the curves flatten."
+    }
+   },
+   "explain": {
+    "text": "Both settle at 1 %². F is halfway back, at 2.5 %², after about 8 days; S takes about 35. Same level, different speeds: the level comes from $\\omega$, $\\alpha$ and $\\beta$ together.",
+    "canvas": {
+     "points": {
+      "L": {
+       "y": 1
+      }
+     },
+     "hlines": [
+      {
+       "id": "lr",
+       "y": 1,
+       "label": "level 1"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Now move the parameters. The curve starts at 4 %² and the dashed line is where it settles. Watch which slider moves the level most.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      120
+     ],
+     "y": [
+      0,
+      6
+     ],
+     "height": 230,
+     "grid": true,
+     "xLabel": "Days ahead",
+     "yLabel": "Expected variance (%²)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "w/(1-a-b) + (a+b)^(x-1)*(4 - w/(1-a-b))",
+       "domain": [
+        1,
+        120
+       ],
+       "label": "$E[\\sigma^2]$",
+       "labelAt": 100
+      }
+     ],
+     "params": {
+      "w": 0.02,
+      "a": 0.08,
+      "b": 0.9
+     }
+    },
+    "state": {
+     "params": {
+      "w": 0.02,
+      "a": 0.08,
+      "b": 0.9
+     },
+     "hlines": [
+      {
+       "id": "V",
+       "y": 1,
+       "label": "level"
+      }
+     ]
+    },
+    "derive": {
+     "V.y": "w / (1 - a - b)",
+     "caption": "$\\omega$ = {{fixed(w, 2)}}, $\\alpha + \\beta$ = {{fixed(a + b, 2)}}: the level is {{fixed(w / (1 - a - b), 2)}} %²."
+    },
+    "controls": [
+     {
+      "bind": "w",
+      "min": 0.01,
+      "max": 0.05,
+      "step": 0.01,
+      "start": 0.02,
+      "label": "$\\omega$",
+      "decimals": 2
+     },
+     {
+      "bind": "a",
+      "min": 0.02,
+      "max": 0.08,
+      "step": 0.01,
+      "start": 0.08,
+      "label": "$\\alpha$",
+      "decimals": 2
+     },
+     {
+      "bind": "b",
+      "min": 0.8,
+      "max": 0.91,
+      "step": 0.01,
+      "start": 0.9,
+      "label": "$\\beta$",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "With $\\omega = 0.02$ and $\\alpha = 0.08$, set $\\beta = 0.91$. Where is the level now, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0,
+    "tol": {
+     "abs": 0.01
+    },
+    "label": "Level in %²",
+    "accept": "2.0: $0.02/(1 - 0.99)$.",
+    "wrong": [
+     {
+      "id": "small",
+      "value": 1.01,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "omega",
+      "value": 0.02,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption after you move $\\beta$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. One more hundredth of $\\beta$ doubles the level.",
+    "generic": "Not quite right. Set the three sliders and read the level in the caption.",
+    "byKey": {
+     "small": "You expected a small step in $\\beta$ to move the level a little. It halves $1 - \\alpha - \\beta$, so the level doubles.",
+     "omega": "That is $\\omega$. The level is where the curve flattens."
+    }
+   },
+   "explain": {
+    "text": "At $\\alpha + \\beta = 0.98$ the level is 1 %²; at 0.99 it is 2. Each day the model adds $\\omega$ and keeps $\\alpha + \\beta$ of what it had, so it settles where the two balance. Near 1 the leak $1 - \\alpha - \\beta$ is tiny, and small changes in it matter enormously.",
+    "canvas": {
+     "params": {
+      "w": 0.02,
+      "a": 0.08,
+      "b": 0.91
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The long-run variance",
+   "prose": "That level is the **long-run** (unconditional) **variance**. Take expectations of the recursion. By stationarity $E[r^2] = E[\\sigma^2] = V$, so $V = \\omega + \\alpha V + \\beta V$: $$V_L = \\frac{\\omega}{1 - \\alpha - \\beta}.$$ For share B's truth, $V_L = 0.02/0.02 = 1$ %², a daily volatility of 1%.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 30,
+     "step": 5
+    },
+    "state": {
+     "points": [
+      {
+       "id": "d",
+       "x": 1,
+       "label": "daily 1%",
+       "labelPos": "below"
+      }
+     ],
+     "caption": "Volatility in %."
+    }
+   },
+   "question": "What annual volatility does that imply, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 15.87,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "%",
+    "label": "Annual volatility in per cent",
+    "accept": "15.87%: $\\sqrt{252} \\times 1\\%$.",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 252,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "omega",
+      "value": 2.245,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "days365",
+      "value": 19.1,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Annualise the daily sd as in lesson 4."
+    },
+    {
+     "rung": "point",
+     "text": "Daily variances add over 252 days, so the sd scales by $\\sqrt{252}$.",
+     "highlight": [
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{252} = 15.87$, so 15.87% a year."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. B's long-run volatility is 15.87% a year.",
+    "generic": "Not quite right. Multiply the daily sd, 1%, by $\\sqrt{252}$.",
+    "byKey": {
+     "var": "You scaled by 252. That annualises the variance; the sd scales by $\\sqrt{252}$.",
+     "omega": "You annualised $\\sqrt{\\omega}$. $\\omega$ is not the long-run variance; $V_L$ is.",
+     "days365": "You used $\\sqrt{365}$. A year has about 252 trading days."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{252} \\times 1\\% = 15.87\\%$ a year, as the course context promised. The variance scales by 252 and the sd by $\\sqrt{252}$. The model will drift back to this level after any storm.",
+    "canvas": {
+     "points": {
+      "y": {
+       "x": 15.87,
+       "label": "annual 15.87%",
+       "colour": 3,
+       "labelPos": "above"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Now lesson 7's fit, to 6 places: $\\hat\\omega = 0.012065$ and $\\hat\\alpha + \\hat\\beta = 0.986421$. The leak $1 - \\hat\\alpha - \\hat\\beta$ is 0.013579.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 30,
+     "step": 5
+    },
+    "state": {
+     "points": [
+      {
+       "id": "y",
+       "x": 15.87,
+       "label": "true 15.87%",
+       "labelPos": "above"
+      }
+     ],
+     "caption": "Annual volatility in %."
+    }
+   },
+   "question": "What long-run annual volatility does the fit imply, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 14.96,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "%",
+    "label": "Annual volatility in per cent",
+    "accept": "14.96%: $V_L = 0.012065/0.013579 = 0.8885$ %², daily 0.9426%.",
+    "wrong": [
+     {
+      "id": "daily",
+      "value": 0.9426,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.8885,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "omega",
+      "value": 1.744,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Long-run variance first, then the daily sd, then the year."
+    },
+    {
+     "rung": "point",
+     "text": "$V_L = 0.012065/0.013579 = 0.8885$ %².",
+     "highlight": [
+      "y"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{0.8885} = 0.9426\\%$ a day, times $\\sqrt{252}$ gives 14.96%."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The fit says 14.96% a year against a true 15.87%.",
+    "generic": "Not quite right. Divide $\\hat\\omega$ by the leak, take the square root, then scale by $\\sqrt{252}$.",
+    "byKey": {
+     "daily": "That is the daily figure, 0.9426%. Scale it by $\\sqrt{252}$.",
+     "var": "That is the long-run variance in %². Take its square root, then annualise.",
+     "omega": "You annualised $\\sqrt{\\hat\\omega}$, leaving out the leak."
+    }
+   },
+   "explain": {
+    "text": "$V_L = 0.8885$ %², 0.9426% a day and 14.96% a year, about a point below the truth. Rounding first to 0.0121 and 0.9864 gives 0.8897 %²: the leak is small, so its digits matter. Lesson 9 forecasts back towards this 0.94%.",
+    "canvas": {
+     "points": {
+      "f": {
+       "x": 14.96,
+       "label": "fitted 14.96%",
+       "colour": 3,
+       "labelPos": "below"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "How fast is the way back? Take expectations one day ahead and subtract $V_L$: $$E[\\sigma^2_{t+1}] - V_L = (\\alpha + \\beta)(\\sigma^2_t - V_L).$$ The gap shrinks by $\\alpha + \\beta$ a day, like an AR(1) deviation by $\\phi$ (`arma` lesson 12). B's truth gives a half-life of 34.31 days.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 80,
+     "step": 10
+    },
+    "state": {
+     "points": [
+      {
+       "id": "t",
+       "x": 34.31,
+       "label": "true 34.3",
+       "labelPos": "above"
+      },
+      {
+       "id": "k",
+       "x": 9.08,
+       "label": "1,000 days 9.1",
+       "labelPos": "below"
+      }
+     ],
+     "caption": "Half-lives of a variance shock, in days."
+    }
+   },
+   "question": "What half-life does the fitted persistence 0.9864 give, in days?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 50.62,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "days",
+    "label": "Half-life in days",
+    "accept": "50.62 days: $\\ln 0.5/\\ln 0.9864$.",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 73.53,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "lin",
+      "value": 36.76,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "truth",
+      "value": 34.31,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $0.9864^h = 0.5$ for $h$."
+    },
+    {
+     "rung": "point",
+     "text": "$h = \\ln 0.5/\\ln 0.9864$.",
+     "highlight": [
+      "t"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.6931/-0.013693 = 50.62$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A shock to B's variance halves in about 51 days on the fit, 34 on the truth.",
+    "generic": "Not quite right. The half-life is $\\ln 0.5/\\ln(\\alpha + \\beta)$.",
+    "byKey": {
+     "mean": "That is $1/(1 - 0.9864)$, the average life of a shock, not its half-life.",
+     "lin": "You used $0.5/(1 - 0.9864)$. Take logs: $\\ln 0.5/\\ln 0.9864$.",
+     "truth": "That is the truth's half-life, from 0.98."
+    }
+   },
+   "explain": {
+    "text": "A persistence of 0.9864 against 0.98 looks close, yet the half-life is half again as long: 50.6 days against 34.3. With the unrounded 0.986421 it is 50.7. Near 1, small errors in the persistence become large errors in days.",
+    "canvas": {
+     "points": {
+      "f": {
+       "x": 50.62,
+       "label": "fitted 50.6",
+       "colour": 3,
+       "labelPos": "above"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Write the three as functions. A fit in % gives $V_L$ in %². Its annual volatility is then in %: divide by 100 for a fraction. With `pct=False` the parameters are in decimals already. `params` holds lesson 7's fit to full precision.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 80,
+     "step": 10
+    },
+    "state": {
+     "points": [
+      {
+       "id": "t",
+       "x": 34.31,
+       "label": "true 34.3",
+       "labelPos": "above"
+      },
+      {
+       "id": "f",
+       "x": 50.7,
+       "label": "fitted 50.7",
+       "labelPos": "below"
+      }
+     ],
+     "caption": "Half-lives of a variance shock, in days."
+    }
+   },
+   "question": "Complete `long_run_variance`, `long_run_annual_vol` and `variance_half_life`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\n# The level 2 fit on B, fit_garch(rp).x, to full precision.\nparams = np.array([0.012064508787727014, 0.06293432228388088, 0.9234867892614822])\n",
+    "starter": "import math\n\ndef long_run_variance(omega, alpha, beta):\n    # raise ValueError when alpha + beta >= 1\n    return ...\n\ndef long_run_annual_vol(omega, alpha, beta, pct=True):\n    # parameters fitted in % give a vol in %: return a fraction\n    return ...\n\ndef variance_half_life(alpha, beta):\n    # math.inf when alpha + beta >= 1: the gap never halves\n    return ...\n",
+    "solution": "import math\n\ndef long_run_variance(omega, alpha, beta):\n    if alpha + beta >= 1:\n        raise ValueError(\"no long-run variance when alpha + beta >= 1\")\n    return omega / (1 - alpha - beta)\n\ndef long_run_annual_vol(omega, alpha, beta, pct=True):\n    v = long_run_variance(omega, alpha, beta)\n    vol = math.sqrt(252 * v)\n    return vol / 100 if pct else vol\n\ndef variance_half_life(alpha, beta):\n    p = alpha + beta\n    if p >= 1:\n        return math.inf\n    return math.log(0.5) / math.log(p)\n",
+    "examples": [
+     {
+      "call": "round(long_run_annual_vol(0.02, 0.08, 0.90), 6)",
+      "expect": "0.158745",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(variance_half_life(0.08, 0.90), 6)",
+      "expect": "34.309618",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "long_run_variance(0.02, 0.08, 0.90)",
+      "expect": "0.9999999999999991",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(long_run_variance(*params), 9)",
+      "expect": "0.888475432",
+      "compare": "isclose"
+     },
+     {
+      "call": "long_run_variance(0.02, 0.1, 0.9)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "long_run_variance(0.0, 0.06, 0.94)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "round(long_run_annual_vol(0.02, 0.08, 0.90), 6)",
+      "expect": "0.158745",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(long_run_annual_vol(*params), 6)",
+      "expect": "0.149631",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(long_run_annual_vol(2e-6, 0.08, 0.90, pct=False), 6)",
+      "expect": "0.158745",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(variance_half_life(0.08, 0.90), 6)",
+      "expect": "34.309618",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(variance_half_life(params[1], params[2]), 6)",
+      "expect": "50.698581",
+      "compare": "isclose"
+     },
+     {
+      "call": "variance_half_life(0.06, 0.94)",
+      "compare": "equal",
+      "expect": "math.inf"
+     },
+     {
+      "call": "round(variance_half_life(0.1, 0.8), 6)",
+      "expect": "6.578813",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 11 hidden tests, each rounded to 6 or 9 places. Four test `long_run_variance`, two of them at $\\alpha + \\beta \\ge 1$. Three test `long_run_annual_vol`: the truth, the fit and decimals. Four test `variance_half_life`, one with persistence 1. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the edge first in each function: $\\alpha + \\beta \\ge 1$."
+    },
+    {
+     "rung": "point",
+     "text": "Annual: `math.sqrt(252 * v)`, divided by 100 when `pct` is true."
+    },
+    {
+     "rung": "step",
+     "text": "Half-life: `math.log(0.5) / math.log(alpha + beta)`, or `math.inf` at persistence 1."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The truth gives 0.1587 a year, the fit 0.1496, and the fit's half-life is 50.7 days.",
+    "generic": "Some tests failed. Check the two edges and the division by 100."
+   },
+   "explain": {
+    "text": "The truth's long run is 0.1587 a year and the fit's 0.1496. At full precision the fit's half-life is 50.70 days, against 50.62 from the rounded 0.9864. At persistence 1 there is no level and no half-life, so the functions refuse or return infinity.",
+    "canvas": {
+     "highlight": [
+      "f"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Hold $\\omega$ at 0.0121 and let the persistence vary. The curve is $V_L = 0.0121/(1 - p)$. Drag the dot along it and read the caption.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.95,
+      1.0
+     ],
+     "y": [
+      0,
+      6
+     ],
+     "height": 230,
+     "grid": true,
+     "xLabel": "$p = \\alpha + \\beta$",
+     "yLabel": "$V_L$ (%²)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "0.0121/(1-x)",
+       "domain": [
+        0.95,
+        0.998
+       ],
+       "label": "$V_L$",
+       "labelAt": 0.965
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 0.98,
+       "y": 0.605,
+       "drag": true,
+       "on": "f",
+       "snap": 0.001,
+       "label": ""
+      }
+     ],
+     "vlines": [
+      {
+       "id": "one",
+       "x": 1.0,
+       "label": "IGARCH"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$p$ = {{fixed(p.x, 3)}}: $V_L$ = {{fixed(p.y, 3)}} %², {{fixed(sqrt(252 * p.y), 2)}}% a year, half-life {{fixed(log(0.5) / log(p.x), 1)}} days."
+    }
+   },
+   "question": "Drag to a persistence of 0.995. What long-run annual volatility does it give, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 24.69,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "%",
+    "label": "Annual volatility in per cent",
+    "accept": "24.69%: $V_L = 0.0121/0.005 = 2.42$ %², and $\\sqrt{252 \\times 2.42} = 24.69$.",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 2.42,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "daily",
+      "value": 1.556,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "p98",
+      "value": 12.35,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption at $p = 0.995$."
+    },
+    {
+     "rung": "point",
+     "text": "$V_L = 0.0121/(1 - 0.995) = 2.42$ %².",
+     "highlight": [
+      "p"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{2.42} = 1.556\\%$ a day, times $\\sqrt{252}$ gives 24.69%."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. From 0.98 to 0.995 the long-run vol doubles, from 12.3% to 24.7%.",
+    "generic": "Not quite right. Divide 0.0121 by $1 - 0.995$, take the square root, then scale by $\\sqrt{252}$.",
+    "byKey": {
+     "var": "That is $V_L$ in %². Take its square root and annualise.",
+     "daily": "That is the daily figure. Scale it by $\\sqrt{252}$.",
+     "p98": "That is the value at 0.98. Drag on to 0.995."
+    }
+   },
+   "explain": {
+    "text": "The leak $1 - p$ sits in the denominator, so as $p$ nears 1 the level shoots up. At $p = 1$ there is no level at all: **IGARCH**, whose forecasts never revert. Lesson 5's EWMA is that case, with $\\omega = 0$, $\\alpha = 1 - \\lambda$ and $\\beta = \\lambda$.",
+    "canvas": {
+     "points": {
+      "p": {
+       "x": 0.995
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "How far can we trust 14.96%? The histogram shows the long-run annual volatility from the fit on 20 paths of B's model, seeds 7 to 26. Every path has the same truth, 15.87%.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": 13,
+      "max": 19,
+      "width": 1
+     },
+     "data": [
+      14.96,
+      17.17,
+      16.42,
+      16.17,
+      16.14,
+      15.93,
+      15.3,
+      14.96,
+      14.59,
+      15.67,
+      18.25,
+      16.57,
+      13.9,
+      16.66,
+      13.1,
+      14.46,
+      14.74,
+      14.81,
+      16.9,
+      18.02
+     ],
+     "xLabel": "Fitted long-run volatility (% a year)",
+     "yLabel": "Paths",
+     "height": 200,
+     "yMax": 7,
+     "showValues": true,
+     "decimals": 0
+    },
+    "state": {
+     "cut": {
+      "at": 15.87,
+      "side": "above",
+      "label": "true 15.87%"
+     }
+    }
+   },
+   "question": "What should a report say about B's long-run volatility?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "range",
+      "text": "About 15% a year, give or take a point and a half: equally good samples ran from 13.1% to 18.2%.",
+      "correct": true
+     },
+     {
+      "id": "exact",
+      "text": "Exactly 14.96% a year, the fitted value.",
+      "why": "You quoted the estimate to two decimals. Twenty equally good samples spread over five points."
+     },
+     {
+      "id": "wrong",
+      "text": "The fit is wrong, since it misses the truth by 0.9 points.",
+      "why": "You expected the fit to hit the truth. A miss of 0.9 points is within the spread's sd of 1.3."
+     },
+     {
+      "id": "mean",
+      "text": "15.74%, the average of the 20 fits.",
+      "why": "You used paths we only have because we simulated them. A real share gives one path."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the spread of the bars, not one bar."
+    },
+    {
+     "rung": "point",
+     "text": "The fits run from 13.1% to 18.2%, with an sd of 1.3 points.",
+     "highlight": [
+      "b1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A single fit pins the long run to about ±1.3 points."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The long run is the least precise thing a GARCH fit gives.",
+    "generic": "Not quite right. Ask how far a fit on equally good data could land from the truth.",
+    "byKey": {
+     "exact": "You quoted the estimate to two decimals. Equally good samples spread from 13.1% to 18.2%."
+    }
+   },
+   "explain": {
+    "text": "The 20 fits give long-run vols from 13.1% to 18.2%, sd 1.3 points, around the true 15.87%. Their $V_L$ runs from 0.68 to 1.32 %², because a small leak $1 - \\hat\\alpha - \\hat\\beta$ amplifies the noise in $\\hat\\omega$. Quote the long run to a point, never to 0.01%.",
+    "canvas": {
+     "highlight": [
+      "b1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Desks often skip estimating the long run. **Variance targeting** fixes $V_L$ at the sample variance $\\bar v$, so $\\omega = \\bar v(1 - \\alpha - \\beta)$, and fits only $\\alpha$ and $\\beta$. B's sample variance is 1.0585 %², or 16.33% a year.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Fit",
+      "$\\hat\\omega$",
+      "$\\hat\\alpha$",
+      "$\\hat\\beta$",
+      "Long run, a year"
+     ],
+     "rows": [
+      [
+       "Full (lesson 7)",
+       "0.0121",
+       "0.0629",
+       "0.9235",
+       "14.96%"
+      ],
+      [
+       "Targeted",
+       "?",
+       "?",
+       "?",
+       "16.33%"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `fit_variance_targeted(r)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\ndef garch_variance(params, r):\n    \"\"\"Conditional variances for returns r (in %): sigma2_0 is the sample variance of r.\"\"\"\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\ndef neg_loglik(params, r):\n    \"\"\"Minus the Gaussian log-likelihood, zero mean: 0.5 * sum(ln 2pi + ln s2 + r^2 / s2).\"\"\"\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n\n# Share B: 2,000 days of a simulated share's daily returns (decimals),\n# from a GARCH(1,1) whose parameters we know; s2 holds its true variances.\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\nrp = 100 * r      # B in %\ns2p = 1e4 * s2    # B's true variances in %^2\n# Series A: independent normal returns with sd 1%, no clustering.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n",
+    "starter": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_variance_targeted(r):\n    \"\"\"GARCH(1,1) with omega set so the long run\n    is r.var(). Returns (omega, alpha, beta).\"\"\"\n    v = r.var()\n    def nll(q, r):\n        alpha, beta = q\n        # omega comes from v, alpha and beta\n        return neg_loglik((..., alpha, beta), r)\n    cons = [{\"type\": \"ineq\",\n             \"fun\": lambda q: 0.9999 - q[0] - q[1]}]\n    res = minimize(nll, x0=np.array([0.05, 0.90]),\n                   args=(r,), method=\"SLSQP\",\n                   bounds=[(0.0, 1.0), (0.0, 1.0)],\n                   constraints=cons,\n                   options={\"ftol\": 1e-10, \"maxiter\": 500})\n    alpha, beta = res.x\n    return (..., float(alpha), float(beta))\n",
+    "solution": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_variance_targeted(r):\n    \"\"\"GARCH(1,1) with omega set so the long run\n    is r.var(). Returns (omega, alpha, beta).\"\"\"\n    v = r.var()\n    def nll(q, r):\n        alpha, beta = q\n        return neg_loglik((v * (1 - alpha - beta), alpha, beta), r)\n    cons = [{\"type\": \"ineq\",\n             \"fun\": lambda q: 0.9999 - q[0] - q[1]}]\n    res = minimize(nll, x0=np.array([0.05, 0.90]),\n                   args=(r,), method=\"SLSQP\",\n                   bounds=[(0.0, 1.0), (0.0, 1.0)],\n                   constraints=cons,\n                   options={\"ftol\": 1e-10, \"maxiter\": 500})\n    alpha, beta = res.x\n    return (float(v * (1 - alpha - beta)), float(alpha), float(beta))\n",
+    "examples": [
+     {
+      "call": "round(fit_variance_targeted(rp)[1], 3)",
+      "expect": "0.066",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(fit_variance_targeted(rp)[1], 3)",
+      "expect": "0.066",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_variance_targeted(rp)[2], 3)",
+      "expect": "0.924",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_variance_targeted(rp)[0], 3)",
+      "expect": "0.011",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "bool(abs(fit_variance_targeted(rp)[0] / (1 - sum(fit_variance_targeted(rp)[1:])) - rp.var()) < 1e-9)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "bool(0.03 < fit_variance_targeted(rp)[1] < 0.13 and 0.85 < fit_variance_targeted(rp)[2] < 0.96)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "round(fit_variance_targeted(rp[:1000])[2], 3)",
+      "expect": "0.867",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_variance_targeted(100 * simulate_garch(2e-6, 0.08, 0.90, 2000, 11)[0])[1], 3)",
+      "expect": "0.092",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Five fit B: each parameter to 3 places within 0.003, the long run against `rp.var()`, and two intervals. Two fit B's first 1,000 days and a second seed. Fitted values can differ in the fourth place between optimisers, so each is checked to within 0.003. The first run loads NumPy and SciPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\omega$ is whatever makes $\\omega/(1 - \\alpha - \\beta)$ equal `v`."
+    },
+    {
+     "rung": "point",
+     "text": "Inside `nll`: `v * (1 - alpha - beta)`."
+    },
+    {
+     "rung": "step",
+     "text": "Return `(float(v * (1 - alpha - beta)), float(alpha), float(beta))`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Targeting gives $\\hat\\alpha = 0.0658$ and $\\hat\\beta = 0.9238$, persistence 0.9897.",
+    "generic": "Some tests failed. Build $\\omega$ from `v` and the two fitted parameters, in both places."
+   },
+   "explain": {
+    "text": "Targeting gives $\\hat\\omega = 0.0109$, $\\hat\\alpha = 0.0658$, $\\hat\\beta = 0.9238$, and its log-likelihood is only 0.28 below the full fit's. Yet the long run moves from 14.96% to 16.33% a year. The data barely pin the long run down, so desks often take it from the sample instead.",
+    "canvas": {
+     "values": {
+      "r1c1": "0.0109",
+      "r1c2": "0.0658",
+      "r1c3": "0.9238"
+     },
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "Two analysts write B's long-run volatility into a report. The first writes that $\\hat\\omega = 0.0121$ %² is the long-run variance: 0.11% a day, 1.75% a year. The second uses the sd of days 1,380 to 1,479, which gives 38.6% a year.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 40,
+     "step": 5
+    },
+    "state": {
+     "points": [
+      {
+       "id": "om",
+       "x": 1.75,
+       "label": "first 1.75%",
+       "labelPos": "above"
+      },
+      {
+       "id": "st",
+       "x": 38.58,
+       "label": "second 38.6%",
+       "labelPos": "above"
+      }
+     ],
+     "caption": "Annual volatility in %."
+    }
+   },
+   "question": "What should the report say, from the fit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "vl",
+      "text": "14.96%: the long-run variance is $\\hat\\omega/(1 - \\hat\\alpha - \\hat\\beta) = 0.8885$ %².",
+      "correct": true
+     },
+     {
+      "id": "omega",
+      "text": "1.75%: $\\omega$ is the level the variance returns to.",
+      "why": "You read $\\omega$ as the level. It is the variance added each day; the level is $\\omega$ divided by the leak $1 - \\alpha - \\beta$."
+     },
+     {
+      "id": "storm",
+      "text": "38.6%: the latest storm is the best guide to the long run.",
+      "why": "You took a stormy window. The long run averages calm and storm; that window is the storm itself."
+     },
+     {
+      "id": "true",
+      "text": "15.87%: B's true long-run volatility.",
+      "why": "We know that only because we simulated B. A report on a real share must use the fit."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which number divides $\\omega$ in the long-run variance?"
+    },
+    {
+     "rung": "point",
+     "text": "$V_L = 0.0121/(1 - 0.9864)$, not $0.0121$.",
+     "highlight": [
+      "om"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is 0.8885 %², 0.9426% a day, 14.96% a year."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. $\\omega$ is tiny because the leak it refills is tiny.",
+    "generic": "Not quite right. Use $V_L = \\omega/(1 - \\alpha - \\beta)$ from the fit.",
+    "byKey": {
+     "omega": "You read $\\omega$ as the long-run variance. Each day the model keeps 98.6% of its variance and adds $\\omega$. The level is $\\omega/0.0136$, 73 times larger."
+    }
+   },
+   "explain": {
+    "text": "$\\hat\\omega = 0.0121$ only tops up the 1.36% that leaks away each day, so the level is 73 times larger. The storm window measures one storm, not the average over many. Long-run vol comes from $V_L = 0.8885$ %², then $\\sqrt{252}$.",
+    "canvas": {
+     "points": {
+      "vl": {
+       "x": 14.96,
+       "label": "$V_L$: 14.96%",
+       "colour": 3,
+       "labelPos": "below"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Write the long-run variance out in full, as lesson 6 did for ARCH. Assume stationarity: $E[r_t^2]$ and $E[\\sigma_t^2]$ do not depend on $t$.",
+   "question": "Order the steps from the GARCH recursion to $V_L$.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Take expectations: $E[\\sigma_t^2] = \\omega + \\alpha E[r_{t-1}^2] + \\beta E[\\sigma_{t-1}^2]$, by linearity"
+     },
+     {
+      "id": "s2",
+      "text": "$E[r_{t-1}^2] = E[\\sigma_{t-1}^2]$, since $z_{t-1}$ is independent of $\\sigma_{t-1}$ with variance 1"
+     },
+     {
+      "id": "s3",
+      "text": "Stationarity: every one of these expectations equals the same $V$"
+     },
+     {
+      "id": "s4",
+      "text": "So $V = \\omega + \\alpha V + \\beta V$, and $(1 - \\alpha - \\beta)V = \\omega$"
+     },
+     {
+      "id": "s5",
+      "text": "$V_L = \\omega/(1 - \\alpha - \\beta)$, a positive level only when $\\alpha + \\beta < 1$"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "same": [
+     [
+      "s1",
+      "s2"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The same three facts as for ARCH: linearity, independence, stationarity."
+    },
+    {
+     "rung": "point",
+     "text": "$E[r^2] = E[\\sigma^2]$ must come before stationarity names one $V$."
+    },
+    {
+     "rung": "step",
+     "text": "Expectations, $E[r^2] = E[\\sigma^2]$, stationarity, collect the $V$ terms, divide."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. GARCH adds a $\\beta V$ term, so the leak becomes $1 - \\alpha - \\beta$.",
+    "generic": "Not quite right. Write both expectations, then let stationarity name them $V$, then solve.",
+    "byKey": {
+     "s5": "Dividing comes last: it needs $(1 - \\alpha - \\beta)V = \\omega$ first.",
+     "s3": "Stationarity names one $V$; it comes after the expectations are in terms of $\\sigma^2$."
+    }
+   },
+   "explain": {
+    "text": "Linearity and independence turn the recursion into one about $E[\\sigma^2]$, and stationarity sets it equal to $V$. Collecting terms leaves $(1 - \\alpha - \\beta)V = \\omega$. At $\\alpha + \\beta = 1$ there is no solution: IGARCH has no long-run level."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A risk committee asks what volatility to assume for next year. Take `trees` lesson 10's one-year call: $S = K = 100$, $r = 5\\%$, $T = 1$, worth £10.4506 at 20%. Over a year, B's variance spends most days near its long run. The curve is the Black-Scholes price against volatility.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.1,
+      0.3
+     ],
+     "y": [
+      6,
+      15
+     ],
+     "height": 230,
+     "grid": true,
+     "xFormat": "percent",
+     "xLabel": "Volatility a year",
+     "yLabel": "Call price (£)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "100*Phi((0.05 + x^2/2)/x) - 100*exp(-0.05)*Phi((0.05 - x^2/2)/x)",
+       "domain": [
+        0.1,
+        0.3
+       ],
+       "label": "Black-Scholes",
+       "labelAt": 0.26
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "v",
+       "x": 0.2,
+       "y": 10.4506,
+       "drag": true,
+       "on": "f",
+       "snap": 0.0001,
+       "label": ""
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Volatility {{fixed(100 * v.x, 2)}}%: call worth {{money(v.y, \"£\", 2)}}."
+    }
+   },
+   "question": "What is the call worth at B's true long-run volatility, 15.87%, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.9136,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "£",
+    "label": "Call price in pounds",
+    "accept": "£8.91 at $\\sigma = 15.87\\%$.",
+    "wrong": [
+     {
+      "id": "twenty",
+      "value": 10.45,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "fit",
+      "value": 8.5781,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag the dot to 15.87% and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "At 20% it reads £10.45; move it left.",
+     "highlight": [
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At 15.87% the call is worth £8.91."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. At the long run the call is worth £8.91, £1.54 less than at 20%.",
+    "generic": "Not quite right. Move the dot to a volatility of 15.87% and read the price.",
+    "byKey": {
+     "twenty": "That is the price at 20%. The committee wants the long-run level.",
+     "fit": "That is the price at the fit's 14.96%. The question asks for the true 15.87%."
+    }
+   },
+   "explain": {
+    "text": "At 15.87% the call is worth £8.91, and at the fit's 14.96% £8.58. For a one-year contract the long run matters more than today, because the forecast reverts within months. A good answer to the committee is a range: the fit pins the long run to about ±1.3 points.",
+    "canvas": {
+     "points": {
+      "v": {
+       "x": 0.1587
+      },
+      "w": {
+       "x": 0.1496,
+       "y": 8.5781,
+       "label": "fit",
+       "colour": 3
+      }
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "GARCH's variance settles at $V_L = \\omega/(1 - \\alpha - \\beta)$: each day it adds $\\omega$ and keeps $\\alpha + \\beta$. B's truth gives 1 %², 15.87% a year; the fit 0.8885 %², 14.96%.",
+   "A variance shock shrinks by $\\alpha + \\beta$ a day, so it halves in $\\ln 0.5/\\ln(\\alpha + \\beta)$ days: 34.3 true, 50.6 fitted.",
+   "Near persistence 1 the leak is tiny, so $V_L$ is fragile: 20 equally good fits ran from 13.1% to 18.2%. At 1 there is no level (IGARCH, EWMA)."
+  ],
+  "formula": {
+   "name": "Long-run variance",
+   "tex": "V_L = \\dfrac{\\omega}{1 - \\alpha - \\beta}, \\qquad \\sigma_{\\text{annual}} = \\sqrt{252\\,V_L}",
+   "note": "Needs $\\alpha + \\beta < 1$. Fits in % give $V_L$ in %²."
+  },
+  "trap": "$\\omega$ is the daily top-up, not the long-run variance: divide it by $1 - \\alpha - \\beta$."
+ },
+ "quiz": [
+  {
+   "id": "q1",
+   "difficulty": 2,
+   "prose": "A GARCH(1,1) fit in % gives $\\omega = 0.04$, $\\alpha = 0.10$, $\\beta = 0.88$.",
+   "question": "What is its long-run variance, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0,
+    "tol": {
+     "abs": 0.005
+    },
+    "label": "Variance in %²",
+    "accept": "2.0: $0.04/(1 - 0.98)$.",
+    "wrong": [
+     {
+      "id": "omega",
+      "value": 0.04,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "beta",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Divide $\\omega$ by $1 - \\alpha - \\beta$.",
+    "byKey": {
+     "omega": "That is $\\omega$, the daily top-up. Divide it by the leak, 0.02.",
+     "beta": "You divided by $1 - \\beta$ only. The leak is $1 - \\alpha - \\beta$."
+    }
+   },
+   "explain": {
+    "text": "$0.04/(1 - 0.10 - 0.88) = 0.04/0.02 = 2.0$ %², a daily volatility of 1.41%."
+   }
+  },
+  {
+   "id": "q2",
+   "difficulty": 2,
+   "prose": "A fit gives a long-run variance of 2.25 %² in daily % returns.",
+   "question": "What is the long-run volatility a year, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 23.81,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "%",
+    "label": "Annual volatility in per cent",
+    "accept": "23.81%: $\\sqrt{2.25} \\times \\sqrt{252} = 1.5 \\times 15.87$.",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 567,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "daily",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Take the square root first, then scale by $\\sqrt{252}$.",
+    "byKey": {
+     "var": "You multiplied the variance by 252. Take its square root first.",
+     "daily": "That is the daily sd. Scale it by $\\sqrt{252}$."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{2.25} = 1.5\\%$ a day, and $1.5 \\times \\sqrt{252} = 23.81\\%$ a year."
+   }
+  },
+  {
+   "id": "q3",
+   "difficulty": 3,
+   "prose": "Lesson 5's EWMA with $\\lambda = 0.94$ is a GARCH(1,1).",
+   "question": "Which parameters, and what long-run variance?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ig",
+      "text": "$\\omega = 0$, $\\alpha = 0.06$, $\\beta = 0.94$: persistence 1, so there is no long-run level.",
+      "correct": true
+     },
+     {
+      "id": "swap",
+      "text": "$\\omega = 0$, $\\alpha = 0.94$, $\\beta = 0.06$, with no long-run level.",
+      "why": "You swapped the weights: $\\lambda$ multiplies yesterday's variance, which is $\\beta$'s job."
+     },
+     {
+      "id": "zero",
+      "text": "$\\omega = 0$, $\\alpha = 0.06$, $\\beta = 0.94$, so the long-run variance is 0.",
+      "why": "You computed $0/0$ as 0. At persistence 1 the formula has no answer."
+     },
+     {
+      "id": "sample",
+      "text": "Any $\\omega$, with the sample variance as its level.",
+      "why": "EWMA has no constant term, so $\\omega$ is 0 and nothing pulls it to a level."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Match $\\lambda\\sigma^2 + (1 - \\lambda)r^2$ to $\\omega + \\alpha r^2 + \\beta\\sigma^2$."
+   },
+   "explain": {
+    "text": "Matching terms gives $\\omega = 0$, $\\alpha = 1 - \\lambda$, $\\beta = \\lambda$. The persistence is 1, so EWMA is IGARCH: its forecast stays flat at every horizon."
+   }
+  },
+  {
+   "id": "q4",
+   "difficulty": 3,
+   "prose": "A fit has persistence $\\alpha + \\beta = 0.95$.",
+   "question": "What is the half-life of a variance shock, in days, to 2 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 13.51,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "days",
+    "label": "Days",
+    "accept": "13.51: $\\ln 0.5/\\ln 0.95$.",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 20,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "lin",
+      "value": 10,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Solve $0.95^h = 0.5$.",
+    "byKey": {
+     "mean": "That is $1/(1 - 0.95)$, the average life.",
+     "lin": "You used $0.5/(1 - 0.95)$. Take logs instead."
+    }
+   },
+   "explain": {
+    "text": "$\\ln 0.5/\\ln 0.95 = -0.6931/-0.0513 = 13.51$ days. Lower persistence means a faster return to the long run."
+   }
+  }
+ ]
+}

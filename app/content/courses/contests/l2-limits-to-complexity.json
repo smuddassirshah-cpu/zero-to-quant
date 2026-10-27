@@ -1,0 +1,1299 @@
+{
+  "id": "l2-limits-to-complexity",
+  "course": "contests",
+  "title": "From limits to complexity",
+  "minutes": 14,
+  "objectives": [
+    "Choose an algorithm from the constraints before writing code."
+  ],
+  "skills": [
+    "cn-reading"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which one passes?",
+      "prose": "Problem B and three correct solutions. Nothing has run yet. Read the limits, then pick the one that finishes inside 1 second on the largest test.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "B. Best stretch",
+            "time limit per test: 1 second",
+            "memory limit per test: 256 megabytes",
+            "",
+            "Mira wants her best run of consecutive",
+            "days: the largest total a_l + … + a_r",
+            "over all 1 ≤ l ≤ r ≤ n.",
+            "",
+            "Input",
+            "n (1 ≤ n ≤ 2·10⁵), then a₁, …, aₙ",
+            "(−10⁹ ≤ aᵢ ≤ 10⁹).",
+            "",
+            "Output",
+            "The largest stretch total."
+          ],
+          "title": "Problem B"
+        },
+        "state": {}
+      },
+      "question": "Which solution passes every test inside 1 second?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cubic",
+            "text": "```python\nbest = a[0]\nfor l in range(n):\n    for r in range(l, n):\n        best = max(best, sum(a[l:r + 1]))\n```",
+            "why": "You read three loops as fine. At $n = 2 \\cdot 10^5$ the slices add up to about $10^{15}$ steps."
+          },
+          {
+            "id": "quad",
+            "text": "```python\nbest = a[0]\nfor l in range(n):\n    s = 0\n    for r in range(l, n):\n        s += a[r]\n        best = max(best, s)\n```",
+            "why": "Two loops over $2 \\cdot 10^5$ days is about $2 \\cdot 10^{10}$ steps: minutes, not a second."
+          },
+          {
+            "id": "lin",
+            "text": "```python\nbest = cur = a[0]\nfor x in a[1:]:\n    cur = max(x, cur + x)\n    best = max(best, cur)\n```",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the steps each one takes at $n = 2 \\cdot 10^5$."
+        },
+        {
+          "rung": "point",
+          "text": "The largest $n$ is in the Input section.",
+          "highlight": [
+            "l10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About $n^3/6 \\approx 1.3 \\cdot 10^{15}$, $n^2/2 = 2 \\cdot 10^{10}$ and $n = 2 \\cdot 10^5$ steps."
+        }
+      ],
+      "feedback": {
+        "correct": "The single pass takes $2 \\cdot 10^5$ steps, far inside the limit.",
+        "generic": "Not quite right. Count the steps at the largest $n$, not at the example's size.",
+        "byKey": {
+          "quad": "You chose two loops. $n^2/2 = 2 \\cdot 10^{10}$ steps, and a judge does about $10^8$ a second.",
+          "cubic": "You chose three loops, counting the slice's sum. That is about $1.3 \\cdot 10^{15}$ steps."
+        }
+      },
+      "explain": {
+        "text": "We counted steps before running anything: about $10^{15}$, $2 \\cdot 10^{10}$ and $2 \\cdot 10^5$. A judge does roughly $10^8$ simple steps a second in C++. Only the single pass fits.",
+        "canvas": {
+          "shade": {
+            "limit": [
+              "l10"
+            ]
+          },
+          "caption": "The constraint picks the algorithm"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Steps against n",
+      "prose": "Both axes are logarithmic. The flat lines are about one second of work: $10^8$ simple steps in C++, and roughly $10^7$ in Python. Slide $n$ and watch where each curve crosses them.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            10,
+            1000000
+          ],
+          "y": [
+            10,
+            10000000000000
+          ],
+          "xScale": "log",
+          "yScale": "log",
+          "xLabel": "$n$",
+          "yLabel": "steps",
+          "functions": [
+            {
+              "id": "sq",
+              "expr": "x^2",
+              "label": "$n^2$"
+            },
+            {
+              "id": "nl",
+              "expr": "x*ln(x)/ln(2)",
+              "label": "$n \\log_2 n$",
+              "labelSide": "below"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "cpp",
+              "y": 100000000,
+              "label": "C++, 1 s"
+            },
+            {
+              "id": "py",
+              "y": 10000000,
+              "label": "Python, about 1 s"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a",
+              "x": 1000,
+              "y": 1000000,
+              "on": "sq"
+            },
+            {
+              "id": "b",
+              "x": 1000,
+              "y": 9966,
+              "on": "nl"
+            }
+          ]
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 10,
+            "max": 1000000,
+            "scale": "log",
+            "perDecade": 3,
+            "start": 1000,
+            "label": "$n$"
+          }
+        ],
+        "derive": {
+          "a.x": "n",
+          "b.x": "n",
+          "caption": "n = {{round(n)}}: n² takes {{fixed(n * n / 1e8, 3)}} s and n log₂ n takes {{fixed(n * log(n) / log(2) / 1e8, 4)}} s in C++"
+        }
+      },
+      "question": "What is the largest $n$ for which $n^2$ stays within $10^8$ steps?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10000,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "10,000: $(10^4)^2 = 10^8$.",
+        "label": "Largest n",
+        "wrong": [
+          {
+            "id": "py",
+            "value": 3162,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "budget",
+            "value": 100000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nl",
+            "value": 4523071,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide until the $n^2$ point meets the C++ line."
+        },
+        {
+          "rung": "point",
+          "text": "The C++ line sits at $10^8$.",
+          "highlight": [
+            "cpp"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$n^2 = 10^8$ when $n = \\sqrt{10^8} = 10^4$."
+        }
+      ],
+      "feedback": {
+        "correct": "$n = 10^4$: there $n^2$ meets the line.",
+        "generic": "Not quite right. Find where the $n^2$ curve crosses $10^8$.",
+        "byKey": {
+          "py": "That is where $n^2$ meets the Python line, $10^7$. The question asks about $10^8$.",
+          "budget": "You gave the budget itself. The question asks for $n$.",
+          "nl": "That is where $n \\log_2 n$ crosses $10^8$, off the right of this chart. Read the $n^2$ curve."
+        }
+      },
+      "explain": {
+        "text": "You found $n^2$ crossing $10^8$ at $n = 10^4$. At $n = 2 \\cdot 10^5$, $n \\log_2 n$ is only about $3.5 \\cdot 10^6$ steps. That gap is why the constraint decides the algorithm.",
+        "canvas": {
+          "params": {
+            "n": 10000
+          },
+          "points": {
+            "a": {
+              "x": 10000
+            },
+            "b": {
+              "x": 10000
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Constraints to complexity",
+      "prose": "What you just did has a name: turning a **constraint** into an **allowed complexity**. Use about $10^8$ steps for a 1 s limit. Python manages far fewer, so on Codeforces submit it as **PyPy 3**, or write C++.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Rule of thumb, 1 s limit",
+            "C++:     about 10⁸ simple steps",
+            "PyPy 3:  a few times slower than C++",
+            "Python:  roughly 10⁶ to 10⁷ steps",
+            "",
+            "Measured here: 10⁷ additions took about",
+            "1 s in Pyodide and 0.3 s in CPython."
+          ],
+          "title": "Budget"
+        },
+        "state": {}
+      },
+      "question": "Fill in the slowest growth that still fits each constraint.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Constraint",
+          "Slowest growth that fits"
+        ],
+        "rows": [
+          [
+            "$n \\le 20$",
+            {
+              "edit": true,
+              "answer": "O(2^n)",
+              "accept": [
+                "2^n",
+                "O(2**n)"
+              ],
+              "placeholder": "O(...)"
+            }
+          ],
+          [
+            "$n \\le 500$",
+            {
+              "edit": true,
+              "answer": "O(n^3)",
+              "accept": [
+                "n^3"
+              ],
+              "placeholder": "O(...)"
+            }
+          ],
+          [
+            "$n \\le 5{,}000$",
+            {
+              "edit": true,
+              "answer": "O(n^2)",
+              "accept": [
+                "n^2"
+              ],
+              "placeholder": "O(...)"
+            }
+          ],
+          [
+            "$n \\le 2 \\cdot 10^5$",
+            "O(n log n)"
+          ],
+          [
+            "$n \\le 10^{18}$, a value",
+            {
+              "edit": true,
+              "answer": "O(log n)",
+              "accept": [
+                "log n"
+              ],
+              "placeholder": "O(...)"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put each largest $n$ into each growth and compare with $10^8$."
+        },
+        {
+          "rung": "point",
+          "text": "$2^{20} \\approx 10^6$, $500^3 = 1.25 \\cdot 10^8$, $5{,}000^2 = 2.5 \\cdot 10^7$.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The rows read $2^n$, $n^3$, $n^2$, then $n \\log n$, and a value of $10^{18}$ only allows $\\log n$."
+        }
+      ],
+      "feedback": {
+        "correct": "Each row is the slowest growth that still lands near $10^8$.",
+        "generic": "Not quite right. Put the largest $n$ into your growth and compare with $10^8$.",
+        "byKey": {
+          "r0c1": "Your entry for $n \\le 20$ is not the slowest that fits. $2^{20} \\approx 10^6$, so trying every subset fits.",
+          "r1c1": "Your entry for $n \\le 500$ is not the slowest that fits. $500^3 = 1.25 \\cdot 10^8$ fits, just.",
+          "r2c1": "Your entry for $n \\le 5{,}000$ is not the slowest that fits. $5{,}000^2 = 2.5 \\cdot 10^7$ fits.",
+          "r4c1": "Your entry for $10^{18}$ is too slow. You cannot even count to $10^{18}$ in time; only halving fits."
+        }
+      },
+      "explain": {
+        "text": "You read each limit as the setter's hint about the intended solution. Small limits allow brute force; large ones demand $n \\log n$ or better. A limit on a value rather than a length, like $10^{18}$, asks for $\\log$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Twenty instruments",
+      "prose": "A tiny limit is a message from the setter.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "D. Hedge basket   (1 s, 256 MB)",
+            "n instruments (1 ≤ n ≤ 20), each with a",
+            "risk rᵢ and an expected return gᵢ.",
+            "Choose any set with total risk at most R.",
+            "Print the largest total expected return."
+          ],
+          "title": "Problem D"
+        },
+        "state": {}
+      },
+      "question": "How many sets must a program try to check every one at $n = 20$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1048576,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "1,048,576 $= 2^{20}$.",
+        "label": "Sets to try",
+        "wrong": [
+          {
+            "id": "n2",
+            "value": 400,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "n",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "n3",
+            "value": 8000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each instrument is either in the set or out."
+        },
+        {
+          "rung": "point",
+          "text": "The constraint caps $n$ at 20.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two choices, 20 times: $2^{20}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2^{20} = 1{,}048{,}576$ sets: about a million.",
+        "generic": "Not quite right. Each instrument is in or out, independently.",
+        "byKey": {
+          "n2": "That is $n^2$. Each instrument doubles the count, so it is $2^{20}$.",
+          "n": "That counts the instruments. Every in-or-out pattern is a different set.",
+          "n3": "That is $n^3$. Each instrument doubles the count, so it is $2^{20}$."
+        }
+      },
+      "explain": {
+        "text": "You counted $2^{20} \\approx 10^6$ sets. Adding up each set's risk costs up to 20 more steps: about $2 \\cdot 10^7$ in all, fine in C++. A limit of 20 says try everything, which level 3 does with bitmasks.",
+        "canvas": {
+          "shade": {
+            "n": [
+              "l2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Five thousand days",
+      "prose": "Problem E checks every pair of days. In Python a simple step costs far more than in C++.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "E. Matched days   (1 s, 256 MB)",
+            "n (2 ≤ n ≤ 5,000) daily P&L values.",
+            "Count the pairs of days i < j whose",
+            "P&L values differ by at most d."
+          ],
+          "title": "Problem E"
+        },
+        "state": {}
+      },
+      "question": "How many pairs $i < j$ are there when $n = 5{,}000$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12497500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "12,497,500 $= 5{,}000 \\cdot 4{,}999 / 2$.",
+        "label": "Pairs",
+        "wrong": [
+          {
+            "id": "ordered",
+            "value": 25000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ordered2",
+            "value": 24995000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each pair is counted once, with $i < j$."
+        },
+        {
+          "rung": "point",
+          "text": "The number of pairs is $n(n-1)/2$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$5{,}000 \\cdot 4{,}999 / 2 = 12{,}497{,}500$."
+        }
+      ],
+      "feedback": {
+        "correct": "About $1.25 \\cdot 10^7$ pairs.",
+        "generic": "Not quite right. Count each unordered pair once.",
+        "byKey": {
+          "ordered": "That is $n^2$, which counts $(i, j)$ and $(j, i)$ and $(i, i)$. Halve it and drop the diagonal.",
+          "ordered2": "That counts each pair twice, once each way round. Halve it."
+        }
+      },
+      "explain": {
+        "text": "About $1.25 \\cdot 10^7$ pairs is a tenth of a second in C++. In plain Python it takes a few seconds, so submit it as PyPy 3 or in C++. A limit of 5,000 says $O(n^2)$ is intended."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A huge value, many queries",
+      "prose": "Here $n$ is small but the values are enormous. You can check a guess $m$ in one step, by testing $m^2 \\le x$.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "F. Position size   (1 s, 256 MB)",
+            "q queries (1 ≤ q ≤ 2·10⁵). Each gives x",
+            "(1 ≤ x ≤ 10¹⁸). Print the largest m",
+            "with m² ≤ x."
+          ],
+          "title": "Problem F"
+        },
+        "state": {}
+      },
+      "question": "Binary search for $m$ between 0 and $10^9$. How many halvings shrink those $10^9 + 1$ values to one?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 30,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "",
+        "accept": "30: $2^{30} \\approx 1.07 \\cdot 10^9$.",
+        "label": "Halvings",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 1000000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sqrt",
+            "value": 31623,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each halving cuts the range in two."
+        },
+        {
+          "rung": "point",
+          "text": "$2^{10} \\approx 10^3$, so $10^9 \\approx 2^{30}$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2^{30} = 1{,}073{,}741{,}824 \\ge 10^9 + 1$: 30 halvings."
+        }
+      ],
+      "feedback": {
+        "correct": "About 30 halvings per query.",
+        "generic": "Not quite right. Count how often you can halve $10^9$ before one value is left.",
+        "byKey": {
+          "linear": "That tries every $m$ in turn. Halving reaches one value far sooner.",
+          "sqrt": "That is $\\sqrt{10^9}$. Halving needs only the logarithm, $\\log_2 10^9 \\approx 30$."
+        }
+      },
+      "explain": {
+        "text": "You need about 30 halvings, so $2 \\cdot 10^5$ queries cost about $6 \\cdot 10^6$ steps. A value of $10^{18}$ can be halved but never scanned. Huge values with many queries ask for $O(\\log)$ per query."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Work over many tests",
+      "prose": "The many-test format from lesson 1 again. Your solution is $O(n^2)$ inside each test case.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "t test cases (1 ≤ t ≤ 10⁴). Each has n",
+            "(1 ≤ n ≤ 2·10⁵) values.",
+            "The sum of n over all test cases does",
+            "not exceed 2·10⁵."
+          ],
+          "title": "Problem G, input"
+        },
+        "state": {}
+      },
+      "question": "What is the most total work any input can force?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "About $4 \\cdot 10^{10}$: one test case with $n = 2 \\cdot 10^5$",
+            "correct": true
+          },
+          {
+            "id": "even",
+            "text": "About $4 \\cdot 10^6$: $10^4$ test cases of 20 values",
+            "why": "You chose a gentle split. The setter picks the worst one, and one large test is worst for $n^2$."
+          },
+          {
+            "id": "nosum",
+            "text": "About $4 \\cdot 10^{14}$: $10^4$ test cases of $2 \\cdot 10^5$ values",
+            "why": "You ignored the sum bound. All the tests together hold at most $2 \\cdot 10^5$ values."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The tests must share $2 \\cdot 10^5$ values. Which split makes $\\sum n_i^2$ largest?"
+        },
+        {
+          "rung": "point",
+          "text": "Squares reward putting everything in one test.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sum n_i^2 \\le (\\sum n_i)^2 = (2 \\cdot 10^5)^2 = 4 \\cdot 10^{10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "One big test case gives $(2 \\cdot 10^5)^2 = 4 \\cdot 10^{10}$: too slow.",
+        "generic": "Not quite right. Find the split of $2 \\cdot 10^5$ values that makes $\\sum n_i^2$ largest.",
+        "byKey": {
+          "even": "You split the values evenly. The setter will also send one test with all $2 \\cdot 10^5$ values."
+        }
+      },
+      "explain": {
+        "text": "The sum bound makes linear work safe across tests, but not quadratic work. $\\sum n_i^2$ is largest when one test holds everything: $4 \\cdot 10^{10}$. So per-test complexity is judged at the full $2 \\cdot 10^5$.",
+        "canvas": {
+          "shade": {
+            "sum": [
+              "l3",
+              "l4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "One loop, how many steps?",
+      "prose": "This solution counts the distinct P&L values for $n \\le 2 \\cdot 10^5$. It has one loop.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "seen = []",
+            "for x in a:",
+            "    if x not in seen:",
+            "        seen.append(x)",
+            "print(len(seen))"
+          ],
+          "title": "Distinct values",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "About how many steps can it take at $n = 2 \\cdot 10^5$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "loop",
+            "text": "About $2 \\cdot 10^5$: one loop",
+            "why": "You counted the loop. `x not in seen` reads `seen` from the start each time: up to $n$ steps inside."
+          },
+          {
+            "id": "quad",
+            "text": "About $2 \\cdot 10^{10}$: `in` scans the list",
+            "correct": true
+          },
+          {
+            "id": "log",
+            "text": "About $3.5 \\cdot 10^6$: $n \\log n$",
+            "why": "That would need a sorted list and binary search. `in` on a list reads it item by item."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `x not in seen` do on a list?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 3 compares `x` with every item of `seen`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With all values distinct, `seen` grows to $n$, so the checks add up to about $n^2/2 = 2 \\cdot 10^{10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "The hidden scan makes it $O(n^2)$.",
+        "generic": "Not quite right. Count the work inside line 3, not only the loop.",
+        "byKey": {
+          "loop": "You counted the loop but not line 3. `in` on a list scans it: about $2 \\cdot 10^{10}$ steps in all."
+        }
+      },
+      "explain": {
+        "text": "Line 3 scans up to $n$ items, so the loop costs about $2 \\cdot 10^{10}$ steps. A `set` makes the check $O(1)$ on average (`ds`, Looking up in constant time). `list.pop(0)` and `s = s + c` hide costs like this too.",
+        "canvas": {
+          "shade": {
+            "hidden": [
+              "l3"
+            ]
+          },
+          "tone": {
+            "l3": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The budget rule",
+      "prose": "Each time, you put the largest input into a step count and compared it with the budget:\n\n$$\\text{steps}(n_{\\max}) \\le 10^8 \\times \\text{seconds}$$\n\nPython's budget is a few times to a hundred times smaller.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "n ≤ 10 to 20    2ⁿ, n!     try everything",
+            "n ≤ 500         n³",
+            "n ≤ 5,000       n²",
+            "n ≤ 2·10⁵       n log n    sort, heap, search",
+            "n ≤ 10⁷         n          one pass",
+            "n ≤ 10¹⁸        log n      halve, or a formula"
+          ],
+          "title": "Constraint table"
+        },
+        "state": {}
+      },
+      "question": "$n \\le 10^6$, a 2 s limit, C++. Does an $O(n \\log n)$ sort fit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: about $2 \\cdot 10^7$ steps against $2 \\cdot 10^8$",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No: $n \\log n$ is more than the table's $2 \\cdot 10^5$ row allows",
+            "why": "The table's rows are rules of thumb. Compute: $10^6 \\cdot 20 = 2 \\cdot 10^7$ steps."
+          },
+          {
+            "id": "tight",
+            "text": "Only just: it needs about $10^{12}$ steps",
+            "why": "That is $n^2$. $\\log_2 10^6$ is about 20, not $10^6$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10^6 \\log_2 10^6 \\approx 2 \\cdot 10^7$, a tenth of the budget.",
+        "generic": "Not quite right. Put $n = 10^6$ into $n \\log_2 n$ and compare with $2 \\cdot 10^8$."
+      },
+      "explain": {
+        "text": "The table is the rule worked out in advance. When a limit falls between rows, compute the step count directly."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The table as code",
+      "prose": "Write `budget_class(n)`. It returns the first class in `CLASSES` whose step count at this $n$ is at most $10^8$, with $\\log$ in base 2. Watch the largest tests: $2^n$ at $n = 10^{18}$ is not a number you can compute.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "2ⁿ   n³   n²   n log₂ n   n   log₂ n",
+            "first one with steps(n) ≤ 10⁸ wins"
+          ],
+          "title": "budget_class"
+        },
+        "state": {}
+      },
+      "question": "Write `budget_class(n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import log2\n\n# from the most work to the least\nCLASSES = [\"2^n\", \"n^3\", \"n^2\", \"n log n\", \"n\", \"log n\"]\n\n\ndef budget_class(n):\n    ...\n",
+        "solution": "from math import log2\n\n# from the most work to the least\nCLASSES = [\"2^n\", \"n^3\", \"n^2\", \"n log n\", \"n\", \"log n\"]\n\n\ndef budget_class(n):\n    if n <= 60 and 2 ** n <= 10 ** 8:\n        return \"2^n\"\n    if n ** 3 <= 10 ** 8:\n        return \"n^3\"\n    if n ** 2 <= 10 ** 8:\n        return \"n^2\"\n    if n * log2(n) <= 10 ** 8:\n        return \"n log n\"\n    if n <= 10 ** 8:\n        return \"n\"\n    return \"log n\"\n",
+        "examples": [
+          {
+            "call": "budget_class(20)",
+            "expect": "'2^n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(5000)",
+            "expect": "'n^2'",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "budget_class(1)",
+            "expect": "'2^n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(20)",
+            "expect": "'2^n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(26)",
+            "expect": "'2^n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(27)",
+            "expect": "'n^3'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(464)",
+            "expect": "'n^3'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(465)",
+            "expect": "'n^2'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(500)",
+            "expect": "'n^2'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(5000)",
+            "expect": "'n^2'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(10000)",
+            "expect": "'n^2'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(10001)",
+            "expect": "'n log n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(200000)",
+            "expect": "'n log n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(10**7)",
+            "expect": "'n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(10**8)",
+            "expect": "'n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(10**8 + 1)",
+            "expect": "'log n'",
+            "compare": "equal"
+          },
+          {
+            "call": "budget_class(10**18)",
+            "expect": "'log n'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 15 hidden tests, from $n = 1$ to $n = 10^{18}$, including each side of every boundary. Answers are compared exactly as strings."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try the classes in order and return the first that fits."
+        },
+        {
+          "rung": "point",
+          "text": "Python computes `2 ** n` exactly, so at $n = 10^{18}$ it never finishes. Check $n$ first.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`if n <= 60 and 2 ** n <= 10 ** 8:` then the same test for `n ** 3`, `n ** 2`, `n * log2(n)` and `n`; else `\"log n\"`."
+        }
+      ],
+      "feedback": {
+        "correct": "Six checks in order, with a guard before `2 ** n`.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-7": "Test 7 has $n = 500$: $500^3 = 1.25 \\cdot 10^8$ is just over, so the answer is `\"n^2\"`. The table's 500 is a rule of thumb.",
+          "test-6": "Test 6 has $n = 465$: $465^3 \\approx 1.005 \\cdot 10^8$, just over the budget.",
+          "test-15": "Test 15 has $n = 10^{18}$. Computing `2 ** n` there never ends; check $n$ before the power."
+        }
+      },
+      "explain": {
+        "text": "The boundaries sit at $n = 26$, 464, $10^4$, about $4.5 \\cdot 10^6$ and $10^8$. At $n = 500$ the exact rule says $n^2$ while the table says $n^3$: the table rounds to about a second. The guard `n <= 60` stops Python building a number with $10^{18}$ bits."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Solve problem H",
+      "prose": "Write `pair_sums_at_most(xs, k)`. State the complexity before you code. Sorting does not change which pairs exist, only where they sit.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "H. Cheap pairs   (1 s, 256 MB)",
+            "n (1 ≤ n ≤ 2·10⁵) values aᵢ and k",
+            "(−10⁹ ≤ aᵢ ≤ 10⁹, −2·10⁹ ≤ k ≤ 2·10⁹).",
+            "Count pairs i < j with aᵢ + aⱼ ≤ k."
+          ],
+          "title": "Problem H"
+        },
+        "state": {}
+      },
+      "question": "Write `pair_sums_at_most(xs, k)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "class _Counted(list):\n    reads = 0\n\n    def __getitem__(self, i):\n        _Counted.reads += 1\n        return list.__getitem__(self, i)\n\n    def __iter__(self):\n        _Counted.reads += len(self)\n        return list.__iter__(self)\n\n\ndef reads_for(fn, xs, *args):\n    _Counted.reads = 0\n    fn(_Counted(xs), *args)\n    return _Counted.reads\n",
+        "starter": "def pair_sums_at_most(xs, k):\n    ...\n",
+        "solution": "def pair_sums_at_most(xs, k):\n    a = sorted(xs)\n    i, j = 0, len(a) - 1\n    count = 0\n    while i < j:\n        if a[i] + a[j] <= k:\n            count += j - i\n            i += 1\n        else:\n            j -= 1\n    return count\n",
+        "examples": [
+          {
+            "call": "pair_sums_at_most([1, 2, 3, 4], 5)",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "pair_sums_at_most([1, 2, 3, 4], 5)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "pair_sums_at_most([5], 10)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "pair_sums_at_most([2, 2, 2, 2], 4)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "pair_sums_at_most([2, 2, 2, 2], 3)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "pair_sums_at_most([-3, -1, 4, 0], -1)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "pair_sums_at_most([10**9, 10**9, -10**9], 0)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "pair_sums_at_most([3, 1, 4, 1, 5, 9, 2, 6], 7)",
+            "expect": "15",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random; r = random.Random(11); ys = [r.randint(-1000, 1000) for _ in range(1000)]",
+            "call": "reads_for(pair_sums_at_most, ys, 0) <= 20000",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random; r = random.Random(5); xs = [r.randint(-10**9, 10**9) for _ in range(200000)]",
+            "call": "pair_sums_at_most(xs, 0)",
+            "expect": "10053378714",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: hand cases with duplicates, negative values and $n = 1$. Test 8 passes 1,000 values in a list that counts how often it is read; at most 20,000 reads pass. Test 9 has 200,000 values, so an $O(n^2)$ loop is stopped."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After sorting, if the smallest and largest values fit, so does the smallest with everything below the largest."
+        },
+        {
+          "rung": "point",
+          "text": "Keep `i` at the small end and `j` at the large end of the sorted list.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If `a[i] + a[j] <= k`, add `j - i` and move `i` up; otherwise move `j` down. Stop when they meet."
+        }
+      ],
+      "feedback": {
+        "correct": "Sort, then two pointers: $O(n \\log n)$.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is four 2s with $k = 4$ and expects 6. Equal values still make pairs: use `<=`.",
+          "test-5": "Test 5 has negative values and a negative $k$. Do not start any count or bound at 0.",
+          "test-8": "Test 8 counted far more than 20,000 reads of the list. Checking every pair reads it about $n^2$ times.",
+          "test-9": "Test 9 has 200,000 values. Checking every pair is $2 \\cdot 10^{10}$ steps; sort and use two pointers."
+        }
+      },
+      "explain": {
+        "text": "Sorting costs $O(n \\log n)$ and the two pointers then meet in at most $n$ moves. When `a[i] + a[j] <= k`, every partner between `i` and `j` also fits, so one step counts `j - i` pairs. In Pyodide the 200,000-value test takes well under a second."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "What are the constraints?",
+      "prose": "In a developer interview at a trading firm, the first good question is the one you have been asking all lesson. Then say the complexity out loud before you code: interviewers mark that habit.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Interviewer: Here are a day's trade prices.",
+            "  Find two trades whose prices sum",
+            "  closest to a target.",
+            "You: What are the constraints?",
+            "Interviewer: Up to 10⁶ trades, prices",
+            "  below £10⁶. A second or two is fine."
+          ],
+          "title": "Interview"
+        },
+        "state": {}
+      },
+      "question": "Which plan do you state first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sort",
+            "text": "Sort, then two pointers from both ends: $O(n \\log n)$, about $2 \\cdot 10^7$ steps",
+            "correct": true
+          },
+          {
+            "id": "pairs",
+            "text": "Check every pair: $O(n^2)$, simple and safe",
+            "why": "You skipped the constraint. $10^6$ trades make about $5 \\cdot 10^{11}$ pairs."
+          },
+          {
+            "id": "hash",
+            "text": "A hash set of prices: $O(n)$",
+            "why": "A hash set finds an exact sum. *Closest* needs order, which sorting gives."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute the pair count at $n = 10^6$."
+        },
+        {
+          "rung": "point",
+          "text": "$n^2/2 = 5 \\cdot 10^{11}$ is far over $10^8$.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Sorting costs $10^6 \\log_2 10^6 \\approx 2 \\cdot 10^7$ steps; the two pointers add $10^6$."
+        }
+      ],
+      "feedback": {
+        "correct": "Constraints, then complexity, then code: the order interviewers want to hear.",
+        "generic": "Not quite right. Put $n = 10^6$ into each plan's step count.",
+        "byKey": {
+          "pairs": "You chose every pair. At $10^6$ trades that is $5 \\cdot 10^{11}$ checks, hours of work."
+        }
+      },
+      "explain": {
+        "text": "Asking for the constraints turned a vague task into a budget: $n = 10^6$ allows $O(n \\log n)$ but not $O(n^2)$. Saying \"sort, then two pointers, $O(n \\log n)$\" before coding shows the interviewer the plan fits.",
+        "canvas": {
+          "shade": {
+            "cons": [
+              "l5",
+              "l6"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Put the largest input into the step count before coding: about $10^8$ simple steps a second in C++, far fewer in Python.",
+      "Small limits invite brute force ($n \\le 20$: $2^n$; $n \\le 5{,}000$: $n^2$); a limit of $2 \\cdot 10^5$ asks for $n \\log n$; a value of $10^{18}$ asks for $\\log$.",
+      "Count the hidden cost inside a loop: `in` on a list, `pop(0)` and string `+` are each $O(n)$."
+    ],
+    "formula": {
+      "name": "The budget rule",
+      "tex": "\\text{steps}(n_{\\max}) \\le 10^8 \\times \\text{seconds}",
+      "note": "For C++; use PyPy 3 or C++ when Python's budget is too small."
+    },
+    "trap": "One loop is not one step per item: `x in some_list` scans the list, so the loop is $O(n^2)$."
+  },
+  "quiz": [
+    {
+      "id": "q-small-n",
+      "difficulty": 2,
+      "prose": "A statement has $n \\le 100$ and a 1 s limit. You see a clever $O(n \\log n)$ idea that needs 20 minutes of careful code, and an $O(n^3)$ triple loop you can write in 3.",
+      "question": "Which do you write?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cubic",
+            "text": "The triple loop: $100^3 = 10^6$ steps",
+            "correct": true
+          },
+          {
+            "id": "clever",
+            "text": "The clever idea: it is the faster algorithm",
+            "why": "You chose speed you do not need. $100^3 = 10^6$ steps already fit many times over."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: $n^3$ is never acceptable",
+            "why": "You judged the growth, not the count. At $n = 100$ it is only $10^6$ steps."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10^6$ steps: write the simple thing.",
+        "generic": "Not quite right. Put $n = 100$ into $n^3$."
+      },
+      "explain": {
+        "text": "The constraint says brute force is enough, so the simple code is the right code. It is also less likely to hold a bug, and it saves 17 minutes."
+      }
+    },
+    {
+      "id": "q-pop0",
+      "difficulty": 3,
+      "prose": "A breadth-first search over $2 \\cdot 10^5$ nodes keeps its queue in a Python list:\n\n```python\nwhile queue:\n    node = queue.pop(0)\n    ...\n```",
+      "question": "What does `queue.pop(0)` cost over the whole search?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "quad",
+            "text": "Up to about $n^2/2 = 2 \\cdot 10^{10}$ moves: each pop shifts the list",
+            "correct": true
+          },
+          {
+            "id": "lin",
+            "text": "About $n$: one pop per node",
+            "why": "You counted the pops. Each `pop(0)` shifts every remaining item one place left."
+          },
+          {
+            "id": "log",
+            "text": "About $n \\log n$, like a heap",
+            "why": "A list is not a heap. Removing its first item moves all the others."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each `pop(0)` is $O(n)$; `collections.deque.popleft()` is $O(1)$.",
+        "generic": "Not quite right. Think about what happens to the other items when the first one goes."
+      },
+      "explain": {
+        "text": "Removing the first item of a list shifts the rest, so a long queue costs $O(n)$ per pop. `collections.deque` pops from the front in $O(1)$ (`ds`, First in, first out)."
+      }
+    },
+    {
+      "id": "q-million",
+      "difficulty": 3,
+      "prose": "$n \\le 10^6$. Your plan sorts the values once.",
+      "question": "About how many steps is that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "About $2 \\cdot 10^7$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "About $10^6$",
+            "why": "That leaves out the $\\log_2 n \\approx 20$ factor of sorting."
+          },
+          {
+            "id": "c",
+            "text": "About $10^{12}$",
+            "why": "That is $n^2$. A good sort is $n \\log n$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10^6 \\cdot \\log_2 10^6 \\approx 2 \\cdot 10^7$.",
+        "generic": "Not quite right. Sorting costs $n \\log_2 n$."
+      },
+      "explain": {
+        "text": "$\\log_2 10^6 \\approx 19.9$, so the sort is about $2 \\cdot 10^7$ steps: a fifth of a second in C++."
+      }
+    },
+    {
+      "id": "q-400",
+      "difficulty": 2,
+      "prose": "A statement allows $n \\le 400$ with a 2 s limit.",
+      "question": "Which complexity is the setter most likely inviting?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "n3",
+            "text": "$O(n^3)$",
+            "correct": true
+          },
+          {
+            "id": "2n",
+            "text": "$O(2^n)$",
+            "why": "$2^{400}$ is astronomically large. Trying every subset needs $n$ near 20."
+          },
+          {
+            "id": "nlogn",
+            "text": "$O(n \\log n)$",
+            "why": "That would pass, but a limit as small as 400 would then be odd. Setters size the limit to the intended solution."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$400^3 = 6.4 \\cdot 10^7$ steps: comfortable in 2 s.",
+        "generic": "Not quite right. Put 400 into each growth."
+      },
+      "explain": {
+        "text": "$400^3 = 6.4 \\cdot 10^7$ fits in 2 s with room to spare. Setters choose limits that let the intended solution pass and the next slower one fail."
+      }
+    }
+  ]
+}

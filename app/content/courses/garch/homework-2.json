@@ -1,0 +1,526 @@
+{
+ "id": "homework-2",
+ "course": "garch",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-long-run-vol",
+   "difficulty": 3,
+   "skills": [
+    "gv-models",
+    "gv-forecast"
+   ],
+   "title": "A long-run volatility",
+   "prose": "A GARCH(1,1) fit on a share's daily returns in % gives $\\hat\\omega = 0.03$, $\\hat\\alpha = 0.07$, $\\hat\\beta = 0.91$.",
+   "question": "What long-run volatility a year does it imply, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 19.44,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "%",
+    "label": "Annual volatility in per cent",
+    "accept": "19.44%: $V_L = 0.03/0.02 = 1.5$ %², daily 1.2247%, times $\\sqrt{252}$.",
+    "wrong": [
+     {
+      "id": "omega",
+      "value": 2.75,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "daily",
+      "value": 1.2247,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "var",
+      "value": 378,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. $V_L$ first, then the daily sd, then $\\sqrt{252}$.",
+    "byKey": {
+     "omega": "You annualised $\\sqrt{\\omega}$. Divide $\\omega$ by $1 - \\alpha - \\beta$ first.",
+     "daily": "That is the daily sd. Scale it by $\\sqrt{252}$.",
+     "var": "You multiplied the variance by 252 and stopped. Take the square root."
+    }
+   },
+   "explain": {
+    "text": "$V_L = 0.03/(1 - 0.98) = 1.5$ %², so $\\sqrt{1.5} = 1.2247\\%$ a day and $1.2247 \\times 15.87 = 19.44\\%$ a year."
+   }
+  },
+  {
+   "id": "h-mle-steps",
+   "difficulty": 3,
+   "skills": [
+    "gv-models"
+   ],
+   "title": "Fitting GARCH by maximum likelihood",
+   "prose": "You have 2,000 daily closes of a share and want its GARCH(1,1) parameters, written by hand as in lesson 7.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "ret",
+      "text": "Turn closes into daily returns in %, and subtract their mean"
+     },
+     {
+      "id": "rec",
+      "text": "For given $(\\omega, \\alpha, \\beta)$, run $\\sigma_t^2 = \\omega + \\alpha r_{t-1}^2 + \\beta\\sigma_{t-1}^2$ from the sample variance"
+     },
+     {
+      "id": "score",
+      "text": "Score each day, $\\ell_t = -\\tfrac12(\\ln 2\\pi + \\ln\\sigma_t^2 + r_t^2/\\sigma_t^2)$, and add the scores"
+     },
+     {
+      "id": "opt",
+      "text": "Minimise minus that sum with SLSQP, under $\\omega > 0$, $\\alpha, \\beta \\ge 0$ and $\\alpha + \\beta < 1$"
+     },
+     {
+      "id": "check",
+      "text": "Check convergence and the bounds, then read the persistence and the long-run variance"
+     }
+    ],
+    "answer": [
+     "ret",
+     "rec",
+     "score",
+     "opt",
+     "check"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Data first, then the model for given parameters, then its score, then the search.",
+    "byKey": {
+     "opt": "The optimiser needs something to minimise: the summed score comes first.",
+     "ret": "Everything works on returns, so they come first."
+    }
+   },
+   "explain": {
+    "text": "Returns in % keep the parameters of similar size. The recursion and the score are a function of the parameters, which SLSQP minimises within the bounds. Only a converged fit inside the bounds is worth reading."
+   }
+  },
+  {
+   "id": "h-ewma-vs-garch",
+   "difficulty": 4,
+   "skills": [
+    "gv-models",
+    "gv-forecast"
+   ],
+   "title": "EWMA against GARCH",
+   "prose": "Both models give a one-step variance forecast for every day. Score each against share B's true variance with the mean squared error, from day `start` on. Use lesson 5's EWMA (started at the variance of the first 20 returns) and `garch_variance` (loaded). `params` is lesson 7's fit, `rp` and `s2p` are B in % and %².",
+   "question": "Write `ewma_variance` and `forecast_mse(r, true_var, lam, params, start=20)`, returning `(mse_ewma, mse_garch)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\ndef garch_variance(params, r):\n    \"\"\"Conditional variances for returns r (in %): sigma2_0 is the sample variance of r.\"\"\"\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\n# Share B: 2,000 days of a simulated share's daily returns (decimals),\n# from a GARCH(1,1) whose parameters we know; s2 holds its true variances.\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\nrp = 100 * r      # B in %\ns2p = 1e4 * s2    # B's true variances in %^2\n# Series A: independent normal returns with sd 1%, no clustering.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n\n# The level 2 fit on B, fit_garch(rp).x, to full precision.\nparams = np.array([0.012064508787727014, 0.06293432228388088, 0.9234867892614822])\n",
+    "starter": "import numpy as np\n\ndef ewma_variance(r, lam, init_window=20):\n    ...   # lesson 5: start at r[:init_window].var()\n\ndef forecast_mse(r, true_var, lam, params, start=20):\n    \"\"\"Mean squared errors (EWMA, GARCH) of one-step variance\n    forecasts against the true variance, from day `start` on.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef ewma_variance(r, lam, init_window=20):\n    r = np.asarray(r, dtype=float)\n    s2 = np.empty(len(r))\n    s2[0] = r[:init_window].var()\n    for t in range(1, len(r)):\n        s2[t] = lam * s2[t - 1] + (1 - lam) * r[t - 1] ** 2\n    return s2\n\ndef forecast_mse(r, true_var, lam, params, start=20):\n    \"\"\"Mean squared errors (EWMA, GARCH) of one-step variance\n    forecasts against the true variance, from day `start` on.\"\"\"\n    true_var = np.asarray(true_var, dtype=float)\n    e = ewma_variance(r, lam)\n    g = garch_variance(params, np.asarray(r, dtype=float))\n    mse_e = float(np.mean((e[start:] - true_var[start:]) ** 2))\n    mse_g = float(np.mean((g[start:] - true_var[start:]) ** 2))\n    return (mse_e, mse_g)\n",
+    "examples": [
+     {
+      "call": "[round(v, 6) for v in forecast_mse(rp, s2p, 0.94, params)]",
+      "expect": "[0.06919, 0.008506]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 6) for v in forecast_mse(rp, s2p, 0.94, params)]",
+      "expect": "[0.06919, 0.008506]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in forecast_mse(rp, s2p, 0.90, params)]",
+      "expect": "[0.067523, 0.008506]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in forecast_mse(rp, s2p, 0.94, params, start=250)]",
+      "expect": "[0.076377, 0.009445]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(forecast_mse(rp, s2p, 0.94, (0.02, 0.08, 0.90))[1], 9)",
+      "expect": "1.35e-07",
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in forecast_mse(100 * r11, 1e4 * s11, 0.94, (0.0251, 0.0933, 0.8825))]",
+      "setup": "r11, s11 = simulate_garch(2e-6, 0.08, 0.90, 2000, 11)",
+      "expect": "[0.020105, 0.001933]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in forecast_mse(rp[1350:1500], s2p[1350:1500], 0.94, params, start=0)]",
+      "expect": "[0.59612, 0.521811]",
+      "compare": "isclose"
+     },
+     {
+      "call": "bool(forecast_mse(rp, s2p, 0.94, params)[1] < forecast_mse(rp, s2p, 0.94, params)[0])",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 7 hidden tests, each rounded to 6 or 9 places. Three score B with $\\lambda$ = 0.94 and 0.90 and from day 250. One uses the true parameters, one a second seed, one the storm of days 1,350 to 1,499. One checks that GARCH wins on B. The first run loads NumPy, which takes a few seconds."
+   },
+   "feedback": {
+    "correct": "Correct. On B, EWMA scores 0.0692 and the GARCH fit 0.0085: eight times smaller.",
+    "generic": "Some tests failed. Both forecasts for day $t$ use returns up to $t - 1$; score from `start` on, in %⁴."
+   },
+   "explain": {
+    "text": "EWMA's error is 0.0692 and GARCH's 0.0085, in (%²)². GARCH wins because B really is a GARCH(1,1) with a long-run level, which EWMA lacks. On real data the gap is smaller, but the test stays: score forecasts on unseen days."
+   }
+  },
+  {
+   "id": "h-year-later",
+   "difficulty": 4,
+   "skills": [
+    "gv-forecast"
+   ],
+   "title": "A year later",
+   "prose": "A fit has persistence $\\alpha + \\beta = 0.995$. Today the variance is well above its long-run level.",
+   "question": "What share of today's excess variance does the model expect to remain after 252 trading days, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 28.34,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "%",
+    "label": "Share remaining in per cent",
+    "accept": "28.3%: $0.995^{252} = 0.2834$.",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 50,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "once",
+      "value": 99.5,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. The excess shrinks by the factor 0.995 each day.",
+    "byKey": {
+     "half": "That is the half-life fraction. The half-life here is 138 days, and 252 is longer.",
+     "once": "That is one day. Raise 0.995 to the power 252."
+    }
+   },
+   "explain": {
+    "text": "$0.995^{252} = e^{252 \\ln 0.995} = 0.283$, so 28% of the excess is still there after a year. The half-life is $\\ln 0.5/\\ln 0.995 = 138$ days. At this persistence a storm colours the whole next year."
+   }
+  },
+  {
+   "id": "h-units",
+   "difficulty": 3,
+   "skills": [
+    "gv-models"
+   ],
+   "title": "The same fit in decimals",
+   "prose": "A GARCH(1,1) fit on returns in % gives $\\hat\\omega = 0.0121$, $\\hat\\alpha = 0.0629$, $\\hat\\beta = 0.9235$. A colleague needs the same model for returns in decimals.",
+   "question": "What is $\\omega$ for returns in decimals?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.21e-06,
+    "tol": {
+     "rel": 0.001
+    },
+    "label": "omega in decimal units",
+    "placeholder": "for example 2e-6",
+    "accept": "0.00000121: divide by $100^2$.",
+    "wrong": [
+     {
+      "id": "hundred",
+      "value": 0.000121,
+      "tol": {
+       "rel": 0.001
+      }
+     },
+     {
+      "id": "same",
+      "value": 0.0121,
+      "tol": {
+       "rel": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. $\\alpha$ and $\\beta$ stay as they are.",
+    "generic": "Not quite right. $\\omega$ is a variance, so it scales with the square of the units.",
+    "byKey": {
+     "hundred": "You divided by 100. $\\omega$ is in %², so divide by $100^2 = 10^4$.",
+     "same": "$\\omega$ is a variance, so it changes with the units. $\\alpha$ and $\\beta$ have none."
+    }
+   },
+   "explain": {
+    "text": "Every term of the recursion is a variance, so $\\omega$ scales by $10^{-4}$. $\\alpha$ and $\\beta$ have no units and stay put: $\\omega = 0.00000121$. Fitting in decimals directly invites the stalled optimiser of lesson 7."
+   }
+  },
+  {
+   "id": "h-fit-and-report",
+   "difficulty": 5,
+   "skills": [
+    "gv-models",
+    "gv-forecast"
+   ],
+   "title": "A fit you can trust",
+   "prose": "Write the function a risk system calls before it uses a GARCH fit. Fit as in lesson 7, then refuse with `ValueError` when:\n\n- the optimiser did not converge;\n- $\\hat\\alpha + \\hat\\beta \\ge 0.999$, too close to 1 for a long run;\n- $\\hat\\alpha < 0.01$: the variance does not react, so $\\hat\\beta$ means nothing.\n\nOtherwise return a dictionary of the six numbers named in the question.",
+   "question": "Write `fit_and_report(r)` returning `omega`, `alpha`, `beta`, `persistence`, `half_life` (days) and `annual_vol` (a fraction).",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\ndef garch_variance(params, r):\n    \"\"\"Conditional variances for returns r (in %): sigma2_0 is the sample variance of r.\"\"\"\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\ndef neg_loglik(params, r):\n    \"\"\"Minus the Gaussian log-likelihood, zero mean: 0.5 * sum(ln 2pi + ln s2 + r^2 / s2).\"\"\"\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n\n# Share B: 2,000 days of a simulated share's daily returns (decimals),\n# from a GARCH(1,1) whose parameters we know; s2 holds its true variances.\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\nrp = 100 * r      # B in %\ns2p = 1e4 * s2    # B's true variances in %^2\n# Series A: independent normal returns with sd 1%, no clustering.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n# Share N: a near-integrated GARCH(1,1), persistence 0.999 (seed 3).\nrn, _ = simulate_garch(2e-7, 0.06, 0.939, 2000, 3)\n# A second path of B's model (seed 11).\nr11, _ = simulate_garch(2e-6, 0.08, 0.90, 2000, 11)\n",
+    "starter": "import math\nimport numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_and_report(r):\n    \"\"\"Fit GARCH(1,1) to r in %; refuse a fit not to trust.\"\"\"\n    r = np.asarray(r, dtype=float)\n    ...\n",
+    "solution": "import math\nimport numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_and_report(r):\n    \"\"\"Fit GARCH(1,1) to r in %; refuse a fit not to trust.\"\"\"\n    r = np.asarray(r, dtype=float)\n    cons = [{\"type\": \"ineq\", \"fun\": lambda p: 0.9999 - p[1] - p[2]}]\n    res = minimize(neg_loglik, x0=np.array([0.05, 0.05, 0.90]),\n                   args=(r,), method=\"SLSQP\",\n                   bounds=[(1e-6, 10.0), (0.0, 1.0), (0.0, 1.0)],\n                   constraints=cons,\n                   options={\"ftol\": 1e-10, \"maxiter\": 500})\n    omega, alpha, beta = (float(v) for v in res.x)\n    p = alpha + beta\n    if not res.success:\n        raise ValueError(\"the optimiser did not converge\")\n    if p >= 0.999:\n        raise ValueError(\"persistence too close to 1\")\n    if alpha < 0.01:\n        raise ValueError(\"no reaction to news: beta is not identified\")\n    return {\"omega\": omega, \"alpha\": alpha, \"beta\": beta,\n            \"persistence\": p,\n            \"half_life\": math.log(0.5) / math.log(p),\n            \"annual_vol\": math.sqrt(252 * omega / (1 - p)) / 100}\n",
+    "examples": [
+     {
+      "call": "round(fit_and_report(rp)['persistence'], 3)",
+      "expect": "0.986",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(fit_and_report(rp)['alpha'], 3)",
+      "expect": "0.063",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_and_report(rp)['beta'], 3)",
+      "expect": "0.923",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_and_report(rp)['persistence'], 3)",
+      "expect": "0.986",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_and_report(rp)['annual_vol'], 3)",
+      "expect": "0.15",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "bool(40 < fit_and_report(rp)['half_life'] < 65)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "sorted(fit_and_report(rp))",
+      "compare": "equal",
+      "expect": "['alpha', 'annual_vol', 'beta', 'half_life', 'omega', 'persistence']"
+     },
+     {
+      "call": "round(fit_and_report(100 * r11)['persistence'], 3)",
+      "expect": "0.976",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_and_report(100 * r11)['annual_vol'], 3)",
+      "expect": "0.161",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "bool(20 < fit_and_report(100 * r11)['half_life'] < 40)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "round(fit_and_report(rp[:1000])['beta'], 3)",
+      "expect": "0.866",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "fit_and_report(100 * iid)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "fit_and_report(100 * rn)",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "how": "Check runs 12 hidden tests. Six fit B (`rp`). Four check $\\hat\\alpha$, $\\hat\\beta$, the persistence and the annual vol to 3 places, within 0.003. Two check the half-life, between 40 and 65 days, and the keys. Four fit B's first 1,000 days and a second seed `r11`. Two must raise `ValueError`: series A (`100 * iid`) and share N (`100 * rn`). Fitted values can differ in the fourth place between optimisers, so each is checked to within 0.003. The first run loads NumPy and SciPy, which takes a few seconds; the 12 fits take about 3 s.",
+    "budget": 20000
+   },
+   "feedback": {
+    "correct": "Correct. B reports persistence 0.986, a half-life of 51 days and 14.96% a year; A and N are refused.",
+    "generic": "Some tests failed. Fit first, then apply the three refusals in turn, then build the dictionary."
+   },
+   "explain": {
+    "text": "On series A the fit lands on $\\hat\\alpha = 0$, with or without SciPy's success flag, so that rule catches it. Share N's fit says 0.9997: its long run and half-life would mean nothing. Refusing is a result: it tells the risk system to fall back on a simpler estimate."
+   }
+  },
+  {
+   "id": "h-stalled",
+   "difficulty": 4,
+   "skills": [
+    "gv-models"
+   ],
+   "title": "Success, but wrong",
+   "prose": "A colleague fits GARCH(1,1) to returns in decimals. SLSQP prints `Optimization terminated successfully` and returns $\\hat\\alpha = 0.246$, $\\hat\\beta = 0.276$. On the same returns in %, the fit gives 0.063 and 0.923, with a log-likelihood 176 higher.",
+   "question": "What should she do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pct",
+      "text": "Refit on returns in %, then divide $\\hat\\omega$ by $10^4$ if decimals are needed.",
+      "correct": true
+     },
+     {
+      "id": "trust",
+      "text": "Keep the decimal fit, since SLSQP reported success.",
+      "why": "You trusted the message. 'Success' means the stopping rule was met; a log-likelihood 176 lower means it stopped far from the peak."
+     },
+     {
+      "id": "iter",
+      "text": "Raise `maxiter` from 500 to 5,000.",
+      "why": "You blamed the step limit. The decimal fit stopped well before 500 steps; it is badly scaled, not short of steps."
+     },
+     {
+      "id": "avg",
+      "text": "Average the two fits.",
+      "why": "Averaging a stalled fit with a good one gives a third wrong answer."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Which fit has the higher likelihood, and why did the other stop?"
+   },
+   "explain": {
+    "text": "Both fits describe the same returns, so the higher likelihood wins: the % fit. In decimals $\\omega$ is $10^4$ times smaller than in %, which upsets the optimiser's step sizes. Fit in %, then convert $\\omega$ by $10^{-4}$."
+   }
+  },
+  {
+   "id": "h-persistence-999",
+   "difficulty": 5,
+   "skills": [
+    "gv-models",
+    "gv-forecast"
+   ],
+   "title": "Persistence 0.999",
+   "kind": "longform",
+   "prompt": "Your GARCH(1,1) fit on two years (504 days) of a share's daily returns, in %, gives $\\hat\\omega = 0.002$, $\\hat\\alpha = 0.07$, $\\hat\\beta = 0.929$. The risk report wants the share's long-run volatility.\n\nWrite a note to the head of risk (about 250 words). Cover:\n\n(a) what $\\hat\\alpha + \\hat\\beta = 0.999$ means for how shocks fade, with the half-life;\n\n(b) the long-run volatility the fit implies, and why you do not trust it;\n\n(c) two reasons a fit can land this close to 1;\n\n(d) what you would do instead, and what you would report.",
+   "model": "**(a)** The persistence is $\\hat\\alpha + \\hat\\beta = 0.999$, so a variance shock shrinks by only 0.1% a day. Its half-life is $\\ln 0.5/\\ln 0.999 = 693$ days, nearly three years: longer than the 504 days of data. The model says almost nothing ever fades.\n\n**(b)** $V_L = \\hat\\omega/(1 - \\hat\\alpha - \\hat\\beta) = 0.002/0.001 = 2$ %², a daily sd of 1.41% and $\\sqrt{252 \\times 2} = 22.4\\%$ a year. The leak, 0.001, is tiny and poorly estimated. If the persistence were 0.998 instead, $V_L$ would halve to 1 %² (15.9%); at 0.9995 it would double (31.7%). A level the data cannot distinguish from 16% or 32% is not a number to report. Lesson 8's 20 paths of 2,000 days already spread the long run from 13% to 18% at persistence 0.98; with 504 days and persistence 0.999 it is far worse.\n\n**(c)** A short sample understates or distorts the persistence (lesson 7's 1,000 days gave 0.9265 against 0.98). A shift in the level of volatility within the sample, such as a calm year followed by a stormy one, also looks like near-permanent persistence to GARCH. Either way the fit is near the boundary $\\alpha + \\beta = 1$, the IGARCH case, where the long run does not exist.\n\n**(d)** Refit on a longer history if one exists, and check the fit converged inside its bounds. Fit with variance targeting: fix $V_L$ at the sample variance and estimate only $\\alpha$ and $\\beta$. Compare with EWMA, which is the IGARCH case anyway. Report the long run as a range from the sample variance and the targeted fit, never 22.4% to the decimal, and flag the persistence for review.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Reads 0.999 as a shock fading by 0.1% a day, with a half-life of about 693 days"
+    },
+    {
+     "points": 2,
+     "text": "Computes $V_L = 2$ %² and about 22.4% a year correctly"
+    },
+    {
+     "points": 2,
+     "text": "Explains the sensitivity: the tiny leak $1 - \\alpha - \\beta$, with a number such as 0.998 halving $V_L$"
+    },
+    {
+     "points": 2,
+     "text": "Gives two causes: a short sample, a shift in the volatility level, or nearness to IGARCH"
+    },
+    {
+     "points": 1,
+     "text": "Proposes a remedy: a longer sample, variance targeting, or EWMA as a check"
+    },
+    {
+     "points": 1,
+     "text": "Reports a range rather than a precise long-run figure, in plain language for a reader in risk"
+    }
+   ]
+  },
+  {
+   "id": "h-ewma-garch",
+   "difficulty": 3,
+   "skills": [
+    "gv-models"
+   ],
+   "title": "EWMA as GARCH",
+   "prose": "RiskMetrics uses EWMA with $\\lambda = 0.97$ for some monthly measures: $\\sigma_t^2 = 0.97\\,\\sigma_{t-1}^2 + 0.03\\,r_{t-1}^2$.",
+   "question": "As a GARCH(1,1), which $(\\omega, \\alpha, \\beta)$ is it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$(0,\\ 0.03,\\ 0.97)$",
+      "correct": true
+     },
+     {
+      "id": "swap",
+      "text": "$(0,\\ 0.97,\\ 0.03)$",
+      "why": "You gave $\\lambda$ to $\\alpha$. $\\lambda$ multiplies yesterday's variance, which is $\\beta$."
+     },
+     {
+      "id": "omega",
+      "text": "$(0.03,\\ 0,\\ 0.97)$",
+      "why": "You read $1 - \\lambda$ as the constant. It multiplies $r_{t-1}^2$, so it is $\\alpha$."
+     },
+     {
+      "id": "level",
+      "text": "$(0.0003,\\ 0.03,\\ 0.96)$",
+      "why": "You added a constant so it has a long-run level. EWMA has none: $\\omega = 0$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Match each term of the EWMA line to $\\omega + \\alpha r^2 + \\beta\\sigma^2$."
+   },
+   "explain": {
+    "text": "Matching terms gives $\\omega = 0$, $\\alpha = 0.03$, $\\beta = 0.97$. The persistence is exactly 1, so it is IGARCH: no long-run level and a flat forecast at every horizon."
+   }
+  }
+ ]
+}

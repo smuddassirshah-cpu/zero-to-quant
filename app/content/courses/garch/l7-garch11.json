@@ -1,0 +1,3049 @@
+{
+ "id": "l7-garch11",
+ "course": "garch",
+ "title": "GARCH(1,1)",
+ "minutes": 15,
+ "objectives": [
+  "Fit a GARCH(1,1) model and read its persistence.",
+  "Write its log-likelihood by hand and know how far to trust a fit."
+ ],
+ "skills": [
+  "gv-models"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Lesson 6 left a gap. Share B's squared returns stay correlated for weeks: 0.36, 0.29, 0.27, 0.23, 0.28 at lags 1 to 5. ARCH(1)'s memory is gone by lag 3, because today's variance hears only yesterday's news.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "k1",
+       "label": "1"
+      },
+      {
+       "id": "k2",
+       "label": "2"
+      },
+      {
+       "id": "k3",
+       "label": "3"
+      },
+      {
+       "id": "k4",
+       "label": "4"
+      },
+      {
+       "id": "k5",
+       "label": "5"
+      },
+      {
+       "id": "k6",
+       "label": "6"
+      },
+      {
+       "id": "k7",
+       "label": "7"
+      },
+      {
+       "id": "k8",
+       "label": "8"
+      },
+      {
+       "id": "k9",
+       "label": "9"
+      },
+      {
+       "id": "k10",
+       "label": "10"
+      }
+     ],
+     "groups": [
+      {
+       "id": "arch",
+       "label": "ARCH(1), α = 0.5",
+       "colour": 2
+      },
+      {
+       "id": "B",
+       "label": "share B",
+       "colour": 1
+      }
+     ],
+     "xLabel": "Lag $k$",
+     "yLabel": "ACF of $r^2$",
+     "height": 220,
+     "yMin": -0.05,
+     "yMax": 0.45,
+     "hlines": [
+      {
+       "id": "band",
+       "y": 0.0438,
+       "label": "band 0.0438"
+      }
+     ]
+    },
+    "state": {
+     "values": {
+      "arch": {
+       "k1": 0.4246,
+       "k2": 0.1376,
+       "k3": 0.0505,
+       "k4": 0.0069,
+       "k5": 0.0351,
+       "k6": 0.0954,
+       "k7": 0.0456,
+       "k8": 0.0085,
+       "k9": -0.018,
+       "k10": -0.0309
+      },
+      "B": {
+       "k1": 0.3596,
+       "k2": 0.2879,
+       "k3": 0.2672,
+       "k4": 0.2265,
+       "k5": 0.2766,
+       "k6": 0.3337,
+       "k7": 0.229,
+       "k8": 0.198,
+       "k9": 0.2374,
+       "k10": 0.2292
+      }
+     }
+    }
+   },
+   "question": "What could we add to the variance rule so that a shock echoes for weeks?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "var",
+      "text": "Yesterday's variance, $\\sigma^2_{t-1}$: it already holds the echo of every earlier shock.",
+      "correct": true
+     },
+     {
+      "id": "today",
+      "text": "Today's squared return, $r_t^2$.",
+      "why": "You reached for today's return. It is not known when today's variance is set; that is lesson 6's trap."
+     },
+     {
+      "id": "alpha",
+      "text": "A larger $\\alpha$, near 0.9.",
+      "why": "You stretched ARCH's one lag. Lag 1 would then sit near 0.9, far above B's 0.36, and the kurtosis would be infinite."
+     },
+     {
+      "id": "mean",
+      "text": "A constant mean return.",
+      "why": "You changed the level of returns. A mean does nothing to how long large moves keep coming."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which quantity known yesterday already carries the shocks of the days before?"
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Yesterday's variance is a running summary of past shocks.",
+    "generic": "Not quite right. Look for something known yesterday that already summarises older shocks.",
+    "byKey": {
+     "alpha": "You stretched ARCH's one lag. A large $\\alpha$ makes lag 1 huge too, while B's lag 1 is only 0.36."
+    }
+   },
+   "explain": {
+    "text": "Yesterday's variance was built from the day before's shock and its own past. Feeding it back passes every shock on, a little weaker each day. One extra term gives the long memory ARCH lacks.",
+    "canvas": {
+     "highlight": [
+      "k5-arch",
+      "k5-B"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Try it. Today's variance is 1 %², the long-run level, and today's return is a 5% shock. The curve is the expected variance on each later day, with $\\omega = 1 - \\alpha - \\beta$ so the long run stays at 1 %². Slide $\\alpha$, the weight on news, and $\\beta$, the weight on yesterday's variance.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      60
+     ],
+     "y": [
+      0,
+      6
+     ],
+     "height": 230,
+     "grid": true,
+     "xLabel": "Days after the shock",
+     "yLabel": "Expected variance (%²)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "1 + a*24*(a+b)^(x-1)",
+       "domain": [
+        1,
+        60
+       ],
+       "label": "$E[\\sigma^2]$",
+       "labelAt": 50
+      }
+     ],
+     "hlines": [
+      {
+       "id": "lr",
+       "y": 1,
+       "label": "long run 1"
+      }
+     ],
+     "params": {
+      "a": 0.08,
+      "b": 0
+     }
+    },
+    "state": {
+     "params": {
+      "a": 0.08,
+      "b": 0
+     }
+    },
+    "derive": {
+     "caption": "$\\alpha + \\beta$ = {{fixed(a + b, 2)}}: the next day jumps by {{fixed(24 * a, 2)}} %², {{a + b >= 1 ? 'and the extra never fades' : a + b <= 0 ? 'then is gone' : 'and the extra halves every ' + fixed(log(0.5) / log(a + b), 1) + ' days'}}."
+    },
+    "controls": [
+     {
+      "bind": "a",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "start": 0.08,
+      "label": "$\\alpha$",
+      "decimals": 2
+     },
+     {
+      "bind": "b",
+      "min": 0,
+      "max": 0.9,
+      "step": 0.01,
+      "start": 0,
+      "label": "$\\beta$",
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "Hold $\\alpha$ at 0.08 and raise $\\beta$ from 0 to 0.90. What does $\\beta$ change?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "last",
+      "text": "How long the shock's extra variance lasts.",
+      "correct": true
+     },
+     {
+      "id": "jump",
+      "text": "The size of the next day's jump.",
+      "why": "You watched the first day. The jump is $24\\alpha = 1.92$ %² whatever $\\beta$ is; the caption shows it."
+     },
+     {
+      "id": "level",
+      "text": "The long-run level.",
+      "why": "The level is held at 1 %²: $\\omega$ moves to keep it there."
+     },
+     {
+      "id": "react",
+      "text": "Whether the shock raises the variance at all.",
+      "why": "That is $\\alpha$. With $\\alpha = 0$ nothing reacts, whatever $\\beta$ is."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption at $\\beta = 0$, then at $\\beta = 0.90$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. $\\alpha$ sets the jump; $\\alpha + \\beta$ sets how fast it fades.",
+    "generic": "Not quite right. Compare the next day's jump and the half-life in the caption at both settings.",
+    "byKey": {
+     "jump": "The jump stays at $24\\alpha = 1.92$ %² as $\\beta$ moves. What changes is how long the curve takes to come down."
+    }
+   },
+   "explain": {
+    "text": "At $\\beta = 0$ the extra variance is gone in a day or two, as in ARCH. At $\\beta = 0.90$ the extra shrinks by the factor $\\alpha + \\beta = 0.98$ a day and halves in about 34 days. The jump is $\\alpha$'s, the memory is $\\beta$'s.",
+    "canvas": {
+     "params": {
+      "a": 0.08,
+      "b": 0.9
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "GARCH(1,1)",
+   "prose": "That is **GARCH(1,1)**, Bollerslev's model of 1986: $$\\sigma_t^2 = \\omega + \\alpha\\,r_{t-1}^2 + \\beta\\,\\sigma_{t-1}^2.$$ $\\alpha$ is the reaction to news, $\\beta$ the memory, $\\alpha + \\beta$ the **persistence**. In $r_t^2$ it is an ARMA(1,1) with AR coefficient $\\alpha + \\beta$ (`arma` lesson 10). Share B's truth in %: $\\omega = 0.02$, $\\alpha = 0.08$, $\\beta = 0.90$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4,
+      4
+     ],
+     "y": [
+      0,
+      2.4
+     ],
+     "height": 200,
+     "grid": true,
+     "xLabel": "$r_{t-1}$ (%)",
+     "yLabel": "Today's variance (%²)",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "0.92 + 0.08*x^2",
+       "label": "$\\sigma_t^2$ when $\\sigma_{t-1}^2 = 1$",
+       "labelAt": -2.2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": -3,
+       "y": 1.64,
+       "label": "$r_{t-1} = -3$"
+      }
+     ]
+    }
+   },
+   "question": "Yesterday's variance was 1.00 %² and yesterday's return −3%. What is today's variance, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.64,
+    "tol": {
+     "abs": 0.003
+    },
+    "label": "Variance in %²",
+    "accept": "1.64: $0.02 + 0.08 \\times 9 + 0.90 \\times 1$.",
+    "wrong": [
+     {
+      "id": "noomega",
+      "value": 1.62,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "nobeta",
+      "value": 0.74,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "nosq",
+      "value": 0.68,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Three terms: the constant, the squared return, yesterday's variance."
+    },
+    {
+     "rung": "point",
+     "text": "$0.08 \\times (-3)^2 = 0.72$ and $0.90 \\times 1 = 0.90$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.02 + 0.72 + 0.90 = 1.64$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A 3% fall lifts the variance from 1.00 to 1.64 %², a volatility of 1.28%.",
+    "generic": "Not quite right. Add $\\omega$, $\\alpha$ times the squared return and $\\beta$ times yesterday's variance.",
+    "byKey": {
+     "noomega": "You left out $\\omega = 0.02$.",
+     "nobeta": "You left out $\\beta\\,\\sigma_{t-1}^2$, the memory term: that is ARCH's rule.",
+     "nosq": "You used −3 unsquared. A fall raises the variance as a rise does."
+    }
+   },
+   "explain": {
+    "text": "$0.02 + 0.08 \\times 9 + 0.90 \\times 1 = 1.64$ %². Most of today's variance, 0.90, is yesterday's carried over; news adds 0.72. Lesson 5's EWMA with $\\lambda = 0.94$ said 1.48 from the same day.",
+    "canvas": {
+     "highlight": [
+      "P"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Run B's true model through five storm days by hand. Day 1,454's variance is 3.2346 %². Each row uses the row above: its return and its variance. The returns in %, to 4 places: −1.1802, −4.8496, 5.7099, 4.1162, −2.8258.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "d1454",
+       "label": "1,454"
+      },
+      {
+       "id": "d1455",
+       "label": "1,455"
+      },
+      {
+       "id": "d1456",
+       "label": "1,456"
+      },
+      {
+       "id": "d1457",
+       "label": "1,457"
+      },
+      {
+       "id": "d1458",
+       "label": "1,458"
+      }
+     ],
+     "xLabel": "Day",
+     "yLabel": "Return (%)",
+     "height": 160,
+     "yMin": -6,
+     "yMax": 6,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "d1454": -1.1802,
+      "d1455": -4.8496,
+      "d1456": 5.7099,
+      "d1457": 4.1162,
+      "d1458": -2.8258
+     }
+    }
+   },
+   "question": "Fill in $\\sigma_t^2$ for days 1,455 to 1,459, to 4 places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Day $t$",
+     "Return on day $t$ (%)",
+     "$\\sigma_t^2$ (%²)"
+    ],
+    "rows": [
+     [
+      "1,454",
+      "−1.18",
+      "3.2346"
+     ],
+     [
+      "1,455",
+      "−4.85",
+      {
+       "edit": true,
+       "answer": 3.0426,
+       "tol": {
+        "abs": 0.003
+       }
+      }
+     ],
+     [
+      "1,456",
+      "5.71",
+      {
+       "edit": true,
+       "answer": 4.6398,
+       "tol": {
+        "abs": 0.003
+       }
+      }
+     ],
+     [
+      "1,457",
+      "4.12",
+      {
+       "edit": true,
+       "answer": 6.8041,
+       "tol": {
+        "abs": 0.003
+       }
+      }
+     ],
+     [
+      "1,458",
+      "−2.83",
+      {
+       "edit": true,
+       "answer": 7.4991,
+       "tol": {
+        "abs": 0.003
+       }
+      }
+     ],
+     [
+      "1,459",
+      "?",
+      {
+       "edit": true,
+       "answer": 7.408,
+       "tol": {
+        "abs": 0.003
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Day 1,455 uses day 1,454's return and variance."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma^2_{1455} = 0.02 + 0.08 \\times 1.1802^2 + 0.90 \\times 3.2346$.",
+     "highlight": [
+      "d1454"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.02 + 0.1114 + 2.9111 = 3.0426$. Day 1,456 then uses −4.8496 and 3.0426."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The 4.85% fall enters on day 1,456, and the variance more than doubles in three days.",
+    "generic": "Not quite right. Each row uses the return and the variance of the row above, never its own return."
+   },
+   "explain": {
+    "text": "The variance dips on day 1,455, then climbs to 7.50 %² as three big moves feed in. Day 1,459 is still 7.41: $\\beta = 0.90$ carries most of it forward. These match B's true variances, because after 1,454 days the starting value has faded.",
+    "canvas": {
+     "highlight": [
+      "d1455",
+      "d1456",
+      "d1457"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "How well does the model explain a day? Score it with the normal log-likelihood from `estimation` lesson 7, with that day's own variance: $$\\ell_t = -\\tfrac12\\left(\\ln 2\\pi + \\ln\\sigma_t^2 + \\frac{r_t^2}{\\sigma_t^2}\\right).$$ A big move on a calm forecast scores badly. $\\ln 2\\pi = 1.8379$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "d1454",
+       "label": "1,454"
+      },
+      {
+       "id": "d1455",
+       "label": "1,455"
+      },
+      {
+       "id": "d1456",
+       "label": "1,456"
+      },
+      {
+       "id": "d1457",
+       "label": "1,457"
+      },
+      {
+       "id": "d1458",
+       "label": "1,458"
+      }
+     ],
+     "xLabel": "Day",
+     "yLabel": "Return (%)",
+     "height": 150,
+     "yMin": -6,
+     "yMax": 6,
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "d1454": -1.1802,
+      "d1455": -4.8496,
+      "d1456": 5.7099,
+      "d1457": 4.1162,
+      "d1458": -2.8258
+     },
+     "highlight": [
+      "d1455",
+      "d1456",
+      "d1457"
+     ]
+    }
+   },
+   "question": "Fill in $\\ell_t$ for days 1,456 and 1,457, to 3 places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Day",
+     "$r_t$ (%)",
+     "$\\sigma_t^2$ (%²)",
+     "$\\ell_t$"
+    ],
+    "rows": [
+     [
+      "1,455",
+      "−4.8496",
+      "3.0426",
+      "−5.340"
+     ],
+     [
+      "1,456",
+      "5.7099",
+      "4.6398",
+      {
+       "edit": true,
+       "answer": -5.2,
+       "tol": {
+        "abs": 0.003
+       }
+      }
+     ],
+     [
+      "1,457",
+      "4.1162",
+      "6.8041",
+      {
+       "edit": true,
+       "answer": -3.123,
+       "tol": {
+        "abs": 0.003
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Three terms inside the bracket, then multiply by $-\\tfrac12$."
+    },
+    {
+     "rung": "point",
+     "text": "Day 1,456: $\\ln 4.6398 = 1.5347$ and $5.7099^2/4.6398 = 7.0268$.",
+     "highlight": [
+      "d1456"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-\\tfrac12(1.8379 + 1.5347 + 7.0268) = -5.200$. Day 1,457 the same way."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A 5.71% rise against a variance of 4.64 costs more than a 4.12% rise against 6.80.",
+    "generic": "Not quite right. Use each day's own $r_t$ and $\\sigma_t^2$, and keep the minus sign."
+   },
+   "explain": {
+    "text": "Day 1,457's 4.12% move came on a variance of 6.80 %², so it was no surprise: $\\ell = -3.12$. Day 1,456's 5.71% came on 4.64 and scores $-5.20$. Fitting GARCH chooses $\\omega$, $\\alpha$, $\\beta$ to make the sum of all 2,000 scores as large as possible.",
+    "canvas": {
+     "highlight": [
+      "d1456"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Now all 2,000 days in code. Start the recursion at the sample variance of `r`, `r.var()`. `neg_loglik` returns minus the sum of the daily scores, so a better fit gives a smaller number. At B's true parameters it is 2625.3778. The chart shows the start fading: our start is 1.0585 %², the truth's 1.0.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "height": 190,
+     "yLabel": "Daily volatility (%)",
+     "indexFrom": 0,
+     "y": [
+      0.6,
+      1.2
+     ],
+     "decimals": 2,
+     "series": [
+      {
+       "id": "tv",
+       "label": "true",
+       "values": [
+        1.0,
+        0.9592,
+        0.9244,
+        0.8912,
+        0.8861,
+        0.86,
+        0.8625,
+        0.8305,
+        0.8602,
+        0.8368,
+        0.8196,
+        0.7984,
+        0.7747,
+        0.7488,
+        0.7507,
+        0.7261,
+        0.7175,
+        0.7469,
+        0.7289,
+        0.8074,
+        0.8327,
+        0.9123,
+        0.879,
+        0.9026,
+        0.8707,
+        0.8389,
+        0.8095,
+        0.9705,
+        0.9432,
+        0.906,
+        0.8715,
+        0.9197,
+        0.8926,
+        0.8933,
+        0.8832,
+        0.8901,
+        0.88,
+        0.8468,
+        0.8427,
+        0.8237,
+        0.7946,
+        0.7673,
+        0.7417,
+        0.7623,
+        0.7371,
+        0.7676,
+        0.8143,
+        0.8099,
+        0.7818,
+        0.7682,
+        0.8603,
+        0.8488,
+        0.8668,
+        0.8346,
+        0.8157,
+        0.7879,
+        0.7758,
+        0.7496,
+        0.7387,
+        0.7755,
+        0.7637,
+        0.7395,
+        0.7222,
+        0.7001,
+        0.7186,
+        0.7061,
+        0.6858,
+        0.6882,
+        0.7042,
+        0.732,
+        0.7276,
+        0.717,
+        0.8037,
+        0.7826,
+        0.7561,
+        0.779,
+        0.7676,
+        0.7452,
+        0.7251,
+        0.7042,
+        0.7472,
+        0.7285,
+        0.7082,
+        0.6902,
+        0.6703,
+        0.6525,
+        0.6674,
+        0.6488,
+        0.6368,
+        0.655,
+        0.6487,
+        0.6314,
+        0.627,
+        0.6143,
+        0.627,
+        0.6114,
+        0.6055,
+        0.6315,
+        0.6187,
+        0.6721
+       ],
+       "dashed": true,
+       "colour": 4
+      },
+      {
+       "id": "gv",
+       "label": "recursion",
+       "values": [
+        1.0289,
+        0.9862,
+        0.9497,
+        0.9148,
+        0.9075,
+        0.8799,
+        0.8804,
+        0.8472,
+        0.8747,
+        0.8502,
+        0.832,
+        0.8098,
+        0.7853,
+        0.7587,
+        0.7595,
+        0.7343,
+        0.7251,
+        0.7534,
+        0.735,
+        0.8123,
+        0.837,
+        0.9158,
+        0.8823,
+        0.9055,
+        0.8733,
+        0.8414,
+        0.8119,
+        0.9723,
+        0.9448,
+        0.9075,
+        0.8729,
+        0.9209,
+        0.8937,
+        0.8944,
+        0.8841,
+        0.8909,
+        0.8807,
+        0.8475,
+        0.8433,
+        0.8243,
+        0.7951,
+        0.7678,
+        0.7422,
+        0.7627,
+        0.7375,
+        0.7679,
+        0.8146,
+        0.8102,
+        0.782,
+        0.7684,
+        0.8604,
+        0.849,
+        0.8669,
+        0.8347,
+        0.8158,
+        0.788,
+        0.7759,
+        0.7497,
+        0.7388,
+        0.7756,
+        0.7638,
+        0.7396,
+        0.7223,
+        0.7001,
+        0.7186,
+        0.7061,
+        0.6858,
+        0.6882,
+        0.7043,
+        0.732,
+        0.7276,
+        0.7171,
+        0.8038,
+        0.7826,
+        0.7561,
+        0.779,
+        0.7676,
+        0.7452,
+        0.7251,
+        0.7042,
+        0.7472,
+        0.7285,
+        0.7082,
+        0.6902,
+        0.6703,
+        0.6525,
+        0.6674,
+        0.6488,
+        0.6368,
+        0.655,
+        0.6487,
+        0.6314,
+        0.627,
+        0.6143,
+        0.627,
+        0.6114,
+        0.6055,
+        0.6315,
+        0.6187,
+        0.6721
+       ],
+       "colour": 1
+      }
+     ]
+    }
+   },
+   "question": "Complete `garch_variance(params, r)` and `neg_loglik(params, r)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\n# Share B: 2,000 days of a simulated share's daily returns (decimals),\n# from a GARCH(1,1) whose parameters we know; s2 holds its true variances.\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\nrp = 100 * r      # B in %\ns2p = 1e4 * s2    # B's true variances in %^2\n# Series A: independent normal returns with sd 1%, no clustering.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n",
+    "starter": "import numpy as np\n\ndef garch_variance(params, r):\n    omega, alpha, beta = params\n    s2 = np.empty(len(r))\n    s2[0] = ...            # the sample variance of r\n    for t in range(1, len(r)):\n        s2[t] = ...\n    return s2\n\ndef neg_loglik(params, r):\n    s2 = garch_variance(params, r)\n    return ...             # minus the sum of the daily scores\n",
+    "solution": "import numpy as np\n\ndef garch_variance(params, r):\n    omega, alpha, beta = params\n    s2 = np.empty(len(r))\n    s2[0] = r.var()        # the sample variance of r\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\ndef neg_loglik(params, r):\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n",
+    "examples": [
+     {
+      "call": "round(float(neg_loglik((0.02, 0.08, 0.90), rp)), 4)",
+      "expect": "2625.3778",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(neg_loglik((0.02, 0.08, 0.90), rp)), 4)",
+      "expect": "2625.3778",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(neg_loglik((0.02, 0.08, 0.90), rp)), 9)",
+      "expect": "2625.377769105",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(neg_loglik((0.05, 0.05, 0.90), rp)), 9)",
+      "expect": "2657.172155384",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(neg_loglik((0.0121, 0.0629, 0.9235), rp)), 9)",
+      "expect": "2623.830304489",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(garch_variance((0.02, 0.08, 0.90), rp)[1455]), 9)",
+      "expect": "3.042557169",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(garch_variance((0.02, 0.08, 0.90), rp)[0]), 9)",
+      "expect": "1.058537067",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(garch_variance((0.1, 0.1, 0.8), np.array([1.0, -2.0, 0.5, 3.0, -1.0])), 9).tolist()",
+      "expect": "[2.96, 2.568, 2.5544, 2.16852, 2.734816]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(neg_loglik((0.1, 0.1, 0.8), np.array([1.0, -2.0, 0.5, 3.0, -1.0]))), 9)",
+      "expect": "10.222460179",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(garch_variance((0.02, 0.08, 0.90), rp[:30]))",
+      "compare": "equal",
+      "expect": "30"
+     },
+     {
+      "call": "bool(neg_loglik((0.02, 0.08, 0.90), rp) < neg_loglik((0.05, 0.05, 0.90), rp))",
+      "compare": "equal",
+      "expect": "True"
+     }
+    ],
+    "how": "Check runs 10 hidden tests, each value rounded to 9 places. Four score B (`rp`, in %) at the truth, the start (0.05, 0.05, 0.90) and the fit. Two check variances on B, two a 5-day array, one the length and one the order. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Day $t$ uses yesterday's return and yesterday's variance."
+    },
+    {
+     "rung": "point",
+     "text": "`s2[0] = r.var()` and `s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]`."
+    },
+    {
+     "rung": "step",
+     "text": "`return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. At the truth, minus the log-likelihood is 2625.3778.",
+    "generic": "Some tests failed. Check the start, `r.var()`, and that the score is minus the sum, halved."
+   },
+   "explain": {
+    "text": "The loop is the model and the sum is the score. Our start differs from the truth's, but the gap shrinks by $\\beta = 0.90$ a day and is invisible within a month. The start (0.05, 0.05, 0.90) scores 2657.1722, which is 31.8 worse than the truth.",
+    "canvas": {
+     "highlight": [
+      "gv"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Hold $\\omega = 0.0121$ and $\\beta = 0.9235$, where the full fit will land, and vary $\\alpha$ alone. The curve is B's log-likelihood, $-$`neg_loglik`, at each $\\alpha$. Drag the dot along it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.04,
+      0.085
+     ],
+     "y": [
+      -2700,
+      -2615
+     ],
+     "height": 240,
+     "grid": true,
+     "xLabel": "$\\alpha$",
+     "yLabel": "Log-likelihood",
+     "functions": [
+      {
+       "id": "f",
+       "points": [
+        [
+         0.04,
+         -2687.57
+        ],
+        [
+         0.041,
+         -2680.78
+        ],
+        [
+         0.042,
+         -2674.52
+        ],
+        [
+         0.043,
+         -2668.76
+        ],
+        [
+         0.044,
+         -2663.47
+        ],
+        [
+         0.045,
+         -2658.62
+        ],
+        [
+         0.046,
+         -2654.18
+        ],
+        [
+         0.047,
+         -2650.14
+        ],
+        [
+         0.048,
+         -2646.46
+        ],
+        [
+         0.049,
+         -2643.13
+        ],
+        [
+         0.05,
+         -2640.13
+        ],
+        [
+         0.051,
+         -2637.43
+        ],
+        [
+         0.052,
+         -2635.02
+        ],
+        [
+         0.053,
+         -2632.89
+        ],
+        [
+         0.054,
+         -2631.02
+        ],
+        [
+         0.055,
+         -2629.39
+        ],
+        [
+         0.056,
+         -2628.0
+        ],
+        [
+         0.057,
+         -2626.83
+        ],
+        [
+         0.058,
+         -2625.87
+        ],
+        [
+         0.059,
+         -2625.1
+        ],
+        [
+         0.06,
+         -2624.52
+        ],
+        [
+         0.061,
+         -2624.13
+        ],
+        [
+         0.062,
+         -2623.9
+        ],
+        [
+         0.063,
+         -2623.83
+        ],
+        [
+         0.064,
+         -2623.92
+        ],
+        [
+         0.065,
+         -2624.15
+        ],
+        [
+         0.066,
+         -2624.52
+        ],
+        [
+         0.067,
+         -2625.02
+        ],
+        [
+         0.068,
+         -2625.64
+        ],
+        [
+         0.069,
+         -2626.39
+        ],
+        [
+         0.07,
+         -2627.24
+        ],
+        [
+         0.071,
+         -2628.21
+        ],
+        [
+         0.072,
+         -2629.28
+        ],
+        [
+         0.073,
+         -2630.45
+        ],
+        [
+         0.074,
+         -2631.71
+        ],
+        [
+         0.075,
+         -2633.05
+        ],
+        [
+         0.076,
+         -2634.49
+        ],
+        [
+         0.077,
+         -2636.0
+        ],
+        [
+         0.078,
+         -2637.6
+        ],
+        [
+         0.079,
+         -2639.26
+        ],
+        [
+         0.08,
+         -2641.0
+        ],
+        [
+         0.081,
+         -2642.8
+        ],
+        [
+         0.082,
+         -2644.67
+        ],
+        [
+         0.083,
+         -2646.6
+        ],
+        [
+         0.084,
+         -2648.58
+        ],
+        [
+         0.085,
+         -2650.62
+        ]
+       ],
+       "label": "$\\ell(\\alpha)$",
+       "labelAt": 0.045
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "A",
+       "x": 0.045,
+       "y": -2658.62,
+       "drag": true,
+       "on": "f",
+       "label": ""
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$\\alpha$ = {{fixed(A.x, 3)}}: log-likelihood {{fixed(A.y, 2)}}."
+    }
+   },
+   "question": "Drag the dot to where the log-likelihood peaks.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "A",
+      "target": {
+       "on": "f",
+       "x": 0.0629
+      },
+      "tolX": 0.002
+     }
+    ],
+    "wrong": [
+     {
+      "id": "truth",
+      "region": {
+       "x": [
+        0.0775,
+        0.0825
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the caption: the number rises, then falls."
+    },
+    {
+     "rung": "point",
+     "text": "The peak sits between 0.06 and 0.065.",
+     "highlight": [
+      "f"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It is at $\\alpha = 0.063$, where the log-likelihood is −2623.83."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. The peak is at $\\alpha = 0.063$, with a log-likelihood of −2623.83.",
+    "generic": "Not quite right. Move the dot until the caption stops rising.",
+    "byKey": {
+     "truth": "You went to the true $\\alpha$, 0.08. B's data peak at 0.063: an estimate misses the truth by about its standard error, 0.015.",
+     "A": "Not yet. Move the dot until the caption stops rising."
+    }
+   },
+   "explain": {
+    "text": "The peak is at $\\alpha = 0.063$, not the true 0.08: 2,000 days pin $\\alpha$ down to about $\\pm 0.015$. The curve falls steeply to the left, where the variance cannot react to storms. An optimiser climbs this surface in all three directions at once.",
+    "canvas": {
+     "points": {
+      "A": {
+       "x": 0.063
+      }
+     },
+     "vlines": [
+      {
+       "id": "tr",
+       "x": 0.08,
+       "label": "true 0.08"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Fit all three at once with SciPy's `minimize`. The `arch` package does this in one line on a desktop. In this browser we write it, which is how you would check it anyway. Returns go in in %, as `arch` does by default, so $\\omega$ is near 0.02 rather than 0.000002.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "height": 200,
+     "yLabel": "Daily volatility (%)",
+     "indexFrom": 1200,
+     "y": [
+      0,
+      3.2
+     ],
+     "decimals": 1,
+     "series": [
+      {
+       "id": "tv",
+       "label": "true",
+       "values": [
+        0.7706,
+        0.8019,
+        0.7753,
+        0.7579,
+        0.7371,
+        0.8005,
+        0.7983,
+        0.7705,
+        0.7692,
+        0.7739,
+        0.7479,
+        0.7246,
+        0.7222,
+        0.7044,
+        0.6848,
+        0.6751,
+        0.7363,
+        0.7127,
+        0.7538,
+        0.7518,
+        0.7904,
+        0.8086,
+        0.8352,
+        0.8067,
+        0.852,
+        0.8356,
+        0.8585,
+        0.8313,
+        0.8168,
+        0.7915,
+        0.7668,
+        0.7539,
+        0.7714,
+        0.791,
+        0.8083,
+        0.8396,
+        0.8241,
+        0.871,
+        0.8389,
+        0.8118,
+        0.7879,
+        0.7874,
+        0.7645,
+        0.7655,
+        0.8032,
+        0.7897,
+        0.764,
+        0.7651,
+        0.7744,
+        0.7519,
+        0.8955,
+        0.8781,
+        0.8525,
+        0.8546,
+        0.8244,
+        0.842,
+        0.8194,
+        0.8327,
+        0.934,
+        0.9051,
+        0.9257,
+        0.8917,
+        0.8644,
+        0.8498,
+        0.8403,
+        0.8178,
+        0.817,
+        0.789,
+        0.7809,
+        0.7671,
+        0.7448,
+        0.7209,
+        0.9052,
+        0.889,
+        0.9233,
+        0.8873,
+        0.8542,
+        0.8409,
+        0.8376,
+        0.8611,
+        0.8329,
+        0.8151,
+        0.7958,
+        0.7766,
+        0.761,
+        0.7948,
+        0.7729,
+        0.7819,
+        0.8263,
+        0.7975,
+        0.8395,
+        0.8559,
+        0.8947,
+        0.9501,
+        0.9404,
+        0.9608,
+        0.9361,
+        1.0074,
+        1.0075,
+        0.9666,
+        0.9295,
+        0.8933,
+        0.8604,
+        0.8384,
+        0.8079,
+        0.8617,
+        0.9276,
+        0.8939,
+        0.8898,
+        0.8572,
+        0.8501,
+        0.8189,
+        0.8097,
+        0.8618,
+        0.8725,
+        0.8528,
+        0.8349,
+        0.8057,
+        0.9754,
+        0.9591,
+        0.9227,
+        0.9751,
+        0.9391,
+        0.9047,
+        0.942,
+        0.9818,
+        1.0674,
+        1.0225,
+        0.9823,
+        1.0444,
+        1.0343,
+        1.268,
+        1.2382,
+        1.2632,
+        1.2222,
+        1.2167,
+        1.2505,
+        1.2721,
+        1.2174,
+        1.1675,
+        1.154,
+        1.1122,
+        1.0715,
+        1.052,
+        1.0785,
+        1.033,
+        1.0117,
+        1.0398,
+        1.0638,
+        1.0297,
+        1.1249,
+        1.1587,
+        1.2311,
+        1.1781,
+        1.1348,
+        1.2625,
+        1.3193,
+        1.2848,
+        1.2711,
+        1.2166,
+        1.1683,
+        1.2519,
+        1.2021,
+        1.2145,
+        1.2458,
+        1.1962,
+        1.1482,
+        1.1854,
+        1.1806,
+        1.1429,
+        1.1092,
+        1.0808,
+        1.0524,
+        1.0226,
+        1.1078,
+        1.0649,
+        1.0277,
+        0.9992,
+        1.1331,
+        1.088,
+        1.0672,
+        1.1281,
+        1.2861,
+        1.5531,
+        1.5608,
+        1.5463,
+        1.5695,
+        1.558,
+        1.4863,
+        1.4988,
+        1.4534,
+        1.4169,
+        1.6879,
+        2.0995,
+        2.0406,
+        2.2065,
+        2.1738,
+        2.2555,
+        2.3721,
+        2.4844,
+        2.3612,
+        2.3838,
+        2.2691,
+        2.5792,
+        2.7475,
+        2.6113,
+        2.5871,
+        2.4614,
+        2.3406,
+        2.566,
+        2.614,
+        2.4841,
+        2.509,
+        2.4478,
+        2.3381,
+        2.3027,
+        2.3337,
+        2.2261,
+        2.2741,
+        2.1634,
+        2.2869,
+        2.2279,
+        2.1231,
+        2.0898,
+        2.1005,
+        2.1284,
+        2.2055,
+        2.5631,
+        2.4607,
+        2.3912,
+        2.3224,
+        2.2187,
+        2.1687,
+        2.0699,
+        1.9756,
+        1.9099,
+        1.8442,
+        1.7679,
+        1.8904,
+        1.8144,
+        1.875,
+        1.7861,
+        1.7678,
+        1.6838,
+        1.6181,
+        1.673,
+        1.6392,
+        1.6216,
+        1.5824,
+        1.6902,
+        1.6603,
+        1.59,
+        1.652,
+        1.7254,
+        1.7985,
+        1.7443,
+        2.154,
+        2.6085,
+        2.7385,
+        2.7218,
+        2.5892,
+        2.4654,
+        2.3443,
+        2.4359,
+        2.3623,
+        2.2672,
+        2.1602,
+        2.181,
+        2.0745,
+        2.4069,
+        2.3391,
+        2.2302,
+        2.4408,
+        2.4759,
+        2.5304,
+        2.4975,
+        2.403,
+        2.2845,
+        2.2743,
+        2.1738,
+        2.0911,
+        2.0096,
+        1.9591,
+        1.8987,
+        1.8332,
+        1.8072,
+        1.7263,
+        1.6445,
+        1.6379,
+        1.9869,
+        1.9487,
+        1.8542,
+        1.767,
+        1.7359,
+        1.7118,
+        1.701,
+        1.631,
+        1.5662,
+        1.5285,
+        1.4671,
+        1.4014,
+        1.4215,
+        1.5086,
+        1.4543,
+        1.57,
+        1.5374,
+        1.6021,
+        1.5306,
+        1.4916,
+        1.8236,
+        1.8469,
+        1.8621,
+        1.9851,
+        1.9033,
+        1.8574,
+        1.8912,
+        1.8351,
+        1.7601,
+        1.7331,
+        1.6846,
+        1.6324,
+        1.5565,
+        1.4849,
+        1.4291,
+        1.4839,
+        1.6509,
+        1.6668,
+        1.6258,
+        1.558,
+        1.4853,
+        1.4357,
+        1.38,
+        1.4782,
+        1.4448,
+        1.8412,
+        2.0107,
+        1.9988,
+        1.9135,
+        1.8218,
+        1.8796,
+        1.9015,
+        1.8117,
+        1.8885,
+        1.8004,
+        1.7277,
+        1.6462,
+        1.5824,
+        1.6672,
+        1.6476,
+        1.6242,
+        1.6564,
+        1.6103,
+        1.535,
+        1.8626,
+        1.7727,
+        1.775,
+        1.7053,
+        1.7942,
+        1.8047,
+        1.8058,
+        1.878,
+        1.7883,
+        1.8817,
+        1.7995,
+        1.7741,
+        1.6893,
+        1.7185,
+        1.7027,
+        1.6215,
+        1.5449,
+        1.4733,
+        1.4266,
+        1.5791,
+        1.5047,
+        1.5175,
+        1.4618,
+        1.4278,
+        1.3877,
+        1.3252,
+        1.2911,
+        1.233,
+        1.3222,
+        1.3579,
+        1.3339,
+        1.2868,
+        1.2369,
+        1.2605,
+        1.2275,
+        1.1731,
+        1.3362,
+        1.3017,
+        1.2502,
+        1.2237,
+        1.1785,
+        1.1644,
+        1.114,
+        1.0676,
+        1.1909,
+        1.1402,
+        1.0949,
+        1.0576,
+        1.1325,
+        1.0899,
+        1.0437,
+        1.0006,
+        1.015,
+        0.991,
+        1.0132,
+        0.9738,
+        1.005,
+        0.9849,
+        0.9562,
+        0.9654,
+        0.933,
+        0.8999,
+        0.8673,
+        0.8758,
+        1.0124,
+        1.0009,
+        1.0038,
+        1.0133,
+        1.0037,
+        0.9933,
+        0.9568,
+        0.9512,
+        0.9141,
+        0.885,
+        0.8718,
+        0.8397,
+        0.9018,
+        0.8712,
+        0.8538,
+        0.8224,
+        0.8224,
+        0.7955,
+        0.7931,
+        0.7883,
+        0.7626,
+        0.7769,
+        0.7588,
+        0.7348,
+        0.7437,
+        0.7408,
+        0.7252,
+        0.8323,
+        0.8079,
+        0.7887,
+        0.7718,
+        0.7466,
+        0.7354,
+        0.713,
+        0.806,
+        0.7791,
+        0.8174,
+        0.7908,
+        0.7754,
+        0.8132,
+        0.7849,
+        0.7581,
+        0.7348,
+        0.8403,
+        0.8362,
+        0.811,
+        0.7887,
+        0.7636,
+        0.7398,
+        0.7209,
+        0.745,
+        0.747,
+        0.7252,
+        0.703,
+        0.6859,
+        0.6751,
+        0.675,
+        0.6559,
+        0.6746,
+        0.6858,
+        0.7284,
+        0.7265,
+        0.7097,
+        0.7057,
+        0.7442,
+        0.807,
+        0.8324,
+        0.808,
+        0.783,
+        0.7647,
+        0.7395,
+        0.8435,
+        0.8212,
+        0.8577,
+        0.8413,
+        0.8165,
+        0.8314,
+        0.8638,
+        0.8671,
+        0.8347,
+        0.8163,
+        0.798,
+        0.8022
+       ],
+       "dashed": true,
+       "colour": 4
+      },
+      {
+       "id": "fv",
+       "label": "fitted",
+       "values": [
+        0.7661,
+        0.7898,
+        0.768,
+        0.7533,
+        0.7356,
+        0.7845,
+        0.7825,
+        0.76,
+        0.7583,
+        0.7613,
+        0.7399,
+        0.7204,
+        0.717,
+        0.7015,
+        0.6844,
+        0.6749,
+        0.7216,
+        0.7021,
+        0.7342,
+        0.7324,
+        0.7635,
+        0.779,
+        0.8016,
+        0.7796,
+        0.8173,
+        0.8052,
+        0.825,
+        0.8041,
+        0.7932,
+        0.7732,
+        0.7532,
+        0.7424,
+        0.7557,
+        0.771,
+        0.7851,
+        0.8109,
+        0.7992,
+        0.8379,
+        0.8132,
+        0.7919,
+        0.7728,
+        0.7721,
+        0.7534,
+        0.7535,
+        0.7831,
+        0.7723,
+        0.7515,
+        0.7518,
+        0.7587,
+        0.7403,
+        0.8562,
+        0.8438,
+        0.8245,
+        0.8271,
+        0.8035,
+        0.818,
+        0.8003,
+        0.8111,
+        0.894,
+        0.8725,
+        0.8908,
+        0.8648,
+        0.8437,
+        0.8323,
+        0.8247,
+        0.8067,
+        0.8056,
+        0.7827,
+        0.7753,
+        0.7633,
+        0.7444,
+        0.724,
+        0.8701,
+        0.8585,
+        0.8877,
+        0.8602,
+        0.8344,
+        0.8239,
+        0.8213,
+        0.8402,
+        0.8179,
+        0.8035,
+        0.7876,
+        0.7716,
+        0.758,
+        0.7836,
+        0.7655,
+        0.7717,
+        0.8066,
+        0.7836,
+        0.817,
+        0.8307,
+        0.8629,
+        0.9096,
+        0.9038,
+        0.9225,
+        0.9043,
+        0.9641,
+        0.9668,
+        0.9359,
+        0.9074,
+        0.8791,
+        0.8528,
+        0.8348,
+        0.8097,
+        0.8508,
+        0.9033,
+        0.8771,
+        0.874,
+        0.848,
+        0.8419,
+        0.8166,
+        0.8081,
+        0.8482,
+        0.8566,
+        0.8409,
+        0.8263,
+        0.8025,
+        0.9381,
+        0.9268,
+        0.899,
+        0.9422,
+        0.9148,
+        0.888,
+        0.9182,
+        0.9513,
+        1.0227,
+        0.9889,
+        0.9583,
+        1.0097,
+        1.0035,
+        1.1974,
+        1.1782,
+        1.2034,
+        1.1743,
+        1.1733,
+        1.2041,
+        1.2251,
+        1.1844,
+        1.1466,
+        1.1371,
+        1.1048,
+        1.0728,
+        1.0568,
+        1.0767,
+        1.0406,
+        1.0227,
+        1.0432,
+        1.0612,
+        1.034,
+        1.1083,
+        1.1362,
+        1.1959,
+        1.1559,
+        1.1227,
+        1.2258,
+        1.2746,
+        1.2502,
+        1.2417,
+        1.2003,
+        1.163,
+        1.2297,
+        1.1915,
+        1.202,
+        1.2277,
+        1.1895,
+        1.152,
+        1.1806,
+        1.1769,
+        1.1473,
+        1.1203,
+        1.0969,
+        1.0731,
+        1.048,
+        1.1116,
+        1.0773,
+        1.047,
+        1.0228,
+        1.125,
+        1.0897,
+        1.0727,
+        1.1197,
+        1.2467,
+        1.4691,
+        1.4826,
+        1.4773,
+        1.5022,
+        1.4986,
+        1.4455,
+        1.4592,
+        1.4262,
+        1.3994,
+        1.6201,
+        1.9674,
+        1.9302,
+        2.0782,
+        2.0628,
+        2.1406,
+        2.2479,
+        2.3525,
+        2.2634,
+        2.2914,
+        2.2072,
+        2.4665,
+        2.6159,
+        2.517,
+        2.5069,
+        2.4139,
+        2.3233,
+        2.5064,
+        2.5517,
+        2.4548,
+        2.4788,
+        2.4346,
+        2.3513,
+        2.3244,
+        2.3486,
+        2.2655,
+        2.3013,
+        2.2153,
+        2.3085,
+        2.2626,
+        2.1808,
+        2.1523,
+        2.1571,
+        2.1756,
+        2.2331,
+        2.5151,
+        2.4393,
+        2.388,
+        2.336,
+        2.256,
+        2.2161,
+        2.1383,
+        2.063,
+        2.0082,
+        1.9528,
+        1.8891,
+        1.9724,
+        1.9102,
+        1.9496,
+        1.8779,
+        1.8582,
+        1.7897,
+        1.7339,
+        1.7666,
+        1.7351,
+        1.7155,
+        1.6799,
+        1.7541,
+        1.7274,
+        1.67,
+        1.7114,
+        1.7637,
+        1.8182,
+        1.7756,
+        2.0985,
+        2.476,
+        2.5962,
+        2.5959,
+        2.4997,
+        2.4087,
+        2.3182,
+        2.395,
+        2.3415,
+        2.2698,
+        2.1877,
+        2.2032,
+        2.1206,
+        2.379,
+        2.3292,
+        2.2462,
+        2.4127,
+        2.4447,
+        2.4924,
+        2.4712,
+        2.4005,
+        2.3097,
+        2.3016,
+        2.2234,
+        2.1577,
+        2.0921,
+        2.049,
+        1.998,
+        1.9428,
+        1.9162,
+        1.8491,
+        1.7809,
+        1.7666,
+        2.0211,
+        1.9902,
+        1.9157,
+        1.846,
+        1.8175,
+        1.794,
+        1.7804,
+        1.7228,
+        1.6684,
+        1.6334,
+        1.5809,
+        1.5249,
+        1.5307,
+        1.5874,
+        1.5414,
+        1.6223,
+        1.5941,
+        1.6398,
+        1.5828,
+        1.5497,
+        1.8041,
+        1.8251,
+        1.8399,
+        1.941,
+        1.8802,
+        1.8467,
+        1.8754,
+        1.8333,
+        1.7756,
+        1.7543,
+        1.7159,
+        1.674,
+        1.6136,
+        1.5556,
+        1.5088,
+        1.5443,
+        1.6685,
+        1.6802,
+        1.648,
+        1.5945,
+        1.5367,
+        1.4955,
+        1.4493,
+        1.5188,
+        1.4905,
+        1.7991,
+        1.9406,
+        1.9376,
+        1.8749,
+        1.8059,
+        1.854,
+        1.8745,
+        1.8065,
+        1.8686,
+        1.8016,
+        1.7456,
+        1.6819,
+        1.6309,
+        1.6931,
+        1.6766,
+        1.657,
+        1.68,
+        1.6432,
+        1.5835,
+        1.8366,
+        1.7683,
+        1.7714,
+        1.7179,
+        1.7875,
+        1.7972,
+        1.7996,
+        1.8582,
+        1.7899,
+        1.8645,
+        1.8019,
+        1.7828,
+        1.717,
+        1.7383,
+        1.7252,
+        1.6616,
+        1.6006,
+        1.5427,
+        1.5028,
+        1.6133,
+        1.5542,
+        1.5606,
+        1.5153,
+        1.4858,
+        1.4514,
+        1.3999,
+        1.369,
+        1.3202,
+        1.3802,
+        1.4029,
+        1.3813,
+        1.3421,
+        1.3004,
+        1.3133,
+        1.2843,
+        1.2391,
+        1.3581,
+        1.3298,
+        1.2882,
+        1.265,
+        1.2274,
+        1.2128,
+        1.1708,
+        1.1315,
+        1.2196,
+        1.1784,
+        1.1408,
+        1.1087,
+        1.1612,
+        1.1261,
+        1.0878,
+        1.0514,
+        1.0578,
+        1.0357,
+        1.0485,
+        1.0152,
+        1.035,
+        1.0167,
+        0.9917,
+        0.9951,
+        0.9673,
+        0.9388,
+        0.9102,
+        0.9123,
+        1.014,
+        1.0042,
+        1.0054,
+        1.0121,
+        1.0039,
+        0.9949,
+        0.9654,
+        0.9595,
+        0.9291,
+        0.9045,
+        0.8917,
+        0.8645,
+        0.9094,
+        0.884,
+        0.8684,
+        0.8418,
+        0.839,
+        0.8157,
+        0.8109,
+        0.8044,
+        0.782,
+        0.79,
+        0.7734,
+        0.7522,
+        0.7562,
+        0.7513,
+        0.7368,
+        0.8186,
+        0.7989,
+        0.7829,
+        0.7685,
+        0.7473,
+        0.7368,
+        0.7174,
+        0.7892,
+        0.7675,
+        0.7976,
+        0.7764,
+        0.7636,
+        0.7933,
+        0.7707,
+        0.7489,
+        0.7294,
+        0.813,
+        0.8105,
+        0.7907,
+        0.7729,
+        0.7526,
+        0.7328,
+        0.7167,
+        0.7344,
+        0.7351,
+        0.717,
+        0.6982,
+        0.6831,
+        0.6729,
+        0.6709,
+        0.6541,
+        0.667,
+        0.6746,
+        0.7078,
+        0.706,
+        0.6923,
+        0.6885,
+        0.7192,
+        0.7708,
+        0.7931,
+        0.7748,
+        0.7555,
+        0.7412,
+        0.721,
+        0.8056,
+        0.7889,
+        0.8199,
+        0.8082,
+        0.7892,
+        0.8021,
+        0.8294,
+        0.8336,
+        0.8086,
+        0.7944,
+        0.7799,
+        0.7832
+       ],
+       "colour": 1
+      }
+     ]
+    },
+    "state": {
+     "hide": [
+      "fv"
+     ]
+    }
+   },
+   "question": "Complete `fit_garch(r)` and `persistence_and_halflife(params)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nfrom scipy.optimize import minimize\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\ndef garch_variance(params, r):\n    \"\"\"Conditional variances for returns r (in %): sigma2_0 is the sample variance of r.\"\"\"\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\ndef neg_loglik(params, r):\n    \"\"\"Minus the Gaussian log-likelihood, zero mean: 0.5 * sum(ln 2pi + ln s2 + r^2 / s2).\"\"\"\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n\n# Share B: 2,000 days of a simulated share's daily returns (decimals),\n# from a GARCH(1,1) whose parameters we know; s2 holds its true variances.\nr, s2 = simulate_garch(2e-6, 0.08, 0.90, 2000, 7)\nrp = 100 * r      # B in %\ns2p = 1e4 * s2    # B's true variances in %^2\n# Series A: independent normal returns with sd 1%, no clustering.\niid = 0.01 * np.random.default_rng(8).standard_normal(2000)\n",
+    "starter": "import math\nimport numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_garch(r):\n    x0 = ...       # start at (0.05, 0.05, 0.90)\n    bounds = ...   # omega [1e-6, 10]; alpha, beta [0, 1]\n    # the constraint is >= 0 when alpha + beta <= 0.9999\n    cons = [{\"type\": \"ineq\",\n             \"fun\": lambda p: ...}]\n    return minimize(neg_loglik, x0=x0, args=(r,), method=\"SLSQP\",\n                    bounds=bounds, constraints=cons,\n                    options={\"ftol\": 1e-10, \"maxiter\": 500})\n\ndef persistence_and_halflife(params):\n    omega, alpha, beta = params\n    p = ...\n    return (p, ...)   # half-life ln 0.5 / ln p\n",
+    "solution": "import math\nimport numpy as np\nfrom scipy.optimize import minimize\n\ndef fit_garch(r):\n    x0 = np.array([0.05, 0.05, 0.90])\n    bounds = [(1e-6, 10.0), (0.0, 1.0), (0.0, 1.0)]\n    cons = [{\"type\": \"ineq\",\n             \"fun\": lambda p: 0.9999 - p[1] - p[2]}]\n    return minimize(neg_loglik, x0=x0, args=(r,), method=\"SLSQP\",\n                    bounds=bounds, constraints=cons,\n                    options={\"ftol\": 1e-10, \"maxiter\": 500})\n\ndef persistence_and_halflife(params):\n    omega, alpha, beta = params\n    p = alpha + beta\n    return (p, math.log(0.5) / math.log(p))\n",
+    "examples": [
+     {
+      "call": "round(float(fit_garch(rp).x[1]), 3)",
+      "expect": "0.063",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in persistence_and_halflife((0.02, 0.08, 0.90))]",
+      "expect": "[0.98, 34.309618]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(fit_garch(rp).x[0]), 3)",
+      "expect": "0.012",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(fit_garch(rp).x[1]), 3)",
+      "expect": "0.063",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(fit_garch(rp).x[2]), 3)",
+      "expect": "0.923",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "bool(fit_garch(rp).success)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "bool(0.03 < fit_garch(rp).x[1] < 0.13 and 0.85 < fit_garch(rp).x[2] < 0.96)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "bool(0.95 < fit_garch(rp).x[1] + fit_garch(rp).x[2] < 0.9999)",
+      "compare": "equal",
+      "expect": "True"
+     },
+     {
+      "call": "round(float(fit_garch(rp[:1000]).x[2]), 3)",
+      "expect": "0.866",
+      "tol": {
+       "abs": 0.003
+      },
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in persistence_and_halflife((0.02, 0.08, 0.90))]",
+      "expect": "[0.98, 34.309618]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in persistence_and_halflife((0.0121, 0.0629, 0.9235))]",
+      "expect": "[0.9864, 50.61934]",
+      "compare": "isclose"
+     },
+     {
+      "call": "[round(v, 6) for v in persistence_and_halflife((0.1, 0.1, 0.8))]",
+      "expect": "[0.9, 6.578813]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 10 hidden tests. Seven fit B: each parameter to 3 places within 0.003, convergence, intervals around the truth, and $\\hat\\beta$ on 1,000 days. Fitted values can differ in the fourth place between optimisers, so each is checked to within 0.003. Three test `persistence_and_halflife` to 6 places. The first run loads NumPy and SciPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The constraint function must be at least 0 exactly when $\\alpha + \\beta \\le 0.9999$."
+    },
+    {
+     "rung": "point",
+     "text": "`lambda p: 0.9999 - p[1] - p[2]`, with `x0 = np.array([0.05, 0.05, 0.90])`."
+    },
+    {
+     "rung": "step",
+     "text": "`bounds = [(1e-6, 10.0), (0.0, 1.0), (0.0, 1.0)]`; persistence `alpha + beta`, half-life `math.log(0.5) / math.log(p)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. $\\hat\\omega = 0.0121$, $\\hat\\alpha = 0.0629$, $\\hat\\beta = 0.9235$: persistence 0.9864, half-life 50.6 days.",
+    "generic": "Some tests failed. Check the start, the three bounds and the sign of the constraint."
+   },
+   "explain": {
+    "text": "SLSQP climbs to (0.0121, 0.0629, 0.9235) in 15 steps, against a true (0.02, 0.08, 0.90). Its variances track the truth with a correlation of 0.9962; lesson 5's EWMA managed 0.9863. On day 1,999 it says 0.923% a day against a true 0.965%.",
+    "canvas": {
+     "hide": []
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Why %? Here is the same fit on B in decimals, from the same start, as SciPy runs in this browser. SLSQP reports `Optimization terminated successfully` both times. The log-likelihoods are both in % terms, so they compare directly.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Returns in",
+      "$\\hat\\omega$",
+      "$\\hat\\alpha$",
+      "$\\hat\\beta$",
+      "$\\hat\\alpha + \\hat\\beta$",
+      "Log-likelihood"
+     ],
+     "rows": [
+      [
+       "%",
+       "0.0121",
+       "0.0629",
+       "0.9235",
+       "0.9864",
+       "−2623.83"
+      ],
+      [
+       "decimals",
+       "0.0000701",
+       "0.2461",
+       "0.2756",
+       "0.5217",
+       "−2800.14"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What happened in decimals?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "stall",
+      "text": "It stopped far from the peak. $\\omega$ is $10^4$ times smaller than in %, and the optimiser's steps suit parameters of similar size.",
+      "correct": true
+     },
+     {
+      "id": "scale",
+      "text": "Nothing: decimals just rescale the same answer.",
+      "why": "You expected units not to matter. Rescaling multiplies $\\omega$ by $10^{-4}$ but leaves $\\alpha$ and $\\beta$ alone; here they changed completely."
+     },
+     {
+      "id": "better",
+      "text": "The decimal fit is more precise.",
+      "why": "You trusted the extra digits. Its log-likelihood is 176 lower, so it explains the data far worse."
+     },
+     {
+      "id": "data",
+      "text": "The decimal data hold less information.",
+      "why": "You blamed the data. They are the same returns divided by 100."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two log-likelihoods: which fit explains the data better?"
+    },
+    {
+     "rung": "point",
+     "text": "The right decimal answer is $\\omega = 0.00000121$ with the same $\\alpha$ and $\\beta$.",
+     "highlight": [
+      "r1c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Its log-likelihood would match the % fit; this one is 176 lower."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. 'Success' only means the optimiser's stopping rule was met.",
+    "generic": "Not quite right. A rescaling should leave $\\alpha$ and $\\beta$ unchanged. Did it?",
+    "byKey": {
+     "scale": "You expected units not to matter. They should not, but $\\alpha$ and $\\beta$ changed completely: the optimiser stalled."
+    }
+   },
+   "explain": {
+    "text": "In decimals $\\omega$ should be 0.00000121, while $\\alpha$ and $\\beta$ stay near 0.06 and 0.92. One tiny parameter beside two large ones misleads the optimiser's step sizes, and it stops 176 log-likelihood units short. A desktop SciPy stops somewhere else again ($\\hat\\alpha = 0.17$, $\\hat\\beta = 0.08$): fragile, not wrong by chance.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "B's fit says $\\hat\\alpha + \\hat\\beta = 0.9864$, but we simulated 0.98. A colleague calls the fit broken. The histogram shows the same fit on 20 paths of B's model, seeds 7 to 26, 2,000 days each. Seed 7 is B.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {
+      "min": 0.96,
+      "max": 0.99,
+      "width": 0.005
+     },
+     "data": [
+      0.9864,
+      0.9863,
+      0.979,
+      0.9855,
+      0.9758,
+      0.9778,
+      0.964,
+      0.9867,
+      0.9729,
+      0.9729,
+      0.9847,
+      0.9766,
+      0.9694,
+      0.9744,
+      0.9603,
+      0.9816,
+      0.9696,
+      0.9857,
+      0.9795,
+      0.9861
+     ],
+     "xLabel": "Fitted persistence $\\hat\\alpha + \\hat\\beta$",
+     "yLabel": "Paths",
+     "height": 200,
+     "yMax": 7,
+     "showValues": true,
+     "decimals": 0
+    },
+    "state": {
+     "cut": {
+      "at": 0.98,
+      "side": "above",
+      "label": "true 0.98"
+     }
+    }
+   },
+   "question": "Is B's fit broken?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fine",
+      "text": "No. The 20 fits spread with an sd of 0.008 around 0.978, and 0.9864 is one of them.",
+      "correct": true
+     },
+     {
+      "id": "equal",
+      "text": "Yes. A correct fit should return 0.98.",
+      "why": "You expected the estimate to equal the truth. Each 2,000-day path gives its own estimate, here from 0.960 to 0.987."
+     },
+     {
+      "id": "iter",
+      "text": "Yes. SLSQP needs more iterations.",
+      "why": "You blamed the optimiser. It converged in 15 steps; more steps climb to the same peak."
+     },
+     {
+      "id": "over",
+      "text": "No, but fits always overstate the persistence.",
+      "why": "You read one path as a rule. The 20 fits average 0.978, slightly below the truth."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does 0.9864 sit among the 20 fits?"
+    },
+    {
+     "rung": "point",
+     "text": "It falls in the right-most bin, with five other paths.",
+     "highlight": [
+      "b5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The 20 fits have an sd of 0.008, and 0.9864 is 0.8 sd from the truth."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. An estimate from 2,000 days carries an error of about ±0.01 in the persistence.",
+    "generic": "Not quite right. Compare 0.9864 with how far fits on equally good data spread.",
+    "byKey": {
+     "equal": "You expected the estimate to equal the truth. Twenty equally good paths give twenty different fits, from 0.960 to 0.987."
+    }
+   },
+   "explain": {
+    "text": "On 20 paths of one model the persistence ranges from 0.960 to 0.987, sd 0.0079. B's 0.9864 is 0.8 sd above the truth, an ordinary draw. Quote it as about $0.986 \\pm 0.008$, never as a failed fit.",
+    "canvas": {
+     "highlight": [
+      "b5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Two harder cases, fitted the same way. Series A is lesson 5's independent normal returns, with no clustering at all. The last row is what desktop SciPy returns for A. Its log-likelihood matches the browser's to two places.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Data",
+      "$\\hat\\omega$",
+      "$\\hat\\alpha$",
+      "$\\hat\\beta$",
+      "$\\hat\\alpha + \\hat\\beta$"
+     ],
+     "rows": [
+      [
+       "B, 2,000 days",
+       "0.0121",
+       "0.0629",
+       "0.9235",
+       "0.9864"
+      ],
+      [
+       "B, first 1,000 days",
+       "0.0430",
+       "0.0602",
+       "0.8663",
+       "0.9265"
+      ],
+      [
+       "A, 2,000 days",
+       "1.0253",
+       "0.0000",
+       "0.0050",
+       "0.0050"
+      ],
+      [
+       "A, desktop SciPy",
+       "0.0000",
+       "0.0000",
+       "1.0000",
+       "1.0000"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "short",
+      "text": "Half the data understates the persistence: 0.9265 against a true 0.98.",
+      "correct": true
+     },
+     {
+      "id": "react",
+      "text": "On A, $\\hat\\alpha = 0$: the fitted variance never reacts to news.",
+      "correct": true
+     },
+     {
+      "id": "beta",
+      "text": "On A, $\\hat\\beta = 0.005$ shows that A's variance has no memory.",
+      "why": "You read $\\hat\\beta$ as a finding. With $\\alpha = 0$ there is no news to remember. Any $\\beta$ fits with the right $\\omega$: the desktop says 1.0."
+     },
+     {
+      "id": "recent",
+      "text": "The 1,000-day fit is better because the data are more recent.",
+      "why": "You assumed newer data. It is days 0 to 999, and its half-life of 9 days is far from the true 34."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each row with the truth, (0.02, 0.08, 0.90)."
+    },
+    {
+     "rung": "point",
+     "text": "For A, ask what $\\beta$ does once $\\alpha$ is 0.",
+     "highlight": [
+      "r1c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Two statements hold: the short sample and $\\hat\\alpha = 0$ on A."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. A short sample understates persistence, and without clustering $\\beta$ means nothing.",
+    "generic": "Not quite right. Check each statement against its row of the table.",
+    "byKey": {
+     "beta": "You read $\\hat\\beta$ as a finding. With $\\hat\\alpha = 0$, every $\\beta$ with $\\omega = V(1 - \\beta)$ gives the same constant variance."
+    }
+   },
+   "explain": {
+    "text": "With 1,000 days the persistence is 0.9265, a half-life of 9 days instead of 34. On A, $\\hat\\alpha = 0$ leaves a constant variance, which any $\\beta$ with $\\omega = V(1 - \\beta)$ produces. So the two platforms disagree on $\\hat\\beta$ yet fit equally well.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2,
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "An equity desk fits GARCH(1,1) to an index's daily returns: $\\hat\\alpha = 0.09$, $\\hat\\beta = 0.90$. Persistence of 0.98 to 0.99 is the textbook range for daily index returns (Tsay, chapter 3). The desk wants to know how long a shock to variance lasts.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 120,
+     "step": 20
+    },
+    "state": {
+     "points": [
+      {
+       "id": "B",
+       "x": 50.62,
+       "label": "B fitted 50.6",
+       "labelPos": "below"
+      },
+      {
+       "id": "Bt",
+       "x": 34.31,
+       "label": "B true 34.3",
+       "labelPos": "above"
+      }
+     ],
+     "caption": "Half-lives in days."
+    }
+   },
+   "question": "What is the half-life of a variance shock, in days?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 68.97,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "days",
+    "label": "Half-life in days",
+    "accept": "68.97 days: $\\ln 0.5/\\ln 0.99$.",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 100,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "half",
+      "value": 50,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "beta",
+      "value": 6.58,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The persistence is $\\alpha + \\beta$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.09 + 0.90 = 0.99$; the gap shrinks by 0.99 a day.",
+     "highlight": [
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\ln 0.5/\\ln 0.99 = -0.6931/-0.01005 = 68.97$."
+    }
+   ],
+   "feedback": {
+    "correct": "Correct. Persistence 0.99 means a shock takes about 69 trading days, three months, to halve.",
+    "generic": "Not quite right. Use $\\ln 0.5 / \\ln(\\alpha + \\beta)$.",
+    "byKey": {
+     "mean": "That is $1/(1 - 0.99)$, the average life, not the half-life.",
+     "half": "You used $0.5/(1 - 0.99)$. The half-life is $\\ln 0.5/\\ln 0.99$.",
+     "beta": "You used $\\beta = 0.90$ alone. The variance gap shrinks by $\\alpha + \\beta$ a day."
+    }
+   },
+   "explain": {
+    "text": "$\\ln 0.5/\\ln 0.99 = 69.0$ days, about three months. A pegged currency is the opposite case: $\\hat\\alpha$ is near 0 while the peg holds, until the day it breaks. A model fitted on the calm years then has no idea how large the news can be.",
+    "canvas": {
+     "points": {
+      "ix": {
+       "x": 68.97,
+       "label": "index 69.0",
+       "colour": 3,
+       "labelPos": "above"
+      }
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "GARCH(1,1) adds yesterday's variance: $\\sigma_t^2 = \\omega + \\alpha r_{t-1}^2 + \\beta\\sigma_{t-1}^2$. $\\alpha$ is the reaction to news, $\\alpha + \\beta$ the persistence.",
+   "Fit it by maximising the normal log-likelihood, each day with its own variance. Use SLSQP from (0.05, 0.05, 0.90), with bounds and $\\alpha + \\beta < 1$, on returns in %.",
+   "On B the fit is (0.0121, 0.0629, 0.9235), persistence 0.9864 against a true 0.98. Twenty paths spread by 0.008, and 1,000 days understate it badly."
+  ],
+  "formula": {
+   "name": "GARCH(1,1)",
+   "tex": "\\sigma_t^2 = \\omega + \\alpha\\,r_{t-1}^2 + \\beta\\,\\sigma_{t-1}^2",
+   "note": "Persistence $\\alpha + \\beta$; half-life $\\ln 0.5/\\ln(\\alpha + \\beta)$ days."
+  },
+  "trap": "A fitted persistence of 0.9864 against a true 0.98 is ordinary sampling error, not a failed fit."
+ },
+ "quiz": [
+  {
+   "id": "q1",
+   "difficulty": 2,
+   "prose": "A GARCH(1,1) in % has $\\omega = 0.05$, $\\alpha = 0.10$, $\\beta = 0.85$. Yesterday the variance was 2.0 %² and the return +1%.",
+   "question": "What is today's variance, in %²?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.85,
+    "tol": {
+     "abs": 0.003
+    },
+    "label": "Variance in %²",
+    "accept": "1.85: $0.05 + 0.10 + 1.70$.",
+    "wrong": [
+     {
+      "id": "nobeta",
+      "value": 0.15,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "swap",
+      "value": 1.1,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Add $\\omega$, $\\alpha r^2$ and $\\beta\\sigma^2$.",
+    "byKey": {
+     "nobeta": "You left out $\\beta\\,\\sigma_{t-1}^2 = 1.70$.",
+     "swap": "You swapped $\\alpha$ and $\\beta$: $0.05 + 0.85 \\times 1 + 0.10 \\times 2$."
+    }
+   },
+   "explain": {
+    "text": "$0.05 + 0.10 \\times 1 + 0.85 \\times 2.0 = 1.85$ %². A calm day lets the variance drift down from 2.0."
+   }
+  },
+  {
+   "id": "q2",
+   "difficulty": 2,
+   "prose": "Two GARCH fits have the same persistence, 0.97. Fit X has $\\alpha = 0.03$, $\\beta = 0.94$; fit Y has $\\alpha = 0.12$, $\\beta = 0.85$.",
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "y",
+      "text": "Y jumps more after a big day, and both fade at the same rate.",
+      "correct": true
+     },
+     {
+      "id": "x",
+      "text": "X jumps more, because its $\\beta$ is larger.",
+      "why": "You gave the jump to $\\beta$. The jump is $\\alpha r^2$; $\\beta$ carries yesterday's variance."
+     },
+     {
+      "id": "fade",
+      "text": "X fades more slowly, because its $\\beta$ is larger.",
+      "why": "You read the memory from $\\beta$ alone. A shock fades by $\\alpha + \\beta$ a day, 0.97 for both."
+     },
+     {
+      "id": "same",
+      "text": "They behave the same, since the persistence is the same.",
+      "why": "The fade matches, but the first reaction is four times larger in Y."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. $\\alpha$ sets the reaction; $\\alpha + \\beta$ sets the fade."
+   },
+   "explain": {
+    "text": "The day after a shock, the variance rises by $\\alpha r^2$: four times more in Y. From then on the extra shrinks by $\\alpha + \\beta = 0.97$ a day in both."
+   }
+  },
+  {
+   "id": "q3",
+   "difficulty": 3,
+   "prose": "A GARCH fit gives $\\alpha = 0.05$ and $\\beta = 0.93$.",
+   "question": "What is the half-life of a variance shock, in days, to 2 places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 34.31,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "days",
+    "label": "Days",
+    "accept": "34.31: $\\ln 0.5/\\ln 0.98$.",
+    "wrong": [
+     {
+      "id": "beta",
+      "value": 9.56,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "mean",
+      "value": 50,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. The half-life is $\\ln 0.5/\\ln(\\alpha + \\beta)$.",
+    "byKey": {
+     "beta": "You used $\\beta$ alone. Use the persistence $\\alpha + \\beta = 0.98$.",
+     "mean": "That is $1/(1 - 0.98)$, the average life."
+    }
+   },
+   "explain": {
+    "text": "$\\alpha + \\beta = 0.98$, the same persistence as share B, so the half-life is $\\ln 0.5/\\ln 0.98 = 34.31$ days."
+   }
+  },
+  {
+   "id": "q4",
+   "difficulty": 3,
+   "prose": "A colleague drops the bounds and the constraint: `minimize(neg_loglik, x0, args=(rp,))`, which uses BFGS. It returns $\\hat\\omega = -905.6$, $\\hat\\alpha = -64.9$, $\\hat\\beta = -494.3$ and a log-likelihood of `nan`.",
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neg",
+      "text": "Nothing kept the variance positive, so the search left the region where the model makes sense.",
+      "correct": true
+     },
+     {
+      "id": "start",
+      "text": "The starting point was poor.",
+      "why": "You blamed the start. With the bounds and the constraint the same start reaches the fit in 15 steps."
+     },
+     {
+      "id": "data",
+      "text": "B is not a GARCH series.",
+      "why": "You blamed the data. B was simulated from GARCH(1,1), and the constrained fit recovers it."
+     },
+     {
+      "id": "nan",
+      "text": "Only the `nan` is a problem; the parameters are fine.",
+      "why": "A negative $\\omega$ and $\\beta$ give negative variances, which no return series can have."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Ask what $\\sigma_t^2$ is with these parameters."
+   },
+   "explain": {
+    "text": "With a negative $\\omega$ the variance turns negative and its log is `nan`. The bounds keep $\\omega > 0$, $\\alpha, \\beta \\ge 0$, and the constraint keeps $\\alpha + \\beta$ below 1."
+   }
+  }
+ ]
+}
