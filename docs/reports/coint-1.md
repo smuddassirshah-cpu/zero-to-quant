@@ -21,7 +21,11 @@ Skills: l2 `co-spurious`, `co-test`; l3 and l4 `co-test`; review and homework it
 
 ## Playthrough
 
-PLAYTHROUGH_RESULT
+`node tools/playthrough.mjs --lesson coint/l1-two-walks --lesson coint/l2-not-correlation --lesson coint/l3-stays-put --lesson coint/l4-engle-granger --set coint/review-1 --set coint/homework-1 --local-cdn .../scratchpad/pkgs --shots .../coint-1/final --mobile`: all passed.
+
+- l1: 16 checks, quiz 4/4. l2: 16 checks, quiz 4/4. l3: 16 checks, quiz 4/4. l4: 15 checks, quiz 3/3 (replayed alone after a last table fix, passed).
+- review-1: recorded 8 of 8. homework-1: marked 9 of 9 right, 41 of 41 marks.
+- One failure on the way: l3's drag-point screen failed with key `P` while its target was `{ on: "f", x: 1.47 }` on a polyline (backlog bullet 1); it now uses a plain target and passes.
 
 Each code solution was also run against its hidden tests in CPython (statsmodels 0.15.0, NumPy 2.5.3) with `harness.py` and in Pyodide 0.27.7 (statsmodels 0.14.4, NumPy 2.0.2) under node with `mkpc.py` and `pyrun.mjs`: every solution passes every case in both, and every untouched starter fails every case in both (l2: 17 cases, l3: 22, l4: 15, homework: 16).
 
