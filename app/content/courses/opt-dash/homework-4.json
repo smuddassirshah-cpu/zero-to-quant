@@ -1,0 +1,452 @@
+{
+  "id": "homework-4",
+  "course": "opt-dash",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h4-book",
+      "difficulty": 5,
+      "skills": [
+        "od-greeks",
+        "od-surface"
+      ],
+      "prose": "A desk's risk report sums Greeks over its book. Each position is a dict with `K`, `T`, `kind` and `qty` (negative for short). Price each option at the surface's vol for its strike, $\\sigma = a + bm + cm^2$ with $m = \\ln(K/F)/\\sqrt{T}$ and $F = Se^{(r - q)T}$. Then return the explain for a move.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> g = book_greeks(book, surface, 100.0, 0.05, 0.01,",
+            "...                 dS=2.0, dsigma=0.01, dt=1 / 365)",
+            ">>> {k: round(v, 2) for k, v in g.items()}",
+            "{'delta': -5.09, 'gamma': 0.17, 'vega': -141.72, 'theta': 5.93, 'explain': -11.24}"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `book_greeks(positions, surface, S, r, q, dS=0.0, dsigma=0.0, dt=0.0)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from math import erf, exp, log, sqrt, pi, isnan\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Delta, gamma, vega (per 1.00), theta (per year), rho.\"\"\"\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in\n                (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega,\n            \"theta\": theta, \"rho\": rho}\n\ndef pnl_explain(greeks, dS, dsigma, dt):\n    terms = {\"delta\": greeks[\"delta\"] * dS,\n             \"gamma\": 0.5 * greeks[\"gamma\"] * dS ** 2,\n             \"vega\": greeks[\"vega\"] * dsigma,\n             \"theta\": greeks[\"theta\"] * dt}\n    terms[\"total\"] = sum(terms.values())\n    return terms\n\ndef smile_iv(coeffs, m):\n    a, b, c = coeffs\n    return a + b * m + c * m * m\n\nsurface = {T: (0.22 - 0.045 * exp(-T / 0.3), -0.08, 0.10)\n           for T in (1 / 12, 1 / 6, 0.25, 0.5, 1.0)}\n\nbook = [\n    {\"K\": 90, \"T\": 0.25, \"kind\": \"put\", \"qty\": -20},\n    {\"K\": 95, \"T\": 0.25, \"kind\": \"put\", \"qty\": 15},\n    {\"K\": 100, \"T\": 0.25, \"kind\": \"call\", \"qty\": 10},\n    {\"K\": 105, \"T\": 0.25, \"kind\": \"call\", \"qty\": -25},\n    {\"K\": 100, \"T\": 0.5, \"kind\": \"put\", \"qty\": 30},\n    {\"K\": 110, \"T\": 0.5, \"kind\": \"call\", \"qty\": -10},\n    {\"K\": 80, \"T\": 1.0, \"kind\": \"put\", \"qty\": -40},\n    {\"K\": 100, \"T\": 1.0, \"kind\": \"call\", \"qty\": 20},\n    {\"K\": 120, \"T\": 1.0, \"kind\": \"call\", \"qty\": -15},\n    {\"K\": 100, \"T\": 1 / 12, \"kind\": \"call\", \"qty\": 5},\n]\n",
+        "starter": "from math import exp, log, sqrt\n\ndef book_greeks(positions, surface, S, r, q, dS=0.0, dsigma=0.0, dt=0.0):\n    \"\"\"Summed delta, gamma, vega and theta of a book, and its explain.\"\"\"\n    totals = {\"delta\": 0.0, \"gamma\": 0.0, \"vega\": 0.0, \"theta\": 0.0}\n    for p in positions:\n        K, T = p[\"K\"], p[\"T\"]\n        F = ...          # the forward for this expiry\n        sigma = ...      # the surface's vol at this strike\n        g = bs_greeks(S, K, r, sigma, T, p[\"kind\"], q)\n        for name in totals:\n            ...          # add this position's share of each Greek\n    totals[\"explain\"] = pnl_explain(totals, dS, dsigma, dt)[\"total\"]\n    return totals\n",
+        "solution": "from math import exp, log, sqrt\n\ndef book_greeks(positions, surface, S, r, q, dS=0.0, dsigma=0.0, dt=0.0):\n    \"\"\"Summed delta, gamma, vega and theta of a book, and its explain.\"\"\"\n    totals = {\"delta\": 0.0, \"gamma\": 0.0, \"vega\": 0.0, \"theta\": 0.0}\n    for p in positions:\n        K, T = p[\"K\"], p[\"T\"]\n        F = S * exp((r - q) * T)\n        sigma = smile_iv(surface[T], log(K / F) / sqrt(T))\n        g = bs_greeks(S, K, r, sigma, T, p[\"kind\"], q)\n        for name in totals:\n            totals[name] += p[\"qty\"] * g[name]\n    totals[\"explain\"] = pnl_explain(totals, dS, dsigma, dt)[\"total\"]\n    return totals\n",
+        "examples": [
+          {
+            "call": "round(book_greeks(book, surface, 100.0, 0.05, 0.01)['delta'], 2)",
+            "expect": "-5.09",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "{k: round(v, 6) for k, v in book_greeks([{'K': 100, 'T': 0.25, 'kind': 'call', 'qty': 1}], surface, 100.0, 0.05, 0.01).items()}",
+            "compare": "equal",
+            "expect": "{'delta': 0.55802, 'gamma': 0.038947, 'vega': 19.676221, 'theta': -9.95879, 'explain': 0.0}"
+          },
+          {
+            "call": "round(book_greeks([{'K': 70, 'T': 1 / 12, 'kind': 'put', 'qty': 1}], surface, 100.0, 0.05, 0.01)['vega'], 6)",
+            "compare": "isclose",
+            "expect": "0.176611"
+          },
+          {
+            "call": "{k: round(v, 10) for k, v in book_greeks([{'K': 95, 'T': 0.5, 'kind': 'put', 'qty': 7}, {'K': 95, 'T': 0.5, 'kind': 'put', 'qty': -7}], surface, 100.0, 0.05, 0.01).items()}",
+            "compare": "equal",
+            "expect": "{'delta': 0.0, 'gamma': 0.0, 'vega': 0.0, 'theta': 0.0, 'explain': 0.0}"
+          },
+          {
+            "setup": "one = book_greeks([{'K': 110, 'T': 1.0, 'kind': 'call', 'qty': 1}], surface, 100.0, 0.05, 0.01); ten = book_greeks([{'K': 110, 'T': 1.0, 'kind': 'call', 'qty': 10}], surface, 100.0, 0.05, 0.01)",
+            "call": "round(ten['gamma'] / one['gamma'], 9)",
+            "compare": "isclose",
+            "expect": "10.0"
+          },
+          {
+            "call": "round(book_greeks(book, surface, 100.0, 0.05, 0.01)['delta'], 4)",
+            "compare": "isclose",
+            "expect": "-5.0941"
+          },
+          {
+            "call": "round(book_greeks(book, surface, 100.0, 0.05, 0.01)['gamma'], 4)",
+            "compare": "isclose",
+            "expect": "0.1726"
+          },
+          {
+            "call": "round(book_greeks(book, surface, 100.0, 0.05, 0.01)['vega'], 4)",
+            "compare": "isclose",
+            "expect": "-141.7206"
+          },
+          {
+            "call": "round(book_greeks(book, surface, 100.0, 0.05, 0.01)['theta'], 4)",
+            "compare": "isclose",
+            "expect": "5.9318"
+          },
+          {
+            "call": "round(book_greeks(book, surface, 100.0, 0.05, 0.01, dS=2.0, dsigma=0.01, dt=1 / 365)['explain'], 4)",
+            "compare": "isclose",
+            "expect": "-11.2439"
+          },
+          {
+            "call": "round(book_greeks(book, surface, 100.0, 0.05, 0.01, dS=-5.0, dsigma=0.03, dt=1 / 365)['explain'], 4)",
+            "compare": "isclose",
+            "expect": "23.3924"
+          },
+          {
+            "call": "book_greeks([], surface, 100.0, 0.05, 0.01, dS=3.0)",
+            "compare": "equal",
+            "expect": "{'delta': 0.0, 'gamma': 0.0, 'vega': 0.0, 'theta': 0.0, 'explain': 0.0}"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: one option against `bs_greeks` at the surface's vol, a one-month wing, a long and a short that cancel, quantity scaling, the ten-option `book`, two moves and an empty book. Values are rounded to 4 or 6 places. `bs_greeks`, `smile_iv`, `pnl_explain`, `surface` and `book` are loaded. Pure Python: nothing to load."
+      },
+      "feedback": {
+        "correct": "The book's Greeks and its explain, each option at its own vol.",
+        "generic": "Some tests failed. Read each option's vol at its own $m$, with the forward of its own expiry, and weight by `qty`."
+      },
+      "explain": {
+        "text": "Each option needs the vol of its own strike and expiry. A flat 20% would give the one-month £70 put almost no vega. Greeks add across positions because each is a derivative of a sum. The explain then runs once on the totals."
+      }
+    },
+    {
+      "id": "h4-cross",
+      "difficulty": 4,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "The l14 residual was mostly vanna, $\\partial^2 V/\\partial S\\,\\partial\\sigma$. Bump both inputs: price the four corners $(S \\pm h_S, \\sigma \\pm h_\\sigma)$ and combine them. The closures `bs` and `bs_put` price our one-year £100 call and put.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> cross_gamma(bs, 100, 0.2, 1)",
+            "-0.28143029...",
+            ">>> _ * 2 * 0.01   # vanna term on the £2, +1 point day",
+            "-0.0056"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `cross_gamma(pricer, S, sigma, T, h_S=0.01, h_sigma=0.0001)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from math import erf, exp, log, sqrt, pi, isnan\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_greeks(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Delta, gamma, vega (per 1.00), theta (per year), rho.\"\"\"\n    if T <= 0 or sigma <= 0:\n        return {k: float(\"nan\") for k in\n                (\"delta\", \"gamma\", \"vega\", \"theta\", \"rho\")}\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    Sq, Kr = S * exp(-q * T), K * exp(-r * T)\n    gamma = exp(-q * T) * norm_pdf(d1) / (S * sigma * sqrt(T))\n    vega = Sq * norm_pdf(d1) * sqrt(T)\n    decay = -Sq * norm_pdf(d1) * sigma / (2 * sqrt(T))\n    if kind == \"call\":\n        delta = exp(-q * T) * norm_cdf(d1)\n        theta = decay - r * Kr * norm_cdf(d2) + q * Sq * norm_cdf(d1)\n        rho = K * T * exp(-r * T) * norm_cdf(d2)\n    elif kind == \"put\":\n        delta = -exp(-q * T) * norm_cdf(-d1)\n        theta = decay + r * Kr * norm_cdf(-d2) - q * Sq * norm_cdf(-d1)\n        rho = -K * T * exp(-r * T) * norm_cdf(-d2)\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    return {\"delta\": delta, \"gamma\": gamma, \"vega\": vega,\n            \"theta\": theta, \"rho\": rho}\n\nbs = lambda S, sigma, T: bs_price(S, 100, 0.05, sigma, T)\nbs_put = lambda S, sigma, T: bs_price(S, 100, 0.05, sigma, T, \"put\")\ncalls = []\n\ndef counted(S, sigma, T):\n    calls.append((S, sigma))\n    return bs(S, sigma, T)\n",
+        "starter": "def cross_gamma(pricer, S, sigma, T, h_S=0.01, h_sigma=0.0001):\n    \"\"\"Bumped d2V / dS dsigma (vanna), by central differences in both.\"\"\"\n    uu = pricer(S + h_S, sigma + h_sigma, T)\n    # price the other three corners, then combine them\n    ...\n",
+        "solution": "def cross_gamma(pricer, S, sigma, T, h_S=0.01, h_sigma=0.0001):\n    \"\"\"Bumped d2V / dS dsigma (vanna), by central differences in both.\"\"\"\n    uu = pricer(S + h_S, sigma + h_sigma, T)\n    ud = pricer(S + h_S, sigma - h_sigma, T)\n    du = pricer(S - h_S, sigma + h_sigma, T)\n    dd = pricer(S - h_S, sigma - h_sigma, T)\n    return (uu - ud - du + dd) / (4 * h_S * h_sigma)\n",
+        "examples": [
+          {
+            "call": "round(cross_gamma(bs, 100, 0.2, 1), 4)",
+            "expect": "-0.2814",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "cross_gamma(bs, 100, 0.2, 1)",
+            "compare": "isclose",
+            "expect": "-0.2814302602",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "cross_gamma(bs_put, 100, 0.2, 1)",
+            "compare": "isclose",
+            "expect": "-0.2814302602",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "cross_gamma(lambda S, s, T: S * s * T, 100, 0.2, 2)",
+            "compare": "isclose",
+            "expect": "2.0",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "cross_gamma(lambda S, s, T: S ** 2 + s ** 2 - T, 100, 0.2, 1)",
+            "compare": "isclose",
+            "expect": "0.0",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "cross_gamma(lambda S, s, T: S * s ** 2, 100, 0.2, 1, h_S=1, h_sigma=0.01)",
+            "compare": "isclose",
+            "expect": "0.4",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "round(cross_gamma(bs, 100, 0.2, 1) * 2 * 0.01, 4)",
+            "compare": "isclose",
+            "expect": "-0.0056"
+          },
+          {
+            "setup": "calls.clear(); cross_gamma(counted, 100, 0.2, 1)",
+            "call": "sorted({(round(a, 6), round(b, 6)) for a, b in calls})",
+            "expect": "[(99.99, 0.1999), (99.99, 0.2001), (100.01, 0.1999), (100.01, 0.2001)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: the call and the put against the closed-form vanna within 1e-6, $S\\sigma T$, a pricer with no cross term, $S\\sigma^2$ with large bumps, the l14 cross term, and the four corners priced. Pure Python: nothing to load."
+      },
+      "feedback": {
+        "correct": "Vanna $-0.2814$, and the cross term $-0.0056$ of the l14 residual.",
+        "generic": "Some tests failed. The numerator is up-up minus up-down minus down-up plus down-down, over $4h_Sh_\\sigma$."
+      },
+      "explain": {
+        "text": "The four-corner formula cancels every term but the mixed one, so $S\\sigma T$ gives exactly $T$. Call and put share vanna, because parity differs only by $Se^{-qT} - Ke^{-rT}$, which has no vol in it. Times $dS\\,d\\sigma = 0.02$ it gives $-0.0056$ of the $-0.0078$ residual."
+      }
+    },
+    {
+      "id": "h4-hedged",
+      "difficulty": 3,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "Why does a delta-hedged long option earn money when the share moves more than implied vol says? Take $r = q = 0$ and hold the volatility fixed for the day.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "Hedged P&L $= dV - \\Delta\\,dS$ (long the option, short $\\Delta$ shares)"
+          },
+          {
+            "id": "d2",
+            "text": "$dV \\approx \\Delta\\,dS + \\tfrac12\\Gamma\\,dS^2 + \\Theta\\,dt$ (Taylor in $S$ and $t$, vol fixed)"
+          },
+          {
+            "id": "d3",
+            "text": "Hedged P&L $\\approx \\tfrac12\\Gamma\\,dS^2 + \\Theta\\,dt$ (the delta terms cancel)"
+          },
+          {
+            "id": "d4",
+            "text": "$\\Theta = -\\tfrac12\\sigma^2S^2\\Gamma$ (the Black-Scholes equation with $r = q = 0$)"
+          },
+          {
+            "id": "d5",
+            "text": "Hedged P&L $\\approx \\tfrac12\\Gamma\\left(dS^2 - \\sigma^2S^2\\,dt\\right)$ (substitute and factor)"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5"
+        ]
+      },
+      "feedback": {
+        "correct": "Gamma earns the realised move squared; theta charges the implied one.",
+        "generic": "Not quite right. Write the hedged P&L, expand $dV$, cancel, then use the pricing equation.",
+        "byKey": {
+          "d4": "The pricing equation is used to replace theta, so it comes after theta appears in the P&L."
+        }
+      },
+      "explain": {
+        "text": "The Black-Scholes equation ties theta to gamma, so the hedged P&L is gamma times the gap between $dS^2$ and $\\sigma^2S^2dt$. At $S = 100$ and $\\sigma = 20\\%$ the break-even move is $\\sigma S\\sqrt{dt} = \\text{£}1.05$ a day. The l14 figure, £1.37, is higher because $r = 5\\%$ adds to theta."
+      }
+    },
+    {
+      "id": "h4-straddle",
+      "difficulty": 4,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "A trader is short one three-month at-the-money straddle: the £100 call and the £100 put, $S = \\text{£}100$, $r = 5\\%$, $\\sigma = 20\\%$. The position's delta is $-0.1389$, gamma $-0.07858$ and theta $+16.01$ a year. The next day the share rises £5 and vol is unchanged.",
+      "question": "What P&L does the explain give for the day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1.6329,
+        "tol": {
+          "abs": 0.003
+        },
+        "unit": "£",
+        "label": "Explained P&L",
+        "accept": "−£1.6329: $-0.6946 - 0.9822 + 0.0439$",
+        "wrong": [
+          {
+            "id": "no-gamma",
+            "value": -0.6507,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "gamma-sign",
+            "value": 0.3315,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "−£1.6329; full revaluation gives −£1.5732.",
+        "generic": "Not quite right. Use $\\Delta\\,dS + \\tfrac12\\Gamma\\,dS^2 + \\Theta\\,dt$ with the position's own signs.",
+        "byKey": {
+          "no-gamma": "You left out the gamma term. On a £5 move it is $\\tfrac12 \\times -0.07858 \\times 25 = -0.9822$, the largest term.",
+          "gamma-sign": "You gave the short straddle positive gamma. Selling options makes gamma negative."
+        }
+      },
+      "explain": {
+        "text": "Delta loses $-0.1389 \\times 5 = -0.6946$, gamma $-0.9822$, and a day's theta earns $16.01/365 = 0.0439$. The explain says −£1.6329 and revaluation −£1.5732: short gamma loses on any big move, whichever way."
+      }
+    },
+    {
+      "id": "h4-mc-delta",
+      "difficulty": 3,
+      "skills": [
+        "od-greeks"
+      ],
+      "prose": "`fd_greeks` on the Monte Carlo pricer of l7, 100,000 paths, $h = \\text{£}0.01$. With a fresh seed for each price, our one-year £100 call's bumped delta is $-0.30$. A second run gives $-1.15$. With one seed for both prices it is 0.6359.",
+      "question": "Why does one seed fix it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "crn",
+            "text": "Both prices then use the same paths, so their noise cancels in the difference",
+            "correct": true
+          },
+          {
+            "id": "more",
+            "text": "One seed gives more paths",
+            "why": "The path count is 100,000 either way. What changes is whether the two runs share them."
+          },
+          {
+            "id": "bias",
+            "text": "A fresh seed biases each price upwards",
+            "why": "Each price is unbiased with any seed. The trouble is noise, divided by $2h = 0.02$."
+          },
+          {
+            "id": "h",
+            "text": "The bump is too small for Monte Carlo, so any seed fails",
+            "why": "With one seed the same bump gives 0.6359, close to 0.6368."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Common random numbers: the noise is shared and cancels.",
+        "generic": "Not quite right. Ask what the difference of two independent noisy prices looks like over 0.02.",
+        "byKey": {
+          "bias": "You blamed bias. Each price has a standard error near 0.033; independent errors over $2h = 0.02$ give a delta noise of about 2.3."
+        }
+      },
+      "explain": {
+        "text": "Each price has a standard error of about 0.033. Two independent errors divided by 0.02 swamp a delta of 0.64. With common random numbers the two prices move together and only the true slope survives."
+      }
+    },
+    {
+      "id": "h4-min-vol",
+      "difficulty": 4,
+      "skills": [
+        "od-surface"
+      ],
+      "prose": "At fixed $k = \\ln(K/F)$, the three-month vol is 26%. The six-month quote at the same $k$ has a typo.",
+      "question": "What is the lowest six-month vol that avoids calendar arbitrage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18.38,
+        "tol": {
+          "abs": 0.03
+        },
+        "unit": "%",
+        "label": "Lowest six-month vol",
+        "accept": "18.38%: $\\sqrt{0.26^2 \\times 0.25 / 0.5}$",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 26,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "half",
+            "value": 13,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "18.38%: total variance stays at 0.0169.",
+        "generic": "Not quite right. Set the six-month total variance equal to the three-month one and solve for the vol.",
+        "byKey": {
+          "same": "You kept vol from falling. Vol may fall with expiry, as long as $\\sigma^2 T$ does not.",
+          "half": "You scaled vol by the ratio of times. Total variance is vol squared times time, so scale by $\\sqrt{0.25/0.5}$."
+        }
+      },
+      "explain": {
+        "text": "Three-month total variance is $0.26^2 \\times 0.25 = 0.0169$. Six months needs $\\sigma^2 \\times 0.5 \\ge 0.0169$, so $\\sigma \\ge 18.38\\%$. Any lower quote prices a calendar spread below zero."
+      }
+    },
+    {
+      "id": "h4-note",
+      "difficulty": 4,
+      "skills": [
+        "od-greeks",
+        "od-surface",
+        "od-data"
+      ],
+      "question": "Write your answer, then mark it against the model.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Write the results note for your dashboard on the seeded chain. Use the headings Question, Data, Pricers, Implied volatility, Greeks, Arbitrage checks, What failed and Next steps. Quote the numbers from your run. Name at least two concrete failures. End with a paragraph on what you would change to run it on real data.",
+        "model": "**Results note: options analytics dashboard (seeded chain)**\n\n**Question.** Can one option chain give an arbitrage-free volatility surface, and Greeks that explain a day's P&L?\n\n**Data.** `make_chain()`, seed 2320: one share at £100, $r = 5\\%$, five expiries from one month to one year, strikes £70 to £130. Cleaning kept 102 of 130 quotes: 15 zero bids, 2 crossed, 2 stale, 9 too wide. Implied forwards give $q$ near 1% (0.96% at one year, forward £104.12).\n\n**Pricers.** On a grid of puts, the 200-step tree is within £0.0098 of Black-Scholes and Monte Carlo within 0.7 standard errors. The American put premium reaches £1.0438 at the one-year £110 strike.\n\n**Implied volatility.** Newton's method with a bracketed bisection fallback solves each mid. Quadratic smiles in $m = \\ln(K/F)/\\sqrt{T}$ give skew near $-0.08$ and curvature near 0.10. The ATM term structure rises from 0.1854 at one month to 0.2192 at one year. Expiries are joined by interpolating total variance in $T$ at fixed $k$.\n\n**Greeks.** Closed form and bumped Greeks agree within $10^{-4}$ with $h = \\text{£}0.01$. The three-month £100 call has vol 0.2018 and delta 0.5580. On a £2, one-point day the explain gives 1.3636 against 1.3556 from revaluation: a residual of $-0.0080$, mostly vanna.\n\n**Arbitrage checks.** The raw mids show four butterfly failures (£0.035 to £0.31), each below the middle call's spread, so none is tradable. The fitted surface shows no butterfly and no calendar failures.\n\n**What failed.**\n- Plain Newton from 0.2 broke on the one-month £75 call, where vega is near 0; the fallback found 0.4865.\n- The one-month smile rests on four OTM quotes (£90 to £105), so its wings are extrapolated; its curvature is 0.0835 against the planted 0.10.\n- A $10^{-6}$ bump gave gamma 0.0284 against 0.0188, and a £0.01 bump of the tree gave 3.35.\n\n**Next steps.** Weight fits by the bid-ask vol band, fit SVI for the wings, and run on real data.\n\n**On real data.** Replace `make_chain` with a loader that returns the same columns. yfinance gives `option_chain(date)` frames with `strike`, `bid`, `ask`, `lastTradeDate` and its own `impliedVolatility`, which I would recompute, not trust. Cache it to disk and download while the market is open. Deribit's public API needs no key; its quotes are in BTC, so multiply by the index price. Take $r$ per expiry from a rate curve, and use the tree for American single-stock options.",
+        "rubric": [
+          {
+            "points": 1,
+            "text": "All eight headings, in order, with a one-line question"
+          },
+          {
+            "points": 2,
+            "text": "Data: the seed, the cleaning counts (102 of 130, by reason) and the forwards"
+          },
+          {
+            "points": 1,
+            "text": "Pricers: tree and Monte Carlo agreement with their error allowances, and the American premium"
+          },
+          {
+            "points": 1,
+            "text": "Implied volatility: solver with fallback, smile fit, term structure and the interpolation rule"
+          },
+          {
+            "points": 1,
+            "text": "Greeks: closed form against bumped, and the explain with its residual and its cause"
+          },
+          {
+            "points": 1,
+            "text": "Arbitrage: raw failures compared with spreads, and the fitted surface's result"
+          },
+          {
+            "points": 2,
+            "text": "What failed: two or more concrete failures, each with its numbers"
+          },
+          {
+            "points": 1,
+            "text": "Real data: a loader with the same columns, recomputed vols, caching or market hours, and $r$ or American exercise"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your note with the model and tick the rubric.",
+        "generic": "Open the model answer and mark your note against the rubric."
+      },
+      "explain": {
+        "text": "A good note states its numbers, separates results from failures, and says what breaks on real data. A reader should be able to rerun the dashboard from it."
+      }
+    }
+  ]
+}
