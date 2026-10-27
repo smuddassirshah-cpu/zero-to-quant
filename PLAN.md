@@ -6,20 +6,21 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 
 ## Tasks (one per session; tick when committed)
 
-### 0. Triage work left in flight on 27 Oct
-- [ ] Triage: run the validator and `playthrough.mjs --lesson/--set` on every file that exists but has no report in `docs/reports/`: arma L3; alpha L3; opt-dash L4 (partial); any coint or contests files. Keep what passes, finish or delete partials (a partial level is one whose level agent never reported). Check `app/js/` for half-applied engine pass 7 edits (`git diff HEAD~40 --stat app/js`); if the full playthrough fails, revert the engine files to the last green commit and record what was lost in KNOWN_ISSUES.md. Check `docs/reviews/review-1.9.md` (partial reader) and mark its task below accordingly.
+### 0. Triage
+- [x] Triage work left in flight on 27 Oct: arma L3 and opt-dash L4 lessons green with reports; garch l5, l9, coint l1, contests l1 kept (`docs/reports/triage-27oct.md`); nothing removed. Pass 7 left no status block; its edits sit in WIP commits; full playthrough 663 of ~1,050 ok, 0 failures, before a container restart stopped it.
+- [ ] Triage 2 (container restart, 27 Oct): coint L3, contests L2, L3, L4 have all six files each on disk (validator 0 errors) but no report. Per level: playthrough with `--local-cdn`, numbers twice, starters fail; keep and report, or fix, or delete. Then finish `playthrough.mjs --all --local-cdn <pkgs>` (it covers the new exams too).
 
 ### 1. Stage 2 content (brief: `docs/briefs/<course>.md`, section `## Level n`)
-- [ ] garch L2
-- [ ] garch L3
-- [ ] coint L1
-- [ ] coint L2
-- [ ] coint L3
-- [ ] opt-dash L4 (l15, l16, review-4, homework-4 missing)
-- [ ] contests L1
-- [ ] contests L2
-- [ ] contests L3
-- [ ] contests L4
+- [x] garch L2
+- [x] garch L3
+- [x] coint L1
+- [x] coint L2
+- [ ] coint L3 (files on disk, see triage 2)
+- [x] opt-dash L4
+- [x] contests L1
+- [ ] contests L2 (files on disk, see triage 2)
+- [ ] contests L3 (files on disk, see triage 2)
+- [ ] contests L4 (files on disk, see triage 2)
 
 ### 2. Stage 1 gap levels (briefs: `docs/briefs/gap-<course>.md`; plan in `docs/briefs/gaps-plan.md`)
 - [ ] limits L5
@@ -53,8 +54,8 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [ ] mental-pressure L3
 
 ### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
-- [ ] topic-0.1 to topic-0.5 (Stage 0 topic exams; never written, the Learn screen shows them as unwritten; pattern topic-1.1.json, items from the Stage 0 courses of each topic)
-- [ ] topic-1.9 (cpp, cpp-pricing; the 1.9 review proposes coverage)
+- [x] topic-0.1 to topic-0.5 (Stage 0 topic exams; never written, the Learn screen shows them as unwritten; pattern topic-1.1.json, items from the Stage 0 courses of each topic)
+- [x] topic-1.9 (cpp, cpp-pricing; the 1.9 review proposes coverage)
 - [ ] topic-2.1 (stat-learning, validation, ensembles, fin-ml)
 - [ ] topic-2.2 (arma, garch, coint)
 - [ ] topic-2.3 (backtest, alpha, opt-dash)
@@ -66,7 +67,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 
 ### 5. Second readers and fix passes (reader pattern: `docs/reviews/review-1.5.md`; fix pattern: its `## Fix pass` section)
 - [ ] Second reader 1.8 (was in flight; no file yet) then fix pass 1.8
-- [ ] Second reader 1.9 (`docs/reviews/review-1.9.md` may be partial) then fix pass 1.9
+- [ ] Fix pass 1.9 (second reader 1.9 is complete in `docs/reviews/review-1.9.md`)
 - [ ] Second reader 2.1 then fix pass
 - [ ] Second reader 2.2 then fix pass
 - [ ] Second reader 2.3 and 2.4 then fix pass

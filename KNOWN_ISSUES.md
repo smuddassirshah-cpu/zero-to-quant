@@ -1,10 +1,10 @@
 # KNOWN ISSUES
 
 Open at migration (27 Oct 2026)
-- Work left in flight: engine pass 7 edits in `app/js/` may be half-applied (validator shows 0 errors; full playthrough not re-run since). Content on disk without reports: arma L2, L3; alpha L3, L4; opt-dash L2 to L4 partial. `docs/reviews/review-1.9.md` may be partial (its reader never reported). See PLAN.md task 0.
+- Unreported after a container restart (27 Oct): coint L3, contests L2, L3, L4 (all files on disk, validator 0 errors). Engine pass 7 never wrote its "Seventh pass" status block; its edits are in WIP commits, and the full playthrough ran 663 items green before the restart. See PLAN.md triage 2.
 - `docs/BACKLOG-INBOX.md` holds about 136 unnumbered engine bullets awaiting pass 7.
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
-- Topic 1.8 and 1.9 have no exams; Stage 2 and 3 have none.
+- Stage 1, 2 and 3 have no stage exams; topics 2.x and 3.x have no topic exams.
 
 Engine gotchas
 - `unit: "%"` on a numeric widget divides the typed value by 100: store the fraction.
@@ -31,3 +31,5 @@ C++ runtime
 Process
 - Session and weekly usage caps stop every agent mid-task; work is saved on disk, so checkpoint-commit, then resume or triage.
 - Validator warnings are mostly "ladder changes canvas kind" and "not yet written"; only errors block.
+- jsDelivr is blocked in cloud sandboxes; build the local CDN with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (40 s, 870 MB) and pass `--local-cdn`.
+- Script-mode `sys.stdin` has no `.buffer`; contests lessons use `sys.stdin.read()`.

@@ -1,11 +1,24 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 0, "Triage work left in flight on 27 Oct".
+Task: PLAN.md task 0, "Triage 2 (container restart, 27 Oct)".
 
-Context not in the state files: the previous orchestration ran twenty agents at once and was stopped mid-flight on 27 Oct. Files on disk that no agent reported on may be complete, partial, or unvalidated: `app/content/courses/arma/` level 3 (l9 to l12, review-3, homework-3), `app/content/courses/alpha/` level 3, `app/content/courses/opt-dash/` level 4 (l15, l16, review-4, homework-4 missing), and possibly `coint/` and `contests/` level 1 files. Engine pass 7 (`app/js/`, `app/tools/validate.mjs`, `docs/AUTHORING.md`, canvas READMEs) was interrupted; its "Seventh pass" status block in `docs/ENGINE-BACKLOG.md` may be missing or partial. `docs/reviews/review-1.9.md` may be a partial second-reader file.
+Context: a container restart stopped four content agents just before they reported. coint L3 and contests L2, L3 and L4 (lessons, reviews, homeworks) are on disk in WIP commits, validator 0 errors. The full `playthrough.mjs --all` had run 663 items green with no failures (Stage 0, Stage 1 and the start of Stage 2) when it was killed.
 
-Do: delegate to a `file-finder` agent for the table of present files against course maps and reports; then, per unreported level, a `test-fixer` agent that runs the validator and the playthrough (`--local-cdn` only if the scratchpad `pkgs` folder named in `docs/LEVEL-BRIEF.md` exists on this machine; otherwise plain, which needs network) and either confirms the level green and writes a short `docs/reports/<course>-<level>.md`, or deletes the partial files. Run `node tools/playthrough.mjs --all 2>&1 | tail -30` from `app/` once; if engine changes broke it and the fix is not obvious, revert `app/js` and `app/tools` to the last commit whose message starts "engine integration pass 6" and record the loss in KNOWN_ISSUES.md.
+First, build the local CDN if it is missing: from the repo root, `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`; jsDelivr is blocked here.
 
-Files likely touched: the course folders above, `docs/reports/`, `app/js/`, `app/content/manifest.json`, PLAN.md, PROGRESS.md, KNOWN_ISSUES.md.
+Do: for each of the four levels, run one `test-fixer` agent. Give it the brief section in `docs/briefs/<course>.md`, the `--local-cdn` path, and the report pattern `docs/reports/coint-2.md`. It plays every lesson and both sets, checks numbers twice and checks that starters fail. Then it writes `docs/reports/<course>-<level>.md`, or deletes the level's files if they cannot be made green. Run up to four of these agents in parallel. Then run `node tools/playthrough.mjs --all --local-cdn <pkgs> 2>&1 | tail -30` from `app/` in the background. It takes about 2.5 hours, so commit while it runs.
 
-Acceptance: `node tools/validate.mjs` reports 0 errors; `playthrough.mjs --all` passes; every level on disk is either green with a report or removed; PLAN.md ticks task 0 and lists any level that was removed back under its course; NEXT_PROMPT.md names the next task (garch L2).
+Once triage is green, continue with the next unchecked tasks in this order, one agent per level or exam, in waves of four. Stop launching new work at about 85% of the session limit.
+1. Exam topic-2.2.
+2. Exams topic-2.3 and topic-2.4.
+3. Exam topic-2.1.
+4. Stage 1 gap levels.
+
+Files likely touched: `app/content/courses/{coint,contests}/`, `docs/reports/`, `docs/BACKLOG-INBOX.md`, `app/content/manifest.json`, state files.
+
+Acceptance:
+- `node tools/validate.mjs` reports 0 errors.
+- `playthrough.mjs --all --local-cdn` passes.
+- Each of the four levels is green with a report, or removed and relisted in PLAN.md.
+- PLAN.md ticks triage 2 and its four levels.
+- NEXT_PROMPT.md names the next task.

@@ -11,6 +11,7 @@ Architecture
 - Progress data keys on lesson ids, so lessons are never renamed or removed; gap content is appended as new levels.
 
 Content process
+- Stage 0 gets topic exams topic-0.1 to topic-0.5 like every other stage (27 Oct); the original Stage 0 plan wrote only the stage exam, so the Learn screen's topic chips led nowhere.
 - One level per agent from a brief in `docs/briefs/<course>.md`; the agent validates, plays through with screenshots, writes `docs/reports/<course>-<level>.md`, appends engine limits to `docs/BACKLOG-INBOX.md`, hands back six lines. Reason: orchestrator context stays small.
 - Briefs are written by brief-writer agents from `course.json`, `curriculum.md` and `docs/briefs/EXAMPLE.md`; the orchestrator never writes per-lesson design.
 - Every stated number is computed twice (generator plus independent check, or CPython plus Pyodide). Every code solution passes its hidden tests and the starter fails them.
@@ -22,6 +23,7 @@ Content process
 Engine process
 - Backlog items are numbered in `docs/ENGINE-BACKLOG.md`; integration passes fix a range and write a status block. Content agents never edit engine files; engine passes never edit content.
 - The code widget's time budget is 5 s per case for the whole run plus 30 s for heavy imports; slow solutions are caught with large inputs or a hidden counting subclass, not wall-clock asserts.
+- Sandboxes without jsDelivr build the `--local-cdn` folder from GitHub releases and npm with `app/tools/fetch-local-cdn.sh` (27 Oct). Reason: plain playthrough cannot load Pyodide or clang there.
 - Playthrough takes screenshots after `enter` patches settle; `--local-cdn` points at a scratchpad package folder in sandboxes where jsDelivr is blocked.
 
 Rejected
