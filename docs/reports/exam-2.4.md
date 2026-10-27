@@ -61,10 +61,10 @@ Run in CPython (`harness.py`) and in Pyodide 0.27.7 under Node (`pyo_run.py`), a
 |---|---|---|---|---|
 | e-code-pairs | 7 | 7/7, 0.01 s / 0.02 s | fails all 7 | `input()` per line (3, 4, 7), split on newlines (3, 4, 7), double loop (7, stopped), `list.count` per value (7, stopped), string tokens with `/` (all) |
 | e-code-quiet | 8 | 8/8, 0.2 s / 0.6 s | fails all 8 | range loop (7, 8 stopped), no spare cell (1 to 3, 5 to 8), `>=` (1, 5, 8), no `-v` (1, 4, 6 to 8), numpy slices (8, by the source check) |
-| e-code-geom | 11 | 11/11, under 0.01 s | fails all 11 | no `g = 1` case (4, 8), loop over n (8 to 11, stopped), floor division (7, 11), no reduction (2, 3, 6, 8 to 11), `n` without `% p` (8) |
+| e-code-geom | 11 | 11/11, under 0.01 s | fails all 11 | no `g = 1` case (4, 8), loop over n (8 to 11, stopped), floor division (7, 11), no reduction (2, 3, 6, 7, 9 to 11), `n` without `% p` (8) |
 | e-code-vans | 8 | 8/8, 0.1 s / 0.3 s | fails all 8 | neighbours in sorted order (1, 2, 6, 7), input order (1, 2, 7), heaviest with next heaviest (1, 2, 6, 7), partner scan (7, 8, stopped), missing last van (1, 3, 5) |
 | e-code-conflicts | 10 | 10/10, 0.02 s / 0.06 s | fails all 10 | permutations (8 to 10, stopped), least-conflicted greedy (7), first fit (7 to 9), masks to `n - 1` bits (2, 3, 7, 8) |
-| e-code-book | 8 | 8/8, 0.03 s / 0.2 s | fails all 8 | a zero for odd n (1, 3, 4, 6, 7), a bad triple (1, 4, 6, 7), search over combinations (6 to 8, stopped), running sum (4 to 8) |
+| e-code-book | 8 | 8/8, 0.03 s / 0.2 s | fails all 8 | a zero for odd n (1, 3, 4, 6, 7), a wrong odd pattern (1, 4, 6, 7), search over combinations (6 to 8, stopped), running sum (4 to 8) |
 
 Slow versions measured in Pyodide: the double loop on test 7 took 69 s and `list.count` 19.5 s, against the 5 s limit (two runs in parallel). The partner scan on 200,000 orders was still running after 120 s. The loop over $10^{18}$ terms, the permutation search at $n = 16$ and the combination search at $n = 199{,}999$ cannot finish. Every size case sits at least 4 times over the limit for its slow version and every correct solution at under 1 s.
 

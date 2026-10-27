@@ -1,10 +1,10 @@
 # KNOWN ISSUES
 
 Open at migration (27 Oct 2026)
-- Unreported at the session limit (27 Oct): exams topic-2.1, 2.2, 2.3, 2.4 (agents stopped mid-task; files may be partial). The full playthrough ran 137 items green before it stopped. See PLAN.md triage 3.
+- The full playthrough has not finished since 26 Oct; the 27 Oct run reached 223 of 1,108 items, all green, before the session limit.
 - `docs/BACKLOG-INBOX.md` holds about 136 unnumbered engine bullets awaiting pass 7.
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
-- Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams; topic 2.x exams are in triage 3.
+- Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams.
 
 Engine gotchas
 - `unit: "%"` on a numeric widget divides the typed value by 100: store the fraction.

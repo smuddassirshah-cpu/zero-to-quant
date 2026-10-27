@@ -1,20 +1,21 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 0, "Triage 3 (session limit, 27 Oct)".
+Task: PLAN.md task 0, "Full `playthrough.mjs --all --local-cdn <pkgs>` green", then PLAN.md task 2, the Stage 1 gap levels.
 
-Context: the last session hit its limit with the topic-2.4 exam agent in flight. topic-2.1 to 2.3 are done (green, reported); topic-2.4 did not report. Whatever they wrote is in the last WIP commit: check `app/content/exams/topic-2.*.json` and `docs/reports/exam-2.*.md`; a file may be partial or missing. All Stage 2 content is green and reported. The full `playthrough.mjs --all` had run 137 items green, 0 failures, when stopped.
+Context: all Stage 2 content and exams topic-2.1 to 2.4 are green and reported. The last full playthrough reached 223 of 1,108 items, all green, when the session limit stopped it. That run started before the topic 2.x exams existed; each passed alone.
 
 First, build the local CDN if it is missing: from the repo root, `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
 
-Do: one agent (Sonnet) for topic-2.4: a `test-fixer` if the file is on disk, a `content-author` if it is missing or clearly unfinished. Give it `docs/briefs/contests.md` (course context and Level 1 harness rules) and `docs/reports/contests-*.md`. Each reads `docs/AUTHORING.md`, `docs/curriculum.md` (the topic's exit line), the courses' `course.json` maps and level reports, and the patterns `app/content/exams/topic-1.7.json` and `docs/reports/exam-1.8.md`. It covers every skill, ramps difficulty near 20/50/20/10 per cent across d2 to d5, mixes widgets with code items, computes every number twice, checks that starters fail, plays `--exam topic-2.x --local-cdn <pkgs>`, and writes `docs/reports/exam-2.x.md`. Commit each exam as it lands. Then run `node tools/playthrough.mjs --all --local-cdn <pkgs> 2>&1 | tail -30` from `app/` in the background (about 2.5 hours) and commit while it runs.
+Do:
+1. From `app/`, run `node tools/validate.mjs 2>&1 | tail -5`, then start `node tools/playthrough.mjs --all --local-cdn <pkgs> > <scratchpad>/full.log 2>&1` in the background (about 2.5 hours). Never read the full log; count `^ok` lines and grep non-ok lines. A failure goes to one `test-fixer` (Sonnet) with the item id; re-run it alone first, since parallel agents make set mode flaky.
+2. While it runs, start the gap levels in waves of four, one `content-author` (Sonnet) per level, in PLAN.md order: limits L5, integrals L4, multivar L5, eigen L4, then random-vars L5, limits-thm L4, markov L4. Each gets its brief `docs/briefs/gap-<course>.md`, `docs/briefs/gaps-plan.md`, `docs/LEVEL-BRIEF.md`, the `--local-cdn` path, and the report pattern `docs/reports/coint-2.md`. Commit each level as it lands.
+3. Stop launching at about 85% of the session limit.
 
-When triage is green, continue in waves of four: Stage 1 gap levels (PLAN.md task 2, briefs `docs/briefs/gap-<course>.md`, one `content-author` per level). Stop launching at about 85% of the session limit.
-
-Files likely touched: `app/content/exams/topic-2.4.json`, `docs/reports/exam-2.*.md`, `docs/BACKLOG-INBOX.md`, `app/content/manifest.json`, state files.
+Files likely touched: `app/content/courses/{limits,integrals,multivar,eigen,random-vars,limits-thm,markov}/`, `docs/reports/`, `docs/BACKLOG-INBOX.md`, `app/content/manifest.json`, state files.
 
 Acceptance:
 - `node tools/validate.mjs` reports 0 errors.
-- `playthrough.mjs --all --local-cdn` passes.
-- topic-2.4 is green with a report.
-- PLAN.md ticks triage 3 and topic-2.4.
+- `playthrough.mjs --all --local-cdn` passes, or its failures are fixed and re-run green.
+- Each launched gap level is green with a report, or removed and relisted in PLAN.md.
+- PLAN.md ticks the playthrough task and the finished levels.
 - NEXT_PROMPT.md names the next task.
