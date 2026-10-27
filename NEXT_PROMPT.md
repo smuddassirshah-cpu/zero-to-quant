@@ -2,7 +2,7 @@ Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Fol
 
 Task: PLAN.md task 0, "Triage 3 (session limit, 27 Oct)".
 
-Context: the last session hit its limit with four exam agents in flight: topic-2.1 (stat-learning, validation, ensembles, fin-ml), topic-2.2 (arma, garch, coint), topic-2.3 (backtest, alpha, opt-dash), topic-2.4 (contests). None reported. Whatever they wrote is in the last WIP commit: check `app/content/exams/topic-2.*.json` and `docs/reports/exam-2.*.md`; a file may be partial or missing. All Stage 2 content is green and reported. The full `playthrough.mjs --all` had run 137 items green, 0 failures, when stopped.
+Context: the last session hit its limit with four exam agents in flight: topic-2.1, 2.2, 2.3 and 2.4. None reported. Whatever they wrote is in the last WIP commit: check `app/content/exams/topic-2.*.json` and `docs/reports/exam-2.*.md`; a file may be partial or missing. All Stage 2 content is green and reported. The full `playthrough.mjs --all` had run 137 items green, 0 failures, when stopped.
 
 First, build the local CDN if it is missing: from the repo root, `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (jsDelivr is blocked).
 
