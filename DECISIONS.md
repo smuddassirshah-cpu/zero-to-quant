@@ -24,6 +24,7 @@ Content process
 - Conventions fixed by fix passes: "hit rate" means P(right | call); P(flash | up) is the "detection rate". Per cent widgets store the fraction with `unit: "%"` (the engine divides typed input by 100). Singularity is checked by `matrix_rank` or `cond`, never a determinant threshold.
 - Content agents ran on Opus through 26 Oct; from the migration, implementation agents run on Sonnet and the main session only plans and reviews (user instruction).
 - Breadth plan (27 Oct): 13 courses, 49 levels, 218 lessons; markov L5 covers martingales and optional stopping only, because the Poisson process is already markov l16; stage hours and exit lines in curriculum.json are left for the engine item.
+- Breadth briefs (27 Oct): pure courses never grade a free-form proof; each proof step is graded by `order`, `choice`/`multi` or a fill-in widget, and whole proofs go to `longform` homework with a 10-point rubric. Complex answers are graded as Re and Im (or modulus and argument) parts, never as a complex `expression`. Brief-writers ran on Opus (user instruction for this item).
 
 Engine process
 - Backlog items are numbered in `docs/ENGINE-BACKLOG.md`; integration passes fix a range and write a status block. Content agents never edit engine files; engine passes never edit content.

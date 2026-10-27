@@ -470,3 +470,15 @@ Raised later (momentum-rep level 1):
 - Explore rule and `place`: a `place` widget in order or assign mode does not count as a canvas-bound widget, so the brief's "reading order with a place in order mode" cannot be an explore screen. Workaround: an ordered `tap-regions` on table rows (l1) and on graph nodes (l5). Wanted: either accept `place` order mode on explore screens or say in AUTHORING that ordered taps are the explore form of an ordering task.
 - Why? copy of an ordered tap: patching `selected` into `explain.canvas` shows the rows in selection blue without the 1, 2, 3 order badges, so the explanation cannot show the order the learner was meant to tap. Workaround: a `highlight` on the first row only (l1) and a node rearrangement with arrows (l5). Wanted: `state.order: [ids]` (or `selected` plus `ordered: true`) drawing the badges in static copies.
 - Playthrough and starters: `playthrough.mjs` checks only that each code solution passes; nothing checks that a starter fails its tests, which AUTHORING and CLAUDE.md require. Workaround: a CPython harness in the scratchpad that runs solution and starter against every hidden test (pure Python and NumPy cases only). Wanted: a `--starters` flag that applies the starter, runs Check and fails the screen if every test passes.
+
+Raised later (breadth briefs 0.6, 1.10, 1.11, markov L5):
+
+- Expression grader and complex values: `exprEqual` compares real parts only, so 3 − 4i passes for 3 + 4i and 0 passes for (1 + i)²; Compute Engine 0.30.2 also rejects the correct 1/(1 + i). Briefs grade Re and Im as separate cells until fixed (complex brief).
+- Code `isclose` on complex results: `float(complex)` fails and the harness falls back to `==`, so tests must split real and imaginary parts (complex brief).
+- `plane` has no vector-field or slope-field layer and cannot trace a trajectory from a dragged start; every arrow and orbit is listed by hand (vector-calc, odes briefs).
+- No 3D canvas (item 241) and no complex-mapping canvas; vector-calc level 3 uses fixed oblique projections, complex uses a pair of planes.
+- `expression` grades one scalar only: a 3D curl or cross product is graded per component (vector-calc brief).
+- `order` grades one fixed sequence and has no distractor lines (item 420); proofs with interchangeable steps need `same` groups, flawed-line spotting needs `choice` or a tapped `table` (proof, linear-maps briefs).
+- `vectors` canvas: `derive` cannot read `state.matrix`, and other vectors do not move through the matrix (linear-maps brief).
+- `walk` draws only the walk: no S_n² − n, (q/p)^S_n, bankroll or stopped-average overlay, no slider-bound barriers, no mean-reverting model (markov L5, odes briefs).
+- Expression answers cannot use `\min` or a capital N; `\epsilon` and `\varepsilon` may differ as symbols (analysis brief).

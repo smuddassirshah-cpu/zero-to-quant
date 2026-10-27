@@ -8,6 +8,8 @@ Open at migration (27 Oct 2026)
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
 - Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams.
 - Learn header still says 3,100 hours (curriculum: 3,530; quant path 3,330), stage hours ignore "Quant path only", and the Paths view is unfiltered (ENGINE-BACKLOG item 428). Direct links to hidden pure courses still open.
+- Complex numbers: `exprEqual` compares real parts only (3 − 4i passes for 3 + 4i); code `isclose` falls back to `==` on complex results (inbox, 27 Oct).
+- Sandbox CPython lacks SciPy and SymPy; brief-writers installed them (SymPy system-wide, SciPy by `pip --target` in the scratchpad). The `pkgs` local CDN was not built in session e7b7844f.
 
 Engine gotchas
 - `unit: "%"` on a numeric widget divides the typed value by 100: store the fraction.
