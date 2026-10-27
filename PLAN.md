@@ -53,6 +53,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [ ] mental-pressure L3
 
 ### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
+- [ ] topic-0.1 to topic-0.5 (Stage 0 topic exams; never written, the Learn screen shows them as unwritten; pattern topic-1.1.json, items from the Stage 0 courses of each topic)
 - [ ] topic-1.9 (cpp, cpp-pricing; the 1.9 review proposes coverage)
 - [ ] topic-2.1 (stat-learning, validation, ensembles, fin-ml)
 - [ ] topic-2.2 (arma, garch, coint)
