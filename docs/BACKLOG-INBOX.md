@@ -261,3 +261,9 @@ Raised later (opt-dash level 3):
 
 Raised later (arma level 3):
 - playthrough tool: it runs each code widget's `solution` but never its `starter`, so "the starter fails its tests" is unchecked. The arma level 3 triage ran every starter and solution against the hidden tests in CPython with a small harness instead. Wanted: a `--starters` flag (or a default check) that runs the untouched starter and fails the screen when every hidden test passes.
+
+Raised later (opt-dash level 4):
+
+- payoff canvas, `tangent.label`: `{delta}` always prints two decimals. So l13's hook asks for "0.64" (tolerance 0.006), and the closed form's 0.6368 comes only in the explanation. Wanted: a format such as `{delta:.4f}` or `tangent.decimals`, and `{gamma}` for the curvature at the spot.
+- plane canvas, function labels: on a curve that leaves the frame at its top-right corner, the label is clipped at the right edge (l14's hedged-P&L parabola, "hedged P&L" cut off). `labelAt` with `labelSide: "below"` put it across the curve. Workaround: the label was dropped (the y-axis title names the curve). Wanted: labels kept inside the frame, and placed off the curve when `labelAt` is given.
+- validator, "a point hint usually highlights the canvas": this fires on code screens whose canvas is a static console of example calls, where nothing on the canvas relates to the hint. Workaround: those hints highlight the console's example lines. Wanted: no warning when the screen's widget is `code`.
