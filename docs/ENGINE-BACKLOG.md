@@ -1208,3 +1208,15 @@ Raised later (maths breadth pass, task 2b):
 426. Done: setting "Quant path only" (`settings.quantOnly`, You, Settings): `content.stages()` and `courses()` drop pure courses and all-pure topics, so Learn, Today, Review, the mastery map and stage "topics passed" counts skip them. `topic()`, `course()`, `stage()`, `allStages()` and `allCourses()` are unfiltered.
 427. Done: Learn shows a topic's `exit` as a "Target" line; a topic exam with no file shows "Not written yet" on Learn and Review (`content.examWritten`); a course with no written lessons opens without error everywhere (routes playthrough).
 428. Open (small): stage hours on Learn still show the full curriculum figure with "Quant path only" on, and the Paths view (Stage 2 and 3.2 optional card) is not filtered.
+
+Raised later (breadth briefs 0.6, 1.10, 1.11, markov L5; PLAN task 2b engine item "breadth visuals and complex grading"):
+
+429. Open: expression grader and complex values: `exprEqual` compares real parts only, so 3 − 4i passes for 3 + 4i and 0 passes for (1 + i)²; Compute Engine 0.30.2 also rejects the correct 1/(1 + i). Compare real and imaginary parts at every seeded point (complex brief).
+430. Open: code `isclose` on complex results: `float(complex)` fails and the harness falls back to `==`; complex-aware `isclose` with tolerance in Python and C++ (complex brief).
+431. Open: `plane` has no vector-field or slope-field layer and cannot trace a trajectory from a dragged start; add slider-bound field layers and an RK4 trajectory (vector-calc, odes briefs).
+432. Open: no 3D canvas (with 241) and no complex-mapping canvas; vector-calc level 3 uses fixed oblique projections, complex uses a pair of planes. A rotatable 3D canvas (drag, depth order, vectors, curves, surfaces, field arrows) and a z-plane grid beside its image under f.
+433. Open: `expression` grades one scalar only: a 3D curl or cross product is graded per component; accept a vector answer in one widget (vector-calc brief).
+434. Open: `order` grades one fixed sequence and has no distractor lines; proofs with interchangeable steps need `same` groups, flawed-line spotting needs `choice` or a tapped `table` (proof, linear-maps briefs).
+435. Open: `vectors` canvas: `derive` cannot read `state.matrix`, and other vectors do not move through the matrix (linear-maps brief).
+436. Open: `walk` draws only the walk: no S_n² − n, (q/p)^S_n, bankroll or stopped-average overlay, no slider-bound barriers, no mean-reverting model (markov L5, odes briefs).
+437. Open: expression answers cannot use `\min` or a capital N; `\epsilon` and `\varepsilon` may differ as symbols (analysis brief).
