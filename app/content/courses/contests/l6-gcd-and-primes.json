@@ -1,0 +1,1795 @@
+{
+  "id": "l6-gcd-and-primes",
+  "course": "contests",
+  "title": "GCD and primes",
+  "minutes": 14,
+  "objectives": [
+    "Use Euclid’s algorithm and a sieve.",
+    "Factorise a number up to $10^{12}$ by trial division to $\\sqrt n$."
+  ],
+  "skills": [
+    "cn-maths"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two gear wheels",
+      "prose": "Two gear wheels mesh. One has 84 teeth and the other 36. A mark on each wheel touches the other's now. The marks touch again only when both wheels have made whole turns.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 264,
+          "step": 12,
+          "labels": 3
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "s0",
+              "from": 0,
+              "to": 36,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "s1",
+              "from": 36,
+              "to": 72,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "s2",
+              "from": 72,
+              "to": 108,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "s3",
+              "from": 108,
+              "to": 144,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "s4",
+              "from": 144,
+              "to": 180,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "s5",
+              "from": 180,
+              "to": 216,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "s6",
+              "from": 216,
+              "to": 252,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "g0",
+              "from": 0,
+              "to": 84,
+              "row": 2,
+              "colour": 2
+            },
+            {
+              "id": "g1",
+              "from": 84,
+              "to": 168,
+              "row": 2,
+              "colour": 2
+            },
+            {
+              "id": "g2",
+              "from": 168,
+              "to": 252,
+              "row": 2,
+              "colour": 2
+            }
+          ],
+          "points": [
+            {
+              "id": "t",
+              "x": 0,
+              "label": "marks meet",
+              "labelPos": "below",
+              "drag": true
+            }
+          ],
+          "caption": "Teeth passed. Dots on the lower row end turns of the 36-tooth wheel; on the upper row, of the 84-tooth wheel."
+        }
+      },
+      "question": "Drag the point to the next time the marks touch.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "t",
+            "target": 252,
+            "tol": 1
+          }
+        ],
+        "wrong": [
+          {
+            "id": "gcd",
+            "region": {
+              "x": [
+                11,
+                13
+              ]
+            }
+          },
+          {
+            "id": "big2",
+            "region": {
+              "x": [
+                167,
+                169
+              ]
+            }
+          },
+          {
+            "id": "small2",
+            "region": {
+              "x": [
+                71,
+                73
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where do the ends of the two kinds of bar line up?"
+        },
+        {
+          "rung": "point",
+          "text": "The 84-tooth wheel finishes turns at 84, 168 and 252.",
+          "highlight": [
+            "g2",
+            "s6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "84 and 168 are not multiples of 36. 252 is: $252 = 7 \\cdot 36 = 3 \\cdot 84$."
+        }
+      ],
+      "feedback": {
+        "correct": "252 teeth: 7 turns of the small wheel and 3 of the large one.",
+        "generic": "Not quite right. Find the first place where a turn of each wheel ends together.",
+        "byKey": {
+          "gcd": "12 is the largest number dividing both 84 and 36. The marks need a number both divide.",
+          "big2": "At 168 the large wheel has made 2 turns, but the small one $168 / 36 = 4\\tfrac23$.",
+          "small2": "At 72 the small wheel has made 2 turns, but the large one has not finished one."
+        }
+      },
+      "explain": {
+        "text": "252 is the smallest number that both 84 and 36 divide: their **least common multiple**, $\\operatorname{lcm}(84, 36)$. The product $84 \\cdot 36 = 3024$ is a common multiple too, the 12th meeting. Next we find the lcm without searching.",
+        "canvas": {
+          "points": {
+            "t": {
+              "x": 252
+            }
+          },
+          "highlight": [
+            "g2",
+            "s6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Shrink the pair",
+      "prose": "Any number dividing 84 and 36 also divides $84 - 36$, and $84 - 2 \\cdot 36 = 12$. So we may swap the pair for a smaller one with the same common divisors. Shrink it until one number is 0.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 90,
+          "step": 6,
+          "labels": 2
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "a",
+              "from": 0,
+              "to": 84,
+              "row": 2,
+              "colour": 2,
+              "label": "a = 84",
+              "labelPos": "right"
+            },
+            {
+              "id": "b",
+              "from": 0,
+              "to": 36,
+              "row": 1,
+              "colour": 3,
+              "label": "b = 36",
+              "labelPos": "right"
+            }
+          ]
+        }
+      },
+      "question": "Shrink the pair until one number is 0.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s2",
+        "states": {
+          "s0": {
+            "tex": "\\gcd(84, 36)",
+            "ops": [
+              {
+                "label": "Replace 84 by 84 mod 36",
+                "to": "s1"
+              },
+              {
+                "label": "Replace 36 by 36 mod 84",
+                "reject": true,
+                "why": "36 mod 84 is 36, so nothing shrinks. Take the larger number modulo the smaller."
+              }
+            ]
+          },
+          "s1": {
+            "tex": "\\gcd(36, 12)",
+            "canvas": {
+              "intervals": {
+                "a": {
+                  "id": "a",
+                  "from": 0,
+                  "to": 36,
+                  "row": 2,
+                  "colour": 2,
+                  "label": "a = 36",
+                  "labelPos": "right"
+                },
+                "b": {
+                  "id": "b",
+                  "from": 0,
+                  "to": 12,
+                  "row": 1,
+                  "colour": 3,
+                  "label": "b = 12",
+                  "labelPos": "right"
+                }
+              }
+            },
+            "ops": [
+              {
+                "label": "Replace 36 by 36 mod 12",
+                "to": "s2"
+              },
+              {
+                "label": "Replace 36 by 36 − 12",
+                "to": "s1b",
+                "why": "Subtracting once is allowed, but slow. One mod takes away every 12 that fits."
+              }
+            ]
+          },
+          "s1b": {
+            "tex": "\\gcd(24, 12)",
+            "canvas": {
+              "intervals": {
+                "a": {
+                  "id": "a",
+                  "from": 0,
+                  "to": 24,
+                  "row": 2,
+                  "colour": 2,
+                  "label": "a = 24",
+                  "labelPos": "right"
+                },
+                "b": {
+                  "id": "b",
+                  "from": 0,
+                  "to": 12,
+                  "row": 1,
+                  "colour": 3,
+                  "label": "b = 12",
+                  "labelPos": "right"
+                }
+              }
+            },
+            "ops": [
+              {
+                "label": "Replace 24 by 24 mod 12",
+                "to": "s2"
+              }
+            ]
+          },
+          "s2": {
+            "tex": "\\gcd(12, 0) = 12",
+            "canvas": {
+              "intervals": {
+                "a": {
+                  "id": "a",
+                  "from": 0,
+                  "to": 12,
+                  "row": 2,
+                  "colour": 2,
+                  "label": "gcd = 12",
+                  "labelPos": "right"
+                },
+                "b": null
+              }
+            }
+          }
+        }
+      },
+      "feedback": {
+        "correct": "Two steps: $(84, 36)$, $(36, 12)$, $(12, 0)$. The gcd is 12.",
+        "generic": "Not quite right. Each step replaces the larger number by its remainder modulo the smaller."
+      },
+      "explain": {
+        "text": "Each step kept the common divisors and shrank the pair, and the last non-zero number, 12, is $\\gcd(84, 36)$. This is **Euclid's algorithm**. Then $\\operatorname{lcm}(84, 36) = 84 / 12 \\cdot 36 = 252$, the gear answer.",
+        "canvas": {
+          "intervals": {
+            "a": {
+              "id": "a",
+              "from": 0,
+              "to": 12,
+              "row": 2,
+              "colour": 2,
+              "label": "gcd = 12",
+              "labelPos": "right"
+            },
+            "b": null
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Euclid by hand",
+      "prose": "The loop in the box is the algorithm you just ran. Each row replaces $(a, b)$ by $(b, a \\bmod b)$, and it stops when $b = 0$.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "def gcd(a, b):",
+            "    while b != 0:",
+            "        a, b = b, a % b",
+            "    return a"
+          ],
+          "title": "Euclid's algorithm"
+        },
+        "state": {}
+      },
+      "question": "Fill in the steps for $\\gcd(1071, 462)$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$a$",
+          "$b$",
+          "$a \\bmod b$"
+        ],
+        "rows": [
+          [
+            "1071",
+            "462",
+            "147"
+          ],
+          [
+            "462",
+            "147",
+            {
+              "edit": true,
+              "answer": 21,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "147",
+            {
+              "edit": true,
+              "answer": 21,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each row's $a$ and $b$ are the previous row's $b$ and $a \\bmod b$."
+        },
+        {
+          "rung": "point",
+          "text": "$462 = 3 \\cdot 147 + 21$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So row 2 ends in 21. Row 3 is $(147, 21)$, and $147 = 7 \\cdot 21$, remainder 0."
+        }
+      ],
+      "feedback": {
+        "correct": "$(1071, 462) \\to (462, 147) \\to (147, 21) \\to (21, 0)$: the gcd is 21.",
+        "generic": "Not quite right. Carry $b$ and $a \\bmod b$ down to the next row.",
+        "byKey": {
+          "r1c2": "Check $462 \\bmod 147$: $3 \\cdot 147 = 441$, and $462 - 441 = 21$.",
+          "r2c1": "Row 3's $b$ is row 2's remainder."
+        }
+      },
+      "explain": {
+        "text": "Three remainders took 1071 and 462 down to 21, which divides both: $1071 = 51 \\cdot 21$, $462 = 22 \\cdot 21$. The remainders shrink fast, so the loop takes $O(\\log \\min(a, b))$ steps."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why the swap is safe",
+      "prose": "Euclid's step must keep every common divisor, and add none. Here is the proof with one line missing.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "a = q·b + r,   where r = a mod b",
+            "suppose d divides a and d divides b",
+            "?",
+            "so d divides both b and r",
+            "and from a = q·b + r, any divisor of b and r divides a",
+            "so (a, b) and (b, r) share every common divisor"
+          ],
+          "title": "Proof"
+        },
+        "state": {
+          "highlight": [
+            "l3"
+          ]
+        }
+      },
+      "question": "Which line belongs where the ? is?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sub",
+            "text": "$d$ divides $r = a - qb$, because it divides $a$ and $qb$",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "$d$ divides $r$, because $r < b$",
+            "why": "Being smaller than $b$ says nothing about divisibility: 5 is smaller than 6 and does not divide it."
+          },
+          {
+            "id": "equal",
+            "text": "$d = r$, because $r$ is what is left",
+            "why": "The remainder need not be a divisor at all: $84 \\bmod 36 = 12$, but 4 also divides 84 and 36."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write $r$ using $a$ and $b$."
+        },
+        {
+          "rung": "point",
+          "text": "$r = a - qb$.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If $d$ divides $a$ and $b$, it divides any $a - qb$."
+        }
+      ],
+      "feedback": {
+        "correct": "$r = a - qb$ is built from $a$ and $b$, so every common divisor divides it.",
+        "generic": "Not quite right. Express $r$ in terms of $a$ and $b$."
+      },
+      "explain": {
+        "text": "The two directions show $(a, b)$ and $(b, a \\bmod b)$ have the same common divisors, so the same greatest one. This is why $\\gcd(a, b) = \\gcd(b, a \\bmod b)$. At $(g, 0)$ the answer is $g$, since every number divides 0.",
+        "canvas": {
+          "lines": [
+            "a = q·b + r,   where r = a mod b",
+            "suppose d divides a and d divides b",
+            "d divides a − q·b = r",
+            "so d divides both b and r",
+            "and from a = q·b + r, any divisor of b and r divides a",
+            "so (a, b) and (b, r) share every common divisor"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The slowest pair",
+      "prose": "How many turns can Euclid's loop take? Try a pair of neighbouring Fibonacci numbers, $89$ and $55$. Count one step for each `a % b` the loop computes.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "def steps(a, b):",
+            "    n = 0",
+            "    while b != 0:",
+            "        a, b = b, a % b",
+            "        n += 1",
+            "    return n"
+          ],
+          "title": "Counting the turns"
+        },
+        "state": {}
+      },
+      "question": "What does `steps(89, 55)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "9: $(89, 55), (55, 34), (34, 21), (21, 13), (13, 8), (8, 5), (5, 3), (3, 2), (2, 1)$, then $(1, 0)$.",
+        "label": "Steps",
+        "wrong": [
+          {
+            "id": "pairs",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$89 \\bmod 55 = 34$, the previous Fibonacci number."
+        },
+        {
+          "rung": "point",
+          "text": "Every remainder is the next Fibonacci number down.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From 55 the remainders run 34, 21, 13, 8, 5, 3, 2, 1, 0: nine of them."
+        }
+      ],
+      "feedback": {
+        "correct": "9 steps, each one Fibonacci number down.",
+        "generic": "Not quite right. List the remainders: 34, 21, 13, and so on to 0.",
+        "byKey": {
+          "pairs": "You counted the pairs, including $(1, 0)$. The loop computes `a % b` nine times.",
+          "half": "Each step goes down one Fibonacci number, not two."
+        }
+      },
+      "explain": {
+        "text": "Every quotient was 1, the slowest shrink there is, so neighbouring Fibonacci numbers are Euclid's worst case. Fibonacci numbers grow by a factor of about 1.618, so the steps are $O(\\log \\min(a, b))$. For $\\gcd(F_{88}, F_{87})$, with $F_{88} \\approx 1.1 \\cdot 10^{18}$, the loop takes 86 steps."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write gcd",
+      "prose": "Write `gcd(a, b)` for whole numbers $a, b \\ge 0$, without the `math` module. Then write `gcd_all(xs)`, the gcd of a list. Every number divides 0, so $\\gcd(0, a) = a$ and the gcd of an empty list is 0.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "def gcd(a, b):",
+            "    while b != 0:",
+            "        a, b = b, a % b",
+            "    return a"
+          ],
+          "title": "Euclid's algorithm"
+        },
+        "state": {}
+      },
+      "question": "Write `gcd(a, b)` and `gcd_all(xs)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def gcd(a, b):\n    ...\n\n\ndef gcd_all(xs):\n    ...\n",
+        "solution": "def gcd(a, b):\n    while b != 0:\n        a, b = b, a % b\n    return a\n\n\ndef gcd_all(xs):\n    g = 0\n    for x in xs:\n        g = gcd(g, x)\n    return g\n",
+        "examples": [
+          {
+            "call": "gcd(84, 36)",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd_all([12, 18, 30])",
+            "expect": "6",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "gcd(84, 36)",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd(0, 5)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd(5, 0)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd(0, 0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd(17, 5)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd(10**18, 6 * 10**17)",
+            "expect": "200000000000000000",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd_all([12, 18, 30])",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd_all([7])",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd_all([])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd_all([0, 0, 4])",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "'math' not in __learner_source__",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd(1100087778366101931, 679891637638612258)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "gcd(10**18, 1)",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 13 hidden tests: zeros, an empty list, one-element lists, and values up to $10^{18}$. Test 11 checks that the code does not use `math`. Test 13 is $\\gcd(10^{18}, 1)$: a loop that subtracts instead of taking `%` needs $10^{18}$ turns and is stopped."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The box is almost the whole of `gcd`."
+        },
+        {
+          "rung": "point",
+          "text": "For the list, start from 0, since $\\gcd(0, x) = x$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`g = 0`, then `g = gcd(g, x)` for each `x`, then return `g`."
+        }
+      ],
+      "feedback": {
+        "correct": "Euclid's loop, folded over the list from 0.",
+        "generic": "Not quite right. Read the failing row: zeros and the empty list are the usual slips."
+      },
+      "explain": {
+        "text": "Starting the fold at 0 handles the empty list and needs no special case, because $\\gcd(0, x) = x$. Python has `math.gcd` and, for a list, `math.gcd(*xs)`: in a contest use them."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A sieve on 1 to 100",
+      "prose": "To list every prime up to 100, cross out multiples. 1 is not prime. The primes 2, 3 and 5 have crossed out their multiples, which are dimmed. The next number still standing, 7, is prime.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 10,
+          "cols": 10,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10"
+            ],
+            [
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20"
+            ],
+            [
+              "21",
+              "22",
+              "23",
+              "24",
+              "25",
+              "26",
+              "27",
+              "28",
+              "29",
+              "30"
+            ],
+            [
+              "31",
+              "32",
+              "33",
+              "34",
+              "35",
+              "36",
+              "37",
+              "38",
+              "39",
+              "40"
+            ],
+            [
+              "41",
+              "42",
+              "43",
+              "44",
+              "45",
+              "46",
+              "47",
+              "48",
+              "49",
+              "50"
+            ],
+            [
+              "51",
+              "52",
+              "53",
+              "54",
+              "55",
+              "56",
+              "57",
+              "58",
+              "59",
+              "60"
+            ],
+            [
+              "61",
+              "62",
+              "63",
+              "64",
+              "65",
+              "66",
+              "67",
+              "68",
+              "69",
+              "70"
+            ],
+            [
+              "71",
+              "72",
+              "73",
+              "74",
+              "75",
+              "76",
+              "77",
+              "78",
+              "79",
+              "80"
+            ],
+            [
+              "81",
+              "82",
+              "83",
+              "84",
+              "85",
+              "86",
+              "87",
+              "88",
+              "89",
+              "90"
+            ],
+            [
+              "91",
+              "92",
+              "93",
+              "94",
+              "95",
+              "96",
+              "97",
+              "98",
+              "99",
+              "100"
+            ]
+          ],
+          "compact": true
+        },
+        "maxHeight": 360,
+        "state": {
+          "dim": [
+            "r1c1",
+            "r1c4",
+            "r1c6",
+            "r1c8",
+            "r1c9",
+            "r1c10",
+            "r2c2",
+            "r2c4",
+            "r2c5",
+            "r2c6",
+            "r2c8",
+            "r2c10",
+            "r3c1",
+            "r3c2",
+            "r3c4",
+            "r3c5",
+            "r3c6",
+            "r3c7",
+            "r3c8",
+            "r3c10",
+            "r4c2",
+            "r4c3",
+            "r4c4",
+            "r4c5",
+            "r4c6",
+            "r4c8",
+            "r4c9",
+            "r4c10",
+            "r5c2",
+            "r5c4",
+            "r5c5",
+            "r5c6",
+            "r5c8",
+            "r5c10",
+            "r6c1",
+            "r6c2",
+            "r6c4",
+            "r6c5",
+            "r6c6",
+            "r6c7",
+            "r6c8",
+            "r6c10",
+            "r7c2",
+            "r7c3",
+            "r7c4",
+            "r7c5",
+            "r7c6",
+            "r7c8",
+            "r7c9",
+            "r7c10",
+            "r8c2",
+            "r8c4",
+            "r8c5",
+            "r8c6",
+            "r8c8",
+            "r8c10",
+            "r9c1",
+            "r9c2",
+            "r9c4",
+            "r9c5",
+            "r9c6",
+            "r9c7",
+            "r9c8",
+            "r9c10",
+            "r10c2",
+            "r10c3",
+            "r10c4",
+            "r10c5",
+            "r10c6",
+            "r10c8",
+            "r10c9",
+            "r10c10"
+          ],
+          "shade": {
+            "primes": {
+              "ids": [
+                "r1c2",
+                "r1c3",
+                "r1c5",
+                "r1c7"
+              ],
+              "colour": 3
+            }
+          }
+        }
+      },
+      "question": "Tap every number that 7 still has to cross out.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r5c9",
+          "r8c7",
+          "r10c1"
+        ],
+        "only": [
+          "r1c2",
+          "r1c3",
+          "r1c5",
+          "r1c7",
+          "r2c1",
+          "r2c3",
+          "r2c7",
+          "r2c9",
+          "r3c3",
+          "r3c9",
+          "r4c1",
+          "r4c7",
+          "r5c1",
+          "r5c3",
+          "r5c7",
+          "r5c9",
+          "r6c3",
+          "r6c9",
+          "r7c1",
+          "r7c7",
+          "r8c1",
+          "r8c3",
+          "r8c7",
+          "r8c9",
+          "r9c3",
+          "r9c9",
+          "r10c1",
+          "r10c7"
+        ],
+        "countWord": "crossed",
+        "wrong": [
+          {
+            "id": "with7",
+            "set": [
+              "r1c7",
+              "r5c9",
+              "r8c7",
+              "r10c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which multiples of 7 are not dimmed yet?"
+        },
+        {
+          "rung": "point",
+          "text": "$7 \\cdot 2$, $7 \\cdot 3$, $7 \\cdot 4$, $7 \\cdot 5$ and $7 \\cdot 6$ are already gone.",
+          "highlight": [
+            "r5c9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first new one is $7 \\cdot 7 = 49$. Then $7 \\cdot 11 = 77$ and $7 \\cdot 13 = 91$."
+        }
+      ],
+      "feedback": {
+        "correct": "49, 77 and 91. Every smaller multiple of 7 was already crossed out.",
+        "generic": "Not quite right. Tap only multiples of 7 that are still standing.",
+        "byKey": {
+          "with7": "You crossed out 7 itself. A prime stays; only its multiples go."
+        }
+      },
+      "explain": {
+        "text": "The first new number 7 crosses out is $7^2 = 49$: any smaller $7k$ has a factor $k < 7$ and is gone already. The next prime, 11, starts at $121 > 100$, so the sieve is finished. The 25 numbers left standing are the primes up to 100.",
+        "canvas": {
+          "dim": [
+            "r1c1",
+            "r1c4",
+            "r1c6",
+            "r1c8",
+            "r1c9",
+            "r1c10",
+            "r2c2",
+            "r2c4",
+            "r2c5",
+            "r2c6",
+            "r2c8",
+            "r2c10",
+            "r3c1",
+            "r3c2",
+            "r3c4",
+            "r3c5",
+            "r3c6",
+            "r3c7",
+            "r3c8",
+            "r3c10",
+            "r4c2",
+            "r4c3",
+            "r4c4",
+            "r4c5",
+            "r4c6",
+            "r4c8",
+            "r4c9",
+            "r4c10",
+            "r5c2",
+            "r5c4",
+            "r5c5",
+            "r5c6",
+            "r5c8",
+            "r5c10",
+            "r6c1",
+            "r6c2",
+            "r6c4",
+            "r6c5",
+            "r6c6",
+            "r6c7",
+            "r6c8",
+            "r6c10",
+            "r7c2",
+            "r7c3",
+            "r7c4",
+            "r7c5",
+            "r7c6",
+            "r7c8",
+            "r7c9",
+            "r7c10",
+            "r8c2",
+            "r8c4",
+            "r8c5",
+            "r8c6",
+            "r8c8",
+            "r8c10",
+            "r9c1",
+            "r9c2",
+            "r9c4",
+            "r9c5",
+            "r9c6",
+            "r9c7",
+            "r9c8",
+            "r9c10",
+            "r10c2",
+            "r10c3",
+            "r10c4",
+            "r10c5",
+            "r10c6",
+            "r10c8",
+            "r10c9",
+            "r10c10",
+            "r5c9",
+            "r8c7",
+            "r10c1"
+          ],
+          "selected": [
+            "r5c9",
+            "r8c7",
+            "r10c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the sieve",
+      "prose": "Write `sieve(n)`: the list of primes up to and including $n$, in order. This is the **sieve of Eratosthenes**: for each prime $p$ with $p^2 \\le n$, cross out $p^2, p^2 + p, \\ldots$. Your sieve also answers the problem in the box.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Problem 1 · Prime sum",
+            "",
+            "The primes below 10 are 2, 3, 5 and 7,",
+            "and their sum is 17.",
+            "",
+            "Find the sum of all the primes",
+            "below 1,500,000."
+          ],
+          "title": "In the style of Project Euler"
+        },
+        "state": {}
+      },
+      "question": "Write `sieve(n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def sieve(n):\n    ...\n",
+        "solution": "def sieve(n):\n    if n < 2:\n        return []\n    is_prime = [True] * (n + 1)\n    is_prime[0] = is_prime[1] = False\n    p = 2\n    while p * p <= n:\n        if is_prime[p]:\n            for q in range(p * p, n + 1, p):\n                is_prime[q] = False\n        p += 1\n    return [i for i in range(n + 1) if is_prime[i]]\n",
+        "examples": [
+          {
+            "call": "sieve(10)",
+            "expect": "[2, 3, 5, 7]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "sieve(0)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "sieve(1)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "sieve(2)",
+            "expect": "[2]",
+            "compare": "equal"
+          },
+          {
+            "call": "sieve(10)",
+            "expect": "[2, 3, 5, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "sieve(30)",
+            "expect": "[2, 3, 5, 7, 11, 13, 17, 19, 23, 29]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(sieve(100))",
+            "expect": "25",
+            "compare": "equal"
+          },
+          {
+            "call": "sieve(97)[-1]",
+            "expect": "97",
+            "compare": "equal"
+          },
+          {
+            "call": "len(sieve(10**6))",
+            "expect": "78498",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(sieve(1_499_999))",
+            "expect": "82074443256",
+            "compare": "equal"
+          },
+          {
+            "call": "len(sieve(2 * 10**6))",
+            "expect": "148933",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: $n = 0$, 1 and 2, small lists, $n$ itself prime, then the count of primes up to $10^6$, the answer to the problem in the box, and a sieve up to $2 \\cdot 10^6$. Testing every number by trial division is stopped at test 8."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep a list of $n + 1$ flags, all `True` except 0 and 1."
+        },
+        {
+          "rung": "point",
+          "text": "Stop the outer loop once $p \\cdot p > n$."
+        },
+        {
+          "rung": "step",
+          "text": "For each `p` still flagged, set the flags at `range(p * p, n + 1, p)` to `False`. Return the indices still `True`."
+        }
+      ],
+      "feedback": {
+        "correct": "A sieve up to $2 \\cdot 10^6$ runs in well under a second.",
+        "generic": "Not quite right. Read the failing row: $n < 2$ and $n$ prime are the usual slips."
+      },
+      "explain": {
+        "text": "Prime $p$ crosses out about $n / p$ numbers, and summing over primes gives $O(n \\log \\log n)$ work. There are 78,498 primes up to $10^6$, and the sum in the box is 82,074,443,256. Project Euler asks solvers not to publish answers past its first hundred problems, so this course writes its own."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "How far to test",
+      "prose": "This test for primality is correct. For $n = 1{,}000{,}003$, which is prime, it tries 1,000,001 divisors before saying so.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "def is_prime(n):",
+            "    for d in range(2, n):",
+            "        if n % d == 0:",
+            "            return False",
+            "    return n >= 2"
+          ],
+          "title": "Correct, but slow"
+        },
+        "state": {
+          "highlight": [
+            "l2"
+          ]
+        }
+      },
+      "question": "What is the largest divisor a faster version must try for $n = 1{,}000{,}003$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1000,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "1000: if $n = de$ with $d \\le e$, then $d \\le \\sqrt n \\approx 1000.0015$.",
+        "label": "Largest divisor",
+        "wrong": [
+          {
+            "id": "ton",
+            "value": 1000002,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 500001,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If $n = d \\cdot e$, can both $d$ and $e$ be above $\\sqrt n$?"
+        },
+        {
+          "rung": "point",
+          "text": "$1000^2 = 1{,}000{,}000$ and $1001^2 = 1{,}002{,}001$.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A composite $n$ has a divisor $d \\le \\sqrt n$, and $\\lfloor \\sqrt{1{,}000{,}003} \\rfloor = 1000$."
+        }
+      ],
+      "feedback": {
+        "correct": "1000. Testing $d \\cdot d \\le n$ is enough.",
+        "generic": "Not quite right. A divisor above $\\sqrt n$ comes paired with one below it.",
+        "byKey": {
+          "ton": "You kept the slow loop's bound, $n - 1$. Any divisor above $\\sqrt n$ has a partner below it, so stop at 1000.",
+          "half": "$n / 2$ is a common stopping point, but still 500 times too far. The partner of a divisor above $\\sqrt n$ is below $\\sqrt n$."
+        }
+      },
+      "explain": {
+        "text": "Stopping at $\\sqrt n$ cuts a million divisions to a thousand, and it is the difference that matters. A sieve that starts crossing at $2p$ instead of $p^2$ is still correct and only a little slower: about 0.7 s against 0.45 s in Pyodide for $n = 2 \\cdot 10^6$.",
+        "canvas": {
+          "lines": [
+            "def is_prime(n):",
+            "    d = 2",
+            "    while d * d <= n:",
+            "        if n % d == 0:",
+            "            return False",
+            "        d += 1",
+            "    return n >= 2"
+          ],
+          "highlight": [
+            "l3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write factorise",
+      "prose": "Write `factorise(n)` for $1 \\le n \\le 10^{12}$: the prime factors in increasing order, each as often as it divides. Divide out each $d$ while you can. When $d \\cdot d$ passes what is left, what is left is 1 or a prime.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "factorise(360)  ->  [2, 2, 2, 3, 3, 5]",
+            "factorise(97)   ->  [97]",
+            "factorise(1)    ->  []"
+          ],
+          "title": "Examples"
+        },
+        "state": {}
+      },
+      "question": "Write `factorise(n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def factorise(n):\n    ...\n",
+        "solution": "def factorise(n):\n    out = []\n    d = 2\n    while d * d <= n:\n        while n % d == 0:\n            out.append(d)\n            n //= d\n        d += 1\n    if n > 1:\n        out.append(n)\n    return out\n",
+        "examples": [
+          {
+            "call": "factorise(360)",
+            "expect": "[2, 2, 2, 3, 3, 5]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "factorise(1)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(2)",
+            "expect": "[2]",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(360)",
+            "expect": "[2, 2, 2, 3, 3, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(97)",
+            "expect": "[97]",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(2**40)",
+            "expect": "[2] * 40",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(10**12)",
+            "expect": "[2] * 12 + [5] * 12",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(999983 * 999983)",
+            "expect": "[999983, 999983]",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(999983 * 1000003)",
+            "expect": "[999983, 1000003]",
+            "compare": "equal"
+          },
+          {
+            "call": "factorise(999999999989)",
+            "expect": "[999999999989]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: $n = 1$, primes, prime powers, and three values near $10^{12}$: a prime square, a product of two primes near $10^6$, and the prime 999,999,999,989. Trial division up to $n$ instead of $\\sqrt n$ is stopped on those."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try $d = 2, 3, 4, \\ldots$ while $d \\cdot d \\le n$."
+        },
+        {
+          "rung": "point",
+          "text": "Divide out each $d$ completely before moving on, so composite $d$ never divide.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After the loop, if the remaining $n$ is above 1, it is a prime factor: append it."
+        }
+      ],
+      "feedback": {
+        "correct": "At most $10^6$ trial divisors for any $n \\le 10^{12}$.",
+        "generic": "Not quite right. Read the failing row: $n = 1$ and a large prime left over are the usual slips."
+      },
+      "explain": {
+        "text": "The loop shrinks $n$ as it divides, so it stops at the square root of what is left. For many factorisations up to $10^6$, a sieve that stores each number's smallest prime factor answers each one in $O(\\log n)$ divisions instead."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The rules",
+      "prose": "What you used:\n\n$$\\gcd(a, b) = \\gcd(b, a \\bmod b), \\quad \\gcd(a, 0) = a, \\quad \\operatorname{lcm}(a, b) = \\frac{a}{\\gcd(a, b)} \\cdot b$$\n\nEuclid takes $O(\\log \\min(a, b))$ steps. Trial division stops at $\\sqrt n$. The sieve crosses out from $p^2$ and costs $O(n \\log \\log n)$.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "lcm = a // gcd(a, b) * b"
+          ],
+          "title": "In code"
+        },
+        "state": {}
+      },
+      "question": "Why divide first in `a // gcd(a, b) * b`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "overflow",
+            "text": "In C++, $a \\cdot b$ can overflow 64 bits even when the lcm fits",
+            "correct": true
+          },
+          {
+            "id": "different",
+            "text": "Multiplying first gives a different answer",
+            "why": "$ab / g$ and $(a / g) b$ are the same number. Only the size of the middle step differs."
+          },
+          {
+            "id": "speed",
+            "text": "Dividing first is faster in Python",
+            "why": "Python's speed barely changes. The reason is the size of $ab$ in a fixed-width language."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$a / g$ is whole and small, so the product never exceeds the lcm.",
+        "generic": "Not quite right. Compare the size of $ab$ with the size of the lcm."
+      },
+      "explain": {
+        "text": "With $a = b = 10^{12}$ the lcm is $10^{12}$, but $ab = 10^{24}$ overflows a `long long`. In Python both orders work, and `math.lcm` exists."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Rebalancing calendar",
+      "prose": "A fund rebalances its equity book every 14 days and its futures hedge every 21 days. Both happened today. Operations wants to know when they next fall on the same day.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 84,
+          "step": 7,
+          "labels": 1
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "e0",
+              "from": 0,
+              "to": 14,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "e1",
+              "from": 14,
+              "to": 28,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "e2",
+              "from": 28,
+              "to": 42,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "e3",
+              "from": 42,
+              "to": 56,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "e4",
+              "from": 56,
+              "to": 70,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "e5",
+              "from": 70,
+              "to": 84,
+              "row": 1,
+              "colour": 3
+            },
+            {
+              "id": "f0",
+              "from": 0,
+              "to": 21,
+              "row": 2,
+              "colour": 2
+            },
+            {
+              "id": "f1",
+              "from": 21,
+              "to": 42,
+              "row": 2,
+              "colour": 2
+            },
+            {
+              "id": "f2",
+              "from": 42,
+              "to": 63,
+              "row": 2,
+              "colour": 2
+            },
+            {
+              "id": "f3",
+              "from": 63,
+              "to": 84,
+              "row": 2,
+              "colour": 2
+            }
+          ],
+          "caption": "Days from today. Dots on the lower row are equity rebalances; on the upper row, futures."
+        }
+      },
+      "question": "In how many days do both rebalances fall on the same day again?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 42,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "42 days: $\\operatorname{lcm}(14, 21) = 14 / 7 \\cdot 21 = 42$.",
+        "label": "Days",
+        "wrong": [
+          {
+            "id": "product",
+            "value": 294,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "gcd",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You want the smallest number both 14 and 21 divide."
+        },
+        {
+          "rung": "point",
+          "text": "$\\gcd(14, 21) = 7$.",
+          "highlight": [
+            "e2",
+            "f1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\operatorname{lcm} = 14 / 7 \\cdot 21 = 42$."
+        }
+      ],
+      "feedback": {
+        "correct": "42 days: three equity cycles and two futures cycles.",
+        "generic": "Not quite right. Find the smallest common multiple of 14 and 21.",
+        "byKey": {
+          "product": "$14 \\cdot 21 = 294$ is a common multiple, but not the first. Divide by the gcd, 7.",
+          "gcd": "7 is the gcd, the largest number dividing both. The two dates meet at a multiple of both."
+        }
+      },
+      "explain": {
+        "text": "$\\operatorname{lcm}(14, 21) = 42$. Problems like this one, maths first and a few lines of code after, are what Project Euler sets. That is why the curriculum names it for maths with code, and why it suits maths-minded quant candidates.",
+        "canvas": {
+          "highlight": [
+            "e2",
+            "f1"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Euclid's algorithm, $\\gcd(a, b) = \\gcd(b, a \\bmod b)$, takes $O(\\log \\min(a, b))$ steps; the lcm is $a / \\gcd \\cdot b$.",
+      "A composite $n$ has a divisor at most $\\sqrt n$, so trial division and factorising stop there.",
+      "The sieve of Eratosthenes lists every prime up to $n$ in $O(n \\log \\log n)$, crossing out from $p^2$; 1 is not prime."
+    ],
+    "formula": {
+      "name": "Euclid's step",
+      "tex": "\\gcd(a, b) = \\gcd(b,\\, a \\bmod b), \\qquad \\gcd(a, 0) = a",
+      "note": "Every common divisor of $a$ and $b$ divides $a - qb$."
+    },
+    "trap": "Testing divisors up to $n$ is correct but a million times too slow at $10^{12}$: stop at $\\sqrt n$."
+  },
+  "quiz": [
+    {
+      "id": "q-gcd-zero",
+      "difficulty": 2,
+      "prose": "A test case has $a = 0$ and $b = 15$.",
+      "question": "What is $\\gcd(0, 15)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "15",
+            "text": "15",
+            "correct": true
+          },
+          {
+            "id": "0",
+            "text": "0",
+            "why": "You took 0 as having no divisors. Every number divides 0, so the largest common divisor is 15."
+          },
+          {
+            "id": "1",
+            "text": "1",
+            "why": "1 divides both, but so does 15, since $0 = 0 \\cdot 15$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "15: every number divides 0.",
+        "generic": "Not quite right. Which numbers divide 0?"
+      },
+      "explain": {
+        "text": "$\\gcd(0, a) = a$, which is also where Euclid's loop stops."
+      }
+    },
+    {
+      "id": "q-lcm",
+      "difficulty": 2,
+      "prose": "Two signals refresh every 6 and every 10 seconds.",
+      "question": "What is $\\operatorname{lcm}(6, 10)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 30,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "30: $6 / 2 \\cdot 10$.",
+        "label": "lcm",
+        "wrong": [
+          {
+            "id": "product",
+            "value": 60,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "gcd",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "30 seconds.",
+        "generic": "Not quite right. Divide one number by the gcd, then multiply by the other.",
+        "byKey": {
+          "product": "60 is a common multiple, but not the least. Divide by $\\gcd(6, 10) = 2$.",
+          "gcd": "2 is the gcd, not the lcm."
+        }
+      },
+      "explain": {
+        "text": "$\\gcd(6, 10) = 2$, so $\\operatorname{lcm} = 6 / 2 \\cdot 10 = 30$."
+      }
+    },
+    {
+      "id": "q-pi30",
+      "difficulty": 2,
+      "prose": "`sieve(30)` returns a list.",
+      "question": "How long is it?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "10: 2, 3, 5, 7, 11, 13, 17, 19, 23 and 29.",
+        "label": "Primes up to 30",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Ten primes.",
+        "generic": "Not quite right. List them: 2, 3, 5, 7, 11, ...",
+        "byKey": {
+          "one": "You counted 1. It has one divisor, so it is not prime."
+        }
+      },
+      "explain": {
+        "text": "2, 3, 5, 7, 11, 13, 17, 19, 23, 29."
+      }
+    },
+    {
+      "id": "q-sieve-stop",
+      "difficulty": 3,
+      "prose": "A sieve runs up to $n = 200$.",
+      "question": "Which is the last prime whose multiples it crosses out?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "13",
+            "text": "13",
+            "correct": true
+          },
+          {
+            "id": "199",
+            "text": "199",
+            "why": "Primes above $\\sqrt{200} \\approx 14.1$ would start at $p^2 > 200$, so they cross out nothing."
+          },
+          {
+            "id": "17",
+            "text": "17",
+            "why": "$17^2 = 289 > 200$, so 17 crosses out nothing new."
+          },
+          {
+            "id": "14",
+            "text": "14",
+            "why": "14 is not prime; 2 and 7 crossed it out."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "13, since $13^2 = 169 \\le 200 < 17^2$.",
+        "generic": "Not quite right. A prime $p$ starts crossing at $p^2$."
+      },
+      "explain": {
+        "text": "Every composite up to 200 has a prime factor up to 14, so after 13 the sieve is done."
+      }
+    }
+  ]
+}

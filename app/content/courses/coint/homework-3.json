@@ -1,0 +1,523 @@
+{
+ "id": "homework-3",
+ "course": "coint",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-pipeline-order",
+   "difficulty": 3,
+   "skills": [
+    "co-test",
+    "co-pairs"
+   ],
+   "prose": "Ten years of two shares' adjusted closes, from loading to a live decision. The steps are out of order; two of them are where look-ahead usually sneaks in.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Load both closes and align them on common dates, dropping missing days"
+     },
+     {
+      "id": "s2",
+      "text": "Split the days: the first five years for formation, the last five for trading"
+     },
+     {
+      "id": "s3",
+      "text": "On the formation years, check each price is I(1)"
+     },
+     {
+      "id": "s4",
+      "text": "On the formation years, regress B on A and run `coint` against Engle-Granger values"
+     },
+     {
+      "id": "s5",
+      "text": "Estimate the formation residual's half-life"
+     },
+     {
+      "id": "s6",
+      "text": "Choose the entry by the formation years' backtest Sharpe, never the trading years'"
+     },
+     {
+      "id": "s7",
+      "text": "Report the trading years' Sharpe at that entry, after costs"
+     },
+     {
+      "id": "s8",
+      "text": "Fix the stop rules, then trade and re-test monthly"
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6",
+     "s7",
+     "s8"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Split before any test, choose before any judging.",
+    "generic": "Not quite right. The split comes before every test, and the choice before the report."
+   },
+   "explain": {
+    "text": "The split must come before any test, or the trading years help choose the pair. The entry is chosen on formation years only, and the trading years judge it once. The stop rules are fixed before the pair goes live."
+   }
+  },
+  {
+   "id": "h-roundtrip",
+   "difficulty": 3,
+   "skills": [
+    "co-pairs"
+   ],
+   "prose": "A long spread trade buys one $y$ at £120.00 and sells $\\beta = 0.75$ shares of $x$ at £80.00. Each side of each leg costs 4 bp of the pounds traded. Ignore price moves.",
+   "question": "What does the round trip cost in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.144,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "£",
+    "placeholder": "a decimal",
+    "accept": "$2 \\times (120 + 60) \\times 0.0004 = 0.144$",
+    "wrong": [
+     {
+      "id": "open",
+      "value": 0.072,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "noleg",
+      "value": 0.096,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "full",
+      "value": 0.208,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. £0.144 per round trip.",
+    "generic": "Not quite right. Both legs, both sides.",
+    "byKey": {
+     "open": "That is the opening only. The close pays again.",
+     "noleg": "You costed only $y$. The $x$ leg trades £60 a side.",
+     "full": "You used the full £80 for $x$. We trade 0.75 shares: £60."
+    }
+   },
+   "explain": {
+    "text": "Each side trades £120 of $y$ and $0.75 \\times 80 = £60$ of $x$: £180. At 4 bp that is £0.072, and the round trip doubles it to £0.144."
+   }
+  },
+  {
+   "id": "h-breakeven",
+   "difficulty": 4,
+   "skills": [
+    "co-pairs"
+   ],
+   "prose": "The reference pair earns £31.21 before costs; at 5 bp its costs are £2.64. The trades do not change with the cost.",
+   "question": "At what cost in basis points would the pair just break even? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 59.1,
+    "tol": {
+     "abs": 0.3
+    },
+    "unit": "bp",
+    "placeholder": "a decimal",
+    "accept": "$31.21 / (2.64/5) = 59.1$, ± 0.3 (the unrounded backtest gives 59.0)",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 11.8,
+      "tol": {
+       "abs": 0.3
+      }
+     },
+     {
+      "id": "per",
+      "value": 0.53,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. About 59 bp, roughly twelve times the 5 bp assumed.",
+    "generic": "Not quite right. Find the cost per basis point, then divide the gross P&L by it.",
+    "byKey": {
+     "inv": "You divided by 2.64 alone. The £2.64 is for 5 bp, so one basis point costs £0.528.",
+     "per": "That is the cost of one basis point. Divide £31.21 by it."
+    }
+   },
+   "explain": {
+    "text": "One basis point costs $2.64/5 = £0.528$, so the gross £31.21 lasts to $31.21/0.528 = 59.1$ bp. The margin is wide here because the pair trades only 25 times. A pair that trades daily has a far lower break-even."
+   }
+  },
+  {
+   "id": "h-best-of-nine",
+   "difficulty": 4,
+   "skills": [
+    "co-pairs"
+   ],
+   "prose": "Lesson 9's colleague tried nine entry levels and kept the best, Sharpe 1.124 over 4.96 years of trading. The Testing course's bar for the best of $N$ is $z_{1 - 0.05/N}/\\sqrt T$, one-sided, and $z_{1 - 0.05/9} = 2.539$.",
+   "question": "What Sharpe must the best of nine clear? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.14,
+    "tol": {
+     "abs": 0.01
+    },
+    "placeholder": "a decimal",
+    "accept": "$2.539/\\sqrt{4.96} = 1.14$",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.88,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "nosqrt",
+      "value": 0.51,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. 1.14: the best of nine, 1.124, just fails.",
+    "generic": "Not quite right. Divide 2.539 by the square root of the years.",
+    "byKey": {
+     "one": "0.88 is the bar for one pre-set rule, $1.96/\\sqrt{4.96}$. Nine tries raise it.",
+     "nosqrt": "You divided by 4.96. The bar uses $\\sqrt T$."
+    }
+   },
+   "explain": {
+    "text": "$\\sqrt{4.96} = 2.228$, and $2.539/2.228 = 1.14$. The best of nine, 1.124, falls just short, while one pre-set rule would need only 0.88. Fixing entry 2 in advance would have passed the bar it faced."
+   }
+  },
+  {
+   "id": "h-cost-table",
+   "difficulty": 4,
+   "skills": [
+    "co-pairs"
+   ],
+   "title": "Costs at several levels",
+   "prose": "Write a cost-sensitivity table and the break-even cost. `backtest(y, x, window, entry, exit, stop, cost_bp)` is the reference backtest, already defined; it returns the daily P&L, the Sharpe and the changes. A desk reports net results at several costs.",
+   "question": "Complete `cost_table(y, x, costs)` and `breakeven_bp(y, x)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef make_two_walks(seed, n=500):\n    \"\"\"Two independent Gaussian random walks from 0 (columns of one draw).\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    return np.cumsum(z[:, 0]), np.cumsum(z[:, 1])\n\n\ndef make_pair(seed, n=1000, alpha=5.0, beta=1.5, phi=0.95, sd_u=0.5, x0=40.0, vol=0.015):\n    \"\"\"A cointegrated pair of share prices in pounds. x starts at x0 and is a log random walk\n    with daily sd vol; y = alpha + beta * x + u, u an AR(1) with coefficient phi and shock sd sd_u.\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    x = x0 * np.exp(np.cumsum(vol * z[:, 0]))\n    u = np.empty(n); u[0] = sd_u * z[0, 1]\n    for t in range(1, n):\n        u[t] = phi * u[t - 1] + sd_u * z[t, 1]\n    return x, alpha + beta * x + u\n\n\ndef make_broken_pair(seed, n=1500, break_at=1000, sd_break=1.0, **kw):\n    \"\"\"make_pair, plus a random walk added to y from day break_at: the spread stops reverting.\"\"\"\n    x, y = make_pair(seed, n, **kw)\n    z = np.random.default_rng(seed + 1000).standard_normal(n)\n    return x, y + np.concatenate([np.zeros(break_at), np.cumsum(sd_break * z[break_at:])])\n\n\ndef rolling_fit(y, x, window):\n    \"\"\"alpha_t, beta_t and residual sd from OLS of y on x over days t - window + 1 to t.\"\"\"\n    a = np.full(len(y), np.nan); b = a.copy(); sd = a.copy()\n    for t in range(window - 1, len(y)):\n        xs, ys = x[t - window + 1:t + 1], y[t - window + 1:t + 1]\n        bb, aa = np.polyfit(xs, ys, 1); r = ys - aa - bb * xs\n        a[t], b[t], sd[t] = aa, bb, r.std(ddof=1)\n    return a, b, sd\n\n\ndef positions(z, entry=2.0, exit=0.0, stop=4.0):\n    \"\"\"+1 long the spread (long y, short beta x), -1 short, 0 flat; decided at each day's close.\"\"\"\n    pos = np.zeros(len(z)); cur = 0\n    for t in range(len(z)):\n        zt = z[t]\n        if np.isnan(zt): cur = 0\n        elif cur == 0:\n            if entry <= zt < stop: cur = -1\n            elif -stop < zt <= -entry: cur = 1\n        elif cur == 1 and (zt >= -exit or zt <= -stop): cur = 0\n        elif cur == -1 and (zt <= exit or zt >= stop): cur = 0\n        pos[t] = cur\n    return pos\n\n\ndef backtest(y, x, window=250, entry=2.0, exit=0.0, stop=4.0, cost_bp=5.0):\n    \"\"\"Trade at the close of the signal day; the hedge ratio is fixed at entry; P&L in pounds\n    for one share of y; cost_bp on the pounds traded in both legs at every position change.\"\"\"\n    a, b, sd = rolling_fit(y, x, window)\n    z = (y - a - b * x) / sd\n    pos = positions(z, entry, exit, stop)\n    n = len(y); pnl = np.zeros(n); units = 0.0; hb = 0.0; trades = 0\n    for t in range(1, n):\n        pnl[t] = units * ((y[t] - y[t - 1]) - hb * (x[t] - x[t - 1]))\n        if pos[t] != pos[t - 1]:\n            new_hb = b[t] if pos[t] != 0 else 0.0\n            traded = abs(pos[t] - units) * y[t] + abs(pos[t] * new_hb - units * hb) * x[t]\n            pnl[t] -= traded * cost_bp / 1e4; trades += 1\n            units, hb = pos[t], new_hb\n    sharpe = pnl.mean() / pnl.std(ddof=1) * np.sqrt(252)\n    return pnl, sharpe, trades\n\n\ndef make_share_pair(seed=2024, n=2520):\n    \"\"\"Ten years of two seeded share prices that mimic a cointegrated pair (synthetic, not real data).\"\"\"\n    return make_pair(seed, n, alpha=3.0, beta=1.2, phi=0.97, sd_u=0.3, x0=25.0, vol=0.018)\n",
+    "starter": "import numpy as np\n\ndef cost_table(y, x, costs):\n    \"\"\"[(cost in bp, total P&L to 2 places, Sharpe to 3 places), ...] from the reference backtest.\"\"\"\n    rows = []\n    for c in costs:\n        ...\n    return rows\n\n\ndef breakeven_bp(y, x):\n    \"\"\"The cost in bp at which total P&L is zero, to 1 place. The trades do not depend on the cost.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef cost_table(y, x, costs):\n    \"\"\"[(cost in bp, total P&L to 2 places, Sharpe to 3 places), ...] from the reference backtest.\"\"\"\n    rows = []\n    for c in costs:\n        pnl, sharpe, trades = backtest(y, x, cost_bp=c)\n        rows.append((c, round(float(pnl.sum()), 2), round(float(sharpe), 3)))\n    return rows\n\n\ndef breakeven_bp(y, x):\n    \"\"\"The cost in bp at which total P&L is zero, to 1 place. The trades do not depend on the cost.\"\"\"\n    gross = backtest(y, x, cost_bp=0)[0].sum()\n    per_bp = gross - backtest(y, x, cost_bp=1)[0].sum()\n    return round(float(gross / per_bp), 1)\n",
+    "budget": 40000,
+    "examples": [
+     {
+      "setup": "x, y = make_pair(5, 1500)",
+      "call": "cost_table(y, x, [0, 10])",
+      "expect": "[(0, 40.45, 1.802), (10, 34.85, 1.562)]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x, y = make_pair(3, 1500)",
+      "call": "cost_table(y, x, [0, 5, 20])",
+      "expect": "[(0, 31.21, 1.218), (5, 28.56, 1.124), (20, 20.63, 0.817)]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(5, 1500)",
+      "call": "cost_table(y, x, [0, 10])",
+      "expect": "[(0, 40.45, 1.802), (10, 34.85, 1.562)]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "xa, yb = make_share_pair()",
+      "call": "cost_table(yb, xa, [5])",
+      "expect": "[(5, 33.74, 1.267)]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(3, 1500)",
+      "call": "cost_table(y, x, [])",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "setup": "x, y = make_pair(3, 1500)",
+      "call": "breakeven_bp(y, x)",
+      "expect": "59.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(5, 1500)",
+      "call": "breakeven_bp(y, x)",
+      "expect": "72.2",
+      "compare": "isclose"
+     },
+     {
+      "setup": "xa, yb = make_share_pair()",
+      "call": "breakeven_bp(yb, xa)",
+      "expect": "125.1",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(3, 1500); be = breakeven_bp(y, x)",
+      "call": "abs(round(float(backtest(y, x, cost_bp=be)[0].sum()), 0))",
+      "expect": "0.0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 8 hidden tests on `make_pair(3, 1500)`, `make_pair(5, 1500)` and the share pair. The last checks that the backtest at your break-even cost earns about £0. NumPy loads on the first run; each backtest takes under a second."
+   },
+   "feedback": {
+    "correct": "Correct. The reference pair breaks even near 59.0 bp, the share pair near 125.1 bp.",
+    "generic": "Some tests failed. Run the backtest once per cost, and find the cost of one basis point from two runs."
+   },
+   "explain": {
+    "text": "Because the trades do not depend on the cost, P&L falls in a straight line with it. Two runs, at 0 and 1 bp, give the slope, and the break-even is gross P&L over that slope. The share pair's break-even, 125.1 bp, is higher: its prices are lower, so each change trades fewer pounds."
+   }
+  },
+  {
+   "id": "h-pipeline",
+   "difficulty": 5,
+   "skills": [
+    "co-test",
+    "co-pairs"
+   ],
+   "title": "The whole pipeline",
+   "prose": "Put the level together. Test the pair on a formation window and refuse it if Engle-Granger fails. Otherwise trade on, with the reference backtest and lesson 11's two stops. `backtest`, `rolling_fit`, `positions`, `rolling_adf_pvalues` and `drawdown_stop` are defined.",
+   "question": "Complete `pairs_pipeline` as its docstring specifies.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from statsmodels.tsa.stattools import adfuller, coint\nimport numpy as np\n\ndef make_two_walks(seed, n=500):\n    \"\"\"Two independent Gaussian random walks from 0 (columns of one draw).\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    return np.cumsum(z[:, 0]), np.cumsum(z[:, 1])\n\n\ndef make_pair(seed, n=1000, alpha=5.0, beta=1.5, phi=0.95, sd_u=0.5, x0=40.0, vol=0.015):\n    \"\"\"A cointegrated pair of share prices in pounds. x starts at x0 and is a log random walk\n    with daily sd vol; y = alpha + beta * x + u, u an AR(1) with coefficient phi and shock sd sd_u.\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    x = x0 * np.exp(np.cumsum(vol * z[:, 0]))\n    u = np.empty(n); u[0] = sd_u * z[0, 1]\n    for t in range(1, n):\n        u[t] = phi * u[t - 1] + sd_u * z[t, 1]\n    return x, alpha + beta * x + u\n\n\ndef make_broken_pair(seed, n=1500, break_at=1000, sd_break=1.0, **kw):\n    \"\"\"make_pair, plus a random walk added to y from day break_at: the spread stops reverting.\"\"\"\n    x, y = make_pair(seed, n, **kw)\n    z = np.random.default_rng(seed + 1000).standard_normal(n)\n    return x, y + np.concatenate([np.zeros(break_at), np.cumsum(sd_break * z[break_at:])])\n\n\ndef make_case(name, n=1000):\n    \"\"\"Lesson 2's four planted pairs, as (x, y).\"\"\"\n    if name == \"A\":    # correlated returns, not cointegrated\n        e = np.random.default_rng(1).standard_normal((n, 2))\n        return np.cumsum(e[:, 0]), np.cumsum(0.8 * e[:, 0] + 0.6 * e[:, 1])\n    if name == \"B\":    # cointegrated, weakly correlated returns\n        e = np.random.default_rng(2).standard_normal((n, 2))\n        x = np.cumsum(e[:, 0])\n        u = np.empty(n); u[0] = 3 * e[0, 1]\n        for t in range(1, n):\n            u[t] = 0.5 * u[t - 1] + 3 * e[t, 1]\n        return x, x + u\n    if name == \"C\":    # both\n        return make_pair(3, n)\n    return make_two_walks(4, n)    # D: neither\n\n\ndef rolling_fit(y, x, window):\n    \"\"\"alpha_t, beta_t and residual sd from OLS of y on x over days t - window + 1 to t.\"\"\"\n    a = np.full(len(y), np.nan); b = a.copy(); sd = a.copy()\n    for t in range(window - 1, len(y)):\n        xs, ys = x[t - window + 1:t + 1], y[t - window + 1:t + 1]\n        bb, aa = np.polyfit(xs, ys, 1); r = ys - aa - bb * xs\n        a[t], b[t], sd[t] = aa, bb, r.std(ddof=1)\n    return a, b, sd\n\n\ndef positions(z, entry=2.0, exit=0.0, stop=4.0):\n    \"\"\"+1 long the spread (long y, short beta x), -1 short, 0 flat; decided at each day's close.\"\"\"\n    pos = np.zeros(len(z)); cur = 0\n    for t in range(len(z)):\n        zt = z[t]\n        if np.isnan(zt): cur = 0\n        elif cur == 0:\n            if entry <= zt < stop: cur = -1\n            elif -stop < zt <= -entry: cur = 1\n        elif cur == 1 and (zt >= -exit or zt <= -stop): cur = 0\n        elif cur == -1 and (zt <= exit or zt >= stop): cur = 0\n        pos[t] = cur\n    return pos\n\n\ndef backtest(y, x, window=250, entry=2.0, exit=0.0, stop=4.0, cost_bp=5.0):\n    \"\"\"Trade at the close of the signal day; the hedge ratio is fixed at entry; P&L in pounds\n    for one share of y; cost_bp on the pounds traded in both legs at every position change.\"\"\"\n    a, b, sd = rolling_fit(y, x, window)\n    z = (y - a - b * x) / sd\n    pos = positions(z, entry, exit, stop)\n    n = len(y); pnl = np.zeros(n); units = 0.0; hb = 0.0; trades = 0\n    for t in range(1, n):\n        pnl[t] = units * ((y[t] - y[t - 1]) - hb * (x[t] - x[t - 1]))\n        if pos[t] != pos[t - 1]:\n            new_hb = b[t] if pos[t] != 0 else 0.0\n            traded = abs(pos[t] - units) * y[t] + abs(pos[t] * new_hb - units * hb) * x[t]\n            pnl[t] -= traded * cost_bp / 1e4; trades += 1\n            units, hb = pos[t], new_hb\n    sharpe = pnl.mean() / pnl.std(ddof=1) * np.sqrt(252)\n    return pnl, sharpe, trades\n\n\ndef rolling_adf_pvalues(s, window=250, step=125):\n    out = []\n    for end in range(window, len(s) + 1, step):\n        p = adfuller(s[end - window:end], maxlag=1, regression=\"c\", autolag=None)[1]\n        out.append((end, round(float(p), 4)))\n    return out\n\n\ndef drawdown_stop(pnl, limit):\n    cum = np.cumsum(pnl)\n    dd = np.maximum.accumulate(cum) - cum\n    for t in range(len(dd)):\n        if dd[t] > limit:\n            return t\n    return None\n",
+    "starter": "import numpy as np\nfrom statsmodels.tsa.stattools import adfuller, coint\n\ndef pairs_pipeline(y, x, formation=1000, window=250, entry=2.0, exit=0.0, stop=4.0,\n                   cost_bp=5.0, dd_limit=15.0):\n    \"\"\"None if coint on days before `formation` has p >= 0.05. Otherwise trade from day\n    `formation` with the reference backtest and stop at the first of two rules:\n      ADF: checks every window // 2 days on the spread fixed at the formation fit,\n           windows s[end - window:end] for end = formation + step, formation + 2 * step, ...;\n           two checks in a row with p > 0.5 stop on day end - 1;\n      loss: the trading P&L's drawdown passes dd_limit (drawdown_stop on pnl[formation:]).\n    Return {\"pnl\": total to 2 places, \"sharpe\": to 3 places, \"trades\": position changes,\n            \"stop_day\": the day or None}, over days formation to the stop day, inclusive.\"\"\"\n    y, x = np.asarray(y, float), np.asarray(x, float)\n    ...\n",
+    "solution": "import numpy as np\nfrom statsmodels.tsa.stattools import adfuller, coint\n\ndef pairs_pipeline(y, x, formation=1000, window=250, entry=2.0, exit=0.0, stop=4.0,\n                   cost_bp=5.0, dd_limit=15.0):\n    \"\"\"None if coint on days before `formation` has p >= 0.05. Otherwise trade from day\n    `formation` with the reference backtest and stop at the first of two rules:\n      ADF: checks every window // 2 days on the spread fixed at the formation fit,\n           windows s[end - window:end] for end = formation + step, formation + 2 * step, ...;\n           two checks in a row with p > 0.5 stop on day end - 1;\n      loss: the trading P&L's drawdown passes dd_limit (drawdown_stop on pnl[formation:]).\n    Return {\"pnl\": total to 2 places, \"sharpe\": to 3 places, \"trades\": position changes,\n            \"stop_day\": the day or None}, over days formation to the stop day, inclusive.\"\"\"\n    y, x = np.asarray(y, float), np.asarray(x, float)\n    if coint(y[:formation], x[:formation])[1] >= 0.05:\n        return None\n    pnl = backtest(y, x, window, entry, exit, stop, cost_bp)[0]\n    a, b, sd = rolling_fit(y, x, window)\n    pos = positions((y - a - b * x) / sd, entry, exit, stop)\n    bb, aa = np.polyfit(x[:formation], y[:formation], 1)\n    s = y - aa - bb * x\n    step = window // 2\n    adf_day, run = None, 0\n    for end in range(formation + step, len(y) + 1, step):\n        p = adfuller(s[end - window:end], maxlag=1, regression=\"c\", autolag=None)[1]\n        run = run + 1 if p > 0.5 else 0\n        if run >= 2:\n            adf_day = end - 1\n            break\n    k = drawdown_stop(pnl[formation:], dd_limit)\n    loss_day = None if k is None else formation + k\n    days = [d for d in (adf_day, loss_day) if d is not None]\n    stop_day = min(days) if days else None\n    last = len(y) if stop_day is None else stop_day + 1\n    seg = pnl[formation:last]\n    trades = int(sum(pos[t] != pos[t - 1] for t in range(formation, last)))\n    sharpe = seg.mean() / seg.std(ddof=1) * np.sqrt(252)\n    return {\"pnl\": round(float(seg.sum()), 2), \"sharpe\": round(float(sharpe), 3),\n            \"trades\": trades, \"stop_day\": stop_day}\n",
+    "budget": 60000,
+    "caseBudget": 20000,
+    "examples": [
+     {
+      "setup": "x, y = make_case('A', 1500)",
+      "call": "pairs_pipeline(y, x)",
+      "expect": "None",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x, y = make_pair(3, 1500)",
+      "call": "pairs_pipeline(y, x)",
+      "expect": "{'pnl': 10.56, 'sharpe': 1.24, 'trades': 9, 'stop_day': None}",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(5, 1500)",
+      "call": "pairs_pipeline(y, x)",
+      "expect": "{'pnl': 14.99, 'sharpe': 1.806, 'trades': 16, 'stop_day': None}",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(7, 1500)",
+      "call": "pairs_pipeline(y, x)",
+      "expect": "{'pnl': 10.34, 'sharpe': 1.463, 'trades': 12, 'stop_day': None}",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_broken_pair(3)",
+      "call": "pairs_pipeline(y, x)",
+      "expect": "{'pnl': 11.45, 'sharpe': 0.799, 'trades': 14, 'stop_day': 1249}",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_broken_pair(3)",
+      "call": "pairs_pipeline(y, x)['stop_day']",
+      "expect": "1249",
+      "compare": "equal"
+     },
+     {
+      "setup": "x, y = make_broken_pair(3)",
+      "call": "pairs_pipeline(y, x, formation=800)",
+      "expect": "{'pnl': 2.69, 'sharpe': 0.103, 'trades': 19, 'stop_day': 1390}",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_pair(3, 1500)",
+      "call": "pairs_pipeline(y, x, dd_limit=2.5)",
+      "expect": "{'pnl': 1.74, 'sharpe': 0.439, 'trades': 3, 'stop_day': 1255}",
+      "compare": "isclose"
+     },
+     {
+      "setup": "x, y = make_case('A', 1500)",
+      "call": "pairs_pipeline(y, x)",
+      "expect": "None",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 8 hidden tests: three healthy pairs, the broken pair twice and a tight loss limit. Lesson 2's pair A must be refused. The first run loads statsmodels, which takes 20 to 40 seconds; each case then takes about a second."
+   },
+   "feedback": {
+    "correct": "Correct. The broken pair stops on day 1,249 with £11.45 kept, and pair A is refused.",
+    "generic": "Some tests failed. Check the refusal first, then the check days (`end - 1`). P&L and trades stop at the stop day."
+   },
+   "explain": {
+    "text": "On the broken pair the ADF rule fires on day 1,249, before the loss limit. It keeps £11.45 of trading P&L. With an 800-day formation the check at day 1,300 reads 0.14, so the loss limit fires first, on day 1,390. Pair A never reaches trading: its formation test gives $p = 0.80$."
+   }
+  },
+  {
+   "id": "h-break-signs",
+   "difficulty": 4,
+   "skills": [
+    "co-pairs",
+    "co-test"
+   ],
+   "prose": "A pair has traded well for two years. You review this month's monitoring report.",
+   "question": "Which signs point to a broken tie? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "hl",
+      "text": "The rolling half-life has gone from 12 days to 45",
+      "correct": true
+     },
+     {
+      "id": "adf",
+      "text": "The last two rolling ADF checks read 0.64 and 0.71",
+      "correct": true
+     },
+     {
+      "id": "dd",
+      "text": "The pair's P&L is £18 below its peak, past a £15 limit",
+      "correct": true
+     },
+     {
+      "id": "z",
+      "text": "The spread's $z$ crossed +2 and a short opened",
+      "why": "Crossing ±2 is the normal entry signal, not a sign of a break."
+     },
+     {
+      "id": "corr",
+      "text": "The two shares' daily return correlation is 0.85",
+      "why": "Return correlation says nothing about whether the prices are still tied."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Three warnings, two ordinary readings.",
+    "generic": "Not quite right. Which readings say the spread no longer reverts?"
+   },
+   "explain": {
+    "text": "A lengthening half-life and repeated high ADF p-values say the spread is reverting more slowly or not at all. A drawdown past the limit is the model-free warning. An entry signal and a return correlation say nothing about the tie."
+   }
+  },
+  {
+   "id": "h-daily-beta",
+   "difficulty": 3,
+   "skills": [
+    "co-pairs",
+    "co-spread"
+   ],
+   "prose": "A junior's backtest recomputes the spread every day as $y_t - \\beta_t x_t$ with that day's rolling $\\beta_t$, then z-scores it. It loses money before costs on the reference pair, where lesson 9's rules earn £31.21.",
+   "question": "What is the main fault?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "noise",
+      "text": "Daily changes in $\\beta_t$, times a price near £65, move the spread with estimation noise; fix $\\beta$ at entry",
+      "correct": true
+     },
+     {
+      "id": "costs",
+      "text": "Costs: re-hedging daily is expensive",
+      "why": "It loses money with no costs at all. The signal itself is broken."
+     },
+     {
+      "id": "look",
+      "text": "Look-ahead in the rolling $\\beta_t$",
+      "why": "A trailing $\\beta_t$ is honest. It is just used badly."
+     },
+     {
+      "id": "window",
+      "text": "The 250-day window is too long",
+      "why": "The window is lesson 9's. The fault is putting a moving estimate inside the spread."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Fix the hedge at entry, so each trade's spread is a real position.",
+    "generic": "Not quite right. What moves the junior's spread on a day the prices do not?"
+   },
+   "explain": {
+    "text": "When $\\beta_t$ moves by 0.0025 and $x$ is about £65, the spread moves £0.15 with no change in the tie. The z-score then reads the estimate's wobble as a signal. Lesson 10 fixed $\\beta$ at entry for this reason."
+   }
+  },
+  {
+   "id": "h-memo",
+   "difficulty": 5,
+   "skills": [
+    "co-test",
+    "co-spread",
+    "co-pairs"
+   ],
+   "kind": "longform",
+   "prompt": "Write the one-page memo recommending whether to trade the share pair of lesson 12 (`make_share_pair()`, ten simulated years). Cover the tests, the hedge ratio, the half-life, the out-of-sample backtest with costs, and the rules that would make you stop. Say plainly what the evidence cannot tell you.",
+   "model": "**Recommendation: trade it, small, with fixed stops.** The data are simulated to stand in for two real shares; on real closes the same steps apply.\n\n**Data.** 2,520 business days from 2 January 2015. Days 0 to 1,259 are the formation years; days 1,260 to 2,519 are held back for trading.\n\n**Tests.**\n\n1. Each leg is I(1). The ADF test fails to reject on both prices, $p = 0.5216$ and $0.4716$ (0.79 and 0.70 on the formation years), and rejects on their daily changes.\n2. Least squares of B on A over the formation years gives $\\hat\\beta = 1.214$: hold about 1.2 shares of A against each share of B.\n3. Engle-Granger on the formation years gives $-5.606$, beyond the 1% value $-3.905$, so $p$ is below 0.0001. I judged it against MacKinnon's residual values, not the ADF $-2.86$.\n\n**Speed.** The formation residual's half-life is 12.4 days, so trades should last weeks. A half-life estimate is noisy: on all ten years it is 15.3 days with a 95% interval of 12.1 to 20.9.\n\n**Backtest.** Rolling 250-day hedge ratio and $z$, entry ±2, exit 0, stop ±4, 5 bp on both legs at every change, no look-ahead. I chose the entry on the formation years only: 1.0 scored best there, 1.540. On the trading years it scored 1.383. The conventional entry 2 gave 1.257 and 1.278. Costs are small because the prices are low, £1.40 over ten years at entry 2.\n\n**Significance.** Five years of trading give a standard error of about $1/\\sqrt 5 = 0.45$, so 1.38 is about 3 standard errors from zero. Five entries were tried, but the figure I quote is out of sample.\n\n**Stop rules, fixed now.** Stop the pair if two rolling 250-day ADF checks in a row have $p > 0.5$, if a window's half-life passes 37 days (three times the formation value), or if P&L falls £5 from its peak per share of B traded. Re-test monthly, and never widen a stop or add to a losing spread.\n\n**What the evidence cannot tell us.** A tie that held for ten years can still break, as lesson 11's pair did. The backtest assumes fills at the close and that A can be shorted at no fee. Size by the spread's volatility and start small.",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "States that the data are simulated, or names the real-data steps (align adjusted closes, drop missing days)"
+    },
+    {
+     "points": 2,
+     "text": "Separates formation and trading years and tests on the formation years only"
+    },
+    {
+     "points": 1,
+     "text": "Checks each leg is I(1) on levels and changes"
+    },
+    {
+     "points": 1,
+     "text": "Reports the hedge ratio and reads it as shares of A per share of B"
+    },
+    {
+     "points": 1,
+     "text": "Uses Engle-Granger critical values, not ADF ones, for the residual"
+    },
+    {
+     "points": 1,
+     "text": "Reports the half-life and says it is noisy"
+    },
+    {
+     "points": 2,
+     "text": "Chooses the entry in sample and quotes the out-of-sample Sharpe after costs"
+    },
+    {
+     "points": 1,
+     "text": "Fixes stop rules in advance: a rolling re-test, a half-life or loss limit, no doubling down"
+    }
+   ]
+  }
+ ]
+}

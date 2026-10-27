@@ -1,0 +1,1264 @@
+{
+  "id": "l12-difference-arrays",
+  "course": "contests",
+  "title": "Difference arrays",
+  "minutes": 14,
+  "objectives": [
+    "Apply many range updates at once with a difference array."
+  ],
+  "skills": [
+    "cn-patterns"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A calendar of updates",
+      "prose": "Problem U has 200,000 days, all starting at 0, and 100,000 updates. Each update adds $v$ to every day from $l$ to $r$. Then every day's final value is printed. The simple way loops over each update's range.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "U. Busy calendar   (2 s, 256 MB)",
+            "n days (1 ≤ n ≤ 2·10⁵), all 0 at first, and",
+            "q updates (1 ≤ q ≤ 10⁵), each l r v:",
+            "add v to days l to r (0-based, inclusive).",
+            "Print the n final values."
+          ],
+          "title": "Problem U"
+        },
+        "state": {}
+      },
+      "question": "In the worst case, how many single-day additions does the simple loop make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20000000000.0,
+        "tol": {
+          "rel": 0.01
+        },
+        "unit": "",
+        "placeholder": "a number, such as 2e10",
+        "accept": "$2 \\cdot 10^{10}$: $10^5$ updates of $2 \\cdot 10^5$ days each",
+        "label": "Additions",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 300000,
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "id": "q",
+            "value": 100000,
+            "tol": {
+              "rel": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How long can one update's range be?"
+        },
+        {
+          "rung": "point",
+          "text": "One update may cover all 200,000 days.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10^5$ updates times $2 \\cdot 10^5$ days is $2 \\cdot 10^{10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 \\cdot 10^{10}$ additions.",
+        "generic": "Not quite right. Multiply the updates by the longest possible range.",
+        "byKey": {
+          "sum": "That is $n + q$, the input size. Each update may cover all 200,000 days.",
+          "q": "That is one addition per update. Each update covers up to 200,000 days."
+        }
+      },
+      "explain": {
+        "text": "$2 \\cdot 10^{10}$ additions is far past any time limit, in any language. We want each update to cost $O(1)$, then one pass over the days. The next screen shows how."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Mark the two ends",
+      "prose": "Instead, write $+v$ at cell $l$ and $-v$ at cell $r + 1$ of a second list. A running total then switches each update on at $l$ and off after $r$. Step through three updates on 8 days.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          "steps": [
+            {
+              "cells": [
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0",
+                "0"
+              ],
+              "highlight": {
+                "range": [
+                  8,
+                  8
+                ],
+                "label": "spare"
+              },
+              "caption": "8 days, 0 to 7, and one spare cell, 8."
+            },
+            {
+              "cells": [
+                "0",
+                "3",
+                "0",
+                "0",
+                "0",
+                "−3",
+                "0",
+                "0",
+                "0"
+              ],
+              "highlight": {
+                "ranges": [
+                  {
+                    "range": [
+                      1,
+                      4
+                    ],
+                    "label": "+3 on days 1 to 4"
+                  }
+                ]
+              },
+              "caption": "Update (1, 4, +3): +3 at cell 1, −3 at cell 5."
+            },
+            {
+              "cells": [
+                "0",
+                "3",
+                "2",
+                "0",
+                "0",
+                "−3",
+                "0",
+                "−2",
+                "0"
+              ],
+              "highlight": {
+                "ranges": [
+                  {
+                    "range": [
+                      2,
+                      6
+                    ],
+                    "label": "+2 on days 2 to 6"
+                  }
+                ]
+              },
+              "caption": "Update (2, 6, +2): +2 at cell 2, −2 at cell 7."
+            },
+            {
+              "cells": [
+                "0",
+                "3",
+                "2",
+                "0",
+                "0",
+                "−2",
+                "0",
+                "−2",
+                "−1"
+              ],
+              "highlight": {
+                "ranges": [
+                  {
+                    "range": [
+                      5,
+                      7
+                    ],
+                    "label": "+1 on days 5 to 7"
+                  }
+                ]
+              },
+              "caption": "Update (5, 7, +1): +1 at cell 5, −1 at cell 8."
+            },
+            {
+              "cells": [
+                "0",
+                "3",
+                "5",
+                "5",
+                "5",
+                "3",
+                "3",
+                "1",
+                "·"
+              ],
+              "highlight": {
+                "range": [
+                  0,
+                  7
+                ],
+                "label": "running total"
+              },
+              "caption": "Running total of the cells: the final value of every day."
+            }
+          ]
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "step",
+            "min": 0,
+            "max": 4,
+            "step": 1,
+            "label": "Step",
+            "start": 0
+          }
+        ]
+      },
+      "question": "What is day 5's final value?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "3: updates 2 and 3 cover day 5",
+        "label": "Day 5",
+        "wrong": [
+          {
+            "id": "kept",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "cell",
+            "value": -2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step to the last frame."
+        },
+        {
+          "rung": "point",
+          "text": "Day 5 is covered by (2, 6, +2) and (5, 7, +1).",
+          "highlight": [
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The running total up to cell 5 is $0 + 3 + 2 + 0 + 0 - 2 = 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "Day 5 ends at 3.",
+        "generic": "Not quite right. Add the cells from 0 up to 5.",
+        "byKey": {
+          "kept": "6 counts the +3 too, but update 1 ended at day 4. The −3 at cell 5 switched it off.",
+          "cell": "−2 is cell 5 of the second list. Day 5's value is the running total up to cell 5."
+        }
+      },
+      "explain": {
+        "text": "Day 5's running total is $0 + 3 + 2 + 0 + 0 - 2 = 3$, from updates 2 and 3. Each update cost two writes, and one pass rebuilt every day. That is $O(n + q)$ in place of $O(nq)$.",
+        "canvas": {
+          "cells": [
+            "0",
+            "3",
+            "5",
+            "5",
+            "5",
+            "3",
+            "3",
+            "1",
+            "·"
+          ],
+          "highlight": [
+            "c5"
+          ],
+          "caption": "Final values; cell 8 is the unused spare."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Difference arrays",
+      "prose": "That second list is a **difference array**: cell $i$ holds the change from day $i - 1$ to day $i$. It is the inverse of a prefix sum, from `ds` lesson 7. An update touches two cells, however long its range.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        "state": {
+          "caption": "8 days and a spare cell, all 0."
+        }
+      },
+      "question": "An update adds 4 to days 2 to 5. Tap the two cells it changes.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2",
+          "c6"
+        ],
+        "max": 2,
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "at-r",
+            "set": [
+              "c2",
+              "c5"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the update switch on?"
+        },
+        {
+          "rung": "point",
+          "text": "+4 goes at cell 2.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−4 goes one past the last day, at cell $5 + 1 = 6$."
+        }
+      ],
+      "feedback": {
+        "correct": "+4 at cell 2 and −4 at cell 6.",
+        "generic": "Not quite right. Mark where the update starts and the cell just after it ends.",
+        "byKey": {
+          "at-r": "You put −4 at cell 5, which would switch day 5 off. It goes at $r + 1 = 6$.",
+          "c1": "Cell 1 is day 1, before the update starts.",
+          "c3": "Cells inside the range stay 0; only the ends change.",
+          "c4": "Cells inside the range stay 0; only the ends change.",
+          "c7": "Cell 7 is after the switch-off point at 6.",
+          "c8": "The spare cell is used only when $r$ is the last day, 7."
+        }
+      },
+      "explain": {
+        "text": "$+4$ at cell 2 switches the update on, and $-4$ at cell 6 switches it off after day 5. Every cell between stays 0. A range's length no longer matters, only its ends.",
+        "canvas": {
+          "cells": [
+            "0",
+            "0",
+            "4",
+            "0",
+            "0",
+            "0",
+            "−4",
+            "0",
+            "0"
+          ],
+          "highlight": [
+            "c2",
+            "c6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The spare cell",
+      "prose": "Update 3 in the explore, $(5, 7, +1)$, ended on the last day. Its $-1$ landed in cell 8, one past the calendar. An update with $l = r$, such as $(2, 2, +7)$, puts $+7$ and $-7$ in neighbouring cells.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0",
+            "1",
+            "0",
+            "0",
+            "−1"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              8,
+              8
+            ],
+            "label": "spare"
+          }
+        }
+      },
+      "question": "For $n$ days, how long must the difference list be?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "n1",
+            "text": "$n + 1$: cell $n$ catches $-v$ when $r$ is the last day",
+            "correct": true
+          },
+          {
+            "id": "n",
+            "text": "$n$, one cell per day",
+            "why": "With $n$ cells, `d[r + 1]` raises `IndexError` when $r = n - 1$."
+          },
+          {
+            "id": "2n",
+            "text": "$2n$, two cells per day",
+            "why": "Only one cell past the end is ever written."
+          },
+          {
+            "id": "q",
+            "text": "$q$, one cell per update",
+            "why": "The list is indexed by day, not by update."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which index does an update ending on day $n - 1$ write?"
+        },
+        {
+          "rung": "point",
+          "text": "It writes `d[n]`.",
+          "highlight": [
+            "c8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Indices 0 to $n$ need $n + 1$ cells."
+        }
+      ],
+      "feedback": {
+        "correct": "$n + 1$ cells, the last one never read.",
+        "generic": "Not quite right. Find the largest index an update can write.",
+        "byKey": {
+          "n": "You gave each day one cell. An update ending on the last day writes one past it, and `d[n]` is out of range."
+        }
+      },
+      "explain": {
+        "text": "The largest index written is $r + 1 = n$, so the list needs $n + 1$ cells. The running total stops at day $n - 1$ and never reads cell $n$. With $l = r$ the $+v$ and $-v$ sit side by side, adding $v$ to that day alone."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Solve problem U",
+      "prose": "Write `apply_ranges(n, updates)` for problem U. Each update is `(l, r, v)`, 0-based and inclusive. Return the list of $n$ final values. Mark both ends of every update, then take one running total.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "U. Busy calendar   (2 s, 256 MB)",
+            "n days (1 ≤ n ≤ 2·10⁵), all 0 at first, and",
+            "q updates (1 ≤ q ≤ 10⁵), each l r v:",
+            "add v to days l to r (0-based, inclusive).",
+            "Print the n final values."
+          ],
+          "title": "Problem U"
+        },
+        "state": {}
+      },
+      "question": "Write `apply_ranges(n, updates)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "class _Counted(list):\n    reads = 0\n\n    def __getitem__(self, i):\n        _Counted.reads += 1\n        return list.__getitem__(self, i)\n\n    def __iter__(self):\n        _Counted.reads += len(self)\n        return list.__iter__(self)\n\n\ndef update_reads(n, updates):\n    # how many times apply_ranges reads the updates list\n    _Counted.reads = 0\n    apply_ranges(n, _Counted(updates))\n    return _Counted.reads\n\n\ndef checksum(values):\n    return sum(i * x for i, x in enumerate(values)) % 1000000007\n",
+        "starter": "def apply_ranges(n, updates):\n    ...\n",
+        "solution": "def apply_ranges(n, updates):\n    d = [0] * (n + 1)\n    for l, r, v in updates:\n        d[l] += v\n        d[r + 1] -= v\n    out = []\n    run = 0\n    for i in range(n):\n        run += d[i]\n        out.append(run)\n    return out\n",
+        "examples": [
+          {
+            "call": "apply_ranges(8, [(1, 4, 3), (2, 6, 2), (5, 7, 1)])",
+            "expect": "[0, 3, 5, 5, 5, 3, 3, 1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "apply_ranges(8, [(1, 4, 3), (2, 6, 2), (5, 7, 1)])",
+            "expect": "[0, 3, 5, 5, 5, 3, 3, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "apply_ranges(5, [(2, 2, 7)])",
+            "expect": "[0, 0, 7, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "apply_ranges(5, [(0, 4, 1), (3, 4, 2)])",
+            "expect": "[1, 1, 1, 3, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "apply_ranges(4, [])",
+            "expect": "[0, 0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "apply_ranges(1, [(0, 0, -5), (0, 0, 2)])",
+            "expect": "[-3]",
+            "compare": "equal"
+          },
+          {
+            "call": "apply_ranges(6, [(1, 3, -2), (0, 5, 1)])",
+            "expect": "[1, -1, -1, -1, 1, 1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(7)\nups = []\nfor _ in range(500):\n    l = r.randint(0, 999); ups.append((l, r.randint(l, 999), r.randint(-9, 9)))",
+            "call": "update_reads(1000, ups) <= 2500",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(12)\nups = []\nfor _ in range(100000):\n    l = r.randint(0, 199999); ups.append((l, r.randint(l, 199999), r.randint(-1000, 1000)))",
+            "call": "checksum(apply_ranges(200000, ups))",
+            "expect": "404786420",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: the 8-day example, $l = r$, $r = n - 1$, no updates, $n = 1$ and negative values. Test 7 passes 500 updates in a list that counts its reads; at most 2,500 pass. Test 8 has $n = 2 \\cdot 10^5$ and $q = 10^5$, compared by a checksum."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Make `d = [0] * (n + 1)`."
+        },
+        {
+          "rung": "point",
+          "text": "For each update: `d[l] += v` and `d[r + 1] -= v`.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then walk `i` from 0 to $n - 1$, adding `d[i]` to a running total and appending it."
+        }
+      ],
+      "feedback": {
+        "correct": "Two writes per update and one pass: $O(n + q)$.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has $l = r = 2$: +7 at cell 2 and −7 at cell 3.",
+          "test-3": "Test 3's updates end on the last day. The −v goes in the spare cell $n$, so make the list $n + 1$ long.",
+          "test-7": "Test 7 read the updates list far more than 2,500 times. Scanning every update for each day costs $n \\cdot q$ reads.",
+          "test-8": "Test 8 has $10^5$ updates over $2 \\cdot 10^5$ days. Looping over each range is billions of additions."
+        }
+      },
+      "explain": {
+        "text": "Two writes per update and one running total give $O(n + q)$. The counting test sees the updates read once each, 500 reads. Test 8 runs in well under a second in Pyodide, where the range loop would need about $5 \\cdot 10^9$ additions."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "It passed the sample",
+      "prose": "This version forgets the $-v$. It passes the sample and then fails on submission. Read the sample's updates.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "def apply_ranges(n, updates):",
+            "    d = [0] * (n + 1)",
+            "    for l, r, v in updates:",
+            "        d[l] += v",
+            "    out, run = [], 0",
+            "    for i in range(n):",
+            "        run += d[i]",
+            "        out.append(run)",
+            "    return out",
+            "",
+            "sample: n = 8, (2, 7, +4), (5, 7, +1)",
+            "output: 0 0 4 4 4 5 5 5   matches"
+          ],
+          "title": "apply_ranges, missing a line",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Why did the sample pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "spare",
+            "text": "Both updates end on day 7, so their −v would fall in the spare cell, which is never read",
+            "correct": true
+          },
+          {
+            "id": "cancel",
+            "text": "The running total cancels the missing −v",
+            "why": "Nothing cancels it. Without −v an update never switches off; here there was no later day to reach."
+          },
+          {
+            "id": "judge",
+            "text": "The code is correct; the hidden test must be wrong",
+            "why": "You trusted the sample. On (1, 4, +3) with 8 days, days 5 to 7 keep the +3."
+          },
+          {
+            "id": "small",
+            "text": "Small $n$ hides the bug",
+            "why": "Size is not the cause. Any update ending before the last day shows it, even with $n = 3$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where would each update's −v have gone?"
+        },
+        {
+          "rung": "point",
+          "text": "Both updates have $r = 7$, the last day.",
+          "highlight": [
+            "l4",
+            "l11"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Their −v belongs in cell 8, the spare cell, which the running total never reads."
+        }
+      ],
+      "feedback": {
+        "correct": "The sample's updates never needed switching off.",
+        "generic": "Not quite right. Find where the missing −v would have been written.",
+        "byKey": {
+          "judge": "You trusted the sample. An update ending before the last day, such as (1, 4, +3), shows the bug at once."
+        }
+      },
+      "explain": {
+        "text": "Without $-v$ every update runs to the last day, which is what the sample's updates did anyway. An update that ends early shows it: (1, 4, +3) leaves days 5 to 7 at 3. A stress test against a brute force, as in lesson 4, finds it in one trial.",
+        "canvas": {
+          "tone": {
+            "l4": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The busiest day",
+      "prose": "A variant counts how many intervals cover each day: each adds 1 from $l$ to $r$, inclusive. Five clients' trading windows over days 0 to 9 are shown. Slide the day and count.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 9,
+          "step": 1
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "w1",
+              "from": 1,
+              "to": 5,
+              "row": 1,
+              "colour": 2
+            },
+            {
+              "id": "w2",
+              "from": 2,
+              "to": 8,
+              "row": 2,
+              "colour": 2
+            },
+            {
+              "id": "w3",
+              "from": 4,
+              "to": 9,
+              "row": 3,
+              "colour": 2
+            },
+            {
+              "id": "w4",
+              "from": 6,
+              "to": 7,
+              "row": 4,
+              "colour": 2
+            },
+            {
+              "id": "w5",
+              "from": 0,
+              "to": 3,
+              "row": 5,
+              "colour": 2
+            }
+          ],
+          "points": [
+            {
+              "id": "d",
+              "x": 0,
+              "label": "day",
+              "labelPos": "below"
+            }
+          ]
+        },
+        "controls": [
+          {
+            "bind": "d",
+            "min": 0,
+            "max": 9,
+            "step": 1,
+            "label": "Day",
+            "start": 0
+          }
+        ],
+        "derive": {
+          "caption": "Day {{d.x}}: covered by {{(d.x >= 1 && d.x <= 5 ? 1 : 0) + (d.x >= 2 && d.x <= 8 ? 1 : 0) + (d.x >= 4 && d.x <= 9 ? 1 : 0) + (d.x >= 6 && d.x <= 7 ? 1 : 0) + (d.x >= 0 && d.x <= 3 ? 1 : 0)}} windows"
+        }
+      },
+      "question": "What is the most windows covering a single day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "3, on days 2 to 7",
+        "label": "Windows",
+        "wrong": [
+          {
+            "id": "touch",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide from day 0 to day 9."
+        },
+        {
+          "rung": "point",
+          "text": "Days 2 to 7 each have the same count.",
+          "highlight": [
+            "w1",
+            "w2",
+            "w3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Days 2 to 7 are covered by 3 windows each, and no day by 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Three windows, on days 2 to 7.",
+        "generic": "Not quite right. Count the windows covering each day.",
+        "byKey": {
+          "touch": "(0, 3) ends on day 3 and (4, 9) starts on day 4: they never share a day.",
+          "all": "No single day lies in all five windows: (0, 3) and (4, 9) do not meet."
+        }
+      },
+      "explain": {
+        "text": "Days 0 to 9 have counts 1, 2, 3, 3, 3, 3, 3, 3, 2, 1: a peak of 3. With +1 at $l$ and −1 at $r + 1$, the running total is exactly this count. It is lesson 10's rooms problem on whole, inclusive days."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Solve the busiest day",
+      "prose": "Write `max_coverage(n, intervals)`: the most intervals covering any one of days 0 to $n - 1$. Each interval `(l, r)` is inclusive, so `(0, 2)` and `(2, 4)` share day 2. Return 0 when there are no intervals.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "V. Busiest day   (2 s, 256 MB)",
+            "n days (1 ≤ n ≤ 2·10⁵), m intervals",
+            "(0 ≤ m ≤ 10⁵), each l r with",
+            "0 ≤ l ≤ r ≤ n − 1. Print the most",
+            "intervals covering a single day."
+          ],
+          "title": "Problem V"
+        },
+        "state": {}
+      },
+      "question": "Write `max_coverage(n, intervals)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def max_coverage(n, intervals):\n    ...\n",
+        "solution": "def max_coverage(n, intervals):\n    d = [0] * (n + 1)\n    for l, r in intervals:\n        d[l] += 1\n        d[r + 1] -= 1\n    best = run = 0\n    for i in range(n):\n        run += d[i]\n        best = max(best, run)\n    return best\n",
+        "examples": [
+          {
+            "call": "max_coverage(10, [(1, 5), (2, 8), (4, 9), (6, 7), (0, 3)])",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "max_coverage(10, [(0, 2), (2, 4)])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "max_coverage(10, [(0, 9), (3, 3), (3, 5)])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "max_coverage(5, [])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_coverage(1, [(0, 0), (0, 0)])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "max_coverage(6, [(0, 1), (2, 3), (4, 5)])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "max_coverage(10, [(1, 5), (2, 8), (4, 9), (6, 7), (0, 3)])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(13)\nwins = []\nfor _ in range(100000):\n    a, b = r.randint(0, 199999), r.randint(0, 199999); wins.append((min(a, b), max(a, b)))",
+            "call": "max_coverage(200000, wins)",
+            "expect": "49889",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, each checked against a brute force. They cover shared end days, a one-day interval, no intervals and $n = 1$. Test 7 has $2 \\cdot 10^5$ days and $10^5$ random intervals."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "This is `apply_ranges` with $v = 1$."
+        },
+        {
+          "rung": "point",
+          "text": "Keep the largest running total as you go.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`d[l] += 1`, `d[r + 1] -= 1`, then track `best = max(best, run)`."
+        }
+      ],
+      "feedback": {
+        "correct": "A difference array of +1s, then the peak of its running total.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: (0, 2) and (2, 4) both cover day 2, since ends are inclusive. Put the −1 at $r + 1$.",
+          "test-3": "Test 3 has no intervals: return 0.",
+          "test-7": "Test 7 has $10^5$ intervals averaging about 66,500 days. Mark the ends instead of filling every day."
+        }
+      },
+      "explain": {
+        "text": "Marking ends and one pass is $O(n + m)$. On test 7 the busiest day is covered 49,889 times. Filling every day instead would be about $6.6 \\cdot 10^9$ steps."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "In two dimensions",
+      "prose": "The rule you used: `d[l] += v` and `d[r + 1] -= v`, then a running total.\n\n$$a_i = \\sum_{j=0}^{i} d_j$$\n\nOn a grid, an update to rows $r_1$ to $r_2$ and columns $c_1$ to $c_2$ marks four corners. Running totals along rows, then down columns, rebuild it.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 5,
+          "cols": 5,
+          "rowHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "colHeads": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "compact": true
+        },
+        "maxHeight": 260,
+        "state": {
+          "shade": {
+            "block": [
+              "r2c2",
+              "r2c3",
+              "r3c2",
+              "r3c3"
+            ]
+          },
+          "cells": {
+            "r2c2": "+v",
+            "r2c4": "−v",
+            "r4c2": "−v",
+            "r4c4": "?"
+          }
+        }
+      },
+      "question": "An update covers rows 1 to 2 and columns 1 to 2. Which mark goes at the far corner, row 3 and column 3?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "plus",
+            "text": "$+v$: both $-v$ marks reach that corner, so it adds $v$ back",
+            "correct": true
+          },
+          {
+            "id": "minus",
+            "text": "$-v$, like the other two ends",
+            "why": "Then the region beyond both ends would end at $-2v$, not 0. One $+v$ cancels the double subtraction."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: it lies outside the block",
+            "why": "Both $-v$ marks spread into that corner after the running totals, so it needs a correction."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$+v$ at the far corner.",
+        "generic": "Not quite right. Follow where each mark spreads after the two passes."
+      },
+      "explain": {
+        "text": "After both passes, each mark spreads to every cell below and to the right of it. The two $-v$ marks both reach the far region, so $+v$ there brings it back to 0. This is inclusion and exclusion on four corners.",
+        "canvas": {
+          "cells": {
+            "r4c4": "+v"
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Positions from fills",
+      "prose": "A fill on day $t$ changes the position from day $t$ onwards. That is a difference array with no right end. A desk's fills in one stock over a week are listed.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "Fill (shares)"
+          ],
+          "rows": [
+            [
+              "0",
+              "+300"
+            ],
+            [
+              "2",
+              "−100"
+            ],
+            [
+              "3",
+              "+200"
+            ],
+            [
+              "5",
+              "−400"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the position at the end of day 4?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 400,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "400 shares",
+        "label": "Shares",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "abs",
+            "value": 600,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which fills have happened by day 4?"
+        },
+        {
+          "rung": "point",
+          "text": "Days 0, 2 and 3.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$300 - 100 + 200 = 400$."
+        }
+      ],
+      "feedback": {
+        "correct": "400 shares.",
+        "generic": "Not quite right. Add the fills on days 0 to 4.",
+        "byKey": {
+          "all": "0 includes the sale on day 5, which has not happened by day 4.",
+          "abs": "You added the sale on day 2 instead of subtracting it."
+        }
+      },
+      "explain": {
+        "text": "The position on day 4 is the running total of fills up to day 4: $300 - 100 + 200 = 400$. An option position has both ends, so exposure starts on the trade date and stops after expiry. Daily exposure across a book of options is a difference array over dates."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A range update writes $+v$ at cell $l$ and $-v$ at cell $r + 1$: two writes, whatever its length.",
+      "One running total of the difference array, after all updates, rebuilds every value in $O(n + q)$.",
+      "Allocate $n + 1$ cells for an update ending on the last day, and mark every update before the running total."
+    ],
+    "formula": {
+      "name": "Difference array",
+      "tex": "d_l \\leftarrow d_l + v,\\quad d_{r+1} \\leftarrow d_{r+1} - v,\\quad a_i = \\sum_{j=0}^{i} d_j",
+      "note": "The inverse of a prefix sum."
+    },
+    "trap": "Forgetting $-v$ at $r + 1$: every update then runs to the last day, which a sample can hide."
+  },
+  "quiz": [
+    {
+      "id": "q-diff-list",
+      "difficulty": 2,
+      "prose": "Five days, updates $(0, 2, +5)$ and $(1, 3, -2)$.",
+      "question": "Which is the difference list, cells 0 to 5?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "good",
+            "text": "5, −2, 0, −5, 2, 0",
+            "correct": true
+          },
+          {
+            "id": "atr",
+            "text": "5, −2, −5, 2, 0, 0",
+            "why": "You put each $-v$ at $r$ instead of $r + 1$."
+          },
+          {
+            "id": "vals",
+            "text": "5, 3, 3, −2, 0, 0",
+            "why": "That is the final values, the running total, not the difference list."
+          },
+          {
+            "id": "nominus",
+            "text": "5, −2, 0, 0, 0, 0",
+            "why": "You left out the switch-off marks at $r + 1$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$+5$ at 0, $-5$ at 3; $-2$ at 1, $+2$ at 4.",
+        "generic": "Not quite right. Write $+v$ at $l$ and $-v$ at $r + 1$ for each update."
+      },
+      "explain": {
+        "text": "The first update writes +5 at cell 0 and −5 at cell 3. The second writes −2 at cell 1 and +2 at cell 4."
+      }
+    },
+    {
+      "id": "q-day2",
+      "difficulty": 2,
+      "prose": "The same five days and updates $(0, 2, +5)$ and $(1, 3, -2)$.",
+      "question": "What is day 2's final value?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "3",
+        "label": "Day 2",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "off",
+            "value": -2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$5 - 2 = 3$.",
+        "generic": "Not quite right. Add every update that covers day 2.",
+        "byKey": {
+          "first": "Day 2 is in the second update's range too, so it loses 2.",
+          "off": "Day 2 is still inside the first update, which ends on day 2."
+        }
+      },
+      "explain": {
+        "text": "Both updates cover day 2: $5 - 2 = 3$. The running total of 5, −2 and 0 gives the same 3."
+      }
+    },
+    {
+      "id": "q-order",
+      "difficulty": 3,
+      "prose": "A solution marks half the updates, takes the running total, then marks the other half in the same list.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "late",
+            "text": "The second half's updates never reach the final values",
+            "correct": true
+          },
+          {
+            "id": "double",
+            "text": "The first half is counted twice",
+            "why": "The first half was added once, before the running total."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: addition can happen in any order",
+            "why": "The marks can go in any order, but all of them must be in before the running total."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every update must be marked before the running total.",
+        "generic": "Not quite right. Ask which marks the running total saw."
+      },
+      "explain": {
+        "text": "The running total reads the list once. Marks written after it are never turned into values, so the second half is lost."
+      }
+    },
+    {
+      "id": "q-which",
+      "difficulty": 3,
+      "prose": "Four tasks on an array of $n \\le 2 \\cdot 10^5$ values, each with $q \\le 2 \\cdot 10^5$ operations.",
+      "question": "Which one does a difference array solve in $O(n + q)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "updates",
+            "text": "All range additions first, then print every value",
+            "correct": true
+          },
+          {
+            "id": "mixed",
+            "text": "Range additions mixed with single-value queries",
+            "why": "Each query would need a fresh running total, $O(n)$ per query. That needs a tree structure."
+          },
+          {
+            "id": "sums",
+            "text": "Range-sum queries on a fixed array",
+            "why": "That is a prefix sum, the inverse tool."
+          },
+          {
+            "id": "max",
+            "text": "The maximum of each range, with no updates",
+            "why": "A difference array says nothing about range maxima."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All updates, then one pass.",
+        "generic": "Not quite right. A difference array is read once, after every update."
+      },
+      "explain": {
+        "text": "A difference array takes every update in $O(1)$, then one pass gives all values. When updates and queries interleave, a Fenwick or segment tree takes over."
+      }
+    }
+  ]
+}

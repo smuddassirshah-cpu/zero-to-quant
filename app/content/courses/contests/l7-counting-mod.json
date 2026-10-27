@@ -1,0 +1,1446 @@
+{
+  "id": "l7-counting-mod",
+  "course": "contests",
+  "title": "Counting modulo a prime",
+  "minutes": 14,
+  "objectives": [
+    "Compute binomial coefficients modulo a prime with factorial tables.",
+    "Answer many binomial queries in $O(1)$ each after an $O(n)$ build."
+  ],
+  "skills": [
+    "cn-maths"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Routes across a grid",
+      "prose": "A statement asks for the shortest routes across a 1,000 by 1,000 grid of streets, modulo $10^9 + 7$. Start with 3 by 3. A route moves only right or up, so each corner's count is the count to its left plus the count below.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 4,
+          "rowHeads": false,
+          "colHeads": false,
+          "lattice": true
+        },
+        "state": {
+          "cells": {
+            "r4c1": "1",
+            "r3c1": "1",
+            "r2c1": "1",
+            "r1c1": "1",
+            "r4c2": "1",
+            "r3c2": "2",
+            "r2c2": "3",
+            "r1c2": "4",
+            "r4c3": "1",
+            "r3c3": "3",
+            "r4c4": "1",
+            "r3c4": "4",
+            "r2c4": "10"
+          },
+          "shade": {
+            "ends": {
+              "ids": [
+                "r4c1",
+                "r1c4"
+              ],
+              "colour": 3
+            }
+          }
+        }
+      },
+      "question": "Fill in the three missing counts. The last is the number of routes.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Corner (right, up)",
+          "Routes to it"
+        ],
+        "rows": [
+          [
+            "(2, 2)",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              },
+              "bind": "cells.r2c3",
+              "deps": [
+                "r2c2",
+                "r3c3"
+              ]
+            }
+          ],
+          [
+            "(2, 3)",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              },
+              "bind": "cells.r1c3",
+              "deps": [
+                "r1c2",
+                "r2c3"
+              ]
+            }
+          ],
+          [
+            "(3, 3)",
+            {
+              "edit": true,
+              "answer": 20,
+              "tol": {
+                "abs": 0
+              },
+              "bind": "cells.r1c4",
+              "deps": [
+                "r1c3",
+                "r2c4"
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the count to the left and the count below."
+        },
+        {
+          "rung": "point",
+          "text": "Corner (2, 2) has 3 to its left and 3 below.",
+          "highlight": [
+            "r2c2",
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3 + 3 = 6$, then $4 + 6 = 10$, then $10 + 10 = 20$."
+        }
+      ],
+      "feedback": {
+        "correct": "6, 10 and 20 routes.",
+        "generic": "Not quite right. Each count is the count to its left plus the count below.",
+        "byKey": {
+          "r0c1": "Corner (2, 2): its left neighbour (1, 2) has 3 and the corner below, (2, 1), has 3.",
+          "r1c1": "Corner (2, 3): 4 to its left and your 6 below.",
+          "r2c1": "Corner (3, 3): 10 to its left and 10 below."
+        }
+      },
+      "explain": {
+        "text": "You used **Pascal's rule**: every count is the sum of two earlier ones. For 3 by 3 the answer is 20. For 1,000 by 1,000 the same table needs a million additions, and a statement with $10^5$ grids of up to $10^6$ would need far more.",
+        "canvas": {
+          "cells": {
+            "r2c3": "6",
+            "r1c3": "10",
+            "r1c4": "20"
+          },
+          "highlight": [
+            "r1c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A route is a choice",
+      "prose": "Every route across 3 by 3 takes 6 steps: 3 to the right and 3 up. Here are the 6 steps of a route in order. Choosing which of them go up fixes the route.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "step",
+            "step",
+            "step",
+            "step",
+            "step",
+            "step"
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "caption": "Tap the steps that go up."
+        }
+      },
+      "question": "Choose a route: tap the 3 steps that go up.",
+      "widget": {
+        "kind": "tap-regions",
+        "count": 3,
+        "among": [
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5",
+          "c6"
+        ],
+        "countWord": "up-steps"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Any 3 of the 6 will do: each choice is one route."
+        },
+        {
+          "rung": "point",
+          "text": "For example, steps 1, 2 and 3 go up first, then 3 to the right.",
+          "highlight": [
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tap any 3 cells, then Check."
+        }
+      ],
+      "feedback": {
+        "correct": "That is one route. Each set of 3 up-steps out of 6 is a different route.",
+        "generic": "Not quite right. A route across 3 by 3 goes up exactly 3 times.",
+        "byKey": {
+          "too-few": "A route across 3 by 3 goes up exactly 3 times: tap 3 steps.",
+          "too-many": "A route across 3 by 3 goes up only 3 times: tap 3 steps."
+        }
+      },
+      "explain": {
+        "text": "Routes match the ways to choose 3 up-steps out of 6, so there are $\\binom{6}{3} = \\frac{6!}{3!\\,3!} = 20$, the corner's count. For 1,000 by 1,000 the answer is $\\binom{2000}{1000}$, a number with 601 digits. We need it modulo a prime, and the formula has a division in it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A table of factorials",
+      "prose": "Modulo a prime, dividing by $k!$ means multiplying by $(k!)^{-1}$ (l5). So we store $n! \\bmod p$ once, building each entry from the last. Fill in the table modulo 13.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "fact[0] = 1",
+            "for i in 1, 2, ..., n:",
+            "    fact[i] = fact[i - 1] * i % p"
+          ],
+          "title": "Building the table"
+        },
+        "state": {}
+      },
+      "question": "Fill in $n! \\bmod 13$ for $n = 4$, 5 and 6.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$n$",
+          "$n! \\bmod 13$"
+        ],
+        "rows": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "1",
+            "1"
+          ],
+          [
+            "2",
+            "2"
+          ],
+          [
+            "3",
+            "6"
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 11,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "6",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the previous entry by $n$, then reduce modulo 13."
+        },
+        {
+          "rung": "point",
+          "text": "$6 \\cdot 4 = 24 = 13 + 11$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$11 \\cdot 5 = 55 = 4 \\cdot 13 + 3$, and $3 \\cdot 6 = 18 = 13 + 5$."
+        }
+      ],
+      "feedback": {
+        "correct": "11, 3 and 5.",
+        "generic": "Not quite right. Multiply the row above by $n$ and reduce modulo 13.",
+        "byKey": {
+          "r4c1": "Check $n = 4$: $4! = 24$, and $24 \\bmod 13 = 11$.",
+          "r5c1": "Check $n = 5$: $11 \\cdot 5 = 55$, and $55 \\bmod 13 = 3$."
+        }
+      },
+      "explain": {
+        "text": "Each entry took one multiplication and one remainder, so the whole table is $O(n)$. $6! = 720 = 55 \\cdot 13 + 5$, which matches your last entry. These are **factorial tables**; next come their inverses."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Inverses, backwards",
+      "prose": "Fermat gives one inverse: $(6!)^{-1} \\equiv 5^{11} \\equiv 8 \\pmod{13}$. The rest need no more powers. Since $k! = k \\cdot (k-1)!$, we have $((k-1)!)^{-1} = k \\cdot (k!)^{-1}$. Work up the table from $k = 6$.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "inv_fact[n] = pow(fact[n], p - 2, p)",
+            "for k in n, n - 1, ..., 1:",
+            "    inv_fact[k - 1] = inv_fact[k] * k % p"
+          ],
+          "title": "Backwards"
+        },
+        "state": {}
+      },
+      "question": "Fill in $(k!)^{-1} \\bmod 13$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$k$",
+          "$k! \\bmod 13$",
+          "$(k!)^{-1} \\bmod 13$"
+        ],
+        "rows": [
+          [
+            "0",
+            "1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "1",
+            "1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2",
+            "2",
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3",
+            "6",
+            {
+              "edit": true,
+              "answer": 11,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            "11",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            "3",
+            {
+              "edit": true,
+              "answer": 9,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "6",
+            "5",
+            "8"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at the bottom: row 5 is row 6's inverse times 6."
+        },
+        {
+          "rung": "point",
+          "text": "$8 \\cdot 6 = 48 = 3 \\cdot 13 + 9$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then $9 \\cdot 5 = 45 \\equiv 6$, $6 \\cdot 4 = 24 \\equiv 11$, $11 \\cdot 3 = 33 \\equiv 7$, $7 \\cdot 2 = 14 \\equiv 1$, $1 \\cdot 1 = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 1, 7, 11, 6, 9: one multiplication each.",
+        "generic": "Not quite right. Each row is the row below times that row's $k + 1$, modulo 13.",
+        "byKey": {
+          "r5c2": "Check $k = 5$: multiply row 6's 8 by 6, not by 5. $8 \\cdot 6 = 48 \\equiv 9$.",
+          "r0c2": "Check $k = 0$: $0! = 1$, and the inverse of 1 is 1."
+        }
+      },
+      "explain": {
+        "text": "Each entry times its factorial is 1: for $k = 3$, $6 \\cdot 11 = 66 = 5 \\cdot 13 + 1$. One `pow` and $n$ multiplications built the whole column, so it is $O(n + \\log p)$.",
+        "canvas": {
+          "lines": [
+            "inv_fact[6] = pow(5, 11, 13) = 8",
+            "inv_fact[5] = 8 · 6 % 13 = 9",
+            "inv_fact[4] = 9 · 5 % 13 = 6",
+            "...",
+            "inv_fact[0] = 1 · 1 % 13 = 1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One query",
+      "prose": "With both columns stored, any $\\binom{n}{k}$ with $n < 13$ takes three lookups and two multiplications:\n\n$$\\binom{n}{k} \\equiv n! \\cdot (k!)^{-1} \\cdot ((n-k)!)^{-1} \\pmod{p}$$",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$k$",
+            "$k! \\bmod 13$",
+            "$(k!)^{-1} \\bmod 13$"
+          ],
+          "rows": [
+            [
+              "0",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2",
+              "7"
+            ],
+            [
+              "3",
+              "6",
+              "11"
+            ],
+            [
+              "4",
+              "11",
+              "6"
+            ],
+            [
+              "5",
+              "3",
+              "9"
+            ],
+            [
+              "6",
+              "5",
+              "8"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              3,
+              6
+            ]
+          }
+        }
+      },
+      "question": "Compute $\\binom{6}{3} \\bmod 13$ from the table.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "7: $5 \\cdot 11 \\cdot 11 = 605 = 46 \\cdot 13 + 7$. Check: $20 = 13 + 7$.",
+        "label": "$\\binom{6}{3} \\bmod 13$",
+        "wrong": [
+          {
+            "id": "noreduce",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "usedfact",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "raw",
+            "value": 605,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You need row 6's factorial and row 3's inverse twice."
+        },
+        {
+          "rung": "point",
+          "text": "$6! \\equiv 5$ and $(3!)^{-1} \\equiv 11$.",
+          "highlight": [
+            "r6c1",
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$5 \\cdot 11 = 55 \\equiv 3$, then $3 \\cdot 11 = 33 \\equiv 7$."
+        }
+      ],
+      "feedback": {
+        "correct": "7, which is $20 \\bmod 13$.",
+        "generic": "Not quite right. Multiply $6!$ by the inverse of $3!$ twice, reducing modulo 13.",
+        "byKey": {
+          "noreduce": "20 is $\\binom63$ itself. The table gives it modulo 13: reduce, $20 - 13 = 7$.",
+          "usedfact": "You multiplied by $3! \\equiv 6$ instead of its inverse, 11. Dividing means multiplying by the inverse.",
+          "raw": "605 is the product before reducing. $605 = 46 \\cdot 13 + 7$."
+        }
+      },
+      "explain": {
+        "text": "$5 \\cdot 11 \\cdot 11 \\equiv 7$, and $\\binom63 = 20 \\equiv 7$. Every query now costs $O(1)$ after an $O(n)$ build. The tables need $n < p$: from $n = p$ on, $n! \\equiv 0$.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r6c1",
+              "r3c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Lots between desks",
+      "prose": "A broker splits 5 identical lots between 3 desks, and a desk may get none. Write a split as 5 stars and 2 bars: the bars cut the stars into 3 groups. The row shows the split 2, 3, 0.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "★",
+            "★",
+            "|",
+            "★",
+            "★",
+            "★",
+            "|"
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "caption": "Desk 1 gets 2, desk 2 gets 3, desk 3 gets 0."
+        }
+      },
+      "question": "How many ways are there to split the 5 lots?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "21: choose where the 2 bars go among 7 places, $\\binom{7}{2} = 21$.",
+        "label": "Splits",
+        "wrong": [
+          {
+            "id": "labelled",
+            "value": 243,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "lots-only",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 35,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every split is a row of 7 symbols."
+        },
+        {
+          "rung": "point",
+          "text": "Choosing the 2 bar positions out of 7 fixes the split.",
+          "highlight": [
+            "c3",
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\binom{7}{2} = \\frac{7 \\cdot 6}{2} = 21$."
+        }
+      ],
+      "feedback": {
+        "correct": "21 splits.",
+        "generic": "Not quite right. Count the ways to place 2 bars among 7 symbols.",
+        "byKey": {
+          "labelled": "$3^5 = 243$ treats the lots as different. Identical lots only care how many each desk gets.",
+          "lots-only": "$\\binom{5}{2}$ chooses bars among the 5 lots only. The row has 7 places.",
+          "three": "$\\binom{7}{3} = 35$ chooses 3 places. There are only 2 bars."
+        }
+      },
+      "explain": {
+        "text": "This is **stars and bars**: $n$ identical lots between $k$ desks can be split in $\\binom{n + k - 1}{k - 1}$ ways. With $n$ up to $10^6$ it is one more factorial-table query."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write build_tables",
+      "prose": "Write `build_tables(n, p)` for a prime $p > n$. Return `(fact, inv_fact)`, two lists of length $n + 1$ holding $i! \\bmod p$ and its inverse. Use one `pow`, then work backwards.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "fact[0] = 1;  fact[i] = fact[i - 1] * i % p",
+            "inv_fact[n] = pow(fact[n], p - 2, p)",
+            "inv_fact[k - 1] = inv_fact[k] * k % p"
+          ],
+          "title": "The two loops"
+        },
+        "state": {}
+      },
+      "question": "Write `build_tables(n, p)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def build_tables(n, p):\n    ...\n",
+        "solution": "def build_tables(n, p):\n    fact = [1] * (n + 1)\n    for i in range(1, n + 1):\n        fact[i] = fact[i - 1] * i % p\n    inv_fact = [1] * (n + 1)\n    inv_fact[n] = pow(fact[n], p - 2, p)\n    for k in range(n, 0, -1):\n        inv_fact[k - 1] = inv_fact[k] * k % p\n    return fact, inv_fact\n",
+        "examples": [
+          {
+            "call": "build_tables(6, 13)",
+            "expect": "([1, 1, 2, 6, 11, 3, 5], [1, 1, 7, 11, 6, 9, 8])",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "build_tables(6, 13)",
+            "expect": "([1, 1, 2, 6, 11, 3, 5], [1, 1, 7, 11, 6, 9, 8])",
+            "compare": "equal"
+          },
+          {
+            "call": "build_tables(0, 7)",
+            "expect": "([1], [1])",
+            "compare": "equal"
+          },
+          {
+            "call": "build_tables(1, 2)",
+            "expect": "([1, 1], [1, 1])",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(1000, 10**9 + 7)",
+            "call": "all(f[i] * g[i] % (10**9 + 7) == 1 for i in range(1001))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(10**6, 10**9 + 7)",
+            "call": "(len(f), len(g), f[10**6], f[10**6] * g[10**6] % (10**9 + 7), g[0])",
+            "expect": "(1000001, 1000001, 641102369, 1, 1)",
+            "compare": "equal",
+            "budget": 5000
+          }
+        ],
+        "how": "Check runs 5 hidden tests: the table modulo 13, $n = 0$, $n = 1$ modulo 2, every product $i! \\cdot (i!)^{-1}$ up to 1,000, and a build up to $n = 10^6$. The last has 10 s. One `pow` per entry also passes it, but takes about ten times as long."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two loops: one forwards for `fact`, one backwards for `inv_fact`."
+        },
+        {
+          "rung": "point",
+          "text": "The backward loop starts from `pow(fact[n], p - 2, p)`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`for k in range(n, 0, -1): inv_fact[k - 1] = inv_fact[k] * k % p`."
+        }
+      ],
+      "feedback": {
+        "correct": "$O(n)$ multiplications and one $O(\\log p)$ power.",
+        "generic": "Not quite right. Read the failing row: $n = 0$ and the backward step are the usual slips."
+      },
+      "explain": {
+        "text": "In Pyodide the build up to $10^6$ took about 0.4 s. One `pow` per entry took about 4 s: correct, but ten times slower. In C++ the same two loops fill two arrays of `long long`."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write n_choose_k",
+      "prose": "Write `n_choose_k(n, k, fact, inv_fact, p)`: $\\binom{n}{k} \\bmod p$ from tables built with $p$ and some size at least $n$. There are no ways to choose $k > n$ or $k < 0$ things, so return 0 then. `build_tables` from the last screen is provided.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$k$",
+            "$k! \\bmod 13$",
+            "$(k!)^{-1} \\bmod 13$"
+          ],
+          "rows": [
+            [
+              "0",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2",
+              "7"
+            ],
+            [
+              "3",
+              "6",
+              "11"
+            ],
+            [
+              "4",
+              "11",
+              "6"
+            ],
+            [
+              "5",
+              "3",
+              "9"
+            ],
+            [
+              "6",
+              "5",
+              "8"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              3,
+              6
+            ]
+          }
+        }
+      },
+      "question": "Write `n_choose_k(n, k, fact, inv_fact, p)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "def build_tables(n, p):\n    fact = [1] * (n + 1)\n    for i in range(1, n + 1):\n        fact[i] = fact[i - 1] * i % p\n    inv_fact = [1] * (n + 1)\n    inv_fact[n] = pow(fact[n], p - 2, p)\n    for k in range(n, 0, -1):\n        inv_fact[k - 1] = inv_fact[k] * k % p\n    return fact, inv_fact\n",
+        "starter": "def n_choose_k(n, k, fact, inv_fact, p):\n    ...\n",
+        "solution": "def n_choose_k(n, k, fact, inv_fact, p):\n    if k < 0 or k > n:\n        return 0\n    return fact[n] * inv_fact[k] % p * inv_fact[n - k] % p\n",
+        "examples": [
+          {
+            "setup": "f, g = build_tables(6, 13)",
+            "call": "n_choose_k(6, 3, f, g, 13)",
+            "expect": "7",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "f, g = build_tables(6, 13)",
+            "call": "n_choose_k(6, 3, f, g, 13)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(1000, 10**9 + 7)",
+            "call": "n_choose_k(6, 3, f, g, 10**9 + 7)",
+            "expect": "20",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(1000, 10**9 + 7)",
+            "call": "n_choose_k(10, 0, f, g, 10**9 + 7)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(1000, 10**9 + 7)",
+            "call": "n_choose_k(0, 0, f, g, 10**9 + 7)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(1000, 10**9 + 7)",
+            "call": "n_choose_k(5, 7, f, g, 10**9 + 7)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(1000, 10**9 + 7)",
+            "call": "n_choose_k(5, -1, f, g, 10**9 + 7)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "setup": "f, g = build_tables(1000, 10**9 + 7)",
+            "call": "n_choose_k(1000, 500, f, g, 10**9 + 7)",
+            "expect": "159835829",
+            "compare": "equal"
+          },
+          {
+            "setup": "import math; f, g = build_tables(1000, 10**9 + 7)",
+            "call": "all(n_choose_k(n, k, f, g, 10**9 + 7) == (math.comb(n, k) % (10**9 + 7) if 0 <= k <= n else 0) for n in range(60) for k in range(-2, 63))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: modulo 13 and modulo $10^9 + 7$, $k = 0$, $n = 0$, $k > n$, $k < 0$, $\\binom{1000}{500}$, and every $\\binom{n}{k}$ for $n < 60$ against `math.comb`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Handle $k < 0$ and $k > n$ first."
+        },
+        {
+          "rung": "point",
+          "text": "Then three lookups: `fact[n]`, `inv_fact[k]`, `inv_fact[n - k]`.",
+          "highlight": [
+            "r6c1",
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return fact[n] * inv_fact[k] % p * inv_fact[n - k] % p`."
+        }
+      ],
+      "feedback": {
+        "correct": "Two guards and one product.",
+        "generic": "Not quite right. Read the failing row: $k > n$ and $k < 0$ must give 0."
+      },
+      "explain": {
+        "text": "Without the guard, $k > n$ reads `inv_fact[n - k]` at a negative index. Python then wraps round to the end of the list and returns a wrong number, with no error."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Many queries",
+      "prose": "Write `count_queries(queries, p)`. Each query is a pair $(n, k)$ with $0 \\le n \\le 10^6$; return the list of $\\binom{n}{k} \\bmod p$ in order. There may be $10^5$ queries. Build the tables once, up to the largest $n$. `build_tables` is provided.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "C. Routes, many times   (2 s, 256 MB)",
+            "Input: q (1 ≤ q ≤ 10⁵), then q lines n k",
+            "(0 ≤ n ≤ 10⁶, −1 ≤ k ≤ n + 1).",
+            "Output: C(n, k) mod 10⁹ + 7 for each query."
+          ],
+          "title": "Problem C"
+        },
+        "state": {}
+      },
+      "question": "Write `count_queries(queries, p)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "def build_tables(n, p):\n    fact = [1] * (n + 1)\n    for i in range(1, n + 1):\n        fact[i] = fact[i - 1] * i % p\n    inv_fact = [1] * (n + 1)\n    inv_fact[n] = pow(fact[n], p - 2, p)\n    for k in range(n, 0, -1):\n        inv_fact[k - 1] = inv_fact[k] * k % p\n    return fact, inv_fact\n",
+        "starter": "def count_queries(queries, p):\n    ...\n",
+        "solution": "def count_queries(queries, p):\n    if not queries:\n        return []\n    n = max(q[0] for q in queries)\n    fact, inv_fact = build_tables(n, p)\n    out = []\n    for n, k in queries:\n        if k < 0 or k > n:\n            out.append(0)\n        else:\n            out.append(fact[n] * inv_fact[k] % p * inv_fact[n - k] % p)\n    return out\n",
+        "examples": [
+          {
+            "call": "count_queries([(6, 3), (5, 7)], 10**9 + 7)",
+            "expect": "[20, 0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_queries([(6, 3), (5, 7)], 10**9 + 7)",
+            "expect": "[20, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "count_queries([(4, 2), (0, 0), (3, -1), (3, 3)], 10**9 + 7)",
+            "expect": "[6, 1, 0, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "count_queries([(6, 3)], 13)",
+            "expect": "[7]",
+            "compare": "equal"
+          },
+          {
+            "call": "count_queries([], 10**9 + 7)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "count_queries([(2000, 1000)], 10**9 + 7)",
+            "expect": "[72475738]",
+            "compare": "equal"
+          },
+          {
+            "call": "count_queries([(10**6, 5 * 10**5)], 10**9 + 7)",
+            "expect": "[996692777]",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random; r = random.Random(7); qs = []\nfor _ in range(10**5):\n    n = r.randint(0, 10**6); qs.append((n, r.randint(-1, n + 1)))",
+            "call": "sum(count_queries(qs, 10**9 + 7)) % (10**9 + 7)",
+            "expect": "555553024",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: hand queries with $k$ out of range, a prime 13, no queries, the 1,000 by 1,000 grid, $\\binom{10^6}{5 \\cdot 10^5}$, and $10^5$ random queries with $n \\le 10^6$ (seed 7). `math.comb` on each query is stopped at test 6."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the largest $n$ among the queries first."
+        },
+        {
+          "rung": "point",
+          "text": "One call `build_tables(max_n, p)`, outside the loop.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then answer each query with the guard and three lookups, as in `n_choose_k`."
+        }
+      ],
+      "feedback": {
+        "correct": "One $O(\\max n)$ build, then $O(1)$ per query.",
+        "generic": "Not quite right. Read the failing row: no queries and $k$ out of range are the usual slips."
+      },
+      "explain": {
+        "text": "The build is about a million multiplications and each query a handful, so the whole run is well under a second. Building tables inside the loop would cost $10^5$ builds: the same mistake as recomputing a prefix sum per query."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The exact binomial",
+      "prose": "A solution to problem C answers each query with `math.comb(n, k) % p`. Python computes $\\binom{n}{k}$ exactly, then reduces.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "import math",
+            "",
+            "def count_queries(queries, p):",
+            "    return [math.comb(n, k) % p if 0 <= k <= n else 0",
+            "            for n, k in queries]"
+          ],
+          "title": "A short solution"
+        },
+        "state": {
+          "highlight": [
+            "l4"
+          ]
+        }
+      },
+      "question": "What happens on the tests with $n$ near $10^6$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tle",
+            "text": "Time limit: each exact $\\binom{n}{k}$ near $n = 10^6$ has about 300,000 digits",
+            "correct": true
+          },
+          {
+            "id": "overflow",
+            "text": "Wrong answer: the numbers overflow",
+            "why": "Python's integers never overflow, so every answer would be right, only far too late. In C++ the exact value cannot even be stored."
+          },
+          {
+            "id": "ok",
+            "text": "Accepted: `math.comb` runs in C",
+            "why": "Fast code still builds a 300,000-digit number for each query. One took about 10 s in Pyodide."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How big is $\\binom{10^6}{5 \\cdot 10^5}$?"
+        },
+        {
+          "rung": "point",
+          "text": "Its logarithm is about $10^6 \\log_{10} 2$.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It has 301,028 digits, and the reduction comes only at the end."
+        }
+      ],
+      "feedback": {
+        "correct": "Correct, and far too slow.",
+        "generic": "Not quite right. Think about the size of the exact number before `% p`.",
+        "byKey": {
+          "overflow": "You expected an overflow. Python's integers grow as needed, so the answers are right but each takes seconds."
+        }
+      },
+      "explain": {
+        "text": "Reducing only at the end means building the whole huge number first. The tables reduce after every multiplication, so nothing grows past $p^2$. Building each inverse factorial with its own `pow` is the milder slip: correct, about ten times slower."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The method",
+      "prose": "For a prime $p$ and $0 \\le k \\le n < p$:\n\n$$\\binom{n}{k} \\equiv n! \\cdot (k!)^{-1} \\cdot ((n-k)!)^{-1} \\pmod p$$\n\nBuild both tables once in $O(n)$, then answer each query in $O(1)$. For small $n$, Pascal's rule $\\binom{n}{k} = \\binom{n-1}{k-1} + \\binom{n-1}{k}$ fills an $O(n^2)$ table with no division.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$k$",
+            "$k! \\bmod 13$",
+            "$(k!)^{-1} \\bmod 13$"
+          ],
+          "rows": [
+            [
+              "0",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2",
+              "7"
+            ],
+            [
+              "3",
+              "6",
+              "11"
+            ],
+            [
+              "4",
+              "11",
+              "6"
+            ],
+            [
+              "5",
+              "3",
+              "9"
+            ],
+            [
+              "6",
+              "5",
+              "8"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              3,
+              6
+            ]
+          }
+        }
+      },
+      "question": "When should you fill Pascal's table instead of factorial tables?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "notprime",
+            "text": "The modulus is $10^9$, which is not prime, and $n \\le 2{,}000$",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "$n$ up to $10^6$, modulus $10^9 + 7$",
+            "why": "An $O(n^2)$ table at $n = 10^6$ is $10^{12}$ entries. Factorial tables are the tool here."
+          },
+          {
+            "id": "many",
+            "text": "Many queries with $n \\le 10^6$ and a prime modulus",
+            "why": "Factorial tables answer each query in $O(1)$, whatever $k$ is."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Pascal's rule only adds, so it works for any modulus.",
+        "generic": "Not quite right. Which method needs inverses, and when do inverses exist?"
+      },
+      "explain": {
+        "text": "Modulo $10^9 = 2^9 \\cdot 5^9$, even 2 has no inverse, so the factorial method fails. Pascal's table of $2{,}000^2 / 2 = 2 \\cdot 10^6$ sums is quick, and every entry is exact modulo anything."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Paths in a binomial tree",
+      "prose": "A binomial tree moves a share price up or down at each step. The drawing shows 4 steps, with the number of paths to each node. A 10-step tree prices a short-dated option.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "lattice": {
+            "steps": 4,
+            "S0": 100,
+            "u": 1.1,
+            "d": 0.9,
+            "decimals": 0,
+            "money": "£"
+          }
+        },
+        "state": {
+          "values": {
+            "n0_0": "1",
+            "n1_0": "1",
+            "n1_1": "1",
+            "n2_0": "1",
+            "n2_1": "2",
+            "n2_2": "1",
+            "n3_0": "1",
+            "n3_1": "3",
+            "n3_2": "3",
+            "n3_3": "1",
+            "n4_0": "1",
+            "n4_1": "4",
+            "n4_2": "6",
+            "n4_3": "4",
+            "n4_4": "1"
+          }
+        }
+      },
+      "question": "In a 10-step tree, how many paths end at the node with 6 up moves?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 210,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "210: $\\binom{10}{6} = \\frac{10!}{6!\\,4!}$.",
+        "label": "Paths",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 1024,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ordered",
+            "value": 5040,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A path is a choice of which 6 of the 10 steps go up."
+        },
+        {
+          "rung": "point",
+          "text": "In the drawing, the node with 2 ups after 4 steps has $\\binom42 = 6$ paths.",
+          "highlight": [
+            "n4_2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\binom{10}{6} = \\binom{10}{4} = \\frac{10 \\cdot 9 \\cdot 8 \\cdot 7}{24} = 210$."
+        }
+      ],
+      "feedback": {
+        "correct": "210 paths.",
+        "generic": "Not quite right. Choose which 6 of the 10 steps go up.",
+        "byKey": {
+          "all": "1,024 counts every path through the tree. Only those with exactly 6 ups end at that node.",
+          "ordered": "5,040 counts ordered picks of 4 down-steps. The steps chosen form a set, so divide by $4!$."
+        }
+      },
+      "explain": {
+        "text": "$\\binom{10}{6} = 210$. On a 252-step daily tree the middle node's count has 75 digits, so a counting question about fills or paths is asked modulo a prime. Interviewers like that form: it checks the method without big-number arithmetic.",
+        "canvas": {
+          "highlight": [
+            "n4_2"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Store $i! \\bmod p$ and $(i!)^{-1} \\bmod p$ for $i \\le n$: one forward loop, one `pow`, one backward loop, $O(n)$.",
+      "Then $\\binom{n}{k} = n! \\cdot (k!)^{-1} \\cdot ((n-k)!)^{-1} \\bmod p$ costs $O(1)$; it is 0 for $k < 0$ or $k > n$, and needs $n < p$.",
+      "Pascal's rule needs no inverses and suits small $n$ or a modulus that is not prime; stars and bars gives $\\binom{n+k-1}{k-1}$."
+    ],
+    "formula": {
+      "name": "Binomial modulo a prime",
+      "tex": "\\binom{n}{k} \\equiv n! \\, (k!)^{-1} \\, ((n-k)!)^{-1} \\pmod p",
+      "note": "Build the inverses backwards: $((k-1)!)^{-1} = k \\cdot (k!)^{-1}$."
+    },
+    "trap": "`math.comb(n, k) % p` is exact but builds a huge number first: about 10 s per query at $n = 10^6$ in Pyodide."
+  },
+  "quiz": [
+    {
+      "id": "q-k-gt-n",
+      "difficulty": 2,
+      "prose": "A query asks for $\\binom{5}{7}$.",
+      "question": "What should `n_choose_k` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "0: there is no way to choose 7 things from 5.",
+        "label": "Answer",
+        "wrong": [
+          {
+            "id": "swap",
+            "value": 21,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0 ways.",
+        "generic": "Not quite right. How many ways are there to choose 7 of 5 things?",
+        "byKey": {
+          "swap": "21 is $\\binom75$. The query asks for 7 out of 5.",
+          "one": "1 is the count for $k = 0$ or $k = n$."
+        }
+      },
+      "explain": {
+        "text": "The guard `k < 0 or k > n` returns 0 before any table lookup."
+      }
+    },
+    {
+      "id": "q-backward",
+      "difficulty": 2,
+      "prose": "`inv_fact[n]` is known.",
+      "question": "Which line fills `inv_fact[k - 1]` in $O(1)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`inv_fact[k] * k % p`",
+            "correct": true
+          },
+          {
+            "id": "off",
+            "text": "`inv_fact[k] * (k - 1) % p`",
+            "why": "$k! = k \\cdot (k-1)!$, so the factor is $k$, not $k - 1$."
+          },
+          {
+            "id": "div",
+            "text": "`inv_fact[k] // k % p`",
+            "why": "Dividing is the move modular arithmetic forbids. Multiplying by $k$ undoes the $k$ in $k!$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$((k-1)!)^{-1} = k \\cdot (k!)^{-1}$.",
+        "generic": "Not quite right. Write $k!$ in terms of $(k-1)!$."
+      },
+      "explain": {
+        "text": "Inverting $k! = k \\cdot (k-1)!$ gives $(k!)^{-1} = k^{-1} ((k-1)!)^{-1}$, so $((k-1)!)^{-1} = k \\, (k!)^{-1}$."
+      }
+    },
+    {
+      "id": "q-stars",
+      "difficulty": 3,
+      "prose": "4 identical lots go to 3 desks; a desk may get none.",
+      "question": "How many splits are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "15: $\\binom{6}{2}$, placing 2 bars among 6 symbols.",
+        "label": "Splits",
+        "wrong": [
+          {
+            "id": "labelled",
+            "value": 81,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "lots",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "15 splits.",
+        "generic": "Not quite right. Use 4 stars and 2 bars.",
+        "byKey": {
+          "labelled": "$3^4 = 81$ treats the lots as different.",
+          "lots": "$\\binom42 = 6$ places the bars among the lots only."
+        }
+      },
+      "explain": {
+        "text": "$\\binom{4 + 3 - 1}{3 - 1} = \\binom62 = 15$."
+      }
+    },
+    {
+      "id": "q-work",
+      "difficulty": 3,
+      "prose": "Problem C: $10^5$ queries, each with $n \\le 10^6$.",
+      "question": "About how many operations do the tables need in total?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "1e6",
+            "text": "About $10^6$: one build, then a few per query",
+            "correct": true
+          },
+          {
+            "id": "1e11",
+            "text": "About $10^{11}$",
+            "why": "You multiplied $n$ by the number of queries. The tables are built once."
+          },
+          {
+            "id": "1e5log",
+            "text": "About $10^5 \\cdot 30$: one `pow` per query",
+            "why": "With an inverse-factorial table no query needs a `pow` at all."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$O(\\max n + q)$.",
+        "generic": "Not quite right. How many times are the tables built?"
+      },
+      "explain": {
+        "text": "About $2 \\cdot 10^6$ multiplications for the build and $3 \\cdot 10^5$ for the queries."
+      }
+    }
+  ]
+}

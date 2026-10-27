@@ -1,0 +1,497 @@
+{
+  "id": "homework-3",
+  "course": "contests",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw3-alerts",
+      "difficulty": 4,
+      "skills": [
+        "cn-patterns"
+      ],
+      "prose": "Problem A: $n \\le 2 \\cdot 10^5$ clients each watch the market during a window $[s, e]$ of whole minutes, ends included. Choose the fewest alert times so that every window contains at least one alert.",
+      "question": "Write `fewest_alerts(windows)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def fewest_alerts(windows):\n    ...\n",
+        "solution": "def fewest_alerts(windows):\n    count = 0\n    last = float(\"-inf\")\n    for s, e in sorted(windows, key=lambda w: w[1]):\n        if s > last:  # not yet covered\n            count += 1\n            last = e\n    return count\n",
+        "examples": [
+          {
+            "call": "fewest_alerts([(1, 4), (2, 6), (5, 8), (7, 9)])",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "fewest_alerts([(1, 4), (2, 6), (5, 8), (7, 9)])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_alerts([(1, 10), (2, 3)])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_alerts([(1, 3), (3, 5)])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_alerts([(4, 4)])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_alerts([(2, 5), (2, 5), (2, 5)])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_alerts([(1, 2), (3, 4), (5, 6)])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_alerts([(1, 20), (2, 4), (3, 5), (10, 12), (11, 15)])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_alerts([(-5, -1), (-3, 2)])",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(31)\nwins = []\nfor _ in range(200000):\n    s = r.randint(0, 10**9); wins.append((s, s + r.randint(0, 10**5)))",
+            "call": "fewest_alerts(wins)",
+            "expect": "35817",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests, each checked against a brute force. They include nested windows, a shared end minute, identical windows and negative times. Test 9 has 200,000 windows."
+      },
+      "feedback": {
+        "correct": "Sort by end, alert at the end of each uncovered window.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is (1, 10) and (2, 3): one alert at 3 covers both. An alert at a window's start is the wrong choice.",
+          "test-3": "Test 3 is (1, 3) and (3, 5). Ends are included, so one alert at 3 covers both: test `s > last`.",
+          "test-9": "Test 9 has 200,000 windows. Keep only the last alert time instead of checking every alert."
+        }
+      },
+      "explain": {
+        "text": "The window that ends first needs an alert inside it, and its end is the best place. Every window containing an earlier alert time still contains that end. Then skip the windows it covers; sorting makes it $O(n \\log n)$, and test 9 needs 35,817 alerts."
+      }
+    },
+    {
+      "id": "hw3-span",
+      "difficulty": 4,
+      "skills": [
+        "cn-patterns",
+        "cn-impl"
+      ],
+      "prose": "Problem S has $n \\le 2 \\cdot 10^5$ closing prices. The span of day $i$ counts the consecutive days ending at day $i$ with close at most day $i$'s. The first day's span is 1.",
+      "question": "Write `spans(closes)`, returning the list of spans.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "class _Counted(list):\n    reads = 0\n\n    def __getitem__(self, i):\n        _Counted.reads += 1\n        return list.__getitem__(self, i)\n\n    def __iter__(self):\n        _Counted.reads += len(self)\n        return list.__iter__(self)\n\n\ndef reads_for(fn, xs):\n    _Counted.reads = 0\n    fn(_Counted(xs))\n    return _Counted.reads\n",
+        "starter": "def spans(closes):\n    ...\n",
+        "solution": "def spans(closes):\n    out = []\n    stack = []  # indices of earlier closes, falling\n    for i, c in enumerate(closes):\n        while stack and closes[stack[-1]] <= c:\n            stack.pop()\n        out.append(i + 1 if not stack else i - stack[-1])\n        stack.append(i)\n    return out\n",
+        "examples": [
+          {
+            "call": "spans([100, 80, 60, 70, 60, 75, 85])",
+            "expect": "[1, 1, 1, 2, 1, 4, 6]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "spans([100, 80, 60, 70, 60, 75, 85])",
+            "expect": "[1, 1, 1, 2, 1, 4, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "spans([5, 5, 5])",
+            "expect": "[1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "spans([42])",
+            "expect": "[1]",
+            "compare": "equal"
+          },
+          {
+            "call": "spans([9, 7, 5, 3])",
+            "expect": "[1, 1, 1, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "spans([1, 2, 3, 4])",
+            "expect": "[1, 2, 3, 4]",
+            "compare": "equal"
+          },
+          {
+            "call": "spans([3, 1, 2, 1, 3])",
+            "expect": "[1, 1, 2, 1, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "reads_for(spans, list(range(1000))) <= 10000",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(spans(list(range(200000))))",
+            "expect": "20000100000",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(33)\ncl = [r.randint(1, 1000) for _ in range(200000)]",
+            "call": "sum(spans(cl))",
+            "expect": "18188896",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: the example, equal closes, $n = 1$, falling and rising prices. Test 7 passes 1,000 rising closes in a list that counts its reads; at most 10,000 pass. Tests 8 and 9 have 200,000 closes, rising and random."
+      },
+      "feedback": {
+        "correct": "A stack of earlier closes, falling: $O(n)$.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is three equal closes: spans 1, 2 and 3. The rule is at most today's close, so pop on `<=`.",
+          "test-7": "Test 7 read the list far more than 10,000 times. Walking back day by day on rising prices costs about $n^2 / 2$ reads.",
+          "test-8": "Test 8 has 200,000 rising closes: walking back from each day is $2 \\cdot 10^{10}$ steps. Keep a stack, as in `ds` lesson 10."
+        }
+      },
+      "explain": {
+        "text": "The stack holds the days not yet beaten, with falling closes. A new close pops every day it beats, and the day left on top is where the span stops. Each day is pushed and popped at most once, so the whole pass is $O(n)$."
+      }
+    },
+    {
+      "id": "hw3-cap",
+      "difficulty": 5,
+      "skills": [
+        "cn-patterns"
+      ],
+      "prose": "Problem C: $n \\le 2 \\cdot 10^5$ days start at 0. Then $q \\le 10^5$ updates arrive in order, each adding $v \\ge 1$ to days $l$ to $r$. After how many updates does some day first exceed the cap? Return −1 if no day ever does.",
+      "question": "Write `first_over_cap(n, updates, cap)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def first_over_cap(n, updates, cap):\n    ...\n",
+        "solution": "def first_over_cap(n, updates, cap):\n    def over(k):  # does some day exceed cap after the first k updates?\n        d = [0] * (n + 1)\n        for l, r, v in updates[:k]:\n            d[l] += v\n            d[r + 1] -= v\n        run = 0\n        for i in range(n):\n            run += d[i]\n            if run > cap:\n                return True\n        return False\n\n    if not over(len(updates)):\n        return -1\n    lo, hi = 1, len(updates)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if over(mid):\n            hi = mid\n        else:\n            lo = mid + 1\n    return lo\n",
+        "examples": [
+          {
+            "call": "first_over_cap(5, [(0, 2, 3), (1, 4, 2), (2, 2, 1)], 5)",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "first_over_cap(5, [(0, 2, 3), (1, 4, 2), (2, 2, 1)], 5)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "first_over_cap(5, [(0, 4, 10)], 5)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "first_over_cap(5, [(0, 1, 1), (3, 4, 1)], 5)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "first_over_cap(4, [(0, 3, 2), (0, 3, 3)], 5)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "first_over_cap(3, [(0, 0, 4), (1, 1, 4), (2, 2, 4), (0, 2, 2)], 5)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "first_over_cap(1, [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)], 5)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "first_over_cap(6, [(5, 5, 4), (0, 5, 1), (4, 5, 1)], 5)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(35)\nups = []\nfor _ in range(100000):\n    a, b = r.randint(0, 199999), r.randint(0, 199999); ups.append((min(a, b), max(a, b), r.randint(1, 10)))",
+            "call": "first_over_cap(200000, ups, 100000)",
+            "expect": "36515",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(35)\nups = []\nfor _ in range(100000):\n    a, b = r.randint(0, 199999), r.randint(0, 199999); ups.append((min(a, b), max(a, b), r.randint(1, 10)))",
+            "call": "first_over_cap(200000, ups, 200000)",
+            "expect": "72568",
+            "compare": "equal"
+          },
+          {
+            "setup": "import random\nr = random.Random(35)\nups = []\nfor _ in range(100000):\n    a, b = r.randint(0, 199999), r.randint(0, 199999); ups.append((min(a, b), max(a, b), r.randint(1, 10)))",
+            "call": "first_over_cap(200000, ups, 1000000000)",
+            "expect": "-1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. In the hand cases the first, the last or no update breaks the cap. Test 4 ends exactly at the cap. Tests 8 to 10 have $n = 2 \\cdot 10^5$ and $q = 10^5$.",
+        "budget": 20000
+      },
+      "feedback": {
+        "correct": "Binary search on the count, a difference array for each check.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 ends with every day at exactly 5. The cap is exceeded only above 5, so the answer is −1.",
+          "test-3": "Test 3 never exceeds the cap: return −1.",
+          "test-8": "Test 8 has $10^5$ updates. Rebuilding the days after every update is $O(nq)$; binary search on the count instead.",
+          "test-10": "Test 10 never exceeds the cap. Check all $q$ updates once before searching, and return −1."
+        }
+      },
+      "explain": {
+        "text": "Every $v \\ge 1$, so once a day exceeds the cap it stays over. So 'over after $k$ updates' is false, then true, as $k$ grows. Binary search finds the first true $k$ in about 17 checks, each a difference array: $O((n + q) \\log q)$."
+      }
+    },
+    {
+      "id": "hw3-exchange",
+      "difficulty": 3,
+      "skills": [
+        "cn-patterns"
+      ],
+      "prose": "The exchange argument for earliest-finish scheduling, one step per line.",
+      "question": "Put the proof in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Let $g$ be the meeting that finishes earliest, and OPT any best schedule in time order"
+          },
+          {
+            "id": "s2",
+            "text": "Let $o$ be OPT's first meeting; $g$ ends no later than $o$"
+          },
+          {
+            "id": "s3",
+            "text": "Swap $o$ for $g$: $g$ has ended before OPT's second meeting starts, so nothing overlaps"
+          },
+          {
+            "id": "s4",
+            "text": "The new schedule is as large as OPT, so it is also best, and it starts with $g$"
+          },
+          {
+            "id": "s5",
+            "text": "Drop $g$ and every meeting that starts before $g$ ends: what is left is the same problem, smaller"
+          },
+          {
+            "id": "s6",
+            "text": "By induction greedy is optimal on what is left, so its whole schedule is optimal"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ]
+      },
+      "feedback": {
+        "correct": "Choose, compare, swap, keep the size, shrink, induct.",
+        "generic": "Not quite right. Each line uses the one before it: you cannot swap before naming $o$."
+      },
+      "explain": {
+        "text": "The proof names greedy's choice and a best answer, then swaps one into the other without loss. It repeats on a smaller problem. The same moves prove most greedy choices in contests."
+      }
+    },
+    {
+      "id": "hw3-writeup",
+      "difficulty": 4,
+      "skills": [
+        "cn-patterns"
+      ],
+      "question": "Write up problem A.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Write up problem A, the fewest alerts, as you would after a contest. Give the statement in one line, the greedy, a counterexample to an obvious wrong greedy, the exchange proof, the complexity and the edge cases.",
+        "model": "**Problem A, fewest alerts.**\n\n**Statement.** Given $n \\le 2 \\cdot 10^5$ windows $[s_i, e_i]$ of whole minutes, ends included, choose the fewest alert times so that every window contains one.\n\n**The greedy.** Sort the windows by end. Keep `last`, the time of the latest alert. For each window in order, if $s > $ `last`, it is not covered: place an alert at its end $e$ and set `last` $= e$. The count of alerts is the answer.\n\n**A wrong greedy.** Sorting by start and alerting at each uncovered window's start fails on $[1, 10]$ and $[2, 3]$. It alerts at 1, then at 2, while one alert at 3 covers both.\n\n**Exchange proof.** Let $w$ be the window with the smallest end $e$. Any valid set of alerts has an alert $t$ inside $w$, so $t \\le e$. Move it to $e$. Every window that contained $t$ starts at or before $t \\le e$ and ends at or after $e$, because $e$ is the smallest end. So it still contains $e$, and the set stays valid with the same size. Hence some best answer alerts at $e$. The windows that do not contain $e$ all start after $e$, which is the test $s > $ `last`. They form the same problem, smaller, and by induction the greedy solves it optimally.\n\n**Complexity.** Sorting is $O(n \\log n)$ and the pass is $O(n)$, well under a second at $n = 2 \\cdot 10^5$ in Python. Checking each window against every alert is $O(nk)$, too slow when the answer $k$ is in the tens of thousands, as in test 9 (35,817 alerts).\n\n**Edge cases.** $n = 1$ gives 1. Identical windows give 1. Nested windows such as $[1, 20]$ and $[2, 4]$ give 1, at 4. Windows sharing an end minute, $[1, 3]$ and $[3, 5]$, give 1 at 3, because ends are included: the test is $s > $ `last`, not $s \\ge $ `last`. A one-minute window $[4, 4]$ and negative times need no special code.",
+        "rubric": [
+          {
+            "points": 1,
+            "text": "States the task in one line with the limit and that ends are included"
+          },
+          {
+            "points": 2,
+            "text": "Describes the greedy: sort by end, alert at the end of each window not yet covered"
+          },
+          {
+            "points": 2,
+            "text": "Gives a concrete counterexample to a wrong greedy, with the two answers"
+          },
+          {
+            "points": 3,
+            "text": "Proves it by exchange: moves an alert to the smallest end, says why every window stays covered, uses induction"
+          },
+          {
+            "points": 1,
+            "text": "Gives $O(n \\log n)$ with the reason (the sort) and names the slow alternative"
+          },
+          {
+            "points": 1,
+            "text": "Lists at least three edge cases, including windows that share an end minute"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your write-up with the model, part by part.",
+        "generic": "Compare your write-up with the model, part by part."
+      },
+      "explain": {
+        "text": "A greedy write-up stands on its proof. The counterexample shows why the key matters, and the exchange shows why this key works. The edge cases record which inequality the statement asked for."
+      }
+    },
+    {
+      "id": "hw3-assign",
+      "difficulty": 4,
+      "skills": [
+        "cn-patterns"
+      ],
+      "prose": "Twelve traders must sit at twelve desks, one each, with a cost for every pairing. A DP over masks seats them in order. `dp[mask]` is the least cost of seating the first popcount(mask) traders at the desks in `mask`.",
+      "question": "If the loop checks every desk for every mask, how many (mask, desk) pairs does it look at?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 49152,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "49,152 = $2^{12} \\cdot 12$",
+        "label": "Pairs",
+        "wrong": [
+          {
+            "id": "perms",
+            "value": 479001600,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "masks",
+            "value": 4096,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2^{12} \\cdot 12 = 49{,}152$.",
+        "generic": "Not quite right. Multiply the masks by the desks.",
+        "byKey": {
+          "perms": "That is $12!$, every seating order. The DP merges seatings that fill the same desks.",
+          "masks": "That counts masks only. Each mask checks 12 desks."
+        }
+      },
+      "explain": {
+        "text": "$2^{12} = 4{,}096$ masks times 12 desks is 49,152 checks. Only the 24,576 desks inside a mask lead anywhere. Trying all $12! \\approx 4.8 \\cdot 10^8$ seatings would not fit any time limit in Python."
+      }
+    },
+    {
+      "id": "hw3-derange",
+      "difficulty": 3,
+      "skills": [
+        "cn-patterns"
+      ],
+      "prose": "Problem P: print any order $p$ of 1 to $n$ with $p_i \\ne i$ at every position $i$. Print −1 if there is none.",
+      "question": "Which construction is correct for every $n$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "shift",
+            "text": "Shift by one, 2, 3, …, $n$, 1, and print −1 for $n = 1$",
+            "correct": true
+          },
+          {
+            "id": "reverse",
+            "text": "Reverse: $n$, …, 2, 1",
+            "why": "For odd $n$ the middle stays put: $n = 3$ gives 3, 2, 1, with 2 in place 2."
+          },
+          {
+            "id": "pairs",
+            "text": "Swap neighbours in pairs: 2, 1, 4, 3, …",
+            "why": "For odd $n$ the last number has no partner and stays in its place."
+          },
+          {
+            "id": "odd",
+            "text": "Print −1 for every odd $n$",
+            "why": "Shifting by one works for every $n \\ge 2$: 2, 3, 1 has no fixed point."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every number moves one place; only $n = 1$ has no answer.",
+        "generic": "Not quite right. Check each construction at $n = 3$."
+      },
+      "explain": {
+        "text": "Shifting puts $i + 1$ at place $i$ and 1 at place $n$, so no number sits at its own place. For $n = 1$ the only order is 1, which fails. Odd $n$ breaks the two constructions that pair or mirror the numbers."
+      }
+    },
+    {
+      "id": "hw3-bookings",
+      "difficulty": 3,
+      "skills": [
+        "cn-patterns"
+      ],
+      "prose": "Problem B: $n \\le 2 \\cdot 10^5$ flights and $q \\le 2 \\cdot 10^5$ bookings. Each booking reserves $s$ seats on every flight from $l$ to $r$. Print the seats booked on each flight.",
+      "question": "Which approach fits the limits best?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "diff",
+            "text": "A difference array: $+s$ at $l$, $-s$ at $r + 1$, then one running total",
+            "correct": true
+          },
+          {
+            "id": "prefix",
+            "text": "Prefix sums of the flights",
+            "why": "Prefix sums answer range-sum queries on fixed values. Here ranges are added to."
+          },
+          {
+            "id": "loop",
+            "text": "A loop over each booking's flights",
+            "why": "That is up to $4 \\cdot 10^{10}$ additions."
+          },
+          {
+            "id": "bisect",
+            "text": "A binary search for each flight",
+            "why": "There is nothing sorted to search. Each flight needs the total of the bookings covering it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two writes per booking and one pass: $O(n + q)$.",
+        "generic": "Not quite right. Every booking is known before any flight is printed."
+      },
+      "explain": {
+        "text": "All bookings arrive before any output, which is exactly the difference-array shape. Each booking writes two cells, and one running total prints every flight. The loop over flights is $O(nq)$ in the worst case."
+      }
+    }
+  ]
+}
