@@ -1,0 +1,440 @@
+{
+ "id": "homework-3",
+ "course": "garch",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-backtest-steps",
+   "difficulty": 3,
+   "skills": [
+    "gv-risk"
+   ],
+   "title": "A backtest in order",
+   "prose": "You must backtest a GARCH 99% VaR honestly on 1,000 days held back from the fit.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "fit",
+      "text": "Fit GARCH(1,1) by maximum likelihood on the training days only"
+     },
+     {
+      "id": "filter",
+      "text": "Hold the parameters fixed and filter every day, each variance from returns up to the day before"
+     },
+     {
+      "id": "var",
+      "text": "Turn each test day's forecast into a VaR: $-q_{0.01}\\,\\hat\\sigma_{t+1} \\times$ position"
+     },
+     {
+      "id": "count",
+      "text": "Count the test days whose loss beats that day's VaR"
+     },
+     {
+      "id": "lr",
+      "text": "Compute Kupiec's LR from the count and compare it with 3.841"
+     },
+     {
+      "id": "time",
+      "text": "Check whether the breaches bunch together in time"
+     }
+    ],
+    "answer": [
+     "fit",
+     "filter",
+     "var",
+     "count",
+     "lr",
+     "time"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Fit, filter, VaR, count, test the count, then test the timing.",
+    "byKey": {
+     "fit": "The fit comes first, on the training days alone, so the test days stay unseen.",
+     "lr": "Kupiec needs the count, so counting comes before it."
+    }
+   },
+   "explain": {
+    "text": "The fit sees only the training days, and each test day's VaR uses returns up to the evening before. Then the count goes to Kupiec, and the timing to an independence check, since Kupiec cannot see bunching."
+   }
+  },
+  {
+   "id": "h-t-var",
+   "difficulty": 3,
+   "skills": [
+    "gv-risk"
+   ],
+   "prose": "A £1m position has a forecast daily volatility of 1.2%. The desk uses Student-$t$ shocks with $\\nu = 5$, rescaled to variance 1; `t.ppf(0.01, 5)` is −3.3649.",
+   "question": "What is the 99% one-day VaR?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 31277.56,
+    "tol": {
+     "abs": 15
+    },
+    "label": "VaR in pounds",
+    "accept": "£31,278: $3.3649 \\times \\sqrt{3/5} \\times 0.012 \\times$ £1m.",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 40378.8,
+      "tol": {
+       "abs": 20
+      }
+     },
+     {
+      "id": "normal",
+      "value": 27916.17,
+      "tol": {
+       "abs": 15
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Rescale the quantile by $\\sqrt{3/5}$ before multiplying.",
+    "byKey": {
+     "raw": "You used the raw $t_5$ quantile. That $t$ has variance 5/3.",
+     "normal": "That is the normal VaR."
+    }
+   },
+   "explain": {
+    "text": "The unit-variance quantile is $-3.3649 \\times \\sqrt{0.6} = -2.6065$, so the VaR is $2.6065 \\times$ £12,000 = £31,278."
+   }
+  },
+  {
+   "id": "h-banded-backtest",
+   "difficulty": 4,
+   "skills": [
+    "gv-forecast",
+    "gv-risk"
+   ],
+   "title": "A volatility target with a band and costs",
+   "prose": "Write `banded_backtest(params, r, n_train, target, cap, band, cost_bp)`. Size each test day from GARCH's forecast made the evening before, as in lesson 12. Keep the held weight until the target weight moves more than `band` away from it, then trade to the target. Return a tuple of three: the realised annual vol, the turnover a year and the yearly cost as a fraction. Round them to 4, 4 and 6 places; the vol is the sample sd times $\\sqrt{252}$.",
+   "question": "Write `banded_backtest`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\ndef garch_variance(params, r):\n    \"\"\"Conditional variances for returns r (in %): sigma2_0 is the sample variance of r.\"\"\"\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\n# The course data set, extended to 3,000 days: days 0 to 1,999 are levels 1 and 2's.\nr3, s3 = simulate_garch(2e-6, 0.08, 0.90, 3000, 7)\nrp3 = 100 * r3          # daily returns in %\n# The level 2 fit on days 0 to 1,999, fit_garch(rp3[:2000]).x, to full precision.\nparams = np.array([0.012064508787727014, 0.06293432228388088, 0.9234867892614822])\ns2f = garch_variance(params, rp3)   # s2f[t]: day t's variance, from returns up to day t - 1\n\ndef target_weights(sigma_annual, target, cap):\n    \"\"\"Weight in the asset for each forecast annual vol (fractions).\"\"\"\n    return np.minimum(target / np.asarray(sigma_annual, dtype=float), cap)\n",
+    "starter": "import numpy as np\n\ndef banded_backtest(params, r, n_train, target, cap, band, cost_bp):\n    \"\"\"(realised annual vol, turnover a year, cost a year) for a fund that keeps\n    its held weight until the target weight moves more than band away from it.\"\"\"\n    w = ...           # the daily target weights, from the evening before\n    held = ...        # the weights actually held\n    ...\n    return ...\n",
+    "solution": "import numpy as np\n\ndef banded_backtest(params, r, n_train, target, cap, band, cost_bp):\n    \"\"\"(realised annual vol, turnover a year, cost a year) for a fund that keeps\n    its held weight until the target weight moves more than band away from it.\"\"\"\n    sigma_annual = np.sqrt(garch_variance(params, r))[n_train:] / 100 * np.sqrt(252)\n    w = target_weights(sigma_annual, target, cap)\n    held = np.empty(len(w)); cur = w[0]\n    for i, x in enumerate(w):\n        if abs(x - cur) > band:\n            cur = x\n        held[i] = cur\n    strat = held * np.asarray(r)[n_train:] / 100\n    vol = strat.std(ddof=1) * np.sqrt(252)\n    turnover = np.abs(np.diff(held)).sum() * 252 / (len(held) - 1)\n    return round(float(vol), 4), round(float(turnover), 4), round(float(turnover * cost_bp / 10_000), 6)\n",
+    "examples": [
+     {
+      "call": "list(banded_backtest(params, rp3, 2000, 0.10, 2.0, 0.0, 5))",
+      "expect": "[0.1021, 5.0994, 0.00255]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(banded_backtest(params, rp3, 2000, 0.10, 2.0, 0.0, 5))",
+      "expect": "[0.1021, 5.0994, 0.00255]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(banded_backtest(params, rp3, 2000, 0.10, 2.0, 0.1, 5))",
+      "expect": "[0.1005, 1.9225, 0.000961]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(banded_backtest(params, rp3, 2000, 0.10, 2.0, 0.05, 5))",
+      "expect": "[0.1006, 2.6728, 0.001336]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(banded_backtest(params, rp3, 2000, 0.20, 2.0, 0.1, 5))",
+      "expect": "[0.2012, 5.3457, 0.002673]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(banded_backtest(params, rp3, 2000, 0.10, 2.0, 0.1, 10))",
+      "expect": "[0.1005, 1.9225, 0.001922]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(banded_backtest((0.02, 0.08, 0.90), rp3, 2000, 0.10, 2.0, 0.1, 5))",
+      "expect": "[0.1, 2.2745, 0.001137]",
+      "compare": "isclose"
+     },
+     {
+      "call": "banded_backtest(params, rp3, 2000, 0.10, 2.0, 5.0, 5)[1]",
+      "expect": "0.0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 7 hidden tests on `rp3` with the fit held fixed. Bands are 0 (daily trading), 0.05, 0.1 and one so wide the fund never trades. Targets are 10% and 20%, costs 5 and 10 bp, and one test uses the true parameters. `params`, `rp3`, `garch_variance` and `target_weights` are loaded. The first run loads NumPy, which takes a few seconds."
+   },
+   "feedback": {
+    "correct": "Correct. The 0.1 band cuts turnover from 5.099 to 1.922 a year.",
+    "generic": "Some tests failed. Compare each target weight with the held weight, not with yesterday's target."
+   },
+   "explain": {
+    "text": "The band compares the new target with the weight actually held. With a band of 0.1 the fund trades on 63 days and its vol is 10.05%. A band of 5 never trades, so the fund keeps day 2,000's weight and its turnover is 0."
+   }
+  },
+  {
+   "id": "h-risk-pipeline",
+   "difficulty": 5,
+   "skills": [
+    "gv-forecast",
+    "gv-risk"
+   ],
+   "title": "From returns to a VaR verdict",
+   "prose": "Write `risk_pipeline(r, n_train, position, level=0.99)` for returns `r` in %. Fit GARCH on the first `n_train` days with `fit_garch`, then filter every day. Compute each later day's VaR with normal and with unit-variance $t_5$ shocks. Count the breaches and run `kupiec_lr`. Return a dictionary: `params` (3 places); `normal` and `t5`, each `[breaches, LR, p]` (4 places); and `keep`. `keep` is the model not rejected at 5% whose p-value is closest to 1, or `None`.",
+   "question": "Write `risk_pipeline`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\n\ndef simulate_garch(omega, alpha, beta, n, seed):\n    \"\"\"GARCH(1,1) returns: r_t = sigma_t z_t, z_t ~ N(0, 1),\n    sigma2_t = omega + alpha r_{t-1}^2 + beta sigma2_{t-1}, started at the long-run variance.\"\"\"\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t in range(n):\n        if t > 0:\n            s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n        r[t] = np.sqrt(s2[t]) * z[t]\n    return r, s2\n\ndef garch_variance(params, r):\n    \"\"\"Conditional variances for returns r (in %): sigma2_0 is the sample variance of r.\"\"\"\n    omega, alpha, beta = params\n    s2 = np.empty(len(r)); s2[0] = r.var()\n    for t in range(1, len(r)):\n        s2[t] = omega + alpha * r[t - 1] ** 2 + beta * s2[t - 1]\n    return s2\n\n# The course data set, extended to 3,000 days: days 0 to 1,999 are levels 1 and 2's.\nr3, s3 = simulate_garch(2e-6, 0.08, 0.90, 3000, 7)\nrp3 = 100 * r3          # daily returns in %\n# The level 2 fit on days 0 to 1,999, fit_garch(rp3[:2000]).x, to full precision.\nparams = np.array([0.012064508787727014, 0.06293432228388088, 0.9234867892614822])\ns2f = garch_variance(params, rp3)   # s2f[t]: day t's variance, from returns up to day t - 1\n\nimport math\nfrom scipy.optimize import minimize\nfrom scipy.stats import norm, t, chi2\n\ndef neg_loglik(params, r):\n    \"\"\"Minus the Gaussian log-likelihood, zero mean: 0.5 * sum(ln 2pi + ln s2 + r^2 / s2).\"\"\"\n    s2 = garch_variance(params, r)\n    return 0.5 * np.sum(np.log(2 * np.pi) + np.log(s2) + r ** 2 / s2)\n\ndef fit_garch(r):\n    return minimize(neg_loglik, x0=np.array([0.05, 0.05, 0.90]), args=(r,), method=\"SLSQP\",\n                    bounds=[(1e-6, 10.0), (0.0, 1.0), (0.0, 1.0)],\n                    constraints=[{\"type\": \"ineq\", \"fun\": lambda p: 0.9999 - p[1] - p[2]}],\n                    options={\"ftol\": 1e-10, \"maxiter\": 500})\n\ndef simulate_garch_t(omega, alpha, beta, nu, n, seed):\n    \"\"\"As simulate_garch, but with Student-t shocks rescaled to variance 1.\"\"\"\n    z = np.random.default_rng(seed).standard_t(nu, n) * np.sqrt((nu - 2) / nu)\n    r = np.empty(n); s2 = np.empty(n)\n    s2[0] = omega / (1 - alpha - beta)\n    for t_ in range(n):\n        if t_ > 0:\n            s2[t_] = omega + alpha * r[t_ - 1] ** 2 + beta * s2[t_ - 1]\n        r[t_] = np.sqrt(s2[t_]) * z[t_]\n    return r, s2\n\n# Three planted series in %, GARCH(1,1) at the course's true parameters but with t3 shocks.\nrt20 = 100 * simulate_garch_t(2e-6, 0.08, 0.90, 3, 3000, 20)[0]\nrt27 = 100 * simulate_garch_t(2e-6, 0.08, 0.90, 3, 3000, 27)[0]\nrt31 = 100 * simulate_garch_t(2e-6, 0.08, 0.90, 3, 3000, 31)[0]\n\ndef kupiec_lr(x, n, p=0.01):\n    def xlogy(a, b):\n        return 0.0 if a == 0 else a * math.log(b)\n    phat = x / n\n    lr = max(0.0, -2 * (xlogy(n - x, 1 - p) + xlogy(x, p) - xlogy(n - x, 1 - phat) - xlogy(x, phat)))\n    return lr, float(chi2.sf(lr, 1))\n",
+    "starter": "import numpy as np\nfrom scipy.stats import norm, t\n\ndef risk_pipeline(r, n_train, position, level=0.99):\n    r = np.asarray(r, dtype=float)\n    params = ...      # fit on the training days only\n    ...\n    out = ...         # keys: \"params\", \"normal\", \"t5\", \"keep\"\n    return out\n",
+    "solution": "import numpy as np\nfrom scipy.stats import norm, t\n\ndef risk_pipeline(r, n_train, position, level=0.99):\n    r = np.asarray(r, dtype=float)\n    params = fit_garch(r[:n_train]).x\n    sigma = np.sqrt(garch_variance(params, r))[n_train:] / 100\n    test = r[n_train:] / 100 * position\n    quantiles = {\"normal\": norm.ppf(1 - level),\n                 \"t5\": t.ppf(1 - level, 5) * np.sqrt(3 / 5)}\n    out = {\"params\": [round(float(v), 3) for v in params]}\n    best, best_p = None, -1.0\n    for name, q in quantiles.items():\n        var = -q * sigma * position\n        x = int(np.sum(test < -var))\n        lr, p = kupiec_lr(x, len(var), 1 - level)\n        out[name] = [x, round(lr, 4), round(p, 4)]\n        if p >= 0.05 and p > best_p:\n            best, best_p = name, p\n    out[\"keep\"] = best\n    return out\n",
+    "examples": [
+     {
+      "call": "risk_pipeline(rp3, 2000, 1_000_000)['keep']",
+      "expect": "'normal'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "risk_pipeline(rp3, 2000, 1_000_000)['keep']",
+      "expect": "'normal'",
+      "compare": "equal"
+     },
+     {
+      "call": "risk_pipeline(rp3, 2000, 1_000_000)['normal']",
+      "expect": "[11, 0.0978, 0.7544]",
+      "compare": "isclose"
+     },
+     {
+      "call": "risk_pipeline(rp3, 2000, 1_000_000)['t5']",
+      "expect": "[8, 0.4337, 0.5102]",
+      "compare": "isclose"
+     },
+     {
+      "call": "risk_pipeline(rp3, 2000, 1_000_000)['params']",
+      "expect": "[0.012, 0.063, 0.923]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "call": "risk_pipeline(rt27, 2000, 1_000_000)['keep']",
+      "expect": "'t5'",
+      "compare": "equal"
+     },
+     {
+      "call": "risk_pipeline(rt27, 2000, 1_000_000)['normal']",
+      "expect": "[20, 7.8272, 0.0051]",
+      "compare": "isclose"
+     },
+     {
+      "call": "risk_pipeline(rt20, 2000, 1_000_000)['keep']",
+      "expect": "'normal'",
+      "compare": "equal"
+     },
+     {
+      "call": "risk_pipeline(rt31, 2000, 1_000_000)['keep']",
+      "expect": "None",
+      "compare": "equal"
+     },
+     {
+      "call": "risk_pipeline(rp3, 2000, 250_000)['t5'][0]",
+      "expect": "8",
+      "compare": "equal"
+     },
+     {
+      "call": "sorted(risk_pipeline(rt20, 2000, 1_000_000).keys())",
+      "expect": "['keep', 'normal', 'params', 't5']",
+      "compare": "equal"
+     },
+     {
+      "call": "0.03 < risk_pipeline(rt27, 2000, 1_000_000)['params'][1] < 0.13",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "budget": 10000,
+    "how": "Check runs 11 hidden tests. They use `rp3` and three planted series, `rt20`, `rt27` and `rt31`. These have B's true parameters but fat $t_3$ shocks. Fitted parameters are checked to within 0.003, since optimisers can differ in the fourth place. Counts, LRs and p-values are checked exactly after rounding. Each test fits once, about 0.2 seconds; SciPy loads in a few seconds."
+   },
+   "feedback": {
+    "correct": "Correct. On B the normal model is kept; on `rt27` only the $t_5$ survives.",
+    "generic": "Some tests failed. Fit on the training days only, and use $1 - $ `level` in Kupiec. Keep only a model with p of at least 0.05."
+   },
+   "explain": {
+    "text": "On `rp3` both models pass and the normal has the higher p (0.7544 against 0.5102). On `rt27`, with $t_3$ shocks, the normal VaR is beaten 20 times (p = 0.0051), and the $t_5$ survives. On `rt31` both fail, so the honest answer is `None`."
+   }
+  },
+  {
+   "id": "h-march-kupiec",
+   "difficulty": 4,
+   "skills": [
+    "gv-risk"
+   ],
+   "prose": "A desk's 99% VaR had 9 breaches in the last 250 days.",
+   "question": "What is Kupiec's LR?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.229,
+    "tol": {
+     "abs": 0.01
+    },
+    "label": "Kupiec LR",
+    "accept": "10.229: $-2[241\\ln 0.99 + 9\\ln 0.01 - 241\\ln(241/250) - 9\\ln(9/250)]$.",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 5.1145,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. It is rejected (p = 0.0014), though Basel still calls 9 amber.",
+    "generic": "Not quite right. Compare the log-likelihood at 0.01 with that at $9/250$, and multiply the difference by $-2$.",
+    "byKey": {
+     "half": "You left out the factor $-2$."
+    }
+   },
+   "explain": {
+    "text": "The log-likelihoods are −43.869 at 0.01 and −38.754 at 0.036, so LR = 10.229 and p = 0.0014. Kupiec rejects the model; Basel's light is amber, one breach short of red."
+   }
+  },
+  {
+   "id": "h-clustered",
+   "difficulty": 4,
+   "skills": [
+    "gv-risk"
+   ],
+   "prose": "Of a model's 11 breaches in 1,000 days, 9 came the day after another breach. Kupiec's LR is 0.098.",
+   "question": "What should the backtest report conclude?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "indep",
+      "text": "The count passes, but the breaches are not independent: the VaR reacts too slowly to storms.",
+      "correct": true
+     },
+     {
+      "id": "pass",
+      "text": "The model passes: Kupiec's p is 0.75.",
+      "why": "Kupiec sees only the count. Nine breaches after a breach, where 1% is expected, is a failure of timing."
+     },
+     {
+      "id": "many",
+      "text": "The model fails for too many breaches.",
+      "why": "11 is inside Kupiec's band of 5 to 16. The failure is in the timing."
+     },
+     {
+      "id": "fine",
+      "text": "Bunched breaches are natural, since volatility clusters.",
+      "why": "A good VaR follows the clusters, so its breaches stay spread out."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Separate what the count shows from what the timing shows."
+   },
+   "explain": {
+    "text": "Under a correct model a breach follows a breach about 1% of the time, not 9 times in 11. The count passes Kupiec, but an independence test such as Christoffersen's would reject it."
+   }
+  },
+  {
+   "id": "h-capped-fund",
+   "difficulty": 3,
+   "skills": [
+    "gv-forecast",
+    "gv-risk"
+   ],
+   "prose": "A fund targets 12% a year with a leverage cap of 2. After a long calm, tonight's forecast is 5% a year.",
+   "question": "What volatility does the fund expect tomorrow, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1,
+    "tol": {
+     "abs": 0.0005
+    },
+    "label": "Fund volatility in per cent",
+    "accept": "10%: the rule asks for 2.4, the cap allows 2, and $2 \\times 5\\% = 10\\%$.",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "target",
+      "value": 0.12,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "uncapped",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite right. Cap the weight first, then multiply by the forecast.",
+    "byKey": {
+     "target": "The rule asks for 12/5 = 2.4, but the cap holds it at 2.",
+     "uncapped": "That is the asset's own forecast, at a weight of 1."
+    }
+   },
+   "explain": {
+    "text": "$12/5 = 2.4$ is above the cap, so the fund holds 2 and expects $2 \\times 5\\% = 10\\%$. The cap trades a missed target for limited borrowing."
+   }
+  },
+  {
+   "id": "h-march-note",
+   "difficulty": 5,
+   "skills": [
+    "gv-risk",
+    "gv-forecast"
+   ],
+   "title": "The March breaches",
+   "kind": "longform",
+   "prompt": "A desk's 99% one-day VaR had 9 breaches over the last 250 trading days, all in March. The VaR is a normal VaR built on a 250-day sample sd.\n\nWrite a note to the risk committee (about 250 words). Cover:\n\n(a) the count against what a correct model gives, with the numbers;\n\n(b) Kupiec's test and Basel's traffic light;\n\n(c) what the March clustering means;\n\n(d) the changes you propose, and how you would check them;\n\n(e) one limit of these tests.",
+   "model": "**(a)** A correct 99% VaR is beaten on 1% of days, so over 250 days the count is Binomial(250, 0.01): 2.5 expected, sd 1.57. Nine is 4.1 sds above that.\n\n**(b)** Kupiec's LR is $-2[241\\ln 0.99 + 9\\ln 0.01 - 241\\ln(241/250) - 9\\ln(9/250)] = 10.23$, against a 5% critical value of 3.841; p = 0.0014. The model is rejected. Basel's light is amber (5 to 9), one breach from red.\n\n**(c)** Nine breaches in one month mean the hits are not independent. A correct model's breaches arrive about 1% of the time after any day, storms included, because its VaR rises with the storm. A 250-day sd barely moves in a month, so in March the VaR stayed at its calm level while volatility jumped. The model is too slow, not only too low.\n\n**(d)** Replace the 250-day sd with a GARCH(1,1) forecast, fitted by maximum likelihood on past data and updated each evening. Use Student-$t$ shocks rescaled to variance 1, since a normal understates the 99% tail. Report expected shortfall beside VaR. Check the new model out of sample: hold the parameters fixed, compute each day's VaR from returns up to the day before, then run Kupiec and an independence test such as Christoffersen's on the breaches. On our simulated share B the GARCH-normal model had 11 breaches in 1,000 test days (p = 0.75) with none on consecutive days.\n\n**(e)** 250 days give little power: a model with a true 2% breach rate passes Kupiec about 76% of the time. A pass is not proof, so the committee should also watch the size of each breach.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States the expected count 2.5 with its sd 1.57, from the binomial"
+    },
+    {
+     "points": 2,
+     "text": "Computes Kupiec's LR (about 10.2) and reaches the right verdict, and names the amber zone"
+    },
+    {
+     "points": 2,
+     "text": "Explains that bunched breaches mean the VaR reacts too slowly, and names an independence test"
+    },
+    {
+     "points": 2,
+     "text": "Proposes a reacting forecast (GARCH or EWMA) with fat-tailed shocks, and an honest out-of-sample check"
+    },
+    {
+     "points": 1,
+     "text": "Names a limit: low power with 250 days, or that the count ignores breach size"
+    },
+    {
+     "points": 1,
+     "text": "Writes for a committee: numbered, numbers given, a clear recommendation"
+    }
+   ]
+  }
+ ]
+}
