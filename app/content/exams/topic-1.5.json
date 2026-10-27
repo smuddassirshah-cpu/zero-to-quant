@@ -1287,6 +1287,392 @@
       "explain": {
         "text": "First-step analysis gives $D_i = 1 + \\tfrac{1}{2}D_{i+1} + \\tfrac{1}{2}D_{i-1}$ with $D_0 = D_5 = 0$. The solution is $D_i = i(5 - i)$, so $D_2 = 6$."
       }
+    },
+    {
+      "id": "e-trade-counts",
+      "difficulty": 4,
+      "skills": [
+        "rv-variance",
+        "rv-condexp",
+        "rv-linearity"
+      ],
+      "title": "Counting trade outcomes",
+      "prose": "Each day a desk makes $N$ trades, where $N$ is 10 or 30 with equal chance. Each trade is independently up (chance 0.5), flat (0.2) or down (0.3). $U$ and $D$ count the up and down trades.",
+      "question": "Fill in both values.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\mathrm{Cov}(U, D \\mid N = 10)$",
+            {
+              "edit": true,
+              "answer": -1.5,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "$\\mathrm{Var}(U)$",
+            {
+              "edit": true,
+              "answer": 30.0,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "The counts compete for the same trades, and $N$ adds its own spread.",
+        "generic": "Use $-np_ip_j$ for the covariance, then the law of total variance for $U$.",
+        "byKey": {
+          "r0c1": "With $N$ fixed, more up trades leave fewer for down, so the sign is negative. The covariance is $-np_{\\text{up}}p_{\\text{down}}$ with $n = 10$.",
+          "r1c1": "Check both terms. The average binomial variance is $20 \\times 0.25 = 5$, and the spread of $E[U \\mid N] = 0.5N$ adds $0.25 \\times 100 = 25$."
+        }
+      },
+      "explain": {
+        "text": "Given $N = 10$, $\\mathrm{Cov}(U, D) = -10(0.5)(0.3) = -1.5$. Given $N$, $U$ is binomial, so $E[\\mathrm{Var}(U \\mid N)] = 0.25\\,E[N] = 5$ and $\\mathrm{Var}(E[U \\mid N]) = 0.25\\,\\mathrm{Var}(N) = 0.25 \\times 100 = 25$. The law of total variance adds them: $\\mathrm{Var}(U) = 30$."
+      }
+    },
+    {
+      "id": "e-share-count",
+      "difficulty": 3,
+      "skills": [
+        "rv-expect"
+      ],
+      "title": "Shares for £1,000",
+      "prose": "Tomorrow a share will cost £80 or £125, with equal chance. You will spend £1,000 on it, so at price $X$ you get $1000/X$ shares.",
+      "question": "Which is larger: $A = E[1000/X]$ or $B = 1000/E[X]$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "$A$ is larger",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$B$ is larger",
+            "why": "You treated $1000/x$ as concave. It curves upwards for positive $x$, so the average of it is larger."
+          },
+          {
+            "id": "c",
+            "text": "They are equal",
+            "why": "You moved the expectation inside $1000/x$. That only works for a straight line."
+          },
+          {
+            "id": "d",
+            "text": "It depends on the two chances",
+            "why": "Jensen’s inequality holds for any chances. Only a fixed price makes the two equal."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1000/x$ is convex for positive $x$, so Jensen puts $A$ above $B$.",
+        "generic": "Ask whether $1000/x$ curves up or down, then apply Jensen’s inequality."
+      },
+      "explain": {
+        "text": "$A = \\tfrac12(12.5 + 8) = 10.25$ shares, while $B = 1000/102.5 = 9.76$ shares. A convex function averages to more than its value at the average price."
+      }
+    },
+    {
+      "id": "e-beta-pair",
+      "difficulty": 4,
+      "skills": [
+        "dl-continuous"
+      ],
+      "title": "Two Beta questions",
+      "prose": "(a) Five strategies have independent scores, each Uniform(0, 1). (b) A strategy’s win rate $p$ has prior Beta(2, 2). A backtest then shows 7 wins in 10 trades.",
+      "question": "Fill in both values to three decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Part",
+          "Value"
+        ],
+        "rows": [
+          [
+            "(a) $P(\\text{best score} \\le 0.8)$",
+            {
+              "edit": true,
+              "answer": 0.3277,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "(b) $E[p \\mid \\text{data}]$",
+            {
+              "edit": true,
+              "answer": 0.6429,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "The best of five uniforms is Beta(5, 1), and the update stays Beta.",
+        "generic": "For (a), all five scores must be at most 0.8. For (b), add the wins and losses to the prior.",
+        "byKey": {
+          "r0c1": "The best is at most 0.8 only when all five scores are. Multiply the five chances, not one.",
+          "r1c1": "Neither $7/10$ nor the prior mean 0.5 alone. Beta(2, 2) counts as two wins and two losses already seen."
+        }
+      },
+      "explain": {
+        "text": "(a) The scores are independent, so $P(\\max \\le 0.8) = 0.8^5 = 0.3277$. (b) The posterior is Beta$(2 + 7, 2 + 3)$, which is Beta$(9, 5)$. Its mean is $9/14 = 0.6429$."
+      }
+    },
+    {
+      "id": "e-reversible-sampler",
+      "difficulty": 4,
+      "skills": [
+        "mc-longrun",
+        "mc-chains"
+      ],
+      "title": "A chain and its sampler",
+      "prose": "An inventory chain holds 0, 1 or 2 lots and moves at most one step a day. Its chances are on the diagram.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "nodeRadius": 32,
+          "nodes": [
+            {
+              "id": "s0",
+              "label": "0",
+              "x": 0.15,
+              "y": 0.5
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "x": 0.5,
+              "y": 0.5
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "x": 0.85,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "s0",
+              "to": "s0",
+              "w": 0.6
+            },
+            {
+              "from": "s0",
+              "to": "s1",
+              "w": 0.4
+            },
+            {
+              "from": "s1",
+              "to": "s0",
+              "w": 0.2
+            },
+            {
+              "from": "s1",
+              "to": "s1",
+              "w": 0.5
+            },
+            {
+              "from": "s1",
+              "to": "s2",
+              "w": 0.3
+            },
+            {
+              "from": "s2",
+              "to": "s1",
+              "w": 0.5
+            },
+            {
+              "from": "s2",
+              "to": "s2",
+              "w": 0.5
+            }
+          ],
+          "height": 220
+        },
+        "state": {}
+      },
+      "question": "Fill in $\\pi_2$. A Metropolis sampler with symmetric proposals then targets this $\\pi$. From state 1 it proposes state 2: fill in its acceptance chance.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\pi_2$",
+            {
+              "edit": true,
+              "answer": 0.2857,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Acceptance, 1 to 2",
+            {
+              "edit": true,
+              "answer": 0.6,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Detailed balance holds for a chain that moves one step at a time.",
+        "generic": "Balance the flow across each edge, then compare the target weights of the two states.",
+        "byKey": {
+          "r0c1": "Three states do not mean equal shares. Balance each edge: $\\pi_1 \\times 0.3 = \\pi_2 \\times 0.5$, so $\\pi_2/\\pi_1 = 0.6$.",
+          "r1c1": "Metropolis ignores the chain’s own 0.3. A move to a state with less target weight is accepted with chance $\\pi_2/\\pi_1$."
+        }
+      },
+      "explain": {
+        "text": "Detailed balance gives $\\pi_1 = \\pi_0 \\times 0.4/0.2 = 2\\pi_0$ and $\\pi_2 = \\pi_1 \\times 0.3/0.5 = 1.2\\pi_0$. The weights 1, 2 and 1.2 sum to 4.2, so $\\pi_2 = 1.2/4.2 = 0.2857$. The sampler accepts with chance $\\min(1, \\pi_2/\\pi_1) = \\min(1, 0.6) = 0.6$."
+      }
+    },
+    {
+      "id": "e-order-split",
+      "difficulty": 3,
+      "skills": [
+        "mc-chains",
+        "dl-discrete"
+      ],
+      "title": "Buys and sells",
+      "prose": "Orders reach a market maker as a Poisson process at 12 an hour. Each order is independently a buy with chance 0.25, otherwise a sell.",
+      "question": "Fill in both values for one 20-minute window.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$P(\\text{no buys})$",
+            {
+              "edit": true,
+              "answer": 0.3679,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$E[\\text{buys} \\mid 6\\ \\text{sells}]$",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Splitting a Poisson process gives two independent Poisson processes.",
+        "generic": "Find the rate of buys alone, then use the independence of the two streams.",
+        "byKey": {
+          "r0c1": "Buys alone arrive at 3 an hour, not 12. Twenty minutes of buys has mean $3 \\times \\tfrac13 = 1$.",
+          "r1c1": "Do not scale the sells by one buy per three sells. The split streams are independent, so the sells tell you nothing."
+        }
+      },
+      "explain": {
+        "text": "Buys form a Poisson process at $12 \\times 0.25 = 3$ an hour. In 20 minutes their count is Poisson(1), so $P(0) = e^{-1} = 0.3679$. The sells are independent of the buys, so the expected buys stay at 1."
+      }
+    },
+    {
+      "id": "e-default-pair",
+      "difficulty": 5,
+      "skills": [
+        "dl-continuous",
+        "rv-joint"
+      ],
+      "title": "Two default times",
+      "prose": "Two firms default at times $X < Y$, in years. Their joint density is $f(x, y) = e^{-y}$ for $0 < x < y$. Let $G = Y - X$ be the gap between the defaults.",
+      "question": "Fill in all four values to three decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Part",
+          "Value"
+        ],
+        "rows": [
+          [
+            "(a) $P(X > 1)$",
+            {
+              "edit": true,
+              "answer": 0.3679,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "(b) $P(G > 0.5)$",
+            {
+              "edit": true,
+              "answer": 0.6065,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "(c) $f_Y(2)$",
+            {
+              "edit": true,
+              "answer": 0.2707,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "(d) $M_Y(0.5)$",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "$X$ and $G$ are independent Exponential(1), so $Y$ is Gamma(2, 1).",
+        "generic": "Find the marginal of $X$, then change variables from $(x, y)$ to $(x, g)$.",
+        "byKey": {
+          "r0c1": "Integrate out $y$, not $x$: $f_X(x) = \\int_x^\\infty e^{-y}\\,dy = e^{-x}$.",
+          "r1c1": "Change variables to $(X, G)$ first. The tail of $Y$ is not the tail of the gap.",
+          "r2c1": "$Y$ is not one exponential. It is the sum $X + G$ of two, so convolve.",
+          "r3c1": "An MGF of 2 is one exponential’s. Here $M_Y = M_X M_G = (1 - t)^{-2}$."
+        }
+      },
+      "explain": {
+        "text": "The marginal is $f_X(x) = \\int_x^\\infty e^{-y}\\,dy = e^{-x}$, so $P(X > 1) = e^{-1} = 0.3679$. With $y = x + g$ and Jacobian 1, $f(x, g) = e^{-x}e^{-g}$, so $P(G > 0.5) = e^{-0.5} = 0.6065$. The convolution gives $f_Y(2) = \\int_0^2 e^{-x}e^{-(2 - x)}\\,dx = 2e^{-2} = 0.2707$, and $M_Y(0.5) = (1 - 0.5)^{-2} = 4$ is the Gamma(2, 1) MGF."
+      }
     }
   ]
 }

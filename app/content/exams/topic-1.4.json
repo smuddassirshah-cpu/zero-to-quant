@@ -1704,6 +1704,385 @@
       "explain": {
         "text": "The variance is a quadratic form, and its gradient is $2\\boldsymbol{\\Sigma}\\mathbf{w}$. The multiplier condition gives $\\mathbf{w} \\propto \\boldsymbol{\\Sigma}^{-1}\\mathbf{1}$, scaled to sum to 1. A positive definite $\\boldsymbol{\\Sigma}$ makes the minimum unique."
       }
+    },
+    {
+      "id": "a-expm-spreads",
+      "difficulty": 3,
+      "skills": [
+        "eg-diag",
+        "eg-eigen"
+      ],
+      "title": "Two spreads pulled back together",
+      "prose": "Two linked spreads sit $u_1$ and $u_2$ basis points from fair value. Time $t$ is in days, and $$\\mathbf{u}' = \\mathbf{A}\\mathbf{u}, \\quad \\mathbf{A} = \\begin{pmatrix} -3 & 1 \\\\ 2 & -2 \\end{pmatrix}, \\quad \\mathbf{u}_0 = (3, 0).$$ So $\\mathbf{u}(t) = e^{\\mathbf{A}t}\\mathbf{u}_0$.",
+      "question": "What is $u_2$ after half a day, at $t = 0.5$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9424,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "accept": "$2e^{-0.5} - 2e^{-2} \\approx 0.9424$",
+        "wrong": [
+          {
+            "id": "one-day",
+            "value": 0.6991,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "euler",
+            "value": 3,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "entrywise",
+            "value": 8.1548,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "sign",
+            "value": 1.4837,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$u_2$ starts at fair value, is pulled up by $u_1$, then decays.",
+        "generic": "Find the eigenvalues and eigenvectors of $\\mathbf{A}$. Write $\\mathbf{u}_0$ in that basis, then let each part decay as $e^{\\lambda t}$.",
+        "byKey": {
+          "one-day": "You used $t = 1$. Half a day means $e^{-0.5}$ and $e^{-4 \\times 0.5}$.",
+          "euler": "You took one straight step, $(\\mathbf{I} + 0.5\\mathbf{A})\\mathbf{u}_0$. The exponential bends the path as it goes.",
+          "entrywise": "You took $e$ of each entry of $0.5\\mathbf{A}$. The matrix exponential is not built entry by entry.",
+          "sign": "Check the second eigenvector. For $\\lambda = -4$, $(\\mathbf{A} + 4\\mathbf{I})\\mathbf{v} = \\mathbf{0}$ gives $(1, -1)$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{A}$ has eigenvalue $-1$ with $(1, 2)$ and $-4$ with $(1, -1)$, and $\\mathbf{u}_0 = 1(1, 2) + 2(1, -1)$. So $\\mathbf{u}(t) = e^{-t}(1, 2) + 2e^{-4t}(1, -1)$. At $t = 0.5$, $u_2 = 2e^{-0.5} - 2e^{-2} = 1.2131 - 0.2707 = 0.9424$."
+      }
+    },
+    {
+      "id": "a-chol-conditional",
+      "difficulty": 3,
+      "skills": [
+        "eg-pd"
+      ],
+      "title": "A stress test from the factor",
+      "prose": "Weekly returns in %, $X$ for an index and $Y$ for a bank, are bivariate normal. Their means are $0.2$ and $0.1$, and $$\\boldsymbol{\\Sigma} = \\begin{pmatrix} 9 & 6 \\\\ 6 & 8 \\end{pmatrix}.$$ Write $\\boldsymbol{\\Sigma} = \\mathbf{L}\\mathbf{L}^T$ with $\\mathbf{L}$ lower triangular and a positive diagonal. Then $X = 0.2 + L_{11}Z_1$ and $Y = 0.1 + L_{21}Z_1 + L_{22}Z_2$.",
+      "question": "Fill in $\\mathbf{L}$, then the bank's mean and sd in a week when the index returns $-5.8\\%$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$L_{11}$",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$L_{21}$",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$L_{22}$",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$E[Y \\mid X = -5.8]$",
+            {
+              "edit": true,
+              "answer": -3.9,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$\\mathrm{sd}(Y \\mid X = -5.8)$",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "$X = -5.8$ pins $Z_1$ at $-2$. Only $L_{22}Z_2$ is still random.",
+        "generic": "$L_{11} = \\sqrt{9}$ and $L_{21} = 6 / L_{11}$, then $L_{22} = \\sqrt{8 - L_{21}^2}$. Solve $X = -5.8$ for $Z_1$ and put it into $Y$.",
+        "byKey": {
+          "r0c1": "$L_{11}$ is the square root of $\\Sigma_{11} = 9$.",
+          "r1c1": "If you wrote 6, you copied $\\Sigma_{21}$. It equals $L_{21}L_{11}$, so divide 6 by $L_{11} = 3$.",
+          "r2c1": "If you took $\\sqrt{8}$, first remove the part of $Y$'s variance carried by $Z_1$, $L_{21}^2 = 4$.",
+          "r3c1": "Measure the shock from the index mean: $-5.8 - 0.2 = -6$, so $Z_1 = -2$. Then add the bank's mean, $0.1$, to $L_{21}Z_1$.",
+          "r4c1": "Knowing $X$ fixes $Z_1$, so only $L_{22}Z_2$ is left. Give its sd, not $\\sqrt{8}$ and not the variance 4."
+        }
+      },
+      "explain": {
+        "text": "$L_{11} = 3$, $L_{21} = 6/3 = 2$ and $L_{22} = \\sqrt{8 - 4} = 2$. The index return fixes $Z_1 = (-5.8 - 0.2)/3 = -2$, so $E[Y \\mid X = -5.8] = 0.1 + 2(-2) = -3.9$. The sd left is $L_{22} = 2$, the same as $\\sqrt{8 - 6^2/9}$."
+      }
+    },
+    {
+      "id": "a-code-normal-eq",
+      "difficulty": 4,
+      "skills": [
+        "ls-fit",
+        "eg-pd"
+      ],
+      "title": "Factor betas from the normal equations",
+      "prose": "Each column of `R` holds a stock's daily returns. Each column of `F` holds a factor's, on the same days. Regress every stock on a column of ones and the factors at once. Solve the normal equations $\\mathbf{X}^T\\mathbf{X}\\mathbf{B} = \\mathbf{X}^T\\mathbf{R}$ yourself. The tests fail if your source calls `lstsq` or `pinv`.",
+      "question": "Complete `factor_betas(F, R)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_factors(seed, n=250, k=2, m=3):\n    rng = np.random.default_rng(seed)\n    F = rng.standard_normal((n, k))\n    B0 = rng.uniform(-1.0, 1.5, size=(k, m))\n    a0 = rng.uniform(-0.1, 0.1, size=m)\n    R = a0 + F @ B0 + 0.8 * rng.standard_normal((n, m))\n    return F, R\n",
+        "starter": "import numpy as np\n\ndef factor_betas(F, R):\n    \"\"\"F: days x factors. R: days x stocks.\n    Row 0 of the result holds each stock's intercept;\n    row j its beta on factor j.\"\"\"\n    F = np.asarray(F, dtype=float)\n    R = np.asarray(R, dtype=float)\n    X = ...      # a column of ones, then F\n    XtX = ...    # X^T X\n    XtR = ...    # X^T R\n    B = ...      # solve XtX B = XtR\n    return B\n",
+        "solution": "import numpy as np\n\ndef factor_betas(F, R):\n    \"\"\"F: days x factors. R: days x stocks.\n    Row 0 of the result holds each stock's intercept;\n    row j its beta on factor j.\"\"\"\n    F = np.asarray(F, dtype=float)\n    R = np.asarray(R, dtype=float)\n    X = np.column_stack([np.ones(len(F)), F])\n    XtX = X.T @ X\n    XtR = X.T @ R\n    B = np.linalg.solve(XtX, XtR)\n    return B\n",
+        "examples": [
+          {
+            "setup": "m = [[-1], [0], [1], [2], [3]]; s = [[-2], [0], [1], [3], [3]]",
+            "call": "np.round(factor_betas(m, s), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[[-0.3], [1.3]]"
+          },
+          {
+            "setup": "F = [[1, 0], [0, 1], [2, 1], [-1, 3], [1, -2], [0, 0]]; B0 = np.array([[0.1, -0.05], [1.0, 0.5], [-0.2, 2.0]]); R = np.column_stack([np.ones(6), F]) @ B0",
+            "call": "np.round(factor_betas(F, R), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[[0.1, -0.05], [1.0, 0.5], [-0.2, 2.0]]"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "m = [[-1], [0], [1], [2], [3]]; s = [[-2], [0], [1], [3], [3]]",
+            "call": "np.round(factor_betas(m, s), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[[-0.3], [1.3]]"
+          },
+          {
+            "setup": "F = [[1, 0], [0, 1], [2, 1], [-1, 3], [1, -2], [0, 0]]; B0 = np.array([[0.1, -0.05], [1.0, 0.5], [-0.2, 2.0]]); R = np.column_stack([np.ones(6), F]) @ B0",
+            "call": "np.round(factor_betas(F, R), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[[0.1, -0.05], [1.0, 0.5], [-0.2, 2.0]]"
+          },
+          {
+            "setup": "F, R = make_factors(17)",
+            "call": "np.round(factor_betas(F, R), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            },
+            "expect": "[[0.085516, 0.132614, -0.03377], [-0.269707, 0.360981, -0.184164], [0.515633, -0.276607, 1.168575]]"
+          },
+          {
+            "setup": "F, R = make_factors(29, n=60, k=3, m=2)",
+            "call": "np.round(factor_betas(F, R), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            },
+            "expect": "[[0.08908, 0.019067], [0.254129, -0.149161], [0.703567, 1.064521], [1.427964, 0.624439]]"
+          },
+          {
+            "setup": "F, R = make_factors(17); X = np.column_stack([np.ones(len(F)), F])",
+            "call": "bool(np.abs(X.T @ (R - X @ factor_betas(F, R))).max() < 1e-8) and 'lstsq' not in __learner_source__ and 'pinv' not in __learner_source__",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "setup": "F, R = make_factors(5, n=40, k=2, m=4)",
+            "call": "list(np.shape(factor_betas(F, R)))",
+            "compare": "equal",
+            "expect": "[3, 4]"
+          },
+          {
+            "setup": "m = [[-1], [0], [1], [2], [3]]; s = [[-2], [0], [1], [3], [3]]",
+            "call": "bool(np.allclose(factor_betas(m, s), [[-0.3], [1.3]])) and 'lstsq' not in __learner_source__ and 'pinv' not in __learner_source__",
+            "compare": "equal",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Four compare B, rounded to 6 places: a one-factor fit, a planted exact model and two books from `make_factors(seed)`. One checks the residuals are perpendicular to every column of X, and one checks the shape. Two tests also fail if your source names `lstsq` or `pinv`. The first run loads NumPy: 1 to 3 seconds."
+      },
+      "feedback": {
+        "correct": "One solve of the $(k + 1) \\times (k + 1)$ system fits every stock at once.",
+        "generic": "Some tests failed. Put a column of ones before the factors, then solve $\\mathbf{X}^T\\mathbf{X}\\mathbf{B} = \\mathbf{X}^T\\mathbf{R}$ with `np.linalg.solve`.",
+        "byKey": {
+          "test-1": "A one-factor fit should give $\\alpha = -0.3$ and $\\beta = 1.3$. Is the column of ones first?",
+          "test-2": "The returns were built exactly from known intercepts and betas, so the fit must return them. Check that you fit both factors together, not one at a time.",
+          "test-5": "The residuals must be perpendicular to every column of $\\mathbf{X}$. If the values are right, your source names `lstsq` or `pinv`.",
+          "test-6": "The result has one row for the intercept and one per factor, and one column per stock.",
+          "test-7": "Solve the normal equations yourself; this test fails if your source names `lstsq` or `pinv`.",
+          "error": "Your code stopped with an error. Read the last line under the editor. `np.column_stack` joins the ones and `F` side by side."
+        }
+      },
+      "explain": {
+        "text": "With independent factor columns, $\\mathbf{X}^T\\mathbf{X}$ is positive definite, so the system has one solution. Each column of $\\mathbf{B}$ is that stock's own regression. Fitting factors one at a time is wrong when they are correlated.\n\n```python\nX = np.column_stack([np.ones(len(F)), F])\nB = np.linalg.solve(X.T @ X, X.T @ R)\n```"
+      }
+    },
+    {
+      "id": "a-code-pca-changes",
+      "difficulty": 4,
+      "skills": [
+        "eg-pca"
+      ],
+      "title": "Principal components of yield changes",
+      "prose": "`Y` holds yields in %, one row per day and one column per maturity. Run PCA on the covariance of the daily changes, not the levels. Return each component's share of the variance, largest first, and the first loading vector. Fix its sign so that its entries add up to more than 0.",
+      "question": "Complete `pc_shares(Y)` and `pc1(Y)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_curve(seed, n=250):\n    \"\"\"Yields in %, one row per day. Columns: 2y, 5y,\n    10y, 20y, 30y.\"\"\"\n    rng = np.random.default_rng(seed)\n    level = np.array([1.0, 1.0, 1.0, 1.0, 1.0])\n    slope = np.array([-1.0, -0.5, 0.0, 0.5, 1.0])\n    curve = np.array([1.0, -0.5, -1.0, -0.5, 1.0])\n    z = rng.standard_normal((n - 1, 3))\n    dy = (6 * np.outer(z[:, 0], level) + 3 * np.outer(z[:, 1], slope)\n          + 1.5 * np.outer(z[:, 2], curve)) / 100\n    dy = dy + 0.005 * rng.standard_normal((n - 1, 5))\n    start = np.array([4.0, 4.2, 4.4, 4.6, 4.7])\n    return np.vstack([start, start + np.cumsum(dy, axis=0)])\n",
+        "starter": "import numpy as np\n\ndef pc_shares(Y):\n    \"\"\"Y: yields, one row per day. Share of the variance\n    of daily changes taken by each principal component,\n    largest first.\"\"\"\n    Y = np.asarray(Y, dtype=float)\n    D = ...       # daily changes\n    C = ...       # their covariance matrix\n    vals = ...    # eigenvalues of C, largest first\n    return vals / vals.sum()\n\ndef pc1(Y):\n    \"\"\"Loadings of the first principal component of the\n    daily changes, signed so that they add up to more\n    than 0.\"\"\"\n    Y = np.asarray(Y, dtype=float)\n    ...\n",
+        "solution": "import numpy as np\n\ndef pc_shares(Y):\n    \"\"\"Y: yields, one row per day. Share of the variance\n    of daily changes taken by each principal component,\n    largest first.\"\"\"\n    Y = np.asarray(Y, dtype=float)\n    D = np.diff(Y, axis=0)\n    C = np.cov(D, rowvar=False)\n    vals = np.linalg.eigvalsh(C)[::-1]\n    return vals / vals.sum()\n\ndef pc1(Y):\n    \"\"\"Loadings of the first principal component of the\n    daily changes, signed so that they add up to more\n    than 0.\"\"\"\n    Y = np.asarray(Y, dtype=float)\n    C = np.cov(np.diff(Y, axis=0), rowvar=False)\n    vals, vecs = np.linalg.eigh(C)\n    v = vecs[:, -1]\n    return v if v.sum() > 0 else -v\n",
+        "examples": [
+          {
+            "setup": "Y = [[1, 1], [2, 3], [1, 2], [3, 3]]",
+            "call": "np.round(pc_shares(Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[0.892857, 0.107143]"
+          },
+          {
+            "setup": "Y = [[1, 1], [2, 3], [1, 2], [3, 3]]",
+            "call": "np.round(pc1(Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[0.707107, 0.707107]"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Y = [[1, 1], [2, 3], [1, 2], [3, 3]]",
+            "call": "np.round(pc_shares(Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[0.892857, 0.107143]"
+          },
+          {
+            "setup": "Y = make_curve(41)",
+            "call": "np.round(pc_shares(Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            },
+            "expect": "[0.850449, 0.113482, 0.033976, 0.001154, 0.000939]"
+          },
+          {
+            "setup": "Y = make_curve(58, n=120)",
+            "call": "np.round(pc_shares(Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            },
+            "expect": "[0.820986, 0.121706, 0.054405, 0.001532, 0.00137]"
+          },
+          {
+            "setup": "Y = make_curve(41)",
+            "call": "bool(np.allclose(pc_shares(100 * Y), pc_shares(Y))) and bool(np.all(np.diff(pc_shares(Y)) <= 0))",
+            "compare": "equal",
+            "expect": "True"
+          },
+          {
+            "setup": "Y = [[1, 1], [2, 3], [1, 2], [3, 3]]",
+            "call": "np.round(pc1(Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "[0.707107, 0.707107]"
+          },
+          {
+            "setup": "Y = make_curve(41)",
+            "call": "np.round(pc1(Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            },
+            "expect": "[0.418862, 0.454682, 0.464736, 0.463213, 0.43275]"
+          },
+          {
+            "setup": "Y = make_curve(58, n=120)",
+            "call": "np.round(pc1(-Y), 6).tolist()",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            },
+            "expect": "[0.45982, 0.430847, 0.424794, 0.446406, 0.472449]"
+          },
+          {
+            "setup": "Y = make_curve(58, n=120)",
+            "call": "round(float(np.linalg.norm(pc1(Y))), 6)",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            },
+            "expect": "1.0"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on a four-day example and on curves from `make_curve(seed)`, rounded to 6 places. One test checks the shares are sorted and do not change when yields are quoted in bp. Others check that `pc1` has length 1 and that flipping every yield's sign leaves it unchanged. The first run loads NumPy: 1 to 3 seconds."
+      },
+      "feedback": {
+        "correct": "Level takes over 80% of the variance here, and its loadings all have the same sign.",
+        "generic": "Some tests failed. Take `np.diff(Y, axis=0)`, form its covariance, and sort the eigenvalues from largest to smallest.",
+        "byKey": {
+          "test-1": "Four days give three changes, $(1, 2)$, $(-1, -1)$ and $(2, 1)$. Their covariance has eigenvalues $25/6$ and $1/2$, so the shares are $25/28$ and $3/28$.",
+          "test-2": "Check that you used daily changes, not levels. Also check the order: `eigvalsh` sorts from smallest to largest.",
+          "test-5": "PC1 belongs to the largest eigenvalue, the last column `eigh` returns.",
+          "test-7": "Flipping the sign of every yield flips the changes but not their covariance. Your sign rule should give the same vector.",
+          "error": "Your code stopped with an error. Read the last line under the editor. `np.cov(D, rowvar=False)` treats each column as one maturity."
+        }
+      },
+      "explain": {
+        "text": "Yield levels wander like random walks, so their covariance mostly measures drift. Daily changes are what a risk model needs. `eigh` returns the smallest eigenvalue first, so reverse it, and a library may return either sign of a loading.\n\n```python\nD = np.diff(Y, axis=0)\nC = np.cov(D, rowvar=False)\nvals = np.linalg.eigvalsh(C)[::-1]\n```"
+      }
     }
   ]
 }
