@@ -43,7 +43,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] Levels: placeholder, replaced by the breadth plan (order: Stage 0, then 1, then 2, then 3; within a stage by topic number)
 
 ### 3. Stage 3 content (briefs in `docs/briefs/`)
-- [ ] momentum-rep L1
+- [x] momentum-rep L1 (look-ahead bug gives 17.06% a month, not the brief's 15%; `docs/reports/momentum-rep-1.md`)
 - [ ] momentum-rep L2
 - [ ] momentum-rep L3
 - [ ] pairs-rep L1

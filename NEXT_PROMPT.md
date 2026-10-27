@@ -1,19 +1,18 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 3, first item: momentum-rep L1 ("The paper"), course `momentum-rep` (topic 3.1).
+Task: PLAN.md task 2b, first item: the breadth plan. This is a planning task, not content authoring. The user asked (27 Oct) for the maths breadth pass to run before the rest of Stage 3; momentum-rep L1 is done, and L2 waits until task 2b is complete.
 
-Context: tasks 0 to 2 are done (Stage 1 and Stage 2 complete; exams topic-1.3 to 1.5 extended to the 30-item cap and green). Stage 3 starts here. The brief is `docs/briefs/momentum-rep.md`: the course context at the top (paper figures, generator, reference values) plus section `## Level 1`. That brief names stale scratchpad and pkgs paths; give the agent this session's paths instead.
-
-First, build the local CDN if it is missing: from the repo root, `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
+Context: `docs/curriculum.md` now has new items 0.6 (proof), 1.10 (analysis, proof-based linear algebra), 1.11 (complex numbers, vector calculus, ODEs), 2.5 (numerical methods, optimisation), 2.6 (statistical modelling), additions to 3.2 (measure theory, PDEs), 3.4 (algebra, topology), and a 1.5 gap level for markov (Poisson process, martingales, optional stopping). Each item is tagged [Quant] or [Pure maths]. The previous gap pass is the pattern: `docs/briefs/gaps-plan.md`. Lesson length and voice: `docs/AUTHORING.md`. Topics shown in the app: `app/content/curriculum.json`.
 
 Do:
-1. Launch one `content-author` agent with the course context and the Level 1 section of `docs/briefs/momentum-rep.md`, `docs/LEVEL-BRIEF.md`, `docs/AUTHORING.md`, this session's scratchpad subfolder `momentum-rep-1` and the `--local-cdn` path. It writes `l1-reading-a-paper` to `l5-replication-plan`, `review-1.json`, `homework-1.json` in `app/content/courses/momentum-rep/`, reports to `docs/reports/momentum-rep-1.md`, appends engine limits to `docs/BACKLOG-INBOX.md`, and does not commit.
-2. If time remains after it lands and is committed, run momentum-rep L2 the same way (it reads L1's files, so not in parallel).
+1. Launch one Sonnet agent (`general-purpose` or `content-author`, planning only). It writes `docs/briefs/breadth-plan.md`: for each course, the levels, lesson ids, titles, objectives, prerequisites and the existing lessons each one builds on. It writes the new `course.json` maps, each with `strand` ("quant" or "pure") and `strandNote`, plus the topic entries in `app/content/curriculum.json`, and appends the markov gap level to `markov/course.json` without renaming any id. It writes no lessons and does not commit.
+2. Replace the "Levels: placeholder" line in PLAN.md task 2b with one line per level, each marked [Quant] or [Pure maths], ordered Stage 0, then 1, 2, 3.
 
-Files likely touched: `app/content/courses/momentum-rep/l1-*.json` to `l5-*.json`, `review-1.json`, `homework-1.json`, `docs/reports/momentum-rep-1.md`, `docs/BACKLOG-INBOX.md`, `app/content/manifest.json`, state files.
+Files likely touched: `docs/briefs/breadth-plan.md`, `app/content/courses/<new>/course.json`, `app/content/courses/markov/course.json`, `app/content/curriculum.json`, `app/content/manifest.json`, PLAN.md, state files.
 
 Acceptance:
-- From `app/`, `node tools/validate.mjs 2>&1 | tail -5` reports 0 errors.
-- `node tools/playthrough.mjs --lesson momentum-rep/<id>` for each of the five lessons and `--set momentum-rep/review-1`, `--set momentum-rep/homework-1`, all with `--local-cdn <pkgs>`, pass.
-- Every code solution passes its hidden tests and every starter fails them; every number computed twice (report says how).
-- PLAN.md ticks momentum-rep L1; NEXT_PROMPT.md names the next task (momentum-rep L2, or L3 if L2 also landed).
+- From `app/`, `node tools/validate.mjs 2>&1 | tail -5` reports 0 errors. New lessons show as "not yet written". If the validator rejects `strand`, record it for the engine task and leave the field in.
+- No existing lesson id changes (`git diff` on existing course.json files shows additions only).
+- PLAN.md ticks the breadth plan and lists every level; NEXT_PROMPT.md names the engine item of task 2b.
+
+Local CDN, if a later step needs playthrough: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
