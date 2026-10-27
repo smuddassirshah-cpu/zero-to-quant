@@ -1,0 +1,280 @@
+{
+ "id": "homework-2",
+ "course": "coint",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-z-order",
+   "difficulty": 4,
+   "skills": ["co-spread"],
+   "prose": "You hold five years of daily closes for two shares. A backtest needs each day's z-score of their spread, with no look-ahead.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {"id": "s1", "text": "Check each price is I(1): ADF fails to reject on levels and rejects on changes"},
+     {"id": "s2", "text": "Test the pair with Engle-Granger, `coint`, on a formation window; stop if $p \\ge 0.05$"},
+     {"id": "s3", "text": "For each day $t$, fit $y$ on $x$ over the 250 days ending at $t$"},
+     {"id": "s4", "text": "Form day $t$'s residual from that window's $\\hat\\alpha_t$ and $\\hat\\beta_t$"},
+     {"id": "s5", "text": "Divide it by the sample sd of the window's residuals, so the z uses days up to $t$ only"},
+     {"id": "s6", "text": "Compare today's z with the entry line at ±2, and leave the first 249 days as NaN"}
+    ],
+    "answer": ["s1", "s2", "s3", "s4", "s5", "s6"]
+   },
+   "feedback": {
+    "correct": "Correct. Test, then fit, form, scale and read, each from the past only.",
+    "generic": "Not quite right. Test the legs and the pair before any z-score, then build it day by day."
+   },
+   "explain": {"text": "A z-score is meaningful only for a cointegrated pair, so the tests come first. Each later step uses days up to $t$: lesson 6's `residual_z`."}
+  },
+  {
+   "id": "h-slopes",
+   "difficulty": 3,
+   "skills": ["co-spread"],
+   "prose": "On a 90-day window, regressing $y$ on $x$ gives a slope of 0.90. Regressing $x$ on $y$ gives a slope of 0.80.",
+   "question": "What hedge ratio, in shares of $x$ per share of $y$, does the second regression imply? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.25,
+    "tol": {"abs": 0.005},
+    "unit": "",
+    "placeholder": "a decimal",
+    "accept": "$1/0.80 = 1.25$, ± 0.005; the window's $R^2$ is $0.90 \\times 0.80 = 0.72$",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 0.9,
+      "tol": {"abs": 0.0}
+     },
+     {
+      "id": "asis",
+      "value": 0.8,
+      "tol": {"abs": 0.0}
+     },
+     {
+      "id": "r2",
+      "value": 0.72,
+      "tol": {"abs": 0.005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. 1.25 against 0.90: $R^2 = 0.72$ separates them.",
+    "generic": "Not quite right. Invert the $x$ on $y$ slope.",
+    "byKey": {
+     "same": "That is the first regression's ratio. Invert the second slope.",
+     "asis": "0.80 is shares of $y$ per share of $x$. Invert it.",
+     "r2": "0.72 is $R^2$, the product of the slopes."
+    }
+   },
+   "explain": {"text": "$1/0.80 = 1.25$. The product $0.90 \\times 0.80 = 0.72$ is $R^2$, so the inverted ratio is $0.90/0.72 = 1.25$, the same answer by lesson 5's rule."}
+  },
+  {
+   "id": "h-interval",
+   "difficulty": 4,
+   "skills": ["co-spread"],
+   "prose": "A spread's half-life regression gives $b = -0.040$ with standard error 0.012.",
+   "question": "What is the long end of the 95% half-life interval, in days? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 41.71,
+    "tol": {"abs": 0.05},
+    "unit": "",
+    "placeholder": "a decimal",
+    "accept": "$b + 1.96 \\times 0.012 = -0.01648$, and $\\ln 0.5/\\ln 0.98352 = 41.71$ days, ± 0.05",
+    "wrong": [
+     {
+      "id": "short",
+      "value": 10.56,
+      "tol": {"abs": 0.05}
+     },
+     {
+      "id": "point",
+      "value": 16.98,
+      "tol": {"abs": 0.05}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. 41.71 days, against a point estimate of 16.98.",
+    "generic": "Not quite right. The long end comes from $b + 1.96\\,\\text{se}$.",
+    "byKey": {
+     "short": "That is the short end, from $b - 1.96\\,\\text{se}$. The larger $b$ reverts more slowly.",
+     "point": "That is the point estimate. Shift $b$ by $1.96 \\times 0.012$ first."
+    }
+   },
+   "explain": {
+    "text": "The interval for $b$ is −0.0635 to −0.0165, which maps to 10.56 to 41.71 days around 16.98. The long end is the loose one, because the formula steepens as $b$ nears 0."
+   }
+  },
+  {
+   "id": "h-gaps",
+   "difficulty": 4,
+   "skills": ["co-test"],
+   "prose": "Four regional bank shares are tested with Johansen. Trace statistics: 70.4, 41.0, 19.8, 2.1. 95% critical values: 47.9, 29.8, 15.5, 3.8.",
+   "question": "How many common trends drive the four shares?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {"abs": 0},
+    "unit": "",
+    "placeholder": "a whole number",
+    "accept": "Rank 3 (reject three rows, stop at $r \\le 3$), so $4 - 3 = 1$ trend",
+    "wrong": [
+     {
+      "id": "rank",
+      "value": 3,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Rank 3, one common trend.",
+    "generic": "Not quite right. Find the rank first, then subtract it from 4.",
+    "byKey": {"rank": "3 is the rank. The number of trends is $4 - 3$.", "zero": "Zero trends would mean rank 4: all four stationary. The last row did not reject."}
+   },
+   "explain": {"text": "70.4 > 47.9, 41.0 > 29.8 and 19.8 > 15.5 reject; 2.1 < 3.8 stops at $r \\le 3$. Rank 3 leaves one common trend, the sector's level."}
+  },
+  {
+   "id": "h-rank",
+   "difficulty": 4,
+   "skills": ["co-test"],
+   "prose": "A risk system stores Johansen output as two lists, trace statistics and critical values, from $r = 0$ down. Write `rank_from_table(trace, crit)` without statsmodels. Raise ValueError when the lists differ in length. A statistic equal to its critical value counts as a rejection.",
+   "question": "Complete `rank_from_table(trace, crit)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def rank_from_table(trace, crit):\n    \"\"\"The cointegration rank from Johansen's trace statistics and critical values,\n    both listed from r = 0 down, by the sequential rule.\"\"\"\n    ...\n",
+    "solution": "def rank_from_table(trace, crit):\n    \"\"\"The cointegration rank from Johansen's trace statistics and critical values,\n    both listed from r = 0 down, by the sequential rule.\"\"\"\n    if len(trace) != len(crit):\n        raise ValueError(\"trace and crit must have the same length\")\n    for r, (stat, cv) in enumerate(zip(trace, crit)):\n        if stat < cv:\n            return r            # first failure to reject\n    return len(trace)           # every row rejected: all series stationary\n",
+    "examples": [
+     {"call": "rank_from_table([197.863, 88.082, 0.277], [29.7961, 15.4943, 3.8415])", "expect": "2", "compare": "equal"}
+    ],
+    "tests": [
+     {"call": "rank_from_table([197.863, 88.082, 0.277], [29.7961, 15.4943, 3.8415])", "expect": "2", "compare": "equal"},
+     {"call": "rank_from_table([27.658, 10.691, 4.348], [29.7961, 15.4943, 3.8415])", "expect": "0", "compare": "equal"},
+     {"call": "rank_from_table([98.294, 12.212, 4.367], [29.7961, 15.4943, 3.8415])", "expect": "1", "compare": "equal"},
+     {"call": "rank_from_table([658.884, 423.893, 197.21], [29.7961, 15.4943, 3.8415])", "expect": "3", "compare": "equal"},
+     {"call": "rank_from_table([25.953, 0.03], [15.4943, 3.8415])", "expect": "1", "compare": "equal"},
+     {"call": "rank_from_table([70.4, 41.0, 19.8, 2.1], [47.9, 29.8, 15.5, 3.8])", "expect": "3", "compare": "equal"},
+     {"call": "rank_from_table([29.7961, 1.0], [29.7961, 3.8415])", "expect": "1", "compare": "equal"},
+     {"call": "rank_from_table([1.0, 2.0], [3.0])", "compare": "raises", "expect": "ValueError"}
+    ],
+    "how": "Check runs 8 hidden tests on lesson 8's tables, the four bank shares, a tie and lists of unequal length. Plain Python is enough; nothing needs loading."
+   },
+   "feedback": {
+    "correct": "Correct. The rule reads from the top and stops at the first failure.",
+    "generic": "Some tests failed. Return the index of the first row whose statistic is below its critical value."
+   },
+   "explain": {
+    "text": "Reading from the top is what makes the walks' table give 0, though its last row rejects. When every row rejects, the rank is $k$: each series is stationary on its own."
+   }
+  },
+  {
+   "id": "h-report",
+   "difficulty": 5,
+   "skills": ["co-spread", "co-test"],
+   "prose": "Write the one-page check a desk runs before trading a pair. It refuses pairs that fail Engle-Granger at 5%. It reports the hedge ratio both ways, the half-life with its interval, and today's rolling z. `make_pair`, `make_case` and `make_two_walks` are defined.",
+   "question": "Complete `spread_report(y, x, window=60)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\nimport pandas as pd\nfrom statsmodels.tsa.stattools import coint\n\ndef spread_report(y, x, window=60):\n    \"\"\"One page on a candidate pair. Raise ValueError unless coint(y, x) rejects at 5%.\n    Returns a dict: beta (y on x), beta_inv (1 / slope of x on y), p (Engle-Granger),\n    half_life and interval (95%, from the OLS residual), z_today (rolling z of the\n    residual on the last day). Round beta, beta_inv, p and z_today to 4 places,\n    the half-life and its interval to 2.\"\"\"\n    y, x = np.asarray(y, float), np.asarray(x, float)\n    ...\n",
+    "solution": "import math\nimport numpy as np\nimport pandas as pd\nfrom statsmodels.tsa.stattools import coint\n\ndef spread_report(y, x, window=60):\n    \"\"\"One page on a candidate pair. Raise ValueError unless coint(y, x) rejects at 5%.\n    Returns a dict: beta (y on x), beta_inv (1 / slope of x on y), p (Engle-Granger),\n    half_life and interval (95%, from the OLS residual), z_today (rolling z of the\n    residual on the last day). Round beta, beta_inv, p and z_today to 4 places,\n    the half-life and its interval to 2.\"\"\"\n    y, x = np.asarray(y, float), np.asarray(x, float)\n    p = coint(y, x)[1]\n    if p >= 0.05:\n        raise ValueError(\"not cointegrated at 5%\")\n    beta, alpha = np.polyfit(x, y, 1)\n    b_xy = np.polyfit(y, x, 1)[0]\n    s = y - alpha - beta * x                                   # the spread\n    ds = np.diff(s)\n    X = np.column_stack([np.ones(len(ds)), s[:-1]])\n    coef = np.linalg.lstsq(X, ds, rcond=None)[0]\n    resid = ds - X @ coef\n    se = math.sqrt(resid @ resid / (len(ds) - 2) * np.linalg.inv(X.T @ X)[1, 1])\n    def hl(b):\n        return math.inf if b >= 0 else math.log(0.5) / math.log(1 + b)\n    b = coef[1]\n    q = pd.Series(s)\n    z = (q - q.rolling(window).mean()) / q.rolling(window).std()\n    return {\"beta\": round(float(beta), 4), \"beta_inv\": round(float(1 / b_xy), 4), \"p\": round(float(p), 4),\n            \"half_life\": round(hl(b), 2), \"interval\": (round(hl(b - 1.96 * se), 2), round(hl(b + 1.96 * se), 2)),\n            \"z_today\": round(float(z.iloc[-1]), 4)}\n",
+    "examples": [
+     {
+      "setup": "x, y = make_pair(3, 1000)",
+      "call": "spread_report(y, x)",
+      "expect": "{'beta': 1.4744, 'beta_inv': 1.4809, 'p': 0.0001, 'half_life': 13.29, 'interval': (9.52, 21.72), 'z_today': 0.7086}",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x, y = make_pair(3, 1000)",
+      "call": "spread_report(y, x)",
+      "expect": "{'beta': 1.4744, 'beta_inv': 1.4809, 'p': 0.0001, 'half_life': 13.29, 'interval': (9.52, 21.72), 'z_today': 0.7086}",
+      "compare": "equal"
+     },
+     {
+      "setup": "x, y = make_pair(5, 1000); r = spread_report(y, x)",
+      "call": "[r[k] for k in ('beta', 'beta_inv', 'half_life', 'z_today')]",
+      "expect": "[1.5279, 1.5607, 13.25, -0.2178]",
+      "compare": "isclose"
+     },
+     {"setup": "x, y = make_pair(6, 1000)", "call": "spread_report(y, x)['interval']", "expect": "(9.42, 21.54)", "compare": "isclose"},
+     {"setup": "x, y = make_pair(3, 1000)", "call": "round(spread_report(y, x, window=20)['z_today'], 4)", "expect": "-1.015", "compare": "isclose"},
+     {
+      "setup": "x, y = make_case('B'); r = spread_report(y, x)",
+      "call": "[r[k] for k in ('beta', 'half_life')] + list(r['interval'])",
+      "expect": "[0.9911, 0.84, 0.72, 0.98]",
+      "compare": "isclose"
+     },
+     {"setup": "x, y = make_case('A')", "call": "spread_report(y, x)", "compare": "raises", "expect": "ValueError"},
+     {"setup": "x, y = make_two_walks(103)", "call": "spread_report(y, x)", "compare": "raises", "expect": "ValueError"},
+     {"setup": "x, y = make_pair(3, 250)", "call": "spread_report(y, x)", "compare": "raises", "expect": "ValueError"}
+    ],
+    "how": "Check runs 8 hidden tests on seeded pairs. Three must raise ValueError: pair A, two independent walks, and pair C cut to 250 days ($p = 0.072$). The first run loads statsmodels, which takes 20 to 40 seconds.",
+    "prelude": "import numpy as np\n\ndef make_two_walks(seed, n=500):\n    \"\"\"Two independent Gaussian random walks from 0 (columns of one draw).\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    return np.cumsum(z[:, 0]), np.cumsum(z[:, 1])\n\n\ndef make_pair(seed, n=1000, alpha=5.0, beta=1.5, phi=0.95, sd_u=0.5, x0=40.0, vol=0.015):\n    \"\"\"A cointegrated pair of share prices in pounds. x starts at x0 and is a log random walk\n    with daily sd vol; y = alpha + beta * x + u, u an AR(1) with coefficient phi and shock sd sd_u.\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, 2))\n    x = x0 * np.exp(np.cumsum(vol * z[:, 0]))\n    u = np.empty(n); u[0] = sd_u * z[0, 1]\n    for t in range(1, n):\n        u[t] = phi * u[t - 1] + sd_u * z[t, 1]\n    return x, alpha + beta * x + u\n\n\ndef make_broken_pair(seed, n=1500, break_at=1000, sd_break=1.0, **kw):\n    \"\"\"make_pair, plus a random walk added to y from day break_at: the spread stops reverting.\"\"\"\n    x, y = make_pair(seed, n, **kw)\n    z = np.random.default_rng(seed + 1000).standard_normal(n)\n    return x, y + np.concatenate([np.zeros(break_at), np.cumsum(sd_break * z[break_at:])])\n\n\ndef make_case(name, n=1000):\n    \"\"\"Lesson 2's four planted pairs, as (x, y).\"\"\"\n    if name == \"A\":    # correlated returns, not cointegrated\n        e = np.random.default_rng(1).standard_normal((n, 2))\n        return np.cumsum(e[:, 0]), np.cumsum(0.8 * e[:, 0] + 0.6 * e[:, 1])\n    if name == \"B\":    # cointegrated, weakly correlated returns\n        e = np.random.default_rng(2).standard_normal((n, 2))\n        x = np.cumsum(e[:, 0])\n        u = np.empty(n); u[0] = 3 * e[0, 1]\n        for t in range(1, n):\n            u[t] = 0.5 * u[t - 1] + 3 * e[t, 1]\n        return x, x + u\n    if name == \"C\":    # both\n        return make_pair(3, n)\n    return make_two_walks(4, n)    # D: neither\n",
+    "budget": 60000
+   },
+   "feedback": {
+    "correct": "Correct. Pair C reports 1.4744 and 1.4809, a half-life of 13.29 days (9.52 to 21.72) and today's z of 0.71.",
+    "generic": "Some tests failed. Refuse first, then compute each figure from the full-sample residual."
+   },
+   "explain": {
+    "text": "The refusal comes first, because a hedge ratio and a half-life mean nothing for a pair that is not tied. Pair C on 250 days is refused at $p = 0.072$, the low power of a short window. On the last day the full-sample residual uses no future, so its rolling z is honest."
+   }
+  },
+  {
+   "id": "h-longform",
+   "difficulty": 5,
+   "skills": ["co-spread", "co-test"],
+   "kind": "longform",
+   "prompt": "A junior analyst brings you a pair of shares, A and B. Regressing A on B over the last year gives a slope of 0.62. Regressing B on A and inverting gives a hedge ratio of 2.10 shares of B per share of A. The spread's half-life is 85 days. Explain the gap between 0.62 and 2.10, say which hedge ratio you would use and why, and decide whether to trade the pair.",
+   "model": "**The gap.** The two regressions answer different questions. Regressing A on B treats B as exact and measures gaps in A; regressing B on A does the reverse. Their slopes multiply to $R^2$, so the inverted ratio equals the direct one divided by $R^2$: $R^2 = 0.62/2.10 = 0.295$. The fit is loose ($\\rho \\approx 0.54$), and noise in each regression's right-hand leg pulls its slope towards zero. That is why the two hedge ratios differ by a factor of more than three.\n\n**Which hedge ratio.** Decide first which leg is the position and which is the hedge, and regress the position on the hedge: if we hold A and hedge with B, use 0.62 shares of B per share of A. Report the reverse fit and total least squares (which falls between them, but depends on units) as checks. With a gap this large, no single number is reliable, and a rolling estimate will wander. Johansen gives a ratio with no direction if neither leg is special.\n\n**Whether to trade.**\n\n1. $R^2 = 0.30$ on a year of a supposed tie is a warning by itself. Test first: each leg I(1), then Engle-Granger with `coint` in both directions, judged against about −3.34 at 5%.\n2. A half-life of 85 days is about four months to close half of a gap. Its 95% interval almost certainly runs to infinity on one year of data. Check that interval.\n3. A z-score window of a few half-lives would be most of the year, so the z would be noisy and slow. A desk funding a position for a month or a quarter could not wait for the reversion.\n4. Costs are paid on both legs at every trade, and a slow spread earns little per year to cover them.\n\n**Decision.** Do not trade it as it stands. Ask for evidence that the pair is cointegrated (both directions, on a formation window), a half-life interval that excludes infinity, and a reason the two firms are tied. If the tie is real but slow, it may suit a longer-horizon book. It does not suit a pairs desk with a short holding limit.",
+   "rubric": [
+    {"points": 2, "text": "Explains that the two regressions minimise different gaps and their slopes multiply to $R^2$"},
+    {"points": 1, "text": "Computes $R^2 = 0.62/2.10 \\approx 0.30$ and calls the fit loose"},
+    {"points": 2, "text": "Chooses the direction from which leg is the position and which the hedge, and gives the matching ratio"},
+    {"points": 1, "text": "Mentions total least squares or Johansen as direction-free checks, and that TLS depends on units"},
+    {"points": 2, "text": "Requires a cointegration test before trusting either ratio or the half-life"},
+    {"points": 1, "text": "Reads 85 days against a holding period and the z window, and asks for its interval"},
+    {"points": 1, "text": "Reaches a clear decision with the evidence that would change it"}
+   ]
+  },
+  {
+   "id": "h-leak",
+   "difficulty": 3,
+   "skills": ["co-spread"],
+   "prose": "A backtest of 1,500 days computes each day's z-score with the mean and sd of the whole sample.",
+   "question": "On day 1,000, how many days from its future does that z-score use?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 499,
+    "tol": {"abs": 0},
+    "unit": "",
+    "placeholder": "a whole number",
+    "accept": "Days 1,001 to 1,499: 499 days",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 500,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Days 1,001 to 1,499.",
+    "generic": "Not quite right. Count the days after day 1,000, up to day 1,499.",
+    "byKey": {"five": "You counted day 1,000 itself. Its close is known; the future starts at day 1,001."}
+   },
+   "explain": {"text": "The days run from 0 to 1,499, so day 1,000 has $1{,}499 - 1{,}000 = 499$ later days. Only the last day of the file borrows nothing."}
+  }
+ ]
+}
