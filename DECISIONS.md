@@ -18,6 +18,7 @@ Content process
 - Every stated number is computed twice (generator plus independent check, or CPython plus Pyodide). Every code solution passes its hidden tests and the starter fails them.
 - Second reader per completed topic writes `docs/reviews/review-<topic>.md`; a fix agent applies targeted edits and appends `## Fix pass`. Coverage gaps become new levels, not edits to existing lessons.
 - Voice rules (AUTHORING.md): British English, no exclamation marks, sentences under 20 words, explanations of at most three sentences, £ for money, `\operatorname{Var}`, `\text{£}` inside maths. Trees course: (1 + r) per step in l5 and the first screens of l7, e^{rΔt} from l6 onwards (stated).
+- Topic exams stay at 30 items or fewer (validator cap); when an extension needs more asks, pack them into multi-part table items rather than raise the cap (27 Oct, exam extension 1.3 to 1.5).
 - Conventions fixed by fix passes: "hit rate" means P(right | call); P(flash | up) is the "detection rate". Per cent widgets store the fraction with `unit: "%"` (the engine divides typed input by 100). Singularity is checked by `matrix_rank` or `cond`, never a determinant threshold.
 - Content agents ran on Opus through 26 Oct; from the migration, implementation agents run on Sonnet and the main session only plans and reviews (user instruction).
 

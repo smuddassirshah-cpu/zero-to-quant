@@ -3,8 +3,8 @@
 Open at migration (27 Oct 2026)
 - A single `--all` run is too long for one browser and the 2-hour background limit (the browser closed after about 1,100 items); always split it into lessons, `--sets`, and `--exams` plus `--routes-only`.
 - `docs/BACKLOG-INBOX.md` holds about 136 unnumbered engine bullets awaiting pass 7, plus about 42 from the seven gap levels (27 Oct).
-- markov l16 states the Gamma law of the third arrival without citing limits-thm l18-gamma-beta (written after it); add the cite in a fix pass.
-- Gap briefs (`docs/briefs/gap-*.md`) name scratchpad and pkgs paths from an older session; give agents the current paths.
+- Gap briefs and Stage 3 briefs (`docs/briefs/gap-*.md`, `momentum-rep.md` and others) name scratchpad and pkgs paths from an older session; give agents the current paths.
+- Topic exams 1.3, 1.4, 1.5 sit at the validator's 30-item cap; gap items are packed into multi-part tables marked all or nothing, and the 1.3 curve sketch is typed, not tapped (inbox bullets ask for partial credit and compound items).
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
 - Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams.
 

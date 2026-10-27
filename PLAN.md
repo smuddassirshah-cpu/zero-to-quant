@@ -32,7 +32,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [x] random-vars L5
 - [x] limits-thm L4
 - [x] markov L4
-- [ ] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (items listed in `docs/briefs/gaps-plan.md`)
+- [x] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (each now 30 items, the validator cap; reports `docs/reports/exam-1.3-gap.md`, `exam-1.4-gap.md`, `exam-1.5-gap.md`)
 
 ### 3. Stage 3 content (briefs in `docs/briefs/`)
 - [ ] momentum-rep L1
