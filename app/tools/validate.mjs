@@ -966,6 +966,11 @@ Object.keys(C.courses || {}).forEach(cid => {
   if (D.name !== meta.name) warn(file, 'name', 'name differs from curriculum.json');
   if (ART && !ART.has(D.art)) err(file, 'art', `unknown art id "${D.art}"`);
   checkText(file, 'description', D.description); checkText(file, 'name', D.name);
+  /* strand ("quant" or "pure") and its roles note: both or neither (docs/AUTHORING.md, strand) */
+  if (D.strand !== undefined && D.strand !== 'quant' && D.strand !== 'pure') err(file, 'strand', `strand must be "quant" or "pure" (found ${JSON.stringify(D.strand)})`);
+  if (D.strand !== undefined && (typeof D.strandNote !== 'string' || !D.strandNote.trim())) err(file, 'strandNote', 'strandNote (a non-empty string naming the roles) is required when strand is set');
+  if (D.strand === undefined && D.strandNote !== undefined) err(file, 'strandNote', 'strandNote needs strand');
+  if (typeof D.strandNote === 'string') checkText(file, 'strandNote', D.strandNote);
   const skills = isObj(D.skills) ? Object.keys(D.skills) : [];
   if (skills.length < 3 || skills.length > 6) err(file, 'skills', `3 to 6 skills (found ${skills.length})`);
   skills.forEach(s => {

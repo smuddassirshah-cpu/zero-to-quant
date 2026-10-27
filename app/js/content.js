@@ -37,10 +37,46 @@
   };
 
   /* ---------- Registry over the curriculum ---------- */
-  const stages = () => (curriculum ? curriculum.stages : []);
-  const stage = (n) => stages().find(s => s.id === Number(n)) || null;
-  const topic = (id) => { for (const s of stages()) for (const t of s.topics) if (t.id === String(id)) return { ...t, stage: s.id }; return null; };
-  const topicOfCourse = (cid) => { for (const s of stages()) for (const t of s.topics) if ((t.courses || []).includes(cid)) return { s, t }; return null; };
+  /* Strands: a course.json may carry strand ("quant" or "pure") and strandNote (the roles). The "Quant path only"
+     setting hides pure courses and the topics that hold only pure courses from stages() and courses(); topic(),
+     course() and stage() still find everything, so a link or a saved resume point to a pure course keeps working. */
+  const quantOnly = () => { try { const S = window.ZQ && window.ZQ.state; return !!(S && S.settings && S.settings.quantOnly); } catch { return false; } };
+  const isPure = (id) => { const m = (curriculum && curriculum.courses[id]) || {}, d = courseDocs[id] || {}; return (d.strand || m.strand) === 'pure'; };
+  const strandOfCourse = (id) => { const m = (curriculum && curriculum.courses[id]) || {}, d = courseDocs[id] || {}; const v = d.strand || m.strand; return v === 'pure' || v === 'quant' ? v : null; };
+  /* A topic has a strand when every one of its courses carries the same one; mixed or untagged topics have none */
+  const topicStrand = (t) => {
+    const ids = (t && t.courses) || [];
+    const set = new Set(ids.map(id => strandOfCourse(id) || ''));
+    return set.size === 1 && ids.length && [...set][0] ? [...set][0] : null;
+  };
+  const strandNoteOf = (ids) => {
+    const notes = [...new Set((ids || []).map(id => (courseDocs[id] || {}).strandNote).filter(Boolean))];
+    return notes.join(' ');
+  };
+  const STRAND_NAME = { pure: 'Pure maths', quant: 'Quant' };
+  const escAttr = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  /* The badge markup for a strand with its note as the tooltip and the screen-reader detail; '' for no strand */
+  const strandBadge = (strand, note = '', cls = '') => {
+    if (!STRAND_NAME[strand]) return '';
+    const n = escAttr(note || (strand === 'pure' ? 'Pure maths: not needed to be hired.' : 'Quant path: used in quant roles.'));
+    return `<span class="strand-badge is-${strand}${cls ? ' ' + cls : ''}" title="${n}" aria-label="${STRAND_NAME[strand]}. ${n}">${STRAND_NAME[strand]}</span>`;
+  };
+  const allStages = () => (curriculum ? curriculum.stages : []);
+  const stages = () => {
+    const all = allStages();
+    if (!quantOnly()) return all;
+    return all.map(s => ({
+      ...s,
+      topics: s.topics.flatMap(t => {
+        const cs = t.courses || [], kept = cs.filter(id => !isPure(id));
+        if (cs.length && !kept.length) return [];
+        return [kept.length === cs.length ? t : { ...t, courses: kept }];
+      }),
+    }));
+  };
+  const stage = (n) => allStages().find(s => s.id === Number(n)) || null;
+  const topic = (id) => { for (const s of allStages()) for (const t of s.topics) if (t.id === String(id)) return { ...t, stage: s.id }; return null; };
+  const topicOfCourse = (cid) => { for (const s of allStages()) for (const t of s.topics) if ((t.courses || []).includes(cid)) return { s, t }; return null; };
   const course = (id) => {
     if (!curriculum || !curriculum.courses[id]) return null;
     const meta = curriculum.courses[id], doc = courseDocs[id] || {};
@@ -50,9 +86,11 @@
       name: doc.name || meta.name, art: doc.art || meta.art, description: doc.description || meta.description,
       topic: (where && where.t.id) || meta.topic, topicName: where ? where.t.name : '', stage: where ? where.s.id : null, track: where ? where.t.track : null,
       skills: doc.skills || {}, levels: doc.levels || [], loaded: !!courseDocs[id],
+      strand: strandOfCourse(id), strandNote: strandOfCourse(id) ? (doc.strandNote || '') : '',
     };
   };
-  const courses = () => stages().flatMap(s => s.topics.flatMap(t => (t.courses || []).map(id => course(id)).filter(Boolean)));
+  const allCourses = () => allStages().flatMap(s => s.topics.flatMap(t => (t.courses || []).map(id => course(id)).filter(Boolean)));
+  const courses = () => (quantOnly() ? allCourses().filter(c => c.strand !== 'pure') : allCourses());
 
   /* Ordered list of everything on a course map: each level's lessons, then its review, then its homework */
   const lessonCache = new Map();  // `${course}/${id}` -> loaded lesson title, for names when the map has none
@@ -84,6 +122,8 @@
   const lesson = (cid, id) => load(`courses/${cid}/${id}.json`).then(d => { if (d && d.title) lessonCache.set(`${cid}/${id}`, d.title); return d; });
   const review = (cid, id) => load(`courses/${cid}/${id}.json`);
   const homework = (cid, id) => load(`courses/${cid}/${id}.json`);
+  /* true or false from the manifest; null when there is no manifest */
+  const examWritten = (id) => (manifest ? manifest.has(`exams/${id}.json`) : null);
   const exam = (id) => load(`exams/${id}.json`);
   const drill = (id) => load(`drills/${id}.json`);
   const drills = () => drillIndex || [];
@@ -109,8 +149,8 @@
     ready,
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
-    stages, stage, topic, course, courses, courseLessons, next, exists,
-    lesson, review, homework, exam, drill, drills,
+    stages, allStages, stage, topic, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
+    lesson, review, homework, exam, examWritten, drill, drills,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),
     deKebab,

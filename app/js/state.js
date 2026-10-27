@@ -37,7 +37,7 @@
   const fresh = () => ({
     v: V,
     profile: { name: '', initial: '', track: 'Undecided', weeklyGoalH: 15, startStage: 0, createdAt: null },
-    settings: { theme: 'system', motion: 'system', sound: false, haptics: true, streakMode: 'daily' },
+    settings: { theme: 'system', motion: 'system', sound: false, haptics: true, streakMode: 'daily', quantOnly: false },
     xp: 0, mp: 0,
     lessons: {}, reviews: {}, homework: {}, exams: {}, skills: {},
     redo: [], notebook: [], drills: {},
@@ -438,7 +438,7 @@
     const courseProgress = {};
     if (C && typeof C.courses === 'function') {
       try {
-        C.courses().forEach(c => {
+        (C.allCourses || C.courses)().forEach(c => {
           const ls = C.courseLessons(c.id).filter(x => x.kind === 'lesson');
           const done = ls.filter(x => doc.lessons[lessonId(c.id, x.id)] && doc.lessons[lessonId(c.id, x.id)].done).length;
           courseProgress[c.id] = ls.length ? done / ls.length : 0;

@@ -269,7 +269,7 @@
     const examsEl = root.querySelector('[data-exams]');
     const topicsAll = C().stages().flatMap(s => s.topics.map(t => ({ ...t, stage: s.id })));
     Promise.all([
-      Promise.all(topicsAll.map(t => C().exam(`topic-${t.id}`).catch(() => null).then(doc => (doc ? { t, doc } : null)))),
+      Promise.all(topicsAll.map(t => C().exam(`topic-${t.id}`).catch(() => null).then(doc => (doc ? { t, doc } : C().examWritten(`topic-${t.id}`) === false ? { t, doc: null } : null)))),
       Promise.all(C().stages().map(s => C().exam(`stage-${s.id}`).catch(() => null).then(doc => (doc ? { s, doc } : null)))),
     ]).then(([tops, stages]) => {
       if (!alive) return;
@@ -277,7 +277,11 @@
       const ringC = 2 * Math.PI * 22;
       const attempts = (id) => ((S().exams[id] || {}).attempts || []);
       const best = (id) => attempts(id).reduce((b, a) => Math.max(b, a.items ? a.score / a.items : 0), -1);
+      const sb = (t) => C().strandBadge(C().topicStrand(t), C().strandNoteOf(t.courses), 'is-sm');
       const topicRow = ({ t, doc }) => {
+        if (!doc) return `<li class="rv-ex is-unwritten" data-track="${esc(t.track)}">
+          <div class="rv-ex-body"><span class="t-overline rv-deep">${esc(t.id)} ${esc(t.name)} ${sb(t)}</span><h3 class="t-h2">Topic exam</h3>
+            <p class="t-caption secondary">Not written yet.</p></div></li>`;
         const id = doc.id, at = attempts(id), passed = at.some(a => a.passed);
         const sk = Object.keys(doc.skills || {});
         const ready = sk.length ? Math.round(sk.reduce((s, k) => s + (mastery[k] || 0), 0) / sk.length * 100) : 0;
@@ -289,7 +293,7 @@
           : `Sit it early to test out. ${doc.minutes} min, pass mark ${Math.round(doc.pass * 100)}%. ${ready}% ready, from your mastery map.`;
         return `<li class="rv-ex" data-track="${esc(t.track)}">
           <span class="rv-ring" role="img" aria-label="${ready}% ready"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="22" class="rv-ring-t"/><circle cx="28" cy="28" r="22" class="rv-ring-f" ${ready ? '' : 'opacity="0"'} stroke-dasharray="${(ringC * ready / 100).toFixed(2)} ${ringC.toFixed(2)}" transform="rotate(-90 28 28)"/></svg><span class="tnum" aria-hidden="true">${passed ? I('check', 'sm') : ready + '%'}</span></span>
-          <div class="rv-ex-body"><span class="t-overline rv-deep">${esc(t.id)} ${esc(t.name)}</span><h3 class="t-h2">Topic exam</h3>
+          <div class="rv-ex-body"><span class="t-overline rv-deep">${esc(t.id)} ${esc(t.name)} ${sb(t)}</span><h3 class="t-h2">Topic exam</h3>
             <p class="t-caption secondary">${esc(note)}</p></div>
           <a class="btn secondary" href="#exam/${esc(id)}">${at.length ? 'Sit again' : 'Sit exam'}</a></li>`;
       };

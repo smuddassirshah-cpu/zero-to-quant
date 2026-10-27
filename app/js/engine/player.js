@@ -81,7 +81,7 @@
     (c && c.levels || []).forEach(lv => { const i = (lv.lessons || []).indexOf(lessonId); if (i >= 0) { level = lv.n ?? lv.level; n = i + 1; } });
     let track = c && c.track;
     if (!track && c && c.topic && C && C.topic) { try { track = (C.topic(c.topic) || {}).track; } catch { /* no topic */ } }
-    return { name: c && c.name, art: (c && c.art) || 'tree', track: track || 'prob', level, n };
+    return { name: c && c.name, art: (c && c.art) || 'tree', track: track || 'prob', level, n, strand: c && c.strand, strandNote: c && c.strandNote };
   };
   const nextItem = async (course, lessonId) => {
     const C = window.ZQ.content;
@@ -598,7 +598,7 @@
       const meta = info.level && info.n ? `Level ${info.level} · Lesson ${info.n}` : (info.name || 'Lesson');
       const el = h(`<section class="lsn-step lsn-title">
         <div class="lsn-title-art" data-track="${Z.esc(info.track)}">${window.ZQArt ? window.ZQArt(info.art, { label: 'Course art' }) : ''}</div>
-        <div class="t-overline lsn-over">${Z.esc(meta)}</div>
+        <div class="t-overline lsn-over">${Z.esc(meta)}${info.strand && window.ZQ.content.strandBadge ? ` ${window.ZQ.content.strandBadge(info.strand, info.strandNote)}` : ''}</div>
         <h1 class="t-lesson-title">${G().inline(spec.title || LSN.title)}</h1>
         ${G().prose(spec.prose || '')}
         <p class="t-caption lsn-meta">${icon('clock', 'xs')} About ${LSN.minutes || 12} minutes${quizSpec.length ? `, then a ${quizSpec.length}-question quiz` : ''}</p>

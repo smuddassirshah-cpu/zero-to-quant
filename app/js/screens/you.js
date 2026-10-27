@@ -48,10 +48,14 @@
       const skillLabel = {};
       C.courses().forEach(c => Object.entries(c.skills || {}).forEach(([k, v]) => { if (!skillLabel[k]) skillLabel[k] = v; }));
       const topicsByTrack = {};
-      C.stages().forEach(st => st.topics.forEach(t => {
-        const courses = (t.courses || []).map(id => C.course(id)).filter(c => c && Object.keys(c.skills || {}).length);
-        if (courses.length) (topicsByTrack[t.track] = topicsByTrack[t.track] || []).push({ ...t, stage: st.id, courses });
-      }));
+      const buildTopics = () => { // again after "Quant path only" changes
+        Object.keys(topicsByTrack).forEach(k => delete topicsByTrack[k]);
+        C.stages().forEach(st => st.topics.forEach(t => {
+          const courses = (t.courses || []).map(id => C.course(id)).filter(c => c && Object.keys(c.skills || {}).length);
+          if (courses.length) (topicsByTrack[t.track] = topicsByTrack[t.track] || []).push({ ...t, stage: st.id, courses });
+        }));
+      };
+      buildTopics();
       const mastery = (skill) => { const r = S.skills[skill]; return r && r.seen ? (S.summary().skillMastery[skill] || 0) : null; };
       const bin = (v) => (v == null ? 0 : Math.max(1, Math.min(6, Math.ceil(v * 6))));
       const pct = (v) => Math.round(v * 100);
@@ -345,6 +349,7 @@
               <h3 class="t-overline muted">Study plan</h3>
               ${seg('goal', 'Weekly goal', [[5, '5 h'], [10, '10 h'], [15, '15 h'], [25, '25 h']], P.weeklyGoalH, goalHelp(P.weeklyGoalH))}
               ${seg('track', 'Track', TRACKS, P.track, 'Stages 0 and 1 are the same for every track. The track shapes Stage 2 onwards and the Paths view on Learn.')}
+              ${sw('quantonly', 'Quant path only', 'Hides the pure maths courses and topics, and leaves them out of stage progress. They stay one tap away if you open them from a link.', !!S.settings.quantOnly)}
               ${sw('streak', 'Streak', 'Off hides the streak count, the bolt and the calendar everywhere.', !streakOff())}
               ${act('setup', 'Run setup again', 'Change your name, track, weekly hours or starting stage. Your progress stays.', 'Run setup', 'replay')}
             </div>
@@ -637,6 +642,7 @@
           const h = $('#yu-h-goal'); if (h) h.textContent = goalHelp(Number(t.value));
           paint.head(); paint.hours();
         } else if (t.name === 'yu-track') { S.profile.set({ track: t.value }); paint.head(); }
+        else if (t.id === 'yu-quantonly') { S.settings.set({ quantOnly: t.checked }); buildTopics(); paint.map(); paint.head(); }
         else if (t.id === 'yu-streak') { S.settings.set({ streakMode: t.checked ? 'daily' : 'off' }); applyStreakMode(); Z.refreshShell(); }
       });
 

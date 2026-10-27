@@ -1200,3 +1200,11 @@ Raised later (ds level 4):
 Content gaps (second reader, topic 1.5), to fill in the gap pass with 383 and 401:
 
 423. Probability against the Stat 110 exit line: missing moment generating functions, continuous joint densities with marginals and independence, transformations and convolution, continuous order statistics, Beta, Gamma, negative binomial, multinomial, chi-square, t and bivariate normal, the law of total variance, Jensen's inequality, the strong law, Poisson process properties, reversibility and MCMC; covariance and conditional expectation only in discrete form. The exam never tests covariance, Poisson, exponential, hypergeometric, lognormal, reflection or absorption, and every item is one step. Duplication to cut: conditional l2 repeats counting-chance l7; counting-chance l9 screens 1 to 5 repeat l3; limits-thm l1 and l2 repeat random-vars.
+
+Raised later (maths breadth pass, task 2b):
+
+424. Done: validator checks `strand` ("quant" or "pure") and `strandNote` (non-empty when `strand` is set; an error without `strand`); rules in AUTHORING.md section 7 and 9. Checked on a scratch copy with four bad cases.
+425. Done: "Pure maths" and "Quant" badge (`ZQ.content.strandBadge`, `.strand-badge` in components.css) on Learn course cards, topic chip rows and topic exam chips, the course page, the lesson start screen and the Review exam list; `strandNote` is the tooltip and screen-reader detail; untagged courses and mixed topics show none.
+426. Done: setting "Quant path only" (`settings.quantOnly`, You, Settings): `content.stages()` and `courses()` drop pure courses and all-pure topics, so Learn, Today, Review, the mastery map and stage "topics passed" counts skip them. `topic()`, `course()`, `stage()`, `allStages()` and `allCourses()` are unfiltered.
+427. Done: Learn shows a topic's `exit` as a "Target" line; a topic exam with no file shows "Not written yet" on Learn and Review (`content.examWritten`); a course with no written lessons opens without error everywhere (routes playthrough).
+428. Open (small): stage hours on Learn still show the full curriculum figure with "Quant path only" on, and the Paths view (Stage 2 and 3.2 optional card) is not filtered.

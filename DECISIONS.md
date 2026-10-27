@@ -30,6 +30,7 @@ Engine process
 - The code widget's time budget is 5 s per case for the whole run plus 30 s for heavy imports; slow solutions are caught with large inputs or a hidden counting subclass, not wall-clock asserts.
 - Sandboxes without jsDelivr build the `--local-cdn` folder from GitHub releases and npm with `app/tools/fetch-local-cdn.sh` (27 Oct). Reason: plain playthrough cannot load Pyodide or clang there.
 - Playthrough takes screenshots after `enter` patches settle; `--local-cdn` points at a scratchpad package folder in sandboxes where jsDelivr is blocked.
+- Strand badges (27 Oct): violet "Pure maths", amber "Quant", detail from `strandNote`; a topic or exam chip shows a badge only when all its courses share a strand. "Quant path only" hides pure courses and all-pure topics and drops them from stage gating and progress. Learn shows every topic's `exit` as a Target line.
 
 Rejected
 - One agent per course (too long, lost to rate limits); one agent per level is the unit.

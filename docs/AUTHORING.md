@@ -443,7 +443,8 @@ Errors:
 7. `skills` exist in the course; every course skill is used by at least one lesson.
 8. Copy rules: no `!` in prose, question or feedback; no emoji (plain symbols used as tokens are text, not emoji: ★ ☆ ● ○ ■ □ ▲ △ ▼ ◀ ▶ ◆ and the card suits ♠ ♥ ♦ ♣, unless written with the emoji selector U+FE0F); no "it can be shown"; no American spellings from a fixed list (color, center, favorite, analyze, optimize, behavior, modeling, labeled, math class... the validator ships the list).
 9. KaTeX: every `$...$` is balanced; `\\` is escaped in JSON.
-10. Course: levels 3 to 5, lessons per level 4 to 6, every lesson file referenced exists or is listed in `--summary` as unwritten (warning, not error); `review` and `homework` files exist for every level (warning until written).
+10. Strand (section 9): `strand` in `course.json` is "quant" or "pure"; `strandNote` is a non-empty string when `strand` is set, and an error without it.
+11. Course: levels 3 to 5, lessons per level 4 to 6, every lesson file referenced exists or is listed in `--summary` as unwritten (warning, not error); `review` and `homework` files exist for every level (warning until written).
 
 Warnings: prose over 60 words; a screen without a canvas in a `problem` before the ladder's end; a lesson with no `transfer`; a quiz with any interactive canvas.
 
@@ -454,3 +455,19 @@ C++ widgets (`language: "cpp"`), the rules so far: at least 3 and at most 15 tes
 ## 8. A complete minimal example
 
 See `content/courses/conditional/l3-shrinking.json` (the reference lesson, ported from the prototype) and `content/courses/conditional/course.json`.
+
+## 9. Course strand: Pure maths and Quant
+
+The maths breadth courses are tagged so the learner can tell what is needed to be hired from what is for the love of the subject. Two optional top-level fields in a course's `course.json`:
+
+```json
+"strand": "pure",
+"strandNote": "Not needed to be hired. Research roles that hire maths PhDs, and reading proofs in papers."
+```
+
+- `strand` is `"quant"` or `"pure"`. Any other value is a validator error. A course with no `strand` is untagged and shows no badge (every course written before the breadth pass).
+- `strandNote` names the roles in one or two plain sentences. It is required when `strand` is set, and an error without `strand`. It is the badge's detail: the tooltip, and the screen-reader text after the strand name.
+- The app shows a "Pure maths" (violet) or "Quant" (amber) badge on the course card, the course page, the lesson start screen, and on a topic's chip row and topic exam chip (Learn and the exam list on Review). A topic or exam chip gets a badge only when every course in the topic carries the same strand; a mixed or partly untagged topic shows none.
+- Topic targets: a topic's `exit` in `curriculum.json` shows as a "Target" line under the topic heading on Learn. A topic with no exam file in `content/exams/` shows "Topic exam, not written yet" (Learn and Review) instead of a button. A course with no written lessons opens its map as "Map only".
+- Setting: You, Settings, Study plan, "Quant path only" (`settings.quantOnly`, saved with the other settings, off by default). When on, `ZQ.content.stages()` and `courses()` leave out pure courses and any topic whose courses are all pure, so Learn, Today, Review, the mastery map and the stage progress count ("n of m topics passed") skip them. `topic()`, `course()` and `stage()` still find everything, so a link, resume point or exam URL to a pure course keeps working. Stage hours still show the full curriculum figure. `ZQ.content.allStages()` and `allCourses()` ignore the setting.
+- For engine code: `ZQ.content.course(id)` carries `strand` (or `null`) and `strandNote`; `topicStrand(topic)` and `strandNoteOf(courseIds)` give a topic's strand and notes; `strandBadge(strand, note, cls)` returns the badge HTML.

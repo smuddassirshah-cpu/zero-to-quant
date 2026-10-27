@@ -7,7 +7,7 @@ Open at migration (27 Oct 2026)
 - Topic exams 1.3, 1.4, 1.5 sit at the validator's 30-item cap; gap items are packed into multi-part tables marked all or nothing, and the 1.3 curve sketch is typed, not tapped (inbox bullets ask for partial credit and compound items).
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
 - Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams.
-- `strand` and `strandNote` sit in 13 course.json maps but the validator does not check them and the app ignores them; topics 0.6 and 1.10 (pure) count towards stage progress until the engine item of task 2b lands (notes in `docs/briefs/breadth-plan.md`, Engine notes).
+- Learn header still says 3,100 hours (curriculum: 3,530; quant path 3,330), stage hours ignore "Quant path only", and the Paths view is unfiltered (ENGINE-BACKLOG item 428). Direct links to hidden pure courses still open.
 
 Engine gotchas
 - `unit: "%"` on a numeric widget divides the typed value by 100: store the fraction.

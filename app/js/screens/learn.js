@@ -249,12 +249,12 @@
         const p = prog(c.id), pct = Math.round(p * 100), s = courseState(c, t), cur = c.id === curId;
         const n = lessonsOf(c.id).length, w = writtenCount(c.id), mapOnly = n > 0 && w === 0;
         const counts = `${fmt(n)} lessons · ${c.levels.length} ${c.levels.length === 1 ? 'level' : 'levels'}`;
-        const label = `${c.name}. ${counts}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
+        const label = `${c.name}.${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''} ${counts}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
         return `<button type="button" class="zl-card${cur ? ' is-current' : ''}${mapOnly ? ' is-map' : ''}" data-track="${t.track}" data-course="${c.id}" aria-label="${esc(label)}">
             <span class="zl-art" aria-hidden="true">${ZQArt(c.art)}</span>
             <span class="zl-body">
               ${cur ? '<span class="zl-cur" aria-hidden="true">Current</span>' : ''}
-              <span class="zl-title">${esc(c.name)}</span>
+              <span class="zl-title">${esc(c.name)}</span>${C.strandBadge(c.strand, c.strandNote)}
               <span class="zl-label tnum">${counts}</span>
               <span class="zl-foot"><span class="bar thin track" aria-hidden="true"><i data-w="${pct}"></i></span><span class="zl-chips">${chip(s)}${mapOnly ? '<span class="zl-maponly">Map only</span>' : ''}</span></span>
             </span>
@@ -264,13 +264,15 @@
       /* ---------- Topic sections ---------- */
       const examChip = (t) => {
         const ex = exam('topic-' + t.id), min = examMinutes(t.hours);
+        const sb = C.strandBadge(C.topicStrand(t), C.strandNoteOf(t.courses), 'is-sm');
+        if (C.examWritten('topic-' + t.id) === false) return `<span class="zl-exam-chip is-unwritten" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: not written yet.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">Not written yet</span>${sb}</span>`;
         const best = ex.sat ? Math.max(...ex.attempts.map(pctOf)) : 0;
         if (ex.passed.length) {
           const sc = Math.max(...ex.passed.map(pctOf));
-          return `<button type="button" class="zl-exam-chip is-pass" data-exam="topic-${t.id}" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: passed with ${sc}%. Open it again.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">Passed ${sc}%</span></button>`;
+          return `<button type="button" class="zl-exam-chip is-pass" data-exam="topic-${t.id}" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: passed with ${sc}%. Open it again.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">Passed ${sc}%</span>${sb}</button>`;
         }
-        if (ex.sat) return `<button type="button" class="zl-exam-chip" data-exam="topic-${t.id}" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: not passed yet, best score ${best}%. Sit it again.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">Best ${best}%</span></button>`;
-        return `<button type="button" class="zl-exam-chip" data-exam="topic-${t.id}" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: not sat. ${min} minutes, timed, 70% to pass. Sit it first to test out.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">${min} min</span></button>`;
+        if (ex.sat) return `<button type="button" class="zl-exam-chip" data-exam="topic-${t.id}" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: not passed yet, best score ${best}%. Sit it again.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">Best ${best}%</span>${sb}</button>`;
+        return `<button type="button" class="zl-exam-chip" data-exam="topic-${t.id}" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: not sat. ${min} minutes, timed, 70% to pass. Sit it first to test out.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">${min} min</span>${sb}</button>`;
       };
       const resLink = (t) => {
         const r = t.resource;
@@ -291,9 +293,10 @@
               <span class="t-overline zl-ov">${esc(trackNames[t.track] || '')}</span>
               <h2 class="zl-topic-h" id="zl-t-${t.id.replace('.', '-')}" tabindex="-1"><span class="zl-num tnum">${t.id}</span> ${esc(t.name)} <span class="zl-hrs tnum">· ${opt ? 'Optional' : hrs(t.hours)}</span></h2>
               <p class="zl-meta">${cs.length} course${cs.length === 1 ? '' : 's'} · ${lessons} lessons${notes[t.id] ? `<span class="zl-note">${esc(notes[t.id])}</span>` : ''}</p>
+              ${t.exit ? `<p class="zl-target"><b>Target:</b> ${esc(t.exit)}</p>` : ''}
               ${resLink(t)}
             </div>
-            <div class="zl-topic-chips">${chip(st, 'lg')}${close}</div>
+            <div class="zl-topic-chips">${C.strandBadge(C.topicStrand(t), C.strandNoteOf(t.courses), 'lg')}${chip(st, 'lg')}${close}</div>
           </div>`;
       };
 

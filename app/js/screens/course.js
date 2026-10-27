@@ -233,7 +233,7 @@
       <aside class="zc-course card" aria-labelledby="zc-title">
         <div class="zc-art">${ZQArt(co.art, { label: '' })}</div>
         <div class="zc-course-body">
-          <span class="chip track">${esc(topic.id)} ${esc(topic.name)}</span>
+          <span class="chip track">${esc(topic.id)} ${esc(topic.name)}</span>${C.strandBadge(co.strand, co.strandNote)}
           <h1 class="t-course-title" id="zc-title">${esc(co.name)}</h1>
           <p class="t-body secondary zc-desc">${esc(co.description || '')}</p>
           <p class="t-label zc-stats">${stats}</p>

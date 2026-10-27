@@ -1,20 +1,14 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 2b, second item: the engine item for the maths breadth pass. Launch one `engine-dev` agent (Sonnet). The main session plans and reviews only.
+Task: PLAN.md task 2b, third item: briefs for the 0.6, 1.10 and 1.11 courses and the markov gap level. Six courses: `proof`, `analysis`, `linear-maps`, `complex`, `vector-calc`, `odes`, plus markov L5 (martingales and optional stopping; the Poisson process is already markov l16).
 
-Context: the breadth plan is done (`docs/briefs/breadth-plan.md`, read its `## Engine notes` section). Thirteen new course maps (`proof`, `analysis`, `linear-maps`, `complex`, `vector-calc`, `odes`, `numerics`, `convex`, `stat-models`, `measure-prob`, `pdes`, `algebra`, `topology`) carry top-level `strand` ("quant" or "pure") and `strandNote` (roles). The validator accepts these fields without checking them and the app ignores them. Topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 and the 3.2 additions are in `app/content/curriculum.json`; every new lesson is unwritten. Stage hours and exit lines in curriculum.json were left unchanged.
+Do: launch one brief-writer agent per course (Sonnet, `general-purpose`), in parallel, planning only, no commits. Each reads `docs/briefs/breadth-plan.md` (its course section: levels, lesson ids, titles, objectives, prerequisites, builds-on lessons), the course's `app/content/courses/<course>/course.json`, its item in `docs/curriculum.md`, `docs/briefs/EXAMPLE.md` (the brief pattern) and `docs/AUTHORING.md` as needed. It writes `docs/briefs/<course>.md` with a `## Level n` section per level. Markov L5 goes in a new `docs/briefs/gap-markov-2.md` (do not edit `gap-markov.md`). Every number in a brief is computed twice. Briefs name the current paths: scratchpad `/tmp/claude-0/-home-user-zero-to-quant/<session>/scratchpad` and its `pkgs` folder (built with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); give agents this session's scratchpad path. Pure courses (`proof`, `analysis`, `linear-maps`, `vector-calc`) teach proof by guided steps, ordering, and fill-in widgets, since free-form proofs are not gradable; the brief says which widget grades each step. Hand-backs under 200 words each.
 
-The agent must:
-1. Show the new topics with targets on the Learn screen (`app/js/screens/learn.js`); exams list them; nothing throws on a course with no written lessons.
-2. Validator accepts and checks `strand` (only "quant" or "pure") and `strandNote` (non-empty string when `strand` is set).
-3. Add a "Pure maths" or "Quant" badge, with `strandNote` as its detail, on course cards, the lesson start screen, topic chips and exam chips; distinct in light and dark themes; untagged courses show no badge.
-4. Add a "Quant path only" setting that hides pure courses and drops them from stage-exam gating and stage progress.
-5. Document it in `docs/AUTHORING.md`; number any inbox bullets it adds per CLAUDE.md.
+Context not in state files: the engine item is done (`docs/reports/engine-breadth.md`); strand badges and "Quant path only" work; stage hours on Learn are stale (item 428).
 
-Files likely touched: `app/js/screens/learn.js`, course card and lesson start screens, settings screen, exam list, `app/css/`, `app/tools/validate.mjs`, `docs/AUTHORING.md`, `docs/ENGINE-BACKLOG.md`.
+Files likely touched: `docs/briefs/proof.md`, `analysis.md`, `linear-maps.md`, `complex.md`, `vector-calc.md`, `odes.md`, `gap-markov-2.md`, PLAN.md, state files.
 
 Acceptance:
-- From `app/`, `node tools/validate.mjs 2>&1 | tail -5` reports 0 errors, and a bad `strand` value in a scratch copy is rejected.
-- Playthrough of one existing lesson per stage and the routes is green (`--routes-only`, with `--local-cdn` built by `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`).
-- Screenshots in both themes show the badge on a pure and a quant course and none on a core course; with "Quant path only" on, pure courses vanish.
-- PLAN.md ticks the engine item; NEXT_PROMPT.md names the briefs item for 0.6, 1.10, 1.11 and markov L5.
+- Seven brief files exist, each with one `## Level n` section per level in `breadth-plan.md`, every lesson id matching its `course.json`.
+- `git diff app/` is empty (briefs only); from `app/`, `node tools/validate.mjs 2>&1 | tail -5` still reports 0 errors.
+- PLAN.md ticks the item; NEXT_PROMPT.md names the briefs item for 2.5, 2.6, 3.2 additions and 3.4.
