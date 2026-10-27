@@ -59,7 +59,7 @@ Screenshots from the desktop and 390 px runs, and the Why? sheets from the first
 
 The derive-driven canvases were confirmed through their Why? copies: l14's rectangle caption at $a = b = 1$ (0.5466, 0.6321, 0.8647) and l16's overlap at $t = 1.5$ (width 0.50).
 
-Every code solution and starter was run under CPython (`harness.py`): every solution passes all its tests and every starter fails the suite (l16's starter returns a zero list of the right length, so it passes the length test only). The solutions also pass in Pyodide 0.27.7 through the browser playthrough, with the tests in 0.1 to 0.6 s each.
+Every code solution and starter was run under CPython (`harness.py`): every solution passes all its tests and every starter fails the suite (l16's starter returns a zero list of the right length, so it passes the length test only). The solutions also pass in Pyodide 0.27.7 through the browser playthrough.
 
 ## Generators, seeds and conventions
 
@@ -69,7 +69,7 @@ Every code solution and starter was run under CPython (`harness.py`): every solu
   - l17: `minn(5, -log(1 - u()) / 0.02)`, seed 171; `maxn(20, n())`, seed 172.
   - l18: `sum(3, -log(1 - u()) / 2)`, seed 181.
   - All with trials 100, 1,000, 10,000 and `proportion: true`; curves are written as density times `w`.
-  - Seeded means at 10,000 trials, checked in Node (`simcheck.mjs`): l15 0.4989; l16 0.9961; l17 9.978 and 1.8625; l18 1.4961.
+  - Seeded means at 10,000 trials, checked in Node (`simcheck.mjs`): l15 0.5039; l16 0.9961; l17 9.978 and 1.8625; l18 1.4961.
 - **Python seeds** in hidden tests:
   - l15 `exp_sample`: exact draws at (2, 3, 42), then sample means and a tail share at seeds 7, 8, 9 and 2.
   - l15 `box_muller`: exact pair at (1, 3), then 100,000 draws at seed 5.
