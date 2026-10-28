@@ -46,13 +46,13 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] proof L2: Sets and functions [Pure maths] (`docs/reports/proof-2.md`; 4 inbox bullets, one a `place` grading bug)
 - [x] proof L3: Proof methods [Pure maths] (`docs/reports/proof-3.md`; 4 inbox bullets; proof course complete)
 - [x] markov L5: Martingales and stopping [Quant] (`docs/reports/markov-5.md`; 5 inbox bullets; topic-1.5 exam at cap, not extended)
-- [ ] analysis L1: The real numbers [Pure maths]
-- [ ] analysis L2: Sequences [Pure maths]
+- [ ] analysis L1: The real numbers [Pure maths] (lessons committed green 28 Oct; only `docs/reports/analysis-1.md` missing, see KNOWN_ISSUES)
+- [ ] analysis L2: Sequences [Pure maths] (lessons committed green 28 Oct; only `docs/reports/analysis-2.md` missing, see KNOWN_ISSUES)
 - [ ] analysis L3: Series [Pure maths]
 - [ ] analysis L4: Continuity and the derivative [Pure maths]
 - [ ] analysis L5: Integration and metric spaces [Pure maths]
 - [x] linear-maps L1: Vector spaces [Pure maths] (`docs/reports/linear-maps-1.md`; 5 inbox bullets)
-- [ ] linear-maps L2: Linear maps [Pure maths]
+- [x] linear-maps L2: Linear maps [Pure maths] (`docs/reports/linear-maps-2.md`; 3 inbox bullets; l9 starter passes 4 of 6 hidden tests)
 - [ ] linear-maps L3: Duality and inner products [Pure maths]
 - [ ] linear-maps L4: Operators [Pure maths]
 - [ ] complex L1: The complex plane [Quant]
