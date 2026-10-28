@@ -77,6 +77,12 @@
   const stage = (n) => allStages().find(s => s.id === Number(n)) || null;
   const topic = (id) => { for (const s of allStages()) for (const t of s.topics) if (t.id === String(id)) return { ...t, stage: s.id }; return null; };
   const topicOfCourse = (cid) => { for (const s of allStages()) for (const t of s.topics) if ((t.courses || []).includes(cid)) return { s, t }; return null; };
+  /* Tested out: a passed topic exam, read from the saved attempts at call time (nothing stored per lesson).
+     Today and the "up next" course skip a course whose topic is passed; lesson flags and progress are untouched. */
+  const topicPassed = (tid) => {
+    try { const r = window.ZQ.state.exams['topic-' + tid]; return !!(r && Array.isArray(r.attempts) && r.attempts.some(a => a && a.passed)); } catch { return false; }
+  };
+  const courseTestedOut = (cid) => { const w = topicOfCourse(cid); return !!w && topicPassed(w.t.id); };
   const course = (id) => {
     if (!curriculum || !curriculum.courses[id]) return null;
     const meta = curriculum.courses[id], doc = courseDocs[id] || {};
@@ -149,7 +155,7 @@
     ready,
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
-    stages, allStages, stage, topic, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
+    stages, allStages, stage, topic, topicPassed, courseTestedOut, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
     lesson, review, homework, exam, examWritten, drill, drills,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),

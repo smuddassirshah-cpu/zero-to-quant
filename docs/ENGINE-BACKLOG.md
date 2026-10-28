@@ -1234,3 +1234,7 @@ Raised by engine breadth pass 2 (the `space` canvas, `complex-map`, grading):
 446. `expression`: a bare `i` is now the imaginary unit, so a real answer that uses `i` as an index or variable is read as complex and both parts are compared. Only `markov/homework-3` does this (`i(20-i)`, `20i-i^2`: identical polynomials, so it still passes); authors should use `k`, `j` or `n`. A warning in the validator for a bare `i` in a real answer would catch new cases.
 447. `drill.js` keeps its own Python `isclose`, which compares floats only; it needs the same `cmath` branch if a drill ever returns complex values.
 448. `complex-map`: tap mode, a domain restriction on the grid (lines span the whole visible z-plane), curve labels, and a conformal-grid option for unequal units are not built.
+
+Raised later (Today and topic exams):
+
+449. Done: a passed topic exam now counts as tested out. `ZQ.content.topicPassed` and `courseTestedOut` read `S.exams` at call time (no migration, existing passes apply at once); Today, Learn and the course map skip tested-out courses in `currentCourse` unless a lesson is open to resume, falling back to them only when nothing else is left. Exam result copy updated; Due queue and progress figures unchanged.

@@ -85,8 +85,10 @@
     const C = Z.content;
     if (sum.resume && C.course(sum.resume.course)) return sum.resume.course;
     const start = Number(Z.state.profile.startStage) || 0;
-    const cand = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
-    const c = cand.find(x => x.stage >= start) || cand[0];
+    const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
+    /* A course in a passed topic is skipped; it is chosen only when nothing else has a lesson left */
+    const fresh = open.filter(c => !C.courseTestedOut(c.id));
+    const c = fresh.find(x => x.stage >= start) || fresh[0] || open[0];
     return c ? c.id : null;
   };
   /* With nothing written to do: the first course of the learner's starting stage, for its map and its topic resource */

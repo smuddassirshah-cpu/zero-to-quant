@@ -469,7 +469,7 @@
     const timeNote = at.timeUp ? 'Time ran out, so your answers were submitted automatically. ' : '';
     const heroNote = timeNote + (stage
       ? (passed ? 'Every paper passed and every check ticked. This stage counts as passed.' : `To pass, every paper must reach its pass mark and every check must be ticked.${at.checksOk ? '' : ' A check is not ticked yet.'}`)
-      : (passed ? `Pass mark ${Math.round(PASS * 100)}%. This topic now counts as passed. Lessons you have not finished stay open.`
+      : (passed ? `Pass mark ${Math.round(PASS * 100)}%. This topic now counts as passed, so Today moves on. Its lessons stay open on Learn.`
         : `Pass mark ${Math.round(PASS * 100)}%, which is ${Math.ceil(total * PASS)} of ${total}. You need ${Math.max(0, Math.ceil(total * PASS) - score)} more. Study the skills below, then sit it again.`));
 
     root.innerHTML = `<div class="exm-res" data-track="${at.track}">
