@@ -1,0 +1,1434 @@
+{
+ "id": "l20-when-stopping-fails",
+ "course": "markov",
+ "title": "When stopping breaks the rule",
+ "minutes": 15,
+ "objectives": [
+  "Check the conditions of optional stopping, and see why doubling up cannot beat a fair game."
+ ],
+ "skills": [
+  "mc-walks"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Stop when ahead",
+   "prose": "A fair walk from 0 stops the first time you are up £1. The fair walk always comes back to any level (The coin-flip walk), so it reaches $+1$ with chance 1. Some paths take a very long time.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 200,
+     "p": 0.5,
+     "start": 0,
+     "upper": 1,
+     "paths": 30,
+     "drawn": 30,
+     "sim": {
+      "seed": 2
+     },
+     "height": 230,
+     "yLabel": "Winnings (£)",
+     "xLabel": "Bet",
+     "upLabel": "+£1",
+     "overlayHeight": 70
+    },
+    "state": {
+     "stopAtBarrier": true,
+     "showHits": true
+    }
+   },
+   "question": "What is $E[S_T]$, your expected winnings when you stop?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£1: $S_T = 1$ on every path",
+    "unit": "£",
+    "label": "Expected winnings at the stop",
+    "wrong": [
+     {
+      "id": "ost",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where is every path when it stops?"
+    },
+    {
+     "rung": "point",
+     "text": "Each path stops at $+1$, the first time it gets there.",
+     "highlight": [
+      "barrier-up"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So $S_T = 1$ always, and $E[S_T] = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "£1, yet $S_0 = 0$: stopping has changed the mean.",
+    "generic": "Not quite right. Every path stops at $+1$.",
+    "byKey": {
+     "ost": "You applied optional stopping without checking its conditions. Every path stops at $+1$, so the mean at the stop is 1.",
+     "half": "No path stops anywhere but $+1$."
+    }
+   },
+   "explain": {
+    "text": "Every path stops at $+1$, so $E[S_T] = 1 \\ne 0 = S_0$. A fair game has been beaten, so one of the theorem's conditions must fail. The rest of this lesson finds which one.",
+    "canvas": {
+     "highlight": [
+      "barrier-up"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Add a floor",
+   "prose": "Now add a floor: you also stop if you are down £$L$. Here 300 games start with the floor at $-9$. Slide the floor down and watch the average of $S_T$ and the average length.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 1000,
+     "p": 0.5,
+     "start": 0,
+     "upper": 1,
+     "lower": -9,
+     "paths": 300,
+     "drawn": 30,
+     "sim": {
+      "seed": 2
+     },
+     "height": 230,
+     "yLabel": "Winnings (£)",
+     "xLabel": "Bet",
+     "upLabel": "+£1",
+     "overlayHeight": 70
+    },
+    "state": {
+     "stopAtBarrier": true,
+     "showHits": true,
+     "showStopped": true
+    },
+    "derive": {
+     "caption": "{{values.hitsUp}} of {{values.paths}} reached +£1. Average of $S_T$: {{fixed(values.stopped, 2)}}. Average length: {{fixed(values.tauMean, 1)}} bets."
+    },
+    "controls": [
+     {
+      "bind": "lower",
+      "min": -99,
+      "max": -1,
+      "step": 1,
+      "label": "Floor (£)"
+     },
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "With the floor at $-9$, what is the chance of reaching $+1$ first?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0.9: $\\tfrac{L}{L + 1}$ with $L = 9$",
+    "label": "Chance of +£1",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "tenth",
+      "value": 0.1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Shift up by 9: you start at 9 with ends at 0 and 10."
+    },
+    {
+     "rung": "point",
+     "text": "Gambler's ruin gives $\\tfrac{9}{10}$.",
+     "highlight": [
+      "barrier-up",
+      "barrier-down"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{L}{L+1} = \\tfrac{9}{10}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{9}{10}$, and then $E[S_T] = 0.9 \\times 1 - 0.1 \\times 9 = 0$.",
+    "generic": "Not quite right. Shift by 9 and use $\\tfrac{i}{N}$.",
+    "byKey": {
+     "one": "Without the floor it is 1. With it, a run of nine losses stops some games first.",
+     "half": "The floor is 9 away and the target 1, so the target is much likelier.",
+     "tenth": "That is the chance of hitting the floor."
+    }
+   },
+   "explain": {
+    "text": "The chance is $\\tfrac{L}{L+1} = \\tfrac{9}{10}$, so $E[S_T] = \\tfrac{9}{10} \\times 1 - \\tfrac{1}{10} \\times 9 = 0$. Here 276 of 300 games reached +£1 and $S_T$ averaged 0.20. The rare loss of £9 exactly cancels the frequent gains of £1.",
+    "canvas": {
+     "params": {
+      "lower": -9
+     },
+     "highlight": [
+      "stopped-walk"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The price of the floor",
+   "prose": "The floor keeps the game fair, but at a cost in time. Slide the floor and read the average length.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 1000,
+     "p": 0.5,
+     "start": 0,
+     "upper": 1,
+     "lower": -9,
+     "paths": 300,
+     "drawn": 30,
+     "sim": {
+      "seed": 2
+     },
+     "height": 230,
+     "yLabel": "Winnings (£)",
+     "xLabel": "Bet",
+     "upLabel": "+£1",
+     "overlayHeight": 70
+    },
+    "state": {
+     "stopAtBarrier": true,
+     "showHits": true,
+     "showStopped": true
+    },
+    "derive": {
+     "caption": "{{values.hitsUp}} of {{values.paths}} reached +£1. Average of $S_T$: {{fixed(values.stopped, 2)}}. Average length: {{fixed(values.tauMean, 1)}} bets."
+    },
+    "controls": [
+     {
+      "bind": "lower",
+      "min": -99,
+      "max": -1,
+      "step": 1,
+      "label": "Floor (£)"
+     },
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "With the floor at $-L$, how many bets does a game last on average? Give your answer for $L = 9$.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "9: $i(N - i) = 9 \\times 1$",
+    "unit": "bets",
+    "wrong": [
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sq",
+      "value": 81,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Shift by $L$: start $L$, ends 0 and $L + 1$."
+    },
+    {
+     "rung": "point",
+     "text": "$E[T] = i(N - i) = L \\times 1$.",
+     "highlight": [
+      "stopped-walk"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At $L = 9$: 9 bets. At $L = 99$: 99 bets."
+    }
+   ],
+   "feedback": {
+    "correct": "$E[T] = L$: 9 bets here, 99 with the floor at $-99$.",
+    "generic": "Not quite right. Shift by $L$ and use $i(N - i)$.",
+    "byKey": {
+     "ten": "$N = L + 1 = 10$ is the width. The formula is $i(N - i) = 9 \\times 1$.",
+     "sq": "$81 = L^2$ would hold from the middle. You start next to the target.",
+     "one": "1 bet is the shortest game, not the average."
+    }
+   },
+   "explain": {
+    "text": "$E[T] = L$: 9 bets at $L = 9$ (this batch averaged 8.7), and 99 at $L = 99$. At $L = 99$ the batch shows only about 40, because the mean comes from rare games lasting thousands of bets. As the floor drops the mean of $S_T$ stays 0, while the expected time grows without bound.",
+    "canvas": {
+     "params": {
+      "lower": -9
+     },
+     "highlight": [
+      "stopped-walk"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "What broke",
+   "prose": "With no floor, $E[T] = \\lim L = \\infty$, and the walk may fall any distance before it reaches $+1$. Recall the three conditions: $T$ bounded; $E[T]$ finite with bounded steps; the stopped walk bounded.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 200,
+     "p": 0.5,
+     "start": 0,
+     "upper": 1,
+     "paths": 30,
+     "drawn": 30,
+     "sim": {
+      "seed": 2
+     },
+     "height": 230,
+     "yLabel": "Winnings (£)",
+     "xLabel": "Bet",
+     "upLabel": "+£1",
+     "overlayHeight": 70
+    },
+    "state": {
+     "stopAtBarrier": true,
+     "showHits": true
+    }
+   },
+   "question": "Without a floor, which conditions of optional stopping fail? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bounded",
+      "text": "$T$ is not bounded",
+      "correct": true
+     },
+     {
+      "id": "mean",
+      "text": "$E[T]$ is infinite",
+      "correct": true
+     },
+     {
+      "id": "stopped",
+      "text": "The stopped walk is not bounded below",
+      "correct": true
+     },
+     {
+      "id": "mart",
+      "text": "The walk is not a martingale",
+      "why": "Each bet is still fair. The walk is a martingale; the stopping rule is the problem."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check each condition in turn."
+    },
+    {
+     "rung": "point",
+     "text": "No cap on time, $E[T] = \\infty$, and no floor.",
+     "highlight": [
+      "barrier-up"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "All three conditions fail, and the walk is still a martingale."
+    }
+   ],
+   "feedback": {
+    "correct": "All three fail, so the theorem says nothing, and indeed $E[S_T] = 1$.",
+    "generic": "Not quite right. Each condition fails here; the walk itself is fine.",
+    "byKey": {
+     "mart": "The walk is fair. Only the stopping time breaks the rule."
+    }
+   },
+   "explain": {
+    "text": "$T$ can be any length, its mean is $\\lim L = \\infty$, and the walk can sink without limit first. With every condition gone, the theorem gives no promise. The gain of £1 is paid for by unbounded time and unbounded losses on the way."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A cap on time",
+   "prose": "Instead of a floor, cap the time: stop when up £1 or after 100 bets. Now $T \\le 100$ is bounded, so $E[S_T] = 0$. By the reflection count, the walk fails to reach $+1$ in 100 bets with chance $\\binom{100}{50} / 2^{100}$.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 100,
+     "p": 0.5,
+     "start": 0,
+     "upper": 1,
+     "paths": 300,
+     "drawn": 30,
+     "sim": {
+      "seed": 2
+     },
+     "height": 230,
+     "yLabel": "Winnings (£)",
+     "xLabel": "Bet",
+     "upLabel": "+£1",
+     "overlayHeight": 70,
+     "stopAt": 100,
+     "xStep": 20
+    },
+    "state": {
+     "stopAtBarrier": true,
+     "showHits": true,
+     "showStopped": true
+    }
+   },
+   "question": "Fill in the chance of failing, and the average winnings when it fails.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Chance of not reaching +£1",
+      {
+       "edit": true,
+       "answer": 0.0796,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "Average $S_T$ when it fails (£)",
+      {
+       "edit": true,
+       "answer": -11.56,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\binom{100}{50}/2^{100} \\approx 0.0796$."
+    },
+    {
+     "rung": "point",
+     "text": "$E[S_T] = 0$: $1 \\times 0.9204 + m \\times 0.0796 = 0$.",
+     "highlight": [
+      "stopped-walk"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$m = -\\tfrac{0.9204}{0.0796} \\approx -11.56$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.0796, and then about $-$£11.56 on average.",
+    "generic": "Not quite right. Compute the chance, then use $E[S_T] = 0$.",
+    "byKey": {
+     "r0c1": "$\\binom{100}{50} \\approx 1.009 \\times 10^{29}$ and $2^{100} \\approx 1.268 \\times 10^{30}$.",
+     "r1c1": "Solve $0.9204 + 0.0796\\,m = 0$."
+    }
+   },
+   "explain": {
+    "text": "The cap makes $T$ bounded, so the mean at the stop is 0. You win £1 with chance 0.9204, and the other 0.0796 of games end down about £11.56. These 300 games averaged +0.07, with 20 failing.",
+    "canvas": {
+     "highlight": [
+      "stopped-walk"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The doubling system",
+   "prose": "The casino's original martingale: bet £1, double after each loss, stop at the first win. With £1,023 you can afford ten bets, since $1 + 2 + \\dots + 512 = 1023$. Any win recovers every loss plus £1. If all ten lose, you lose £1,023.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "win",
+       "label": "Win £1"
+      },
+      {
+       "id": "lose",
+       "label": "Lose £1,023"
+      }
+     ],
+     "yLabel": "Chance",
+     "height": 190,
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 1
+    },
+    "state": {
+     "values": {
+      "win": 0.999,
+      "lose": 0.001
+     },
+     "caption": "One cycle at a fair coin: win £1 with chance 1023/1024, lose £1,023 with chance 1/1024."
+    }
+   },
+   "question": "What is the expected gain of one cycle with a fair coin?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£0: $1 \\times \\tfrac{1023}{1024} - 1023 \\times \\tfrac{1}{1024}$",
+    "unit": "£",
+    "label": "Expected gain",
+    "wrong": [
+     {
+      "id": "win",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "most",
+      "value": 0.999,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "loss",
+      "value": -1023,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "All ten bets lose with chance $(\\tfrac12)^{10} = \\tfrac{1}{1024}$."
+    },
+    {
+     "rung": "point",
+     "text": "Otherwise you are up exactly £1.",
+     "highlight": [
+      "lose"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1023}{1024} - \\tfrac{1023}{1024} = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "£0. $T \\le 10$ is bounded, so the theorem holds.",
+    "generic": "Not quite right. Weight the £1 win and the £1,023 loss by their chances.",
+    "byKey": {
+     "win": "You counted only the usual outcome. The rare loss is sized to cancel it.",
+     "most": "$\\tfrac{1023}{1024} \\approx 0.999$ is the chance of the win, not the expected gain.",
+     "loss": "That is the loss in the bad case, which has chance only 1 in 1,024."
+    }
+   },
+   "explain": {
+    "text": "$1 \\times \\tfrac{1023}{1024} - 1023 \\times \\tfrac{1}{1024} = 0$. The cycle stops within 10 bets, a bounded stopping time, so it cannot beat a fair coin. A seeded run of 200,000 fair cycles averaged +£0.032, because one cycle has sd about £32.",
+    "canvas": {
+     "highlight": [
+      "lose"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Doubling at a real wheel",
+   "prose": "At red on a European wheel each bet wins with chance $\\tfrac{18}{37}$. All ten bets now lose with chance $(\\tfrac{19}{37})^{10}$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "win",
+       "label": "Win £1"
+      },
+      {
+       "id": "lose",
+       "label": "Lose £1,023"
+      }
+     ],
+     "yLabel": "Chance",
+     "height": 190,
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 1
+    },
+    "state": {
+     "values": {
+      "win": 0.9987,
+      "lose": 0.0013
+     },
+     "caption": "One cycle at red: win £1 with chance 1 − (19/37)^10, lose £1,023 otherwise."
+    }
+   },
+   "question": "What is the expected gain of one cycle? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.3056,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$1 - 1024\\left(\\tfrac{19}{37}\\right)^{10} \\approx -0.3056$",
+    "unit": "£",
+    "label": "Expected gain",
+    "wrong": [
+     {
+      "id": "fair",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "spin",
+      "value": -0.027,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "loss",
+      "value": -1023,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$(\\tfrac{19}{37})^{10} \\approx 0.001275$."
+    },
+    {
+     "rung": "point",
+     "text": "Gain $= 1 \\times (1 - 0.001275) - 1023 \\times 0.001275$.",
+     "highlight": [
+      "lose"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is $1 - 1024 \\times 0.001275 \\approx -0.3056$."
+    }
+   ],
+   "feedback": {
+    "correct": "About $-$£0.3056 a cycle.",
+    "generic": "Not quite right. Use the chance $(\\tfrac{19}{37})^{10}$ that all ten lose.",
+    "byKey": {
+     "fair": "With a fair coin it is 0. Here every bet has the casino's edge.",
+     "spin": "$-\\tfrac{1}{37}$ is the edge on one £1 spin. A cycle stakes up to £1,023.",
+     "loss": "That is the loss in the bad case, not the average."
+    }
+   },
+   "explain": {
+    "text": "$1 - 1024(\\tfrac{19}{37})^{10} \\approx -0.3056$; summing the ten winning branches and the losing one gives the same. Doubling cannot turn a supermartingale into a winner. It only moves the losses into one rare, large event.",
+    "canvas": {
+     "highlight": [
+      "lose"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Unlimited money",
+   "prose": "Suppose you had unlimited money. The cycle ends at the first win, after $T$ bets with $E[T] = 2$. The stake on that bet is $2^{T - 1}$, with mean $\\sum_k (\\tfrac12)^k 2^{k - 1} = \\tfrac12 + \\tfrac12 + \\dots$, which is infinite. The panel plays doubling from £1,023 again and again.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 1500,
+     "p": 0.5,
+     "start": 0,
+     "paths": 6,
+     "sim": {
+      "seed": 12
+     },
+     "height": 160,
+     "yLabel": "Coin walk",
+     "overlays": [
+      {
+       "id": "bank",
+       "type": "bankroll",
+       "bet": "double",
+       "label": "Bankroll, doubling from £1"
+      }
+     ],
+     "bankroll": 1023,
+     "stake": 1,
+     "overlayHeight": 150
+    },
+    "state": {}
+   },
+   "question": "With unlimited money, which condition of optional stopping fails?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "steps",
+      "text": "The steps are not bounded: the last stake has infinite mean",
+      "correct": true
+     },
+     {
+      "id": "time",
+      "text": "$T$ is not bounded, so nothing can be said",
+      "why": "Condition (2) allows unbounded $T$ when $E[T]$ is finite. Here $E[T] = 2$, so look at the steps."
+     },
+     {
+      "id": "mean",
+      "text": "$E[T]$ is infinite",
+      "why": "$E[T] = 2$: the first win comes quickly. The stakes are the problem."
+     },
+     {
+      "id": "mart",
+      "text": "The bankroll is not a martingale",
+      "why": "Every bet is fair whatever its size, so the bankroll is a martingale."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Go through the conditions: is $T$ bounded? Is $E[T]$ finite? Are the steps bounded?"
+    },
+    {
+     "rung": "point",
+     "text": "$E[T] = 2$ is finite, but a stake of $2^{T-1}$ has no bound.",
+     "highlight": [
+      "ov-bank"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Condition (2) fails on its second half: the steps are unbounded."
+    }
+   ],
+   "feedback": {
+    "correct": "The steps are unbounded, so a sure £1 is possible only with infinite money.",
+    "generic": "Not quite right. $E[T]$ is finite; check the size of the steps.",
+    "byKey": {
+     "time": "Unbounded $T$ is allowed under condition (2).",
+     "mean": "$E[T] = 2$ is finite.",
+     "mart": "Fair bets of any size keep the bankroll fair."
+    }
+   },
+   "explain": {
+    "text": "$E[T] = 2$ is finite, but the stakes have no bound, so condition (2) fails. That is how unlimited doubling wins £1 for sure. With a real bankroll the panel climbs by £1 a cycle, then a run of losses wipes it out.",
+    "canvas": {
+     "highlight": [
+      "ov-bank"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "One in 1,024",
+   "prose": "A colleague backtests the £1,023 doubling system on a fair coin. It wins £1 in almost every cycle. She argues that ten losses in a row has chance 1 in 1,024, so the system is safe and profitable.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "win",
+       "label": "Win £1"
+      },
+      {
+       "id": "lose",
+       "label": "Lose £1,023"
+      }
+     ],
+     "yLabel": "Chance",
+     "height": 190,
+     "showValues": true,
+     "decimals": 4,
+     "yMax": 1
+    },
+    "state": {
+     "values": {
+      "win": 0.999,
+      "lose": 0.001
+     },
+     "caption": "Win £1 with chance 1023/1024; lose £1,023 with chance 1/1024."
+    }
+   },
+   "question": "What is wrong with her argument?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "safe",
+      "text": "Nothing: a 1-in-1,024 loss is too rare to matter",
+      "why": "You weighed the chance but not the size. The loss is 1,023 times the gain."
+     },
+     {
+      "id": "size",
+      "text": "The rare loss is sized to cancel the gains exactly, so the mean is 0",
+      "correct": true
+     },
+     {
+      "id": "streak",
+      "text": "After many wins, a loss becomes more likely",
+      "why": "Each cycle is independent of the last. The coin has no memory."
+     },
+     {
+      "id": "time",
+      "text": "The system fails only because the casino may close",
+      "why": "The loss comes from the bankroll limit, not from opening hours."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply each outcome by its chance."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac{1023}{1024} \\times 1$ against $\\tfrac{1}{1024} \\times 1023$.",
+     "highlight": [
+      "lose"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "They are equal, so the expected gain is exactly 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the loss is rare but exactly large enough to cancel the gains.",
+    "generic": "Not quite right. Compare the chance times the size for each outcome.",
+    "byKey": {
+     "safe": "You compared chances only. A loss of £1,023 with chance 1 in 1,024 costs as much as the gains bring.",
+     "streak": "Past wins do not change the next cycle.",
+     "time": "Even with endless time, the expected gain per cycle stays 0."
+    }
+   },
+   "explain": {
+    "text": "The loss has chance $\\tfrac{1}{1024}$ and size £1,023, so it costs about £0.999 a cycle on average. The gains bring the same. A backtest without the loss looks profitable until the rare loss arrives.",
+    "canvas": {
+     "highlight": [
+      "lose"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Doubling in code",
+   "prose": "Compute the doubling cycle exactly, then simulate the capped game. `doubling_ev(d, p)` is the expected gain with $d$ bets and a bankroll of $2^d - 1$. `stop_when_up` returns the share that reached $+1$ and the mean final value.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "call",
+      "exact value"
+     ],
+     "rows": [
+      [
+       "`doubling_ev(10, 1/2)`",
+       "0"
+      ],
+      [
+       "`doubling_ev(10, 18/37)`",
+       "−0.3056"
+      ],
+      [
+       "`doubling_ev(7, 18/37)`",
+       "−0.2052"
+      ],
+      [
+       "`stop_when_up(100, ...)`",
+       "0.9204, 0"
+      ]
+     ],
+     "align": [
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "What the code should give."
+    },
+    "maxHeight": 200
+   },
+   "question": "Replace both `...` lines.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\nfrom fractions import Fraction\n\ndef doubling_ev(doublings, p):\n    \"\"\"Exact expected gain of one doubling cycle: bet 1, 2, 4, ...\n    for at most `doublings` bets, each won with chance p, with a\n    bankroll of 2**doublings - 1.\"\"\"\n    p = Fraction(p)\n    ...\n\ndef stop_when_up(max_steps, trials, seed):\n    \"\"\"Simulate a fair walk from 0 that stops at +1 or after\n    max_steps steps. Return (share that reached +1, mean final value).\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import random\nfrom fractions import Fraction\n\ndef doubling_ev(doublings, p):\n    \"\"\"Exact expected gain of one doubling cycle: bet 1, 2, 4, ...\n    for at most `doublings` bets, each won with chance p, with a\n    bankroll of 2**doublings - 1.\"\"\"\n    p = Fraction(p)\n    lose_all = (1 - p) ** doublings\n    return (1 - lose_all) * 1 - lose_all * (2 ** doublings - 1)\n\ndef stop_when_up(max_steps, trials, seed):\n    \"\"\"Simulate a fair walk from 0 that stops at +1 or after\n    max_steps steps. Return (share that reached +1, mean final value).\"\"\"\n    rng = random.Random(seed)\n    reached = 0\n    total = 0\n    for _ in range(trials):\n        s = 0\n        for _ in range(max_steps):\n            s += 1 if rng.random() < 0.5 else -1\n            if s == 1:\n                break\n        reached += s == 1\n        total += s\n    return reached / trials, total / trials\n",
+    "examples": [
+     {
+      "call": "doubling_ev(10, Fraction(1, 2))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "doubling_ev(10, Fraction(1, 2))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     },
+     {
+      "call": "doubling_ev(6, Fraction(1, 2))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     },
+     {
+      "call": "doubling_ev(1, Fraction(18, 37))",
+      "expect": "Fraction(-1, 37)",
+      "compare": "fraction"
+     },
+     {
+      "call": "doubling_ev(10, Fraction(18, 37))",
+      "expect": "Fraction(-1469627475570375, 4808584372417849)",
+      "compare": "fraction"
+     },
+     {
+      "call": "float(doubling_ev(7, Fraction(18, 37)))",
+      "expect": "-0.205238809632967",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "stop_when_up(100, 3000, 1)",
+      "expect": "(0.9193333333333333, 0.0033333333333333335)",
+      "compare": "isclose"
+     },
+     {
+      "call": "stop_when_up(10, 1000, 2)",
+      "expect": "(0.747, -0.023)",
+      "compare": "isclose"
+     },
+     {
+      "call": "stop_when_up(1, 1000, 4)",
+      "expect": "(0.492, -0.016)",
+      "compare": "isclose"
+     },
+     {
+      "call": "(lambda r: abs(r[0] - 0.9204) < 0.01 and abs(r[1]) < 0.5)(stop_when_up(100, 5000, 9))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests. The doubling cases compare exact fractions. Three walk cases use fixed seeds, so draw one `rng.random()` per step and step up when it is below 0.5."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The cycle loses everything only if all $d$ bets lose, with chance $(1 - p)^d$."
+    },
+    {
+     "rung": "point",
+     "text": "Gain $= 1 \\times (1 - (1 - p)^d) - (2^d - 1)(1 - p)^d$.",
+     "highlight": [
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the walk: loop `max_steps` times, add `+1 if rng.random() < 0.5 else -1`, and break when the walk reaches 1."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: the fair cycle is worth exactly 0, and the capped walk averages about 0.",
+    "generic": "Some tests failed. Check the losing chance $(1 - p)^d$, and use one `rng.random()` per step.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that both `...` lines are replaced."
+    }
+   },
+   "explain": {
+    "text": "The fair cycle is exactly 0 for any $d$; at the wheel it loses more as $d$ grows. The capped walk reaches $+1$ in about 92% of games and still averages near 0. The rare deep losses pay for the frequent small wins."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Selling volatility",
+   "prose": "A book sells options far out of the money. Most days they expire worthless and it keeps a small premium. Rarely, a large market move makes one pay out a great deal. The chart is a sketch of such a P&L, not real data.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "pnl",
+       "label": "Book P&L",
+       "values": [
+        0.6,
+        1.2,
+        1.9,
+        2.7,
+        3.3,
+        4.1,
+        4.3,
+        4.8,
+        5.5,
+        6.1,
+        6.9,
+        7.1,
+        7.6,
+        7.9,
+        8.5,
+        9.0,
+        9.2,
+        9.6,
+        9.9,
+        10.7,
+        11.3,
+        11.6,
+        12.3,
+        12.6,
+        13.2,
+        13.4,
+        13.6,
+        14.4,
+        14.7,
+        15.0,
+        15.8,
+        16.5,
+        16.9,
+        17.7,
+        18.2,
+        18.8,
+        19.1,
+        19.9,
+        20.5,
+        21.3,
+        22.0,
+        22.4,
+        22.8,
+        23.1,
+        23.4,
+        23.7,
+        24.0,
+        24.6,
+        24.8,
+        25.4,
+        25.8,
+        26.2,
+        26.9,
+        27.4,
+        27.8,
+        28.2,
+        28.9,
+        29.1,
+        29.9,
+        30.1,
+        30.8,
+        31.5,
+        31.7,
+        32.3,
+        32.8,
+        33.3,
+        33.5,
+        33.7,
+        34.1,
+        34.8,
+        35.1,
+        35.8,
+        36.6,
+        37.3,
+        37.7,
+        38.1,
+        38.7,
+        39.3,
+        39.6,
+        40.2,
+        40.9,
+        41.6,
+        41.9,
+        42.6,
+        42.9,
+        43.3,
+        43.8,
+        44.6,
+        45.0,
+        45.8,
+        46.3,
+        46.7,
+        47.1,
+        47.4,
+        47.6,
+        47.9,
+        48.5,
+        49.3,
+        49.6,
+        49.8,
+        50.6,
+        51.2,
+        51.6,
+        51.9,
+        -17.5,
+        -16.8,
+        -16.3,
+        -15.9,
+        -15.7,
+        -14.9,
+        -14.7,
+        -14.2,
+        -13.5,
+        -13.2,
+        -12.6,
+        -11.8,
+        -11.2,
+        -10.5,
+        -10.3,
+        -9.8
+       ]
+      }
+     ],
+     "x": "index",
+     "yLabel": "Cumulative P&L (£1,000s)",
+     "xLabel": "Day",
+     "height": 220,
+     "baseline": 0
+    },
+    "state": {
+     "markers": [
+      {
+       "id": "crash",
+       "i": 104,
+       "label": "one bad day"
+      }
+     ]
+    }
+   },
+   "question": "Which statement about this book is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "edge",
+      "text": "A hundred profitable days in a row prove the book has an edge",
+      "why": "The doubling system also wins almost every cycle and has no edge. Long winning runs say nothing about the mean."
+     },
+     {
+      "id": "shape",
+      "text": "Its P&L has the doubling shape: many small gains, a rare large loss, and a mean that depends on both",
+      "correct": true
+     },
+     {
+      "id": "rare",
+      "text": "It is safe, because the loss needs a rare event",
+      "why": "Rare is not small. The loss is sized like doubling's £1,023."
+     },
+     {
+      "id": "calm",
+      "text": "A backtest over a calm year measures its mean well",
+      "why": "A calm year may hold none of the rare losses, so it overstates the mean."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the chart with the doubling cycle."
+    },
+    {
+     "rung": "point",
+     "text": "Many small gains, then one large loss.",
+     "highlight": [
+      "crash"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The mean must count the rare loss, which a short backtest may miss."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the same shape as doubling. Judge the mean with the rare loss in it.",
+    "generic": "Not quite right. Look at what the small gains are paid for with.",
+    "byKey": {
+     "edge": "A winning streak is what this shape always shows before the loss.",
+     "rare": "A rare loss can still cancel all the gains.",
+     "calm": "The rare loss is the part a calm sample misses."
+    }
+   },
+   "explain": {
+    "text": "Selling far out-of-the-money options earns a steady premium and carries a rare large loss, like doubling. Whether it has an edge depends on whether the premium covers the expected loss. A backtest without a bad day cannot answer that.",
+    "canvas": {
+     "highlight": [
+      "crash"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Stopping a fair walk at its first visit to $+1$ gives $E[S_T] = 1$. The cause: $E[T]$ is infinite and the losses on the way are unbounded.",
+   "Any floor or any cap on time restores $E[S_T] = 0$: the rare deep losses exactly pay for the frequent small gains.",
+   "Doubling with a finite bankroll is a bounded stop. Its mean is 0 at a fair coin and negative at a casino."
+  ],
+  "formula": {
+   "name": "Doubling with $d$ bets",
+   "tex": "E[\\text{gain}] = 1 - 2^d (1 - p)^d",
+   "note": "Fair coin: 0. Red on a European wheel, $d = 10$: $-0.3056$."
+  },
+  "trap": "A rare loss is not a small loss. Ten losses in a row are sized to cancel every win."
+ },
+ "quiz": [
+  {
+   "id": "q-bounded",
+   "difficulty": 2,
+   "prose": "A trader plays a fair strategy and stops when up £5 or after 50 trades, whichever comes first.",
+   "question": "What is her expected P&L at the stop?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.5
+    },
+    "accept": "£0: the stopping time is bounded by 50",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "small",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£0. A bounded stopping time keeps a fair game fair.",
+    "generic": "Not quite right. Is the stopping time bounded?",
+    "byKey": {
+     "five": "Not every path reaches £5 within 50 trades. Those that do not end down on average.",
+     "small": "Any bounded rule gives exactly 0."
+    }
+   },
+   "explain": {
+    "text": "$T \\le 50$ is bounded, so optional stopping gives $E[S_T] = S_0 = 0$. However clever the rule, a bounded stop cannot beat a fair game."
+   }
+  },
+  {
+   "id": "q-floor-19",
+   "difficulty": 2,
+   "prose": "Fair £1 bets from 0, stopping at $+1$ or at $-19$.",
+   "question": "What is the chance of reaching $+1$ first?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.95,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0.95: $\\tfrac{19}{20}$",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac{19}{20} = 0.95$.",
+    "generic": "Not quite right. Shift by 19 and use $\\tfrac{i}{N}$.",
+    "byKey": {
+     "one": "The floor stops some games first.",
+     "half": "The target is much nearer than the floor."
+    }
+   },
+   "explain": {
+    "text": "Shifted, you start at 19 with ends 0 and 20, so the chance is $\\tfrac{19}{20}$. Then $E[S_T] = 0.95 - 0.05 \\times 19 = 0$."
+   }
+  },
+  {
+   "id": "q-63",
+   "difficulty": 3,
+   "prose": "You double from £1 with a bankroll of £63 on a fair coin: at most six bets.",
+   "question": "What is the chance that the cycle loses? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0156,
+    "tol": {
+     "abs": 0.0002
+    },
+    "accept": "$\\tfrac{1}{64} \\approx 0.0156$",
+    "wrong": [
+     {
+      "id": "ten",
+      "value": 0.001,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "six",
+      "value": 0.1667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(\\tfrac12)^6 = \\tfrac{1}{64}$, and the loss is £63, so the mean is 0.",
+    "generic": "Not quite right. All six bets must lose.",
+    "byKey": {
+     "ten": "That is the ten-bet chance. Here you can afford only six bets.",
+     "six": "$\\tfrac16$ treats the six bets as one draw. Multiply six halves."
+    }
+   },
+   "explain": {
+    "text": "Six losses in a row have chance $\\tfrac{1}{64} \\approx 0.0156$. The expected gain is $\\tfrac{63}{64} \\times 1 - \\tfrac{1}{64} \\times 63 = 0$."
+   }
+  },
+  {
+   "id": "q-why-fails",
+   "difficulty": 3,
+   "prose": "A fair walk from 0 stops at the first visit to $+1$, with no floor and no time cap.",
+   "question": "Why does optional stopping not give $E[S_T] = 0$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "all",
+      "text": "$T$ is unbounded, $E[T]$ is infinite, and the stopped walk is unbounded below",
+      "correct": true
+     },
+     {
+      "id": "notmart",
+      "text": "The walk is not a martingale",
+      "why": "Each step is fair, so the walk is a martingale."
+     },
+     {
+      "id": "notstop",
+      "text": "$T$ is not a stopping time",
+      "why": "You know you have reached $+1$ the moment it happens, so $T$ is a stopping time."
+     },
+     {
+      "id": "never",
+      "text": "The walk may never reach $+1$",
+      "why": "The fair walk reaches $+1$ with chance 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "All three conditions fail.",
+    "generic": "Not quite right. Check each condition of the theorem.",
+    "byKey": {
+     "notmart": "Fair steps make a martingale.",
+     "notstop": "Reaching a level is decided by the past."
+    }
+   },
+   "explain": {
+    "text": "With a floor at $-L$ the expected time is $L$, which grows without bound as the floor drops. So $E[T] = \\infty$, $T$ is unbounded and so are the losses. With none of the conditions, $E[S_T] = 1$ is possible."
+   }
+  }
+ ]
+}

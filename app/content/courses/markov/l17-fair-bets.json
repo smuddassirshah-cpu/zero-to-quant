@@ -1,0 +1,1552 @@
+{
+ "id": "l17-fair-bets",
+ "course": "markov",
+ "title": "Fair games and martingales",
+ "minutes": 15,
+ "objectives": [
+  "Recognise a martingale by checking that its expected next value, given the history, equals its value now."
+ ],
+ "skills": [
+  "mc-chains"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A fair bet",
+   "prose": "You start with £10 and bet £1 on each toss of a fair coin. Heads wins £1 and tails loses £1. The chart shows 20 such bankrolls and the dashed mean line.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 20,
+     "p": 0.5,
+     "start": 10,
+     "paths": 20,
+     "sim": {
+      "seed": 4
+     },
+     "height": 260,
+     "yLabel": "Bankroll (£)",
+     "xLabel": "Toss",
+     "xStep": 2
+    },
+    "state": {
+     "showMean": true
+    }
+   },
+   "question": "After 8 tosses your bankroll is £13. What do you expect it to be after toss 9, and after toss 18?",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "After toss",
+     "Expected bankroll (£)"
+    ],
+    "rows": [
+     [
+      "9",
+      {
+       "edit": true,
+       "answer": 13,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "18",
+      {
+       "edit": true,
+       "answer": 13,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After toss 9 you hold £14 or £12, each with chance one half."
+    },
+    {
+     "rung": "point",
+     "text": "Average the two: $\\tfrac12(14 + 12)$. Each later toss is just as fair.",
+     "highlight": [
+      "mean"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Both forecasts are £13: a fair toss adds nothing on average, however far ahead you look."
+    }
+   ],
+   "feedback": {
+    "correct": "£13 both times. A fair bet does not move the forecast.",
+    "generic": "Not quite right. Average the two possible bankrolls after one toss, then ask what each later toss adds.",
+    "byKey": {
+     "r0c1": "Check toss 9. You hold £14 or £12 with equal chance, and the start of £10 no longer matters.",
+     "r1c1": "Check toss 18. Each of the 10 tosses is as likely to lose £1 as to win it."
+    }
+   },
+   "explain": {
+    "text": "After toss 9 you hold £14 or £12 with equal chance, so £13 on average. Every later toss adds 0 on average, so the forecast for toss 18 is £13 too. The dashed mean line is flat for the same reason.",
+    "canvas": {
+     "highlight": [
+      "mean"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A biased coin",
+   "prose": "Now bias the coin. Slide the chance of heads $p$ and watch the dashed mean line. Press New paths for a fresh batch.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 20,
+     "p": 0.6,
+     "start": 10,
+     "paths": 20,
+     "sim": {
+      "seed": 4
+     },
+     "height": 260,
+     "yLabel": "Bankroll (£)",
+     "xLabel": "Toss",
+     "xStep": 2
+    },
+    "state": {
+     "showMean": true
+    },
+    "controls": [
+     {
+      "bind": "p",
+      "min": 0.3,
+      "max": 0.7,
+      "step": 0.05,
+      "label": "$p$",
+      "start": 0.6,
+      "decimals": 2
+     },
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "With $p = 0.6$ and £13 after toss 8, what is your expected bankroll after toss 9?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 13.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£13.20: $0.6 \\times 14 + 0.4 \\times 12$",
+    "unit": "£",
+    "label": "Expected bankroll",
+    "wrong": [
+     {
+      "id": "fair",
+      "value": 13,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "gains",
+      "value": 13.6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "win",
+      "value": 14,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "You hold £14 with chance 0.6 and £12 with chance 0.4."
+    },
+    {
+     "rung": "point",
+     "text": "Weight each bankroll by its chance: $0.6 \\times 14 + 0.4 \\times 12$.",
+     "highlight": [
+      "mean"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$8.4 + 4.8 = 13.2$, so £13.20."
+    }
+   ],
+   "feedback": {
+    "correct": "£13.20: each toss now gains $0.6 - 0.4 = 0.2$ on average.",
+    "generic": "Not quite right. Weight £14 by 0.6 and £12 by 0.4.",
+    "byKey": {
+     "fair": "That is the fair answer. With $p = 0.6$ each toss gains $0.6 - 0.4 = 0.2$ on average.",
+     "gains": "You added the expected win, £0.60, but forgot the expected loss: £1 with chance 0.4.",
+     "win": "£14 is the result after heads. Tails still happens with chance 0.4."
+    }
+   },
+   "explain": {
+    "text": "$0.6 \\times 14 + 0.4 \\times 12 = 13.2$. Each toss now adds $2p - 1 = 0.2$ on average, so the mean line tilts upwards. The forecast is no longer today's value.",
+    "canvas": {
+     "params": {
+      "p": 0.6
+     },
+     "highlight": [
+      "mean"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Martingales",
+   "prose": "The fair bankroll has a special property: whatever has happened, its expected next value is its value now. Such a process is a **martingale**: $$E[X_{n+1} \\mid X_0, \\dots, X_n] = X_n \\text{ for every } n,$$ with $E|X_n|$ finite. We condition on the whole history, everything seen so far.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 20,
+     "p": 0.5,
+     "start": 10,
+     "paths": 20,
+     "sim": {
+      "seed": 4
+     },
+     "height": 260,
+     "yLabel": "Bankroll (£)",
+     "xLabel": "Toss",
+     "xStep": 2
+    },
+    "state": {
+     "showMean": true
+    }
+   },
+   "question": "Each process below uses fair coin tosses. Which one is a martingale?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bank",
+      "text": "Your bankroll from £1 bets",
+      "correct": true
+     },
+     {
+      "id": "heads",
+      "text": "The number of heads so far",
+      "why": "You saw that it never falls. It rises by $\\tfrac12$ a toss on average, so its forecast is above its value."
+     },
+     {
+      "id": "best",
+      "text": "Your best bankroll so far",
+      "why": "The best so far can only stay put or rise. Its forecast is above today's value when a new high is possible."
+     },
+     {
+      "id": "rake",
+      "text": "Your bankroll when the casino keeps 5p of every £1 win",
+      "why": "Each toss now adds $0.5 \\times 0.95 - 0.5 = -0.025$ on average, so the forecast falls."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For each process, ask what the next value is on average, given today's value."
+    },
+    {
+     "rung": "point",
+     "text": "A martingale's forecast equals its present value exactly.",
+     "highlight": [
+      "mean"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only the fair bankroll adds 0 on average. The others drift up or down."
+    }
+   ],
+   "feedback": {
+    "correct": "The fair bankroll. Its forecast is always today's value.",
+    "generic": "Not quite right. Find the process whose expected next value equals its value now.",
+    "byKey": {
+     "heads": "The heads count gains $\\tfrac12$ a toss on average, so it is not a fair game.",
+     "best": "The best so far can never fall, so on average it rises.",
+     "rake": "The 5p charge makes each toss lose 2.5p on average."
+    }
+   },
+   "explain": {
+    "text": "The fair bankroll's next value is today's plus a fair step, so its forecast is today's value. The heads count gains $\\tfrac12$ a toss on average, and the best so far can only rise. The raked bankroll falls by 2.5p a toss on average.",
+    "canvas": {
+     "highlight": [
+      "mean"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Subtract the drift",
+   "prose": "Back to $p = 0.6$, now from 0: the walk $S_n$ gains $2p - 1 = 0.2$ a step on average. Subtract that drift: $M_n = S_n - 0.2n$. The lower panel draws $M_n$ for every path.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 30,
+     "p": 0.6,
+     "start": 0,
+     "paths": 20,
+     "sim": {
+      "seed": 5
+     },
+     "height": 240,
+     "xStep": 5,
+     "yLabel": "$S_n$",
+     "overlays": [
+      {
+       "id": "drift",
+       "expr": "S - n * (2 * p - 1)",
+       "label": "$S_n - 0.2n$",
+       "chip": "S − 0.2n"
+      }
+     ]
+    },
+    "state": {
+     "showMean": true
+    }
+   },
+   "question": "After 10 steps, $S_{10} = 5$. What is $E[M_{11} \\mid \\text{history}]$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "3: $E[S_{11}] = 5.2$, less $0.2 \\times 11 = 2.2$",
+    "wrong": [
+     {
+      "id": "stay",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "nodrift",
+      "value": 5.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ten",
+      "value": 3.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First forecast $S_{11}$: one step from 5 gains 0.2 on average."
+    },
+    {
+     "rung": "point",
+     "text": "$E[S_{11} \\mid \\text{history}] = 5.2$. Now subtract $0.2 \\times 11$.",
+     "highlight": [
+      "ov-drift"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$5.2 - 2.2 = 3$, which is $M_{10} = 5 - 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "3, the same as $M_{10} = 5 - 0.2 \\times 10$.",
+    "generic": "Not quite right. Forecast $S_{11}$, then subtract $0.2 \\times 11$.",
+    "byKey": {
+     "stay": "You forecast $S_{11} = 5$ and then forgot $M$. $S$ gains 0.2 a step, and $M$ subtracts $0.2n$.",
+     "nodrift": "5.2 is the forecast of $S_{11}$. $M_{11}$ subtracts $0.2 \\times 11 = 2.2$ from it.",
+     "ten": "You subtracted $0.2 \\times 10$. At step 11 the drift so far is $0.2 \\times 11 = 2.2$."
+    }
+   },
+   "explain": {
+    "text": "$E[S_{11} \\mid \\text{history}] = 5.2$, and $0.2 \\times 11 = 2.2$, so the forecast of $M_{11}$ is 3. That equals $M_{10} = 5 - 2 = 3$. Subtracting the drift turns any walk into a martingale.",
+    "canvas": {
+     "highlight": [
+      "ov-drift"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A fair price",
+   "prose": "A share at £100 moves up 25% or down 20% each day, as in Price paths. Call the up chance $p$. For the price to be a fair game, tomorrow's expected price must be £100.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "£100",
+     "levels": [
+      {
+       "label": "Tomorrow",
+       "branches": [
+        {
+         "id": "u",
+         "label": "Up",
+         "p": "$p$"
+        },
+        {
+         "id": "d",
+         "label": "Down",
+         "p": "$1 - p$"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "u": "£125",
+      "d": "£80"
+     }
+    },
+    "state": {}
+   },
+   "question": "Which up chance $p$ makes the price a martingale? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4444,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\tfrac49 \\approx 0.4444$: $125p + 80(1 - p) = 100$",
+    "label": "Up chance",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "swap",
+      "value": 0.5556,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "down",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write tomorrow's expected price in terms of $p$."
+    },
+    {
+     "rung": "point",
+     "text": "$125p + 80(1 - p) = 100$.",
+     "highlight": [
+      "u",
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$80 + 45p = 100$, so $p = \\tfrac{20}{45} = \\tfrac49$."
+    }
+   ],
+   "feedback": {
+    "correct": "$p = \\tfrac49 \\approx 0.4444$.",
+    "generic": "Not quite right. Solve $125p + 80(1 - p) = 100$.",
+    "byKey": {
+     "half": "You took a fair coin. The moves differ in size: $0.5 \\times 125 + 0.5 \\times 80 = 102.5$, which drifts up.",
+     "swap": "$\\tfrac59$ is the down chance. The up move is the larger one, so it needs the smaller chance.",
+     "down": "0.8 is the down factor, not a chance."
+    }
+   },
+   "explain": {
+    "text": "$125p + 80(1 - p) = 100$ gives $45p = 20$, so $p = \\tfrac49 \\approx 0.4444$. Under this chance every price on the tree is a fair game. Pricing with Trees (topic 1.7) calls it the risk-neutral chance.",
+    "canvas": {
+     "p": {
+      "u": "4/9",
+      "d": "5/9"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A forecaster",
+   "prose": "A forecaster quotes the chance of at least two heads in three fair tosses. Before any toss she says $\\tfrac12$. After each toss she updates her chance. Fill in her forecasts.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "levels": [
+      {
+       "label": "Toss 1",
+       "branches": [
+        {
+         "id": "h",
+         "label": "H",
+         "p": "1/2"
+        },
+        {
+         "id": "t",
+         "label": "T",
+         "p": "1/2"
+        }
+       ]
+      },
+      {
+       "label": "Toss 2",
+       "branches": [
+        {
+         "id": "h",
+         "label": "H",
+         "p": "1/2"
+        },
+        {
+         "id": "t",
+         "label": "T",
+         "p": "1/2"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "h-h": "",
+      "h-t": "",
+      "t-h": "",
+      "t-t": ""
+     }
+    },
+    "state": {
+     "values": {
+      "root": "½",
+      "h": "?",
+      "t": "?"
+     },
+     "leaves": {
+      "h-h": "?",
+      "h-t": "?",
+      "t-h": "?",
+      "t-t": "?"
+     }
+    }
+   },
+   "question": "What does she quote after each of these starts?",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "After",
+     "Forecast"
+    ],
+    "rows": [
+     [
+      "H",
+      {
+       "edit": true,
+       "answer": 0.75,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "T",
+      {
+       "edit": true,
+       "answer": 0.25,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "HH",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "HT",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "TH",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "TT",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After one head she needs at least one more head in two tosses."
+    },
+    {
+     "rung": "point",
+     "text": "After H: $1 - \\tfrac14 = \\tfrac34$. After T she needs both: $\\tfrac14$.",
+     "highlight": [
+      "h",
+      "t"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "After HH she has won: 1. After HT or TH she needs one head in one toss: $\\tfrac12$. After TT: 0."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac34, \\tfrac14$, then $1, \\tfrac12, \\tfrac12, 0$.",
+    "generic": "Not quite right. After each start, count the heads still needed and the tosses left.",
+    "byKey": {
+     "r0c1": "Check the forecast after H. After a head she needs only one more head in two tosses.",
+     "r1c1": "Check the forecast after T. After a tail she needs heads on both tosses left."
+    }
+   },
+   "explain": {
+    "text": "Each pair averages to the forecast before it: $\\tfrac12(\\tfrac34 + \\tfrac14) = \\tfrac12$ and $\\tfrac12(1 + \\tfrac12) = \\tfrac34$. A forecast that uses all the information so far is always a martingale. If it were expected to rise, she would raise it now.",
+    "canvas": {
+     "values": {
+      "root": "½",
+      "h": "¾",
+      "t": "¼"
+     },
+     "leaves": {
+      "h-h": "1",
+      "h-t": "1/2",
+      "t-h": "1/2",
+      "t-t": "0"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Unfair games",
+   "prose": "Most bets are not fair. A process that falls on average, $E[X_{n+1} \\mid \\text{history}] \\le X_n$, is a **supermartingale**. One that rises on average is a **submartingale**. A European wheel has 18 red pockets out of 37.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 300,
+     "p": 0.4865,
+     "start": 0,
+     "paths": 20,
+     "sim": {
+      "seed": 9
+     },
+     "height": 250,
+     "yLabel": "Winnings (£)",
+     "xLabel": "Spin"
+    },
+    "state": {
+     "showMean": true
+    }
+   },
+   "question": "You bet £1 on red every spin. What is your expected change in winnings per spin? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.027,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$-\\tfrac{1}{37} \\approx -0.027$",
+    "unit": "£",
+    "label": "Expected change per spin",
+    "wrong": [
+     {
+      "id": "fair",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "double",
+      "value": -0.054,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "chance",
+      "value": 0.486,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "You win £1 with chance $\\tfrac{18}{37}$. What happens otherwise?"
+    },
+    {
+     "rung": "point",
+     "text": "You lose £1 with chance $\\tfrac{19}{37}$.",
+     "highlight": [
+      "mean"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{18}{37} - \\tfrac{19}{37} = -\\tfrac{1}{37}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-\\tfrac{1}{37} \\approx -$£0.027 a spin: a supermartingale.",
+    "generic": "Not quite right. Add $+1 \\times \\tfrac{18}{37}$ and $-1 \\times \\tfrac{19}{37}$.",
+    "byKey": {
+     "fair": "You treated red as an even chance. The green zero gives the casino one extra pocket.",
+     "double": "You counted the edge twice. The gap between $\\tfrac{19}{37}$ and $\\tfrac{18}{37}$ is $\\tfrac{1}{37}$.",
+     "chance": "0.486 is the chance of red, not the expected change in pounds."
+    }
+   },
+   "explain": {
+    "text": "You win £1 with chance $\\tfrac{18}{37}$ and lose £1 with chance $\\tfrac{19}{37}$, so each spin loses $\\tfrac{1}{37} \\approx$ £0.027 on average. Your winnings are a supermartingale, and the mean line slopes down. The casino's takings, the mirror image, are a submartingale.",
+    "canvas": {
+     "highlight": [
+      "mean"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A constant mean",
+   "prose": "Toss a fair coin once to set $X_0 = +1$ or $-1$. After that, $X_{n+1} = -X_n$: the process flips sign every step. Each $X_n$ is $\\pm 1$ with equal chance, so $E[X_n] = 0$ for every $n$.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "a",
+       "label": "start +1",
+       "values": [
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1
+       ]
+      },
+      {
+       "id": "b",
+       "label": "start −1",
+       "values": [
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        -1,
+        1,
+        -1
+       ],
+       "dashed": true
+      }
+     ],
+     "x": "index",
+     "y": [
+      -1.5,
+      1.5
+     ],
+     "yLabel": "$X_n$",
+     "xLabel": "Step $n$",
+     "height": 220
+    },
+    "state": {}
+   },
+   "question": "Is $X_n$ a martingale?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mean",
+      "text": "Yes: its mean is 0 at every step",
+      "why": "You checked only the overall mean. A martingale needs the forecast given the history to equal today's value."
+     },
+     {
+      "id": "no",
+      "text": "No: given $X_n$, the next value is $-X_n$",
+      "correct": true
+     },
+     {
+      "id": "coin",
+      "text": "Yes: each value is a fair coin",
+      "why": "Each value alone is fair, but they are tied. Once you see $X_n$ you know $X_{n+1}$ exactly."
+     },
+     {
+      "id": "fixed",
+      "text": "No, because after the first toss nothing is random",
+      "why": "A martingale may be predictable: a constant is one. What fails is that the forecast $-X_n$ is not $X_n$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Suppose you see $X_5 = 1$. What do you expect $X_6$ to be?"
+    },
+    {
+     "rung": "point",
+     "text": "$X_6 = -1$ for certain.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So $E[X_6 \\mid X_5 = 1] = -1 \\ne 1$. The defining equation fails."
+    }
+   ],
+   "feedback": {
+    "correct": "No. $E[X_{n+1} \\mid X_n] = -X_n$, which is not $X_n$.",
+    "generic": "Not quite right. Test the forecast given the history, not the overall mean.",
+    "byKey": {
+     "mean": "You checked the mean. It is 0 at every step, yet given $X_n = 1$ the next value is surely $-1$.",
+     "coin": "Each value is fair alone, but the next value is fixed by the last one.",
+     "fixed": "Being predictable is not the problem. The prediction $-X_n$ differs from $X_n$."
+    }
+   },
+   "explain": {
+    "text": "Given $X_n = 1$ the next value is $-1$ for certain, so $E[X_{n+1} \\mid X_n] = -X_n \\ne X_n$. A constant mean is necessary for a martingale but not enough. The test is the forecast from every possible history.",
+    "canvas": {
+     "highlight": [
+      "a"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The Pólya urn",
+   "prose": "An urn holds one red and one blue ball. Draw one, then return it with another of its colour. The red share starts at $\\tfrac12$. After the first draw it is $\\tfrac23$ or $\\tfrac13$.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "levels": [
+      {
+       "label": "Draw 1",
+       "branches": [
+        {
+         "id": "r",
+         "label": "Red",
+         "p": "1/2"
+        },
+        {
+         "id": "b",
+         "label": "Blue",
+         "p": "1/2"
+        }
+       ]
+      },
+      {
+       "label": "Draw 2",
+       "branches": [
+        {
+         "id": "r",
+         "label": "Red",
+         "p": {
+          "r": "2/3",
+          "b": "1/3"
+         }
+        },
+        {
+         "id": "b",
+         "label": "Blue",
+         "p": {
+          "r": "1/3",
+          "b": "2/3"
+         }
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "r-r": "3/4",
+      "r-b": "1/2",
+      "b-r": "1/2",
+      "b-b": "1/4"
+     }
+    },
+    "state": {
+     "values": {
+      "root": "½",
+      "r": "⅔",
+      "b": "⅓"
+     }
+    }
+   },
+   "question": "The first draw was red, so the share is $\\tfrac23$. What is the expected red share after the second draw?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6667,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "$\\tfrac23$: $\\tfrac23 \\times \\tfrac34 + \\tfrac13 \\times \\tfrac12$",
+    "label": "Expected red share",
+    "wrong": [
+     {
+      "id": "again",
+      "value": 0.75,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "start",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "equal",
+      "value": 0.625,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After a red draw the urn holds two red and one blue."
+    },
+    {
+     "rung": "point",
+     "text": "Red comes next with chance $\\tfrac23$ (share $\\tfrac34$), blue with $\\tfrac13$ (share $\\tfrac12$).",
+     "highlight": [
+      "r-r",
+      "r-b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac23 \\times \\tfrac34 + \\tfrac13 \\times \\tfrac12 = \\tfrac12 + \\tfrac16 = \\tfrac23$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac23$, today's share: the red share is a martingale.",
+    "generic": "Not quite right. Weight the shares $\\tfrac34$ and $\\tfrac12$ by their chances given a red first draw.",
+    "byKey": {
+     "again": "$\\tfrac34$ is the share if red comes again. Blue still comes with chance $\\tfrac13$.",
+     "start": "You went back to the start. Given the red first draw, the urn is now two red and one blue.",
+     "equal": "You weighted the two draws equally. Red is now drawn with chance $\\tfrac23$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac23 \\times \\tfrac34 + \\tfrac13 \\times \\tfrac12 = \\tfrac23$, today's share. A red draw makes the next red likelier, so the steps are dependent, yet the share is a martingale. After three draws it is $\\tfrac15, \\tfrac25, \\tfrac35$ or $\\tfrac45$ with chance $\\tfrac14$ each, still mean $\\tfrac12$.",
+    "canvas": {
+     "highlight": [
+      "r-r",
+      "r-b"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "A martingale keeps its mean",
+   "prose": "Every martingale keeps its starting mean, whatever its steps look like. We prove $E[X_n] = E[X_0]$ with the law of total expectation from Averaging averages.",
+   "question": "Put the proof in order, and leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Average over histories (law of total expectation): $E[X_{n+1}] = E\\big[E[X_{n+1} \\mid X_0, \\dots, X_n]\\big]$."
+     },
+     {
+      "id": "b",
+      "text": "The martingale property replaces the inner forecast by $X_n$, so $E[X_{n+1}] = E[X_n]$."
+     },
+     {
+      "id": "c",
+      "text": "Apply this for $n = 0, 1, 2, \\dots$: $E[X_1] = E[X_0]$, then $E[X_2] = E[X_1]$, and so on."
+     },
+     {
+      "id": "d",
+      "text": "By induction $E[X_n] = E[X_0]$ for every $n$: from £10, the expected fair bankroll is £10 at every toss."
+     },
+     {
+      "id": "e",
+      "text": "The steps are independent with mean 0, so their means add up to 0.",
+      "why": "Independence is not needed, and the Pólya urn does not have it. The proof uses only the forecast."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "e"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by writing the mean as an average of forecasts."
+    },
+    {
+     "rung": "point",
+     "text": "The martingale property is used on the inner forecast, so it comes second."
+    },
+    {
+     "rung": "step",
+     "text": "Total expectation, the martingale property, repeat the step, conclude. Leave out the independence line."
+    }
+   ],
+   "feedback": {
+    "correct": "Total expectation, then the martingale property, then induction: $E[X_n] = E[X_0]$.",
+    "generic": "Not quite right. Begin with the law of total expectation and finish with the induction.",
+    "byKey": {
+     "e": "That line assumes independent steps. The Pólya urn keeps its mean without them.",
+     "left-out": "A line that belongs is in the Left out list. Only the independence line should be there."
+    }
+   },
+   "explain": {
+    "text": "Averaging the forecast over all histories gives the mean, and the forecast is $X_n$. So the mean never changes from one step to the next. Only the forecast matters, not how the steps depend on each other."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Check a chain",
+   "prose": "A Markov chain on numbers is a martingale when, from every state, the expected next state is the state itself. Write `next_mean(moves)` for one state's moves, then `is_martingale(chain)` for a whole chain. Work exactly with `Fraction`.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "markov": true,
+     "height": 150,
+     "nodes": [
+      {
+       "id": "n0",
+       "label": "0",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "n1",
+       "label": "1",
+       "x": 0.30000000000000004,
+       "y": 0.5
+      },
+      {
+       "id": "n2",
+       "label": "2",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "n3",
+       "label": "3",
+       "x": 0.7000000000000001,
+       "y": 0.5
+      },
+      {
+       "id": "n4",
+       "label": "4",
+       "x": 0.9,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "n0",
+       "to": "n0",
+       "w": 1
+      },
+      {
+       "from": "n4",
+       "to": "n4",
+       "w": 1
+      },
+      {
+       "from": "n1",
+       "to": "n0",
+       "w": 0.5
+      },
+      {
+       "from": "n1",
+       "to": "n2",
+       "w": 0.5
+      },
+      {
+       "from": "n2",
+       "to": "n1",
+       "w": 0.5
+      },
+      {
+       "from": "n2",
+       "to": "n3",
+       "w": 0.5
+      },
+      {
+       "from": "n3",
+       "to": "n2",
+       "w": 0.5
+      },
+      {
+       "from": "n3",
+       "to": "n4",
+       "w": 0.5
+      }
+     ]
+    },
+    "state": {
+     "show": "none",
+     "caption": "The fair walk on 0 to 4 with absorbing ends, each move with chance ½: the first test chain."
+    },
+    "maxHeight": 170
+   },
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from fractions import Fraction\n\ndef next_mean(moves):\n    \"\"\"Expected next value, exactly.\n    moves: a list of (probability, next_value) pairs.\"\"\"\n    ...\n\ndef is_martingale(chain):\n    \"\"\"chain: a dict from each state to its list of moves.\n    True when every state's next mean equals the state.\"\"\"\n    ...\n",
+    "solution": "from fractions import Fraction\n\ndef next_mean(moves):\n    \"\"\"Expected next value, exactly.\n    moves: a list of (probability, next_value) pairs.\"\"\"\n    return sum(Fraction(p) * Fraction(v) for p, v in moves)\n\ndef is_martingale(chain):\n    \"\"\"chain: a dict from each state to its list of moves.\n    True when every state's next mean equals the state.\"\"\"\n    return all(next_mean(moves) == state for state, moves in chain.items())\n",
+    "examples": [
+     {
+      "call": "next_mean([(Fraction(1, 2), 14), (Fraction(1, 2), 12)])",
+      "expect": "Fraction(13)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "next_mean([(Fraction(1, 2), 14), (Fraction(1, 2), 12)])",
+      "expect": "Fraction(13)",
+      "compare": "fraction"
+     },
+     {
+      "call": "next_mean([(Fraction(3, 5), 14), (Fraction(2, 5), 12)])",
+      "expect": "Fraction(66, 5)",
+      "compare": "fraction"
+     },
+     {
+      "call": "next_mean([(Fraction(4, 9), 125), (Fraction(5, 9), 80)])",
+      "expect": "Fraction(100)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "walk = {0: [(1, 0)], 1: [(Fraction(1, 2), 0), (Fraction(1, 2), 2)], 2: [(Fraction(1, 2), 1), (Fraction(1, 2), 3)], 3: [(Fraction(1, 2), 2), (Fraction(1, 2), 4)], 4: [(1, 4)]}",
+      "call": "is_martingale(walk)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "walk = {0: [(1, 0)], 1: [(Fraction(3, 5), 2), (Fraction(2, 5), 0)], 2: [(Fraction(3, 5), 3), (Fraction(2, 5), 1)], 3: [(1, 3)]}",
+      "call": "is_martingale(walk)",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "call": "is_martingale({100: [(Fraction(4, 9), 125), (Fraction(5, 9), 80)]})",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "is_martingale({100: [(Fraction(1, 2), 125), (Fraction(1, 2), 80)]})",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "setup": "tree = {Fraction(1, 2): [(Fraction(1, 2), Fraction(3, 4)), (Fraction(1, 2), Fraction(1, 4))], Fraction(3, 4): [(Fraction(1, 2), 1), (Fraction(1, 2), Fraction(1, 2))], Fraction(1, 4): [(Fraction(1, 2), Fraction(1, 2)), (Fraction(1, 2), 0)]}",
+      "call": "is_martingale(tree)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "is_martingale({1: [(1, -1)], -1: [(1, 1)]})",
+      "expect": "False",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests: three exact means, then six chains. The chains: a fair walk, a biased walk, the share price twice, the forecaster and the sign flip."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`next_mean` is a weighted sum: each next value times its probability."
+    },
+    {
+     "rung": "point",
+     "text": "Compare each state with `next_mean` of its moves, for every state in the dict.",
+     "highlight": [
+      "n2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`return sum(Fraction(p) * Fraction(v) for p, v in moves)` and `return all(next_mean(m) == s for s, m in chain.items())`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both functions pass: exact forecasts, and a check over every state.",
+    "generic": "Some tests failed. Return a `Fraction` from `next_mean`, and test every state in `is_martingale`.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that both `...` lines are replaced with return statements."
+    }
+   },
+   "explain": {
+    "text": "`next_mean` is the expected next value. `is_martingale` asks every state for its forecast, so one unfair state is enough to fail. The biased walk fails at every inner state, and the sign flip fails at both."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A binary contract",
+   "prose": "A contract pays £100 if the Bank of England cuts rates next month, and £0 if not. It trades at £40. Tomorrow's inflation figure is high with chance 0.6 and low with chance 0.4. After a low figure the price will be £70.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "£40",
+     "levels": [
+      {
+       "label": "Inflation figure",
+       "branches": [
+        {
+         "id": "hi",
+         "label": "High",
+         "p": "0.6"
+        },
+        {
+         "id": "lo",
+         "label": "Low",
+         "p": "0.4"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "hi": "?",
+      "lo": "£70"
+     }
+    },
+    "state": {}
+   },
+   "question": "If the price is a fair game, where must it trade after a high figure?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 20,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£20: $0.6x + 0.4 \\times 70 = 40$",
+    "unit": "£",
+    "label": "Price after a high figure",
+    "wrong": [
+     {
+      "id": "mirror",
+      "value": 10,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "stay",
+      "value": 40,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 30,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Today's price must equal tomorrow's expected price."
+    },
+    {
+     "rung": "point",
+     "text": "$0.6x + 0.4 \\times 70 = 40$.",
+     "highlight": [
+      "hi",
+      "lo"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.6x = 40 - 28 = 12$, so $x = 20$."
+    }
+   ],
+   "feedback": {
+    "correct": "£20: $0.6 \\times 20 + 0.4 \\times 70 = 40$.",
+    "generic": "Not quite right. Solve $0.6x + 0.4 \\times 70 = 40$.",
+    "byKey": {
+     "mirror": "You moved it down £30, as far as it moves up. The likelier move must be the smaller one: $0.6 \\times 20$ balances $0.4 \\times 30$.",
+     "stay": "If it stayed at £40 after a high figure, the average tomorrow would be £52. Buyers would bid it up today.",
+     "half": "£30 gives an average of £46, above today's £40."
+    }
+   },
+   "explain": {
+    "text": "Fairness needs $0.6x + 0.4 \\times 70 = 40$, so $x = 20$. The price of a binary contract is the market's forecast of the event, a martingale like our forecaster's. A trading signal is the claim that $E[\\text{next price} \\mid \\text{what you know}]$ differs from today's price.",
+    "canvas": {
+     "leaves": {
+      "hi": "£20",
+      "lo": "£70"
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A martingale is a fair game: given everything seen so far, its expected next value is its value now.",
+   "A martingale keeps its mean, $E[X_n] = E[X_0]$, by the law of total expectation. Its steps need not be independent: the Pólya urn is one.",
+   "Subtracting the drift makes a walk fair. A forecast of revealed information is always fair, and a price is fair under the chance that balances its moves."
+  ],
+  "formula": {
+   "name": "Martingale",
+   "tex": "E[X_{n+1} \\mid X_0, \\dots, X_n] = X_n",
+   "note": "Falls on average: supermartingale. Rises on average: submartingale."
+  },
+  "trap": "A constant mean is not enough. The forecast from every history must equal today's value."
+ },
+ "quiz": [
+  {
+   "id": "q-drift-up",
+   "difficulty": 2,
+   "prose": "A process has $E[X_{n+1} \\mid \\text{history}] = X_n + 0.5$ for every $n$.",
+   "question": "What kind of process is it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sub",
+      "text": "A submartingale",
+      "correct": true
+     },
+     {
+      "id": "super",
+      "text": "A supermartingale",
+      "why": "A supermartingale falls on average. This one gains 0.5 a step."
+     },
+     {
+      "id": "mart",
+      "text": "A martingale",
+      "why": "A martingale's forecast equals today's value. Here the forecast is 0.5 higher."
+     },
+     {
+      "id": "none",
+      "text": "None of these, as the steps may be dependent",
+      "why": "The definitions use only the forecast, whatever the dependence."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A submartingale: it rises by 0.5 a step on average.",
+    "generic": "Not quite right. Compare the forecast with today's value.",
+    "byKey": {
+     "super": "You swapped the names. Super falls, sub rises.",
+     "mart": "The forecast is $X_n + 0.5$, not $X_n$."
+    }
+   },
+   "explain": {
+    "text": "The forecast is above today's value, so the process rises on average: a submartingale. Subtracting $0.5n$ would give a martingale."
+   }
+  },
+  {
+   "id": "q-keeps-mean",
+   "difficulty": 2,
+   "prose": "A martingale starts at $X_0 = 7$.",
+   "question": "What is $E[X_{20}]$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "7: a martingale keeps its mean",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "add",
+      "value": 27,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "7. The mean never moves.",
+    "generic": "Not quite right. Use $E[X_n] = E[X_0]$.",
+    "byKey": {
+     "zero": "A martingale keeps its starting mean, which is 7 here, not 0.",
+     "add": "You added one per step. A martingale's steps add 0 on average."
+    }
+   },
+   "explain": {
+    "text": "Total expectation and the martingale property give $E[X_{n+1}] = E[X_n]$ at every step. So $E[X_{20}] = E[X_0] = 7$."
+   }
+  },
+  {
+   "id": "q-price-chance",
+   "difficulty": 3,
+   "prose": "A share is £50. Tomorrow it is £60 with chance $p$, and £45 otherwise.",
+   "question": "Which $p$ makes the price a martingale? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3333,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\tfrac13$: $60p + 45(1 - p) = 50$",
+    "label": "Up chance",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "swap",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$p = \\tfrac13$.",
+    "generic": "Not quite right. Solve $60p + 45(1 - p) = 50$.",
+    "byKey": {
+     "half": "A fair coin gives $52.50$: the up move of £10 is larger than the down move of £5.",
+     "swap": "$\\tfrac23$ is the down chance. The larger move needs the smaller chance."
+    }
+   },
+   "explain": {
+    "text": "$45 + 15p = 50$ gives $p = \\tfrac13$. The up move is twice the down move, so it needs half the chance."
+   }
+  },
+  {
+   "id": "q-missing-value",
+   "difficulty": 3,
+   "prose": "Given $X_n = 2$, the next value $X_{n+1}$ is 3 with chance 0.5, 1 with chance 0.3, and $x$ with chance 0.2.",
+   "question": "Which $x$ makes this step fair?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1: $1.5 + 0.3 + 0.2x = 2$",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$x = 1$.",
+    "generic": "Not quite right. Set $0.5 \\times 3 + 0.3 \\times 1 + 0.2x = 2$.",
+    "byKey": {
+     "two": "With $x = 2$ the forecast is $1.5 + 0.3 + 0.4 = 2.2$, above today's 2.",
+     "five": "You may have dropped the chances. Weight each value by its chance first."
+    }
+   },
+   "explain": {
+    "text": "$0.5 \\times 3 + 0.3 \\times 1 = 1.8$, so $0.2x = 0.2$ and $x = 1$. Then the forecast is exactly today's 2."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1201 @@
+{
+ "id": "l18-hidden-martingales",
+ "course": "markov",
+ "title": "Martingales hiding in a walk",
+ "minutes": 14,
+ "objectives": [
+  "Build martingales from a random walk, including $S_n^2 - n$ and $(q/p)^{S_n}$."
+ ],
+ "skills": [
+  "mc-walks"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Is the square fair?",
+   "prose": "The fair walk $S_n$ is a martingale: from any position, the next step is $\\pm 1$ with equal chance. Is its square $S_n^2$ a martingale too? The lower panel draws $S_n^2$ for each path.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 30,
+     "p": 0.5,
+     "start": 0,
+     "paths": 20,
+     "sim": {
+      "seed": 3
+     },
+     "height": 220,
+     "xStep": 5,
+     "yLabel": "$S_n$",
+     "overlays": [
+      {
+       "id": "sqraw",
+       "expr": "S^2",
+       "label": "$S_n^2$",
+       "chip": "S²",
+       "stopLabel": "$S_\\tau^2$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Suppose $S_n = 3$. What is the expected value of $S_{n+1}^2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "10: $\\tfrac12(16 + 4)$",
+    "wrong": [
+     {
+      "id": "stay",
+      "value": 9,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "up",
+      "value": 16,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "mid",
+      "value": 12.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "From 3 the walk moves to 4 or to 2."
+    },
+    {
+     "rung": "point",
+     "text": "The square is then 16 or 4, each with chance $\\tfrac12$.",
+     "highlight": [
+      "ov-sqraw"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12(16 + 4) = 10$."
+    }
+   ],
+   "feedback": {
+    "correct": "10, which is $9 + 1$: the square rises by 1 on average.",
+    "generic": "Not quite right. Square both possible next positions, then average.",
+    "byKey": {
+     "stay": "9 would make $S_n^2$ fair. Square 4 and 2 and average them: 10.",
+     "up": "16 is the square after an up step. A down step to 2 is just as likely.",
+     "mid": "You averaged 16 with today's 9. Average the two next squares, 16 and 4."
+    }
+   },
+   "explain": {
+    "text": "The next square is $4^2 = 16$ or $2^2 = 4$, so its average is 10. That is $9 + 1$: the square rises by 1 a step on average, so it is not a fair game. Subtracting $n$ should cancel the rise, giving $S_n^2 - n$.",
+    "canvas": {
+     "highlight": [
+      "ov-sqraw"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two averages",
+   "prose": "Here are 2,000 fair walks from 0, stopped at step 100; 30 are drawn. The lower panels average $S_{100}^2$ and $S_{100}^2 - 100$ over the first $k$ walks. Press New paths to try other batches.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 100,
+     "p": 0.5,
+     "start": 0,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 100,
+     "sim": {
+      "seed": 11
+     },
+     "height": 220,
+     "xStep": 20,
+     "yLabel": "$S_n$",
+     "overlays": [
+      "sq",
+      {
+       "id": "sqraw",
+       "expr": "S^2",
+       "label": "$S_n^2$",
+       "chip": "S²",
+       "stopLabel": "$S_\\tau^2$"
+      }
+     ],
+     "overlayHeight": 70
+    },
+    "state": {
+     "showStopped": [
+      "sqraw",
+      "sq"
+     ],
+     "overlays": false
+    },
+    "derive": {
+     "caption": "At step 100 over {{values.paths}} walks: the average of $S_n^2$ is {{fixed(values.stoppedSqraw, 1)}} and of $S_n^2 - n$ is {{fixed(values.stoppedSq, 1)}}."
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "Which running average settles near its dashed start line at 0?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sq",
+      "text": "The average of $S_n^2 - n$",
+      "correct": true
+     },
+     {
+      "id": "raw",
+      "text": "The average of $S_n^2$",
+      "why": "You may have read the top panel. $S_n^2$ gains 1 a step, so at step 100 it averages about 100."
+     },
+     {
+      "id": "both",
+      "text": "Both",
+      "why": "Only one stays near 0. The square climbs by about 1 a step."
+     },
+     {
+      "id": "neither",
+      "text": "Neither, as both wander",
+      "why": "The average of $S_n^2 - n$ wanders by a few units but stays near 0. The square ends near 100."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each panel's mean label with its start label."
+    },
+    {
+     "rung": "point",
+     "text": "One average ends near 100, the other near 0.",
+     "highlight": [
+      "stopped-sqraw",
+      "stopped-sq"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$E[S_{100}^2] = 100$, so subtracting $n = 100$ leaves 0."
+    }
+   ],
+   "feedback": {
+    "correct": "The average of $S_n^2 - n$ hovers near 0; the square's climbs towards 100.",
+    "generic": "Not quite right. Read the mean label at the right of each lower panel.",
+    "byKey": {
+     "raw": "The square's average ends near 100, far from its start at 0.",
+     "both": "The square's average climbs: it gains 1 a step.",
+     "neither": "The second panel ends within a few units of 0, which is sampling noise."
+    }
+   },
+   "explain": {
+    "text": "Exactly, $E[S_{100}^2] = 100$ and $E[S_{100}^2 - 100] = 0$. This batch gave 102.7 and 2.7. With 2,000 walks the average of a square misses by several units, because $S_{100}^2$ itself has sd about 141.",
+    "canvas": {
+     "highlight": [
+      "stopped-sq"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A hidden martingale",
+   "prose": "So $S_n^2 - n$ is a fair game hiding inside the fair walk. To see why in general, take any position $S_n = s$ and look one step ahead.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 30,
+     "p": 0.5,
+     "start": 0,
+     "paths": 20,
+     "sim": {
+      "seed": 3
+     },
+     "height": 220,
+     "xStep": 5,
+     "yLabel": "$S_n$",
+     "overlays": [
+      "sq"
+     ]
+    },
+    "state": {}
+   },
+   "question": "From $S_n = s$, what is $E[S_{n+1}^2 \\mid S_n = s]$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "plus1",
+      "text": "$s^2 + 1$",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "$s^2$",
+      "why": "You treated the square like the walk. The square of a fair step is always 1, so it adds 1."
+     },
+     {
+      "id": "up",
+      "text": "$(s + 1)^2$",
+      "why": "That is the square after an up step only. A down step is just as likely."
+     },
+     {
+      "id": "lin",
+      "text": "$s^2 + 2s$",
+      "why": "The cross term $2sX$ averages to 0, because $E[X] = 0$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write $S_{n+1} = s + X$ with $X = \\pm 1$."
+    },
+    {
+     "rung": "point",
+     "text": "$(s + X)^2 = s^2 + 2sX + X^2$.",
+     "highlight": [
+      "ov-sq"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$E[2sX] = 0$ and $X^2 = 1$, so the forecast is $s^2 + 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$s^2 + 1$, so $S_n^2 - n$ is a martingale.",
+    "generic": "Not quite right. Expand $(s + X)^2$ and average over $X = \\pm 1$.",
+    "byKey": {
+     "same": "The square gains $X^2 = 1$ every step.",
+     "up": "Average the up and the down step.",
+     "lin": "The cross term averages to 0."
+    }
+   },
+   "explain": {
+    "text": "$(s \\pm 1)^2$ averages to $s^2 + 1$, so the square gains exactly 1 a step. Subtracting the step count removes that gain. So $E[S_{n+1}^2 - (n + 1) \\mid S_n] = S_n^2 - n$, and $S_n^2 - n$ is a martingale.",
+    "canvas": {
+     "highlight": [
+      "ov-sq"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A biased walk",
+   "prose": "Now let $p = 0.6$. The panel draws $(S_n - 0.2n)^2 - vn$, where $v$ is the variance of one step. Its running average at step 50 sits on the dashed line.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 50,
+     "p": 0.6,
+     "start": 0,
+     "paths": 300,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 6
+     },
+     "height": 220,
+     "xStep": 10,
+     "yLabel": "$S_n$",
+     "overlays": [
+      "sq"
+     ],
+     "overlayHeight": 70
+    },
+    "state": {
+     "showStopped": "sq",
+     "showMean": true
+    }
+   },
+   "question": "What is $v$, the variance of one step when $p = 0.6$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.96,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0.96: $1 - 0.2^2$, or $4pq$",
+    "label": "Variance of one step",
+    "wrong": [
+     {
+      "id": "fair",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pq",
+      "value": 0.24,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "drift",
+      "value": 0.04,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One step $X$ is $+1$ or $-1$, so $X^2 = 1$ always."
+    },
+    {
+     "rung": "point",
+     "text": "$\\mathrm{Var}(X) = E[X^2] - E[X]^2$ with $E[X] = 0.2$.",
+     "highlight": [
+      "ov-sq"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 0.04 = 0.96$, the same as $4 \\times 0.6 \\times 0.4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$v = 0.96 = 4pq$, as in The coin-flip walk.",
+    "generic": "Not quite right. Use $\\mathrm{Var}(X) = E[X^2] - E[X]^2$.",
+    "byKey": {
+     "fair": "That is the fair walk's variance. The drift takes away $0.2^2$.",
+     "pq": "$pq = 0.24$ is the variance of a 0 or 1 step. A $\\pm 1$ step is twice as wide, so $4pq$.",
+     "drift": "$0.04$ is $E[X]^2$, the part to subtract."
+    }
+   },
+   "explain": {
+    "text": "$E[X^2] = 1$ and $E[X] = 0.2$, so $\\mathrm{Var}(X) = 1 - 0.04 = 0.96 = 4pq$. Centre the walk on its drift and subtract $0.96n$: $(S_n - 0.2n)^2 - 0.96n$ is a martingale. Its running average sits on the dashed start line.",
+    "canvas": {
+     "highlight": [
+      "stopped-sq"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The exponential martingale",
+   "prose": "A third kind uses a power. Take $r = \\tfrac{q}{p} = \\tfrac{0.4}{0.6} = \\tfrac23$ and look at $r^{S_n}$. One step multiplies it by $r$ or $\\tfrac1r$: $$E[r^{S_n + X} \\mid S_n] = r^{S_n}\\left(0.6\\,r + \\tfrac{0.4}{r}\\right).$$",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 10,
+     "p": 0.6,
+     "start": 0,
+     "paths": 300,
+     "drawn": 30,
+     "stopAt": 10,
+     "sim": {
+      "seed": 3
+     },
+     "height": 200,
+     "xStep": 1,
+     "yLabel": "$S_n$",
+     "overlays": [
+      "ratio"
+     ],
+     "overlayHeight": 70
+    },
+    "state": {
+     "showStopped": "ratio"
+    }
+   },
+   "question": "What is the factor $0.6\\,r + \\tfrac{0.4}{r}$ when $r = \\tfrac23$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1: $0.4 + 0.6$",
+    "label": "Factor",
+    "wrong": [
+     {
+      "id": "flip",
+      "value": 1.1667,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "r",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$0.6 \\times \\tfrac23 = 0.4$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac{0.4}{2/3} = 0.4 \\times \\tfrac32 = 0.6$.",
+     "highlight": [
+      "ov-ratio"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.4 + 0.6 = 1$, so the forecast is $r^{S_n}$ itself."
+    }
+   ],
+   "feedback": {
+    "correct": "1: $(q/p)^{S_n}$ is a martingale.",
+    "generic": "Not quite right. Work out $0.6 \\times \\tfrac23$ and $0.4 \\times \\tfrac32$, then add.",
+    "byKey": {
+     "flip": "$\\tfrac76$ is the factor for the base $\\tfrac{p}{q} = \\tfrac32$. Here the base is $\\tfrac23$.",
+     "r": "$\\tfrac23$ is the base. The factor averages the up and the down move.",
+     "half": "Each term is weighted by its own chance, 0.6 and 0.4, not by one half."
+    }
+   },
+   "explain": {
+    "text": "$0.6 \\times \\tfrac23 + 0.4 \\times \\tfrac32 = 0.4 + 0.6 = 1$, so $(q/p)^{S_n}$ is a martingale. The binomial sum gives $E[r^{S_{10}}] = 1$ exactly; these 300 paths average 1.02. Up steps are likelier, so they get the smaller factor $r$.",
+    "canvas": {
+     "highlight": [
+      "stopped-ratio"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The wrong base",
+   "prose": "A classmate matches the up chance with the top of the fraction and uses $\\left(\\tfrac{p}{q}\\right)^{S_n} = 1.5^{S_n}$ instead. The new panel and its running average show what happens over ten steps.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 10,
+     "p": 0.6,
+     "start": 0,
+     "paths": 300,
+     "drawn": 30,
+     "stopAt": 10,
+     "sim": {
+      "seed": 3
+     },
+     "height": 180,
+     "xStep": 1,
+     "yLabel": "$S_n$",
+     "overlays": [
+      "ratio",
+      {
+       "id": "flip",
+       "expr": "(p / q) ^ S",
+       "label": "$(p/q)^{S_n}$",
+       "chip": "(p/q)^S",
+       "stopLabel": "$(p/q)^{S_\\tau}$"
+      }
+     ],
+     "overlayHeight": 60
+    },
+    "state": {
+     "showStopped": [
+      "ratio",
+      "flip"
+     ],
+     "overlays": [
+      "flip"
+     ]
+    }
+   },
+   "question": "By what factor does $1.5^{S_n}$ grow per step, on average? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.1667,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\tfrac76 \\approx 1.1667$: $0.6 \\times 1.5 + 0.4 \\div 1.5$",
+    "label": "Factor per step",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "base",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ten",
+      "value": 4.6716,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Up multiplies by 1.5 with chance 0.6, down divides by 1.5 with chance 0.4."
+    },
+    {
+     "rung": "point",
+     "text": "$0.6 \\times 1.5 = 0.9$ and $0.4 \\times \\tfrac23 \\approx 0.2667$.",
+     "highlight": [
+      "ov-flip",
+      "stopped-flip"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.9 + 0.2667 = \\tfrac76 \\approx 1.1667$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac76 \\approx 1.1667$: the wrong base grows.",
+    "generic": "Not quite right. Weight 1.5 by 0.6 and $\\tfrac23$ by 0.4.",
+    "byKey": {
+     "one": "You assumed any power of the odds is fair. With base $\\tfrac32$ the likely up move gets the big factor, so it grows.",
+     "base": "1.5 is the factor after an up step only. Down steps divide by 1.5.",
+     "ten": "$4.6716 = (\\tfrac76)^{10}$ is the growth over ten steps. Give the factor for one step."
+    }
+   },
+   "explain": {
+    "text": "$0.6 \\times \\tfrac32 + 0.4 \\times \\tfrac23 = \\tfrac76 \\approx 1.1667$, so $(p/q)^{S_n}$ grows by $(\\tfrac76)^{10} \\approx 4.6716$ over ten steps. These 300 paths average 4.64. The likely move must get the smaller factor, so the base is $\\tfrac{q}{p}$.",
+    "canvas": {
+     "highlight": [
+      "stopped-flip"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The recipe",
+   "prose": "Every hidden martingale came from one test. Find $f(s, n)$ with $$p\\,f(s + 1, n + 1) + q\\,f(s - 1, n + 1) = f(s, n).$$ Then $f(S_n, n)$ is a martingale. A quant uses three: the drift $s - (p - q)n$, the square $(s - (p - q)n)^2 - 4pqn$, and the power $(q/p)^s$.",
+   "question": "Which $f(s, n)$ is a martingale for the fair walk, $p = \\tfrac12$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sq",
+      "text": "$s^2 - n$",
+      "correct": true
+     },
+     {
+      "id": "s2",
+      "text": "$s^2$",
+      "why": "The square gains 1 a step on the fair walk. It needs the $-n$."
+     },
+     {
+      "id": "plus",
+      "text": "$s^2 + n$",
+      "why": "Adding $n$ makes it gain 2 a step. Subtract the step count instead."
+     },
+     {
+      "id": "pow",
+      "text": "$2^s$",
+      "why": "One step multiplies $2^s$ by $\\tfrac12(2 + \\tfrac12) = 1.25$ on average, so it grows."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Apply the test with $p = q = \\tfrac12$."
+    },
+    {
+     "rung": "point",
+     "text": "For $s^2 - n$: $\\tfrac12[(s + 1)^2 + (s - 1)^2] - (n + 1) = s^2 - n$."
+    },
+    {
+     "rung": "step",
+     "text": "Only $s^2 - n$ passes. The others drift up."
+    }
+   ],
+   "feedback": {
+    "correct": "$s^2 - n$ passes the test.",
+    "generic": "Not quite right. Put each formula through the one-step test.",
+    "byKey": {
+     "s2": "It gains 1 a step.",
+     "plus": "It gains 2 a step.",
+     "pow": "It grows by a factor of 1.25 a step."
+    }
+   },
+   "explain": {
+    "text": "The one-step test averages $f$ over the two next positions and compares it with today. For $s^2 - n$ the gain of 1 in the square cancels the $-1$ in time. For $2^s$ the fair walk gives a factor $1.25$, because only base 1 is fair when $p = q$."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Why the square needs time",
+   "prose": "Prove that $S_n^2 - n$ is a martingale for the fair walk. Put the lines in order, with the step $X = S_{n+1} - S_n$.",
+   "question": "Put the proof in order, and leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Write $S_{n+1} = S_n + X$, where $X = \\pm 1$ is independent of the history."
+     },
+     {
+      "id": "b",
+      "text": "Expand, with $S_n$ known given the history: $E[S_{n+1}^2 \\mid \\text{history}] = S_n^2 + 2S_n E[X] + E[X^2]$."
+     },
+     {
+      "id": "c",
+      "text": "A fair step has $E[X] = 0$ and $X^2 = 1$, so this equals $S_n^2 + 1$."
+     },
+     {
+      "id": "d",
+      "text": "Subtract $n + 1$: $E[S_{n+1}^2 - (n + 1) \\mid \\text{history}] = S_n^2 - n$."
+     },
+     {
+      "id": "e",
+      "text": "$S_n$ is a martingale, so any function of it, such as $S_n^2$, is one too.",
+      "why": "A function of a martingale need not be one: the square gains 1 a step."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "e"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by splitting the next position into today's position plus a step."
+    },
+    {
+     "rung": "point",
+     "text": "Expand the square before you use the facts about a fair step."
+    },
+    {
+     "rung": "step",
+     "text": "Split, expand, use $E[X] = 0$ and $X^2 = 1$, subtract $n + 1$. Leave out the line about functions."
+    }
+   ],
+   "feedback": {
+    "correct": "Split, expand, use the fair step, subtract the time.",
+    "generic": "Not quite right. Split the step off first, and subtract the time last.",
+    "byKey": {
+     "e": "That line is false: $S_n^2$ is a submartingale.",
+     "left-out": "A line that belongs is in the Left out list. Only the line about functions should be there."
+    }
+   },
+   "explain": {
+    "text": "The cross term vanishes because the step has mean 0, and the square of a step is always 1. So the square gains exactly 1 a step. Subtracting $n$ makes the gain zero."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Test any formula",
+   "prose": "Automate the recipe. `one_step_drift(f, s, n, p)` returns $p\\,f(s + 1, n + 1) + q\\,f(s - 1, n + 1) - f(s, n)$ exactly. `is_walk_martingale` checks that the drift is 0 on a grid of positions and times.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$f(s, n)$",
+      "$p$",
+      "drift"
+     ],
+     "rows": [
+      [
+       "$s^2 - n$",
+       "1/2",
+       "0"
+      ],
+      [
+       "$s^2$",
+       "1/2",
+       "1"
+      ],
+      [
+       "$(2/3)^s$",
+       "3/5",
+       "0"
+      ],
+      [
+       "$(3/2)^s$ at $s = 0$",
+       "3/5",
+       "1/6"
+      ],
+      [
+       "$s - 0.2n$",
+       "3/5",
+       "0"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "What the tests expect."
+    },
+    "maxHeight": 230
+   },
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from fractions import Fraction\n\ndef one_step_drift(f, s, n, p):\n    \"\"\"E[f(s + X, n + 1)] - f(s, n), exactly, where the step X\n    is +1 with chance p and -1 otherwise.\"\"\"\n    p = Fraction(p)\n    ...\n\ndef is_walk_martingale(f, p, s_values, n_values):\n    \"\"\"True when the drift is 0 at every s and n given.\"\"\"\n    ...\n",
+    "solution": "from fractions import Fraction\n\ndef one_step_drift(f, s, n, p):\n    \"\"\"E[f(s + X, n + 1)] - f(s, n), exactly, where the step X\n    is +1 with chance p and -1 otherwise.\"\"\"\n    p = Fraction(p)\n    return p * f(s + 1, n + 1) + (1 - p) * f(s - 1, n + 1) - f(s, n)\n\ndef is_walk_martingale(f, p, s_values, n_values):\n    \"\"\"True when the drift is 0 at every s and n given.\"\"\"\n    return all(one_step_drift(f, s, n, p) == 0 for s in s_values for n in n_values)\n",
+    "examples": [
+     {
+      "setup": "f = lambda s, n: s**2 - n",
+      "call": "one_step_drift(f, 3, 9, Fraction(1, 2))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "f = lambda s, n: s**2 - n",
+      "call": "one_step_drift(f, 3, 9, Fraction(1, 2))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "f = lambda s, n: s**2 - n",
+      "call": "one_step_drift(f, -2, 4, Fraction(1, 2))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "f = lambda s, n: s**2",
+      "call": "one_step_drift(f, 3, 9, Fraction(1, 2))",
+      "expect": "Fraction(1)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "f = lambda s, n: Fraction(2, 3)**s",
+      "call": "one_step_drift(f, 2, 0, Fraction(3, 5))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "f = lambda s, n: Fraction(3, 2)**s",
+      "call": "one_step_drift(f, 0, 0, Fraction(3, 5))",
+      "expect": "Fraction(1, 6)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "f = lambda s, n: s - n * (2 * Fraction(3, 5) - 1)",
+      "call": "one_step_drift(f, 5, 10, Fraction(3, 5))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "f = lambda s, n: s**2 - n",
+      "call": "is_walk_martingale(f, Fraction(1, 2), range(-5, 6), range(0, 5))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "f = lambda s, n: s**2",
+      "call": "is_walk_martingale(f, Fraction(1, 2), range(-5, 6), range(0, 5))",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "setup": "f = lambda s, n: Fraction(2, 3)**s",
+      "call": "is_walk_martingale(f, Fraction(3, 5), range(-5, 6), range(0, 5))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "f = lambda s, n: Fraction(3, 2)**s",
+      "call": "is_walk_martingale(f, Fraction(3, 5), range(-5, 6), range(0, 5))",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "setup": "f = lambda s, n: s**3 - 3 * n * s",
+      "call": "is_walk_martingale(f, Fraction(1, 2), range(-5, 6), range(0, 5))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "f = lambda s, n: (s - n * Fraction(1, 5))**2 - Fraction(24, 25) * n",
+      "call": "is_walk_martingale(f, Fraction(3, 5), range(-5, 6), range(0, 5))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 12 hidden tests: six drifts compared exactly as fractions, then six grids. One grid is a surprise: $s^3 - 3ns$ is a martingale of the fair walk too."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The next position is $s + 1$ with chance $p$ and $s - 1$ with chance $1 - p$, both at time $n + 1$."
+    },
+    {
+     "rung": "point",
+     "text": "`p * f(s + 1, n + 1) + (1 - p) * f(s - 1, n + 1) - f(s, n)`.",
+     "highlight": [
+      "r0c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`is_walk_martingale` is `all(one_step_drift(f, s, n, p) == 0 for s in s_values for n in n_values)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both pass. The cube test shows that $s^3 - 3ns$ is a martingale of the fair walk too.",
+    "generic": "Some tests failed. Weight the two next values by $p$ and $1 - p$, then subtract today's value.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that both `...` lines are replaced with return statements."
+    }
+   },
+   "explain": {
+    "text": "The drift is the one-step test written as code, so a grid of zeros means a martingale on that grid. The last grid checks the biased square, $(s - 0.2n)^2 - 0.96n$. The cube shows the recipe finds martingales we did not plan for."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The spread of a fair strategy",
+   "prose": "A fair strategy makes or loses £1,000 a day with equal chance. Its total P&L after $n$ days, $X_n$, is a fair walk in £1,000 steps. So $X_n^2 - n \\times 1000^2$ is a fair game starting at 0.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "steps": 25,
+     "p": 0.5,
+     "start": 0,
+     "paths": 300,
+     "drawn": 30,
+     "stopAt": 25,
+     "sim": {
+      "seed": 8
+     },
+     "height": 220,
+     "xStep": 5,
+     "yLabel": "P&L (£1,000s)",
+     "xLabel": "Day",
+     "overlays": [
+      "sq"
+     ],
+     "overlayHeight": 70
+    },
+    "state": {
+     "showStopped": "sq",
+     "overlays": false,
+     "showSpread": true
+    }
+   },
+   "question": "What is the standard deviation of the P&L after 25 days?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5000,
+    "tol": {
+     "abs": 0.5
+    },
+    "accept": "£5,000: $E[X_{25}^2] = 25 \\times 1000^2$, so the sd is $1000\\sqrt{25}$",
+    "unit": "£",
+    "label": "Standard deviation",
+    "wrong": [
+     {
+      "id": "add",
+      "value": 25000,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "day",
+      "value": 1000,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "var",
+      "value": 25000000,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The fair game $X_n^2 - n \\times 1000^2$ keeps its starting mean of 0."
+    },
+    {
+     "rung": "point",
+     "text": "So $E[X_{25}^2] = 25 \\times 1000^2$, and $E[X_{25}] = 0$.",
+     "highlight": [
+      "spread"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The sd is $\\sqrt{25 \\times 1000^2} = 5 \\times 1000 = 5000$."
+    }
+   ],
+   "feedback": {
+    "correct": "£5,000: the spread grows with $\\sqrt{n}$, not with $n$.",
+    "generic": "Not quite right. Find $E[X_{25}^2]$ from the fair game, then take the square root.",
+    "byKey": {
+     "add": "You added 25 daily sds. Good and bad days cancel, so variances add, not sds.",
+     "day": "£1,000 is one day's sd. After 25 days the spread is wider.",
+     "var": "£25,000,000 is the variance in pounds squared. Take its square root."
+    }
+   },
+   "explain": {
+    "text": "The fair game gives $E[X_{25}^2] = 25 \\times 1000^2$, so the sd is $1000\\sqrt{25} =$ £5,000. Squared minus time is the seed of quadratic variation, which Itô calculus builds on later. A risk limit of £5,000 is one sd after five weeks.",
+    "canvas": {
+     "highlight": [
+      "spread"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "For the fair walk the square gains 1 a step on average, so $S_n^2 - n$ is a martingale.",
+   "For any $p$, centre the walk and subtract $4pqn$ to get a square martingale. The power $(q/p)^{S_n}$ is one too.",
+   "The recipe: find $f(s, n)$ whose average one step ahead equals its value now."
+  ],
+  "formula": {
+   "name": "Square martingale",
+   "tex": "(S_n - (p - q)n)^2 - 4pqn",
+   "note": "Also $S_n - (p - q)n$ and $(q/p)^{S_n}$. Fair walk: $S_n^2 - n$."
+  },
+  "trap": "The base is $q/p$, not $p/q$: the likely move must get the smaller factor."
+ },
+ "quiz": [
+  {
+   "id": "q-fair-ratio",
+   "difficulty": 2,
+   "prose": "Take the fair walk, $p = q = \\tfrac12$.",
+   "question": "What is $(q/p)^{S_n}$ for this walk?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "The constant 1, a martingale that tells us nothing",
+      "correct": true
+     },
+     {
+      "id": "grows",
+      "text": "It grows like $2^{S_n}$",
+      "why": "$q/p = 1$ here, and every power of 1 is 1."
+     },
+     {
+      "id": "square",
+      "text": "It equals $S_n^2 - n$",
+      "why": "The square comes from a different recipe, needed because this one is empty."
+     },
+     {
+      "id": "undef",
+      "text": "It is undefined",
+      "why": "$q/p = 1$ is well defined. Its powers are all 1."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The constant 1. That is why the fair walk needs $S_n^2 - n$.",
+    "generic": "Not quite right. Work out $q/p$ first.",
+    "byKey": {
+     "grows": "$q/p = 1$, not 2.",
+     "square": "They are different martingales."
+    }
+   },
+   "explain": {
+    "text": "With $p = q$ the base is 1, so $(q/p)^{S_n} = 1$ at every step. A constant is a martingale, but it carries no information. So the fair walk needs $S_n^2 - n$ for its durations."
+   }
+  },
+  {
+   "id": "q-base-07",
+   "difficulty": 2,
+   "prose": "A walk steps up with chance $p = 0.7$ and down otherwise.",
+   "question": "Which base $r$ makes $r^{S_n}$ a martingale? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4286,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\tfrac37 \\approx 0.4286$",
+    "label": "Base",
+    "wrong": [
+     {
+      "id": "flip",
+      "value": 2.3333,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "p",
+      "value": 0.7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$r = \\tfrac{q}{p} = \\tfrac37$.",
+    "generic": "Not quite right. Use $r = \\tfrac{q}{p}$.",
+    "byKey": {
+     "flip": "$\\tfrac73 = \\tfrac{p}{q}$ grows. The likely up move needs the smaller factor.",
+     "p": "The base is a ratio of chances, not the up chance."
+    }
+   },
+   "explain": {
+    "text": "$0.7 \\times \\tfrac37 + 0.3 \\times \\tfrac73 = 0.3 + 0.7 = 1$. So $(\\tfrac37)^{S_n}$ is a martingale."
+   }
+  },
+  {
+   "id": "q-exact-ten",
+   "difficulty": 3,
+   "prose": "For $p = 0.6$ and $r = \\tfrac23$, the binomial sum gives $E[r^{S_{10}}]$ from $S_0 = 0$.",
+   "question": "What is $E[r^{S_{10}}]$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1: a martingale keeps its starting value $r^0 = 1$",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "drift",
+      "value": 0.4444,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1, the starting value.",
+    "generic": "Not quite right. A martingale keeps its mean.",
+    "byKey": {
+     "zero": "$r^{S_0} = r^0 = 1$, not 0.",
+     "drift": "You may have computed $r^{E[S_{10}]} = (\\tfrac23)^{2}$. The mean of a power is not the power of the mean."
+    }
+   },
+   "explain": {
+    "text": "$r^{S_n}$ is a martingale with $r^{S_0} = 1$, so $E[r^{S_{10}}] = 1$. The binomial sum $\\sum_k \\binom{10}{k} 0.6^k 0.4^{10-k} r^{2k - 10}$ gives 1 exactly."
+   }
+  },
+  {
+   "id": "q-var-075",
+   "difficulty": 3,
+   "prose": "A walk steps up with chance $p = 0.75$. Then $(S_n - 0.5n)^2 - cn$ is a martingale.",
+   "question": "What is $c$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.75,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "$0.75 = 4pq = 1 - 0.5^2$",
+    "wrong": [
+     {
+      "id": "fair",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pq",
+      "value": 0.1875,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "drift",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$c = 4pq = 0.75$.",
+    "generic": "Not quite right. $c$ is the variance of one step.",
+    "byKey": {
+     "fair": "That is the fair walk's value. Subtract the squared drift.",
+     "pq": "$pq$ is for 0 or 1 steps. A $\\pm 1$ step has variance $4pq$.",
+     "drift": "$0.25$ is the squared drift, $E[X]^2$."
+    }
+   },
+   "explain": {
+    "text": "One step has $E[X] = 0.5$ and $E[X^2] = 1$, so its variance is $0.75 = 4pq$. Centring and subtracting $0.75n$ makes the square fair."
+   }
+  }
+ ]
+}

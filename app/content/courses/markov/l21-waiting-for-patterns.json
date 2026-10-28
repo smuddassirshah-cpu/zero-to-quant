@@ -1,0 +1,1504 @@
+{
+ "id": "l21-waiting-for-patterns",
+ "course": "markov",
+ "title": "Waiting for a pattern",
+ "minutes": 15,
+ "objectives": [
+  "Find the expected wait for a pattern such as HTH with a casino of fair gamblers."
+ ],
+ "skills": [
+  "mc-firststep"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which pattern is slower",
+   "prose": "Flip a fair coin until HTH appears, and separately until HHT appears. Any three flips in a row are HTH with chance $\\tfrac18$, and HHT with chance $\\tfrac18$ too.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Pattern",
+      "Chance in a window",
+      "Average wait"
+     ],
+     "rows": [
+      [
+       "HTH",
+       "1/8",
+       "?"
+      ],
+      [
+       "HHT",
+       "1/8",
+       "?"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "20,000 seeded games of each, with `random.Random(3)`."
+    }
+   },
+   "question": "Which pattern takes longer to appear, on average?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "hth",
+      "text": "HTH",
+      "correct": true
+     },
+     {
+      "id": "hht",
+      "text": "HHT",
+      "why": "HHT can never lose its progress once it has HH: another H keeps it. HTH can."
+     },
+     {
+      "id": "same",
+      "text": "They take the same time, as each has chance 1 in 8",
+      "why": "Equal chances per window do not give equal waits. The seeded games disagree by two flips."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Think about what a near miss costs each pattern."
+    },
+    {
+     "rung": "point",
+     "text": "From HH, a further H still leaves HH. From HT, a T sends HTH back to the start.",
+     "highlight": [
+      "r0c2",
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "HTH loses progress more often, so it takes longer."
+    }
+   ],
+   "feedback": {
+    "correct": "HTH. The seeded games averaged 10.06 flips for HTH and 8.02 for HHT.",
+    "generic": "Not quite right. Compare what happens after a near miss.",
+    "byKey": {
+     "hht": "HHT is the faster one: 8.02 flips against 10.06.",
+     "same": "The games say otherwise: 10.06 against 8.02."
+    }
+   },
+   "explain": {
+    "text": "The seeded games averaged 10.06 flips for HTH and 8.02 for HHT. The exact waits are 10 and 8. The rest of the lesson explains the gap with a casino of fair gamblers.",
+    "canvas": {
+     "values": {
+      "r0c2": "10.06",
+      "r1c2": "8.02"
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Progress towards HHT",
+   "prose": "Track how much of HHT you have so far: nothing, H, HH, or the whole pattern. Each flip moves you between these states, a Markov chain. Here are 300 games; press New games for more.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "markov",
+     "states": [
+      "start",
+      "H",
+      "HH",
+      "HHT"
+     ],
+     "P": [
+      [
+       0.5,
+       0.5,
+       0,
+       0
+      ],
+      [
+       0.5,
+       0,
+       0.5,
+       0
+      ],
+      [
+       0,
+       0,
+       0.5,
+       0.5
+      ],
+      [
+       0,
+       0,
+       0,
+       1
+      ]
+     ],
+     "start": "start",
+     "upper": 3,
+     "steps": 60,
+     "upLabel": "done",
+     "paths": 300,
+     "drawn": 20,
+     "sim": {
+      "seed": 3
+     },
+     "height": 220,
+     "xLabel": "Flip",
+     "yLabel": "Progress"
+    },
+    "state": {
+     "stopAtBarrier": true
+    },
+    "derive": {
+     "caption": "Average wait over {{values.paths}} games: {{fixed(values.tauMean, 2)}} flips."
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New games"
+     }
+    ]
+   },
+   "question": "About how many flips does HHT take on average?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "four",
+      "text": "4",
+      "why": "4 is the wait for HT. HHT needs one more letter."
+     },
+     {
+      "id": "six",
+      "text": "6",
+      "why": "6 is the wait for HH. The final T adds two more flips on average."
+     },
+     {
+      "id": "eight",
+      "text": "8",
+      "correct": true
+     },
+     {
+      "id": "fourteen",
+      "text": "14",
+      "why": "14 is the wait for HHH, which overlaps itself."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption under the chart."
+    },
+    {
+     "rung": "point",
+     "text": "The average over 300 games is close to a whole number.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It is close to 8."
+    }
+   ],
+   "feedback": {
+    "correct": "About 8: these games averaged 7.84 flips.",
+    "generic": "Not quite right. Read the average in the caption.",
+    "byKey": {
+     "six": "That is HH.",
+     "fourteen": "That is HHH."
+    }
+   },
+   "explain": {
+    "text": "These 300 games averaged 7.84 flips, close to the exact 8. Once you reach HH you never fall back, because another H keeps HH. Next we find the 8 exactly by first-step analysis.",
+    "canvas": {
+     "highlight": [
+      "path0"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "First-step analysis",
+   "prose": "Let $t_s$ be the expected flips still needed from state $s$, as in How long. One flip from each state gives $$\\begin{aligned} t_{HH} &= 1 + \\tfrac12 t_{HH}, \\\\ t_H &= 1 + \\tfrac12 t_{HH} + \\tfrac12 t_0, \\\\ t_0 &= 1 + \\tfrac12 t_H + \\tfrac12 t_0. \\end{aligned}$$",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "markov": true,
+     "height": 170,
+     "nodes": [
+      {
+       "id": "s0",
+       "label": "start",
+       "x": 0.1,
+       "y": 0.5
+      },
+      {
+       "id": "s1",
+       "label": "H",
+       "x": 0.37,
+       "y": 0.5
+      },
+      {
+       "id": "s2",
+       "label": "HH",
+       "x": 0.63,
+       "y": 0.5
+      },
+      {
+       "id": "s3",
+       "label": "HHT",
+       "x": 0.9,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "s0",
+       "to": "s0",
+       "w": 0.5,
+       "loopAngle": 90
+      },
+      {
+       "from": "s0",
+       "to": "s1",
+       "w": 0.5
+      },
+      {
+       "from": "s1",
+       "to": "s0",
+       "w": 0.5
+      },
+      {
+       "from": "s1",
+       "to": "s2",
+       "w": 0.5
+      },
+      {
+       "from": "s2",
+       "to": "s2",
+       "w": 0.5,
+       "loopAngle": 90
+      },
+      {
+       "from": "s2",
+       "to": "s3",
+       "w": 0.5
+      }
+     ]
+    },
+    "state": {},
+    "maxHeight": 190
+   },
+   "question": "Solve for the three expected waits.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "State",
+     "Expected flips still needed"
+    ],
+    "rows": [
+     [
+      "HH",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "H",
+      {
+       "edit": true,
+       "answer": 6,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "start",
+      {
+       "edit": true,
+       "answer": 8,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The first equation has only $t_{HH}$: $\\tfrac12 t_{HH} = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "$t_{HH} = 2$, so $t_H = 2 + \\tfrac12 t_0$.",
+     "highlight": [
+      "s2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then $t_0 = 1 + 1 + \\tfrac14 t_0 + \\tfrac12 t_0$, so $\\tfrac14 t_0 = 2$ and $t_0 = 8$, $t_H = 6$."
+    }
+   ],
+   "feedback": {
+    "correct": "$t_{HH} = 2$, $t_H = 6$ and $t_0 = 8$.",
+    "generic": "Not quite right. Solve the HH equation first, then substitute upwards.",
+    "byKey": {
+     "r0c1": "From HH, each flip ends the game with chance $\\tfrac12$: $t_{HH} = 2$.",
+     "r2c1": "Substitute $t_H = 2 + \\tfrac12 t_0$ into the last equation."
+    }
+   },
+   "explain": {
+    "text": "$t_{HH} = 2$, then $t_H = 2 + \\tfrac12 t_0$, and the last equation gives $t_0 = 8$. Averaging averages found HH in 6 the same way. This works, but each pattern needs its own system of equations.",
+    "canvas": {
+     "highlight": [
+      "s2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A casino of gamblers",
+   "prose": "Now a trick. Before each flip a new gambler arrives with £1. She bets it at fair odds that the flip is H. If she wins, she bets her £2 on T, then her £4 on H. A loss ends her play. Each bet is fair, so the casino's takings minus what the gamblers hold is a martingale.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Gambler arrived",
+      "Her bets",
+      "Holds at $T$"
+     ],
+     "rows": [
+      [
+       "at flip $T - 2$",
+       "H, T, H: all won",
+       "£8"
+      ],
+      [
+       "at flip $T - 1$",
+       "H, but the flip was T",
+       "£0"
+      ],
+      [
+       "at flip $T$",
+       "H: won",
+       "£2"
+      ],
+      [
+       "all earlier",
+       "lost at some point",
+       "£0"
+      ]
+     ],
+     "align": [
+      "left",
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "values": {
+      "r0c2": "?",
+      "r1c2": "?",
+      "r2c2": "?",
+      "r3c2": "?"
+     }
+    }
+   },
+   "question": "HTH first appears at flip $T$. How much do the gamblers hold in total at that moment?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£10: £8 + £0 + £2",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "eight",
+      "value": 8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "t",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "fourteen",
+      "value": 14,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Only the last three gamblers can still hold money."
+    },
+    {
+     "rung": "point",
+     "text": "The gambler from $T - 2$ won three bets: £8. The one from $T$ won one: £2.",
+     "highlight": [
+      "r0c2",
+      "r2c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The gambler from $T - 1$ bet H on a T and lost. Total £10."
+    }
+   ],
+   "feedback": {
+    "correct": "£10: £8 and £2.",
+    "generic": "Not quite right. Follow the last three gamblers' bets.",
+    "byKey": {
+     "eight": "You counted only the gambler who saw the whole pattern. The newest gambler also won her first bet, on H.",
+     "fourteen": "You gave the gambler from $T - 1$ £4. Her first bet was H, and the flip was T."
+    }
+   },
+   "explain": {
+    "text": "At $T$ the gamblers hold £8 + £0 + £2 = £10. The casino has taken £1 from each of $T$ gamblers. Its net, $T - 10$, has mean 0 by optional stopping, so $E[T] = 10$.",
+    "canvas": {
+     "values": {
+      "r0c2": "£8",
+      "r1c2": "£0",
+      "r2c2": "£2",
+      "r3c2": "£0"
+     },
+     "highlight": {
+      "rows": [
+       0,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The casino argument",
+   "prose": "Put the argument for the HTH wait in order. $M_n$ is the casino's net: pounds taken minus pounds the gamblers hold.",
+   "question": "Put the lines in order, and leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Every bet is fair, so the casino's net $M_n$ is a martingale with $M_0 = 0$."
+     },
+     {
+      "id": "b",
+      "text": "After $n$ flips the casino has taken £$n$, one pound from each gambler."
+     },
+     {
+      "id": "c",
+      "text": "$T$, the first time HTH appears, has finite mean, and $M$ moves by a bounded amount each flip. So condition (2) holds."
+     },
+     {
+      "id": "d",
+      "text": "At $T$ the gamblers hold £8 + £0 + £2 = £10, so $M_T = T - 10$."
+     },
+     {
+      "id": "e",
+      "text": "Optional stopping: $E[T - 10] = 0$, so $E[T] = 10$."
+     },
+     {
+      "id": "x",
+      "text": "Each window of three flips is HTH with chance $\\tfrac18$, so $E[T] = 8$.",
+      "why": "Windows overlap, so they are not independent tries. That reasoning would give 8 for every pattern of three letters."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ],
+    "same": [
+     [
+      "b",
+      "c"
+     ]
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Name the martingale first and check the theorem applies."
+    },
+    {
+     "rung": "point",
+     "text": "Then count what the casino has taken and what it owes at $T$."
+    },
+    {
+     "rung": "step",
+     "text": "Martingale; takings and conditions; holdings at $T$; optional stopping. Leave out the window line."
+    }
+   ],
+   "feedback": {
+    "correct": "$E[T] = 10$ for HTH.",
+    "generic": "Not quite right. The theorem comes last, once you know $M_T$.",
+    "byKey": {
+     "x": "That line treats overlapping windows as independent tries.",
+     "left-out": "A line that belongs is in the Left out list. Only the window line should be there."
+    }
+   },
+   "explain": {
+    "text": "The casino's net is a fair game that starts at 0. At the stop it equals $T$ minus the payout, £10. So the expected wait equals the payout."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rule",
+   "prose": "The payout is all that matters. A gambler holds money at $T$ when her letters so far are a prefix that is also a suffix. Her holding is $\\tfrac{1}{P(\\text{that prefix})}$. So $$E[T] = \\sum_{\\text{prefixes that are also suffixes}} \\frac{1}{P(\\text{prefix})}.$$",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Gambler arrived",
+      "Her bets",
+      "Holds at $T$"
+     ],
+     "rows": [
+      [
+       "at flip $T - 2$",
+       "H, H, H: all won",
+       "£8"
+      ],
+      [
+       "at flip $T - 1$",
+       "H, H: both won",
+       "£4"
+      ],
+      [
+       "at flip $T$",
+       "H: won",
+       "£2"
+      ]
+     ],
+     "align": [
+      "left",
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "The gamblers when HHH first appears.",
+     "values": {
+      "r0c2": "?",
+      "r1c2": "?",
+      "r2c2": "?"
+     }
+    }
+   },
+   "question": "What is the expected wait for HHH?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 14,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "14: 8 + 4 + 2",
+    "unit": "flips",
+    "wrong": [
+     {
+      "id": "eight",
+      "value": 8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "H, HH and HHH are all both prefixes and suffixes of HHH."
+    },
+    {
+     "rung": "point",
+     "text": "Their chances are $\\tfrac12$, $\\tfrac14$ and $\\tfrac18$.",
+     "highlight": [
+      "r0c2",
+      "r1c2",
+      "r2c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 + 4 + 8 = 14$."
+    }
+   ],
+   "feedback": {
+    "correct": "14 flips: 8 + 4 + 2.",
+    "generic": "Not quite right. Add the holdings of all three gamblers.",
+    "byKey": {
+     "eight": "You counted only the whole pattern. HHH overlaps itself twice.",
+     "six": "6 is the wait for HH."
+    }
+   },
+   "explain": {
+    "text": "HHH overlaps itself at H and HH, so three gamblers hold money: $8 + 4 + 2 = 14$. HHT overlaps only as a whole, so its wait is 8. HTH overlaps at H, giving $8 + 2 = 10$.",
+    "canvas": {
+     "values": {
+      "r0c2": "£8",
+      "r1c2": "£4",
+      "r2c2": "£2"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A biased coin",
+   "prose": "The rule works for any chances. Now heads comes up with chance $\\tfrac23$. A gambler's fair bet on H turns £1 into $\\tfrac32$; two wins turn it into $\\tfrac94$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Gambler arrived",
+      "Her bets",
+      "Holds at $T$"
+     ],
+     "rows": [
+      [
+       "at flip $T - 1$",
+       "H, H: both won",
+       "?"
+      ],
+      [
+       "at flip $T$",
+       "H: won",
+       "?"
+      ]
+     ],
+     "align": [
+      "left",
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "The gamblers when HH first appears."
+    }
+   },
+   "question": "What is the expected wait for HH when heads has chance $\\tfrac23$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.75,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "$\\tfrac{15}{4} = 3.75$: $\\tfrac94 + \\tfrac32$",
+    "unit": "flips",
+    "wrong": [
+     {
+      "id": "fair",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "whole",
+      "value": 2.25,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "HH overlaps itself at H."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac{1}{P(HH)} = \\tfrac94$ and $\\tfrac{1}{P(H)} = \\tfrac32$.",
+     "highlight": [
+      "r0c2",
+      "r1c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac94 + \\tfrac32 = \\tfrac{15}{4} = 3.75$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{15}{4} = 3.75$ flips.",
+    "generic": "Not quite right. Add $\\tfrac{1}{P}$ for HH and for H.",
+    "byKey": {
+     "fair": "6 is the fair-coin answer. Heads is likelier now.",
+     "whole": "You counted only the whole pattern. The last gambler holds $\\tfrac32$ too.",
+     "one": "$\\tfrac32$ is one gambler's holding."
+    }
+   },
+   "explain": {
+    "text": "The two gamblers hold $\\tfrac94$ and $\\tfrac32$, so $E[T] = \\tfrac{15}{4} = 3.75$. Fair odds on a $\\tfrac23$ chance pay $\\tfrac32$ per pound. A first-step solve gives the same: $t_H = 1 + \\tfrac13 t_0$ and $t_0 = 1 + \\tfrac23 t_H + \\tfrac13 t_0$.",
+    "canvas": {
+     "values": {
+      "r0c2": "9/4",
+      "r1c2": "3/2"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The monkey at the typewriter",
+   "prose": "A monkey types one of 26 capital letters at random each second. How long until ABRACADABRA appears? Gamblers now bet on letters at odds of 26 to 1.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Prefix",
+      "Also a suffix?"
+     ],
+     "rows": [
+      [
+       "A",
+       "?"
+      ],
+      [
+       "AB",
+       "?"
+      ],
+      [
+       "ABR",
+       "?"
+      ],
+      [
+       "ABRA",
+       "?"
+      ],
+      [
+       "ABRAC",
+       "?"
+      ],
+      [
+       "ABRACADABRA",
+       "?"
+      ]
+     ],
+     "align": [
+      "left",
+      "center"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which prefixes of ABRACADABRA are also suffixes? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "A",
+      "correct": true
+     },
+     {
+      "id": "ab",
+      "text": "AB",
+      "why": "The word ends in RA, not AB."
+     },
+     {
+      "id": "abr",
+      "text": "ABR",
+      "why": "The word ends in BRA, not ABR."
+     },
+     {
+      "id": "abra",
+      "text": "ABRA",
+      "correct": true
+     },
+     {
+      "id": "abrac",
+      "text": "ABRAC",
+      "why": "The last five letters are DABRA."
+     },
+     {
+      "id": "whole",
+      "text": "ABRACADABRA",
+      "correct": true
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each prefix with the same number of letters at the end."
+    },
+    {
+     "rung": "point",
+     "text": "The word ends ...A, ...ABRA and is itself the whole word.",
+     "highlight": [
+      "r0c1",
+      "r3c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A, ABRA and ABRACADABRA."
+    }
+   ],
+   "feedback": {
+    "correct": "A, ABRA and the whole word.",
+    "generic": "Not quite right. Read the last letters of ABRACADABRA.",
+    "byKey": {
+     "ab": "It ends RA.",
+     "abr": "It ends BRA.",
+     "abrac": "It ends DABRA."
+    }
+   },
+   "explain": {
+    "text": "The expected wait is $26^{11} + 26^4 + 26 = 3{,}670{,}344{,}487{,}444{,}778$ keys. An exact first-step solve over 12 states gives the same number. The overlaps add only 456,976 and 26 to $26^{11}$.",
+    "canvas": {
+     "values": {
+      "r0c1": "yes",
+      "r1c1": "no",
+      "r2c1": "no",
+      "r3c1": "yes",
+      "r4c1": "no",
+      "r5c1": "yes"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Equal chances, unequal waits",
+   "prose": "A classmate says HTH and HHT must take equally long, because each has chance 1 in 8 in any window. The chart tracks progress towards HTH: watch how often a path falls back to the start.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "markov",
+     "states": [
+      "start",
+      "H",
+      "HT",
+      "HTH"
+     ],
+     "P": [
+      [
+       0.5,
+       0.5,
+       0,
+       0
+      ],
+      [
+       0,
+       0.5,
+       0.5,
+       0
+      ],
+      [
+       0.5,
+       0,
+       0,
+       0.5
+      ],
+      [
+       0,
+       0,
+       0,
+       1
+      ]
+     ],
+     "start": "start",
+     "upper": 3,
+     "steps": 80,
+     "upLabel": "done",
+     "paths": 300,
+     "drawn": 20,
+     "sim": {
+      "seed": 3
+     },
+     "height": 220,
+     "xLabel": "Flip",
+     "yLabel": "Progress"
+    },
+    "state": {
+     "stopAtBarrier": true
+    },
+    "derive": {
+     "caption": "Average wait over {{values.paths}} games: {{fixed(values.tauMean, 2)}} flips."
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New games"
+     }
+    ]
+   },
+   "question": "Why does HTH take longer than HHT?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "equal",
+      "text": "It does not: equal chances per window mean equal waits",
+      "why": "You treated overlapping windows as independent tries. In the long run both appear once per 8 flips, but HTH clumps."
+     },
+     {
+      "id": "clump",
+      "text": "HTH overlaps itself, so its appearances come in clumps, leaving longer gaps before the first",
+      "correct": true
+     },
+     {
+      "id": "rare",
+      "text": "T in the middle is rarer than H",
+      "why": "H and T are equally likely on a fair coin."
+     },
+     {
+      "id": "ends",
+      "text": "Patterns that end in T are always faster",
+      "why": "THT, which ends in T, overlaps itself and waits 10."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "In a long run, both patterns appear about once every 8 flips."
+    },
+    {
+     "rung": "point",
+     "text": "HTHTH holds two HTHs in five flips. HHT can never overlap itself.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Clumped appearances with the same long-run rate mean longer gaps, so a longer first wait."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: overlap makes appearances clump, so the first one comes later.",
+    "generic": "Not quite right. Think about how two copies of each pattern can overlap.",
+    "byKey": {
+     "equal": "Equal rates in the long run do not give equal waits for the first appearance.",
+     "rare": "Both letters have chance one half.",
+     "ends": "The end letter does not decide it; the overlap does."
+    }
+   },
+   "explain": {
+    "text": "These games averaged 9.80 flips for HTH. Its appearances overlap, so they arrive in clumps, and clumps at the same long-run rate are further apart. Which of two patterns comes first is a different puzzle, Penney's game, met in a later course.",
+    "canvas": {
+     "highlight": [
+      "path0"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Waits in code",
+   "prose": "Code the casino rule exactly, and a simulation to check it. `pattern_wait` adds $\\tfrac{1}{P(\\text{prefix})}$ over every prefix that is also a suffix. `simulate_wait` flips a coin with heads chance $p$ until the pattern appears.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "pattern",
+      "chances",
+      "wait"
+     ],
+     "rows": [
+      [
+       "HTH",
+       "fair",
+       "10"
+      ],
+      [
+       "HHHH",
+       "fair",
+       "30"
+      ],
+      [
+       "HH",
+       "H: 2/3",
+       "15/4"
+      ],
+      [
+       "LLL",
+       "L: 2/5",
+       "195/8"
+      ]
+     ],
+     "align": [
+      "left",
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "Some of the waits the tests check."
+    },
+    "maxHeight": 200
+   },
+   "question": "Replace both `...` lines.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\nfrom fractions import Fraction\n\ndef pattern_wait(pattern, probs):\n    \"\"\"Exact expected wait for pattern. probs maps each letter to\n    its chance (a Fraction). Add 1/P(prefix) over every prefix that\n    is also a suffix.\"\"\"\n    total = Fraction(0)\n    for k in range(1, len(pattern) + 1):\n        ...\n    return total\n\ndef simulate_wait(pattern, p, trials, seed):\n    \"\"\"Average flips until pattern appears, with heads chance p,\n    over the given number of trials.\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+    "solution": "import random\nfrom fractions import Fraction\n\ndef pattern_wait(pattern, probs):\n    \"\"\"Exact expected wait for pattern. probs maps each letter to\n    its chance (a Fraction). Add 1/P(prefix) over every prefix that\n    is also a suffix.\"\"\"\n    total = Fraction(0)\n    for k in range(1, len(pattern) + 1):\n        if pattern[:k] == pattern[-k:]:\n            chance = Fraction(1)\n            for letter in pattern[:k]:\n                chance *= probs[letter]\n            total += 1 / chance\n    return total\n\ndef simulate_wait(pattern, p, trials, seed):\n    \"\"\"Average flips until pattern appears, with heads chance p,\n    over the given number of trials.\"\"\"\n    rng = random.Random(seed)\n    total = 0\n    for _ in range(trials):\n        seen = \"\"\n        while not seen.endswith(pattern):\n            seen += \"H\" if rng.random() < p else \"T\"\n        total += len(seen)\n    return total / trials\n",
+    "examples": [
+     {
+      "call": "pattern_wait('HTH', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(10)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pattern_wait('H', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HT', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(4)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HH', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(6)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HHT', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(8)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HTH', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(10)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HHH', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(14)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HTHT', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(20)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HHHH', {'H': Fraction(1, 2), 'T': Fraction(1, 2)})",
+      "expect": "Fraction(30)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('HH', {'H': Fraction(2, 3), 'T': Fraction(1, 3)})",
+      "expect": "Fraction(15, 4)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('LLL', {'L': Fraction(2, 5), 'W': Fraction(3, 5)})",
+      "expect": "Fraction(195, 8)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait('ABRACADABRA', {c: Fraction(1, 26) for c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'})",
+      "expect": "Fraction(3670344487444778)",
+      "compare": "fraction"
+     },
+     {
+      "call": "simulate_wait('HTH', 0.5, 2000, 1)",
+      "expect": "9.917",
+      "compare": "isclose"
+     },
+     {
+      "call": "simulate_wait('HH', 2 / 3, 3000, 2)",
+      "expect": "3.6853333333333333",
+      "compare": "isclose"
+     },
+     {
+      "call": "abs(simulate_wait('HHT', 0.5, 4000, 7) - 8) < 0.5",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 14 hidden tests: eleven exact waits, including ABRACADABRA, and three simulations. Two simulations use fixed seeds, so draw one `rng.random()` per flip and call it H when it is below p."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A prefix of length $k$ is also a suffix when `pattern[:k] == pattern[-k:]`."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply the chances of its letters, then add the reciprocal.",
+     "highlight": [
+      "r0c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the simulation, add `'H' if rng.random() < p else 'T'` until `seen.endswith(pattern)`, and count the flips."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: the casino rule and the simulation agree.",
+    "generic": "Some tests failed. Test every prefix against the suffix of the same length, and use one `rng.random()` per flip.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that both `...` lines are replaced."
+    }
+   },
+   "explain": {
+    "text": "The rule is a loop over prefixes, so even ABRACADABRA takes microseconds. The simulation needs many trials to separate 8 from 10 reliably. Two thousand HTH games averaged 9.92 against the exact 10."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Three bad days",
+   "prose": "A strategy loses on a day with chance 0.4, independently of other days. The risk manager's rule says to cut the book after three losing days in a row. Treat each day as a letter, L or W.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Prefix",
+      "Chance",
+      "1 / chance"
+     ],
+     "rows": [
+      [
+       "L",
+       "0.4",
+       "2.5"
+      ],
+      [
+       "LL",
+       "0.16",
+       "6.25"
+      ],
+      [
+       "LLL",
+       "0.064",
+       "?"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many trading days, on average, until the rule first triggers?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 24.375,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "24.375: $\\tfrac{1}{0.4} + \\tfrac{1}{0.16} + \\tfrac{1}{0.064}$",
+    "unit": "days",
+    "wrong": [
+     {
+      "id": "whole",
+      "value": 15.625,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "window",
+      "value": 3,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "two",
+      "value": 8.75,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "LLL overlaps itself at L and at LL."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac{1}{0.064} = 15.625$.",
+     "highlight": [
+      "r2c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2.5 + 6.25 + 15.625 = 24.375$."
+    }
+   ],
+   "feedback": {
+    "correct": "24.375 trading days, just under five weeks.",
+    "generic": "Not quite right. Add $\\tfrac{1}{P}$ for L, LL and LLL.",
+    "byKey": {
+     "whole": "You counted only LLL itself. The pattern overlaps at L and LL.",
+     "two": "8.75 days is the wait for two losing days in a row.",
+     "window": "Three days is the shortest possible wait."
+    }
+   },
+   "explain": {
+    "text": "$2.5 + 6.25 + 15.625 = 24.375$ trading days, about five weeks. Two losing days in a row take $2.5 + 6.25 = 8.75$ days. A rule that looks strict can trigger far sooner than intuition suggests.",
+    "canvas": {
+     "values": {
+      "r2c2": "15.625"
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "First-step analysis on the states of progress finds any pattern's wait, with one system of equations per pattern.",
+   "The casino of fair gamblers turns the wait into a payout. $E[T]$ equals what the gamblers hold when the pattern first appears.",
+   "Add $\\tfrac{1}{P(\\text{prefix})}$ over every prefix that is also a suffix: HHT 8, HTH 10, HHH 14."
+  ],
+  "formula": {
+   "name": "Waiting for a pattern",
+   "tex": "E[T] = \\sum_{\\text{prefix} = \\text{suffix}} \\frac{1}{P(\\text{prefix})}",
+   "note": "The whole pattern always counts, so the wait is at least one over its chance."
+  },
+  "trap": "Equal chances per window do not give equal waits. A pattern that overlaps itself clumps, and waits longer."
+ },
+ "quiz": [
+  {
+   "id": "q-one-letter",
+   "difficulty": 2,
+   "prose": "Flip a fair coin until the first H.",
+   "question": "What is the expected number of flips?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "2: one gambler holds £2",
+    "unit": "flips",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "2 flips.",
+    "generic": "Not quite right. Use the casino rule with the one prefix H.",
+    "byKey": {
+     "one": "One flip is the shortest wait. Half the time you need more.",
+     "half": "$\\tfrac12$ is the chance per flip. The wait is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "The only prefix is H itself, with chance $\\tfrac12$, so the wait is 2. That is the mean of a geometric count with chance $\\tfrac12$."
+   }
+  },
+  {
+   "id": "q-ht",
+   "difficulty": 2,
+   "prose": "Flip a fair coin until HT appears.",
+   "question": "What is the expected number of flips?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "4: HT overlaps itself only as a whole",
+    "unit": "flips",
+    "wrong": [
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "4 flips.",
+    "generic": "Not quite right. Which prefixes of HT are also suffixes?",
+    "byKey": {
+     "six": "6 is HH, which overlaps at H. HT does not.",
+     "two": "2 is the wait for a single H."
+    }
+   },
+   "explain": {
+    "text": "H is not a suffix of HT, so only the whole pattern counts: $\\tfrac{1}{1/4} = 4$."
+   }
+  },
+  {
+   "id": "q-tht",
+   "difficulty": 3,
+   "prose": "Flip a fair coin until THT appears.",
+   "question": "What is the expected number of flips?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "10: 8 + 2",
+    "unit": "flips",
+    "wrong": [
+     {
+      "id": "eight",
+      "value": 8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "fourteen",
+      "value": 14,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "10 flips, the same as HTH.",
+    "generic": "Not quite right. THT overlaps itself at T.",
+    "byKey": {
+     "eight": "You missed the overlap at T.",
+     "fourteen": "Only T and THT are both prefix and suffix."
+    }
+   },
+   "explain": {
+    "text": "T and THT are both prefixes and suffixes, so the wait is $2 + 8 = 10$. It is HTH with the letters swapped."
+   }
+  },
+  {
+   "id": "q-biased-ht",
+   "difficulty": 3,
+   "prose": "A coin shows heads with chance 0.6.",
+   "question": "What is the expected wait for HT? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.1667,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\tfrac{1}{0.24} \\approx 4.1667$",
+    "unit": "flips",
+    "wrong": [
+     {
+      "id": "fair",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "hh",
+      "value": 4.4444,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac{1}{0.6 \\times 0.4} \\approx 4.1667$.",
+    "generic": "Not quite right. HT has no overlap, so the wait is one over its chance.",
+    "byKey": {
+     "fair": "That is the fair answer.",
+     "hh": "You used $0.6^2$, the chance of HH."
+    }
+   },
+   "explain": {
+    "text": "HT has chance $0.6 \\times 0.4 = 0.24$ and no overlap, so the wait is $\\tfrac{1}{0.24} \\approx 4.1667$ flips."
+   }
+  }
+ ]
+}
