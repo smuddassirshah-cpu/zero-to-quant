@@ -51,7 +51,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] analysis L3: Series [Pure maths]
 - [ ] analysis L4: Continuity and the derivative [Pure maths]
 - [ ] analysis L5: Integration and metric spaces [Pure maths]
-- [ ] linear-maps L1: Vector spaces [Pure maths]
+- [x] linear-maps L1: Vector spaces [Pure maths] (`docs/reports/linear-maps-1.md`; 5 inbox bullets)
 - [ ] linear-maps L2: Linear maps [Pure maths]
 - [ ] linear-maps L3: Duality and inner products [Pure maths]
 - [ ] linear-maps L4: Operators [Pure maths]
