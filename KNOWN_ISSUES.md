@@ -38,7 +38,7 @@ C++ runtime
 - A range-for over a braced list needs `<initializer_list>` included.
 
 Process
-- 28 Oct: background content agents for analysis L1 and L2 were refused writes to `docs/reports/analysis-1.md` and `analysis-2.md` (no repo hook; other agents wrote reports fine). The full report text is in that session's hand-backs, not on disk; the user decides whether the main session writes them. Run report writes in the foreground or ask the user.
+- The harness refuses any subagent write of a report file ("Subagents should return findings as text"), in `docs/reports/` and in the scratchpad alike. Agents return the report as text and the main session saves it (analysis-1.md, analysis-2.md saved this way, 28 Oct).
 - Session and weekly usage caps stop every agent mid-task; work is saved on disk, so checkpoint-commit, then resume or triage.
 - Validator warnings are mostly "ladder changes canvas kind" and "not yet written"; only errors block.
 - jsDelivr is blocked in cloud sandboxes; build the local CDN with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (40 s, 870 MB) and pass `--local-cdn`.

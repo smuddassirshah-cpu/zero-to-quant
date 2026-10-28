@@ -46,8 +46,8 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] proof L2: Sets and functions [Pure maths] (`docs/reports/proof-2.md`; 4 inbox bullets, one a `place` grading bug)
 - [x] proof L3: Proof methods [Pure maths] (`docs/reports/proof-3.md`; 4 inbox bullets; proof course complete)
 - [x] markov L5: Martingales and stopping [Quant] (`docs/reports/markov-5.md`; 5 inbox bullets; topic-1.5 exam at cap, not extended)
-- [ ] analysis L1: The real numbers [Pure maths] (lessons committed green 28 Oct; only `docs/reports/analysis-1.md` missing, see KNOWN_ISSUES)
-- [ ] analysis L2: Sequences [Pure maths] (lessons committed green 28 Oct; only `docs/reports/analysis-2.md` missing, see KNOWN_ISSUES)
+- [x] analysis L1: The real numbers [Pure maths] (`docs/reports/analysis-1.md`, written afterwards; 163 numbers rechecked, one text fix in l1)
+- [x] analysis L2: Sequences [Pure maths] (`docs/reports/analysis-2.md`, written afterwards; 170 numbers rechecked, two text fixes in l7)
 - [ ] analysis L3: Series [Pure maths]
 - [ ] analysis L4: Continuity and the derivative [Pure maths]
 - [ ] analysis L5: Integration and metric spaces [Pure maths]
