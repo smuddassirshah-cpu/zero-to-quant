@@ -25,3 +25,4 @@ Before 19 Oct 2026: engine built (vanilla JS player, 20+ canvases, widgets, vali
 - 2026-10-28: proof L1 green and reported (5 lessons, review-1 9 items, homework-1 8 items with one `longform`; topic 0.6 started); 5 inbox bullets, one being table-widget feedback keyed by cell id, not `wrong[]`.
 - 2026-10-28: proof L2 green and reported (4 lessons, review-2 8 items, homework-2 9 items with one `longform`); 4 inbox bullets, including a `place` bug: a chip accepted by two slots marks right answers wrong.
 - 2026-10-28: markov L5 green and reported (6 lessons, review-5 10 items, homework-5 10 items); p = 0.49 ruin case became the trap, ladder uses p = 0.4 (32/275); 5 inbox bullets.
+- 2026-10-28: proof L3 green and reported (6 lessons, review-3 9 items, homework-3 9 items); proof course complete (15 lessons); 4 inbox bullets.

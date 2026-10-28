@@ -44,7 +44,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] Briefs for 2.5, 2.6, 3.2 additions and 3.4 courses (`numerics`, `convex`, `stat-models`, `measure-prob`, `pdes`, `algebra`, `topology`; 26 levels, 111 lessons; 15 inbox bullets)
 - [x] proof L1: Statements and logic [Pure maths] (`docs/reports/proof-1.md`; 5 inbox bullets)
 - [x] proof L2: Sets and functions [Pure maths] (`docs/reports/proof-2.md`; 4 inbox bullets, one a `place` grading bug)
-- [ ] proof L3: Proof methods [Pure maths]
+- [x] proof L3: Proof methods [Pure maths] (`docs/reports/proof-3.md`; 4 inbox bullets; proof course complete)
 - [x] markov L5: Martingales and stopping [Quant] (`docs/reports/markov-5.md`; 5 inbox bullets; topic-1.5 exam at cap, not extended)
 - [ ] analysis L1: The real numbers [Pure maths]
 - [ ] analysis L2: Sequences [Pure maths]
