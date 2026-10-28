@@ -16,7 +16,7 @@ Engine gotchas
 - `unit: "%"` on a numeric widget divides the typed value by 100: store the fraction.
 - `fmtNum` rounds numeric answers to 6 decimal places, so answers below 1e-6 must be rescaled in the prose.
 - `__learner_source__` is visible to tests only when a prelude or postlude exists.
-- The grader reads a capital `N` in a formula as a built-in function.
+- `expression` tests free symbols only from 0.3 to 3, so `\min(1, \varepsilon/5)` grades the same as `\varepsilon/5`; a cap whose switch lies outside that range needs `choice`. (Capital `N` is now an ordinary symbol, item 437.)
 - Code cases: a 5 s limit per case (plus `budget` or 30 s for heavy imports), reported against the case that hit it; `isclose` has a fixed 1e-12 tolerance (C++) or rel 1e-9 (Python); no per-test `tol` yet.
 - A shared generator line `import numpy as np, pandas as pd` loads numpy only in the worker; write separate import lines.
 - `graph` edges draw undirected unless `directed` is set, against README-B.
