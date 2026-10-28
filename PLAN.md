@@ -42,7 +42,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] Engine: breadth visuals and complex grading (report `docs/reports/engine-breadth-2.md`; items 429 to 437 done, follow-ups 438 to 448; new canvases `complex-map` and `space`) (user request, 27 Oct; inbox section "Raised later (breadth briefs ...)", numbered from 429): complex values graded by real and imaginary parts in `expression` and in code `isclose` (Python and C++); vector answers in one `expression`; `order` distractor lines; `plane` vector-field and slope-field layers and trajectories traced from a dragged start; a complex-mapping canvas; `vectors` matrix state readable by `derive` and applied to every vector; `walk` overlays, slider-bound barriers and a mean-reverting mode; a rotatable 3D canvas (item 241). If the 3D canvas overruns, split it into its own item
 - [x] Brief revision (28 Oct; remaining limits cite items 438 to 448): replace every engine fallback in the seven breadth briefs (`proof`, `analysis`, `linear-maps`, `complex`, `vector-calc`, `odes`, `gap-markov-2.md`) with the new features, so no level ships a static or reduced visual
 - [x] Briefs for 2.5, 2.6, 3.2 additions and 3.4 courses (`numerics`, `convex`, `stat-models`, `measure-prob`, `pdes`, `algebra`, `topology`; 26 levels, 111 lessons; 15 inbox bullets)
-- [ ] proof L1: Statements and logic [Pure maths]
+- [x] proof L1: Statements and logic [Pure maths] (`docs/reports/proof-1.md`; 5 inbox bullets)
 - [ ] proof L2: Sets and functions [Pure maths]
 - [ ] proof L3: Proof methods [Pure maths]
 - [ ] markov L5: Martingales and stopping [Quant]
