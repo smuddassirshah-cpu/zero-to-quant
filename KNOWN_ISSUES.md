@@ -12,6 +12,9 @@ Open at migration (27 Oct 2026)
 - `space` canvas: no 3D dragging of points or vectors yet, flat arrowheads, per-piece painter's order (large interpenetrating surfaces can sort wrongly); items 438 to 444.
 - Sandbox CPython lacks SciPy and SymPy; brief-writers installed them (SymPy system-wide, SciPy by `pip --target` in the scratchpad). The `pkgs` local CDN is rebuilt per session (a container restart keeps the scratchpad).
 
+- Item 449: a topic exam passed before new levels joined that topic (markov L5 in 1.5) hides those levels from Today; they stay on Learn. No full `--all` playthrough has run since item 449 (validator 0 errors, `--routes-only`, exam topic-0.1 and number-sense l1 green).
+- The 28 Oct breadth briefs name that session's scratchpad (`.../a8ff8d32-.../scratchpad/pkgs`, `pylib`); give agents the current session's paths. Brief numbers were checked with SciPy 1.18.1, but Pyodide ships SciPy 1.14.1: agents confirm `linprog` (HiGHS) and avoid `res.multipliers` and solver message text.
+
 Engine gotchas
 - `unit: "%"` on a numeric widget divides the typed value by 100: store the fraction.
 - `fmtNum` rounds numeric answers to 6 decimal places, so answers below 1e-6 must be rescaled in the prose.
@@ -20,7 +23,7 @@ Engine gotchas
 - Code cases: a 5 s limit per case (plus `budget` or 30 s for heavy imports), reported against the case that hit it; `isclose` has a fixed 1e-12 tolerance (C++) or rel 1e-9 (Python); no per-test `tol` yet.
 - A shared generator line `import numpy as np, pandas as pd` loads numpy only in the worker; write separate import lines.
 - `graph` edges draw undirected unless `directed` is set, against README-B.
-- `tree` canvas: no binary mode, no inner-node values, no per-node label patch, throws when the root is collapsed; recombining lattices are drawn with `graph` rectangles.
+- `tree` canvas: the limits listed here before pass 7 are fixed (binary mode and the rest; see `README.md`); recombining lattices are still drawn with `graph` rectangles.
 - `grid`: a `null` in a `mark` patch prints "null".
 - `plane`: `derive` cannot target an `area` by id (use `area.to`); no `erf`/Phi in curve formulas before pass 7.
 - Set-mode playthrough is flaky while other agents write files in the same folder; re-run alone before treating a failure as real.

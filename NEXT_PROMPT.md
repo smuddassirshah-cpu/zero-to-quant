@@ -1,15 +1,15 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 2b, "Briefs for 2.5, 2.6, 3.2 additions and 3.4 courses". Briefs only; never edit content, engine files or `course.json`.
+Task: PLAN.md task 2b, "proof L1: Statements and logic [Pure maths]". One content level, written by one `content-author` agent from `## Level 1` of `docs/briefs/proof.md`. The main session plans and reviews only.
 
-Goal: one brief per course, written from its section of `docs/briefs/breadth-plan.md`: `docs/briefs/numerics.md` and `convex.md` (topic 2.5), `stat-models.md` (2.6), `measure-prob.md` and `pdes.md` (3.2 additions), `algebra.md` and `topology.md` (3.4, optional and uncounted). Each brief has a course-context paragraph and one section per level, in the shape of the seven finished breadth briefs (`docs/briefs/odes.md` and `linear-maps.md` are good patterns), following `docs/LEVEL-BRIEF.md` and `docs/AUTHORING.md`.
+Level: course `proof` (topic 0.6, strand pure), lessons `l1-true-or-false`, `l2-and-or-not`, `l3-if-then`, `l4-for-all-there-exists`, `l5-saying-the-opposite`, plus `review-1` and `homework-1`. Use the ids and names in `app/content/courses/proof/course.json` exactly.
 
 Context not in the state files:
-- Design every visual with the engine as it now is: `expression` (complex, vector, `\min`, `\max`, capital N, `\epsilon`), complex `isclose`, `order` `distractors` and `same`, `plane` `field`/`slopeField`/`trajectory`, `complex-map`, `space`, `vectors` `state.matrix`, `walk` overlays and `model: "ou"` (`docs/reports/engine-breadth-2.md`, `app/js/engine/canvas/README-B.md`). No fallbacks to static visuals; a real limit cites ENGINE-BACKLOG items 438 to 448 or goes to `docs/BACKLOG-INBOX.md`.
-- Pure courses (algebra, topology) grade proofs step by step (`order`, `choice`, fill-ins) with whole proofs as `longform` homework (DECISIONS, breadth briefs line).
-- `numerics` and `pdes` build on `odes` (l11 to l13 and l2, l7, l12 are named in `odes.md`).
-- Run seven brief-writers in parallel, one per course, each editing only its brief; every stated number computed twice.
+- Proofs are never graded free-form: each step is graded with `order` (with `distractors` and `same`), `choice`/`multi` or fill-ins; whole proofs go to `longform` homework with a 10-point rubric and model answer.
+- Briefs name an older session's scratchpad. Give the agent this session's scratchpad: its own subfolder `proof-1`, and `pkgs` for `--local-cdn` (build it with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` if missing, about 40 s). CPython lacks SciPy and SymPy; install with `pip install --target <scratchpad>/pylib scipy sympy` if a number check needs them.
+- Item 449 (tested out) is new: nothing in this level depends on it.
+- Seven new breadth briefs exist (`numerics`, `convex`, `stat-models`, `measure-prob`, `pdes`, `algebra`, `topology`); later levels use them.
 
-Files likely touched: the seven new briefs, `docs/BACKLOG-INBOX.md`, PLAN.md, PROGRESS.md, DECISIONS.md, NEXT_PROMPT.md.
+Files likely touched: `app/content/courses/proof/l1-*.json` to `l5-*.json`, `review-1.json`, `homework-1.json`, `docs/reports/proof-1.md`, `docs/BACKLOG-INBOX.md`, plus PLAN.md, PROGRESS.md, NEXT_PROMPT.md.
 
-Acceptance: seven briefs exist; every lesson id and title matches its `course.json` map; each level section names canvases and widgets by option; no "fallback", "precomputed" or "static" workaround for a feature that exists; PLAN.md ticks the task; NEXT_PROMPT.md names the next task ("proof L1: Statements and logic").
+Acceptance: from `app/`, `node tools/validate.mjs 2>&1 | tail -5` shows 0 errors; `node tools/playthrough.mjs --lesson proof/<id>` passes for all five lessons and `--set proof/review-1` and `--set proof/homework-1` pass (with `--local-cdn <pkgs>`); the report exists; every stated number is computed twice; PLAN.md ticks proof L1; NEXT_PROMPT.md names "proof L2: Sets and functions".
