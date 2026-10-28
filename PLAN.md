@@ -43,7 +43,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] Brief revision (28 Oct; remaining limits cite items 438 to 448): replace every engine fallback in the seven breadth briefs (`proof`, `analysis`, `linear-maps`, `complex`, `vector-calc`, `odes`, `gap-markov-2.md`) with the new features, so no level ships a static or reduced visual
 - [x] Briefs for 2.5, 2.6, 3.2 additions and 3.4 courses (`numerics`, `convex`, `stat-models`, `measure-prob`, `pdes`, `algebra`, `topology`; 26 levels, 111 lessons; 15 inbox bullets)
 - [x] proof L1: Statements and logic [Pure maths] (`docs/reports/proof-1.md`; 5 inbox bullets)
-- [ ] proof L2: Sets and functions [Pure maths]
+- [x] proof L2: Sets and functions [Pure maths] (`docs/reports/proof-2.md`; 4 inbox bullets, one a `place` grading bug)
 - [ ] proof L3: Proof methods [Pure maths]
 - [ ] markov L5: Martingales and stopping [Quant]
 - [ ] analysis L1: The real numbers [Pure maths]
