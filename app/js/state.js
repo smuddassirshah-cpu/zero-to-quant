@@ -308,8 +308,9 @@
   };
 
   /* bySkill: { skill: [correct, total] }. results (optional): per-item { id, ok, difficulty, skills } for exact Elo updates.
-     Each missed result with an id joins the redo queue as kind 'exam' with ref { exam, item } (ZQ.select.resolve reads it). */
-  const examFinished = ({ id, score = 0, passed = false, bySkill = {}, items = 0, results, seconds = 0 } = {}) => {
+     Each missed result with an id joins the redo queue as kind 'exam' with ref { exam, item } (ZQ.select.resolve reads it).
+     extra (optional): more fields kept on the attempt. A mock exam (mock-*) earns no XP and keeps every attempt. */
+  const examFinished = ({ id, score = 0, passed = false, bySkill = {}, items = 0, results, seconds = 0, extra } = {}) => {
     const rec = doc.exams[id] || (doc.exams[id] = { attempts: [] });
     const passedBefore = rec.attempts.some(a => a.passed);
     let mp = 0;
@@ -321,9 +322,9 @@
         for (let i = 0; i < total; i++) { const right = i < ok, gain = right ? mpFor(3) : 0; mp += gain; rate([s], right, 3, { mp: gain }); }
       });
     }
-    const xp = passed && !passedBefore ? (String(id).startsWith('stage-') ? XP.stageExam : XP.topicExam) : 0;
+    const xp = passed && !passedBefore && !String(id).startsWith('mock-') ? (String(id).startsWith('stage-') ? XP.stageExam : XP.topicExam) : 0; // a mock is sat many times: no XP
     doc.xp += xp; doc.mp += mp;
-    rec.attempts.push({ at: now(), score, items, passed: !!passed, bySkill });
+    rec.attempts.push({ at: now(), score, items, passed: !!passed, bySkill, ...(extra && typeof extra === 'object' ? extra : {}) }); // extra: a mock's net, wrong, blank, seed, seconds
     const redo = (Array.isArray(results) ? results : []).filter(x => x && !x.ok && (x.id != null || (x.ref && x.ref.item != null)))
       .map(x => redoAdd({ kind: 'exam', ref: x.ref && x.ref.exam ? x.ref : { exam: id, item: x.id }, skills: x.skills || [], difficulty: x.difficulty || 3 }));
     logSeconds('main', seconds, 'exam');

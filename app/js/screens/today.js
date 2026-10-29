@@ -629,18 +629,8 @@
      reverse; multiplication 2 to 12 by 2 to 100; division is multiplication in reverse. 120 seconds.
      A finished full round is saved with ZQ.state.warmup.record(score, seconds), which also logs its minutes to 'mental'.
      ===================================================================================== */
-  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-  const APPLY = { add: (a, b) => a + b, mul: (a, b) => a * b };
-  const makeProblem = (prev) => {
-    const ops = WARM.operations.filter(o => APPLY[o.inverseOf || o.id]);
-    for (;;) {
-      const op = ops[rnd(0, ops.length - 1)];
-      const base = op.inverseOf ? ops.find(o => o.id === op.inverseOf) : op;
-      const a = rnd(base.a[0], base.a[1]), b = rnd(base.b[0], base.b[1]), f = APPLY[base.id];
-      const p = op.inverseOf ? { tex: `${f(a, b)} ${op.tex} ${a}`, ans: b } : { tex: `${a} ${op.tex} ${b}`, ans: f(a, b) };
-      if (!prev || p.tex !== prev.tex) return p;
-    }
-  };
+  /* The generator is shared with the mock exams' generated items (js/engine/arith.js) */
+  const makeProblem = (prev) => ZQ.arith.problem(WARM.operations, Math.random, prev);
   const clock = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   /* Column chart: the last 10 rounds in a lighter step, this round in the track colour,

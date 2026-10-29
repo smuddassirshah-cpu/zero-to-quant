@@ -131,6 +131,8 @@
   /* true or false from the manifest; null when there is no manifest */
   const examWritten = (id) => (manifest ? manifest.has(`exams/${id}.json`) : null);
   const exam = (id) => load(`exams/${id}.json`);
+  /* The mock assessments written (exams/mock-*.json in the manifest), sorted by id; empty while there is no manifest */
+  const mocks = () => (manifest ? [...manifest].filter(f => /^exams\/mock-[^/]+\.json$/.test(f)).map(f => f.slice(6, -5)).sort() : []);
   const drill = (id) => load(`drills/${id}.json`);
   const drills = () => drillIndex || [];
 
@@ -156,7 +158,7 @@
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
     stages, allStages, stage, topic, topicPassed, courseTestedOut, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
-    lesson, review, homework, exam, examWritten, drill, drills,
+    lesson, review, homework, exam, examWritten, mocks, drill, drills,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),
     deKebab,

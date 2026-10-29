@@ -4,7 +4,7 @@ Oct 5, 2026 · @Muddassir Shah
 
 ## Start here
 
-The full path is about 3,530 hours of deliberate work: roughly 4.5 years at 15 hours a week, or about 2.7 years at 25. Without the pure maths items it is 3,330 hours, about 4.3 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
+The full path is about 3,695 hours of deliberate work: roughly 4.7 years at 15 hours a week, or about 2.8 years at 25. Without the pure maths items it is 3,495 hours, about 4.5 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
 
 Zero means: you can read English, use a web browser and do arithmetic with a calculator. Nothing else is assumed, including school algebra or ever having written a line of code.
 
@@ -17,18 +17,18 @@ Four things to know before starting:
 
 ## The map
 
-Four stages, 3,530 hours (3,330 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
+Four stages, 3,695 hours (3,495 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
 
 | Stage | Hours | Quant path | At 15 h/week | You leave when |
 | --- | --- | --- | --- | --- |
-| 0. From nothing (not in the post) | 540 | 500 | 8 months | A GCSE Higher paper at 80%, a precalculus test at 85%, and a Python script you wrote runs; five short proofs a stranger can check **[Pure maths]** |
+| 0. From nothing (not in the post) | 555 | 515 | 9 months | A GCSE Higher paper at 80%, a precalculus test at 85%, and a Python script you wrote runs; five short proofs a stranger can check **[Pure maths]** |
 | 1. Foundations (post's Tier 1) | 1,650 | 1,490 | 25 months | University finals at 70% in calculus, linear algebra, probability and differential equations; 150 algorithm problems solved; a proof-based analysis paper at 60% **[Pure maths]** |
 | 2. Intermediate (post's Tier 2) | 940 | 940 | 14 months | Three finished projects, each with tests and a written results note; one option priced three numerical ways with each error explained |
-| 3. Advanced (post's Tier 3) | 400 | 400 | 6 months | One paper replicated out of sample; the interview books solved cold |
+| 3. Advanced (post's Tier 3) | 550 | 550 | 8 months | One paper replicated out of sample; the interview books solved cold |
 
 Two habits run through every stage and are not on the map: 10 minutes of mental arithmetic a day from the first week, and three interview-style probability problems a week from item 1.5 onwards.
 
-## Stage 0: From nothing (540 hours)
+## Stage 0: From nothing (555 hours)
 
 This stage is everything the post takes for granted: school maths up to the edge of calculus, and enough computer skill to install and run things.
 
@@ -40,8 +40,9 @@ This stage is everything the post takes for granted: school maths up to the edge
 | 0.4 | Computer basics | 40 | Touch typing, files and folders, installing software, the terminal, a code editor | keybr.com for typing. Install Python and VS Code. First three chapters of Automate the Boring Stuff (free online) |
 | 0.5 | Mental arithmetic | 20 | Times tables to 12, two-digit addition, subtraction and multiplication, fractions to decimals | Zetamac arithmetic game, 10 minutes a day |
 | 0.6 | Reasoning and proof **[Pure maths]** | 40 | Statements, and, or, not, implication, quantifiers, sets, functions as sets, direct proof, the contrapositive, contradiction, induction, counterexamples, writing a proof another person can check | How to Prove It, Daniel Velleman. Lighter option: How to Think Like a Mathematician, Kevin Houston |
+| 0.7 | Getting hired | 15 | The three quant roles, kinds of firm, the recruiting calendar, a target list, a one-page CV, online assessments, recorded video interviews, behavioural stories, final rounds, offers and rejections | QuantVault's quant internship timeline. Quantt's guide to quant internships (UK). Each firm's own early-careers pages |
 
-All of it is free except the 0.6 books. Do 0.1 to 0.3 in order; run 0.4 and 0.5 alongside from the first week; start 0.6 after 0.2 and run it alongside 0.3.
+All of it is free except the 0.6 books. Do 0.1 to 0.3 in order; run 0.4 and 0.5 alongside from the first week; start 0.6 after 0.2 and run it alongside 0.3. Read the first part of 0.7 in the first weeks: postings open about a year before an internship. Do the rest about four months before you apply. 0.7 is not part of the exit test.
 
 **Exit test**
 
@@ -197,9 +198,9 @@ Regression in 1.6 assumed normal errors. This item covers the models a statistic
 - **Cover:** generalised linear models (logistic and Poisson), analysis of variance, design of experiments, nonparametric and rank tests, Bayesian inference with conjugate priors, Markov chain Monte Carlo, hierarchical models.
 - **Exit:** fit a logistic and a Poisson model by your own iteratively reweighted least squares and match statsmodels; fit a Bayesian model by Markov chain Monte Carlo and check that the chains have converged.
 
-## Stage 3: Advanced (400 hours)
+## Stage 3: Advanced (550 hours)
 
-This is the post's Tier 3: papers, then interview preparation. Interview drilling starts here in earnest, but the weekly probability problems since 1.5 mean you are not starting cold.
+This is the post's Tier 3: papers, then interview preparation, then the interviews of your role. Interview drilling starts here in earnest, but the weekly probability problems since 1.5 mean you are not starting cold.
 
 ### 3.1 Research papers (150 h)
 
@@ -233,6 +234,8 @@ The books do not train the live formats, so add:
 - **Betting games:** expected value, when to hedge, Kelly sizing.
 - **Jane Street's Probability and Markets guide:** free, short, and written by the firm about its own interviews.
 - **Mock interviews, spoken aloud:** interviewers mark the reasoning as it happens, not only the answer.
+- **Logic and brainteasers:** invariants, weighing and search, backward induction, common knowledge, and quick clock, digit and series questions.
+- **Games, auctions and poker:** payoff tables, Nash and mixed equilibria, sealed-bid auctions and the winner's curse, pot odds and bet sizing.
 
 **Exit test**
 
@@ -247,6 +250,15 @@ The books do not train the live formats, so add:
 - **Cover, algebra:** groups, subgroups and cosets, permutations, modular arithmetic, homomorphisms, rings, fields, polynomials over a field.
 - **Cover, topology:** metric spaces revisited, topological spaces, continuity, connectedness, compactness, completeness and the contraction mapping theorem.
 - **Exit:** a sample of Pinter's end-of-chapter exercises across groups, rings and fields at 70%; prove the contraction mapping theorem and use it to show a fixed-point iteration converges.
+
+### 3.5 Interviews by role (150 h)
+
+- **Who needs it:** everyone does the coding part. Researchers add the research part; developers add the systems part.
+- **Use:** LeetCode, medium problems by pattern. Quantt's guide to quant online assessments. Computer Systems: A Programmer’s Perspective by Bryant and O’Hallaron, for developers.
+- **Cover, coding:** intervals, tries, heaps, sliding-window maximum, bit tricks, strings and simulation, a matching engine, design in code, two problems in 60 minutes, talking while you code.
+- **Cover, research:** statistics and linear algebra questions, machine learning questions, the open prediction case, data tasks and take-homes.
+- **Cover, systems:** caches and memory, threads, locks and atomics, processes, sockets and network protocols, low-latency C++.
+- **Exit:** two medium coding problems solved in 60 minutes. Researchers also work an open case aloud in 45 minutes; developers defend a feed handler design aloud.
 
 ## Weekly rhythm and rules
 

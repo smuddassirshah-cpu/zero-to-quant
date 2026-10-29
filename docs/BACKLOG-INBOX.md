@@ -597,3 +597,7 @@ Raised later (interview plan):
 - [Could] E18. Readiness view: per role, bank coverage by family, the latest mock scores and pace against targets, on You.
 - [Could] E19. Freshness: `asOf` and `sources` fields on lessons that state firm facts, shown under the lesson title, with a validator warning after 12 months.
 - (E10 spoken-answer recording and E20 attention games dropped by user decision, 29 Oct.)
+
+Raised later (interview course maps, 29 Oct):
+- `app/js/screens/learn.js`: the hard-coded `MONTHS` still shows stage 3 as 6 months (curriculum now 550 h, 8 months) and stage 0 needs updating for 515 h; topic 0.7 has no `CLOSE` entry. Needed: derive months from `curriculum.json` hours, and a `CLOSE` line for 0.7.
+- Topics with no exam (0.6 proof, 0.7 recruiting): the stage's "n of m topics passed" count can never reach m. Needed: count only topics that have an exam, or mark 0.7 as exam-free in `curriculum.json` (for example `exam: false`).
