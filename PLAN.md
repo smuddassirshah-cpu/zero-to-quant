@@ -65,7 +65,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] analysis L5: Integration and metric spaces [Pure maths]
 - [x] linear-maps L1: Vector spaces [Pure maths] (`docs/reports/linear-maps-1.md`; 5 inbox bullets)
 - [x] linear-maps L2: Linear maps [Pure maths] (`docs/reports/linear-maps-2.md`; 3 inbox bullets; l9 starter passes 4 of 6 hidden tests)
-- [ ] linear-maps L3: Duality and inner products [Pure maths]
+- [x] linear-maps L3: Duality and inner products [Pure maths] (`docs/reports/linear-maps-3.md`; 5 lessons, review-3, homework-3; 3 inbox bullets)
 - [ ] linear-maps L4: Operators [Pure maths]
 - [ ] complex L1: The complex plane [Quant]
 - [ ] complex L2: Complex functions [Quant]

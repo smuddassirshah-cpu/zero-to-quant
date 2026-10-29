@@ -30,3 +30,4 @@ Before 19 Oct 2026: engine built (vanilla JS player, 20+ canvases, widgets, vali
 - 2026-10-28: analysis L2 lessons committed green (report pending, as L1); linear-maps L2 green and reported (5 lessons, review-2, homework-2); session wrote 8 levels (proof complete, markov L5, analysis L1 and L2, linear-maps L1 and L2).
 - 2026-10-29: analysis L1 and L2 reports written from the committed files (333 numbers rechecked, three text fixes in l1 and l7); analysis L3 green and reported (4 lessons, review-3, homework-3); subagent report writes are refused, so the main session saves reports from their text.
 - 2026-10-29: analysis L4 green and reported (5 lessons, review-4, homework-4; brief's l15 delta and an ungradable two-symbol min corrected); interview readiness made the top priority (PLAN 2a).
+- 2026-10-29: linear-maps L3 green and reported (5 lessons, review-3 9 items, homework-3 9 items); Pure maths levels now wait for PLAN 2a.
