@@ -61,7 +61,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] analysis L1: The real numbers [Pure maths] (`docs/reports/analysis-1.md`, written afterwards; 163 numbers rechecked, one text fix in l1)
 - [x] analysis L2: Sequences [Pure maths] (`docs/reports/analysis-2.md`, written afterwards; 170 numbers rechecked, two text fixes in l7)
 - [x] analysis L3: Series [Pure maths] (`docs/reports/analysis-3.md`; 4 lessons, review-3 9 items, homework-3 9 items; 5 inbox bullets)
-- [ ] analysis L4: Continuity and the derivative [Pure maths]
+- [x] analysis L4: Continuity and the derivative [Pure maths] (`docs/reports/analysis-4.md`; 5 lessons, review-4 8 items, homework-4 9 items; 3 inbox bullets; two brief numbers corrected)
 - [ ] analysis L5: Integration and metric spaces [Pure maths]
 - [x] linear-maps L1: Vector spaces [Pure maths] (`docs/reports/linear-maps-1.md`; 5 inbox bullets)
 - [x] linear-maps L2: Linear maps [Pure maths] (`docs/reports/linear-maps-2.md`; 3 inbox bullets; l9 starter passes 4 of 6 hidden tests)
