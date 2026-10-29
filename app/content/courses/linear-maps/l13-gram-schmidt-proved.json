@@ -1,0 +1,1550 @@
+{
+ "id": "l13-gram-schmidt-proved",
+ "course": "linear-maps",
+ "title": "Orthonormal bases and Gram-Schmidt",
+ "minutes": 15,
+ "objectives": [
+  "Prove that Gram-Schmidt gives an orthonormal basis with the same span."
+ ],
+ "skills": [
+  "lx-inner"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Taking the market out",
+   "prose": "Four days of demeaned returns, in %: the market $\\mathbf{m} = (1, -1, 2, -2)$ and a factor $\\mathbf{f} = (2, 0, 1, -3)$. The part of $\\mathbf{f}$ that moves with the market is $\\beta\\mathbf{m}$, with $\\beta = \\tfrac{\\langle \\mathbf{f}, \\mathbf{m} \\rangle}{\\langle \\mathbf{m}, \\mathbf{m} \\rangle}$, as in `vectors` l3. The $\\tfrac1n$ of the covariance cancels.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "R",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         -1,
+         0
+        ],
+        [
+         2,
+         1
+        ],
+        [
+         -2,
+         -3
+        ]
+       ],
+       "label": "returns (%)",
+       "colLabels": [
+        "$\\mathbf{m}$",
+        "$\\mathbf{f}$"
+       ],
+       "rowLabels": [
+        "day 1",
+        "day 2",
+        "day 3",
+        "day 4"
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\beta$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a decimal",
+    "accept": "1",
+    "wrong": [
+     {
+      "id": "cov",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "rev",
+      "value": 0.7143,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\langle \\mathbf{f}, \\mathbf{m} \\rangle = 2 \\cdot 1 + 0 \\cdot (-1) + 1 \\cdot 2 + (-3)(-2)$."
+    },
+    {
+     "rung": "point",
+     "text": "That is 10, and $\\langle \\mathbf{m}, \\mathbf{m} \\rangle = 1 + 1 + 4 + 4 = 10$.",
+     "highlight": [
+      "R-c0",
+      "R-c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\beta = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $\\beta = \\tfrac{10}{10} = 1$.",
+    "generic": "Not quite right. Compute $\\langle \\mathbf{f}, \\mathbf{m} \\rangle$ and $\\langle \\mathbf{m}, \\mathbf{m} \\rangle$, then divide.",
+    "byKey": {
+     "cov": "You gave $\\tfrac14\\langle \\mathbf{f}, \\mathbf{m} \\rangle = 2.5$, the covariance. Divide by the market's variance, $2.5$, too.",
+     "rev": "You divided by $\\langle \\mathbf{f}, \\mathbf{f} \\rangle = 14$. Beta on the market divides by $\\langle \\mathbf{m}, \\mathbf{m} \\rangle$."
+    }
+   },
+   "explain": {
+    "text": "$\\langle \\mathbf{f}, \\mathbf{m} \\rangle = 2 + 0 + 2 + 6 = 10$ and $\\langle \\mathbf{m}, \\mathbf{m} \\rangle = 10$, so $\\beta = 1$. In covariance terms it is $2.5 / 2.5$, the same ratio. Next we take $\\beta\\mathbf{m}$ away from $\\mathbf{f}$.",
+    "canvas": {
+     "highlight": {
+      "R": {
+       "cols": [
+        0,
+        1
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "What is left over",
+   "prose": "In the plane, $\\mathbf{u} = (3, 1)$ is fixed. Drag $\\mathbf{v}$. The canvas drops a perpendicular from $\\mathbf{v}$ to the line of $\\mathbf{u}$, and the caption tracks the leftover $\\mathbf{v} - \\beta\\mathbf{u}$.",
+   "canvas": {
+    "kind": "vectors",
+    "params": {
+     "x": [
+      -2,
+      4.5
+     ],
+     "y": [
+      -1.5,
+      3.5
+     ],
+     "grid": true,
+     "snap": 0.5,
+     "height": 300,
+     "vectors": [
+      {
+       "id": "u",
+       "v": [
+        3,
+        1
+       ],
+       "label": "$\\mathbf{u}$",
+       "colour": 1
+      },
+      {
+       "id": "v",
+       "v": [
+        1,
+        3
+       ],
+       "label": "$\\mathbf{v}$",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "drag": [
+      "v"
+     ],
+     "project": {
+      "of": "v",
+      "onto": "u"
+     }
+    },
+    "derive": {
+     "caption": "$\\beta$ = {{fixed((3 * v.v[0] + v.v[1]) / 10, 2)}}, and $\\langle \\mathbf{v} - \\beta\\mathbf{u}, \\mathbf{u} \\rangle$ = {{fixed(3 * (v.v[0] - 3 * (3 * v.v[0] + v.v[1]) / 10) + (v.v[1] - (3 * v.v[0] + v.v[1]) / 10), 2)}}"
+    }
+   },
+   "question": "What is $\\langle \\mathbf{v} - \\beta\\mathbf{u}, \\mathbf{u} \\rangle$, wherever you drag $\\mathbf{v}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "Always 0: the leftover is orthogonal to $\\mathbf{u}$",
+      "correct": true
+     },
+     {
+      "id": "beta",
+      "text": "It equals $\\beta$",
+      "why": "Drag $\\mathbf{v}$ to $(3, 1)$: $\\beta = 1$, but the caption shows 0."
+     },
+     {
+      "id": "dep",
+      "text": "It depends on where $\\mathbf{v}$ is",
+      "why": "Drag $\\mathbf{v}$ a few times: the caption reads 0 each time."
+     },
+     {
+      "id": "len",
+      "text": "It equals $\\|\\mathbf{v}\\|$",
+      "why": "At $(1, 3)$, $\\|\\mathbf{v}\\| \\approx 3.16$, but the caption reads 0."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the second number in the caption."
+    },
+    {
+     "rung": "point",
+     "text": "It stays at 0.",
+     "highlight": [
+      "proj"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\langle \\mathbf{v} - \\beta\\mathbf{u}, \\mathbf{u} \\rangle = \\langle \\mathbf{v}, \\mathbf{u} \\rangle - \\beta\\|\\mathbf{u}\\|^2 = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Subtracting $\\beta\\mathbf{u}$ leaves a vector orthogonal to $\\mathbf{u}$.",
+    "generic": "Not quite right. Drag $\\mathbf{v}$ and read the second number in the caption."
+   },
+   "explain": {
+    "text": "$\\langle \\mathbf{v} - \\beta\\mathbf{u}, \\mathbf{u} \\rangle = \\langle \\mathbf{v}, \\mathbf{u} \\rangle - \\beta\\|\\mathbf{u}\\|^2$, and $\\beta$ is chosen to make that 0. The dashed perpendicular is the leftover. This one step, repeated, is Gram-Schmidt.",
+    "canvas": {
+     "highlight": [
+      "proj"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "One step of Gram-Schmidt",
+   "prose": "A list is **orthonormal** when each vector has norm 1 and each pair is orthogonal. **Gram-Schmidt** builds one from an independent list. It subtracts the parts along earlier vectors, then rescales. For $\\mathbf{f}$ and $\\mathbf{m}$ the first step is $\\mathbf{f} - \\beta\\mathbf{m}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "R",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         -1,
+         0
+        ],
+        [
+         2,
+         1
+        ],
+        [
+         -2,
+         -3
+        ]
+       ],
+       "label": "returns (%)",
+       "colLabels": [
+        "$\\mathbf{m}$",
+        "$\\mathbf{f}$"
+       ],
+       "rowLabels": [
+        "day 1",
+        "day 2",
+        "day 3",
+        "day 4"
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\mathbf{f} - \\beta\\mathbf{m}$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "(1, 1, -1, -1)",
+    "keyboard": "algebra",
+    "accept": [
+     "(1, 1, -1, -1)",
+     "[1, 1, -1, -1]"
+    ],
+    "wrong": [
+     {
+      "id": "sum",
+      "tex": "(3, -1, 3, -5)"
+     },
+     {
+      "id": "rev",
+      "tex": "(-1, -1, 1, 1)"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\beta = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "$(2, 0, 1, -3) - (1, -1, 2, -2)$.",
+     "highlight": [
+      "R-c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(1, 1, -1, -1)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $(1, 1, -1, -1)$, orthogonal to $\\mathbf{m}$.",
+    "generic": "Not quite right. With $\\beta = 1$, subtract $\\mathbf{m}$ from $\\mathbf{f}$ entry by entry.",
+    "byKey": {
+     "sum": "You added $\\mathbf{m}$. Subtract it.",
+     "rev": "You computed $\\mathbf{m} - \\mathbf{f}$. The residual is $\\mathbf{f} - \\mathbf{m}$.",
+     "length": "The residual has four entries, one per day."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{f} - \\mathbf{m} = (1, 1, -1, -1)$, and $\\langle (1, 1, -1, -1), \\mathbf{m} \\rangle = 1 - 1 - 2 + 2 = 0$. Dividing $\\mathbf{m}$ and the residual by their norms gives an orthonormal pair. That is Gram-Schmidt on $(\\mathbf{m}, \\mathbf{f})$.",
+    "canvas": {
+     "highlight": {
+      "R": {
+       "cols": [
+        1
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Three vectors: step 2",
+   "prose": "Run Gram-Schmidt on $\\mathbf{v}_1 = (1, 1, 0)$, $\\mathbf{v}_2 = (1, 0, 1)$, $\\mathbf{v}_3 = (0, 1, 1)$. Step 1: $\\mathbf{e}_1 = \\mathbf{v}_1 / \\|\\mathbf{v}_1\\| = \\tfrac{1}{\\sqrt2}(1, 1, 0)$. Step 2 removes the part of $\\mathbf{v}_2$ along $\\mathbf{e}_1$: $\\mathbf{f}_2 = \\mathbf{v}_2 - \\langle \\mathbf{v}_2, \\mathbf{e}_1 \\rangle\\mathbf{e}_1$.",
+   "canvas": {
+    "kind": "space",
+    "params": {
+     "x": [
+      -1,
+      1.5
+     ],
+     "y": [
+      -1,
+      1.5
+     ],
+     "z": [
+      -0.5,
+      1.5
+     ],
+     "equal": true,
+     "height": 300,
+     "camera": {
+      "az": -50,
+      "el": 22
+     },
+     "vectors": [
+      {
+       "id": "v1",
+       "v": [
+        1,
+        1,
+        0
+       ],
+       "label": "$\\mathbf{v}_1$",
+       "colour": 1
+      },
+      {
+       "id": "v2",
+       "v": [
+        1,
+        0,
+        1
+       ],
+       "label": "$\\mathbf{v}_2$",
+       "colour": 2
+      },
+      {
+       "id": "v3",
+       "v": [
+        0,
+        1,
+        1
+       ],
+       "label": "$\\mathbf{v}_3$",
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\mathbf{f}_2$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "(0.5, -0.5, 1)",
+    "keyboard": "algebra",
+    "accept": [
+     "(0.5, -0.5, 1)",
+     "(1/2, -1/2, 1)"
+    ],
+    "wrong": [
+     {
+      "id": "none",
+      "tex": "(1, 0, 1)"
+     },
+     {
+      "id": "full",
+      "tex": "(0, -1, 1)"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\langle \\mathbf{v}_2, \\mathbf{e}_1 \\rangle = \\tfrac{1}{\\sqrt2}$."
+    },
+    {
+     "rung": "point",
+     "text": "So the part along $\\mathbf{e}_1$ is $\\tfrac12(1, 1, 0)$.",
+     "highlight": [
+      "v1",
+      "v2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(1, 0, 1) - (0.5, 0.5, 0)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $\\mathbf{f}_2 = (0.5, -0.5, 1)$.",
+    "generic": "Not quite right. $\\langle \\mathbf{v}_2, \\mathbf{e}_1 \\rangle\\mathbf{e}_1 = \\tfrac{1}{\\sqrt2} \\cdot \\tfrac{1}{\\sqrt2}(1, 1, 0)$.",
+    "byKey": {
+     "none": "You subtracted nothing. Take off $\\langle \\mathbf{v}_2, \\mathbf{e}_1 \\rangle\\mathbf{e}_1 = (0.5, 0.5, 0)$.",
+     "full": "You subtracted all of $\\mathbf{v}_1$. Only $\\tfrac12\\mathbf{v}_1$ lies along it.",
+     "length": "$\\mathbf{f}_2$ is in $\\mathbb{R}^3$: three entries."
+    }
+   },
+   "explain": {
+    "text": "$\\langle \\mathbf{v}_2, \\mathbf{e}_1 \\rangle\\mathbf{e}_1 = \\tfrac12(1, 1, 0)$, so $\\mathbf{f}_2 = (0.5, -0.5, 1)$. Check: $\\langle \\mathbf{f}_2, \\mathbf{v}_1 \\rangle = 0.5 - 0.5 + 0 = 0$. The square roots cancel; they always do in the projection.",
+    "canvas": {
+     "vectors": {
+      "f2": {
+       "v": [
+        0.5,
+        -0.5,
+        1
+       ],
+       "label": "$\\mathbf{f}_2$",
+       "colour": 4
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Rescale",
+   "prose": "$\\mathbf{f}_2 = (0.5, -0.5, 1)$ is orthogonal to $\\mathbf{e}_1$. To make it a unit vector, divide by its norm.",
+   "canvas": {
+    "kind": "space",
+    "params": {
+     "x": [
+      -1,
+      1.5
+     ],
+     "y": [
+      -1,
+      1.5
+     ],
+     "z": [
+      -0.5,
+      1.5
+     ],
+     "equal": true,
+     "height": 300,
+     "camera": {
+      "az": -50,
+      "el": 22
+     },
+     "vectors": [
+      {
+       "id": "v1",
+       "v": [
+        1,
+        1,
+        0
+       ],
+       "label": "$\\mathbf{v}_1$",
+       "colour": 1
+      },
+      {
+       "id": "v2",
+       "v": [
+        1,
+        0,
+        1
+       ],
+       "label": "$\\mathbf{v}_2$",
+       "colour": 2
+      },
+      {
+       "id": "v3",
+       "v": [
+        0,
+        1,
+        1
+       ],
+       "label": "$\\mathbf{v}_3$",
+       "colour": 3
+      },
+      {
+       "id": "f2",
+       "v": [
+        0.5,
+        -0.5,
+        1
+       ],
+       "label": "$\\mathbf{f}_2$",
+       "colour": 4
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\|\\mathbf{f}_2\\|^2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a decimal",
+    "accept": "1.5",
+    "wrong": [
+     {
+      "id": "root",
+      "value": 1.2247,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\|\\mathbf{f}_2\\|^2 = 0.5^2 + (-0.5)^2 + 1^2$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.25 + 0.25 + 1$.",
+     "highlight": [
+      "f2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $0.25 + 0.25 + 1 = 1.5$.",
+    "generic": "Not quite right. Square each entry and add.",
+    "byKey": {
+     "root": "That is $\\|\\mathbf{f}_2\\|$. The question asks for its square.",
+     "two": "You added the entries' sizes, $0.5 + 0.5 + 1$. Square them first.",
+     "one": "Only the last entry squared is 1. Add $0.25 + 0.25$."
+    }
+   },
+   "explain": {
+    "text": "$\\|\\mathbf{f}_2\\|^2 = 1.5$, so $\\mathbf{e}_2 = \\mathbf{f}_2 / \\sqrt{1.5} = \\tfrac{1}{\\sqrt6}(1, -1, 2)$. Doubling $\\mathbf{f}_2$ to $(1, -1, 2)$ first gives the same unit vector. Its norm is $\\sqrt6$.",
+    "canvas": {
+     "highlight": [
+      "f2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Step 3",
+   "prose": "Now $\\mathbf{e}_2 = \\tfrac{1}{\\sqrt6}(1, -1, 2)$. Step 3 removes the parts of $\\mathbf{v}_3$ along both: $\\mathbf{f}_3 = \\mathbf{v}_3 - \\langle \\mathbf{v}_3, \\mathbf{e}_1 \\rangle\\mathbf{e}_1 - \\langle \\mathbf{v}_3, \\mathbf{e}_2 \\rangle\\mathbf{e}_2$. Here $\\langle \\mathbf{v}_3, \\mathbf{e}_1 \\rangle\\mathbf{e}_1 = (0.5, 0.5, 0)$.",
+   "canvas": {
+    "kind": "space",
+    "params": {
+     "x": [
+      -1,
+      1.5
+     ],
+     "y": [
+      -1,
+      1.5
+     ],
+     "z": [
+      -0.5,
+      1.5
+     ],
+     "equal": true,
+     "height": 300,
+     "camera": {
+      "az": -50,
+      "el": 22
+     },
+     "vectors": [
+      {
+       "id": "v1",
+       "v": [
+        1,
+        1,
+        0
+       ],
+       "label": "$\\mathbf{v}_1$",
+       "colour": 1
+      },
+      {
+       "id": "v2",
+       "v": [
+        1,
+        0,
+        1
+       ],
+       "label": "$\\mathbf{v}_2$",
+       "colour": 2
+      },
+      {
+       "id": "v3",
+       "v": [
+        0,
+        1,
+        1
+       ],
+       "label": "$\\mathbf{v}_3$",
+       "colour": 3
+      },
+      {
+       "id": "f2",
+       "v": [
+        0.5,
+        -0.5,
+        1
+       ],
+       "label": "$\\mathbf{f}_2$",
+       "colour": 4
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\mathbf{f}_3$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "(-2/3, 2/3, 2/3)",
+    "keyboard": "algebra",
+    "accept": [
+     "(-2/3, 2/3, 2/3)",
+     "(-0.6667, 0.6667, 0.6667)"
+    ],
+    "wrong": [
+     {
+      "id": "one",
+      "tex": "(-0.5, 0.5, 1)"
+     },
+     {
+      "id": "vs",
+      "tex": "(-1, 0.5, 0.5)"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\langle \\mathbf{v}_3, \\mathbf{e}_2 \\rangle = \\tfrac{-1 + 2}{\\sqrt6} = \\tfrac{1}{\\sqrt6}$."
+    },
+    {
+     "rung": "point",
+     "text": "So the $\\mathbf{e}_2$ part is $\\tfrac16(1, -1, 2)$.",
+     "highlight": [
+      "v3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(0, 1, 1) - (0.5, 0.5, 0) - \\tfrac16(1, -1, 2)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $\\mathbf{f}_3 = (-\\tfrac23, \\tfrac23, \\tfrac23)$.",
+    "generic": "Not quite right. $\\langle \\mathbf{v}_3, \\mathbf{e}_2 \\rangle\\mathbf{e}_2 = \\tfrac16(1, -1, 2)$; subtract it as well.",
+    "byKey": {
+     "one": "You removed only the $\\mathbf{e}_1$ part. Take off $\\tfrac16(1, -1, 2)$ too.",
+     "vs": "You subtracted projections onto $\\mathbf{v}_1$ and $\\mathbf{v}_2$. Use the orthonormal $\\mathbf{e}_1$ and $\\mathbf{e}_2$.",
+     "length": "$\\mathbf{f}_3$ has three entries."
+    }
+   },
+   "explain": {
+    "text": "$(0, 1, 1) - (0.5, 0.5, 0) - (\\tfrac16, -\\tfrac16, \\tfrac13) = (-\\tfrac23, \\tfrac23, \\tfrac23)$. Its norm is $\\tfrac{2}{\\sqrt3} \\approx 1.1547$, so $\\mathbf{e}_3 = \\tfrac{1}{\\sqrt3}(-1, 1, 1)$. It is orthogonal to $\\mathbf{v}_1$ and to $\\mathbf{f}_2$.",
+    "canvas": {
+     "vectors": {
+      "f3": {
+       "v": [
+        -0.6667,
+        0.6667,
+        0.6667
+       ],
+       "label": "$\\mathbf{f}_3$",
+       "colour": 5
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Orthogonal polynomials",
+   "prose": "On $\\mathcal{P}_2(\\mathbb{R})$ take $\\langle p, q \\rangle = \\int_{-1}^{1} pq$. Then $\\|1\\|^2 = 2$, $\\langle x, 1 \\rangle = 0$, $\\|x\\|^2 = \\tfrac23$, $\\langle x^2, 1 \\rangle = \\tfrac23$ and $\\langle x^2, x \\rangle = 0$. Gram-Schmidt on $(1, x, x^2)$ starts with $e_1 = \\tfrac{1}{\\sqrt2}$ and $e_2 = \\sqrt{\\tfrac32}\\,x$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      1
+     ],
+     "y": [
+      -1.4,
+      1.8
+     ],
+     "height": 260,
+     "grid": true,
+     "functions": [
+      {
+       "id": "e1",
+       "expr": "0.7071",
+       "label": "$e_1$",
+       "labelAt": -0.8
+      },
+      {
+       "id": "e2",
+       "expr": "1.2247*x",
+       "label": "$e_2$",
+       "labelAt": 0.8
+      },
+      {
+       "id": "e3",
+       "expr": "2.3717*(x^2 - 1/3)",
+       "label": "$e_3$",
+       "labelAt": 0.2
+      }
+     ]
+    },
+    "state": {
+     "hide": [
+      "e3"
+     ]
+    }
+   },
+   "question": "What is $f_3 = x^2 - \\langle x^2, e_1 \\rangle e_1 - \\langle x^2, e_2 \\rangle e_2$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "x^2-\\frac{1}{3}",
+    "keyboard": "algebra",
+    "accept": [
+     "x^2-1/3"
+    ],
+    "wrong": [
+     {
+      "id": "half",
+      "tex": "x^2-\\frac{2}{3}"
+     },
+     {
+      "id": "same",
+      "tex": "x^2"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\langle x^2, e_2 \\rangle = 0$, since $\\langle x^2, x \\rangle = 0$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\langle x^2, e_1 \\rangle e_1 = \\tfrac{\\langle x^2, 1 \\rangle}{\\|1\\|^2} = \\tfrac13$.",
+     "highlight": [
+      "e1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$f_3 = x^2 - \\tfrac13$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $f_3 = x^2 - \\tfrac13$.",
+    "generic": "Not quite right. $\\langle x^2, e_1 \\rangle e_1 = \\tfrac{2/3}{\\sqrt2} \\cdot \\tfrac{1}{\\sqrt2}$, and the $e_2$ term is 0.",
+    "byKey": {
+     "half": "You subtracted $\\langle x^2, 1 \\rangle$ without dividing by $\\|1\\|^2 = 2$.",
+     "same": "You treated $x^2$ as orthogonal to 1. But $\\langle x^2, 1 \\rangle = \\tfrac23$."
+    }
+   },
+   "explain": {
+    "text": "$\\langle x^2, e_1 \\rangle e_1 = \\tfrac{2/3}{2} = \\tfrac13$ and the $e_2$ term is 0, so $f_3 = x^2 - \\tfrac13$. Then $\\|f_3\\|^2 = \\tfrac25 - \\tfrac49 + \\tfrac29 = \\tfrac{8}{45}$, so $e_3 = \\sqrt{\\tfrac{45}{8}}(x^2 - \\tfrac13) \\approx 2.3717(x^2 - \\tfrac13)$. These are the normalised Legendre polynomials.",
+    "canvas": {
+     "hide": []
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Projecting onto the wrong list",
+   "prose": "A classmate removes projections onto the original vectors: $\\mathbf{g} = \\mathbf{v}_3 - \\operatorname{proj}_{\\mathbf{v}_1}\\mathbf{v}_3 - \\operatorname{proj}_{\\mathbf{v}_2}\\mathbf{v}_3 = (-1, 0.5, 0.5)$. Here $\\operatorname{proj}_{\\mathbf{a}}\\mathbf{b} = \\tfrac{\\langle \\mathbf{b}, \\mathbf{a} \\rangle}{\\|\\mathbf{a}\\|^2}\\mathbf{a}$.",
+   "canvas": {
+    "kind": "space",
+    "params": {
+     "x": [
+      -1,
+      1.5
+     ],
+     "y": [
+      -1,
+      1.5
+     ],
+     "z": [
+      -0.5,
+      1.5
+     ],
+     "equal": true,
+     "height": 300,
+     "camera": {
+      "az": -50,
+      "el": 22
+     },
+     "vectors": [
+      {
+       "id": "v1",
+       "v": [
+        1,
+        1,
+        0
+       ],
+       "label": "$\\mathbf{v}_1$",
+       "colour": 1
+      },
+      {
+       "id": "v2",
+       "v": [
+        1,
+        0,
+        1
+       ],
+       "label": "$\\mathbf{v}_2$",
+       "colour": 2
+      },
+      {
+       "id": "v3",
+       "v": [
+        0,
+        1,
+        1
+       ],
+       "label": "$\\mathbf{v}_3$",
+       "colour": 3
+      },
+      {
+       "id": "g",
+       "v": [
+        -1,
+        0.5,
+        0.5
+       ],
+       "label": "$\\mathbf{g}$",
+       "colour": 6
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\langle \\mathbf{g}, \\mathbf{v}_1 \\rangle$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a decimal",
+    "accept": "−0.5",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "pos",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply entry by entry with $(1, 1, 0)$."
+    },
+    {
+     "rung": "point",
+     "text": "$-1 + 0.5 + 0$.",
+     "highlight": [
+      "g",
+      "v1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.5 \\ne 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $-1 + 0.5 + 0 = -0.5$: not orthogonal.",
+    "generic": "Not quite right. Compute $\\langle (-1, 0.5, 0.5), (1, 1, 0) \\rangle$.",
+    "byKey": {
+     "zero": "You assumed $\\mathbf{g}$ is orthogonal to $\\mathbf{v}_1$. Compute it: $-1 + 0.5 + 0 = -0.5$.",
+     "pos": "Watch the sign of the first entry: $-1 \\cdot 1 + 0.5 \\cdot 1 = -0.5$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{v}_1$ and $\\mathbf{v}_2$ are not orthogonal, so removing the $\\mathbf{v}_2$ part puts some $\\mathbf{v}_1$ back. Gram-Schmidt removes parts along the orthonormal $\\mathbf{e}_j$, which never interfere. That is why $\\mathbf{f}_3$ is orthogonal to both, and $\\mathbf{g}$ is not.",
+    "canvas": {
+     "highlight": [
+      "g",
+      "v1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Gram-Schmidt in general",
+   "prose": "Gram-Schmidt (Axler 6.32), for independent $(\\mathbf{v}_1, \\dots, \\mathbf{v}_m)$: $$\\mathbf{f}_k = \\mathbf{v}_k - \\sum_{j<k} \\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle\\mathbf{e}_j, \\qquad \\mathbf{e}_k = \\frac{\\mathbf{f}_k}{\\|\\mathbf{f}_k\\|}.$$ We prove by induction (`proof` l13-induction) that each $(\\mathbf{e}_1, \\dots, \\mathbf{e}_k)$ is orthonormal with the span of $(\\mathbf{v}_1, \\dots, \\mathbf{v}_k)$. Induction proves the case $k = 1$, then that each case gives the next.",
+   "question": "Why is $\\mathbf{f}_k \\ne \\mathbf{0}$, so that we may divide by $\\|\\mathbf{f}_k\\|$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "span",
+      "text": "$\\mathbf{v}_k \\notin \\operatorname{span}(\\mathbf{v}_1, \\dots, \\mathbf{v}_{k-1}) = \\operatorname{span}(\\mathbf{e}_1, \\dots, \\mathbf{e}_{k-1})$, and the sum removed lies in that span",
+      "correct": true
+     },
+     {
+      "id": "nz",
+      "text": "$\\mathbf{v}_k \\ne \\mathbf{0}$",
+      "why": "A non-zero $\\mathbf{v}_k$ can lie in the earlier span: $(2, 2, 0)$ after $(1, 1, 0)$ leaves $\\mathbf{f}_2 = \\mathbf{0}$."
+     },
+     {
+      "id": "on",
+      "text": "The $\\mathbf{e}_j$ are orthonormal",
+      "why": "Orthonormality makes $\\mathbf{f}_k$ orthogonal to the $\\mathbf{e}_j$. It does not stop $\\mathbf{f}_k$ being $\\mathbf{0}$."
+     },
+     {
+      "id": "norm",
+      "text": "$\\|\\mathbf{v}_k\\|$ is larger than the norm of the sum removed",
+      "why": "Not in general: for $(1, 1, 0), (2, 2, 0)$ they are equal and $\\mathbf{f}_2 = \\mathbf{0}$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Suppose $\\mathbf{f}_k = \\mathbf{0}$."
+    },
+    {
+     "rung": "point",
+     "text": "Then $\\mathbf{v}_k = \\sum_{j<k}\\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle\\mathbf{e}_j$."
+    },
+    {
+     "rung": "step",
+     "text": "That puts $\\mathbf{v}_k$ in the span of the earlier $\\mathbf{v}$s, against independence."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Independence keeps $\\mathbf{v}_k$ out of the earlier span.",
+    "generic": "Not quite right. If $\\mathbf{f}_k = \\mathbf{0}$, then $\\mathbf{v}_k$ equals the removed sum. Where does that sum live?"
+   },
+   "explain": {
+    "text": "If $\\mathbf{f}_k = \\mathbf{0}$, then $\\mathbf{v}_k$ lies in $\\operatorname{span}(\\mathbf{e}_1, \\dots, \\mathbf{e}_{k-1})$. By the induction hypothesis that is $\\operatorname{span}(\\mathbf{v}_1, \\dots, \\mathbf{v}_{k-1})$, which independence forbids. A dependent list does give $\\mathbf{f}_k = \\mathbf{0}$, as `least-squares` l4 showed."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "The inductive step",
+   "prose": "Prove the step from $k - 1$ to $k$. The case $k = 1$ holds, since $\\mathbf{e}_1 = \\mathbf{v}_1 / \\|\\mathbf{v}_1\\|$ has norm 1 and the same span.",
+   "question": "Put the lines in order. One line does not belong: move it to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "g1",
+      "text": "Suppose $(\\mathbf{e}_1, \\dots, \\mathbf{e}_{k-1})$ is orthonormal with the span of $(\\mathbf{v}_1, \\dots, \\mathbf{v}_{k-1})$."
+     },
+     {
+      "id": "g2",
+      "text": "$\\mathbf{v}_k$ is not in that span, by independence, so $\\mathbf{f}_k \\ne \\mathbf{0}$ and $\\mathbf{e}_k$ is defined."
+     },
+     {
+      "id": "g3",
+      "text": "For $j < k$, $\\langle \\mathbf{f}_k, \\mathbf{e}_j \\rangle = \\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle - \\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle = 0$, so the longer list is orthonormal."
+     },
+     {
+      "id": "g4",
+      "text": "$\\mathbf{e}_k$ is a combination of $\\mathbf{v}_k$ and the earlier $\\mathbf{e}_j$, so it lies in $\\operatorname{span}(\\mathbf{v}_1, \\dots, \\mathbf{v}_k)$."
+     },
+     {
+      "id": "g5",
+      "text": "$\\mathbf{v}_k = \\|\\mathbf{f}_k\\|\\mathbf{e}_k + \\sum_{j<k}\\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle\\mathbf{e}_j$ lies in $\\operatorname{span}(\\mathbf{e}_1, \\dots, \\mathbf{e}_k)$."
+     },
+     {
+      "id": "g6",
+      "text": "Each list lies in the other's span, so the spans are equal. $\\blacksquare$"
+     },
+     {
+      "id": "x1",
+      "text": "$\\langle \\mathbf{f}_k, \\mathbf{e}_j \\rangle = 0$ because $\\mathbf{v}_k \\perp \\mathbf{e}_j$.",
+      "why": "$\\mathbf{v}_k$ need not be orthogonal to $\\mathbf{e}_j$: $\\langle \\mathbf{v}_2, \\mathbf{e}_1 \\rangle = \\tfrac{1}{\\sqrt2}$. The subtraction does it."
+     }
+    ],
+    "answer": [
+     "g1",
+     "g2",
+     "g3",
+     "g4",
+     "g5",
+     "g6"
+    ],
+    "distractors": [
+     "x1"
+    ],
+    "same": [
+     [
+      "g4",
+      "g5"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the induction hypothesis."
+    },
+    {
+     "rung": "point",
+     "text": "Then: $\\mathbf{f}_k \\ne \\mathbf{0}$; orthogonality to each $\\mathbf{e}_j$."
+    },
+    {
+     "rung": "step",
+     "text": "Finish with the two span inclusions, in either order, and conclude."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Defined, orthonormal, and the same span.",
+    "generic": "Not quite right. Assume the claim for $k - 1$, show $\\mathbf{f}_k \\ne \\mathbf{0}$, then orthogonality, then the spans.",
+    "byKey": {
+     "x1": "You assumed $\\mathbf{v}_k \\perp \\mathbf{e}_j$. It is not; subtracting its $\\mathbf{e}_j$ parts is what makes $\\mathbf{f}_k$ orthogonal.",
+     "left-out": "You left out a line the proof needs."
+    }
+   },
+   "explain": {
+    "text": "Independence makes $\\mathbf{f}_k$ non-zero, and orthonormality of the earlier $\\mathbf{e}_j$ makes it orthogonal to each. Each new vector lies in the other list's span, so the spans agree. Induction then gives the claim for every $k$ up to $m$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Gram-Schmidt in NumPy",
+   "prose": "`gram_schmidt(V)` takes a matrix with independent columns and returns $\\mathbf{Q}$, whose columns are the $\\mathbf{e}_k$, rounded to 6 places. The starter only rescales each column. Note that `np.linalg.qr` returns $-\\mathbf{e}_1$ first here: still orthonormal, same span, other sign.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "Q",
+       "rows": [
+        [
+         "$\\tfrac{1}{\\sqrt2}$",
+         "$\\tfrac{1}{\\sqrt6}$",
+         "$-\\tfrac{1}{\\sqrt3}$"
+        ],
+        [
+         "$\\tfrac{1}{\\sqrt2}$",
+         "$-\\tfrac{1}{\\sqrt6}$",
+         "$\\tfrac{1}{\\sqrt3}$"
+        ],
+        [
+         "0",
+         "$\\tfrac{2}{\\sqrt6}$",
+         "$\\tfrac{1}{\\sqrt3}$"
+        ]
+       ],
+       "label": "$\\mathbf{Q}$",
+       "colLabels": [
+        "$\\mathbf{e}_1$",
+        "$\\mathbf{e}_2$",
+        "$\\mathbf{e}_3$"
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fix `gram_schmidt(V)`. Raise `ValueError` when the columns are dependent, decided by `np.linalg.matrix_rank`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef gram_schmidt(V):\n    V = np.array(V, dtype=float)\n    # each column scaled to norm 1\n    Q = V / np.linalg.norm(V, axis=0)\n    return (np.round(Q, 6) + 0.0).tolist()\n",
+    "solution": "import numpy as np\n\ndef gram_schmidt(V):\n    V = np.array(V, dtype=float)\n    n, k = V.shape\n    if np.linalg.matrix_rank(V) < k:\n        raise ValueError(\"the columns are dependent\")\n    Q = np.zeros((n, k))\n    for j in range(k):\n        f = V[:, j].copy()\n        for i in range(j):\n            f -= (V[:, j] @ Q[:, i]) * Q[:, i]\n        Q[:, j] = f / np.linalg.norm(f)\n    return (np.round(Q, 6) + 0.0).tolist()\n",
+    "examples": [
+     {
+      "call": "gram_schmidt([[1, 2], [-1, 0], [2, 1], [-2, -3]])",
+      "expect": "[[0.316228, 0.5], [-0.316228, 0.5], [0.632456, -0.5], [-0.632456, -0.5]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "gram_schmidt([[1, 1, 0], [1, 0, 1], [0, 1, 1]])",
+      "expect": "[[0.707107, 0.408248, -0.57735], [0.707107, -0.408248, 0.57735], [0.0, 0.816497, 0.57735]]",
+      "compare": "equal"
+     },
+     {
+      "call": "gram_schmidt([[1, 2], [-1, 0], [2, 1], [-2, -3]])",
+      "expect": "[[0.316228, 0.5], [-0.316228, 0.5], [0.632456, -0.5], [-0.632456, -0.5]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "Q = np.array(gram_schmidt([[1, 0, 2], [1, 1, 0], [0, 1, 1], [2, 0, 1], [1, 3, 0]]))",
+      "call": "bool(np.allclose(Q.T @ Q, np.eye(3), atol=1e-5))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "V = np.array([[1, 0, 2], [1, 1, 0], [0, 1, 1], [2, 0, 1], [1, 3, 0]], dtype=float); Q = np.array(gram_schmidt(V))",
+      "call": "bool(np.allclose(Q @ (Q.T @ V), V, atol=1e-4))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "gram_schmidt([[1, 2], [1, 2], [0, 0]])",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 5 hidden tests: two exact cases, $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$, the span check $\\mathbf{Q}\\mathbf{Q}^T\\mathbf{V} = \\mathbf{V}$, and a dependent input. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop over the columns in order, keeping the finished $\\mathbf{e}_j$ in `Q`."
+    },
+    {
+     "rung": "point",
+     "text": "For column `j`, subtract `(V[:, j] @ Q[:, i]) * Q[:, i]` for each `i < j`.",
+     "highlight": [
+      "Q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then divide by `np.linalg.norm(f)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Subtract along the earlier $\\mathbf{e}_j$, then rescale.",
+    "generic": "Some tests failed. Read the first failing row.",
+    "byKey": {
+     "test-1": "If your first column is $-\\mathbf{e}_1$, you used `np.linalg.qr`. Its signs differ from Gram-Schmidt's; build the loop yourself.",
+     "test-3": "Your columns are not orthogonal. Subtract $\\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle\\mathbf{e}_j$ for each earlier $j$.",
+     "test-5": "Dependent columns must raise `ValueError`. Check `np.linalg.matrix_rank(V) < k` first.",
+     "error": "Your code stopped with an error. Check the shapes in the inner loop."
+    }
+   },
+   "explain": {
+    "text": "Each column subtracts its parts along the finished columns, then rescales. The diagonal of $\\mathbf{Q}^T\\mathbf{V}$ is then $\\|\\mathbf{f}_k\\| > 0$, which fixes the signs. QR may flip a column, which is why the test compares exact entries.\n\n```python\nfor i in range(j):\n    f -= (V[:, j] @ Q[:, i]) * Q[:, i]\n```"
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Residual momentum",
+   "prose": "A residual momentum signal ranks stocks on the factor with the market taken out. Gram-Schmidt on $(\\mathbf{m}, \\mathbf{f})$ in the covariance inner product gives the residual $(1, 1, -1, -1)$ of the hook. A colleague runs it on $(\\mathbf{f}, \\mathbf{m})$ instead.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "R",
+       "rows": [
+        [
+         1,
+         2
+        ],
+        [
+         -1,
+         0
+        ],
+        [
+         2,
+         1
+        ],
+        [
+         -2,
+         -3
+        ]
+       ],
+       "label": "returns (%)",
+       "colLabels": [
+        "$\\mathbf{m}$",
+        "$\\mathbf{f}$"
+       ],
+       "rowLabels": [
+        "day 1",
+        "day 2",
+        "day 3",
+        "day 4"
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What changes?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "basis",
+      "text": "The second vector becomes $\\mathbf{m} - \\tfrac57\\mathbf{f}$, the market without the factor: another basis of the same plane",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "Nothing: Gram-Schmidt gives the same basis in any order",
+      "why": "Gram-Schmidt keeps the first vector's direction. Now that is $\\mathbf{f}$, not $\\mathbf{m}$."
+     },
+     {
+      "id": "span",
+      "text": "The span changes",
+      "why": "Both orders span $\\operatorname{span}(\\mathbf{m}, \\mathbf{f})$; only the basis changes."
+     },
+     {
+      "id": "sign",
+      "text": "Only the sign of the residual flips",
+      "why": "The new second vector is $(-\\tfrac37, -1, \\tfrac97, \\tfrac17)$, not a multiple of $(1, 1, -1, -1)$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Gram-Schmidt keeps the first vector's direction."
+    },
+    {
+     "rung": "point",
+     "text": "With $\\mathbf{f}$ first, it removes the factor from the market.",
+     "highlight": [
+      "R-c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\mathbf{m} - \\tfrac{\\langle \\mathbf{m}, \\mathbf{f} \\rangle}{\\|\\mathbf{f}\\|^2}\\mathbf{f} = \\mathbf{m} - \\tfrac{10}{14}\\mathbf{f}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The order picks which vector is kept whole.",
+    "generic": "Not quite right. Which vector does Gram-Schmidt leave unchanged, up to scale?"
+   },
+   "explain": {
+    "text": "With $\\mathbf{f}$ first, the second vector is $\\mathbf{m} - \\tfrac{10}{14}\\mathbf{f} = (-\\tfrac37, -1, \\tfrac97, \\tfrac17)$. That is the market with the factor removed, a different signal. For residual momentum, the market goes first.",
+    "canvas": {
+     "highlight": {
+      "R": {
+       "cols": [
+        0
+       ]
+      }
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An orthonormal list is independent, and coordinates in an orthonormal basis are $\\langle \\mathbf{v}, \\mathbf{e}_j \\rangle$.",
+   "Gram-Schmidt subtracts the parts along the earlier $\\mathbf{e}_j$, then rescales. Induction proves each list is orthonormal with the same span.",
+   "So every finite-dimensional inner product space has an orthonormal basis, and an orthonormal list extends to one."
+  ],
+  "formula": {
+   "name": "Gram-Schmidt",
+   "tex": "\\mathbf{f}_k = \\mathbf{v}_k - \\sum_{j<k} \\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle\\mathbf{e}_j, \\quad \\mathbf{e}_k = \\frac{\\mathbf{f}_k}{\\|\\mathbf{f}_k\\|}",
+   "note": "Project onto the $\\mathbf{e}_j$, never the original $\\mathbf{v}_j$."
+  },
+  "trap": "Subtracting projections onto the original $\\mathbf{v}$s leaves $(-1, 0.5, 0.5)$, whose inner product with $\\mathbf{v}_1$ is $-0.5$, not 0."
+ },
+ "quiz": [
+  {
+   "id": "q-norm-f3",
+   "difficulty": 2,
+   "prose": "Gram-Schmidt on $(1, 1, 0), (1, 0, 1), (0, 1, 1)$ gave $\\mathbf{f}_3 = (-\\tfrac23, \\tfrac23, \\tfrac23)$.",
+   "question": "What is $\\|\\mathbf{f}_3\\|$, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.1547,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "1.1547, which is 2/√3",
+    "wrong": [
+     {
+      "id": "sq",
+      "value": 1.3333,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. $\\sqrt{\\tfrac43} = \\tfrac{2}{\\sqrt3} \\approx 1.1547$.",
+    "generic": "Not quite right. Square the entries, add, then take the root.",
+    "byKey": {
+     "sq": "That is $\\|\\mathbf{f}_3\\|^2 = \\tfrac43$. Take the square root.",
+     "two": "You added the entries' sizes. Square them first."
+    }
+   },
+   "explain": {
+    "text": "$\\|\\mathbf{f}_3\\|^2 = 3 \\times \\tfrac49 = \\tfrac43$, so $\\|\\mathbf{f}_3\\| = \\tfrac{2}{\\sqrt3} \\approx 1.1547$. Dividing gives $\\mathbf{e}_3 = \\tfrac{1}{\\sqrt3}(-1, 1, 1)$. The three $\\mathbf{e}_k$ are the columns of $\\mathbf{Q}$."
+   }
+  },
+  {
+   "id": "q-orth-step",
+   "difficulty": 2,
+   "prose": "In the inductive step, $\\langle \\mathbf{f}_k, \\mathbf{e}_j \\rangle = \\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle - \\sum_{r<k}\\langle \\mathbf{v}_k, \\mathbf{e}_r \\rangle\\langle \\mathbf{e}_r, \\mathbf{e}_j \\rangle$ for $j < k$.",
+   "question": "Why is this 0?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "on",
+      "text": "$\\langle \\mathbf{e}_r, \\mathbf{e}_j \\rangle$ is 1 for $r = j$ and 0 otherwise, so the sum is $\\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle$",
+      "correct": true
+     },
+     {
+      "id": "perp",
+      "text": "$\\mathbf{v}_k$ is orthogonal to every $\\mathbf{e}_j$",
+      "why": "It is not: $\\langle \\mathbf{v}_2, \\mathbf{e}_1 \\rangle = \\tfrac{1}{\\sqrt2}$."
+     },
+     {
+      "id": "ind",
+      "text": "The $\\mathbf{v}$s are independent",
+      "why": "Independence makes $\\mathbf{f}_k \\ne \\mathbf{0}$. Orthogonality comes from the $\\mathbf{e}_r$."
+     },
+     {
+      "id": "norm",
+      "text": "Each $\\mathbf{e}_r$ has norm 1",
+      "why": "Norm 1 handles $r = j$. The terms with $r \\ne j$ vanish by orthogonality."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Right. Orthonormality leaves one term, which cancels.",
+    "generic": "Not quite right. Evaluate $\\langle \\mathbf{e}_r, \\mathbf{e}_j \\rangle$ for $r = j$ and $r \\ne j$."
+   },
+   "explain": {
+    "text": "Orthonormality kills every term with $r \\ne j$ and leaves $\\langle \\mathbf{v}_k, \\mathbf{e}_j \\rangle \\cdot 1$. That cancels the first term. So $\\mathbf{f}_k \\perp \\mathbf{e}_j$."
+   }
+  },
+  {
+   "id": "q-on-indep",
+   "difficulty": 2,
+   "prose": "Show that an orthonormal list $(\\mathbf{e}_1, \\dots, \\mathbf{e}_m)$ is independent.",
+   "question": "Put the lines in order. One line does not belong: move it to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Suppose $\\sum_j a_j\\mathbf{e}_j = \\mathbf{0}$."
+     },
+     {
+      "id": "o2",
+      "text": "Take the inner product with $\\mathbf{e}_k$: $\\sum_j a_j\\langle \\mathbf{e}_j, \\mathbf{e}_k \\rangle = 0$."
+     },
+     {
+      "id": "o3",
+      "text": "Orthonormality leaves only $a_k$, so $a_k = 0$ for every $k$. $\\blacksquare$"
+     },
+     {
+      "id": "x1",
+      "text": "Orthogonal vectors are never multiples of each other, so the list is independent.",
+      "why": "No two being multiples is weaker than independence: $(1, 0), (0, 1), (1, 1)$ is dependent."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Right. The inner product with $\\mathbf{e}_k$ isolates $a_k$.",
+    "generic": "Not quite right. Start from a zero combination and take an inner product.",
+    "byKey": {
+     "x1": "You argued from no two being multiples. That does not give independence for three or more vectors.",
+     "left-out": "You left out a line the proof needs."
+    }
+   },
+   "explain": {
+    "text": "The inner product with $\\mathbf{e}_k$ picks out $a_k$, as the dual basis did in l10. So an orthonormal list of length $\\dim V$ is a basis. Its coordinates are $\\langle \\mathbf{v}, \\mathbf{e}_j \\rangle$, as in `least-squares` l3."
+   }
+  },
+  {
+   "id": "q-dependent",
+   "difficulty": 2,
+   "prose": "Run Gram-Schmidt on the dependent list $(1, 1, 0), (2, 2, 0)$.",
+   "question": "What happens at step 2?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "$\\mathbf{f}_2 = \\mathbf{0}$, so there is nothing to rescale",
+      "correct": true
+     },
+     {
+      "id": "unit",
+      "text": "$\\mathbf{f}_2$ is a unit vector",
+      "why": "$(2, 2, 0) - \\langle (2, 2, 0), \\mathbf{e}_1 \\rangle\\mathbf{e}_1 = (2, 2, 0) - (2, 2, 0) = \\mathbf{0}$."
+     },
+     {
+      "id": "same",
+      "text": "$\\mathbf{e}_2 = \\mathbf{e}_1$",
+      "why": "$\\mathbf{e}_2$ is never formed: dividing $\\mathbf{0}$ by its norm is undefined."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing unusual; it returns two orthonormal vectors",
+      "why": "Two orthonormal vectors would be independent, but the list is not."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Right. A dependent vector leaves $\\mathbf{f}_k = \\mathbf{0}$.",
+    "generic": "Not quite right. Compute $\\mathbf{f}_2$."
+   },
+   "explain": {
+    "text": "$\\langle (2, 2, 0), \\mathbf{e}_1 \\rangle = 2\\sqrt2$, so the part removed is all of $(2, 2, 0)$. So $\\mathbf{f}_2 = \\mathbf{0}$, and the code screen raises `ValueError`. `least-squares` l4 drops such a vector instead."
+   }
+  },
+  {
+   "id": "q-extend",
+   "difficulty": 3,
+   "prose": "Level 4 will need this corollary: an orthonormal list $(\\mathbf{e}_1, \\dots, \\mathbf{e}_m)$ in a finite-dimensional $V$ extends to an orthonormal basis.",
+   "question": "Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "gs",
+      "text": "Extend it to a basis (l4), then run Gram-Schmidt: the first $m$ vectors come out unchanged",
+      "correct": true
+     },
+     {
+      "id": "add",
+      "text": "Add any unit vectors until the length is $\\dim V$",
+      "why": "Unit vectors need not be orthogonal to the list, or even independent of it."
+     },
+     {
+      "id": "list",
+      "text": "Run Gram-Schmidt on the list alone",
+      "why": "That returns only $m$ vectors. The list must first be extended to a basis."
+     },
+     {
+      "id": "dual",
+      "text": "Take the dual basis of the list",
+      "why": "The dual basis lives in $V'$, not in $V$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Right. Gram-Schmidt leaves an orthonormal start alone.",
+    "generic": "Not quite right. What does Gram-Schmidt do to vectors that are already orthonormal?"
+   },
+   "explain": {
+    "text": "Extend to a basis $(\\mathbf{e}_1, \\dots, \\mathbf{e}_m, \\mathbf{v}_{m+1}, \\dots, \\mathbf{v}_n)$. Gram-Schmidt removes nothing from the $\\mathbf{e}_j$, since each is orthogonal to the earlier ones and has norm 1. So it returns the $\\mathbf{e}_j$ followed by new orthonormal vectors."
+   }
+  }
+ ]
+}
