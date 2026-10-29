@@ -34,7 +34,19 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [x] markov L4
 - [x] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (each now 30 items, the validator cap; reports `docs/reports/exam-1.3-gap.md`, `exam-1.4-gap.md`, `exam-1.5-gap.md`)
 
-### 2b. Maths breadth pass (user request, 27 Oct; runs before the rest of task 3)
+### 2a. Interview readiness (user priority, 29 Oct; runs before everything else)
+Goal: the app is a complete, self-contained resource for passing quant internship online assessments and superdays (Two Sigma, JP Morgan, trading firms, bank strats). Pure maths levels in 2b wait until this section is done; in-flight analysis L4 and linear-maps L3 finish first.
+- [ ] Interview gap analysis and plan: `docs/briefs/interview-gaps.md` (reported OA and superday questions by firm against the committed content, with sources) and `docs/briefs/interview-plan.md` (new courses, levels, exams, engine needs, order of work)
+- [ ] Course maps and curriculum entries for the plan's new courses and appended levels; validate 0 errors; replace the placeholder below with one line per level
+- [ ] Briefs for the plan's new courses and levels; revise puzzles, mm-games, mental-pressure, ito briefs where the plan says
+- [ ] puzzles L1
+- [ ] puzzles L2 to L4, mm-games L1 to L3, mental-pressure L1 to L3, ito L1 to L3 (moved up from task 3)
+- [ ] Levels: placeholder, replaced by the interview plan
+- [ ] Exams: topic-3.3, topic-3.2 (ito part), plus the plan's mock OA and mock superday exams
+- [ ] Engine: the plan's needs (for example timers, question banks, spaced interview practice)
+- [ ] Second readers and fix passes for interview-critical topics first: fix pass 1.9, reader and fix 1.8, then 2.1
+
+### 2b. Maths breadth pass (user request, 27 Oct; runs after 2a, before the rest of task 3)
 Fills seven gaps against a traditional maths degree, now written into `docs/curriculum.md`: proof (0.6), analysis and proof-based linear algebra (1.10), complex numbers, vector calculus and ODEs (1.11), numerical methods and optimisation (2.5), statistical modelling (2.6), measure theory and PDEs (added to 3.2), pure mathematics (3.4, optional), plus a 1.5 gap level (Poisson process, martingales, optional stopping). Suggested courses: `proof`; `analysis`, `linear-maps`; `complex`, `vector-calc`, `odes`; `numerics`, `convex`; `stat-models`; `measure-prob`, `pdes`; `algebra`, `topology`; a new markov level.
 - [x] Breadth plan: `docs/briefs/breadth-plan.md` (49 levels, 218 lessons in 13 new courses plus markov L5; validator accepts `strand` but ignores it) (pattern `docs/briefs/gaps-plan.md`): per course the levels, lesson ids, titles, objectives, prerequisites and the existing lessons each builds on; write the `course.json` maps and add topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (and the 3.2 courses) to `app/content/curriculum.json`; the markov gap level appended to `markov/course.json`; every new `course.json` carries `strand` (`"quant"` or `"pure"`, per the tags in `docs/curriculum.md`; vector calculus is `pure`, complex numbers and ODEs `quant`) and `strandNote` (the roles, e.g. "Desk quant"); validate at 0 errors with the new lessons shown as unwritten; replace the level placeholder below with one line per level, each marked [Quant] or [Pure maths]
 - [x] Engine: (report `docs/reports/engine-breadth.md`; items 424 to 428; stage hours and Paths view not yet filtered, item 428) the Learn screen shows the new topics with targets (`app/js/screens/learn.js`), exams list them, nothing throws on an empty course; validator accepts and checks `strand`; a "Pure maths" or "Quant" badge (with `strandNote`) on course cards, the lesson start screen, topic chips and exam chips, distinct in both themes; untagged courses show no badge (core path); a "Quant path only" setting hides pure courses and drops them from stage-exam gating; document in AUTHORING.md
