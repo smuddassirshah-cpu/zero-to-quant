@@ -1,5 +1,9 @@
-/* Topic and stage exams (docs/PLAN.md 7 and 10; AUTHORING.md 5; design-research 4.7, 5.4, 6.2, 8.2, 8.4, 9.4).
-   Route: #exam/<examId>, for content/exams/<examId>.json (topic-<topic> or stage-<n>).
+/* Topic, stage and mock exams (docs/PLAN.md 7 and 10; AUTHORING.md 5; design-research 4.7, 5.4, 6.2, 8.2, 8.4, 9.4).
+   Route: #exam/<examId>, for content/exams/<examId>.json (topic-<topic>, stage-<n> or mock-<id>); an optional second
+   segment, #exam/<examId>/<seed>, fixes the seed of generated items (otherwise a new seed per attempt).
+   A paper may score { right, wrong, blank } with passNet (ENGINE-BACKLOG 450), run forward only with navigation
+   "forward" and skip: false (451), and hold { generator: "arith" } entries that expand to seeded choice items (452).
+   A mock exam (453) has a style and a models line, earns no XP, and every attempt is kept with a net score and trend.
    Start card, then the timed paper: one question at a time through ZQ.player.renderItem in exam mode (nothing is marked
    until you submit, one attempt, questions can be marked to come back to), a question navigator, a timer from the file
    and a finish-early path. A stage exam runs each paper in turn, then the checks the app cannot mark as self-ticks.
@@ -7,7 +11,8 @@
    explanation. Recorded once with ZQ.state.examFinished({ id, score, items, passed, bySkill, results, seconds }).
    Misses join the redo queue with ref { exam, item } (examFinished; ZQ.select.resolve reads them back).
    Test hooks: window.ZQ.test from the start card to the result (current, answerCorrect, check, continue), and while a
-   paper is open window.ZQExam = { handles(), go(i), setRemaining(s), submit(), part() }.
+   paper is open window.ZQExam = { handles(), go(i), setRemaining(s), submit(), part() }. setRemaining moves the clock
+   without waiting; nothing in the tools waits out a real timer.
    Every class carries the exm- prefix. */
 (function () {
   'use strict';
@@ -56,23 +61,35 @@
     root.innerHTML = shell('<p class="t-caption">Loading the exam</p>');
     root.querySelector('.exm-close').addEventListener('click', () => Z.go('review'));
 
-    ZQ.content.exam(id).then((doc) => {
+    ZQ.content.exam(id).then((doc) => (doc && ZQ.arith ? ZQ.arith.ready.then(() => doc) : doc)).then((doc) => {
       if (!alive) return;
       if (!doc) { bail('Not yet written', `The exam ${id} has not been written yet.`); return; }
       run(doc);
     }).catch((e) => { console.error(e); if (alive) bail('The exam did not load', e.message); });
 
     function run(doc) {
-      const stage = Array.isArray(doc.parts);
-      const parts = stage ? doc.parts : [{ kind: 'paper', id: 'paper', name: doc.name, minutes: doc.minutes || 60, pass: doc.pass || 0.7, items: doc.items || [] }];
+      const M = ZQ.mock;
+      const mock = M.is(doc.id);
+      const stage = Array.isArray(doc.parts) && !mock;
+      /* A mock has parts, or the fields of one paper at the top level */
+      const raw = Array.isArray(doc.parts) ? doc.parts
+        : [{ kind: 'paper', id: 'paper', name: doc.name, minutes: doc.minutes || 60, pass: doc.pass, passNet: doc.passNet, scoring: doc.scoring, navigation: doc.navigation, skip: doc.skip, items: doc.items || [] }];
+      /* The seed fixes every generated item of this attempt; it is stored with the attempt */
+      const seed = params[1] != null && /^\d+$/.test(params[1]) ? Number(params[1]) % 4294967296 : Math.floor(Math.random() * 4294967296);
+      let paperNo = 0;
+      const parts = raw.map(p => (p.kind === 'paper' ? Object.assign({}, p, { pass: p.pass == null && p.passNet == null ? 0.7 : p.pass, items: ZQ.arith ? ZQ.arith.expand(p.items || [], seed, paperNo++) : (p.items || []) }) : p));
       const papers = parts.filter(p => p.kind === 'paper');
       const checks = parts.filter(p => p.kind === 'check');
-      const topic = !stage && ZQ.content.topic(doc.topic);
-      const track = (topic && topic.track) || (stage ? 'maths' : 'prob');
-      const over = stage ? `Stage ${doc.stage} · ${(ZQ.content.stage(doc.stage) || {}).name || ''}` : `Topic ${doc.topic} · ${topic ? topic.name : ''}`;
-      const title = stage ? (doc.name || `Stage ${doc.stage} exit test`) : 'Topic exam';
+      const multi = stage || (mock && (papers.length > 1 || checks.length > 0));
+      const generated = papers.some(p => p.items.some(it => it && it.generated));
+      const scored = papers.some(M.scored);
+      const topic = !stage && !mock && ZQ.content.topic(doc.topic);
+      const mstyle = M.style(doc.style);
+      const track = mock ? mstyle.track : (topic && topic.track) || (stage ? 'maths' : 'prob');
+      const over = mock ? `Mock assessment · ${mstyle.label}` : stage ? `Stage ${doc.stage} · ${(ZQ.content.stage(doc.stage) || {}).name || ''}` : `Topic ${doc.topic} · ${topic ? topic.name : ''}`;
+      const title = mock ? (doc.name || 'Mock assessment') : stage ? (doc.name || `Stage ${doc.stage} exit test`) : 'Topic exam';
       const names = Object.assign(skillNames(), doc.skills || {});
-      const A = { results: [], used: [], flags: [], handles: [], ticks: new Set(), t0: Date.now() };
+      const A = { results: [], used: [], flags: [], handles: [], ticks: new Set(), t0: Date.now(), seed };
       /* Test hook (docs/PLAN.md 7): kind 'start' on the start card, between papers and on the checks page (continue()
          begins, or ticks every check and shows the result), 'item' in a paper (check() grades the shown question without
          marking it; continue() moves on and submits after the last), 'done' on the result page. */
