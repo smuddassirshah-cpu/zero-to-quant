@@ -35,16 +35,74 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 - [x] Extend exams topic-1.3, topic-1.4, topic-1.5 with items for the new levels (each now 30 items, the validator cap; reports `docs/reports/exam-1.3-gap.md`, `exam-1.4-gap.md`, `exam-1.5-gap.md`)
 
 ### 2a. Interview readiness (user priority, 29 Oct; runs before everything else)
-Goal: the app is a complete, self-contained resource for passing quant internship online assessments and superdays (Two Sigma, JP Morgan, trading firms, bank strats). Pure maths levels in 2b wait until this section is done; in-flight analysis L4 and linear-maps L3 finish first.
-- [ ] Interview gap analysis and plan: `docs/briefs/interview-gaps.md` (reported OA and superday questions by firm against the committed content, with sources) and `docs/briefs/interview-plan.md` (new courses, levels, exams, engine needs, order of work)
-- [ ] Course maps and curriculum entries for the plan's new courses and appended levels; validate 0 errors; replace the placeholder below with one line per level
-- [ ] Briefs for the plan's new courses and levels; revise puzzles, mm-games, mental-pressure, ito briefs where the plan says
+Goal: the app is a complete, self-contained resource for passing quant internship online assessments and superdays (Two Sigma, JP Morgan, trading firms, bank strats). Plan: `docs/briefs/interview-plan.md` (phases 0 to 4; user decisions at its end: UK first, trader and researcher tracks first, no audio). Pure maths levels in 2b wait until this section is done.
+- [x] Interview gap analysis and plan (`docs/briefs/interview-gaps.md`, `interview-plan.md`; 27 new levels, 12 mocks, a 400-item bank, 120 drills; engine bullets E1 to E19 in the inbox, E10 and E20 dropped)
+- [ ] Course maps and curriculum entries: new courses `recruiting` (topic 0.7), `brainteasers`, `game-theory` (3.3), `coding-int`, `research-int`, `systems` (topic 3.5); appended levels puzzles L5, mm-games L4, mental-pressure L4, trees L4, ito L4, cpp L5; validate 0 errors
+- [ ] Engine pass A (phase 0): E1 net scoring, E2 forward-only papers, E4 generated arithmetic items, E5 mock exam kind, E6 timed sets (number from 450 in ENGINE-BACKLOG; document in AUTHORING.md)
+- [ ] Briefs: recruiting, brainteasers; revise puzzles, mm-games, mental-pressure, ito briefs per plan section (a)
+- [ ] Briefs: coding-int, research-int, game-theory, systems, and the six appended levels
+
+Phase 0, fast track
 - [ ] puzzles L1
-- [ ] puzzles L2 to L4, mm-games L1 to L3, mental-pressure L1 to L3, ito L1 to L3 (moved up from task 3)
-- [ ] Levels: placeholder, replaced by the interview plan
-- [ ] Exams: topic-3.3, topic-3.2 (ito part), plus the plan's mock OA and mock superday exams
-- [ ] Engine: the plan's needs (for example timers, question banks, spaced interview practice)
-- [ ] Second readers and fix passes for interview-critical topics first: fix pass 1.9, reader and fix 1.8, then 2.1
+- [ ] mental-pressure L1
+- [ ] mental-pressure L2
+- [ ] mental-pressure L3
+- [ ] mental-pressure L4: Assessment batteries
+- [ ] puzzles L2
+- [ ] recruiting L1: The landscape
+- [ ] recruiting L2: The application
+- [ ] Exams: mock-oa-arith, mock-oa-trader, mock-oa-sig
+
+Phase 1, trader core
+- [ ] puzzles L3
+- [ ] puzzles L4
+- [ ] puzzles L5: Puzzles firms keep asking
+- [ ] brainteasers L1: Invariants and counting arguments
+- [ ] brainteasers L2: Strategy and logic
+- [ ] brainteasers L3: Quick reasoning
+- [ ] mm-games L1
+- [ ] mm-games L2
+- [ ] mm-games L3
+- [ ] mm-games L4: Trading games firms run
+- [ ] recruiting L3: Interviews and after
+- [ ] Engine pass B: E7 question bank with item spacing, E9 per-item timing
+- [ ] Bank part 1 (200 items: probability, brainteasers, mental, market making, behavioural), in four sessions
+- [ ] Exam: mock-superday-trader
+- [ ] Second readers and fix passes: puzzles, mental-pressure
+
+Phase 2, researcher core
+- [ ] research-int L1: Statistics and linear algebra questions
+- [ ] research-int L2: Machine learning questions
+- [ ] research-int L3: The open case
+- [ ] research-int L4: Data tasks and take-homes
+- [ ] coding-int L1: Patterns still to learn
+- [ ] coding-int L2: Strings and simulation
+- [ ] coding-int L3: Design in code
+- [ ] coding-int L4: Under the clock
+- [ ] trees L4: Options at interview
+- [ ] Engine pass C: E3 exam item banks, E8 drill library (C++, timed), E11 follow-up parts, E14 data files
+- [ ] Drill packs 1 to 4 (60 drills)
+- [ ] Exams: mock-oa-code, mock-superday-research, mock-oa-quant-data
+- [ ] Second readers and fix passes for interview-critical topics: fix pass 1.9, reader and fix 1.8, then 2.1
+
+Phase 3, trader and researcher depth
+- [ ] game-theory L1: Games in a table
+- [ ] game-theory L2: Sequential games and auctions
+- [ ] game-theory L3: Poker and decisions
+- [ ] ito L1
+- [ ] ito L2
+- [ ] ito L3
+- [ ] Engine pass D: E12 trading-game widget
+- [ ] Bank part 2 (200 items)
+- [ ] Exams: topic-3.3, topic-3.2 (ito part)
+
+Phase 4, developer and strats depth
+- [ ] ito L4: Stochastic calculus at interview
+- [ ] cpp L5: C++ questions at interview
+- [ ] systems L1 to L4 (one line per level when started)
+- [ ] Engine: E13 concurrency canvas; [Could] items E15 to E19
+- [ ] Drill packs 5 to 8 (60 drills)
+- [ ] Exams: mock-oa-code-hard, mock-oa-strats, mock-superday-developer, mock-superday-strats, mock-video, topic-3.5
 
 ### 2b. Maths breadth pass (user request, 27 Oct; runs after 2a, before the rest of task 3)
 Fills seven gaps against a traditional maths degree, now written into `docs/curriculum.md`: proof (0.6), analysis and proof-based linear algebra (1.10), complex numbers, vector calculus and ODEs (1.11), numerical methods and optimisation (2.5), statistical modelling (2.6), measure theory and PDEs (added to 3.2), pure mathematics (3.4, optional), plus a 1.5 gap level (Poisson process, martingales, optional stopping). Suggested courses: `proof`; `analysis`, `linear-maps`; `complex`, `vector-calc`, `odes`; `numerics`, `convex`; `stat-models`; `measure-prob`, `pdes`; `algebra`, `topology`; a new markov level.
