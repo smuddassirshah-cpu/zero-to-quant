@@ -38,7 +38,7 @@ C++ runtime
 - A range-for over a braced list needs `<initializer_list>` included.
 
 Process
-- The harness refuses any subagent write of a report file ("Subagents should return findings as text"), in `docs/reports/` and in the scratchpad alike. Agents return the report as text and the main session saves it (analysis-1.md, analysis-2.md saved this way, 28 Oct).
+- Claude Code's Write tool refuses a subagent write to any `.md` file whose name starts with `report`, `summary`, `findings` or `analysis` (a built-in filename rule with no setting). Only the `analysis` course's reports are hit. User decision (29 Oct): the agent returns the report as text and the main session saves `docs/reports/analysis-<n>.md`; no workaround. analysis-1.md to analysis-3.md were saved this way.
 - Session and weekly usage caps stop every agent mid-task; work is saved on disk, so checkpoint-commit, then resume or triage.
 - Validator warnings are mostly "ladder changes canvas kind" and "not yet written"; only errors block.
 - jsDelivr is blocked in cloud sandboxes; build the local CDN with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (40 s, 870 MB) and pass `--local-cdn`.
