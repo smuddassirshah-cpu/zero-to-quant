@@ -10,7 +10,7 @@
      node app/tools/playthrough.mjs --sets                 every written level review and homework only
      node app/tools/playthrough.mjs --exams                every exam in content/exams only (combine with --sets)
      node app/tools/playthrough.mjs --set number-sense/review-1   one review or homework (repeatable)
-     node app/tools/playthrough.mjs --exam topic-1.5       one exam (repeatable)
+     node app/tools/playthrough.mjs --exam topic-1.5       one exam (repeatable); topic-*, stage-* and mock-* all play the same way
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
      node app/tools/playthrough.mjs --routes-only          only the routes
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
@@ -22,6 +22,13 @@
                                                            exam's result page with every explanation open
      node app/tools/playthrough.mjs --local-cdn <dir>      serve cdn.jsdelivr.net from local npm packages (see below)
      node app/tools/playthrough.mjs --headed               watch it
+
+   A mock exam (mock-*) is also checked for what is special about it: a forward-only paper refuses to go back or jump
+   ahead (and a no-skip paper refuses to move on unanswered), generated items repeat for the same seed (#exam/<id>/<seed>)
+   and differ for another, a second sitting with the clock moved to zero (ZQExam.setRemaining; no real timer is waited
+   for) submits itself and is marked with the paper's own scoring, and every attempt is kept. A review whose file has
+   timed: { seconds, lockAtZero: true } is likewise sat once with the clock moved to zero: it must end by itself and be
+   recorded with what was answered.
 
    Needs Playwright (the globally installed package is found too) and Chromium at /opt/pw-browsers/chromium, else
    Playwright's own. Starts `python3 -m http.server` on a free port serving app/. A fresh browser profile is used, setup
@@ -123,7 +130,7 @@ const writtenLessons = () => {
       if (lv.homework && fs.existsSync(path.join(CONTENT, 'courses', c, lv.homework + '.json'))) sets.push({ id: `${c}/${lv.homework}`, kind: 'homework', route: `homework/${c}/${lv.homework}` });
     });
   }
-  const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^(topic|stage)-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort() : [];
+  const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^(topic|stage|mock)-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort() : [];
   return { lessons: out, courses: order.filter(c => fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json'))), sets, exams };
 };
 
@@ -312,8 +319,10 @@ const main = async () => {
       const fails = [];
       const t0 = Date.now();
       let checks = 0;
+      const probed = new Set();
       try {
         await page.evaluate(() => { delete window.ZQ.test; });
+        if (await page.evaluate((r) => location.hash === '#' + r, route)) await go('review');   // the same hash would not remount
         await go(route);
         await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
         let guard = 0, last = '', same = 0;
@@ -326,6 +335,20 @@ const main = async () => {
           if (same >= 4) { fails.push(`stuck at ${c.kind} ${c.screenIndex} (state ${c.state})`); break; }
           if (++guard > 400) { fails.push('more than 400 steps without reaching the end'); break; }
           if (opt.shots && same === 0) await shot(`${label}-${c.kind}-${String(c.screenIndex).padStart(2, '0')}`);
+          if (c.kind === 'item' && c.forward && c.screenIndex <= 1 && !probed.has(`${c.paper}:${c.screenIndex}`)) {
+            /* a forward-only paper: no jumping ahead, no going back, and with skip: false no moving on unanswered */
+            probed.add(`${c.paper}:${c.screenIndex}`);
+            const pr = await page.evaluate(async (c) => {
+              const at = () => ZQ.test.current().screenIndex, i0 = at(), out = {};
+              window.ZQExam.go(i0 + 2); out.jump = at() - i0;
+              if (i0 >= 1) { window.ZQExam.go(i0 - 1); out.back = at() - i0; }
+              if (c.noSkip && c.state === 'idle') { await ZQ.test.continue(); out.skip = at() - i0; }
+              return out;
+            }, c);
+            if (pr.jump) fails.push(`paper ${c.paper + 1}: a forward-only paper let the learner jump ahead`);
+            if (pr.back) fails.push(`paper ${c.paper + 1}: a forward-only paper let the learner go back`);
+            if (pr.skip) fails.push(`paper ${c.paper + 1}: a no-skip paper moved on without an answer`);
+          }
           if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
             const py = await waitPython();
             if (py) { fails.push(`item ${c.screenIndex + 1}: ${py}`); break; }
@@ -360,7 +383,40 @@ const main = async () => {
       }
       fails.forEach(f => failures.push(`#${route}: ${f === 'the set has no items' ? f + ' (twice: check that its items exist and validate; a course file may have been mid-write)' : f}`));
     };
+    /* A review with timed: { lockAtZero: true } is sat once with the clock moved to zero after one answer: it must end by
+       itself, with the unanswered items missed and the review recorded (no real timer is waited for) */
+    const timedChecks = async (st, timed) => {
+      where = '#' + st.route;
+      const fails = [];
+      const t0 = Date.now();
+      try {
+        await go('review');
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go(st.route);
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        await page.evaluate(() => ZQ.test.continue());
+        await page.waitForFunction(() => window.ZQSet && ZQ.test.current().kind === 'item', null, { timeout: opt.timeout });
+        const py = await waitPython();
+        if (py) fails.push(py);
+        else {
+          await page.evaluate(() => ZQ.test.answerCorrect());
+          const r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok } : null; });
+          if (!r || !r.ok) fails.push('the first item could not be answered correctly before the clock ran out');
+          await page.evaluate(() => ZQSet.setRemaining(0));
+          await page.waitForFunction(() => ZQ.test.current().kind === 'done', null, { timeout: 5000 }).catch(() => fails.push('the clock reached zero but the set did not end by itself'));
+          const rec = await page.evaluate((k) => ZQ.state.reviews[k] || null, st.id);
+          if (!rec) fails.push('the timed-out review was not recorded');
+          else if (rec.score !== 1) fails.push(`the timed-out review recorded ${rec.score} right (one item was answered)`);
+        }
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} ${st.id} (timed ${timed.seconds} s, clock at zero), ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log(`FAIL ${st.id} (timed)  threw`);
+      }
+      fails.forEach(f => failures.push(`#${st.route}: ${f}`));
+    };
     for (const st of sets) {
+      if (st.kind === 'review') { const t = readJSON(path.join(CONTENT, 'courses', ...st.id.split('/')) + '.json').timed; if (t && t.lockAtZero) await timedChecks(st, t); }
       await playSet(st.route, st.id, async () => {
         if (st.kind === 'review') {
           const r = await page.evaluate((k) => ZQ.state.reviews[k] || null, st.id);
@@ -374,13 +430,74 @@ const main = async () => {
         return { fail: h.score !== h.items || !h.items ? note : null, note };
       });
     }
+    /* A mock exam: forward-only papers are probed while it is played (above); here the generated items must repeat for one
+       seed and differ for another, and a second sitting with the clock moved to zero must submit itself (no timer is waited for) */
+    const mockChecks = async (ex) => {
+      where = `#exam/${ex}`;
+      const fails = [];
+      const doc = readJSON(path.join(CONTENT, 'exams', ex + '.json'));
+      const papers = (Array.isArray(doc.parts) ? doc.parts : [doc]).filter(p => p.kind === 'paper' || !Array.isArray(doc.parts));
+      const t0 = Date.now();
+      try {
+        const open = async (hash) => {
+          await go('review');   // a changed hash is what remounts the screen, so leave it first
+          await page.evaluate(() => { delete window.ZQ.test; });
+          await go(hash);
+          await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+        };
+        if (JSON.stringify(doc).includes('"generator"')) {
+          const grab = async (seed) => {
+            await open(`exam/${ex}/${seed}`);
+            await page.evaluate(() => ZQ.test.continue());
+            await page.waitForFunction(() => window.ZQExam && ZQExam.handles().length, null, { timeout: opt.timeout });
+            return page.evaluate(() => ZQExam.handles().map(h => h && h.item && h.item.generated ? h.item.question : null).filter(Boolean));
+          };
+          const a = await grab(4242), b = await grab(4242), c2 = await grab(4243);
+          if (!a.length) fails.push('no generated questions appeared');
+          else if (JSON.stringify(a) !== JSON.stringify(b)) fails.push('the same seed gave different generated questions');
+          else if (JSON.stringify(a) === JSON.stringify(c2)) fails.push('a different seed gave the same generated questions');
+        }
+        await open(`exam/${ex}`);
+        const before = await page.evaluate((id) => (ZQ.state.exams[id] || { attempts: [] }).attempts.length, ex);
+        let guard = 0, answered = new Set();
+        while (++guard < 80) {
+          const c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind === 'done') break;
+          if (c.kind === 'start') await page.evaluate(() => ZQ.test.continue());
+          else if (c.kind === 'item') {
+            if (!answered.has(c.paper)) {
+              answered.add(c.paper);
+              await page.evaluate(() => ZQ.test.answerCorrect());
+              await page.evaluate(() => ZQExam.setRemaining(0));
+            }
+          }
+          await page.waitForTimeout(150);
+        }
+        const c = await page.evaluate(() => ZQ.test.current());
+        if (c.kind !== 'done') fails.push('the clock reached zero but the exam did not finish by itself');
+        else {
+          const r = await page.evaluate((id) => { const a = ZQ.state.exams[id].attempts; return { n: a.length, last: a[a.length - 1], note: (document.querySelector('.exm-hero-note') || {}).textContent || '' }; }, ex);
+          if (r.n !== before + 1) fails.push(`the timed-out sitting was not kept as an attempt (${before} before, ${r.n} after)`);
+          if (!/Time ran out/.test(r.note)) fails.push('the result does not say that time ran out');
+          if (!(c.score >= 1 && c.score <= papers.length)) fails.push(`timed out with one answer per paper but scored ${c.score}`);
+          if (typeof r.last.net !== 'number' || typeof r.last.max !== 'number') fails.push('the attempt carries no net score');
+          await shot(`${ex}-timeup`);
+        }
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} ${ex} (mock checks)  seed, clock at zero, attempts kept, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log(`FAIL ${ex} (mock checks)  threw`);
+      }
+      fails.forEach(f => failures.push(`#exam/${ex}: ${f}`));
+    };
     for (const ex of exams) {
       await playSet(`exam/${ex}`, ex, async () => {
         const c = await page.evaluate(() => ZQ.test.current());
         if (c.kind !== 'done') return { fail: 'the result page was not reached' };
-        const note = `scored ${c.score} of ${c.total}, ${c.passed ? 'passed' : 'not passed'}`;
+        const note = `scored ${c.score} of ${c.total}${c.max != null && c.max !== c.total ? `, net ${c.net} of ${c.max}` : ''}, ${c.passed ? 'passed' : 'not passed'}`;
         return { fail: !c.passed || c.score !== c.total || !c.total ? note : null, note };
       });
+      if (/^mock-/.test(ex)) await mockChecks(ex);
     }
 
     /* Every other route once */

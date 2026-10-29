@@ -243,8 +243,12 @@
         let m;
         if ((m = String(id).match(/^topic-(.+)$/))) { const t = C.topic(m[1]); return { tag: m[1], name: t ? t.name : `Topic ${m[1]}`, kind: 'Topic exam', track: t ? t.track : 'maths' }; }
         if ((m = String(id).match(/^stage-(\d+)$/))) { const s = C.stage(+m[1]); return { tag: 'S' + m[1], name: s ? `Stage ${m[1]}: ${s.name}` : `Stage ${m[1]}`, kind: 'Stage exit', track: 'maths' }; }
+        if (/^mock-/.test(String(id))) { const d = examDocs[id]; return { tag: 'M', name: (d && d.name) || id, kind: 'Mock assessment', track: ZQ.mock ? ZQ.mock.style(d && d.style).track : 'speed' }; }
         return { tag: '', name: id, kind: 'Exam', track: 'maths' };
       };
+      /* A mock keeps a net score; its pass mark may be a net score too */
+      const netOf = (e) => (typeof e.net === 'number' ? ZQ.mock.signed(e.net) : null);
+      const passText = (id) => { const d = examDocs[id]; if (!d) return null; const p = (d.parts || []).find(x => x.kind === 'paper') || d; return typeof p.passNet === 'number' ? `${ZQ.mock.signed(p.passNet)} net` : null; };
       const examRows = () => {
         const out = [];
         Object.entries(S.exams || {}).forEach(([id, rec]) => (rec.attempts || []).forEach((a, i) => out.push({ id, i, ...a, ...examName(id) })));
@@ -261,8 +265,8 @@
               <td class="yu-ex-d"><time datetime="${e.at ? new Date(e.at).toISOString() : ''}">${e.at ? dateLong(e.at) : ''}</time></td>
               <th scope="row" class="yu-ex-n"><button type="button" class="yu-ex-b" data-exam="${k}" aria-haspopup="dialog">
                 ${e.tag ? `<span class="yu-tag">${esc(e.tag)}</span>` : ''}<span class="yu-ex-t"><span class="t-label">${esc(e.name)}</span><span class="t-caption muted">${esc(e.kind)}</span></span>${icon('chevronR', 'sm yu-chev')}</button></th>
-              <td class="yu-ex-s num tnum"><span class="yu-ex-pct">${Math.round(share * 100)}%</span><span class="yu-ex-got">${e.score} of ${e.items}</span></td>
-              <td class="yu-ex-p num tnum"><span class="yu-k">Pass </span>${pm == null ? '<span class="muted">…</span>' : Math.round(pm * 100) + '%'}</td>
+              <td class="yu-ex-s num tnum"><span class="yu-ex-pct">${netOf(e) != null ? netOf(e) + ' net' : Math.round(share * 100) + '%'}</span><span class="yu-ex-got">${e.score} of ${e.items}${netOf(e) != null ? ' right' : ''}</span></td>
+              <td class="yu-ex-p num tnum"><span class="yu-k">Pass </span>${passText(e.id) || (pm == null ? '<span class="muted">…</span>' : Math.round(pm * 100) + '%')}</td>
               <td class="yu-ex-r">${e.passed ? `<span class="chip correct">${icon('check', 'xs')}Passed</span>` : `<span class="chip notyet">${icon('cross', 'xs')}Not passed</span>`}</td>
             </tr>`; }).join('')}</tbody>
           </table>`;
@@ -505,8 +509,8 @@
         const note = !skills.length ? '' : under.length ? `Under the pass mark on ${listAnd(under.map(x => `${esc(x.label)} (${x.c} of ${x.t})`))}. Questions you missed went to your redo queue.` : 'Every skill at or above the pass mark.';
         Z.sheet(`<div class="yu-sh" data-track="${esc(e.track)}">
             <div class="yu-sh-h">${e.tag ? `<span class="yu-sh-tag">${esc(e.tag)}</span>` : ''}<div><h2 class="t-sheet-title">${esc(e.name)}</h2><p class="t-caption muted">${esc(e.kind)}${e.at ? ' · ' + dateLong(e.at) : ''}</p></div></div>
-            <div class="yu-sh-score"><span class="t-stat tnum">${Math.round(share * 100)}%</span>
-              <span class="yu-sh-meta"><span class="t-label tnum">${e.score} of ${e.items} correct</span>${pm == null ? '' : `<span class="t-caption muted tnum">Pass mark ${Math.round(pm * 100)}%</span>`}</span>
+            <div class="yu-sh-score"><span class="t-stat tnum">${netOf(e) != null ? netOf(e) : Math.round(share * 100) + '%'}</span>
+              <span class="yu-sh-meta"><span class="t-label tnum">${netOf(e) != null ? `net score, ${e.score} of ${e.items} right` : `${e.score} of ${e.items} correct`}</span>${passText(e.id) ? `<span class="t-caption muted tnum">Pass mark ${passText(e.id)}</span>` : pm == null ? '' : `<span class="t-caption muted tnum">Pass mark ${Math.round(pm * 100)}%</span>`}</span>
               ${e.passed ? `<span class="chip correct">${icon('check', 'xs')}Passed</span>` : `<span class="chip notyet">${icon('cross', 'xs')}Not passed</span>`}</div>
             ${skills.length ? `<div class="yu-sh-sk">
               <p class="t-caption secondary">Share correct in each skill.${pm == null ? '' : ` The dashed line is the ${Math.round(pm * 100)}% pass mark.`}</p>

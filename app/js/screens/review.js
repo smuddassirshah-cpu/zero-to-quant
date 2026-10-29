@@ -7,7 +7,10 @@
      #practice  and  #practice/weekly   a practice set of 8 from ZQ.select.practiceSet, or the week's 3 probability problems;
                                      each answer goes to ZQ.state.practiceResult (skill scores and the streak count only)
      #redo                           every due redo item, oldest first, each result recorded with ZQ.state.redo.result
-   Each page installs window.ZQ.test (current, answerCorrect, check, continue) for tools/playthrough.mjs.
+   A set with timed: { seconds, lockAtZero } (a level review's file, or #practice/timed/<seconds>) shows a countdown and a
+   live score; at zero a locking set ends by itself and records what was answered (ENGINE-BACKLOG 454, covers 129).
+   Each page installs window.ZQ.test (current, answerCorrect, check, continue) for tools/playthrough.mjs; a timed set also
+   installs window.ZQSet = { setRemaining(s), remaining(), timed } so a tool can move the clock without waiting.
    Learner state is read through ZQ.state and changed only through its mutators. Every selector carries the rv- (hub),
    rvs- (set pages) or hw- (homework) prefix. */
 (function () {
@@ -16,6 +19,7 @@
   const LONG_PASS = 7;                        // the longform widget counts 7 of 10 or more as right
   const PRACTICE_N = 8;
   const DAY = 86400000;
+  const clock = (s) => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`; };
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -234,6 +238,10 @@
               <div class="rv-card-h"><h2 class="t-h2" id="rv-ex-h">Exams</h2><span class="t-caption muted">Timed, no hints, no retries</span></div>
               <div data-exams><p class="t-caption muted">Loading exams</p></div>
             </section>
+            <section class="card rv-card" aria-labelledby="rv-mk-h" data-sec="mocks" hidden>
+              <div class="rv-card-h"><h2 class="t-h2" id="rv-mk-h">Mock assessments</h2><span class="t-caption muted">Timed, as the real ones are. Sit them as often as you like</span></div>
+              <div data-mocks></div>
+            </section>
           </div>
           <div class="rv-col">
             <section class="card rv-card" aria-labelledby="rv-pr-h" data-sec="practice" data-track="prob">
@@ -262,7 +270,7 @@
       const go = root.querySelector('[data-pset-go]');
       if (!go) return;
       go.innerHTML = items.length
-        ? `<a class="btn track block" href="#practice" data-start-practice>Start a practice set, ${Math.min(PRACTICE_N, items.length)} problems</a><p class="t-caption muted rv-pset-n">${plural(items.length, 'problem', 'problems')} in your pool</p>`
+        ? `<a class="btn track block" href="#practice" data-start-practice>Start a practice set, ${Math.min(PRACTICE_N, items.length)} problems</a><p class="t-caption muted rv-pset-n">${plural(items.length, 'problem', 'problems')} in your pool. <a class="link-btn" href="#practice/timed/${PRACTICE_N * 60}">Or against the clock, ${PRACTICE_N} minutes</a></p>`
         : `<p class="t-body rv-empty">${I('lock', 'sm')}<span>Finish a lesson to unlock practice. Sets draw on the quizzes of lessons you have finished.</span></p>`;
     }).catch(e => console.error(e));
 
@@ -310,6 +318,40 @@
       examsEl.innerHTML = (tops.length ? `<ul class="rv-exs">${tops.map(topicRow).join('')}</ul>` : '<p class="t-body secondary rv-empty">No topic exams are written yet.</p>') + stages.map(stageBlock).join('');
     }).catch(e => { console.error(e); examsEl.innerHTML = '<p class="t-body secondary">The exams could not be listed.</p>'; });
 
+    /* ---------- Mock assessments (exams/mock-*.json): every attempt kept, with a net score trend ---------- */
+    const mocksEl = root.querySelector('[data-mocks]'), mocksSec = root.querySelector('[data-sec="mocks"]');
+    const mockIds = (() => { try { return C().mocks(); } catch { return []; } })();
+    if (mockIds.length) {
+      Promise.all(mockIds.map(id => C().exam(id).catch(() => null))).then(docs => {
+        if (!alive) return;
+        const list = docs.filter(d => d && d.id);
+        if (!list.length) return;
+        const M = ZQ.mock;
+        const row = (doc) => {
+          const papers = (Array.isArray(doc.parts) ? doc.parts : [doc]).filter(p => Array.isArray(doc.parts) ? p.kind === 'paper' : true);
+          const n = papers.reduce((a, p) => a + (p.items || []).reduce((b, it) => b + (it && it.generator ? Math.max(1, +it.n || 1) : 1), 0), 0);
+          const minutes = papers.reduce((a, p) => a + (+p.minutes || 0), 0);
+          const ways = [...new Set(papers.flatMap(p => [p.navigation === 'forward' ? 'forward only' : null, M.scored(p) ? 'negative marking' : null]).filter(Boolean))];
+          const at = ((S().exams[doc.id] || {}).attempts || []);
+          const nets = at.map(a => (typeof a.net === 'number' ? a.net : a.score));
+          const single = papers.length === 1 && !(Array.isArray(doc.parts) && doc.parts.some(p => p.kind === 'check')) ? papers[0] : null;
+          const need = single ? M.need(single, M.scoring(single).right * (single.items || []).reduce((b, it) => b + (it && it.generator ? Math.max(1, +it.n || 1) : 1), 0)) : null;
+          const st = M.style(doc.style);
+          const note = at.length ? `${plural(at.length, 'attempt', 'attempts')}. Latest ${M.signed(nets[nets.length - 1])}, best ${M.signed(Math.max(...nets))}${need != null ? `, pass mark ${M.signed(need)}` : ''}. ${at[at.length - 1].passed ? 'Latest passed.' : 'Latest not passed.'}` : 'Not sat yet. Every attempt is kept.';
+          return `<li class="rv-ex rv-mk" data-track="${esc(st.track)}" data-mock="${esc(doc.id)}">
+            <span class="rv-ex-ic">${I('timer')}</span>
+            <div class="rv-ex-body"><span class="t-overline rv-deep">${esc(st.label)} · ${esc(String(minutes))} min · ${plural(n, 'question', 'questions')}${ways.length ? ' · ' + esc(ways.join(', ')) : ''}</span>
+              <h3 class="t-h2">${esc(doc.name || doc.id)}</h3>
+              ${doc.models ? `<p class="t-caption secondary">Models ${esc(doc.models)}</p>` : ''}
+              <p class="t-caption secondary tnum">${esc(note)}</p>
+              ${nets.length ? `<div class="rv-mk-tr">${M.trend(nets, { pass: need, label: `${doc.name || doc.id}, net score by attempt` })}</div>` : ''}</div>
+            <a class="btn secondary" href="#exam/${esc(doc.id)}">${at.length ? 'Sit again' : 'Sit mock'}</a></li>`;
+        };
+        mocksEl.innerHTML = `<ul class="rv-exs">${list.map(row).join('')}</ul>`;
+        mocksSec.hidden = false;
+      }).catch(e => console.error(e));
+    }
+
     /* ---------- Events ---------- */
     const onClick = (e) => {
       const nb = e.target.closest('[data-nb]');
@@ -338,7 +380,7 @@
      ===================================================================================== */
   function setPage(host, Z, cfg) {
     const I = Z.icon, esc = Z.esc;
-    let alive = true, run = null, t0 = 0, finished = false;
+    let alive = true, run = null, t0 = 0, finished = false, timedOut = false, tick = 0, offset = 0;   // cfg.timed is read once the items have loaded
     host.innerHTML = `
       <div class="hw rvs" data-track="${esc(cfg.track || 'prob')}">
         <header class="hw-top">
@@ -370,7 +412,8 @@
         <h1 class="t-lesson-title">${esc(cfg.heading || cfg.title)}</h1>
         <p class="t-prose">${esc(cfg.lede || '')}</p>
         <ul class="hw-facts">
-          <li>${I('clock', 'sm')}<span>About ${Math.max(2, Math.round(items.length * (cfg.perItem || 1.5)))} minutes. ${plural(items.length, 'problem', 'problems')}.</span></li>
+          <li>${I('clock', 'sm')}<span>${cfg.timed ? `${esc(clock(cfg.timed.seconds))} on the clock. ${plural(items.length, 'problem', 'problems')}. The clock starts when you press Start.` : `About ${Math.max(2, Math.round(items.length * (cfg.perItem || 1.5)))} minutes. ${plural(items.length, 'problem', 'problems')}.`}</span></li>
+          ${cfg.timed ? `<li>${I('timer', 'sm')}<span>${cfg.timed.lockAtZero ? 'At zero the set ends and what you have not answered counts as missed.' : 'The clock is a guide: at zero you can carry on.'} Your score shows as you go.</span></li>` : ''}
           <li>${I('lock', 'sm')}<span>No hints and one try each. Why? opens the explanation after you check.</span></li>
           ${(cfg.facts || []).map(([ic, t]) => `<li>${I(ic, 'sm')}<span>${esc(t)}</span></li>`).join('')}
         </ul>
@@ -388,19 +431,42 @@
       continue: () => { if (phase === 'start') start(items0); return Promise.resolve(); },
     };
     window.ZQ.test = hook;
+    /* ---------- The clock of a timed set: countdown and live score; the page, not the engine, ends the set ---------- */
+    const remaining = () => (cfg.timed ? cfg.timed.seconds - ((Date.now() - t0) / 1000 + offset) : Infinity);
+    const drawClock = () => {
+      if (!cfg.timed || !run || finished) return;
+      const r = remaining(), res = run.results(), ok = res.filter(x => x && x.ok).length, n = res.filter(Boolean).length;
+      const low = r <= Math.min(60, cfg.timed.seconds / 4);
+      if (!right.querySelector('.rvs-timer')) {
+        right.classList.add('is-timed');
+        right.innerHTML = `<span class="rvs-timer" role="timer">${I('timer', 'xs')}<span class="tnum" data-time></span></span><span class="t-caption muted rvs-live tnum"></span>`;
+      }
+      const tm = right.querySelector('.rvs-timer');
+      tm.classList.toggle('is-low', low);
+      tm.setAttribute('aria-label', r <= 0 ? 'Time is up' : low ? 'Time left, running low' : 'Time left');
+      right.querySelector('[data-time]').textContent = clock(r);
+      right.querySelector('.rvs-live').textContent = `Score ${ok} of ${n}${n < items0.length ? ` · ${items0.length - n} to go` : ''}`;
+      if (r <= 0 && cfg.timed.lockAtZero && !timedOut) { timedOut = true; clearInterval(tick); run.finish(); }
+    };
     const start = (items) => {
       col.innerHTML = ''; setActs('');
-      t0 = Date.now();
+      t0 = Date.now(); offset = 0; timedOut = false;
       phase = 'running';
       run = ZQ.player.runSet(col, { title: cfg.setTitle || cfg.title, items, mode: 'set', track: cfg.track || 'prob', onDone: (res) => done(items, res) });
       host._run = run;
+      if (cfg.timed) {
+        clearInterval(tick); drawClock(); tick = setInterval(drawClock, 250);
+        window.ZQSet = { timed: cfg.timed, remaining, setRemaining: (s) => { offset = cfg.timed.seconds - s - (Date.now() - t0) / 1000; drawClock(); } };
+      }
     };
     const done = (items, res) => {
       if (finished) return;
       finished = true;
+      clearInterval(tick);
       const seconds = Math.round((Date.now() - t0) / 1000);
       const out = cfg.record(items, res, seconds) || {};
       if (run) { run.destroy(); run = null; }
+      delete window.ZQSet;
       phase = 'done'; window.ZQ.test = hook;
       summary(items, res, out);
     };
@@ -410,6 +476,7 @@
         <span class="t-overline hw-deep">${esc(cfg.over || '')}</span>
         <h1 class="t-complete">${esc(cfg.doneTitle || 'Set complete')}</h1>
         <div class="hw-score-big"><span class="t-stat tnum" data-count>${nRight}</span><span class="t-h2 secondary">of ${items.length} right</span></div>
+        ${timedOut ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Time ran out with ${plural(res.filter(Boolean).length, 'problem', 'problems')} answered. The rest count as missed.</span></p>` : cfg.timed ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Finished with ${esc(clock(Math.max(0, remaining())))} left on the clock.</span></p>` : ''}
         <div class="hw-badges">${(out.badges || []).map(([v, l], k) => `<div class="hw-badge hw-in" style="animation-delay:${200 + k * 80}ms"><span class="t-h1 tnum">${v}</span><span class="t-caption muted">${esc(l)}</span></div>`).join('')}</div>
         ${out.note ? `<div class="hw-redo">${I('replay', 'sm')}<span>${out.note}</span></div>` : ''}
         <h2 class="t-h2 hw-res-h">Problem by problem</h2>
@@ -431,6 +498,7 @@
     Promise.resolve(cfg.load()).then(items => { items0 = items || []; phase = items0.length ? 'start' : 'empty'; intro(items0); }).catch(e => { console.error(e); if (alive) { col.innerHTML = `<p class="t-body">This set could not be loaded: ${esc(e.message)}</p>`; setActs('<button type="button" class="btn hw-primary" data-back>Back to Review</button>'); } });
     return () => {
       alive = false;
+      clearInterval(tick); delete window.ZQSet;
       if (window.ZQ.test === hook) delete window.ZQ.test;
       /* Leaving part way records what was answered, so a redo or review is never lost */
       if (run && !finished) {
@@ -440,6 +508,9 @@
       }
     };
   }
+
+  /* timed: { seconds, lockAtZero } on a review, a practice set or a deck: a clock and a live score (ENGINE-BACKLOG 454) */
+  const timedOf = (t) => (t && typeof t === 'object' && Number(t.seconds) > 0 ? { seconds: Math.round(Number(t.seconds)), lockAtZero: t.lockAtZero === true } : null);
 
   /* ---------- The three set kinds ---------- */
   const redoRecord = (items, res, seconds) => {
@@ -477,6 +548,8 @@
   }
   function mountPractice(root, Z, params) {
     const weekly = params[0] === 'weekly';
+    /* #practice/timed/<seconds>: the same set against a locking clock (default 60 seconds a problem) */
+    const timed = params[0] === 'timed' ? timedOf({ seconds: Math.min(7200, Math.max(30, parseInt(params[1], 10) || PRACTICE_N * 60)), lockAtZero: true }) : null;
     const done0 = ZQ.select.weeklyStatus().done;
     return setPage(root, Z, weekly ? {
       title: 'Weekly probability problems', sub: '1.5 Probability', over: 'This week', heading: 'Three probability problems', track: 'prob', perItem: 2,
@@ -494,12 +567,12 @@
       },
       partial: (items, res, seconds) => { practiced(res, 'weekly'); ZQ.select.weeklyRecord(Math.max(done0, res.filter(Boolean).length)); logReview(seconds, 'weekly'); },
     } : {
-      title: 'Practice set', sub: 'From the lessons you have finished', over: 'Practice', heading: 'A mixed practice set', track: 'prob', perItem: 1.5,
+      title: 'Practice set', sub: 'From the lessons you have finished', over: 'Practice', heading: timed ? 'A timed practice set' : 'A mixed practice set', track: 'prob', perItem: 1.5, timed,
       lede: 'Problems from the quizzes and reviews of lessons you have finished. The set leans on your weakest skills and the ones you have not seen for a while.',
       facts: [['review', 'Topics are mixed on purpose: switching between them is what makes them stick.']],
       tag: (it) => it.source.split(' · ')[0],
       emptyTitle: 'No practice yet', emptyText: 'Finish a lesson first. Practice sets draw on the quizzes of lessons you have finished.',
-      doneTitle: 'Practice done', setTitle: 'Practice', again: 'New set',
+      doneTitle: 'Practice done', setTitle: 'Practice', again: timed ? 'New timed set' : 'New set',
       load: () => ZQ.select.practiceSet({ n: PRACTICE_N }),
       record: (items, res, seconds) => {
         practiced(res, 'practice');
@@ -515,7 +588,7 @@
   function mountLevelReview(root, Z, cid, id) {
     const lv = levelOfId(cid, id);
     const c = course(cid);
-    return setPage(root, Z, {
+    const cfg = {
       title: `Level ${lv ? lv.n : ''} review`, sub: `${c ? c.name : cid}${lv ? ', ' + lv.name : ''}`, over: `${c ? c.name : cid} · Level ${lv ? lv.n : ''}`,
       heading: lv ? `Review: ${lv.name}` : 'Level review', track: trackOf(cid), perItem: 1.5,
       lede: 'Mixed problems from every lesson of the level, in no particular order. Each right answer adds mastery points to its skills; each miss joins your redo queue.',
@@ -523,7 +596,7 @@
       tag: (it) => { const n = skillNames(); return (it.skills || []).map(s => n[s] || s).join(', '); },
       emptyTitle: 'Not yet written', emptyText: 'This level review has not been written yet. Use the course map to pick another item.',
       doneTitle: 'Level review done', setTitle: 'Level review',
-      load: () => C().review(cid, id).then(D => (D && Array.isArray(D.items) ? D.items.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: id, item: it.id || 'q' + i }, source: `Item ${i + 1}` })) : [])),
+      load: () => C().review(cid, id).then(D => { cfg.timed = timedOf(D && D.timed); return D; }).then(D => (D && Array.isArray(D.items) ? D.items.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: id, item: it.id || 'q' + i }, source: `Item ${i + 1}` })) : [])),
       record: (items, res, seconds) => {
         const results = items.map((it, j) => res[j] ? resultRow(res[j]) : { id: it.id, ok: false, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.ref });
         const o = S().reviewFinished({ course: cid, id, results, items: items.length, seconds }) || {};
@@ -531,7 +604,8 @@
         return { badges: [[`+${o.xp || 0}`, 'XP'], [`+${o.mp || 0}`, 'mastery points'], [wrong, 'to the redo queue']],
           note: wrong ? `${plural(wrong, 'problem joins', 'problems join')} your redo queue, back in 7 days.` : 'Nothing to redo. Every problem was right first time.' };
       },
-    });
+    };
+    return setPage(root, Z, cfg);
   }
   /* Full-screen takeover for set routes that share the shell's screen id */
   const takeover = (Z) => { const app = document.getElementById('app'); app.innerHTML = ''; app.className = 'screen-set'; return app; };

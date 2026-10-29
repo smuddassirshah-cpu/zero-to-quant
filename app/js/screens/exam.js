@@ -103,35 +103,52 @@
       window.ZQ.test = hook;
       cleanups.push(() => { if (window.ZQ.test === hook) delete window.ZQ.test; });
 
+      /* ---------- How a paper is marked and moved through (scoring, navigation, skip) ---------- */
+      const fwd = (p) => p.navigation === 'forward';
+      const noSkip = (p) => p.skip === false;
+      const markLine = (p) => { const s = M.scoring(p); const f = (v) => (v > 0 ? '+' : v < 0 ? '\u2212' : '') + M.signed(Math.abs(v)); return `${f(s.right)} for a right answer, ${f(s.wrong)} for a wrong one, ${f(s.blank)} for a blank.`; };
+      /* The pass mark as a heading and a sentence: a net score, or a share of the marks */
+      const passOf = (p) => {
+        const max = M.tally(p, []).max, need = M.need(p, max);
+        if (typeof p.passNet === 'number') return [`Pass mark ${M.signed(need)} net`, `Out of ${M.signed(max)} marks.${M.scored(p) ? ' ' + markLine(p) : ''}`];
+        return [`Pass mark ${Math.round(p.pass * 100)}%`, `That is ${M.signed(Math.ceil(max * p.pass - 1e-9))} of ${M.signed(max)} ${M.scored(p) ? 'marks' : 'correct'}.${M.scored(p) ? ' ' + markLine(p) : ''}`];
+      };
+      const wayOf = (p) => [fwd(p) ? 'forward only' : null, noSkip(p) ? 'no skipping' : null, M.scored(p) ? 'negative marking' : null].filter(Boolean);
+
       /* ---------- Start card ---------- */
       const intro = () => {
         const allItems = papers.flatMap(p => p.items || []);
-        const mix = [2, 3, 4, 5].map(d => [d, allItems.filter(it => it.difficulty === d).length]).filter(([, n]) => n);
+        const mix = mock ? [] : [2, 3, 4, 5].map(d => [d, allItems.filter(it => it.difficulty === d).length]).filter(([, n]) => n);
         const kinds = [...new Set(allItems.map(kindOf))].map(k => (KIND[k] || k).toLowerCase());
         const minutes = papers.reduce((a, p) => a + (p.minutes || 0), 0);
+        const p0 = papers[0], anyFwd = papers.some(fwd), allFwd = papers.every(fwd), anySkip0 = papers.some(noSkip);
         const rules = [
-          ['clock', stage ? `${minutes} minutes in ${plural(papers.length, 'paper', 'papers')}` : `${minutes} minutes`, 'Each paper has its own clock. It starts when you begin and does not pause.'],
-          ['clipboard', plural(allItems.length, 'question', 'questions'), kinds.length ? `${listAnd(kinds).replace(/^./, c => c.toUpperCase())}.` : 'Mixed formats.'],
+          ['clock', multi ? `${minutes} minutes in ${plural(papers.length, 'paper', 'papers')}` : `${minutes} minutes`, 'Each paper has its own clock. It starts when you begin and does not pause.'],
+          ['clipboard', plural(allItems.length, 'question', 'questions'), generated ? `${kinds.length ? listAnd(kinds).replace(/^./, c => c.toUpperCase()) + '. ' : ''}Questions are generated afresh for each attempt.` : kinds.length ? `${listAnd(kinds).replace(/^./, c => c.toUpperCase())}.` : 'Mixed formats.'],
           ['bulb', 'No hints', 'Hints, explanations and animated aids are switched off.'],
-          ['replay', 'No retries', 'One attempt. You can change an answer until you submit.'],
+          allFwd ? ['replay', 'No going back', `Each answer is final once you move on.${anySkip0 ? ' You must answer a question before the next one opens.' : ' A question you skip scores as blank.'}`]
+            : ['replay', 'No retries', anyFwd ? 'One attempt. Some papers are forward only; the others let you change an answer until you submit.' : 'One attempt. You can change an answer until you submit.'],
           ['check', 'Marked when you submit', 'No feedback until then. Worked explanations follow.'],
-          ['target', stage ? 'Pass every part' : `Pass mark ${Math.round(papers[0].pass * 100)}%`, stage ? papers.map(p => `${p.name}: ${Math.round(p.pass * 100)}%`).join('. ') + '.' : `That is ${Math.ceil(allItems.length * papers[0].pass)} of ${allItems.length} correct. A pass earns 200 XP.`],
-          ['mark', 'Mark questions', 'Mark any question to come back to before you submit.'],
-          ['calc', 'Finish early', 'Submit whenever you are done. Time left over is not counted against you.'],
+          multi ? ['target', 'Pass every part', papers.map(p => `${p.name}: ${passOf(p)[0].replace(/^Pass mark /, '')}`).join('. ') + '.']
+            : ['target', passOf(p0)[0], `${passOf(p0)[1]}${mock ? ' Every attempt is kept.' : ' A pass earns 200 XP.'}`],
+          ...(scored && multi ? [['flag', 'Negative marking', papers.filter(M.scored).map(p => `${p.name}: ${markLine(p)}`).join(' ')]] : scored && !multi && typeof p0.passNet !== 'number' ? [['flag', 'Marking', markLine(p0)]] : []),
+          ...(allFwd ? [] : [['mark', 'Mark questions', 'Mark any question to come back to before you submit.']]),
+          ['calc', 'Finish early', allFwd ? 'The last question submits the paper. Time left over is not counted against you.' : 'Submit whenever you are done. Time left over is not counted against you.'],
         ];
         root.innerHTML = `<div class="exm" data-track="${track}">
           <header class="exm-top"><button type="button" class="icon-btn exm-close" aria-label="Close and return to Review">${Z.icon('close')}</button><p class="exm-top-t t-label">${Z.esc(title)}</p><span></span></header>
           <div class="exm-frame"><main class="exm-main">
             <div class="exm-scroll"><div class="exm-col exm-intro enter">
-              <div class="exm-art">${window.ZQArt ? ZQArt(stage ? 'tree' : 'die', { label: 'Exam art' }) : ''}</div>
+              <div class="exm-art">${window.ZQArt ? ZQArt(multi ? 'tree' : 'die', { label: 'Exam art' }) : ''}</div>
               <p class="t-overline exm-ov">${Z.esc(over)}</p>
               <h1 class="t-lesson-title">${Z.esc(title)}</h1>
-              <p class="t-prose exm-lede">${Z.esc(stage ? (doc.description || 'The exit test for this stage. Sit it first to skip the stage.') : `${doc.name || 'The topic exam'} covers every course in the topic. Sit it now to test out, or after the last course.`)}</p>
-              ${stage ? `<ol class="exm-parts">${parts.map((p, i) => `<li><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(p.name)}</b><span class="t-caption">${p.kind === 'paper' ? `${plural((p.items || []).length, 'question', 'questions')} · ${p.minutes} minutes · pass ${Math.round(p.pass * 100)}%` : 'You tick this yourself at the end'}</span></span></li>`).join('')}</ol>` : ''}
+              <p class="t-prose exm-lede">${Z.esc(mock ? (doc.description || 'A timed mock assessment. Sit it as often as you like: every attempt is kept.') : stage ? (doc.description || 'The exit test for this stage. Sit it first to skip the stage.') : `${doc.name || 'The topic exam'} covers every course in the topic. Sit it now to test out, or after the last course.`)}</p>
+              ${mock && doc.models ? `<p class="t-caption exm-models"><b class="t-label">Models</b> ${Z.esc(doc.models)}</p>` : ''}
+              ${multi ? `<ol class="exm-parts">${parts.map((p, i) => `<li><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(p.name)}</b><span class="t-caption">${p.kind === 'paper' ? `${plural((p.items || []).length, 'question', 'questions')} · ${p.minutes} minutes · ${passOf(p)[0].replace(/^Pass mark/, 'pass')}${wayOf(p).length ? ' · ' + wayOf(p).join(', ') : ''}` : 'You tick this yourself at the end'}</span></span></li>`).join('')}</ol>` : ''}
               <ul class="exm-rules">${rules.map(([ic, h, t]) => `<li><span class="exm-rule-ic">${icon(Z, ic)}</span><div><b class="t-label">${Z.esc(h)}</b><p class="t-caption">${Z.esc(t)}</p></div></li>`).join('')}</ul>
-              <p class="t-caption exm-mix">Difficulty, on a scale of 1 to 5: ${listAnd(mix.map(([d, n]) => `${n} at level ${d}`))}.</p>
+              ${mix.length ? `<p class="t-caption exm-mix">Difficulty, on a scale of 1 to 5: ${listAnd(mix.map(([d, n]) => `${n} at level ${d}`))}.</p>` : ''}
             </div></div>
-            <div class="exm-foot"><p class="t-caption exm-foot-note">Leaving after you begin ends the attempt.</p><div class="exm-actions"><button type="button" class="btn exm-begin">${stage ? 'Begin part 1' : 'Begin exam'}</button></div></div>
+            <div class="exm-foot"><p class="t-caption exm-foot-note">Leaving after you begin ends the attempt.</p><div class="exm-actions"><button type="button" class="btn exm-begin">${multi ? 'Begin part 1' : 'Begin exam'}</button></div></div>
           </main></div></div>`;
         root.querySelector('.exm-close').addEventListener('click', () => Z.go('review'));
         root.querySelector('.exm-begin').addEventListener('click', () => paper(0));
@@ -148,8 +165,8 @@
               <p class="t-overline exm-ov">Part ${next} done</p>
               <h1 class="t-lesson-title">Next: ${Z.esc(p.name)}</h1>
               <p class="t-prose exm-lede">Your answers to part ${next} are saved and will be marked with the rest. Take a short break if you need one: the next clock starts when you begin.</p>
-              <ul class="exm-rules"><li><span class="exm-rule-ic">${Z.icon('clock')}</span><div><b class="t-label">${p.minutes} minutes</b><p class="t-caption">${plural((p.items || []).length, 'question', 'questions')}.</p></div></li>
-                <li><span class="exm-rule-ic">${Z.icon('target')}</span><div><b class="t-label">Pass mark ${Math.round(p.pass * 100)}%</b><p class="t-caption">That is ${Math.ceil((p.items || []).length * p.pass)} of ${(p.items || []).length} correct.</p></div></li></ul>
+              <ul class="exm-rules"><li><span class="exm-rule-ic">${Z.icon('clock')}</span><div><b class="t-label">${p.minutes} minutes</b><p class="t-caption">${plural((p.items || []).length, 'question', 'questions')}${wayOf(p).length ? ', ' + wayOf(p).join(', ') : ''}.</p></div></li>
+                <li><span class="exm-rule-ic">${Z.icon('target')}</span><div><b class="t-label">${Z.esc(passOf(p)[0])}</b><p class="t-caption">${Z.esc(passOf(p)[1])}</p></div></li></ul>
             </div></div>
             <div class="exm-foot"><div class="exm-actions"><button type="button" class="btn exm-begin">Begin part ${next + 1}</button></div></div>
           </main></div></div>`;
@@ -166,7 +183,7 @@
             <div class="exm-scroll"><div class="exm-col exm-intro enter">
               <p class="t-overline exm-ov">Last part</p>
               <h1 class="t-lesson-title">What the app cannot mark</h1>
-              <p class="t-prose exm-lede">Tick each one you have done. Be honest: the stage counts as passed only when every paper passes and every box is ticked.</p>
+              <p class="t-prose exm-lede">Tick each one you have done. Be honest: the ${mock ? 'mock' : 'stage'} counts as passed only when every paper passes and every box is ticked.</p>
               <div class="exm-checks">${checks.map((c, i) => `<label class="hw-rb exm-chk"><input type="checkbox" data-chk="${i}"><span class="hw-box" aria-hidden="true">${Z.icon('check')}</span><span class="exm-chk-t"><b class="t-label">${Z.esc(c.name)}</b>${c.detail ? `<span class="t-caption">${Z.esc(c.detail)}</span>` : ''}</span></label>`).join('')}</div>
             </div></div>
             <div class="exm-foot"><div class="exm-actions"><button type="button" class="btn exm-begin">See results</button></div></div>
@@ -192,11 +209,12 @@
       /* ---------- A timed paper ---------- */
       function paper(pi) {
         const P = papers[pi], QS = P.items || [], N = QS.length, MINUTES = P.minutes || 60;
+        const FWD = fwd(P), NOSKIP = noSkip(P), LOWAT = Math.min(LOW, MINUTES * 15);   // low-time warning: 5 minutes, or a quarter of a short paper
         const S = { cur: 0, flags: new Set(), t0: performance.now(), offset: 0, tick: null, low: false, over: false, anim: null };
         const local = [];
         const $ = (sel) => root.querySelector(sel);
-        const label = stage ? `Part ${pi + 1} · ${P.name}` : title;
-        root.innerHTML = `<div class="exm is-paper" data-track="${track}">
+        const label = multi ? `Part ${pi + 1} · ${P.name}` : title;
+        root.innerHTML = `<div class="exm is-paper${FWD ? ' is-fwd' : ''}" data-track="${track}">
           <header class="exm-top">
             <button type="button" class="icon-btn exm-close" aria-label="Leave the exam">${Z.icon('close')}</button>
             <div class="exm-mid">
@@ -222,7 +240,7 @@
               <p class="t-caption exm-count" data-count></p>
               <div data-grid></div>
               ${legend()}
-              <div class="exm-aside-foot"><button type="button" class="btn secondary block exm-submit">Finish early</button><p class="t-caption exm-zero">Unanswered questions score zero.</p></div>
+              <div class="exm-aside-foot"><button type="button" class="btn secondary block exm-submit">Finish early</button><p class="t-caption exm-zero">${M.scored(P) ? Z.esc(markLine(P)) : 'Unanswered questions score zero.'}</p></div>
             </aside>
           </div>
           <div class="sr-only" aria-live="polite" data-live></div>
@@ -271,9 +289,12 @@
           mb.setAttribute('aria-label', `Mark question ${i + 1} to come back to`);
           mb.querySelector('.exm-mark-l').textContent = f ? 'Marked' : 'Mark';
           const prev = $('.exm-prev'), nx = $('.exm-next'), last = i === N - 1;
-          prev.disabled = i === 0;
+          prev.disabled = i === 0 || FWD;
           if (prev.disabled && document.activeElement === prev) nx.focus();
-          if (nx.dataset.last !== String(last)) { nx.dataset.last = String(last); nx.innerHTML = last ? `<span>${stage && pi < papers.length - 1 ? `Submit part ${pi + 1}` : 'Submit exam'}</span>` : `<span>Next</span>${Z.icon('chevronR', 'sm')}`; }
+          /* A forward-only paper offers Skip on an unanswered question; with skip: false the button waits for an answer */
+          const skipping = FWD && !NOSKIP && !last && !isAns(i), key = `${last}:${skipping}`;
+          if (nx.dataset.last !== key) { nx.dataset.last = key; nx.innerHTML = last ? `<span>${multi && pi < papers.length - 1 ? `Submit part ${pi + 1}` : 'Submit exam'}</span>` : `<span>${skipping ? 'Skip' : 'Next'}</span>${Z.icon('chevronR', 'sm')}`; }
+          nx.disabled = NOSKIP && !isAns(i);
           syncGrid($('[data-grid]'));
           $('[data-count]').textContent = counts();
           col.querySelectorAll('.exm-q').forEach((q, k) => { const tag = q.querySelector('.exm-marked'); if (tag) tag.hidden = !S.flags.has(k); });
@@ -288,10 +309,14 @@
         function go(i) {
           if (i < 0 || i >= N || S.over) return;
           if (i === S.cur) { renderChrome(); return; }
+          if (FWD && i !== S.cur + 1) return;                                   // forward only: one step on, never back
+          if (i > S.cur && NOSKIP) for (let k = S.cur; k < i; k++) if (!isAns(k)) return;   // skip: false: answer before moving on
+          if (FWD) { try { local[S.cur] && local[S.cur].step.lock(); } catch (e) { console.error(e); } }   // the answer is final once you leave it
           S.cur = i; show(false);
           announce(`Question ${i + 1} of ${N}${S.flags.has(i) ? ', marked' : ''}`);
         }
         function toggleMark() {
+          if (FWD) return;
           const i = S.cur;
           if (S.flags.has(i)) S.flags.delete(i); else S.flags.add(i);
           renderChrome();
@@ -302,6 +327,7 @@
           const t = e.target instanceof Element ? e.target : document.body;
           if (t.matches('input, textarea, select, math-field') || t.isContentEditable) return;
           if (/^[1-9]$/.test(e.key)) { const h = local[S.cur]; if (h && h.pick) { e.preventDefault(); h.pick(+e.key - 1); } }
+          else if (FWD) { if (e.key === 'Enter' && !e.repeat && (t === document.body || t.classList.contains('opt')) && !$('.exm-next').disabled) { e.preventDefault(); $('.exm-next').click(); } }
           else if (e.key === 'ArrowRight' && !t.closest('[role="radiogroup"], .wd-opts')) { e.preventDefault(); go(S.cur + 1); }
           else if (e.key === 'ArrowLeft' && !t.closest('[role="radiogroup"], .wd-opts')) { e.preventDefault(); go(S.cur - 1); }
           else if (e.key === 'm' || e.key === 'M') { e.preventDefault(); toggleMark(); }
@@ -312,18 +338,18 @@
           if (!el) return;
           el.textContent = clock(r);
           const dt = document.querySelector('[data-dlg-time]'); if (dt) dt.textContent = clock(r);
-          const low = r <= LOW;
+          const low = r <= LOWAT;
           if (low !== S.low) {
             S.low = low;
             const tm = $('.exm-timer');
             tm.classList.toggle('is-low', low);
-            tm.setAttribute('aria-label', low ? 'Time left, under 5 minutes' : 'Time left');
-            if (low) announce('Five minutes left.');
+            tm.setAttribute('aria-label', low ? (LOWAT === LOW ? 'Time left, under 5 minutes' : 'Time left, running low') : 'Time left');
+            if (low) announce(LOWAT === LOW ? 'Five minutes left.' : 'A quarter of the time is left.');
           }
           if (r <= 0) submit(true);
         }
         function openNav() {
-          if (dialogOpen()) return;
+          if (dialogOpen() || FWD) return;
           const box = Z.h(`<div class="exm-dlg exm-navsheet"><h2 class="t-sheet-title">Questions</h2><p class="t-caption exm-count">${counts()}</p>${grid('exm-grid-6')}${legend()}
             <div class="exm-dlg-act"><button type="button" class="btn secondary" data-submit>Finish early</button></div></div>`);
           const close = Z.sheet(box, { label: 'Question navigator' });
@@ -335,16 +361,17 @@
         function confirmSubmit() {
           if (dialogOpen() || S.over) return;
           const un = QS.map((q, i) => i).filter(i => !isAns(i));
-          const fl = [...S.flags].sort((a, b) => a - b);
+          const fl = FWD ? [] : [...S.flags].sort((a, b) => a - b);
           const jumps = (xs) => `<div class="exm-jumps">${xs.map(i => `<button type="button" class="exm-sq${isAns(i) ? ' is-ans' : ''}" data-q="${i}" aria-label="Go to question ${i + 1}">${i + 1}</button>`).join('')}</div>`;
-          const what = stage && pi < papers.length - 1 ? `part ${pi + 1}` : 'your exam';
+          const what = multi && pi < papers.length - 1 ? `part ${pi + 1}` : 'your exam';
+          const blank = M.signed(M.scoring(P).blank);
           const box = Z.h(`<div class="exm-dlg">
             <h2 class="t-sheet-title">Submit ${what}?</h2>
             <p class="t-body exm-dlg-sub">You cannot change answers after you submit. Time left: <b class="tnum" data-dlg-time>${clock(remaining())}</b>.</p>
-            ${un.length ? `<div class="exm-dlg-sec"><h3 class="t-h2">Not answered: ${un.length}</h3><p class="t-caption exm-dlg-cap">These score zero. Choose one to go back to it.</p>${jumps(un)}</div>` : ''}
+            ${un.length ? `<div class="exm-dlg-sec"><h3 class="t-h2">Not answered: ${un.length}</h3><p class="t-caption exm-dlg-cap">${FWD ? `These score ${blank}. You cannot go back.` : `These score ${blank}. Choose one to go back to it.`}</p>${FWD ? '' : jumps(un)}</div>` : ''}
             ${fl.length ? `<div class="exm-dlg-sec"><h3 class="t-h2 exm-dlg-mh">${icon(Z, 'mark', 'xs')}Marked: ${fl.length}</h3><p class="t-caption exm-dlg-cap">You marked these to come back to.</p>${jumps(fl)}</div>` : ''}
-            ${!un.length && !fl.length ? `<p class="exm-allset t-body">${Z.icon('check', 'sm')}All ${N} answered, none marked.</p>` : ''}
-            <div class="exm-dlg-act"><button type="button" class="btn secondary" data-close>Keep working</button><button type="button" class="btn" data-submit>Submit</button></div>
+            ${!un.length && !fl.length ? `<p class="exm-allset t-body">${Z.icon('check', 'sm')}All ${N} answered${FWD ? '' : ', none marked'}.</p>` : ''}
+            <div class="exm-dlg-act"><button type="button" class="btn secondary" data-close>${FWD ? 'Not yet' : 'Keep working'}</button><button type="button" class="btn" data-submit>Submit</button></div>
           </div>`);
           const close = Z.sheet(box, { label: 'Submit' });
           box.addEventListener('click', (e) => {
@@ -380,7 +407,7 @@
         $('.exm-navbtn').addEventListener('click', openNav);
         $('.exm-markbtn').addEventListener('click', toggleMark);
         $('.exm-prev').addEventListener('click', () => go(S.cur - 1));
-        $('.exm-next').addEventListener('click', () => (S.cur === N - 1 ? confirmSubmit() : go(S.cur + 1)));
+        $('.exm-next').addEventListener('click', () => { if (!$('.exm-next').disabled) (S.cur === N - 1 ? confirmSubmit() : go(S.cur + 1)); });
         $('.exm-submit').addEventListener('click', confirmSubmit);
         $('[data-grid]').addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) go(+b.dataset.q); });
         document.addEventListener('keydown', onKey);
@@ -393,14 +420,14 @@
         };
         T = {
           kind: 'item',
-          cur: () => ({ kind: S.over ? 'loading' : 'item', phase: 'exam', state: isAns(S.cur) ? 'engaged' : 'idle', screenIndex: S.cur, total: N, paper: pi }),
+          cur: () => ({ kind: S.over ? 'loading' : 'item', phase: 'exam', state: isAns(S.cur) ? 'engaged' : 'idle', screenIndex: S.cur, total: N, paper: pi, forward: FWD, noSkip: NOSKIP }),
           answer: () => { const h = local[S.cur]; if (!h) return false; const ok = h.answerCorrect(); renderChrome(); return ok; },
           check: async () => { const h = local[S.cur]; return h ? h.step.grade() : null; },
-          go: () => (S.cur < N - 1 ? go(S.cur + 1) : submit(false)),
+          go: () => (S.cur < N - 1 ? go(S.cur + 1) : (NOSKIP && !isAns(S.cur) ? null : submit(false))),
         };
         show(true);
         updateTime();
-        announce(`${stage ? `Part ${pi + 1} started` : 'Exam started'}. ${MINUTES} minutes. Question 1 of ${N}.`);
+        announce(`${multi ? `Part ${pi + 1} started` : 'Exam started'}. ${MINUTES} minutes. Question 1 of ${N}.`);
       }
 
       /* ---------- Mark, record, show ---------- */
@@ -410,18 +437,22 @@
         papers.forEach((p, pi) => (p.items || []).forEach((it, i) => rows.push({ pi, i, it, r: (A.results[pi] || [])[i] || { ok: false, done: false }, h: ((A.handles[pi] || [])[i]) || null })));
         const bySkill = {};
         rows.forEach(({ it, r }) => (it.skills || []).forEach(s => { const b = bySkill[s] || (bySkill[s] = [0, 0]); b[1]++; if (r.ok) b[0]++; }));
-        const paperScores = papers.map((p, pi) => { const rs = A.results[pi] || []; const c = rs.filter(x => x && x.ok).length; const n = (p.items || []).length; return { p, c, n, share: n ? c / n : 0, passed: n ? c / n >= p.pass - 1e-9 : false }; });
+        /* Each paper is marked by its own scoring (default +1, 0, 0) against passNet, else pass as a share of the marks */
+        const paperScores = papers.map((p, pi) => { const t = M.tally(p, A.results[pi] || []); return { p, ...t, c: t.right, share: t.n ? t.right / t.n : 0, need: M.need(p, t.max), passed: M.passed(p, t) }; });
         const score = rows.filter(x => x.r.ok).length, total = rows.length;
+        const sum = (k) => Math.round(paperScores.reduce((a, s) => a + s[k], 0) * 1e6) / 1e6;
+        const net = sum('net'), max = sum('max'), wrong = sum('wrong'), blank = sum('blank');
         const checksOk = checks.every((c, i) => A.ticks.has(i));
-        const passed = stage ? paperScores.every(s => s.passed) && checksOk : paperScores[0].passed;
+        const passed = multi ? paperScores.every(s => s.passed) && checksOk : paperScores[0].passed;
         const seconds = A.used.reduce((a, b) => a + (b || 0), 0);
         let out = {};
         try {
           out = ZQ.state.examFinished({ id: doc.id, score, items: total, passed, bySkill, seconds,
-            results: rows.map(({ it, r }) => ({ id: it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null ? { exam: doc.id, item: it.id } : null })) }) || {};
+            results: rows.map(({ it, r }) => ({ id: it.generated ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated ? { exam: doc.id, item: it.id } : null })),
+            extra: mock || scored || generated ? { net, max, wrong, blank, seconds, ...(generated ? { seed: A.seed } : {}) } : undefined }) || {};
         } catch (e) { console.error(e); }
-        T = { kind: 'done', info: { score, total, passed } };
-        cleanups.push(mountResult(root, Z, { doc, stage, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, passed, seconds, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
+        T = { kind: 'done', info: { score, total, passed, net, max, wrong, blank, seed: A.seed } };
+        cleanups.push(mountResult(root, Z, { doc, stage, mock, multi, scored, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, net, max, wrong, blank, passed, seconds, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
           minutes: papers.reduce((a, p) => a + (p.minutes || 0), 0) }));
       }
 
@@ -439,10 +470,15 @@
   /* Result: count-up, stamp, breakdown, review                          */
   /* ================================================================== */
   function mountResult(root, Z, at) {
-    const { rows, names, paperScores, stage, score, total, passed } = at;
-    const pct = Math.round(score / Math.max(1, total) * 100);
-    const PASS = stage ? null : paperScores[0].p.pass;
-    const passRef = PASS == null ? 0.7 : PASS;
+    const { rows, names, paperScores, stage, multi, mock, scored, score, total, passed } = at;
+    const M = ZQ.mock;
+    /* The headline is the net score when a paper is marked with wrong or blank marks, else the count of right answers */
+    const heroN = scored ? at.net : score, heroMax = scored ? at.max : total;
+    const pct = Math.max(0, Math.round(heroN / Math.max(1, heroMax) * 100));
+    const p0 = paperScores[0];
+    const PASS = multi || typeof p0.p.passNet === 'number' ? null : p0.p.pass;
+    const passRef = multi ? 0.7 : PASS != null ? PASS : p0.max > 0 ? Math.min(1, Math.max(0, p0.need / p0.max)) : 0.7;
+    const sgn = (v) => M.signed(v);
     const wrong = rows.filter(x => !x.r.ok);
     const flagged = rows.filter(x => x.r.flag);
     const bySkill = Object.entries(at.bySkill).map(([id, [c, t]]) => ({ id, name: names[id] || id, c, t, p: t ? c / t : 0, qs: rows.map((x, k) => ((x.it.skills || []).includes(id) ? k : -1)).filter(k => k >= 0) }))
@@ -450,7 +486,12 @@
     const under = bySkill.filter(s => s.p < passRef);
     const timers = []; let raf = 0, final = false;
     const later = (fn, ms) => timers.push(setTimeout(fn, ms));
-    const qlabel = (k) => (stage ? `${rows[k].pi + 1}.${rows[k].i + 1}` : String(k + 1));
+    const qlabel = (k) => (multi ? `${rows[k].pi + 1}.${rows[k].i + 1}` : String(k + 1));
+    const hasSkills = Object.keys(at.bySkill).length > 0;
+    /* This mock's attempts so far, newest last, with the one just recorded */
+    const attempts = mock ? ((ZQ.state.exams[at.doc.id] || {}).attempts || []) : [];
+    const nets = attempts.map(a => (typeof a.net === 'number' ? a.net : a.score));
+    const marksOf = (x) => { const s = M.scoring(paperScores[x.pi].p); return x.r.ok ? s.right : x.r.done ? s.wrong : s.blank; };
 
     const skillRow = (s) => {
       const w = (s.p * 100).toFixed(2) + '%', near = Math.abs(s.p - passRef) < 0.06;
@@ -464,12 +505,13 @@
       const { it, r } = x;
       const fb = it.feedback || {};
       const line = r.ok ? fb.correct : (r.key != null && fb.byKey && fb.byKey[r.key]) || (r.done ? fb.generic : '');
-      const v = r.ok ? `<span class="exm-v is-ok">${Z.icon('check')}<span>Correct</span></span>` : `<span class="exm-v is-no">${Z.icon('cross')}<span>${r.done ? 'Not correct' : 'No answer'}</span></span>`;
+      const mk = scored ? ` ${marksOf(x) > 0 ? '+' : ''}${sgn(marksOf(x))}` : '';
+      const v = r.ok ? `<span class="exm-v is-ok">${Z.icon('check')}<span>Correct${mk}</span></span>` : `<span class="exm-v is-no">${Z.icon('cross')}<span>${r.done ? 'Not correct' : 'No answer'}${mk}</span></span>`;
       const ans = correctHTML(it);
       return `<article class="exm-ri${r.ok ? '' : ' is-no'}" data-ok="${r.ok}" data-flag="${!!r.flag}" data-k="${k}">
         <button type="button" class="exm-ri-h" aria-expanded="${!r.ok}" aria-controls="exm-rb-${k}">
           <span class="exm-ri-n tnum">${qlabel(k)}</span>
-          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
+          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${it.generated ? 'Generated question' : `${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5`}${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
           ${v}
           <span class="exm-ri-chev" aria-hidden="true">${Z.icon('chevronD', 'sm')}</span>
         </button>
@@ -484,7 +526,13 @@
     };
 
     const timeNote = at.timeUp ? 'Time ran out, so your answers were submitted automatically. ' : '';
-    const heroNote = timeNote + (stage
+    const needLine = (x) => (typeof x.p.passNet === 'number' ? `${sgn(x.need)} net` : `${Math.round(x.p.pass * 100)}% of the marks`);
+    const heroNote = timeNote + (mock
+      ? (multi
+        ? (passed ? 'Every paper reached its pass mark and every check is ticked.' : `To pass, every paper must reach its pass mark${at.checks.length ? ' and every check must be ticked' : ''}.${paperScores.filter(x => !x.passed).length ? ` Short of the mark: ${listAnd(paperScores.filter(x => !x.passed).map(x => x.p.name))}.` : ''}`)
+        : (passed ? `Pass mark ${needLine(p0)}. You scored ${sgn(at.net)} net.` : `Pass mark ${needLine(p0)}, which is ${sgn(p0.need)} of ${sgn(p0.max)}. You need ${sgn(Math.max(0, Math.round((p0.need - p0.net) * 1e6) / 1e6))} more net. Sit it again when you are ready.`))
+        + (nets.length > 1 ? ` Attempt ${nets.length}; your best net is ${sgn(Math.max(...nets))}.` : '')
+      : stage
       ? (passed ? 'Every paper passed and every check ticked. This stage counts as passed.' : `To pass, every paper must reach its pass mark and every check must be ticked.${at.checksOk ? '' : ' A check is not ticked yet.'}`)
       : (passed ? `Pass mark ${Math.round(PASS * 100)}%. This topic now counts as passed, so Today moves on. Its lessons stay open on Learn.`
         : `Pass mark ${Math.round(PASS * 100)}%, which is ${Math.ceil(total * PASS)} of ${total}. You need ${Math.max(0, Math.ceil(total * PASS) - score)} more. Study the skills below, then sit it again.`));
@@ -497,30 +545,37 @@
       <main class="exm-rcol">
         <section class="exm-hero" aria-labelledby="exm-rh">
           <p class="t-overline exm-ov">${Z.esc(at.over)}</p>
-          <h1 class="t-complete" id="exm-rh">${Z.esc(stage ? at.title : (at.doc.name || 'Topic exam'))}</h1>
+          <h1 class="t-complete" id="exm-rh">${Z.esc(stage || mock ? at.title : (at.doc.name || 'Topic exam'))}</h1>
           <div class="exm-scorerow">
-            <p class="exm-score"><span class="sr-only">${score} of ${total} correct, ${pct}%. ${passed ? 'Pass' : 'Not passed'}.</span>
-              <span aria-hidden="true" class="exm-score-n"><b class="t-stat" data-score>0</b><span class="exm-of"> of ${total}</span></span>
-              <span aria-hidden="true" class="exm-pct tnum"><span data-pct>0</span>% correct</span>
+            <p class="exm-score"><span class="sr-only">${scored ? `Net score ${sgn(heroN)} of ${sgn(heroMax)}: ${score} right, ${at.wrong} wrong, ${at.blank} blank` : `${score} of ${total} correct, ${pct}%`}. ${passed ? 'Pass' : 'Not passed'}.</span>
+              <span aria-hidden="true" class="exm-score-n"><b class="t-stat" data-score>0</b><span class="exm-of"> of ${sgn(heroMax)}${scored ? ' net' : ''}</span></span>
+              <span aria-hidden="true" class="exm-pct tnum">${scored ? `${score} right · ${at.wrong} wrong · ${at.blank} blank` : `<span data-pct>0</span>% correct`}</span>
             </p>
             <div class="exm-stamp ${passed ? 'is-pass' : 'is-fail'}" aria-hidden="true">${Z.icon(passed ? 'check' : 'cross')}<span>${passed ? 'Pass' : 'Not passed'}</span></div>
           </div>
           <p class="t-body exm-hero-note exm-later" data-l="0">${Z.esc(heroNote)}</p>
           <div class="exm-badges">
-            <div class="exm-badge exm-xp exm-later" data-l="1"><span class="t-caption exm-badge-l">${Z.spark(at.xp > 0)}XP</span><span class="exm-badge-v tnum">${at.xp ? '+' + at.xp.toLocaleString('en-GB') : '0'}</span><span class="t-caption exm-badge-s">${passed ? (at.xp ? (stage ? 'Stage exam passed' : 'Topic exam passed') : 'Passed before') : `${stage ? '1,000' : '200'} on a pass`}</span></div>
-            <div class="exm-badge exm-later" data-l="2"><span class="t-caption exm-badge-l">${Z.icon('clock', 'xs')}Time used</span><span class="exm-badge-v tnum">${clock(at.seconds)}</span><span class="t-caption exm-badge-s">of ${clock(at.minutes * 60)}</span></div>
+            ${mock ? `<div class="exm-badge exm-later" data-l="1"><span class="t-caption exm-badge-l">${Z.icon('replay', 'xs')}Attempt</span><span class="exm-badge-v tnum">${nets.length}</span><span class="t-caption exm-badge-s">${nets.length > 1 ? `best net ${sgn(Math.max(...nets))}` : 'every attempt is kept'}</span></div>`
+            : `<div class="exm-badge exm-xp exm-later" data-l="1"><span class="t-caption exm-badge-l">${Z.spark(at.xp > 0)}XP</span><span class="exm-badge-v tnum">${at.xp ? '+' + at.xp.toLocaleString('en-GB') : '0'}</span><span class="t-caption exm-badge-s">${passed ? (at.xp ? (stage ? 'Stage exam passed' : 'Topic exam passed') : 'Passed before') : `${stage ? '1,000' : '200'} on a pass`}</span></div>`}
+            <div class="exm-badge exm-later" data-l="2"><span class="t-caption exm-badge-l">${Z.icon('clock', 'xs')}Time used</span><span class="exm-badge-v tnum">${clock(at.seconds)}</span><span class="t-caption exm-badge-s">of ${clock(at.minutes * 60)}${mock && total > 0 ? `, ${(at.seconds / total).toFixed(1)} s each` : ''}</span></div>
             <div class="exm-badge exm-later" data-l="3"><span class="t-caption exm-badge-l">${Z.icon('target', 'xs')}Mastery</span><span class="exm-badge-v tnum">+${at.mp}</span><span class="t-caption exm-badge-s">mastery points</span></div>
           </div>
           <button type="button" class="btn exm-back exm-later" data-l="3">Back to Review</button>
         </section>
 
-        ${stage ? `<section class="exm-card exm-parts-r exm-later" data-l="4" aria-labelledby="exm-pt-h">
+        ${mock ? `<section class="exm-card exm-trend exm-later" data-l="4" aria-labelledby="exm-tr-h">
+          <div class="exm-sec-h"><h2 class="t-h2" id="exm-tr-h">Score trend</h2></div>
+          <p class="t-caption exm-sec-c">${multi ? 'Total net score' : 'Net score'} for each attempt, oldest first${multi ? '' : '. The dashed line is the pass mark'}.</p>
+          <div class="exm-trend-row">${M.trend(nets, { pass: multi ? null : p0.need, label: 'Net score by attempt' })}<p class="t-body exm-trend-t tnum">${nets.length > 1 ? `Latest ${sgn(nets[nets.length - 1])}, previous ${sgn(nets[nets.length - 2])}, best ${sgn(Math.max(...nets))}.` : `First attempt: ${sgn(nets[0] == null ? at.net : nets[0])}. Sit it again to see a trend.`}</p></div>
+        </section>` : ''}
+
+        ${multi ? `<section class="exm-card exm-parts-r exm-later" data-l="4" aria-labelledby="exm-pt-h">
           <div class="exm-sec-h"><h2 class="t-h2" id="exm-pt-h">Part by part</h2></div>
-          <ul class="exm-pres">${paperScores.map((s, i) => `<li class="${s.passed ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(s.p.name)}</b><span class="t-caption">${s.c} of ${s.n} correct, ${Math.round(s.share * 100)}%. Pass mark ${Math.round(s.p.pass * 100)}%.</span></span><span class="exm-v ${s.passed ? 'is-ok' : 'is-no'}">${Z.icon(s.passed ? 'check' : 'cross')}<span>${s.passed ? 'Passed' : 'Not passed'}</span></span></li>`).join('')}
+          <ul class="exm-pres">${paperScores.map((s, i) => `<li class="${s.passed ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(s.p.name)}</b><span class="t-caption">${M.scored(s.p) ? `${sgn(s.net)} net: ${s.c} right, ${s.wrong} wrong, ${s.blank} blank. Pass mark ${needLine(s)}.` : `${s.c} of ${s.n} correct, ${Math.round(s.share * 100)}%. Pass mark ${Math.round(s.p.pass * 100)}%.`}</span></span><span class="exm-v ${s.passed ? 'is-ok' : 'is-no'}">${Z.icon(s.passed ? 'check' : 'cross')}<span>${s.passed ? 'Passed' : 'Not passed'}</span></span></li>`).join('')}
             ${at.checks.map((c, i) => `<li class="${at.ticks.has(i) ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${paperScores.length + i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(c.name)}</b><span class="t-caption">Self-ticked check</span></span><span class="exm-v ${at.ticks.has(i) ? 'is-ok' : 'is-no'}">${Z.icon(at.ticks.has(i) ? 'check' : 'cross')}<span>${at.ticks.has(i) ? 'Ticked' : 'Not ticked'}</span></span></li>`).join('')}</ul>
         </section>` : ''}
 
-        <section class="exm-card exm-skills exm-later" data-l="4" aria-labelledby="exm-sk-h">
+        ${hasSkills ? `<section class="exm-card exm-skills exm-later" data-l="4" aria-labelledby="exm-sk-h">
           <div class="exm-sec-h"><h2 class="t-h2" id="exm-sk-h">By skill</h2><button type="button" class="link-btn exm-tbl-t" aria-pressed="false">Show as table</button></div>
           <p class="t-caption exm-sec-c" data-cap>Share of questions correct in each skill, weakest first. The dashed line is the ${Math.round(passRef * 100)}% pass mark.</p>
           <div class="exm-chart" style="--pass:${passRef}">
@@ -536,7 +591,7 @@
             <tbody>${bySkill.map(s => `<tr><th scope="row">${Z.esc(s.name)}</th><td class="num">${s.c} of ${s.t}</td><td class="num">${Math.round(s.p * 100)}%</td><td>${s.qs.map(qlabel).join(', ')}</td></tr>`).join('')}</tbody>
           </table>
           <p class="t-body exm-sk-note">${under.length ? `Under the pass mark: ${Z.esc(listAnd(under.slice(0, 6).map(s => `${s.name} (${s.c} of ${s.t})`)))}${under.length > 6 ? `, and ${under.length - 6} more` : ''}. Start there before you sit it again.` : 'Every skill is at or above the pass mark.'}</p>
-        </section>
+        </section>` : ''}
 
         <section class="exm-review exm-later" data-l="5" aria-labelledby="exm-rv-h">
           <h2 class="t-h1" id="exm-rv-h">Your answers</h2>
@@ -589,36 +644,38 @@
       });
       q('.exm-empty').hidden = n > 0;
     });
-    const tblBtn = q('.exm-tbl-t');
-    tblBtn.addEventListener('click', () => {
-      const on = tblBtn.getAttribute('aria-pressed') !== 'true';
-      tblBtn.setAttribute('aria-pressed', String(on));
-      tblBtn.textContent = on ? 'Show as chart' : 'Show as table';
-      q('.exm-chart').hidden = on; q('.exm-table').hidden = !on;
-    });
-    const chart = q('.exm-chart'), tip = q('.exm-tip');
-    const showTip = (row) => {
-      const s = bySkill.find(x => x.id === row.dataset.skill); if (!s) return;
-      tip.querySelector('b').textContent = `${Math.round(s.p * 100)}%`;
-      tip.querySelector('span').textContent = `${s.name} · ${s.c} of ${s.t} correct · Questions ${listAnd(s.qs.map(qlabel))}`;
-      tip.hidden = false;
-      const cr = chart.getBoundingClientRect(), br = row.querySelector('.exm-plot').getBoundingClientRect();
-      const x = br.left - cr.left + br.width * s.p, tw = tip.offsetWidth;
-      tip.style.left = Math.max(tw / 2, Math.min(cr.width - tw / 2, x)) + 'px';
-      tip.style.top = (br.top - cr.top - 8) + 'px';
-    };
-    const hideTip = () => { tip.hidden = true; };
-    chart.addEventListener('pointerover', (e) => { const r = e.target.closest('.exm-row'); if (r) showTip(r); });
-    chart.addEventListener('pointerleave', hideTip);
-    chart.addEventListener('focusin', (e) => { const r = e.target.closest('.exm-row'); if (r) showTip(r); });
-    chart.addEventListener('focusout', hideTip);
+    if (hasSkills) {
+      const tblBtn = q('.exm-tbl-t');
+      tblBtn.addEventListener('click', () => {
+        const on = tblBtn.getAttribute('aria-pressed') !== 'true';
+        tblBtn.setAttribute('aria-pressed', String(on));
+        tblBtn.textContent = on ? 'Show as chart' : 'Show as table';
+        q('.exm-chart').hidden = on; q('.exm-table').hidden = !on;
+      });
+      const chart = q('.exm-chart'), tip = q('.exm-tip');
+      const showTip = (row) => {
+        const s = bySkill.find(x => x.id === row.dataset.skill); if (!s) return;
+        tip.querySelector('b').textContent = `${Math.round(s.p * 100)}%`;
+        tip.querySelector('span').textContent = `${s.name} · ${s.c} of ${s.t} correct · Questions ${listAnd(s.qs.map(qlabel))}`;
+        tip.hidden = false;
+        const cr = chart.getBoundingClientRect(), br = row.querySelector('.exm-plot').getBoundingClientRect();
+        const x = br.left - cr.left + br.width * s.p, tw = tip.offsetWidth;
+        tip.style.left = Math.max(tw / 2, Math.min(cr.width - tw / 2, x)) + 'px';
+        tip.style.top = (br.top - cr.top - 8) + 'px';
+      };
+      const hideTip = () => { tip.hidden = true; };
+      chart.addEventListener('pointerover', (e) => { const r = e.target.closest('.exm-row'); if (r) showTip(r); });
+      chart.addEventListener('pointerleave', hideTip);
+      chart.addEventListener('focusin', (e) => { const r = e.target.closest('.exm-row'); if (r) showTip(r); });
+      chart.addEventListener('focusout', hideTip);
+    }
 
     /* Celebration (spec 4.7): count-up 900ms, stamp on spring-snap, breakdown fades in. Tap skips. */
     const finish = () => {
       if (final) return;
       final = true;
       timers.splice(0).forEach(clearTimeout); cancelAnimationFrame(raf);
-      scoreEl.textContent = score; pctEl.textContent = pct;
+      scoreEl.textContent = sgn(heroN); if (pctEl) pctEl.textContent = pct;
       res.classList.add('final');
       stamp.classList.add('on');
       res.querySelectorAll('.exm-later').forEach(n => n.classList.add('on'));
@@ -628,7 +685,7 @@
       const step = (now) => {
         const p = Math.min(1, (now - t0) / ms);
         const e = p < 0.8 ? p / 0.8 * 0.9 : 0.9 + (1 - Math.pow(1 - (p - 0.8) / 0.2, 3)) * 0.1;
-        scoreEl.textContent = Math.round(score * e); pctEl.textContent = Math.round(pct * e);
+        scoreEl.textContent = sgn(Math.round(heroN * e)); if (pctEl) pctEl.textContent = Math.round(pct * e);
         if (p < 1) raf = requestAnimationFrame(step); else done();
       };
       raf = requestAnimationFrame(step);

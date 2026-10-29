@@ -1,0 +1,581 @@
+{
+ "id": "homework-1",
+ "course": "puzzles",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "hw1-pattern-wait",
+   "difficulty": 5,
+   "skills": [
+    "pz-expectation",
+    "pz-recursion"
+   ],
+   "prose": "Write `pattern_wait(pattern, p)`: the exact expected number of flips until an H/T `pattern` first appears, with heads at chance `p`. No helpers this time: build the states, write the first-step equations and solve them with `Fraction`.",
+   "question": "Write `pattern_wait(pattern, p)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction\n",
+    "starter": "from fractions import Fraction\n\n\ndef pattern_wait(pattern, p=Fraction(1, 2)):\n    ...\n",
+    "solution": "from fractions import Fraction\n\n\ndef pattern_wait(pattern, p=Fraction(1, 2)):\n    p = Fraction(p)\n    n = len(pattern)\n\n    def step(k, flip):\n        # longest end of (first k letters + flip) that starts the pattern\n        s = pattern[:k] + flip\n        while s and not pattern.startswith(s):\n            s = s[1:]\n        return len(s)\n\n    # row k: E_k - p E_step(k,H) - q E_step(k,T) = 1, with E_n = 0\n    A = [[Fraction(0)] * n + [Fraction(1)] for _ in range(n)]\n    for k in range(n):\n        A[k][k] += 1\n        for flip, chance in ((\"H\", p), (\"T\", 1 - p)):\n            j = step(k, flip)\n            if j < n:\n                A[k][j] -= chance\n    for i in range(n):\n        piv = next(r for r in range(i, n) if A[r][i] != 0)\n        A[i], A[piv] = A[piv], A[i]\n        for r in range(n):\n            if r != i and A[r][i] != 0:\n                f = A[r][i] / A[i][i]\n                A[r] = [x - f * y for x, y in zip(A[r], A[i])]\n    return A[0][n] / A[0][0]\n",
+    "examples": [
+     {
+      "call": "pattern_wait(\"HH\")",
+      "expect": "Fraction(6, 1)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pattern_wait(\"HT\")",
+      "expect": "Fraction(4, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HHH\")",
+      "expect": "Fraction(14, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HTHT\")",
+      "expect": "Fraction(20, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HHTT\")",
+      "expect": "Fraction(16, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HTHTH\")",
+      "expect": "Fraction(42, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HHHHH\")",
+      "expect": "Fraction(62, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"H\")",
+      "expect": "Fraction(2, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HTH\", Fraction(1, 3))",
+      "expect": "Fraction(33, 2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HHT\", Fraction(3, 5))",
+      "expect": "Fraction(125, 18)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"THTTHHTHTTHH\")",
+      "expect": "Fraction(4160, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "pattern_wait(\"HHHHHHHHHHHH\", Fraction(9, 10))",
+      "expect": "Fraction(7175704635190, 282429536481)",
+      "compare": "fraction"
+     }
+    ],
+    "how": "Check runs 11 hidden tests, each needing an exact `Fraction`. They are HT, HHH, HTHT, HHTT, HTHTH, HHHHH and the one-flip H. Then HTH at $p = \\tfrac13$, HHT at $p = \\tfrac35$, and two 12-flip patterns, one at $p = \\tfrac9{10}$."
+   },
+   "feedback": {
+    "correct": "Prefix states and first-step equations solve every pattern exactly.",
+    "generic": "Not quite right. Look at the first failing test.",
+    "byKey": {
+     "test-3": "HTHT should give 20. After HTH and a head, you hold H, not the start: find the longest end that begins the pattern.",
+     "test-7": "A one-flip pattern has a single state: $E_0 = 1 + qE_0$, so $1/p$."
+    }
+   },
+   "explain": {
+    "text": "State $k$ means the last $k$ flips are the first $k$ letters of the pattern. A flip moves to the longest end that still starts the pattern. Each state gives $E_k = 1 + p\\,E_{k_H} + q\\,E_{k_T}$ with $E_n = 0$, and Gauss-Jordan elimination with `Fraction` keeps it exact. As a check, Conway's overlap rule gives the same values: HTHTH is $32 + 8 + 2 = 42$."
+   }
+  },
+  {
+   "id": "hw1-stopping-value",
+   "difficulty": 4,
+   "skills": [
+    "pz-expectation",
+    "pz-recursion"
+   ],
+   "prose": "A die has faces `die_faces`, all equally likely. You may keep the face in £, or pay `cost` to roll again, as often as you like. Write `stopping_value(die_faces, cost)`, the exact value of the game played well.",
+   "question": "Write `stopping_value(die_faces, cost)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction\n",
+    "starter": "from fractions import Fraction\n\n\ndef stopping_value(die_faces, cost):\n    ...\n",
+    "solution": "from fractions import Fraction\n\n\ndef stopping_value(die_faces, cost):\n    faces = sorted(Fraction(x) for x in die_faces)\n    n = len(faces)\n    cost = Fraction(cost)\n    best = None\n    # reroll the m smallest faces, keep the rest: V = (sum kept - m*cost) / (n - m)\n    for m in range(n):\n        v = (sum(faces[m:]) - m * cost) / (n - m)\n        if best is None or v > best:\n            best = v\n    return best\n",
+    "examples": [
+     {
+      "call": "stopping_value([1, 2, 3, 4, 5, 6], 1)",
+      "expect": "Fraction(4, 1)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "stopping_value([1, 2, 3, 4, 5, 6], 1)",
+      "expect": "Fraction(4, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([1, 2, 3, 4, 5, 6], 2)",
+      "expect": "Fraction(18, 5)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([1, 2, 3, 4, 5, 6], Fraction(1, 2))",
+      "expect": "Fraction(9, 2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([1, 2, 3, 4, 5, 6], 0)",
+      "expect": "Fraction(6, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([1, 2, 3, 4, 5, 6], 10)",
+      "expect": "Fraction(7, 2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([0, 0, 0, 10], 1)",
+      "expect": "Fraction(7, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([1, 2, 3, 4], 1)",
+      "expect": "Fraction(8, 3)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([2, 4, 9], 3)",
+      "expect": "Fraction(5, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([5], 1)",
+      "expect": "Fraction(5, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "stopping_value([7, 7, 7], 2)",
+      "expect": "Fraction(7, 1)",
+      "compare": "fraction"
+     }
+    ],
+    "how": "Check runs 10 hidden tests, each needing an exact `Fraction`. A standard die is tried at costs 1, 2, ½, 0 and 10. Then come uneven dice, a one-faced die and a die with equal faces."
+   },
+   "feedback": {
+    "correct": "The best rule rerolls the smallest faces; trying every cut-off finds it.",
+    "generic": "Not quite right. Look at the first failing test.",
+    "byKey": {
+     "test-4": "With a free reroll you keep rerolling until the top face: the value is the largest face.",
+     "test-5": "With a cost of 10 you never reroll, so the value is the plain average, 3.5."
+    }
+   },
+   "explain": {
+    "text": "The best rule keeps the faces above $V - c$, so it rerolls the $m$ smallest faces for some $m$. That rule is worth $V_m = (\\text{sum of kept faces} - mc)/(n - m)$. Every $V_m$ can be achieved, so the game is worth the largest: 4 at cost 1, $\\tfrac{18}{5}$ at cost 2."
+   }
+  },
+  {
+   "id": "hw1-two-sixes",
+   "difficulty": 4,
+   "skills": [
+    "pz-expectation",
+    "pz-recursion"
+   ],
+   "prose": "Roll a fair die until two sixes come in a row. Let $E_0$ be the expected rolls from the start and $E_S$ from just after a six.",
+   "question": "Put the derivation in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "From just after a six: a six finishes and anything else restarts, so $E_S = 1 + \\tfrac56 E_0$."
+     },
+     {
+      "id": "s2",
+      "text": "From the start: a six reaches S and anything else stays, so $E_0 = 1 + \\tfrac16 E_S + \\tfrac56 E_0$."
+     },
+     {
+      "id": "s3",
+      "text": "Rearrange the second: $\\tfrac16 E_0 = 1 + \\tfrac16 E_S$."
+     },
+     {
+      "id": "s4",
+      "text": "Substitute the first: $\\tfrac16 E_0 = 1 + \\tfrac16 + \\tfrac{5}{36} E_0$."
+     },
+     {
+      "id": "s5",
+      "text": "So $\\tfrac1{36} E_0 = \\tfrac76$ and $E_0 = 42$."
+     },
+     {
+      "id": "d1",
+      "text": "From just after a six, a non-six keeps you there, so $E_S = 6$."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1"
+    ],
+    "same": [
+     [
+      "s1",
+      "s2"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Two equations, rearrange, substitute, solve: 42 rolls.",
+    "generic": "Not quite right. Write both first-step equations, then eliminate $E_S$.",
+    "byKey": {
+     "d1": "A non-six after a six breaks the run, so it sends you back to the start.",
+     "left-out": "Every true line is needed.",
+     "s5": "The answer comes last."
+    }
+   },
+   "explain": {
+    "text": "This is $(1 + p)/p^2$ with $p = \\tfrac16$: $\\tfrac{7/6}{1/36} = 42$. A 6 then a 5 takes only 36, because it cannot overlap itself."
+   }
+  },
+  {
+   "id": "hw1-spoken",
+   "difficulty": 4,
+   "skills": [
+    "pz-expectation"
+   ],
+   "question": "Answer aloud, then write it out.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "An interviewer asks how many rolls of a fair die it takes, on average, to see every face. Write the answer as you would say it, in under a minute. Give the method, the number and a check.",
+    "model": "**Set-up.** Let $T$ be the number of rolls. Split it into six stages, $T = T_1 + T_2 + \\dots + T_6$, where $T_k$ is the rolls spent finding the $k$-th new face.\n\n**Each stage.** With $k - 1$ faces seen, a roll is new with chance $\\tfrac{7 - k}{6}$. So $T_k$ is a geometric wait, with $E[T_k] = \\tfrac{6}{7 - k}$.\n\n**Linearity.** Expected values add, whatever the dependence:\n$$E[T] = \\tfrac66 + \\tfrac65 + \\tfrac64 + \\tfrac63 + \\tfrac62 + \\tfrac61 = 6 \\times \\tfrac{49}{20} = 14.7.$$\n\n**Checks.** You need at least 6 rolls, and 14.7 is well above that. The last face alone takes 6 rolls on average, the first takes 1. For large $n$, $nH_n \\approx n\\ln n + 0.577n + \\tfrac12$, and for $n = 6$ that gives $10.75 + 3.46 + 0.5 \\approx 14.7$.\n\n**Said aloud.** \"Split the wait into six stages, one per new face. Stage $k$ is geometric with chance $(7 - k)/6$. Add the means by linearity: $6(1 + \\tfrac12 + \\dots + \\tfrac16) = 14.7$. Sanity check: the last face alone takes 6.\"",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Splits the wait into six stages, one for each new face"
+     },
+     {
+      "points": 2,
+      "text": "Gives each stage as a geometric wait with chance $(7 - k)/6$ and mean $6/(7 - k)$"
+     },
+     {
+      "points": 2,
+      "text": "Adds the stage means by linearity, and says no independence is needed"
+     },
+     {
+      "points": 1,
+      "text": "States the number, 14.7 (or $6H_6 = 147/10$)"
+     },
+     {
+      "points": 2,
+      "text": "Gives a sanity check: at least 6 rolls, the last stage alone is 6, or the $n \\ln n$ estimate"
+     },
+     {
+      "points": 1,
+      "text": "Says it in order and briefly, as an interviewer wants: method, number, check"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and tick the rubric.",
+    "generic": "Open the model answer and mark each rubric line."
+   },
+   "explain": {
+    "text": "The answer an interviewer wants is short: stages, geometric waits, linearity, 14.7, and one check. Saying the method before the number lets them follow you."
+   }
+  },
+  {
+   "id": "hw1-run-of-three",
+   "difficulty": 4,
+   "skills": [
+    "pz-expectation",
+    "pz-recursion"
+   ],
+   "prose": "Flip a fair coin until three equal faces in a row appear, either HHH or TTT.",
+   "question": "How many flips do you expect?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "label": "Expected flips",
+    "accept": "7",
+    "wrong": [
+     {
+      "id": "hhh",
+      "value": 14,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "half",
+      "value": 7.5,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "7 flips.",
+    "generic": "Not quite right. Track the length of the current run, 1 or 2, whatever its face.",
+    "byKey": {
+     "hhh": "That is HHH alone. Either face may make the run here, which halves the wait.",
+     "half": "You halved the HHH wait and added a flip. Solve the run-length chain instead."
+    }
+   },
+   "explain": {
+    "text": "After the first flip the run has length 1. Then $e_1 = 1 + \\tfrac12 e_2 + \\tfrac12 e_1$ and $e_2 = 1 + \\tfrac12 \\cdot 0 + \\tfrac12 e_1$, so $e_1 = 6$. Adding the first flip gives $1 + 6 = 7$."
+   }
+  },
+  {
+   "id": "hw1-two-toys",
+   "difficulty": 4,
+   "skills": [
+    "pz-expectation"
+   ],
+   "prose": "A cereal box holds toy A with chance 0.8 and toy B with chance 0.2.",
+   "question": "How many boxes do you expect to open to collect both toys? Give two decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.25,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "label": "Boxes",
+    "accept": "21/4 = 5.25",
+    "wrong": [
+     {
+      "id": "rare",
+      "value": 5,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "equal",
+      "value": 3,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5.25$ boxes.",
+    "generic": "Not quite right. Split on which toy comes first.",
+    "byKey": {
+     "rare": "That is the wait for B alone. Sometimes B comes first, and then you wait for A.",
+     "equal": "That treats the toys as equally likely."
+    }
+   },
+   "explain": {
+    "text": "The first box gives a toy. If it is A (chance 0.8), B takes $1/0.2 = 5$ more. If it is B (chance 0.2), A takes $1/0.8 = 1.25$ more. So $1 + 0.8 \\times 5 + 0.2 \\times 1.25 = 5.25$. As a check, $E[\\max] = E[T_A] + E[T_B] - E[\\min] = 1.25 + 5 - 1 = 5.25$."
+   }
+  },
+  {
+   "id": "hw1-loops",
+   "difficulty": 5,
+   "skills": [
+    "pz-expectation",
+    "pz-symmetry"
+   ],
+   "prose": "Ten people each draw one of their ten names from a hat at random. Draw an arrow from each person to the person they drew. The arrows form closed loops; someone who drew their own name is a loop of one.",
+   "question": "How many loops do you expect? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.929,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "label": "Loops",
+    "accept": "H_10 = 7381/2520, about 2.9290",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "log",
+      "value": 2.3026,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$H_{10} = 1 + \\tfrac12 + \\dots + \\tfrac1{10} \\approx 2.9290$.",
+    "generic": "Not quite right. Give each person the share $1/L$, where $L$ is the size of their loop.",
+    "byKey": {
+     "one": "One big loop is possible, but many shuffles split into several.",
+     "log": "That is $\\ln 10$, an estimate of the answer, not the answer.",
+     "half": "You paired people up. Loops can have any size from 1 to 10."
+    }
+   },
+   "explain": {
+    "text": "Give each person $1/L$, where $L$ is the size of their loop. Then the shares add to the number of loops. By symmetry, the loop through any one person has a size uniform on 1 to 10. So each share averages $\\tfrac1{10}H_{10}$, and ten people give $H_{10} \\approx 2.929$."
+   }
+  },
+  {
+   "id": "hw1-penney",
+   "difficulty": 3,
+   "skills": [
+    "pz-recursion"
+   ],
+   "prose": "Flip a fair coin until HT or TT appears. You win on HT, your friend on TT.",
+   "question": "What is your chance of winning?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$\\tfrac34$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$\\tfrac12$",
+      "why": "You treated it like HH against HT. Here TT wins only if the first two flips are both T."
+     },
+     {
+      "id": "c",
+      "text": "$\\tfrac14$",
+      "why": "That is your friend's chance."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$\\tfrac34$: once an H appears, HT must come before TT.",
+    "generic": "Not quite right. What happens once the first H appears?"
+   },
+   "explain": {
+    "text": "Once any H appears, the next T makes HT before a TT can form. So your friend wins only on TT at flips 1 and 2, chance $\\tfrac14$, and you win with $\\tfrac34$."
+   }
+  },
+  {
+   "id": "hw1-triples",
+   "difficulty": 4,
+   "skills": [
+    "pz-expectation"
+   ],
+   "prose": "Fifty people, with birthdays spread evenly over 365 days.",
+   "question": "How many groups of three people do you expect to share a birthday? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1471,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "label": "Triples",
+    "accept": "C(50, 3)/365^2, about 0.1471",
+    "wrong": [
+     {
+      "id": "pairs",
+      "value": 3.3562,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one-day",
+      "value": 0.0004,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\binom{50}{3}/365^2 = 19600/133225 \\approx 0.1471$.",
+    "generic": "Not quite right. Count the triples, then one triple's chance of a shared day.",
+    "byKey": {
+     "pairs": "That is the expected number of pairs. A triple needs three people on one day.",
+     "one-day": "That is the chance for a particular day. The shared day can be any of 365."
+    }
+   },
+   "explain": {
+    "text": "There are $\\binom{50}{3} = 19{,}600$ triples. The second and third people both match the first with chance $1/365^2$. So $E = 19600/133225 \\approx 0.147$, while the expected pairs are $\\binom{50}{2}/365 \\approx 3.36$."
+   }
+  },
+  {
+   "id": "hw1-card-23",
+   "difficulty": 4,
+   "skills": [
+    "pz-expectation",
+    "pz-recursion"
+   ],
+   "prose": "Two red and three black cards are shuffled and turned one at a time. A red pays £1, a black costs £1, and you may stop at any moment.",
+   "question": "What is the game worth, in £? Give one decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "label": "Value in £",
+    "accept": "1/5 = 0.2",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "forced",
+      "value": -1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac15$: the option to stop makes even a losing deck worth playing.",
+    "generic": "Not quite right. Work backwards using $V(r, b) = \\max(0, \\text{turning})$.",
+    "byKey": {
+     "zero": "You assumed a deck with more blacks is worthless. You stop when ahead, so the good orders pay and the bad ones cost little.",
+     "forced": "That is the value if you must turn every card."
+    }
+   },
+   "explain": {
+    "text": "With $V(1,1) = \\tfrac12$, $V(1,2) = 0$, $V(2,1) = \\tfrac43$, then $V(2,2) = \\tfrac23$ and $V(1,3) = 0$. So $V(2,3) = \\tfrac25(1 + V(1,3)) + \\tfrac35(-1 + V(2,2)) = \\tfrac25 - \\tfrac15 = \\tfrac15$. A first red earns £1 and lets you stop, which outweighs the cost of a first black."
+   }
+  }
+ ]
+}

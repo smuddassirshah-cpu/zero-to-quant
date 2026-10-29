@@ -1,0 +1,512 @@
+{
+ "id": "homework-1",
+ "course": "ito",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-qv-convergence",
+   "difficulty": 5,
+   "skills": [
+    "it-bm",
+    "it-calculus"
+   ],
+   "title": "How fast quadratic variation settles",
+   "prose": "Quadratic variation at $m$ steps has mean $T$ and variance $2T\\Delta t$, so on $[0, 1]$ its sd is $\\sqrt{2/m}$. Test that across many paths. `qv_convergence(seed, ms, paths)` builds `paths` seeded paths on the finest grid. It reads each at $m$ steps and returns one pair (mean, sample sd) per $m$.",
+   "question": "Complete `qv_convergence`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef qv_convergence(seed, ms, paths):\n    \"\"\"For each m in ms: (mean, sd) over paths of the\n    quadratic variation on [0, 1] at m steps.\"\"\"\n    N = max(ms)                     # finest grid\n    rng = np.random.default_rng(seed)\n    dW = rng.standard_normal((paths, N)) * np.sqrt(1 / N)\n    W = np.hstack([np.zeros((paths, 1)),\n                   np.cumsum(dW, axis=1)])\n    out = []\n    ...\n    return out\n",
+    "solution": "import numpy as np\n\ndef qv_convergence(seed, ms, paths):\n    \"\"\"For each m in ms: (mean, sd) over paths of the\n    quadratic variation on [0, 1] at m steps.\"\"\"\n    N = max(ms)                     # finest grid\n    rng = np.random.default_rng(seed)\n    dW = rng.standard_normal((paths, N)) * np.sqrt(1 / N)\n    W = np.hstack([np.zeros((paths, 1)),\n                   np.cumsum(dW, axis=1)])\n    out = []\n    for m in ms:\n        d = np.diff(W[:, ::N // m], axis=1)   # m increments\n        q = np.sum(d ** 2, axis=1)            # one sum per path\n        out.append((float(np.mean(q)), float(np.std(q, ddof=1))))\n    return out\n",
+    "examples": [
+     {
+      "call": "len(qv_convergence(1, [4, 16], 10))",
+      "expect": "2",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[[round(a, 6), round(b, 6)] for a, b in qv_convergence(1, [16, 64, 256, 1024], 2000)]",
+      "expect": "[[1.000491, 0.345591], [0.995637, 0.175049], [0.996848, 0.086355], [0.998191, 0.043781]]",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(qv_convergence(1, [16, 64, 256, 1024], 2000)) == 4 and all(abs(b / (2 / m) ** 0.5 - 1) < 0.1 for (a, b), m in zip(qv_convergence(1, [16, 64, 256, 1024], 2000), [16, 64, 256, 1024]))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "len(qv_convergence(1, [16, 64, 256, 1024], 2000)) == 4 and all(abs(a - 1) < 3 * (2 / m) ** 0.5 / 2000 ** 0.5 for (a, b), m in zip(qv_convergence(1, [16, 64, 256, 1024], 2000), [16, 64, 256, 1024]))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "[[round(a, 6), round(b, 6)] for a, b in qv_convergence(7, [8, 32, 128, 512], 3000)]",
+      "expect": "[[1.005306, 0.503185], [0.994773, 0.251117], [0.994518, 0.126509], [0.999206, 0.063731]]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "r = qv_convergence(7, [8, 32, 128, 512], 3000)",
+      "call": "all(r[k][1] > r[k + 1][1] for k in range(3))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(qv_convergence(3, [5], 4)[0][0], 6)",
+      "expect": "1.529179",
+      "compare": "isclose"
+     }
+    ],
+    "budget": 10000,
+    "how": "Check runs 6 hidden tests. The pairs on seeds 1 and 7 must match to 6 places. Every sd must be within 10% of $\\sqrt{2/m}$, and every mean within three standard errors of 1. The sds must shrink as $m$ grows."
+   },
+   "feedback": {
+    "correct": "The sds shrink like $\\sqrt{2/m}$: 0.35 at 16 steps, 0.044 at 1,024.",
+    "generic": "Not quite right. For each $m$, read every `N // m`-th column, take the increments along each row, and sum their squares."
+   },
+   "explain": {
+    "text": "On seed 1 the sds are 0.3456, 0.1750, 0.0864 and 0.0438, against $\\sqrt{2/m}$ = 0.3536, 0.1768, 0.0884 and 0.0442. Each quadrupling of $m$ halves the sd, so the sum converges to $T$ in mean square. The means all sit within a few thousandths of 1."
+   }
+  },
+  {
+   "id": "h-bridge",
+   "difficulty": 4,
+   "skills": [
+    "it-bm"
+   ],
+   "title": "Filling in a path between two prices",
+   "prose": "A desk knows a log price at the open and the close and wants a path in between. Take a free path $B$ on $[0, 1]$ and set $X_t = W_0 + (W_1 - W_0)t + (B_t - tB_1)$. The bracket is 0 at both ends, so $X$ is pinned to $W_0$ and $W_1$. This is a **Brownian bridge**, with $\\operatorname{Var}(X_t) = t(1 - t)$.",
+   "question": "Complete `brownian_bridge`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef brownian_bridge(W0, W1, n, seed):\n    \"\"\"A Brownian path on [0, 1] pinned to W0 at t = 0 and\n    W1 at t = 1, at n + 1 equal times.\"\"\"\n    rng = np.random.default_rng(seed)\n    dB = rng.standard_normal(n) * np.sqrt(1 / n)\n    B = np.concatenate([[0.0], np.cumsum(dB)])   # free path\n    t = np.linspace(0, 1, n + 1)\n    ...\n",
+    "solution": "import numpy as np\n\ndef brownian_bridge(W0, W1, n, seed):\n    \"\"\"A Brownian path on [0, 1] pinned to W0 at t = 0 and\n    W1 at t = 1, at n + 1 equal times.\"\"\"\n    rng = np.random.default_rng(seed)\n    dB = rng.standard_normal(n) * np.sqrt(1 / n)\n    B = np.concatenate([[0.0], np.cumsum(dB)])   # free path\n    t = np.linspace(0, 1, n + 1)\n    # straight line between the pins, plus B with its end removed\n    return W0 + (W1 - W0) * t + (B - t * B[-1])\n",
+    "examples": [
+     {
+      "call": "round(float(brownian_bridge(0.2, 0.5, 8, 11)[-1]), 6)",
+      "expect": "0.5",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(brownian_bridge(0.2, 0.5, 8, 11), 6).tolist()",
+      "expect": "[0.2, 0.170187, 0.609028, 1.000131, 0.777808, 0.630558, 0.402197, 0.561724, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(brownian_bridge(1.0, -1.0, 100, 3)[0]), 9)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(brownian_bridge(1.0, -1.0, 100, 3)[-1]), 9)",
+      "expect": "-1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "len(brownian_bridge(0, 0, 50, 1))",
+      "expect": "51",
+      "compare": "equal"
+     },
+     {
+      "call": "round(float(brownian_bridge(0, 0, 4, 5)[2]), 6)",
+      "expect": "-0.574594",
+      "compare": "isclose"
+     },
+     {
+      "setup": "mids = [brownian_bridge(0, 0, 2, s)[1] for s in range(2000)]",
+      "call": "abs(float(np.var(mids, ddof=1)) - 0.25) < 0.024",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests: a seed-11 bridge to 6 places, both pins, the length and a seed-5 midpoint. The last test needs the variance at $t = 0.5$ over 2,000 seeds within 0.024 of 0.25."
+   },
+   "feedback": {
+    "correct": "Pinned at both ends, with variance $t(1 - t)$ in between.",
+    "generic": "Not quite right. Add the straight line $W_0 + (W_1 - W_0)t$ to $B_t - tB_1$."
+   },
+   "explain": {
+    "text": "The line joins the two pins, and $B_t - tB_1$ adds noise that vanishes at both ends. Its variance is $t - 2t \\cdot t + t^2 = t(1 - t)$, largest at $t = \\tfrac12$. Over 2,000 seeds the midpoint variance is 0.2449, against 0.25."
+   }
+  },
+  {
+   "id": "h-var-integral-proof",
+   "difficulty": 4,
+   "skills": [
+    "it-bm"
+   ],
+   "title": "The variance of an average",
+   "prose": "Prove that $A_T = \\int_0^T W_t\\,dt$ has $\\operatorname{Var}(A_T) = T^3/3$. Leave out the two flawed lines.",
+   "question": "Put the lines of the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "e1",
+      "text": "$E[A_T] = \\int_0^T E[W_t]\\,dt = 0$, swapping $E$ and the integral."
+     },
+     {
+      "id": "e2",
+      "text": "So $\\operatorname{Var}(A_T) = E[A_T^2] = E\\left[\\int_0^T W_s\\,ds \\int_0^T W_t\\,dt\\right]$, a double integral of $W_sW_t$."
+     },
+     {
+      "id": "e3",
+      "text": "Swap again: $\\operatorname{Var}(A_T) = \\int_0^T\\int_0^T E[W_sW_t]\\,ds\\,dt$."
+     },
+     {
+      "id": "e4",
+      "text": "$E[W_sW_t] = \\operatorname{Cov}(W_s, W_t) = \\min(s, t)$, as both means are 0."
+     },
+     {
+      "id": "e5",
+      "text": "The square is symmetric about $s = t$: the integral is $2\\int_0^T\\int_0^t s\\,ds\\,dt$."
+     },
+     {
+      "id": "e6",
+      "text": "Inner integral $t^2/2$, outer $2 \\cdot T^3/6 = T^3/3$."
+     },
+     {
+      "id": "x1",
+      "text": "$\\operatorname{Var}(A_T) = \\int_0^T \\operatorname{Var}(W_t)\\,dt = T^2/2$.",
+      "why": "Variance does not pass through an integral like that. The values at different times are correlated, so the covariances count."
+     },
+     {
+      "id": "x2",
+      "text": "$E[W_sW_t] = 0$ for $s \\ne t$, by independent increments.",
+      "why": "Increments are independent, values are not. $E[W_sW_t] = \\min(s, t)$."
+     }
+    ],
+    "answer": [
+     "e1",
+     "e2",
+     "e3",
+     "e4",
+     "e5",
+     "e6"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "A double integral of $\\min(s, t)$ over the square: $T^3/3$.",
+    "generic": "Not quite right. Each step must follow from the one before.",
+    "byKey": {
+     "x1": "You integrated the variances only. The values at different times are correlated, so the covariances count too.",
+     "x2": "You treated $W_s$ and $W_t$ as independent. Only increments over disjoint times are.",
+     "left-out": "A line of the proof is in the Left out list. Only the two flawed lines belong there."
+    }
+   },
+   "explain": {
+    "text": "The mean is 0, so the variance is $E[A_T^2]$, a double integral of $E[W_sW_t] = \\min(s, t)$. By symmetry it is twice the triangle $s < t$, which gives $T^3/3$. At $T = 1$ that is $\\tfrac13$, and at $T = 2$ it is 2.6667, as in the review."
+   }
+  },
+  {
+   "id": "h-which-martingales",
+   "difficulty": 4,
+   "skills": [
+    "it-bm"
+   ],
+   "title": "Martingale or not",
+   "prose": "An interview question. Write $W_t = W_s + D$ for $s < t$, with $D \\sim N(0, t - s)$ independent of the path up to $s$. Use $E[D] = E[D^3] = 0$, $E[D^2] = t - s$ and $E[e^{D}] = e^{(t - s)/2}$.",
+   "question": "Which are martingales? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cubic",
+      "text": "$W_t^3 - 3tW_t$",
+      "correct": true
+     },
+     {
+      "id": "expo",
+      "text": "$e^{W_t - t/2}$",
+      "correct": true
+     },
+     {
+      "id": "comp",
+      "text": "$W_t^2 - t$",
+      "correct": true
+     },
+     {
+      "id": "cube",
+      "text": "$W_t^3$",
+      "why": "$E[(W_s + D)^3] = W_s^3 + 3W_s(t - s)$: the middle term drifts with $W_s$."
+     },
+     {
+      "id": "tw",
+      "text": "$tW_t$",
+      "why": "$E[tW_t \\mid \\text{path to } s] = tW_s$, not $sW_s$: it grows by $(t - s)W_s$."
+     },
+     {
+      "id": "expw",
+      "text": "$e^{W_t}$",
+      "why": "$E[e^{W_s + D}] = e^{W_s}e^{(t - s)/2}$: it grows on average."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Three are: each correction term cancels the drift of the other part.",
+    "generic": "Not quite right. Expand each with $W_t = W_s + D$ and check whether the conditional mean is the same formula at time $s$."
+   },
+   "explain": {
+    "text": "$E[(W_s + D)^3 - 3t(W_s + D)] = W_s^3 + 3W_s(t - s) - 3tW_s = W_s^3 - 3sW_s$, so $W_t^3 - 3tW_t$ is a martingale. $E[e^{W_s + D - t/2}] = e^{W_s}e^{(t - s)/2 - t/2} = e^{W_s - s/2}$, and $W_t^2 - t$ was checked in the review. $W_t^3$, $tW_t$ and $e^{W_t}$ keep a drift."
+   }
+  },
+  {
+   "id": "h-both-positive",
+   "difficulty": 5,
+   "skills": [
+    "it-bm"
+   ],
+   "title": "Above zero at both times",
+   "prose": "An interview question: $W_t$ is Brownian motion. Write $X = W_1$ and $Y = W_2 - W_1$, two independent $N(0, 1)$ draws. The pair $(X, Y)$ has a density that looks the same in every direction.",
+   "question": "What is $P(W_1 > 0 \\text{ and } W_2 > 0)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.375,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.375: the region $X > 0$, $X + Y > 0$ is a wedge of 135° out of 360°.",
+    "label": "Probability, as a decimal",
+    "placeholder": "for example 0.25",
+    "wrong": [
+     {
+      "id": "indep",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "third",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$135/360 = 3/8 = 0.375$.",
+    "generic": "Not quite right. Draw the region $X > 0$, $Y > -X$ in the plane and measure its angle.",
+    "byKey": {
+     "indep": "You treated $W_1$ and $W_2$ as independent: $\\tfrac12 \\times \\tfrac12$. They share $[0, 1]$, so both positive is more likely.",
+     "half": "0.5 is $P(W_1 > 0)$ alone. $W_2$ can still fall below 0.",
+     "third": "The wedge is 135°, not 120°."
+    }
+   },
+   "explain": {
+    "text": "$W_1 > 0$ and $W_2 > 0$ mean $X > 0$ and $Y > -X$: the half-plane $X > 0$ above the line $Y = -X$. That wedge runs from $-45°$ to $90°$, an angle of 135°. A direction-free density gives it $135/360 = 3/8$; a million seeded draws give 0.3754."
+   }
+  },
+  {
+   "id": "h-fourth-cross",
+   "difficulty": 5,
+   "skills": [
+    "it-bm"
+   ],
+   "title": "A mixed fourth moment",
+   "prose": "An interview question: for $s < t$, find $E[W_s^2W_t^2]$. Write $W_t = W_s + D$ with $D$ independent of $W_s$, and use $E[W_s^4] = 3s^2$.",
+   "question": "Give $E[W_s^2W_t^2]$ as a formula in $s$ and $t$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "2s^2+st",
+    "accept": [
+     "2s^2+st",
+     "2*s^2+s*t",
+     "s(2s+t)",
+     "3s^2+s(t-s)"
+    ],
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "indep",
+      "tex": "st"
+     },
+     {
+      "id": "nocross",
+      "tex": "3s^2"
+     },
+     {
+      "id": "noKurt",
+      "tex": "s^2+st"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$3s^2 + s(t - s) = 2s^2 + st$.",
+    "generic": "Not quite right. Expand $W_s^2(W_s + D)^2$ and take expectations term by term.",
+    "byKey": {
+     "indep": "$st$ treats $W_s^2$ and $W_t^2$ as independent. They share the stretch $[0, s]$.",
+     "nocross": "You kept only $E[W_s^4]$. The term $W_s^2D^2$ adds $s(t - s)$.",
+     "noKurt": "You used $E[W_s^4] = s^2$. A normal's fourth moment is $3s^2$."
+    }
+   },
+   "explain": {
+    "text": "$W_s^2W_t^2 = W_s^4 + 2W_s^3D + W_s^2D^2$. Independence gives $E = 3s^2 + 0 + s(t - s) = 2s^2 + st$. A million seeded draws at $s = 0.7$, $t = 1.9$ give 2.322 against $2.31$, within the noise."
+   }
+  },
+  {
+   "id": "h-drift-below",
+   "difficulty": 3,
+   "skills": [
+    "it-bm"
+   ],
+   "prose": "A strategy's cumulative P&L, in £ thousand, is modelled as Brownian motion with drift: $X_t = 0.5t + W_t$, with $t$ in months.",
+   "question": "What is $P(X_4 < 0)$, the chance the strategy is down after four months? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1587,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.1587: $X_4 \\sim N(2, 4)$, so $\\Phi(-2/2) = \\Phi(-1)$.",
+    "label": "Probability, as a decimal",
+    "placeholder": "for example 0.25",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.3085,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sd1",
+      "value": 0.0228,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nodrift",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\Phi(-1) = 0.1587$.",
+    "generic": "Not quite right. Find the mean and the sd of $X_4$, then standardise 0.",
+    "byKey": {
+     "var": "You divided by the variance 4. Divide by the sd, 2.",
+     "sd1": "You used sd 1. $W_4$ has sd 2.",
+     "nodrift": "The drift moves the centre to 2."
+    }
+   },
+   "explain": {
+    "text": "$X_4 = 2 + W_4 \\sim N(2, 4)$, so $P(X_4 < 0) = \\Phi((0 - 2)/2) = \\Phi(-1) = 0.1587$. The mean grows like $t$ and the sd like $\\sqrt{t}$. So the chance of being down falls as the horizon grows: $\\Phi(-0.5\\sqrt t)$."
+   }
+  },
+  {
+   "id": "h-realised-vol",
+   "difficulty": 3,
+   "skills": [
+    "it-bm",
+    "it-calculus"
+   ],
+   "prose": "Over one quarter, 63 trading days or $T = 0.25$ years, a share's squared daily log returns add to $\\sum r^2 = 0.0144$.",
+   "question": "Estimate its annual volatility $\\sigma$ from the quadratic variation. Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.24,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "0.24: $\\sqrt{0.0144/0.25}$.",
+    "label": "Annual volatility",
+    "wrong": [
+     {
+      "id": "noT",
+      "value": 0.12,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "var",
+      "value": 0.0576,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "daily",
+      "value": 0.0151,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{0.0576} = 0.24$.",
+    "generic": "Not quite right. Quadratic variation of $\\sigma W$ over $T$ is $\\sigma^2T$.",
+    "byKey": {
+     "noT": "You took the square root without dividing by $T$. A quarter holds a quarter of the annual variance.",
+     "var": "0.0576 is $\\hat\\sigma^2$.",
+     "daily": "That is a daily volatility. Divide by $T$ in years."
+    }
+   },
+   "explain": {
+    "text": "$\\sum r^2 \\approx \\sigma^2T$, so $\\hat\\sigma^2 = 0.0144/0.25 = 0.0576$ and $\\hat\\sigma = 0.24$. That is 24% a year. The drift barely matters over a quarter: it adds about $\\mu^2T^2/63$."
+   }
+  },
+  {
+   "id": "h-why-gbm",
+   "difficulty": 4,
+   "skills": [
+    "it-bm"
+   ],
+   "kind": "longform",
+   "title": "Why GBM and not W",
+   "prompt": "A new analyst asks why share prices are modelled with geometric Brownian motion rather than with Brownian motion itself, $S_t = S_0 + \\sigma W_t$. Write a short note. Give two reasons against $W$ itself, and write down GBM and its solution. Explain what the $-\\tfrac12\\sigma^2$ term does, with the course's numbers (£100, $\\mu = 8\\%$, $\\sigma = 20\\%$ and 60%). Say how $\\sigma$ is estimated from data. Give one way real prices differ from GBM.",
+   "model": "**1. Why not $W$ itself.** If the price were $S_t = S_0 + \\sigma W_t$, it would be normal at every date. A normal price can go negative, with chance $\\Phi(-S_0/(\\sigma\\sqrt t))$, which is never 0. Its moves would also be in pounds, so a £10 share and a £1,000 share with the same $\\sigma$ would swing by the same number of pounds. Real shares move by percentages: a 2% day is ordinary at any price level.\n\n**2. Why GBM.** GBM models the log price as Brownian motion with drift: $$\\ln S_t = \\ln S_0 + (\\mu - \\tfrac12\\sigma^2)t + \\sigma W_t.$$ So $S_t = S_0\\exp((\\mu - \\tfrac12\\sigma^2)t + \\sigma W_t)$ is always positive. Each log return over $\\Delta t$ is $N((\\mu - \\tfrac12\\sigma^2)\\Delta t, \\sigma^2\\Delta t)$, the same at every price, so percentage moves have a fixed distribution. Returns over disjoint periods are independent, from the independent increments of $W$. The price at each date is lognormal.\n\n**3. What the $\\sigma^2/2$ does.** It makes $\\mu$ the mean growth rate: $E[e^{\\sigma W_t}] = e^{\\sigma^2t/2}$, which cancels the $-\\tfrac12\\sigma^2t$, so $E[S_t] = S_0e^{\\mu t}$. The median, and the growth of a typical path, is lower: $S_0e^{(\\mu - \\sigma^2/2)t}$. At $\\mu = 8\\%$ and $\\sigma = 20\\%$, from £100: mean £108.33, median £106.18. At $\\sigma = 60\\%$ the log drift is $0.08 - 0.18 = -0.10$, so 57% of paths lose money although the mean still rises. This volatility drag is why a volatile asset can have a high average return and a poor typical outcome.\n\n**4. Estimating $\\sigma$.** The quadratic variation of $\\sigma W$ over $T$ is $\\sigma^2T$, so realised variance $\\sum r^2$ estimates $\\sigma^2T$. On the course's seeded year, 252 daily log returns give 0.1994 (sample sd times $\\sqrt{252}$) against the true 0.2.\n\n**5. How real prices differ.** Any one of these, explained, earns the point:\n- Fat tails: daily returns have far more 5-sd days than a normal allows (October 1987 was over 20 sd).\n- Volatility clusters and changes: calm and stormy spells persist, and $\\sigma$ is not constant (GARCH, stochastic volatility).\n- Jumps: earnings and defaults move prices in a step, not along a continuous path.\n- Skew and leverage: falls come with rising volatility, so option smiles are not flat.\n\n**6. Why it is still used.** GBM gives closed forms (the Black-Scholes formula in level 3), is easy to simulate exactly, and its failures are understood. Desks use it as a baseline and patch it with a volatility surface.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Two reasons against $S_0 + \\sigma W_t$: prices can go negative, and moves are in pounds rather than percentages."
+    },
+    {
+     "points": 2,
+     "text": "Writes GBM with its solution $S_t = S_0\\exp((\\mu - \\tfrac12\\sigma^2)t + \\sigma W_t)$, and says log returns are independent normals."
+    },
+    {
+     "points": 2,
+     "text": "Explains the drag: $E[S_t] = S_0e^{\\mu t}$ via $E[e^{\\sigma W_t}] = e^{\\sigma^2t/2}$, median $S_0e^{(\\mu - \\sigma^2/2)t}$, with £108.33 and £106.18."
+    },
+    {
+     "points": 1,
+     "text": "Uses the $\\sigma = 60\\%$ case: negative log drift, 57% of paths below £100 although the mean rises."
+    },
+    {
+     "points": 1,
+     "text": "Estimates $\\sigma$ from realised variance, citing quadratic variation $\\sigma^2T$."
+    },
+    {
+     "points": 2,
+     "text": "Gives one real departure (fat tails, changing volatility, jumps or skew) with a concrete sign of it in data."
+    }
+   ]
+  }
+ ]
+}

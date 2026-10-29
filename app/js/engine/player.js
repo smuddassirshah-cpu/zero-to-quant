@@ -5,7 +5,8 @@
    ZQ.player.mount(host, { course, lesson, start })   lesson is an id or a lesson object; start: undefined (resume),
                                                        'quiz', 'done' or a screen index. Returns cleanup().
    ZQ.player.renderItem(item, host, { mode, onGraded }) one item for reviews, homework, redo, practice and exams.
-   ZQ.player.runSet(host, { title, items, mode, hints: false, onDone }) a list with dot progress, one try each.
+   ZQ.player.runSet(host, { title, items, mode, hints: false, onDone }) a list with dot progress, one try each; the returned
+   handle has finish() to end the set at once (a locking clock), which passes onDone the results so far.
    window.ZQ.test while a lesson is mounted: current(), answerCorrect(), check(), continue() (see the bottom). runSet
    installs the same four calls for its set (current().phase is 'set'; kind is 'item' until the last Finish, then 'done').
 
@@ -1103,6 +1104,15 @@
     };
     primary.addEventListener('click', onPrimary);
     sec.addEventListener('click', () => cur && cur.why());
+    /* finish(): end the set now (a locking clock reached zero). An answer that is ready but not yet checked is checked
+       first; the rest stay unanswered. onDone gets the results so far, with holes for what was not answered. */
+    const finishNow = async () => {
+      if (!alive) return;
+      if (st0 === 'engaged' && cur) { try { const r = await cur.check(); if (r && !r.pending) results[i] = r; } catch (e) { console.error(e); } }
+      if (!alive) return;
+      alive = false;
+      if (onDone) onDone(results.slice());
+    };
     const onKey = (e) => {
       if (!wrap.isConnected || document.querySelector('.scrim')) return;
       if (e.key === 'Enter' && !e.repeat && !(e.target.closest && e.target.closest('button, a, textarea') && !e.target.closest('.opt, .wd-tok, .wd-line'))) { e.preventDefault(); onPrimary(); }
@@ -1134,6 +1144,7 @@
     return {
       results: () => results.slice(),
       current: () => cur,
+      finish: finishNow,
       hook,
       destroy() { alive = false; document.removeEventListener('keydown', onKey); if (window.ZQ.test === hook) delete window.ZQ.test; if (cur) cur.destroy(); wrap.remove(); },
     };

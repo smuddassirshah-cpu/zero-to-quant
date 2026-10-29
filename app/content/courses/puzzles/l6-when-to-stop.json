@@ -1,0 +1,1263 @@
+{
+ "id": "l6-when-to-stop",
+ "course": "puzzles",
+ "title": "When to stop rolling",
+ "minutes": 14,
+ "objectives": [
+  "Find an optimal stopping rule by comparing the value of stopping and continuing."
+ ],
+ "skills": [
+  "pz-expectation",
+  "pz-recursion"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two reds up",
+   "prose": "Two red and two black cards are shuffled and turned over one at a time. A red pays £1 and a black costs £1. You may stop at any moment and keep your total.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "n22",
+       "label": "2R2B",
+       "shape": "pill",
+       "x": 0.08,
+       "y": 0.5
+      },
+      {
+       "id": "n21",
+       "label": "2R1B",
+       "shape": "pill",
+       "x": 0.29,
+       "y": 0.69
+      },
+      {
+       "id": "n12",
+       "label": "1R2B",
+       "shape": "pill",
+       "x": 0.29,
+       "y": 0.31
+      },
+      {
+       "id": "n20",
+       "label": "2R0B",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.88
+      },
+      {
+       "id": "n11",
+       "label": "1R1B",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "n02",
+       "label": "0R2B",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.12
+      },
+      {
+       "id": "n10",
+       "label": "1R0B",
+       "shape": "pill",
+       "x": 0.71,
+       "y": 0.69
+      },
+      {
+       "id": "n01",
+       "label": "0R1B",
+       "shape": "pill",
+       "x": 0.71,
+       "y": 0.31
+      },
+      {
+       "id": "n00",
+       "label": "0R0B",
+       "shape": "pill",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "n22",
+       "to": "n12",
+       "label": "$\\tfrac{2}{4}$",
+       "directed": true
+      },
+      {
+       "from": "n22",
+       "to": "n21",
+       "label": "$\\tfrac{2}{4}$",
+       "directed": true
+      },
+      {
+       "from": "n21",
+       "to": "n11",
+       "label": "$\\tfrac{2}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n21",
+       "to": "n20",
+       "label": "$\\tfrac{1}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n12",
+       "to": "n02",
+       "label": "$\\tfrac{1}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n12",
+       "to": "n11",
+       "label": "$\\tfrac{2}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n20",
+       "to": "n10",
+       "label": "$\\tfrac{2}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n11",
+       "to": "n01",
+       "label": "$\\tfrac{1}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n11",
+       "to": "n10",
+       "label": "$\\tfrac{1}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n02",
+       "to": "n01",
+       "label": "$\\tfrac{2}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n10",
+       "to": "n00",
+       "label": "$\\tfrac{1}{1}$",
+       "directed": true
+      },
+      {
+       "from": "n01",
+       "to": "n00",
+       "label": "$\\tfrac{1}{1}$",
+       "directed": true
+      }
+     ],
+     "directed": true,
+     "height": 360
+    },
+    "state": {
+     "caption": "Each pill shows the reds and blacks left. Up is a red card (+£1), down a black (−£1).",
+     "current": "n02"
+    }
+   },
+   "question": "You have turned two reds, so you are up £2 with two blacks left. Stop or turn another card?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "Stop",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Turn another",
+      "why": "Only blacks are left. Each one costs £1 and nothing can win it back."
+     },
+     {
+      "id": "c",
+      "text": "It makes no difference",
+      "why": "Turning a black loses £1 for certain, so stopping is strictly better."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What cards remain?"
+    },
+    {
+     "rung": "point",
+     "text": "Two blacks, each costing £1.",
+     "highlight": [
+      "n02"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Turning can only lose, so stop."
+    }
+   ],
+   "feedback": {
+    "correct": "Stop: the cards left can only cost you.",
+    "generic": "Not quite right. Look at what is left in the deck."
+   },
+   "explain": {
+    "text": "With only blacks left, turning loses for sure, so the position is worth 0 more. That is the end of the game, where values are easy. We now work backwards from such positions.",
+    "canvas": {
+     "values": {
+      "n02": "0"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Work backwards",
+   "prose": "Let $V$ be the extra you expect to win from a position, playing well. Stopping adds 0. Turning adds the card's £1 or −£1 plus the $V$ you land in. So $V = \\max(0, \\text{turning})$. This is **backward induction**.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "n22",
+       "label": "2R2B",
+       "shape": "pill",
+       "x": 0.08,
+       "y": 0.5
+      },
+      {
+       "id": "n21",
+       "label": "2R1B",
+       "shape": "pill",
+       "x": 0.29,
+       "y": 0.69
+      },
+      {
+       "id": "n12",
+       "label": "1R2B",
+       "shape": "pill",
+       "x": 0.29,
+       "y": 0.31
+      },
+      {
+       "id": "n20",
+       "label": "2R0B",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.88
+      },
+      {
+       "id": "n11",
+       "label": "1R1B",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.5
+      },
+      {
+       "id": "n02",
+       "label": "0R2B",
+       "shape": "pill",
+       "x": 0.5,
+       "y": 0.12
+      },
+      {
+       "id": "n10",
+       "label": "1R0B",
+       "shape": "pill",
+       "x": 0.71,
+       "y": 0.69
+      },
+      {
+       "id": "n01",
+       "label": "0R1B",
+       "shape": "pill",
+       "x": 0.71,
+       "y": 0.31
+      },
+      {
+       "id": "n00",
+       "label": "0R0B",
+       "shape": "pill",
+       "x": 0.92,
+       "y": 0.5
+      }
+     ],
+     "edges": [
+      {
+       "from": "n22",
+       "to": "n12",
+       "label": "$\\tfrac{2}{4}$",
+       "directed": true
+      },
+      {
+       "from": "n22",
+       "to": "n21",
+       "label": "$\\tfrac{2}{4}$",
+       "directed": true
+      },
+      {
+       "from": "n21",
+       "to": "n11",
+       "label": "$\\tfrac{2}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n21",
+       "to": "n20",
+       "label": "$\\tfrac{1}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n12",
+       "to": "n02",
+       "label": "$\\tfrac{1}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n12",
+       "to": "n11",
+       "label": "$\\tfrac{2}{3}$",
+       "directed": true
+      },
+      {
+       "from": "n20",
+       "to": "n10",
+       "label": "$\\tfrac{2}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n11",
+       "to": "n01",
+       "label": "$\\tfrac{1}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n11",
+       "to": "n10",
+       "label": "$\\tfrac{1}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n02",
+       "to": "n01",
+       "label": "$\\tfrac{2}{2}$",
+       "directed": true
+      },
+      {
+       "from": "n10",
+       "to": "n00",
+       "label": "$\\tfrac{1}{1}$",
+       "directed": true
+      },
+      {
+       "from": "n01",
+       "to": "n00",
+       "label": "$\\tfrac{1}{1}$",
+       "directed": true
+      }
+     ],
+     "directed": true,
+     "height": 360
+    },
+    "state": {
+     "caption": "Each pill shows the reds and blacks left. Up is a red card (+£1), down a black (−£1)."
+    }
+   },
+   "question": "Fill in the values, from the end of the game back to the start. Give fractions as decimals.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Cards left",
+     "Value $V$"
+    ],
+    "rows": [
+     [
+      "1R 1B",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "1R 2B",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "2R 1B",
+      {
+       "edit": true,
+       "answer": 1.3333,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "2R 2B",
+      {
+       "edit": true,
+       "answer": 0.6667,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with 1R 1B, near the end."
+    },
+    {
+     "rung": "point",
+     "text": "From 1R 0B the last red is worth 1; from 0R 1B you stop, worth 0.",
+     "highlight": [
+      "n11"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$V(1,1) = \\tfrac12$, $V(1,2) = 0$, $V(2,1) = \\tfrac23 \\cdot \\tfrac32 + \\tfrac13 \\cdot 1 = \\tfrac43$, $V(2,2) = \\tfrac23$."
+    }
+   ],
+   "feedback": {
+    "correct": "Values $\\tfrac12$, 0, $\\tfrac43$ and $\\tfrac23$.",
+    "generic": "Not quite right. Each value uses the ones nearer the end.",
+    "byKey": {
+     "r0c1": "From 1R 1B, a red wins £1 and you stop. A black costs £1, then the last red wins it back. So $\\tfrac12(1) + \\tfrac12(-1 + 1) = \\tfrac12$.",
+     "r1c1": "From 1R 2B: turning gives $\\tfrac13(1 + 0) + \\tfrac23(-1 + \\tfrac12) = 0$, the same as stopping.",
+     "r3c1": "From 2R 2B: $\\tfrac12(1 + 0) + \\tfrac12(-1 + \\tfrac43) = \\tfrac23$."
+    }
+   },
+   "explain": {
+    "text": "The game is worth $\\tfrac23$ of £1. Taking every card would be worth 0, so the option to stop is what has value. Each value came from positions one card later.",
+    "canvas": {
+     "values": {
+      "n00": "0",
+      "n10": "1",
+      "n01": "0",
+      "n20": "2",
+      "n11": "½",
+      "n02": "0",
+      "n21": "4/3",
+      "n12": "0",
+      "n22": "2/3"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Stop when ahead?",
+   "prose": "A new deck: three red and one black. Your first card is red, so you are up £1, with two reds and one black left.",
+   "question": "Stop now, or turn on?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Turn on: the rest is worth £$\\tfrac43$ more",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Stop and bank the £1",
+      "why": "You stopped as soon as you were ahead. Two reds and one black are worth $\\tfrac43$ more, which stopping throws away."
+     },
+     {
+      "id": "c",
+      "text": "Turn one more card, then stop whatever it shows",
+      "why": "A fixed plan ignores what the next card shows. After a black you should still turn the two reds left."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is 2R 1B worth?"
+    },
+    {
+     "rung": "point",
+     "text": "You found $V = \\tfrac43$ for it."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac43 > 0$, so turn on."
+    }
+   ],
+   "feedback": {
+    "correct": "Turn on. From 2R 1B the value is $\\tfrac43$, more than stopping's 0.",
+    "generic": "Not quite right. Compare stopping with the value of 2R 1B from the table.",
+    "byKey": {
+     "b": "Stopping when ahead is the blurted rule. It gives up $\\tfrac43$ here; in the 3-and-3 game it earns $\\tfrac34$ against the best $\\tfrac{17}{20}$."
+    }
+   },
+   "explain": {
+    "text": "The money you hold is safe whatever you do, so only the cards left matter. From 2R 1B turning on is worth $\\tfrac43$, so stopping costs that much. Stopping at the first gain gives the 3-and-3 game $\\tfrac34$, short of its value $\\tfrac{17}{20}$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Pig, alone",
+   "prose": "Pig for one player: roll a die and add the face to your turn total, $t$. A 1 wipes $t$ and ends the turn. Holding $t$, one more roll adds $\\tfrac{2 + 3 + 4 + 5 + 6}{6} = \\tfrac{20}{6}$ on average and risks $\\tfrac{t}{6}$.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 40,
+     "step": 5,
+     "snap": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 4,
+       "label": "hold at"
+      }
+     ],
+     "caption": "Drag the point to the turn total where you start to hold."
+    }
+   },
+   "question": "Drag the point to the turn total at which you should start to hold.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "p1",
+      "target": 20,
+      "tol": 0.5
+     }
+    ],
+    "wrong": [
+     {
+      "id": "early",
+      "region": {
+       "x": [
+        0,
+        15.5
+       ]
+      }
+     },
+     {
+      "id": "late",
+      "region": {
+       "x": [
+        24.5,
+        40
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set the gain equal to the risk."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac{20}{6} = \\tfrac{t}{6}$.",
+     "highlight": [
+      "p1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$t = 20$: roll below 20, hold at 20 or more."
+    }
+   ],
+   "feedback": {
+    "correct": "Hold at 20: below it a roll gains more than it risks.",
+    "generic": "Not quite right. Find where the gain $\\tfrac{20}{6}$ equals the risk $\\tfrac{t}{6}$.",
+    "byKey": {
+     "early": "You held too soon. Below 20, one more roll adds $\\tfrac{20 - t}{6}$ on average.",
+     "late": "You held too late. Above 20 the risk $\\tfrac{t}{6}$ beats the gain $\\tfrac{20}{6}$."
+    }
+   },
+   "explain": {
+    "text": "One more roll changes $t$ by $\\tfrac{20 - t}{6}$ on average, positive below 20. Rolling only makes $t$ larger, so once a roll stops paying it never pays again. That is why one roll of look-ahead finds the best rule."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A harsher die",
+   "prose": "Same game, but now a 1 or a 2 wipes the turn. Holding $t$, a roll adds $\\tfrac{3 + 4 + 5 + 6}{6} = 3$ on average and risks $\\tfrac{2t}{6}$.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 20,
+     "step": 2,
+     "snap": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 2,
+       "label": "hold at"
+      }
+     ],
+     "caption": "Now a 1 or a 2 wipes the turn."
+    }
+   },
+   "question": "Drag the point to the new holding total.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "p1",
+      "target": 9,
+      "tol": 0.5
+     }
+    ],
+    "wrong": [
+     {
+      "id": "old",
+      "region": {
+       "x": [
+        17.5,
+        20
+       ]
+      }
+     },
+     {
+      "id": "half",
+      "region": {
+       "x": [
+        9.5,
+        10.5
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The risk is now $\\tfrac{2t}{6} = \\tfrac{t}{3}$."
+    },
+    {
+     "rung": "point",
+     "text": "Solve $3 = \\tfrac{t}{3}$.",
+     "highlight": [
+      "p1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$t = 9$."
+    }
+   ],
+   "feedback": {
+    "correct": "Hold at 9: $3 = \\tfrac{2t}{6}$ gives $t = 9$.",
+    "generic": "Not quite right. Set the gain 3 equal to the risk $\\tfrac{t}{3}$.",
+    "byKey": {
+     "old": "That is close to the old threshold. Two wiping faces double the risk and cut the gain.",
+     "half": "You halved 20. The gain also falls, from $\\tfrac{20}{6}$ to 3."
+    }
+   },
+   "explain": {
+    "text": "The gain is 3 and the risk $\\tfrac{t}{3}$, so you hold at 9. A harsher die makes you cautious twice over: less to gain and more to lose."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Three candidates",
+   "prose": "Three candidates arrive in random order, and you must accept or reject each on the spot. You want the best. Rule: let the first go, then take the first who beats them, or the last if none does.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Arrival order",
+      "You take"
+     ],
+     "rows": [
+      [
+       "1 then 2 then 3",
+       {
+        "text": ""
+       }
+      ],
+      [
+       "1 then 3 then 2",
+       {
+        "text": ""
+       }
+      ],
+      [
+       "2 then 1 then 3",
+       {
+        "text": ""
+       }
+      ],
+      [
+       "2 then 3 then 1",
+       {
+        "text": ""
+       }
+      ],
+      [
+       "3 then 1 then 2",
+       {
+        "text": ""
+       }
+      ],
+      [
+       "3 then 2 then 1",
+       {
+        "text": ""
+       }
+      ]
+     ],
+     "align": [
+      "left",
+      "center"
+     ]
+    },
+    "state": {
+     "caption": "Candidates are ranked 1 to 3, and 3 is the best."
+    }
+   },
+   "question": "What is the chance this rule picks the best candidate?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "label": "Chance",
+    "accept": "3/6 = 0.5",
+    "wrong": [
+     {
+      "id": "third",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "two-thirds",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Fill the \"You take\" column in your head."
+    },
+    {
+     "rung": "point",
+     "text": "In \"3 then 1 then 2\" nobody beats the first, so you take the last, 2.",
+     "highlight": [
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The rule takes 3 in the orders 1 3 2, 2 1 3 and 2 3 1."
+    }
+   ],
+   "feedback": {
+    "correct": "It picks the best in 3 of 6 orders: $\\tfrac12$.",
+    "generic": "Not quite right. Work out who the rule takes in each of the six orders.",
+    "byKey": {
+     "third": "That is taking the first, or picking at random. Letting one go first does better.",
+     "two-thirds": "You counted every order where the best is not first. In \"1 then 2 then 3\" the rule takes the 2, which beats the 1, and misses the 3."
+    }
+   },
+   "explain": {
+    "text": "The rule wins in 3 of the 6 orders, so $\\tfrac12$, against $\\tfrac13$ for taking anyone at once. With $n$ candidates, let about $n/e$ go and the chance of the best tends to $1/e \\approx 0.37$. This is the **secretary problem**.",
+    "canvas": {
+     "values": {
+      "r0c1": "2",
+      "r1c1": "3",
+      "r2c1": "3",
+      "r3c1": "3",
+      "r4c1": "2",
+      "r5c1": "1"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Stop or go on",
+   "prose": "Every game here used one rule. A position is worth the larger of stopping now and going on: $$V = \\max\\big(\\text{stop},\\; E[\\text{go on}]\\big),$$ worked out from the end backwards. Graphs and DP valued its dice game this way: £4.25 for two rolls, £$\\tfrac{14}{3}$ for three.",
+   "question": "In the card game, what is a position worth when no red cards are left?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "0: stop at once",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Minus the number of blacks left",
+      "why": "You may stop, so you never have to turn them."
+     },
+     {
+      "id": "c",
+      "text": "It depends on your running total",
+      "why": "The money you hold is safe. Only the cards left decide whether to go on."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Going on can only lose, so you stop and $V = 0$.",
+    "generic": "Not quite right. Compare stopping with turning a black."
+   },
+   "explain": {
+    "text": "When going on always has negative value, you stop at once and the position is worth 0. That is the edge case of $V = \\max(\\text{stop}, E[\\text{go on}])$. Every value in the table was built up from such end positions."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why pig holds at 20",
+   "prose": "Put the threshold argument for pig in order, one justified line at a time.",
+   "question": "Put the lines in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Holding $t$, compare holding with one more roll."
+     },
+     {
+      "id": "s2",
+      "text": "A 1, chance $\\tfrac16$, loses the $t$ you hold."
+     },
+     {
+      "id": "s3",
+      "text": "Faces 2 to 6 add $\\tfrac{2 + 3 + 4 + 5 + 6}{6} = \\tfrac{20}{6}$ on average."
+     },
+     {
+      "id": "s4",
+      "text": "So one more roll changes the total by $\\tfrac{20 - t}{6}$ on average."
+     },
+     {
+      "id": "s5",
+      "text": "That is positive while $t < 20$: roll below 20 and hold from 20."
+     },
+     {
+      "id": "d1",
+      "text": "Hold once your total beats your opponent's score."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1"
+    ],
+    "same": [
+     [
+      "s2",
+      "s3"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with what you compare."
+    },
+    {
+     "rung": "point",
+     "text": "The risk and the gain come next, in either order."
+    },
+    {
+     "rung": "step",
+     "text": "Compare, risk, gain, net change, threshold."
+    }
+   ],
+   "feedback": {
+    "correct": "Compare, risk, gain, net change, threshold.",
+    "generic": "Not quite right. Find the risk and the gain before the net change.",
+    "byKey": {
+     "d1": "This game has one player. Only your turn total and the die matter.",
+     "left-out": "All five true lines are part of the argument.",
+     "s5": "The threshold comes from the net change, so it is the last line."
+    }
+   },
+   "explain": {
+    "text": "The risk is $\\tfrac{t}{6}$ and the gain $\\tfrac{20}{6}$, so the net is $\\tfrac{20 - t}{6}$. It changes sign at 20. In a two-player game the opponent's score would matter, but not here."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Write it",
+   "prose": "Write `card_game_value(r, b)`. It returns the value of the card game with `r` red and `b` black cards left, as a `Fraction`. Use the recursion you used by hand, with a memo so each position is solved once.",
+   "question": "Write the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction\n",
+    "starter": "from fractions import Fraction\nfrom functools import lru_cache\n\n\n@lru_cache(maxsize=None)\ndef card_game_value(r, b):\n    ...\n",
+    "solution": "from fractions import Fraction\nfrom functools import lru_cache\n\n\n@lru_cache(maxsize=None)\ndef card_game_value(r, b):\n    if r == 0:\n        return Fraction(0)\n    if b == 0:\n        return Fraction(r)\n    go = (Fraction(r, r + b) * (1 + card_game_value(r - 1, b))\n          + Fraction(b, r + b) * (-1 + card_game_value(r, b - 1)))\n    return max(Fraction(0), go)\n",
+    "examples": [
+     {
+      "call": "card_game_value(1, 1)",
+      "expect": "Fraction(1, 2)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "card_game_value(1, 1)",
+      "expect": "Fraction(1, 2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(2, 2)",
+      "expect": "Fraction(2, 3)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(2, 1)",
+      "expect": "Fraction(4, 3)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(1, 2)",
+      "expect": "Fraction(0, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(3, 3)",
+      "expect": "Fraction(17, 20)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(0, 5)",
+      "expect": "Fraction(0, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(5, 0)",
+      "expect": "Fraction(5, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(2, 3)",
+      "expect": "Fraction(1, 5)",
+      "compare": "fraction"
+     },
+     {
+      "call": "card_game_value(26, 26)",
+      "expect": "Fraction(41984711742427, 15997372030584)",
+      "compare": "fraction"
+     },
+     {
+      "call": "float(card_game_value(26, 26))",
+      "expect": "2.624475548993925",
+      "compare": "isclose",
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ],
+    "how": "Check runs 10 hidden tests on small decks, all-red and all-black decks, and the full 26 and 26 deck. All but the last need an exact `Fraction`. The full deck has 729 positions, so it needs the memo."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Base cases: no reds is 0, no blacks is $r$."
+    },
+    {
+     "rung": "point",
+     "text": "Otherwise take the max of 0 and the turning value."
+    },
+    {
+     "rung": "step",
+     "text": "`go = Fraction(r, r + b) * (1 + V(r - 1, b)) + Fraction(b, r + b) * (-1 + V(r, b - 1))`, then `max(Fraction(0), go)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Backward induction in a few lines, exact for any deck.",
+    "generic": "Not quite right. Look at the first failing test.",
+    "byKey": {
+     "test-1": "With 1R 1B, turning gives $\\tfrac12(1 + V(0,1)) + \\tfrac12(-1 + V(1,0)) = \\tfrac12$. Check your two base cases.",
+     "test-4": "With 1R 2B, turning is worth 0, so $V = \\max(0, 0) = 0$. Return `Fraction(0)`, not a negative value.",
+     "test-9": "The full deck needs the memo: without `@lru_cache` the recursion repeats positions billions of times."
+    }
+   },
+   "explain": {
+    "text": "The memo keeps the 27 by 27 positions, so the full deck runs at once. Its value is about £2.62, more than the 0 of taking every card. Stopping well is worth over £2.60 on a fair deck."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Taking profit",
+   "prose": "A position shows an open profit of £$t$. Each extra day you hold it, it gains £2,000 on average with chance 0.9. With chance 0.1 a gap through your stop gives back the whole open profit.",
+   "question": "Up to what open profit is holding one more day worth it, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18000,
+    "tol": {
+     "abs": 1
+    },
+    "placeholder": "an amount",
+    "label": "Open profit in £",
+    "unit": "£",
+    "accept": "0.9 x 2000 / 0.1 = £18,000",
+    "wrong": [
+     {
+      "id": "even",
+      "value": 2000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "ninety",
+      "value": 20000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Gain: $0.9 \\times 2000$. Risk: $0.1 \\times t$."
+    },
+    {
+     "rung": "point",
+     "text": "This is pig with a different die."
+    },
+    {
+     "rung": "step",
+     "text": "$1800 = 0.1t$, so $t = 18{,}000$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.9 \\times 2000 = 0.1 \\times t$ gives $t = £18{,}000$.",
+    "generic": "Not quite right. Set the expected gain equal to the expected give-back.",
+    "byKey": {
+     "even": "That is the gain on a good day. The give-back grows with $t$, so solve $1800 = 0.1t$.",
+     "ninety": "You compared £2,000 with $0.1t$. The gain comes only with chance 0.9: £1,800 a day."
+    }
+   },
+   "explain": {
+    "text": "Holding adds $1800 - 0.1t$ a day on average, positive below £18,000. Above it, take profit. The edge and the stop-out chance set the threshold, just as the die did in pig."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Value a position as the larger of stopping now and the expected value of going on.",
+   "Work from the end backwards: end positions are easy, and each earlier one uses them.",
+   "When going on only gets riskier, a one-step check of gain against risk gives the threshold."
+  ],
+  "formula": {
+   "name": "Optimal stopping",
+   "tex": "V = \\max\\big(\\text{stop},\\; E[\\text{go on}]\\big)",
+   "note": "The 2-and-2 card game is worth $\\tfrac23$; pig holds at 20."
+  },
+  "trap": "Stopping as soon as you are ahead. In the card game it throws away the value of the cards still to come."
+ },
+ "quiz": [
+  {
+   "id": "q-take-all",
+   "difficulty": 2,
+   "prose": "The two-red, two-black card game, but now you must turn all four cards.",
+   "question": "What is the game worth?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "label": "Value in £",
+    "accept": "0",
+    "wrong": [
+     {
+      "id": "opt",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0: two reds and two blacks always net to £0.",
+    "generic": "Not quite right. Add the four cards.",
+    "byKey": {
+     "opt": "That is the value when you may stop. Without the option, the cards net to 0."
+    }
+   },
+   "explain": {
+    "text": "Taking every card always gives $2 - 2 = 0$. The game with stopping is worth $\\tfrac23$, so the option to stop is worth exactly $\\tfrac23$."
+   }
+  },
+  {
+   "id": "q-costly",
+   "difficulty": 2,
+   "prose": "Each roll of a fair die costs £4 and pays its face in £. You may stop whenever you like, before the first roll too.",
+   "question": "What is the game worth?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.005
+    },
+    "placeholder": "a decimal",
+    "label": "Value in £",
+    "accept": "0: never roll",
+    "wrong": [
+     {
+      "id": "one",
+      "value": -0.5,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "face",
+      "value": 3.5,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0: each roll loses £0.50 on average, so you never roll.",
+    "generic": "Not quite right. Compare one roll's average payout with its cost.",
+    "byKey": {
+     "one": "That is one forced roll. You may refuse to roll at all.",
+     "face": "You forgot the £4 cost of each roll."
+    }
+   },
+   "explain": {
+    "text": "A roll pays 3.5 and costs 4, so it loses £0.50 on average every time. Going on always has negative value, so you stop at once and the game is worth 0. This is the edge case of the stopping rule."
+   }
+  },
+  {
+   "id": "q-pig-six",
+   "difficulty": 3,
+   "prose": "One-player pig, but now a 6 wipes the turn, and faces 1 to 5 add to it.",
+   "question": "At what turn total should you start to hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 15,
+    "tol": {
+     "abs": 0.5
+    },
+    "placeholder": "a decimal",
+    "label": "Hold at",
+    "accept": "15",
+    "wrong": [
+     {
+      "id": "twenty",
+      "value": 20,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Hold at 15: the gain $\\tfrac{15}{6}$ equals the risk $\\tfrac{t}{6}$ there.",
+    "generic": "Not quite right. Find the average gain of faces 1 to 5.",
+    "byKey": {
+     "twenty": "That is the usual game. Faces 1 to 5 add only $\\tfrac{15}{6}$ on average.",
+     "five": "You held at the highest safe face. Compare the average gain with the risk."
+    }
+   },
+   "explain": {
+    "text": "The gain is $\\tfrac{1 + 2 + 3 + 4 + 5}{6} = \\tfrac{15}{6}$ and the risk $\\tfrac{t}{6}$. They balance at $t = 15$."
+   }
+  },
+  {
+   "id": "q-secretary",
+   "difficulty": 3,
+   "prose": "A hundred candidates arrive in random order, accepted or rejected on the spot. You want the very best.",
+   "question": "Which rule does best, and roughly how often does it win?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Let about 37 go, then take the next best so far: wins about 37% of the time",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Let the first half go, then take the next best so far: wins about 50%",
+      "why": "With three candidates the chance was $\\tfrac12$. With many it falls, and skipping about $n/e$ does better than half."
+     },
+     {
+      "id": "c",
+      "text": "Take the first candidate: wins about 37%",
+      "why": "Taking the first wins only one time in 100."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Let about $n/e$ go; the chance of the best tends to $1/e \\approx 0.37$.",
+    "generic": "Not quite right. The best rule skips a fixed share of the candidates."
+   },
+   "explain": {
+    "text": "Skipping $k$ and then taking the best so far wins with chance about $\\tfrac{k}{n}\\ln\\tfrac{n}{k}$. That peaks at $k = n/e$ with value $1/e \\approx 0.37$."
+   }
+  }
+ ]
+}

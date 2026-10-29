@@ -1060,6 +1060,16 @@ const checkSet = (file, kind, courseId, id, level, doc, course) => {
   if (doc.id !== id) err(file, 'id', `id "${doc.id}" must match the file name "${id}"`);
   if (doc.course !== courseId) err(file, 'course', `course must be "${courseId}"`);
   if (doc.level !== level) err(file, 'level', `level must be ${level}`);
+  /* timed: { seconds, lockAtZero } puts a countdown and a live score on a level review (ENGINE-BACKLOG 454) */
+  if (doc.timed != null) {
+    if (kind !== 'review') err(file, 'timed', 'timed belongs on a level review (a practice set takes it from the route, a deck from its own file)');
+    else if (!isObj(doc.timed)) err(file, 'timed', 'timed is { "seconds": n, "lockAtZero": true }');
+    else {
+      Object.keys(doc.timed).forEach(k => { if (!['seconds', 'lockAtZero'].includes(k)) err(file, `timed.${k}`, 'timed has seconds and lockAtZero only'); });
+      if (!Number.isInteger(doc.timed.seconds) || doc.timed.seconds < 30 || doc.timed.seconds > 7200) err(file, 'timed.seconds', 'seconds is a whole number from 30 to 7200');
+      if (doc.timed.lockAtZero != null && typeof doc.timed.lockAtZero !== 'boolean') err(file, 'timed.lockAtZero', 'lockAtZero is true or false (false by default: the clock is a guide)');
+    }
+  }
   const items = Array.isArray(doc.items) ? doc.items : [];
   const [lo, hi, nlo, nhi] = kind === 'review' ? [2, 4, 6, 10] : [3, 5, 6, 12];
   if (items.length < nlo || items.length > nhi) err(file, 'items', `${nlo} to ${nhi} items (found ${items.length})`);
@@ -1087,9 +1097,113 @@ const checkRamp = (file, where, items) => {
   const off = items.filter(it => it && !(it.difficulty in RAMP)).length;
   if (off) err(file, where, `${off} item(s) outside difficulty 2 to 5`);
 };
+/* Paper fields shared by topic, stage and mock exams: scoring, passNet, navigation, skip (ENGINE-BACKLOG 450, 451) */
+const MOCK_STYLES = ['trader', 'research', 'developer', 'strats'];
+const SCORING_KEYS = ['right', 'wrong', 'blank'];
+const checkPaperRules = (file, where, p, { needPass = false } = {}) => {
+  if (p.minutes != null && !(typeof p.minutes === 'number' && p.minutes > 0)) err(file, `${where}.minutes`, 'minutes is a number above 0');
+  if (p.pass != null && !(typeof p.pass === 'number' && p.pass > 0 && p.pass <= 1)) err(file, `${where}.pass`, 'pass is a share between 0 and 1');
+  let max = (Array.isArray(p.items) ? p.items : []).reduce((a, it) => a + (it && it.generator ? Math.max(1, Math.round(+it.n || 1)) : 1), 0);
+  if (p.scoring != null) {
+    if (!isObj(p.scoring)) err(file, `${where}.scoring`, 'scoring is { right, wrong, blank } (numbers)');
+    else {
+      Object.keys(p.scoring).forEach(k => { if (!SCORING_KEYS.includes(k)) err(file, `${where}.scoring.${k}`, 'scoring has right, wrong and blank only'); else if (typeof p.scoring[k] !== 'number' || !Number.isFinite(p.scoring[k])) err(file, `${where}.scoring.${k}`, 'a mark is a number'); });
+      if (typeof p.scoring.right === 'number' && p.scoring.right <= 0) err(file, `${where}.scoring.right`, 'right is the mark for a correct answer: above 0');
+      if (typeof p.scoring.wrong === 'number' && p.scoring.wrong > 0) err(file, `${where}.scoring.wrong`, 'wrong is 0 or negative');
+      if (typeof p.scoring.blank === 'number' && p.scoring.blank > 0) err(file, `${where}.scoring.blank`, 'blank is 0 or negative');
+      if (typeof p.scoring.right === 'number' && p.scoring.right > 0) max *= p.scoring.right;
+    }
+  }
+  if (p.passNet != null) {
+    if (typeof p.passNet !== 'number' || !Number.isFinite(p.passNet)) err(file, `${where}.passNet`, 'passNet is a net score (a number)');
+    else if (p.passNet > max + 1e-9) err(file, `${where}.passNet`, `passNet ${p.passNet} is above the most the paper can score (${max})`);
+    if (p.pass != null) err(file, `${where}.pass`, 'give pass (a share) or passNet (a net score), not both');
+  }
+  if (needPass && p.pass == null && p.passNet == null) err(file, `${where}.pass`, 'give pass (a share of the marks) or passNet (a net score)');
+  if (p.navigation != null && !['forward', 'free'].includes(p.navigation)) err(file, `${where}.navigation`, 'navigation is "forward" or "free"');
+  if (p.skip != null && typeof p.skip !== 'boolean') err(file, `${where}.skip`, 'skip is true or false');
+  if (p.skip === false && p.navigation !== 'forward') warn(file, `${where}.skip`, 'skip: false with free navigation only stops the learner moving on past an unanswered question; pair it with navigation: "forward" for a no-return test');
+};
+/* A generated item entry: { generator: "arith", mix, n, options } expands to n single-choice items at run time (ENGINE-BACKLOG 452) */
+let WARM_OPS = null;
+const warmOps = () => {
+  if (WARM_OPS) return WARM_OPS;
+  const ops = {};
+  try { (JSON.parse(fs.readFileSync(path.join(CONTENT, 'warmup.json'), 'utf8')).operations || []).forEach(o => { ops[o.id] = o; }); } catch { /* the warm-up file has its own check */ }
+  return (WARM_OPS = ops);
+};
+const checkGenerator = (file, where, g, allSkills) => {
+  Object.keys(g).forEach(k => { if (!['generator', 'mix', 'n', 'options', 'difficulty', 'skills'].includes(k)) err(file, `${where}.${k}`, 'a generator entry has generator, mix, n, options, difficulty and skills only'); });
+  if (g.generator !== 'arith') { err(file, `${where}.generator`, 'the only generator is "arith"'); return; }
+  if (!Number.isInteger(g.n) || g.n < 1 || g.n > 200) err(file, `${where}.n`, 'n is a whole number of questions, 1 to 200');
+  if (g.options != null && (!Number.isInteger(g.options) || g.options < 2 || g.options > 6)) err(file, `${where}.options`, 'options is 2 to 6 answers per question (default 4)');
+  if (g.difficulty != null) checkDifficulty(file, `${where}.difficulty`, g.difficulty, 1, 5, 'generated');
+  if (g.skills != null) { if (!Array.isArray(g.skills)) err(file, `${where}.skills`, 'skills is a list of skill ids'); else g.skills.forEach(s => { if (allSkills && !allSkills.has(s)) err(file, `${where}.skills`, `unknown skill "${s}"`); }); }
+  if (g.mix != null) {
+    const ops = warmOps();
+    if (!isObj(g.mix)) { err(file, `${where}.mix`, 'mix is { operation: weight }, for example { "add": 1, "mul": 2 }'); return; }
+    let any = false;
+    Object.entries(g.mix).forEach(([k, v]) => {
+      if (!ops[k]) { err(file, `${where}.mix.${k}`, `unknown operation "${k}" (content/warmup.json has ${Object.keys(ops).join(', ')})`); return; }
+      const w = typeof v === 'number' ? v : isObj(v) ? (v.weight == null ? 1 : v.weight) : NaN;
+      if (!(typeof w === 'number' && w >= 0 && Number.isFinite(w))) { err(file, `${where}.mix.${k}`, 'a weight is a number, 0 or more, or { weight, a: [lo, hi], b: [lo, hi] }'); return; }
+      if (w > 0) any = true;
+      if (isObj(v)) {
+        Object.keys(v).forEach(f => { if (!['weight', 'a', 'b'].includes(f)) err(file, `${where}.mix.${k}.${f}`, 'an operation entry has weight, a and b only'); });
+        ['a', 'b'].forEach(f => { if (v[f] != null && !(Array.isArray(v[f]) && v[f].length === 2 && v[f].every(Number.isInteger) && v[f][0] <= v[f][1] && v[f][0] >= 1)) err(file, `${where}.mix.${k}.${f}`, `${f} is a range [lo, hi] of whole numbers, 1 or more`); });
+        if ((v.a || v.b) && ops[k].inverseOf) err(file, `${where}.mix.${k}`, `ranges go on "${ops[k].inverseOf}": "${k}" reverses it and uses the same numbers`);
+      }
+    });
+    if (!any && Object.keys(g.mix).length) err(file, `${where}.mix`, 'at least one operation needs a weight above 0');
+  }
+};
+/* The items of one paper: authored items and generator entries */
+const checkPaperItems = (file, where, items, ctx) => {
+  (Array.isArray(items) ? items : []).forEach((it, j) => {
+    if (isObj(it) && it.generator !== undefined) { if (ctx.generators === false) err(file, `${where}[${j}].generator`, 'generated items belong in mock and stage exams, not topic exams'); else checkGenerator(file, `${where}[${j}]`, it, ctx.skills); }
+    else checkItem(file, `${where}[${j}]`, it, ctx);
+  });
+};
+/* A mock exam (ENGINE-BACKLOG 453): exams/mock-<id>.json, papers and optional checks, exempt from the topic skill-coverage rule */
+const checkMock = (file, id, doc, cur) => {
+  const parted = Array.isArray(doc.parts);
+  req(file, '', doc, parted ? ['id', 'name', 'style', 'models', 'parts'] : ['id', 'name', 'style', 'models', 'minutes', 'items']);
+  if (!KEBAB.test(id.slice(5))) err(file, 'id', 'a mock id is mock- then kebab-case words');
+  if (doc.style != null && !MOCK_STYLES.includes(doc.style)) err(file, 'style', `style is one of ${MOCK_STYLES.join(', ')}`);
+  checkText(file, 'name', doc.name);
+  if (typeof doc.models === 'string') {
+    if (/\n/.test(doc.models) || doc.models.length > 200) err(file, 'models', 'models is one plain line (up to 200 characters) saying what the mock models');
+    checkText(file, 'models', doc.models);
+  } else if (doc.models != null) err(file, 'models', 'models is one plain line of text');
+  if (doc.description != null) checkText(file, 'description', doc.description);
+  ['topic', 'stage'].forEach(k => { if (doc[k] != null) err(file, k, `a mock has no ${k}: it mixes topics on purpose`); });
+  const allSkills = new Set(Object.values(cur.courseDocs).flatMap(c => Object.keys((c || {}).skills || {})));
+  if (doc.skills != null) { if (!isObj(doc.skills)) err(file, 'skills', 'skills is { id: name }'); else Object.keys(doc.skills).forEach(s => { if (!allSkills.has(s)) err(file, 'skills', `"${s}" is not a skill of any course`); }); }
+  const ictx = { lo: 1, hi: 5, label: 'mock', skills: allSkills, skillsRequired: false, needDifficulty: false, allowLongform: true };
+  const paperOf = (p, where) => {
+    checkPaperRules(file, where, p, { needPass: true });
+    if (!Array.isArray(p.items) || !p.items.length) err(file, `${where}.items`, 'a paper needs at least one item');
+    checkPaperItems(file, `${where}.items`, p.items, ictx);
+    const seen = new Set();
+    (p.items || []).forEach((it, j) => { if (isObj(it) && it.id) { if (seen.has(it.id)) err(file, `${where}.items[${j}].id`, `duplicate id "${it.id}"`); seen.add(it.id); } });
+  };
+  if (parted) {
+    if (!doc.parts.some(p => p && p.kind === 'paper')) err(file, 'parts', 'a mock needs at least one paper');
+    const pids = new Set();
+    doc.parts.forEach((p, i) => {
+      if (!isObj(p)) { err(file, `parts[${i}]`, 'a part is an object'); return; }
+      if (!['paper', 'check'].includes(p.kind)) err(file, `parts[${i}].kind`, 'kind is paper or check');
+      if (!p.name) err(file, `parts[${i}].name`, 'required field missing');
+      checkText(file, `parts[${i}].name`, p.name);
+      if (p.id) { if (pids.has(p.id)) err(file, `parts[${i}].id`, `duplicate part id "${p.id}"`); pids.add(p.id); }
+      if (p.kind === 'paper') { req(file, `parts[${i}]`, p, ['minutes', 'items']); paperOf(p, `parts[${i}]`); }
+    });
+  } else paperOf(doc, '');
+};
 const checkExam = (file, id, doc, cur) => {
   const topicExam = id.startsWith('topic-');
   if (doc.id !== id) err(file, 'id', `id "${doc.id}" must match the file name "${id}"`);
+  if (id.startsWith('mock-')) { checkMock(file, id, doc, cur); return; }
   if (topicExam) {
     req(file, '', doc, ['id', 'topic', 'name', 'minutes', 'pass', 'skills', 'items']);
     const t = cur.topics.get(String(doc.topic));
@@ -1101,7 +1215,8 @@ const checkExam = (file, id, doc, cur) => {
     topicSkills.forEach(s => { if (!examSkills.has(s)) err(file, 'skills', `topic skill "${s}" is not covered by the exam`); });
     const items = Array.isArray(doc.items) ? doc.items : [];
     if (items.length < 20 || items.length > 30) err(file, 'items', `20 to 30 items (found ${items.length})`);
-    items.forEach((it, i) => checkItem(file, `items[${i}]`, it, { lo: 2, hi: 5, label: 'exam', skills: examSkills, skillsRequired: true, allowLongform: true }));
+    checkPaperItems(file, 'items', items, { lo: 2, hi: 5, label: 'exam', skills: examSkills, skillsRequired: true, allowLongform: true, generators: false });
+    checkPaperRules(file, '', doc);
     const used = new Set(items.flatMap(it => (it && it.skills) || []));
     examSkills.forEach(s => { if (!used.has(s)) err(file, 'items', `no item tests the skill "${s}"`); });
     checkRamp(file, 'items', items);
@@ -1116,10 +1231,11 @@ const checkExam = (file, id, doc, cur) => {
       if (!p.name) err(file, `parts[${i}].name`, 'required field missing');
       checkText(file, `parts[${i}].name`, p.name);
       if (p.kind === 'paper') {
-        req(file, `parts[${i}]`, p, ['minutes', 'pass', 'items']);
+        req(file, `parts[${i}]`, p, p.passNet != null ? ['minutes', 'items'] : ['minutes', 'pass', 'items']);
         const items = Array.isArray(p.items) ? p.items : [];
-        items.forEach((it, j) => checkItem(file, `parts[${i}].items[${j}]`, it, { lo: 2, hi: 5, label: 'exam', skills: allSkills, skillsRequired: true, allowLongform: true }));
-        if (items.length >= 10) checkRamp(file, `parts[${i}].items`, items);
+        checkPaperItems(file, `parts[${i}].items`, items, { lo: 2, hi: 5, label: 'exam', skills: allSkills, skillsRequired: true, allowLongform: true });
+        checkPaperRules(file, `parts[${i}]`, p, { needPass: true });
+        if (items.length >= 10 && !items.some(it => it && it.generator !== undefined)) checkRamp(file, `parts[${i}].items`, items);
       }
     });
   }
@@ -1263,7 +1379,7 @@ Object.keys(C.courses || {}).forEach(cid => {
 const examDir = path.join(CONTENT, 'exams');
 listJSON(examDir).forEach(f => {
   const id = f.replace(/\.json$/, ''), file = path.join(examDir, f);
-  if (!/^(topic-\d+\.\d+|stage-\d+)$/.test(id)) { err(file, '', 'exam files are topic-<topic>.json or stage-<n>.json'); return; }
+  if (!/^(topic-\d+\.\d+|stage-\d+|mock-[a-z0-9]+(-[a-z0-9]+)*)$/.test(id)) { err(file, '', 'exam files are topic-<topic>.json, stage-<n>.json or mock-<id>.json'); return; }
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`exams/${f}`);
   guard(file, () => checkExam(file, id, r.data, cur));
