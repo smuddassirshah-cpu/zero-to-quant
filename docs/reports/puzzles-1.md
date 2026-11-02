@@ -40,6 +40,8 @@ Builders and checkers are in `/tmp/claude-0/-home-user-zero-to-quant/9fb26fd5-85
 - review-1: 9 of 9 recorded
 - homework-1: 10 of 10 marked right, 47 of 47 marks
 
+After the container restart the files were rebuilt from the builders, re-linted, re-validated (0 errors) and re-code-checked; `git status` shows them identical to the played versions.
+
 `codecheck.py`: every solution passes all its tests and every starter passes none (l2's same-seed test was tightened to `... == ... > 0` after the starter's `None == None` passed it).
 
 Screenshots at 1280 and 390 px, with Why? sheets, were read screen by screen. Fixed from them: the l1 title screen does not draw a canvas (the books table became a list in the prose); the six-branch reroll tree's $\tfrac16$ labels collided (hidden, with a caption); the seven-node coupon chain overlapped at 390 px (zigzag layout, loops above and below); the l2 table screen's canvas gave the answers away (now the chance chain, with waits only in the Why? patch); the trap's caption gave the mean away; the HHH chain was cramped (hand positions); the HH equations overflowed at 390 px (stacked with `aligned`); the card-game lattice pills were shortened; the race item's correct option was the only short one.

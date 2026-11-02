@@ -234,13 +234,13 @@
               <div class="rv-card-h"><h2 class="t-h2" id="rv-hw-h">Homework</h2><span class="t-caption muted">One set per level, due 7 days after it is set</span></div>
               ${hwRows()}
             </section>
-            <section class="card rv-card" aria-labelledby="rv-ex-h" data-sec="exams">
-              <div class="rv-card-h"><h2 class="t-h2" id="rv-ex-h">Exams</h2><span class="t-caption muted">Timed, no hints, no retries</span></div>
-              <div data-exams><p class="t-caption muted">Loading exams</p></div>
-            </section>
             <section class="card rv-card" aria-labelledby="rv-mk-h" data-sec="mocks" hidden>
               <div class="rv-card-h"><h2 class="t-h2" id="rv-mk-h">Mock assessments</h2><span class="t-caption muted">Timed, as the real ones are. Sit them as often as you like</span></div>
               <div data-mocks></div>
+            </section>
+            <section class="card rv-card" aria-labelledby="rv-ex-h" data-sec="exams">
+              <div class="rv-card-h"><h2 class="t-h2" id="rv-ex-h">Exams</h2><span class="t-caption muted">Timed, no hints, no retries</span></div>
+              <div data-exams><p class="t-caption muted">Loading exams</p></div>
             </section>
           </div>
           <div class="rv-col">

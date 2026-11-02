@@ -211,7 +211,7 @@ Fourth pass (items 115 to 132 and 162 to 194):
 126. Done: number-line arrow `side: "below"`, overlapping arcs stack in levels, and a zero-length jump is a small loop.
 127. Done: area `colSizes.k` / `rowSizes.k` control binds (sign kept), see 191.
 128. Done: grid `revealAfterGrade: true` (with `text: "marked"`): a tap selects without showing the text.
-129. Deferred: a timed table set (countdown, live score, lock at zero) is a screen mode of its own, close to the Today warm-up; better designed with the mental arithmetic course than added to the table widget.
+129. Deferred: a timed table set (countdown, live score, lock at zero) is a screen mode of its own, close to the Today warm-up; better designed with the mental arithmetic course than added to the table widget. Covered by 454 (a `timed` field on reviews and practice, with a countdown, live score and lock at zero).
 130. Done: area labels keyed "c11-c16" span the rectangle between the two cells; sizes patchable (191).
 131. Done: number-line interval labels are plain text unless wrapped in `$...$`.
 132. Done: tap-regions `only` expands a canvas's set names (a grid's `col7`, `row5`, `cross5`).
@@ -1238,3 +1238,11 @@ Raised by engine breadth pass 2 (the `space` canvas, `complex-map`, grading):
 Raised later (Today and topic exams):
 
 449. Done: a passed topic exam now counts as tested out. `ZQ.content.topicPassed` and `courseTestedOut` read `S.exams` at call time (no migration, existing passes apply at once); Today, Learn and the course map skip tested-out courses in `currentCourse` unless a lesson is open to resume, falling back to them only when nothing else is left. Exam result copy updated; Due queue and progress figures unchanged.
+
+Raised later (interview plan, engine pass A; the five bullets E1, E2, E4, E5 and E6 of `docs/briefs/interview-plan.md` section f, report `docs/reports/engine-interview-a.md`):
+
+450. Done (E1): per-paper `scoring: { right, wrong, blank }` and `passNet` in `exam.js` (a paper with neither keeps `pass` as a share of the marks). Marks are tallied per paper with `ZQ.mock.tally`; the results page headlines the net score with right, wrong and blank counts and each question's marks; the attempt keeps `net`, `max`, `wrong` and `blank`. Validator rules for the fields.
+451. Done (E2): `navigation: "forward"` and `skip: false` on a paper: one question at a time, no navigator, Mark or Back, no jumping ahead, the answer locks on moving on; with `skip: false` the next question opens only after an answer (Enter moves on; Skip appears when skipping is allowed). Short papers warn in the last quarter of the clock rather than the last five minutes.
+452. Done (E4): `{ generator: "arith", mix, n, options }` entries in a paper expand to seeded single-choice items (`js/engine/arith.js`, shared with the Today warm-up, which now calls the same `ZQ.arith.problem`). Near-miss distractors: reverse operation, misplaced point, slipped digit. The seed is per attempt (or `#exam/<id>/<seed>`) and stored on the attempt. Generated items never join the redo queue.
+453. Done (E5): the mock exam kind `exams/mock-<id>.json` with `style` and `models`, in `exam.js` (start card, papers, checks, result with a score trend), in `ZQ.content.mocks()`, on Review under "Mock assessments" (latest, best, trend, Sit again) and in the You exam history with net scores; exempt from the topic skill-coverage rule; no XP; every attempt kept. `content/exams/mock-sample.json` is the engine sample (not a real assessment).
+454. Done (E6, covers 129): `timed: { seconds, lockAtZero }` on a level review file, and `#practice/timed/<seconds>` for practice; a countdown pill and live score in the set header, `ZQ.player.runSet` handle `finish()`, and a summary note when time runs out. Bank decks (E7) will pass the same field to the same set page. Not built: a timed homework, and a timer on lessons.

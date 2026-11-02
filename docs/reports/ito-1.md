@@ -19,11 +19,17 @@ Interview-style material (as asked): review has $E[W_t^4] = 3t^2$ (expression), 
 
 ## Validator
 
-PENDING
+`node tools/validate.mjs` (from `app/`): 0 errors overall, and no warnings in ito level 1 files. The only ito warning is the course map's unwritten levels 2 to 4 (13 of 17 lessons). Re-run after the container restart: unchanged.
 
 ## Playthrough
 
-PENDING
+Final run: `node tools/playthrough.mjs --lesson ito/l1-walk-to-bm --lesson ito/l2-normal-increments --lesson ito/l3-quadratic-variation --lesson ito/l4-gbm --set ito/review-1 --set ito/homework-1 --local-cdn /tmp/claude-0/-home-user-zero-to-quant/9fb26fd5-8508-5986-8a3a-66bc5f67acde/scratchpad/pkgs --shots .../ito-1/final --mobile`: all passed.
+
+- l1: 14 checks, quiz 4/4. l2: 15 checks, quiz 4/4. l3: 15 checks, quiz 4/4. l4: 15 checks, quiz 4/4.
+- review-1: recorded 9 of 9. homework-1: marked 9 of 9 right, 43 of 43 marks.
+- An earlier run with `--why` (l3, l4, both sets) also passed; its Explanation and wrong-answer sheets are in `/tmp/claude-0/-home-user-zero-to-quant/9fb26fd5-8508-5986-8a3a-66bc5f67acde/scratchpad/ito-1/shots5/`, earlier rounds in `shots` to `shots4`, the final desktop and 390 px screenshots in `final/`.
+- Fixes made from the screenshots: bars y range fixed so the normal curve shows before any run (`yMax`); code starters wrapped to the 54-character column; scatter points that fell outside the plot frame (explicit ranges); "4, 096" in KaTeX captions (now `4{,}096`); the distribution canvas's "μ = 108.329" mean label replaced by a plane with labelled mean and median lines; a long plane x label that overlapped the caption; italic £ inside maths (now `\text{£}`).
+- `checkcode.mjs` in Pyodide 0.27.7: all 7 code widgets pass every case with the solution (60 cases, tests and examples), and every untouched starter fails all its tests. Pyodide NumPy matched CPython to every stated place (PCG64 `integers` and `standard_normal` streams agree).
 
 ## Seeds and generators
 
