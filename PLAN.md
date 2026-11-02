@@ -60,7 +60,7 @@ Phase 1, trader core
 - [ ] brainteasers L1: Invariants and counting arguments
 - [ ] brainteasers L2: Strategy and logic
 - [ ] brainteasers L3: Quick reasoning
-- [ ] mm-games L1
+- [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
 - [ ] mm-games L2
 - [ ] mm-games L3
 - [ ] mm-games L4: Trading games firms run
@@ -176,7 +176,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] puzzles L2
 - [ ] puzzles L3
 - [ ] puzzles L4
-- [ ] mm-games L1
+- [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
 - [ ] mm-games L2
 - [ ] mm-games L3
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
