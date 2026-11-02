@@ -40,3 +40,4 @@ Before 19 Oct 2026: engine built (vanilla JS player, 20+ canvases, widgets, vali
 - 2026-11-02: mental-pressure L2 (4 lessons), puzzles L2 (6 lessons) and recruiting L2 (5 lessons) green and reported, run in parallel; validate 0 errors; 18 inbox bullets.
 - 2026-11-02: engine 455 prep tags: `content/prep.json` loader and validator, one "Interview prep" chip, a "Prepare for" page; full `--all` playthrough green.
 - 2026-11-02: prep mapping: 23 paths (general, 12 stage and role, 10 firm, reported 2026-10), 346 steps, foundations to superday; validate 0 errors, routes green.
+- 2026-11-02: topic 0.7 closed: recruiting L3 green and reported (5 lessons, review-3, homework-3), exam topic-0.7 (30 items), second read (3 errors, 17 warnings, 29 notes) and fix pass (48 fixed; level 1 firm names now firm types); game-theory brief (3 levels, 15 lessons); answer check of 432 items: no wrong number, 6 wording, rubric and reuse fixes applied.
