@@ -514,6 +514,7 @@
         }));
       });
     }));
+    C.prepPaths().forEach(p => index.push({ kind: 'Prepare', icon: 'target', title: p.name, sub: p.kind === 'firm' ? 'Prepare for · firm' : p.kind === 'stage' ? `Prepare for · ${C.prepStageLabel(p.stage)}, ${p.track}` : 'Prepare for · general', go: `prepare/${p.id}`, own: false }));
     S.notebook.list().forEach(n => {
       const c = C.course(n.course) || {};
       index.push({ kind: 'Formula', icon: 'sparkle', title: n.name || 'Formula', f: n, sub: c.name || '', own: n.course === cid });
@@ -526,7 +527,7 @@
     });
     /* Words match at word starts only: "put" finds put-call parity, not computer. "1.5" still finds the topic. */
     const hasWord = (e, w) => e.toks.some(t => t.startsWith(w)) || e.hay.includes(' ' + w);
-    const kindRank = { Formula: 0, Lesson: 0.2, Course: 0.4, Topic: 0.6 };
+    const kindRank = { Formula: 0, Lesson: 0.2, Course: 0.4, Prepare: 0.5, Topic: 0.6 };
     const rank = (e, v) => (e.t.startsWith(v) ? 0 : (' ' + e.t).includes(' ' + v) ? 1 : 2) + (e.own ? 0 : 1.5) + kindRank[e.kind];
     let hits = [], active = -1;
     function closeResults() { listEl.hidden = true; q.setAttribute('aria-expanded', 'false'); q.removeAttribute('aria-activedescendant'); active = -1; hits = []; }

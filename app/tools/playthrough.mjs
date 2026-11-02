@@ -504,7 +504,11 @@ const main = async () => {
     if (opt.routes) {
       const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^topic-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')) : [];
       const drills = fs.existsSync(path.join(CONTENT, 'drills', 'index.json')) ? readJSON(path.join(CONTENT, 'drills', 'index.json')).map(d => d.id || d) : [];
-      const routes = ['today', 'learn', ...courses.map(c => `course/${c}`), 'review', 'you', 'system', 'drill',
+      /* The Prepare for page (ENGINE-BACKLOG 455): the default path, then one deep link for each kind of path in content/prep.json */
+      const prepFile = path.join(CONTENT, 'prep.json');
+      const prepPaths = fs.existsSync(prepFile) ? (readJSON(prepFile).paths || []) : [];
+      const prepRoutes = prepPaths.length ? ['prepare', ...['general', 'stage', 'firm'].map(k => prepPaths.find(p => p.kind === k)).filter(Boolean).map(p => `prepare/${p.id}`)] : [];
+      const routes = ['today', 'learn', ...courses.map(c => `course/${c}`), 'review', ...prepRoutes, 'you', 'system', 'drill',
         ...drills.slice(0, 1).map(d => `drill/${d}`), ...(exams.includes('topic-1.5') ? ['exam/topic-1.5'] : exams.slice(0, 1).map(e => `exam/${e}`)), 'setup'];
       for (const r of routes) {
         where = '#' + r;
@@ -513,6 +517,14 @@ const main = async () => {
           await go(r);
           const blank = await page.evaluate(() => { const a = document.querySelector('#app'); return !a || a.innerText.trim().length < 20 || /This screen failed to render/.test(a.innerText); });
           if (blank) failures.push(`#${r}: the screen is empty or failed to render`);
+          if (/^prepare(\/|$)/.test(r)) {
+            /* Prepare for: the chosen path lists every step, and nothing spills sideways (also at --mobile) */
+            const pid = r.split('/')[1] || (prepPaths[0] || {}).id, want = ((prepPaths.find(p => p.id === pid) || {}).steps || []).length;
+            const got = await page.evaluate(() => ({ steps: document.querySelectorAll('.pp-step').length, wide: document.documentElement.scrollWidth > window.innerWidth + 1, bad: document.querySelectorAll('.pp-step a[href="#course/undefined"]').length }));
+            if (got.steps !== want) failures.push(`#${r}: ${got.steps} steps drawn, ${want} in prep.json`);
+            if (got.wide) failures.push(`#${r}: the page is wider than the window`);
+            if (got.bad) failures.push(`#${r}: a step links to an unknown course`);
+          }
           await shot('route-' + r);
         } catch (e) { failures.push(`#${r}: threw ${String(e.message || e).split('\n')[0]}`); }
         console.log(`${consoleErrors.length > before ? 'ERR ' : 'ok  '} #${r}`);

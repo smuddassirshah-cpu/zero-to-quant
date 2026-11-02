@@ -159,6 +159,7 @@
           <header class="zl-head">
             <h1 class="t-h1 zl-h1">Learn</h1>
             <p class="t-body secondary zl-desc">${fmt(totalH)} hours in ${STAGES.length === 4 ? 'four' : STAGES.length} stages. Sit a stage’s exit test first to skip it.</p>
+            ${C.prepPaths().length ? `<a class="zl-prepare" href="#prepare">${Z.icon('target', 'xs')}<span>Prepare for an assessment or a firm</span>${Z.icon('chevronR', 'xs')}</a>` : ''}
             <div class="zl-toggle" role="group" aria-label="View">
               <button type="button" data-view="courses">${Z.icon('grid', 'xs')}<span>Courses</span></button>
               <button type="button" data-view="paths">${Z.icon('target', 'xs')}<span>Paths</span></button>
@@ -251,12 +252,13 @@
         const p = prog(c.id), pct = Math.round(p * 100), s = courseState(c, t), cur = c.id === curId;
         const n = lessonsOf(c.id).length, w = writtenCount(c.id), mapOnly = n > 0 && w === 0;
         const counts = `${fmt(n)} lessons · ${c.levels.length} ${c.levels.length === 1 ? 'level' : 'levels'}`;
-        const label = `${c.name}.${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''} ${counts}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
+        const pp = C.prepForCourse(c.id), tags = C.strandBadge(c.strand, c.strandNote) + C.prepChip(pp);
+        const label = `${c.name}.${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''}${pp.length ? ' Interview prep.' : ''} ${counts}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
         return `<button type="button" class="zl-card${cur ? ' is-current' : ''}${mapOnly ? ' is-map' : ''}" data-track="${t.track}" data-course="${c.id}" aria-label="${esc(label)}">
             <span class="zl-art" aria-hidden="true">${ZQArt(c.art)}</span>
             <span class="zl-body">
               ${cur ? '<span class="zl-cur" aria-hidden="true">Current</span>' : ''}
-              <span class="zl-title">${esc(c.name)}</span>${C.strandBadge(c.strand, c.strandNote)}
+              <span class="zl-title">${esc(c.name)}</span>${pp.length ? `<span class="zl-tags">${tags}</span>` : tags}
               <span class="zl-label tnum">${counts}</span>
               <span class="zl-foot"><span class="bar thin track" aria-hidden="true"><i data-w="${pct}"></i></span><span class="zl-chips">${chip(s)}${mapOnly ? '<span class="zl-maponly">Map only</span>' : ''}</span></span>
             </span>

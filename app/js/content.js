@@ -12,6 +12,7 @@
   const cache = new Map();        // path -> Promise<object|null>
   const known = new Map();        // path -> true (found) | false (missing)
   let drillIndex = null;
+  let prepDoc = null;             // content/prep.json (ENGINE-BACKLOG 455), or null when there is none
 
   const deKebab = (id) => {
     const s = String(id).replace(/^l\d+-/, '').replace(/-/g, ' ');
@@ -136,6 +137,61 @@
   const drill = (id) => load(`drills/${id}.json`);
   const drills = () => drillIndex || [];
 
+  /* ---------- Prep paths (content/prep.json, ENGINE-BACKLOG 455, docs/AUTHORING.md section 10) ----------
+     Which lessons prepare for which assessment. Paths never unlock or gate anything; they only label lessons and list
+     them in study order on the Prepare for page (js/screens/prepare.js). A step's ref is a course id, <course>/level-<n>
+     or <course>/<lesson-id>; it expands to lessons listed in course.json, written or not. */
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  /* "2026-10" or "2026-10-15" -> "October 2026"; '' when it does not parse */
+  const prepMonth = (asOf) => { const m = /^(\d{4})-(\d{2})/.exec(String(asOf || '')); return m && +m[2] >= 1 && +m[2] <= 12 ? `${MONTH_NAMES[+m[2] - 1]} ${m[1]}` : ''; };
+  const STAGE_NAME = { oa: 'OA', interview: 'interview', superday: 'superday' };
+  const STAGE_LABEL = { oa: 'OA', interview: 'Interview', superday: 'Superday' };
+  const prep = () => prepDoc || { asOf: '', paths: [] };
+  const prepPaths = () => prep().paths;
+  const prepPath = (id) => prepPaths().find(p => p.id === id) || null;
+  /* A ref's lessons as [{ course, id, level, name, written }]; [] when the ref names nothing */
+  const prepRefLessons = (ref) => {
+    const [cid, rest] = String(ref).split('/');
+    if (!curriculum || !curriculum.courses[cid] || !courseDocs[cid]) return [];
+    const all = courseLessons(cid).filter(x => x.kind === 'lesson');
+    const pick = rest == null ? all : /^level-\d+$/.test(rest) ? all.filter(x => x.level === +rest.slice(6)) : all.filter(x => x.id === rest);
+    return pick.map(x => ({ course: cid, id: x.id, level: x.level, name: x.name, written: x.written }));
+  };
+  /* The steps of a path with their lessons: [{ ...step, lessons }] */
+  const prepSteps = (p) => ((typeof p === 'string' ? prepPath(p) : p) || { steps: [] }).steps.map(st => ({ ...st, lessons: prepRefLessons(st.ref) }));
+  let prepIndex = null;           // `${course}/${lesson}` -> [path], built once, after the courses have loaded
+  const prepIdx = () => {
+    if (prepIndex) return prepIndex;
+    prepIndex = new Map();
+    prepPaths().forEach(p => p.steps.forEach(st => prepRefLessons(st.ref).forEach(l => {
+      const k = `${l.course}/${l.id}`, a = prepIndex.get(k) || [];
+      if (!a.includes(p)) a.push(p);
+      prepIndex.set(k, a);
+    })));
+    return prepIndex;
+  };
+  const prepFor = (cid, lid) => prepIdx().get(`${cid}/${lid}`) || [];
+  /* Every path that holds at least one lesson of the course */
+  const prepForCourse = (cid) => {
+    const out = [];
+    prepIdx().forEach((a, k) => { if (k.startsWith(cid + '/')) a.forEach(p => { if (!out.includes(p)) out.push(p); }); });
+    return prepPaths().filter(p => out.includes(p));
+  };
+  /* One plain line for a set of paths: "General interview prep. OA, superday. Optiver, SIG (reported, October 2026)." */
+  const prepDetail = (paths) => {
+    const out = [];
+    if (paths.some(p => p.kind === 'general')) out.push('General interview prep');
+    const stages = ['oa', 'interview', 'superday'].filter(s => paths.some(p => p.kind === 'stage' && p.stage === s)).map(s => STAGE_NAME[s]);
+    if (stages.length) out.push(stages.join(', '));
+    const byMonth = new Map();
+    paths.filter(p => p.kind === 'firm').forEach(p => { const m = prepMonth(p.asOf) || 'date not given'; byMonth.set(m, [...(byMonth.get(m) || []), p.name]); });
+    byMonth.forEach((names, m) => out.push(`${names.join(', ')} (reported, ${m})`));
+    return out.join('. ') + (out.length ? '.' : '');
+  };
+  /* The "Interview prep" chip; the title is the detail line */
+  const prepChip = (paths, cls = '') => (paths && paths.length
+    ? `<span class="prep-chip${cls ? ' ' + cls : ''}" title="${escAttr(prepDetail(paths))}">Interview prep</span>` : '');
+
   /* ---------- Start ---------- */
   const ready = (async () => {
     const [cur, man, di] = await Promise.all([
@@ -146,6 +202,9 @@
     curriculum = cur;
     if (man && Array.isArray(man.files)) { manifest = new Set(man.files); manifest.forEach(f => known.set(f, true)); }
     drillIndex = Array.isArray(di) ? di : [];
+    /* prep.json is requested only when the manifest lists it (or there is no manifest), so no 404 reaches the console */
+    const pr = !manifest || manifest.has('prep.json') ? await getJSON('prep.json', { optional: true }).catch(e => { console.error(e); return null; }) : null;
+    prepDoc = pr && Array.isArray(pr.paths) ? { asOf: pr.asOf || '', paths: pr.paths.filter(p => p && p.id && Array.isArray(p.steps)).map(p => ({ mocks: [], ...p })) } : null;
     const ids = Object.keys(cur.courses || {});
     await Promise.all(ids.map(id => getJSON(`courses/${id}/course.json`).then(d => { courseDocs[id] = d; })
       .catch(e => { console.error(e); courseDocs[id] = null; })));
@@ -159,6 +218,7 @@
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
     stages, allStages, stage, topic, topicPassed, courseTestedOut, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
     lesson, review, homework, exam, examWritten, mocks, drill, drills,
+    prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),
     deKebab,

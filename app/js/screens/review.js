@@ -108,6 +108,7 @@
      ===================================================================================== */
   function hub(root, Z) {
     const I = Z.icon, esc = Z.esc;
+    const prepPaths = (() => { try { return C().prepPaths(); } catch { return []; } })();
     let alive = true;
     assignDue();
     const sum = S().summary();
@@ -234,8 +235,9 @@
               <div class="rv-card-h"><h2 class="t-h2" id="rv-hw-h">Homework</h2><span class="t-caption muted">One set per level, due 7 days after it is set</span></div>
               ${hwRows()}
             </section>
-            <section class="card rv-card" aria-labelledby="rv-mk-h" data-sec="mocks" hidden>
+            <section class="card rv-card" aria-labelledby="rv-mk-h" data-sec="mocks" ${prepPaths.length ? '' : 'hidden'}>
               <div class="rv-card-h"><h2 class="t-h2" id="rv-mk-h">Mock assessments</h2><span class="t-caption muted">Timed, as the real ones are. Sit them as often as you like</span></div>
+              ${prepPaths.length ? `<a class="rv-prep" href="#prepare">${Z.icon('target', 'xs')}<span>Prepare for an assessment or a firm</span>${Z.icon('chevronR', 'xs')}</a>` : ''}
               <div data-mocks></div>
             </section>
             <section class="card rv-card" aria-labelledby="rv-ex-h" data-sec="exams">

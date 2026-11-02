@@ -4,6 +4,7 @@
    node tools/validate.mjs              validate everything under content/, print one line per problem, exit 1 on any error
    node tools/validate.mjs --summary    also print lesson counts per course and every mapped lesson not yet written
    node tools/validate.mjs --no-manifest   do not rewrite content/manifest.json
+   node tools/validate.mjs --prep <file>   check <file> instead of content/prep.json (and leave the manifest alone)
 
    It loads curriculum.json, every course.json, every lesson, level review, homework, exam and drill file, and checks
    the schema and the semantic rules. Missing lesson, review and homework files are warnings (they show as "Not yet
@@ -21,7 +22,9 @@ const APP = path.resolve(HERE, '..');
 const CONTENT = path.join(APP, 'content');
 const args = new Set(process.argv.slice(2));
 const SUMMARY = args.has('--summary');
-const WRITE_MANIFEST = !args.has('--no-manifest');
+const prepArg = process.argv.indexOf('--prep');
+const PREP_FILE = prepArg > 0 && process.argv[prepArg + 1] ? path.resolve(process.argv[prepArg + 1]) : null; // a scratch copy of prep.json to check instead
+const WRITE_MANIFEST = !args.has('--no-manifest') && !PREP_FILE;
 
 /* ---------- Reporting ---------- */
 const problems = [];
@@ -1384,6 +1387,110 @@ listJSON(examDir).forEach(f => {
   manifest.push(`exams/${f}`);
   guard(file, () => checkExam(file, id, r.data, cur));
 });
+
+/* ---------- Prep paths: content/prep.json (ENGINE-BACKLOG 455, docs/AUTHORING.md section 10) ---------- */
+const PREP_KINDS = ['general', 'stage', 'firm'];
+const PREP_STAGES = ['oa', 'interview', 'superday'];
+const PREP_TRACKS = ['trader', 'research', 'strats', 'developer'];
+const PREP_TOP = ['asOf', 'paths'];
+const PREP_PATH = ['id', 'name', 'kind', 'stage', 'track', 'description', 'mocks', 'steps', 'asOf', 'source', 'reported'];
+const PREP_STEP = ['ref', 'priority', 'why', 'track'];
+const PREP_DATE = /^(\d{4})-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/;
+/* A ref names a course, one of its levels or one of its lessons (a lesson listed in course.json counts even when unwritten); returns its lessons or null */
+const prepRefLessons = (ref) => {
+  if (typeof ref !== 'string') return null;
+  const [cid, rest, extra] = ref.split('/');
+  const D = cur.courseDocs[cid];
+  if (extra !== undefined || !D || !Array.isArray(D.levels)) return null;
+  const all = D.levels.flatMap(lv => (Array.isArray(lv.lessons) ? lv.lessons : []).map(l => ({ id: l, level: lv.n })));
+  if (rest === undefined) return all.map(x => `${cid}/${x.id}`);
+  const m = /^level-(\d+)$/.exec(rest);
+  if (m) { const pick = all.filter(x => x.level === +m[1]); return pick.length ? pick.map(x => `${cid}/${x.id}`) : null; }
+  return all.some(x => x.id === rest) ? [`${cid}/${rest}`] : null;
+};
+const checkPrep = (file, doc) => {
+  const unknown = (where, o, allowed) => Object.keys(o).forEach(k => { if (!allowed.includes(k)) err(file, where ? `${where}.${k}` : k, `unknown field "${k}" (allowed: ${allowed.join(', ')})`); });
+  if (!isObj(doc)) { err(file, '', 'prep.json is an object with asOf and paths'); return; }
+  unknown('', doc, PREP_TOP);
+  if (typeof doc.asOf !== 'string' || !PREP_DATE.test(doc.asOf)) err(file, 'asOf', 'asOf is required as YYYY-MM-DD (or YYYY-MM): the date the mapping was last checked');
+  if (!Array.isArray(doc.paths) || !doc.paths.length) { err(file, 'paths', 'paths is a non-empty array'); return; }
+  const ids = new Set(), stageKeys = new Map();
+  const monthsOld = (d) => { const m = PREP_DATE.exec(d); const now = new Date(); return (now.getFullYear() - +m[1]) * 12 + (now.getMonth() + 1 - +m[2]) - (m[4] && now.getDate() < +m[4] ? 1 : 0); };
+  doc.paths.forEach((p, i) => {
+    const at = `paths[${i}]`;
+    if (!isObj(p)) { err(file, at, 'a path is an object'); return; }
+    unknown(at, p, PREP_PATH);
+    req(file, at, p, ['id', 'name', 'kind']);
+    if (typeof p.id === 'string') {
+      if (!KEBAB.test(p.id)) err(file, `${at}.id`, 'path ids are kebab-case');
+      if (ids.has(p.id)) err(file, `${at}.id`, `duplicate path id "${p.id}"`);
+      ids.add(p.id);
+    }
+    checkText(file, `${at}.name`, p.name); checkText(file, `${at}.description`, p.description);
+    if (p.description !== undefined && (typeof p.description !== 'string' || !p.description.trim())) err(file, `${at}.description`, 'description is a non-empty string (one or two plain sentences)');
+    if (typeof p.description === 'string' && words(p.description) > 40) warn(file, `${at}.description`, 'keep the description to one or two short sentences');
+    if (!PREP_KINDS.includes(p.kind)) err(file, `${at}.kind`, `kind is one of ${PREP_KINDS.join(', ')}`);
+    if (p.kind === 'stage') {
+      if (!PREP_STAGES.includes(p.stage)) err(file, `${at}.stage`, `a stage path needs stage: ${PREP_STAGES.join(', ')}`);
+      if (!PREP_TRACKS.includes(p.track)) err(file, `${at}.track`, `a stage path needs track: ${PREP_TRACKS.join(', ')}`);
+      const key = `${p.stage}/${p.track}`;
+      if (stageKeys.has(key)) err(file, at, `stage "${p.stage}" and track "${p.track}" already have a path (${stageKeys.get(key)})`); else stageKeys.set(key, p.id);
+    } else {
+      if (p.stage !== undefined) err(file, `${at}.stage`, 'stage belongs only to a stage path');
+      if (p.track !== undefined && !PREP_TRACKS.includes(p.track)) err(file, `${at}.track`, `track is one of ${PREP_TRACKS.join(', ')}`);
+      if (p.track !== undefined && p.kind === 'general') err(file, `${at}.track`, 'a general path has no track');
+    }
+    if (p.kind === 'firm') {
+      if (typeof p.asOf !== 'string' || !PREP_DATE.test(p.asOf)) err(file, `${at}.asOf`, 'a firm path needs asOf (YYYY-MM or YYYY-MM-DD): when its reported formats were last checked');
+      else if (monthsOld(p.asOf) > 12) warn(file, `${at}.asOf`, `reported formats are ${monthsOld(p.asOf)} months old: re-check them and re-date`);
+      if (typeof p.source !== 'string' || !p.source) err(file, `${at}.source`, 'a firm path needs source: a lesson or course ref, such as recruiting/l4-firm-by-firm');
+      else if (!prepRefLessons(p.source)) err(file, `${at}.source`, `source "${p.source}" is not a course, level or lesson`);
+      if (p.reported !== true) err(file, `${at}.reported`, 'a firm path needs reported: true (the formats come from candidate reports)');
+    } else {
+      if (p.source !== undefined) err(file, `${at}.source`, 'source belongs only to a firm path');
+      if (p.reported !== undefined) err(file, `${at}.reported`, 'reported belongs only to a firm path');
+      if (p.asOf !== undefined && (typeof p.asOf !== 'string' || !PREP_DATE.test(p.asOf))) err(file, `${at}.asOf`, 'asOf is YYYY-MM or YYYY-MM-DD');
+    }
+    if (p.mocks !== undefined) {
+      if (!Array.isArray(p.mocks)) err(file, `${at}.mocks`, 'mocks is a list of mock exam ids');
+      else {
+        const seen = new Set();
+        p.mocks.forEach(m => {
+          if (typeof m !== 'string' || !/^mock-[a-z0-9]+(-[a-z0-9]+)*$/.test(m)) err(file, `${at}.mocks`, `"${m}" is not a mock id (mock- then kebab-case words)`);
+          else if (seen.has(m)) err(file, `${at}.mocks`, `duplicate mock "${m}"`);
+          seen.add(m);
+        });
+      }
+    }
+    if (!Array.isArray(p.steps)) { err(file, `${at}.steps`, 'steps is a list (it may be empty while the path is being written)'); return; }
+    if (!p.steps.length) warn(file, `${at}.steps`, 'no steps yet');
+    const seenRef = new Set(), lessonAt = new Map();
+    p.steps.forEach((st, j) => {
+      const sat = `${at}.steps[${j}]`;
+      if (!isObj(st)) { err(file, sat, 'a step is an object'); return; }
+      unknown(sat, st, PREP_STEP);
+      req(file, sat, st, ['ref', 'priority', 'why']);
+      if (st.priority !== undefined && st.priority !== 'must' && st.priority !== 'should') err(file, `${sat}.priority`, 'priority is "must" or "should"');
+      if (st.track !== undefined && !PREP_TRACKS.includes(st.track)) err(file, `${sat}.track`, `track is one of ${PREP_TRACKS.join(', ')}`);
+      if (typeof st.why === 'string') {
+        checkText(file, `${sat}.why`, st.why);
+        if (words(st.why) >= 20) err(file, `${sat}.why`, `why is a line of under 20 words (found ${words(st.why)})`);
+      } else if (st.why !== undefined) err(file, `${sat}.why`, 'why is a string');
+      if (typeof st.ref !== 'string') { if (st.ref !== undefined) err(file, `${sat}.ref`, 'ref is a string'); return; }
+      const ls = prepRefLessons(st.ref);
+      if (!ls) err(file, `${sat}.ref`, `ref "${st.ref}" is not a course, "<course>/level-<n>" or "<course>/<lesson-id>" listed in a course.json`);
+      else {
+        if (seenRef.has(st.ref)) err(file, `${sat}.ref`, `ref "${st.ref}" appears twice in this path`);
+        seenRef.add(st.ref);
+        ls.forEach(l => { if (lessonAt.has(l) && lessonAt.get(l) !== j) warn(file, `${sat}.ref`, `"${l}" is already in step ${lessonAt.get(l) + 1} of this path`); else lessonAt.set(l, j); });
+      }
+    });
+  });
+};
+const prepFile = PREP_FILE || path.join(CONTENT, 'prep.json');
+const prepDoc = readJSON(prepFile);
+if (prepDoc.data) { guard(prepFile, () => checkPrep(prepFile, prepDoc.data)); if (!PREP_FILE) manifest.push('prep.json'); }
+else if (prepDoc.missing && PREP_FILE) err(prepFile, '', 'the file given to --prep does not exist');
 
 /* Drills */
 const drillDir = path.join(CONTENT, 'drills');

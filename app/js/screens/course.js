@@ -154,12 +154,14 @@
     const lessonsDone = (st = statusOf) => flat.filter(e => e.it.kind === 'lesson' && st(e) === 'done').length;
     const pct = (n) => (lessonsTotal ? Math.round(n / lessonsTotal * 100) : 0);
 
+    /* The prep paths a lesson is on (ENGINE-BACKLOG 455); none for a review or homework */
+    const prepOf = (e) => (e.it.kind === 'lesson' ? C.prepFor(cid, e.it.id) : []);
     const kindName = (e) => (e.it.kind === 'lesson' ? `Lesson ${e.no}` : e.it.kind === 'review' ? `Level ${e.lv.n} review` : e.it.name);
     const ariaFor = (e, st) => {
       const it = e.it;
       const what = it.kind === 'lesson' ? `Lesson ${e.no}, ${it.name}` : it.kind === 'review' ? `Level ${e.lv.n} review` : `${it.name}, level ${e.lv.n}`;
       const state = st === 'done' ? (mastered(e) ? 'Done, mastered' : 'Done') : st === 'current' ? 'Up next' : st === 'nw' ? 'Not yet written' : 'Not started';
-      return `${what}. ${state}.`;
+      return `${what}. ${state}.${prepOf(e).length ? ' Interview prep.' : ''}`;
     };
 
     /* ---------- Puck ---------- */
@@ -191,7 +193,7 @@
           ${puck(e.it.kind)}
           <span class="zc-mark" aria-hidden="true"><span>${Z.mark()}</span></span>
         </span>
-        <span class="zc-tt"><span class="zc-title">${esc(e.it.name)}</span>${st === 'nw' ? '<span class="zc-nwtag">Not yet written</span>' : ''}</span>
+        <span class="zc-tt"><span class="zc-title">${esc(e.it.name)}</span>${C.prepChip(prepOf(e), 'is-sm')}${st === 'nw' ? '<span class="zc-nwtag">Not yet written</span>' : ''}</span>
       </button></li>`;
     };
 
@@ -338,6 +340,8 @@
         </div>` : '';
       const perfect = r && r.perfect ? `<p class="t-caption secondary zc-perf">${Z.icon('star', 'xs')}Perfect lesson: every problem right first time.</p>` : '';
       const act = actFor(e);
+      const pp = prepOf(e);
+      const prepLine = pp.length ? `<p class="t-caption secondary zc-prep"><b>Interview prep.</b> ${esc(C.prepDetail(pp))} <a href="#prepare${pp.length === 1 ? '/' + encodeURIComponent(pp[0].id) : ''}">See ${pp.length === 1 ? 'the path' : 'the paths'}</a></p>` : '';
       const nwBody = st === 'nw' ? `${resource && resource.url ? `<a class="btn secondary block" href="${esc(resource.url)}" target="_blank" rel="noopener">Open the topic resource</a>` : ''}
           <p class="t-caption muted zc-cap">${resource && resource.name ? `Until it is written, study it from ${esc(resource.name)}.` : 'Until it is written, study it from the topic resource.'}</p>` : '';
       body.innerHTML = `<div class="zc-info">
@@ -345,7 +349,7 @@
         <h2 class="t-sheet-title" id="zc-pop-title">${esc(title)}</h2>
         ${it.objective ? `<p class="t-body zc-obj">${Z.md(esc(it.objective))}</p>` : ''}
         <p class="t-body secondary zc-meta" data-meta>${esc(metaFor(e))}</p>
-        ${score}${perfect}
+        ${prepLine}${score}${perfect}
         ${act ? `<button type="button" class="btn track lg block" data-act>${act.label}</button>` : ''}
         ${act && act.cap ? `<p class="t-caption muted zc-cap">${esc(act.cap)}</p>` : ''}
         ${nwBody}
