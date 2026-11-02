@@ -1,0 +1,594 @@
+{
+  "id": "homework-2",
+  "course": "puzzles",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw2-duration",
+      "difficulty": 5,
+      "skills": [
+        "pz-recursion"
+      ],
+      "tags": [
+        "ruin-in-interviews"
+      ],
+      "prose": "Write `ruin_duration(k, N, p)` for any $p$. It returns the exact expected number of £1 bets from $k$ until $0$ or $N$. Solve the first-step equations $D_k = 1 + pD_{k+1} + qD_{k-1}$, $D_0 = D_N = 0$. For $p \\ne q$ the solution is $D_k = \\tfrac{k}{q - p} - \\tfrac{N}{q - p} \\cdot \\tfrac{1 - r^k}{1 - r^N}$ with $r = q/p$.",
+      "question": "Write the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import random as _random\nfrom fractions import Fraction\n\ndef _sim_duration(k, N, p, trials, seed):\n    rng = _random.Random(seed)\n    total = 0\n    for _ in range(trials):\n        x = k\n        while 0 < x < N:\n            x += 1 if rng.random() < p else -1\n            total += 1\n    return total / trials\n",
+        "starter": "from fractions import Fraction\n\n\ndef ruin_duration(k, N, p):\n    \"\"\"Expected number of 1-unit bets from k until 0 or N.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\n\n\ndef ruin_duration(k, N, p):\n    \"\"\"Expected number of 1-unit bets from k until 0 or N.\"\"\"\n    p = Fraction(p)\n    q = 1 - p\n    if p == q:\n        return Fraction(k * (N - k))\n    r = q / p\n    return Fraction(k) / (q - p) - Fraction(N) / (q - p) * (1 - r ** k) / (1 - r ** N)\n",
+        "examples": [
+          {
+            "call": "ruin_duration(3, 10, Fraction(1, 2))",
+            "expect": "Fraction(21, 1)",
+            "compare": "fraction"
+          }
+        ],
+        "tests": [
+          {
+            "call": "ruin_duration(3, 10, Fraction(3, 5))",
+            "expect": "Fraction(48291, 2321)",
+            "compare": "fraction"
+          },
+          {
+            "call": "ruin_duration(2, 4, Fraction(9, 20))",
+            "expect": "Fraction(400, 101)",
+            "compare": "fraction"
+          },
+          {
+            "call": "ruin_duration(2, 5, Fraction(2, 5))",
+            "expect": "Fraction(1110, 211)",
+            "compare": "fraction"
+          },
+          {
+            "call": "ruin_duration(3, 10, Fraction(1, 2))",
+            "expect": "Fraction(21, 1)",
+            "compare": "fraction"
+          },
+          {
+            "call": "ruin_duration(5, 10, Fraction(1, 2))",
+            "expect": "Fraction(25, 1)",
+            "compare": "fraction"
+          },
+          {
+            "call": "ruin_duration(0, 10, Fraction(3, 5))",
+            "expect": "Fraction(0, 1)",
+            "compare": "fraction"
+          },
+          {
+            "call": "ruin_duration(10, 10, Fraction(3, 5))",
+            "expect": "Fraction(0, 1)",
+            "compare": "fraction"
+          },
+          {
+            "call": "abs(float(ruin_duration(3, 10, Fraction(5001, 10000))) - 21) < 0.01",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(float(ruin_duration(3, 10, Fraction(3, 5))) - _sim_duration(3, 10, 0.6, 20000, 3)) < 0.34",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(float(ruin_duration(4, 9, Fraction(11, 20))) - _sim_duration(4, 9, 0.55, 20000, 8)) < 0.34",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. Tests 1 to 7 need an exact `Fraction`, the fair case and both edges included. Test 8 checks that $p = 0.5001$ lands within 0.01 of the fair 21. Tests 9 and 10 compare with a hidden seeded simulation of 20,000 runs, within three standard errors (0.34 bets)."
+      },
+      "feedback": {
+        "correct": "Exact, fair and simulated cases all agree.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-4": "At $p = \\tfrac12$ the general formula divides by zero. Return $k(N - k)$ there.",
+          "test-1": "Keep everything a `Fraction`: convert `p` first and build $r = q/p$ from it."
+        }
+      },
+      "explain": {
+        "text": "The fair case needs its own branch, since $q - p = 0$. Near $p = \\tfrac12$ the general formula tends to $k(N - k)$, which test 8 checks. The hidden simulation gives 20.84 for the worked case against the exact 20.81."
+      }
+    },
+    {
+      "id": "hw2-natfreq",
+      "difficulty": 4,
+      "skills": [
+        "pz-conditioning"
+      ],
+      "tags": [
+        "bayes-in-a-minute"
+      ],
+      "prose": "Write `natural_frequency(base, sens, fpr, n=10000)`. Return the true positives, the false positives and $P(\\text{ill} \\mid +)$ out of $n$ people, all exact. Counts may be fractions when $n$ is too small.",
+      "question": "Write the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\n\n\ndef natural_frequency(base, sens, fpr, n=10000):\n    \"\"\"Return (true positives, false positives, P(ill | positive)), all exact.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\n\n\ndef natural_frequency(base, sens, fpr, n=10000):\n    \"\"\"Return (true positives, false positives, P(ill | positive)), all exact.\"\"\"\n    base, sens, fpr = (Fraction(str(x)) for x in (base, sens, fpr))\n    tp = n * base * sens\n    fp = n * (1 - base) * fpr\n    return tp, fp, tp / (tp + fp)\n",
+        "examples": [
+          {
+            "call": "natural_frequency(0.01, 0.99, 0.05)",
+            "expect": "(Fraction(99, 1), Fraction(495, 1), Fraction(1, 6))",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "natural_frequency(0.01, 0.99, 0.05) == (99, 495, Fraction(1, 6))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "natural_frequency(0.15, 0.8, 0.2, 100) == (12, 17, Fraction(12, 29))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "natural_frequency(0.4, 0.6, 0.3, 100) == (24, 18, Fraction(4, 7))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "natural_frequency(0.02, 0.9, 0.1, 1000) == (18, 98, Fraction(9, 58))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "natural_frequency(Fraction(1, 100), Fraction(99, 100), Fraction(1, 20))[2] == Fraction(1, 6)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "isinstance(natural_frequency(0.01, 0.99, 0.05)[2], Fraction)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "natural_frequency(0.01, 0.99, 0.025)[1] == Fraction(495, 2)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "natural_frequency(0.3, 0.7, 0)[2] == 1",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Each compares your exact tuple, or one entry of it, with the exact answer. Decimals such as 0.01 must become exact fractions, so `Fraction(str(x))` is the safe conversion."
+      },
+      "feedback": {
+        "correct": "Exact counts and the exact posterior.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Convert each rate with `Fraction(str(x))`. `Fraction(0.01)` keeps the float’s binary error."
+        }
+      },
+      "explain": {
+        "text": "True positives are $n \\cdot \\text{base} \\cdot \\text{sens}$ and false ones $n(1 - \\text{base})\\,\\text{fpr}$. The posterior is their share, which does not depend on $n$. Choosing $n$ well only makes the counts whole when you say them aloud."
+      }
+    },
+    {
+      "id": "hw2-fair-ruin",
+      "difficulty": 4,
+      "skills": [
+        "pz-recursion"
+      ],
+      "tags": [
+        "ruin-in-interviews"
+      ],
+      "prose": "Derive the chance that fair £1 bets from £$k$ reach £$N$ before £0.",
+      "question": "Put the derivation in order. Leave out the line that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Let $P_k$ be the chance of reaching $N$ from $k$, with $P_0 = 0$ and $P_N = 1$."
+          },
+          {
+            "id": "s2",
+            "text": "First step: $P_k = \\tfrac12 P_{k+1} + \\tfrac12 P_{k-1}$ for $0 < k < N$."
+          },
+          {
+            "id": "s3",
+            "text": "Rearrange: $P_{k+1} - P_k = P_k - P_{k-1}$, so every step up the ladder is the same size $d$."
+          },
+          {
+            "id": "s4",
+            "text": "Then $P_k = kd$, and $P_N = Nd = 1$ gives $d = \\tfrac1N$."
+          },
+          {
+            "id": "s5",
+            "text": "So $P_k = \\tfrac{k}{N}$; from £3 of £10 that is 0.3."
+          },
+          {
+            "id": "d1",
+            "text": "Each bet is fair, so both ends are equally likely: $P_k = \\tfrac12$."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Boundary values, first step, equal steps, then $d = \\tfrac1N$.",
+        "generic": "Not quite right. Define $P_k$ and its ends first, then take one step.",
+        "byKey": {
+          "d1": "Fair bets do not make the ends equally likely. The nearer end is likelier, as $k/N$ shows.",
+          "left-out": "Every line except the one about equal ends belongs.",
+          "s5": "The conclusion comes last."
+        }
+      },
+      "explain": {
+        "text": "The first-step equation makes $P_k$ the average of its neighbours. So $P_k$ is a straight line in $k$, and the ends fix it at $k/N$. It matches the fair-game argument $N P_k = k$."
+      }
+    },
+    {
+      "id": "hw2-spoken",
+      "difficulty": 4,
+      "skills": [
+        "pz-conditioning"
+      ],
+      "tags": [
+        "bayes-in-a-minute"
+      ],
+      "question": "Answer aloud, then write it out.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "An interviewer says: 1% of people have a condition. A test catches 99% of cases and flags 5% of healthy people. A patient tests positive twice. Give yourself 2 minutes. Say your answer aloud as you would in the room, then write it here.",
+        "model": "**Set-up.** Picture 1,000,000 people. At a 1% base rate, 10,000 are ill and 990,000 are well.\n\n**Counts.** Assume the two tests err independently, given whether the person is ill. The ill test positive twice at $0.99^2$: $9{,}801$ people. The well test positive twice at $0.05^2 = 0.0025$: $2{,}475$ people.\n\n**Answer.** $$P(\\text{ill} \\mid ++) = \\frac{9801}{9801 + 2475} = \\frac{99}{124} \\approx 0.80.$$\n\n**Check.** One positive gave $\\tfrac16$, so a second should raise it a lot but not to certainty. In odds: $\\tfrac1{99} \\times 19.8^2 = 3.96$, a chance of $3.96/4.96 \\approx 0.80$. Both routes agree.\n\n**Assumption.** If the second test repeats the first on the same sample, its errors are not independent. Then the second positive adds much less, and the answer is nearer $\\tfrac16$.\n\n**Said aloud.** \"Take a million people: ten thousand ill. Twice positive: 9,801 ill and 2,475 well, if the tests err independently. So about 80%. Check by odds: one ninety-ninth times 19.8 squared is about 4 to 1.\"",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Uses natural frequencies: a round total split into ill and well, then into positives"
+          },
+          {
+            "points": 2,
+            "text": "Starts from the base rate, 1%, and keeps it in the bottom line"
+          },
+          {
+            "points": 2,
+            "text": "Reaches the number: $9801/(9801 + 2475) = 99/124 \\approx 0.80$"
+          },
+          {
+            "points": 2,
+            "text": "Gives a sanity check: odds $\\tfrac1{99} \\times 19.8^2 \\approx 4$, or a comparison with one test’s $\\tfrac16$"
+          },
+          {
+            "points": 2,
+            "text": "States the assumption that the two tests err independently, and what breaks it"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and tick the rubric.",
+        "generic": "Open the model answer and mark each rubric line."
+      },
+      "explain": {
+        "text": "Interviewers mark the route as it happens: a total, the counts, the share, a check, the assumption. Saying the assumption is what separates 0.80 from a guess."
+      }
+    },
+    {
+      "id": "hw2-second-ace",
+      "difficulty": 4,
+      "skills": [
+        "pz-symmetry"
+      ],
+      "tags": [
+        "cards-and-colours"
+      ],
+      "prose": "Turn a shuffled deck over one card at a time.",
+      "question": "At what position does the second ace appear, on average? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21.2,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Position",
+        "accept": "2 × 53/5 = 21.2",
+        "wrong": [
+          {
+            "id": "double-gap",
+            "value": 19.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "half",
+            "value": 26.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "quarter",
+            "value": 26,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two gaps of $9.6$ and two aces: $21.2$.",
+        "generic": "Not quite right. Count the cards in the first two gaps, then add the two aces.",
+        "byKey": {
+          "double-gap": "You counted the cards in two gaps but not the two aces.",
+          "half": "That is the middle of the deck. Four aces make five gaps, and the second ace ends the second.",
+          "quarter": "You split the deck into four equal parts and took two."
+        }
+      },
+      "explain": {
+        "text": "Each of the five gaps holds $\\tfrac{48}{5} = 9.6$ cards on average. The second ace follows two gaps and the first ace: $2 \\times 9.6 + 2 = 21.2$. In general the $j$-th ace is at $j \\cdot \\tfrac{53}{5}$."
+      }
+    },
+    {
+      "id": "hw2-last-two",
+      "difficulty": 4,
+      "skills": [
+        "pz-symmetry"
+      ],
+      "tags": [
+        "urns"
+      ],
+      "prose": "An urn holds 7 red and 5 blue balls. You draw them all without replacement.",
+      "question": "What is the chance the last two balls differ in colour? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5303,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "2 × 7/12 × 5/11 = 35/66, about 0.5303",
+        "wrong": [
+          {
+            "id": "once",
+            "value": 0.2652,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "replace",
+            "value": 0.4861,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The last two act like the first two: $2 \\cdot \\tfrac7{12} \\cdot \\tfrac5{11} = \\tfrac{35}{66}$.",
+        "generic": "Not quite right. Use symmetry: the last two places are like the first two.",
+        "byKey": {
+          "once": "You counted red then blue only. Blue then red counts too.",
+          "replace": "You used $\\tfrac{7}{12} \\cdot \\tfrac5{12}$ twice, as if with replacement."
+        }
+      },
+      "explain": {
+        "text": "By symmetry the last two places are a random pair, like the first two draws. Red then blue or blue then red: $\\tfrac{35}{132}$ each. Together $\\tfrac{35}{66} \\approx 0.53$."
+      }
+    },
+    {
+      "id": "hw2-two-coins",
+      "difficulty": 5,
+      "skills": [
+        "pz-conditioning"
+      ],
+      "tags": [
+        "bayes-in-a-minute"
+      ],
+      "prose": "A bag holds a fair coin and a coin that lands heads with chance $\\tfrac34$. You pick one at random and flip it twice: two heads.",
+      "question": "What is the chance the next flip of the same coin is a head? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6731,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "35/52, about 0.6731",
+        "wrong": [
+          {
+            "id": "prior",
+            "value": 0.625,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "biased",
+            "value": 0.6923,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "sure",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac9{13} \\cdot \\tfrac34 + \\tfrac4{13} \\cdot \\tfrac12 = \\tfrac{35}{52} \\approx 0.6731$.",
+        "generic": "Not quite right. Update which coin you hold, then average its head chance.",
+        "byKey": {
+          "prior": "You averaged $\\tfrac34$ and $\\tfrac12$ evenly. Two heads make the biased coin likelier.",
+          "biased": "That is the chance you hold the biased coin. Now average the head chances with it.",
+          "sure": "You assumed the biased coin for certain. The fair coin also gives two heads a quarter of the time."
+        }
+      },
+      "explain": {
+        "text": "Out of 32 picks, 16 biased coins give two heads 9 times and 16 fair coins 4 times. So the biased coin has chance $\\tfrac9{13}$. The next head then has chance $\\tfrac9{13} \\cdot \\tfrac34 + \\tfrac4{13} \\cdot \\tfrac12 = \\tfrac{35}{52}$."
+      }
+    },
+    {
+      "id": "hw2-ever-up",
+      "difficulty": 4,
+      "skills": [
+        "pz-recursion"
+      ],
+      "tags": [
+        "ruin-in-interviews"
+      ],
+      "prose": "A walk starts at 0 and steps up with chance 0.4, down with chance 0.6. There is no floor. Write $P$ for the chance it ever reaches $+1$. First step: $P = 0.4 + 0.6P^2$, since from $-1$ it must climb two levels.",
+      "question": "What is $P$? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6667,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "2/3, the smaller root of 0.6P² − P + 0.4 = 0",
+        "wrong": [
+          {
+            "id": "sure",
+            "value": 1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "first",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$P = \\tfrac{p}{q} = \\tfrac23$.",
+        "generic": "Not quite right. Solve the quadratic and pick the root that a floor moving away gives.",
+        "byKey": {
+          "sure": "That is the other root. With a floor at $-k$ the chance is $\\tfrac{1 - r^k}{1 - r^{k+1}} \\to \\tfrac1r = \\tfrac23$, so 1 is not the limit.",
+          "first": "That counts only an up first step. A walk can go down and come back."
+        }
+      },
+      "explain": {
+        "text": "The roots of $0.6P^2 - P + 0.4 = 0$ are 1 and $\\tfrac23$. Putting a floor at $-k$ and letting it recede gives $\\tfrac{1 - 1.5^k}{1 - 1.5^{k+1}} \\to \\tfrac23$. A simulation gives 0.667."
+      }
+    },
+    {
+      "id": "hw2-max-three",
+      "difficulty": 4,
+      "skills": [
+        "pz-conditioning"
+      ],
+      "tags": [
+        "largest-of-several"
+      ],
+      "prose": "Roll three dice. Use $E[\\max] = \\sum_{m=1}^{6} P(\\max \\ge m)$ and $P(\\max \\ge m) = 1 - (\\tfrac{m - 1}{6})^3$.",
+      "question": "What is the expected largest face? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.9583,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Expected max",
+        "accept": "6 − 225/216 = 119/24, about 4.9583",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 4.4722,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "top",
+            "value": 6,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$6 - \\tfrac{0 + 1 + 8 + 27 + 64 + 125}{216} = \\tfrac{119}{24} \\approx 4.9583$.",
+        "generic": "Not quite right. Add $1 - (\\tfrac{m - 1}{6})^3$ for $m$ from 1 to 6.",
+        "byKey": {
+          "two": "That is two dice. A third die raises the max.",
+          "top": "Six is the most, not the average."
+        }
+      },
+      "explain": {
+        "text": "The tail sum gives $6 - \\tfrac{225}{216} = \\tfrac{119}{24}$. Each extra die adds less: 3.5, 4.47, 4.96. A count over all 216 rolls gives the same."
+      }
+    },
+    {
+      "id": "hw2-frog-three",
+      "difficulty": 3,
+      "skills": [
+        "pz-symmetry"
+      ],
+      "tags": [
+        "ants"
+      ],
+      "prose": "The frog now jumps one, two or three steps at a time. Count by the last jump.",
+      "question": "In how many ways can it reach step 10?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 274,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a decimal",
+        "label": "Ways",
+        "accept": "274",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 89,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nine",
+            "value": 149,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "274 ways.",
+        "generic": "Not quite right. Add the three previous counts each time.",
+        "byKey": {
+          "two": "That allows only jumps of one or two.",
+          "nine": "That is step 9. Add one more term."
+        }
+      },
+      "explain": {
+        "text": "$w(n) = w(n - 1) + w(n - 2) + w(n - 3)$ with $w(1) = 1$, $w(2) = 2$, $w(3) = 4$. Then 7, 13, 24, 44, 81, 149, 274."
+      }
+    }
+  ]
+}
