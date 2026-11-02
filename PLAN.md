@@ -44,7 +44,7 @@ Goal: the app is a complete, self-contained resource for passing quant internshi
 
 Phase 0, fast track
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
-- [ ] mental-pressure L1
+- [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
 - [ ] mental-pressure L2
 - [ ] mental-pressure L3
 - [ ] mental-pressure L4: Assessment batteries
@@ -179,7 +179,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] mm-games L1
 - [ ] mm-games L2
 - [ ] mm-games L3
-- [ ] mental-pressure L1
+- [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
 - [ ] mental-pressure L2
 - [ ] mental-pressure L3
 
