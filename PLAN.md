@@ -46,7 +46,7 @@ Order (user decisions, 2 Nov; supersedes the phase order below, whose lines stay
 Rules: work topic by topic. A topic closes when every level (lessons, review, homework), its topic exam, its mocks, a second read and fix pass (answers, grading of alternative correct forms and of wrong answers, layout) and a green playthrough of the topic are done, in one closing commit after the per-level commits. Agents may run in parallel on different courses of the current topic, and on the next topic once the current one has only its exam, read and fix left. Each session also ends with an answer-check agent that recomputes every keyed answer in that session's new files independently; mismatches go to a fix agent before the session closes.
 
 1. Prep tags: engine pass 455, then the mapping (general and stage paths first, foundations to superday; firm paths last).
-2. Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
+2. [done 2 Nov] Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
 3. Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning).
 4. Topic 3.3:
    - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built.
@@ -84,14 +84,15 @@ Phase 1, trader core
 - [ ] mm-games L2
 - [ ] mm-games L3
 - [ ] mm-games L4: Trading games firms run
-- [ ] recruiting L3: Interviews and after
+- [x] recruiting L3: Interviews and after (`docs/reports/recruiting-3.md`; 5 lessons, review-3 9 items, homework-3 9 items; 4 inbox bullets)
+- [x] Topic 0.7 closed: exam topic-0.7 (30 items, `docs/reports/exam-0.7.md`), second read and fix (`docs/reviews/review-0.7.md`: 3 errors, 17 warnings, 29 notes; 48 fixed, 1 deferred to the inbox), level 1 firm names moved to firm types, all lessons, sets and exam green
 - [ ] Engine pass B: E7 question bank with item spacing, E9 per-item timing
 - [ ] Bank part 1 (200 items: probability, brainteasers, mental, market making, behavioural), in four sessions
 - [ ] Exam: mock-superday-trader
 - [ ] Second readers and fix passes: puzzles, mental-pressure
 
 Phase 2, researcher core
-- [ ] Briefs: research-int, coding-int, game-theory, systems, trees L4, cpp L5 (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
+- [ ] Briefs: research-int, coding-int, game-theory (done 2 Nov, `docs/briefs/game-theory.md`), systems, trees L4, cpp L5 (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
 - [ ] research-int L1: Statistics and linear algebra questions
 - [ ] research-int L2: Machine learning questions
 - [ ] research-int L3: The open case
