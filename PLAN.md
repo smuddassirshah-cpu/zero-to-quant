@@ -51,6 +51,8 @@ Phase 0, fast track
 - [x] recruiting L1: The landscape (`docs/reports/recruiting-1.md`; 5 lessons, review-1, homework-1 with a dated target list; 5 inbox bullets)
 - [x] recruiting L2: The application (`docs/reports/recruiting-2.md`; 5 lessons, review-2, homework-2; 5 inbox bullets)
 - [ ] Exams: mock-oa-arith, mock-oa-trader, mock-oa-sig
+- [ ] Prep tags, engine (ENGINE-BACKLOG 455; brief `docs/briefs/prep-tags.md`): `content/prep.json` schema, validator, one chip per lesson, a "Prepare for" page (user request, 2 Nov)
+- [ ] Prep tags, mapping: general, stage-by-track and ten firm paths in `content/prep.json`
 
 Phase 1, trader core
 - [ ] puzzles L3
