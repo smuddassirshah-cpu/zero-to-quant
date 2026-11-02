@@ -41,14 +41,28 @@ Goal: the app is a complete, self-contained resource for passing quant internshi
 - [x] Engine pass A (items 450 to 454; `docs/reports/engine-interview-a.md`; sample `exams/mock-sample.json`): E1 net scoring, E2 forward-only papers, E4 generated arithmetic items, E5 mock exam kind, E6 timed sets (number from 450 in ENGINE-BACKLOG; document in AUTHORING.md)
 - [x] Briefs: recruiting, brainteasers; revise puzzles, mm-games, mental-pressure, ito briefs per plan section (a) (plus new sections puzzles L5, mm-games L4, mental-pressure L4, ito L4)
 
-Order (user decision, 2 Nov; supersedes the phase order below, whose lines stay as the checklist): finish one section at a time, then move on. A section is a topic: every level (lessons, review, homework), its topic exam, a second read and fix pass, and a green playthrough of the topic. Within a topic, finish one course before starting the next. A mock exam is written as soon as the content it draws on is complete. Each level is still committed when green (usage caps); the section closes with a commit that includes its exam.
-1. Prep tags: engine pass, then mapping (in flight).
-2. Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
-3. Topic 3.3: mental-pressure L3, L4, then mock-oa-arith; puzzles L3 to L5, then mock-oa-sig and mock-oa-trader; mm-games L2 to L4 (engine pass D first if L4 needs E12); brainteasers L1 to L3; game-theory brief and L1 to L3; exam topic-3.3; mock-superday-trader; second readers and fix passes.
-4. Topic 3.5: briefs, then research-int L1 to L4, coding-int L1 to L4, systems L1 to L4 (engine passes B and C when a level needs them); researcher, developer and strats mocks; exam topic-3.5; second read and fix.
-5. Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
-6. Levels appended to finished topics: trees L4 (topic 1.7), cpp L5 (topic 1.9); each also extends its topic exam to cover the new level.
-7. Then 2b and the rest, topic by topic in the same way.
+Order (user decisions, 2 Nov; supersedes the phase order below, whose lines stay as the checklist).
+Rules: finish one section at a time. A section is a topic: every level (lessons, review, homework), its topic exam, a second read and fix pass, and a green playthrough of the topic. Within a topic, finish one course before the next. Write a mock as soon as its content is complete. Commit each level when green (usage caps); a section closes with a commit that includes its exam.
+
+Part G, gaps first: complete courses already started and write the exams their topics allow, before any course with no lessons is begun.
+1. Prep tags: engine pass, then mapping (started this session).
+2. Exam topic-0.6 (lessons complete).
+3. recruiting L3; exam topic-0.7; extend stage-0 to cover topics 0.6 and 0.7 if it does not.
+4. mental-pressure L3, L4; mock-oa-arith.
+5. puzzles L3 to L5; mock-oa-sig, mock-oa-trader.
+6. mm-games L2 to L4 (engine pass D first if L4 needs E12).
+7. ito L2 to L4.
+8. trees L4, extend exam topic-1.7; cpp L5, extend exam topic-1.9.
+9. momentum-rep L2, L3.
+10. analysis L5, linear-maps L4 (Pure maths, reversing the Pure-waits rule for started courses); exam topic-1.10.
+11. Second reads and fix passes for finished topics with none (0.1 to 0.7, 1.1, 1.2, 1.8, 1.10, 2.1 to 2.4), interview-critical first: 0.5, 0.7, 1.8, 2.1.
+
+Part N, new courses, topic by topic, after Part G:
+1. Topic 3.3: brainteasers, game-theory (brief first); exam topic-3.3; mock-superday-trader; second reads.
+2. Topic 3.5: briefs; research-int, coding-int, systems (engine passes B and C when needed); researcher, developer and strats mocks; exam topic-3.5.
+3. Topic 3.2: measure-prob, pdes; exam topic-3.2.
+4. Topic 3.1: pairs-rep; exam topic-3.1.
+5. Then 2b and the rest (1.11, 2.5, 2.6, 3.4), then stage exams 1 to 3.
 
 Phase 0, fast track
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
