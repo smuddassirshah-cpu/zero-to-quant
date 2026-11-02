@@ -680,3 +680,8 @@ Raised later (recruiting level 3):
 Raised later (exam 0.7):
 - `tools/playthrough.mjs --why --shots`: the results page screenshot of a 30-item exam stops painting after about item 21 (topic-0.7-done-why.png is 28,463 px tall, blank below 17,400 px), so the last items, here both longform model answers and a Markdown table in one, cannot be checked from the shots. Wanted: the results page captured in several viewport-height screenshots, or one per item. Workaround: none; the report says the models were not seen rendered.
 - `table` canvas: no way to keep a short column from wrapping, so dates such as "8 Nov 2026" break over two lines at 390 px when a neighbouring column holds a phrase (topic-0.7 target-list and planning tables). Wanted: a per-column `nowrap` or width hint on `params.columns`. Workaround: shorter text in the other columns.
+
+Raised later (topic 0.7 fix pass, 2 Nov):
+- `boxes` canvas: at 390 px a card deck of 8 or 9 cards scales card text to about 7 to 8 px (recruiting l1 hook, l9 hook), and `cols: 1` on the deck makes it worse when the containers then fit on one row (l1). Wanted: a minimum card font, with the canvas growing taller or wrapping containers instead of shrinking text. Workaround: two-word labels; l9's deck is one column.
+- Lesson player at 390 px: the left-edge rail handle overlaps the first letters of the question line (recruiting l14 screen 4, topic-0.7 exam items 22, 26 and 29). Wanted: inset the handle or a 16 px left gutter at narrow widths.
+- `pair` canvas with `stack: true`: each side's table takes its own width, so a short-row table draws narrower and centred above a full-width one (recruiting l7 hook, Entry A against Entry B). Wanted: both sides at the same width. Workaround: Entry A's rows padded.

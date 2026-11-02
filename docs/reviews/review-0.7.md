@@ -73,3 +73,94 @@ All stated numbers check, including every date count from 2 November 2026 (6, 13
 ## Counts
 
 3 errors, 17 warnings, 29 notes.
+
+## Fix pass
+
+Targeted string edits only; no file was regenerated, and no lesson, screen or item id changed. I recomputed every number I touched (Python `datetime` and `fractions`, a word count of each edited model answer, and the brief's games with an iterated-deletion and indifference script in the scratchpad folder `fix-0.7`). A style script over every recruiting file and the exam finds no exclamation mark or em-dash. It also finds no new sentence over 20 words outside quoted CV lines, and no explanation over three sentences. A firm-name scan finds no firm outside l4 in levels 1 to 3, the reviews, the homework or the exam.
+
+Firm policy (DECISIONS, 2 Nov). Level 1 now names firms by type. Where one lesson compares several, it uses letters kept the same across l2, l5 and homework 1: trading firm A, market maker B, hedge fund C, trading firms D and E, hedge fund F, research firm G. Two items that only worked with a firm name now use invented firms: the shared-name trap and quizzes use Firm H or Firm K with "Firm K Securities", pointing to the real pair in l4. Review-1 items[5] uses Firm T and homework-1 items[4] uses Firm S. Every keyed answer is unchanged.
+
+Status: fixed 48, disputed 0, deferred 1 (an engine change). Where a fix differs from the proposal, the line says why. Screen, item and quiz numbers are zero-based, as in the findings.
+
+### Level 1 (20)
+
+1. l5 s2 row 5 (error): fixed, "Penultimate-year and Master's students". The same claim was in the exam's `e-target-rows` row r5 ("Penultimate or final year" for a bank research summer). That row now reads "Penultimate year; London"; the keyed rows r2 and r5 still hold for Omar. No other summer-internship row says final year. The two off-cycle rows (l3 s3, l5 s0) keep "penultimate or final year", which is what those real off-cycle postings say.
+2. l3 s7 Amir: fixed as proposed. Key "From July 2027, as postings open, and no later than his first weeks"; the `never` why is the proposed line. The MMath sentence left the prose; the explain keeps it in its third sentence, so it is still three sentences.
+3. l4 s1 order: fixed, `same: [["oa", "vid"]]` and the proposed `vid` line. The `oa` line no longer states an order either.
+4. l5 s8 status: fixed, `accept` gains "sent 1 nov", "submitted" and "done".
+5. l1 firm names: fixed as proposed. The s6 explain also points to l4 for the rounds.
+6. l2 firm names: fixed. The examples column became firm types, and the pay rows "High-frequency firm" and "Market maker". The return-rate and office tables use letters, and the Citadel trap uses invented Firm H. The summary idea and quiz[2] now say "a hedge fund and a market maker can share a name". I moved nothing into l4: the arithmetic and the reading of reports are the teaching, not the names.
+7. l3 firm names: fixed with firm types ("A UK bank", "Trading firm, first-year programme"). Every date and day count is unchanged.
+8. l5 firm names: fixed with the letters above and firm types. The caption keeps its sources without firm domains. Keys r0 to r4 and r0, r4 are unchanged.
+9. review-1 items[1], [4], [5] and [8]: fixed. Items[5] is now invented Firm T, so it no longer adds facts l4 lacks. The "interview-gaps analysis" source is gone. Items[8] uses Firm K.
+10. homework-1: fixed. The models name firms by type and letter and say the learner's own list names them. Items[3] now states the 8-month rule in the prose, because the stem no longer names the firm; the key (mid-March 2028) is unchanged. Items[4] is invented Firm S, built only from the stated stages. Items[6] and [7] use "a large bank" and "a trading firm".
+11. l5 s4 explain: fixed, "when checked on 29 October 2026 it had no 2027 date".
+12. l3 s6: fixed, `target 3.5, tol 1.5`. Correction to the proposal: this accepts days 2 to 5 from 2 November, which is 4 to 7 November, not "4 to 5 November". It matches the hint "day 2 to 5".
+13. review-1 items[3]: fixed, `target 8.75, tol 0.75`. With snap 0.5 it accepts 8, 8.5, 9 and 9.5: March to mid-April. Mid-February (7.5) now fails.
+14. l1 s2 `dev` why: fixed as proposed.
+15. l2 s0 caption: fixed, "Each row combines reports from different firms of that kind".
+16. l2 quiz[3]: fixed with a new firm description (an invented firm that trades only its own capital). The option ids and the key `prop` are unchanged.
+17. homework-1 models: fixed. Both now send firm A's application on 4 November, as l5 s8 does.
+18. l2 s0 and s2 explains: fixed, three sentences each.
+19. l3 s4 explain: fixed with different wording. The proposed single sentence runs to 22 words, so the explain is three sentences: "So 6 December is 28 + 6 = 34 days away, and 3 January 28 + 31 + 3 = 62."
+20. homework-1 items[7] explain: fixed, three sentences. Checked: 2 November 2026 to 28 June 2027 is 238 days = 34 weeks.
+
+### Level 2 (13)
+
+21. l6 s0 (error): fixed with different wording. "Nothing to defend" does not fit r10 either: a six-language list gives Sam too much to defend. The question is now "Tap the four lines with no evidence behind them". The prose and hint say the same, and the explain names "adjectives, a duty, a padded list or a cliché". The key is unchanged.
+22. l10 s1 and s11 (error): fixed with the proposal's interim option. Both screens and the s1 explain now cite "candidate reports, October 2026" without "l4". l10 itself states the format (30 s, 2 minutes, one take, three questions), so l4 was not extended.
+23. l6 s5: fixed with the proposed prose, "Sam's projects show more of what the role tests than his internship".
+24. l9 s0 card: fixed, "Check paper rule". The hint now says "check the paper rule".
+25. l8 s9: fixed as proposed. The column header has no "(l2)", the row is "Hedge fund (research) | Tests ideas for weeks before they trade", and the keyed text ends "A research role spends weeks before an idea trades."
+26. l9 s4: fixed, "In a test that allows skipping, when does a guess stop costing marks on average?"
+27. l6 quiz[2]: fixed, adds "What do you do with Rust on the CV?"
+28. l7 s9: fixed, `shuffle: true`.
+29. Momentum method: fixed. Every version now buys the top tenth and sells the bottom tenth on monthly prices: l7 s2 row and homework-3 items[0] ("monthly prices", "and selling the losers", and the look-ahead fix "lagging the signal by one month"). l7 s11 and homework-2 already said so. Homework-3 items[0] is now 178 words, about 1 minute 22 seconds (82.2 s), and its header says so.
+30. homework-2 items[4]: fixed, labels "about 12 s", "about 25 s", "about 34 s" and "about 25 s" (26, 55, 73 and 54 words after item 33's split). The total is 208 words, 96 s, so "about 210 words: 1 minute 36 seconds" stands.
+31. l10 s4 and s6: fixed as proposed (the explain and story A's why).
+32. l8 s1 prose and l9 summary idea 2: fixed, both split as proposed.
+33. homework-2 models: fixed. Each "Why it scores 10" line is a list. The other long sentences are split. Items[1] and [3] keep 85 and 86 words; items[2] is now 81 words and its header says "About 81 words".
+
+### Level 3 (8)
+
+34. Nadia's exam story: fixed. Homework-2 items[5] is now "In January I scored 52% on a probability exam, against a 70% aim", then three timed past papers a week and 71% in June. l10 s6 row B is "52% against a 70% aim; new revision plan; 71% in June", as in l11, l13 and homework 3. The option, the feedback and s11 now say "the exam below her aim", not "the failed exam". Review-2's anonymous 38% / 74% answer is not Nadia's, so it stays.
+35. Nadia's evidence: fixed by adding the options pricer to her homework-2 CV ("Options pricer, Python, Jan 2027 ... checked it against 200 quoted prices"), since l8 and l10 lean on it. l13 s10's key is "A pricing tool for one product, like my options pricer but tested on live quotes". Its hint is "Her CV has an options pricer".
+36. l11 s5 Contest: fixed, cue words "Trading game, one afternoon; chose half size with data missing" in both tables. The nudge hint also says "time limit". Deadline stays Yes.
+37. l12 s8: fixed. The number line now runs £0 to £12, with "Pays £2 to £10" as a closed band and a point at £11.
+38. l14 s1: fixed, "(... April 2004). That source is old; Quantt's UK guide (2026) reports one to two weeks."
+39. review-3 items[8]: fixed, "Ten of Ella's rejections came after the same market-making round."
+40. l13 s0: fixed as proposed.
+41. homework-3 models: fixed. The shared "Why it scores 10" line is a seven-point list in six models, and the final-plan line is a list too. Long sentences in items[0], [2], [3] and [4] and in the final plan are split. Items[2] and [4] are now 168 and 170 words (both about 1 minute 18 seconds); items[3] keeps 155.
+
+### Exam (3)
+
+42. items[1] `b` why and explain: fixed as proposed. "Holds positions longer" is gone.
+43. items[21] `feedback.correct`: fixed, "the London research summer and the bank research summer".
+44. items[19], [26] and [28] (d): fixed. Items[19] now reads "the retry waits 8 months, from 20 November 2026 to 20 July 2027". Items[26] now opens "This is a line on your CV." Items[28] (d) is split after "the clock starts".
+
+### Layout (5)
+
+45. l3 s0: fixed. The steps start at months 0, 2, 6, 8 and 10 with labels alternating above and below. Each start is outside every target's tolerance, and 4 stays clear of Today at 4.03. The 390 px screenshot shows five separate dots with readable labels.
+46. l9 s0 and l1 s0 cards: fixed in two ways. l9's deck is `cols: 1` with "Check paper rule" and "Phone visible", and every label now fits its card at 390 px. On l1, `cols: 1` made the four containers fit one row and shrank the cards further (screenshot), so the deck stays at three columns. Its labels became two words ("Quote prices", "Clean data", "Fix crashes"). An engine bullet for a minimum card font is in `docs/BACKLOG-INBOX.md`.
+47. l7 s0: fixed in content. Entry A's rows are padded ("Momentum backtest, a personal project, spring 2027"; a longer tool list), so both tables now draw full width at 390 px. An engine bullet for equal pair widths is in the inbox.
+48. Rail handle over the question line: deferred. It is an engine change; the bullet is in `docs/BACKLOG-INBOX.md`.
+49. l4 s4 row 2: fixed, "Phone rounds: dice and card probability". Review-1 keeps to l4's facts by using invented Firm T (line 9 above).
+
+### Answer check (answers-2026-11-02.md), 6 applied
+
+- homework-3 `hw3-final-plan`: the model now gives two questions for each round (8 in all), so it meets the rubric line. Its "Why" line says "two questions for each round".
+- topic-0.7 `e-cycle-plan` (c): now "four options each". The −0.5 holds: 1/4 − 3/4.
+- topic-0.7 `e-target-rows`: as item 43.
+- game-theory brief, L1 l2: the drill falls "in three rounds", with a round defined as deleting every move strictly dominated at that point. The worked 3 × 3's round count is keyed 3 (C; then M and B; then R). Checked: drill T; then L and C; then M.
+- game-theory brief, L1 review: the checked replacements. Mixed (2, 0), (0, 3) / (0, 2), (1, 0) has no pure equilibrium, with Ana T 2/5 and Ben L 1/3. Saddle rows (5, 7), (2, 3) have value 5 at row 1, column 1.
+- game-theory brief, L2 review: two fifths of the average, level 2 = 50 × (2/5)² = 8; five bidders ±£9, overshoot 9 × 4/6 = £6; three rounds at δ = 0.7, Ana keeps 1 − 0.7 × 0.3 = 79%. The "Number checks" rows now read "in 3 rounds" and list 2/5 and 1/3, saddle 5, 8, 6.00 and 0.79.
+
+### Acceptance
+
+From `app/`, with `--local-cdn`:
+- `node tools/validate.mjs`: 0 errors (385 warnings, none in recruiting or topic-0.7).
+- `--lesson`: l1 to l15 all pass, and l11 to l15 also pass with `--mobile`. l15 had no edits and was run for the check. 390 px screenshots of l1, l3, l7, l9 and l12 were looked at.
+- `--set`: review-1, review-3, homework-1, homework-2 and homework-3 pass.
+- `--exam topic-0.7`: 30 of 30, passed.
+
+Graded answers changed: two tolerances (l3 s6 target 3.5 ± 1.5; review-1 items[3] 8.75 ± 0.75) and one accept list (l5 s8); one order gains a `same` group (l4 s1). Every keyed option, row, cell and number is otherwise unchanged. Not changed: `course.json`, any id, engine files, `prep.json`.
