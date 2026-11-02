@@ -1,21 +1,17 @@
-Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
+Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md, with the sprint override below.
 
-Task: PLAN.md task 2a, phase 0, "mental-pressure L3" ("Test formats": l9-eighty-in-eight, l10-next-in-sequence, l11-word-problems, l12-mock-test, review-3, homework-3). One `content-author` agent writes it from `## Level 3` of `docs/briefs/mental-pressure.md`. Room permitting, run "mental-pressure L4: Assessment batteries" after it (same course, so not in parallel: L4 reads L3's files).
+Task: PLAN.md task 2a, Part S, session S1. The user has superdays coming and wants a learnable app fast. Run these in parallel, one agent each, each with its own scratchpad subfolder:
+- `content-author`: recruiting L3 (`docs/briefs/recruiting.md`).
+- `content-author`: mental-pressure L3 (`docs/briefs/mental-pressure.md`).
+- `content-author`: puzzles L3 (`docs/briefs/puzzles.md`).
+- `content-author`: brainteasers L1 (`docs/briefs/brainteasers.md`).
+- Then a `content-author` for the prep tags mapping (`docs/briefs/prep-tags.md`, section "Mapping"), only if ENGINE-BACKLOG 455 is ticked; if not, an `engine-dev` agent finishes 455 first from `docs/reports/engine-prep-tags.md`.
 
 Context not in the state files:
-- Task 2a is the user's priority; plan in `docs/briefs/interview-plan.md` (UK first; trader, then researcher; no audio).
-- Read level-1 and level-2 files for voice. Keep follow-up screens, a pace, and `tags` on drill and homework items.
-- Name firms only in `recruiting` l4 and mock exam descriptions; cite a firm's resource by title and firm type.
-- `longform` in homework and exams only.
-- Engine limits: `derive` takes expression, order or choice only; `expression` samples six seeded points; 4-column tables scroll at 390 px; `place` allows one slot per chip; `shuffle: true` on choices.
-- Net scoring, forward-only papers, generated arithmetic and timed sets exist for mock exams only (AUTHORING sections 5 and 7, `exams/mock-sample.json`). Where the L3 brief says E1 or E4 are unbuilt, follow AUTHORING; lessons still cannot net-score the learner's answers.
-- The brief's scratchpad subfolder is `mental-pressure-3` under the scratchpad you name. Local CDN: `<scratchpad>/pkgs`; build with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` if missing.
+- Lean rules (PLAN 2a Part S): no second reads, short reports, one `--mobile` spot check per level; numbers still computed twice, code still passes its tests.
+- From puzzles L2 on: follow-up screens, a pace, `tags` on drill and homework items. Name firms only in recruiting l4, mock descriptions and `prep.json`. `longform` in homework and exams only.
+- Engine limits: `derive` takes expression, order or choice only; `expression` samples six seeded points; 4-column tables scroll at 390 px; `place` allows one slot per chip; `shuffle: true` on choices. Net scoring and timed papers exist for mock exams only (AUTHORING 5 and 7); where a brief says E1 or E4 are unbuilt, follow AUTHORING.
+- Local CDN: `<scratchpad>/pkgs`; build with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` if missing. Re-run a validator error once before treating it as real while agents write.
+- Commit each level as it turns green.
 
-Files likely touched: `app/content/courses/mental-pressure/` level-3 lessons, `review-3`, `homework-3`; `docs/reports/mental-pressure-3.md`; `docs/BACKLOG-INBOX.md`; the state files.
-
-Acceptance, from `app/`:
-- `node tools/validate.mjs 2>&1 | tail -5` shows 0 errors.
-- `node tools/playthrough.mjs --lesson mental-pressure/<id> --local-cdn <pkgs>` passes for each level-3 lesson; `--set mental-pressure/review-3` and `--set mental-pressure/homework-3` pass.
-- The report exists, records l12's generator script and output, and every number is computed twice.
-- PLAN.md ticks mental-pressure L3 in tasks 2a and 3.
-- NEXT_PROMPT.md names the next phase-0 item.
+Acceptance, from `app/`: `node tools/validate.mjs 2>&1 | tail -5` 0 errors; `node tools/playthrough.mjs --lesson <course>/<id> --local-cdn <pkgs>` passes for every new lesson, and `--set` for each new review and homework; four reports exist; PLAN ticks each level (in tasks 2a and 3 where listed); NEXT_PROMPT.md names session S2.
