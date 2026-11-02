@@ -36,7 +36,7 @@ New files: `app/js/engine/arith.js`, `app/js/engine/mock.js` (both in `index.htm
 - `--exam mock-sample`: passes (11 items, net 14 of 14, mock checks ok). `--exam topic-1.5` and `--exam stage-0`: pass. `--routes-only`: passes. The Today warm-up still starts and runs (checked by hand).
 - `--set number-sense/review-1` with `timed` added in a scratch copy: clock test and full play pass.
 - Screens checked at 390 px and 1280 px in light and dark: mock start card, forward paper (including 390 px with the amber timer), between-papers page, free paper with navigator sheet, checks page, result with trend (first and second attempt), Review hub with the mock card, You history, timed review start card, running header and time-out summary.
-- Full `--all` run: see the end of this file.
+- Full `node tools/playthrough.mjs --all --local-cdn <pkgs>`: All passed (every written lesson, review, homework and exam including `mock-sample`, and every route; 0 failures, no retries needed). Final `validate.mjs`: 0 errors.
 
 ## Left for later
 

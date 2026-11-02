@@ -43,3 +43,10 @@ Process
 - Validator warnings are mostly "ladder changes canvas kind" and "not yet written"; only errors block.
 - jsDelivr is blocked in cloud sandboxes; build the local CDN with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (40 s, 870 MB) and pass `--local-cdn`.
 - Script-mode `sys.stdin` has no `.buffer`; contests lessons use `sys.stdin.read()`.
+
+Interview pass (2 Nov 2026)
+- Engine item 454 (`timed` with `lockAtZero` on reviews and practice) is not exercised by any content file, so playthrough does not cover it until a review carries `timed`; it passed only on a scratch copy.
+- Recruiting firm facts (deadlines, formats, pay) are dated October and November 2026, some from third-party guides; they go stale every cycle (engine item E19 proposes `asOf` and a staleness warning). JP Morgan's reported 1 November 2026 close has passed.
+- The validator refuses `longform` in reviews, contrary to AUTHORING section 5; spoken-answer practice sits in homework only (inbox bullet).
+- Level 1 sections of the puzzles, mm-games, mental-pressure and ito briefs still name an old scratchpad; give agents current paths.
+- A weekly usage limit stopped eight agents at once on 29 Oct; all resumed from disk on 2 Nov with no loss. Checkpoint-commit before long parallel runs.

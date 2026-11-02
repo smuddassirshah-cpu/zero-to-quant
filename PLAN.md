@@ -38,9 +38,8 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 Goal: the app is a complete, self-contained resource for passing quant internship online assessments and superdays (Two Sigma, JP Morgan, trading firms, bank strats). Plan: `docs/briefs/interview-plan.md` (phases 0 to 4; user decisions at its end: UK first, trader and researcher tracks first, no audio). Pure maths levels in 2b wait until this section is done.
 - [x] Interview gap analysis and plan (`docs/briefs/interview-gaps.md`, `interview-plan.md`; 27 new levels, 12 mocks, a 400-item bank, 120 drills; engine bullets E1 to E19 in the inbox, E10 and E20 dropped)
 - [x] Course maps and curriculum entries (stage 0 515 h, stage 3 550 h; full path 3,695 h): new courses `recruiting` (topic 0.7), `brainteasers`, `game-theory` (3.3), `coding-int`, `research-int`, `systems` (topic 3.5); appended levels puzzles L5, mm-games L4, mental-pressure L4, trees L4, ito L4, cpp L5; validate 0 errors
-- [ ] Engine pass A (phase 0): E1 net scoring, E2 forward-only papers, E4 generated arithmetic items, E5 mock exam kind, E6 timed sets (number from 450 in ENGINE-BACKLOG; document in AUTHORING.md)
+- [x] Engine pass A (items 450 to 454; `docs/reports/engine-interview-a.md`; sample `exams/mock-sample.json`): E1 net scoring, E2 forward-only papers, E4 generated arithmetic items, E5 mock exam kind, E6 timed sets (number from 450 in ENGINE-BACKLOG; document in AUTHORING.md)
 - [x] Briefs: recruiting, brainteasers; revise puzzles, mm-games, mental-pressure, ito briefs per plan section (a) (plus new sections puzzles L5, mm-games L4, mental-pressure L4, ito L4)
-- [ ] Briefs: coding-int, research-int, game-theory, systems, and the six appended levels
 
 Phase 0, fast track
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
@@ -71,6 +70,7 @@ Phase 1, trader core
 - [ ] Second readers and fix passes: puzzles, mental-pressure
 
 Phase 2, researcher core
+- [ ] Briefs: research-int, coding-int, game-theory, systems, trees L4, cpp L5 (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
 - [ ] research-int L1: Statistics and linear algebra questions
 - [ ] research-int L2: Machine learning questions
 - [ ] research-int L3: The open case
@@ -162,7 +162,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] topology L2: Topological spaces [Pure maths]
 - [ ] topology L3: Compact and complete [Pure maths]
 
-### 3. Stage 3 content (briefs in `docs/briefs/`)
+### 3. Stage 3 content (briefs in `docs/briefs/`; puzzles, mm-games, mental-pressure and ito lines are duplicated in 2a: tick both)
 - [x] momentum-rep L1 (look-ahead bug gives 17.06% a month, not the brief's 15%; `docs/reports/momentum-rep-1.md`)
 - [ ] momentum-rep L2
 - [ ] momentum-rep L3

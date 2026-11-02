@@ -36,3 +36,4 @@ Before 19 Oct 2026: engine built (vanilla JS player, 20+ canvases, widgets, vali
 - 2026-11-02: mental-pressure L1 green and reported (4 lessons, review-1 10 items, homework-1 8 items); targets Zetamac 50 and 80-in-8 at about 55 net named in l1.
 - 2026-11-02: mm-games L1 green and reported (4 lessons, review-1 10 items, homework-1 9 items; ledger and P&L drills, Fermi trade follow-up).
 - 2026-11-02: recruiting L1 green and reported (5 lessons: roles, firm types, UK-first calendar dated 2 Nov, firm-by-firm processes, a target list); topic 0.7 started.
+- 2026-11-02: engine pass A (items 450 to 454): mock exam kind `exams/mock-*.json`, net scoring, forward-only papers, generated arithmetic items, timed sets; mock-sample, topic-1.5, stage-0 and routes green. Session total: analysis L3, L4, linear-maps L3, puzzles L1, mental-pressure L1, mm-games L1, ito L1, recruiting L1, interview plan, six course maps, five briefs.
