@@ -45,7 +45,7 @@
       const op = from[Math.floor(rng() * from.length)];
       const base = op.inverseOf ? usable.find(o => o.id === op.inverseOf) : op;
       const a = pick(rng, base.a[0], base.a[1]), b = pick(rng, base.b[0], base.b[1]), f = APPLY[base.id];
-      const p = op.inverseOf ? { id: op.id, tex: `${f(a, b)} ${op.tex} ${a}`, ans: b, a, b, whole: f(a, b), base: base.id } : { id: op.id, tex: `${a} ${op.tex} ${b}`, ans: f(a, b), a, b, base: op.id };
+      const p = op.inverseOf ? { id: op.id, tex: `${f(a, b)} ${op.tex} ${a}`, plain: `${f(a, b)} ${op.symbol || op.tex} ${a}`, ans: b, a, b, whole: f(a, b), base: base.id } : { id: op.id, tex: `${a} ${op.tex} ${b}`, plain: `${a} ${op.symbol || op.tex} ${b}`, ans: f(a, b), a, b, base: op.id };
       if (!prev || p.tex !== prev.tex) return p;
     }
     return problem(ops, rng, null, weights);
@@ -92,7 +92,7 @@
       p,
       item: {
         id: `gen-${pi}-${idx + 1}`, generated: true, difficulty: spec.difficulty || 3, skills: Array.isArray(spec.skills) ? spec.skills.slice() : [],
-        question: `$${p.tex}$`,
+        title: p.plain, question: `$${p.tex}$`,
         widget: { kind: 'choice', layout: 'grid', label: 'Answer options', options: opts.map((t, i) => ({ id: LETTERS[i], text: `$${t}$`, correct: t === right })) },
         feedback: { correct: '', generic: `$${p.tex} = ${right}$.` },
         explain: { text: `$${p.tex} = ${right}$.` },

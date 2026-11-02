@@ -1,0 +1,625 @@
+{
+  "id": "homework-1",
+  "course": "mm-games",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-dice-market",
+      "difficulty": 5,
+      "skills": [
+        "mg-fair",
+        "mg-quote"
+      ],
+      "tags": [
+        "dice-market-code"
+      ],
+      "prose": "Write the engine behind this level’s dice markets. List every roll for the exact fair value $\\mu$ and the sd. Centre on $c = \\lfloor 2\\mu + \\tfrac12 \\rfloor / 2$. Widen the integer quote $(c - h, c + h)$ step by step. Return the first that holds half the rolls, ends included, or `None` once its width passes `width_limit`.",
+      "question": "Complete `dice_market(contracts, width_limit)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\nfrom itertools import product\nfrom math import floor, sqrt\n\n\ndef dice_market(contracts, width_limit):\n    \"\"\"contracts: a list of (n_dice, payoff) pairs. payoff maps a\n    roll tuple to a number. For each contract return\n    (fair, sd, quote): fair a Fraction, sd a float, and quote\n    (bid, ask) as integers, or None if no quote fits.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\nfrom itertools import product\nfrom math import floor, sqrt\n\n\ndef dice_market(contracts, width_limit):\n    \"\"\"contracts: a list of (n_dice, payoff) pairs. payoff maps a\n    roll tuple to a number. For each contract return\n    (fair, sd, quote): fair a Fraction, sd a float, and quote\n    (bid, ask) as integers, or None if no quote fits.\"\"\"\n    out = []\n    for n_dice, payoff in contracts:\n        pays = [payoff(r) for r in product(range(1, 7), repeat=n_dice)]\n        n = len(pays)\n        fair = Fraction(sum(pays), n)\n        var = sum((Fraction(p) - fair) ** 2 for p in pays) / n\n        centre = Fraction(floor(2 * fair + Fraction(1, 2)), 2)\n        h = centre - floor(centre)\n        quote = None\n        while 2 * h <= width_limit:\n            bid, ask = centre - h, centre + h\n            if Fraction(sum(bid <= p <= ask for p in pays), n) >= Fraction(1, 2):\n                quote = (int(bid), int(ask))\n                break\n            h += 1\n        out.append((fair, sqrt(var), quote))\n    return out\n",
+        "examples": [
+          {
+            "call": "dice_market([(2, sum)], 4)[0][0]",
+            "expect": "Fraction(7)",
+            "compare": "fraction"
+          },
+          {
+            "call": "tuple(dice_market([(1, sum)], 3)[0][2])",
+            "expect": "(2, 5)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "dice_market([(2, sum)], 4)[0][0]",
+            "expect": "Fraction(7)",
+            "compare": "fraction"
+          },
+          {
+            "call": "dice_market([(2, sum)], 4)[0][1]",
+            "expect": "2.41522945769824",
+            "compare": "isclose"
+          },
+          {
+            "call": "tuple(dice_market([(2, sum)], 4)[0][2])",
+            "expect": "(5, 9)",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_market([(2, sum)], 3)[0][2] is None",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_market([(3, sum)], 4)[0][2] is None",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(dice_market([(3, sum)], 5)[0][2])",
+            "expect": "(8, 13)",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_market([(2, max)], 4)[0][0]",
+            "expect": "Fraction(161, 36)",
+            "compare": "fraction"
+          },
+          {
+            "call": "dice_market([(2, max)], 4)[0][1]",
+            "expect": "1.4040835507",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-08
+            }
+          },
+          {
+            "call": "tuple(dice_market([(2, max)], 4)[0][2])",
+            "expect": "(3, 6)",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_market([(2, lambda r: r[0] * r[1])], 10)[0][2] is None",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(dice_market([(3, lambda r: 6)], 0)[0][2])",
+            "expect": "(6, 6)",
+            "compare": "equal"
+          },
+          {
+            "call": "dice_market([(3, lambda r: 6)], 0)[0][1]",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "dice_market([(3, lambda r: len(set(r)))], 2)[0][0]",
+            "expect": "Fraction(91, 36)",
+            "compare": "fraction"
+          },
+          {
+            "call": "tuple(dice_market([(3, lambda r: len(set(r)))], 2)[0][2])",
+            "expect": "(2, 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "[None if q[2] is None else tuple(q[2]) for q in dice_market([(1, sum), (2, sum), (3, sum)], 4)]",
+            "expect": "[(2, 5), (5, 9), None]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 15 hidden tests. Fair values must be exact Fractions, sds within a relative 1e-8, and quotes exact integer pairs or None."
+      },
+      "feedback": {
+        "correct": "Your engine prices and quotes every contract.",
+        "generic": "Some tests failed. Check the centre rounding and the first $h$. Both ends must be integers, and both count.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that the `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "The centre is a whole or half number, so $h$ starts at 0 or 1/2 and steps by 1. Two dice give (5, 9), the larger of two gives (3, 6), and three dice need width 5. The product of two dice has no such quote under width 10, because its payouts are too lumpy.\n\n```python\ncentre = Fraction(floor(2 * fair + Fraction(1, 2)), 2)\nh = centre - floor(centre)\nwhile 2 * h <= width_limit:\n    ...\n    h += 1\n```"
+      }
+    },
+    {
+      "id": "h-calibration-score",
+      "difficulty": 4,
+      "skills": [
+        "mg-fair"
+      ],
+      "tags": [
+        "calibration-code"
+      ],
+      "prose": "Score a practice week. Count the hits. Under calibration, hits follow Binomial($n$, level). The two-sided p-value adds the chance of every hit count no more likely than yours. Below 0.05, call it `\"overconfident\"` (too few hits) or `\"underconfident\"` (too many), else `\"calibrated\"`. Use `Fraction(str(level))` so ties compare exactly.",
+      "question": "Complete `calibration_score(intervals, truths, level=0.9)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\nfrom math import comb\n\n\ndef calibration_score(intervals, truths, level=0.9):\n    \"\"\"Return (hits, p_value, verdict) for ranges stated at level.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\nfrom math import comb\n\n\ndef calibration_score(intervals, truths, level=0.9):\n    \"\"\"Return (hits, p_value, verdict) for ranges stated at level.\"\"\"\n    n = len(truths)\n    hits = sum(lo <= t <= hi for (lo, hi), t in zip(intervals, truths))\n    p = Fraction(str(level))\n    pmf = [comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n + 1)]\n    p_value = float(sum(q for q in pmf if q <= pmf[hits]))\n    if p_value < 0.05 and hits < n * p:\n        verdict = \"overconfident\"\n    elif p_value < 0.05 and hits > n * p:\n        verdict = \"underconfident\"\n    else:\n        verdict = \"calibrated\"\n    return hits, p_value, verdict\n",
+        "examples": [
+          {
+            "call": "calibration_score([(0, 1)] * 10, [0] * 9 + [5])[0]",
+            "expect": "9",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "iv = [(500, 900), (64, 150), (30_000_000, 35_000_000), (8_000, 12_000), (8_000, 9_000), (100_000, 1_000_000), (1_000, 50_000), (2_500, 3_500), (400, 500), (200, 1_000)]; tr = [792, 204, 31_536_000, 10_080, 8_784, 2_598_960, 40_320, 2_893, 435, 1_296]",
+            "call": "calibration_score(iv, tr)[0]",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "setup": "iv = [(500, 900), (64, 150), (30_000_000, 35_000_000), (8_000, 12_000), (8_000, 9_000), (100_000, 1_000_000), (1_000, 50_000), (2_500, 3_500), (400, 500), (200, 1_000)]; tr = [792, 204, 31_536_000, 10_080, 8_784, 2_598_960, 40_320, 2_893, 435, 1_296]",
+            "call": "calibration_score(iv, tr)[1]",
+            "expect": "0.0701908264",
+            "compare": "isclose"
+          },
+          {
+            "setup": "iv = [(500, 900), (64, 150), (30_000_000, 35_000_000), (8_000, 12_000), (8_000, 9_000), (100_000, 1_000_000), (1_000, 50_000), (2_500, 3_500), (400, 500), (200, 1_000)]; tr = [792, 204, 31_536_000, 10_080, 8_784, 2_598_960, 40_320, 2_893, 435, 1_296]",
+            "call": "calibration_score(iv, tr)[2]",
+            "expect": "'calibrated'",
+            "compare": "equal"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 20, [0] * 14 + [5] * 6)[1]",
+            "expect": "0.011253134164509",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 20, [0] * 14 + [5] * 6)[2]",
+            "expect": "'overconfident'",
+            "compare": "equal"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 50, [0] * 50)[1]",
+            "expect": "0.008373696343230026",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 50, [0] * 50)[2]",
+            "expect": "'underconfident'",
+            "compare": "equal"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 50, [0] * 38 + [9] * 12)[2]",
+            "expect": "'overconfident'",
+            "compare": "equal"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 50, [0] * 45 + [9] * 5)[1]",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 10, [0] * 3 + [9] * 7, level=0.5)[1]",
+            "expect": "0.34375",
+            "compare": "isclose"
+          },
+          {
+            "call": "calibration_score([(0, 1)] * 20, [0] * 20)[2]",
+            "expect": "'calibrated'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: hit counts and verdicts exactly, p-values within a relative 1e-9."
+      },
+      "feedback": {
+        "correct": "Your scorer matches every case.",
+        "generic": "Some tests failed. Add the probabilities of every count no more likely than the observed one, including the observed count.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that the `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "The p-value adds $\\binom{n}{k} p^k (1-p)^{n-k}$ over every $k$ no more likely than the observed count. Seven hits in ten gives 0.070, too little evidence, but 14 in 20 gives 0.011. Fifty in fifty gives 0.008: ranges that never miss are too wide.\n\n```python\npmf = [comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n + 1)]\np_value = float(sum(q for q in pmf if q <= pmf[hits]))\n```"
+      }
+    },
+    {
+      "id": "h-answer-order",
+      "difficulty": 3,
+      "skills": [
+        "mg-fair",
+        "mg-quote"
+      ],
+      "tags": [
+        "market-steps"
+      ],
+      "prose": "The interviewer says: \"Make me a market on the number of piano keys in this building.\" You have about a minute.",
+      "question": "Put the steps of a good answer in order, and leave out the one that loses marks.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "clarify",
+            "text": "Clarify: what counts, and how the contract settles."
+          },
+          {
+            "id": "estimate",
+            "text": "Say a fair value with its reason."
+          },
+          {
+            "id": "range",
+            "text": "Say a range, and how sure you are of it."
+          },
+          {
+            "id": "quote",
+            "text": "Quote around the fair value, within any width limit."
+          },
+          {
+            "id": "update",
+            "text": "Update the fair value after each trade or new fact, aloud."
+          },
+          {
+            "id": "silent",
+            "text": "Work out an exact answer silently before saying anything.",
+            "why": "Silence scores nothing. The interviewer marks the reasoning as it happens, so speak from the first step."
+          }
+        ],
+        "answer": [
+          "clarify",
+          "estimate",
+          "range",
+          "quote",
+          "update"
+        ],
+        "distractors": [
+          "silent"
+        ]
+      },
+      "feedback": {
+        "correct": "Clarify, estimate, range, quote, update.",
+        "generic": "Not quite right. You cannot quote before you have a fair value and a range.",
+        "byKey": {
+          "silent": "Silence scores nothing. The interviewer marks the reasoning as it happens, so speak from the first step.",
+          "left-out": "Every step except the silent one belongs in the answer."
+        }
+      },
+      "explain": {
+        "text": "You cannot price what you have not defined, so clarify first. A quote needs a centre and a width, which come from the estimate and the range. After each trade the fair value may move, so the update comes last and repeats."
+      }
+    },
+    {
+      "id": "h-chess-count",
+      "difficulty": 3,
+      "skills": [
+        "mg-fair"
+      ],
+      "tags": [
+        "chess-squares"
+      ],
+      "prose": "The interviewer asks for a market on the squares of any size on a standard 8 by 8 chessboard.",
+      "question": "What is the exact count?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 204,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "204: $\\sum_{k=1}^{8} k^2 = 8 \\cdot 9 \\cdot 17 / 6$.",
+        "label": "Squares",
+        "wrong": [
+          {
+            "id": "unit-only",
+            "value": 64,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "plus-one",
+            "value": 65,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rectangles",
+            "value": 1296,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "204.",
+        "generic": "Not quite right. A $k$ by $k$ square can start in $9 - k$ places each way.",
+        "byKey": {
+          "unit-only": "You counted only the 1 by 1 squares.",
+          "plus-one": "You added the whole board but missed the sizes in between.",
+          "rectangles": "That counts every rectangle, $\\binom{9}{2}^2$. Squares need equal sides."
+        }
+      },
+      "explain": {
+        "text": "Each size $k$ gives $(9 - k)^2$ squares, so the total is $1^2 + 2^2 + \\dots + 8^2$. The formula $n(n+1)(2n+1)/6$ at $n = 8$ gives $8 \\times 9 \\times 17 / 6 = 204$. A loop over all positions and sizes counts 204 too."
+      }
+    },
+    {
+      "id": "h-mock-opening",
+      "difficulty": 5,
+      "skills": [
+        "mg-fair",
+        "mg-quote"
+      ],
+      "tags": [
+        "mock-round"
+      ],
+      "title": "A mock opening round",
+      "kind": "longform",
+      "prompt": "Write out your answer to a trader interview opener, as you would say it. The interviewer says: \"Make me a market on the squares on a chessboard, any size.\" The contract pays £1 per square.\n\nCover every stage in order:\n- what you clarify;\n- your fair value and range before calculating, with the reason;\n- the calculation;\n- your quote and its width, before and after you know the answer;\n- what you say if the interviewer buys at your ask before you finish.\n\nPractise it aloud with a partner and time it: about two minutes.",
+      "model": "**Clarify (10 seconds).** \"Squares from 1 by 1 up to 8 by 8, on a standard board? Aligned with the grid? And it settles at £1 a square?\" The interviewer agrees.\n\n**Estimate and range first (20 seconds).** \"There are 64 small squares and one 8 by 8. Each size between adds fewer. I guess about 200, and I am 90% sure it is between 150 and 300.\" The reason is said aloud: at least 64, plus a shrinking amount for each larger size.\n\n**A quote before calculating (10 seconds).** \"Until I have counted, I will make it 180 at 230.\" That is width 50 around a fair value of about 205, inside my range.\n\n**Calculate aloud (40 seconds).** \"A $k$ by $k$ square can start in $9 - k$ columns and $9 - k$ rows. So there are $(9 - k)^2$ of them: 64, 49, 36, 25, 16, 9, 4 and 1.\" Running total aloud: 64, 113, 149, 174, 190, 199, 203, 204. \"Check with $n(n+1)(2n+1)/6$ at $n = 8$: $8 \\times 9 \\times 17 / 6 = 204$.\"\n\n**Quote after calculating (5 seconds).** \"Now it is known, so my market is 204 at 204. Zero width: there is no uncertainty left.\"\n\n**If the interviewer had bought at 230 before I finished.** \"You bought one from me at 230, so I am short 1. It settles at 204, so I make £26 on that trade. Did you know something? You may have thought it was above 230. It was not, so the trade went my way.\"\n\n**Speaking.** Every number comes with its reason. The range comes before the working. Nothing is calculated in silence.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Clarifies what counts (squares of every size, aligned with the grid, 8 by 8) and how the contract settles."
+        },
+        {
+          "points": 2,
+          "text": "States a fair value and a 90% range before calculating, with a reason. The range holds 204."
+        },
+        {
+          "points": 3,
+          "text": "Calculates 204 aloud from $(9 - k)^2$ for each size, with a check (a running total or $n(n+1)(2n+1)/6$)."
+        },
+        {
+          "points": 2,
+          "text": "Quotes around the fair value with a stated width before calculating. Quotes zero width once the count is known. Marks the sale at 230 as +£26."
+        },
+        {
+          "points": 1,
+          "text": "Speaks clearly in order, with no silent working and no false precision."
+        }
+      ]
+    },
+    {
+      "id": "h-digit-sum",
+      "difficulty": 4,
+      "skills": [
+        "mg-fair"
+      ],
+      "tags": [
+        "digit-count"
+      ],
+      "prose": "A whole number from 1 to 100 is drawn at random, each equally likely. The contract pays its digit sum: 47 pays 11, 100 pays 1.",
+      "question": "What is the fair value? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9.01,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "9.01: the digit sums of 1 to 100 add to 901.",
+        "label": "Fair value",
+        "wrong": [
+          {
+            "id": "two-digits",
+            "value": 9,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one-digit",
+            "value": 4.5,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "9.01.",
+        "generic": "Not quite right. Add the units digits and the tens digits of 1 to 99 separately, then add 100.",
+        "byKey": {
+          "two-digits": "That is the average over 0 to 99. The draw is 1 to 100, and 100 adds a digit sum of 1.",
+          "one-digit": "You counted only one place. Each number has a units digit and a tens digit."
+        }
+      },
+      "explain": {
+        "text": "From 0 to 99, each digit appears 10 times in each place. So the digit sums add to $2 \\times 10 \\times 45 = 900$. Adding 100 contributes 1, so the total is 901. The fair value is $901/100 = 9.01$."
+      }
+    },
+    {
+      "id": "h-distinct-faces",
+      "difficulty": 4,
+      "skills": [
+        "mg-fair"
+      ],
+      "tags": [
+        "dice-ev"
+      ],
+      "prose": "Three dice. The contract pays the number of different faces showing: (2, 2, 5) pays 2, (1, 4, 6) pays 3.",
+      "question": "What is the fair value? Give four decimal places or a fraction.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5278,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "91/36, about 2.5278.",
+        "label": "Fair value",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "mode",
+            "value": 3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "halfway",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "91/36, about 2.53.",
+        "generic": "Not quite right. For each face, find the chance it shows at least once, and add.",
+        "byKey": {
+          "mode": "You priced the most likely result, three different faces. It happens only 120 times in 216.",
+          "halfway": "Halfway between 1 and 3 is a guess, not a price. Weigh each result by its chance."
+        }
+      },
+      "explain": {
+        "text": "Each face shows at least once with chance $1 - (5/6)^3 = 91/216$, and the count is a sum over the six faces. So the fair value is $6 \\times 91/216 = 91/36 \\approx 2.53$. A seeded simulation of 200,000 rolls gives 2.527."
+      }
+    },
+    {
+      "id": "h-fermi-range",
+      "difficulty": 4,
+      "skills": [
+        "mg-fair"
+      ],
+      "tags": [
+        "fermi-error"
+      ],
+      "prose": "You estimate an exchange’s trades in a day: 2,000 listed shares, good to a factor of 2, times 3,000 trades each, good to a factor of 3.",
+      "question": "What is the lowest total in your range?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1000000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1,000,000: $1{,}000 \\times 1{,}000$.",
+        "label": "Trades",
+        "wrong": [
+          {
+            "id": "central",
+            "value": 6000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-factor",
+            "value": 2000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "divided-five",
+            "value": 1200000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1 million, a factor of 6 below 6 million.",
+        "generic": "Not quite right. Take each factor at its low end and multiply.",
+        "byKey": {
+          "central": "That is the central estimate. The question asks for the low end.",
+          "one-factor": "You lowered only the trades per share. Lower both factors.",
+          "divided-five": "You divided by $2 + 3 = 5$. Error factors multiply: divide by 6."
+        }
+      },
+      "explain": {
+        "text": "The low ends are $2{,}000 / 2 = 1{,}000$ shares and $3{,}000 / 3 = 1{,}000$ trades. So the lowest total is 1,000,000, a factor of $2 \\times 3 = 6$ below the central 6,000,000. The high end is $4{,}000 \\times 9{,}000 = 36{,}000{,}000$."
+      }
+    },
+    {
+      "id": "h-two-dice-ledger",
+      "difficulty": 3,
+      "skills": [
+        "mg-fair",
+        "mg-quote"
+      ],
+      "tags": [
+        "ledger-pnl"
+      ],
+      "prose": "A mock game on the sum of two dice, £1 a point. You quote 6 at 8. The interviewer sells you 3 at 6, then buys 1 at 8. Then the dice are rolled: 9.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Price (£)",
+            "Position",
+            "P&L at 7 (£)"
+          ],
+          "rows": [
+            [
+              "Start",
+              "",
+              "0",
+              "0"
+            ],
+            [
+              "You buy 3",
+              "6",
+              "+3",
+              "+3"
+            ],
+            [
+              "You sell 1",
+              "8",
+              "+2",
+              "?"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Fair value 7 before the roll"
+        }
+      },
+      "question": "What is your P&L at the fair value of 7, before the roll, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "£4: +3 on the purchase, +1 on the sale.",
+        "label": "P&L in pounds",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "realised",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "net-only",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "+£4 at fair value.",
+        "generic": "Not quite right. Mark each trade against 7 and add.",
+        "byKey": {
+          "realised": "That is the P&L against the roll of 9. The question asks for the mark at the fair value, 7.",
+          "net-only": "You marked only the net position. Each trade earns its own distance from 7."
+        }
+      },
+      "explain": {
+        "text": "Buying 3 at 6 earns $3 \\times 1$ against 7, and selling 1 at 8 earns 1 more: +£4. Against the roll of 9 the P&L is $3 \\times 3 - 1 = 8$. The £4 is the edge; the other £4 is luck from being long 2 when the dice came high.",
+        "canvas": {
+          "values": {
+            "r2c3": "+4"
+          }
+        }
+      }
+    }
+  ]
+}
