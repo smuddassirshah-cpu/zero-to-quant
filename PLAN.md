@@ -39,7 +39,7 @@ Goal: the app is a complete, self-contained resource for passing quant internshi
 - [x] Interview gap analysis and plan (`docs/briefs/interview-gaps.md`, `interview-plan.md`; 27 new levels, 12 mocks, a 400-item bank, 120 drills; engine bullets E1 to E19 in the inbox, E10 and E20 dropped)
 - [x] Course maps and curriculum entries (stage 0 515 h, stage 3 550 h; full path 3,695 h): new courses `recruiting` (topic 0.7), `brainteasers`, `game-theory` (3.3), `coding-int`, `research-int`, `systems` (topic 3.5); appended levels puzzles L5, mm-games L4, mental-pressure L4, trees L4, ito L4, cpp L5; validate 0 errors
 - [ ] Engine pass A (phase 0): E1 net scoring, E2 forward-only papers, E4 generated arithmetic items, E5 mock exam kind, E6 timed sets (number from 450 in ENGINE-BACKLOG; document in AUTHORING.md)
-- [ ] Briefs: recruiting, brainteasers; revise puzzles, mm-games, mental-pressure, ito briefs per plan section (a)
+- [x] Briefs: recruiting, brainteasers; revise puzzles, mm-games, mental-pressure, ito briefs per plan section (a) (plus new sections puzzles L5, mm-games L4, mental-pressure L4, ito L4)
 - [ ] Briefs: coding-int, research-int, game-theory, systems, and the six appended levels
 
 Phase 0, fast track
