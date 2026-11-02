@@ -2,7 +2,7 @@ Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Fol
 
 Task: PLAN.md task 2a, order item 2 (topic 0.7), plus the game-theory brief from item 4.
 
-Another session is finishing the prep tags engine pass (ENGINE-BACKLOG 455) and will then write `app/content/prep.json`. Do not touch `app/js/`, `app/css/`, `app/tools/`, `app/index.html`, `app/content/prep.json`, `docs/briefs/prep-tags.md` or `docs/ENGINE-BACKLOG.md`. Before every push run `git pull --rebase origin claude/amazing-wright-d4mx7i`; on a `manifest.json` conflict take either side and re-run the validator.
+Prep tags (engine 455 and the `prep.json` mapping) are done; leave `app/js/`, `app/css/`, `app/tools/` and `app/content/prep.json` alone. Before every push run `git pull --rebase origin claude/amazing-wright-d4mx7i`; on a `manifest.json` conflict take either side and re-run the validator.
 
 Steps, each agent with its own scratchpad subfolder:
 1. In parallel: a `content-author` writes recruiting L3 from `## Level 3` of `docs/briefs/recruiting.md`; a brief agent writes `docs/briefs/game-theory.md`, every level, in the pattern of `docs/briefs/brainteasers.md`, from `course.json`, `docs/briefs/interview-plan.md` and `interview-gaps.md`.
