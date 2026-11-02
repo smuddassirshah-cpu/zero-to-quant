@@ -54,7 +54,7 @@ One central file, because firm facts go stale every cycle (one place to re-date)
 
 ## Mapping (content agent, after the engine pass; edits only `app/content/prep.json`)
 
-Read `recruiting/l4-firm-by-firm.json`, `docs/briefs/interview-gaps.md` and the mock table in `docs/briefs/interview-plan.md`. Prefer level refs; use lesson refs where one lesson in a level matters. Trader and researcher paths first and fullest (user decision); strats and developer paths may be short. Seeds, to refine:
+Read `recruiting/l4-firm-by-firm.json`, `docs/briefs/interview-gaps.md` and the mock table in `docs/briefs/interview-plan.md`. Prefer level refs; use lesson refs where one lesson in a level matters. Trader and researcher paths first and fullest (user decision); strats and developer paths may be short. The user's superdays are not with a named firm (2 Nov): write `general` and the stage paths first and in full, each ordered from foundations (Stage 0 and 1 courses) up to superday topics, so one path reads as a study route; firm paths come last and may be short. Seeds, to refine:
 
 - general: mental, mental-pressure L1 to L2, counting-chance, conditional L1 to L2, random-vars L1 to L2, puzzles L1 to L2, recruiting.
 - oa-trader: mental, mental-pressure, number-sense L3, ratio L1, series L1, puzzles L1 to L2, conditional L1 to L2, counting-chance L2.

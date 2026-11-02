@@ -44,7 +44,7 @@ Goal: the app is a complete, self-contained resource for passing quant internshi
 Order (user decisions, 2 Nov; supersedes the phase order below, whose lines stay as the checklist). The user has superdays coming: a learnable app first, polish later.
 
 Part S, superday sprint (runs first). Trader, then researcher. Each session runs three or four content agents in parallel on different courses; levels of one course stay in order across sessions. Commit each level when green.
-- S1: prep tags mapping (after engine 455); recruiting L3; mental-pressure L3; puzzles L3; brainteasers L1.
+- S1: prep tags mapping (after engine 455; general and stage paths first, foundations to superday; firm paths last); recruiting L3; mental-pressure L3; puzzles L3; brainteasers L1.
 - S2: mental-pressure L4; puzzles L4; brainteasers L2; mm-games L2.
 - S3: puzzles L5; brainteasers L3; mm-games L3; game-theory L1.
 - S4: mm-games L4 (scripted games, no E12); game-theory L2; mock-superday-trader; mock-oa-arith.
