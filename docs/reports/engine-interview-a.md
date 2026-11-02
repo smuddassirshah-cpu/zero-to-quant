@@ -27,7 +27,7 @@ New files: `app/js/engine/arith.js`, `app/js/engine/mock.js` (both in `index.htm
 
 ## Tools
 
-- `validate.mjs`: `mock-<id>` exam ids; mock rules; paper rules (`scoring`, `pass`/`passNet`, `navigation`, `skip`) for topic, stage and mock; generator entries (not in topic exams); `timed` on reviews (an error on homework). Scratch cases (a copy of `app/` with bad mocks and a bad `timed`) each gave the expected error lines; a valid mock with a top-level paper, a `mix` range and a fractional-free scoring gave none.
+- `validate.mjs`: `mock-<id>` exam ids; mock rules; paper rules (`scoring`, `pass`/`passNet`, `navigation`, `skip`) for topic, stage and mock; generator entries (not in topic exams); `timed` on reviews (an error on homework). Scratch cases (a copy of `app/` with bad mocks and a bad `timed`) each gave the expected error lines; a valid mock with a top-level paper, a `mix` range and `scoring` gave none.
 - `playthrough.mjs`: plays `mock-*` like `--exam` (included in `--exams` and `--all`); on a forward paper probes jump ahead, going back and, with `skip: false`, moving on unanswered; generated items repeat for the same seed and differ for another; a second sitting with `ZQExam.setRemaining(0)` must submit itself, say "Time ran out", be kept as an extra attempt and carry a net; a timed locking review gets the same clock test (`ZQSet.setRemaining(0)`). No real timer is ever waited for. Also: a hash change is forced before replaying the same route, which previously hung a repeat visit.
 
 ## Verification (from `app/`, local CDN `scratchpad/pkgs`)
