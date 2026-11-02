@@ -43,7 +43,7 @@ Goal: the app is a complete, self-contained resource for passing quant internshi
 - [ ] Briefs: coding-int, research-int, game-theory, systems, and the six appended levels
 
 Phase 0, fast track
-- [ ] puzzles L1
+- [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
 - [ ] mental-pressure L1
 - [ ] mental-pressure L2
 - [ ] mental-pressure L3
@@ -172,7 +172,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
 - [ ] ito L2
 - [ ] ito L3
-- [ ] puzzles L1
+- [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
 - [ ] puzzles L2
 - [ ] puzzles L3
 - [ ] puzzles L4

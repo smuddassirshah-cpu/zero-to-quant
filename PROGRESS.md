@@ -32,3 +32,4 @@ Before 19 Oct 2026: engine built (vanilla JS player, 20+ canvases, widgets, vali
 - 2026-10-29: analysis L4 green and reported (5 lessons, review-4, homework-4; brief's l15 delta and an ungradable two-symbol min corrected); interview readiness made the top priority (PLAN 2a).
 - 2026-10-29: linear-maps L3 green and reported (5 lessons, review-3 9 items, homework-3 9 items); Pure maths levels now wait for PLAN 2a.
 - 2026-11-02: ito L1 green and reported (4 lessons, interview-style review and homework); weekly limit stopped eight agents on 29 Oct, all resumed after the reset.
+- 2026-11-02: puzzles L1 green and reported (6 lessons, review-1 9 items, homework-1 10 items); topic 3.3 started.
