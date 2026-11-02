@@ -24,5 +24,7 @@ Brief: `docs/briefs/prep-tags.md`, sections "Data" and "Engine". Schema document
 - `node tools/validate.mjs`: 0 errors (386 warnings, all existing "not yet written" notes).
 - A broken scratch copy (`prep-broken.json`: missing top `asOf`, unknown fields, bad and unknown refs, bad priority, exclamation, em-dash and a 27-word `why`, a firm path without `asOf`, `source` or `reported`, a bad mock id, a duplicate mock, a stage path without stage or track, a 34-month-old firm date) gave 18 errors and 2 warnings, exit 1.
 - Screenshots at 390 px (and 1280 px for the map card and search), checked by eye: Learn course card chip, Learn header link, course map nodes, lesson detail sheet and desktop card, Review mocks card, Prepare for (general, firm, mocks). One fault found and fixed: the chip on the current map node sat a halo's width left of its title.
-- Playthrough results: see the final lines below.
+- `node tools/playthrough.mjs --routes-only --local-cdn <pkgs>`: all passed, with and without `--mobile` (the prepare checks run at 1280 px and 390 px).
+- `--lesson puzzles/l1-dice-games --local-cdn <pkgs>`: ok, 12 checks, quiz 4/4.
+- `--all --local-cdn <pkgs>` (every lesson, review, homework, exam and route, about 2 h 30 min): all passed, no re-run needed.
 

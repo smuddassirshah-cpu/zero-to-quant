@@ -38,3 +38,4 @@ Before 19 Oct 2026: engine built (vanilla JS player, 20+ canvases, widgets, vali
 - 2026-11-02: recruiting L1 green and reported (5 lessons: roles, firm types, UK-first calendar dated 2 Nov, firm-by-firm processes, a target list); topic 0.7 started.
 - 2026-11-02: engine pass A (items 450 to 454): mock exam kind `exams/mock-*.json`, net scoring, forward-only papers, generated arithmetic items, timed sets; mock-sample, topic-1.5, stage-0 and routes green. Session total: analysis L3, L4, linear-maps L3, puzzles L1, mental-pressure L1, mm-games L1, ito L1, recruiting L1, interview plan, six course maps, five briefs.
 - 2026-11-02: mental-pressure L2 (4 lessons), puzzles L2 (6 lessons) and recruiting L2 (5 lessons) green and reported, run in parallel; validate 0 errors; 18 inbox bullets.
+- 2026-11-02: engine 455 prep tags: `content/prep.json` loader and validator, one "Interview prep" chip, a "Prepare for" page; full `--all` playthrough green.
