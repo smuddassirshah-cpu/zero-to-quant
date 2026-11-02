@@ -41,22 +41,24 @@ Goal: the app is a complete, self-contained resource for passing quant internshi
 - [x] Engine pass A (items 450 to 454; `docs/reports/engine-interview-a.md`; sample `exams/mock-sample.json`): E1 net scoring, E2 forward-only papers, E4 generated arithmetic items, E5 mock exam kind, E6 timed sets (number from 450 in ENGINE-BACKLOG; document in AUTHORING.md)
 - [x] Briefs: recruiting, brainteasers; revise puzzles, mm-games, mental-pressure, ito briefs per plan section (a) (plus new sections puzzles L5, mm-games L4, mental-pressure L4, ito L4)
 
-Order (user decisions, 2 Nov; supersedes the phase order below, whose lines stay as the checklist). The user has superdays coming: a learnable app first, polish later.
+Order (user decisions, 2 Nov; supersedes the phase order below, whose lines stay as the checklist). Interview content first, firm-neutral, foundations to superday. Full standards apply to every item: `docs/LEVEL-BRIEF.md` and `docs/AUTHORING.md` acceptance in full, a written brief before any level, a second read and fix pass for every topic, and the engine features a course needs built before the levels that use them. The lean sprint rules are withdrawn.
 
-Part S, superday sprint (runs first). Trader, then researcher. Each session runs three or four content agents in parallel on different courses; levels of one course stay in order across sessions. Commit each level when green.
-- S1: prep tags mapping (after engine 455; general and stage paths first, foundations to superday; firm paths last); recruiting L3; mental-pressure L3; puzzles L3; brainteasers L1.
-- S2: mental-pressure L4; puzzles L4; brainteasers L2; mm-games L2.
-- S3: puzzles L5; brainteasers L3; mm-games L3; game-theory L1.
-- S4: mm-games L4 (scripted games, no E12); game-theory L2; mock-superday-trader; mock-oa-arith.
-- S5: game-theory L3; research-int L1; coding-int L1; mock-oa-sig and mock-oa-trader.
-- S6: research-int L2; coding-int L2; trees L4; ito L2.
-- S7: research-int L3; coding-int L3; ito L3; mock-superday-research.
-- S8: research-int L4; coding-int L4; ito L4; cpp L5.
-Lean rules for the sprint: no second reads; no engine work except blockers; where a course has no brief (game-theory, research-int, coding-int), the content agent first writes its own level's section in `docs/briefs/<course>.md` from `course.json`, `interview-plan.md` and `interview-gaps.md`; acceptance is validate 0 errors, playthrough of every file with `--local-cdn`, one `--mobile` spot check per level, a short report. Numbers are still computed twice and code still passes its tests: correctness is not cut. Two cheap guards: the first agent on a course with no brief writes the brief for every level of that course, not only its own; and each session ends with one answer-check agent that recomputes every keyed answer in that session's new files independently and lists mismatches for a fix agent.
+Rules: work topic by topic. A topic closes when every level (lessons, review, homework), its topic exam, its mocks, a second read and fix pass (answers, grading of alternative correct forms and of wrong answers, layout) and a green playthrough of the topic are done, in one closing commit after the per-level commits. Agents may run in parallel on different courses of the current topic, and on the next topic once the current one has only its exam, read and fix left. Each session also ends with an answer-check agent that recomputes every keyed answer in that session's new files independently; mismatches go to a fix agent before the session closes.
 
-Part G, gaps, after the sprint: exams topic-0.7 and topic-3.3 (once game-theory is done), topic-0.6; extend stage-0 to 0.6 and 0.7; extend topic-1.7 (trees L4) and topic-1.9 (cpp L5); momentum-rep L2, L3; analysis L5, linear-maps L4, exam topic-1.10.
-Part N, new courses: systems; measure-prob, pdes, exam topic-3.2; pairs-rep, exam topic-3.1; exam topic-3.5; remaining mocks; then 2b and the rest (1.11, 2.5, 2.6, 3.4), then stage exams 1 to 3.
-Part P, polish, last: second reads and fix passes (task 5), question bank and drill packs, engine passes B to D and the [Could] items.
+1. Prep tags: engine pass 455, then the mapping (general and stage paths first, foundations to superday; firm paths last).
+2. Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
+3. Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning).
+4. Topic 3.3:
+   - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built.
+   - Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
+   - mental-pressure L3, L4, then mock-oa-arith; puzzles L3 to L5, then mock-oa-sig and mock-oa-trader; brainteasers L1 to L3; mm-games L2, then L3 and L4 on the E12 widget; game-theory L1 to L3.
+   - Bank part 1 (200 items) on E7.
+   - Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
+5. Topic 3.5: briefs for research-int, coding-int, systems (all levels); engine pass C where levels need it; the levels; mock-oa-code, mock-superday-research, mock-oa-quant-data and the developer and strats mocks; exam topic-3.5; second reads and fixes.
+6. Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
+7. Appended levels: trees L4 (extend exam topic-1.7), cpp L5 (extend exam topic-1.9); second read of each new level.
+8. Remaining gaps: exam topic-0.6; extend stage-0 to 0.6 and 0.7; momentum-rep L2, L3, pairs-rep, exam topic-3.1; analysis L5, linear-maps L4, exam topic-1.10; second reads for the other finished topics (0.1 to 0.4, 0.6, 1.1, 1.2, 1.10, 2.2 to 2.4).
+9. Then 2b and the rest (1.11, 2.5, 2.6, 3.4) topic by topic, bank part 2, drill packs, stage exams 1 to 3.
 
 Phase 0, fast track
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
