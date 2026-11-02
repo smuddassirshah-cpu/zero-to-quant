@@ -518,12 +518,17 @@ const main = async () => {
           const blank = await page.evaluate(() => { const a = document.querySelector('#app'); return !a || a.innerText.trim().length < 20 || /This screen failed to render/.test(a.innerText); });
           if (blank) failures.push(`#${r}: the screen is empty or failed to render`);
           if (/^prepare(\/|$)/.test(r)) {
-            /* Prepare for: the chosen path lists every step, and nothing spills sideways (also at --mobile) */
-            const pid = r.split('/')[1] || (prepPaths[0] || {}).id, want = ((prepPaths.find(p => p.id === pid) || {}).steps || []).length;
-            const got = await page.evaluate(() => ({ steps: document.querySelectorAll('.pp-step').length, wide: document.documentElement.scrollWidth > window.innerWidth + 1, bad: document.querySelectorAll('.pp-step a[href="#course/undefined"]').length }));
-            if (got.steps !== want) failures.push(`#${r}: ${got.steps} steps drawn, ${want} in prep.json`);
-            if (got.wide) failures.push(`#${r}: the page is wider than the window`);
-            if (got.bad) failures.push(`#${r}: a step links to an unknown course`);
+            /* Prepare for: the chosen path lists every step, and nothing spills sideways (also at 390 px with --mobile) */
+            const pid = r.split('/')[1] || (['general', 'stage', 'firm'].map(k => prepPaths.find(p => p.kind === k)).find(Boolean) || {}).id, want = ((prepPaths.find(p => p.id === pid) || {}).steps || []).length;
+            const probe = () => page.evaluate(() => ({ steps: document.querySelectorAll('.pp-step').length, wide: document.documentElement.scrollWidth > window.innerWidth + 1, bad: document.querySelectorAll('.pp-step a[href="#course/undefined"]').length }));
+            for (const w of opt.mobile ? [1280, 390] : [1280]) {
+              if (w !== 1280) { await page.setViewportSize({ width: w, height: 844 }); await page.waitForTimeout(300); }
+              const got = await probe();
+              if (got.steps !== want) failures.push(`#${r} at ${w} px: ${got.steps} steps drawn, ${want} in prep.json`);
+              if (got.wide) failures.push(`#${r} at ${w} px: the page is wider than the window`);
+              if (got.bad) failures.push(`#${r}: a step links to an unknown course`);
+              if (w !== 1280) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+            }
           }
           await shot('route-' + r);
         } catch (e) { failures.push(`#${r}: threw ${String(e.message || e).split('\n')[0]}`); }

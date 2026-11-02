@@ -511,3 +511,45 @@ The maths breadth courses are tagged so the learner can tell what is needed to b
 - Setting: You, Settings, Study plan, "Quant path only" (`settings.quantOnly`, saved with the other settings, off by default). When on, `ZQ.content.stages()` and `courses()` leave out pure courses and any topic whose courses are all pure, so Learn, Today, Review, the mastery map and the stage progress count ("n of m topics passed") skip them. `topic()`, `course()` and `stage()` still find everything, so a link, resume point or exam URL to a pure course keeps working. Stage hours still show the full curriculum figure. `ZQ.content.allStages()` and `allCourses()` ignore the setting.
 - Passing a topic exam means the topic is "tested out": Today stops recommending that topic's courses and moves to the next topic, then the next stage, unless one of its lessons is open to resume. It is read from the saved exam attempts (`ZQ.content.topicPassed(id)`, `courseTestedOut(courseId)`), so nothing is stored per lesson, lesson `done` flags and progress stay as they were, and Learn still lists every lesson. A tested-out course is offered only when no other course has a written lesson left. Levels added to a topic after its exam was passed are therefore hidden from Today until the learner opens them on Learn. The Due queue is unchanged.
 - For engine code: `ZQ.content.course(id)` carries `strand` (or `null`) and `strandNote`; `topicStrand(topic)` and `strandNoteOf(courseIds)` give a topic's strand and notes; `strandBadge(strand, note, cls)` returns the badge HTML.
+
+## 10. Prep paths: "Interview prep" tags and the Prepare for page (ENGINE-BACKLOG 455)
+
+Which lessons prepare for which assessment lives in one file, `app/content/prep.json`, not on the lessons. Firm facts go stale every cycle, so they are re-dated in one place; lesson ids never change; a path may name a lesson that is mapped in `course.json` but not written yet. Paths label lessons and list them in study order. They never unlock, lock or reorder anything.
+
+```json
+{
+  "asOf": "2026-11-02",
+  "paths": [
+    { "id": "general", "name": "General interview prep", "kind": "general", "description": "One or two plain sentences.",
+      "mocks": [],
+      "steps": [
+        { "ref": "mental", "priority": "must", "why": "One line, under 20 words." },
+        { "ref": "puzzles/level-1", "priority": "must", "why": "..." },
+        { "ref": "conditional/l3-shrinking", "priority": "should", "why": "..." } ] },
+    { "id": "oa-trader", "name": "OA prep: trader", "kind": "stage", "stage": "oa", "track": "trader",
+      "mocks": ["mock-oa-arith"], "steps": [] },
+    { "id": "firm-optiver", "name": "Optiver", "kind": "firm", "track": "trader",
+      "asOf": "2026-10", "source": "recruiting/l4-firm-by-firm", "reported": true,
+      "mocks": ["mock-oa-arith"], "steps": [] }
+  ]
+}
+```
+
+- Top level: `asOf` (`YYYY-MM-DD` or `YYYY-MM`, required: when the mapping was last checked) and `paths`. No other fields.
+- A path: `id` (kebab-case, unique), `name`, `kind`, optional `description`, optional `mocks`, `steps`, plus the fields of its kind. Unknown fields are errors.
+  - `kind: "general"`: no `stage`, no `track`.
+  - `kind: "stage"`: `stage` is `oa`, `interview` or `superday`, and `track` is `trader`, `research`, `strats` or `developer`, both required. One path per stage and track pair.
+  - `kind: "firm"`: `asOf` (`YYYY-MM` or `YYYY-MM-DD`), `source` (a ref, usually the recruiting lesson the firm facts come from) and `reported: true` are required. `track` is optional.
+- A step: `ref`, `priority`, `why`, and an optional `track` (for a firm that runs several roles; shown as a small role tag). Steps are in study order and the page shows them in that order.
+  - `ref` is a course id (`mental`), a level (`puzzles/level-1`) or a lesson (`conditional/l3-shrinking`). A course or level expands to its lessons. A lesson that `course.json` lists counts even when its file is not written yet; the page shows it as "Not yet written".
+  - `priority` is `must` or `should`.
+  - `why` is one line of under 20 words, in the app's voice (British spelling, no exclamation marks, no em-dashes).
+- `mocks` lists mock exam ids (`mock-` then kebab-case words). An id with no file yet is allowed; the page shows it as "Not yet written" and links the others to `#exam/<id>`.
+- Validator errors: a `ref`, `source`, `stage` or `track` that does not resolve; a malformed id, date or mock id; a `why` of 20 words or more or with a copy-rule fault; a firm path without `asOf`, `source` or `reported: true`; a repeated ref or mock in one path; an unknown field; `stage` or `source` or `reported` on the wrong kind. Warnings: a firm path whose `asOf` is over 12 months old (re-check it and re-date), a path with no steps, a lesson that two steps of one path both cover. `node tools/validate.mjs --prep <file>` checks a scratch copy instead of `content/prep.json` and leaves the manifest alone. When `prep.json` is valid it is listed in `content/manifest.json`.
+- Where it shows:
+  - A lesson on any path gets an "Interview prep" chip on its course map node; a course with any such lesson gets the chip on its Learn card. Never more than one chip. The chip's tooltip and the node's detail (card on desktop, sheet on a phone) list the stages and firms, for example "General, OA, superday. Optiver, SIG (reported, October 2026)." with a link to the path.
+  - Learn has a "Prepare for an assessment or a firm" link under its heading, and Review has the same link in the "Mock assessments" card. Both open `#prepare`; `#prepare/<path id>` opens one path.
+  - The Prepare for page lets the learner pick General, a stage with a role, or a firm. A path shows each step with Must or Should, done, in progress, not started or not yet written, its `why` line, the lesson count, then its mocks. A firm path says "Reported formats, as of <month year>" under its title, with a pointer to its source.
+  - Path names are in the Today search (kind "Prepare"), so "Optiver" or "OA" finds them.
+- "Quant path only" is unchanged: it hides pure courses from Learn as before, and a step that points at a hidden course still opens its map.
+- For engine code: `ZQ.content.prep()` is `{ asOf, paths }` (empty when there is no file); `prepPath(id)`, `prepSteps(path)` (each step with `lessons: [{ course, id, level, name, written }]`), `prepRefLessons(ref)`, `prepFor(course, lesson)` and `prepForCourse(course)` (the paths a lesson or course is on), `prepDetail(paths)` (the line above) and `prepChip(paths, cls)` (the chip markup, `''` for none). The page is `js/screens/prepare.js`, styled in `css/screens/prepare.css`; the chip is `.prep-chip` in `components.css`.

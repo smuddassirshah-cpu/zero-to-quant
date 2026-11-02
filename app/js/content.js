@@ -2,7 +2,8 @@
    course.json it lists, in parallel; ZQ.content.ready resolves when both are in. Lessons, reviews, homework, exams and
    drills are fetched on demand and cached. content/manifest.json (written by tools/validate.mjs) lists every authored
    file, so a lesson that is not written yet is known as missing without a request; without a manifest, a 404 is
-   cached as missing, never thrown. Course art ids are the kinds in js/art.js (ZQArt.kinds). */
+   cached as missing, never thrown. Course art ids are the kinds in js/art.js (ZQArt.kinds). content/prep.json (prep paths, ENGINE-BACKLOG 455) is read at start too,
+   only when the manifest lists it. */
 (function () {
   'use strict';
   const BASE = 'content/';
@@ -177,11 +178,10 @@
     prepIdx().forEach((a, k) => { if (k.startsWith(cid + '/')) a.forEach(p => { if (!out.includes(p)) out.push(p); }); });
     return prepPaths().filter(p => out.includes(p));
   };
-  /* One plain line for a set of paths: "General interview prep. OA, superday. Optiver, SIG (reported, October 2026)." */
+  /* One plain line for a set of paths: "General, OA, superday. Optiver, SIG (reported, October 2026)." */
   const prepDetail = (paths) => {
     const out = [];
-    if (paths.some(p => p.kind === 'general')) out.push('General interview prep');
-    const stages = ['oa', 'interview', 'superday'].filter(s => paths.some(p => p.kind === 'stage' && p.stage === s)).map(s => STAGE_NAME[s]);
+    const stages = [...(paths.some(p => p.kind === 'general') ? ['General'] : []), ...['oa', 'interview', 'superday'].filter(s => paths.some(p => p.kind === 'stage' && p.stage === s)).map(s => STAGE_NAME[s])];
     if (stages.length) out.push(stages.join(', '));
     const byMonth = new Map();
     paths.filter(p => p.kind === 'firm').forEach(p => { const m = prepMonth(p.asOf) || 'date not given'; byMonth.set(m, [...(byMonth.get(m) || []), p.name]); });

@@ -341,7 +341,7 @@
       const perfect = r && r.perfect ? `<p class="t-caption secondary zc-perf">${Z.icon('star', 'xs')}Perfect lesson: every problem right first time.</p>` : '';
       const act = actFor(e);
       const pp = prepOf(e);
-      const prepLine = pp.length ? `<p class="t-caption secondary zc-prep"><b>Interview prep.</b> ${esc(C.prepDetail(pp))} <a href="#prepare${pp.length === 1 ? '/' + encodeURIComponent(pp[0].id) : ''}">See ${pp.length === 1 ? 'the path' : 'the paths'}</a></p>` : '';
+      const prepLine = pp.length ? `<p class="t-caption secondary zc-prep"><b>Interview prep:</b> ${esc(C.prepDetail(pp))} <a href="#prepare${pp.length === 1 ? '/' + encodeURIComponent(pp[0].id) : ''}">See ${pp.length === 1 ? 'the path' : 'the paths'}</a></p>` : '';
       const nwBody = st === 'nw' ? `${resource && resource.url ? `<a class="btn secondary block" href="${esc(resource.url)}" target="_blank" rel="noopener">Open the topic resource</a>` : ''}
           <p class="t-caption muted zc-cap">${resource && resource.name ? `Until it is written, study it from ${esc(resource.name)}.` : 'Until it is written, study it from the topic resource.'}</p>` : '';
       body.innerHTML = `<div class="zc-info">
