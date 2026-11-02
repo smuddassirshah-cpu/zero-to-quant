@@ -35,3 +35,4 @@ Before 19 Oct 2026: engine built (vanilla JS player, 20+ canvases, widgets, vali
 - 2026-11-02: puzzles L1 green and reported (6 lessons, review-1 9 items, homework-1 10 items); topic 3.3 started.
 - 2026-11-02: mental-pressure L1 green and reported (4 lessons, review-1 10 items, homework-1 8 items); targets Zetamac 50 and 80-in-8 at about 55 net named in l1.
 - 2026-11-02: mm-games L1 green and reported (4 lessons, review-1 10 items, homework-1 9 items; ledger and P&L drills, Fermi trade follow-up).
+- 2026-11-02: recruiting L1 green and reported (5 lessons: roles, firm types, UK-first calendar dated 2 Nov, firm-by-firm processes, a target list); topic 0.7 started.

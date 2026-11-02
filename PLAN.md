@@ -49,7 +49,7 @@ Phase 0, fast track
 - [ ] mental-pressure L3
 - [ ] mental-pressure L4: Assessment batteries
 - [ ] puzzles L2
-- [ ] recruiting L1: The landscape
+- [x] recruiting L1: The landscape (`docs/reports/recruiting-1.md`; 5 lessons, review-1, homework-1 with a dated target list; 5 inbox bullets)
 - [ ] recruiting L2: The application
 - [ ] Exams: mock-oa-arith, mock-oa-trader, mock-oa-sig
 
