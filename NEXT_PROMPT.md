@@ -4,10 +4,10 @@ Task: PLAN.md 2a order item 3 (second reads and fixes for topics 0.5, 1.8, 2.1),
 
 Steps (own scratchpad subfolder per agent; checkpoint-commit as items turn green):
 1. In parallel:
-   - Three second readers write `docs/reviews/review-0.5.md` (`mental`, exam topic-0.5), `review-1.8.md` (algo-think, ds, graphs-dp, topic-1.8) and `review-2.1.md` (stat-learning, validation, fin-ml, ensembles, topic-2.1), pattern `review-0.7.md`: answers, grading of alternative correct forms and wrong answers, layout, voice; code solutions pass hidden tests, starters fail them.
-   - Two `content-author` agents write mental-pressure L3 and puzzles L3 from `## Level 3` of their briefs. Where a brief says E1 or E4 is unbuilt, follow AUTHORING (built for mocks only).
+   - Three readers write `docs/reviews/review-0.5.md` (`mental`, exam topic-0.5), `review-1.8.md` (algo-think, ds, graphs-dp, topic-1.8) and `review-2.1.md` (stat-learning, validation, fin-ml, ensembles, topic-2.1), pattern `review-0.7.md`: answers, grading of alternative correct forms and wrong answers, layout, voice; code solutions pass hidden tests, starters fail them.
+   - Two `content-author`s write mental-pressure L3 and puzzles L3 from `## Level 3` of their briefs. Where a brief says E1 or E4 is unbuilt, follow AUTHORING (built for mocks only).
 2. A `test-fixer` per review appends `## Fix pass`.
-3. An answer-check agent recomputes every keyed answer in this session's new files (pattern `docs/reviews/answers-2026-11-02.md`); mismatches go to a fix agent.
+3. An answer-check agent recomputes every keyed answer in this session's new files (pattern `docs/reviews/answers-2026-11-02.md`); a fix agent fixes mismatches.
 
 Context: follow-up screens, a pace, `tags` on drill and homework items; firms only in recruiting l4, mocks and `prep.json`; `longform` in homework and exams only; `derive` takes expression, order or choice; `expression` samples six points; 4-column tables scroll at 390 px; `place` allows one slot per chip; `shuffle: true` on choices. Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
 
