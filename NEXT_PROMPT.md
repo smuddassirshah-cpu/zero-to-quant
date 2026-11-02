@@ -1,6 +1,6 @@
 Read CLAUDE.md, then PLAN.md, PROGRESS.md, DECISIONS.md and KNOWN_ISSUES.md. Follow the SESSION PROTOCOL in CLAUDE.md.
 
-Task: PLAN.md task 2a, phase 0, "mental-pressure L2". One `content-author` agent writes it from `## Level 2` of `docs/briefs/mental-pressure.md`. If there is room, run "puzzles L2" in parallel, then "recruiting L2".
+Task: PLAN.md task 2a, phase 0, "mental-pressure L2". One `content-author` agent writes it from `## Level 2` of `docs/briefs/mental-pressure.md`. Room permitting, run "puzzles L2" in parallel, then "recruiting L2".
 
 Context not in the state files:
 - Task 2a (interview readiness) is the user's priority. Plan: `docs/briefs/interview-plan.md`, with the user's decisions at its end (UK first; trader, then researcher; no audio).
