@@ -89,7 +89,7 @@ Phase 3, trader and researcher depth
 - [ ] game-theory L1: Games in a table
 - [ ] game-theory L2: Sequential games and auctions
 - [ ] game-theory L3: Poker and decisions
-- [ ] ito L1
+- [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
 - [ ] ito L2
 - [ ] ito L3
 - [ ] Engine pass D: E12 trading-game widget
@@ -169,7 +169,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] pairs-rep L1
 - [ ] pairs-rep L2
 - [ ] pairs-rep L3
-- [ ] ito L1
+- [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
 - [ ] ito L2
 - [ ] ito L3
 - [ ] puzzles L1
