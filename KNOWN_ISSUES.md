@@ -50,3 +50,4 @@ Interview pass (2 Nov 2026)
 - The validator refuses `longform` in reviews, contrary to AUTHORING section 5; spoken-answer practice sits in homework only (inbox bullet).
 - Level 1 sections of the puzzles, mm-games, mental-pressure and ito briefs still name an old scratchpad; give agents current paths.
 - A weekly usage limit stopped eight agents at once on 29 Oct; all resumed from disk on 2 Nov with no loss. Checkpoint-commit before long parallel runs.
+- The mental-pressure L3 brief (l12) says net scoring (E1) is not built; engine pass A built it for mock exams (`exams/mock-*.json`, AUTHORING sections 5 and 7). Lessons still cannot net-score a learner's own answers, so l12's sample-candidate review stands; follow AUTHORING where the brief is out of date.

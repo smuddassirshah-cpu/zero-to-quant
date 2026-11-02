@@ -44,12 +44,12 @@ Goal: the app is a complete, self-contained resource for passing quant internshi
 Phase 0, fast track
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
-- [ ] mental-pressure L2
+- [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
 - [ ] mental-pressure L3
 - [ ] mental-pressure L4: Assessment batteries
-- [ ] puzzles L2
+- [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
 - [x] recruiting L1: The landscape (`docs/reports/recruiting-1.md`; 5 lessons, review-1, homework-1 with a dated target list; 5 inbox bullets)
-- [ ] recruiting L2: The application
+- [x] recruiting L2: The application (`docs/reports/recruiting-2.md`; 5 lessons, review-2, homework-2; 5 inbox bullets)
 - [ ] Exams: mock-oa-arith, mock-oa-trader, mock-oa-sig
 
 Phase 1, trader core
@@ -173,14 +173,14 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] ito L2
 - [ ] ito L3
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
-- [ ] puzzles L2
+- [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
 - [ ] puzzles L3
 - [ ] puzzles L4
 - [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
 - [ ] mm-games L2
 - [ ] mm-games L3
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
-- [ ] mental-pressure L2
+- [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
 - [ ] mental-pressure L3
 
 ### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
