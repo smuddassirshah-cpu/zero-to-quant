@@ -1262,3 +1262,14 @@ Raised later (interview plan, engine pass B; items E7 and E9 of `docs/briefs/int
 - 456 (E7, bank and Interview practice): done.
 - 457 (E9, per-item timing and `pace`): done.
 - 458 (`tags` shape and documentation): done.
+
+Raised later (interview plan, engine pass D; inbox bullet E12 and the "running ledger" bullet, report `docs/reports/engine-pass-d.md`):
+
+459. Done (E12): the `trade` widget, `js/engine/widgets/trade.js` (a pure game that also runs under Node, plus the widget), over the `orderbook` canvas. Per turn the learner sets bid, ask and size; a seeded counterparty (`noise` with `rate` and `reach`, `informed` with `edge`, `scripted` list of `hit`/`lift`/`none`; a list of them by `turns` range) trades at the quoted price; cards on a `schedule` (text, a `fair` that moves the mark, `reveal` of the hidden value); `limit` cuts an oversize quote and counts a break; `spread` bounds and crossed or locked quotes count breaks; a live ledger (position, cash, mark-to-market, realised, average cost) and per-turn lines; the hidden `value` settles after the last turn; results box with every turn, the counterparty type and each trade's edge. Grade: final P&L against `benchmark` or `band`, then rule breaks against `maxBreaks`; keys `low`, `high`, `limit`, `crossed`, `spread`. Deterministic under `seed` (draws from seed and turn only); `strategy` is required and replayed by the test hook, Show solution and the playthrough. Validator: shape of every field, and the strategy played through the real game (error when it misses the target or breaks a rule, warning when the untouched opening quote already passes). Sample: `content/exams/mock-trade-sample.json`.
+460. Done (the ledger bullet): `carry`. A widget with `carry: "name"` stores the learner's value when its screen is checked or revealed (a number, the sliders map, or the trade ledger `{ pnl, position, cash, realised, mtm, breaks, turns, value }`); a later screen reads `{{carry.name}}`, `{{carry.name.pnl}}` or `{{carry.name|fallback}}` in any string of its spec (canvas state, prose, a numeric `answer`); a whole-string placeholder becomes the number. Validator: carry name shape, and a read with no earlier store is an error. In `player.js` (`carryResolve`, `carryReset`, called when a lesson or set starts).
+
+### Engine pass D: status
+
+- 459 (E12, `trade` widget): done.
+- 460 (running ledger, `carry`): done.
+- Inbox bullets integrated: E12 and the running ledger bullet. The game-theory `play` bullet (rounds against a seeded opponent) names E12 as a relative but is not answered by it and stays in the inbox; the mm-games level 1 and 2 bullets (`table` wrong ids, `sliders` boolean checks, number-line interval drag, log tick separators) are unrelated to E12 and stay.

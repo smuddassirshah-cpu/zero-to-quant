@@ -357,7 +357,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       break;
     }
     case 'numeric':
-      if (typeof w.answer !== 'number' || !Number.isFinite(w.answer)) err(file, `${where}.answer`, 'numeric answer must be a number');
+      if ((typeof w.answer !== 'number' || !Number.isFinite(w.answer)) && !(typeof w.answer === 'string' && /^\{\{\s*carry\.[A-Za-z0-9_.]+\s*\}\}$/.test(w.answer))) err(file, `${where}.answer`, 'numeric answer must be a number (or one {{carry.name}} placeholder)');
       tol(w.tol, `${where}.tol`);
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (w.wrong || []).forEach((x, i) => { if (typeof x.value !== 'number') err(file, `${where}.wrong[${i}].value`, 'must be a number'); if (x.tol) tol(x.tol, `${where}.wrong[${i}].tol`); });

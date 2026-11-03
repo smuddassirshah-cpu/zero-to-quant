@@ -662,6 +662,8 @@ Payoff or profit and loss at expiry against the price of the underlying.
 - `state.quotes: { "bid": [p, s], "ask": [p, s] }` merges the learner's own quotes into the book, labelled "You" (`youLabel`), in the manipulable colour; `state.fair` (or `params.fair`) adds a fair value to the spread row, so sliders on fair, half-spread and skew (with a derive writing `quotes`) move the learner's quotes in the book.
 - `decimals` for the average fill price, `midDecimals` for the mid (default: one more place when the mid falls between ticks), `spreadUnit: "pence" | "bp"` for the spread.
 
+**The `trade` widget over an orderbook (item 459).** The market-making game (AUTHORING section 3, `trade`) drives this canvas through `state.quotes` (`{ bid: [price, room-trimmed size], ask: [...] }`, drawn as "You" rows in the manipulable colour; a side with no room, or the whole pair once the game is over, shows no row) and `state.fair` (the current mark, which a card's `fair` moves and a `reveal` card sets to the hidden value). Give the canvas `depth` and a background book (`bids`, `asks`, `currency`, `dp`, `showMid`) for context: the game never changes those. The learner's quote is updated on every stepper change, so the book shows where the quote sits against the market before it is sent.
+
 ## space
 
 A rotatable 3D view in plain SVG: axes, a box and grid, points, vectors, curves, polylines, surfaces, planes and spans, and a vector field. Orthographic by default. Drawn with a painter's algorithm (far pieces first), so a vector through a surface, a curve over a surface or a plane cutting a bowl all read correctly. Built on `ZQ.cvb`; code in `space.js`.

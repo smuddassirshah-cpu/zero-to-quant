@@ -289,7 +289,7 @@
     Object.entries(inputs).forEach(([k, inp]) => {
       inp.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); nudge(k, e.key === 'ArrowUp' ? 1 : -1); }
-        else if (e.key === 'Enter') { e.preventDefault(); const v = Z.widgets.parseNum(inp.value); if (Number.isFinite(v)) q[k] = k === 'size' ? Math.min(N.size.max, Math.max(N.size.min, Math.round(v))) : snap(N, v); send(); }
+        else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); const v = Z.widgets.parseNum(inp.value); if (Number.isFinite(v)) q[k] = k === 'size' ? Math.min(N.size.max, Math.max(N.size.min, Math.round(v))) : snap(N, v); send(); }
       });
       inp.addEventListener('change', () => { const v = Z.widgets.parseNum(inp.value); if (Number.isFinite(v)) q[k] = k === 'size' ? Math.min(N.size.max, Math.max(N.size.min, Math.round(v))) : snap(N, v); paintInputs(); paintWarn(); pushCanvas(); change(); });
     });
