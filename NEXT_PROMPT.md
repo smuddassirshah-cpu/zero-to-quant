@@ -1,8 +1,8 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored")
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored").
 
-Task: PLAN.md 2a order item 4 (topic 3.3), first part, plus fix pass 1.9 left from task 5.
+Task: PLAN.md 2a order item 4 (topic 3.3), part one, plus fix pass 1.9 left from task 5.
 
-Steps (own scratchpad subfolder per agent; checkpoint-commit as items turn green):
+Steps (own scratchpad subfolder each; checkpoint-commit as items turn green):
 1. In parallel:
    - `engine-dev`: engine pass B, E7 (question bank with item spacing) and E9 (per-item timing), from their bullets in `docs/BACKLOG-INBOX.md`; number them from 456 in `docs/ENGINE-BACKLOG.md`, document in AUTHORING, report to `docs/reports/engine-pass-b.md`.
    - Four `content-author`s: mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2, each from its brief's `## Level n`.
