@@ -1,6 +1,6 @@
 """List learner-visible sentences over MAX words in one course (or an exam file).
 Usage: VOICE_BASE=/home/user/zero-to-quant/app/content/courses/<course>/ python3 docs/reviews/voice-scan.py [MAX=20] [--summary]
-A $...$ formula, $$...$$ block or `code` span counts as one word; fenced code is dropped.
+A $...$ formula, $$...$$ block `code` span or {{template}} value counts as one word; fenced code is dropped.
 """
 import json, glob, re, sys, os
 BASE = os.environ.get('VOICE_BASE', '/home/user/zero-to-quant/app/content/courses/graphs-dp/')
@@ -23,6 +23,7 @@ def strings(o, path=''):
 def mask(t):
     t = re.sub(r'```.*?```', ' ', t, flags=re.S)
     t = re.sub(r'`[^`]*`', 'CODE', t)
+    t = re.sub(r'\{\{.*?\}\}', 'VALUE', t, flags=re.S)
     t = re.sub(r'\$\$.*?\$\$', ' MATH ', t, flags=re.S)
     t = re.sub(r'\$[^$]*\$', 'MATH', t)
     return t
