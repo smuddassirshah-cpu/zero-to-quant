@@ -1,0 +1,584 @@
+{
+ "id": "homework-2",
+ "course": "mm-games",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-play-engine",
+   "difficulty": 5,
+   "skills": [
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "game-engine-code"
+   ],
+   "title": "A scripted game engine",
+   "prose": "Code the scripted card game end to end. The hidden tests deal three seeded games with `random.Random(seed)`, plus this homework's mock round and some edge cases. Each trade happens at the quote your rule gives for the fair value and position of that moment.",
+   "question": "Complete `play(script, quoting_rule, n_cards=3)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction\nimport random\n\n\ndef card_sum_fair(revealed, n_cards, deck_total=364, deck_size=52):\n    k = len(revealed)\n    shown = sum(revealed)\n    if k == n_cards:\n        return Fraction(shown)\n    return shown + (n_cards - k) * Fraction(deck_total - shown, deck_size - k)\n\n\ndef make_script(seed, n_cards=3):\n    r = random.Random(seed)\n    deck = [v for v in range(1, 14) for _ in range(4)]\n    cards = r.sample(deck, n_cards)\n    script = []\n    for c in cards:\n        side = r.choice([\"buy\", \"sell\", None])\n        if side:\n            script.append((side, r.randint(1, 3)))\n        script.append((\"reveal\", c))\n    return script\n\n\ndef centre_rule(fair, position):\n    return (fair - 2, fair + 2)\n\n\ndef skew_rule(fair, position):\n    m = fair - Fraction(position, 2)\n    return (m - 2, m + 2)\n\n\ndef mock_rule(fair, position):\n    m = Fraction(round(2 * (fair - Fraction(position, 2))), 2)\n    return (m - 2, m + 2)\n",
+    "starter": "def play(script, quoting_rule, n_cards=3):\n    \"\"\"Run a scripted game on the sum of n_cards dealt from\n    one full deck. Events, in order:\n      (\"reveal\", v)  a card of value v turns over\n      (\"buy\", k)     the interviewer buys k at your ask\n      (\"sell\", k)    the interviewer sells k at your bid\n    quoting_rule(fair, position) gives (bid, ask).\n    card_sum_fair(revealed, n_cards) is available.\n    Return (position, pnl): cash plus position times\n    the true sum, as a Fraction.\"\"\"\n    ...\n",
+    "solution": "def play(script, quoting_rule, n_cards=3):\n    \"\"\"Run a scripted game on the sum of n_cards dealt from\n    one full deck. Events, in order:\n      (\"reveal\", v)  a card of value v turns over\n      (\"buy\", k)     the interviewer buys k at your ask\n      (\"sell\", k)    the interviewer sells k at your bid\n    quoting_rule(fair, position) gives (bid, ask).\n    card_sum_fair(revealed, n_cards) is available.\n    Return (position, pnl): cash plus position times\n    the true sum, as a Fraction.\"\"\"\n    revealed, position, cash = [], 0, Fraction(0)\n    for kind, x in script:\n        if kind == \"reveal\":\n            revealed.append(x)\n            continue\n        bid, ask = quoting_rule(card_sum_fair(revealed, n_cards), position)\n        if kind == \"buy\":\n            position -= x\n            cash += x * ask\n        else:\n            position += x\n            cash -= x * bid\n    return position, cash + position * sum(revealed)\n",
+    "examples": [
+     {
+      "call": "play([('buy', 1), ('reveal', 13), ('reveal', 2), ('reveal', 6)], centre_rule)",
+      "expect": "(-1, Fraction(2, 1))",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "play(make_script(1), centre_rule)",
+      "expect": "(-2, Fraction(-4751, 1275))",
+      "compare": "equal"
+     },
+     {
+      "call": "play(make_script(2), skew_rule)",
+      "expect": "(-1, Fraction(1014, 25))",
+      "compare": "equal"
+     },
+     {
+      "call": "play(make_script(3), skew_rule)",
+      "expect": "(1, Fraction(9, 1))",
+      "compare": "equal"
+     },
+     {
+      "call": "play(make_script(7), mock_rule)",
+      "expect": "(-1, Fraction(6, 1))",
+      "compare": "equal"
+     },
+     {
+      "call": "play([('sell', 2), ('reveal', 3), ('buy', 1), ('reveal', 11), ('reveal', 9)], mock_rule)",
+      "expect": "(1, Fraction(3, 1))",
+      "compare": "equal"
+     },
+     {
+      "call": "play([('reveal', 13), ('reveal', 2), ('reveal', 6)], centre_rule)",
+      "expect": "(0, Fraction(0, 1))",
+      "compare": "equal"
+     },
+     {
+      "call": "play([('buy', 1), ('reveal', 13), ('reveal', 2), ('reveal', 6)], centre_rule)",
+      "expect": "(-1, Fraction(2, 1))",
+      "compare": "equal"
+     },
+     {
+      "call": "play([('reveal', 13), ('reveal', 2), ('reveal', 6), ('sell', 3)], skew_rule)",
+      "expect": "(3, Fraction(6, 1))",
+      "compare": "equal"
+     },
+     {
+      "call": "play([('sell', 1), ('reveal', 1), ('sell', 1), ('reveal', 1)], centre_rule, n_cards=2)",
+      "expect": "(2, Fraction(-240, 17))",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests. Each must return (position, pnl) exactly equal to the expected tuple, with pnl a Fraction. The helpers card_sum_fair, make_script, centre_rule, skew_rule and mock_rule are defined for you."
+   },
+   "feedback": {
+    "correct": "`play` passes every test.",
+    "generic": "Some tests failed. Quote from the fair value before each trade, and settle at the true sum of every card.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that the `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "The engine keeps the revealed cards, your position and your cash. Each trade asks the rule for a quote at the current fair value, then moves position and cash. At the end, the position is worth the true sum, so the mock round settles at +3."
+   }
+  },
+  {
+   "id": "h-zero-profit",
+   "difficulty": 4,
+   "skills": [
+    "mg-update"
+   ],
+   "tags": [
+    "zero-profit-code"
+   ],
+   "title": "The break-even half-width",
+   "prose": "In the die game, a share $\\alpha$ of counterparties see the outcome. The rest buy or sell 1 at random. You quote $m \\pm h$ around the mean $m$. Random flow earns $h$ a trade; informed flow costs $L(h)$, the average of $\\max(|x - m| - h, 0)$.",
+   "question": "Complete `zero_profit_half_spread(alpha, outcomes)`, returning the smallest break-even $h$ exactly.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction\n",
+    "starter": "from fractions import Fraction\n\n\ndef zero_profit_half_spread(alpha, outcomes):\n    \"\"\"Smallest half-width h >= 0 around the mean of the\n    equally likely outcomes with (1 - alpha) * h >= alpha * L(h),\n    where L(h) is the average loss to a fully informed trader.\n    Return an exact Fraction.\"\"\"\n    ...\n",
+    "solution": "from fractions import Fraction\n\n\ndef zero_profit_half_spread(alpha, outcomes):\n    \"\"\"Smallest half-width h >= 0 around the mean of the\n    equally likely outcomes with (1 - alpha) * h >= alpha * L(h),\n    where L(h) is the average loss to a fully informed trader.\n    Return an exact Fraction.\"\"\"\n    alpha = Fraction(alpha)\n    xs = [Fraction(x) for x in outcomes]\n    m = sum(xs) / len(xs)\n\n    def gap(h):\n        loss = sum(max(abs(x - m) - h, 0) for x in xs) / len(xs)\n        return (1 - alpha) * h - alpha * loss\n\n    points = sorted(set([Fraction(0)] + [abs(x - m) for x in xs]))\n    if gap(points[0]) >= 0:\n        return points[0]\n    for lo, hi in zip(points, points[1:]):\n        if gap(hi) >= 0:\n            return lo + (hi - lo) * (-gap(lo)) / (gap(hi) - gap(lo))\n    return points[-1]\n",
+    "examples": [
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 2), range(1, 7))",
+      "expect": "Fraction(4, 5)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 2), range(1, 7))",
+      "expect": "Fraction(4, 5)",
+      "compare": "fraction"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 5), range(1, 7))",
+      "expect": "Fraction(3, 10)",
+      "compare": "fraction"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(0), range(1, 7))",
+      "expect": "Fraction(0, 1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(1), range(1, 7))",
+      "expect": "Fraction(5, 2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 2), two)",
+      "expect": "Fraction(15, 14)",
+      "compare": "fraction",
+      "setup": "two = [a + b for a in range(1, 7) for b in range(1, 7)]"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 4), two)",
+      "expect": "Fraction(35, 69)",
+      "compare": "fraction",
+      "setup": "two = [a + b for a in range(1, 7) for b in range(1, 7)]"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 3), [0, 10])",
+      "expect": "Fraction(5, 3)",
+      "compare": "fraction"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 2), [1, 2, 3, 4])",
+      "expect": "Fraction(1, 2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(3, 4), range(1, 7))",
+      "expect": "Fraction(4, 3)",
+      "compare": "fraction"
+     },
+     {
+      "call": "zero_profit_half_spread(Fraction(1, 10), range(1, 7))",
+      "expect": "Fraction(3, 20)",
+      "compare": "fraction"
+     }
+    ],
+    "how": "Check runs 10 hidden tests. Each must return a Fraction equal to the exact half-width."
+   },
+   "feedback": {
+    "correct": "Every half-width is exact.",
+    "generic": "Some tests failed. $L(h)$ is linear between the points $|x - m|$, so solve on the right piece.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that the `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "The gap $(1 - \\alpha)h - \\alpha L(h)$ rises with $h$ and is a straight line between the points $|x - m|$. Find the piece where it crosses zero and solve that line exactly. For a die, $\\alpha = \\tfrac12$ gives $h = 4/5$, and $\\alpha = 1$ needs the whole range, $5/2$."
+   }
+  },
+  {
+   "id": "h-after-lift",
+   "difficulty": 3,
+   "skills": [
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "market-steps"
+   ],
+   "title": "After being lifted",
+   "prose": "You quote on an unknown number. The interviewer lifts your ask for 3, and you have a position limit of 5. Say what you do next, aloud, in about 30 seconds.",
+   "question": "Put the steps in order, and leave out the one that loses marks.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "info",
+      "text": "Update your fair value for what the trade tells you."
+     },
+     {
+      "id": "skew",
+      "text": "Skew your centre for the new position, short 3."
+     },
+     {
+      "id": "limit",
+      "text": "Check the position against the limit: two more and you are at 5."
+     },
+     {
+      "id": "requote",
+      "text": "Say your new bid and ask, with the reason."
+     },
+     {
+      "id": "sell",
+      "text": "Lower your ask to sell them more while they are keen.",
+      "why": "Lowering the ask after being lifted grows your short and ignores the information. Move up."
+     }
+    ],
+    "answer": [
+     "info",
+     "skew",
+     "limit",
+     "requote"
+    ],
+    "distractors": [
+     "sell"
+    ]
+   },
+   "feedback": {
+    "correct": "Information, inventory, limit, quote.",
+    "generic": "Not quite right. The fair value comes first; the quote comes last.",
+    "byKey": {
+     "sell": "Lowering the ask after being lifted grows your short and ignores the information. Move up.",
+     "left-out": "Every step except lowering the ask belongs in the answer."
+    }
+   },
+   "explain": {
+    "text": "A trade first changes what the number is likely to be, so the fair value moves. Then the position sets the skew, and the limit says how much more you can take. Only then can you quote."
+   },
+   "pace": 30
+  },
+  {
+   "id": "h-mock-cards",
+   "difficulty": 5,
+   "skills": [
+    "mg-quote",
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "mock-round"
+   ],
+   "title": "A mock round on three cards",
+   "kind": "longform",
+   "prompt": "Write out a full mock round, as you would say it. Three cards are dealt face down from one deck. Your half-width is 2, and you skew 0.5 a unit held, rounding your centre to the nearest 0.5.\n\nThe interviewer's script:\n1. Asks for a market before any card turns.\n2. Sells you 2 at your bid.\n3. Turns the first card: a 3.\n4. Buys 1 at your ask.\n5. Turns the second card: a jack (11).\n6. Turns the last card: a 9.\n\nAt each step say your fair value with its arithmetic, your quote and why, and your P&L at fair. Say it aloud first and time it: about three minutes. Then write it.",
+   "model": "**Before any card (20 seconds).** \"Each card averages $364/52 = 7$, so the sum is worth 21. Three cards are unseen, so I want some width: 19 at 23.\"\n\n**They sell me 2 at 19.** \"I am long 2. Marked at 21, that is +£4. A seller may think the cards are low; that is information. I am also long, so my skew of 0.5 a unit moves my centre down 1, to 20. Until a card turns, 18 at 22.\"\n\n**The first card is a 3.** \"The deck now holds 361 points in 51 cards, about 7.08 a card. Fair value: $3 + 2 \\times 361/51 = 17.16$. Long 2 bought at 19, I am −£3.69 at fair. My centre is $17.16 - 1 = 16.16$, call it 16. I quote 14 at 18.\"\n\n**They buy 1 at 18.** \"I am long 1 now. That sale earns 0.84 against 17.16, so the ledger reads −£2.84. A buyer at 18 may think the cards are high. My centre is $17.16 - 0.5$, about 16.5: 14.5 at 18.5.\"\n\n**The second card is a jack.** \"14 is shown. The deck holds 350 points in 50 cards: exactly 7. Fair value: $14 + 7 = 21$. I hold 1 and my cash is −£20, so the ledger reads +£1. Centre $21 - 0.5 = 20.5$: 18.5 at 22.5.\"\n\n**The last card is a 9.** \"The sum is 23, known. My market is 23 at 23, or none. I bought 2 at 19 and sold 1 at 18, so cash is −£20. Long 1 worth 23 gives a final P&L of +£3.\"\n\n**Speaking.** Every fair value comes with its arithmetic. Every move names its reason: information, inventory or both. The ledger is said after every trade and every card.",
+   "pace": 180,
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States the fair value before any card, 21, with the reason: 364/52 = 7 a card."
+    },
+    {
+     "points": 2,
+     "text": "Updates the fair value after each card with its arithmetic: 17.16, then 21, then 23."
+    },
+    {
+     "points": 2,
+     "text": "Gives a width with a reason: some width while cards are unseen, none once the sum is known."
+    },
+    {
+     "points": 2,
+     "text": "Moves the quote after each trade: down after a hit, up after a lift. Names information or inventory as the reason."
+    },
+    {
+     "points": 1,
+     "text": "Keeps the ledger: −£3.69 after the 3, +£1 after the jack, and a final P&L of +£3."
+    },
+    {
+     "points": 1,
+     "text": "Speaks in order with no silent working, and says each number with its reason."
+    }
+   ]
+  },
+  {
+   "id": "h-mock-fair-1",
+   "difficulty": 3,
+   "skills": [
+    "mg-update"
+   ],
+   "tags": [
+    "card-fair"
+   ],
+   "prose": "In the mock round above, the first card turns and shows a 3.",
+   "question": "What is the fair value of the sum now? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 17.1569,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "875/51: 3 + 2 × 361/51.",
+    "label": "Fair value",
+    "wrong": [
+     {
+      "id": "seven",
+      "value": 17,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 10.0784,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "17.1569, or 875/51.",
+    "generic": "Not quite right. Two unseen cards each average 361/51.",
+    "byKey": {
+     "seven": "You kept 7 for the unseen cards. A low card left the deck, so they average a little more.",
+     "one": "You added only one unseen card. Two are still face down."
+    }
+   },
+   "explain": {
+    "text": "The deck holds $364 - 3 = 361$ points in 51 cards. Two unseen cards add $2 \\times 361/51 = 14.16$. The fair value is 17.16."
+   },
+   "pace": 60
+  },
+  {
+   "id": "h-mock-fair-2",
+   "difficulty": 3,
+   "skills": [
+    "mg-update"
+   ],
+   "tags": [
+    "card-fair"
+   ],
+   "prose": "In the mock round, the second card is a jack, so a 3 and an 11 are shown.",
+   "question": "What is the fair value of the sum now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 21,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "21: 14 + 350/50 = 14 + 7.",
+    "label": "Fair value",
+    "wrong": [
+     {
+      "id": "first",
+      "value": 20.8824,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "two",
+      "value": 28,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Exactly 21.",
+    "generic": "Not quite right. The last card averages $(364 - 14)/50$.",
+    "byKey": {
+     "first": "You used 351/51 for the last card. Two cards have left the deck, not one.",
+     "two": "You counted two unseen cards. Only one is still face down."
+    }
+   },
+   "explain": {
+    "text": "The deck holds 350 points in 50 cards, exactly 7 a card. So the fair value is $14 + 7 = 21$. The 3 and the 11 average 7, so the deck's average is back where it started."
+   },
+   "pace": 60
+  },
+  {
+   "id": "h-mock-pnl",
+   "difficulty": 4,
+   "skills": [
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "ledger-pnl"
+   ],
+   "prose": "In the mock round you bought 2 at 19, then sold 1 at 18. The last card is a 9, so the sum is 23.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Event",
+      "Price (£)",
+      "Position"
+     ],
+     "rows": [
+      [
+       "You buy 2",
+       "19.00",
+       "+2"
+      ],
+      [
+       "You sell 1",
+       "18.00",
+       "+1"
+      ],
+      [
+       "Sum shown",
+       "23",
+       "+1"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Settles at the true sum"
+    }
+   },
+   "question": "What is your final P&L, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£3: cash −38 + 18 = −20, plus 1 × 23.",
+    "label": "P&L in pounds",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "flat",
+      "value": -20,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "both",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "fair21",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "+£3, long 1.",
+    "generic": "Not quite right. Add your cash to your position times the sum.",
+    "byKey": {
+     "flat": "That is your cash alone. You still hold 1, worth 23.",
+     "both": "You valued both units you bought at 23. You sold one of them at 18.",
+     "fair21": "That was the ledger at a fair value of 21. The sum settled at 23."
+    }
+   },
+   "explain": {
+    "text": "You paid 38 and received 18, so cash is −£20. Your one remaining unit settles at 23. The final P&L is +£3."
+   },
+   "pace": 60
+  },
+  {
+   "id": "h-two-dice-mixed",
+   "difficulty": 4,
+   "skills": [
+    "mg-update"
+   ],
+   "tags": [
+    "informed-loss"
+   ],
+   "prose": "Two dice. Half your counterparties see the sum; the other half buy or sell 1 at random. You quote 5 at 9. This is the level's toy: the random half trades at any width.",
+   "question": "What do you make per game on average? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7222,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "13/18: ½ × 2 − ½ × 5/9.",
+    "label": "P&L",
+    "wrong": [
+     {
+      "id": "noinf",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "full",
+      "value": 0.4444,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "13/18, about 0.7222.",
+    "generic": "Not quite right. Random flow earns the half-width, 2; informed flow costs 5/9.",
+    "byKey": {
+     "noinf": "You left out the informed half.",
+     "full": "You took the whole informed loss without halving it. Only half the flow is informed.",
+     "half": "You halved the random earning but left out the informed loss."
+    }
+   },
+   "explain": {
+    "text": "Random traders earn the half-width, 2. Informed ones lose you 5/9, as sums 2 to 4 and 10 to 12 trade. Half of each gives $1 - 5/18 = 13/18$."
+   },
+   "pace": 120
+  },
+  {
+   "id": "h-edge-game",
+   "difficulty": 3,
+   "skills": [
+    "mg-quote"
+   ],
+   "tags": [
+    "game-edge"
+   ],
+   "prose": "You pay £1 to roll a die. A six pays £6, a five pays £1, and anything else pays nothing.",
+   "question": "What is your edge per play, in pounds? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1667,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1/6: the game is worth 7/6 and costs 1.",
+    "label": "Edge in pounds",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "six",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": -0.1667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "+£0.1667 a play.",
+    "generic": "Not quite right. The game is worth $(6 + 1)/6$.",
+    "byKey": {
+     "six": "You counted the six but not the five. The five pays £1 too.",
+     "sign": "You took the payout from the stake."
+    }
+   },
+   "explain": {
+    "text": "The game pays $(6 + 1)/6 = 7/6$ on average and costs £1. The edge is 1/6, about 17p. Play it, in small size, because one play's spread is large."
+   },
+   "pace": 60
+  }
+ ]
+}
