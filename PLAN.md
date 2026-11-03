@@ -70,7 +70,7 @@ Phase 0, fast track
 - [x] recruiting L1: The landscape (`docs/reports/recruiting-1.md`; 5 lessons, review-1, homework-1 with a dated target list; 5 inbox bullets)
 - [x] recruiting L2: The application (`docs/reports/recruiting-2.md`; 5 lessons, review-2, homework-2; 5 inbox bullets)
 - [x] mock-oa-arith (`docs/reports/exam-mock-oa-arith.md`; 64 generated and 16 fixed items, 8 minutes, net scoring, forward only; 4 inbox bullets)
-- [ ] Exams: mock-oa-trader, mock-oa-sig (brief `docs/briefs/mocks.md`; three fixed versions each until E3)
+- [x] Exams: mock-oa-trader, mock-oa-sig (brief `docs/briefs/mocks.md`; three fixed versions each until E3; `docs/reports/exam-mock-oa-sig.md`, `exam-mock-oa-trader.md`; sig 17 items, trader 40 items in three papers; 9 inbox bullets)
 - [x] Prep tags, engine (`docs/reports/engine-prep-tags.md`; full playthrough green; ENGINE-BACKLOG 455; brief `docs/briefs/prep-tags.md`): `content/prep.json` schema, validator, one chip per lesson, a "Prepare for" page (user request, 2 Nov)
 - [x] Prep tags, mapping (`docs/reports/prep-mapping.md`; 23 paths, 346 steps): general, stage-by-track and ten firm paths in `content/prep.json`
 
@@ -83,8 +83,8 @@ Phase 1, trader core
 - [x] brainteasers L3: Quick reasoning (`docs/reports/brainteasers-3.md`; 5 lessons, review-3 10 items, homework-3 8 items; 6 inbox bullets)
 - [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] mm-games L2 (`docs/reports/mm-games-2.md`; 5 lessons, review-2, homework-2; 4 inbox bullets)
-- [ ] mm-games L3
-- [ ] mm-games L4: Trading games firms run
+- [x] mm-games L3 (`docs/reports/mm-games-3.md`; 4 lessons with `trade` games, review-3, homework-3; 8 inbox bullets)
+- [x] mm-games L4: Trading games firms run (`docs/reports/mm-games-4.md`; 5 lessons, review-4, homework-4; 7 inbox bullets)
 - [x] recruiting L3: Interviews and after (`docs/reports/recruiting-3.md`; 5 lessons, review-3 9 items, homework-3 9 items; 4 inbox bullets)
 - [x] Topic 0.7 closed: exam topic-0.7 (30 items, `docs/reports/exam-0.7.md`), second read and fix (`docs/reviews/review-0.7.md`: 3 errors, 17 warnings, 29 notes; 48 fixed, 1 deferred to the inbox), level 1 firm names moved to firm types, all lessons, sets and exam green
 - [x] Engine pass B: E7 question bank with item spacing, E9 per-item timing (items 456 to 458, `tags` checked; `docs/reports/engine-pass-b.md`; sample `bank/sample.json`; full run green)
@@ -110,8 +110,8 @@ Phase 2, researcher core
 
 Phase 3, trader and researcher depth
 - [x] game-theory L1: Games in a table (`docs/reports/game-theory-1.md`; 5 lessons, review-1 9 items, homework-1 8 items; 6 inbox bullets)
-- [ ] game-theory L2: Sequential games and auctions
-- [ ] game-theory L3: Poker and decisions
+- [x] game-theory L2: Sequential games and auctions (`docs/reports/game-theory-2.md`; 5 lessons, review-2, homework-2; 2 inbox bullets)
+- [x] game-theory L3: Poker and decisions (`docs/reports/game-theory-3.md`; 5 lessons, review-3, homework-3; 2 inbox bullets)
 - [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
 - [ ] ito L2
 - [ ] ito L3
@@ -201,7 +201,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] puzzles L4 (`docs/reports/puzzles-4.md`)
 - [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] mm-games L2 (`docs/reports/mm-games-2.md`)
-- [ ] mm-games L3
+- [x] mm-games L3 (`docs/reports/mm-games-3.md`; 4 lessons with `trade` games, review-3, homework-3; 8 inbox bullets)
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
 - [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
 - [x] mental-pressure L3 (`docs/reports/mental-pressure-3.md`)
