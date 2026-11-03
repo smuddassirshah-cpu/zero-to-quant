@@ -1,9 +1,9 @@
-"""List learner-visible sentences over MAX words in graphs-dp.
-Usage: python3 long.py [MAX=20] [--summary]
+"""List learner-visible sentences over MAX words in one course (or an exam file).
+Usage: VOICE_BASE=/home/user/zero-to-quant/app/content/courses/<course>/ python3 docs/reviews/voice-scan.py [MAX=20] [--summary]
 A $...$ formula, $$...$$ block or `code` span counts as one word; fenced code is dropped.
 """
 import json, glob, re, sys, os
-BASE = '/home/user/zero-to-quant/app/content/courses/graphs-dp/'
+BASE = os.environ.get('VOICE_BASE', '/home/user/zero-to-quant/app/content/courses/graphs-dp/')
 MAX = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 20
 # keys whose values are code, tests, ids or structure (never prose)
 SKIP = {'id', 'kind', 'type', 'course', 'skills', 'answer', 'accept_ids', 'starter', 'solution',
