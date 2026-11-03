@@ -6,8 +6,8 @@
 | 0 From nothing | 7 | 14 | 193/193 | 44/44 | 44/44 | 6/7 | yes | 2/7 | 2/7 | 6 |
 | 1 Foundations | 11 | 36 | 496/560 | 117/131 | 117/131 | 9/11 | no | 7/11 | 7/11 | 87 |
 | 2 Intermediate | 6 | 14 | 150/202 | 37/49 | 37/49 | 4/6 | no | 1/6 | 1/6 | 12 |
-| 3 Advanced | 5 | 15 | 64/259 | 13/55 | 13/55 | 0/5 | no | 0/5 | 0/5 | 0 |
-| Total | 29 | 79 | 903/1214 | 211/279 | 211/279 | 19/29 | 1/4 | 10/29 | 10/29 | 105 |
+| 3 Advanced | 5 | 15 | 86/259 | 17/55 | 17/55 | 0/5 | no | 0/5 | 0/5 | 0 |
+| Total | 29 | 79 | 925/1214 | 215/279 | 215/279 | 19/29 | 1/4 | 10/29 | 10/29 | 105 |
 
 ## 2. Per topic, course, level
 
@@ -371,7 +371,7 @@
 | puzzles | core | L2 Conditioning | 6/6 | - | yes | yes | no | Finished, no topic exam |
 | puzzles | core | L3 Continuous and geometric | 6/6 | - | yes | yes | no | Finished, no topic exam |
 | puzzles | core | L4 Games and betting | 6/6 | - | yes | yes | no | Finished, no topic exam |
-| puzzles | core | L5 Puzzles firms keep asking | 0/6 | l25-fair-from-biased, l26-estimating-n, l27-given-the-total, l28-duels, l29-random-chords, l30-follow-ups | no | no | no | Not started |
+| puzzles | core | L5 Puzzles firms keep asking | 6/6 | - | yes | yes | no | Finished, no topic exam |
 | mm-games | core | L1 Fair value | 4/4 | - | yes | yes | no | Finished, no topic exam |
 | mm-games | core | L2 Quoting | 5/5 | - | yes | yes | no | Finished, no topic exam |
 | mm-games | core | L3 Risk | 0/4 | l10-position-limits, l11-hedging, l12-thinking-aloud, l13-full-game | no | no | no | Not started |
@@ -381,9 +381,9 @@
 | mental-pressure | core | L3 Test formats | 4/4 | - | yes | yes | no | Finished, no topic exam |
 | mental-pressure | core | L4 Assessment batteries | 5/5 | - | yes | yes | no | Finished, no topic exam |
 | brainteasers | core | L1 Invariants and counting arguments | 5/5 | - | yes | yes | no | Finished, no topic exam |
-| brainteasers | core | L2 Strategy and logic | 0/6 | l6-back-from-the-end, l7-hat-strategies, l8-prisoners-and-boxes, l9-egg-drop, l10-what-they-know, l11-crossings-and-schedules | no | no | no | Not started |
-| brainteasers | core | L3 Quick reasoning | 0/5 | l12-clocks-and-trains, l13-digits-and-remainders, l14-sums-in-one-line, l15-numbers-to-know, l16-mixed-set | no | no | no | Not started |
-| game-theory | core | L1 Games in a table | 0/5 | l1-payoff-tables, l2-dominated-moves, l3-nash-equilibrium, l4-mixing, l5-zero-sum | no | no | no | Not started |
+| brainteasers | core | L2 Strategy and logic | 6/6 | - | yes | yes | no | Finished, no topic exam |
+| brainteasers | core | L3 Quick reasoning | 5/5 | - | yes | yes | no | Finished, no topic exam |
+| game-theory | core | L1 Games in a table | 5/5 | - | yes | yes | no | Finished, no topic exam |
 | game-theory | core | L2 Sequential games and auctions | 0/5 | l6-game-trees, l7-guess-two-thirds, l8-sealed-bids, l9-winners-curse, l10-splitting-a-pie | no | no | no | Not started |
 | game-theory | core | L3 Poker and decisions | 0/5 | l11-pot-odds, l12-ranges, l13-toy-poker, l14-value-of-information, l15-sizing-and-risk | no | no | no | Not started |
 
@@ -415,9 +415,9 @@
 | systems | core | L4 Low-latency C++ | 0/4 | l15-no-allocation, l16-ring-buffer, l17-measuring-latency, l18-feed-handler | no | no | no | Not started |
 
 ## 3. Mocks
-Existing: mock-sample
-Planned, not present (PLAN.md and briefs): mock-oa-arith, mock-oa-code, mock-oa-code-hard, mock-oa-quant-data, mock-oa-sig, mock-oa-strats, mock-oa-trader, mock-superday-developer, mock-superday-research, mock-superday-strats, mock-superday-trader, mock-video
-Planned count: 13
+Existing: mock-oa-arith, mock-sample, mock-trade-sample
+Planned, not present (PLAN.md and briefs): mock-oa-code, mock-oa-code-hard, mock-oa-quant-data, mock-oa-sig, mock-oa-strats, mock-oa-trader, mock-superday-developer, mock-superday-research, mock-superday-strats, mock-superday-trader, mock-video
+Planned count: 14
 
 ## 4. Gap inputs
 Missing levels (no lessons written):
@@ -462,12 +462,8 @@ Missing levels (no lessons written):
   pdes L1 (topic 3.2, Not started)
   pdes L2 (topic 3.2, Not started)
   pdes L3 (topic 3.2, Not started)
-  puzzles L5 (topic 3.3, Not started)
   mm-games L3 (topic 3.3, Not started)
   mm-games L4 (topic 3.3, Not started)
-  brainteasers L2 (topic 3.3, Not started)
-  brainteasers L3 (topic 3.3, Not started)
-  game-theory L1 (topic 3.3, Not started)
   game-theory L2 (topic 3.3, Not started)
   game-theory L3 (topic 3.3, Not started)
   algebra L1 (topic 3.4, Not started)
@@ -522,7 +518,7 @@ Shared-skill-only levels (counted as covered):
   micro L3 (topic 1.7)
   graphs-dp L4 (topic 1.8)
   validation L3 (topic 2.1)
-Status counts: {'Finished except second read': 79, 'Finalised': 105, 'Finished, no topic exam': 23, 'Finished, second read pending': 3, 'Finished, not in topic exam': 1, 'Not started': 68}
+Status counts: {'Finished except second read': 79, 'Finalised': 105, 'Finished, no topic exam': 27, 'Finished, second read pending': 3, 'Finished, not in topic exam': 1, 'Not started': 64}
 Topics read but not fixed: []
 Stage exams missing: ['stage-1', 'stage-2', 'stage-3']
 Topic exams not covering all written levels:
