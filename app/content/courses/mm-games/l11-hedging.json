@@ -1,0 +1,1217 @@
+{
+ "id": "l11-hedging",
+ "course": "mm-games",
+ "title": "Hedging a position",
+ "minutes": 15,
+ "objectives": [
+  "Hedge exposure with a correlated instrument."
+ ],
+ "skills": [
+  "mg-risk"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A long you keep",
+   "prose": "You are long contract A and cannot sell it today. Contract B is liquid. Each dot is one day: B's move across, A's move up. They tend to move together.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "sim": {
+      "n": 60,
+      "rho": 0.8,
+      "seed": 11,
+      "sx": 1.6,
+      "sy": 2
+     },
+     "x": "B's daily move (%)",
+     "y": "A's daily move (%)",
+     "height": 280
+    },
+    "state": {}
+   },
+   "question": "Which trade in B lowers the risk of your long A?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sell",
+      "text": "Sell some B",
+      "correct": true
+     },
+     {
+      "id": "buy",
+      "text": "Buy some B",
+      "why": "You added to the risk. A and B rise together, so a long B doubles the bet."
+     },
+     {
+      "id": "none",
+      "text": "Nothing: B is a different contract",
+      "why": "You ignored the pattern. When A falls, B usually falls too, so a short B gains."
+     },
+     {
+      "id": "all",
+      "text": "Sell B and also sell A short elsewhere",
+      "why": "You were told A cannot be sold today. B is the tool you have."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does B tend to rise or fall on the days A falls?"
+    },
+    {
+     "rung": "point",
+     "text": "The dots run from bottom left to top right.",
+     "highlight": [
+      "p0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A short in B gains on the days A loses."
+    }
+   ],
+   "feedback": {
+    "correct": "Sell some B.",
+    "generic": "Not quite right. Look at what B does on A's bad days.",
+    "byKey": {
+     "buy": "You added to the risk. A and B rise together, so a long B doubles the bet.",
+     "none": "You ignored the pattern. When A falls, B usually falls too, so a short B gains."
+    }
+   },
+   "explain": {
+    "text": "A and B move together, with correlation 0.8. A short in B gains on most of A's bad days. That offset is a **hedge**."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 2,
+   "title": "How much B?",
+   "prose": "Sell $h$ units of B for each unit of A. What is left is A's move less $h$ times B's: the gaps from the line. Slide $h$ and watch the sum of squared gaps.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "sim": {
+      "n": 60,
+      "rho": 0.8,
+      "seed": 11,
+      "sx": 1.6,
+      "sy": 2
+     },
+     "x": "B's daily move (%)",
+     "y": "A's daily move (%)",
+     "height": 280
+    },
+    "state": {
+     "line": {
+      "m": 0.5,
+      "b": 0,
+      "label": "hedge"
+     },
+     "residuals": "line",
+     "showSSE": true
+    },
+    "controls": [
+     {
+      "bind": "line.m",
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "label": "Hedge $h$",
+      "start": 0.5,
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "Which hedge leaves the smallest gaps?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "About 1.0",
+      "correct": true
+     },
+     {
+      "id": "rho",
+      "text": "About 0.8, the correlation",
+      "why": "You used the correlation alone. B moves less than A, so you need more of it."
+     },
+     {
+      "id": "ratio",
+      "text": "About 1.25, A's sd over B's",
+      "why": "You used the volatilities alone. The correlation is under 1, so less B is enough."
+     },
+     {
+      "id": "two",
+      "text": "About 2, to be safe",
+      "why": "You over-hedged. At 2 the gaps are as large as with no hedge, the other way round."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "About 1.0.",
+    "generic": "Not quite right. Slide until the sum of squares stops falling.",
+    "byKey": {
+     "rho": "You used the correlation alone. B moves less than A, so you need more of it.",
+     "two": "You over-hedged. At 2 the gaps are as large as with no hedge, the other way round."
+    }
+   },
+   "explain": {
+    "text": "The gaps are smallest near $h = 1.0$. That is the correlation 0.8 times A's sd over B's, $2/1.6$. Both numbers matter, not either alone.",
+    "canvas": {
+     "line": {
+      "m": 1,
+      "b": 0,
+      "label": "h = 1"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The hedge ratio",
+   "prose": "The slope you found is the **minimum-variance hedge ratio**:\n$$h = \\rho \\, \\frac{\\sigma_A}{\\sigma_B}.$$\nA new pair: $\\rho = 0.9$, A moves 3% a day and B 2%.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "sim": {
+      "n": 60,
+      "rho": 0.8,
+      "seed": 11,
+      "sx": 1.6,
+      "sy": 2
+     },
+     "x": "B's daily move (%)",
+     "y": "A's daily move (%)",
+     "height": 280
+    },
+    "state": {
+     "line": {
+      "m": 1.0,
+      "b": 0,
+      "label": "hedge"
+     },
+     "caption": "The first pair: $0.8 \\times 2/1.6 = 1.0$."
+    }
+   },
+   "question": "What is the hedge ratio for the new pair?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.35,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1.35: 0.9 × 3/2.",
+    "label": "h",
+    "wrong": [
+     {
+      "id": "rho",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "inv",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply the correlation by A's sd over B's."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma_A/\\sigma_B = 3/2 = 1.5$.",
+     "highlight": [
+      "line"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.9 \\times 1.5 = 1.35$."
+    }
+   ],
+   "feedback": {
+    "correct": "1.35.",
+    "generic": "Not quite right. Use $h = \\rho\\,\\sigma_A/\\sigma_B$.",
+    "byKey": {
+     "rho": "You used the correlation alone. Scale it by $3/2$.",
+     "ratio": "You left out the correlation, 0.9.",
+     "inv": "You divided B's sd by A's. A is the one being hedged, so its sd goes on top."
+    }
+   },
+   "explain": {
+    "text": "$h = 0.9 \\times 3/2 = 1.35$ units of B for each unit of A. B moves less, so you need more than one unit of it. The correlation scales that down, because B only explains part of A."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What is left",
+   "prose": "Back to the first pair, hedged at $h = 1.0$. A hedge removes the share $\\rho^2$ of A's variance. The share $1 - \\rho^2$ is left.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "sim": {
+      "n": 60,
+      "rho": 0.8,
+      "seed": 11,
+      "sx": 1.6,
+      "sy": 2
+     },
+     "x": "B's daily move (%)",
+     "y": "A's daily move (%)",
+     "height": 280
+    },
+    "state": {
+     "line": {
+      "m": 1.0,
+      "b": 0,
+      "label": "hedge"
+     },
+     "residuals": "line",
+     "showSSE": true
+    }
+   },
+   "question": "A moves 2% a day. What is the daily sd of the hedged position, in per cent?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1.2%: 2 × √(1 − 0.64) = 2 × 0.6.",
+    "label": "sd",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.72,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "rho",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the share of variance left, then take its square root."
+    },
+    {
+     "rung": "point",
+     "text": "$1 - 0.8^2 = 0.36$.",
+     "highlight": [
+      "line"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{0.36} = 0.6$, and $0.6 \\times 2\\% = 1.2\\%$."
+    }
+   ],
+   "feedback": {
+    "correct": "1.2%.",
+    "generic": "Not quite right. The sd scales by $\\sqrt{1 - \\rho^2}$.",
+    "byKey": {
+     "var": "You scaled the sd by $1 - \\rho^2$. That share applies to the variance, so take its square root.",
+     "rho": "You scaled by $1 - \\rho$. The share left is $1 - \\rho^2$, and the sd takes its root."
+    }
+   },
+   "explain": {
+    "text": "The variance left is $0.36 \\times 4 = 1.44$, so the sd is 1.2%. A correlation of 0.8 cuts the risk by 40%, not 80%. Even a strong hedge leaves a real part of the risk."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The two-dice game",
+   "prose": "Six turns on the sum of two dice, size 1 or 2, width 1 to 3, limit 4. Other traders deal within £1 of fair. On the next screen you hedge what you are left holding.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       5.5,
+       4
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       4.5,
+       8
+      ]
+     ],
+     "asks": [
+      [
+       8.5,
+       4
+      ],
+      [
+       9,
+       6
+      ],
+      [
+       9.5,
+       8
+      ]
+     ],
+     "depth": 3,
+     "currency": "£",
+     "dp": 1,
+     "showMid": true
+    },
+    "state": {}
+   },
+   "question": "Finish the six turns with a P&L of at least £5 and no rule breaks.",
+   "widget": {
+    "kind": "trade",
+    "seed": 16,
+    "turns": 6,
+    "fair": 7,
+    "value": 7,
+    "tick": 0.5,
+    "range": [
+     3,
+     11
+    ],
+    "currency": "£",
+    "size": {
+     "min": 1,
+     "max": 2,
+     "start": 1
+    },
+    "limit": 4,
+    "spread": {
+     "min": 1,
+     "max": 3
+    },
+    "quote": {
+     "bid": 6.5,
+     "ask": 7.5,
+     "size": 1
+    },
+    "counterparty": {
+     "type": "noise",
+     "rate": 0.8,
+     "reach": 1,
+     "maxSize": 2
+    },
+    "schedule": [
+     {
+      "turn": 1,
+      "text": "A market on the sum of two dice, rolled at the end. Fair is £7. Other traders deal only within £1 of fair."
+     }
+    ],
+    "benchmark": 5,
+    "maxBreaks": 0,
+    "strategy": [
+     {
+      "bid": 6,
+      "ask": 8,
+      "size": 1
+     },
+     {
+      "bid": 6,
+      "ask": 8,
+      "size": 1
+     },
+     {
+      "bid": 6,
+      "ask": 8,
+      "size": 1
+     },
+     {
+      "bid": 6,
+      "ask": 8,
+      "size": 1
+     },
+     {
+      "bid": 6,
+      "ask": 8,
+      "size": 1
+     },
+     {
+      "bid": 6,
+      "ask": 8,
+      "size": 1
+     }
+    ],
+    "carry": "sum",
+    "label": "Your quote"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How much edge does 6.5 at 7.5 make on a fill?"
+    },
+    {
+     "rung": "point",
+     "text": "Other traders still deal at 6 and 8, a full £1 from fair.",
+     "highlight": [
+      "bid0",
+      "ask0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Quote 6 at 8 for 1 every turn: £1 of edge on each fill."
+    }
+   ],
+   "feedback": {
+    "correct": "Six fills, £1 of edge each.",
+    "generic": "Not quite right. Quote as wide as other traders will still deal, and keep the size at 1.",
+    "byKey": {
+     "low": "Your P&L is under £5. A quote of 6.5 at 7.5 earns only 50p a fill; 6 at 8 is still inside their £1.",
+     "crossed": "Your bid met or passed your ask, so nobody traded. Keep the bid below the ask.",
+     "limit": "A size of 2 took you past 4 lots on one side. Keep the size at 1.",
+     "spread": "Your width left 1 to 3. Keep the ask between 1 and 3 above the bid."
+    }
+   },
+   "explain": {
+    "text": "The model run quoted 6 at 8 for 1: bought 2 at 6, then sold 4 at 8. It ended short 2 with cash +£20. At the value 7 that is $20 - 2 \\times 7 = 6$, so +£6."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Hedge with the first die",
+   "prose": "You hold {{carry.sum.position|0}} lots of the sum. The first die now trades on its own at 3.4 to 3.6, fair 3.5. The sum is the first die plus the second. So the sum moves one for one with the first die.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Holding",
+      "Units",
+      "sd (£)"
+     ],
+     "rows": [
+      [
+       "Sum, unhedged",
+       "{{carry.sum.position}}",
+       "?"
+      ],
+      [
+       "Sum less die 1",
+       "{{carry.sum.position}}",
+       "?"
+      ]
+     ]
+    },
+    "state": {
+     "q": "{{carry.sum.position}}",
+     "caption": "sd per unit: the sum 2.4152, one die 1.7078"
+    },
+    "derive": {
+     "values.r0c2": "fixed(sqrt(35/6) * abs(q), 4)",
+     "values.r1c2": "fixed(sqrt(35/12) * abs(q), 4)",
+     "caption": "Hedged sd {{fixed(sqrt(35/12) * abs(q), 2)}} against {{fixed(sqrt(35/6) * abs(q), 2)}} unhedged"
+    }
+   },
+   "question": "How many units of the first die do you sell to hedge? A negative number means you buy.",
+   "widget": {
+    "kind": "numeric",
+    "answer": "{{carry.sum.position}}",
+    "tol": {
+     "abs": 0
+    },
+    "accept": "As many as you hold of the sum, with the same sign: short 2 sells −2, which is buying 2.",
+    "label": "Units to sell"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A long sum is hedged by selling the die; a short sum by buying it."
+    },
+    {
+     "rung": "point",
+     "text": "The ratio is 1: the sum moves one for one with the first die.",
+     "highlight": [
+      "r0c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Sell exactly your position. Short 2 means sell −2, so buy 2. A flat position needs no hedge."
+    }
+   ],
+   "feedback": {
+    "correct": "That hedge removes the first die's risk.",
+    "generic": "Not quite right. Sell as many units of the first die as you hold of the sum, sign and all."
+   },
+   "explain": {
+    "text": "The sum is die 1 plus die 2, so the ratio is $h = 1$. After the hedge only the second die is left: sd 1.7078 a unit against 2.4152. A position of 0 needs no hedge at all."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Did the hedge pay?",
+   "prose": "The model run ended short 2 sums, so it bought 2 of the first die at 3.6. The dice land 3 and 4. Read the blotter.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Trade",
+      "Price",
+      "Value",
+      "P&L (£)"
+     ],
+     "rows": [
+      [
+       "Sums: bought 2, sold 4",
+       "6, 8",
+       "7",
+       "+6.00"
+      ],
+      [
+       "Die 1: bought 2",
+       "3.6",
+       "3",
+       "?"
+      ],
+      [
+       "Total",
+       "",
+       "",
+       "?"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Buying at 3.6 against a fair 3.5 cost $2 \\times 0.10$, so £0.20 of edge."
+    }
+   },
+   "question": "What is the hedged total P&L, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.8,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "+£4.80: 6 + 2 × (3 − 3.6).",
+    "label": "P&L",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "unhedged",
+      "value": 6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "fairhedge",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 7.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the hedge's P&L first: bought 2 at 3.6, worth 3 each."
+    },
+    {
+     "rung": "point",
+     "text": "The hedge makes $2 \\times (3 - 3.6) = -1.20$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$6 - 1.20 = 4.80$."
+    }
+   ],
+   "feedback": {
+    "correct": "+£4.80.",
+    "generic": "Not quite right. Add the hedge's P&L, $2 \\times (3 - 3.6)$, to the £6.",
+    "byKey": {
+     "unhedged": "That is the sum alone. The hedge lost £1.20 on this roll.",
+     "fairhedge": "You marked the hedge at its fair 3.5. The first die landed 3.",
+     "sign": "You added the hedge's loss instead of subtracting it."
+    }
+   },
+   "explain": {
+    "text": "The hedge lost £1.20 because the first die rolled low, and the total fell to £4.80. It was still right: the sd of the position fell from 4.83 to 3.42. Judge a hedge by the risk it removed, as you judged trades by edge.",
+    "canvas": {
+     "values": {
+      "r1c3": "−1.20",
+      "r2c3": "+4.80"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "One for one?",
+   "prose": "You are long £10,000 of a share that moves 2% a day. The index future moves 4% a day, with correlation 0.8. A colleague says: \"Sell £10,000 of the future. Pound for pound.\"",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Contract",
+      "Daily sd",
+      "Holding"
+     ],
+     "rows": [
+      [
+       "Share",
+       "2%",
+       "long £10,000"
+      ],
+      [
+       "Index future",
+       "4%",
+       "?"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Correlation between the two: 0.8"
+    }
+   },
+   "question": "How much of the future do you sell?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "£4,000",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "£10,000, pound for pound",
+      "why": "You used a ratio of 1. The future moves twice as much, so £10,000 of it over-hedges: the sd rises to 2.68%."
+     },
+     {
+      "id": "rho",
+      "text": "£8,000, the correlation times £10,000",
+      "why": "You used the correlation alone. Scale it by the share's sd over the future's, 2/4."
+     },
+     {
+      "id": "inv",
+      "text": "£16,000",
+      "why": "You put the future's sd on top. The share is what you hedge, so its 2% goes on top."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which moves more each day, the share or the future?"
+    },
+    {
+     "rung": "point",
+     "text": "$h = 0.8 \\times 2/4$.",
+     "highlight": [
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$h = 0.4$, so sell 0.4 of £10,000: £4,000."
+    }
+   ],
+   "feedback": {
+    "correct": "£4,000.",
+    "generic": "Not quite right. Use $h = \\rho\\,\\sigma_A/\\sigma_B$ with the share as A.",
+    "byKey": {
+     "one": "You used a ratio of 1. The future moves twice as much, so £10,000 of it over-hedges: the sd rises to 2.68%.",
+     "inv": "You put the future's sd on top. The share is what you hedge, so its 2% goes on top."
+    }
+   },
+   "explain": {
+    "text": "$h = 0.8 \\times 2/4 = 0.4$, and the sd falls from 2% to 1.2%. Pound for pound leaves you short the market: the sd rises to 2.68%, above no hedge at all. Too much hedge is a new position the other way.",
+    "canvas": {
+     "values": {
+      "r1c2": "short £4,000"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The hedge rule",
+   "prose": "For a unit of A hedged with $h$ units of B, the variance left is $\\sigma_A^2 + h^2\\sigma_B^2 - 2h\\rho\\,\\sigma_A\\sigma_B$. It is smallest at\n$$h = \\rho\\,\\frac{\\sigma_A}{\\sigma_B}, \\qquad \\sigma_{\\text{left}} = \\sigma_A\\sqrt{1 - \\rho^2}.$$\nEvery hedge you cross a spread for also costs edge.",
+   "question": "Two contracts have correlation 0. What hedge ratio leaves the least risk?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0: with ρ = 0, h = 0 and no hedge helps.",
+    "label": "h",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $\\rho = 0$ into the ratio."
+    },
+    {
+     "rung": "point",
+     "text": "$h = 0 \\times \\sigma_A/\\sigma_B$."
+    },
+    {
+     "rung": "step",
+     "text": "$h = 0$: B tells you nothing about A."
+    }
+   ],
+   "feedback": {
+    "correct": "0.",
+    "generic": "Not quite right. With $\\rho = 0$ the ratio is 0.",
+    "byKey": {
+     "one": "You hedged one for one. With no correlation, B only adds its own risk."
+    }
+   },
+   "explain": {
+    "text": "With $\\rho = 0$ the best hedge is none, and $\\sigma_{\\text{left}} = \\sigma_A$. Any B you trade only adds $h^2\\sigma_B^2$ to the variance. A hedge needs correlation to work."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Hedging in code",
+   "prose": "Code the ratio, the risk it leaves, and a seeded check that the simulated hedge matches. The simulation is tested against the exact sd within 3%.",
+   "question": "Complete `hedge_ratio`, `residual_sd` and `hedged_pnl_sim`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport random\n\n\ndef hedge_ratio(rho, sa, sb):\n    \"\"\"Units of B to sell per unit of A.\"\"\"\n    ...\n\n\ndef residual_sd(rho, sa):\n    \"\"\"sd of A left after the best hedge.\"\"\"\n    ...\n\n\ndef hedged_pnl_sim(rho, sa, sb, h, n, seed):\n    \"\"\"sd of A - h*B over n seeded days.\n    rng = random.Random(seed); each day draw\n    z1 = rng.gauss(0, 1), then z2 = rng.gauss(0, 1).\n    A = sa*z1; B = sb*(rho*z1 + sqrt(1 - rho**2)*z2).\n    Return the population sd (divide by n).\"\"\"\n    ...\n",
+    "solution": "import math\nimport random\n\n\ndef hedge_ratio(rho, sa, sb):\n    \"\"\"Units of B to sell per unit of A.\"\"\"\n    return rho * sa / sb\n\n\ndef residual_sd(rho, sa):\n    \"\"\"sd of A left after the best hedge.\"\"\"\n    return sa * math.sqrt(1 - rho ** 2)\n\n\ndef hedged_pnl_sim(rho, sa, sb, h, n, seed):\n    \"\"\"sd of A - h*B over n seeded days.\n    rng = random.Random(seed); each day draw\n    z1 = rng.gauss(0, 1), then z2 = rng.gauss(0, 1).\n    A = sa*z1; B = sb*(rho*z1 + sqrt(1 - rho**2)*z2).\n    Return the population sd (divide by n).\"\"\"\n    rng = random.Random(seed)\n    c = math.sqrt(1 - rho ** 2)\n    xs = []\n    for _ in range(n):\n        z1 = rng.gauss(0, 1)\n        z2 = rng.gauss(0, 1)\n        xs.append(sa * z1 - h * sb * (rho * z1 + c * z2))\n    m = sum(xs) / n\n    return math.sqrt(sum((x - m) ** 2 for x in xs) / n)\n",
+    "examples": [
+     {
+      "call": "hedge_ratio(0.8, 2, 1.6)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "residual_sd(0.8, 2)",
+      "expect": "1.2",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "hedge_ratio(0.8, 2, 1.6)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "hedge_ratio(0.8, 2, 4)",
+      "expect": "0.4",
+      "compare": "isclose"
+     },
+     {
+      "call": "hedge_ratio(0.9, 3, 2)",
+      "expect": "1.35",
+      "compare": "isclose"
+     },
+     {
+      "call": "hedge_ratio(0, 2, 1.6)",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "residual_sd(0.8, 2)",
+      "expect": "1.2",
+      "compare": "isclose"
+     },
+     {
+      "call": "residual_sd(0, 2)",
+      "expect": "2.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "residual_sd(1, 2)",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "hedged_pnl_sim(0.8, 2, 1.6, 1.0, 20000, 1)",
+      "expect": "1.2",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.03
+      }
+     },
+     {
+      "call": "hedged_pnl_sim(0.8, 2, 1.6, 0, 20000, 2)",
+      "expect": "2.0",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.03
+      }
+     },
+     {
+      "call": "hedged_pnl_sim(0.8, 2, 1.6, 2.0, 20000, 3)",
+      "expect": "2.0",
+      "compare": "isclose",
+      "tol": {
+       "rel": 0.03
+      }
+     },
+     {
+      "setup": "a = hedged_pnl_sim(0.8, 2, 1.6, 1.0, 50, 7)",
+      "call": "isinstance(a, float) and a == hedged_pnl_sim(0.8, 2, 1.6, 1.0, 50, 7)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 11 hidden tests. The ratio and residual sd must be exact. Each simulated sd must be within 3% of the exact one, and the same seed must give the same answer."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The residual sd is $\\sigma_A\\sqrt{1 - \\rho^2}$."
+    },
+    {
+     "rung": "point",
+     "text": "In the simulation, draw `z1` before `z2` each day."
+    },
+    {
+     "rung": "step",
+     "text": "Collect `A - h*B` for each day, then take the mean and the population sd."
+    }
+   ],
+   "feedback": {
+    "correct": "All three functions pass.",
+    "generic": "Some tests failed. Check the ratio's order, $\\rho\\,\\sigma_A/\\sigma_B$, and divide by n for the sd.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that each `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "The simulated sd sits near 1.2 at $h = 1$ and near 2 at both $h = 0$ and $h = 2$. Doubling the right hedge brings all the risk back, the other way round. The ratio is a minimum, so missing it either side costs."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A bank and its sector",
+   "prose": "A market maker in one bank's shares is long £50,000 after a client sold. The bank moves 2.5% a day. A future on the banking sector moves 1.4% a day, with correlation 0.7.",
+   "question": "How much of the sector future should they sell, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 62500,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "£62,500: h = 0.7 × 2.5/1.4 = 1.25, times £50,000.",
+    "label": "Future to sell",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 50000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "rho",
+      "value": 35000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "inv",
+      "value": 28000,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find $h$ first, then scale by the £50,000."
+    },
+    {
+     "rung": "point",
+     "text": "$h = 0.7 \\times 2.5/1.4 = 1.25$."
+    },
+    {
+     "rung": "step",
+     "text": "$1.25 \\times 50{,}000 = 62{,}500$."
+    }
+   ],
+   "feedback": {
+    "correct": "£62,500.",
+    "generic": "Not quite right. Multiply £50,000 by $h = \\rho\\,\\sigma_A/\\sigma_B$.",
+    "byKey": {
+     "one": "You hedged pound for pound. The bank moves more than the sector, so you need more future.",
+     "rho": "You used the correlation alone. Scale it by $2.5/1.4$.",
+     "inv": "You put the future's sd on top. The bank is what you hedge."
+    }
+   },
+   "explain": {
+    "text": "$h = 1.25$, so they sell £62,500 of the future. The risk left is $2.5\\% \\times \\sqrt{1 - 0.49} = 1.79\\%$ a day, the bank's own news. An options desk short calls does the same with shares, buying the calls' delta."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Hedge A by selling $h = \\rho\\,\\sigma_A/\\sigma_B$ units of a correlated B.",
+   "The best hedge leaves $\\sigma_A\\sqrt{1 - \\rho^2}$: at $\\rho = 0.8$, 60% of the sd remains.",
+   "Judge a hedge by the risk it removes, not by whether it made money on one roll."
+  ],
+  "formula": {
+   "name": "Minimum-variance hedge",
+   "tex": "h = \\rho\\,\\dfrac{\\sigma_A}{\\sigma_B}, \\qquad \\sigma_{\\text{left}} = \\sigma_A\\sqrt{1 - \\rho^2}",
+   "note": "Sell $h$ units of B for each unit of A held."
+  },
+  "trap": "Hedging pound for pound. If B moves more than A, a ratio of 1 over-hedges the other way."
+ },
+ "quiz": [
+  {
+   "id": "q-delta",
+   "difficulty": 2,
+   "prose": "You sold 10 call contracts, each on 100 shares. Each call has a delta of 0.6.",
+   "question": "How many shares do you buy to hedge?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 600,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "600: 10 × 100 × 0.6.",
+    "label": "Shares",
+    "wrong": [
+     {
+      "id": "full",
+      "value": 1000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "contracts",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "600 shares.",
+    "generic": "Not quite right. Multiply contracts, shares per contract and delta.",
+    "byKey": {
+     "full": "You hedged one share per share of calls. Delta 0.6 means each call moves 0.6 of the share.",
+     "contracts": "You left out the 100 shares in each contract."
+    }
+   },
+   "explain": {
+    "text": "The calls act like $10 \\times 100 \\times 0.6 = 600$ shares short. Buying 600 shares hedges them for small moves. Delta is the hedge ratio of an option."
+   },
+   "tags": [
+    "hedge-ratio"
+   ],
+   "pace": 45
+  },
+  {
+   "id": "q-resid",
+   "difficulty": 2,
+   "prose": "A position moves 5% a day. Its best hedge has correlation 0.6 with it.",
+   "question": "What is the daily sd after the best hedge, in per cent?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "4%: 5 × √(1 − 0.36) = 5 × 0.8.",
+    "label": "sd",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 3.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "lin",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "4%.",
+    "generic": "Not quite right. Scale by $\\sqrt{1 - \\rho^2}$.",
+    "byKey": {
+     "var": "You scaled by $1 - \\rho^2$, the variance share. Take its root.",
+     "lin": "You scaled by $1 - \\rho$. Square the correlation first."
+    }
+   },
+   "explain": {
+    "text": "$1 - 0.6^2 = 0.64$ and $\\sqrt{0.64} = 0.8$, so 4% is left. A correlation of 0.6 removes only a fifth of the sd. Weak hedges remove little."
+   },
+   "tags": [
+    "hedge-ratio"
+   ],
+   "pace": 45
+  },
+  {
+   "id": "q-hedge-cost",
+   "difficulty": 3,
+   "prose": "You are short 3 lots of a contract, fair £20. Its hedge trades at 19.8 to 20.2, fair 20, with ratio 1.",
+   "question": "How much edge do you give away by hedging now, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£0.60: you buy 3 at 20.2, 0.2 over fair each.",
+    "label": "Edge given away",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "width",
+      "value": 1.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£0.60.",
+    "generic": "Not quite right. You buy 3 at the ask, each 0.2 over fair.",
+    "byKey": {
+     "width": "You charged yourself the whole width. You pay only half of it, from fair to the ask.",
+     "one": "That is for one lot. You hedge 3."
+    }
+   },
+   "explain": {
+    "text": "Short 3 means you buy 3 to hedge, at the ask 20.2. Each costs 0.2 against fair, so £0.60 in all. That is the price of the risk you removed."
+   },
+   "tags": [
+    "hedge-cost"
+   ],
+   "pace": 45
+  },
+  {
+   "id": "q-over-hedge",
+   "difficulty": 3,
+   "prose": "Long one unit of A, with $\\sigma_A = 2\\%$, $\\sigma_B = 1.6\\%$ and $\\rho = 0.8$. You sell 2 units of B.",
+   "question": "Compared with no hedge, the risk is",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "same",
+      "text": "the same: 2% either way",
+      "correct": true
+     },
+     {
+      "id": "lower",
+      "text": "lower, since more hedge removes more risk",
+      "why": "You assumed more hedge is safer. Past $h = 1$ each extra unit adds risk the other way."
+     },
+     {
+      "id": "zero",
+      "text": "zero",
+      "why": "You assumed B cancels A exactly. With $\\rho = 0.8$ some risk is always left."
+     },
+     {
+      "id": "double",
+      "text": "twice as large",
+      "why": "You doubled the sd. The variance is $4 + 10.24 - 10.24 = 4$, the same as before."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The same.",
+    "generic": "Not quite right. Work out $\\sigma_A^2 + h^2\\sigma_B^2 - 2h\\rho\\sigma_A\\sigma_B$ at $h = 2$.",
+    "byKey": {
+     "lower": "You assumed more hedge is safer. Past $h = 1$ each extra unit adds risk the other way."
+    }
+   },
+   "explain": {
+    "text": "At $h = 2$ the variance is $4 + 4 \\times 2.56 - 2 \\times 2 \\times 0.8 \\times 2 \\times 1.6 = 4$. The sd is 2%, as with no hedge. You now hold a short in B instead of a long in A."
+   },
+   "tags": [
+    "over-hedge"
+   ],
+   "pace": 60
+  }
+ ]
+}

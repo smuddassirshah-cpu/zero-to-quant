@@ -1,0 +1,836 @@
+{
+ "id": "homework-3",
+ "course": "mm-games",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-full-game",
+   "difficulty": 5,
+   "skills": [
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "game-engine-code"
+   ],
+   "pace": 1500,
+   "title": "A game engine with limits and a hedge",
+   "prose": "Extend level 2's scripted engine. Trades now fill only up to your room under the limit. A hedge contract pays the first card's value; at a `hedge` event you trade it to hold minus your position. The tests run three seeded scripts from `make_script` and some edge cases.",
+   "question": "Complete `full_game(script, rule, limit=3, n_cards=3)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction\nimport random\n\n\ndef card_sum_fair(revealed, n_cards, deck_total=364, deck_size=52):\n    k = len(revealed)\n    shown = sum(revealed)\n    if k == n_cards:\n        return Fraction(shown)\n    return shown + (n_cards - k) * Fraction(deck_total - shown, deck_size - k)\n\n\ndef make_script(seed, n_cards=3):\n    r = random.Random(seed)\n    deck = [v for v in range(1, 14) for _ in range(4)]\n    cards = r.sample(deck, n_cards)\n    script = []\n    for i, c in enumerate(cards):\n        for _ in range(2):\n            side = r.choice([\"buy\", \"sell\", None])\n            if side:\n                script.append((side, r.randint(1, 3)))\n        script.append((\"reveal\", c))\n        if i == 0:\n            script.append((\"hedge\", Fraction(c * 10 + r.choice([-1, 1]), 10)))\n    return script\n\n\ndef skew_rule(fair, position):\n    m = Fraction(round(2 * (fair - Fraction(position, 2))), 2)\n    return (m - 2, m + 2)\n\n\ndef centre_rule(fair, position):\n    return (fair - 2, fair + 2)\n",
+    "starter": "def full_game(script, rule, limit=3, n_cards=3):\n    \"\"\"Run a scripted card game with a position limit and\n    a hedge contract that pays the first card's value.\n    Events, in order:\n      (\"reveal\", v)  a card of value v turns over\n      (\"buy\", k)     the interviewer buys k at your ask\n      (\"sell\", k)    the interviewer sells k at your bid\n      (\"hedge\", p)   trade the hedge contract at price p\n                     so you hold minus your position in it\n    A trade fills only up to your room: limit + position\n    to sell, limit - position to buy.\n    rule(fair, position) gives (bid, ask); use\n    card_sum_fair(revealed, n_cards) for the fair value.\n    Return (pnl, max_position): pnl is cash plus position\n    times the true sum plus the hedge times the first\n    card, a Fraction; max_position is the largest\n    absolute position held.\"\"\"\n    ...\n",
+    "solution": "def full_game(script, rule, limit=3, n_cards=3):\n    \"\"\"Run a scripted card game with a position limit and\n    a hedge contract that pays the first card's value.\n    Events, in order:\n      (\"reveal\", v)  a card of value v turns over\n      (\"buy\", k)     the interviewer buys k at your ask\n      (\"sell\", k)    the interviewer sells k at your bid\n      (\"hedge\", p)   trade the hedge contract at price p\n                     so you hold minus your position in it\n    A trade fills only up to your room: limit + position\n    to sell, limit - position to buy.\n    rule(fair, position) gives (bid, ask); use\n    card_sum_fair(revealed, n_cards) for the fair value.\n    Return (pnl, max_position): pnl is cash plus position\n    times the true sum plus the hedge times the first\n    card, a Fraction; max_position is the largest\n    absolute position held.\"\"\"\n    revealed, pos, hedge = [], 0, 0\n    cash, peak = Fraction(0), 0\n    for kind, x in script:\n        if kind == \"reveal\":\n            revealed.append(x)\n            continue\n        if kind == \"hedge\":\n            trade = -pos - hedge\n            cash -= trade * x\n            hedge += trade\n            continue\n        bid, ask = rule(card_sum_fair(revealed, n_cards), pos)\n        if kind == \"buy\":\n            k = min(x, limit + pos)\n            pos -= k\n            cash += k * ask\n        else:\n            k = min(x, limit - pos)\n            pos += k\n            cash -= k * bid\n        peak = max(peak, abs(pos))\n    first = revealed[0] if revealed else 0\n    return cash + pos * sum(revealed) + hedge * first, peak\n",
+    "examples": [
+     {
+      "call": "full_game([('buy', 2), ('reveal', 4), ('buy', 2), ('reveal', 6), ('sell', 1), ('reveal', 5)], skew_rule)",
+      "expect": "(Fraction(41, 2), 3)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "full_game(make_script(1), skew_rule, 3)",
+      "expect": "(Fraction(76, 5), 3)",
+      "compare": "equal"
+     },
+     {
+      "call": "full_game(make_script(2), skew_rule, 3)",
+      "expect": "(Fraction(246, 5), 3)",
+      "compare": "equal"
+     },
+     {
+      "call": "full_game(make_script(3), centre_rule, 2)",
+      "expect": "(Fraction(-1, 5), 2)",
+      "compare": "equal"
+     },
+     {
+      "call": "full_game(make_script(7), skew_rule, 1)",
+      "expect": "(Fraction(131, 10), 1)",
+      "compare": "equal"
+     },
+     {
+      "call": "full_game([('buy', 2), ('reveal', 4), ('buy', 2), ('reveal', 6), ('sell', 1), ('reveal', 5)], skew_rule)",
+      "expect": "(Fraction(41, 2), 3)",
+      "compare": "equal"
+     },
+     {
+      "call": "full_game([('buy', 5), ('reveal', 4), ('hedge', Fraction(41, 10)), ('reveal', 6), ('reveal', 5)], skew_rule, 3)",
+      "expect": "(Fraction(237, 10), 3)",
+      "compare": "equal"
+     },
+     {
+      "call": "full_game([('buy', 5), ('reveal', 4), ('hedge', Fraction(41, 10)), ('reveal', 6), ('reveal', 5)], skew_rule, 10)",
+      "expect": "(Fraction(79, 2), 5)",
+      "compare": "equal"
+     },
+     {
+      "call": "full_game([('reveal', 1), ('reveal', 2), ('reveal', 3)], skew_rule)",
+      "expect": "(Fraction(0, 1), 0)",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 8 hidden tests. Return a tuple: the P&L as an exact Fraction, then the largest absolute position."
+   },
+   "feedback": {
+    "correct": "The engine handles the limit and the hedge.",
+    "generic": "Some tests failed. Cap each fill at your room, and settle the hedge at the first card.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "Each fill is cut to the room, `limit + pos` to sell and `limit - pos` to buy. A hedge trade of $-q - h$ units leaves you holding $-q$, settled at the first card. Seed 1 ends at +76/5 with a peak position of 3."
+   }
+  },
+  {
+   "id": "h-kelly-game",
+   "difficulty": 4,
+   "skills": [
+    "mg-risk"
+   ],
+   "tags": [
+    "kelly-code"
+   ],
+   "pace": 900,
+   "title": "The Kelly game in code",
+   "prose": "Code one seeded path of the Kelly game, then the median over many paths. From £100, 50 bets at evens with chance 0.6, the median at $f = 0.2$ should match $100\\,e^{50 g}$.",
+   "question": "Complete `kelly_game` and `median_bankroll`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import random\nimport statistics\n\n\ndef kelly_game(p, b, f, bets, seed, bankroll=100.0):\n    \"\"\"Final bankroll of one seeded path: each bet stakes\n    f of the bankroll, wins b per £1 if rng.random() < p,\n    else loses the stake. rng = random.Random(seed).\"\"\"\n    ...\n\n\ndef median_bankroll(p, b, f, bets, paths, seed, bankroll=100.0):\n    \"\"\"Median final bankroll over paths seeded seed,\n    seed + 1, ..., seed + paths - 1.\"\"\"\n    ...\n",
+    "solution": "import random\nimport statistics\n\n\ndef kelly_game(p, b, f, bets, seed, bankroll=100.0):\n    \"\"\"Final bankroll of one seeded path: each bet stakes\n    f of the bankroll, wins b per £1 if rng.random() < p,\n    else loses the stake. rng = random.Random(seed).\"\"\"\n    rng = random.Random(seed)\n    for _ in range(bets):\n        stake = f * bankroll\n        if rng.random() < p:\n            bankroll += b * stake\n        else:\n            bankroll -= stake\n    return bankroll\n\n\ndef median_bankroll(p, b, f, bets, paths, seed, bankroll=100.0):\n    \"\"\"Median final bankroll over paths seeded seed,\n    seed + 1, ..., seed + paths - 1.\"\"\"\n    finals = [kelly_game(p, b, f, bets, seed + i, bankroll)\n              for i in range(paths)]\n    return statistics.median(finals)\n",
+    "examples": [
+     {
+      "call": "kelly_game(0.6, 1, 0.2, 1, 5)",
+      "expect": "80.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "kelly_game(0.6, 1, 0.2, 50, 1)",
+      "expect": "410.5143852960866",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "kelly_game(0.6, 1, 0.2, 50, 2)",
+      "expect": "81.08926129305412",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "kelly_game(0.6, 1, 1.0, 50, 3)",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "kelly_game(0.6, 1, 0, 50, 4)",
+      "expect": "100.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "kelly_game(0.6, 1, 0.2, 1, 5)",
+      "expect": "80.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "median_bankroll(0.6, 1, 0.2, 50, 1001, 1)",
+      "expect": "273.6762568640577",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "median_bankroll(0.6, 1, 0.1, 50, 1001, 1)",
+      "expect": "212.14399524562987",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "median_bankroll(0.6, 1, 0.4, 50, 1001, 1)",
+      "expect": "88.48427116811816",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "how": "Check runs 8 hidden tests. Paths must use `random.Random(seed)` and `rng.random() < p` once a bet; medians use seeds seed to seed + paths − 1."
+   },
+   "feedback": {
+    "correct": "Both functions pass.",
+    "generic": "Some tests failed. Stake a fraction of the current bankroll, and seed each path separately.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "Seed 1 wins 31 of 50 and ends at £410.51; seed 2 wins 27 and ends at £81.09. Over 1,001 paths the median path wins 30, giving £273.68 at Kelly and £88.48 at double Kelly. Half Kelly's median is £212.14."
+   }
+  },
+  {
+   "id": "h-risk-checks",
+   "difficulty": 3,
+   "skills": [
+    "mg-risk"
+   ],
+   "tags": [
+    "risk-checks"
+   ],
+   "pace": 45,
+   "title": "Before every quote",
+   "prose": "A risk routine runs before each quote in a game with a limit, a bankroll and a hedge.",
+   "question": "Put the checks in order, and leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "pos",
+      "text": "Check your position against the limit: what room is left each side?"
+     },
+     {
+      "id": "bank",
+      "text": "Check the bankroll against the stake: can you bear the worst case?"
+     },
+     {
+      "id": "hedge",
+      "text": "Check whether a hedge is available, and what crossing its spread costs."
+     },
+     {
+      "id": "quote",
+      "text": "Then quote, and say why."
+     },
+     {
+      "id": "conv",
+      "text": "Raise the size when you feel sure of the value.",
+      "why": "Size by risk, not by conviction. A strong feeling does not change the limit or the bankroll."
+     }
+    ],
+    "answer": [
+     "pos",
+     "bank",
+     "hedge",
+     "quote"
+    ],
+    "distractors": [
+     "conv"
+    ]
+   },
+   "feedback": {
+    "correct": "Position, bankroll, hedge, then quote.",
+    "generic": "Not quite right. The quote comes last, after every risk check.",
+    "byKey": {
+     "conv": "Size by risk, not by conviction. A strong feeling does not change the limit or the bankroll.",
+     "left-out": "Each risk check belongs; only the size-by-feeling line goes."
+    }
+   },
+   "explain": {
+    "text": "The limit says how much you may trade, and the bankroll how much you can lose. The hedge says what risk you can remove, and only then is the quote safe. Conviction sets none of these."
+   }
+  },
+  {
+   "id": "h-narrated-game",
+   "difficulty": 5,
+   "skills": [
+    "mg-fair",
+    "mg-quote",
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "thinking-aloud",
+    "mock-round"
+   ],
+   "pace": 900,
+   "title": "A full game, narrated",
+   "kind": "longform",
+   "prompt": "Replay lesson 13's game aloud, as if to an interviewer. Three cards come from one deck: 4, 6 and 5. Use width 4, limit 3 and a skew of 0.5 a lot. The interviewer buys 1 at your ask on turn 1 and tries to sell at 19 after the 4. Then they buy at 20.5 on turn 4 and sell at 16 after the 6.\n\nTake about ten minutes, kept with a watch. Say every fair value with its arithmetic and every quote with its reason. Say your position and P&L after every trade and card. There is no recording: write it out afterwards, then mark it.",
+   "model": "**Before the game (30 seconds).** \"Three cards from one deck. Each averages $364/52 = 7$, so fair is 21. My width is 4 while three cards are unseen, my limit is 3, and I skew 0.5 a lot. I quote 19 at 23 for 1.\"\n\n**Turn 1: they buy at 23.** \"Short 1 at 23, up £2 at fair 21. A buyer may know something, and I am short, so I move up 0.5: 19.5 at 23.5.\"\n\n**Card 1, a 4.** \"The deck holds 360 in 51 cards. Fair is $4 + 2 \\times 360/51 = 308/17$, about 18.12. Short 1 at 23, I am up £4.88. Centre $18.12 + 0.5 = 18.62$, call it 18.5: 16.5 at 20.5.\" They try to sell at 19 and miss my 16.5 bid: updating saved me from a seller who knew.\n\n**Turn 4: they buy at 20.5.** \"Short 2 now, cash £43.50, up £7.26 at 18.12. One more lot and I am at the limit. Centre 19.12, call it 19: 17 at 21.\"\n\n**Card 2, a 6.** \"The 50 cards left hold 354. Fair is $10 + 354/50 = 17.08$. Short 2, I am up £9.34. Centre 18.08: 16 at 20.\"\n\n**Turn 6: they sell at 16.** \"I buy 1 back. Short 1, cash £27.50, up £10.42 at 17.08. Centre 17.58, call it 17.5: 15.5 at 19.5.\"\n\n**Settlement.** The last card is a 5, the sum 15. \"Short 1 against cash £27.50: +£12.50. My trades made 8, 5.50 and −1 against 15. The −1 was an inventory trade that halved my risk.\"\n\n**Review.** \"With a king the same quotes make £4.50, so I grade the quotes, not the P&L. The limit was never reached, and every number had its reason.\" ",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States each fair value with its arithmetic: 21, 308/17 (18.12) and 427/25 (17.08)."
+    },
+    {
+     "points": 2,
+     "text": "Gives each quote with its width and skew: 19/23, 19.5/23.5, 16.5/20.5, 17/21, 16/20, 15.5/19.5."
+    },
+    {
+     "points": 2,
+     "text": "Says the position and P&L at fair after every trade and card: +2, +4.88, +7.26, +9.34, +10.42, then +12.50."
+    },
+    {
+     "points": 1,
+     "text": "Names the turn 3 miss as adverse selection avoided by updating."
+    },
+    {
+     "points": 1,
+     "text": "Watches the limit: notes short 2 is one lot from 3."
+    },
+    {
+     "points": 1,
+     "text": "Reviews by quotes, not by P&L: gives the king case, +£4.50."
+    },
+    {
+     "points": 1,
+     "text": "Speaks with no silent working and no unexplained change of fair value."
+    }
+   ]
+  },
+  {
+   "id": "h-mock-game",
+   "difficulty": 5,
+   "skills": [
+    "mg-quote",
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "mock-round"
+   ],
+   "pace": 480,
+   "title": "Mock round, part 1: play",
+   "prose": "The mock round. Three cards from a full deck, ace 1 to king 13. The interviewer trades four times, each with a price limit; the results table lists them as `scripted`. Width 4, limit 3, size 1 or 2.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       18.5,
+       3
+      ],
+      [
+       18,
+       5
+      ],
+      [
+       17.5,
+       8
+      ]
+     ],
+     "asks": [
+      [
+       23.5,
+       3
+      ],
+      [
+       24,
+       5
+      ],
+      [
+       24.5,
+       8
+      ]
+     ],
+     "depth": 3,
+     "currency": "£",
+     "dp": 1,
+     "showMid": true
+    },
+    "state": {}
+   },
+   "question": "Finish with a P&L of at least £12 and no rule breaks.",
+   "widget": {
+    "kind": "trade",
+    "seed": 131,
+    "turns": 8,
+    "fair": 21,
+    "value": 30,
+    "tick": 0.5,
+    "range": [
+     10,
+     34
+    ],
+    "currency": "£",
+    "size": {
+     "min": 1,
+     "max": 2,
+     "start": 1
+    },
+    "limit": 3,
+    "spread": {
+     "min": 1,
+     "max": 4
+    },
+    "quote": {
+     "bid": 19,
+     "ask": 23,
+     "size": 1
+    },
+    "counterparty": {
+     "type": "scripted",
+     "trades": [
+      {
+       "act": "hit",
+       "size": 2,
+       "price": 19
+      },
+      {
+       "act": "none"
+      },
+      {
+       "act": "lift",
+       "size": 2,
+       "price": 23
+      },
+      {
+       "act": "none"
+      },
+      {
+       "act": "hit",
+       "size": 1,
+       "price": 19.5
+      },
+      {
+       "act": "none"
+      },
+      {
+       "act": "lift",
+       "size": 1,
+       "price": 27.5
+      },
+      {
+       "act": "none"
+      }
+     ]
+    },
+    "schedule": [
+     {
+      "turn": 1,
+      "text": "Three cards are dealt face down from a full deck. Fair is 21. Width 4 at most, limit 3 either way."
+     },
+     {
+      "turn": 3,
+      "text": "Card 1 is turned: an 8. Fair is now $8 + 2 \\times 356/51 = 21.96$.",
+      "fair": 21.9608
+     },
+     {
+      "turn": 6,
+      "text": "Card 2 is turned: a jack (11). Fair is now $19 + 345/50 = 25.9$.",
+      "fair": 25.9
+     }
+    ],
+    "benchmark": 12,
+    "maxBreaks": 0,
+    "strategy": [
+     {
+      "bid": 19,
+      "ask": 23,
+      "size": 1
+     },
+     {
+      "bid": 18.5,
+      "ask": 22.5,
+      "size": 1
+     },
+     {
+      "bid": 19.5,
+      "ask": 23.5,
+      "size": 1
+     },
+     {
+      "bid": 19.5,
+      "ask": 23.5,
+      "size": 1
+     },
+     {
+      "bid": 19.5,
+      "ask": 23.5,
+      "size": 1
+     },
+     {
+      "bid": 23,
+      "ask": 27,
+      "size": 1
+     },
+     {
+      "bid": 23,
+      "ask": 27,
+      "size": 1
+     },
+     {
+      "bid": 23.5,
+      "ask": 27.5,
+      "size": 1
+     }
+    ],
+    "label": "Your quote"
+   },
+   "feedback": {
+    "correct": "You updated on both cards and skewed on every trade.",
+    "generic": "Not quite right. Update on each card, skew 0.5 a lot, and keep the size at 1.",
+    "byKey": {
+     "low": "Your P&L is under £12. A stale quote sells cheaply to an interviewer who has seen high cards.",
+     "crossed": "Your bid met or passed your ask, so nobody traded.",
+     "limit": "A quote was larger than your room. Size 2 after the first buy breaks the limit of 3.",
+     "spread": "Your width left 1 to 4."
+    }
+   },
+   "explain": {
+    "text": "The model run bought at 19 and 19.5, then sold 1 at 27 after the jack. Long 1 with cash −£11.50 settled at 30: +£18.50. The stale quote made −£3."
+   }
+  },
+  {
+   "id": "h-mock-aloud",
+   "difficulty": 5,
+   "skills": [
+    "mg-fair",
+    "mg-quote",
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "mock-round",
+    "thinking-aloud"
+   ],
+   "pace": 900,
+   "title": "Mock round, part 2: say it",
+   "kind": "longform",
+   "prompt": "Narrate the mock round you just played, aloud and timed: about ten minutes. Use the model run's quotes and trades, or your own. Before the first quote the interviewer also offers a side bet. It pays evens on a coin that lands your way with chance 0.6, and you have £100. Choose and justify your stake.\n\nSay each fair value with its arithmetic and each width with its reason. Cover each trade, the limit and the bet size. End with the final P&L and a short review. Then write it out and mark it.",
+   "model": "**Before any card.** \"Each card averages 7, so fair is 21. Three unseen cards, so width 4: 19 at 23 for 1. Limit 3, skew 0.5 a lot.\"\n\n**Side bet.** \"You offer evens on a coin that lands my way with chance 0.6, from a £100 bankroll. Kelly is $0.6 - 0.4 = 0.2$, so I stake £20, not £100: the expected gain is £4, and one loss cannot end me.\"\n\n**Turn 1: they sell at 19.** \"Long 1 at 19, up £2 at 21. A seller may know something, and I am long, so I move down: 18.5 at 22.5.\"\n\n**Card 1, an 8.** \"The deck holds 356 in 51. Fair is $8 + 2 \\times 356/51 = 1120/51$, about 21.96. Long 1, up £2.96. Centre $21.96 - 0.5 = 21.46$, call it 21.5: 19.5 at 23.5.\" They try to buy at 23 and miss my 23.5 ask.\n\n**Turn 5: they sell at 19.5.** \"Long 2, cash −£38.50, up £5.42 at 21.96. One more lot reaches the limit, so my next centre drops by another 0.5.\"\n\n**Card 2, a jack.** \"19 shown; 345 in 50 cards. Fair is $19 + 345/50 = 25.9$. Long 2, up £13.30. Centre 24.9, call it 25: 23 at 27.\"\n\n**Turn 7: they buy at 27.** \"I sell 1 at 27, so I am long 1, cash −£11.50, up £14.40 at 25.9. Centre 25.4, call it 25.5: 23.5 at 27.5.\"\n\n**Settlement.** The last card is a jack: the sum is 30. \"Long 1 against cash −£11.50: +£18.50. Edges +11, +10.50 and −3 against 30. The −3 sale cut my long to 1 before the last card.\"\n\n**Review.** \"The stale 19 at 23 would have sold twice at 23 to someone who had seen high cards: −£3. Updating without the skew makes £21 with twice the position. I grade the quotes and the risk, and the bet size followed Kelly.\" ",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Fair values with arithmetic: 21, then 1120/51 (21.96), then 259/10 (25.9)."
+    },
+    {
+     "points": 1,
+     "text": "Widths with reasons: 4 while cards are unseen."
+    },
+    {
+     "points": 2,
+     "text": "Responds to each trade: moves down after a sale to them, up after a buy, with information and inventory named."
+    },
+    {
+     "points": 1,
+     "text": "Respects the limit: notes long 2 is one lot from 3."
+    },
+    {
+     "points": 1,
+     "text": "Sizes the side bet by Kelly: £20 of £100, with the reason that a full stake can be ruined."
+    },
+    {
+     "points": 2,
+     "text": "States the final P&L, +£18.50 for the model run, and reviews the quotes, not only the result."
+    },
+    {
+     "points": 1,
+     "text": "Spoken clearly, with no silent working."
+    }
+   ]
+  },
+  {
+   "id": "h-mock-fair-0",
+   "difficulty": 3,
+   "skills": [
+    "mg-fair"
+   ],
+   "tags": [
+    "card-fair"
+   ],
+   "pace": 30,
+   "prose": "The mock round, before any card turns. Three cards from a full deck, ace 1 to king 13.",
+   "question": "What is the fair value of the sum?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 21,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "21: 3 × 364/52.",
+    "label": "Fair value",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 19.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "21.",
+    "generic": "Not quite right. One card averages $364/52 = 7$.",
+    "byKey": {
+     "half": "You used 6.5 as the average card. Values 1 to 13 average 7.",
+     "one": "That is one card. The sum has three."
+    }
+   },
+   "explain": {
+    "text": "The deck totals 364 over 52 cards, 7 a card. Three cards are worth $3 \\times 7 = 21$. That is the opening fair value."
+   }
+  },
+  {
+   "id": "h-mock-fair-1",
+   "difficulty": 3,
+   "skills": [
+    "mg-update"
+   ],
+   "tags": [
+    "card-fair"
+   ],
+   "pace": 60,
+   "prose": "In the mock round the first card is an 8.",
+   "question": "What is the fair value of the sum? Give 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 21.9608,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1120/51 = 21.9608: 8 + 2 × 356/51.",
+    "label": "Fair value",
+    "wrong": [
+     {
+      "id": "seven",
+      "value": 22,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "deck52",
+      "value": 21.6923,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1120/51, about 21.9608.",
+    "generic": "Not quite right. The 51 cards left hold 356 points.",
+    "byKey": {
+     "seven": "You used 7 for each unseen card. The 8 left the deck, so they average $356/51$.",
+     "deck52": "You divided by 52. Only 51 cards are left."
+    }
+   },
+   "explain": {
+    "text": "The deck now holds $364 - 8 = 356$ points in 51 cards. Two unseen cards are worth $712/51 = 13.96$. With the 8, fair is $1120/51 = 21.96$."
+   }
+  },
+  {
+   "id": "h-mock-fair-2",
+   "difficulty": 3,
+   "skills": [
+    "mg-update"
+   ],
+   "tags": [
+    "card-fair"
+   ],
+   "pace": 60,
+   "prose": "In the mock round the second card is a jack, 11, after the 8.",
+   "question": "What is the fair value of the sum?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 25.9,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "259/10 = 25.9: 19 + 345/50.",
+    "label": "Fair value",
+    "wrong": [
+     {
+      "id": "seven",
+      "value": 26,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "old",
+      "value": 21.9608,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "259/10 = 25.9.",
+    "generic": "Not quite right. Add the 19 shown to one card from the 50 left.",
+    "byKey": {
+     "seven": "You used 7 for the last card. The 50 left average $345/50 = 6.9$.",
+     "old": "That is the fair value before the jack."
+    }
+   },
+   "explain": {
+    "text": "19 is shown, and the 50 cards left hold $364 - 19 = 345$. One more card averages 6.9. Fair is $19 + 6.9 = 25.9$."
+   }
+  },
+  {
+   "id": "h-mock-pnl",
+   "difficulty": 4,
+   "skills": [
+    "mg-update",
+    "mg-risk"
+   ],
+   "tags": [
+    "ledger-pnl"
+   ],
+   "pace": 60,
+   "prose": "The model run of the mock round bought 1 at 19, bought 1 at 19.5, and sold 1 at 27. The cards were 8, jack and jack.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Turn",
+      "Trade",
+      "Price (£)",
+      "Position"
+     ],
+     "rows": [
+      [
+       "1",
+       "Buy 1",
+       "19",
+       "+1"
+      ],
+      [
+       "5",
+       "Buy 1",
+       "19.5",
+       "+2"
+      ],
+      [
+       "7",
+       "Sell 1",
+       "27",
+       "+1"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Settles at the true sum"
+    }
+   },
+   "question": "What is the model run's final P&L, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "+£18.50: cash −11.50 plus 1 × 30.",
+    "label": "P&L",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "cash",
+      "value": -11.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "fair",
+      "value": 14.4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "both",
+      "value": 21.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "+£18.50.",
+    "generic": "Not quite right. Cash plus the position at the true sum, 30.",
+    "byKey": {
+     "cash": "That is the cash alone. You still hold 1, worth 30.",
+     "fair": "That is the ledger at fair 25.9, before the last card.",
+     "both": "You marked both buys at 30 and forgot the sale took one away at 27."
+    }
+   },
+   "explain": {
+    "text": "Cash is $-19 - 19.5 + 27 = -11.50$, and long 1 settles at $8 + 11 + 11 = 30$. The P&L is +£18.50. Edges: +11, +10.50 and −3."
+   }
+  },
+  {
+   "id": "h-ruin-stake",
+   "difficulty": 4,
+   "skills": [
+    "mg-risk"
+   ],
+   "tags": [
+    "risk-of-ruin"
+   ],
+   "pace": 180,
+   "prose": "From £20 you bet at evens, winning with chance 0.55, until you reach £0 or £40. With £1 stakes the chance of ruin is 0.0178. Now stake £10 a bet, so you are 2 steps from each end.",
+   "question": "What is the chance of ruin with £10 stakes? Give 3 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.401,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.401: with r = 0.45/0.55, (r² − r⁴)/(1 − r⁴) = 81/202.",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.0178,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.45,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "fair",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.401.",
+    "generic": "Not quite right. Use the ruin formula with $i = 2$ steps from £0 and $N = 4$ steps to £40.",
+    "byKey": {
+     "one": "That is the £1 answer. Bigger stakes mean fewer steps.",
+     "half": "That is one £20 bet. With £10 you have 2 steps.",
+     "fair": "You ignored the edge. At 0.55 the chance is below a half."
+    }
+   },
+   "explain": {
+    "text": "With $r = 9/11$, ruin is $(r^2 - r^4)/(1 - r^4) = 81/202 = 0.401$. The edge is the same as with £1 bets, but there are fewer of them. The ruin chance rises from 1.8% to 40.1%."
+   }
+  }
+ ]
+}
