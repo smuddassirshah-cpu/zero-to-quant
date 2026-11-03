@@ -12,6 +12,7 @@
      node app/tools/playthrough.mjs --set number-sense/review-1   one review or homework (repeatable)
      node app/tools/playthrough.mjs --exam topic-1.5       one exam (repeatable); topic-*, stage-* and mock-* all play the same way
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
+     node app/tools/playthrough.mjs --bank probability-1   every item of one bank file (repeatable, or --bank all): dealt, answered right from its key, pass or fail per item
      node app/tools/playthrough.mjs --routes-only          only the routes, then the interview bank deck (due and new items, the 3-day box,
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
                                                            skewed Date.now so per-item seconds and the pace line are checked
@@ -67,7 +68,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], all: false };
+const opt = { mobile: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], all: false };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -83,6 +84,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--exams') opt.exams = true;
   else if (a === '--set') { opt.setIds.push(next()); opt.sets = true; }
   else if (a === '--exam') { opt.examIds.push(next()); opt.exams = true; }
+  else if (a === '--bank') opt.bankIds.push(next());
   else if (a === '--all') opt.all = true;
   else if (a === '--help' || a === '-h') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('*/')[0].replace(/^#!.*\n\/\* ?/, '')); process.exit(0); }
   else die(`unknown argument ${a} (try --help)`);
@@ -90,7 +92,8 @@ for (let i = 0; i < argv.length; i++) {
 const onlySets = !opt.all && (opt.sets || opt.exams);
 if (opt.all) { opt.sets = true; opt.exams = true; }
 if (onlySets && !opt.lessons.length) opt.lessonsOn = false;
-if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets;
+if (opt.bankIds.length && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
+if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length;
 if (opt.localCdn && !fs.existsSync(opt.localCdn)) die(`--local-cdn: ${opt.localCdn} does not exist`);
 if (opt.shots) fs.mkdirSync(opt.shots, { recursive: true });
 function die(msg) { console.error('playthrough: ' + msg); process.exit(2); }
@@ -516,6 +519,11 @@ const main = async () => {
       const fails = [], t0 = Date.now();
       const items = docs.flatMap(d => d.items), open = items.filter(it => !it.requires), lockedN = items.length - open.length;
       try {
+        /* 0. counts come from the bank files: unique uids, and the engine's own totals agree with them */
+        const uids = docs.flatMap(d => d.items.map(it => `bank/${d.id}/${it.id}`));
+        if (new Set(uids).size !== uids.length) fails.push('two bank items share a uid');
+        const stat = await page.evaluate(() => ZQ.select.bankStatus());
+        if (stat.total !== open.length || stat.locked !== lockedN || stat.fresh !== open.length) fails.push(`bankStatus says ${stat.total} drawable, ${stat.locked} locked, ${stat.fresh} new; the files give ${open.length}, ${lockedN}, ${open.length}`);
         /* 1. the Review card: due and new counts, the locked line, the start link */
         await go('review');
         await page.waitForFunction(() => { const s = document.querySelector('[data-sec="bank"]'); return s && !s.hidden; }, null, { timeout: opt.timeout });
@@ -579,16 +587,82 @@ const main = async () => {
         const all = await page.evaluate(() => ({ due: ZQ.state.bank.due().length, n: Object.keys(ZQ.state.bank.list()).length }));
         if (all.due !== all.n) fails.push(`40 days on every scheduled item should be due: ${all.due} of ${all.n}`);
         /* 6. an old save with no bank or timing loads and still works */
-        const old = await page.evaluate(() => { const d = JSON.parse(ZQ.state.export()); delete d.bank; delete d.timing; const r = ZQ.state.import(JSON.stringify(d)); const b = ZQ.state.bank.list(); ZQ.state.bankResult({ results: [{ uid: 'bank/sample/x', ok: true, seconds: 2, family: 'f' }] }); return { ok: r.ok, empty: Object.keys(b).length === 0, after: Object.keys(ZQ.state.bank.list()).length, fam: Object.keys(ZQ.state.timing.families).length }; });
+        const old = await page.evaluate(() => { const d = JSON.parse(ZQ.state.export()); delete d.bank; delete d.timing; const r = ZQ.state.import(JSON.stringify(d)); const b = ZQ.state.bank.list(); ZQ.state.bankResult({ results: [{ uid: 'bank/x/x', ok: true, seconds: 2, family: 'f' }] }); return { ok: r.ok, empty: Object.keys(b).length === 0, after: Object.keys(ZQ.state.bank.list()).length, fam: Object.keys(ZQ.state.timing.families).length }; });
         if (!old.ok || !old.empty || old.after !== 1 || old.fam !== 1) fails.push(`an old save without bank or timing did not load cleanly: ${JSON.stringify(old)}`);
         await unskew();
-        console.log(`${fails.length ? 'FAIL' : 'ok  '} #bank  ${open.length} drawable of ${items.length}, deck, pace line, schedule, miss, old save, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} #bank  ${open.length} drawable of ${items.length} in ${docs.length} files (${lockedN} locked), deck, pace line, schedule, miss, old save, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
         fails.push('threw: ' + String(e.message || e).split('\n')[0]);
         console.log('FAIL #bank  threw');
       }
       try { await unskew(); } catch { /* page gone */ }
       fails.forEach(f => failures.push(`#bank: ${f}`));
+    };
+
+    /* ---------- --bank <file>: every item of one bank file, dealt through the deck and answered right from its key ----------
+       Items still locked by `requires` are unlocked by importing a save with those lessons finished; every other drawable item is
+       walked to the 30-day box so the deck holds only the file's items (the schedule is cleared before each file). Reports pass or fail per item. */
+    const bankPlay = async (ids) => {
+      const dir = path.join(CONTENT, 'bank');
+      const names = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /^[a-z0-9-]+\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort() : [];
+      const want = ids.includes('all') ? names : ids;
+      for (const id of want) if (!names.includes(id)) die(`--bank ${id}: no such file in content/bank (${names.join(', ')})`);
+      let tot = 0, bad = 0;
+      for (const id of want) {
+        where = `#bank/${id}`;
+        const doc = readJSON(path.join(dir, id + '.json')), t0 = Date.now();
+        const byUid = {}; doc.items.forEach(it => { byUid[`bank/${doc.id}/${it.id}`] = it; });
+        const mine = Object.keys(byUid), reqs = [...new Set(doc.items.flatMap(it => it.requires || []))];
+        const res = {}, note = (uid, msg) => { if (!res[uid]) res[uid] = msg; };
+        try {
+          const imp = await page.evaluate((reqs) => { const d = JSON.parse(ZQ.state.export()); delete d.bank; d.lessons = d.lessons || {}; reqs.forEach(r => { if (!d.lessons[r] || !d.lessons[r].done) d.lessons[r] = { attempts: 1, done: true, firstTry: true, xp: 0, bestQuiz: 1, mastered: false, perfect: false, completedAt: Date.now(), secondsSpent: 600, position: null, positionAt: null }; }); return ZQ.state.import(JSON.stringify(d)); }, reqs);
+          if (!imp || !imp.ok) throw new Error('could not import the unlocking save');
+          const drawable = await page.evaluate(() => ZQ.select.bankDeck({ n: 2000 }).then(a => a.map(x => x.uid)));
+          mine.filter(u => !drawable.includes(u)).forEach(u => note(u, 'not drawable after unlocking its requires'));
+          const others = drawable.filter(u => !mine.includes(u));
+          await page.evaluate((us) => { for (let k = 0; k < 4; k++) ZQ.state.bankResult({ results: us.map(uid => ({ uid, ok: true, seconds: 1, family: 'x' })) }); }, others);
+          await page.evaluate(() => { if (!window.__deals) { const orig = ZQ.select.bankDeck; window.__deals = []; ZQ.select.bankDeck = async (o) => { const a = await orig(o); window.__deals.push(a.map(x => x.uid)); return a; }; } });
+          const played = new Set(), todo = () => mine.filter(u => !played.has(u) && !res[u]);
+          for (let sit = 0; sit < Math.ceil(mine.length / 8) + 4 && todo().length; sit++) {
+            await go('review');
+            await page.evaluate(() => { delete window.ZQ.test; });
+            await go('bank');
+            await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+            await page.evaluate(() => ZQ.test.continue());
+            await page.waitForFunction(() => ZQ.test.current().kind === 'item', null, { timeout: opt.timeout });
+            const deal = await page.evaluate(() => window.__deals[window.__deals.length - 1]);
+            let guard = 0;
+            while ((await page.evaluate(() => ZQ.test.current().kind)) !== 'done' && ++guard < 40) {
+              const c = await page.evaluate(() => ZQ.test.current());
+              if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
+                const uid = deal[c.screenIndex], it = byUid[uid];
+                if (!it) { await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(() => ZQ.test.check()); }
+                else {
+                  if (!(await page.evaluate(() => ZQ.test.answerCorrect()))) note(uid, 'answerCorrect had nothing to answer');
+                  if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) note(uid, 'the page is wider than the window');
+                  let r = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
+                  if (it.widget.kind === 'longform') {
+                    await page.evaluate(() => { [...document.querySelectorAll('input[type=checkbox]')].filter(n => n.offsetParent && !n.checked).forEach(b => b.click()); });
+                    const r2 = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
+                    const last = await page.evaluate(() => { const x = ZQ.test.results(); return x.length ? !!x[x.length - 1].ok : false; });
+                    r = { ok: (r2 && r2.ok) || (r && r.ok) || last };
+                  }
+                  if (!r || !r.ok) note(uid, 'the right answer was not accepted'); else played.add(uid);
+                }
+              }
+              await page.evaluate(() => ZQ.test.continue());
+              await page.waitForTimeout(100);
+            }
+          }
+          mine.filter(u => !played.has(u)).forEach(u => note(u, 'never dealt'));
+          if (opt.shots) await shot(`bank-${id}`);
+        } catch (e) { mine.forEach(u => note(u, 'threw: ' + String(e.message || e).split('\n')[0])); }
+        const badN = mine.filter(u => res[u]).length;
+        mine.forEach(u => { if (res[u]) { console.log(`FAIL ${u}: ${res[u]}`); failures.push(`#bank/${id}: ${u}: ${res[u]}`); } });
+        console.log(`${badN ? 'FAIL' : 'ok  '} --bank ${id}  ${mine.length - badN} of ${mine.length} items right from the key${reqs.length ? `, ${reqs.length} requires lessons unlocked` : ''}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+        tot += mine.length; bad += badN;
+      }
+      console.log(`bank total: ${tot - bad} of ${tot} items passed in ${want.length} file${want.length === 1 ? '' : 's'}`);
     };
     /* An exam sat with Date.now skewed: item 3 takes 90 s, the others 4 s. The result has a pace line and per-question
        seconds, and the attempt keeps itemSeconds, one per question. Time never changes the marks (everything is right). */
@@ -614,6 +688,7 @@ const main = async () => {
     };
 
     /* Every other route once */
+    if (opt.bankIds.length) await bankPlay(opt.bankIds);
     if (opt.routes) {
       const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^topic-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')) : [];
       const drills = fs.existsSync(path.join(CONTENT, 'drills', 'index.json')) ? readJSON(path.join(CONTENT, 'drills', 'index.json')).map(d => d.id || d) : [];
