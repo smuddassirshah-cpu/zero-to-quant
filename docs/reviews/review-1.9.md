@@ -139,3 +139,115 @@ Must cover, with one item each unless stated:
 25. cx-testing and cx-perf (d5, longform, rubric summing to 10): the exit task in small, a short note on porting and timing a pricer against Python. It names the method, the flags, the agreement tolerance and the caveats. Ideally the learner's own Python timing feeds it, once the exit gap above is closed.
 
 Items 20, 24 and 25 are the three difficulty-5 items, so the exam tests the exit skill rather than recall.
+
+## Fix pass
+
+Targeted string edits only (a raw-text replace that must match once, then a JSON parse); no file was regenerated, and no lesson, screen or item id changed. Every number I touched was computed twice: by formula in Python and again by hand or a second route (scripts in the scratchpad's `fix-1.9`). C++ figures were rebuilt with the app's own compiler, YoWASP clang 21.1.4 from the local `pkgs`, driven from Node (`yc.mjs`, `runw.mjs`, wasm32-wasi, `-O1`). Each changed code widget was played with its solution in the app, and its starter and the reviewer's planted bugs were swapped in on a scratch copy of `app/` and played again (`mut.py`); each of those fails. Screen, item and quiz numbers are zero-based, as in the findings.
+
+Status: fixed 64, disputed 2, deferred 2 (both are the same new cpp lesson, which needs `course.json`). Where a fix differs from the proposal, the line says why.
+
+### cpp (43)
+
+1. l1 s8 trap prose (warning): fixed as proposed.
+2. l1 s1 explain: fixed as proposed.
+3. l1 s7 prose: fixed. `#include <iostream>` and a blank line now sit above `int main()`, so `int qty` is on line 4, as the console's `main.cpp:4:9` says.
+4. l3 s7 pattern block (warning): fixed. The two `if` lines now sit inside `while (std::cin >> x) { ... }`.
+5. l3 s8 explain: fixed as proposed.
+6. l4 s4 wrong `sum` (warning): fixed. Value 3.65, tol 0.005, with the proposed byKey line. Checked: 0.01 × 365 = 3.65; the key 0.01√365 = 0.19105 is far outside it.
+7. l4 s9 explain: fixed, three sentences (the returns.h sentence dropped).
+8. l4 q-no-params `noparen` why: fixed, "It converts to `true` and prints 1, not 0.04."
+9. l4 q-undefined-ref prose: fixed with ld's two real lines: "/usr/bin/ld: /tmp/ccR5tWb1.o: in function \`main':" and "main.cpp:(.text+0x1a): undefined reference to ...".
+10. l5 s8 and q-return (warning): fixed. The prose says the compiler usually builds the local in place and otherwise moves it, so no element is copied. q-return's correct option reads "None: the vector is built in `px` itself, or moved there". Both whys and the explain say the same.
+11. l6 s0: fixed, "declared const here".
+12. l7 summary.ideas[2] (warning): fixed, in two sentences: a null read crashes a desk build; a dangling read may print a stale number there too, and `-fsanitize=address` names the line.
+13. l7 s6 console: fixed with ASan's own words ("is located in stack of thread T0 at offset 32 in frame", "<== Memory access at offset 32 is inside this variable", "SUMMARY: AddressSanitizer: ..."). The line count and every tap id are unchanged.
+14. l7 s8 explain: fixed, the last two sentences merged.
+15. l8 s4 console: fixed, "allocated from:" and "SUMMARY: AddressSanitizer:".
+16. l8 s6 code widget: fixed in `how` as proposed ("A write past the end of the buffer goes unnoticed here. A desk build with `-fsanitize=address` reports it as heap-buffer-overflow."). The runtime limit is an inbox bullet.
+17. l10 s5 how (error): fixed, "Two tests pass only if the program stops."
+18. l11 s7 (error): fixed with the second option, all four copy and move members `= default`. The rule-of-zero option would have turned the screen into a repeat of screen 9. The prose adds "Declare one special member and the compiler may stop writing the others, so name all four." The table gains the two assignment rows (r2, r3; r0 and r1 keep their ids). The question, starter comment, solution and step hint name the two `operator=` lines. Four tests were added (12 now): `std::is_copy_assignable_v`, `std::is_move_assignable_v`, and two hidden postlude helpers that assign into an existing `Buffer` only when the class allows it. `copied_into_existing<Buffer>()` expects 10.5 (1.5 + 9.0, so no sharing); `moved_into_existing<Buffer>()` expects 30 (`a` empty, `c` holding 3). Checked natively and in the app: the old solution gets false, false, −1, −1. A version with the copy members and only the move constructor gets 33 on the last test, since `a` was copied. byKey lines for tests 9, 10 and 12 name the rule.
+19. l11 s7 explain: fixed as proposed.
+20. l13 s4 console: disputed. The console's command is a plain `clang++ -std=c++17 main.cpp`, so clang's default `-ferror-limit=19` applies. The app's clang 21 then prints 358 lines ending "20 errors generated."; with the command line that is the prose's 359. The reviewer's 365 and 21 come from `-ferror-limit=20`. The first 21 output lines match the console character for character (line numbers aside). One fix: "... 330 more lines ..." is now "... 335 more lines ..." (358 − 21 − 2).
+21. l13 s6 explain: fixed: "A negative total would also become a huge unsigned number before the division." The explain stays at three sentences.
+22. l13 s9 explain: fixed as proposed.
+23. l14 s5 `end` (warning): fixed, dropped with its byKey line.
+24. l14 size_t wrap (warning): fixed. s4's explain gives both platforms: the largest `std::size_t`, 4,294,967,295 (about 4.3 billion) here and $2^{64} - 1 \approx 1.8 \times 10^{19}$ on a 64-bit desk. s9's `rev` why now says "wraps to its largest value", matching l3.
+25. l14 s1 and s2 doubling: fixed. s1 says "This library doubles, as libstdc++ does"; s2 says "doubles here (libc++ and libstdc++)".
+26. l14 s2 caption: fixed, "After `reserve(1000)` (8 slots drawn): size 0, capacity 1,000".
+27. l14 s4 tests: fixed as proposed (test 7, `returns_from({100, 110})` expects `[0.1]`). The `<= 2` mutant fails it.
+28. l14 s8 explain: fixed, three sentences ("Here it skipped a zero, as a Python list would; ...").
+29. l16 s7 `trunc` (error): fixed with the second option. `trunc` is gone and the `exact` byKey line names both slips: "You summed exactly, as Python would, or truncated only once at the end." Checked: one truncation of the exact 175.00 gives 175; step-by-step gives 120, 79, 154, 143, 173.
+30. l16 s9 explain (error): fixed. "Capture by reference: with `[peak, worst]` the assignments do not compile, and with `mutable` they change copies, so it returns 0."
+31. l16 s5 tests: fixed as proposed (test 7, `count_up_days({100, 101})` expects 1). The `<= 2` mutant fails it.
+32. l17 s6 Release (error): fixed. "turns the optimiser on (`-O3`) and defines `NDEBUG`, which switches `assert` off"; bar label "Release (-O3)". The same slip was in the exam's model answer (items[24], "Release build (`-O2 -DNDEBUG`)"), now `-O3 -DNDEBUG`.
+33. l17 s2 console: fixed. Title "Terminal (trimmed)", and GNU 13.3.0 to match cpp-pricing's g++ 13.3. The ABI-detection lines stay out; the title says so.
+34. l17 s5 console: fixed. The build line and the ld line both name `CMakeFiles/main.dir/src/daycount.cpp.o`.
+35. l18 s1 explain (warning): fixed, `0.0 ± 1.0e-12`. Checked in the pytest 8.1.1 wheel Pyodide ships: `ApproxScalar.__repr__` prints `f"{expected} ± {tolerance:.1e}"`, and the tolerance at 0 is the absolute floor 1e-12.
+36. l18 s2 prose (warning): fixed. "Catch2 has class fixtures (`TEST_CASE_METHOD`), but rarely needs them. A `TEST_CASE` can hold `SECTION`s instead."
+37. homework-1 items[4] `double` why (error): fixed as proposed.
+38. homework-1 items[7] prose: fixed with l4's full lines (the `/usr/bin/ld:` prefix, the `/tmp/cc....o` names and the `collect2` line).
+39. homework-2 items[2] (error): fixed in a different way, so that one order is right by the language. The code now computes `double up = payoff(s * 1.1, k);` and `double down = payoff(s * 0.9, k);` on two lines, which fixes their order. The explain says "In one `+` expression the two calls could run in either order; two lines fix it." The answer and the eight lines are unchanged; 0.5 × 15 + 0.5 × 0 = 7.5 still holds.
+40. homework-3 items[1] `nosell` (error): fixed, value 51.7143 (tol 0.001). Checked: (300 × 51 + 50 × 56)/350 = 18,100/350 = 51.714286, and the same from the raw buys, (10,000 + 5,300 + 2,800)/350.
+41. homework-3 items[2] tests (warning): fixed as proposed (test 11, `p.buy(0, 10.0)` must stop). The `qty < 0` mutant fails it. The `how` says 11 tests, four of which pass only if the program stops.
+42. Boilerplate `how`: fixed. l1 to l4, review-1 and homework-1 used "can take up to a minute; later Checks take a few seconds". Every C++ widget in both courses and the exam now says "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s."
+43. Long sentences: fixed by the voice pass below.
+
+### cpp-pricing (23)
+
+44. l1 s6 and s7 table, row 10⁻⁴ (error): fixed, 8 in both tables. A further fix in the same column: row 10⁻¹ said 14, but by the lesson's own digit rule it is 13. 0.0049958347219741794 against the true 0.0049958347219742339 (40-digit series) agree in 13 digits, then 1 against 2; the relative error 1.09e-14 gives 13.96. Rows 10⁻⁶ (4) and 10⁻⁸ (0) recomputed and unchanged.
+45. l1 s8 explain: fixed, "23-bit mantissas".
+46. l2 quiz q2: fixed, "per cent".
+47. l3 s6 `sd`: fixed, dropped.
+48. l3 s7 byKey test-1: fixed, "about 107.4" (105.30 × e^{0.02} = 107.427; the missing −½σ² scales every path by the same factor).
+49. l4 s5 (error): fixed, 0.997213 in the title, prose, question and hint (0.5 erfc(−1.96) = 0.9972131377, Python and the app's clang).
+50. l4 s9 hint, accept, explain (error): fixed, 2.32635 throughout (2.32635 × 120,000 = 279,162; the exact −Φ⁻¹(0.01) = 2.326348 gives 279,161.7). The key and tolerance are unchanged.
+51. l4 s9 `pct` (error): fixed, value 27,916 (tol 200): 2.3263 × 0.0012 × £10m = 2.3263 × 0.012 × £1m = 27,915.6.
+52. l4 s7 explain: fixed, "rational fits such as Acklam's or Wichura's AS241, sometimes with one Newton step".
+53. l5 handover gap (warning): deferred. The proposed "Base classes and virtual functions" lesson in cpp level 3 needs a new lesson id in `course.json`, which this pass may not touch. Note for a new level, below.
+54. l7 s4 solution and hints (warning): fixed, `std::acos(-1.0)` in the solution and the step hint. The point hint reads "`std::acos(-1.0)` is $\pi$; `M_PI` is not standard C++, as l2 showed." `acos(-1.0)` is the double nearest π, so every test value is unchanged.
+55. l8 s0 `itm` (error): fixed. `itm` is 15.11 (the four payers averaged, then discounted: 63.52/4 × e^{−0.05} = 15.1055), and a new `itmraw` is 15.88 (undiscounted, 63.52/4). Each has its own byKey line.
+56. l8 s4 explain: disputed. With the lesson's one-pass formula, Σy² − nȳ² for the ten σ = 0 paths is +5.68e-14, in the app's clang 21 build (wasi-libc `exp`, `-O1`) and again in CPython. So the variance is 6.3e-15 and the standard error 2.51e-8, the "2.5e-8 instead of 0" the explain gives. Only the form Σy² − (Σy)²/n gives exactly 0, and none gives a negative value here. The explain is unchanged.
+57. l9 s4 and s5 timings: fixed. s4 reads "takes about 20 to 25 µs here; take 25", which keeps the batch arithmetic (10,000 / 25 = 400) and agrees with s5's 20 µs.
+58. l12 s8 explain (warning): fixed with the interim sentence: "The C++ pricer is now tested on 100 inputs and timed; timing Python the same way completes the exit task." The missing step, timing the Python pricer in the same browser, is a note for a new level, below.
+59. review-1 items[1] (error): fixed. 4.3143 throughout (Σ e^{−0.05t} for t = 1 to 5 = 4.314306; also e^{−0.05}(1 − e^{−0.25})/(1 − e^{−0.05})). Coupons £17.26, `noprincipal` 17.26, and £17.26 + £77.88 = £95.14 as keyed.
+60. review-2 items[0] explain: fixed, three sentences ("The digital pays £5, since £105 > £100; the put at £100 and the call at £110 pay 0.").
+61. review-3 items[4] `o3` why: fixed as proposed.
+62. homework-2 items[0] prose (error): fixed, "Trees level 2 (l7) found £5.88 with four steps."
+63. homework-2 items[1] tests: fixed. Test 8 runs n = 1 and expects `tree 12.1623`, `bs 10.4506`, `diff 1.7117`, and test 9 gives S = 0 and must stop. Checked: u = e^{0.2}, q = (e^{0.05} − e^{−0.2})/(e^{0.2} − e^{−0.2}) = 0.577493, tree = e^{−0.05} × 0.577493 × 22.1403 = 12.1623, in Python and in the app's clang. The `n <= 1` and dropped-`s` mutants each fail. The `how` names runs 5, 6, 7 and 9 as the non-zero exits.
+64. homework-2 items[2] order: fixed with the second option, in the prose: "State the pair's mean before its variance, and bring in plain paths just before the comparison." That also settles s2 against s3, which could swap in the same way.
+65. Bare £ in maths: fixed, `\text{£}` at all 18 signs (the finding's 15 places hold 18): l2 (3), l4 (7), l7 (1), review-1 (5), homework-1 (2). A scan finds none left in either course or the exam.
+66. Long sentences: fixed by the voice pass below.
+
+### Handover (2)
+
+67. Class names: closed. A search finds `CallPayoff` and `PutPayoff` nowhere; a bullet in `docs/BACKLOG-INBOX.md` closes the stale content note.
+68. Inheritance lesson in cpp level 3: deferred, as finding 53.
+
+### Notes for new levels (not edits)
+
+- cpp level 3, a fifth lesson "Base classes and virtual functions": public derivation, dispatch through `const Base&`, `override`, pure virtual and abstract bases, the virtual destructor with `unique_ptr<Base>`, and slicing, on order types or risk checks. Then cpp-pricing l5 can open with a one-screen recap. Needs a new id in cpp's `course.json`.
+- cpp-pricing, the exit step: time the trees course's Python pricer in Pyodide (`time.perf_counter`, a warm-up, median of five) beside the learner's C++ tree in the same browser, and feed the ratio to homework-3's note. A new screen in l12 or a new lesson; either needs `course.json` or a lesson rewrite beyond a fix pass.
+- The review's coverage list (exceptions shown by console, `std::array`, `std::string_view`, linkage and namespaces, `enum class`, `<cstdint>`, hand-written move assignment and `noexcept`, `std::function`, `std::optional`, `constexpr`, stream I/O) stays as written there, for a later cpp level.
+
+### Voice pass
+
+`docs/reviews/voice-scan.py` run on both courses and the exam, after the fixes above. Before: cpp 183 sentences over 20 words in 26 files, cpp-pricing 174 in 17 files, the exam 10, and no explanation over three sentences (review-2's four sentences were already fixed as finding 60). After: 0, 0 and 0, with no explanation over three sentences. 122 of the 367 were one `how` sentence, the compiler line in two wordings (finding 42). The rest were split at a colon, semicolon or list, or tightened where an explanation already had three sentences. Lists of what changed are in `docs/reviews/voice-1.9-cpp.txt`, `voice-1.9-cpp-pricing.txt` and `voice-1.9-exam.txt`.
+
+Wrong statements found while rewriting, all fixed:
+- cpp homework-2 items[7] model: "returning by value is cheap thanks to copy elision" now reads "the compiler builds the result in place or moves it". A named local's elision is optional, as finding 10 says.
+- Exam items[24] model: Release is `-O3 -DNDEBUG` (finding 32).
+- cpp-pricing l1 row 10⁻¹: 13 right digits, not 14 (finding 44).
+- cpp-pricing l1 s1 `canvas.derive.cells` is a derive expression the scan reads as prose. Its `, ` separators were closed up, and the expression's value is unchanged.
+
+Checked and left: the exam's items[23] £0.42 (the σ√T slip one day out at K = 105: £0.4226) and items[18]'s 2 × 10⁻⁶ (10⁻¹⁶ / 5 × 10⁻¹¹).
+
+### Acceptance
+
+From `app/`, with `--local-cdn` (the scratchpad `pkgs`):
+- `node tools/validate.mjs`: 0 errors (393 warnings, none new in these courses).
+- `--lesson`: all 18 cpp lessons and all 12 cpp-pricing lessons pass. cpp l11, l14 and l16, and cpp-pricing l4 and l8, also pass with `--mobile` (l11's four-row table checked at 390 px).
+- `--set`: all 14 reviews and homeworks of both courses pass. `--exam topic-1.9`: 25 of 25, passed.
+- Variants, played on a scratch copy of `app/`: every changed widget's starter fails (cpp l11 s7, l14 s4, l16 s5, homework-3 items[2]; cpp-pricing l7 s4, homework-2 items[1]). Each planted bug fails a new test: l11 with no assignment members (test 9), and with no move assignment (test 12, 33 against 30). Also l14 and l16 `<= 2` (test 7), homework-3 `qty < 0` (test 11), and homework-2 `n <= 1` (test 8) and no `s <= 0` check (test 9).
+- Voice scan, re-run with absolute `VOICE_BASE` paths after the script's fix: cpp 7,996 sentences and cpp-pricing 5,955, each with 0 over 20 words and 0 explanations over three sentences. The `app/content/exams/` folder has no topic-1.9 hit.
+
+Graded answers changed: cpp l4 s4 `sum` (3.65, tol 0.005); l14 s5 `end` dropped; l16 s7 `trunc` dropped; homework-3 items[1] `nosell` (51.7143). cpp-pricing l1 s6 and s7 table cells (13 and 8; the screen's key, 4, is unchanged); l3 s6 `sd` dropped; l4 s9 `pct` (27,916); l8 s0 `itm` (15.11) plus a new `itmraw` (15.88); review-1 items[1] `noprincipal` (17.26). New hidden tests: cpp l11 s7 (four, plus a postlude), l14 s4, l16 s5, homework-3 items[2]; cpp-pricing homework-2 items[1] (two). cpp l11 s7's solution now defaults both assignments. Every key, correct option and order answer is unchanged. Not changed: `course.json`, any id, engine files.
