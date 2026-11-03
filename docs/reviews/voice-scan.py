@@ -4,6 +4,9 @@ A $...$ formula, $$...$$ block `code` span or {{template}} value counts as one w
 """
 import json, glob, re, sys, os
 BASE = os.environ.get('VOICE_BASE', '/home/user/zero-to-quant/app/content/courses/graphs-dp/')
+BASE = os.path.join(os.path.abspath(BASE), '')
+if not glob.glob(BASE + '*.json'):
+    sys.exit('voice-scan: no .json files in ' + BASE)
 MAX = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 20
 # keys whose values are code, tests, ids or structure (never prose)
 SKIP = {'id', 'kind', 'type', 'course', 'skills', 'answer', 'accept_ids', 'starter', 'solution',
