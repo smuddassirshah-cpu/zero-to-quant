@@ -47,3 +47,62 @@ All keyed answers check, with one exception. That is l4 s2, where the key is one
 ## Counts
 
 2 errors, 8 warnings, 13 notes.
+
+## Fix pass
+
+Targeted string edits only; no file was regenerated, and no lesson, screen or item id changed except the exam items replaced below. The exam file was edited through Python's `json` module, which round-trips it byte for byte, so its diff holds only the changed items. Every number I touched was recomputed by hand and in Python with `fractions.Fraction` (script `check.py` in the scratchpad folder `fix-0.5`), and each new tolerance was probed with the engine's 1e-9 slack. A scan of every added line finds no exclamation mark, em or en dash, and no new sentence over 20 words.
+
+Status: fixed 21, disputed 0, deferred 2 (engine changes). Where a fix differs from the proposal, the line says why. Screen, item and quiz numbers are zero-based, as in the findings.
+
+### Level 1 (7)
+
+1. l4 s2 (error): fixed as proposed. The row is 18, 25, 31, 15, 22, with units 8, 5, 1, 5, 2; the only pairs to a ten are 18 + 22 and 25 + 15, so 31 is the one odd number. The nudge, FC, explain and caption now say 31 and $40 + 40 + 31 = 111$. Key `r0c2` and the byKey lines are unchanged.
+2. l1 s4 byKey `t2`: fixed as proposed.
+3. l3 s4 prose: fixed as proposed.
+4. l4 s5 explain: fixed with the merged first sentence, so it stays at three sentences. Checked: $48 + 31 + 67 = 146$ and $48 + 31 + 67 + 22 = 168$.
+5. homework-1 items[2] prose: fixed as proposed.
+6. homework-1 items[9] rubric[0]: fixed as two sentences. I kept "or adding from the left", since the model gives both methods; the second sentence is 15 words.
+7. homework-1 items[9] model (d): fixed, "more than £10 away" ($16.50 - 6 = 10.50$). The sentence then ran to 21 words, so it is split before "It looks like an extra ten crept in."
+
+### Level 2 (6)
+
+8. l7 quiz[2] `q-hedge`: fixed as proposed; FC, FG and all three byKey lines now work in hundredths. Checked: $6400 - 64 = 6336$, $6400 - 1 = 6399$, $6400 - 640 = 5760$, $6400 + 64 = 6464$.
+9. review-2 items[7] `rv-return-notional`: fixed as proposed (FC, FG, the three byKey lines and the explain). The prose keeps "2.5% in a month" as the stated return, since it turns it into 0.025 and $\tfrac{25}{1000}$ at once. Checked: $400{,}000 \div 1{,}000 = 400$, $25 \times 400 = 10{,}000$, and the wrong values 100,000, 1,000 and 20,000 are 0.25, 0.0025 and 50 lots of £400.
+10. homework-2 items[3] and [4]: fixed in place with the proposed wording, not moved to homework 3. items[3]: $8400 - 168 = 8232$; wrong values $8398$, $8316$, $8568$ check. items[4]: the prose now gives 0.0025 as 25 ten-thousandths; $4{,}800{,}000 \div 10{,}000 = 480$ and $25 \times 480 = 12{,}000$; wrong values 120,000, 1,200, 48,000 and 24,000 are 0.025, 0.00025, 100 lots and 50 lots. The explain ends "It is the ×25 move again." The byKey ids (`one-percent` and so on) are internal and unchanged.
+11. l8 s7 explain: fixed as proposed.
+12. l5 s1 explain: fixed with different wording. The proposed sentence is 23 words, and splitting it would make four sentences. It now reads "Each step adds 9, one ten up and one unit down. From 9 to 90 that keeps the digit sum at 9. At 99 the sum is 18, still a multiple of 9."
+13. l8 quiz[2] FG: fixed as proposed.
+
+### Level 3 (3)
+
+14. l9 quiz[1] (error): fixed as proposed, "In a default Zetamac round, division answers go up to 100."
+15. l10 s4 and quiz[1]: fixed, `tol: { "abs": 0.00035 }` on both. Probed: 0.167, 0.1667 and 0.16667 pass, 0.1666 and 0.1674 fail; 0.667, 0.6667 and 0.66667 pass, 0.6666 and 0.6674 fail.
+16. review-3 items[5]: fixed, `tol: { "abs": 0.00035 }`. 0.833, 0.8333 and 0.83333 pass; 0.8334 and 0.8326 fail.
+
+### Exam (4)
+
+17. items[15] `m-halve-both`: fixed with the taught split. Title "Past the table"; FC "280 ÷ 14 + 98 ÷ 14 = 20 + 7 = 27."; FG "Split 378 into two multiples of 14."; the proposed explain. The `one-side` line adds "twice 7" so it says why the answer is half of 54. The id stays. Checked: $14 \times 20 = 280$, $14 \times 7 = 98$, $378 \div 7 = 54$, $27 \times 14 = 378$, $14 \times 26 = 364$.
+18. Coverage: fixed by replacing two items and adding two.
+    - items[3] `m-seven-twentieths` is now `m-one-sixth` (d2, `ma-frac`): "What is 1/6 to two decimal places?", 0.17, `tol` 0.0005, wrong `chopped` 0.16, `digit` 0.6, `flip` 6. $\tfrac16 = 0.1666\ldots$ rounds to 0.17.
+    - items[13] `m-three-fortieths` is now `m-remainder-eight` (d3, `ma-div`, `ma-frac`): "What is 43 ÷ 8 as a decimal?", 5.375, `tol` 0.0005. Wrong values: `rem-digit` 5.3, `one-eighth` 5.125 and `whole` 5. I used 5.125 (one eighth for a remainder of 3) in place of the proposed 5.03, which names no slip the course teaches against. Checked: $8 \times 5 = 40$, remainder 3, $3 \times 0.125 = 0.375$.
+    - Added `m-times-eleven` (d3, `ma-mult`): 11 × 76 = 836, wrong `no-carry` 7136, `lost-carry` 736, `ten-only` 760. I used 76, not 68, because $11 \times 68$ is l6's own worked example. Checked: $760 + 76 = 836$ and $7 + 6 = 13$.
+    - Added `m-divide-five` (d3, `ma-div`): 165 ÷ 5 = 33 by doubling, then dividing by 10, as l12 teaches. Wrong `no-tenth` 330, `halved` 82.5, `times` 825. Checked: $5 \times 33 = 165$.
+    - The exam now has 22 items at 4, 12, 4 and 2 (18%, 55%, 18%, 9%), inside the ±10% ramp, with all four skills tagged.
+19. items[0] `m-add-bridge`: fixed as proposed (FC, FG, explain). I also reworded the `no-carry` line to the left-to-right route: "You lost a ten. From 77, the 8 crosses 80, so the answer is past 80." Checked: $47 + 30 = 77$, $77 + 3 = 80$, $80 + 5 = 85$.
+20. Pence fields and "27p": deferred, as the finding says. The `parseNum` bullet is under "Raised later (fix pass 0.5)" in `docs/BACKLOG-INBOX.md`. No content change.
+
+### Layout (3)
+
+21. l4 s3: fixed, `"side": "below"` on `a2`. At 390 px the −18 arc now sits under the axis with its label clear; the 55 label stays below, beside the arc's end (screenshot looked at).
+22. l2 s2: fixed, `"side": "below"` on `a2`. At 390 px the correction loop and its −1 label sit under the axis, away from the +30 arc (screenshot looked at). The `derive` keys still drive it.
+23. Grid cell size (l5, l9): deferred, an engine change. The bullet is in the inbox and points to the two earlier grid bullets asking for the same thing.
+
+### Acceptance
+
+From `app/`, with `--local-cdn`:
+- `node tools/validate.mjs`: 0 errors (385 warnings, none in `mental/` or topic-0.5).
+- `--lesson`: l1, l2, l3, l4, l5, l7, l8, l9 and l10 pass; l2 and l4 also with `--mobile`.
+- `--set`: homework-1, homework-2, review-2 and review-3 pass.
+- `--exam topic-0.5`: 22 of 22, passed.
+
+Graded answers changed: three tolerances (l10 s4 and quiz[1], review-3 items[5], 0.0004 to 0.00035). In l4 s2 the cell under key `r0c2` now reads 31, so the key is unique. In the exam, two items were replaced (0.35 and 0.075 out; 0.17 and 5.375 in) and two added (836 and 33). Every other keyed option, cell and number is unchanged. Not changed: `course.json`, any lesson id, engine files.
