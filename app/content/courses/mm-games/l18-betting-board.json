@@ -1,0 +1,1300 @@
+{
+ "id": "l18-betting-board",
+ "course": "mm-games",
+ "title": "A betting board with a bankroll",
+ "minutes": 15,
+ "objectives": [
+  "Track P&L and size bets across a board of bets under a bankroll limit."
+ ],
+ "skills": [
+  "mg-risk"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A board of bets",
+   "prose": "An interviewer lays out four bets on separate coins and dice. You have £100. You may stake any amount on any bet, or none.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Bet",
+      "Odds",
+      "Win chance"
+     ],
+     "rows": [
+      [
+       "a",
+       "evens",
+       "0.55"
+      ],
+      [
+       "b",
+       "2 to 1",
+       "0.4"
+      ],
+      [
+       "c",
+       "3 to 1",
+       "0.2"
+      ],
+      [
+       "d",
+       "evens",
+       "0.6"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Odds of b to 1 pay £b for each £1 staked"
+    }
+   },
+   "question": "Which bet should you not take at all?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "c",
+      "text": "c: 3 to 1 with chance 0.2",
+      "correct": true
+     },
+     {
+      "id": "a",
+      "text": "a: evens with chance 0.55",
+      "why": "You skipped a real edge. At evens, 0.55 wins 10p per £1 on average."
+     },
+     {
+      "id": "b",
+      "text": "b: 2 to 1 with chance 0.4",
+      "why": "You judged by the win chance. At 2 to 1, 0.4 wins 20p per £1 on average."
+     },
+     {
+      "id": "none",
+      "text": "None: take them all",
+      "why": "You took c for its payout. At 3 to 1 a chance of 0.2 loses 20p per £1."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out each bet's average gain per £1: $p \\times b - (1 - p)$."
+    },
+    {
+     "rung": "point",
+     "text": "For c: $0.2 \\times 3 - 0.8 = -0.2$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "c loses 20p per £1 on average: skip it."
+    }
+   ],
+   "feedback": {
+    "correct": "Skip c.",
+    "generic": "Not quite right. Find the bet whose average gain per £1 is negative.",
+    "byKey": {
+     "none": "You took c for its payout. At 3 to 1 a chance of 0.2 loses 20p per £1.",
+     "b": "You judged by the win chance. At 2 to 1, 0.4 wins 20p per £1 on average."
+    }
+   },
+   "explain": {
+    "text": "A big payout is not an edge. c pays 3 to 1 but wins only one time in five: −£0.20 per £1. The other three bets each gain on average."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Edge per pound",
+   "prose": "The edge of a bet is its average gain per £1 staked: $p\\,b - (1 - p)$.",
+   "question": "Fill the edge of each bet.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Bet",
+     "Odds",
+     "Win chance",
+     "Edge per £1"
+    ],
+    "rows": [
+     [
+      "a",
+      "evens",
+      "0.55",
+      {
+       "edit": true,
+       "answer": 0.1,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "b",
+      "2 to 1",
+      "0.4",
+      {
+       "edit": true,
+       "answer": 0.2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "c",
+      "3 to 1",
+      "0.2",
+      {
+       "edit": true,
+       "answer": -0.2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "d",
+      "evens",
+      "0.6",
+      {
+       "edit": true,
+       "answer": 0.2,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Win $b$ with chance $p$, lose 1 otherwise."
+    },
+    {
+     "rung": "point",
+     "text": "a: $0.55 - 0.45 = 0.1$; b: $0.8 - 0.6 = 0.2$."
+    },
+    {
+     "rung": "step",
+     "text": "c: $0.6 - 0.8 = -0.2$; d: $0.6 - 0.4 = 0.2$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.1, 0.2, −0.2 and 0.2.",
+    "generic": "Not quite right. Edge is $p\\,b - (1 - p)$."
+   },
+   "explain": {
+    "text": "b and d have the same edge, 0.2, though b pays more. Edge measures the bet; odds measure how lumpy it is. Kelly needs both."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Kelly on each bet",
+   "prose": "Stake each bet at its Kelly fraction of the bankroll, $f^* = p - (1 - p)/b$, and stake nothing when $f^*$ is negative.",
+   "question": "Fill each stake on £100, in pounds.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Bet",
+     "Odds",
+     "Win chance",
+     "Stake (£)"
+    ],
+    "rows": [
+     [
+      "a",
+      "evens",
+      "0.55",
+      {
+       "edit": true,
+       "answer": 10,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "b",
+      "2 to 1",
+      "0.4",
+      {
+       "edit": true,
+       "answer": 10,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "c",
+      "3 to 1",
+      "0.2",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "d",
+      "evens",
+      "0.6",
+      {
+       "edit": true,
+       "answer": 20,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At evens, $f^* = p - (1 - p)$."
+    },
+    {
+     "rung": "point",
+     "text": "b: $0.4 - 0.6/2 = 0.1$."
+    },
+    {
+     "rung": "step",
+     "text": "Stakes £10, £10, £0 and £20."
+    }
+   ],
+   "feedback": {
+    "correct": "£10, £10, £0 and £20.",
+    "generic": "Not quite right. Use $f^* = p - (1 - p)/b$, times £100."
+   },
+   "explain": {
+    "text": "a and b each get 0.1 of the bankroll, d gets 0.2, and c nothing. b's edge is twice a's, but its odds are twice too, so Kelly stakes them equally. Edge over odds sets the size."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What the board earns",
+   "prose": "With stakes of £10, £10, £0 and £20, each bet earns its stake times its edge on average.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Bet",
+      "Odds",
+      "Win chance",
+      "Stake (£)",
+      "Edge"
+     ],
+     "rows": [
+      [
+       "a",
+       "evens",
+       "0.55",
+       "10",
+       "0.1"
+      ],
+      [
+       "b",
+       "2 to 1",
+       "0.4",
+       "10",
+       "0.2"
+      ],
+      [
+       "c",
+       "3 to 1",
+       "0.2",
+       "0",
+       "−0.2"
+      ],
+      [
+       "d",
+       "evens",
+       "0.6",
+       "20",
+       "0.2"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the board's expected profit this round, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£7: 10 × 0.1 + 10 × 0.2 + 20 × 0.2.",
+    "label": "Expected profit",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "withc",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "stakes",
+      "value": 40,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply each stake by its edge."
+    },
+    {
+     "rung": "point",
+     "text": "$1 + 2 + 0 + 4$.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "£7."
+    }
+   ],
+   "feedback": {
+    "correct": "£7.",
+    "generic": "Not quite right. Add stake times edge for each bet.",
+    "byKey": {
+     "stakes": "That is the total staked, not the expected profit.",
+     "withc": "You staked £10 on c. Its edge is negative."
+    }
+   },
+   "explain": {
+    "text": "a earns £1, b £2 and d £4 on average: £7 on £40 staked. c would only subtract. The round's result will swing around that £7."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A limit on the round",
+   "prose": "The interviewer adds a rule: at most £30 at risk in a round. Your Kelly stakes total £40. Scale every stake down by the same factor.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "a",
+       "label": "a"
+      },
+      {
+       "id": "b",
+       "label": "b"
+      },
+      {
+       "id": "c",
+       "label": "c"
+      },
+      {
+       "id": "d",
+       "label": "d"
+      }
+     ],
+     "xLabel": "Bet",
+     "yLabel": "Stake (£)",
+     "yMax": 25,
+     "showValues": true,
+     "money": "£"
+    },
+    "state": {
+     "values": {
+      "a": 10,
+      "b": 10,
+      "c": 0,
+      "d": 20
+     }
+    },
+    "derive": {
+     "caption": "Total at risk: £{{fixed(values.a + values.b + values.c + values.d, 2)}}"
+    }
+   },
+   "question": "Set the stakes on a, b and d so that £30 is at risk.",
+   "widget": {
+    "kind": "sliders",
+    "sliders": [
+     {
+      "id": "a",
+      "bind": "a",
+      "min": 0,
+      "max": 25,
+      "step": 0.5,
+      "label": "a",
+      "start": 10
+     },
+     {
+      "id": "b",
+      "bind": "b",
+      "min": 0,
+      "max": 25,
+      "step": 0.5,
+      "label": "b",
+      "start": 10
+     },
+     {
+      "id": "d",
+      "bind": "d",
+      "min": 0,
+      "max": 25,
+      "step": 0.5,
+      "label": "d",
+      "start": 20
+     }
+    ],
+    "answer": {
+     "a": 7.5,
+     "b": 7.5,
+     "d": 15
+    },
+    "tol": 0.01,
+    "wrong": [
+     {
+      "id": "cutd",
+      "check": "abs(d - 10) < 0.01"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The factor is $30/40$."
+    },
+    {
+     "rung": "point",
+     "text": "Every stake times 0.75.",
+     "highlight": [
+      "a",
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "£7.50, £7.50 and £15."
+    }
+   ],
+   "feedback": {
+    "correct": "£7.50, £7.50 and £15.",
+    "generic": "Not quite right. Multiply every stake by $30/40 = 0.75$.",
+    "byKey": {
+     "cutd": "You cut only the largest stake. Scale them all by 0.75, so the mix stays the same.",
+     "a": "Check a: 0.75 of £10 is £7.50.",
+     "b": "Check b: 0.75 of £10 is £7.50.",
+     "d": "Check d: 0.75 of £20 is £15."
+    }
+   },
+   "explain": {
+    "text": "Scaling by 0.75 keeps each bet's share of the risk. The stakes become £7.50, £7.50 and £15. Cutting one bet alone would change the mix Kelly chose."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The capped board",
+   "prose": "With the cap, the stakes are £7.50, £7.50, £0 and £15.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "a",
+       "label": "a"
+      },
+      {
+       "id": "b",
+       "label": "b"
+      },
+      {
+       "id": "c",
+       "label": "c"
+      },
+      {
+       "id": "d",
+       "label": "d"
+      }
+     ],
+     "xLabel": "Bet",
+     "yLabel": "Stake (£)",
+     "yMax": 25,
+     "showValues": true,
+     "money": "£"
+    },
+    "state": {
+     "values": {
+      "a": 7.5,
+      "b": 7.5,
+      "c": 0,
+      "d": 15
+     }
+    }
+   },
+   "question": "What is the expected profit now, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.25,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£5.25: 0.75 × £7.",
+    "label": "Expected profit",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "old",
+      "value": 7,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sub",
+      "value": -3,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every stake fell by a quarter."
+    },
+    {
+     "rung": "point",
+     "text": "So does the expected profit.",
+     "highlight": [
+      "d"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.75 \\times 7 = 5.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "£5.25.",
+    "generic": "Not quite right. Scale £7 by 0.75.",
+    "byKey": {
+     "old": "That is the uncapped board.",
+     "sub": "You subtracted the £10 cut. Scale the profit instead."
+    }
+   },
+   "explain": {
+    "text": "$0.75 \\times 7 = 5.25$, or $0.75 + 1.50 + 3.00$ bet by bet. The cap costs £1.75 of expected profit a round. It buys smaller swings."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Round one",
+   "prose": "Back to full Kelly, no cap: £10 on a, £10 on b, £20 on d. The results: a wins, b loses, d wins.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Bet",
+      "Odds",
+      "Win chance",
+      "Stake (£)",
+      "Result"
+     ],
+     "rows": [
+      [
+       "a",
+       "evens",
+       "0.55",
+       "10",
+       "win"
+      ],
+      [
+       "b",
+       "2 to 1",
+       "0.4",
+       "10",
+       "lose"
+      ],
+      [
+       "c",
+       "3 to 1",
+       "0.2",
+       "0",
+       ""
+      ],
+      [
+       "d",
+       "evens",
+       "0.6",
+       "20",
+       "win"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is your bankroll after the round, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 120,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£120: 100 + 10 − 10 + 20.",
+    "label": "Bankroll",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "pnl",
+      "value": 20,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "bwin",
+      "value": 140,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ],
+    "carry": "bank"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At evens a win pays the stake; a loss loses it."
+    },
+    {
+     "rung": "point",
+     "text": "a +10, b −10, d +20.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$100 + 20 = 120$."
+    }
+   ],
+   "feedback": {
+    "correct": "£120.",
+    "generic": "Not quite right. Add each bet's result to £100.",
+    "byKey": {
+     "pnl": "That is the round's profit. Add it to £100.",
+     "bwin": "You counted b as a win at 2 to 1. It lost."
+    }
+   },
+   "explain": {
+    "text": "a and d win £10 and £20; b loses £10. The round makes £20 and the bankroll is £120. Every stake next round is a fraction of £120."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Same stakes again?",
+   "prose": "Your bankroll is now £{{carry.bank|120}}. A friend says: \"Keep the stakes you had: £10, £10 and £20. They worked.\"",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Bet",
+      "Odds",
+      "Win chance",
+      "Last stake (£)"
+     ],
+     "rows": [
+      [
+       "a",
+       "evens",
+       "0.55",
+       "10"
+      ],
+      [
+       "b",
+       "2 to 1",
+       "0.4",
+       "10"
+      ],
+      [
+       "c",
+       "3 to 1",
+       "0.2",
+       "0"
+      ],
+      [
+       "d",
+       "evens",
+       "0.6",
+       "20"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What do you stake on d this round, in pounds, using a bankroll of £120?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 24,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£24: 0.2 × £120.",
+    "label": "Stake on d",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "kept",
+      "value": 20,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "all",
+      "value": 120,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "profit",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Kelly is a fraction of the current bankroll."
+    },
+    {
+     "rung": "point",
+     "text": "d's fraction is 0.2.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.2 \\times 120 = 24$."
+    }
+   ],
+   "feedback": {
+    "correct": "£24.",
+    "generic": "Not quite right. Stake 0.2 of the bankroll you have now.",
+    "byKey": {
+     "kept": "You kept the old stake. Kelly rescales with the bankroll after every round.",
+     "all": "You staked the bankroll. One loss would end the game.",
+     "profit": "You staked 0.2 of the profit only."
+    }
+   },
+   "explain": {
+    "text": "Kelly stakes a fraction of what you have now: £24 on d, £12 each on a and b. After a loss the stakes shrink just as they grew. Keeping old stakes drifts away from the fraction."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Round two",
+   "prose": "From £120 the stakes are £12, £12, £0 and £24. This time a loses, b wins at 2 to 1, and d loses.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "bank",
+       "label": "Bankroll",
+       "values": [
+        100,
+        120,
+        null
+       ]
+      }
+     ],
+     "x": "index",
+     "money": "£",
+     "y": [
+      90,
+      130
+     ]
+    },
+    "state": {
+     "drawdown": "money",
+     "markers": [
+      {
+       "id": "m1",
+       "i": 1,
+       "label": "after round 1"
+      }
+     ]
+    }
+   },
+   "question": "What is the bankroll after round two, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 108,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£108: 120 − 12 + 24 − 24.",
+    "label": "Bankroll",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "evens",
+      "value": 96,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "fixed",
+      "value": 100,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "b at 2 to 1 wins twice its stake."
+    },
+    {
+     "rung": "point",
+     "text": "a −12, b +24, d −24.",
+     "highlight": [
+      "m1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$120 - 12 = 108$."
+    }
+   ],
+   "feedback": {
+    "correct": "£108.",
+    "generic": "Not quite right. a loses 12, b wins 24, d loses 24.",
+    "byKey": {
+     "evens": "You paid b at evens. At 2 to 1 it wins £24.",
+     "fixed": "You used the old stakes, £10, £10 and £20."
+    }
+   },
+   "explain": {
+    "text": "The round loses £12, and the bankroll falls from £120 to £108. Next round the stakes shrink to £10.80, £10.80 and £21.60. Sizing to the bankroll makes ruin impossible, though the swings are real.",
+    "canvas": {
+     "series": {
+      "bank": {
+       "values": [
+        100,
+        120,
+        108
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Sizing a board",
+   "prose": "For each bet, $f^* = p - (1 - p)/b$; skip it when $f^* \\le 0$. If the stakes total more than the cap $C$, scale every one by $C / \\sum f^* W$:\n$$\\text{stake}_i = f_i^* \\, W \\times \\min\\!\\left(1, \\frac{C}{\\sum_j f_j^* W}\\right).$$",
+   "question": "A bet at 3 to 1 with chance 0.3, on a bankroll of £120. What is its Kelly stake, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£8: (0.3 − 0.7/3) × 120.",
+    "label": "Stake",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "edge",
+      "value": 24,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "p",
+      "value": 36,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$0.7/3 = 0.2333$."
+    },
+    {
+     "rung": "point",
+     "text": "$f^* = 0.3 - 0.2333 = 0.0667$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.0667 \\times 120 = 8$."
+    }
+   ],
+   "feedback": {
+    "correct": "£8.",
+    "generic": "Not quite right. $f^* = 0.3 - 0.7/3$.",
+    "byKey": {
+     "edge": "You staked the edge, 0.2, times 120. Divide the edge by the odds.",
+     "p": "You staked $p$ of the bankroll."
+    }
+   },
+   "explain": {
+    "text": "$f^* = 1/15$, so £8 of £120. The edge is $0.3 \\times 3 - 0.7 = 0.2$, and dividing by the odds 3 gives the fraction. Here bets are sized one at a time; joint Kelly for bets settled together is a little lower."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The board in code",
+   "prose": "Code the stakes and the ledger. `run_board` restakes from the current bankroll each round, as you did by hand.",
+   "question": "Complete `board_stakes` and `run_board`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def board_stakes(bets, bankroll, cap):\n    \"\"\"bets: list of (b, p) for b-to-1 odds and win chance p.\n    Kelly stake on each, 0 without an edge, all scaled down\n    together if they total more than cap.\"\"\"\n    ...\n\n\ndef run_board(bets, outcomes, bankroll, cap):\n    \"\"\"outcomes: one list of True/False per round, one per bet.\n    Restake from the current bankroll each round.\n    Return [(start, profit, end), ...], one row a round.\"\"\"\n    ...\n",
+    "solution": "def board_stakes(bets, bankroll, cap):\n    \"\"\"bets: list of (b, p) for b-to-1 odds and win chance p.\n    Kelly stake on each, 0 without an edge, all scaled down\n    together if they total more than cap.\"\"\"\n    stakes = [max(0.0, p - (1 - p) / b) * bankroll for b, p in bets]\n    total = sum(stakes)\n    if total > cap:\n        stakes = [s * cap / total for s in stakes]\n    return stakes\n\n\ndef run_board(bets, outcomes, bankroll, cap):\n    \"\"\"outcomes: one list of True/False per round, one per bet.\n    Restake from the current bankroll each round.\n    Return [(start, profit, end), ...], one row a round.\"\"\"\n    rows = []\n    for won in outcomes:\n        stakes = board_stakes(bets, bankroll, cap)\n        profit = sum(s * b if w else -s\n                     for s, (b, p), w in zip(stakes, bets, won))\n        rows.append((bankroll, profit, bankroll + profit))\n        bankroll += profit\n    return rows\n",
+    "examples": [
+     {
+      "call": "board_stakes([(1, 0.55), (2, 0.4), (3, 0.2), (1, 0.6)], 100, 1000)",
+      "expect": "[10.0, 10.0, 0.0, 20.0]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "board_stakes([(1, 0.55), (2, 0.4), (3, 0.2), (1, 0.6)], 100, 1000)",
+      "expect": "[10.0, 10.0, 0.0, 20.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "board_stakes([(1, 0.55), (2, 0.4), (3, 0.2), (1, 0.6)], 100, 30)",
+      "expect": "[7.5, 7.5, 0.0, 15.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "board_stakes([(1, 0.55), (2, 0.4), (3, 0.2), (1, 0.6)], 120, 1000)",
+      "expect": "[12.0, 12.0, 0.0, 24.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "board_stakes([(1, 0.5)], 100, 1000)",
+      "expect": "[0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "board_stakes([(3, 0.3)], 120, 1000)",
+      "expect": "[8.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "run_board([(1, 0.55), (2, 0.4), (3, 0.2), (1, 0.6)], [[True, False, False, True]], 100, 1000)",
+      "expect": "[[100, 20.0, 120.0]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "run_board([(1, 0.55), (2, 0.4), (3, 0.2), (1, 0.6)], [[True, False, False, True], [False, True, False, False]], 100, 1000)",
+      "expect": "[[100, 20.0, 120.0], [120.0, -12.0, 108.0]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "run_board([(1, 0.55), (2, 0.4), (3, 0.2), (1, 0.6)], [[True, True, True, True]], 100, 30)",
+      "expect": "[[100, 37.5, 137.5]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "how": "Check runs 8 hidden tests. Stakes and ledger rows are compared within 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Clamp each Kelly fraction at 0 before multiplying by the bankroll."
+    },
+    {
+     "rung": "point",
+     "text": "Scale only when the total is above the cap."
+    },
+    {
+     "rung": "step",
+     "text": "In `run_board`, a win pays `stake * b`; a loss costs the stake."
+    }
+   ],
+   "feedback": {
+    "correct": "Both functions pass.",
+    "generic": "Some tests failed. Check the clamp, the cap and the payout at odds.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that each `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "The two rounds give £120 then £108, as on the screens. With the cap and every bet winning, the board makes £37.50 on £30 at risk. A zero-edge bet, evens at 0.5, gets a stake of 0."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A book under a limit",
+   "prose": "A trader runs positions sized at 10% of the desk's capital for each idea. After a bad month the capital falls from £1,000,000 to £800,000.",
+   "question": "What is the new size for one idea, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 80000,
+    "tol": {
+     "abs": 0.5
+    },
+    "accept": "£80,000: 10% of £800,000.",
+    "label": "Size",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "old",
+      "value": 100000,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "cut",
+      "value": 60000,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Size is a fraction of current capital."
+    },
+    {
+     "rung": "point",
+     "text": "10% of £800,000."
+    },
+    {
+     "rung": "step",
+     "text": "£80,000."
+    }
+   ],
+   "feedback": {
+    "correct": "£80,000.",
+    "generic": "Not quite right. Take 10% of the capital you have now.",
+    "byKey": {
+     "old": "You kept the old size. The capital fell, so the size falls with it.",
+     "cut": "You cut by the whole £200,000 loss twice over. Take 10% of £800,000."
+    }
+   },
+   "explain": {
+    "text": "Each idea shrinks from £100,000 to £80,000, as Kelly stakes shrink after a loss. Resizing keeps risk in line with what can be lost. Desks do this by rule, not by feel."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Stake each bet at $f^* = p - (1 - p)/b$ of the current bankroll, and skip bets with no edge.",
+   "When the stakes break the limit, scale them all alike: £40 capped at £30 means 0.75 of each.",
+   "Restake every round from the bankroll you have: £100, then £120, then £108."
+  ],
+  "formula": {
+   "name": "Kelly on a board",
+   "tex": "\\text{stake}_i = f_i^*\\,W \\times \\min\\left(1, \\dfrac{C}{\\sum_j f_j^* W}\\right)",
+   "note": "$W$ the bankroll, $C$ the cap on money at risk."
+  },
+  "trap": "Backing a bet for its big payout, or keeping last round's stakes after the bankroll has moved."
+ },
+ "quiz": [
+  {
+   "id": "q-zero-edge",
+   "difficulty": 2,
+   "prose": "A bet at evens wins with chance 0.5. Your bankroll is £200.",
+   "question": "What is the Kelly stake, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£0: f* = 0.5 − 0.5 = 0.",
+    "label": "Stake",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 100,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "some",
+      "value": 10,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£0.",
+    "generic": "Not quite right. With no edge, Kelly stakes nothing.",
+    "byKey": {
+     "half": "You staked the win chance. With no edge there is nothing to grow.",
+     "some": "You staked a little for fun. Any stake adds risk with no gain."
+    }
+   },
+   "explain": {
+    "text": "$f^* = 0.5 - 0.5/1 = 0$. A fair bet adds risk and no growth. Kelly skips it."
+   },
+   "tags": [
+    "betting-board",
+    "edge-case"
+   ],
+   "pace": 20
+  },
+  {
+   "id": "q-half-kelly",
+   "difficulty": 2,
+   "prose": "The board of four bets on £100, at half Kelly.",
+   "question": "What do you stake on d, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£10: half of 0.2 × £100.",
+    "label": "Stake on d",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "full",
+      "value": 20,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£10.",
+    "generic": "Not quite right. Halve the full Kelly stake of £20.",
+    "byKey": {
+     "full": "That is full Kelly. Half Kelly halves it."
+    }
+   },
+   "explain": {
+    "text": "Half Kelly stakes £5, £5, £0 and £10. It gives up a little growth for much smaller swings. Many traders prefer it because their $p$ is only an estimate."
+   },
+   "tags": [
+    "betting-board",
+    "kelly"
+   ],
+   "pace": 30
+  },
+  {
+   "id": "q-board-ev",
+   "difficulty": 3,
+   "prose": "A board on £200: evens with chance 0.6, and 4 to 1 with chance 0.25. No cap.",
+   "question": "What is the board's expected profit, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.125,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£11.13: £40 × 0.2 + £12.50 × 0.25 = 8 + 3.125.",
+    "label": "Expected profit",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 8,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "stakes",
+      "value": 52.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About £11.13.",
+    "generic": "Not quite right. Find each Kelly stake, then stake times edge.",
+    "byKey": {
+     "one": "You counted only the evens bet.",
+     "stakes": "That is the total staked."
+    }
+   },
+   "explain": {
+    "text": "Evens at 0.6: $f^* = 0.2$, stake £40, edge 0.2: £8. 4 to 1 at 0.25: $f^* = 0.0625$, stake £12.50, edge 0.25: £3.125. The total is £11.125."
+   },
+   "tags": [
+    "betting-board"
+   ],
+   "pace": 90
+  }
+ ]
+}

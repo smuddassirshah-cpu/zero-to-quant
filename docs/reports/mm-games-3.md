@@ -99,6 +99,10 @@ Games use the `trade` widget's own seeds (38, 16, 13, 10, 131), and the settleme
 - The results table shows the raw counterparty type: the prose says `scripted` is the interviewer.
 - Homework cannot read carry (follow-up 3): review and homework use the model run's fixed numbers.
 
+## Backlog
+
+8 bullets added to `docs/BACKLOG-INBOX.md` under "Raised later (mm-games level 3):".
+
 ## Proposed course.json change
 
 None.

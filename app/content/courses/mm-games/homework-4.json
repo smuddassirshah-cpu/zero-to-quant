@@ -1,0 +1,653 @@
+{
+ "id": "homework-4",
+ "course": "mm-games",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h4-find-all-arb",
+   "difficulty": 5,
+   "skills": [
+    "mg-fair",
+    "mg-quote"
+   ],
+   "tags": [
+    "contracts",
+    "arbitrage"
+   ],
+   "pace": 1500,
+   "title": "Search a family for arbitrage",
+   "prose": "Six contracts on one die are in `PAY`. A pays the face, E the face if even and F the face if odd. H pays the face if 4 or more, L if 3 or less, and U £1 always. `FAIR` quotes them all consistently; `q(...)` changes some quotes. Search every set of up to three for a sure profit.",
+   "question": "Complete `find_all_arb(contracts, quotes)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction, Fraction as Fr\nPAY = {\"A\": [1, 2, 3, 4, 5, 6], \"E\": [0, 2, 0, 4, 0, 6], \"F\": [1, 0, 3, 0, 5, 0],\n       \"H\": [0, 0, 0, 4, 5, 6], \"L\": [1, 2, 3, 0, 0, 0], \"U\": [1] * 6}\nFAIR = {\"A\": (Fr(\"3.4\"), Fr(\"3.6\")), \"E\": (Fr(\"1.9\"), Fr(\"2.1\")), \"F\": (Fr(\"1.4\"), Fr(\"1.6\")),\n        \"H\": (Fr(\"2.4\"), Fr(\"2.6\")), \"L\": (Fr(\"0.9\"), Fr(\"1.1\")), \"U\": (Fr(\"0.95\"), Fr(\"1.05\"))}\ndef q(**kw):\n    d = dict(FAIR)\n    for k, v in kw.items():\n        d[k] = (Fr(v[0]), Fr(v[1]))\n    return d\n",
+    "starter": "from itertools import combinations, product\n\n\ndef find_all_arb(contracts, quotes):\n    \"\"\"contracts: {name: [payoff on faces 1..6]};\n    quotes: {name: (bid, ask)}. Try every set of 1 to 3\n    contracts, each bought once (at the ask) or sold once\n    (at the bid). Keep those whose total payoff is the\n    same on every face and whose profit (that payoff plus\n    the cash) is above 0. Return (profit, trades) for the\n    best: highest profit, then fewest trades, then the\n    first in sorted order; trades is a sorted tuple of\n    (name, \"buy\" or \"sell\"). With none: (Fr(0), ()).\"\"\"\n    ...\n",
+    "solution": "from itertools import combinations, product\n\n\ndef find_all_arb(contracts, quotes):\n    \"\"\"contracts: {name: [payoff on faces 1..6]};\n    quotes: {name: (bid, ask)}. Try every set of 1 to 3\n    contracts, each bought once (at the ask) or sold once\n    (at the bid). Keep those whose total payoff is the\n    same on every face and whose profit (that payoff plus\n    the cash) is above 0. Return (profit, trades) for the\n    best: highest profit, then fewest trades, then the\n    first in sorted order; trades is a sorted tuple of\n    (name, \"buy\" or \"sell\"). With none: (Fr(0), ()).\"\"\"\n    best = None\n    names = sorted(quotes)\n    for k in (1, 2, 3):\n        for combo in combinations(names, k):\n            for sides in product((1, -1), repeat=k):\n                net = [sum(s * contracts[n][f] for n, s in zip(combo, sides))\n                       for f in range(6)]\n                if len(set(net)) != 1:\n                    continue\n                cash = sum(-quotes[n][1] if s > 0 else quotes[n][0]\n                           for n, s in zip(combo, sides))\n                profit = net[0] + cash\n                if profit <= 0:\n                    continue\n                trades = tuple(sorted((n, \"buy\" if s > 0 else \"sell\")\n                                      for n, s in zip(combo, sides)))\n                key = (-profit, len(trades), trades)\n                if best is None or key < best[0]:\n                    best = (key, (profit, trades))\n    return best[1] if best else (Fr(0), ())\n",
+    "examples": [
+     {
+      "call": "find_all_arb(PAY, q(U=('1.1', '1.2')))",
+      "expect": "(Fraction(1, 10), (('U', 'sell'),))",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "find_all_arb(PAY, FAIR)",
+      "expect": "(Fraction(0, 1), ())",
+      "compare": "equal"
+     },
+     {
+      "call": "find_all_arb(PAY, q(E=('2.3', '2.5')))",
+      "expect": "(Fraction(1, 10), (('A', 'buy'), ('E', 'sell'), ('F', 'sell')))",
+      "compare": "equal"
+     },
+     {
+      "call": "find_all_arb(PAY, q(A=('3.0', '3.2')))",
+      "expect": "(Fraction(1, 10), (('A', 'buy'), ('E', 'sell'), ('F', 'sell')))",
+      "compare": "equal"
+     },
+     {
+      "call": "find_all_arb(PAY, q(U=('1.1', '1.2')))",
+      "expect": "(Fraction(1, 10), (('U', 'sell'),))",
+      "compare": "equal"
+     },
+     {
+      "call": "find_all_arb(PAY, q(H=('2.2', '2.3'), L=('0.8', '0.9')))",
+      "expect": "(Fraction(1, 5), (('A', 'sell'), ('H', 'buy'), ('L', 'buy')))",
+      "compare": "equal"
+     },
+     {
+      "call": "find_all_arb({'A': PAY['A'], 'E': PAY['E']}, {'A': FAIR['A'], 'E': FAIR['E']})",
+      "expect": "(Fraction(0, 1), ())",
+      "compare": "equal"
+     },
+     {
+      "call": "find_all_arb(PAY, q(A=('3.7', '3.8'), U=('0.9', '0.95')))",
+      "expect": "(Fraction(1, 20), (('U', 'buy'),))",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests: five planted arbitrages and two consistent sets with none. Profits are exact Fractions."
+   },
+   "feedback": {
+    "correct": "The search finds every planted arbitrage and none in a fair set.",
+    "generic": "Some tests failed. Check that the payoff is constant on every face, and the tie-break.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "A cheap A is bought against selling E and F, for 0.10. Cheap H and L are bought against selling A, for 0.20. A fair set returns nothing, however hard you search."
+   }
+  },
+  {
+   "id": "h4-option-book",
+   "difficulty": 4,
+   "skills": [
+    "mg-quote",
+    "mg-risk"
+   ],
+   "tags": [
+    "options-game"
+   ],
+   "pace": 900,
+   "title": "An option book on two dice",
+   "prose": "Code the fair call, put and straddle at each strike on the two-dice sum, with the parity check.",
+   "question": "Complete `option_book(strikes)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from fractions import Fraction\n\n\ndef option_book(strikes):\n    \"\"\"For each strike K, return (K, call, put, straddle,\n    parity_ok) on the sum of two dice: exact Fractions, and\n    parity_ok True when call - put == 7 - K.\"\"\"\n    ...\n",
+    "solution": "from fractions import Fraction\n\n\ndef option_book(strikes):\n    \"\"\"For each strike K, return (K, call, put, straddle,\n    parity_ok) on the sum of two dice: exact Fractions, and\n    parity_ok True when call - put == 7 - K.\"\"\"\n    sums = [a + b for a in range(1, 7) for b in range(1, 7)]\n    out = []\n    for k in strikes:\n        c = Fraction(sum(max(s - k, 0) for s in sums), 36)\n        p = Fraction(sum(max(k - s, 0) for s in sums), 36)\n        out.append((k, c, p, c + p, c - p == 7 - k))\n    return out\n",
+    "examples": [
+     {
+      "call": "option_book([7])",
+      "expect": "[(7, Fraction(35, 36), Fraction(35, 36), Fraction(35, 18), True)]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "option_book([7])",
+      "expect": "[(7, Fraction(35, 36), Fraction(35, 36), Fraction(35, 18), True)]",
+      "compare": "equal"
+     },
+     {
+      "call": "option_book([8])",
+      "expect": "[(8, Fraction(5, 9), Fraction(14, 9), Fraction(19, 9), True)]",
+      "compare": "equal"
+     },
+     {
+      "call": "option_book([2, 12])",
+      "expect": "[(2, Fraction(5), Fraction(0), Fraction(5), True), (12, Fraction(0), Fraction(5), Fraction(5), True)]",
+      "compare": "equal"
+     },
+     {
+      "call": "option_book([5, 9])",
+      "expect": "[(5, Fraction(41, 18), Fraction(5, 18), Fraction(23, 9), True), (9, Fraction(5, 18), Fraction(41, 18), Fraction(23, 9), True)]",
+      "compare": "equal"
+     },
+     {
+      "call": "all(row[4] for row in option_book(range(1, 14)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "min(option_book(range(2, 13)), key=lambda r: r[3])[0]",
+      "expect": "7",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests. Values are exact Fractions; the cheapest straddle must be at strike 7."
+   },
+   "feedback": {
+    "correct": "The book is right and parity holds at every strike.",
+    "generic": "Some tests failed. Enumerate all 36 rolls for each strike.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "Parity holds at every strike because $(S - K)^+ - (K - S)^+ = S - K$ on every roll. The straddle is cheapest at 7, the centre: 35/18. At strikes 2 and 12 one side is worth 5 and the other 0."
+   }
+  },
+  {
+   "id": "h4-arb-checks",
+   "difficulty": 3,
+   "skills": [
+    "mg-quote"
+   ],
+   "tags": [
+    "arbitrage"
+   ],
+   "pace": 60,
+   "title": "Checking a set of quotes",
+   "prose": "An interviewer shows quotes on contracts tied to one die. They ask whether you can make money for sure.",
+   "question": "Put the checks in order, and leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "pay",
+      "text": "Write every contract's payoff on each face."
+     },
+     {
+      "id": "combo",
+      "text": "Find a combination whose payoffs cancel, or are equal, on every face."
+     },
+     {
+      "id": "cash",
+      "text": "Price it at the quotes: buy at asks, sell at bids. Is the cash positive?"
+     },
+     {
+      "id": "size",
+      "text": "Check the sizes shown at each price, and trade the smallest."
+     },
+     {
+      "id": "trade",
+      "text": "Trade the biggest-looking gap first, then check the payoffs.",
+      "why": "Trading before checking can leave a leg open. A gap is only an arbitrage once the payoffs cancel."
+     }
+    ],
+    "answer": [
+     "pay",
+     "combo",
+     "cash",
+     "size"
+    ],
+    "distractors": [
+     "trade"
+    ]
+   },
+   "feedback": {
+    "correct": "Payoffs, combination, cash, size.",
+    "generic": "Not quite right. The payoffs come first; the size comes last.",
+    "byKey": {
+     "trade": "Trading before checking can leave a leg open. A gap is only an arbitrage once the payoffs cancel.",
+     "left-out": "Every check belongs except trading first."
+    }
+   },
+   "explain": {
+    "text": "The payoff table shows which combinations cancel. Only then does the cash say whether there is a profit. The size at each price says how much of it you can take."
+   }
+  },
+  {
+   "id": "h4-mock-game",
+   "difficulty": 5,
+   "skills": [
+    "mg-quote",
+    "mg-risk"
+   ],
+   "tags": [
+    "options-game",
+    "mock-round"
+   ],
+   "pace": 360,
+   "title": "Mock round, part 1: play",
+   "prose": "The mock round. You make the market in the 7-call on two dice, size 1 or 2, width 0.2 to 0.4, limit 4. Skew 0.05 per call held. The interviewer is listed as `scripted`; the first die turns before turn 3.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       0.7,
+       10
+      ],
+      [
+       0.6,
+       10
+      ],
+      [
+       0.5,
+       10
+      ]
+     ],
+     "asks": [
+      [
+       1.3,
+       10
+      ],
+      [
+       1.4,
+       10
+      ],
+      [
+       1.5,
+       10
+      ]
+     ],
+     "depth": 3,
+     "currency": "£",
+     "dp": 1,
+     "showMid": true
+    },
+    "state": {}
+   },
+   "question": "Finish the five turns with a P&L of at least £0.80 and no rule breaks.",
+   "widget": {
+    "kind": "trade",
+    "seed": 4,
+    "turns": 5,
+    "fair": 0.9722,
+    "value": 0,
+    "tick": 0.1,
+    "range": [
+     0,
+     3
+    ],
+    "currency": "£",
+    "size": {
+     "min": 1,
+     "max": 2,
+     "start": 1
+    },
+    "limit": 4,
+    "spread": {
+     "min": 0.2,
+     "max": 0.4
+    },
+    "quote": {
+     "bid": 0.9,
+     "ask": 1.1,
+     "size": 1
+    },
+    "counterparty": {
+     "type": "scripted",
+     "trades": [
+      {
+       "act": "lift",
+       "size": 2,
+       "price": 1.1
+      },
+      {
+       "act": "none"
+      },
+      {
+       "act": "none"
+      },
+      {
+       "act": "hit",
+       "size": 2,
+       "price": 0.1
+      },
+      {
+       "act": "none"
+      }
+     ]
+    },
+    "schedule": [
+     {
+      "turn": 1,
+      "text": "A market in the 7-call on the sum of two dice: it pays $(S - 7)^+$. Fair is $35/36 = 0.97$."
+     },
+     {
+      "turn": 3,
+      "text": "The first die shows 2. The call now pays only if the second die is 6: fair $1/6 = 0.17$.",
+      "fair": 0.1667
+     }
+    ],
+    "benchmark": 0.8,
+    "maxBreaks": 0,
+    "strategy": [
+     {
+      "bid": 0.9,
+      "ask": 1.1,
+      "size": 2
+     },
+     {
+      "bid": 1.0,
+      "ask": 1.2,
+      "size": 2
+     },
+     {
+      "bid": 0.2,
+      "ask": 0.4,
+      "size": 2
+     },
+     {
+      "bid": 0.2,
+      "ask": 0.4,
+      "size": 2
+     },
+     {
+      "bid": 0.1,
+      "ask": 0.3,
+      "size": 2
+     }
+    ],
+    "label": "Your quote"
+   },
+   "feedback": {
+    "correct": "You sold dear and bought back cheap after the die.",
+    "generic": "Not quite right. Move to the new fair value when the die shows, and trade size 2.",
+    "byKey": {
+     "low": "Your P&L is under £0.80. After the 2 the call is worth 1/6; a bid near 0.9 buys it back far too dear.",
+     "crossed": "Your bid met or passed your ask, so nobody traded.",
+     "limit": "Your size took you past 4 calls on one side.",
+     "spread": "Your width left 0.2 to 0.4."
+    }
+   },
+   "explain": {
+    "text": "The model sold 2 at 1.1, then, after the 2, bought 2 back at 0.2. Flat, it made $2.20 - 0.40 = +£1.80$. The stale 0.9 bid would have bought back at 0.9: +£0.40."
+   }
+  },
+  {
+   "id": "h4-mock-aloud",
+   "difficulty": 5,
+   "skills": [
+    "mg-quote",
+    "mg-risk"
+   ],
+   "tags": [
+    "options-game",
+    "mock-round"
+   ],
+   "pace": 900,
+   "title": "Mock round, part 2: say it",
+   "kind": "longform",
+   "prompt": "Narrate the mock round aloud, timed: about ten minutes, kept with a watch. Use the model run. Sell 2 calls at 1.1, then buy 2 back at 0.2 after the first die shows 2.\n\nOn turn 2 the interviewer adds a parity break. The 7-put is 0.7 to 0.8 and the sum 6.9 to 7.1. Say what trade it allows and what it locks.\n\nSay every fair value with its arithmetic, and the ledger after each trade. Give the worst outcome for your position and the final P&L. Then write it out and mark it.",
+   "model": "**Before the first quote.** \"The 7-call pays the sum less 7 when the sum is above 7. Sums 8 to 12 pay 1 to 5 on 5, 4, 3, 2 and 1 rolls. That is 35 over 36, so fair is 0.97. I quote 0.9 at 1.1 for 2, width 0.2.\"\n\n**Turn 1: they buy 2 at 1.1.** \"Short 2 calls at 1.1, cash £2.20. At fair 0.97 I am up 2 × 0.13 = £0.26. Short calls lose on high sums: the worst is 12, where I owe 2 × 5 = 10, a loss of £7.80. I skew up 0.1 for the short 2: 1.0 at 1.2.\"\n\n**Turn 2: the parity offer.** The interviewer also quotes the 7-put at 0.7 to 0.8 and the sum at 6.9 to 7.1. \"Parity says call − put = 7 − 7 = 0. A put at 0.8 plus a sum at 7.1, less the 7 they pay together, is a call for 0.9. I sold calls at 1.1, so buying that for 0.9 locks 0.20 a set. On my 2 that is £0.40, whatever the dice. This game trades only the call, so I note it and carry on.\"\n\n**The first die shows 2.** \"Now the call pays only if the second die is 6, and then 1: fair 1/6 = 0.17. Short 2 at 1.1, I am up 2 × (1.1 − 0.17) = £1.87. Centre 0.17 + 0.1 = 0.27, call it 0.3: 0.2 at 0.4.\"\n\n**Turn 4: they sell 2 at 0.2.** \"I buy back 2 at 0.2. Flat now, with cash 2.20 − 0.40 = £1.80 locked. Centre 0.17: 0.1 at 0.3.\"\n\n**Settlement.** The second die is 3, the sum 5, so the call pays 0. \"Flat, so the P&L is the cash: +£1.80. Had I stayed short and the second die been 6, I would have owed 2 × 1 = 2.\"\n\n**Review.** \"The edge came from updating. I sold at 1.1 a call worth 0.97, and bought it back at 0.2 for 0.17. The parity gap was worth 0.20 a set. Every number had its reason, and I said the worst case before it could happen.\" ",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Fair values with arithmetic: 35/36 before the die, 1/6 after the 2."
+    },
+    {
+     "points": 2,
+     "text": "Finds the parity trade: put at 0.8 and sum at 7.1 against the call at 1.1, for 0.20 a set."
+    },
+    {
+     "points": 2,
+     "text": "States the ledger after each trade: short 2, cash £2.20; then flat, cash £1.80."
+    },
+    {
+     "points": 1,
+     "text": "Names the worst case for the short calls: a sum of 12 owes 10, a loss of £7.80."
+    },
+    {
+     "points": 1,
+     "text": "Moves the quote after the die and after each trade, with the skew."
+    },
+    {
+     "points": 1,
+     "text": "States the final P&L, +£1.80, and reviews where the edge came from."
+    },
+    {
+     "points": 1,
+     "text": "Speaks with no silent working."
+    }
+   ]
+  },
+  {
+   "id": "h4-fair-call",
+   "difficulty": 3,
+   "skills": [
+    "mg-quote"
+   ],
+   "tags": [
+    "options-game"
+   ],
+   "pace": 45,
+   "prose": "The mock round's 7-call on two dice, before any die turns.",
+   "question": "What is it worth? Give 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9722,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "35/36: (5 + 8 + 9 + 8 + 5)/36.",
+    "label": "Value",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "chance",
+      "value": 0.4167,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "35/36, about 0.9722.",
+    "generic": "Not quite right. Average the payoff over 36 rolls.",
+    "byKey": {
+     "zero": "You priced the payoff of the average sum.",
+     "chance": "That is the chance it pays."
+    }
+   },
+   "explain": {
+    "text": "Payoffs 1 to 5 on 5, 4, 3, 2 and 1 rolls total 35. Over 36 rolls the call is worth 0.9722. It is the average of the payoff, not the payoff of the average."
+   }
+  },
+  {
+   "id": "h4-fair-after",
+   "difficulty": 3,
+   "skills": [
+    "mg-quote"
+   ],
+   "tags": [
+    "options-game"
+   ],
+   "pace": 45,
+   "prose": "In the mock round the first die shows 2.",
+   "question": "What is the 7-call worth now? Give 4 places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1667,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1/6: only a second 6 pays, and it pays 1.",
+    "label": "Value",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "before",
+      "value": 0.9722,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1/6.",
+    "generic": "Not quite right. With a 2 shown, the call pays $D - 5$ when $D$ is 6.",
+    "byKey": {
+     "zero": "A second die of 6 makes 8, which pays 1.",
+     "before": "That is the value before the die."
+    }
+   },
+   "explain": {
+    "text": "With 2 shown the sum is above 7 only if the second die is 6, and then it pays 1. That is worth $1/6$. A low first die takes most of the call's value away."
+   }
+  },
+  {
+   "id": "h4-parity-profit",
+   "difficulty": 3,
+   "skills": [
+    "mg-quote"
+   ],
+   "tags": [
+    "options-game",
+    "arbitrage"
+   ],
+   "pace": 60,
+   "prose": "Quotes: the 7-call 1.1 to 1.2, the 7-put 0.7 to 0.8, the sum 6.9 to 7.1.",
+   "question": "Sell the call, buy the put and buy the sum. What is locked per set, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£0.20: the position pays 7 and costs 0.8 + 7.1 − 1.1 = 6.8.",
+    "label": "Profit",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "cost",
+      "value": 6.8,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "rev",
+      "value": -0.6,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£0.20.",
+    "generic": "Not quite right. The position pays 7; subtract its cost.",
+    "byKey": {
+     "cost": "That is the cost. Subtract it from 7.",
+     "rev": "You took the reverse trade, which loses."
+    }
+   },
+   "explain": {
+    "text": "Short call and long put pay $7 - S$, and the sum adds $S$: 7 on every roll. The cost is 6.8, so £0.20 is locked. The call was dear against the put."
+   }
+  },
+  {
+   "id": "h4-mock-pnl",
+   "difficulty": 4,
+   "skills": [
+    "mg-quote",
+    "mg-risk"
+   ],
+   "tags": [
+    "options-game",
+    "ledger-pnl"
+   ],
+   "pace": 60,
+   "prose": "The mock round's model run sold 2 calls at 1.1, then bought 2 back at 0.2. The dice were 2 and 3.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Turn",
+      "Trade",
+      "Price",
+      "Position"
+     ],
+     "rows": [
+      [
+       "1",
+       "Sell 2",
+       "1.1",
+       "−2"
+      ],
+      [
+       "4",
+       "Buy 2",
+       "0.2",
+       "0"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "The call pays $(5 - 7)^+ = 0$"
+    }
+   },
+   "question": "What is the model run's final P&L, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.8,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "+£1.80: 2.20 − 0.40.",
+    "label": "P&L",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "sale",
+      "value": 2.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "+£1.80.",
+    "generic": "Not quite right. Cash in 2.20, cash out 0.40.",
+    "byKey": {
+     "sale": "You left out the buy-back at 0.2.",
+     "one": "That is for one call. The trades were for 2."
+    }
+   },
+   "explain": {
+    "text": "The sale brought in £2.20 and the buy-back cost £0.40, so the model is flat with +£1.80. The call paid 0, but the position was already closed. The stale 0.9 bid would have made only £0.40."
+   }
+  }
+ ]
+}
