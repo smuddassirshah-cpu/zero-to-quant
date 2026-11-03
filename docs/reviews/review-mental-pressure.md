@@ -101,3 +101,56 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Code: all 22 solutions pass every hidden test and example in CPython; no starter passes every test; every playthrough passes at 390 px with Python loaded.
 - No exclamation marks, em-dashes, `$` amounts or firm names; money is £ throughout; "Zetamac" and "reported" framing as the briefs require.
 - Level 4 (l13 to l17, review-4, homework-4) has no voice-scan hits.
+
+## Fix pass
+
+I recomputed every corrected number in Python (fractions; the engine's `within` rule for each band) before writing it; scripts are in the scratchpad folder `fix-mental-pressure/` (`fix1.py` to `fix5.py`, `fix_opts.py`, `fouropt2.py`). After the edits: `node tools/validate.mjs` 0 errors; `voice-scan.py --summary` reports 0 and 0 (saved over `docs/reviews/voice-3.3-mental-pressure.txt`); the reader's `tolscan.py` finds no overlap; `fouropt.py` re-keys all 120 four-option rows with no issue and finds 0 times-ten or equal-slip rows; `codecheck_all.py` passes every solution and fails every starter; all 17 lessons and 8 sets play green with and without `--mobile` (`--local-cdn`).
+
+Status: fixed 78, disputed 0, deferred 0. Where a fix differs from the proposal, the line says why.
+
+Graded answers changed: two keys (review-2 r-root-120 now 11.0; homework-2 drill row 12 now √0.6 = 0.7746) and one band tightened (l8 screens[2], tol 0.05 to 0.01). No option letter changed.
+
+### Errors (5 fixed)
+
+1. review-2 r-root-120: fixed as proposed. `answer: 11.0, tol 0.05` accepts 10.95 to 11.05, so 11, 10.95, 10.955 and 10.954 pass; 10.909 (and 10.9) now reach `no-double`.
+2. l6 screens[10] row 6: fixed, "The size of the fall that undoes +25%", key 0.2 kept.
+3. l2 screens[10] explain: fixed, "Nine of the fifteen had a shortcut and six needed cross multiplication." (9 hint rows; 23 × 14, 56 × 27, 72 × 18, 49 × 62, 30 × 47, 76 × 34 cross multiply.)
+4. l4 screens[10] explain: fixed, "Seven products, five quotients and three known fractions." (7 + 5 + 3 = 15 rows.)
+5. homework-2 model section 2: fixed, "about £329,700 − £9,900 = **£319,800**" (329,700 − 9,900 = 319,800).
+
+### Warnings (12 fixed)
+
+1. tags: fixed. Every quiz item of l1 to l12, every item of review-1 and homework-1, and the l2 to l4 drills now carry one family. Reused course names where one fits (`fraction-compare`, `fraction-gap`, `percent-chain`, `percent-reverse`, `percent-points`, `estimate-product`, `sqrt-newton`, `checkpoints`, `skip-budget`, `guess-value`, `sequence-differences`, `sequence-woven`, `sequences`, `word-time`, `word-filled`, `net-score`, `error-sort`, `drill-mixed`); level 1 had none, so it uses the proposed `pace-score`, `cross-multiply`, `division`, `decimal-places`, `drill-cross-multiply`, `drill-division`, `drill-decimal-places`, plus `word-problem`, `code-pace-score` and `code-error-report`.
+2. pace: fixed. Every quiz, review and homework item and every drill screen now has `pace`. Drills copy their stated target (l2 120, l3 96, l4 90, l5 48, l6 72, l7 60, l8 80, l9 120, l10 96, l11 100, l12 120 a block, l14 90, homework-1 120, homework-2 120, homework-3 120 and 180, homework-4 180 for ranking). Items use a prose target where one is stated (review-2 4 s, review-3 8 s, review-4 30 s and 5 s an event), else 8 to 20 s for one-step arithmetic, 20 to 60 s for ranking and multi-step items, 120 s for the Bayes items (l15 quiz 2, review-4 items[4]), 600 to 1200 s for code and long-form. Review paces sum well inside each `timed` clock.
+3. four-option tables: fixed by targeted swaps, not regeneration. In each of the 48 rows one distractor was replaced by another near miss (a slipped digit, a dropped step or the reverse operation), keeping the key value and letter. `fouropt.py` now finds 0 rows with the key between a times-ten pair or two equal slips. The l12 candidate review is unchanged, as it reads only seconds and marks. The l12 paper is therefore seed 80 with 31 hand-swapped distractors; `docs/reports/mental-pressure-3.md` is not mine to edit.
+4. shuffle: fixed. `shuffle: true` on l14 q-two-sd-move and l17 q-slow-right; l15 screens[5] options put in letter order A, B, C, D (shuffling would scramble the letters the prose names).
+5. non-breaking spaces: fixed. In l17 screens[2] to [4] and homework-4 items[2] each bold letter is joined to its value by U+00A0, and each value to its following "·"; l17 section A questions also join their operators. l9, l12 and homework-3 rows now carry the same space before "·".
+6. l8 and homework-2 roots: fixed. √150 and √60 stay and the trap is named: the byKey lines say "12.25 is a little high, so round down: 12.2" and "7.75, a little high; exact 7.746, so 7.7", and screen 4's explain now reads "One place is usually safe, but a step ending in 5 can round the wrong way: 12.25 gives 12.2." homework-2's √0.2 became √0.6 (step 0.775, true 0.7746, both 0.8 to one place).
+7. review-2 r-gap-5-6-4-5: fixed. `tops-bottoms` removed; `count` now says "1 is the cross-product gap, or $\tfrac{5 - 4}{6 - 5}$. Divide the gap by 30."
+8. l2, l3, l4 unused cell slips: fixed differently. The validator refuses a table cell's `wrong` id as a `byKey` key ("the widget cannot return the key"), although `table.js` returns it, so I removed the three cell `wrong` entries and put the slip into each cell's own line, which now fires: "Take off $2^2 = 4$, not 2.", "then divide by 100: 54, not 5,400.", "Count with 100 before you trim." The validator gap is an engine item for the inbox.
+9. l12 screens[5]: fixed, "A lesson cannot score your own answers net, so we score the candidate by hand."
+10. homework-3 model section 5: fixed, "So I guess only after removing two; with one option removed, a guess costs a third of a mark." ($\tfrac13 - \tfrac23 = -\tfrac13$.)
+11. l10 screens[0]: fixed, "About one question in ten of the test asks for the next term" (8 sequences in l12's 80).
+12. homework-4 h-drill-ranking: fixed, `pace: 180`, prose "about 30 seconds a pair, 3 minutes in all", and the correct line "Note your time against 3 minutes."
+
+### Notes (15 fixed)
+
+1. l14 screens[10]: fixed, `pace: 90`, prose "Target: about 90 seconds in all.", correct line "against 90 seconds".
+2. l14 q-twelve-rolls: fixed, "Roughly what is the chance of at least one six?"; accept "0.89 (exactly 0.8878); 0.86 from $1 - e^{-2}$ is close enough." ($1 - (5/6)^{12} = 0.8878$; $1 - e^{-2} = 0.8647$.)
+3. review-4 r-twenty-tries: fixed by asking "roughly", since the explain accepts the $1 - 1/e = 0.632$ benchmark; accept "0.64: $1 - 0.95^{20} = 0.6415$; 0.63 from $1 - 1/e$ is close enough."
+4. l8 screens[2]: fixed, tol 0.01 (accepts 11.40 and 11.41; the step gives 11.409).
+5. l8 q-root-80: fixed, `bracket` tol 0.005 (band 8.995 to 9.005, clear of the key's 8.8943 to 8.9943).
+6. l4 screens[7] `whole`: fixed, "You trimmed 30 to 3, then gave it only 0.5’s one place."
+7. l4 screens[10] hint: fixed, "Eighths and sixths come from the known decimals on screen 5."
+8. l3 screens[10] explain: fixed, "Rows 5 and 6 are the edge case".
+9. l17 screens[2] feedback: fixed, and widened: multiplication rows now say "an addition" (12 + 20 = 32 and so on), division rows "a subtraction" (570 − 15 = 555, 480 − 12 = 468, 246 − 6 = 240), percentage rows "the other 55%", "the other 25%", "the other 40%"; the explain and point hint say "the wrong operation". Addition and subtraction rows keep "the reverse operation".
+10. homework-4 r4c1: fixed, "$64 \times (0.9 - 0.1) = 51.2$".
+11. review-1: fixed, `"timed": { "seconds": 360, "lockAtZero": false }`.
+12. `math.isclose`: fixed, in backticks in homework-1, homework-2, l6, l8, l9 and l11.
+13. l12 option wrap: fixed with a non-breaking space before each "·", so a letter, its value and its dot stay on one line.
+14. homework-2 `Full`: fixed, `__mul__` returns `Full` for an int argument, so `a * 1 * b` raises; the solution still scores 20 of 20 and the starter fails.
+15. l14 and l15 natural-order choices: no change needed, as the review says.
+
+### Voice-scan notes (46 fixed)
+
+All 45 long sentences are split or shortened, mostly as proposed; l2 screens[5] explain is now three sentences. Departures: homework-1 items[0] explain keeps three sentences by joining the list to the first ("every move of the level: left to right, cross multiplication, shortcuts, estimate and correct, moving the point"); l9 screens[4] explain reads "Each row took one move, such as left to right, a split, a moved point, a denominator or a difference" to keep the sequences row; homework-3 items[3].how now says "five by ratios", because 5 of its 13 tests are ratios (it said four). Display maths now follows a full stop in l1, l2, l3, l4, l7 and l8 generalise prose.
