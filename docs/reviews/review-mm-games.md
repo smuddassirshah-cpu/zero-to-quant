@@ -76,3 +76,60 @@ KNOWN_ISSUES records this debt (mm-games L1, l4-fermi). Three of the six are a d
 - app/content/courses/mm-games/l3-how-wide.json | summary.ideas[0] | note | 21 words. | "A range of fair value ± k sd holds a share set by k. On two dice, 5 to 9 holds 2/3."
 - app/content/courses/mm-games/l4-fermi.json | screens[7] prose | note | 24 words (the display has no full stop). | "Logs turn a product into a sum. $$\ln Q = \ln f_1 + \ln f_2 + \ln f_3.$$ If factor $i$ is good to a factor $r_i$, the total is good to about $r_1 r_2 r_3$."
 - app/content/courses/mm-games/l4-fermi.json | quiz[1] prose | note | 24 words. | "A Fermi estimate has four factors. Two are good to a factor of 2, one to a factor of 3, and one is exact."
+
+## Fix pass
+
+I recomputed every corrected number before writing it (Python: `Fraction`s, exhaustive dice enumeration, `random.Random` simulations run twice with `randint` and `randrange`). The two trade games whose text changed (l13 `screens[1]`, homework-3 `items[4]`) were replayed from seed through `app/js/engine/widgets/trade.js` under node: the l13 strategy still ends +£12.50, short 1, cash +£27.50, with its 16.5 bid unfilled on turn 3. Size 2 breaks the limit on every turn after reaching short 2 or long 2, and not before. No trade game was edited. `node tools/validate.mjs`: 0 errors. `voice-scan.py --summary`: 0 long sentences and 0 long explanations (saved over `docs/reviews/voice-3.3-mm-games.txt`). All 18 lessons and review-1, review-2, homework-1, homework-2 and homework-3 play green with `--local-cdn`, with and without `--mobile`. No graded answer changed.
+
+Status: fixed 36, disputed 0, deferred 0. Where a fix differs from the proposal, the line says why.
+
+### Level 1 (7 fixed)
+
+1. l1 screens[11] firm name: fixed, "*Probability and Markets*, a free guide written by a trading firm, describes rounds like this."
+2. Level 1 quiz tags and pace (13 items): fixed, using tags already in the course. `q-500-pages` digit-count 60 s, `q-twelve-of-twenty` calibration 30, `q-four-board` chess-squares 60, `q-seconds` calibration 45, `q-first-six` dice-ev 30, `q-smaller` dice-ev 90, `q-four-dice` dice-sd 45, `q-three-nine-twelve` coverage 90, `q-one-die` coverage 20, `q-width-four` coverage 45, `q-lse-minutes` fermi 45, `q-mixed-factors` fermi-error 45, `q-heartbeats` fermi 30.
+3. review-1 and homework-1 pace (19 items): fixed. Numeric and choice items 30 to 120 s, `h-answer-order` 60, `h-mock-opening` 600, code items 1500 (`h-dice-market`) and 900 (`h-calibration-score`).
+4. l1 screens[5] `narrow` why: fixed, "It looks precise, but it misses the true 8,784." (shorter than the proposal, which repeated "guess").
+5. l4 screens[3] slug: fixed, "the trick from Mental Maths Under Pressure, lesson 7" (that course's name in its `course.json`; its l7 is estimating products).
+6. review-1 `r-abs-diff` seed: fixed by stating the seed. "A simulation of 200,000 rolls with `random.Random(1)` gives 1.945" (recomputed: 1.9449; exact 35/18 = 1.9444). The same seed is now named in `r-max-three` (4.958, recomputed 4.9576) and homework-1 `h-distinct-faces` (2.528, recomputed 2.5280; the old 2.527 did not reproduce with seed 1).
+7. review-1 `r-coins-mile` option `precise`: fixed, "69,565.2 coins." ($160{,}000 / 2.3 = 69{,}565.217$).
+
+### Level 2 (11 fixed)
+
+8. l9 screens[4] explain: fixed, "as lesson 7 showed."
+9. l8 `q-alpha-up` byKey `added`: fixed as proposed (10 + 0.4 = 10.4; answer 0.4 × 10 = 4).
+10. review-2 `r-fresh-vs-shared` byKey `seven`: fixed, "You took the shared deck's mean as 6. It is $351/51$, so the gap is $7 - 351/51 = 2/17$." (364 − 13 = 351 over 51 cards; 7 − 6 = 1 is the stored slip.)
+11. l8 screens[2] cell wrongs: fixed by a workaround. The validator rejects a cell's own `wrong[]` id in `byKey` (BACKLOG-INBOX, table widget keys), so the two cell `wrong[]` entries were removed and the lines key on the cells: `r0c1` "Faces 1 and 6 each land 0.5 outside this quote. Count both sides, then divide by 6." and `r2c1` "Weight each face by how far outside it lands: 2, 1, 1 and 2. Counting the trading faces gives 4/6 instead." Rechecked: 1/6, 1/12 one-sided, 1 and 4/6.
+12. l8 screens[4] `full`: fixed, keyed on cells `r1c2` and `r2c2` for the same validator reason. The proposed wording is wrong for the stored values: 1.1667 = 1.5 − 1/3 and 0.3333 = 1 − 2/3 halve neither part (halving only the loss would give 0.4167). The lines say "Halve both parts, since each kind of trader is half the flow. That gives $0.75 - \tfrac16$." (and $0.5 - \tfrac13$).
+13. l6 screens[1]: fixed, `"shuffle": true`.
+14. l7 screens[1]: fixed, `"shuffle": true`.
+15. l6 screens[7] explain: fixed as proposed. $\sqrt{35/12} = 1.7078$; 100 plays have sd £17.08, one play at 100 times the size £170.78, edge £50 either way.
+16. l7 screens[10] explain: fixed, "`skewed_quote` is the rule in one line, and `quote_path` reuses it after every trade. So the four trades give the positions and bids you filled in." The screen 3 table asks for positions as well as bids; merging kept the explanation at three sentences.
+17. l5 and l7 screens[10] `how`: fixed, `` `math.isclose` ``.
+18. homework-2 code items: fixed, pace 1500 (`h-play-engine`) and 900 (`h-zero-profit`).
+
+### Level 3 (5 fixed)
+
+19. l10 screens[11] `conviction`: fixed. A numeric `wrong[]` has no `why`, so only the byKey changed: "You added the two traders' counts, 50 and 200. Each has its own £40,000 of risk, so $40{,}000 / 800 = 50$."
+20. l12 screens[6]: fixed. The prose adds "You quote with half-width 1 and skew 0.25 a lot.", and the explain ends "A half-width of 1 then gives 12.5 at 14.5." (13 + 2 × 0.25 = 13.5, ± 1.)
+21. l13 screens[1] explain: fixed, "The model sold 1 at 23, and its 16.5 bid missed the interviewer's sale at 19 after the 4." (replayed above).
+22. l13 screens[1] and homework-3 items[4] byKey `limit`: fixed, "A quote was larger than your room on one side. Once you are short or long 2, a size of 2 breaks the limit of 3." Replayed: short 2 after turn 1 breaks on turns 2 to 8, long 2 after turn 3 breaks on turn 4, homework-3 at size 2 throughout breaks on turns 2 to 8.
+23. l11 screens[10] explain: fixed, "A desk that is short calls does the same with shares: it buys the calls' delta."
+
+### Level 4 (7 fixed)
+
+24. l16 screens[2] `same` why: fixed, "E and F each pay A on half the faces and 0 on the rest. So each is worth less than A." There was no `same` byKey line to change.
+25. l18 screens[11] `cut`: fixed, byKey "You cut the size by 40%, twice the 20% fall. Take 10% of £800,000." (£100,000 × 0.6 = £60,000; numeric wrongs carry no `why`.)
+26. l14 screens[9] tolerances: fixed, `width` and `noweight` at 0.4.
+27. l17 screens[9] explain: fixed, "Any gap is a trade, as the quotes that broke parity showed." (screen 6 is titled "Quotes that break parity").
+28. l15 `q-fx` unit: fixed, `"unit": "£"` (1.30 × 150 × 0.0052 = 1.014).
+29. l18 screens[0] caption: fixed, "Odds of 2 to 1 pay £2 for each £1 staked".
+30. Five-column tables: fixed. The 390 px screenshots (`--shots --mobile`) showed l13 screens[4] and l10 screens[3] fitting without scrolling. l14 screens[4] wrapped "Holds 25?" and its cells onto three lines, and l18 wrapped two headers. Headers now read "Fair" (l13 screens[4] and [6]), "Hit?" (l14 screens[4]), and "Chance" and "Stake £" (l18 screens[3] and [6]). l16 screens[3] already had short headers and is unchanged.
+
+### Voice (6 fixed)
+
+31. homework-1 items[7] prose: fixed as proposed.
+32. l1 screens[7] prose: fixed. A full stop now ends the sentence before the display, one ends the display, and the last sentence reads "and the range is its spread."
+33. l3 screens[8] prose: fixed in the same way.
+34. l3 summary.ideas[0]: fixed as proposed.
+35. l4 screens[7] prose: fixed in the same way.
+36. l4 quiz[1] prose: fixed as proposed.
