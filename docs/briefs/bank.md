@@ -61,7 +61,7 @@ A **group** is the file prefix. A **family** is an item's first tag, and it reus
 
 Which course tags map to which bank group:
 
-- **probability**: the `puzzles` tags (`ants`, `bayes-in-a-minute`, `broken-stick`, `buffon`, `cards-and-colours`, `duels`, `kelly`, `largest-of-several`, `meeting`, `ruin-in-interviews`, `urns`, `when-to-stop`, `who-wins`, and the rest in the table), plus `dice-ev` (carried by `mm-games` items). Five families have no course tag yet because `puzzles` l1 to l5 were tagged by lesson only in part: `coupon-collector`, `at-least-one`, `derangements`, `waiting-for-hh`, `indicator-tricks`. They are bank-only families here; the bank sample already uses the first three. Propose tagging the matching `puzzles` items in the report, never edit them.
+- **probability**: the `puzzles` tags (`ants`, `bayes-in-a-minute`, `broken-stick`, `buffon`, `cards-and-colours`, `duels`, `kelly`, `largest-of-several`, `meeting`, `ruin-in-interviews`, `urns`, `when-to-stop`, `who-wins`, and the rest in the table), plus `dice-ev` (carried by `mm-games` items). Five families have no course tag yet because `puzzles` l1 to l5 were tagged by lesson only in part: `every-coupon`, `at-least-one`, `hats`, `waiting-for-hh`, `indicator-tricks`. They are bank-only families here; the bank sample already uses the first three. Propose tagging the matching `puzzles` items in the report, never edit them.
 - **brainteasers**: the `brainteasers` tags, unchanged (all 40 used are existing tags). `backward-induction` and `common-knowledge` are shared with `game-theory`, which is fine.
 - **mental**: the `mental-pressure` tags (`percent-chain`, `fraction-compare`, `estimate-product`, `sequences`, `sqrt-newton`, `negative-marking`, `ranking`, `battery`, `probability`, and so on) plus `mental-arithmetic`, the family the engine gives generated arithmetic items. Use `mental-arithmetic` for plain products and quotients.
 - **market-making**: the `mm-games` tags (`card-fair`, `fermi`, `intervals`, `skew`, `informed-loss`, `hedge-ratio`, `arbitrage`, `options-game`, and so on) plus `dice-ev`, which is shared with probability.
@@ -79,8 +79,8 @@ Which course tags map to which bank group:
 | `broken-stick` | 1/0/0/1 | 2 | puzzles 9 |
 | `buffon` | 0/0/1/0 | 1 | puzzles 6 |
 | `cards-and-colours` | 1/1/0/0 | 2 | puzzles 7 |
-| `coupon-collector` | 2/0/1/1 | 4 | none (bank-only family) |
-| `derangements` | 1/0/1/0 | 2 | none (bank-only family) |
+| `every-coupon` | 2/0/1/1 | 4 | none (bank-only family) |
+| `hats` | 1/0/1/0 | 2 | none (bank-only family) |
 | `dice-ev` | 2/2/1/1 | 6 | mm-games 3 |
 | `doubling-up` | 0/0/1/0 | 1 | puzzles 8 |
 | `duels` | 0/1/0/1 | 2 | puzzles 10 |
@@ -270,12 +270,12 @@ An idea gives the situation and the parameters. It is not the finished question 
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1p01 | `dice-ev` | Roll a fair d8 and may reroll once. Fair value of playing the best rule. | numeric | 3 | 120 | T,R,S | `puzzles/l1-dice-games` |
 | 1p02 | `dice-ev` | Paid the smaller of two d10 rolls. Which of four values is the fair value (distractors: mean of means, larger, 5.5-1). | choice | 2 | 75 | T,S | `puzzles/l1-dice-games` |
-| 1p03 | `coupon-collector` | Expected rolls to see every face of a d4, then say how it compares with a d8 (ask for the d8 value). | numeric | 3 | 120 | T,R,S | `puzzles/l2-every-coupon` |
-| 1p04 | `coupon-collector` | Expected number of different colours in 8 draws with replacement from 5 colours (indicator method). | numeric | 4 | 150 | T,R | `puzzles/l4-indicator-tricks` |
+| 1p03 | `every-coupon` | Expected rolls to see every face of a d4, then say how it compares with a d8 (ask for the d8 value). | numeric | 3 | 120 | T,R,S | `puzzles/l2-every-coupon` |
+| 1p04 | `every-coupon` | Expected number of different colours in 8 draws with replacement from 5 colours (indicator method). | numeric | 4 | 150 | T,R | `puzzles/l4-indicator-tricks` |
 | 1p05 | `waiting-for-hh` | Expected flips of a fair coin until TTH first appears (first-step equations). | numeric | 4 | 150 | T,R | `puzzles/l3-waiting-for-hh` |
 | 1p06 | `waiting-for-hh` | Which pattern of HHT and HTH is waited for longer, and why: four-option choice with the overlap trap. | choice | 3 | 90 | T,R,S | `puzzles/l3-waiting-for-hh` |
 | 1p07 | `at-least-one` | Smallest n so that n fair flips give at least one head with chance above 99%. | numeric | 2 | 60 | T,R,S | `counting-chance/l1-every-outcome` |
-| 1p08 | `derangements` | Five people take hats at random: chance exactly two get their own. | numeric | 4 | 150 | T,R | `puzzles/l5-hats` |
+| 1p08 | `hats` | Five people take hats at random: chance exactly two get their own. | numeric | 4 | 150 | T,R | `puzzles/l5-hats` |
 | 1p09 | `cards-and-colours` | Two cards drawn from a full deck: chance the second is red given the first is a heart. | numeric | 4 | 100 | T,R,S | `puzzles/l7-cards-and-colours` |
 | 1p10 | `urns` | An urn holds 7 red and 3 blue balls, drawn without replacement: expected reds before the first blue. | numeric | 4 | 120 | T,R | `puzzles/l8-urns` |
 | 1p11 | `bayes-in-a-minute` | A screen flags 2% of clean trades and 90% of bad ones; 0.5% are bad. Chance a flagged trade is bad. | numeric | 3 | 120 | T,R,S | `puzzles/l9-bayes-in-a-minute` |
@@ -423,10 +423,10 @@ An idea gives the situation and the parameters. It is not the finished question 
 | Id | Family (first tag) | Item idea | Kind | D | Pace | Roles | Draws on |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 3p01 | `dice-ev` | Pay the second-largest of three d6 rolls: fair value. | numeric | 4 | 150 | T,R,S | `puzzles/l11-largest-of-several` |
-| 3p02 | `coupon-collector` | Expected packs to collect all 6 stickers when each pack holds one at random, and the expected packs for the last one. | numeric | 3 | 120 | T,R,S | `puzzles/l2-every-coupon` |
+| 3p02 | `every-coupon` | Expected packs to collect all 6 stickers when each pack holds one at random, and the expected packs for the last one. | numeric | 3 | 120 | T,R,S | `puzzles/l2-every-coupon` |
 | 3p03 | `at-least-one` | A signal fires with chance 3% each day: chance of at least one fire in 60 independent days. | numeric | 3 | 75 | T,R,S | `counting-chance/l1-every-outcome` |
-| 3p04 | `derangements` | Eight guests take coats at random: expected number who get their own and its variance (choice of pairs). | choice | 4 | 150 | T,R | `puzzles/l5-hats` |
-| 3p05 | `waiting-for-hh` | A strategy loses a day with chance 0.4: expected days until two losing days in a row. | numeric | 5 | 150 | T,R,S | `puzzles/l3-waiting-for-hh` |
+| 3p04 | `hats` | Eight guests take coats at random: expected number who get their own and its variance (choice of pairs). | choice | 4 | 150 | T,R | `puzzles/l5-hats` |
+| 3p05 | `waiting-for-hh` | A strategy loses a day with chance 0.4: expected days until two losing days in a row (session 1 found this repeats `puzzles` l3 screen 9: choose new numbers). | numeric | 5 | 150 | T,R,S | `puzzles/l3-waiting-for-hh` |
 | 3p06 | `bayes-in-a-minute` | A signal fires on 55% of good days and 25% of bad days, good days 30% of days: chance the day is good given a fire. | numeric | 4 | 120 | T,R,S | `puzzles/l9-bayes-in-a-minute` |
 | 3p07 | `ruin-in-interviews` | Bets with win chance 0.45 from £3 to £9: chance of reaching £9. | numeric | 5 | 180 | T,R,S | `puzzles/l10-ruin-in-interviews` |
 | 3p08 | `betting-on-sequences` | Bet on each flip of a 0.6 coin with the Kelly fraction: growth per flip to three decimals. | numeric | 4 | 150 | T,R,S | `puzzles/l20-betting-on-sequences` |
@@ -500,7 +500,7 @@ An idea gives the situation and the parameters. It is not the finished question 
 | Id | Family (first tag) | Item idea | Kind | D | Pace | Roles | Draws on |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 4p01 | `dice-ev` | Roll a d6 with up to three rolls, keeping the last you choose: value of the best rule. | numeric | 4 | 150 | T,R,S | `puzzles/l6-when-to-stop` |
-| 4p02 | `coupon-collector` | Each d6 roll costs £1 and a £20 prize pays once all six faces have shown: expected profit. | numeric | 3 | 150 | T,R,S | `puzzles/l2-every-coupon` |
+| 4p02 | `every-coupon` | Each d6 roll costs £1 and a £20 prize pays once all six faces have shown: expected profit. | numeric | 3 | 150 | T,R,S | `puzzles/l2-every-coupon` |
 | 4p03 | `indicator-tricks` | Expected number of empty boxes when 12 balls go into 8 boxes at random. | numeric | 3 | 120 | T,R | `puzzles/l4-indicator-tricks` |
 | 4p04 | `bayes-in-a-minute` | Two independent positive tests with sensitivity 0.9, false positive 0.08 and base rate 0.02: posterior. | numeric | 4 | 150 | T,R,S | `puzzles/l9-bayes-in-a-minute` |
 | 4p05 | `largest-of-several` | Expected minimum of three independent exponential waits with rates 1, 2 and 3. | numeric | 3 | 120 | T,R | `puzzles/l11-largest-of-several` |
@@ -595,15 +595,20 @@ Do not edit: engine files (`app/js/`, `app/tools/`, `app/css/`, `app/index.html`
 
 ## 8. The sample bank, `bank/sample.json`
 
-Ten items adapted from level reviews (`dice-ev`, `digit-count`, `fermi`, `coupon-collector`, `mental-arithmetic`, `at-least-one`, `regime-length`, `derangements`). `KNOWN_ISSUES.md` says it is probably learner-visible, and it is: the manifest lists it, so the deck draws it. It shows as "Sample interview bank" under the families it carries, so a learner would see ten items that also exist in their course reviews and would answer each twice.
+Ten items adapted from level reviews (`dice-ev`, `digit-count`, `fermi`, `every-coupon`, `mental-arithmetic`, `at-least-one`, `regime-length`, `hats`). `KNOWN_ISSUES.md` says it is probably learner-visible, and it is: the manifest lists it, so the deck draws it. It shows as "Sample interview bank" under the families it carries, so a learner would see ten items that also exist in their course reviews and would answer each twice.
 
 Recommendation, not an action (do not delete it in a bank session):
 
 1. Keep `sample.json` until session 1 has landed and its playthrough is green, because the `--routes-only` bank check needs at least one bank file.
 2. Then remove it in a separate cleanup commit by the orchestrator (`git rm app/content/bank/sample.json`, re-run the validator to rewrite the manifest, re-run `--routes-only`). Nothing in `app/js/` or the playthrough names the file (the `bank/sample/x` string in the old-save check is only a made-up uid).
-3. Little is lost: the ten items are variants of course review items, and the tagged ones (for example `dice-ev`, `fermi`, `regime-length`) are still dealt from their lessons. The families `coupon-collector`, `derangements` and `at-least-one` have no course tag, and session 1 covers them with new items (`1p03`, `1p08`, `1p07`). No bank item here repeats a sample item.
+3. Little is lost: the ten items are variants of course review items, and the tagged ones (for example `dice-ev`, `fermi`, `regime-length`) are still dealt from their lessons. The families `every-coupon`, `hats` and `at-least-one` have no course tag, and session 1 covers them with new items (`1p03`, `1p08`, `1p07`). No bank item here repeats a sample item.
 4. Update `docs/AUTHORING.md` (the sentence "The sample file is `content/bank/sample.json`...") and the `KNOWN_ISSUES.md` line at the same time.
 
 ## 9. Order and hand-off
 
 Run session 1 first. When it is green, run sessions 2, 3 and 4 in parallel (disjoint files), then one second-read session for the whole bank (`docs/reviews/review-bank-1.md`, pattern `docs/reviews/review-1.5.md`: re-derive a sample of 30 answers, run the voice scan, read the behavioural rubrics, check family balance against section 3 and that no `pace` exceeds 180), then the sample cleanup in section 8, then a `PLAN.md` tick and a `PROGRESS.md` line.
+
+## Changes after session 1 (3 Nov)
+- Families renamed to match the tags the puzzles fix pass added: `coupon-collector` is now `every-coupon`, `derangements` is now `hats` (tables above updated). Sessions 2 to 4 use the new names.
+- Session 1 changed the numbers or twist of 16 items that matched course or exam items (list in `docs/reports/bank-1-1.md`). Later sessions grep for duplicates the same way; 3p05 already needs new numbers.
+- Behavioural rubric shape set by session 1: six lines worth 2, 2, 2, 2, 1 and 1 points.
