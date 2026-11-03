@@ -1,0 +1,483 @@
+{
+  "id": "homework-3",
+  "course": "game-theory",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw3-derive-bluff",
+      "difficulty": 4,
+      "skills": [
+        "gm-poker",
+        "gm-mixed"
+      ],
+      "tags": [
+        "bluff-frequency"
+      ],
+      "pace": 240,
+      "prose": "On the last bet Ana bets $B$ into a pot $P$. A share $x$ of her bets are bluffs. Ben holds a hand that beats only bluffs.",
+      "question": "Put the derivation of Ana's bluff share in order. Leave out the line that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "A call of $B$ wins $P + B$ against a bluff and loses $B$ against a value bet."
+          },
+          {
+            "id": "s2",
+            "text": "So the call is worth $x(P + B) - (1 - x)B$."
+          },
+          {
+            "id": "s3",
+            "text": "Ana makes Ben indifferent: set $x(P + B) - (1 - x)B = 0$."
+          },
+          {
+            "id": "s4",
+            "text": "Solve: $x(P + 2B) = B$, so $x = \\tfrac{B}{P + 2B}$."
+          },
+          {
+            "id": "d1",
+            "text": "Set the bluff's value to 0: $P(1 - c) - Bc = 0$.",
+            "why": "That makes Ana's bluff indifferent, which fixes Ben's calling frequency, not her bluff share."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Call's payoffs, its value, set to 0, solve.",
+        "generic": "Not quite right. Start from what Ben's call wins and loses.",
+        "byKey": {
+          "d1": "That makes Ana's bluff indifferent, which fixes Ben's calling frequency, not her bluff share.",
+          "left-out": "Every line but the bluff's own value belongs."
+        }
+      },
+      "explain": {
+        "text": "Ana's bluff share must leave Ben's call worth 0. Setting $x(P + B) = (1 - x)B$ gives $x = \\tfrac{B}{P + 2B}$. The bluff's own value fixes Ben's calls instead: $\\tfrac{P}{P + B}$."
+      }
+    },
+    {
+      "id": "hw3-ranges",
+      "difficulty": 5,
+      "skills": [
+        "gm-poker"
+      ],
+      "tags": [
+        "combos",
+        "blockers",
+        "equity-vs-range"
+      ],
+      "pace": 900,
+      "prose": "Write two functions. `combos(hand, dead)` counts holdings of a hand such as `\"AK\"`, `\"AKs\"`, `\"AKo\"` or `\"QQ\"`. It skips any holding that uses a card in `dead`, such as `\"As\"`. `range_equity(hands, beaten, dead)` returns, as a `Fraction`, the share of the range's combos that lie in `beaten`. The starter ignores `dead`.",
+      "question": "Fix the functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\nfrom itertools import combinations\n\nRANKS = \"23456789TJQKA\"\nSUITS = \"shdc\"\nDECK = [r + s for r in RANKS for s in SUITS]\n\n\ndef combos(hand, dead):\n    \"\"\"Count holdings of hand (\"AK\", \"AKs\", \"AKo\",\n    \"QQ\") that use no card in dead.\"\"\"\n    r1, r2, kind = hand[0], hand[1], hand[2:]\n    count = 0\n    for a, b in combinations(DECK, 2):\n        if sorted(a[0] + b[0]) != sorted(r1 + r2):\n            continue\n        suited = a[1] == b[1]\n        if kind == \"s\" and not suited:\n            continue\n        if kind == \"o\" and suited:\n            continue\n        count += 1\n    return count\n\n\ndef range_equity(hands, beaten, dead):\n    \"\"\"Share of the range's combos that lie in beaten.\"\"\"\n    total = sum(combos(h, dead) for h in hands)\n    won = sum(combos(h, dead) for h in beaten)\n    return Fraction(won, total)\n",
+        "solution": "from fractions import Fraction\nfrom itertools import combinations\n\nRANKS = \"23456789TJQKA\"\nSUITS = \"shdc\"\nDECK = [r + s for r in RANKS for s in SUITS]\n\n\ndef combos(hand, dead):\n    \"\"\"Count holdings of hand (\"AK\", \"AKs\", \"AKo\",\n    \"QQ\") that use no card in dead.\"\"\"\n    r1, r2, kind = hand[0], hand[1], hand[2:]\n    count = 0\n    live = [c for c in DECK if c not in dead]\n    for a, b in combinations(live, 2):\n        if sorted(a[0] + b[0]) != sorted(r1 + r2):\n            continue\n        suited = a[1] == b[1]\n        if kind == \"s\" and not suited:\n            continue\n        if kind == \"o\" and suited:\n            continue\n        count += 1\n    return count\n\n\ndef range_equity(hands, beaten, dead):\n    \"\"\"Share of the range's combos that lie in beaten.\"\"\"\n    total = sum(combos(h, dead) for h in hands)\n    won = sum(combos(h, dead) for h in beaten)\n    return Fraction(won, total)\n",
+        "examples": [
+          {
+            "call": "combos(\"AKo\", [\"As\"])",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "range_equity([\"AQ\", \"99\", \"54s\", \"JTs\"], [\"JTs\"], [\"Ks\", \"Kh\", \"Ad\", \"9c\", \"6h\", \"3s\", \"2d\"])",
+            "expect": "Fraction(4, 23)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "combos(\"AK\", [])",
+            "expect": "16",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"AKs\", [])",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"AKo\", [])",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"QQ\", [])",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"AKo\", [\"As\"])",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"QQ\", [\"Qh\"])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"KQs\", [\"Ks\", \"Kh\"])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"AA\", [\"As\", \"Ac\", \"Ad\"])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"AQ\", [\"Ad\", \"Ks\", \"Kh\"])",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"T9s\", [\"Ts\", \"9h\"])",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "combos(\"99\", [\"9c\"])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "range_equity([\"AQ\", \"99\", \"54s\", \"JTs\"], [\"JTs\"], [\"Ks\", \"Kh\", \"Ad\", \"9c\", \"6h\", \"3s\", \"2d\"])",
+            "expect": "Fraction(4, 23)",
+            "compare": "equal"
+          },
+          {
+            "call": "range_equity([\"AQ\", \"99\", \"54s\", \"JTs\", \"KQs\"], [\"JTs\", \"KQs\"], [\"Ks\", \"Kh\", \"Ad\", \"9c\", \"6h\", \"3s\", \"2d\"])",
+            "expect": "Fraction(6, 25)",
+            "compare": "equal"
+          },
+          {
+            "call": "range_equity([\"AQ\", \"99\", \"54s\", \"JTs\", \"KQs\", \"QJs\"], [\"JTs\", \"KQs\", \"QJs\"], [\"Ks\", \"Kh\", \"Ad\", \"9c\", \"6h\", \"3s\", \"2d\"])",
+            "expect": "Fraction(10, 29)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 14 hidden tests: eleven combo counts with and without dead cards, and lesson 12's river range three ways. Each result must be exact."
+      },
+      "feedback": {
+        "correct": "All 14 counts and equities are right.",
+        "generic": "Not quite right. Strike every dead card out of the deck before you count."
+      },
+      "explain": {
+        "text": "Remove the dead cards from the deck first, then count pairs of the right ranks and suitedness. With the river's seven dead cards the range gives $\\tfrac{4}{23}$, $\\tfrac{6}{25}$ and $\\tfrac{10}{29}$. The starter counted blocked combos and failed ten tests."
+      }
+    },
+    {
+      "id": "hw3-implied",
+      "difficulty": 4,
+      "skills": [
+        "gm-poker"
+      ],
+      "tags": [
+        "implied-odds",
+        "pot-odds"
+      ],
+      "pace": 150,
+      "prose": "On the turn you have 9 outs among 46 unseen cards. The opponent bets £25 into £50. If you hit, you expect to win £X more on the river.",
+      "question": "How large must X be for the call to break even, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 27.78,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "number",
+        "unit": "£",
+        "accept": "Any form equal to 250/9, or 27.78 ± 0.01",
+        "wrong": [
+          {
+            "id": "pot",
+            "value": 75,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "whole",
+            "value": 102.78,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£27.78.",
+        "generic": "Not quite right. Set the call's average to 0 with X added to a hit.",
+        "byKey": {
+          "pot": "£75 is the pot you win now. X is what you need on top of it.",
+          "whole": "That is the whole win needed. Take away the £75 already there."
+        }
+      },
+      "explain": {
+        "text": "Break-even needs $\\tfrac{9}{46}(75 + X) = \\tfrac{37}{46} \\times 25$. So $75 + X = \\tfrac{925}{9} = 102.78$ and $X = £27.78$."
+      }
+    },
+    {
+      "id": "hw3-river-bluff",
+      "difficulty": 3,
+      "skills": [
+        "gm-poker",
+        "gm-mixed"
+      ],
+      "tags": [
+        "bluff-frequency"
+      ],
+      "pace": 60,
+      "prose": "On the river Ana bets £100 into a £150 pot.",
+      "question": "What share of her bets should be bluffs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2857,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "Any form equal to 2/7, or 28.6%",
+        "wrong": [
+          {
+            "id": "call",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "third",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac27$: $\\tfrac{100}{350}$.",
+        "generic": "Not quite right. Use $\\tfrac{B}{P + 2B}$.",
+        "byKey": {
+          "call": "$\\tfrac35$ is how often Ben should call, $\\tfrac{P}{P + B}$.",
+          "third": "A third fits a pot-sized bet. This bet is two thirds of the pot."
+        }
+      },
+      "explain": {
+        "text": "Ben's call risks £100 to win £250, so Ana bluffs $\\tfrac{100}{350} = \\tfrac27$ of her bets. Ben calls $\\tfrac{150}{250} = \\tfrac35$ of the time."
+      }
+    },
+    {
+      "id": "hw3-analyst",
+      "difficulty": 4,
+      "skills": [
+        "gm-poker"
+      ],
+      "tags": [
+        "imperfect-signal",
+        "value-of-information"
+      ],
+      "pace": 180,
+      "prose": "A trade makes £40 with chance 0.4 or loses £20 with chance 0.6. Perfect information about it would be worth £12. An analyst calls it good or bad and is right 75% of the time.",
+      "question": "What is the analyst worth, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "number",
+        "unit": "£",
+        "accept": "5: £9 with him, £4 without.",
+        "wrong": [
+          {
+            "id": "perfect",
+            "value": 12,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "with",
+            "value": 9,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£5.",
+        "generic": "Not quite right. Find the trade's value after each call, then compare with £4 now.",
+        "byKey": {
+          "perfect": "£12 is perfect information. A 75% analyst is worth less.",
+          "with": "£9 is the value with him. Take away the £4 you get anyway."
+        }
+      },
+      "explain": {
+        "text": "A good call comes with chance 0.45 and makes the trade worth $\\tfrac{12 - 3}{0.45} = £20$. A bad call makes it −£9.09, so skip. With him $0.45 \\times 20 = £9$, against £4 now: £5."
+      }
+    },
+    {
+      "id": "hw3-kelly-doubt",
+      "difficulty": 4,
+      "skills": [
+        "gm-poker"
+      ],
+      "tags": [
+        "kelly",
+        "log-utility"
+      ],
+      "pace": 120,
+      "prose": "You believe a bet at 4 to 1 wins 30% of the time and stake the full Kelly fraction, 0.125. The true chance is 25%.",
+      "question": "What is the bankroll's long-run growth a bet?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0012,
+        "tol": {
+          "abs": 0.0002
+        },
+        "placeholder": "decimal",
+        "accept": "About 0.0012, within 0.0002",
+        "wrong": [
+          {
+            "id": "believed",
+            "value": 0.02817,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.0074,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 0.0012 a bet.",
+        "generic": "Not quite right. Use the true chance in the growth formula.",
+        "byKey": {
+          "believed": "0.02817 is the growth if 30% were true.",
+          "half": "0.0074 is the growth at half Kelly, 0.0625."
+        }
+      },
+      "explain": {
+        "text": "At the true 25%: $0.25\\ln 1.5 + 0.75\\ln 0.875 = 0.1014 - 0.1001 = 0.0012$. Full Kelly on a wrong edge earns almost nothing. Half Kelly would still earn 0.0074."
+      }
+    },
+    {
+      "id": "hw3-ruin",
+      "difficulty": 3,
+      "skills": [
+        "gm-poker"
+      ],
+      "tags": [
+        "risk-of-ruin",
+        "kelly"
+      ],
+      "pace": 90,
+      "prose": "Fixed-stake betting with a bankroll of n stakes, even-money bets won with chance $p > \\tfrac12$.",
+      "question": "Which statements are true? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "More stakes in the bankroll lower the ruin chance",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "A bet with edge cannot ruin you",
+            "why": "With 10 stakes at 55% the ruin chance is still 0.1344."
+          },
+          {
+            "id": "c",
+            "text": "Doubling the stake turns a ruin chance r into √r",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "The Kelly fraction maximises expected profit per bet",
+            "why": "Kelly maximises long-run growth. Expected profit is largest staking everything."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "True: more stakes help, and doubling the stake takes the square root.",
+        "generic": "Not quite right. Recall $(q/p)^n$ and what Kelly maximises."
+      },
+      "explain": {
+        "text": "Ruin is $(q/p)^n$, so a larger n lowers it. Doubling the stake halves n, so r becomes $\\sqrt r$. Edge does not prevent ruin, and Kelly maximises growth, not expected profit."
+      }
+    },
+    {
+      "id": "hw3-say-it",
+      "difficulty": 5,
+      "skills": [
+        "gm-poker"
+      ],
+      "tags": [
+        "equity-vs-range",
+        "pot-odds",
+        "blockers"
+      ],
+      "pace": 180,
+      "question": "Say your answer aloud, timing yourself, then write it here. Open the model answer and tick the rubric.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Defend a poker line in pot odds, as reported in trading-firm interviews. On the river of lesson 12's spot the opponent bets £60 into £120. Your range analysis gives you 6 winning combos of 25. Say aloud whether you call, and how the answer would change. Give yourself three minutes.",
+        "model": "**Price.** The call is £60 to win £180, so the price is $\\tfrac{60}{240} = 25\\%$.\n\n**Combos.** His range is ace-queen 12, nines 3, 5-4 suited 4, jack-ten suited 4 and king-queen suited 2: 25 combos. My K♠ K♥ block two king-queen suited combos.\n\n**Equity.** I beat jack-ten and king-queen: 6 of 25, 24%.\n\n**Expected value.** Calling earns $0.24 \\times 180 - 0.76 \\times 60 = 43.2 - 45.6 = -£2.40$. Fold, narrowly.\n\n**What decides it.** The two blocked combos. Counted as four, I would have 8 of 27, 29.6%, and call.\n\n**What would flip it.** One more bluff combo gives 7 of 26, 26.9%: a call. Against a pot-sized bet I need 33.3%, so 4 more bluffs.\n\n**His bluff share.** A balanced bettor at this size bluffs a quarter of his bets. My 6 of 25 is close to that, which is why the spot is close.\n\n**Said aloud.** \"Price 25%. Range 25 combos once my kings block two king-queens. I beat 6: 24%. Calling loses £2.40, so I fold. One more bluff would make it a call.\"",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "States the price: $\\tfrac{60}{240} = 25\\%$"
+          },
+          {
+            "points": 2,
+            "text": "Counts the combos with blockers: 25, of which 6 win"
+          },
+          {
+            "points": 2,
+            "text": "Finds the expected value, −£2.40, and folds"
+          },
+          {
+            "points": 2,
+            "text": "Says what would flip it: one more bluff, or 4 more against a pot-sized bet"
+          },
+          {
+            "points": 1,
+            "text": "Links 24% to a balanced bettor's bluff share of a quarter"
+          },
+          {
+            "points": 1,
+            "text": "Says it in a clear order in under three minutes"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model, line by line.",
+        "generic": "Compare your answer with the model, line by line."
+      },
+      "explain": {
+        "text": "The price is 25% and the blocked range gives 24%, so the call loses £2.40: fold. One more bluff combo flips it. The bettor's balanced bluff share, a quarter, is why the spot is close."
+      }
+    }
+  ]
+}

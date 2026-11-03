@@ -1,0 +1,484 @@
+{
+  "id": "homework-2",
+  "course": "game-theory",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw2-derive-bid",
+      "difficulty": 4,
+      "skills": [
+        "gm-auction"
+      ],
+      "tags": [
+        "first-price"
+      ],
+      "pace": 300,
+      "prose": "A first-price auction. Your value is $v$, at most £100. One rival has a value uniform from £0 to £100 and bids half of it. You bid $b$.",
+      "question": "Put the derivation of your best bid in order. Leave out the line that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "You win when the rival's bid is below $b$: $P(\\text{win}) = \\dfrac{2b}{100}$ for $b \\le 50$."
+          },
+          {
+            "id": "s2",
+            "text": "Expected profit is $(v - b)\\,\\dfrac{2b}{100}$, since a win pays $v - b$."
+          },
+          {
+            "id": "s3",
+            "text": "Its slope is $\\dfrac{2v - 4b}{100}$, which is 0 at $b = v/2$."
+          },
+          {
+            "id": "s4",
+            "text": "Check the end $b = 50$: it earns $v - 50$, never more than $v^2/200$, since $(v - 100)^2 \\ge 0$."
+          },
+          {
+            "id": "d1",
+            "text": "Bid your value, since the highest value wins.",
+            "why": "Bidding $v$ wins most often, but every win then pays $v$ for a lot worth $v$: no profit."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Chance, profit, slope, end check: bid $v/2$.",
+        "generic": "Not quite right. Start from the chance that $b$ wins.",
+        "byKey": {
+          "d1": "Bidding $v$ wins most often, but every win then pays $v$ for a lot worth $v$: no profit.",
+          "left-out": "Every line but bidding your value belongs.",
+          "s4": "Check the end after finding where the slope is 0."
+        }
+      },
+      "explain": {
+        "text": "The chance of winning rises with $b$ and the profit per win falls. The product peaks where the slope $\\tfrac{2v - 4b}{100}$ is 0, at $v/2$, earning $v^2/200$. The end $b = 50$ earns $v - 50$, which is never more."
+      }
+    },
+    {
+      "id": "hw2-spe",
+      "difficulty": 5,
+      "skills": [
+        "gm-sequential"
+      ],
+      "tags": [
+        "backward-induction"
+      ],
+      "pace": 600,
+      "prose": "Write `spe(tree)`. A leaf is a tuple of two numbers, (Ana's payoff, Ben's payoff). A decision node is a dict `{\"player\": 0 or 1, \"moves\": [subtrees]}`, where player 0 is Ana. There are no ties. Return the payoff pair reached by backward induction.",
+      "question": "Write the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def spe(tree):\n    \"\"\"Payoff pair reached by backward induction.\n\n    Leaf: a tuple (Ana's payoff, Ben's payoff).\n    Node: {\"player\": 0 or 1, \"moves\": [...]}.\n    Player 0 is Ana.\n    \"\"\"\n    node = tree\n    while isinstance(node, dict):\n        node = node[\"moves\"][0]\n    return node\n",
+        "solution": "def spe(tree):\n    \"\"\"Payoff pair reached by backward induction.\n\n    Leaf: a tuple (Ana's payoff, Ben's payoff).\n    Node: {\"player\": 0 or 1, \"moves\": [...]}.\n    Player 0 is Ana.\n    \"\"\"\n    if isinstance(tree, tuple):\n        return tree\n    p = tree[\"player\"]\n    outcomes = [spe(m) for m in tree[\"moves\"]]\n    return max(outcomes, key=lambda pay: pay[p])\n",
+        "examples": [
+          {
+            "setup": "T = {'player': 0, 'moves': [(0, 10), {'player': 1, 'moves': [(-2, 2), (3, 5)]}]}",
+            "call": "tuple(spe(T))",
+            "expect": "(3, 5)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "T = {'player': 0, 'moves': [(0, 10), {'player': 1, 'moves': [(-2, 2), (3, 5)]}]}",
+            "call": "tuple(spe(T))",
+            "expect": "(3, 5)",
+            "compare": "equal"
+          },
+          {
+            "setup": "T = {'player': 0, 'moves': [(2, 0), {'player': 1, 'moves': [(1, 3), {'player': 0, 'moves': [(4, 2), {'player': 1, 'moves': [(3, 5), (6, 4)]}]}]}]}",
+            "call": "tuple(spe(T))",
+            "expect": "(2, 0)",
+            "compare": "equal"
+          },
+          {
+            "setup": "T = (8, 6)\nfor k, take in reversed(list(enumerate([(2, 0), (1, 3), (4, 2), (3, 5), (6, 4), (5, 7)]))):\n    T = {'player': k % 2, 'moves': [take, T]}",
+            "call": "tuple(spe(T))",
+            "expect": "(2, 0)",
+            "compare": "equal"
+          },
+          {
+            "setup": "T = {'player': 0, 'moves': [{'player': 1, 'moves': [(3, 1), (1, 2)]}, {'player': 1, 'moves': [(2, 2), {'player': 0, 'moves': [(4, 1), (2, 3)]}]}]}",
+            "call": "tuple(spe(T))",
+            "expect": "(2, 2)",
+            "compare": "equal"
+          },
+          {
+            "setup": "T = {'player': 0, 'moves': [{'player': 1, 'moves': [(3, 2), (0, 0)]}, {'player': 1, 'moves': [(0, 0), (2, 3)]}]}",
+            "call": "tuple(spe(T))",
+            "expect": "(3, 2)",
+            "compare": "equal"
+          },
+          {
+            "setup": "T = {'player': 1, 'moves': [{'player': 0, 'moves': [(3, 2), (0, 0)]}, {'player': 0, 'moves': [(0, 0), (2, 3)]}]}",
+            "call": "tuple(spe(T))",
+            "expect": "(2, 3)",
+            "compare": "equal"
+          },
+          {
+            "setup": "T = {'player': 0, 'moves': [(0, 8), {'player': 1, 'moves': [(-1, 1), (2, 4)]}]}",
+            "call": "tuple(spe(T))",
+            "expect": "(2, 4)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Submit runs 7 hidden tests on trees from this level. They include entry games, centipedes and the venue game in both orders. Each result must equal the payoff pair exactly."
+      },
+      "feedback": {
+        "correct": "All seven trees solve correctly.",
+        "generic": "Not quite right. At a decision node, solve every move first, then keep the one best for the mover."
+      },
+      "explain": {
+        "text": "Recurse: a leaf is its own value, and a node keeps the child best for its mover. The starter followed the first move down and never compared. Backward induction is a recursion on the tree."
+      }
+    },
+    {
+      "id": "hw2-capacity",
+      "difficulty": 4,
+      "skills": [
+        "gm-sequential"
+      ],
+      "tags": [
+        "commitment",
+        "credible-threat"
+      ],
+      "pace": 180,
+      "prose": "An entry game, payoffs (Entrant, Incumbent) in £m: Out (0, 9); after entry, Fight (−3, 1) or Share (2, 6). The incumbent may first buy spare capacity at a cost of $k$. With it, after entry Fight pays the incumbent $7 - k$ and Share $6 - k$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "Entrant",
+          "levelLabels": [
+            "Entrant moves",
+            "Incumbent moves"
+          ],
+          "nodes": {
+            "children": [
+              {
+                "id": "out",
+                "label": "Out",
+                "value": "(0, 9)"
+              },
+              {
+                "id": "in",
+                "label": "In",
+                "children": [
+                  {
+                    "id": "fight",
+                    "label": "Fight",
+                    "value": "(−3, 1)"
+                  },
+                  {
+                    "id": "share",
+                    "label": "Share",
+                    "value": "(2, 6)"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "state": {}
+      },
+      "question": "What is the most the incumbent should pay for the capacity, in £m?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "number",
+        "unit": "£m",
+        "accept": "3: it keeps 9 − k with capacity, against 6 without.",
+        "wrong": [
+          {
+            "id": "nine",
+            "value": 9,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£3m.",
+        "generic": "Not quite right. Compare what the incumbent ends with, with and without capacity.",
+        "byKey": {
+          "nine": "Staying out leaves it 9 − k, not 9. Without capacity it shares and keeps 6.",
+          "one": "£1m is what fighting gains over sharing with capacity. The prize is 9 − k against 6."
+        }
+      },
+      "explain": {
+        "text": "Without capacity the incumbent shares (6 > 1), so the entrant enters and it keeps 6. With capacity Fight beats Share, so the entrant stays out and it keeps $9 - k$. That beats 6 while $k < 3$ (checked at 2.9 and 3.1)."
+      }
+    },
+    {
+      "id": "hw2-patience",
+      "difficulty": 4,
+      "skills": [
+        "gm-sequential"
+      ],
+      "tags": [
+        "patience",
+        "alternating-offers"
+      ],
+      "pace": 120,
+      "prose": "Alternating offers with no last round. Ana proposes first and discounts by $\\delta_A = 0.85$ a round; Ben discounts by $\\delta_B = 0.95$.",
+      "question": "What share does Ana get, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2597,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "number",
+        "unit": "%",
+        "accept": "Any form equal to 0.05/0.1925, or 25.97%",
+        "wrong": [
+          {
+            "id": "equal",
+            "value": 0.5405,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "swap",
+            "value": 0.7792,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "25.97%: proposing first does not save the less patient side.",
+        "generic": "Not quite right. Use $\\tfrac{1 - \\delta_B}{1 - \\delta_A\\delta_B}$.",
+        "byKey": {
+          "equal": "That is $\\tfrac{1}{1.85}$, as if both discounted by 0.85. Ben is more patient.",
+          "swap": "You put Ana's factor in the numerator. It is $1 - \\delta_B = 0.05$."
+        }
+      },
+      "explain": {
+        "text": "Ana's share is $\\tfrac{1 - 0.95}{1 - 0.85 \\times 0.95} = \\tfrac{0.05}{0.1925} = 0.2597$. Ben's patience outweighs Ana's first move. A round-by-round recursion over 2,000 rounds agrees."
+      }
+    },
+    {
+      "id": "hw2-curse",
+      "difficulty": 3,
+      "skills": [
+        "gm-auction"
+      ],
+      "tags": [
+        "winners-curse"
+      ],
+      "pace": 90,
+      "prose": "Eight bidders estimate a common value, each with an error uniform from −£15 to +£15, and each bids the estimate.",
+      "question": "By how much does the winner overshoot on average, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11.67,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "number",
+        "unit": "£",
+        "accept": "Any form equal to 35/3, or 11.67 ± 0.01",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "top",
+            "value": 15,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£11.67: $15 \\times \\tfrac79$.",
+        "generic": "Not quite right. Use $a\\,\\tfrac{n - 1}{n + 1}$.",
+        "byKey": {
+          "zero": "Each error averages 0, but the winner's is the largest of eight."
+        }
+      },
+      "explain": {
+        "text": "The largest of eight errors on ±£15 averages $15 \\times \\tfrac{7}{9} = £11.67$. A seeded simulation lands within a few pence of it."
+      }
+    },
+    {
+      "id": "hw2-guess",
+      "difficulty": 3,
+      "skills": [
+        "gm-sequential",
+        "gm-normal"
+      ],
+      "tags": [
+        "iterated-dominance",
+        "beauty-contest"
+      ],
+      "pace": 90,
+      "prose": "Everyone writes a number from 0 to 100. The winner is closest to two thirds of the average, plus 12.",
+      "question": "What is the equilibrium guess?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "number",
+        "accept": "36: $x = \\tfrac23 x + 12$.",
+        "wrong": [
+          {
+            "id": "twelve",
+            "value": 12,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "36.",
+        "generic": "Not quite right. In equilibrium every guess equals the target.",
+        "byKey": {
+          "twelve": "12 is the target if everyone guessed 0. Then the guess should rise to 12, and so on.",
+          "zero": "0 was the answer without the plus 12. Here a room at 0 has target 12."
+        }
+      },
+      "explain": {
+        "text": "If everyone guesses $x$, the target is $\\tfrac23 x + 12$. Equilibrium needs them equal: $\\tfrac13 x = 12$, so $x = 36$."
+      }
+    },
+    {
+      "id": "hw2-second-price",
+      "difficulty": 3,
+      "skills": [
+        "gm-auction"
+      ],
+      "tags": [
+        "second-price",
+        "revenue-equivalence"
+      ],
+      "pace": 90,
+      "prose": "Second-price sealed-bid auctions with private values.",
+      "question": "Which statements are true? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Bidding your value is never worse than any other bid",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The winner pays her own bid",
+            "why": "She pays the second-highest bid. That is what makes bidding your value safe."
+          },
+          {
+            "id": "c",
+            "text": "With uniform values, the expected price equals the first-price one",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "More bidders lower the expected price",
+            "why": "More bidders raise the second-highest value, so the price rises: $\\tfrac{n - 1}{n + 1} \\times 100$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "True: bidding your value is never worse, and revenue is the same as first price.",
+        "generic": "Not quite right. Recall who sets the price in a second-price auction."
+      },
+      "explain": {
+        "text": "Your bid only decides whether you win, so bidding your value is never worse. The winner pays the second bid, and with uniform values the price averages $\\tfrac{n - 1}{n + 1} \\times 100$ in both formats. That rises with $n$."
+      }
+    },
+    {
+      "id": "hw2-say-it",
+      "difficulty": 5,
+      "skills": [
+        "gm-auction"
+      ],
+      "tags": [
+        "acquire-a-company",
+        "winners-curse"
+      ],
+      "pace": 180,
+      "question": "Say your answer aloud, timing yourself, then write it here. Open the model answer and tick the rubric.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A firm is worth between £0 and £100m to its owner, all values equally likely. It is worth 1.5 times that to you. The owner sells if your offer is at least the value. Say aloud what you offer, and what would change your answer. Give yourself three minutes.",
+        "model": "**Condition on acceptance.** The owner sells only when $V \\le b$. Given that, $V$ is uniform on 0 to $b$.\n\n**Its value to you.** $E[V \\mid V \\le b] = b/2$, so an accepted firm is worth $1.5 \\times b/2 = 0.75b$ to you.\n\n**The decision.** You pay $b$ for $0.75b$: every accepted offer loses $0.25b$ on average. So offer nothing.\n\n**One worked offer.** At £60m the owner accepts with chance 0.6. Accepted firms average £30m, worth £45m to you. Expected profit is $0.6 \\times (45 - 60) = -£9$m.\n\n**Where the curse comes from.** There are no rival bidders here. The curse comes from the seller's information: a yes is bad news.\n\n**What would change it.** At exactly twice the value, an accepted offer buys $2 \\times b/2 = b$: break-even. Above twice, the sign flips and you offer the most, £100m.\n\n**Said aloud.** \"Condition on a yes: the value is then uniform up to my offer, average half of it. Worth 0.75 of my offer to me, so I lose a quarter of every accepted offer. I offer nothing. At £60m I lose £9m on average. It flips above twice the value.\"",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Conditions on acceptance: the owner sells only when $V \\le b$"
+          },
+          {
+            "points": 2,
+            "text": "Uses $E[V \\mid V \\le b] = b/2$"
+          },
+          {
+            "points": 2,
+            "text": "Finds the loss of $0.25b$ on every accepted offer and offers nothing"
+          },
+          {
+            "points": 1,
+            "text": "Works one offer with its number, such as −£9m at £60m"
+          },
+          {
+            "points": 2,
+            "text": "Names the threshold: offers pay only above twice the value"
+          },
+          {
+            "points": 1,
+            "text": "Says it in a clear order in under three minutes"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model, line by line.",
+        "generic": "Compare your answer with the model, line by line."
+      },
+      "explain": {
+        "text": "Given a yes, the firm averages $b/2$, worth $0.75b$ to you, so every accepted offer loses $0.25b$. Offer nothing. Only above twice the owner's value would an offer pay."
+      }
+    }
+  ]
+}
