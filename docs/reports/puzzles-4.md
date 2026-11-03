@@ -25,9 +25,22 @@ Interview form. Every drill screen carries `"tags": ["<family>"]` and states abo
 
 ## Playthrough
 
-PLAYTHROUGH_RESULTS
+`node tools/playthrough.mjs --local-cdn <scratchpad>/pkgs`, each lesson alone, without and with `--mobile` (the mobile runs with `--shots` and `--why`); sets with `--set`. All passed:
 
-Screenshots (desktop, 390 px and Why sheets) are in the scratchpad `puzzles-4/shots`. Fixed after looking: the l19 chain graph was squat (nodes spread, height 300); the l20 automata overlapped at 390 px while end nodes read "HHT wins" (now the bare pattern, caption says the right-hand nodes end the game); the l21 and l22 planes drew the x-axis title over a tick at y = 0 (`xAxis: "bottom"`).
+| File | Plain | `--mobile` |
+|---|---|---|
+| l19-who-wins | ok, 15 checks, quiz 4/4 | ok, 15 checks, quiz 4/4 |
+| l20-betting-on-sequences | ok, 13 checks, quiz 3/3 | ok, 13 checks, quiz 3/3 |
+| l21-kelly | ok, 15 checks, quiz 3/3 | ok, 15 checks, quiz 3/3 |
+| l22-when-to-hedge | ok, 13 checks, quiz 3/3 | ok, 13 checks, quiz 3/3 |
+| l23-doubling-up | ok, 14 checks, quiz 3/3 | ok, 14 checks, quiz 3/3 |
+| l24-mixed-set | ok, 15 checks, quiz 3/3 | ok, 15 checks, quiz 3/3 |
+| review-4 | ok, recorded 9 of 9 | |
+| homework-4 | ok, marked 9 of 9 right, 43 of 43 marks | |
+
+l20, l22, l24 and both sets were played again, plain and mobile, after the last edits below (all ok, validator 0 errors).
+
+Screenshots (desktop, 390 px and Why sheets) are in the scratchpad `puzzles-4/shots`. Fixed after looking: the l19 chain graph was squat (nodes spread, height 300); the l20 automata overlapped at 390 px while end nodes read "HHT wins" (now the bare pattern, caption says the right-hand nodes end the game); the l21 and l22 planes drew the x-axis title over a tick at y = 0 (`xAxis: "bottom"`); l22 captions said "top line" and "bottom line" for lines that cross (now "team-wins line", "team-loses line") and the root value overlapped a branch (now £0); the Penney choices stated each option's chance, which gave the answer away (numbers removed in l20, l24 and homework); the l24 doubling option alone carried a justification (shortened); the l24 bag explanation spoke of an all-red bag although the bag holds blue balls (now 3 red and 1 blue gives ½, 9 red and 1 blue gives 7/8, both recomputed).
 
 ## Numbers and their sources
 
