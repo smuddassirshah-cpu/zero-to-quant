@@ -26,7 +26,9 @@ The checks run under **`--routes-only`** (no new flag), after the routes: `bankC
 
 Results (from `app/`, with `--local-cdn` set to the scratchpad `pkgs`):
 - `node tools/validate.mjs`: 0 errors.
-- RESULTS_PLACEHOLDER
+- `node tools/playthrough.mjs --routes-only` (bank deck and timing checks included): All passed, at 1280 px and with `--mobile`.
+- `--exam mock-sample --exam topic-1.5 --set mm-games/review-1 --lesson mm-games/l1-unknown-quantity`: All passed, with and without `--mobile` (mock-sample 11 of 11, net 14 of 14; topic-1.5 30 of 30).
+- Full coverage in four shards (899 lessons in three, then every review and homework set and all 21 exams in one): all passed, 0 failures. Warnings in the validator are the existing not-yet-written notes.
 
 ## Screenshots
 
