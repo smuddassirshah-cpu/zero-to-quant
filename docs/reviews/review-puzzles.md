@@ -56,3 +56,58 @@ Counts: 2 errors, 11 warnings, 22 notes (12 of them voice-scan hits). Voice scan
 ## Checked and correct (no finding)
 
 Every keyed answer in all 40 files, including: 161/36, 91/36, 70/36 and the reroll values (l1, l30, review-5, homework-1, homework-5); the full coupon distribution chart, 14.7, 137/12, 7381/252 and the simulated means (l2); every pattern wait and the 12-flip test values (l3, homework-1); the derangement table and 44/120 (l5); the 26-and-26 card game, 41984711742427/15997372030584 (l6); every Bayes count, 1024/2023 and 0.9874 (l9); every ruin chance and duration, 48291/2321 and 3486784401/13486784401 (l10, homework-2); 2 ln 2 − 1, ln 2 − 1/2, 11/18, 1/9 and the quadrilateral and pentagon chances (l13, homework-3); n/2^(n−1) and the sphere's 1/8 (l14); e, e^(1/2), e^0.8, 3e − e² and e² − e (l15, homework-3); every meeting band, 31/72 and 59/144 (l16, review-3); 2/π, 3/π on the square grid (simulated 0.955) and 7/(4π) (l17, homework-3); 0.3826, 0.5214 and Robbins' 0.6617 (l18); every Penney race, Conway number and best response (l20, review-4, homework-4); g(0.2), g(0.1), g(0.4) and the zero near 0.389 (l21); every series bet and the £60 and £180 log hedges (l22, homework-4); the roulette doubling losses (l23, review-4, homework-4); every truel value and best move (l28, homework-5); the serial-number estimators, their variance ratio 2 at k = 4 and the 495-set average of 12 (l26, homework-5); every chord chance and mean length (l29).
+
+## Fix pass
+
+I recomputed every corrected number before writing it, in Python with `fractions` and exhaustive enumeration (scripts in the session scratchpad `fix-puzzles/`). The l10 code widget was rerun in CPython: the solution passes all 10 hidden tests and the starter fails all 10. `docs/reviews/voice-scan.py` now reports 0 sentences over 20 words and 0 explanations over three sentences (`voice-3.3-puzzles.txt`). `node tools/validate.mjs`: 0 errors. Every touched file plays green with `--local-cdn`, with and without `--mobile`.
+
+Status: fixed 35, disputed 0, deferred 0. Where a fix differs from the proposal, the line says why.
+
+### Errors
+
+1. l2 s3 explain: fixed, "Over a third of it, 6 rolls, is the last face alone" (6 / 14.7 = 0.408).
+2. l3 s5 canvas: fixed. Edges weigh 0.6667 (H) and 0.3333 (T), labelled "H $\tfrac23$" and "T $\tfrac13$", and the caption says heads have chance $\tfrac23$. $E_0 = (1 + p)/p^2 = 15/4$ is unchanged.
+
+### Warnings
+
+3. l1 s0: fixed, "*Probability and Markets*, a free guide from a trading firm: value as a price", as in l7. To keep the screen at 60 words, "easiest first" gained a comma and "quick expected values" became "quick expectations".
+4. l15 s9 and l1 q-until-six: fixed. l15 now states "Wald's identity says $E[S_N] = E[N]\,E[U]$ when $N$ depends only on the draws so far." l1 drops the name: "each face averages 3.5, so the sum averages $6 \times 3.5 = 21$", with the check line kept. l15 s6 distractor `d1` also named Wald before s9 stated it; its why now reads "The stopped sum averages $E[N]/2$, but it passes 1."
+5. l13 q-all-long `cube`: fixed, value 0.4219 kept ($(3/4)^3 = 0.421875$). The why is now "You gave each piece chance $\tfrac34$ of passing $\tfrac14$, then multiplied three times."
+6. l28 s0 `b`: fixed, "You used B's miss alone, $\tfrac12$, as the restart chance. Both must miss: $\tfrac23 \times \tfrac12 = \tfrac13$." ($x = \tfrac13 + \tfrac12 x$ gives $\tfrac23$.)
+7. l30 s5: fixed. Option b's why is "You dropped the $n + 1$: $\tfrac36 = \tfrac12$." Option c is now $\tfrac23$, "That is $\tfrac{2n}{3}$, the continuous answer, at $n = 1$."
+8. homework-1 hw1-run-of-three `half`: fixed, value 7.5 → 8 ($14/2 + 1$).
+9. l21 q-half-share: fixed, `"shuffle": true`.
+10. l23 s5: fixed, `"shuffle": true`.
+11. Level 1 tags and pace: fixed on all 43 items. The tags follow the course's convention, the lesson slug as family (`dice-games`, `every-coupon`, `waiting-for-hh`, `indicator-tricks`, `hats`, `when-to-stop`), in place of the proposed names; `dice-games`, `every-coupon`, `waiting-for-hh` and `when-to-stop` are already used in l24, l30, review-5 and homework-5. Review and homework items take the family of the lesson they draw on, and hw1-spoken also takes `spoken`, as hw4 and hw5 do. Pace: 120 s at difficulty 1 or 2 and 180 s above for quiz and review items; for homework, 180 s (300 s at difficulty 5) for numeric and choice items, 420 s for order, 300 s for the spoken item, and 900 s (1500 s at difficulty 5) for code.
+12. l7 to l18, review-2, review-3, homework-2 to homework-4 `pace`: fixed on all 79 items, on the same scale as item 11.
+13. Untagged choice items in l7, l8, l9, l10, l11, l15, l17 and l18: fixed, each takes its lesson's family tag.
+
+### Notes
+
+14. l1 q-product option c: fixed, "Adding all 36 works but is slow. For independent dice the mean of the product is the product of the means."
+15. l19 s8: fixed with `"shuffle": true`. The takes 1 to 4 are moves to weigh, not a range to read in order, so shuffling them costs nothing, and the key no longer sits in a fixed place.
+16. l19 s11 explain: fixed, "Go through every rival bid, as you went through every reply in the take-away game."
+17. l25 q-two-headed option c: fixed, "That is the fair-coin wait, $\tfrac{1}{2pq}$ at $p = \tfrac12$. Here $pq = 0$, so no round ever succeeds." ($1/(2 \cdot \tfrac14) = 2$.)
+18. review-1 r1-santa: fixed with a narrower tolerance than proposed, ± 0.00005 on `none` and `e`. The engine accepts $|v - a| \le tol + 10^{-9}$, so ± 0.0001 would still share the point 0.3680. Now `none` covers 0.36805 to 0.36815 (265/720 = 0.368056) and `e` covers 0.36785 to 0.36795 (1/e = 0.367879).
+19. l10 s6 test 9: fixed, `ruin_sim(3, 10, 0.6, 500, 4) is not None and ...`. The starter now fails it, and the solution passes all 10 tests.
+20. l23 s2: fixed, the question adds "Give the chance as a fraction or to six decimal places." (1/1024 = 0.000977 to six places; table cells accept fractions.)
+21. l8 s2: fixed, "Fill in the four path chances, as fractions or to four decimal places."
+22. homework-2 hw2-frog-three: fixed, tags `["climbing-steps"]`. The l12 frog transfer screen carries no tags, so nothing else changes.
+23. Wide display formulas: fixed. l5 s5, l8 s5, l10 s4 and l30 s5 now hold one formula per display. l8 shortens the second to "reds before first blue". l10 moves $r = q/p$ into the lead-in sentence. hw1-spoken keeps the sum as a display and gives $6 \times \tfrac{49}{20} = 14.7$ after it. l9's summary formula is two aligned lines, "posterior odds = prior odds × $L$" and $L = P(+ \mid \text{ill}) / P(+ \mid \text{well})$. Its note now begins "$L$ is the likelihood ratio" ($\tfrac1{99} \times 19.8 = \tfrac15$, a chance of $\tfrac16$).
+
+### Voice-scan hits
+
+24. homework-3 hw3-spoken: fixed, as proposed.
+25. l15 s7 how: fixed, as proposed (sd of $N$: $\sqrt{3e - e^2} = 0.8751$).
+26. l17 s3: fixed, as proposed.
+27. l17 s9: fixed, as proposed.
+28. l18 s8 how: fixed, as proposed.
+29. l3 s8 how: fixed, as proposed; the eight named patterns match the eight tests.
+30. homework-1 hw1-pattern-wait: fixed, as proposed ($32 + 8 + 2 = 42$).
+31. homework-1 hw1-two-toys: fixed, as proposed ($1 + 4 + 0.25 = 5.25$).
+32. homework-1 hw1-loops: fixed. The proposed first sentence was 21 words, so it reads "Give each person $1/L$, with $L$ the size of their loop: the shares add to the loop count." ($H_{10} = 7381/2520 = 2.9290$.)
+33. l3 s4 explain: fixed, first sentence dropped.
+34. l5 s5 explain: fixed, as proposed.
+35. review-1 r1-secretary-four: fixed, as proposed ($\tfrac14 \cdot \tfrac{11}{6} = \tfrac{11}{24}$ against $\tfrac12(\tfrac12 + \tfrac13) = \tfrac5{12}$).
+
+No graded answer changed. Course files and lesson ids are unchanged.
