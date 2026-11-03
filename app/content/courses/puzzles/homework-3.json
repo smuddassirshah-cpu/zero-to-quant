@@ -1,0 +1,552 @@
+{
+  "id": "homework-3",
+  "course": "puzzles",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw3-stick-code",
+      "difficulty": 5,
+      "skills": [
+        "pz-geometry"
+      ],
+      "tags": [
+        "broken-stick"
+      ],
+      "prose": "Write `stick_triangle(procedure, trials, seed)` for three procedures. `\"uniform\"` makes two uniform breaks. `\"longer\"` breaks once, then breaks the longer piece. `\"coin\"` breaks once, then a coin picks the piece to break. Use `random.Random(seed)` and return the share of triangles. Raise `ValueError` for any other name.",
+      "question": "Write the simulation.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\n\ndef stick_triangle(procedure, trials, seed):\n    \"\"\"Share of trials whose three pieces make a triangle.\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+        "solution": "import random\n\n\ndef pieces(procedure, rng):\n    if procedure == \"uniform\":\n        a, b = sorted((rng.random(), rng.random()))\n        return a, b - a, 1 - b\n    x = rng.random()\n    if procedure == \"longer\":\n        piece = max(x, 1 - x)\n    elif procedure == \"coin\":\n        piece = x if rng.random() < 0.5 else 1 - x\n    else:\n        raise ValueError(procedure)\n    cut = rng.random() * piece\n    return 1 - piece, cut, piece - cut\n\n\ndef stick_triangle(procedure, trials, seed):\n    \"\"\"Share of trials whose three pieces make a triangle.\"\"\"\n    rng = random.Random(seed)\n    wins = 0\n    for _ in range(trials):\n        if max(pieces(procedure, rng)) < 0.5:\n            wins += 1\n    return wins / trials\n",
+        "examples": [
+          {
+            "call": "abs(stick_triangle('uniform', 4000, 1) - 0.25) < 0.03",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "stick_triangle('uniform', 40000, 1)",
+            "expect": "0.25",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0065
+            }
+          },
+          {
+            "call": "stick_triangle('longer', 40000, 2)",
+            "expect": "0.386294",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0073
+            }
+          },
+          {
+            "call": "stick_triangle('coin', 40000, 3)",
+            "expect": "0.193147",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0059
+            }
+          },
+          {
+            "call": "stick_triangle('longer', 500, 4) == stick_triangle('longer', 500, 4)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "0 <= stick_triangle('coin', 10, 5) <= 1",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "stick_triangle('halves', 10, 6)",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Tests 1 to 3 accept a share within three standard errors of $\\tfrac14$, $2\\ln 2 - 1$ and $\\ln 2 - \\tfrac12$. Each uses 40,000 trials. Test 4 runs one seed twice, and test 6 wants a `ValueError`."
+      },
+      "feedback": {
+        "correct": "All three procedures match their exact chances within the noise.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-2": "For `longer`, break the piece of length `max(x, 1 - x)`, and keep the short piece as the third length.",
+          "test-3": "For `coin`, pick `x` or `1 - x` with a fair coin, then break that piece.",
+          "test-6": "Raise `ValueError` when the procedure name is not one of the three."
+        }
+      },
+      "explain": {
+        "text": "The model solution gives 0.2526, 0.3874 and 0.1927 on seeds 1, 2 and 3. Each is within about one standard error of the exact chance. Three procedures, three answers: the point of the longform item below."
+      }
+    },
+    {
+      "id": "hw3-semicircle-code",
+      "difficulty": 4,
+      "skills": [
+        "pz-geometry",
+        "pz-symmetry"
+      ],
+      "tags": [
+        "semicircle"
+      ],
+      "prose": "Write `semicircle_prob(n)`: the exact chance, as a `Fraction`, that $n$ random points on a circle share a semicircle. Then write `semicircle_sim(n, trials, seed)` with `random.Random(seed)`.",
+      "question": "Write both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\nfrom fractions import Fraction\n\n\ndef semicircle_prob(n):\n    \"\"\"Exact chance that n random points on a circle lie in one semicircle.\"\"\"\n    ...\n\n\ndef semicircle_sim(n, trials, seed):\n    rng = random.Random(seed)\n    ...\n",
+        "solution": "import random\nfrom fractions import Fraction\n\n\ndef semicircle_prob(n):\n    \"\"\"Exact chance that n random points on a circle lie in one semicircle.\"\"\"\n    return Fraction(n, 2 ** (n - 1))\n\n\ndef semicircle_sim(n, trials, seed):\n    rng = random.Random(seed)\n    hits = 0\n    for _ in range(trials):\n        pts = sorted(rng.random() for _ in range(n))\n        gaps = [b - a for a, b in zip(pts, pts[1:])]\n        gaps.append(1 - pts[-1] + pts[0])\n        if max(gaps) >= 0.5:\n            hits += 1\n    return hits / trials\n",
+        "examples": [
+          {
+            "call": "semicircle_prob(3)",
+            "expect": "Fraction(3, 4)",
+            "compare": "fraction"
+          }
+        ],
+        "tests": [
+          {
+            "call": "semicircle_prob(3)",
+            "expect": "Fraction(3, 4)",
+            "compare": "fraction"
+          },
+          {
+            "call": "semicircle_prob(4)",
+            "expect": "Fraction(1, 2)",
+            "compare": "fraction"
+          },
+          {
+            "call": "semicircle_prob(5)",
+            "expect": "Fraction(5, 16)",
+            "compare": "fraction"
+          },
+          {
+            "call": "semicircle_prob(2)",
+            "expect": "Fraction(1, 1)",
+            "compare": "fraction"
+          },
+          {
+            "call": "semicircle_prob(10)",
+            "expect": "Fraction(5, 256)",
+            "compare": "fraction"
+          },
+          {
+            "call": "semicircle_sim(3, 20000, 1)",
+            "expect": "0.75",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0092
+            }
+          },
+          {
+            "call": "semicircle_sim(5, 20000, 3)",
+            "expect": "0.3125",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0098
+            }
+          },
+          {
+            "call": "semicircle_sim(4, 300, 2) == semicircle_sim(4, 300, 2)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Tests 1 to 5 need an exact `Fraction`. Tests 6 and 7 accept a simulated chance within three standard errors over 20,000 trials. Test 8 runs one seed twice."
+      },
+      "feedback": {
+        "correct": "Exact and simulated chances agree.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Return `Fraction(n, 2 ** (n - 1))`.",
+          "test-6": "Sort the points and find the largest gap round the circle. Count a hit when it is at least a half."
+        }
+      },
+      "explain": {
+        "text": "The exact chance is $n/2^{n-1}$, which already gives 1 at $n = 2$. In the simulation the points fit when the largest gap, wrapping round, is at least a half. The model solution gives 0.7479 and 0.3126."
+      }
+    },
+    {
+      "id": "hw3-semi-order",
+      "difficulty": 4,
+      "skills": [
+        "pz-geometry",
+        "pz-symmetry"
+      ],
+      "tags": [
+        "semicircle"
+      ],
+      "prose": "Derive the chance that $n$ random points on a circle lie in one semicircle.",
+      "question": "Put the argument in order. Leave out the line that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Let $E_i$ be the event that the half starting at point $i$, going anticlockwise, holds all the others."
+          },
+          {
+            "id": "s2",
+            "text": "Given point $i$, the others each land in that half with chance $\\tfrac12$, independently: $P(E_i) = (\\tfrac12)^{n-1}$."
+          },
+          {
+            "id": "s3",
+            "text": "If the points lie in some semicircle, exactly one $E_i$ holds: the point just after the largest gap."
+          },
+          {
+            "id": "s4",
+            "text": "So the $E_i$ are disjoint and together make up the event, and their chances add."
+          },
+          {
+            "id": "s5",
+            "text": "$P = n \\cdot (\\tfrac12)^{n-1} = \\tfrac{n}{2^{n-1}}$."
+          },
+          {
+            "id": "d1",
+            "text": "The $E_i$ are independent, so $P = 1 - (1 - (\\tfrac12)^{n-1})^n$."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "same": [
+          [
+            "s2",
+            "s3"
+          ]
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Define the starts, find each chance, show they are disjoint, then add.",
+        "generic": "Not quite right. Define $E_i$ first and add only after showing the events are disjoint.",
+        "byKey": {
+          "d1": "The $E_i$ are disjoint, not independent. Disjoint events add.",
+          "left-out": "Every line except the independence line belongs.",
+          "s5": "The sum comes last."
+        }
+      },
+      "explain": {
+        "text": "Each start has chance $(\\tfrac12)^{n-1}$, and at most one start works. So the chances add to $n/2^{n-1}$."
+      }
+    },
+    {
+      "id": "hw3-spoken",
+      "difficulty": 4,
+      "skills": [
+        "pz-geometry"
+      ],
+      "tags": [
+        "broken-stick"
+      ],
+      "question": "Answer aloud, then write it out.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "An interviewer says: \"Break a stick at random into three pieces. What is the chance the pieces form a triangle?\" Give yourself 3 minutes. Explain aloud why the question is ambiguous, give two procedures and their answers, then write your answer here.",
+        "model": "**Flag it first.** \"Break at random\" does not fix the procedure, and the answer depends on it. I will give two common readings and their answers.\n\n**Procedure 1: two uniform breaks.** The breaks $x$ and $y$ make a uniform point in the unit square. So area is chance. Three pieces make a triangle when each is under $\\tfrac12$. A piece must be shorter than the other two together. Above the diagonal that is the triangle $x < \\tfrac12$, $y > \\tfrac12$, $y - x < \\tfrac12$, of area $\\tfrac18$; below it, its mirror image. So $P = \\tfrac14$.\n\n**Procedure 2: break once, then break the longer piece.** The longer piece $L$ is uniform on $[\\tfrac12, 1]$. The second cut must leave both parts under $\\tfrac12$: a window of length $1 - L$ out of $L$. So $$P = 2\\int_{1/2}^{1} \\frac{1 - L}{L}\\,dL = 2\\ln 2 - 1 \\approx 0.386.$$\n\n**Sanity check.** Procedure 2 never wastes the second break on the short piece. So it should beat $\\tfrac14$, and it does. If a coin picks the piece instead, half the time the short piece is broken. Then no triangle is possible, so $P = \\ln 2 - \\tfrac12 \\approx 0.193$.\n\n**Said aloud.** \"Before I answer: how is it broken? If both breaks are uniform, picture the unit square: each piece must be under a half, which is two of eight equal triangles, a quarter. If you break once and then break the longer piece, it is $2\\ln 2 - 1$, about 0.39.\"",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Says the question is ambiguous before computing, and asks or states how the stick is broken"
+          },
+          {
+            "points": 2,
+            "text": "Sets up two uniform breaks as a point in the unit square and the triangle condition: every piece under $\\tfrac12$"
+          },
+          {
+            "points": 2,
+            "text": "Reaches $\\tfrac14$ from two of eight equal triangles, or an equivalent area"
+          },
+          {
+            "points": 2,
+            "text": "Gives a second procedure with its answer, such as breaking the longer piece: $2\\ln 2 - 1 \\approx 0.386$"
+          },
+          {
+            "points": 2,
+            "text": "Checks the answers make sense: the second beats $\\tfrac14$, or a coin choice halves it to $\\ln 2 - \\tfrac12$"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and tick the rubric.",
+        "generic": "Open the model answer and mark each rubric line."
+      },
+      "explain": {
+        "text": "Interviewers set this to see if you notice the ambiguity. Naming the procedure, then answering cleanly for two, scores better than a fast quarter."
+      }
+    },
+    {
+      "id": "hw3-pentagon",
+      "difficulty": 4,
+      "skills": [
+        "pz-geometry",
+        "pz-symmetry"
+      ],
+      "tags": [
+        "broken-stick"
+      ],
+      "prose": "Break a stick of length 1 at four uniform points, making five pieces. They form a pentagon when every piece is under $\\tfrac12$.",
+      "question": "What is the chance they form a pentagon? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6875,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "1 − 5/16 = 11/16",
+        "wrong": [
+          {
+            "id": "tri",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "quad",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 5 \\times (\\tfrac12)^4 = \\tfrac{11}{16} = 0.6875$.",
+        "generic": "Not quite right. One piece reaches a half when all four other breaks miss it.",
+        "byKey": {
+          "tri": "That is three pieces.",
+          "quad": "That is four pieces. A fifth piece makes long pieces rarer."
+        }
+      },
+      "explain": {
+        "text": "A given piece reaches a half with chance $(\\tfrac12)^4$, and only one piece can. So $1 - \\tfrac5{16} = \\tfrac{11}{16}$, the same $1 - n/2^{n-1}$ as the semicircle."
+      }
+    },
+    {
+      "id": "hw3-three-meet",
+      "difficulty": 4,
+      "skills": [
+        "pz-geometry"
+      ],
+      "tags": [
+        "meeting"
+      ],
+      "prose": "Three people arrive at uniform times in one hour, independently. Each waits 10 minutes, then leaves.",
+      "question": "What is the chance all three are there together at some moment? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0741,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "3a² − 2a³ with a = 1/6: 2/27",
+        "wrong": [
+          {
+            "id": "pairs",
+            "value": 0.0934,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "two",
+            "value": 0.3056,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$3 \\cdot \\tfrac1{36} - 2 \\cdot \\tfrac1{216} = \\tfrac{16}{216} = \\tfrac2{27} \\approx 0.0741$.",
+        "generic": "Not quite right. All three meet when the range of the arrivals is at most 10 minutes.",
+        "byKey": {
+          "pairs": "You multiplied pair chances. The pairs are not independent; use the range of the three arrivals.",
+          "two": "That is two people. A third must also fit in the window."
+        }
+      },
+      "explain": {
+        "text": "All three overlap exactly when the first and last arrivals are at most 10 minutes apart. For three uniforms $P(\\text{range} \\le a) = 3a^2 - 2a^3$. At $a = \\tfrac16$ that is $\\tfrac2{27}$."
+      }
+    },
+    {
+      "id": "hw3-exceed-two",
+      "difficulty": 5,
+      "skills": [
+        "pz-geometry",
+        "pz-expectation"
+      ],
+      "tags": [
+        "exceeding-one"
+      ],
+      "prose": "Uniforms on $[0, 1]$ are added until the sum passes 2; $N$ is the number drawn. For $n \\ge 1$, $P(U_1 + \\dots + U_n \\le 2) = \\tfrac{2^n - n}{n!}$.",
+      "question": "What is $E[N]$? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.6708,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "E[N]",
+        "accept": "e² − e, about 4.6708",
+        "wrong": [
+          {
+            "id": "double",
+            "value": 5.4366,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "square",
+            "value": 7.3891,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "mean",
+            "value": 4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$E[N] = 1 + \\sum_{n \\ge 1} \\tfrac{2^n - n}{n!} = e^2 - e \\approx 4.6708$.",
+        "generic": "Not quite right. Add the tail chances $P(N > n)$ from $n = 0$.",
+        "byKey": {
+          "double": "You doubled $e$. Passing 2 is not two passes of 1, because the first overshoot carries over.",
+          "square": "You used $e^t$ with $t = 2$. That formula holds only for $t \\le 1$.",
+          "mean": "You divided 2 by the mean draw. That ignores the overshoot, as in the trap."
+        }
+      },
+      "explain": {
+        "text": "The tails add to $\\sum 2^n/n! - \\sum_{n \\ge 1} n/n! = e^2 - e$. The second sum is $e$ because $n/n! = 1/(n - 1)!$. A seeded run of 2,000,000 trials gives 4.6709."
+      }
+    },
+    {
+      "id": "hw3-grid",
+      "difficulty": 4,
+      "skills": [
+        "pz-geometry"
+      ],
+      "tags": [
+        "buffon"
+      ],
+      "prose": "A unit needle falls on a square grid of lines 2 apart both ways. For $l \\le d$ the chance it crosses at least one line is $\\tfrac{4ld - l^2}{\\pi d^2}$.",
+      "question": "What is the chance it crosses at least one line? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.557,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "(8 − 1)/(4π) = 7/(4π), about 0.5570",
+        "wrong": [
+          {
+            "id": "unit",
+            "value": 0.9549,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-way",
+            "value": 0.3183,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "sum",
+            "value": 0.6366,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{4 \\cdot 1 \\cdot 2 - 1}{4\\pi} = \\tfrac7{4\\pi} \\approx 0.5570$.",
+        "generic": "Not quite right. Put $l = 1$ and $d = 2$ into the formula.",
+        "byKey": {
+          "unit": "That is a gap of 1.",
+          "one-way": "That is one family of lines only.",
+          "sum": "You added the two families, $2 \\times \\tfrac1{\\pi}$. That counts needles crossing both twice."
+        }
+      },
+      "explain": {
+        "text": "Each family alone gives $\\tfrac1{\\pi}$. Adding them double counts the drops that cross both. The formula subtracts that overlap: $\\tfrac7{4\\pi} \\approx 0.557$."
+      }
+    },
+    {
+      "id": "hw3-square-sq",
+      "difficulty": 3,
+      "skills": [
+        "pz-geometry",
+        "pz-expectation"
+      ],
+      "tags": [
+        "expected-distance"
+      ],
+      "prose": "Two uniform points in the unit square.",
+      "question": "What is the expected squared distance between them? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "E[D²]",
+        "accept": "1/6 + 1/6 = 1/3",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.1667,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "dist",
+            "value": 0.5214,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac16 + \\tfrac16 = \\tfrac13$.",
+        "generic": "Not quite right. Square the distance, then use linearity over the coordinates.",
+        "byKey": {
+          "one": "That is one coordinate. Add the other.",
+          "dist": "That is the expected distance, not its square."
+        }
+      },
+      "explain": {
+        "text": "$D^2 = (X_1 - Y_1)^2 + (X_2 - Y_2)^2$, and each term averages $\\tfrac16$. Squares need no closed form, unlike the distance itself."
+      }
+    }
+  ]
+}
