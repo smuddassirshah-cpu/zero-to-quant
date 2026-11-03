@@ -897,7 +897,7 @@
         }
       },
       "explain": {
-        "text": "The gap behind `slow` goes 2, then 1, then 0. It never skips 0, because it shrinks by exactly one. So once `slow` is inside a cycle of length $L$, they meet within $L$ moves. The whole run is $O(n)$.",
+        "text": "The gap behind `slow` goes 2, then 1, then 0. It never skips 0, because it shrinks by exactly one. So once `slow` is in a cycle of length $L$, they meet within $L$ moves: $O(n)$ in all.",
         "canvas": {
           "highlight": [
             "n3",
@@ -1255,7 +1255,7 @@
       "type": "problem",
       "difficulty": 3,
       "title": "Write both",
-      "prose": "The prelude adds `make_cycle(values, pos)`: it builds the list, then points the tail back at index `pos`. So `make_cycle([1, 2, 3, 4, 5, 6], 2)` is the list from this lesson. A set of seen nodes would pass the tests; aim for $O(1)$ space.",
+      "prose": "The prelude adds `make_cycle(values, pos)`: it builds the list, then points the tail back at index `pos`. So `make_cycle([1, 2, 3, 4, 5, 6], 2)` is the list from this lesson. Aim for $O(1)$ space: two tests check your peak memory.",
       "canvas": {
         "kind": "graph",
         "params": {
@@ -1340,7 +1340,7 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "prelude": "class Node:\n    def __init__(self, val, next=None):\n        self.val = val\n        self.next = next\n\ndef from_list(values):\n    head = None\n    for v in reversed(values):\n        head = Node(v, head)\n    return head\n\ndef to_list(head, limit=10000):\n    out = []\n    while head and len(out) < limit:\n        out.append(head.val)\n        head = head.next\n    return out\n\ndef make_cycle(values, pos):\n    \"\"\"Build a list from values, then point the tail back at index pos (-1: no cycle).\"\"\"\n    head = from_list(values)\n    if head is None or pos < 0:\n        return head\n    cur, target, i = head, None, 0\n    while True:\n        if i == pos:\n            target = cur\n        if cur.next is None:\n            break\n        cur, i = cur.next, i + 1\n    cur.next = target\n    return head\n",
+        "prelude": "class Node:\n    def __init__(self, val, next=None):\n        self.val = val\n        self.next = next\n\ndef from_list(values):\n    head = None\n    for v in reversed(values):\n        head = Node(v, head)\n    return head\n\ndef to_list(head, limit=10000):\n    out = []\n    while head and len(out) < limit:\n        out.append(head.val)\n        head = head.next\n    return out\n\ndef make_cycle(values, pos):\n    \"\"\"Build a list from values, then point the tail back at index pos (-1: no cycle).\"\"\"\n    head = from_list(values)\n    if head is None or pos < 0:\n        return head\n    cur, target, i = head, None, 0\n    while True:\n        if i == pos:\n            target = cur\n        if cur.next is None:\n            break\n        cur, i = cur.next, i + 1\n    cur.next = target\n    return head\n\nimport tracemalloc as _tm\ndef peak_bytes(f):\n    _tm.start()\n    try:\n        f()\n        return _tm.get_traced_memory()[1]\n    finally:\n        _tm.stop()\n",
         "starter": "# Node, from_list, to_list and make_cycle(values, pos) are ready to use.\n\ndef has_cycle(head):\n    ...\n\n\ndef middle(head):\n    ...\n",
         "solution": "def has_cycle(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n        if slow is fast:\n            return True\n    return False\n\n\ndef middle(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n    return slow\n",
         "examples": [
@@ -1415,9 +1415,21 @@
             "call": "middle(from_list([7])).val",
             "expect": "7",
             "compare": "equal"
+          },
+          {
+            "setup": "hc = make_cycle(list(range(100000)), 50000)",
+            "call": "peak_bytes(lambda: has_cycle(hc)) < 50_000",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "hm = from_list(list(range(100000)))",
+            "call": "peak_bytes(lambda: middle(hm)) < 50_000",
+            "expect": "True",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 12 hidden tests: an empty list (`None`), one node pointing to itself, two nodes with and without a cycle, and 100,000 nodes. `middle` returns the node; the tests read its `.val`."
+        "how": "Check runs 14 hidden tests. They include an empty list (`None`), one node pointing to itself, two nodes with and without a cycle, and 100,000 nodes. `middle` returns the node; the tests read its `.val`. Tests 13 and 14 check the peak memory of each function on 100,000 nodes."
       },
       "hints": [
         {
@@ -1700,6 +1712,7 @@
             "compare": "equal"
           }
         ],
+        "prelude": "import tracemalloc as _tm\ndef peak_bytes(f):\n    _tm.start()\n    try:\n        f()\n        return _tm.get_traced_memory()[1]\n    finally:\n        _tm.stop()\n",
         "tests": [
           {
             "call": "has_loop({\"spot\": \"mid\", \"mid\": \"last\", \"last\": None}, \"spot\")",
@@ -1740,9 +1753,15 @@
             "call": "has_loop({**{i: i + 1 for i in range(100000)}, 100000: 50000}, 0)",
             "expect": "True",
             "compare": "equal"
+          },
+          {
+            "setup": "fb = {**{i: i + 1 for i in range(100000)}, 100000: 50000}",
+            "call": "peak_bytes(lambda: has_loop(fb, 0)) < 50_000",
+            "expect": "True",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests: a chain ending in `None`, a rule pointing to itself, an empty dict and a missing rule. Test 8 is a chain of 100,000 rules that loops."
+        "how": "Check runs 8 hidden tests: a chain ending in `None`, a rule pointing to itself, an empty dict and a missing rule. Test 8 is a chain of 100,000 rules that loops, and test 9 checks your peak memory on it."
       },
       "hints": [
         {

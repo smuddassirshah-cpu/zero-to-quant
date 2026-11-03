@@ -1063,7 +1063,7 @@
         "language": "python",
         "starter": "import heapq\n\n\ndef top_k(xs, k):\n    ...\n",
         "solution": "import heapq\n\n\ndef top_k(xs, k):\n    if k <= 0:\n        return []\n    h = []\n    for x in xs:\n        if len(h) < k:\n            heapq.heappush(h, x)\n        elif x > h[0]:\n            heapq.heapreplace(h, x)\n    return sorted(h, reverse=True)\n",
-        "prelude": "",
+        "prelude": "import tracemalloc as _tm\ndef peak_bytes(f):\n    _tm.start()\n    try:\n        f()\n        return _tm.get_traced_memory()[1]\n    finally:\n        _tm.stop()\n",
         "examples": [
           {
             "call": "top_k([120, 45, 300, 80, 210, 60], 3)",
@@ -1121,9 +1121,14 @@
             "call": "top_k(iter([4, 9, 2]), 2)",
             "expect": "[9, 4]",
             "compare": "equal"
+          },
+          {
+            "call": "peak_bytes(lambda: top_k(iter(range(200000)), 3)) < 50_000",
+            "expect": "True",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 10 hidden tests, including `k = 0`, `k` larger than the list, repeats, and a stream (an iterator) that can be read only once."
+        "how": "Check runs 11 hidden tests, including `k = 0`, `k` larger than the list, repeats, and a stream (an iterator) that can be read only once. Test 11 checks your peak memory on a stream of 200,000 values."
       },
       "hints": [
         {

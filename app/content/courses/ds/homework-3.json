@@ -61,9 +61,15 @@
             "call": "s5.get_min()",
             "expect": "0",
             "compare": "equal"
+          },
+          {
+            "setup": "s6 = MinStack()\nfor v in range(200000, -1, -1): s6.push(v)",
+            "call": "sum(s6.get_min() for _ in range(20000))",
+            "expect": "0",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests. Each builds a stack in a setup line. Test 3 pushes a repeated minimum, and test 6 pushes 200,001 values."
+        "how": "Check runs 7 hidden tests. Each builds a stack in a setup line. Test 3 pushes a repeated minimum, and test 6 pushes 200,001 values. Test 7 calls `get_min` 20,000 times on a stack that size."
       },
       "feedback": {
         "correct": "A second stack of running minimums makes every operation $O(1)$.",
@@ -159,25 +165,25 @@
       "skills": [
         "ds-stacks"
       ],
-      "prose": "You buy 200 shares at £50.00, then 100 at £52.00, then 300 at £49.50. Then you sell 350. FIFO accounting matches a sale against the oldest lots first, like a queue.",
+      "prose": "You buy 200 shares at £50.00, then 100 at £52.00, then 300 at £49.00. Then you sell 350. FIFO accounting matches a sale against the oldest lots first, like a queue.",
       "question": "What is the cost basis of the 350 shares sold, in pounds?",
       "widget": {
         "kind": "numeric",
-        "answer": 17675,
+        "answer": 17650,
         "tol": {
           "abs": 0.5
         },
         "unit": "£",
         "label": "Cost basis",
-        "accept": "£17,675: $200 \\times 50 + 100 \\times 52 + 50 \\times 49.50$",
+        "accept": "£17,650: $200 \\times 50 + 100 \\times 52 + 50 \\times 49$",
         "wrong": [
           {
             "id": "lifo",
-            "value": 17325
+            "value": 17300
           },
           {
             "id": "avg",
-            "value": 17558.33,
+            "value": 17441.67,
             "tol": {
               "abs": 1
             }
@@ -188,12 +194,12 @@
         "correct": "The first two lots go whole, then 50 shares of the third.",
         "generic": "Not quite right. Dequeue the oldest lot, then the next, until 350 shares are matched.",
         "byKey": {
-          "lifo": "You matched the newest lot first: 300 at £49.50 and 50 at £52. That is LIFO, a stack.",
-          "avg": "You used the average cost. FIFO uses each lot's own price, oldest first."
+          "lifo": "You matched the newest lot first: 300 at £49.00 and 50 at £52. That is LIFO, a stack.",
+          "avg": "You used the weighted average cost. FIFO uses each lot's own price, oldest first."
         }
       },
       "explain": {
-        "text": "£10,000 for the first lot, £5,200 for the second, and $50 \\times 49.50 = $ £2,475 from the third: £17,675. The queue keeps 250 shares at £49.50. In code, a `deque` of `[qty, price]` lots with `popleft()` does this."
+        "text": "£10,000 for the first lot, £5,200 for the second, and $50 \\times 49 = $ £2,450 from the third: £17,650. The queue keeps 250 shares at £49.00. In code, a `deque` of `[qty, price]` lots with `popleft()` does this."
       }
     },
     {
@@ -309,9 +315,14 @@
             "call": "run(1000, [['put', i % 3000, i] for i in range(100000)] + [['get', 99999 % 3000], ['get', 1500]])",
             "expect": "[99999, -1]",
             "compare": "equal"
+          },
+          {
+            "call": "run(50000, [['put', i, i] for i in range(100000)] + [['get', i] for i in range(99999, 49999, -1)]) == list(range(99999, 49999, -1))",
+            "expect": "True",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests through a hidden helper, `run(cap, ops)`. It applies the operations in order and lists what each `get` returned. Test 7 makes 100,000 calls."
+        "how": "Check runs 8 hidden tests through a hidden helper, `run(cap, ops)`. It applies the operations in order and lists what each `get` returned. Test 7 makes 100,000 calls. Test 8 makes 150,000 calls on a cache of 50,000 keys."
       },
       "feedback": {
         "correct": "The dict finds a node in $O(1)$; the list reorders and evicts in $O(1)$.",
@@ -337,7 +348,7 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "prelude": "class Node:\n    def __init__(self, val, next=None):\n        self.val = val\n        self.next = next\n\ndef from_list(values):\n    head = None\n    for v in reversed(values):\n        head = Node(v, head)\n    return head\n\ndef to_list(head, limit=10000):\n    out = []\n    while head and len(out) < limit:\n        out.append(head.val)\n        head = head.next\n    return out\n\ndef make_cycle(values, pos):\n    \"\"\"Build a list from values, then point the tail back at index pos (-1: no cycle).\"\"\"\n    head = from_list(values)\n    if head is None or pos < 0:\n        return head\n    cur, target, i = head, None, 0\n    while True:\n        if i == pos:\n            target = cur\n        if cur.next is None:\n            break\n        cur, i = cur.next, i + 1\n    cur.next = target\n    return head\n",
+        "prelude": "class Node:\n    def __init__(self, val, next=None):\n        self.val = val\n        self.next = next\n\ndef from_list(values):\n    head = None\n    for v in reversed(values):\n        head = Node(v, head)\n    return head\n\ndef to_list(head, limit=10000):\n    out = []\n    while head and len(out) < limit:\n        out.append(head.val)\n        head = head.next\n    return out\n\ndef make_cycle(values, pos):\n    \"\"\"Build a list from values, then point the tail back at index pos (-1: no cycle).\"\"\"\n    head = from_list(values)\n    if head is None or pos < 0:\n        return head\n    cur, target, i = head, None, 0\n    while True:\n        if i == pos:\n            target = cur\n        if cur.next is None:\n            break\n        cur, i = cur.next, i + 1\n    cur.next = target\n    return head\n\nimport tracemalloc as _tm\ndef peak_bytes(f):\n    _tm.start()\n    try:\n        f()\n        return _tm.get_traced_memory()[1]\n    finally:\n        _tm.stop()\n",
         "starter": "def cycle_start(head):\n    ...\n",
         "solution": "def cycle_start(head):\n    slow = fast = head\n    while fast and fast.next:\n        slow = slow.next\n        fast = fast.next.next\n        if slow is fast:\n            break\n    else:\n        return None\n    slow = head\n    while slow is not fast:\n        slow = slow.next\n        fast = fast.next\n    return slow\n",
         "examples": [
@@ -393,9 +404,15 @@
             "call": "cycle_start(h) is h",
             "expect": "True",
             "compare": "equal"
+          },
+          {
+            "setup": "h = make_cycle(list(range(100000)), 77777)",
+            "call": "peak_bytes(lambda: cycle_start(h)) < 50_000",
+            "expect": "True",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests, including no cycle, an empty list, a node pointing to itself, and 100,000 nodes. Test 9 has equal values, so it compares nodes with `is`."
+        "how": "Check runs 10 hidden tests, including no cycle, an empty list, a node pointing to itself, and 100,000 nodes. Test 9 has equal values, so it compares nodes with `is`. Test 10 checks your peak memory on 100,000 nodes."
       },
       "feedback": {
         "correct": "Meet, reset one pointer to the head, then walk both one step at a time.",
