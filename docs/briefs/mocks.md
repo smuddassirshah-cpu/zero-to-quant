@@ -247,3 +247,132 @@ Worked (version 1):
 **Prerequisites:** mental-pressure `l10-next-in-sequence`, `l16-harder-sequences`, `l14-ranking-likelihoods`, `l15-probability-at-speed`, `l13-negative-marking`, `l17-full-battery`, `l7-estimating-products`, `l8-square-roots`; puzzles `l7-cards-and-colours`, `l9-bayes-in-a-minute`; puzzles `l27-given-the-total` once it is written.
 
 **Acceptance.** The common checks for all three files; the start card lists three papers (25, 30 and 10 minutes, 65 in all) and the check; paper A refuses a step without an answer; every ranking item's gaps are at least 0.02 and every interval item has exactly one narrowest interval that holds the value; report at `docs/reports/exam-mock-oa-trader.md`, with inbox bullets for interval scoring by width and for the bank draw (E3) that would retire the fixed versions.
+
+## mock-superday-trader
+
+**File.** `app/content/exams/mock-superday-trader.json`. One file, no versions. Reason: the mocks rule above (three fixed versions only while E3 is not built) was written for the online assessments, which are resat to build speed. A superday is a rehearsal sat a few times, its weight is in the written answers and the market-making games, and `docs/briefs/interview-plan.md` section (d) asks for three versions of the OAs only ("Superdays use the stage-exam shape"). The report raises one inbox bullet that E3 would let this mock draw fresh items. `content/prep.json` already lists `mock-superday-trader` (paths `superday-trader` and the trader firm paths); do not edit it.
+
+- `id`: `mock-superday-trader`
+- `name`: `Trader superday`
+- `style`: `trader`
+- `models` (one line, 200 characters at most; this text is 179): `Reported, as of Nov 2026: trading-firm final-round days at Jane Street, Optiver, SIG, IMC and Citadel Securities: probability, mental maths, market-making games and fit questions.`
+- `skills`: `{ "pz-expectation": "Expected value puzzles", "pz-conditioning": "Conditioning puzzles", "pz-games": "Games and betting", "gm-poker": "Poker and betting decisions", "mp-speed": "Speed arithmetic", "mp-fractions": "Fractions and percentages at speed", "mp-estimate": "Fast estimation", "bz-quick": "Quick reasoning", "mg-fair": "Fair value", "mg-quote": "Quoting", "mg-update": "Updating on trades", "mg-risk": "Position and risk", "rk-behave": "Behavioural answers" }`
+
+**Description** (plain, each sentence under 20 words; firm names stay here and in `models` only):
+
+> This is the reported shape of a trading firm's final-round day, as candidates described it by Nov 2026. Jane Street, Optiver, SIG, IMC and Citadel Securities all report these rounds. They cover probability and betting games, mental maths, market-making games and fit questions. There are four papers, each on its own clock. Real rounds are spoken, so say each written answer aloud before you type it. Mental maths is one question at a time with no going back. No calculator is allowed. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.
+
+**Parts, in order** (every paper `scoring: { "right": 1, "wrong": 0, "blank": 0 }`; no firm reports negative marking in a final round):
+
+| # | Paper `id`, name | Minutes | Items | Pass | Navigation | `pace` sum |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | `probability`, Probability and expected value | 45 | 6 (4 choice, 2 `longform`) | `pass: 0.65` (4 of 6) | free | 2,520 s |
+| 2 | `mental`, Mental maths and Fermi | 15 | 12 (8 `numeric`, 4 interval `choice`) | `pass: 0.7` (9 of 12) | `"forward"`, `skip: false` | 800 s |
+| 3 | `market`, Market-making game | 30 | 4 (3 `trade`, 1 `longform`) | `pass: 0.75` (3 of 4) | free | 1,800 s |
+| 4 | `fit`, Fit and motivation | 18 | 2 (both `longform`) | `pass: 0.5` (1 of 2) | free | 960 s |
+| 5 | check `game-aloud`, `I played a full market-making game aloud with a partner`, detail `Tick this only if a real person played the counterparty and you spoke your reasoning at every quote.` | | | | | |
+| 6 | check `why-aloud`, `I said my why-trading answer aloud in under 90 seconds`, detail `Tick this only if you timed it.` | | | | | |
+
+That is 24 items, 108 minutes, 5 `longform`. Use `pass` (a share), not `passNet`, because no paper has negative marking. **Known engine bug, do not work around it in content:** the results page may print "Pass mark NaN%" on a multi-paper mock (inbox bullets from `mock-oa-trader`). The attempt passes only when every paper passes and both checks are ticked.
+
+**What the engine allows, said plainly (checked in `app/tools/validate.mjs` and `app/js/engine/widgets/trade.js`, and by `content/exams/mock-trade-sample.json`, which plays green).**
+
+- A `trade` widget **may** sit in an exam paper, as the whole `widget` of one item, over an `orderbook` canvas (the validator warns without it). The mock validator checks it like any other item: all trade fields, and the authored `strategy` is replayed through the widget's own game and must meet the target with no rule break. The start card and the playthrough treat it as one item.
+- The author **may** use `noise`, `informed` and `scripted` counterparties, a `schedule` of cards, `limit`, `spread`, and either `benchmark` or `band`. A trade item is graded right or wrong (target met and breaks within `maxBreaks`) and scores the paper's `right` mark. It cannot score by P&L, and `scoring` is per paper, so every item counts one mark.
+- The author **may not** use `carry` to read a learner's earlier P&L (an exam draws every item at once, so a later item cannot read it); any debrief item uses fixed numbers from the model run. Do not put `carry` on a trade item (it would store a value nothing reads). Do not set `timed`. Every trade needs `strategy`, one entry per turn.
+- `longform` **is** allowed in a mock (`allowLongform`): `{ "kind": "longform", "prompt", "model", "rubric": [ { "points", "text" } ] }` with points summing to 10, no `widget`. In an exam the button reads "Mark my answer"; the learner ticks the rubric and 7 or more counts as right. Give each a `difficulty`, `skills`, `tags` and `pace` like any item.
+- Spoken answers (plan E10) were dropped (DECISIONS, 29 Oct): there is no microphone, speak mode or recording. The description says to speak aloud first, the two checks cover the spoken part, and the report says the plan's "recorded" wording is replaced by this.
+
+**Rules.** Firm names only in `models` and `description`, with "reported" and "Nov 2026". Elsewhere say "a trading firm" or "the interviewer". Our own wording and numbers. Every stated number computed twice, as `Fraction`s, with an `assert`. Every `choice` carries `"shuffle": true`, interval choices included (DECISIONS, "Numeric distractors"); every distractor has a `why` naming the learner's action; no item puts the key between a times-ten pair or between two equal slips (DECISIONS, "Distractors (4 Nov)"; the rule applies to options a learner sees, not to numeric `wrong` values). Voice as the shared rules. Every item has `tags` (family first), `pace`, `skills`.
+
+**No duplicates.** The script must hold the families and keys of all three `mock-oa-trader` versions and `mock-oa-sig`, read from their JSON, and assert that no question text, family tag or key-plus-question pair here repeats one there. Families already taken, so avoid them: `dice-ev`, `linearity`, `ev-fee`, `indicator`, `at-least-one`, `cards-conditional`, `binomial`, `weighing`, `bayes`, `waiting-time`, `stopping`, `max-of-draws`, `bayes-multi`, `ruin-fair`, `ruin-biased`, `bayes-ruin`, `dice-sum`, `same-suit`, `reroll-ev`, `distinct-days`, `first-success`, `committee`, `urn`, `natural-frequency`, `max-of-dice`, `given-the-total`, `first-to-six`, `pattern-race`, `likelihood-ranking`, `interval`, `sequence` (and its rule families). The `interval` tag is reused here for the Fermi items: change it to `fermi-interval` so no family matches.
+
+### Paper 1: probability and expected value (45 min, 6 items)
+
+Final-round questions are harder and arrive with follow-ups, so items 5 and 6 are talk-through answers.
+
+| Q | Diff | Family tag | Kind | Pace | Skill | Draws on | Idea |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 3 | `coupon-collector` | choice | 300 | pz-expectation | puzzles `l2-every-coupon` | Expected rolls of a fair die until every face has appeared |
+| 2 | 3 | `fixed-points` | choice | 300 | pz-conditioning | puzzles `l5-hats` | Four hats returned at random: chance nobody gets their own |
+| 3 | 4 | `kelly` | choice | 360 | pz-games | puzzles `l21-kelly` | Even-money bet won with chance 0.6: fraction of bankroll to stake to maximise log growth |
+| 4 | 4 | `fair-from-biased` | choice | 360 | pz-expectation | puzzles `l25-fair-from-biased` | Coin with heads 0.3: toss in pairs until HT or TH; expected tosses |
+| 5 | 5 | `card-stopping` | longform | 600 | pz-games | puzzles `l20-betting-on-sequences`, `l24-mixed-set` | Shuffled 26 red, 26 black deck; stop at any time and bet £1 on the next card being red; value and how to play |
+| 6 | 4 | `pot-odds` | longform | 600 | gm-poker | game-theory `l11-pot-odds` | Pot £100, opponent bets £50, you win 30% if called: call or fold, then how often must a bet be a bluff |
+
+**Worked keys (use as written; the script asserts each two ways).**
+
+- Q1: key $\tfrac{147}{10}$, 14.7 rolls. Distractors 36 (waited for each face as if it were the last face, $6 \times 6$), 2.45 (the harmonic number without the factor 6), 8.7 (stopped when five faces had appeared, $14.7 - 6$). Twice: $6\left(1 + \tfrac12 + \tfrac13 + \tfrac14 + \tfrac15 + \tfrac16\right)$; and the stage waits $1 + \tfrac65 + \tfrac64 + \tfrac63 + \tfrac62 + 6$ as `Fraction`s. Add a Markov solve on "faces seen" if cheap.
+- Q2: key $\tfrac38$. Distractors $\tfrac58$ (the chance somebody does, the complement), $\tfrac{81}{256}$ (each hat independent, $(\tfrac34)^4$), $\tfrac14$ (one named person only). Twice: inclusion-exclusion $1 - 1 + \tfrac12 - \tfrac16 + \tfrac1{24} = \tfrac{9}{24}$; and enumeration of the 24 permutations, 9 with no fixed point.
+- Q3: key 20%. Distractors 60% (stake the win chance), 10% (half the edge), 100% (maximise the expected value, not the log). Twice: $f = p - q = 0.2$ for an even-money bet; and a grid search of $0.6 \ln(1+f) + 0.4 \ln(1-f)$ in 1% steps peaks at 20% (growth 0.0201 a bet).
+- Q4: key $\tfrac{100}{21}$, 4.76 tosses. Distractors 2.38 (counted pairs, not tosses, $\tfrac{50}{21}$), 3.33 (waited for a head, $1/0.3$), 1.43 (waited for a tail, $1/0.7$). Twice: a pair succeeds with $2 \times 0.3 \times 0.7 = 0.42$, so $2 / 0.42$ tosses; and a linear solve over the two states "start" and "failed pair" gives $\tfrac{1}{0.21}$. Note that 2.38 and the key differ by a factor of 2 on one side only, so the rule holds.
+- Q5 (longform). Model: the chance the next card is red is $\tfrac{r}{r+b}$ and the fair-bet value at any moment is $\tfrac{r-b}{r+b}$, a martingale, so every stopping rule has expected gain £0 (optional stopping). Check by recursion on small decks. Script: the value of "stop now or wait" over states $(r, b)$ with a forced bet by the last card, as `Fraction`s: $V(3,3) = V(26,26) = 0$ and $V(2,1) = \tfrac13$ for one state. Follow-up in the model: if you may stake anything from £0 to £1 on every card, you win in expectation; with one red and one black card the stakes £0 then £1 give £1. Rubric (10): states the question is whether any stopping time helps (1); next card red has probability equal to the red share (1); the stopping value is the red-minus-black share (2); sees the fair-game or symmetry argument that the bet has expected gain 0 whenever you stop (3); checks a small deck by enumeration (1); answers £0 for the single bet (1); names what changes with variable stakes and gives the two-card example (1).
+- Q6 (longform). Model: calling costs £50 to win the £150 already in the pot, so the break-even equity is $\tfrac{50}{200} = 25\%$; at 30% the call earns $0.3 \times 150 - 0.7 \times 50 = +£10$. For the follow-up, if a share $x$ of bets are bluffs you win $x \times 150 - (1 - x) \times 50$, which is 0 at $x = \tfrac14$. Twice: pot odds against the EV sum; and $200 \times 0.3 - 50 = 10$. Rubric (10): the price of the call and what it wins (2); break-even equity 25% by a stated formula (2); EV +£10 and the decision to call (2); says the 30% is an estimate and what would change it (1); the bluff frequency $\tfrac14$ with a reason (2); reasons aloud in order and ends with a clear action (1).
+
+For each `longform` write `model` as the spoken answer an interviewer would hope for in at most 150 words, with the follow-up built in. `feedback` is not used on a longform; the model and rubric carry it.
+
+### Paper 2: mental maths and Fermi (15 min, 12 items)
+
+Forward only, no skipping, because these are asked one at a time with no paper. Q1 to Q8 are `numeric` (exact, or `tol` as stated), `pace: 40`, skills `mp-speed` or `mp-fractions`, tags as shown; Q9 to Q12 are interval `choice` items, `pace: 120`, skill `mp-estimate`, tag first `fermi-interval`. Each `numeric` lists the named wrong values in `wrong` so feedback names the slip.
+
+| Q | Diff | Tag | Item | Key | `wrong` (slip) | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 2 | `percent-of` | 13% of 760 | 98.8 (`tol` abs 0.05) | 9.88 (moved the point); 76 (took 10% only) | $76 + 22.8$; $0.13 \times 760 = 494/5$ |
+| 2 | 3 | `difference-of-squares` | $47 \times 53$ | 2491 | 2500 (forgot the $-9$); 2209 (squared 47) | $50^2 - 3^2$; direct product |
+| 3 | 3 | `two-by-two` | $38 \times 26$ | 988 | 1040 (rounded 38 to 40); 948 (slipped a digit) | $38 \times 25 + 38$; $40 \times 26 - 2 \times 26$ |
+| 4 | 2 | `fraction-sum` | $\tfrac18 + \tfrac1{12}$ as a decimal to 3 places | 0.208 (`tol` abs 0.0005) | 0.100 (added tops and bottoms, $\tfrac{2}{20}$); 0.010 (multiplied the fractions, $\tfrac1{96}$) | $\tfrac{3}{24} + \tfrac{2}{24} = \tfrac5{24}$; $0.125 + 0.0833$ |
+| 5 | 3 | `compound` | $1.06^{12}$ to 2 places, within 0.03 | 2.01 (`tol` abs 0.03) | 1.72 (added $12 \times 6\%$) | rule of 72 gives a doubling; $1.06^{12} = 2.0122$ by squaring |
+| 6 | 2 | `gauss-sum` | $1 + 2 + \dots + 120$ | 7260 | 7140 (stopped at 119); 14520 (forgot to halve) | $\tfrac{120 \times 121}{2}$; 60 pairs of 121 |
+| 7 | 3 | `last-digit` | Last digit of $7^{2026}$ | 9 | 3 (used $2027 \bmod 4$); 7 (read the exponent as 1 mod 4) | cycle 7, 9, 3, 1 and $2026 \bmod 4 = 2$; `pow(7, 2026, 10)` |
+| 8 | 2 | `net-percent` | Up 40%, then down 25%: net change in % | 5 | 15 (added the changes); 10 (took 40% of 25%) | $1.4 \times 0.75 = 1.05$; start at 100: 140, then 105 |
+
+The script asserts every `wrong` value is outside the `tol` of the key.
+
+**Fermi, Q9 to Q12.** Each question states every figure it needs, so the value is computable and never trivia, and ends "Choose the tightest interval that holds your estimate." The four options follow the `mock-oa-trader` paper C rule: one narrow interval holds the value (the key); one wider interval also holds it, and its `why` says the tighter one also holds it, so it scores less on the day; two narrow intervals of the key's width miss it, one adjacent and one a full width away, the side varying by item. `shuffle: true`.
+
+| Q | Diff | Tag (after `fermi-interval`) | Question, with figures | Value | Key and options | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- |
+| 9 | 3 | `stack-of-coins` | A coin is 2.5 mm thick. How tall, in km, is a stack of 1,000,000? | 2.5 km | key 2.0 to 3.0; wide 1.0 to 4.0; misses 3.0 to 4.0 and 0.0 to 1.0 | $10^6 \times 2.5$ mm = 2,500 m; 1,000 coins is 2.5 m, times 1,000 |
+| 10 | 4 | `balls-in-a-room` | A room is 4 m by 5 m by 2.5 m. Balls 6.5 cm across fill 64% of it. How many, in thousands? | 222.5 | key 200 to 250; wide 100 to 400; misses 250 to 300 and 100 to 150 | $\tfrac{0.64 \times 50}{\tfrac43 \pi (0.0325)^3}$; $\tfrac{0.64 \times 50\,\text{m}^3}{(\pi/6) \times 0.065^3}$ |
+| 11 | 3 | `heartbeats` | A heart beats 70 times a minute. Beats in 80 years, in billions? (1 year = 365.25 days) | 2.945 | key 2.8 to 3.0; wide 2.0 to 4.0; misses 3.0 to 3.2 and 2.4 to 2.6 | $70 \times 60 \times 24 \times 365.25 \times 80$; per year 36.8 million, times 80 |
+| 12 | 3 | `quote-rate` | A desk quotes 4 markets, each updated twice a second, for 6.5 hours. Updates in a day, in thousands? | 187.2 | key 180 to 190; wide 100 to 300; misses 190 to 200 and 160 to 170 | $4 \times 2 \times 6.5 \times 3600$; per hour 28,800, times 6.5 |
+
+Check the distractor rule on Q11 and Q12 after generating (the key must not sit between two equal slips: one miss adjacent, the other a width away). Each `explain` shows the product and says why the wider interval holds but scores less.
+
+### Paper 3: market-making game (30 min, 4 items)
+
+Three `trade` items, each over an `orderbook` canvas (`params`: three levels a side around `fair`, `currency: "£"`, `showMid: true`, `state: {}`, as `mock-trade-sample.json`), then a debrief. The prose of each says what the quantity is, how a turn works and that the interviewer may know more than you. `question` states the target. Every spec below was played in node through `app/js/engine/widgets/trade.js` (`play(widget, strategy)`): the strategy meets the target and the untouched opening quote fails, so the validator warns about neither. If the author changes a number, rerun `play` for both and keep the margin.
+
+Shared: `tick: 0.5`, `currency: "£"`, `maxBreaks: 0`, `dp: 1`. `feedback.byKey` for `low`, `limit`, `crossed`, `spread` as the widget needs, each naming the learner's action ("You kept the same ask after the news, so the informed trader bought it cheap."). Games are `pace` 420 s (items 1 and 3) and 480 s (item 2).
+
+**Q1, `three-dice`** (diff 3, skills `mg-fair`, `mg-update`; draws on mm-games `l2-dice-sum`, `l13-full-game`). Three fair dice, the total settles the game; fair opens at 10.5.
+`seed 23, turns 8, fair 10.5, value 13, range [3, 18], size {min 1, max 2, start 1}, limit 5, spread {min 1, max 4}, quote {bid 9, ask 12, size 2}, counterparty [noise rate 0.8 turns [1, 4]; informed edge 0.5 turns [5, 8]], benchmark 8`. Cards: turn 1 the rule; turn 3 "The first die shows 6. Fair is now 13.5." (`fair: 13.5`); turn 6 "The second die shows 4. Fair is now 13.5." (`fair: 13.5`); turn 8 the third die shows 3, the total is 13 (`reveal: true`). Strategy: `[9,12,2] [9,12,2] [12,15,1] [12.5,14.5,1]` then `[12.5,14.5,1]` four times. Played: P&L £9.5, 0 breaks; opening quote untouched: £1, 2 limit breaks. Second check of $10.5$ and $13.5$: $3 \times 3.5$; $6 + 3.5 + 3.5 = 13$ and $6 + 4 + 3.5 = 13.5$.
+
+**Q2, `bad-news`** (diff 4, skills `mg-update`, `mg-risk`; draws on mm-games `l8-informed-flow`). A share opens at £50; bad news, then informed sellers.
+`seed 31, turns 8, fair 50, value 46, range [38, 58], size {min 1, max 3, start 1}, limit 4, spread {min 1, max 5}, quote {bid 48.5, ask 51.5, size 2}, counterparty [noise rate 0.7 turns [1, 3]; informed edge 0.5 turns [4, 8]], benchmark 12`. Cards: turn 1 "The share last traded at £50."; turn 4 "A weak report. Fair is now £48." (`fair: 48`); turn 7 "The value is revealed: £46." (`reveal: true`). Strategy: `[48.5,51.5,2]` three times, then `[46,50,1] [45,49,1] [44.5,48.5,1] [44.5,47.5,1] [44.5,47.5,1]`. Played: P&L £19.5, 0 breaks; untouched: £2, 3 limit breaks.
+
+**Q3, `interviewer-flow`** (diff 4, skills `mg-quote`, `mg-risk`; draws on mm-games `l10-position-limits`, `l12-thinking-aloud`). The interviewer is a scripted counterparty who tests your limit; the results table lists them as `scripted`.
+`seed 41, turns 6, fair 100, value 104, range [92, 112], size {min 1, max 2, start 1}, limit 3, spread {min 2, max 6}, quote {bid 98, ask 102, size 2}, counterparty scripted trades [hit 2 at 98; hit 2 at 97.5; hit 2 at 97; lift 2 at 102; lift 2 at 101; none], benchmark 6`. Cards: turn 1 the rule; turn 4 "The interviewer says the level looks higher. Fair is now £102." (`fair: 102`); turn 6 "The value is revealed: £104." (`reveal: true`). Strategy: `[98,102,2] [96.5,100.5,1] [96.5,100.5,1] [100,102,1] [99,101,1] [101,105,1]`. Played: P&L £7, 0 breaks; untouched: £14 but 3 limit breaks, so it fails on the rules first. Note for the prose: at position 3 (the limit) any quote breaks, so the learner must step the bid away before the position reaches it. That is the lesson; say so in `feedback.byKey.limit`.
+
+**Q4, `defend-the-skew`** (longform, diff 4, skills `mg-quote`, `mg-risk`, `rk-behave`; draws on mm-games `l7-skewing`, `l12-thinking-aloud`; tag `market-defence`; pace 480). Fixed numbers from Q3's model run, not read from the learner: "You bought 2 at £98 on turn 1. The interviewer offers to sell again at £97.5. You quote £96.5 to £100.5 for 1. Explain the quote." Model: the position is +2 against a limit of 3, so a second fill at £97.5 would leave +4 and break the limit; lowering the bid below £97.5 stops the fill, the ask at £100.5 stays above the fair value of £100 so selling still earns, and the width of £4 keeps the quote inside the allowed £2 to £6. Rubric (10): states the position and the limit (2); says the bid sits below the interviewer's £97.5 so no more is bought (2); gives the ask against fair value (1); names the skew as inventory management, not a view (2); mentions adverse selection (a seller who keeps selling may know more) (1); states what would change the quote (a card, a price, a fill) (1); reasons aloud, in order, with a clear final quote (1).
+
+### Paper 4: fit and motivation (18 min, 2 `longform`)
+
+Both items: `skills: ["rk-behave"]`, draws on recruiting `l8-why-this-firm`, `l11-stories-that-answer`, `l13-the-final-round`, difficulty 3, `pace: 480`. The prompt says to say the answer aloud first, then type it in at most 200 words. The model answer is an example, clearly labelled as one, because the learner's own story is the real answer. No firm is named in the prompt, model or rubric.
+
+- **Q1, `why-trading`.** Prompt: "Why do you want to trade rather than work at a bank or a lab?" Rubric (10): a one-sentence answer first (1); two reasons tied to the daily work, such as pricing under uncertainty and fast feedback (2); one piece of your own evidence with a number or an outcome (3); says what you dislike or find hard about trading and how you handle it (2); why a trading firm rather than another route (1); about 90 seconds, no clichés (1).
+- **Q2, `decision-under-uncertainty`.** Prompt: "Tell me about a decision you made with incomplete information, and what you would change." Rubric (10): the situation in one or two sentences (1); what you did not know (2); the decision and its reason, with a rough probability or cost (3); the result, stated honestly (1); what you would change, and how you would know sooner (2); the answer is first person and under two minutes (1).
+
+### Generation, voice and acceptance
+
+**Script.** `gen_superday.py` in the agent's scratchpad folder, `random.Random(2601)` for option order only (parameters are fixed above). It holds every number as a `Fraction`, asserts each key two ways, replays the three trade specs through `app/js/engine/widgets/trade.js` by a small node call and asserts verdict `ok` for the strategy and not `ok` for `strategy: null`, reads the families and questions of `mock-oa-trader*.json` and `mock-oa-sig*.json` for the duplicate check, asserts the option rules (shuffle, no times-ten pair, no equal slips, one tightest interval per Fermi item), writes the exam JSON and prints a key table. The script is embedded in the report.
+
+**Feedback and explain.** Choice and numeric items: `feedback.correct` names the move in one clause, `feedback.generic` gives the first step, `explain.text` shows the calculation and the second check in at most three sentences. Trade items: per-key `feedback.byKey` as above and `explain.text` naming the P&L of the model run. Longform items: `model` and `rubric` only.
+
+**Voice scan.** `VOICE_BASE=/home/user/zero-to-quant/app/content/exams/ python3 docs/reviews/voice-scan.py`, or a folder holding a copy of the exam file: 0 sentences over 20 words and 0 explanations over three sentences. Model answers of a longform count as prose, so keep their sentences short too.
+
+**Skills covered.** `pz-expectation`, `pz-conditioning`, `pz-games`, `gm-poker`, `mp-speed`, `mp-fractions`, `mp-estimate`, `bz-quick`, `mg-fair`, `mg-quote`, `mg-update`, `mg-risk`, `rk-behave`.
+
+**Prerequisites** (cite in the report; nothing is gated): puzzles `l2-every-coupon`, `l5-hats`, `l20-betting-on-sequences`, `l21-kelly`, `l24-mixed-set`, `l25-fair-from-biased`; game-theory `l11-pot-odds`; mental-pressure `l1-towards-fifty`, `l2-two-by-two`, `l7-estimating-products`; brainteasers `l13-digits-and-remainders`, `l14-sums-in-one-line`; mm-games `l2-dice-sum`, `l4-fermi`, `l7-skewing`, `l8-informed-flow`, `l10-position-limits`, `l12-thinking-aloud`, `l13-full-game`; recruiting `l8-why-this-firm`, `l11-stories-that-answer`, `l12-reasoning-aloud`, `l13-the-final-round`.
+
+**Acceptance.** The common checks (1 to 5), with one file instead of three, plus: the start card lists four papers (45, 15, 30 and 18 minutes, 108 in all, 24 questions) and both checks; paper 2 refuses a step back and a step without an answer (the playthrough probes it); the playthrough passes the three trade items by their `strategy` and marks the five longform items with every rubric point ticked, at 1280 and 390 px (`--mobile`), with `--local-cdn <pkgs>`; a screenshot of one trade item at 390 px shows the ledger and the steppers without overlap; every key is asserted two ways in `gen_superday.py`; report at `docs/reports/exam-mock-superday-trader.md`, listing each item's answer and computations, the three trade specs and their played P&L, and these proposals: no `prep.json` change (the entry exists); inbox bullets under `Raised later (exam mock-superday-trader):` for the E3 bank draw, for a `trade` item that could score by P&L, for longform marks that are all-or-nothing at 7 of 10, and for the NaN pass mark if it shows.
