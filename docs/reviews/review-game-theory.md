@@ -58,3 +58,58 @@ Checked with `playthrough.mjs --mobile` on every lesson and set (all pass; homew
 
 - app/content/courses/game-theory/l11-pot-odds.json screens[4], [6], [8]; l12-ranges.json screens[2], [4], [5], [8], [9] | `boxes` canvas, two hand cards and five board cards | warning | At 390 px the seven `size: "large"` cards shrink to about 40 px and their labels ("K♠", "6♥") render at roughly 8 px: the suit, which decides every count on these screens, is hard to read (screenshot of l12 screens[2]). | Stack the containers (`params.rows: 2`) so the board row gets the full width, or show the board as text in the prose as well.
 - app/content/courses/game-theory/l4-mixing.json screens[7]; l5-zero-sum.json screens[8] | table canvas with two cells per column | note | At 390 px "(−2, −2), (4, 0)" breaks after the comma, so each column shows two stacked pairs that read like two rows. | One column per cell (Row 1 L, Row 1 R, ...) or a 2 × 2 grid per game, slid with controls as in l3 screens[7].
+
+## Fix pass
+
+Every corrected number was recomputed before it was written (Python with fractions; scripts in the session scratchpad `fix-game-theory/`). After the edits the reader's `mech.py` finds no item without `pace` or `tags`, no answer overlapping a `wrong` value and no `wrong` value without a `byKey` line. `node tools/validate.mjs`: 0 errors. Voice scan: 0 explanations over three sentences, 0 of 7,257 sentences over 20 words. Every lesson and set plays green with and without `--mobile`.
+
+Status: fixed 35, fixed in part with the rest disputed 1, deferred 1. No keyed answer changed.
+
+### Errors
+
+1. l15 screens[4] option b and `byKey.b`: fixed with the proposed line. Checked: 0.3 − 0.7/4 = 0.125, and p − q/b < p for any b > 0.
+2. l13 screens[3] `byKey.r2c1`: fixed with the proposed line. Checked: checking the jack gives −1; a bluff gains 2 on that when Ben folds and loses 1 more when he calls, so the call rate is 2/3 = 1/2 (kings) + c/2, giving c = 1/3 for queens.
+3. l11 screens[0] and [4]: fixed. Both questions now end "as a percentage", and the accept lines read "25%" and "34.97%, within 0.05 percentage points". Checked: 1 − (38/47)(37/46) = 378/1081 = 0.34968.
+
+### Warnings
+
+4. `%` accept lines: fixed on all ten `%` items (l10 q1, q2; l11 screens[0], [4], q1, q2; rv2-bargain; rv3-gutshot, rv3-twelve; hw2-patience). Each now reads "x%, within t percentage points", matching its `tol`. Checked: 2/3, 10/46 = 21.74%, 1/1.95 = 51.28%, 4/46 = 8.70%, 972/2162 = 44.96%, 0.05/0.1925 = 25.97%.
+5. l2 screens[8]: fixed with mixes, as proposed. Half L, half R pays Ben 3.5, 6 and 6 against C's 0, 5 and 5, so round 1 removes T and C, round 2 L and round 3 M. The keys 6 and 3 stand. Hint step, `r0c1`, `r1c1` and the explain changed.
+6. l7 weak deletion: fixed. Screens[6] prose now says the deleted guesses are only weakly dominated and can tie for the win; the explain says even this weak deletion ends at 0. The ending went in the explain, not the prose, because screens[6] asks where deletion ends. Screens[0] explain now says a guess above 66.67 "never does better than" 66.67, not "is beaten by" it.
+7. l14 screens[7]: fixed, row 3 now ends "(he asks £6)".
+8. l1 screens[3] option c: fixed, dropped.
+9. l4 screens[7]: fixed, rows 1 to 4 now begin "Race, mixed equilibrium:" and "Venues, mixed equilibrium:".
+10. `pace`: fixed on all 38 items on the level-2 pattern. Drills 180 s; quiz items 45 s (difficulty 2) or 60 s (difficulty 3); review-1 45, 60 or 90 s by difficulty; homework-1 code 600, order 300, longform 180, numeric and multi 90 or 120 s.
+11. Two-place answers: fixed by widening `tol` to 0.05 on the listed cells (l7 screens[0], [1], [2], [3], [7], q1; l8 screens[3]; l10 screens[8], [9]), and on the two others of the same kind (l9 screens[8] r0c1, 180/11; l11 screens[8] r2c1, 680/2162). No `wrong` value lies within 0.1 of these keys. The l7 accept lines now say ± 0.05. Money answers to the penny (l8 screens[8], l9 screens[2] and [9], rv2-price-five, hw2-curse, hw3-implied) keep 0.01.
+12. Raw ids: fixed in l6 screens[6], l8 screens[1] and [3], l9 screens[1] (prose and line s3) and [9], l12 screens[9], l15 screens[2], [3] hint and [8]. Each now names the course and lesson as `course.json` does, for example "*How much to bet*, in Probability Puzzles". The l14 screens[8] sentence is cut.
+13. rv1-none: fixed, the back-reference is gone.
+
+### Notes
+
+14. l1 formula: fixed, `\arg\max` in screens[6] and the summary.
+15. Two-option choices: fixed. l1 q1 adds "Either: T and B tie" (Ana's row sums are 6 and 6), q2 adds "Either: L and R tie" (Ben's column sums are 3 and 3), l6 q1 adds "Enters unless the incumbent first promises to fight", and l12 screens[4] and q3 add "Raise". Both l12 questions now ask "What do you do?".
+16. l1 q2, q3: fixed, each states the table's reading itself.
+17. Resource paragraph: fixed. It left l11 screens[1] and moved to the l11 drill (screens[8], 50 words), so each level keeps it once; l1 and l6 keep theirs.
+18. l3 screens[3]: fixed as proposed.
+19. l3 q3 explain: fixed with different wording: "No switch may pay strictly more, so a tie, as at (2, 2) in the spread table, still holds." The proposed line runs to 21 words.
+20. l4 screens[5]: fixed, "Ben plays L with chance $q$." comes before the equation.
+21. l5 screens[9], l13 screens[8]: fixed. Both now read "A maker who always quotes the same size is as easy to read as a player who never mixes" (l5) or "never bluffs" (l13).
+22. l6 screens[2]: fixed as proposed.
+23. l7 screens[5] option c: fixed as proposed.
+24. `wrong` without `byKey`: fixed. l9 screens[2] `ten`, l9 q1 `top` and hw2-curse `top` now have byKey lines. The l8 screens[8] `half` entry (50) was dropped.
+25. Accept lines against `tol`: fixed by making the lines match the tolerance (l10 screens[4], l13 screens[0] and [8] now say ± 0.005). Tightening `tol` instead would reject 0.33 for 1/3.
+26. l9 screens[0]: fixed, "The highest bid wins and pays its bid."
+27. l15 screens[1] accept: fixed as proposed. Checked: `parseNum` reads 5.9e-6, and 0.3^10 = 5.9049e-6 is within 1e-7.
+28. l15 screens[7]: fixed, now two sentences ending "Its standard deviation is 80 big blinds a hundred hands." Screens[6] "spread $\sigma$" is now "standard deviation $\sigma$" too.
+29. Authoring checks in learner copy: fixed, cut from l10 screens[9], l12 screens[5], l14 screens[3], hw2-capacity, hw2-patience and hw2-curse.
+30. rv1-deletion `stopped`: fixed as proposed. Checked: (M, L) = 6, and Ben's C beats L 7 to 2 and 9 to 2.
+31. l11 screens[2] explain: fixed as proposed.
+32. hw3-say-it: fixed, the prompt now gives "K♠ K♥ on A♦ 9♣ 6♥ 3♠ 2♦".
+33. l13 screens[7] `byKey.r4c1`: fixed. The line now says Ben's queen is indifferent and either reply gives −1/9. Checked: against bet K, bet Q, bet J a third, Ben's queen calling and folding both give Ana (−2/3)/6 = −1/9.
+34. Units: l2 screens[1] fixed, with `wrong` 4 and 5 and byKey lines on "The table is in £1,000 a day". The l3 half is disputed: l3 screens[4] is a tap-regions trap with no numeric, and the one numeric that asks in £ (screens[1]) reads a table in £.
+35. Voice note: none needed; the re-run is still 0 and 0 (`voice-3.3-game-theory.txt` saved).
+
+### Layout at 390 px
+
+36. Card labels (l11 screens[4], [6], [8]; l12 screens[2], [4], [5], [8], [9]): deferred to the engine, with an inbox bullet. `.cv-svg text { font-size: 13px }` in `css/canvases.css` overrides the label size `boxes.js` sets, so large cards keep 13-unit text (about 8.6 px). `params.rows: 2` was tried and reverted: the cards were never shrunk, only their text, so stacking gained nothing. Content workaround: a canvas caption on l11 screens[4], [6], [8] and l12 screens[5], [8], [9] lists the cards in text; l12 screens[2] and [4] already name them in the prose.
+37. l4 screens[7], l5 screens[8]: fixed. Each table now has one column per cell (R1 C1, R1 C2, R2 C1, R2 C2), and the caption explains the heads; l4 uses short game names, with the moves in the caption. The 390 px screenshots show every pair on one line with all four columns visible.

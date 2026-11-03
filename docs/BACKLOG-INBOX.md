@@ -839,3 +839,6 @@ Raised later (bank part 1 session 1):
 
 Raised later (game-theory fix pass):
 - boxes canvas, card labels: `css/canvases.css` line 47 (`.cv-svg text { font-size: 13px }`) overrides the `font-size` attribute that `boxes.js` line 114 sets on card text, so `size: "large"` cards keep 13-unit labels. In a 540-unit frame at 390 px that is about 8.6 px, and the suits in game-theory l11 screens[4], [6], [8] and l12 screens[2], [4], [5], [8], [9] are hard to read. `params.rows: 2` does not help: the cards were never shrunk, only their text. Workaround: the prose names every card. Wanted: set the card label size with `style.fontSize` (or a CSS variable) so it scales with the card.
+
+Raised later (topic 3.3 fix passes, mm-games and mental-pressure):
+- Table widget: a cell's own `wrong[]` id still cannot be a `byKey` key (two more votes). mm-games l8 s2 and s4 and mental-pressure l2, l3 and l4 key on `r{i}c{j}` and name the slip in that line.
