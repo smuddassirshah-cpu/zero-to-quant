@@ -75,3 +75,77 @@ No findings on correctness or grading: all 30 keys, tolerances and wrong values 
 ## Counts
 
 7 errors, 11 warnings, 24 notes.
+
+## Fix pass
+
+Targeted string edits only; no file was regenerated, and no lesson, screen, item or option id was renamed or removed. I recomputed every number I touched in Python (NumPy 2.5, pandas 3.1, scikit-learn 1.6.1, SciPy; scratchpad folder `fix-2.1`) and a second way by hand or by a second formula, as each line says. The long-sentence list is left to the per-course voice agents, as briefed. Screen, item and quiz numbers are zero-based, as in the findings.
+
+Status: fixed 38, disputed 0, deferred 4 (two to the voice agents, two engine changes). One fix differs from the proposal (line 6).
+
+### Statistical Learning (8)
+
+1. l7 quiz[1] (error): fixed as proposed. The prose now rescales momentum, a feature, not the target; the key `no` and the `times100` why are the proposed lines, shortened to stay under 20 words. Checked: with the target times 100, `Ridge(alpha=50)` gives the same coefficients times 100; with momentum times 100, its coefficient shrinks from 0.4848 (OLS) only to 0.4850 / 100.
+2. l12 s9 console (error): fixed, "0.9167". Checked: pair count (3 + 1 + 0.5 + 1)/6 and `roc_auc_score`, both 0.91667.
+3. l12 s10 explain (error): fixed, "fires on only 2% of days" (20 of 1,000).
+4. l13 s3 `abs` (error): fixed, value 0.25 (tol 0.0005) and byKey "0.25 averages the gaps without squaring them." Checked: (0.1 + 0.2 + 0.6 + 0.1)/4 = 0.25; the squared mean stays 0.105.
+5. l5 s5 and s7 (warning): fixed. The explain reads "On the test rows `model.score` gives −0.95, and against the training mean $1 - 23.55/12.27 = -0.92$." The two whys, the byKey and s7 now call −0.95 scikit-learn's score. Checked: 1 − 23.55/12.27 = −0.9193 = −11.28/12.27.
+6. l3 s8 table (note): fixed with the caption, not the numbers. 6.144 and 0.5466 are the unrounded values the s6 code returns and its tests and feedback expect, so the trap table keeps them. Its caption now says "Unrounded values, so a last digit can differ from the earlier table." Both rows sum to 7.051 with the noise 0.36.
+7. l3 quiz[1] `nosq` (note): fixed, the duplicate entry is removed; `sd` and its byKey stay.
+8. l11 s3 explain (note): fixed, "Refusing everyone is a bad bet, but 0.5 is worse."
+
+### Validation and Leakage (11)
+
+9. l5 s9 and summary note (error): fixed as proposed. The key `iid` is now "A cross-section of 200 loans from one month, one row per borrower, in no meaningful order". A new distractor `ret` holds the daily returns with $\hat\rho(k)$ near 0 and the proposed why. The explain and note are the proposed lines. The feedback now points at rows with no time order.
+10. l5 s5 explain (warning): fixed in three sentences: "... a gap of about 2%, so here shuffling costs little. Shuffling lies when neighbouring rows share information. Real series carry regimes this one lacks, so on a time series keep time order anyway." The keyed option says "costs little here", not "harmless". Checked: (2.6159 − 2.5595)/2.5595 = 2.2%.
+11. l8 quiz[2] (warning): fixed. Key: "It probably never worked: the best of 50 random tries passes 3 standard errors about one time in 15" (the proposal's last clause dropped for length; the prose already gives the flat live record). Explain: "With 50 tries the best noise score averages 2.25 standard errors and passes 3 about 6.5% of the time. A flat live record after that makes luck the likelier story." Checked: $1 - \Phi(3)^{50} = 0.0653$ and $E[\max_{50}] = 2.249$ by integration; 200,000 simulated maxima give 0.0655 and 2.249.
+12. Embargo contradiction (warning): fixed. Validation homework-2 items[5]: the explain is the proposed line, and the docstring in starter and solution says `embargo` adds rows to the gap that walk-forward does not need. The tests and the `embargo` argument stay, so no graded answer changed. Items[6] line `split` is "`TimeSeriesSplit(gap=h - 1)`". Items[7] model is as proposed, and its rubric line drops "(and an embargo if needed)". Fin-ml homework-1 items[6]: "and add an embargo" is gone from the model and from the rubric line. A search of the four courses and the exam finds no other walk-forward embargo, except fin-ml l12 s0's order line, now "Fix a time-ordered split with a purge".
+13. review-2 items[6] (warning): fixed, `tol: { "abs": 0.0002 }`. The answer is checked before `wrong[]`, so 0.0495 to 0.0499 pass and 0.0500 now gets the `half` line. Checked: $\sqrt{0.2475/100} = 0.04975$.
+14. l5 s6 caption (note): fixed, "for `make_vol(7)` with shuffle seed 0".
+15. l5 s7 `before` (note): fixed, value 7, tol 0, byKey "Day 9 is in the test block. Count days 10 to 15."
+16. l7 s1 caption (note): fixed as proposed; s0 keeps its own caption.
+17. l8 s2 explain (note): fixed, "1.7 standard errors below" and "at 2.6 below".
+18. l10 s2 explain (note): fixed, "computed before the test period".
+19. l11 quiz[0] explain (note): fixed, "drops months 31 to 119". Checked: `make_panel` indexes months 0 to 119.
+
+### Financial Machine Learning (9)
+
+20. l9 quiz[3] (error): fixed, "0.195 and 0.212" in the prose and explain, `raw` value 0.017. The key 0 stands: both round to 0.2. Checked: $2\Phi(0.13/\sqrt{0.2331}) - 1 = 0.2123$ by `norm.cdf` and by `erf`; 0.62 gives 0.1953.
+21. l11 quiz[2] `yes` why (error): fixed as proposed. Checked: $\sqrt{1.125/11} = 0.3198$, $z = 1.563$, PSR 0.941.
+22. l8 s6 (warning): fixed. The `shift` why reads "`prev_ret` is a different number. On this frame it is no leak, only the wrong sign. On an oldest-first frame `shift(-1)` would put tomorrow on today's row." Its byKey, which repeated the "any frame" claim, now says it uses only today and yesterday, mis-signed. The explain's second sentence is the proposed one. Checked in pandas: on the console's frame `prev_ret` on 28 June is 103.55/104.10 − 1 = −0.53%.
+23. l8 s2 and s3 (note): fixed, "27 weekdays" in both. Checked: `bdate_range` from 1 April to 7 May 2024 and a weekday count both give 27, and the s2 series itself includes 1 April and 6 May.
+24. l10 s8 (note): fixed with a sentence in the prose, not the explain (which has three already): "`turnover` skips the entry from flat, which `net_pnl` charges; over long series the gap vanishes."
+25. l11 s1 `nosr` (note): fixed, `tol: { "abs": 0.00005 }`. It accepts 0.03647 and 0.0365 and sends 0.0364 ($1/\sqrt{755} = 0.03639$) to its byKey.
+26. l11 quiz[1] `signflip` (note): fixed, 0.0974. Checked: $\sqrt{0.56/59} = 0.09742$.
+27. l12 s5 explain (note): fixed with different wording: "Python rounds the stored binary value, −1.76499…, a hair closer to 0." Checked: `'%.20f' % 1.765` prints 1.76499999999999990230 and `round(-1.765, 2)` is −1.76.
+28. homework-2 items[5] model (note): fixed, "includes 9 future days". Checked: a spike at day 40 enters the centred 20-day means at days 31 to 50, so each window runs $t - 10$ to $t + 9$.
+
+### Trees and Ensembles (5)
+
+29. l12 s3 (warning): fixed. The explain's middle sentence is "With a one-day label nothing overlaps ($h - 1 = 0$), so `gap=1` is a cautious extra day." The prose ("a one-row gap"), accept line, `feedback.correct` and the `nogap` byKey no longer say row 729 must be purged. The key, 728, is unchanged.
+30. l3 s1 explain (note): fixed: "On these 120 loans it trains to 100% but scores 71% on the 200 test loans, the repaid share." Checked: the unlimited tree on the first 120 loans of `make_loans(3, 500)` has 32 leaves and scores 0.71, the repaid share of the test loans; on all 300 it scores 0.66.
+31. l6 summary.ideas[1] (note): fixed and split in two: "Textbooks use $\sqrt{p}$ for classification and $p/3$ for regression; scikit-learn's regressor uses all $p$ by default."
+32. l6 s1 tolerance (note): fixed, `tol: { "abs": 0.002 }`. Checked: $0.5 + 0.5/100 = 0.505$ now goes to `b100`.
+33. l11 s6 prose (note): fixed, "a random validation fraction of 20%" (the console sets 0.2; the default is 0.1).
+
+### Voice (3)
+
+34. Long sentences (warning): deferred to the per-course voice agents, as briefed. Every new or edited string in this pass is under 20 words, except the code-bearing ones the findings quote.
+35. Explains over three sentences (note): deferred to the same agents. Merging sentences lengthens them, so it belongs with the long-sentence pass on the same strings. No edit here adds a fourth sentence to an explain.
+36. Shuffled `KFold` on loan books (note): fixed with the strict reading of DECISIONS. Validation l1 s0's prose and ensembles l7 s6's prose now say "for loans with issue dates, use time-ordered folds", pointing to level 2 and *Walking forward*.
+
+### Layout (6)
+
+37. fin-ml l12 s1 graph (warning): fixed. The 12 stages form a U of two columns at x 0.1 and 0.9 (left down, right up, `height: 440`), with two-line labels "Point-in-\ntime data", "Split +\npurge", "Models +\ntrial log" and "Walk-forward\nP&L". The 1280 px and 390 px screenshots show every label whole and every edge drawn.
+38. validation l10 s3 graph (warning): fixed as one column (y 0.08 to 0.92, `height: 420`, `directed: true`), each step on one line. Both screenshots show six separate boxes and five arrows.
+39. ensembles l7 s1 table widget (warning): fixed by merging two columns into "OOB trees: votes" ("T2: 1, T4: 1"). Checked against the canvas's bootstrap counts: the OOB trees are unchanged. At 390 px the four columns and the input fit.
+40. stat-learning l8 s4 plane (note): fixed, `height: 360`. At 390 px the diamond fills the width and B and C clear the edge; the tick text stays small (an engine limit of `equal`).
+41. validation l5 grids and fin-ml l4 pair (note): deferred. Two rows of 8 would re-key every cell id, answer, patch and hint on four screens, and fin-ml l4's pair is already `stack: true`. Two engine bullets are in `docs/BACKLOG-INBOX.md`.
+42. Engine graph width (note): deferred, one bullet in `docs/BACKLOG-INBOX.md`.
+
+### Exam
+
+No findings; the exam is unchanged and still plays through.
+
+### Checks
+
+`node tools/validate.mjs`: 0 errors. `node tools/playthrough.mjs --local-cdn` with `--shots --mobile` over the 23 changed lessons, validation homework-2 and review-2, fin-ml homework-1 and homework-2, and `--exam topic-2.1`: all passed. No keyed answer changed; graded changes are `wrong[]` values and tolerances (lines 4, 7, 13, 15, 20, 25, 26, 32), the new `ret` distractor (line 9) and the merged table columns (line 39).
