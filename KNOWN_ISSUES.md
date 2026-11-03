@@ -58,3 +58,9 @@ Second-read pass (3 Nov 2026)
 - Raw-source checks that ban a name (for example a sort or a library call) also trip on that name inside a comment or string. Fixed for the sort bans in ds and algo-think; still present in ds l17, eigen l17 and homework-4, contests l5, l6 and l11, and exams topic-1.4 and topic-2.4. Fix in those topics' second reads.
 - Exam items were replaced in topic-0.5 (four items) and topic-1.8 (two items); attempts sat before 3 Nov no longer line up item by item with the new papers. Lesson ids and progress are unaffected.
 - Topics not yet second-read probably carry the same voice debt as 2.1; run `docs/reviews/voice-scan.py` on each before closing it.
+
+Session B (4 Nov 2026)
+- mock-oa-arith's 16 decimal, fraction and percentage items are fixed, so resits repeat them (inbox bullet asks E4 for those operations). Its start card's parts list squeezes at 390 px (engine, inbox).
+- mock-oa-sig and mock-oa-trader are briefed but unwritten; E3 (fresh draws) and E15 (calculator) are not built.
+- The 12-screen lesson cap pushed several brief drills into quizzes in brainteasers L2 and L3 (listed in their reports).
+- Raw `git stash -u` while agents write untracked files hides their files for a moment; use `git pull --rebase --autostash` and stage the manifest entry by entry.
