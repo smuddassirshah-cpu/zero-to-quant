@@ -16,6 +16,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
+const tradeSim = createRequire(import.meta.url)('../js/engine/widgets/trade.js'); // { norm, play, ... }: the trade widget's game, so the authored strategy is played against the benchmark (item 459)
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '..');
@@ -34,7 +35,7 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform']);
+const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform', 'trade']);
 const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'complex-map', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console', 'space']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
@@ -325,6 +326,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
   if (!WIDGETS.has(w.kind)) { err(file, `${where}.kind`, `unknown widget kind "${w.kind}"`); return null; }
   if (w.kind === 'longform' && !ctx.allowLongform) err(file, `${where}.kind`, 'longform belongs in homework and exams');
   const keys = new Set();
+  if (w.carry != null && w.kind !== 'trade' && !(typeof w.carry === 'string' && /^[A-Za-z][A-Za-z0-9]*$/.test(w.carry))) err(file, `${where}.carry`, 'carry is a name of letters and digits');
   /* Shapes first, so a field of the wrong type is one error line and never a crash further down */
   const LISTS = ['options', 'among', 'tokens', 'slots', 'lines', 'points', 'wrong', 'tests', 'examples', 'moves', 'rubric', 'order', 'same'];
   const badShape = LISTS.filter(f => w[f] != null && !Array.isArray(w[f]));
@@ -444,6 +446,78 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if (w.mode === 'order') { if (!Array.isArray(w.order) || w.order.some(t => !tokens.has(t))) err(file, `${where}.order`, 'order must list known token ids'); }
       else if ((w.slots || []).every(s => !(s.accepts || []).length)) err(file, `${where}.slots`, 'no slot accepts any token');
       (w.tokens || []).forEach((t, i) => text(t.text, `${where}.tokens[${i}].text`));
+      break;
+    }
+    case 'trade': {
+      /* item 459: the market-making game. Shape first, then the authored strategy is played through the same game the widget runs. */
+      const TRADE_FIELDS = new Set(['kind', 'seed', 'turns', 'fair', 'value', 'tick', 'range', 'size', 'limit', 'quote', 'spread', 'counterparty', 'schedule', 'benchmark', 'band', 'maxBreaks', 'strategy', 'currency', 'dp', 'carry', 'label']);
+      Object.keys(w).forEach(f => { if (!TRADE_FIELDS.has(f)) err(file, `${where}.${f}`, 'unknown trade field'); });
+      const fin = (v) => typeof v === 'number' && Number.isFinite(v);
+      let ok = true;
+      const bad = (f, m) => { ok = false; err(file, `${where}.${f}`, m); };
+      if (!Number.isInteger(w.seed)) bad('seed', 'seed must be a whole number (the game is deterministic under it)');
+      if (!Number.isInteger(w.turns) || w.turns < 2 || w.turns > 40) bad('turns', 'turns is a whole number from 2 to 40');
+      if (!fin(w.fair)) bad('fair', 'fair (the opening mark) must be a number');
+      if (!fin(w.value)) bad('value', 'value (the hidden settlement value) must be a number');
+      if (w.tick != null && !(fin(w.tick) && w.tick > 0)) bad('tick', 'tick must be a positive number');
+      if (w.range != null && (!Array.isArray(w.range) || w.range.length !== 2 || !w.range.every(fin) || w.range[0] >= w.range[1])) bad('range', 'range is [lowest price, highest price]');
+      if (w.size != null) { if (!isObj(w.size) || Object.entries(w.size).some(([k, v]) => !['min', 'max', 'start', 'step'].includes(k) || !fin(v) || v <= 0) || (fin(w.size.min) && fin(w.size.max) && w.size.min > w.size.max)) bad('size', 'size is { min, max, start, step }, positive numbers with min at most max'); }
+      if (w.limit != null && !(fin(w.limit) && w.limit > 0)) bad('limit', 'limit must be a positive number');
+      if (w.quote != null && (!isObj(w.quote) || Object.entries(w.quote).some(([k, v]) => !['bid', 'ask', 'size'].includes(k) || !fin(v)))) bad('quote', 'quote is { bid, ask, size } (the opening values)');
+      if (w.spread != null && (!isObj(w.spread) || Object.entries(w.spread).some(([k, v]) => !['min', 'max'].includes(k) || !fin(v) || v < 0) || (fin(w.spread.min) && fin(w.spread.max) && w.spread.min > w.spread.max))) bad('spread', 'spread is { min, max }, with min at most max');
+      if (w.maxBreaks != null && !(Number.isInteger(w.maxBreaks) && w.maxBreaks >= 0)) bad('maxBreaks', 'maxBreaks is a whole number, 0 or more');
+      if (w.currency != null && typeof w.currency !== 'string') bad('currency', 'currency is a short string such as "£"');
+      if (w.dp != null && !(Number.isInteger(w.dp) && w.dp >= 0 && w.dp <= 6)) bad('dp', 'dp is a whole number of decimals');
+      if (w.carry != null && !(typeof w.carry === 'string' && /^[A-Za-z][A-Za-z0-9]*$/.test(w.carry))) bad('carry', 'carry is a name of letters and digits');
+      const hasB = w.benchmark != null, hasBand = w.band != null;
+      if (hasB === hasBand) bad('benchmark', 'give exactly one of benchmark (a number: P&L at least this) or band ([low, high])');
+      if (hasB && !fin(w.benchmark)) bad('benchmark', 'benchmark must be a number');
+      if (hasBand && (!Array.isArray(w.band) || w.band.length !== 2 || !w.band.every(fin) || w.band[0] >= w.band[1])) bad('band', 'band is [low, high] with low below high');
+      const cps = w.counterparty == null ? [] : Array.isArray(w.counterparty) ? w.counterparty : [w.counterparty];
+      if (!cps.length) bad('counterparty', 'counterparty is required: { type: "noise" | "informed" | "scripted", ... } or a list of them');
+      cps.forEach((c, i) => {
+        const at = `counterparty${Array.isArray(w.counterparty) ? `[${i}]` : ''}`;
+        if (!isObj(c) || !['noise', 'informed', 'scripted'].includes(c.type)) { bad(at, 'type is "noise", "informed" or "scripted"'); return; }
+        const known = { noise: ['type', 'turns', 'rate', 'reach', 'maxSize'], informed: ['type', 'turns', 'rate', 'edge', 'maxSize'], scripted: ['type', 'turns', 'trades'] }[c.type];
+        Object.keys(c).forEach(f => { if (!known.includes(f)) bad(`${at}.${f}`, `not a field of a ${c.type} counterparty`); });
+        if (c.rate != null && !(fin(c.rate) && c.rate > 0 && c.rate <= 1)) bad(`${at}.rate`, 'rate is a chance above 0 and at most 1');
+        if (c.edge != null && !(fin(c.edge) && c.edge >= 0)) bad(`${at}.edge`, 'edge is a price distance, 0 or more');
+        if (c.reach != null && !(fin(c.reach) && c.reach >= 0)) bad(`${at}.reach`, 'reach is a price distance, 0 or more');
+        if (c.maxSize != null && !(fin(c.maxSize) && c.maxSize >= 1)) bad(`${at}.maxSize`, 'maxSize is a size, 1 or more');
+        if (c.turns != null && (!Array.isArray(c.turns) || c.turns.length !== 2 || !c.turns.every(Number.isInteger) || c.turns[0] < 1 || c.turns[0] > c.turns[1] || (Number.isInteger(w.turns) && c.turns[1] > w.turns))) bad(`${at}.turns`, 'turns is [first, last], whole turn numbers from 1 to turns');
+        if (c.type === 'scripted') {
+          if (!Array.isArray(c.trades) || !c.trades.length) bad(`${at}.trades`, 'a scripted counterparty needs trades: [{ act: "hit" | "lift" | "none", size, price }], one per turn');
+          else {
+            if (Number.isInteger(w.turns) && c.trades.length > w.turns) bad(`${at}.trades`, `more trades (${c.trades.length}) than turns (${w.turns})`);
+            c.trades.forEach((t, j) => { if (!isObj(t) || !['hit', 'lift', 'none'].includes(t.act) || (t.size != null && !(Number.isInteger(t.size) && t.size >= 1)) || (t.price != null && !fin(t.price))) bad(`${at}.trades[${j}]`, 'a scripted trade is { act: "hit" | "lift" | "none", size (whole, optional), price (optional limit) }'); });
+          }
+        }
+      });
+      if (w.schedule != null && !Array.isArray(w.schedule)) bad('schedule', 'schedule is a list of cards: { turn, text, fair, reveal }');
+      (Array.isArray(w.schedule) ? w.schedule : []).forEach((c, i) => {
+        if (!isObj(c) || !Number.isInteger(c.turn) || c.turn < 1 || (Number.isInteger(w.turns) && c.turn > w.turns)) { bad(`schedule[${i}].turn`, 'turn is a whole number from 1 to turns'); return; }
+        Object.keys(c).forEach(f => { if (!['turn', 'text', 'fair', 'reveal'].includes(f)) bad(`schedule[${i}].${f}`, 'a card has turn, text, fair and reveal'); });
+        if (c.fair != null && !fin(c.fair)) bad(`schedule[${i}].fair`, 'fair must be a number');
+        if (c.reveal != null && typeof c.reveal !== 'boolean') bad(`schedule[${i}].reveal`, 'reveal is true or false');
+        if (typeof c.text !== 'string' && c.reveal !== true) bad(`schedule[${i}].text`, 'a card needs text (or reveal: true)');
+        text(c.text, `${where}.schedule[${i}].text`);
+      });
+      if (!Array.isArray(w.strategy) || !w.strategy.length) bad('strategy', 'strategy is required: [{ bid, ask, size }] one entry per turn, a run that meets the benchmark (the playthrough plays it)');
+      else {
+        if (Number.isInteger(w.turns) && w.strategy.length !== w.turns) bad('strategy', `strategy needs one entry per turn (${w.turns}), found ${w.strategy.length}`);
+        w.strategy.forEach((x, i) => { if (!isObj(x) || !fin(x.bid) || !fin(x.ask) || !fin(x.size)) bad(`strategy[${i}]`, 'each entry is { bid, ask, size } with numbers'); });
+      }
+      if (ok) {
+        const N = tradeSim.norm(w);
+        if (fin(N.fair) && (N.range[0] > Math.min(N.fair, N.value) || N.range[1] < Math.max(N.fair, N.value))) warn(file, `${where}.range`, 'the price range does not cover both fair and value');
+        const run = tradeSim.play(w, w.strategy);
+        if (!run.verdict.ok) err(file, `${where}.strategy`, `the authored strategy does not meet the target (P&L ${run.verdict.pnl}, ${run.verdict.breaks} rule breaks, key "${run.verdict.key}"), so the playthrough could not pass it`);
+        const dflt = tradeSim.play(w, null);
+        if (dflt.verdict.ok) warn(file, where, 'leaving the opening quote untouched for every turn already meets the target, so the game checks nothing');
+        const needsKeys = { low: true, high: hasBand, crossed: true, limit: N.limit < Infinity, spread: N.spreadMin != null || N.spreadMax != null };
+        Object.entries(needsKeys).forEach(([k, on]) => { if (on) keys.add(k); });
+        if (!canvas || canvas.kind !== 'orderbook') warn(file, where, 'the trade widget is built over an orderbook canvas');
+      } else keys.add('*');
       break;
     }
     case 'tap-regions': {
@@ -1057,6 +1131,13 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     }
     if (s.explain) checkExplain(file, `${at}.explain`, s.explain);
     if (s.canvas) prevCanvasKind = s.canvas.kind;
+  });
+  /* item 460: {{carry.name}} in a screen reads a value an earlier screen's widget stored with carry: "name" */
+  const carried = new Set();
+  screens.forEach((s, i) => {
+    if (!isObj(s)) return;
+    [...JSON.stringify(s).matchAll(/\{\{\s*carry\.([A-Za-z][A-Za-z0-9]*)/g)].forEach(m => { if (!carried.has(m[1])) err(file, `screens[${i}]`, `{{carry.${m[1]}}} reads a value no earlier screen stores (give an earlier widget carry: "${m[1]}")`); });
+    if (isObj(s.widget) && typeof s.widget.carry === 'string') carried.add(s.widget.carry);
   });
   if (titles > 1) err(file, 'screens', 'at most one title screen');
   if (nonTask > 2) err(file, 'screens', `at most two non-task screens (found ${nonTask})`);

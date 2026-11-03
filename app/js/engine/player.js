@@ -123,8 +123,30 @@
     } catch { return NaN; }
   };
 
+  /* ---------- Carried values (ENGINE-BACKLOG 460) ----------
+     A widget with `carry: "name"` stores what the learner gave it when the screen is checked or revealed: a number for
+     numeric, the { id: value } map for sliders, { pnl, position, cash, realised, mtm, breaks, turns, value } for trade.
+     A later screen reads it with {{carry.name}} or {{carry.name.pnl}} (or {{carry.name|fallback}}) in any string of its
+     spec, for example a canvas state or a prose line. A string that is only the placeholder becomes the number itself. */
+  Z.carry = Z.carry || {};
+  const carryReset = () => { Z.carry = {}; };
+  const carryResolve = (spec) => {
+    if (!JSON.stringify(spec).includes('{{carry.')) return spec;
+    const RE = /\{\{\s*carry\.([A-Za-z0-9_.]+)\s*(?:\|([^}]*))?\}\}/g;
+    const get = (path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), Z.carry || {});
+    const text = (v) => (typeof v === 'number' ? String(+v.toFixed(2)).replace('-', '\u2212') : String(v));
+    const sub = (str) => {
+      const whole = str.match(/^\{\{\s*carry\.([A-Za-z0-9_.]+)\s*(?:\|([^}]*))?\}\}$/);
+      if (whole) { const v = get(whole[1]); if (typeof v === 'number') return v; }
+      return str.replace(RE, (m, path, fb) => { const v = get(path); return v == null || typeof v === 'object' ? (fb != null ? fb : '0') : text(v); });
+    };
+    const walk = (x) => (typeof x === 'string' ? sub(x) : Array.isArray(x) ? x.map(walk) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, walk(v)])) : x);
+    return walk(spec);
+  };
+
   /* ---------- Screen builder: lesson screens, quiz items and set items ---------- */
   function buildScreen(spec, o) {
+    spec = carryResolve(spec);
     const mode = o.mode || 'lesson';
     const w = spec.widget || (spec.kind === 'longform' ? { ...spec, kind: 'longform' } : null);
     const type = spec.type || (mode === 'lesson' ? 'problem' : 'item');
@@ -285,6 +307,14 @@
       stepper.querySelector('.lsn-demo-next').addEventListener('click', () => demo(demoAt + 1));
     }
 
+    const storeCarry = () => {
+      if (!widget || !w || typeof w.carry !== 'string') return;
+      try {
+        let v = widget.carryValue ? widget.carryValue() : widget.value();
+        if (typeof v === 'string') { const n = Z.widgets.parseNum(v); v = Number.isFinite(n) ? n : v; }
+        Z.carry[w.carry] = v;
+      } catch (e) { console.error(e); }
+    };
     const graded = !!widget;
     const step = {
       spec, el, type, mode, widget, canvas, cbar,
@@ -296,14 +326,14 @@
       lock: () => widget && widget.lock(),
       grade: async () => {
         if (!widget) return { ok: true, key: null };
-        try { return (await widget.grade()) || { ok: false, key: null }; } catch (e) { console.error(e); return { ok: false, key: 'error', line: 'This answer could not be checked.' }; }
+        try { const r = (await widget.grade()) || { ok: false, key: null }; storeCarry(); return r; } catch (e) { console.error(e); return { ok: false, key: 'error', line: 'This answer could not be checked.' }; }
       },
       mark(r) { if (!widget) return; widget.markGraded(r); if (!r.ok && !r.final && widget.showWhy) { try { widget.showWhy(r.key); } catch (e) { console.error(e); } } },
       clear() { widget && widget.unlock(); },
       reset() { widget && widget.reset(); resetCanvas(); if (w && w.kind === 'tap-regions') count(tapCount(0)); },
       reveal() {
         if (!widget) return;
-        widget.reveal();
+        widget.reveal(); storeCarry();
         if (canvas && spec.explain && spec.explain.canvas) { try { const { controls: cv0, ...pt } = spec.explain.canvas; canvas.set(pt); if (cv0 && typeof cv0 === 'object' && canvas.setParam) Object.entries(cv0).forEach(([b, v]) => canvas.setParam(b, v)); } catch (e) { console.error(e); } }
       },
       point(h) {
@@ -366,6 +396,7 @@
 
   /* ---------- The lesson ---------- */
   function mount(host, opts = {}) {
+    carryReset();
     const course = opts.course || 'conditional';
     const lessonArg = opts.lesson || 'l3-shrinking';
     const lessonId = typeof lessonArg === 'object' ? lessonArg.id : lessonArg;
@@ -1054,6 +1085,7 @@
 
   /* ---------- A list of items with dot progress, one attempt each ---------- */
   function runSet(host, { title = 'Practice', items = [], mode = 'set', onDone, track = 'prob' } = {}) {
+    carryReset();
     const { h, icon } = Z;
     let alive = true, i = 0, cur = null, st0 = 'idle', shownAt = Date.now();
     const results = [];
@@ -1153,5 +1185,5 @@
     };
   }
 
-  Z.player = { mount, renderItem, runSet, buildScreen, openExplain, XP };
+  Z.player = { mount, renderItem, runSet, buildScreen, openExplain, XP, carryReset };
 })();
