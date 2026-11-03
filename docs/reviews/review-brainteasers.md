@@ -61,3 +61,50 @@ Checked and clean: every keyed answer in the course except the three errors belo
 ## Voice
 
 `VOICE_BASE=app/content/courses/brainteasers/ python3 docs/reviews/voice-scan.py` (saved in `docs/reviews/voice-3.3-brainteasers.txt`): 9,290 sentences scanned, 0 over 20 words; 0 explanations over three sentences. So there are no voice findings to rewrite. The separate scans found no `!`, no em or en dashes, no American spellings (hits such as "check", "pound" and "toward" in "towards" are British usage, and "center" occurs only as a canvas `align` value), and £ for all money. The rewrites above keep to the same rules.
+
+## Fix pass
+
+I recomputed every corrected number before writing it. The scripts are in the scratchpad folder `fix-brainteasers/`. `verify.py` holds my own counterfeit-coin solver (it tracks known-genuine coins), a jug simulation checked move by move against the l5 `manipulate` states, a pirate solver for both voting readings, a bridge Dijkstra with a five-trip enumeration, and the pigeonhole, parity and jug BFS checks. `edits.py` holds every edit, each guarded by an assert on the old text. After the edits, `node tools/validate.mjs` gives 0 errors. The voice scan gives 0 and 0 (9,324 sentences, saved over `voice-3.3-brainteasers.txt`). The reader's `mech.py` raises nothing new. All 17 edited files play green with `--local-cdn`, both with and without `--mobile`.
+
+Status: fixed 29, disputed 1, deferred 0. Where a fix differs from the proposal, the line says why.
+
+### Level 1 (10 fixed)
+
+1. l4 s7 (13 coins): fixed. The prose now adds "You must find the fake and say heavy or light", the question ends "to find the fake and say which", and s5 reads as proposed. Solver: 13 coins with heavy or light named in 3 weighings is False with no genuine coin and True with one. Find-only 13 is True, and 12 is True. No $a$ passes both $2a \le 9$ and $26 - 4a \le 9$. So the one reading left matches the key.
+2. l5 s10 hints and explain: fixed with different wording. The proposed step "Stop when the 7 holds 5" stops at (2, 5, 3), one pour short. Point: "Pour 10 into 7. Then pour 7 into 3, and empty the 3 into the 10 each time it fills." Step: "When the 7 runs dry, refill it from the 10. Stop when the 10 and the 7 hold 5 each." The rule played exhaustively goes (10,0,0) → (3,7,0) → (3,4,3) → (6,4,0) → (6,1,3) → (9,1,0) → (9,0,1) → (2,7,1) → (2,5,3) → (5,5,0). That is 9 pours, the BFS minimum over 20 states, and every move is legal in the widget. The explain and `feedback.generic`, which repeated the looping cycle, now state the same rule.
+3. l3 s8 `ten`: fixed as proposed. Checked: 7 picks force it over all residue multisets, and there are six boxes.
+4. l2 s9: fixed, `"shuffle": true`.
+5. l1 s9: fixed, `"shuffle": true`.
+6. homework-1 hw4: fixed, `"shuffle": true`. The options are counts, not a range.
+7. l4 s8 `onetwentyone`: fixed as proposed. Solver: with no genuine coin the limit is $(3^k - 3)/2$ (3 and 12 for $k = 2, 3$), and with one genuine coin $(3^k - 1)/2$ (4 and 13). So 120 and 121 for $k = 5$.
+8. l1 s6 and s11, l2 s6, l3 s5 and s11 raw ids: fixed with course names, lesson numbers and lesson titles ("Contest Practice, lesson 8 (Parity and invariants)", "Reasoning and Proof, lesson 9", "Counting and Chance, lesson 10 (the birthday problem)"). The l3 s11 citation became its own sentence so it stays under 20 words.
+9. l2 quiz[0] "r1c1": fixed, "A tour starts in a corner room".
+10. l2 s11 layer heads: fixed. The heads are now "1", "2" and "3". The caption says layer 1 is the top and layer 3 the bottom.
+
+### Level 2 (11 fixed, 1 disputed)
+
+11. review-2 r1 (pirate vote): fixed as proposed: "everyone aboard votes, proposer included". Solver: with the proposer voting, the split is (99, 0, 1, 0) and it is unique. With only the others voting it is (98, 0, 1, 1). The key 99 stays, and 98 stays as the listed slip.
+12. l11 s11 `thirty`: fixed. The id is now `thirtyone`, value 31: the 3 escorting 1 and 6 costs $6 + 3 + 3 = 12$, and $19 + 12 = 31$. Dijkstra still gives 29.
+13. homework-2 hw7 `twentyfour`: fixed: "You let the 2 escort 1 and 5: $5 + 2 + 2 = 9$." Checked: $15 + 9 = 24$, and Dijkstra gives 23.
+14. homework-2 hw8 model, case 2: disputed. The proposed reason is false. A five-trip plan can send 6 and 8 over together last after 6 has crossed and walked back: 1 and 3 over, 1 back, 1 and 6 over, 6 back, 6 and 8 over, 24 minutes (found by enumeration). The model's reason is true: if 6 and 8 cross together last, the person who brought the torch back before that trip is 6 or 8. I kept the reason and made it a bound: "If it is first or last, 6 or 8 must walk the torch back. That costs at least $8 + 6 + 3 + 3 + 1 = 21$." Enumeration: the best together-first and together-last plans both take 24 minutes, the best middle plan 18, and apart 19.
+15. Items with no stated rules: fixed in l1 quiz[1] (the lamp rules), l2 quiz[0] (doors in shared walls), l2 quiz[1] (the mouse and cheese), l6 quiz[0] to quiz[2], and homework-2 items[0], [4] and [5]. Each now states the pirate, lion or egg rules in full. Solver: 7 pirates and 60 coins give 57, 5 give (58, 0, 1, 0, 1), and 4 with 100 coins give (99, 0, 1, 0). Five merciful pirates give (60, 0, 0, 0, 0), and four lions do not eat. For 300 floors, $24 \cdot 25/2 = 300$ and $23 \cdot 24/2 = 276$.
+16. l6 s5 explain raw ids: fixed as proposed.
+17. l6 s6 `lin`: fixed as proposed. Checked: $60 - (n - 2)$ buys $n - 2$ votes, all but one of the $n - 1$ others.
+18. l6 s2 and review-2 items[6] (lions): fixed, "but eats whenever it is safe". The parity result is unchanged: the first lion eats exactly when $n$ is odd.
+19. l10 s7 s2: fixed as proposed.
+20. l10 s10 `idk`: fixed as proposed.
+21. l10 s11 prose: fixed as proposed.
+22. homework-2 hw7 `seventeen`: fixed as proposed. Checked: 1, 2, 5 and 10 alone take 17.
+
+### Level 3 (8 fixed)
+
+23. l12 s11: fixed as proposed. The prose and explain no longer mention the £48 desk. quiz[0] still has it (checked: £200 / 4.1667 shares = £48).
+24. l16 Puzzles 1 and 7: fixed as proposed. Puzzle 1 has thirteen coins, four turned a move. BFS reaches heads 1, 3, ..., 13 only, so the key "Never" stands. The canvas has 13 coins, the hints read "4, 2, 0, −2 or −4", and the `six` option became `four` ("Yes, in four moves"). Puzzle 7 has 50 coins. The solver gives (49, 0, 1), unique, so the key is now 49. The wrong values are 50 (all), 25 (half), and 16 or 17 for an equal split (16.5 ± 0.5).
+25. l13 s5 and s10, l14 s1, l15 s2, review-3 items[9] raw ids: fixed as proposed, with the lesson numbers written out.
+26. l15 s3: fixed. Added "Exponentials and Logarithms, lesson 12, met the rule of 72 first."
+27. l15 s5 table header: fixed as proposed.
+28. l16 difficulty ramp: fixed as proposed. The socks puzzle now opens the set at difficulty 1 and carries the set's opening sentence. The titles are renumbered Puzzle 1 to 12, and Puzzle 12's "puzzle 9" (the bridge) still points at the bridge.
+29. l16 Puzzle 8: fixed. `cols: 8` gives two rows, and the hint says "Say blue if the number of red hats seen is even", as in l7.
+30. review-3 items[9] id `seven`: fixed, renamed `ten` in `wrong` and `byKey`. BFS checked: 8 steps starting with the 5, and 10 starting with the 7.
+
+Graded keys changed: l16 Puzzle 7, 39 → 49, because the puzzle now has 50 coins. Every other key is unchanged. The l16 screens are reordered, so the socks puzzle is first. Wrong-entry ids renamed: l11 `thirty` → `thirtyone`, l16 `six` → `four`, review-3 `seven` → `ten`. No lesson id or `course.json` changed.
