@@ -122,3 +122,66 @@ Every keyed answer checks, including 625, 66, 7 (losses at 1, 3, 4, 7, 10), 9 (e
 ## Counts
 
 1 error, 13 warnings, 25 notes.
+
+## Fix pass
+
+Targeted string edits only (a raw-text replace that must match once, then a JSON parse); no file was regenerated, and no lesson, screen or item id changed. Every number I touched was computed twice, once by a formula and once by a count (`fix-1.8` in the scratchpad: `rep.py`, `chk.py`, `long_fix.py`, `style2.py`). Each new hidden test was run in CPython with the reader's harness (`read-1.8/tools/runcode.py`) against the solution, the starter and the reader's naive version. The solution passes, and the starter and the naive version fail. Slow or memory-hungry versions are caught by large inputs, a read counter or `tracemalloc` peak memory, never a wall-clock assert (DECISIONS). Every case stays well inside 5 s: the slowest new case takes 0.3 s with the solution.
+
+Status: fixed 37, disputed 0, deferred 2 (one needs a new exam item, one an engine change). Where a fix differs from the proposal, the line says why. Screen, item and quiz numbers are zero-based, as in the findings.
+
+### Grading and keyed answers (4)
+
+1. ds homework-3 items[2] (error): fixed as proposed. Third lot £49.00; `answer` 17650; `accept` "£17,650: $200 \times 50 + 100 \times 52 + 50 \times 49$"; `wrong` lifo 17300, avg 17441.67 (tol abs 1). Checked: FIFO $10{,}000 + 5{,}200 + 2{,}450 = 17{,}650$; LIFO $300 \times 49 + 50 \times 52 = 17{,}300$; weighted $29{,}900 / 600 \times 350 = 17{,}441.67$. The plain average of the prices, $(50 + 52 + 49)/3 \times 350 = 17{,}616.67$, is now outside the key's 0.5 tolerance. The `lifo` byKey says £49.00; the `avg` byKey says "weighted average cost"; the explain is the proposed one.
+2. ds homework-1 items[6]: fixed, the proposed sentence. The key of 250,000,000 stands ($10{,}000 \times 50{,}001/2 = 250{,}005{,}000$).
+3. algo-think homework-3 items[1] `b` why: fixed as proposed. Checked: greedy pays 6, 8 and 9 with 2, 3 and 3 coins, the fewest.
+4. ds l15 quiz[3] `c` why: fixed as proposed.
+
+### Tests that did not catch the ruled-out solution (10)
+
+5. algo-think review-3 items[6]: fixed as proposed. The `Looks` prelude from l9 and a test on a million closes with `big.looks <= 100` (expect 501: the even numbers from 1,000 to 2,000). The scan reads 1,000,000 values and fails; two bisections read about 40. The `how` is split into three sentences.
+6. ds homework-3 items[0]: fixed as proposed (test 7: 20,000 calls of `get_min` on 200,001 values). `min(self.xs)` stops after 5 s on it.
+7. ds homework-3 items[4]: fixed as proposed (test 8: a 50,000-key cache, 150,000 calls). The list-of-keys version stops after 5 s; the solution takes 0.13 s.
+8. ds homework-3 items[5]: fixed as proposed (`peak_bytes` added to the prelude; test 10 on 100,000 nodes). The set version fails it.
+9. ds l13 screens[9]: fixed as proposed (a new prelude with `peak_bytes`; test 9). The set version fails it.
+10. ds l13 screens[7] (note): fixed, with one more test than proposed. Test 13 checks `has_cycle` and test 14 `middle` (a list of nodes also passed before). Each naive version fails its own test. The prose now says "Aim for $O(1)$ space: two tests check your peak memory".
+11. ds homework-4 items[1]: fixed as proposed. A postlude flag `NO_SORT` is test 9, and the `how` names it. The solution uses neither `sorted` nor `.sort`. `sorted(...)` fails.
+12. ds l17 screens[9]: fixed as proposed (`peak_bytes` in the prelude; test 11 on a 200,000-value stream). `sorted(xs, reverse=True)[:k]` fails it.
+13. algo-think l13 screens[8] (note): fixed with the first option, a line in `how`: "A hand-written full sort also passes, but costs $O(n \log n)$." I did not count comparisons. Merge sort on 100,001 values makes about $1.7 \times 10^6$. A fair three-way-partition quickselect can make about $10^6$ (three comprehensions over about $3.4n$ values). So no threshold separates them safely.
+14. algo-think homework-3 items[6] (note): fixed as proposed. Test 9 asks for `kth_largest(sizes, 20000)`, expect 8005, from `sorted(sizes)[-20000]` and again from a count of values above each level. The $O(nk)$ removal and a scan-and-swap version both stop after 5 s; the solution takes 0.05 s. The `how` says "the 20,000th largest" and is split.
+
+### Explanations (3)
+
+15. algo-think l13 screens[0]: fixed as proposed.
+16. ds l7 screens[8]: fixed as proposed. Checked: $\binom{10001}{2} + \binom{10000}{2} = 10^8$, and a count of the prefixes gives 10,001 and 10,000.
+17. algo-think l3 screens[4]: fixed as proposed (4-byte pointer plus 16-byte float).
+
+### Explanations over three sentences (13)
+
+18 to 29. algo-think l1 screens[2] and review-3 items[1]; ds homework-1 items[5], l10 quiz[1], l13 screens[3], l15 screens[1], l16 screens[8] and [9], review-4 items[3]; graphs-dp l1 screens[8], l3 screens[2] and review-1 items[3]. All fixed as proposed.
+30. Exam items[27]: fixed in a different way. The proposed first sentence runs to 21 words. Instead the last two sentences merge: "The design is judged by its worst common operation, here the cancel, which must be $O(1)$."
+
+### Sentences over 20 words (3)
+
+31 to 33. algo-think, ds, graphs-dp: fixed for the 65 sentences of 25 words or more. Each is split at its colon, semicolon or list, mostly "Check runs N hidden tests. They include ...". graphs-dp homework-4 items[2] lists its rows as "Rows 1 to 3: ... Rows 4 and 5: ...". The homework-2 items[4] latencies are grouped "from LD4" and "Other links"; every figure is unchanged. The two ds homework-2 rubric lines keep their points. The scan now finds no sentence over 24 words. It finds 183 of 21 to 24 words, against 185 before. A few new splits were tightened to stay at 20 or under. The rest are left for a later style pass, as the finding lists only those of 25 or more.
+
+### Exam (1)
+
+34. Skills coverage (note): deferred. Swapping an `at-complexity` item for a reversal or cycle trace means authoring and checking a new exam item, more than a targeted fix. It suits the next revision of the 1.8 exam.
+
+### Layout (5)
+
+35. algo-think l3 screens[9]: fixed. `showZero: false` was added, and the `numpy 50` and `numpy 100` bars start at 0, so nothing can be doubled. The explain patch already fills all six bars (1.97, 3.93, 7.86). The hint that compares the lists bar with the numpy one still holds.
+36. algo-think l1 screens[3]: fixed, `showZero: false`.
+37. graphs-dp l17 screens[5]: fixed. `showZero: false` was added, and the $V_3$ bar starts at 0. The explain patch now sets `"3": 4.6667` beside `"4": 4.9444`. Row 3 stays editable, so the graded cells are unchanged. Checked: $V_2 = 4.25$, $V_3 = 14/3$, $V_4 = 89/18 = 4.9444$.
+38. ds l18 screens[7]: fixed. The formula is an `aligned` block, one operation per line.
+39. ds l18 screens[0] to [4], graphs-dp l14 screens[1] to [5], label size: deferred as an engine change. The bullet is under "Raised later (fix pass 1.8)" in `docs/BACKLOG-INBOX.md`.
+
+### Acceptance
+
+From `app/`, with `--local-cdn`:
+- `node tools/validate.mjs`: 0 errors (386 warnings; the only one in these courses is the ladder-canvas warning on ds l8 screens[6], a file this pass did not touch).
+- `--lesson`: all 34 changed lessons pass (algo-think l1, l3, l4, l9 to l14; ds l2, l6, l7, l9 to l11, l13, l15 to l18; graphs-dp l1 to l5, l9 to l17).
+- `--set`: all 15 changed reviews and homework sets pass.
+- `--exam topic-1.8`: 28 of 28, passed.
+
+Graded answers changed: ds homework-3 items[2] (key 17,650 and both wrong values). Nine code widgets gained hidden tests: algo-think review-3 items[6]; ds homework-3 items[0], [4] and [5]; ds l13 screens[7] (two) and [9]; ds homework-4 items[1]; ds l17 screens[9]. Test 9 of algo-think homework-3 items[6] is now the 20,000th largest. Every other key, option, cell and tolerance is unchanged. Not changed: `course.json`, any id, engine files.
