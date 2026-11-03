@@ -10,7 +10,7 @@
    "skills": [
     "cp-stl"
    ],
-   "prose": "A day's trades arrive one per line: symbol, price in pounds, shares (always positive). For each symbol, in alphabetical order, print one line: the symbol, its number of trades, its VWAP, its lowest and its highest price. Print the three prices to four decimals with `std::fixed << std::setprecision(4)`. Group with a `std::map`, and sort each symbol's trades by price with a lambda.",
+   "prose": "A day's trades arrive one per line: symbol, price in pounds, shares (always positive). For each symbol, in alphabetical order, print one line. Give the symbol, its number of trades, its VWAP, and its lowest and highest prices. Print the three prices to four decimals with `std::fixed << std::setprecision(4)`. Group with a `std::map`, and sort each symbol's trades by price with a lambda.",
    "question": "Write the program.",
    "widget": {
     "kind": "code",
@@ -51,7 +51,7 @@
       "expect": "HSBA 3 6.4250 6.4000 6.4400\n"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 5 times with different trades on std::cin and compares what it prints, line by line."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs your program 5 times with different trades on std::cin and compares what it prints, line by line."
    },
    "feedback": {
     "correct": "Grouped by a map, sorted by a lambda, printed in key order.",
@@ -114,7 +114,7 @@
       "expect": "planted bug 4: caught\n"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 runs your tests against the real max_drawdown and expects 3 passed, 0 failed. Tests 2, 3 and 5 swap in a broken version (input 1, 2 and 4) and expect a check to fail. Test 4 (input 3) uses a version that crashes on an empty vector, so your tests must call it with one and the run must stop."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Test 1 runs your tests against the real max_drawdown and expects 3 passed, 0 failed. Tests 2, 3 and 5 swap in a broken version (inputs 1, 2 and 4). Each expects a check to fail. Test 4 (input 3) uses a version that crashes on an empty vector. Your tests must call it with one, and the run must stop."
    },
    "feedback": {
     "correct": "Your tests pass on the real function and catch all four planted bugs.",
@@ -128,7 +128,7 @@
     }
    },
    "explain": {
-    "text": "Each test pins one behaviour with a hand-worked value. The 100, 120, 90, 130, 104 series separates the worst fall, 0.25, from the last one, 0.2, and needs a running peak. Edge inputs catch the crash; on a desk build you would also test that bad input throws, with `REQUIRE_THROWS_AS`."
+    "text": "Each test pins one behaviour with a hand-worked value. The series 100, 120, 90, 130, 104 needs a running peak: its worst fall is 0.25, its last 0.2. Edge inputs catch the crash; on a desk build you would also test that bad input throws, with `REQUIRE_THROWS_AS`."
    }
   },
   {
@@ -376,7 +376,7 @@
    "question": "Lay out the project and justify each choice.",
    "widget": {
     "kind": "longform",
-    "prompt": "Your desk wants the binomial and Black-Scholes pricers from the Python course as a C++ library. A risk report and a backtester will link it, and it must be tested against the Python values. Describe the project: its folders and files, the CMake targets and how they link, what the headers expose, how you build for timing, and which tests you write and why. About 300 words, with a short `CMakeLists.txt`.",
+    "prompt": "Your desk wants the binomial and Black-Scholes pricers from the Python course as a C++ library. A risk report and a backtester will link it, and it must be tested against the Python values. Describe the project: its folders and files, the CMake targets and how they link, and what the headers expose. Say how you build for timing, and which tests you write and why. About 300 words, with a short `CMakeLists.txt`.",
     "model": "**Layout.**\n\n```text\npricing/\n  CMakeLists.txt\n  include/pricing/binomial.h\n  include/pricing/black_scholes.h\n  src/binomial.cpp\n  src/black_scholes.cpp\n  apps/risk_report.cpp\n  apps/backtest.cpp\n  tests/test_pricing.cpp\n  .gitignore            # build/\n```\n\nHeaders declare the public functions, such as `double binomial_call(double S, double K, double r, double sigma, double T, int steps)`, inside `namespace pricing`. Sources hold the definitions, so the tools never see the internals and an edit to `binomial.cpp` recompiles one file.\n\n**CMake.**\n\n```cmake\ncmake_minimum_required(VERSION 3.16)\nproject(pricing LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nadd_library(pricing src/binomial.cpp src/black_scholes.cpp)\ntarget_include_directories(pricing PUBLIC include)\n\nadd_executable(risk_report apps/risk_report.cpp)\ntarget_link_libraries(risk_report PRIVATE pricing)\nadd_executable(backtest apps/backtest.cpp)\ntarget_link_libraries(backtest PRIVATE pricing)\n\nfind_package(Catch2 3 REQUIRED)\nadd_executable(tests tests/test_pricing.cpp)\ntarget_link_libraries(tests PRIVATE pricing Catch2::Catch2WithMain)\nenable_testing()\nadd_test(NAME pricing_tests COMMAND tests)\n```\n\nOne library, built once and linked by both tools, means one fix reaches every user. `PUBLIC` on the include folder passes it to every target that links `pricing`.\n\n**Builds.** Configure `build-release` with `-DCMAKE_BUILD_TYPE=Release` for timing and `build-debug` with `Debug` for the debugger. Only Release times are compared with Python. `build*/` is in `.gitignore` because it is regenerated.\n\n**Tests** (one behaviour each, hand-worked or reference values, tolerances):\n\n- A regression pin: `binomial_call(100, 100, 0.05, 0.2, 1, 100)` equals the Python value 10.430612 within `1e-6`.\n- Black-Scholes at the money, 10.4506 within `1e-4`.\n- Convergence: 2,000 steps within 0.002 of Black-Scholes.\n- Boundaries: at expiry the call pays `max(S - K, 0)`, tested at S = 90 and S = 110.\n- A no-arbitrage property: put-call parity, $C - P = S - K e^{-rT}$, within `1e-9`.\n- Bad input, such as `steps = 0` or negative volatility, throws `std::invalid_argument`, checked with `REQUIRE_THROWS_AS`.\n\n`ctest --test-dir build-release` runs them after every change, and before any speed-up is merged.",
     "rubric": [
      {
@@ -397,7 +397,7 @@
      },
      {
       "points": 2,
-      "text": "Pins at least one Python reference price with a stated tolerance, and adds a theory check (Black-Scholes value, convergence or put-call parity)"
+      "text": "Pins at least one Python reference price with a stated tolerance. Adds a theory check: Black-Scholes value, convergence or put-call parity"
      },
      {
       "points": 1,
@@ -414,7 +414,7 @@
     "generic": "Compare your plan with the model and tick the rubric."
    },
    "explain": {
-    "text": "A good plan builds the library once, links it into every tool, and protects it with tests that pin known prices. That is the project `cpp-pricing` builds next."
+    "text": "A good plan builds the library once, links it into every tool, and guards it with tests pinning known prices. That is the project `cpp-pricing` builds next."
    }
   }
  ]

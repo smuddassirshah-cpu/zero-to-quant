@@ -1,6 +1,6 @@
 /* Content loader and registry (docs/PLAN.md section 5). At start it fetches content/curriculum.json, then every
    course.json it lists, in parallel; ZQ.content.ready resolves when both are in. Lessons, reviews, homework, exams and
-   drills are fetched on demand and cached. content/manifest.json (written by tools/validate.mjs) lists every authored
+   drills and the question bank are fetched on demand and cached. content/manifest.json (written by tools/validate.mjs) lists every authored
    file, so a lesson that is not written yet is known as missing without a request; without a manifest, a 404 is
    cached as missing, never thrown. Course art ids are the kinds in js/art.js (ZQArt.kinds). content/prep.json (prep paths, ENGINE-BACKLOG 455) is read at start too,
    only when the manifest lists it. */
@@ -135,6 +135,9 @@
   const exam = (id) => load(`exams/${id}.json`);
   /* The mock assessments written (exams/mock-*.json in the manifest), sorted by id; empty while there is no manifest */
   const mocks = () => (manifest ? [...manifest].filter(f => /^exams\/mock-[^/]+\.json$/.test(f)).map(f => f.slice(6, -5)).sort() : []);
+  /* The interview question bank (content/bank/<family>.json, ENGINE-BACKLOG 456): file ids from the manifest, sorted; none without one */
+  const bankIds = () => (manifest ? [...manifest].filter(f => /^bank\/[^/]+\.json$/.test(f)).map(f => f.slice(5, -5)).sort() : []);
+  const bank = (id) => load(`bank/${id}.json`);
   const drill = (id) => load(`drills/${id}.json`);
   const drills = () => drillIndex || [];
 
@@ -217,7 +220,7 @@
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
     stages, allStages, stage, topic, topicPassed, courseTestedOut, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
-    lesson, review, homework, exam, examWritten, mocks, drill, drills,
+    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills,
     prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),

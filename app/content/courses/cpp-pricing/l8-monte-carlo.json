@@ -17,7 +17,7 @@
    "type": "problem",
    "difficulty": 1,
    "title": "Eight futures",
-   "prose": "No tree this time. Draw possible prices for our share in a year, under the risk-neutral model. Here are eight draws, made by a C++ program with a fixed seed, with the call's payoff on each ($K = 100$, $r = 5\\%$, $T = 1$).",
+   "prose": "No tree this time. Draw possible prices for our share in a year, under the risk-neutral model. Below are eight draws from a seeded C++ program, with the call's payoff on each ($K = 100$, $r = 5\\%$, $T = 1$).",
    "canvas": {
     "kind": "table",
     "params": {
@@ -103,7 +103,14 @@
      },
      {
       "id": "itm",
-      "value": 12.71,
+      "value": 15.11,
+      "tol": {
+       "abs": 0.03
+      }
+     },
+     {
+      "id": "itmraw",
+      "value": 15.88,
       "tol": {
        "abs": 0.03
       }
@@ -133,7 +140,8 @@
     "byKey": {
      "nodisc": "That is the average payoff, paid in a year. Discount it: $7.94 \\times e^{-0.05} = 7.55$.",
      "bs": "That is the Black-Scholes price. Eight paths give a much rougher answer; compute what they say.",
-     "itm": "You averaged only the paths that paid. The other four paid £0 and count too."
+     "itm": "You averaged only the four paths that paid, then discounted. The other four paid £0 and count too.",
+     "itmraw": "You averaged only the four paths that paid, and did not discount. Average all eight, then discount one year."
     }
    },
    "explain": {
@@ -325,7 +333,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Prices are compared within a relative 1e-9 with the values this compiler's libc++ gives for the same seed. `std::normal_distribution` is implementation-defined, so another library would give other draws."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 6 hidden tests. Prices are compared within a relative 1e-9 with the values this compiler's libc++ gives for the same seed. `std::normal_distribution` is implementation-defined, so another library would give other draws."
    },
    "hints": [
     {
@@ -416,7 +424,7 @@
       "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Four prices are rounded to 4 places and compared with this compiler's values for the same seed. One test only asks that the 20,000-path call is within 3 standard errors (3 × 0.1042) of 10.4506."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 6 hidden tests. Four prices are rounded to 4 places and compared with this compiler's values for the same seed. One test only asks that the 20,000-path call is within 3 standard errors (3 × 0.1042) of 10.4506."
    },
    "hints": [
     {
@@ -502,7 +510,7 @@
       "expect": "std::invalid_argument"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. Three errors are rounded to 4 places. One path must throw `std::invalid_argument`, which ends the program here."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests. Three errors are rounded to 4 places. One path must throw `std::invalid_argument`, which ends the program here."
    },
    "hints": [
     {
@@ -527,7 +535,7 @@
     }
    },
    "explain": {
-    "text": "With 20,000 paths, $n$ against $n - 1$ changes nothing you can see; with two paths it is the difference between 6.77 and 4.79. Two passes avoid the cancellation of level 1: summing $y^2$ and subtracting $n\\bar y^2$ gives 2.5e-8 instead of 0 when σ = 0."
+    "text": "With 20,000 paths, $n$ against $n - 1$ changes nothing you can see. With two paths it is the difference between 6.77 and 4.79. Two passes avoid the cancellation of level 1: summing $y^2$ and subtracting $n\\bar y^2$ gives 2.5e-8 instead of 0 when σ = 0."
    }
   },
   {
@@ -721,7 +729,7 @@
       "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. Prices are rounded to 4 places and compared with this compiler's values for seed 42. Draw one `z(gen)` per pair, in order."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests. Prices are rounded to 4 places and compared with this compiler's values for seed 42. Draw one `z(gen)` per pair, in order."
    },
    "hints": [
     {
@@ -847,7 +855,7 @@
     }
    },
    "explain": {
-    "text": "Line 3 restarts the stream on every path, so all 20,000 paths are the first path: £14.23 discounted to £13.54, with no spread at all. Build the generator once, before the loop, as `terminal_prices` does.\n\n```cpp\nstd::mt19937 gen(seed);                        // once\nstd::normal_distribution<double> z(0.0, 1.0);  // once\nfor (int i = 0; i < n; ++i) { /* draw z(gen) */ }\n```",
+    "text": "Line 3 restarts the stream on every path, so all 20,000 paths are the first path. That is £14.23 discounted to £13.54, with no spread at all. Build the generator once, before the loop, as `terminal_prices` does.\n\n```cpp\nstd::mt19937 gen(seed);                        // once\nstd::normal_distribution<double> z(0.0, 1.0);  // once\nfor (int i = 0; i < n; ++i) { /* draw z(gen) */ }\n```",
     "canvas": {
      "highlight": [
       "l3"
@@ -1082,7 +1090,7 @@
     "generic": "Not quite right. Measure the gap in standard errors."
    },
    "explain": {
-    "text": "The gap is £0.023, or 0.22 standard errors. At every n on the chart the band holds £10.4506, as it should about 95% of the time. A test that the price lies within 3 standard errors of a known value fails by chance only about 0.3% of the time."
+    "text": "The gap is £0.023, or 0.22 standard errors. At every n on the chart the band holds £10.4506, as it should about 95% of the time. Checking the price lies within 3 standard errors of a known value fails by chance about 0.3% of the time."
    }
   },
   {
@@ -1192,7 +1200,7 @@
    "tex": "\\hat c = e^{-rT}\\frac1n\\sum_{i=1}^n f\\big(S_T^{(i)}\\big),\\quad \\text{SE} = \\frac{s}{\\sqrt n}",
    "note": "$s$ divides by $n - 1$; with $n = 1$ there is no error estimate."
   },
-  "trap": "Seeding the generator inside the loop gives every path the same draw: a price from one path and a standard error of zero."
+  "trap": "Seeding the generator inside the loop gives every path the same draw. The price comes from one path, with a standard error of zero."
  },
  "quiz": [
   {

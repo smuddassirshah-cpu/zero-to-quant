@@ -11,7 +11,7 @@
     "cx-pricers",
     "cx-numeric"
    ],
-   "prose": "Write a self-contained American put pricer on a CRR tree: $\\Delta t = T/n$, $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$, growth $e^{r\\Delta t}$ per step. Use one vector of n + 1 values. At every node take the larger of holding and exercising now. With T = 0, return the payoff. Trees level 3 found £5.88 with four steps.",
+   "prose": "Write a self-contained American put pricer on a CRR tree: $\\Delta t = T/n$, $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$, growth $e^{r\\Delta t}$ per step. Use one vector of n + 1 values. At every node take the larger of holding and exercising now. With T = 0, return the payoff. Trees level 2 (l7) found £5.88 with four steps.",
    "question": "Write `american_put(s, k, r, sigma, t, n)`.",
    "widget": {
     "kind": "code",
@@ -62,7 +62,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Prices are compared within a relative 1e-9 with the 4-step £5.8828 (growth $e^{r\\Delta t}$), a 500-step value and four other cases. One test checks the early-exercise premium over the European £5.0935."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 7 hidden tests. Prices are compared within a relative 1e-9 with the 4-step £5.8828 (growth $e^{r\\Delta t}$), a 500-step value and four other cases. One test checks the early-exercise premium over the European £5.0935."
    },
    "feedback": {
     "correct": "£5.8828 at 4 steps and £6.0888 at 500, both with growth $e^{r\\Delta t}$.",
@@ -73,7 +73,7 @@
     }
    },
    "explain": {
-    "text": "The node at time i with j ups has spot $Su^jd^{i-j}$; its value is the larger of the discounted expectation and $K - $ spot. With growth $e^{r\\Delta t}$ the 4-step put is £5.8828 and the 500-step one £6.0888, against £5.5695 European at 500 steps. At £60 the put is worth exactly its exercise value, £40."
+    "text": "At time i with j ups the spot is $Su^jd^{i-j}$; the value is the larger of holding and $K - $ spot. With growth $e^{r\\Delta t}$ the 4-step put is £5.8828 and the 500-step one £6.0888, against £5.5695 European at 500 steps. At £60 the put is worth exactly its exercise value, £40."
    }
   },
   {
@@ -130,9 +130,18 @@
      {
       "compare": "raises",
       "stdin": "100 100 0.05\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "100 100 0.05 0.2 1 1\n",
+      "expect": "tree 12.1623\nbs 10.4506\ndiff 1.7117\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": "0 100 0.05 0.2 1 4\n"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. It runs your program 7 times with different input on `std::cin`. Output must read exactly `tree ...`, `bs ...`, `diff ...` on three lines. The last three runs must end with a non-zero exit status."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 9 hidden tests. It runs your program 9 times with different input on `std::cin`. Output must read exactly `tree ...`, `bs ...`, `diff ...` on three lines. Runs 5, 6, 7 and 9 must end with a non-zero exit status."
    },
    "feedback": {
     "correct": "One program that checks one pricer against another.",
@@ -152,7 +161,7 @@
    "skills": [
     "cx-numeric"
    ],
-   "prose": "Show why antithetic variates help a call. Let $Y = f(Z)$ and $Y' = f(-Z)$ be the discounted payoffs of a path and its mirror, and $v = \\mathrm{Var}(Y)$.",
+   "prose": "Show why antithetic variates help a call. Let $Y = f(Z)$ and $Y' = f(-Z)$ be the discounted payoffs of a path and its mirror, and $v = \\mathrm{Var}(Y)$. State the pair's mean before its variance, and bring in plain paths just before the comparison.",
    "question": "Put the lines of the argument in order.",
    "widget": {
     "kind": "order",
@@ -209,7 +218,7 @@
    "question": "Write your design in about 250 words.",
    "widget": {
     "kind": "longform",
-    "prompt": "A small desk asks you to design its C++ pricing library from this level's pieces. Describe the interface: the payoff classes, the three pricers (tree, closed form, Monte Carlo), what each is for, and how you would test them against each other. Name one payoff the interface cannot price as it stands, and how you would extend it.",
+    "prompt": "A small desk asks you to design its C++ pricing library from this level's pieces. Describe the interface: the payoff classes, and the three pricers (tree, closed form, Monte Carlo) with what each is for. Say how you would test them against each other. Name one payoff the interface cannot price as it stands, and how you would extend it.",
     "model": "**Payoffs.** An abstract base `class Payoff { public: virtual ~Payoff() = default; virtual double operator()(double spot) const = 0; };`. Each payoff is one class: `Call`, `Put`, `DigitalCall`, `CappedCall`, and composites such as `Straddle` that hold other payoffs. Books are `std::vector<std::unique_ptr<Payoff>>`. Pricers take `const Payoff&`, never a copy, so adding a payoff never changes a pricer.\n\n**Pricers.**\n\n- `binomial_price(const Payoff&, s, r, sigma, t, n, american)`: a CRR tree on one vector of n + 1 values. It is the only one of the three that handles early exercise. It costs $O(n^2)$ and converges like $1/n$.\n- `bs_call`, `bs_put` and the Greeks: exact for European calls and puts under Black-Scholes, and instant. They are the reference the others are tested against.\n- `mc_price` and `mc_standard_error(const Payoff&, ..., n, seed)`: any European payoff, with an error bar. The error falls like $1/\\sqrt n$; antithetic pairs halve the variance for a call.\n\n**Cross-tests.** The closed form against known values (£10.4506, £5.5735) and parity. The tree against Black-Scholes: within 0.005 at 512 steps. Monte Carlo against Black-Scholes: within 3 standard errors, with a fixed seed. Limits for all three: T = 0 gives the payoff, small σ gives the discounted forward payoff. The American put is at least the European, and equals the exercise value deep in the money (£40 at £60).\n\n**Limit.** `Payoff` sees one spot, so it cannot price an Asian option, whose payoff needs the whole path. Add a second interface, `class PathPayoff { virtual double operator()(const std::vector<double>& path) const = 0; }`, and a Monte Carlo pricer that simulates m steps per path.",
     "rubric": [
      {
@@ -222,7 +231,7 @@
      },
      {
       "points": 2,
-      "text": "Names the three pricers with what each is for: tree for American exercise, closed form as the fast exact reference, Monte Carlo for general payoffs with an error bar"
+      "text": "Names what each pricer is for: the tree for American exercise and the closed form as the fast exact reference. Monte Carlo is for general payoffs, with an error bar"
      },
      {
       "points": 1,
@@ -230,7 +239,7 @@
      },
      {
       "points": 3,
-      "text": "Gives at least three cross-tests with tolerances: known values or parity, tree against Black-Scholes, Monte Carlo within a few standard errors with a fixed seed, limits such as T = 0"
+      "text": "Gives at least three cross-tests with tolerances. Options: known values or parity, tree against Black-Scholes, seeded Monte Carlo within its error bar, limits such as T = 0"
      },
      {
       "points": 1,
@@ -243,7 +252,7 @@
     "generic": "Compare your design with the model answer and tick the rubric."
    },
    "explain": {
-    "text": "A good design separates what is paid (payoff classes) from how it is priced (pricers), and tests the pricers against each other where their domains overlap."
+    "text": "A good design separates what is paid (payoff classes) from how it is priced (pricers). It tests the pricers against each other where their domains overlap."
    }
   },
   {
@@ -289,7 +298,7 @@
    "skills": [
     "cx-pricers"
    ],
-   "prose": "On trees level 2's example ($u = 1.2$, $d = 0.8$, growth 1.05 per step, two steps), `tree_price` gives £15.59 for the call with `american` false and with `american` true.",
+   "prose": "Take trees level 2's example: $u = 1.2$, $d = 0.8$, growth 1.05 per step, two steps. There `tree_price` gives £15.59 for the call, with `american` false or true.",
    "question": "Why does the flag change nothing for the call?",
    "widget": {
     "kind": "choice",

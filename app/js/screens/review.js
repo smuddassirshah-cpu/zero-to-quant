@@ -7,6 +7,10 @@
      #practice  and  #practice/weekly   a practice set of 8 from ZQ.select.practiceSet, or the week's 3 probability problems;
                                      each answer goes to ZQ.state.practiceResult (skill scores and the streak count only)
      #redo                           every due redo item, oldest first, each result recorded with ZQ.state.redo.result
+     #bank                           the Interview practice deck: due and new items from content/bank/*.json and tagged items of
+                                     finished lessons (ZQ.select.bankDeck), each scheduled on its own, recorded with ZQ.state.bankResult
+                                     (ENGINE-BACKLOG 456). Every set page ends with a pace line (average, slowest families, items over
+                                     their `pace`) from the seconds each item took (ENGINE-BACKLOG 457); grading never reads time.
    A set with timed: { seconds, lockAtZero } (a level review's file, or #practice/timed/<seconds>) shows a countdown and a
    live score; at zero a locking set ends by itself and records what was answered (ENGINE-BACKLOG 454, covers 129).
    Each page installs window.ZQ.test (current, answerCorrect, check, continue) for tools/playthrough.mjs; a timed set also
@@ -58,7 +62,9 @@
     set: (k, v) => { try { ZQ.store.set(k, v); } catch { /* storage blocked */ } },
   };
   const logReview = (seconds, source) => { const m = seconds / 60; if (m >= 0.1) { try { S().hours.log({ block: 'review', minutes: m, source }); } catch (e) { console.error(e); } } };
-  const resultRow = (r) => ({ id: r.item.id, ok: !!r.ok, difficulty: r.item.difficulty || 2, skills: r.item.skills || [], ref: r.item.ref });
+  const resultRow = (r) => ({ id: r.item.id, ok: !!r.ok, difficulty: r.item.difficulty || 2, skills: r.item.skills || [], ref: r.item.ref, seconds: r.seconds, pace: r.item.pace, family: (ZQ.mock.family(r.item) || {}).id });
+  /* The rows ZQ.mock.pacing reads: one per answered item, numbered as the summary lists them */
+  const paceRows = (items, res) => items.map((it, j) => { const r = res[j], f = ZQ.mock.family(it, skillNames()); return r && typeof r.seconds === 'number' ? { label: String(j + 1), seconds: r.seconds, pace: it.pace, family: f && f.id, familyLabel: f && f.label } : null; }).filter(Boolean);
   /* Practice and weekly answers move skill scores and the streak's problem count (no XP, no MP) */
   const practiced = (res, source) => { try { S().practiceResult({ results: (res || []).filter(Boolean).map(resultRow), source }); } catch (e) { console.error(e); } };
 
@@ -250,6 +256,10 @@
               <div class="rv-card-h"><h2 class="t-h2" id="rv-pr-h">Practice</h2><span class="t-caption muted">Mastery of the skills you have met</span></div>
               ${practiceHTML}
             </section>
+            <section class="card rv-card" aria-labelledby="rv-bk-h" data-sec="bank" data-track="speed" hidden>
+              <div class="rv-card-h"><h2 class="t-h2" id="rv-bk-h">Interview practice</h2><span class="t-caption muted">Each question on its own schedule</span></div>
+              <div class="rv-bk" data-bank></div>
+            </section>
             <section class="card rv-card" aria-labelledby="rv-nb-h" data-sec="notebook">
               <div class="rv-card-h"><h2 class="t-h2" id="rv-nb-h">Notebook</h2><span class="t-caption muted">${plural(cards.length, 'formula card', 'formula cards')}</span></div>
               ${notebookHTML}
@@ -274,6 +284,20 @@
       go.innerHTML = items.length
         ? `<a class="btn track block" href="#practice" data-start-practice>Start a practice set, ${Math.min(PRACTICE_N, items.length)} problems</a><p class="t-caption muted rv-pset-n">${plural(items.length, 'problem', 'problems')} in your pool. <a class="link-btn" href="#practice/timed/${PRACTICE_N * 60}">Or against the clock, ${PRACTICE_N} minutes</a></p>`
         : `<p class="t-body rv-empty">${I('lock', 'sm')}<span>Finish a lesson to unlock practice. Sets draw on the quizzes of lessons you have finished.</span></p>`;
+    }).catch(e => console.error(e));
+
+    /* ---------- Interview practice (content/bank and tagged items of finished lessons) ---------- */
+    ZQ.select.bankStatus().then(st => {
+      if (!alive) return;
+      const sec = root.querySelector('[data-sec="bank"]'), el = root.querySelector('[data-bank]');
+      if (!sec || !el || (!st.total && !st.locked)) return;
+      const fams = Object.keys(st.families).length, todo = st.due + st.fresh;
+      const line = todo ? `${plural(st.due, 'question', 'questions')} due and ${st.fresh} new, from ${plural(fams, 'family', 'families')}.`
+        : st.later ? `Nothing due. The next question comes back${st.nextDue ? ' on ' + dayDate(st.nextDue) : ' soon'}.` : 'No questions are available yet.';
+      el.innerHTML = `<p class="t-body secondary rv-bk-l">Interview-style questions from several families, mixed. A right answer moves a question to a longer wait: 1, 3, 7, then 30 days. A miss starts it again.</p>
+        <p class="t-body rv-bk-n tnum" data-bank-line>${esc(line)}${st.later && todo ? ` ${st.later} scheduled for later.` : ''}${st.locked ? ` ${plural(st.locked, 'more question unlocks', 'more questions unlock')} as you finish lessons.` : ''}</p>
+        ${todo ? `<a class="btn track block" href="#bank" data-start-bank>Start interview practice, ${Math.min(BANK_N, todo)} questions</a>` : ''}`;
+      sec.hidden = false;
     }).catch(e => console.error(e));
 
     const examsEl = root.querySelector('[data-exams]');
@@ -474,17 +498,19 @@
     };
     const summary = (items, res, out) => {
       const nRight = res.filter(r => r && r.ok).length;
+      const pace = ZQ.mock.pacing(paceRows(items, res));
       col.innerHTML = `<section class="hw-sum">
         <span class="t-overline hw-deep">${esc(cfg.over || '')}</span>
         <h1 class="t-complete">${esc(cfg.doneTitle || 'Set complete')}</h1>
         <div class="hw-score-big"><span class="t-stat tnum" data-count>${nRight}</span><span class="t-h2 secondary">of ${items.length} right</span></div>
         ${timedOut ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Time ran out with ${plural(res.filter(Boolean).length, 'problem', 'problems')} answered. The rest count as missed.</span></p>` : cfg.timed ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Finished with ${esc(clock(Math.max(0, remaining())))} left on the clock.</span></p>` : ''}
+        ${pace.n ? `<p class="t-body hw-late hw-pace">${I('timer', 'sm')}<span>${esc(pace.text)}</span></p>` : ''}
         <div class="hw-badges">${(out.badges || []).map(([v, l], k) => `<div class="hw-badge hw-in" style="animation-delay:${200 + k * 80}ms"><span class="t-h1 tnum">${v}</span><span class="t-caption muted">${esc(l)}</span></div>`).join('')}</div>
         ${out.note ? `<div class="hw-redo">${I('replay', 'sm')}<span>${out.note}</span></div>` : ''}
         <h2 class="t-h2 hw-res-h">Problem by problem</h2>
         <ol class="hw-res">${items.map((it, j) => { const r = res[j]; const ok = !!(r && r.ok); return `<li><div class="hw-res-r ${ok ? 'ok' : 'no'} is-static">
           <span class="hw-res-ic" aria-hidden="true">${I(ok ? 'check' : 'cross')}</span>
-          <span class="hw-rl-t"><span class="t-body">${md(stemOf(it))}</span><span class="t-caption secondary">${esc(it.source || '')}${out.lines && out.lines[j] ? ' · ' + esc(out.lines[j]) : ''}</span></span>
+          <span class="hw-rl-t"><span class="t-body">${md(stemOf(it))}</span><span class="t-caption secondary">${esc(it.source || '')}${out.lines && out.lines[j] ? ' · ' + esc(out.lines[j]) : ''}${r && typeof r.seconds === 'number' ? ` · ${esc(ZQ.mock.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${esc(ZQ.mock.fmtSeconds(it.pace))} pace` : ''}` : ''}</span></span>
           <span class="t-label tnum hw-res-m">${ok ? 'Right' : r ? 'Not right' : 'Skipped'}</span><span></span></div></li>`; }).join('')}</ol>
       </section>`;
       setActs(`${cfg.again ? `<button type="button" class="btn secondary hw-sec" data-again>${esc(cfg.again)}</button>` : ''}<button type="button" class="btn hw-primary" data-back>Back to Review</button>`);
@@ -587,6 +613,34 @@
       partial: (items, res, seconds) => { practiced(res, 'practice'); logReview(seconds, 'practice'); },
     });
   }
+  /* The Interview practice deck (ENGINE-BACKLOG 456): each item has its own schedule in ZQ.state.bank */
+  const BANK_N = 8;
+  function mountBank(root, Z) {
+    return setPage(root, Z, {
+      title: 'Interview practice', sub: 'Questions on their own schedule', over: 'Interview practice', heading: 'An interview practice deck', track: 'speed', perItem: 1.5,
+      lede: 'Questions of the kind interviewers ask, from several families at once. Each one comes back on its own schedule: after 1, 3, 7 and then 30 days.',
+      facts: [['review', 'A right answer moves a question up one box. A miss sends it back to the first.'], ['timer', 'Each question is timed. The pace line at the end shows where you were slow.']],
+      tag: (it) => it.family || '',
+      emptyTitle: 'Nothing due', emptyText: 'No interview questions are due, and none are new. Questions that name prerequisite lessons appear as you finish them.',
+      doneTitle: 'Interview practice done', setTitle: 'Interview practice', again: 'Next deck',
+      load: () => ZQ.select.bankDeck({ n: BANK_N }),
+      record: (items, res, seconds) => {
+        const rows = items.map((it, j) => (res[j] ? { uid: it.uid, ok: !!res[j].ok, seconds: res[j].seconds, family: it.family, pace: it.pace, difficulty: it.difficulty || 3, skills: it.skills || [] } : null)).filter(Boolean);
+        let o = {};
+        try { o = S().bankResult({ results: rows }) || {}; } catch (e) { console.error(e); }
+        logReview(seconds, 'bank');
+        const b = o.boxes || {}, wrong = rows.filter(r => !r.ok).length;
+        const later = [[1, 'tomorrow'], [3, 'in 3 days'], [7, 'in 7 days'], [30, 'in 30 days']].filter(([d]) => b[d]).map(([d, w]) => `${b[d]} ${w}`);
+        return { badges: [[rows.filter(r => r.ok).length, 'right'], [wrong, 'back in box 1'], [new Set(items.map(it => it.family)).size, 'families']],
+          note: rows.length ? `Each question returns on its own day: ${listAnd(later)}.` : 'Nothing was answered, so nothing was scheduled.' };
+      },
+      partial: (items, res, seconds) => {
+        const rows = items.map((it, j) => (res[j] ? { uid: it.uid, ok: !!res[j].ok, seconds: res[j].seconds, family: it.family, pace: it.pace, difficulty: it.difficulty || 3, skills: it.skills || [] } : null)).filter(Boolean);
+        try { S().bankResult({ results: rows }); } catch (e) { console.error(e); }
+        logReview(seconds, 'bank');
+      },
+    });
+  }
   function mountLevelReview(root, Z, cid, id) {
     const lv = levelOfId(cid, id);
     const c = course(cid);
@@ -620,6 +674,7 @@
     },
   });
   ZQ.screen({ id: 'redo', title: 'Redo session', group: 'Assessment', shell: false, render: (root, Z) => mountRedo(root, Z) });
+  ZQ.screen({ id: 'bank', title: 'Interview practice', group: 'Assessment', shell: false, render: (root, Z) => mountBank(root, Z) });
   ZQ.screen({ id: 'practice', title: 'Practice set', group: 'Assessment', shell: false, render: (root, Z, params = []) => mountPractice(root, Z, params) });
 
   /* =====================================================================================

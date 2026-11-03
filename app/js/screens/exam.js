@@ -212,6 +212,10 @@
         const FWD = fwd(P), NOSKIP = noSkip(P), LOWAT = Math.min(LOW, MINUTES * 15);   // low-time warning: 5 minutes, or a quarter of a short paper
         const S = { cur: 0, flags: new Set(), t0: performance.now(), offset: 0, tick: null, low: false, over: false, anim: null };
         const local = [];
+        /* Seconds on each question (ENGINE-BACKLOG 457): time spent with it open, counted when you move on and at submit; never graded */
+        const qsec = new Array(N).fill(0);
+        let seenAt = Date.now();
+        const lap = () => { const t = Date.now(); qsec[S.cur] += (t - seenAt) / 1000; seenAt = t; };
         const $ = (sel) => root.querySelector(sel);
         const label = multi ? `Part ${pi + 1} · ${P.name}` : title;
         root.innerHTML = `<div class="exm is-paper${FWD ? ' is-fwd' : ''}" data-track="${track}">
@@ -312,7 +316,7 @@
           if (FWD && i !== S.cur + 1) return;                                   // forward only: one step on, never back
           if (i > S.cur && NOSKIP) for (let k = S.cur; k < i; k++) if (!isAns(k)) return;   // skip: false: answer before moving on
           if (FWD) { try { local[S.cur] && local[S.cur].step.lock(); } catch (e) { console.error(e); } }   // the answer is final once you leave it
-          S.cur = i; show(false);
+          lap(); S.cur = i; show(false);
           announce(`Question ${i + 1} of ${N}${S.flags.has(i) ? ', marked' : ''}`);
         }
         function toggleMark() {
@@ -382,6 +386,7 @@
         }
         async function submit(timeUp) {
           if (S.over) return;
+          lap();
           S.over = true;
           stop();
           document.querySelectorAll('.scrim, .sheet, .modal').forEach(n => n.remove());
@@ -392,7 +397,7 @@
             let r = { ok: false, key: null };
             if (h && isAns(i)) { try { r = await h.check(); } catch (e) { console.error(e); } }
             if (!r || r.pending) r = { ok: false, key: null };
-            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null };
+            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null, seconds: Math.round(qsec[i] * 10) / 10 };
           }
           A.results[pi] = res; A.used[pi] = used; A.flags[pi] = [...S.flags]; A.timeUp = A.timeUp || timeUp;
           /* Detach the rendered questions so the result page can show them, marked */
@@ -425,6 +430,7 @@
           check: async () => { const h = local[S.cur]; return h ? h.step.grade() : null; },
           go: () => (S.cur < N - 1 ? go(S.cur + 1) : (NOSKIP && !isAns(S.cur) ? null : submit(false))),
         };
+        seenAt = Date.now();
         show(true);
         updateTime();
         announce(`${multi ? `Part ${pi + 1} started` : 'Exam started'}. ${MINUTES} minutes. Question 1 of ${N}.`);
@@ -445,14 +451,17 @@
         const checksOk = checks.every((c, i) => A.ticks.has(i));
         const passed = multi ? paperScores.every(s => s.passed) && checksOk : paperScores[0].passed;
         const seconds = A.used.reduce((a, b) => a + (b || 0), 0);
+        /* Per-item timing: the family is the first tag (else the first skill); only answered questions count towards the pace line */
+        const fam = rows.map(({ it }) => ZQ.mock.family(it, names));
+        const pacing = ZQ.mock.pacing(rows.map(({ it, r, pi, i }, k) => (r.done && typeof r.seconds === 'number' ? { label: multi ? `${pi + 1}.${i + 1}` : String(k + 1), seconds: r.seconds, pace: it.pace, family: fam[k] && fam[k].id, familyLabel: fam[k] && fam[k].label } : null)).filter(Boolean));
         let out = {};
         try {
           out = ZQ.state.examFinished({ id: doc.id, score, items: total, passed, bySkill, seconds,
-            results: rows.map(({ it, r }) => ({ id: it.generated ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated ? { exam: doc.id, item: it.id } : null })),
-            extra: mock || scored || generated ? { net, max, wrong, blank, seconds, ...(generated ? { seed: A.seed } : {}) } : undefined }) || {};
+            results: rows.map(({ it, r }, k) => ({ id: it.generated ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated ? { exam: doc.id, item: it.id } : null, seconds: r.done ? r.seconds : undefined, pace: it.pace, family: fam[k] && fam[k].id })),
+            extra: { ...(mock || scored || generated ? { net, max, wrong, blank, seconds, ...(generated ? { seed: A.seed } : {}) } : {}), itemSeconds: rows.map(({ r }) => (typeof r.seconds === 'number' ? Math.round(r.seconds) : 0)) } }) || {};
         } catch (e) { console.error(e); }
         T = { kind: 'done', info: { score, total, passed, net, max, wrong, blank, seed: A.seed } };
-        cleanups.push(mountResult(root, Z, { doc, stage, mock, multi, scored, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, net, max, wrong, blank, passed, seconds, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
+        cleanups.push(mountResult(root, Z, { doc, stage, mock, multi, scored, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, net, max, wrong, blank, passed, seconds, pacing, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
           minutes: papers.reduce((a, p) => a + (p.minutes || 0), 0) }));
       }
 
@@ -511,7 +520,7 @@
       return `<article class="exm-ri${r.ok ? '' : ' is-no'}" data-ok="${r.ok}" data-flag="${!!r.flag}" data-k="${k}">
         <button type="button" class="exm-ri-h" aria-expanded="${!r.ok}" aria-controls="exm-rb-${k}">
           <span class="exm-ri-n tnum">${qlabel(k)}</span>
-          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${it.generated ? 'Generated question' : `${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5`}${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
+          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${it.generated ? 'Generated question' : `${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5`}${typeof r.seconds === 'number' && r.done ? ` · ${Z.esc(M.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${Z.esc(M.fmtSeconds(it.pace))} pace` : ''}` : ''}${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
           ${v}
           <span class="exm-ri-chev" aria-hidden="true">${Z.icon('chevronD', 'sm')}</span>
         </button>
@@ -554,6 +563,7 @@
             <div class="exm-stamp ${passed ? 'is-pass' : 'is-fail'}" aria-hidden="true">${Z.icon(passed ? 'check' : 'cross')}<span>${passed ? 'Pass' : 'Not passed'}</span></div>
           </div>
           <p class="t-body exm-hero-note exm-later" data-l="0">${Z.esc(heroNote)}</p>
+          ${at.pacing && at.pacing.n ? `<p class="t-body exm-pace exm-later" data-l="2">${Z.icon('timer', 'xs')}<span>${Z.esc(at.pacing.text)}</span></p>` : ''}
           <div class="exm-badges">
             ${mock ? `<div class="exm-badge exm-later" data-l="1"><span class="t-caption exm-badge-l">${Z.icon('replay', 'xs')}Attempt</span><span class="exm-badge-v tnum">${nets.length}</span><span class="t-caption exm-badge-s">${nets.length > 1 ? `best net ${sgn(Math.max(...nets))}` : 'every attempt is kept'}</span></div>`
             : `<div class="exm-badge exm-xp exm-later" data-l="1"><span class="t-caption exm-badge-l">${Z.spark(at.xp > 0)}XP</span><span class="exm-badge-v tnum">${at.xp ? '+' + at.xp.toLocaleString('en-GB') : '0'}</span><span class="t-caption exm-badge-s">${passed ? (at.xp ? (stage ? 'Stage exam passed' : 'Topic exam passed') : 'Passed before') : `${stage ? '1,000' : '200'} on a pass`}</span></div>`}

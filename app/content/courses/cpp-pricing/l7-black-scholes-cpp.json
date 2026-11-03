@@ -17,7 +17,7 @@
    "type": "problem",
    "difficulty": 1,
    "title": "From formula to code",
-   "prose": "The tree converges to one number, and Black-Scholes gives it in a few operations: $$c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\qquad d_1 = \\frac{\\ln(S/K) + (r + \\sigma^2/2)T}{\\sigma\\sqrt T}.$$ The curve is our call's value against the spot.",
+   "prose": "The tree converges to one number, and Black-Scholes gives it in a few operations:\n\n$$c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\qquad d_1 = \\frac{\\ln(S/K) + (r + \\sigma^2/2)T}{\\sigma\\sqrt T}.$$\n\nThe curve is our call's value against the spot.",
    "canvas": {
     "kind": "plane",
     "params": {
@@ -302,7 +302,7 @@
       "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Each price is compared with Python's `bs_call` from trees l10, within a relative 1e-9."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 7 hidden tests. Each price is compared with Python's `bs_call` from trees l10, within a relative 1e-9."
    },
    "hints": [
     {
@@ -398,7 +398,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Four prices are compared with Python's within a relative 1e-9; three tests check parity within 1e-9."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 7 hidden tests. Four prices are compared with Python's within a relative 1e-9; three tests check parity within 1e-9."
    },
    "hints": [
     {
@@ -475,7 +475,7 @@
     "kind": "code",
     "language": "cpp",
     "starter": "#include <cmath>\n\n// Loaded: norm_cdf and bs_call.\n\ndouble bs_delta_call(double s, double k, double r, double sigma, double t) {\n    return 0.0;  // N(d1)\n}\n\ndouble bs_vega(double s, double k, double r, double sigma, double t) {\n    return 0.0;  // S phi(d1) sqrt(T)\n}\n\ndouble bs_gamma(double s, double k, double r, double sigma, double t) {\n    return 0.0;  // phi(d1) / (S sigma sqrt(T))\n}\n",
-    "solution": "#include <cmath>\n\ndouble d1_of(double s, double k, double r, double sigma, double t) {\n    return (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n}\n\ndouble norm_pdf(double x) { return std::exp(-x * x / 2) / std::sqrt(2 * M_PI); }\n\ndouble bs_delta_call(double s, double k, double r, double sigma, double t) {\n    return norm_cdf(d1_of(s, k, r, sigma, t));\n}\n\ndouble bs_vega(double s, double k, double r, double sigma, double t) {\n    return s * norm_pdf(d1_of(s, k, r, sigma, t)) * std::sqrt(t);\n}\n\ndouble bs_gamma(double s, double k, double r, double sigma, double t) {\n    return norm_pdf(d1_of(s, k, r, sigma, t)) / (s * sigma * std::sqrt(t));\n}\n",
+    "solution": "#include <cmath>\n\ndouble d1_of(double s, double k, double r, double sigma, double t) {\n    return (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n}\n\ndouble norm_pdf(double x) { return std::exp(-x * x / 2) / std::sqrt(2 * std::acos(-1.0)); }\n\ndouble bs_delta_call(double s, double k, double r, double sigma, double t) {\n    return norm_cdf(d1_of(s, k, r, sigma, t));\n}\n\ndouble bs_vega(double s, double k, double r, double sigma, double t) {\n    return s * norm_pdf(d1_of(s, k, r, sigma, t)) * std::sqrt(t);\n}\n\ndouble bs_gamma(double s, double k, double r, double sigma, double t) {\n    return norm_pdf(d1_of(s, k, r, sigma, t)) / (s * sigma * std::sqrt(t));\n}\n",
     "prelude": "#include <cmath>\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\ndouble bs_call(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n",
     "examples": [
      {
@@ -526,7 +526,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. Values are compared within a relative 1e-9. Two tests compare your delta and vega with slopes of `bs_call` between nearby prices."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 8 hidden tests. Values are compared within a relative 1e-9. Two tests compare your delta and vega with slopes of `bs_call` between nearby prices."
    },
    "hints": [
     {
@@ -535,11 +535,11 @@
     },
     {
      "rung": "point",
-     "text": "`M_PI` from `<cmath>` is $\\pi$."
+     "text": "`std::acos(-1.0)` is $\\pi$; `M_PI` is not standard C++, as l2 showed."
     },
     {
      "rung": "step",
-     "text": "`double norm_pdf(double x) { return std::exp(-x * x / 2) / std::sqrt(2 * M_PI); }`"
+     "text": "`double norm_pdf(double x) { return std::exp(-x * x / 2) / std::sqrt(2 * std::acos(-1.0)); }`"
     }
    ],
    "feedback": {
@@ -828,7 +828,7 @@
       "expect": "std::invalid_argument"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. Six answers must be within 1e-6 of the volatility Python's solver finds. Two prices are impossible and must throw `std::invalid_argument`, which ends the program here: this browser build cannot catch exceptions."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 8 hidden tests. Six answers must be within 1e-6 of the volatility Python's solver finds. Two prices are impossible and must throw `std::invalid_argument`, which ends the program here: this browser build cannot catch exceptions."
    },
    "hints": [
     {
@@ -911,7 +911,7 @@
    "type": "transfer",
    "difficulty": 3,
    "title": "A Greeks report",
-   "prose": "A desk is short 1,000 of our one-year calls and 500 of our one-year puts, all struck at £100 ($S = 100$, $r = 5\\%$, $\\sigma = 20\\%$). Your `bs_delta_call` gives 0.6368. By parity, a put's delta is the call's minus 1.",
+   "prose": "A desk is short 1,000 of our one-year calls and 500 of our one-year puts, all struck at £100. Take $S = 100$, $r = 5\\%$ and $\\sigma = 20\\%$. Your `bs_delta_call` gives 0.6368. By parity, a put's delta is the call's minus 1.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -992,7 +992,7 @@
     }
    },
    "explain": {
-    "text": "The book's delta is $-1000 \\times 0.6368 + 500 \\times 0.3632 = -455.2$, so buy 455 shares. Its vega is $-1500 \\times 0.3752 = -£562.86$ per vol point. The closed form is the reference every tree and simulation on the desk is checked against.",
+    "text": "The book's delta is $-1000 \\times 0.6368 + 500 \\times 0.3632 = -455.2$, so buy 455 shares. Its vega is $-1500 \\times 0.3752 = -\\text{£}562.86$ per vol point. The closed form is the reference every tree and simulation on the desk is checked against.",
     "canvas": {
      "highlight": {
       "rows": [
@@ -1007,7 +1007,7 @@
  "summary": {
   "ideas": [
    "`bs_call` and `bs_put` are a few lines on top of `norm_cdf`. Our inputs give £10.4506 and £5.5735, matching Python to about 15 digits.",
-   "Test a closed form four ways: known prices, put-call parity, limits (T → 0, σ → 0) and Greeks against finite differences of prices. Vary every input, especially T away from 1.",
+   "Test a closed form four ways: known prices, put-call parity, limits (T → 0, σ → 0) and Greeks by finite differences. Vary every input, especially T away from 1.",
    "Delta is $\\Phi(d_1) = 0.6368$ and vega $S\\varphi(d_1)\\sqrt T = 37.52$ for our call. Implied volatility by bisection gives 0.2411 for £12.00 and throws below the floor."
   ],
   "formula": {

@@ -12,7 +12,7 @@
         "cx-pricers"
       ],
       "title": "A test file for the pricer library",
-      "prose": "The desk's pricer library is hidden: `bs_call`, `bs_put`, `bs_delta_call` and `tree_call`. Write its test file with the test kit from l12: at least six tests covering a limit, put-call parity, a known value, the tree's convergence and delta by bumping. Check runs your file against the correct library and against six versions with one bug each, including a call that returns 0 when $\\sigma < 0.001$.",
+      "prose": "The desk's pricer library is hidden: `bs_call`, `bs_put`, `bs_delta_call` and `tree_call`. Write its test file with the test kit from l12: at least six tests. Cover a limit, put-call parity, a known value, the tree's convergence and delta by bumping. Check runs your file against the correct library and six versions with one bug each. One returns a call of 0 when $\\sigma < 0.001$.",
       "question": "Write the test file.",
       "widget": {
         "kind": "code",
@@ -64,7 +64,7 @@
             "expect": true
           }
         ],
-        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 needs at least six tests, all passing on the correct library. Tests 2 to 7 each swap in one bug (put with $N(d_2)$, put or call without the discount, a call that is 0 below $\\sigma = 0.001$, a tree stuck at 64 steps, a discounted delta) and need at least one of your tests to fail. The example expects exactly six tests."
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Test 1 needs at least six tests, all passing on the correct library. Tests 2 to 7 each swap in one bug, and need at least one of your tests to fail. The put bugs use $N(d_2)$ or drop the discount; the call bugs drop the discount or return 0 below $\\sigma = 0.001$. The last two are a tree stuck at 64 steps and a discounted delta. The example expects exactly six tests."
       },
       "feedback": {
         "correct": "Six independent checks; every planted bug trips at least one.",
@@ -77,7 +77,7 @@
         }
       },
       "explain": {
-        "text": "Each family catches different bugs: parity and known values catch formula slips, the limit catches special-case code, convergence catches the tree, the bump catches a Greek. A suite earns trust when every plausible bug fails at least one test."
+        "text": "Each family catches different bugs: parity and known values catch formula slips, and the limit catches special-case code. Convergence catches the tree; the bump catches a Greek. A suite earns trust when every plausible bug fails at least one test."
       }
     },
     {
@@ -88,7 +88,7 @@
         "cx-pricers"
       ],
       "title": "A packed lattice for an American put",
-      "prose": "A square $(n + 1)^2$ lattice wastes almost half its places. Pack the triangle instead: node $(i, j)$ at $i(i + 1)/2 + j$, $(n + 1)(n + 2)/2$ nodes in all. Store every share price in one vector filled with `push_back` after a single `reserve`, with no `pow` per node, then price the American put on it.",
+      "prose": "A square $(n + 1)^2$ lattice wastes almost half its places. Pack the triangle instead: node $(i, j)$ at $i(i + 1)/2 + j$, $(n + 1)(n + 2)/2$ nodes in all. Store every share price in one vector, filled with `push_back` after a single `reserve` and no `pow` per node. Then price the American put on it.",
       "question": "Write `flat_american_put`. At $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ and $n = 512$ it is £6.0889.",
       "widget": {
         "kind": "code",
@@ -271,7 +271,7 @@
             "expect": 8
           }
         ],
-        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Eight hidden tests: prices for $n$ from 1 to 1,000 and strikes £90 to £150 within a relative 1e-9, and the packed index of node (3, 2)."
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Eight hidden tests: prices for $n$ from 1 to 1,000 and strikes £90 to £150, within a relative 1e-9. One more checks the packed index of node (3, 2)."
       },
       "feedback": {
         "correct": "One reserved block of share prices, half the memory of the square lattice, and the same American price.",
@@ -354,8 +354,8 @@
       ],
       "kind": "longform",
       "title": "The timing write-up for the desk",
-      "prompt": "This is the exit deliverable of the C++ topic. Write a one-page note to the desk head comparing the Python tree pricer (trees course) with your C++ version. Use these medians for one 1,000-step European call on a Linux server (Intel Xeon, 2.1 GHz, Python 3.13, g++ 13.3): Python loop 40 ms; NumPy 4.2 ms; C++ `-O0` 4.5 ms; C++ `-O2` 0.45 ms. The American put took 15.5 ms with `pow` at every node and 1.6 ms with one `pow` per step, both at `-O2`. The desk prices 100,000 options a night.\n\nCover: your method, the numbers, the flags and machine, how you know the two pricers agree, the caveats, and what you recommend.",
-      "model": "**Method.** I timed the European call at $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ on a 1,000-step CRR tree. Both versions run the same algorithm: one row of $n + 1$ values, reused at each step. Each run starts with one warm-up call. I then timed five batches (C++: batches long enough to span many clock ticks) and report the median per tree. Every timed price went into a sum that is printed, so nothing was optimised away. Before timing, the C++ and Python prices were checked to agree to a relative $10^{-9}$ on 100 seeded random inputs.\n\n**Machine and builds.** One Linux server, Intel Xeon at 2.1 GHz, idle apart from the benchmark. Python 3.13, pure Python lists. NumPy version vectorising each step. C++ built with g++ 13.3, `-std=c++17`, at `-O0` and at `-O2` (the desk's release flags).\n\n**Numbers (median per tree, $n = 1{,}000$).**\n\n| Version | ms per tree | vs Python |\n|---|---|---|\n| Python loop | 40 | 1× |\n| NumPy | 4.2 | 10× |\n| C++ `-O0` | 4.5 | 9× |\n| C++ `-O2` | 0.45 | about 90× |\n\nTime grows about 4 times per doubling of $n$ in both languages, as $n^2/2$ node updates predict, so the ratio holds across $n$.\n\n**What it means for the batch.** 100,000 options a night take $100{,}000 \\times 0.040 = 4{,}000$ s, about 67 minutes, in Python, and 45 s in the C++ release build. The American put shows a second lesson: with `pow` at every node it took 15.5 ms at `-O2`; with one `pow` per step 1.6 ms. The algorithm change was worth as much as the language change.\n\n**Caveats.** One machine; another processor or compiler will change the numbers, though not the order of magnitude. The machine was shared, so single runs scattered by up to 50%; the median of five absorbs most of it. The browser runs of the course were slower again (WebAssembly, a 100 µs clock). I did not test `-O3` or `-march=native` in production; `-O3` was faster here, but it is not what we ship. No `-ffast-math`: it changes prices in the last digits and can delete NaN checks.\n\n**Recommendation.** Move the nightly tree pricing to the C++ library built `RelWithDebInfo` (`-O2 -g -DNDEBUG`), keeping the Python pricer as the reference in a regression test (100 seeded inputs, relative $10^{-9}$). Run the test suite on Debug and Release in CI. Re-run this benchmark on the production machine before sizing the batch window, and publish it with the machine, compiler and flags.",
+      "prompt": "This is the exit deliverable of the C++ topic. Write a one-page note to the desk head comparing the Python tree pricer (trees course) with your C++ version. Use these medians for one 1,000-step European call on a Linux server (Intel Xeon, 2.1 GHz, Python 3.13, g++ 13.3). Python loop 40 ms; NumPy 4.2 ms; C++ `-O0` 4.5 ms; C++ `-O2` 0.45 ms. At `-O2` the American put took 15.5 ms with `pow` at every node, and 1.6 ms with one per step. The desk prices 100,000 options a night.\n\nCover your method, the numbers, the flags and machine, how you know the pricers agree, the caveats and your recommendation.",
+      "model": "**Method.** I timed the European call at $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ on a 1,000-step CRR tree. Both versions run the same algorithm: one row of $n + 1$ values, reused at each step. Each run starts with one warm-up call. I then timed five batches (C++: batches long enough to span many clock ticks) and report the median per tree. Every timed price went into a sum that is printed, so nothing was optimised away. Before timing, the C++ and Python prices were checked to agree to a relative $10^{-9}$ on 100 seeded random inputs.\n\n**Machine and builds.** One Linux server, Intel Xeon at 2.1 GHz, idle apart from the benchmark. Python 3.13, pure Python lists. NumPy version vectorising each step. C++ built with g++ 13.3, `-std=c++17`, at `-O0` and at `-O2` (the desk's release flags).\n\n**Numbers (median per tree, $n = 1{,}000$).**\n\n| Version | ms per tree | vs Python |\n|---|---|---|\n| Python loop | 40 | 1× |\n| NumPy | 4.2 | 10× |\n| C++ `-O0` | 4.5 | 9× |\n| C++ `-O2` | 0.45 | about 90× |\n\nTime grows about 4 times per doubling of $n$ in both languages, as $n^2/2$ node updates predict. So the ratio holds across $n$.\n\n**What it means for the batch.** 100,000 options a night take $100{,}000 \\times 0.040 = 4{,}000$ s, about 67 minutes, in Python, and 45 s in the C++ release build. The American put shows a second lesson. At `-O2` it took 15.5 ms with `pow` at every node, and 1.6 ms with one per step. The algorithm change was worth as much as the language change.\n\n**Caveats.** One machine; another processor or compiler will change the numbers, though not the order of magnitude. The machine was shared, so single runs scattered by up to 50%; the median of five absorbs most of it. The browser runs of the course were slower again (WebAssembly, a 100 µs clock). I did not test `-O3` or `-march=native` in production; `-O3` was faster here, but it is not what we ship. No `-ffast-math`: it changes prices in the last digits and can delete NaN checks.\n\n**Recommendation.** Move the nightly tree pricing to the C++ library built `RelWithDebInfo` (`-O2 -g -DNDEBUG`). Keep the Python pricer as the reference in a regression test: 100 seeded inputs, relative $10^{-9}$. Run the test suite on Debug and Release in CI. Re-run this benchmark on the production machine before sizing the batch window. Publish it with the machine, compiler and flags.",
       "rubric": [
         {
           "points": 2,
@@ -453,7 +453,7 @@
         "options": [
           {
             "id": "both",
-            "text": "It reads nodes the leaves never filled, so the price is wrong, and each step jumps a whole row in memory",
+            "text": "It reads nodes the leaves never filled, so the price is wrong, and each step jumps a row in memory",
             "correct": true
           },
           {
@@ -526,7 +526,7 @@
         "generic": "Not quite right. Check the build, the clock, the repetition and what happens to the result."
       },
       "explain": {
-        "text": "Fix: build with `-O2`, use `steady_clock` and `duration_cast<microseconds>`, warm up, time five batches of many trees, add every price to a printed sink, and report the median per tree. Printing after the second reading is fine; flushing output inside the interval would not be."
+        "text": "Fix: build with `-O2`, use `steady_clock` and `duration_cast<microseconds>`, and warm up. Time five batches of many trees, add every price to a printed sink, and report the median per tree. Printing after the second reading is fine; flushing output inside the interval would not be."
       }
     },
     {

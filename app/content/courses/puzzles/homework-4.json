@@ -1,0 +1,555 @@
+{
+  "id": "homework-4",
+  "course": "puzzles",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw4-penney-code",
+      "difficulty": 5,
+      "skills": [
+        "pz-games",
+        "pz-recursion"
+      ],
+      "tags": [
+        "betting-on-sequences"
+      ],
+      "prose": "Write `first_to_appear(a, b)` for any two H/T patterns, neither inside the other. It returns the exact chance, as a `Fraction`, that `a` comes first. Build the joint automaton of prefixes and solve its first-step equations yourself; no helper is given.",
+      "question": "Write the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\n\n\ndef first_to_appear(a, b):\n    \"\"\"Exact chance that pattern a appears before pattern b, fair coin.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\n\n\ndef first_to_appear(a, b):\n    \"\"\"Exact chance that pattern a appears before pattern b, fair coin.\"\"\"\n    nodes = sorted({x[:k] for x in (a, b) for k in range(len(x))}, key=len)\n    idx = {s: i for i, s in enumerate(nodes)}\n    n = len(nodes)\n    half = Fraction(1, 2)\n    m = [[Fraction(0)] * (n + 1) for _ in range(n)]\n    for s in nodes:\n        i = idx[s]\n        m[i][i] += 1\n        for c in 'HT':\n            t = s + c\n            if t.endswith(a):\n                m[i][n] += half\n            elif not t.endswith(b):\n                while t not in idx:\n                    t = t[1:]\n                m[i][idx[t]] -= half\n    for c in range(n):\n        p = next(r for r in range(c, n) if m[r][c] != 0)\n        m[c], m[p] = m[p], m[c]\n        pv = m[c][c]\n        m[c] = [v / pv for v in m[c]]\n        for r in range(n):\n            if r != c and m[r][c] != 0:\n                f = m[r][c]\n                m[r] = [x - f * y for x, y in zip(m[r], m[c])]\n    return m[idx['']][n]\n",
+        "examples": [
+          {
+            "call": "first_to_appear('HH', 'TH')",
+            "expect": "Fraction(1, 4)",
+            "compare": "fraction"
+          }
+        ],
+        "tests": [
+          {
+            "call": "first_to_appear('HH', 'TH')",
+            "expect": "Fraction(1, 4)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('HHT', 'HTH')",
+            "expect": "Fraction(2, 3)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('HTHT', 'THTT')",
+            "expect": "Fraction(9, 14)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('HH', 'THT')",
+            "expect": "Fraction(5, 8)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('HTH', 'THTT')",
+            "expect": "Fraction(3, 4)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('HHH', 'TTTT')",
+            "expect": "Fraction(15, 22)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('HHTT', 'TTH')",
+            "expect": "Fraction(3, 8)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('HTHH', 'THHH')",
+            "expect": "Fraction(7, 12)",
+            "compare": "fraction"
+          },
+          {
+            "call": "first_to_appear('THH', 'HHTH') + first_to_appear('HHTH', 'THH')",
+            "expect": "Fraction(1, 1)",
+            "compare": "fraction"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Tests 1 to 8 need the exact `Fraction` for pairs of lengths 2 to 4, some of unequal length. Test 9 checks that the two chances of a pair add to 1."
+      },
+      "feedback": {
+        "correct": "Exact on all eight pairs, unequal lengths included.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-3": "Four-letter patterns need every prefix as a node, '' included.",
+          "test-4": "Patterns of unequal length share the same automaton: take the prefixes of both."
+        }
+      },
+      "explain": {
+        "text": "The nodes are the prefixes of either pattern; each flip moves to the longest suffix that is still a node. One equation per node, solved exactly, gives the chance from ''. Conway's leading numbers agree on all eight pairs."
+      }
+    },
+    {
+      "id": "hw4-kelly-sim",
+      "difficulty": 4,
+      "skills": [
+        "pz-games",
+        "pz-expectation"
+      ],
+      "tags": [
+        "kelly"
+      ],
+      "prose": "Write `kelly_sim(p, b, f, bets, paths, seed)`. Each path starts at log-wealth 0 and makes `bets` bets at stake `f`. Each bet pays `b` to 1 and wins with chance `p`. Use `random.Random(seed)` and return the median final log-wealth. Compare it with $n\\,g(f)$.",
+      "question": "Write the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\nfrom math import log\nfrom statistics import median\n\n\ndef kelly_sim(p, b, f, bets, paths, seed):\n    \"\"\"Median final log-wealth over paths, each of bets bets at stake f.\"\"\"\n    rng = random.Random(seed)\n    ...\n",
+        "solution": "import random\nfrom math import log\nfrom statistics import median\n\n\ndef kelly_sim(p, b, f, bets, paths, seed):\n    \"\"\"Median final log-wealth over paths, each of bets bets at stake f.\"\"\"\n    rng = random.Random(seed)\n    up, down = log(1 + b * f), log(1 - f)\n    finals = []\n    for _ in range(paths):\n        w = 0.0\n        for _ in range(bets):\n            w += up if rng.random() < p else down\n        finals.append(w)\n    return median(finals)\n",
+        "examples": [
+          {
+            "call": "kelly_sim(0.6, 1, 0, 100, 11, 5)",
+            "expect": "0.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "abs(kelly_sim(0.6, 1, 0.2, 1000, 201, 1) - 20.1355) < 1.7",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(kelly_sim(0.6, 1, 0.1, 1000, 201, 2) - 15.0419) < 0.85",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "kelly_sim(0.6, 1, 0.4, 4000, 201, 3) < 0",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 10000
+          },
+          {
+            "call": "abs(kelly_sim(0.5, 2, 0.25, 500, 101, 4) - 29.4458) < 2.9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "kelly_sim(0.6, 1, 0, 100, 11, 5)",
+            "expect": "0.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "isinstance(kelly_sim(0.6, 1, 0.2, 50, 11, 6), float) and kelly_sim(0.6, 1, 0.2, 50, 11, 6) == kelly_sim(0.6, 1, 0.2, 50, 11, 6)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Tests 1, 2 and 4 accept a median within three standard errors of $n\\,g(f)$. Test 3 needs a negative median at double Kelly over 4,000 bets. Test 5 stakes nothing; test 6 runs one seed twice."
+      },
+      "feedback": {
+        "correct": "The medians sit on $n\\,g(f)$, and double Kelly shrinks.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Add $\\ln(1 + bf)$ on a win and $\\ln(1 - f)$ on a loss, then take the median of the finals.",
+          "test-3": "At $f = 0.4$ the growth is negative, so the median should fall below 0."
+        }
+      },
+      "explain": {
+        "text": "Log-wealth is a sum of independent steps, so its median sits near $n\\,g(f)$. With seeds 1 and 2 the median path won exactly 600 of 1,000 bets. So it equals $n\\,g(f)$: 20.14 at Kelly, 15.04 at half. Seed 3 at double Kelly gives −9.79 over 4,000 bets, and seed 4 gives 30.14 against 29.45."
+      }
+    },
+    {
+      "id": "hw4-kelly-order",
+      "difficulty": 4,
+      "skills": [
+        "pz-games",
+        "pz-expectation"
+      ],
+      "tags": [
+        "kelly"
+      ],
+      "prose": "A bet pays $b$ to 1 and wins with chance $p$. Derive its Kelly fraction, one justified line at a time.",
+      "question": "Put the lines in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "One bet multiplies wealth by $1 + bf$ with chance $p$, or by $1 - f$ with chance $q$."
+          },
+          {
+            "id": "s2",
+            "text": "Log-wealth after $n$ bets is a sum of $n$ such logs. By the law of large numbers, its growth per bet tends to $g(f) = p\\ln(1 + bf) + q\\ln(1 - f)$."
+          },
+          {
+            "id": "s3",
+            "text": "Differentiate: $g'(f) = \\dfrac{pb}{1 + bf} - \\dfrac{q}{1 - f}$."
+          },
+          {
+            "id": "s4",
+            "text": "$g''(f) < 0$, so a zero of $g'$ is the maximum."
+          },
+          {
+            "id": "s5",
+            "text": "Set $g'(f) = 0$: $pb(1 - f) = q(1 + bf)$."
+          },
+          {
+            "id": "s6",
+            "text": "Expand: $pb - pbf = q + qbf$, so $bf(p + q) = pb - q$."
+          },
+          {
+            "id": "s7",
+            "text": "Since $p + q = 1$, $f^* = p - \\dfrac{q}{b}$, or 0 when that is negative."
+          },
+          {
+            "id": "d1",
+            "text": "Expected wealth $1 + f(pb - q)$ rises with $f$, so $f^* = 1$.",
+            "why": "That maximises the mean, which stakes everything. Kelly maximises the expected log."
+          },
+          {
+            "id": "d2",
+            "text": "Set $g(f) = 0$ and solve for $f$.",
+            "why": "That finds where growth hits zero, near twice Kelly, not the peak."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6",
+          "s7"
+        ],
+        "same": [
+          [
+            "s4",
+            "s5"
+          ]
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "feedback": {
+        "correct": "$f^* = p - q/b$, line by line.",
+        "generic": "Not quite right. Start from what one bet does to wealth.",
+        "byKey": {
+          "d1": "You maximised expected wealth. That stakes everything; Kelly maximises the expected log.",
+          "d2": "Setting $g = 0$ finds the stake where growth vanishes, not where it peaks.",
+          "left-out": "Every line except the two flawed ones belongs."
+        }
+      },
+      "explain": {
+        "text": "The law of large numbers turns repeated bets into the growth rate $g(f)$. It is concave, so its stationary point is the peak, and the algebra gives $p - q/b$. At $b = 1$ that is $p - q$."
+      }
+    },
+    {
+      "id": "hw4-spoken",
+      "difficulty": 4,
+      "skills": [
+        "pz-games",
+        "pz-expectation"
+      ],
+      "tags": [
+        "kelly",
+        "spoken"
+      ],
+      "pace": 180,
+      "kind": "longform",
+      "prompt": "Spoken answer, about 3 minutes on your own clock. An interviewer asks: \"Would you take a bet that doubles your stake with probability 0.6 and loses it otherwise? How much of your bankroll would you stake?\" Say your answer aloud first. Then write what you said and mark it against the rubric.",
+      "model": "**Expectation.** Per £1 staked I win £1 with chance 0.6 and lose £1 with chance 0.4. The expected gain is $0.6 - 0.4 = £0.20$. So yes, I take the bet.\n\n**Why not stake everything.** If the bet repeats, wealth compounds, so what matters is the growth rate, the expected log of wealth. Staking everything maximises the mean but one loss ruins me: surviving 10 bets has chance $0.6^{10} \\approx 0.006$.\n\n**The fraction.** Staking a fraction $f$, the growth per bet is $g(f) = 0.6\\ln(1 + f) + 0.4\\ln(1 - f)$. Setting $g'(f) = \\tfrac{0.6}{1 + f} - \\tfrac{0.4}{1 - f} = 0$ gives $f^* = p - q = 0.2$. That grows wealth by about $g(0.2) \\approx 0.0201$, roughly 2%, a bet.\n\n**Fractional Kelly.** In practice I would stake less, say half Kelly, 10%. It keeps about three quarters of the growth ($0.0150$ against $0.0201$) with half the spread. Overbetting is costly: at 40%, twice Kelly, the growth is about $-0.0024$, negative.\n\n**Estimation error.** The 0.6 is an estimate. If the true chance were 0.55, Kelly would be 0.1. My 0.2 would then be double Kelly, with growth about zero. Since overbetting hurts more than underbetting, I shade the stake down: 10% of the bankroll.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "States the expected gain, £0.20 per £1, and so takes the bet"
+        },
+        {
+          "points": 2,
+          "text": "Explains that repeated bets compound, so the aim is the expected log of wealth, and that staking everything risks ruin"
+        },
+        {
+          "points": 2,
+          "text": "Derives or states $f^* = p - q = 0.2$, with the growth rate of about 0.02 a bet"
+        },
+        {
+          "points": 2,
+          "text": "Recommends fractional Kelly: about three quarters of the growth for half the spread. Notes that overbetting turns growth negative"
+        },
+        {
+          "points": 2,
+          "text": "Names estimation error in $p$: at a true 0.55 the stake of 0.2 is double Kelly, so shade it down"
+        }
+      ]
+    },
+    {
+      "id": "hw4-four-players",
+      "difficulty": 4,
+      "skills": [
+        "pz-games",
+        "pz-recursion"
+      ],
+      "tags": [
+        "who-wins"
+      ],
+      "pace": 180,
+      "prose": "Four players roll a die in turn, and the first six wins.",
+      "question": "What is the first player's chance? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3219,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "216/671, about 0.3219",
+        "wrong": [
+          {
+            "id": "quarter",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "three",
+            "value": 0.3956,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{216}{671} \\approx 0.3219$.",
+        "generic": "Not quite right. A round is now four rolls.",
+        "byKey": {
+          "quarter": "You split it evenly. Each seat is worth $\\tfrac56$ of the one before.",
+          "three": "That is the three-player answer."
+        }
+      },
+      "explain": {
+        "text": "A round ends with no six with chance $(\\tfrac56)^4 = \\tfrac{625}{1296}$. So $x = \\tfrac{1/6}{671/1296} = \\tfrac{216}{671} \\approx 0.3219$. A simulation of 200,000 games gives 0.3230."
+      }
+    },
+    {
+      "id": "hw4-best-of-nine",
+      "difficulty": 4,
+      "skills": [
+        "pz-games"
+      ],
+      "tags": [
+        "when-to-hedge"
+      ],
+      "pace": 180,
+      "prose": "You want £100 on a best-of-nine series, betting game by game at evens.",
+      "question": "How much do you bet on game 1? Give pounds to two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 27.34,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "pounds",
+        "label": "Bet",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "seven",
+            "value": 31.25,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "ninth",
+            "value": 11.11,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£27.34.",
+        "generic": "Not quite right. Find the chance that games 2 to 9 split 4–4.",
+        "byKey": {
+          "seven": "That is the best-of-seven bet.",
+          "ninth": "You spread £100 over nine games. The bet is the chance game 1 decides it."
+        }
+      },
+      "explain": {
+        "text": "Game 1 decides the series when games 2 to 9 split 4–4, chance $\\binom84/2^8 = \\tfrac{70}{256}$. So bet $100 \\times \\tfrac{70}{256} = £27.34$. Longer series put less on each game."
+      }
+    },
+    {
+      "id": "hw4-table-max",
+      "difficulty": 4,
+      "skills": [
+        "pz-games",
+        "pz-expectation"
+      ],
+      "tags": [
+        "doubling-up"
+      ],
+      "pace": 180,
+      "prose": "A doubler bets on red at a European wheel, where red wins with chance $\\tfrac{18}{37}$. He starts at £1, and the table's maximum bet is £500, so his last stake is £256.",
+      "question": "What is his expected gain per cycle? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.2713,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Gain",
+        "unit": "£",
+        "accept": "1 − 512(19/37)⁹, about −0.2713",
+        "wrong": [
+          {
+            "id": "fair",
+            "value": 0,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "ten",
+            "value": -0.3056,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About $-£0.27$ a cycle.",
+        "generic": "Not quite right. Count the bets: £1 to £256 is nine.",
+        "byKey": {
+          "fair": "That is the fair-coin answer.",
+          "ten": "That is ten bets. The table limit stops him at nine."
+        }
+      },
+      "explain": {
+        "text": "Stakes £1 to £256 make nine bets, losing £511 if all fail. With $q = \\tfrac{19}{37}$, the gain is $1 - 512\\,q^9 \\approx -0.2713$. A table maximum caps the doubling, and the casino edge remains."
+      }
+    },
+    {
+      "id": "hw4-partial-hedge",
+      "difficulty": 5,
+      "skills": [
+        "pz-games",
+        "pz-expectation"
+      ],
+      "tags": [
+        "when-to-hedge"
+      ],
+      "pace": 300,
+      "prose": "Your bankroll would end at £1,500 if your team wins and £900 if it loses. You believe it wins with chance 0.55. You may hedge $h$ at evens on the other side.",
+      "question": "Which hedge maximises your expected log-wealth? Give pounds.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 180,
+        "tol": {
+          "abs": 0.5
+        },
+        "placeholder": "pounds",
+        "label": "Hedge",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "full",
+            "value": 300,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "sixty",
+            "value": 60,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£180.",
+        "generic": "Not quite right. Set the derivative of $0.55\\ln(1500 - h) + 0.45\\ln(900 + h)$ to zero.",
+        "byKey": {
+          "full": "A full hedge locks £1,200, but it gives up your edge.",
+          "none": "With only a small edge, some hedge pays: the bankroll swings too much unhedged.",
+          "sixty": "That is the hedge at $p = 0.6$. A thinner edge calls for more hedging."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac{0.55}{1500 - h} = \\tfrac{0.45}{900 + h}$ gives $495 + 0.55h = 675 - 0.45h$, so $h = 180$. Wealth then ends at £1,320 or £1,080. A grid search over every whole pound agrees."
+      }
+    },
+    {
+      "id": "hw4-choose-second",
+      "difficulty": 3,
+      "skills": [
+        "pz-games",
+        "pz-recursion"
+      ],
+      "tags": [
+        "betting-on-sequences"
+      ],
+      "pace": 180,
+      "prose": "Penney's game: the interviewer picks THH, and you pick a pattern of three flips. First to appear wins.",
+      "question": "Which pattern do you pick?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "TTH, which wins two times in three",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "HHT",
+            "why": "HHT cannot beat THH's lead: any T before HH lets THH finish first. It wins only $\\tfrac14$."
+          },
+          {
+            "id": "c",
+            "text": "HTH",
+            "why": "HTH against THH is an even race."
+          },
+          {
+            "id": "d",
+            "text": "TTT",
+            "why": "TTT needs three tails in a row and loses most races."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "TTH, winning $\\tfrac23$.",
+        "generic": "Not quite right. Put the opposite of their middle letter in front of their first two."
+      },
+      "explain": {
+        "text": "Their middle letter is H, so start with T, then their first two letters TH: TTH. It beats THH with chance $\\tfrac23$. A simulation of 100,000 races gives 0.6669."
+      }
+    }
+  ]
+}

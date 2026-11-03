@@ -6,7 +6,8 @@
                                                        'quiz', 'done' or a screen index. Returns cleanup().
    ZQ.player.renderItem(item, host, { mode, onGraded }) one item for reviews, homework, redo, practice and exams.
    ZQ.player.runSet(host, { title, items, mode, hints: false, onDone }) a list with dot progress, one try each; the returned
-   handle has finish() to end the set at once (a locking clock), which passes onDone the results so far.
+   handle has finish() to end the set at once (a locking clock), which passes onDone the results so far. Each checked result
+   carries seconds, the time on that item (ENGINE-BACKLOG 457); grading never reads it.
    window.ZQ.test while a lesson is mounted: current(), answerCorrect(), check(), continue() (see the bottom). runSet
    installs the same four calls for its set (current().phase is 'set'; kind is 'item' until the last Finish, then 'done').
 
@@ -1054,8 +1055,10 @@
   /* ---------- A list of items with dot progress, one attempt each ---------- */
   function runSet(host, { title = 'Practice', items = [], mode = 'set', onDone, track = 'prob' } = {}) {
     const { h, icon } = Z;
-    let alive = true, i = 0, cur = null, st0 = 'idle';
+    let alive = true, i = 0, cur = null, st0 = 'idle', shownAt = Date.now();
     const results = [];
+    /* Seconds on an item, from when it is shown to when it is checked (ENGINE-BACKLOG 457); never read by grading */
+    const stamp = (r) => { if (r && !r.pending && r.seconds == null) r.seconds = Math.max(0, Math.round((Date.now() - shownAt) / 100) / 10); return r; };
     const wrap = h(`<div class="lsn-set" data-track="${Z.esc(track)}">
       <div class="lsn-qhead"><span class="t-overline">${Z.esc(title)}</span><span class="dots" aria-hidden="true">${items.map(() => '<i></i>').join('')}</span><span class="t-caption lsn-qof"></span></div>
       <div class="lsn-set-body"></div>
@@ -1074,7 +1077,7 @@
     };
     const show = (k) => {
       if (cur) cur.destroy();
-      i = k; st0 = 'idle'; verdict.innerHTML = '';
+      i = k; st0 = 'idle'; verdict.innerHTML = ''; shownAt = Date.now();
       wrap.querySelector('.lsn-qof').textContent = `Question ${i + 1} of ${items.length} · No hints, one try`;
       cur = renderItem(items[i], body, { mode, key: 'set' + i });
       if (!Z.reducedMotion()) cur.el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.05, 0.7, 0.1, 1)' });
@@ -1087,7 +1090,7 @@
       const r = await cur.check();
       if (!alive) return;
       if (r && r.pending) { st0 = cur.ready() ? 'engaged' : 'idle'; sync(); return; }
-      results[i] = r; st0 = r.ok ? 'ok' : 'no';
+      results[i] = stamp(r); st0 = r.ok ? 'ok' : 'no';
       if (mode !== 'exam') {
         if (r.ok) { Z.sound('correct'); } else Z.sound('notyet');
         verdict.innerHTML = `<div class="lsn-chip is-${r.ok ? 'ok' : 'no'}"><span class="lsn-chip-ic">${icon(r.ok ? 'check' : 'cross', 'sm')}</span><div class="lsn-chip-tx"><div class="lsn-chip-h"><b>${r.ok ? 'Correct.' : 'Not quite right.'}</b></div>${r.line ? `<span>${G().inline(strip(r.line, r.ok ? 'Correct.' : 'Not quite right.'))}</span>` : ''}</div></div>`;
@@ -1108,7 +1111,7 @@
        first; the rest stay unanswered. onDone gets the results so far, with holes for what was not answered. */
     const finishNow = async () => {
       if (!alive) return;
-      if (st0 === 'engaged' && cur) { try { const r = await cur.check(); if (r && !r.pending) results[i] = r; } catch (e) { console.error(e); } }
+      if (st0 === 'engaged' && cur) { try { const r = await cur.check(); if (r && !r.pending) results[i] = stamp(r); } catch (e) { console.error(e); } }
       if (!alive) return;
       alive = false;
       if (onDone) onDone(results.slice());

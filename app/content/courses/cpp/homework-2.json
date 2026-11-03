@@ -12,7 +12,7 @@
     "cp-basics"
    ],
    "title": "Apply fills to a book",
-   "prose": "A position book in £ holds one `Position` per symbol (hidden above your code):\n\n```cpp\nstruct Position { std::string sym; int qty; double cash; };\nstruct Fill { std::string sym; int qty; double px; };\n```\n\nFor each fill, find the position with the same symbol: add the fill's quantity, and take `qty * px` from its cash (a sale has negative `qty`, so cash rises). An unknown symbol gets a new position at the end of the book.",
+   "prose": "A position book in £ holds one `Position` per symbol (hidden above your code):\n\n```cpp\nstruct Position { std::string sym; int qty; double cash; };\nstruct Fill { std::string sym; int qty; double px; };\n```\n\nFor each fill, find the position with the same symbol. Add the fill's quantity, and take `qty * px` from its cash. A sale has negative `qty`, so cash rises. An unknown symbol gets a new position at the end of the book.",
    "question": "Write `apply_fills(book, fills)`.",
    "widget": {
     "kind": "code",
@@ -84,7 +84,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 9 hidden tests. Each builds a book, applies some fills, then reads the book's positions."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 9 hidden tests. Each builds a book, applies some fills, then reads the book's positions."
    },
    "feedback": {
     "correct": "Every fill lands on the caller's book.",
@@ -94,7 +94,7 @@
     }
    },
    "explain": {
-    "text": "`book` is a plain reference because the caller's positions must change; `fills` is only read, so it is `const&` and accepts the braced lists the tests pass. The inner loop must use `Position& p`: a copy would absorb the fill and vanish. Buying 200 at 1.85 and selling 50 at 1.90 leaves 150 shares and £275 spent."
+    "text": "`book` is a plain reference, as the caller's positions change; `fills` is only read, so `const&` also accepts braced lists. The inner loop must use `Position& p`: a copy would absorb the fill and vanish. Buying 200 at 1.85 and selling 50 at 1.90 leaves 150 shares and £275 spent."
    }
   },
   {
@@ -106,7 +106,7 @@
     "cp-basics"
    ],
    "title": "VWAP from a day's fills",
-   "prose": "A day's executions arrive on `std::cin`: a count `n`, then `n` lines of `qty price`. A quantity of 0 or less is a cancel: skip it. Print the total quantity, then the volume-weighted average price (total of `qty * price` over total `qty`) to 4 decimals, or `VWAP n/a` when no shares traded.\n\n```text\nQTY 1200\nVWAP 101.2375\n```",
+   "prose": "A day's executions arrive on `std::cin`: a count `n`, then `n` lines of `qty price`. A quantity of 0 or less is a cancel: skip it. Print the total quantity, then the volume-weighted average price to 4 decimals. That is the total of `qty * price` over total `qty`, or `VWAP n/a` when no shares traded.\n\n```text\nQTY 1200\nVWAP 101.2375\n```",
    "question": "Complete the program.",
    "widget": {
     "kind": "code",
@@ -154,7 +154,7 @@
       "expect": "QTY 0\nVWAP n/a\n"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 6 times with different orders on std::cin, including cancels, no orders and 2.5 billion shares. A hidden check after your code requires `double vwap(const std::vector<Order>& orders)`."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs your program 6 times with different orders on std::cin, including cancels, no orders and 2.5 billion shares. A hidden check after your code requires `double vwap(const std::vector<Order>& orders)`."
    },
    "feedback": {
     "correct": "Read once, pass by `const&`, print to four decimals.",
@@ -173,7 +173,7 @@
    "skills": [
     "cp-memory"
    ],
-   "prose": "```cpp\ndouble payoff(double s, double k) {\n    return s > k ? s - k : 0;\n}\ndouble price_option(double s, double k) {\n    return 0.5 * payoff(s * 1.1, k) + 0.5 * payoff(s * 0.9, k);\n}\nint main() {\n    std::cout << price_option(100, 95) << \"\\n\";\n}\n```",
+   "prose": "```cpp\ndouble payoff(double s, double k) {\n    return s > k ? s - k : 0;\n}\ndouble price_option(double s, double k) {\n    double up = payoff(s * 1.1, k);\n    double down = payoff(s * 0.9, k);\n    return 0.5 * up + 0.5 * down;\n}\nint main() {\n    std::cout << price_option(100, 95) << \"\\n\";\n}\n```",
    "question": "Put the stack events of `price_option(100, 95)` in order.",
    "widget": {
     "kind": "order",
@@ -227,7 +227,7 @@
     "generic": "Not quite right. A frame must be popped before the next call from the same caller starts."
    },
    "explain": {
-    "text": "C++ evaluates the left `payoff` call first here, and it returns before the second starts, so the stack is at most three deep: `main`, `price_option`, `payoff`. Each `payoff` frame, with its `s` and `k`, dies at its return. 0.5 × 15 + 0.5 × 0 = 7.5, which a run printed."
+    "text": "Each `payoff` call returns before the next starts, so the stack is at most three deep: `main`, `price_option`, `payoff`. Each `payoff` frame, with its `s` and `k`, dies at its return. In one `+` expression the two calls could run in either order; two lines fix it."
    }
   },
   {
@@ -269,7 +269,7 @@
     "generic": "Not quite right. Which methods only read the book?"
    },
    "explain": {
-    "text": "`best_bid` and `depth` only read, so mark them `const`. A pricer that holds a `const OrderBook&` can then call them, and the compiler checks they really do not change the book."
+    "text": "`best_bid` and `depth` only read, so mark them `const`. A pricer holding a `const OrderBook&` can then call them. The compiler checks that they really leave the book alone."
    }
   },
   {
@@ -362,7 +362,7 @@
     "generic": "Not quite right. Separate checked errors from unchecked ones."
    },
    "explain": {
-    "text": "In this browser all three undefined lines ran without a crash: the null read returned a stray number and both bad deletes were silent. A desk build with `-fsanitize=address` reports SEGV, alloc-dealloc-mismatch and double-free. `at` and `new double[0]` are defined."
+    "text": "Here all three undefined lines ran quietly: the null read gave a stray number, and both bad deletes were silent. A desk build with `-fsanitize=address` reports SEGV, alloc-dealloc-mismatch and double-free. `at` and `new double[0]` are defined."
    }
   },
   {
@@ -418,20 +418,20 @@
    ],
    "title": "Review a colleague's trade utilities",
    "kind": "longform",
-   "prompt": "A colleague's utilities for a trade blotter, in £:\n\n```cpp\nstruct Trade { std::string sym; int qty; double px; };\n\ndouble total_notional(std::vector<Trade> trades) {\n    double sum = 0;\n    for (std::size_t i = 0; i <= trades.size(); ++i)\n        sum += trades[i].qty * trades[i].px;\n    return sum;\n}\n\nTrade* best_trade(std::vector<Trade>& trades) {\n    Trade best = trades[0];\n    for (Trade t : trades)\n        if (t.qty * t.px > best.qty * best.px) best = t;\n    return &best;\n}\n\nvoid add_fee(Trade t, double fee) {\n    t.px += fee;\n}\n\nPricer* make_pricer() {\n    return new Pricer();\n}\n```\n\n(a) Name two problems in `total_notional`, one about cost and one about correctness, and say what each does in this browser and on a desk build. (b) What is wrong with what `best_trade` returns, and with its parameter? What happens for an empty blotter? (c) Why does `add_fee` have no effect? (d) What does `make_pricer` ask of every caller, and how would you remove that burden? (e) Write corrected signatures and bodies for all four.",
-   "model": "**(a)** Cost: `trades` is taken by value, so every call copies the whole blotter, every `std::string` included. It only reads, so it should be `const std::vector<Trade>&`. Correctness: `i <= trades.size()` runs one step too far and reads `trades[trades.size()]`, past the end. That is undefined behaviour. In this browser libc++'s hardening check stops the program with \"vector[] index out of bounds\"; a normal desk build silently reads whatever follows the buffer and adds it to the total. Use `<`, or a range `for`.\n\n**(b)** `best` is a local, so it dies at the closing brace, and `&best` is a dangling pointer. clang warns \"address of stack memory associated with local variable 'best' returned\". Reading through it is undefined: it may print the right trade in testing and garbage in production. The parameter is a plain `&` although the function only reads, so it rejects `const` blotters and temporaries: use `const std::vector<Trade>&`. The loop `for (Trade t : trades)` also copies every trade; use `const Trade&`. With an empty blotter, `trades[0]` reads past the end: undefined again. Return the best trade by value, wrapped in `std::optional<Trade>`, or return an index with `-1` for none; returning by value is cheap thanks to copy elision.\n\n**(c)** `t` is a copy of the caller's trade. The fee is added to the copy, which dies at the `}`, so the caller sees nothing. The parameter must be `Trade& t`.\n\n**(d)** It returns a raw owning pointer: every caller must remember `delete`, on every path, exactly once. One early return leaks a `Pricer`, and two deletes are undefined. Return `std::unique_ptr<Pricer>` from `std::make_unique<Pricer>()`, so ownership is in the type and the `Pricer` frees itself; or return a `Pricer` by value if it is cheap to move.\n\n**(e)**\n\n```cpp\ndouble total_notional(const std::vector<Trade>& trades) {\n    double sum = 0;\n    for (const Trade& t : trades) sum += t.qty * t.px;\n    return sum;\n}\n\nstd::optional<Trade> best_trade(const std::vector<Trade>& trades) {\n    if (trades.empty()) return std::nullopt;\n    Trade best = trades[0];\n    for (const Trade& t : trades)\n        if (t.qty * t.px > best.qty * best.px) best = t;\n    return best;\n}\n\nvoid add_fee(Trade& t, double fee) {\n    t.px += fee;\n}\n\nstd::unique_ptr<Pricer> make_pricer() {\n    return std::make_unique<Pricer>();\n}\n```",
+   "prompt": "A colleague's utilities for a trade blotter, in £:\n\n```cpp\nstruct Trade { std::string sym; int qty; double px; };\n\ndouble total_notional(std::vector<Trade> trades) {\n    double sum = 0;\n    for (std::size_t i = 0; i <= trades.size(); ++i)\n        sum += trades[i].qty * trades[i].px;\n    return sum;\n}\n\nTrade* best_trade(std::vector<Trade>& trades) {\n    Trade best = trades[0];\n    for (Trade t : trades)\n        if (t.qty * t.px > best.qty * best.px) best = t;\n    return &best;\n}\n\nvoid add_fee(Trade t, double fee) {\n    t.px += fee;\n}\n\nPricer* make_pricer() {\n    return new Pricer();\n}\n```\n\n(a) Name two problems in `total_notional`, one about cost and one about correctness. Say what each does in this browser and on a desk build. (b) What is wrong with what `best_trade` returns, and with its parameter? What happens for an empty blotter? (c) Why does `add_fee` have no effect? (d) What does `make_pricer` ask of every caller, and how would you remove that burden? (e) Write corrected signatures and bodies for all four.",
+   "model": "**(a)** Cost: `trades` is taken by value, so every call copies the whole blotter, every `std::string` included. It only reads, so it should be `const std::vector<Trade>&`. Correctness: `i <= trades.size()` runs one step too far and reads `trades[trades.size()]`, past the end. That is undefined behaviour. In this browser libc++'s hardening check stops the program with \"vector[] index out of bounds\". A normal desk build silently reads whatever follows the buffer and adds it to the total. Use `<`, or a range `for`.\n\n**(b)** `best` is a local, so it dies at the closing brace, and `&best` is a dangling pointer. clang warns \"address of stack memory associated with local variable 'best' returned\". Reading through it is undefined: it may print the right trade in testing and garbage in production. The parameter is a plain `&` although the function only reads, so it rejects `const` blotters and temporaries: use `const std::vector<Trade>&`. The loop `for (Trade t : trades)` also copies every trade; use `const Trade&`. With an empty blotter, `trades[0]` reads past the end: undefined again. Return the best trade by value, wrapped in `std::optional<Trade>`, or return an index with `-1` for none. Returning by value is cheap: the compiler builds the result in place or moves it.\n\n**(c)** `t` is a copy of the caller's trade. The fee is added to the copy, which dies at the `}`, so the caller sees nothing. The parameter must be `Trade& t`.\n\n**(d)** It returns a raw owning pointer: every caller must remember `delete`, on every path, exactly once. One early return leaks a `Pricer`, and two deletes are undefined. Return `std::unique_ptr<Pricer>` from `std::make_unique<Pricer>()`, so ownership is in the type and the `Pricer` frees itself. Or return a `Pricer` by value if it is cheap to move.\n\n**(e)**\n\n```cpp\ndouble total_notional(const std::vector<Trade>& trades) {\n    double sum = 0;\n    for (const Trade& t : trades) sum += t.qty * t.px;\n    return sum;\n}\n\nstd::optional<Trade> best_trade(const std::vector<Trade>& trades) {\n    if (trades.empty()) return std::nullopt;\n    Trade best = trades[0];\n    for (const Trade& t : trades)\n        if (t.qty * t.px > best.qty * best.px) best = t;\n    return best;\n}\n\nvoid add_fee(Trade& t, double fee) {\n    t.px += fee;\n}\n\nstd::unique_ptr<Pricer> make_pricer() {\n    return std::make_unique<Pricer>();\n}\n```",
    "rubric": [
     {
      "points": 2,
-     "text": "(a) Says the by-value parameter copies the whole blotter on each call and should be `const std::vector<Trade>&`, and finds the `<=` off-by-one read past the end"
+     "text": "(a) Says the by-value parameter copies the whole blotter on each call and should be `const std::vector<Trade>&`. Finds the `<=` off-by-one read past the end"
     },
     {
      "points": 1,
-     "text": "(a) Says the off-by-one is undefined behaviour: this browser's libc++ check stops it, while a desk build may silently add garbage"
+     "text": "(a) Says the off-by-one is undefined behaviour: libc++'s check stops it here, while a desk build may silently add garbage"
     },
     {
      "points": 2,
-     "text": "(b) Says `&best` points at a local that dies at the `}` (dangling), and proposes returning by value (`std::optional<Trade>` or an index)"
+     "text": "(b) Says `&best` dangles once its local dies at the `}`; proposes returning by value (`std::optional<Trade>` or an index)"
     },
     {
      "points": 1,

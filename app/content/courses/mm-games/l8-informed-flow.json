@@ -1,0 +1,1319 @@
+{
+ "id": "l8-informed-flow",
+ "course": "mm-games",
+ "title": "When the other side knows more",
+ "minutes": 15,
+ "objectives": [
+  "Widen your quotes against a counterparty who may be informed."
+ ],
+ "skills": [
+  "mg-update"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "They have seen the die",
+   "prose": "The interviewer rolls a die and looks at it. Then they ask for your market. They buy only if the die is above your ask, and sell only if it is below your bid. You quote 2.5 at 4.5.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "Roll",
+     "levels": [
+      {
+       "label": "Die",
+       "branches": [
+        {
+         "id": "f1",
+         "label": "1",
+         "p": "1/6"
+        },
+        {
+         "id": "f2",
+         "label": "2",
+         "p": "1/6"
+        },
+        {
+         "id": "f3",
+         "label": "3",
+         "p": "1/6"
+        },
+        {
+         "id": "f4",
+         "label": "4",
+         "p": "1/6"
+        },
+        {
+         "id": "f5",
+         "label": "5",
+         "p": "1/6"
+        },
+        {
+         "id": "f6",
+         "label": "6",
+         "p": "1/6"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "f1": "you buy at 2.5: −1.5",
+      "f2": "you buy at 2.5: −0.5",
+      "f3": "no trade: 0",
+      "f4": "no trade: 0",
+      "f5": "you sell at 4.5: −0.5",
+      "f6": "you sell at 4.5: −1.5"
+     }
+    },
+    "state": {
+     "show": "none",
+     "caption": "Each face 1/6. Leaves are your P&L at 2.5 at 4.5."
+    }
+   },
+   "question": "What do you make per game on average, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.6667,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "−2/3: you lose 4 over the six faces.",
+    "label": "P&L in pounds",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "plus",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which faces lead to a trade, and what does each cost you?"
+    },
+    {
+     "rung": "point",
+     "text": "Faces 1, 2, 5 and 6 trade; each loses.",
+     "highlight": [
+      "f1",
+      "f6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-(1.5 + 0.5 + 0.5 + 1.5)/6 = -4/6$."
+    }
+   ],
+   "feedback": {
+    "correct": "−£0.67 a game: −2/3.",
+    "generic": "Not quite right. Add the losses on the faces that trade and divide by 6.",
+    "byKey": {
+     "zero": "The quote is centred on 3.5, but the interviewer only trades when you are wrong. Every trade loses.",
+     "half": "You earned the half-width as if they traded at random. They trade only when it hurts you.",
+     "plus": "You have the size right but the sign wrong. Every trade they choose loses you money."
+    }
+   },
+   "explain": {
+    "text": "They trade only on faces 1, 2, 5 and 6, and each of those trades loses. The losses add to 4 over six faces. You lose 2/3 a game, however the die is centred.",
+    "canvas": {
+     "highlight": [
+      "f1",
+      "f2",
+      "f5",
+      "f6"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Widen and watch",
+   "prose": "Move your bid and ask. Each bar is what you lose if the die shows that face. The caption averages the six faces.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "xLabel": "Die shows",
+     "yLabel": "Your loss on that face",
+     "yMax": 3,
+     "showValues": true,
+     "decimals": 1
+    },
+    "state": {
+     "values": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0
+     }
+    },
+    "controls": [
+     {
+      "bind": "b",
+      "min": 0.5,
+      "max": 3.5,
+      "step": 0.5,
+      "start": 2.5,
+      "label": "Bid"
+     },
+     {
+      "bind": "a",
+      "min": 3.5,
+      "max": 6.5,
+      "step": 0.5,
+      "start": 4.5,
+      "label": "Ask"
+     }
+    ],
+    "derive": {
+     "let": {
+      "L": "(max(1 - a, 0) + max(b - 1, 0) + max(2 - a, 0) + max(b - 2, 0) + max(3 - a, 0) + max(b - 3, 0) + max(4 - a, 0) + max(b - 4, 0) + max(5 - a, 0) + max(b - 5, 0) + max(6 - a, 0) + max(b - 6, 0)) / 6"
+     },
+     "caption": "Quote {{fixed(b, 1)}} at {{fixed(a, 1)}}: you lose {{fixed(L, 3)}} a game on average",
+     "values.1": "max(1 - a, 0) + max(b - 1, 0)",
+     "values.2": "max(2 - a, 0) + max(b - 2, 0)",
+     "values.3": "max(3 - a, 0) + max(b - 3, 0)",
+     "values.4": "max(4 - a, 0) + max(b - 4, 0)",
+     "values.5": "max(5 - a, 0) + max(b - 5, 0)",
+     "values.6": "max(6 - a, 0) + max(b - 6, 0)"
+    }
+   },
+   "question": "Which quote loses nothing to the interviewer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "full",
+      "text": "0.5 at 6.5",
+      "correct": true
+     },
+     {
+      "id": "wide",
+      "text": "1.5 at 5.5",
+      "why": "Set 1.5 at 5.5: faces 1 and 6 still trade, and you lose 1/6 a game."
+     },
+     {
+      "id": "tight",
+      "text": "3 at 4",
+      "why": "Set 3 at 4: four faces trade against you, and you lose 1 a game."
+     },
+     {
+      "id": "mid",
+      "text": "3.5 at 3.5",
+      "why": "A zero-width quote at 3.5 trades on every face, always the wrong way."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Move the bid down and the ask up as far as they go."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the whole range, 0.5 at 6.5, is safe.",
+    "generic": "Not quite right. Find the quote where every bar is zero."
+   },
+   "explain": {
+    "text": "At 0.5 at 6.5 no face is above the ask or below the bid, so nobody trades. Every narrower quote leaves a face that trades against you. A safe quote here is a useless one.",
+    "canvas": {
+     "params": {
+      "b": 0.5,
+      "a": 6.5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Adverse selection",
+   "prose": "Losing to someone who trades only when you are wrong is **adverse selection**. Work out the average loss a game for two more quotes. The interviewer still sees the die.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "xLabel": "The die the interviewer sees",
+     "yLabel": "Probability",
+     "yMax": 0.25
+    },
+    "state": {
+     "values": {
+      "1": 0.1667,
+      "2": 0.1667,
+      "3": 0.1667,
+      "4": 0.1667,
+      "5": 0.1667,
+      "6": 0.1667
+     },
+     "caption": "Each face 1/6; only the interviewer sees it"
+    }
+   },
+   "question": "Fill in the loss a game for each quote.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quote",
+     "Loss a game"
+    ],
+    "rows": [
+     [
+      "1.5 at 5.5",
+      {
+       "edit": true,
+       "answer": 0.1667,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "one-side",
+         "value": 0.0833,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "2.5 at 4.5",
+      "0.6667"
+     ],
+     [
+      "3 at 4",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "count",
+         "value": 0.6667,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List the faces outside the quote and how far outside each one is."
+    },
+    {
+     "rung": "point",
+     "text": "1.5 at 5.5: faces 1 and 6, each 0.5 outside.",
+     "highlight": [
+      "x1",
+      "x6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "3 at 4: faces 1, 2, 5, 6 lose 2, 1, 1, 2; total 6 over six faces."
+    }
+   ],
+   "feedback": {
+    "correct": "1/6 and 1.",
+    "generic": "Not quite right. Add how far each face lands outside the quote, on both sides, then divide by 6. Count money lost, not trades."
+   },
+   "explain": {
+    "text": "1.5 at 5.5 loses 0.5 on faces 1 and 6: 1/6 a game. 3 at 4 loses 2, 1, 1 and 2 on four faces: 1 a game. The tighter the quote, the more the informed take."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Half of them know",
+   "prose": "A toy: half your counterparties see the die. The other half buy or sell 1 at random, whatever your width. You quote 1.5 at 5.5.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "Who trades",
+     "nodes": [
+      {
+       "id": "inf",
+       "label": "Informed",
+       "p": "1/2"
+      },
+      {
+       "id": "rnd",
+       "label": "Random",
+       "p": "1/2",
+       "children": [
+        {
+         "id": "buy",
+         "label": "Buys at 5.5",
+         "p": "1/2"
+        },
+        {
+         "id": "sell",
+         "label": "Sells at 1.5",
+         "p": "1/2"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "inf": "−1/6 on average",
+      "rnd-buy": "+2 on average",
+      "rnd-sell": "+2 on average"
+     }
+    },
+    "state": {
+     "caption": "Quote 1.5 at 5.5; the die averages 3.5"
+    }
+   },
+   "question": "What do you make per game on average, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9167,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "11/12: ½ × 2 − ½ × 1/6.",
+    "label": "P&L in pounds",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "noinf",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "sum",
+      "value": 1.8333,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Weight each branch by its chance."
+    },
+    {
+     "rung": "point",
+     "text": "Random flow earns 2; informed flow costs 1/6.",
+     "highlight": [
+      "inf"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac12 \\times 2 - \\tfrac12 \\times \\tfrac16 = \\tfrac{11}{12}$."
+    }
+   ],
+   "feedback": {
+    "correct": "+£0.92 a game: 11/12.",
+    "generic": "Not quite right. Weight the random earning and the informed loss by one half each.",
+    "byKey": {
+     "noinf": "You left out the informed half. They cost 1/6 when they come.",
+     "half": "You weighted the random earning but forgot the informed loss.",
+     "sum": "You added the two halves without weighting each by 1/2."
+    }
+   },
+   "explain": {
+    "text": "Random traders pay the half-width, 2, either way. Informed ones cost 1/6 on average. Half of each gives $1 - \\tfrac{1}{12} = \\tfrac{11}{12}$ a game."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Which width?",
+   "prose": "Same toy, half informed and half random. Random traders pay you the half-width; informed ones cost the loss you found.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "rootLabel": "Who trades",
+     "nodes": [
+      {
+       "id": "inf",
+       "label": "Informed",
+       "p": "1/2"
+      },
+      {
+       "id": "rnd",
+       "label": "Random",
+       "p": "1/2",
+       "children": [
+        {
+         "id": "buy",
+         "label": "Buys at 5.5",
+         "p": "1/2"
+        },
+        {
+         "id": "sell",
+         "label": "Sells at 1.5",
+         "p": "1/2"
+        }
+       ]
+      }
+     ],
+     "leaves": {
+      "inf": "−1/6 on average",
+      "rnd-buy": "+2 on average",
+      "rnd-sell": "+2 on average"
+     }
+    },
+    "state": {
+     "caption": "Quote 1.5 at 5.5; the die averages 3.5"
+    }
+   },
+   "question": "Fill in the average a game for the two narrower quotes.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quote",
+     "Loss to informed",
+     "Average a game"
+    ],
+    "rows": [
+     [
+      "1.5 at 5.5",
+      "1/6",
+      "0.9167"
+     ],
+     [
+      "2 at 5",
+      "1/3",
+      {
+       "edit": true,
+       "answer": 0.5833,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "full",
+         "value": 1.1667,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "2.5 at 4.5",
+      "2/3",
+      {
+       "edit": true,
+       "answer": 0.1667,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "full",
+         "value": 0.3333,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Average $= \\tfrac12 h - \\tfrac12 L$."
+    },
+    {
+     "rung": "point",
+     "text": "2 at 5: $h = 1.5$, so $0.75 - \\tfrac16$.",
+     "highlight": [
+      "inf"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "0.5833 and $0.5 - \\tfrac13 = 0.1667$."
+    }
+   ],
+   "feedback": {
+    "correct": "7/12 and 1/6: the widest quote earns most here.",
+    "generic": "Not quite right. Take half the half-width, minus half the informed loss: only half the counterparties are informed."
+   },
+   "explain": {
+    "text": "2 at 5 earns $0.75 - \\tfrac16 = 0.5833$, and 2.5 at 4.5 earns $0.5 - \\tfrac13 = 0.1667$. Narrowing gains less from random traders than it loses to informed ones. In this toy the random half trades at any width; real flow thins as you widen."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Win it back?",
+   "prose": "Back to an interviewer who always sees the die. You quoted 2 at 5, the die was 6, and you sold at 5: −1. A candidate says: \"I will tighten to 3 at 4, trade more, and win it back.\"",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Trade",
+      "Price (£)",
+      "Position",
+      "P&L (£)"
+     ],
+     "rows": [
+      [
+       "Start",
+       "",
+       "0",
+       "0.00"
+      ],
+      [
+       "You sell 1",
+       "5.00",
+       "-1",
+       "-1.00 (die 6)"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "The interviewer sees every roll"
+    }
+   },
+   "question": "What should the candidate do with the next quote?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "widen",
+      "text": "Widen, towards 0.5 at 6.5.",
+      "correct": true
+     },
+     {
+      "id": "tighten",
+      "text": "Tighten to 3 at 4 and trade more.",
+      "why": "You tightened to win back a loss. Against someone who sees the die, 3 at 4 loses 1 a game, three times as much as 2 at 5."
+     },
+     {
+      "id": "keep",
+      "text": "Keep 2 at 5 and wait for better luck.",
+      "why": "It was not bad luck: 2 at 5 loses 1/3 every game against this interviewer."
+     },
+     {
+      "id": "chase",
+      "text": "Centre on the last roll: 5 at 7.",
+      "why": "Each roll is new. Moving to the last roll does nothing about the next one."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Who chooses whether a trade happens?"
+    },
+    {
+     "rung": "point",
+     "text": "The informed side trades only when you are wrong.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A tighter quote gives them more faces to pick off."
+    }
+   ],
+   "feedback": {
+    "correct": "Widen: the informed only trade when it hurts you.",
+    "generic": "Not quite right. Think about who decides to trade.",
+    "byKey": {
+     "tighten": "You tightened to chase the loss. More trades against an informed player means more losses, not fewer."
+    }
+   },
+   "explain": {
+    "text": "The interviewer trades only when the die is outside your quote. Tightening to 3 at 4 raises the loss from 1/3 to 1 a game. Against informed flow, widen; the loss already taken is gone."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Four games",
+   "prose": "You keep quoting 2 at 5 to an interviewer who sees the die. Four games, rolled with seed 4. Mark each trade against the die it was made on.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Die",
+      "Trade",
+      "Price (£)",
+      "P&L (£)"
+     ],
+     "rows": [
+      [
+       "2",
+       "No trade",
+       "",
+       "+0.00"
+      ],
+      [
+       "3",
+       "No trade",
+       "",
+       "+0.00"
+      ],
+      [
+       "1",
+       "You buy 1",
+       "2.00",
+       "-1.00"
+      ],
+      [
+       "6",
+       "You sell 1",
+       "5.00",
+       "?"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Each trade is marked at the die's true value"
+    }
+   },
+   "question": "What is your total P&L after the four games, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "−£2: −1 on the 1 and −1 on the 6.",
+    "label": "P&L in pounds",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "plus",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "expected",
+      "value": -1.3333,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "two",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which rolls traded?"
+    },
+    {
+     "rung": "point",
+     "text": "The 1 traded at your bid, the 6 at your ask.",
+     "highlight": [
+      "r2",
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-1 - 1 = -2$."
+    }
+   ],
+   "feedback": {
+    "correct": "−£2.00.",
+    "generic": "Not quite right. Mark the purchase at 2 against a die of 1, and the sale at 5 against a 6.",
+    "byKey": {
+     "plus": "Both trades lost. You bought at 2 a die worth 1, and sold at 5 a die worth 6.",
+     "expected": "That is the expected loss over four games, 4 × 1/3. The question asks what happened.",
+     "two": "That is one of the two trades. Add the other."
+    }
+   },
+   "explain": {
+    "text": "The 2 and the 3 sat inside your quote, so nothing traded. The 1 and the 6 each cost £1. The expected loss over four games is 4/3; this run lost a little more.",
+    "canvas": {
+     "values": {
+      "r3c3": "−2.00"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The zero-profit half-spread",
+   "prose": "You widened as the informed share grew. The microstructure course put it as a rule. With a share $\\alpha$ informed about a move of $\\pm\\delta$: $$s = \\alpha\\delta.$$ There, $\\alpha = 0.2$ and $\\delta = 10$p gave $s = 2$p.",
+   "question": "Before results, $\\delta$ rises to 30p with the same $\\alpha$. What half-spread breaks even, in pence?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "6p: 0.2 × 30.",
+    "label": "Half-spread in pence",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "delta",
+      "value": 30,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "6p.",
+    "generic": "Not quite right. Multiply the informed share by the size of their news.",
+    "byKey": {
+     "same": "You kept the old half-spread. The news is three times bigger.",
+     "delta": "You set the half-spread to the whole move. Only a fifth of traders know it."
+    }
+   },
+   "explain": {
+    "text": "$s = 0.2 \\times 30 = 6$p. The half-spread grows with how many traders know, $\\alpha$, and how much they know, $\\delta$. Our die game is the case where they know everything."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why widening helps",
+   "prose": "Write the die game's average a game for a quote of half-width $h$ around the mean. Put the lines in order and leave out the false one.",
+   "question": "Order the argument.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "m1",
+      "text": "A random trader buys or sells, earning you the half-width $h$ either way."
+     },
+     {
+      "id": "m2",
+      "text": "An informed trader trades only when the die lands outside, costing $L(h)$ on average."
+     },
+     {
+      "id": "m3",
+      "text": "With a share $\\alpha$ informed, the average a game is $(1 - \\alpha)h - \\alpha L(h)$."
+     },
+     {
+      "id": "m4",
+      "text": "You break even when $(1 - \\alpha)h = \\alpha L(h)$, so a larger $\\alpha$ needs a larger $h$."
+     },
+     {
+      "id": "d1",
+      "text": "An informed trader costs you $h$, just as a random one pays you $h$.",
+      "why": "The informed loss is how far the die lands past your quote, $L(h)$. It shrinks as $h$ grows."
+     }
+    ],
+    "answer": [
+     "m1",
+     "m2",
+     "m3",
+     "m4"
+    ],
+    "same": [
+     [
+      "m1",
+      "m2"
+     ]
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Describe each kind of trader first."
+    },
+    {
+     "rung": "point",
+     "text": "Then weight them by $\\alpha$ and $1 - \\alpha$."
+    },
+    {
+     "rung": "step",
+     "text": "The break-even line comes last."
+    }
+   ],
+   "feedback": {
+    "correct": "Two traders, the weighted average, then break-even.",
+    "generic": "Not quite right. Weight the two kinds of trader before setting the average to zero.",
+    "byKey": {
+     "d1": "The informed loss is $L(h)$, not $h$. It shrinks as you widen, which is why widening works.",
+     "left-out": "Every line except the false one belongs in the argument."
+    }
+   },
+   "explain": {
+    "text": "Random flow pays $h$ and informed flow costs $L(h)$, which falls as $h$ grows. Weighting gives $(1 - \\alpha)h - \\alpha L(h)$. A larger $\\alpha$ moves the break-even to a wider quote."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Informed flow in code",
+   "prose": "Code both games. The informed counterparty trades only when the outcome lies outside your quote. A random one buys or sells one with equal chance, and is marked at the fair value.",
+   "question": "Complete `informed_loss` and `mixed_pnl`, returning exact Fractions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "from fractions import Fraction\n",
+    "starter": "from fractions import Fraction\n\n\ndef informed_loss(bid, ask, outcomes):\n    \"\"\"Average loss a game to a counterparty who sees\n    the outcome (outcomes equally likely).\"\"\"\n    ...\n\n\ndef mixed_pnl(bid, ask, alpha, outcomes, fair):\n    \"\"\"Average P&L a game when a share alpha is informed\n    and the rest buy or sell one at random.\"\"\"\n    ...\n",
+    "solution": "from fractions import Fraction\n\n\ndef informed_loss(bid, ask, outcomes):\n    \"\"\"Average loss a game to a counterparty who sees\n    the outcome (outcomes equally likely).\"\"\"\n    total = Fraction(0)\n    for x in outcomes:\n        if x > ask:\n            total += x - ask\n        elif x < bid:\n            total += bid - x\n    return total / len(outcomes)\n\n\ndef mixed_pnl(bid, ask, alpha, outcomes, fair):\n    \"\"\"Average P&L a game when a share alpha is informed\n    and the rest buy or sell one at random.\"\"\"\n    noise = Fraction(1, 2) * (ask - fair) + Fraction(1, 2) * (fair - bid)\n    return (1 - alpha) * noise - alpha * informed_loss(bid, ask, outcomes)\n",
+    "examples": [
+     {
+      "call": "informed_loss(Fraction(5, 2), Fraction(9, 2), range(1, 7))",
+      "expect": "Fraction(2, 3)",
+      "compare": "fraction"
+     },
+     {
+      "call": "mixed_pnl(Fraction(3, 2), Fraction(11, 2), Fraction(1, 2), range(1, 7), Fraction(7, 2))",
+      "expect": "Fraction(11, 12)",
+      "compare": "fraction"
+     }
+    ],
+    "tests": [
+     {
+      "call": "informed_loss(Fraction(5, 2), Fraction(9, 2), range(1, 7))",
+      "expect": "Fraction(2, 3)",
+      "compare": "fraction"
+     },
+     {
+      "call": "informed_loss(Fraction(3, 2), Fraction(11, 2), range(1, 7))",
+      "expect": "Fraction(1, 6)",
+      "compare": "fraction"
+     },
+     {
+      "call": "informed_loss(3, 4, range(1, 7))",
+      "expect": "Fraction(1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "informed_loss(Fraction(1, 2), Fraction(13, 2), range(1, 7))",
+      "expect": "Fraction(0)",
+      "compare": "fraction"
+     },
+     {
+      "setup": "from itertools import product; two = [a + b for a, b in product(range(1, 7), repeat=2)]",
+      "call": "informed_loss(5, 9, two)",
+      "expect": "Fraction(5, 9)",
+      "compare": "fraction"
+     },
+     {
+      "call": "mixed_pnl(Fraction(3, 2), Fraction(11, 2), Fraction(1, 2), range(1, 7), Fraction(7, 2))",
+      "expect": "Fraction(11, 12)",
+      "compare": "fraction"
+     },
+     {
+      "call": "mixed_pnl(2, 5, Fraction(1, 2), range(1, 7), Fraction(7, 2))",
+      "expect": "Fraction(7, 12)",
+      "compare": "fraction"
+     },
+     {
+      "call": "mixed_pnl(Fraction(5, 2), Fraction(9, 2), Fraction(1, 2), range(1, 7), Fraction(7, 2))",
+      "expect": "Fraction(1, 6)",
+      "compare": "fraction"
+     },
+     {
+      "call": "mixed_pnl(3, 4, Fraction(0), range(1, 7), Fraction(7, 2))",
+      "expect": "Fraction(1, 2)",
+      "compare": "fraction"
+     },
+     {
+      "call": "mixed_pnl(3, 4, Fraction(1), range(1, 7), Fraction(7, 2))",
+      "expect": "Fraction(-1)",
+      "compare": "fraction"
+     },
+     {
+      "call": "mixed_pnl(Fraction(3, 2), Fraction(11, 2), Fraction(1, 5), range(1, 7), Fraction(7, 2))",
+      "expect": "Fraction(47, 30)",
+      "compare": "fraction"
+     }
+    ],
+    "how": "Check runs 11 hidden tests. Each result must be a Fraction equal to the exact value."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start the loss total at `Fraction(0)`, so the average stays exact."
+    },
+    {
+     "rung": "point",
+     "text": "A random trader earns you `(ask - fair)` or `(fair - bid)`, each half the time."
+    },
+    {
+     "rung": "step",
+     "text": "`mixed_pnl` is `(1 - alpha) * noise - alpha * informed_loss(...)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both functions pass every test.",
+    "generic": "Some tests failed. Use strict inequalities for trades, and keep every value a Fraction.",
+    "byKey": {
+     "error": "Your code stopped with an error. Check that each `...` is replaced."
+    }
+   },
+   "explain": {
+    "text": "`informed_loss` adds how far each outcome lands outside the quote, so 2.5 at 4.5 gives 2/3. `mixed_pnl` weights that against the random half-width. With $\\alpha = 0.2$, 1.5 at 5.5 earns 47/30 a game."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Before results day",
+   "prose": "A share is worth 500p. On normal days a fifth of traders are informed about a 10p move, and you quote 498p at 502p. The day before results, they may know of a 30p move.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "bids": [
+      [
+       498,
+       5,
+       "You"
+      ],
+      [
+       497,
+       8
+      ]
+     ],
+     "asks": [
+      [
+       502,
+       5,
+       "You"
+      ],
+      [
+       503,
+       8
+      ]
+     ],
+     "depth": 2
+    },
+    "state": {
+     "fair": 500,
+     "caption": "A normal day, prices in pence"
+    }
+   },
+   "question": "What ask breaks even the day before results, in pence?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 506,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "506p: 500 + 0.2 × 30.",
+    "label": "Ask in pence",
+    "wrong": [
+     {
+      "id": "nomove",
+      "value": 502,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "delta",
+      "value": 530,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $s = \\alpha\\delta$."
+    },
+    {
+     "rung": "point",
+     "text": "$s = 0.2 \\times 30 = 6$p.",
+     "highlight": [
+      "ask0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Ask $500 + 6 = 506$p."
+    }
+   ],
+   "feedback": {
+    "correct": "506p: quote 494p at 506p.",
+    "generic": "Not quite right. Find $s = \\alpha\\delta$ and add it to 500p.",
+    "byKey": {
+     "nomove": "You kept the normal-day quote. Informed traders now know a bigger move.",
+     "delta": "You added the whole move. Only a fifth of traders know it."
+    }
+   },
+   "explain": {
+    "text": "With $\\delta = 30$p the half-spread is 6p, so the quote is 494p at 506p. Flow that knows more is called toxic, and it forces wider quotes. Tightening the day before results hands money to the informed.",
+    "canvas": {
+     "bids": [
+      [
+       494,
+       5,
+       "You"
+      ],
+      [
+       497,
+       8
+      ]
+     ],
+     "asks": [
+      [
+       506,
+       5,
+       "You"
+      ],
+      [
+       503,
+       8
+      ]
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Against someone who sees the die, every trade they choose loses: 2.5 at 4.5 loses 2/3 a game.",
+   "With mixed flow, random traders pay the half-width and informed ones take $L(h)$, so widen until they balance.",
+   "The zero-profit half-spread is $s = \\alpha\\delta$: widen when more traders know, or know more."
+  ],
+  "formula": {
+   "name": "Zero-profit half-spread",
+   "tex": "s = \\alpha\\delta, \\qquad (1 - \\alpha)h = \\alpha L(h)",
+   "note": "The second form is the die game's break-even."
+  },
+  "trap": "Tightening after losing to an informed trader: it hands them more edge on every game."
+ },
+ "quiz": [
+  {
+   "id": "q-doesnt-know",
+   "difficulty": 2,
+   "prose": "The interviewer rolls a die and says: \"I have not looked at it.\" Then they ask for a market.",
+   "question": "Which quote is sensible?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tight",
+      "text": "3 at 4: they are just a random trader now.",
+      "correct": true
+     },
+     {
+      "id": "full",
+      "text": "0.5 at 6.5: they might be informed.",
+      "why": "They said they have not looked. The whole range is the defence against a counterparty who knows."
+     },
+     {
+      "id": "zero",
+      "text": "3.5 at 3.5: there is no information.",
+      "why": "No information does not mean no uncertainty. Zero width earns nothing."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "3 at 4: this is the plain two-sided game again.",
+    "generic": "Not quite right. Without information, quote as in the first lesson of this level."
+   },
+   "explain": {
+    "text": "If they have not looked, they know no more than you. The game is a plain two-sided market again. 3 at 4 earns 0.5 a trade against random flow."
+   }
+  },
+  {
+   "id": "q-loss-skew",
+   "difficulty": 2,
+   "prose": "The interviewer sees a die. You quote 2.5 at 5.5.",
+   "question": "What is your average loss a game, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4167,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "5/12: faces 1, 2 and 6 cost 1.5, 0.5 and 0.5.",
+    "label": "Loss in pounds",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.0833,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "hook",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "5/12, about £0.42.",
+    "generic": "Not quite right. Add how far each face lands outside the quote, then divide by 6.",
+    "byKey": {
+     "one": "You counted only face 6. Faces 1 and 2 are below your bid.",
+     "hook": "That is the loss for 2.5 at 4.5. Your ask is now 5.5."
+    }
+   },
+   "explain": {
+    "text": "Face 6 is 0.5 above the ask, and faces 1 and 2 are 1.5 and 0.5 below the bid. The total is 2.5 over six faces: 5/12. Moving only one side cuts only that side's loss."
+   }
+  },
+  {
+   "id": "q-alpha-up",
+   "difficulty": 2,
+   "prose": "Informed traders know of a 10p move. Their share of the flow rises from 0.2 to 0.4.",
+   "question": "What is the zero-profit half-spread now, in pence?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "4p: 0.4 × 10.",
+    "label": "Half-spread in pence",
+    "wrong": [
+     {
+      "id": "old",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "added",
+      "value": 10.4,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "4p.",
+    "generic": "Not quite right. Multiply 0.4 by 10p.",
+    "byKey": {
+     "old": "That is the old half-spread. Twice the informed share needs twice the half-spread."
+    }
+   },
+   "explain": {
+    "text": "$s = 0.4 \\times 10 = 4$p, twice the old 2p. More informed traders means wider quotes. Halving $\\alpha$ would halve it."
+   }
+  },
+  {
+   "id": "q-two-dice-informed",
+   "difficulty": 3,
+   "prose": "The interviewer rolls two dice and looks at the sum. You quote 5 at 9.",
+   "question": "What is your average loss a game? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5556,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "5/9: 20/36.",
+    "label": "Loss",
+    "wrong": [
+     {
+      "id": "one-side",
+      "value": 0.2778,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "count",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "5/9, about 0.5556.",
+    "generic": "Not quite right. Weight each sum outside the quote by its number of rolls.",
+    "byKey": {
+     "one-side": "You counted only the sums above 9. The sums below 5 cost as much.",
+     "count": "That is the chance of a trade, 12/36. Weight each trade by how far outside it lands."
+    }
+   },
+   "explain": {
+    "text": "Sums 10, 11 and 12 cost 1, 2 and 3 on 3, 2 and 1 rolls: 10. The low side mirrors it: 10 more. So the loss is $20/36 = 5/9$ a game."
+   }
+  }
+ ]
+}

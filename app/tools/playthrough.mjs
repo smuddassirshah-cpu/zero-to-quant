@@ -12,7 +12,9 @@
      node app/tools/playthrough.mjs --set number-sense/review-1   one review or homework (repeatable)
      node app/tools/playthrough.mjs --exam topic-1.5       one exam (repeatable); topic-*, stage-* and mock-* all play the same way
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
-     node app/tools/playthrough.mjs --routes-only          only the routes
+     node app/tools/playthrough.mjs --routes-only          only the routes, then the interview bank deck (due and new items, the 3-day box,
+                                                           a miss, prerequisites, an old save, the pace line) and one exam sat with a
+                                                           skewed Date.now so per-item seconds and the pace line are checked
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
      node app/tools/playthrough.mjs --shots out --mobile   also a 390 px wide screenshot of each (name-390.png)
      node app/tools/playthrough.mjs --shots out --why      also each lesson task's (and set item's) Explanation sheet after the right
@@ -314,7 +316,7 @@ const main = async () => {
        long-form check is answered and checked again), continue(); until 'done'. */
     /* item 445: a set that reports no items, or a hook that never answers (a course file mid-write by another agent, or a
        worker left busy by the lessons before), is reloaded and played once more before it counts as a failure */
-    const playSet = async (route, label, verify, attempt = 1) => {
+    const playSet = async (route, label, verify, attempt = 1, tick = null) => {
       where = '#' + route;
       const fails = [];
       const t0 = Date.now();
@@ -350,6 +352,7 @@ const main = async () => {
             if (pr.skip) fails.push(`paper ${c.paper + 1}: a no-skip paper moved on without an answer`);
           }
           if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
+            if (tick) await tick(c, checks);
             const py = await waitPython();
             if (py) { fails.push(`item ${c.screenIndex + 1}: ${py}`); break; }
             const applied = await page.evaluate(() => ZQ.test.answerCorrect());
@@ -379,7 +382,7 @@ const main = async () => {
       if (attempt === 1 && fails.some(f => f === 'the set has no items' || /^threw: .*(Timeout|waitForFunction)/.test(f))) {
         console.log(`     ${label}: retrying once after a reload`);
         try { await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(800); } catch { /* the retry reports it */ }
-        return playSet(route, label, verify, 2);
+        return playSet(route, label, verify, 2, tick);
       }
       fails.forEach(f => failures.push(`#${route}: ${f === 'the set has no items' ? f + ' (twice: check that its items exist and validate; a course file may have been mid-write)' : f}`));
     };
@@ -500,6 +503,116 @@ const main = async () => {
       if (/^mock-/.test(ex)) await mockChecks(ex);
     }
 
+    /* ---------- Interview bank deck and per-item timing (ENGINE-BACKLOG 456, 457): part of --routes-only ----------
+       Date.now is skewed from the tool (window.__skew, in seconds), so an item can "take" 90 s and a schedule can be
+       moved forward by days without waiting; the exam clock reads performance.now and is not affected. */
+    const skew = (sec) => page.evaluate((n) => { if (window.__skew === undefined) { window.__skew = 0; const real = Date.now.bind(Date); Date.now = () => real() + window.__skew * 1000; } window.__skew += n; return window.__skew; }, sec);
+    const unskew = () => page.evaluate(() => { window.__skew = 0; });
+    const bankFiles = () => (fs.existsSync(path.join(CONTENT, 'bank')) ? fs.readdirSync(path.join(CONTENT, 'bank')).filter(f => /^[a-z0-9-]+\.json$/.test(f)).map(f => readJSON(path.join(CONTENT, 'bank', f))) : []);
+    const bankChecks = async () => {
+      const docs = bankFiles();
+      if (!docs.length) return;
+      where = '#bank';
+      const fails = [], t0 = Date.now();
+      const items = docs.flatMap(d => d.items), open = items.filter(it => !it.requires), lockedN = items.length - open.length;
+      try {
+        /* 1. the Review card: due and new counts, the locked line, the start link */
+        await go('review');
+        await page.waitForFunction(() => { const s = document.querySelector('[data-sec="bank"]'); return s && !s.hidden; }, null, { timeout: opt.timeout });
+        const card = await page.evaluate(() => ({ line: (document.querySelector('[data-bank-line]') || {}).textContent || '', start: !!document.querySelector('[data-start-bank]'), wide: document.documentElement.scrollWidth > window.innerWidth + 1 }));
+        if (!card.start) fails.push('the Review card has no Start interview practice link');
+        if (!new RegExp(`${open.length} new`).test(card.line)) fails.push(`the card line does not say ${open.length} new: "${card.line}"`);
+        if (lockedN && !/unlock/.test(card.line)) fails.push(`the card does not mention the ${lockedN} locked question(s): "${card.line}"`);
+        if (card.wide) fails.push('the Review page is wider than the window with the bank card');
+        await shot('route-review-bank');
+        /* 2. prerequisites: a question that names lessons is not drawn while they are unfinished */
+        const drawn = await page.evaluate(() => ZQ.select.bankDeck({ n: 500 }).then(a => a.map(x => x.uid)));
+        if (drawn.length !== open.length) fails.push(`the deck can draw ${drawn.length} questions, ${open.length} expected (${lockedN} locked by requires)`);
+        const fams = await page.evaluate(() => ZQ.select.bankDeck({ n: 500 }).then(a => a.map(x => x.family)));
+        let adj = 0; for (let k = 1; k < Math.min(fams.length, 8) ; k++) if (fams[k] === fams[k - 1]) adj++;
+        if (new Set(fams).size > 1 && adj > 1) fails.push(`families are not mixed: ${adj} neighbours share a family`);
+        /* 3. a deck sitting: one item "takes" 200 s, the rest 3 s; the summary has the pace line */
+        await go('review');
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go('bank');
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind === 'start', null, { timeout: opt.timeout });
+        await shot('bank-start');
+        await page.evaluate(() => ZQ.test.continue());
+        await page.waitForFunction(() => ZQ.test.current().kind === 'item', null, { timeout: opt.timeout });
+        let n = 0, guard = 0;
+        while ((await page.evaluate(() => ZQ.test.current().kind)) !== 'done' && ++guard < 60) {
+          const c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
+            await skew(n === 1 ? 200 : 3); n++;
+            await page.evaluate(() => ZQ.test.answerCorrect());
+            const r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, seconds: r.seconds } : null; });
+            if (!r || !r.ok) fails.push(`deck item ${n}: not correct`);
+            else if (typeof r.seconds !== 'number') fails.push(`deck item ${n}: no seconds on the result`);
+            else if (n === 2 && r.seconds < 190) fails.push(`deck item 2 should have taken about 200 s, read ${r.seconds}`);
+          }
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(100);
+        }
+        const sum = await page.evaluate(() => ({ pace: (document.querySelector('.hw-pace') || {}).textContent || '', note: (document.querySelector('.hw-redo') || {}).textContent || '', rows: document.querySelectorAll('.hw-res li').length, wide: document.documentElement.scrollWidth > window.innerWidth + 1 }));
+        if (!/Average .* a question/.test(sum.pace)) fails.push(`the summary has no average pace: "${sum.pace}"`);
+        if (!/Over pace: 1 of /.test(sum.pace)) fails.push(`the summary does not name the one item over pace: "${sum.pace}"`);
+        if (new Set(docs.flatMap(d => d.items.map(it => it.tags[0]))).size > 1 && !/Slowest famil/.test(sum.pace)) fails.push(`the summary does not name the slowest families: "${sum.pace}"`);
+        if (!/tomorrow|in 3 days|in 7 days|in 30 days/.test(sum.note)) fails.push(`the summary does not say when questions return: "${sum.note}"`);
+        if (sum.wide) fails.push('the bank summary is wider than the window');
+        await shot('bank-done');
+        /* 4. the schedule: each answered item has its own entry in box 3 days (new, then right), timing is logged */
+        const st = await page.evaluate(() => { const b = ZQ.state.bank.list(), d = Date.now(); return { n: Object.keys(b).length, boxes: Object.values(b).map(r => r.box), off: Object.values(b).map(r => Math.round((r.due - d) / 86400000 * 10) / 10), fam: Object.keys(ZQ.state.timing.families).length, secs: Object.values(b).filter(r => typeof r.secs === 'number').length }; });
+        const want = Math.min(8, open.length);
+        if (st.n !== want) fails.push(`${st.n} schedule entries after the deck, ${want} expected`);
+        if (st.boxes.some(b => b !== 3)) fails.push(`first right answers should sit in the 3-day box: ${JSON.stringify(st.boxes)}`);
+        if (st.off.some(o => Math.abs(o - 3) > 0.1)) fails.push(`due dates are not 3 days ahead: ${JSON.stringify(st.off)}`);
+        if (!st.fam) fails.push('no per-family timing was logged');
+        if (st.secs !== st.n) fails.push('not every schedule entry kept its seconds');
+        /* 5. a miss goes back to box 1, due in a day; two days on it is due again and others are not; 40 days on all are due */
+        const miss = await page.evaluate(() => { const uid = Object.keys(ZQ.state.bank.list())[0]; ZQ.state.bankResult({ results: [{ uid, ok: false, seconds: 9, family: 'x' }] }); const r = ZQ.state.bank.entry(uid); return { uid, box: r.box, miss: r.miss, days: Math.round((r.due - Date.now()) / 8640000) / 10 }; });
+        if (miss.box !== 1 || miss.miss !== 1 || Math.abs(miss.days - 1) > 0.1) fails.push(`a miss should be box 1, due in 1 day: ${JSON.stringify(miss)}`);
+        await skew(2 * 86400);
+        const two = await page.evaluate(() => ZQ.select.bankDeck({ n: 500 }).then(a => ({ first: a.map(x => x.uid), due: ZQ.state.bank.due() })));
+        if (two.due.length !== 1 || two.due[0] !== miss.uid) fails.push(`two days on, only the missed item should be due: ${JSON.stringify(two.due)}`);
+        if (!two.first.includes(miss.uid)) fails.push('the due item is not in the next deck');
+        await skew(40 * 86400);
+        const all = await page.evaluate(() => ({ due: ZQ.state.bank.due().length, n: Object.keys(ZQ.state.bank.list()).length }));
+        if (all.due !== all.n) fails.push(`40 days on every scheduled item should be due: ${all.due} of ${all.n}`);
+        /* 6. an old save with no bank or timing loads and still works */
+        const old = await page.evaluate(() => { const d = JSON.parse(ZQ.state.export()); delete d.bank; delete d.timing; const r = ZQ.state.import(JSON.stringify(d)); const b = ZQ.state.bank.list(); ZQ.state.bankResult({ results: [{ uid: 'bank/sample/x', ok: true, seconds: 2, family: 'f' }] }); return { ok: r.ok, empty: Object.keys(b).length === 0, after: Object.keys(ZQ.state.bank.list()).length, fam: Object.keys(ZQ.state.timing.families).length }; });
+        if (!old.ok || !old.empty || old.after !== 1 || old.fam !== 1) fails.push(`an old save without bank or timing did not load cleanly: ${JSON.stringify(old)}`);
+        await unskew();
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} #bank  ${open.length} drawable of ${items.length}, deck, pace line, schedule, miss, old save, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log('FAIL #bank  threw');
+      }
+      try { await unskew(); } catch { /* page gone */ }
+      fails.forEach(f => failures.push(`#bank: ${f}`));
+    };
+    /* An exam sat with Date.now skewed: item 3 takes 90 s, the others 4 s. The result has a pace line and per-question
+       seconds, and the attempt keeps itemSeconds, one per question. Time never changes the marks (everything is right). */
+    const paceExamChecks = async (ex) => {
+      const doc = readJSON(path.join(CONTENT, 'exams', ex + '.json'));
+      await playSet(`exam/${ex}`, `${ex}-pace`, async () => {
+        const c = await page.evaluate(() => ZQ.test.current());
+        if (c.kind !== 'done') return { fail: 'the result page was not reached' };
+        const r = await page.evaluate((id) => { const a = ((ZQ.state.exams[id] || {}).attempts || []).slice(-1)[0] || {}; return { secs: a.itemSeconds || null, line: (document.querySelector('.exm-pace') || {}).textContent || '', meta: [...document.querySelectorAll('.exm-ri-meta')].filter(n => / s(\b| of)/.test(n.textContent)).length, fam: Object.keys(ZQ.state.timing.families).length, wide: document.documentElement.scrollWidth > window.innerWidth + 1 }; }, ex);
+        const bad = [];
+        if (!r.secs || r.secs.length !== c.total) bad.push(`itemSeconds has ${r.secs ? r.secs.length : 'none'}, ${c.total} questions`);
+        else if (Math.max(...r.secs) < 85) bad.push(`no question shows the 90 s one: ${Math.max(...r.secs)}`);
+        if (!/Average .* a question/.test(r.line)) bad.push(`no pace line on the result: "${r.line}"`);
+        if (!r.meta) bad.push('no question shows its seconds');
+        if (!r.fam) bad.push('no per-family timing was logged from the exam');
+        if (r.wide) bad.push('the result page is wider than the window');
+        if (!c.passed || c.score !== c.total) bad.push(`time changed the marks: ${c.score} of ${c.total}`);
+        await shot(`${ex}-pace-result`);
+        return { fail: bad.length ? bad.join('; ') : null, note: `pace line "${r.line.slice(0, 60)}..."` };
+      }, 1, async (c, n) => { await skew(n === 2 ? 90 : 4); });
+      await unskew();
+      void doc;
+    };
+
     /* Every other route once */
     if (opt.routes) {
       const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^topic-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')) : [];
@@ -534,6 +647,10 @@ const main = async () => {
         } catch (e) { failures.push(`#${r}: threw ${String(e.message || e).split('\n')[0]}`); }
         console.log(`${consoleErrors.length > before ? 'ERR ' : 'ok  '} #${r}`);
       }
+      /* The interview bank deck and per-item timing (ENGINE-BACKLOG 456, 457), then an exam sat with a skewed clock */
+      await bankChecks();
+      const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;
+      if (paceExam) await paceExamChecks(paceExam);
     }
   } finally {
     await cleanup();

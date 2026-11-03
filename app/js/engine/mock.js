@@ -8,7 +8,12 @@
      ZQ.mock.passed(paper, tally)    net against passNet, else the net share against pass (default 0.7)
      ZQ.mock.need(paper, max)        the pass mark as a net score
      ZQ.mock.signed(n)               a score with a true minus sign
-     ZQ.mock.trend(values, opts)     a small SVG column trend of net scores, oldest first (opts: pass, label, max) */
+     ZQ.mock.trend(values, opts)     a small SVG column trend of net scores, oldest first (opts: pass, label, max)
+     ZQ.mock.family(item, names)     { id, label } for an item: its first `tags` entry, else its first skill (label from names), else mental-arithmetic for a generated item, else null
+     ZQ.mock.fmtSeconds(s)           "41 s", or "2 min 05 s" from 120 s
+     ZQ.mock.pacing(rows)            the results line for a timed set (ENGINE-BACKLOG 457): rows are { label, seconds, pace?, family?, familyLabel? };
+                                     returns { n, total, avg, families, over, text } where text names the average, the slowest families
+                                     (by mean seconds, at most three) and the items over their `pace`. Time never affects grading. */
 (function () {
   'use strict';
   const Z = window.ZQ = window.ZQ || {};
@@ -42,5 +47,34 @@
     return `<svg class="mk-trend" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${String(label).replace(/"/g, '&quot;')}"><line class="mk-zero" x1="${pad}" x2="${W - pad}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/>${bars}${line}</svg>`;
   };
 
-  Z.mock = { is: (id) => /^mock-/.test(String(id || '')), style: (s) => STYLES[s] || { label: s ? String(s) : 'Mock', track: 'speed' }, STYLES, scoring, scored, tally, need, passed, signed, trend };
+  /* ---------- Per-item timing (ENGINE-BACKLOG 457) ---------- */
+  const fmtSeconds = (s) => { const r = Math.round(s); return r < 120 ? `${r} s` : `${Math.floor(r / 60)} min ${String(r % 60).padStart(2, '0')} s`; };
+  const family = (it, names) => {
+    if (!it) return null;
+    const t = Array.isArray(it.tags) && typeof it.tags[0] === 'string' ? it.tags[0] : null;
+    if (t) return { id: t, label: t };
+    const s = Array.isArray(it.skills) && it.skills[0];
+    if (s) return { id: s, label: (names && names[s]) || s };
+    return it.generated ? { id: 'mental-arithmetic', label: 'mental-arithmetic' } : null;   // a generated arithmetic item
+  };
+  const listAnd = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
+  const pacing = (rows) => {
+    const list = (rows || []).filter(r => r && typeof r.seconds === 'number' && Number.isFinite(r.seconds) && r.seconds >= 0);
+    if (!list.length) return { n: 0, total: 0, avg: 0, families: [], over: [], paced: 0, text: '' };
+    const total = list.reduce((a, r) => a + r.seconds, 0), avg = total / list.length;
+    const byFam = new Map();
+    list.forEach(r => { if (!r.family) return; const f = byFam.get(r.family) || { id: r.family, label: r.familyLabel || r.family, n: 0, seconds: 0 }; f.n++; f.seconds += r.seconds; byFam.set(r.family, f); });
+    const families = [...byFam.values()].map(f => ({ ...f, avg: f.seconds / f.n })).sort((a, b) => b.avg - a.avg || a.label.localeCompare(b.label));
+    const paced = list.filter(r => typeof r.pace === 'number' && r.pace > 0);
+    const over = paced.filter(r => r.seconds > r.pace + 1e-9);
+    const out = [`Average ${fmtSeconds(avg)} a question, ${fmtSeconds(total)} in all.`];
+    if (families.length) {
+      const top = families.slice(0, 3);
+      out.push(`${families.length > 1 ? 'Slowest families' : 'Family'}: ${top.map(f => `${f.label} ${fmtSeconds(f.avg)}`).join(', ')}.`);
+    }
+    if (paced.length) out.push(over.length ? `Over pace: ${over.length} of ${paced.length} (${listAnd(over.map(r => `question ${r.label}, ${fmtSeconds(r.seconds)} against ${fmtSeconds(r.pace)}`))}).` : `Every paced question was inside its pace (${paced.length}).`);
+    return { n: list.length, total, avg, families, over, paced: paced.length, text: out.join(' ') };
+  };
+
+  Z.mock = { fmtSeconds, family, pacing, is: (id) => /^mock-/.test(String(id || '')), style: (s) => STYLES[s] || { label: s ? String(s) : 'Mock', track: 'speed' }, STYLES, scoring, scored, tally, need, passed, signed, trend };
 })();

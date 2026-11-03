@@ -342,7 +342,7 @@
       "expect": "open a\nopen b\nwork\nclose b\nopen c\nclose c\nclose a\n"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 4 times with different names on `std::cin` and compares what it prints; one run compares character for character."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs your program 4 times with different names on `std::cin` and compares what it prints. One run compares character for character."
    },
    "hints": [
     {
@@ -707,7 +707,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "Copies and moves for free",
-   "prose": "A `std::vector` member already copies its doubles on a copy and hands over its heap block on a move. So the compiler's versions are right. `= default` asks for them by name.",
+   "prose": "A `std::vector` member already copies its doubles on a copy and hands over its heap block on a move. So the compiler's versions are right, and `= default` asks for them by name. Declare one special member and the compiler may stop writing the others, so name all four.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -723,6 +723,14 @@
       [
        "`Buffer b = std::move(a);`",
        "move: b takes a's block; a is left empty"
+      ],
+      [
+       "`b = a;`",
+       "copy assignment: b's old doubles give way to copies of a's"
+      ],
+      [
+       "`b = std::move(a);`",
+       "move assignment: b takes a's block; a is left empty"
       ]
      ],
      "align": [
@@ -732,12 +740,12 @@
     },
     "state": {}
    },
-   "question": "Write `Buffer(int n, double x)` (n copies of x), `int size() const`, `double get(int i) const`, `void set(int i, double x)`, and default copy and move constructors.",
+   "question": "Write `Buffer(int n, double x)` (n copies of x), `int size() const`, `double get(int i) const`, `void set(int i, double x)`, and the four copy and move members as `= default`.",
    "widget": {
     "kind": "code",
     "language": "cpp",
-    "starter": "#include <vector>\n\nclass Buffer {\npublic:\n    // Buffer(int n, double x): n copies of x\n    // copy and move constructors: = default\n    // int size() const, double get(int i) const, void set(int i, double x)\nprivate:\n    std::vector<double> data_;\n};\n",
-    "solution": "#include <vector>\n\nclass Buffer {\npublic:\n    Buffer(int n, double x) : data_(n, x) {}\n    Buffer(const Buffer&) = default;\n    Buffer(Buffer&&) = default;\n\n    int size() const { return static_cast<int>(data_.size()); }\n    double get(int i) const { return data_[i]; }\n    void set(int i, double x) { data_[i] = x; }\n\nprivate:\n    std::vector<double> data_;\n};\n",
+    "starter": "#include <vector>\n\nclass Buffer {\npublic:\n    // Buffer(int n, double x): n copies of x\n    // copy and move constructors and assignments: = default\n    // int size() const, double get(int i) const, void set(int i, double x)\nprivate:\n    std::vector<double> data_;\n};\n",
+    "solution": "#include <vector>\n\nclass Buffer {\npublic:\n    Buffer(int n, double x) : data_(n, x) {}\n    Buffer(const Buffer&) = default;\n    Buffer(Buffer&&) = default;\n    Buffer& operator=(const Buffer&) = default;\n    Buffer& operator=(Buffer&&) = default;\n\n    int size() const { return static_cast<int>(data_.size()); }\n    double get(int i) const { return data_[i]; }\n    void set(int i, double x) { data_[i] = x; }\n\nprivate:\n    std::vector<double> data_;\n};\n",
     "examples": [
      {
       "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
@@ -792,9 +800,30 @@
       "call": "std::is_copy_constructible_v<Buffer>",
       "expect": true,
       "compare": "equal"
+     },
+     {
+      "call": "std::is_copy_assignable_v<Buffer>",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::is_move_assignable_v<Buffer>",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "copied_into_existing<Buffer>()",
+      "expect": 10.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "moved_into_existing<Buffer>()",
+      "expect": 30,
+      "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests that copy and move buffers, then read both. One test moves a million doubles."
+    "postlude": "#include <type_traits>\n#include <utility>\n// Hidden helpers: assign into an existing Buffer, only when the class allows it (-1 otherwise)\ntemplate <class B> double copied_into_existing() {\n    if constexpr (std::is_copy_assignable_v<B>) {\n        B a(3, 1.5);\n        B b(1, 0.0);\n        b = a;\n        b.set(0, 9.0);\n        return a.get(0) + b.get(0);\n    } else return -1;\n}\ntemplate <class B> double moved_into_existing() {\n    if constexpr (std::is_move_assignable_v<B>) {\n        B a(3, 1.5);\n        B c(1, 0.0);\n        c = std::move(a);\n        return a.size() + 10 * c.size();\n    } else return -1;\n}\n",
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 12 hidden tests that copy, move and assign buffers, then read both. One test moves a million doubles."
    },
    "hints": [
     {
@@ -810,7 +839,7 @@
     },
     {
      "rung": "step",
-     "text": "`Buffer(const Buffer&) = default;` and `Buffer(Buffer&&) = default;`, then three one-line functions on `data_`."
+     "text": "`Buffer(const Buffer&) = default;`, `Buffer(Buffer&&) = default;`, and `Buffer& operator=(const Buffer&) = default;` with its `Buffer&&` twin. Then write three one-line functions on `data_`."
     }
    ],
    "feedback": {
@@ -818,11 +847,14 @@
     "generic": "Not quite right. Read the first failing test under the editor.",
     "byKey": {
      "test-2": "Test 2 changes `b` and reads `a`. A copy must not share doubles with its source.",
-     "test-5": "Test 5 reads `a.size()` after a move and expects 0. A moved vector leaves its source empty."
+     "test-5": "Test 5 reads `a.size()` after a move and expects 0. A moved vector leaves its source empty.",
+     "test-9": "Test 9 assigns one buffer to another. A declared move constructor deletes the copy assignment, so default it too.",
+     "test-10": "Test 10 moves into an existing buffer. A declared copy constructor stops the compiler writing the move assignment.",
+     "test-12": "Test 12 moves `a` into an existing buffer and expects `a` empty. Without a move assignment, `a` was copied."
     }
    },
    "explain": {
-    "text": "A copy duplicates the doubles; a move passes the heap block over, so a million doubles cost one pointer swap. `std::vector` guarantees the moved-from vector here is empty in practice; the standard only promises it is valid. Use a moved-from object only to assign it a new value or let it die."
+    "text": "A copy duplicates the doubles; a move passes the heap block over, so a million doubles cost one pointer swap. A moved-from vector is empty; for most other types the standard promises only a valid, unspecified state. Use a moved-from object only to assign it a new value or let it die."
    }
   },
   {
@@ -993,14 +1025,14 @@
     "generic": "Not quite right. Check what each member does on its own."
    },
    "explain": {
-    "text": "With only self-managing members, the compiler's versions are correct: moves move, and the copy is deleted because `unique_ptr` cannot be copied. Write the five only when the class itself holds a raw resource. `= delete` says a copy makes no sense."
+    "text": "Self-managing members make the compiler's versions right: moves move, and the copy is deleted because `unique_ptr` cannot be copied. Write the five only when the class itself holds a raw resource. `= delete` says a copy makes no sense."
    }
   },
   {
    "type": "transfer",
    "difficulty": 3,
    "title": "A connection that disconnects once",
-   "prose": "A market-data connection must disconnect exactly once, in its destructor. A copy would disconnect twice, so copying is deleted. It may be moved, say out of a factory: the new object takes over, and the old one must be left closed so its destructor does nothing.",
+   "prose": "A market-data connection must disconnect exactly once, in its destructor. A copy would disconnect twice, so copying is deleted. It may be moved, say out of a factory. The new object takes over, and the old one must be left closed so its destructor does nothing.",
    "canvas": {
     "kind": "graph",
     "params": {
@@ -1115,7 +1147,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 9 hidden tests. Hidden code counts calls to `disconnect` in `disconnects`; two tests ask whether `Connection` can be copied or moved."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 9 hidden tests. Hidden code counts calls to `disconnect` in `disconnects`; two tests ask whether `Connection` can be copied or moved."
    },
    "hints": [
     {
@@ -1150,7 +1182,7 @@
  ],
  "summary": {
   "ideas": [
-   "A destructor runs when its object's scope ends, in reverse order of construction; a temporary dies at the end of its full expression. Members are built in declaration order.",
+   "A destructor runs when its object's scope ends, in reverse order of construction. A temporary dies at the end of its full expression. Members are built in declaration order.",
    "`T b = a;` builds `b` with the copy constructor; `b = a;` on an existing `b` is copy assignment. `std::move(a)` lets a new object take `a`'s contents.",
    "Rule of zero: hold members that manage themselves (`std::vector`, `std::string`, `std::unique_ptr`) and write no special members. Owning a raw resource needs all five, or `= delete`."
   ],

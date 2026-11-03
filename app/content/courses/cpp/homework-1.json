@@ -116,7 +116,7 @@
       "exact": true
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs your program 7 times with a different file on std::cin each time and compares what it prints."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs your program 7 times with a different file on std::cin each time and compares what it prints."
    },
    "feedback": {
     "correct": "Parse, track the running peak, print once at the end.",
@@ -261,7 +261,7 @@
       "expect": "buy"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 7 hidden tests that call band_signal; each must return exactly the expected word."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 7 hidden tests that call band_signal; each must return exactly the expected word."
    },
    "feedback": {
     "correct": "Strict tests on both sides, hold in between.",
@@ -356,7 +356,7 @@
       "expect": 4500000000
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and can take up to a minute; later Checks take a few seconds. Check runs 5 hidden tests that call total_volume; each must equal the expected whole number exactly."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests that call total_volume; each must equal the expected whole number exactly."
    },
    "feedback": {
     "correct": "Each `int` fill is added into a `long long` total.",
@@ -400,7 +400,7 @@
      {
       "id": "double",
       "text": "Make `i` a `double`",
-      "why": "An index is a whole number. A `double` index does not even compile in `prices[i]`."
+      "why": "An index is a whole number. A `double` index is converted silently, and `i < prices.size()` still mixes types."
      }
     ],
     "shuffle": true
@@ -457,7 +457,7 @@
    ],
    "kind": "longform",
    "prompt": "A colleague ports a Python backtest to C++. Two results look wrong.\n\n```cpp\nint total_qty = 0;\nfor (int q : fills) {\n    total_qty += q;\n}\ndouble avg = total_qty / n_fills;\n```\n\nOn a day with two fills of 1,500,000,000 shares, the total prints −1,294,967,296. On a quieter day, 4 fills totalling 10,000,002 shares give `avg` as 2500000, not 2,500,000.5. Write them a short note. Say what C++ is doing in each case and why Python never showed it. Give a fix in code for each, and one way to catch each sooner.",
-   "model": "**The volume.** `total_qty` is an `int`, which holds at most 2,147,483,647. Two fills of 1,500,000,000 make 3,000,000,000, which does not fit, so the sum wraps by $2^{32}$: $3{,}000{,}000{,}000 - 4{,}294{,}967{,}296 = -1{,}294{,}967{,}296$. Signed overflow is undefined behaviour in C++, so the compiler does not have to warn and the program does not stop.\n\n**The average.** `total_qty / n_fills` divides two `int`s, so C++ does integer division and drops the fraction: 10,000,002 / 4 is 2,500,000, not 2,500,000.5. Only then is the result stored in the `double`.\n\n**Why Python hid both.** Python integers grow without limit, so a sum never overflows, and `/` always gives a float. C++ fixes each variable's type and size when it is declared, and each operation works in the type of its operands.\n\n**Fixes.**\n\n```cpp\nlong long total_qty = 0;                   // 64-bit: up to about 9.2e18\nfor (int q : fills) total_qty += q;\ndouble avg = static_cast<double>(total_qty) / n_fills;  // convert before dividing\n```\n\nWriting `(double)(total_qty / n_fills)` or `total_qty / n_fills * 1.0` would not help: the division has already happened in integers.\n\n**Catching them sooner.** A unit test with a known large day (two fills of 1,500,000,000, expected 3,000,000,000) fails at once on the `int` version. A test with an odd total, such as 10,000,002 over 4 fills expecting 2,500,000.5, catches the division. Building with warnings such as `-Wall -Wconversion` also flags the implicit conversions, and a sanitiser build (`-fsanitize=undefined`) reports the overflow at run time.",
+   "model": "**The volume.** `total_qty` is an `int`, which holds at most 2,147,483,647. Two fills of 1,500,000,000 make 3,000,000,000, which does not fit, so the sum wraps by $2^{32}$: $3{,}000{,}000{,}000 - 4{,}294{,}967{,}296 = -1{,}294{,}967{,}296$. Signed overflow is undefined behaviour in C++. The compiler need not warn, and the program does not stop.\n\n**The average.** `total_qty / n_fills` divides two `int`s, so C++ does integer division and drops the fraction: 10,000,002 / 4 is 2,500,000, not 2,500,000.5. Only then is the result stored in the `double`.\n\n**Why Python hid both.** Python integers grow without limit, so a sum never overflows, and `/` always gives a float. C++ fixes each variable's type and size when it is declared. Each operation works in the type of its operands.\n\n**Fixes.**\n\n```cpp\nlong long total_qty = 0;                   // 64-bit: up to about 9.2e18\nfor (int q : fills) total_qty += q;\ndouble avg = static_cast<double>(total_qty) / n_fills;  // convert before dividing\n```\n\nWriting `(double)(total_qty / n_fills)` or `total_qty / n_fills * 1.0` would not help: the division has already happened in integers.\n\n**Catching them sooner.** A unit test on a known large day fails at once on the `int` version. Two fills of 1,500,000,000 should give 3,000,000,000. A test with an odd total, such as 10,000,002 over 4 fills expecting 2,500,000.5, catches the division. Building with `-Wall -Wconversion` also flags the implicit conversions. A sanitiser build (`-fsanitize=undefined`) reports the overflow at run time.",
    "rubric": [
     {
      "points": 2,
@@ -477,7 +477,7 @@
     },
     {
      "points": 2,
-     "text": "Gives a correct fix for the average in code: convert to `double` before dividing, and notes that converting afterwards does not help"
+     "text": "Fixes the average in code by converting to `double` before dividing; notes that converting afterwards does not help"
     },
     {
      "points": 1,
@@ -491,7 +491,7 @@
    "skills": [
     "cp-build"
    ],
-   "prose": "```text\n$ g++ -std=c++17 main.cpp pricer.cpp -o backtest\npricer.cpp:(.text+0x0): multiple definition of `simple_return(double, double)'; main.cpp:(.text+0x0): first defined here\n```\n\n`returns.h` holds the body of `simple_return` and starts with `#pragma once`. Both `.cpp` files include it.",
+   "prose": "```text\n$ g++ -std=c++17 main.cpp pricer.cpp -o backtest\n/usr/bin/ld: /tmp/ccg6pEss.o: in function `simple_return(double, double)':\npricer.cpp:(.text+0x0): multiple definition of `simple_return(double, double)'; /tmp/ccIdCL2X.o:main.cpp:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n```\n\n`returns.h` holds the body of `simple_return` and starts with `#pragma once`. Both `.cpp` files include it.",
    "question": "Which change fixes the build?",
    "widget": {
     "kind": "choice",

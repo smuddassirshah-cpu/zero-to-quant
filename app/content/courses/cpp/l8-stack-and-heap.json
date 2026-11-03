@@ -537,11 +537,11 @@
      "lines": [
       "$ g++ -g -fsanitize=address leak.cpp -o leak && ./leak",
       "==21322==ERROR: LeakSanitizer: detected memory leaks",
-      "Direct leak of 8000 byte(s) in 1 object(s) from:",
+      "Direct leak of 8000 byte(s) in 1 object(s) allocated from:",
       "    #0 0x7f16a0cfe6c8 in operator new[](unsigned long)",
       "    #1 0x55d48df23237 in sum_prices(int) leak.cpp:2",
       "    #2 0x55d48df2330f in main leak.cpp:10",
-      "SUMMARY: 8000 byte(s) leaked in 1 allocation(s)."
+      "SUMMARY: AddressSanitizer: 8000 byte(s) leaked in 1 allocation(s)."
      ],
      "title": "Terminal: one call to sum_prices(1000)"
     },
@@ -754,7 +754,7 @@
       "expect": "505.00\n"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 5 times with different input. A hidden leak checker counts every `new[]`: if a block never reaches `delete[]`, the program ends with status 1 and the test fails."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs your program 5 times with different input. A hidden leak checker counts every `new[]`. If a block never reaches `delete[]`, the program ends with status 1 and the test fails. A write past the end of the buffer goes unnoticed here. A desk build with `-fsanitize=address` reports it as heap-buffer-overflow."
    },
    "hints": [
     {
@@ -777,7 +777,7 @@
     "correct": "Read, sum, print, `delete[]`.",
     "generic": "Not yet. The results under the editor say which test failed.",
     "byKey": {
-     "test-1": "If the output is right but the test failed with status 1, the leak checker fired: `new[]` needs `delete[]`, not `delete`."
+     "test-1": "If the output is right but the test failed with status 1, the leak checker fired. `new[]` needs `delete[]`, not `delete`."
     }
    },
    "explain": {
@@ -857,7 +857,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. The hidden leak checker fails a test whose program ends with a `new[]` block that never reached `delete[]`."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests. The hidden leak checker fails a test whose program ends with a `new[]` block that never reached `delete[]`."
    },
    "hints": [
     {
@@ -881,7 +881,7 @@
     "generic": "Not yet. The results under the editor say which test failed."
    },
    "explain": {
-    "text": "The vector copies the `n` prices into its own heap buffer, so the `new[]` buffer can be freed before returning. `fill_ticks(out.data(), n)` on a vector of size `n` would skip the manual buffer entirely: the vector frees its own memory, which is the next lesson."
+    "text": "The vector copies the `n` prices into its own heap buffer, so the `new[]` buffer can be freed before returning. `fill_ticks(out.data(), n)` on a vector of size `n` would skip the manual buffer. The vector frees its own memory, which is the next lesson."
    }
   },
   {
@@ -1002,7 +1002,7 @@
      {
       "id": "local",
       "text": "A local array `double v[steps + 1]`",
-      "why": "In standard C++ an array's size must be known at compile time, and a large local array can overflow the stack."
+      "why": "In standard C++ an array's size must be known at compile time. A large local array can overflow the stack."
      },
      {
       "id": "leak",
@@ -1031,7 +1031,7 @@
     "generic": "Not quite right. Count the allocations each design makes, and ask who frees them."
    },
    "explain": {
-    "text": "A vector member is allocated once and reused for all 50,000 prices, and it frees itself when the pricer is destroyed. Allocation in a hot loop costs time, and manual `new[]`/`delete[]` invites leaks. Desks preallocate lattices and buffers for exactly this reason."
+    "text": "A vector member is allocated once, reused for all 50,000 prices, and freed when the pricer is destroyed. Allocation in a hot loop costs time, and manual `new[]`/`delete[]` invites leaks. Desks preallocate lattices and buffers for exactly this reason."
    }
   }
  ],

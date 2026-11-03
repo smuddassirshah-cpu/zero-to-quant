@@ -193,7 +193,7 @@
     }
    },
    "explain": {
-    "text": "When the block is full, `push_back` gets a block twice as big, copies the closes across and frees the old one. So the room grows 1, 2, 4, 8. At 5 closes three slots wait empty.",
+    "text": "When the block is full, `push_back` gets one twice as big, copies the closes across and frees the old one. This library doubles, as libstdc++ does, so the room grows 1, 2, 4, 8. At 5 closes three slots wait empty.",
     "canvas": {
      "params": {
       "n": 5
@@ -227,7 +227,7 @@
    "type": "problem",
    "difficulty": 1,
    "title": "Size, capacity and reserve",
-   "prose": "`size()` counts the elements in use; `capacity()` counts the slots in the block. A full block doubles on the next `push_back`. `reserve(n)` asks for room for `n` up front.\n\n```cpp\nstd::vector<double> ticks;\nticks.reserve(1000);\nfor (int i = 0; i < 600; ++i) {\n    ticks.push_back(100.0 + i * 0.01);\n}\n```",
+   "prose": "`size()` counts the elements in use; `capacity()` counts the slots in the block. A full block doubles here (libc++ and libstdc++) on the next `push_back`. `reserve(n)` asks for room for `n` up front.\n\n```cpp\nstd::vector<double> ticks;\nticks.reserve(1000);\nfor (int i = 0; i < 600; ++i) {\n    ticks.push_back(100.0 + i * 0.01);\n}\n```",
    "canvas": {
     "kind": "array",
     "params": {
@@ -244,7 +244,7 @@
      "showIndex": true
     },
     "state": {
-     "caption": "After `reserve(8)`: size 0, capacity 8"
+     "caption": "After `reserve(1000)` (8 slots drawn): size 0, capacity 1,000"
     }
    },
    "question": "How many times does `ticks` move to a bigger block during the loop?",
@@ -511,7 +511,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests that call moving_average; each mean is accepted within a relative 1e-9, and an empty answer must be empty."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 7 hidden tests that call moving_average, accepting each mean within a relative 1e-9. An empty answer must be empty."
    },
    "hints": [
     {
@@ -663,9 +663,25 @@
       "call": "returns_from(px).size()",
       "expect": 999,
       "compare": "equal"
+     },
+     {
+      "call": "returns_from",
+      "args": [
+       [
+        100,
+        110
+       ]
+      ],
+      "types": [
+       "std::vector<double>"
+      ],
+      "expect": [
+       0.1
+      ],
+      "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call returns_from; returns are accepted within a relative 1e-9, and test 5 expects capacity() to be exactly 5 for 6 closes."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 7 hidden tests that call returns_from, accepting returns within a relative 1e-9. Test 5 expects capacity() to be exactly 5 for 6 closes."
    },
    "hints": [
     {
@@ -694,7 +710,7 @@
     }
    },
    "explain": {
-    "text": "`reserve(px.size() - 1)` makes one allocation of the exact size, so `push_back` never copies. The early return matters: on an empty vector `px.size() - 1` wraps to about 18 quintillion. A vector built with `out(px.size() - 1)` and filled by index works too."
+    "text": "`reserve(px.size() - 1)` makes one allocation of the exact size, so `push_back` never copies. The early return matters: an empty vector's `px.size() - 1` is the largest `std::size_t`, 4.3 billion here, $1.8 \\times 10^{19}$ on a 64-bit desk. A vector built with `out(px.size() - 1)` and filled by index works too."
    }
   },
   {
@@ -753,13 +769,6 @@
       "tol": {
        "abs": 0.001
       }
-     },
-     {
-      "id": "end",
-      "value": 305.9,
-      "tol": {
-       "abs": 0.001
-      }
      }
     ]
    },
@@ -787,8 +796,7 @@
     "generic": "Not quite right. Start at index 1 and stop after index 3.",
     "byKey": {
      "all": "You added index 0 too. `begin() + 1` starts one element in.",
-     "short": "You stopped before index 3. `end()` is one past the last element, so index 3 is still read.",
-     "end": "You read a fifth element at `end()`. `end()` marks the place after the last close and holds no value."
+     "short": "You stopped before index 3. `end()` is one past the last element, so index 3 is still read."
     }
    },
    "explain": {
@@ -886,7 +894,7 @@
       "expect": "60\n50\n40\n"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 6 times with different input on std::cin and compares what it prints."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs your program 6 times with different input on std::cin and compares what it prints."
    },
    "hints": [
     {
@@ -1058,7 +1066,7 @@
       "expect": "std::out_of_range"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests that call price_change. Tests 3 to 5 pass a day that does not exist and expect the program to end with std::out_of_range."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests that call price_change. Tests 3 to 5 pass a day that does not exist and expect the program to end with std::out_of_range."
    },
    "hints": [
     {
@@ -1187,7 +1195,7 @@
     }
    },
    "explain": {
-    "text": "`erase` shifts the later elements left and leaves `it` invalid: using it again is undefined behaviour. Here it skipped a zero; at the last element it can run past `end()`. Python lists skip the same way. The fix takes the iterator `erase` returns:\n\n```cpp\nfor (auto it = ticks.begin(); it != ticks.end(); ) {\n    if (*it == 0.0) it = ticks.erase(it);\n    else ++it;\n}\n```",
+    "text": "`erase` shifts the later elements left and leaves `it` invalid: using it again is undefined behaviour. Here it skipped a zero, as a Python list would; at the last element it can run past `end()`. The fix takes the iterator `erase` returns:\n\n```cpp\nfor (auto it = ticks.begin(); it != ticks.end(); ) {\n    if (*it == 0.0) it = ticks.erase(it);\n    else ++it;\n}\n```",
     "canvas": {
      "cells": [
       101.2,
@@ -1224,7 +1232,7 @@
      {
       "id": "rev",
       "text": "It visits indices 2, 1, 0 and stops",
-      "why": "That works for `int i`. A `std::size_t` cannot be negative: 0 minus 1 wraps to about 18 quintillion, which is still `>= 0`."
+      "why": "That works for `int i`. A `std::size_t` cannot be negative: 0 minus 1 wraps to its largest value, which is still `>= 0`."
      },
      {
       "id": "noc",
@@ -1422,7 +1430,7 @@
       "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call price_lattice; prices are accepted within a relative 1e-9."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 6 hidden tests that call price_lattice; prices are accepted within a relative 1e-9."
    },
    "hints": [
     {
@@ -1431,7 +1439,7 @@
     },
     {
      "rung": "point",
-     "text": "Each new row has one more node: the top node of the last row times `u`, then every node of the last row times `d`.",
+     "text": "Each new row has one more node. It holds the last row's top node times `u`, then every node of the last row times `d`.",
      "highlight": [
       "u-u"
      ]
@@ -1458,7 +1466,7 @@
  "summary": {
   "ideas": [
    "`std::vector<T>` is a growing array of one type: `push_back` appends, `size()` counts, `[]` reads unchecked and `at()` reads checked.",
-   "Elements sit in one block whose capacity doubles when full; `reserve(n)` makes the room once, so a known count never moves the block.",
+   "Elements sit in one block whose capacity doubles here when full. `reserve(n)` makes the room once, so a known count never moves the block.",
    "Iterators mark places: `[begin(), end())` covers every element, and `erase` leaves the old iterator invalid, so use the one it returns."
   ],
   "formula": {
@@ -1466,7 +1474,7 @@
    "tex": "\\text{capacity} = 1, 2, 4, 8, \\ldots \\qquad \\text{copies for } n \\text{ pushes} < 2n",
    "note": "So `push_back` costs a constant amount on average."
   },
-  "trap": "Erasing inside a loop and then `++it` skips the next element; write `it = v.erase(it)` and step only when you did not erase."
+  "trap": "Erasing inside a loop and then `++it` skips the next element. Write `it = v.erase(it)`, and step only when you did not erase."
  },
  "quiz": [
   {

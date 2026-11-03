@@ -945,9 +945,30 @@ const checkDifficulty = (file, where, d, lo, hi, label) => {
   if (d < lo || d > hi) err(file, where, `${label} difficulty runs ${lo} to ${hi} (found ${d})`);
 };
 
-/* An item: a problem screen without hints (quiz, review, homework, exam) */
+/* tags (ENGINE-BACKLOG 456): a non-empty list of kebab-case family names, the first being the item's family. Allowed on lesson
+   screens and on every kind of item (quiz, review, homework, exam, bank). Nothing is checked when it is absent. */
+const checkTags = (file, where, tags) => {
+  if (tags === undefined) return;
+  if (!Array.isArray(tags) || !tags.length) { err(file, where, 'tags is a non-empty list of kebab-case family names, for example ["dice-ev"]'); return; }
+  const seen = new Set();
+  tags.forEach((t, i) => {
+    if (typeof t !== 'string' || !KEBAB.test(t)) err(file, `${where}[${i}]`, `${JSON.stringify(t)} is not a kebab-case family name`);
+    else if (seen.has(t)) err(file, `${where}[${i}]`, `duplicate tag "${t}"`);
+    else seen.add(t);
+  });
+  if (tags.length > 4) warn(file, where, 'more than 4 tags: the first is the family, the rest only narrow it');
+};
+/* pace (ENGINE-BACKLOG 457): the seconds an item should take, a positive number; only the results line reads it, never grading */
+const checkPace = (file, where, v) => {
+  if (v === undefined) return;
+  if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) err(file, where, 'pace is a positive number of seconds');
+  else if (v > 1800) warn(file, where, `pace ${v} is over 30 minutes: it is in seconds`);
+};
+
+/* An item: a problem screen without hints (quiz, review, homework, exam, bank) */
 const checkItem = (file, where, it, ctx) => {
   if (!isObj(it)) { err(file, where, 'item must be an object'); return null; }
+  checkTags(file, `${where}.tags`, it.tags); checkPace(file, `${where}.pace`, it.pace);
   if (!it.id || !KEBAB.test(String(it.id))) err(file, `${where}.id`, 'item id must be kebab-case');
   if (it.difficulty != null || ctx.needDifficulty !== false) checkDifficulty(file, `${where}.difficulty`, it.difficulty, ctx.lo, ctx.hi, ctx.label);
   if (it.hints) err(file, `${where}.hints`, `${ctx.label} items have no hints`);
@@ -996,6 +1017,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     if (s.type === 'title' || s.type === 'demonstrate' || (s.type === 'generalise' && !s.widget)) nonTask++;
     if (s.type === 'transfer') hasTransfer = true;
     checkText(file, `${at}.title`, s.title); checkText(file, `${at}.prose`, s.prose); checkText(file, `${at}.question`, s.question);
+    checkTags(file, `${at}.tags`, s.tags); checkPace(file, `${at}.pace`, s.pace);
     if (s.prose && words(s.prose) > 60) warn(file, `${at}.prose`, `prose over 60 words (${words(s.prose)})`);
     checkCanvas(file, `${at}.canvas`, s.canvas);
     if (s.difficulty != null || GRADED.has(s.type)) checkDifficulty(file, `${at}.difficulty`, s.difficulty, 1, 3, 'lesson screen');
@@ -1255,6 +1277,44 @@ const checkDrill = (file, id, d, cur) => {
   if (!Array.isArray(d.tests) || d.tests.length < 3) err(file, 'tests', 'at least 3 tests');
   else if (d.tests.length > 15) err(file, 'tests', 'at most 15 tests');
   checkText(file, 'name', d.name); checkText(file, 'brief', d.brief); checkText(file, 'how', d.how);
+  checkTags(file, 'tags', d.tags); checkPace(file, 'pace', d.pace);
+};
+
+/* ---------- Interview bank: content/bank/<family>.json (ENGINE-BACKLOG 456, docs/AUTHORING.md section 5) ---------- */
+const BANK_STYLES = ['mental-maths', 'probability', 'brainteaser', 'market-making', 'statistics', 'finance', 'coding', 'behavioural'];
+const checkBank = (file, id, doc, cur) => {
+  req(file, '', doc, ['id', 'name', 'items']);
+  if (doc.id !== id) err(file, 'id', `id "${doc.id}" must match the file name "${id}"`);
+  checkText(file, 'name', doc.name);
+  if (doc.description != null) checkText(file, 'description', doc.description);
+  if (!Array.isArray(doc.items) || !doc.items.length) { err(file, 'items', 'a bank file needs at least one item'); return; }
+  if (doc.items.length > 200) warn(file, 'items', 'over 200 items: split the file by family');
+  const allSkills = new Set(Object.values(cur.courseDocs).flatMap(c => Object.keys((c || {}).skills || {})));
+  const ictx = { lo: 1, hi: 5, label: 'bank', skills: allSkills, skillsRequired: false, allowLongform: true };
+  const seen = new Set();
+  doc.items.forEach((it, i) => {
+    const at = `items[${i}]`;
+    const kind = checkItem(file, at, it, ictx);
+    if (!isObj(it)) return;
+    if (it.id) { if (seen.has(it.id)) err(file, `${at}.id`, `duplicate id "${it.id}"`); seen.add(it.id); }
+    if (kind === 'code') err(file, `${at}.widget`, 'a code item cannot run in the bank deck');
+    if (it.tags === undefined) err(file, `${at}.tags`, 'a bank item needs tags: a list of kebab-case family names, the first being its family');
+    if (!Array.isArray(it.role) || !it.role.length) err(file, `${at}.role`, `role is a non-empty list drawn from ${MOCK_STYLES.join(', ')}`);
+    else it.role.forEach(r => { if (!MOCK_STYLES.includes(r)) err(file, `${at}.role`, `unknown role "${r}" (${MOCK_STYLES.join(', ')})`); });
+    if (typeof it.style !== 'string' || !KEBAB.test(it.style)) err(file, `${at}.style`, `style is one kebab-case word drawn from ${BANK_STYLES.join(', ')}`);
+    else if (!BANK_STYLES.includes(it.style)) warn(file, `${at}.style`, `style "${it.style}" is not one of ${BANK_STYLES.join(', ')}`);
+    if (typeof it.source !== 'string' || !it.source.trim()) err(file, `${at}.source`, 'source is one plain line saying where the question comes from (for example "Original" or "Adapted from probability review 1")');
+    else { if (/\n/.test(it.source) || it.source.length > 120) err(file, `${at}.source`, 'source is one plain line of up to 120 characters'); checkText(file, `${at}.source`, it.source); }
+    if (it.requires !== undefined) {
+      if (!Array.isArray(it.requires) || !it.requires.length) err(file, `${at}.requires`, 'requires is a non-empty list of "course/lesson-id" references');
+      else it.requires.forEach(r => {
+        const m = /^([a-z0-9-]+)\/([a-z0-9-]+)$/.exec(String(r)), c = m && cur.courseDocs[m[1]];
+        if (!m) err(file, `${at}.requires`, `"${r}" is not a "course/lesson-id" reference`);
+        else if (!c) err(file, `${at}.requires`, `unknown course "${m[1]}"`);
+        else if (!(c.levels || []).some(lv => (lv.lessons || []).includes(m[2]))) err(file, `${at}.requires`, `"${m[2]}" is not a lesson of ${m[1]}`);
+      });
+    }
+  });
 };
 
 /* ---------- Main ---------- */
@@ -1386,6 +1446,16 @@ listJSON(examDir).forEach(f => {
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`exams/${f}`);
   guard(file, () => checkExam(file, id, r.data, cur));
+});
+
+/* Interview bank */
+const bankDir = path.join(CONTENT, 'bank');
+listJSON(bankDir).forEach(f => {
+  const id = f.replace(/\.json$/, ''), file = path.join(bankDir, f);
+  if (!KEBAB.test(id)) { err(file, '', 'bank files are <family>.json, kebab-case'); return; }
+  const r = readJSON(file); if (!r.data) return;
+  manifest.push(`bank/${f}`);
+  guard(file, () => checkBank(file, id, r.data, cur));
 });
 
 /* ---------- Prep paths: content/prep.json (ENGINE-BACKLOG 455, docs/AUTHORING.md section 10) ---------- */
@@ -1536,7 +1606,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content.', files: manifest.sort() }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content.', files: manifest.sort() }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }

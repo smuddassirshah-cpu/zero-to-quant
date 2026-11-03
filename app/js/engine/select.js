@@ -11,6 +11,11 @@
    ZQ.select.weeklyProbs()   three probability problems a week from the topic 1.5 pools, once any 1.5 lesson is finished.
        The week's picks are kept in ZQ.state.flags.weeklyProbs = { week, done, ids }, so they stay fixed for the week.
    ZQ.select.weeklyStatus() { eligible, week, done, total }   and   ZQ.select.weeklyRecord(done)
+   ZQ.select.bankDeck({ n = 8 })   the Interview practice deck (ENGINE-BACKLOG 456): items from content/bank/*.json plus the
+       tagged review and homework items of finished lessons, each scheduled on its own (ZQ.state.bank, Leitner 1, 3, 7, 30
+       days). Due items first, then unseen ones, families mixed (round robin, no two neighbours from one family when
+       avoidable). A bank item whose `requires` lessons are not all finished is not drawn.
+   ZQ.select.bankStatus()  { total, due, fresh, later, locked, families, nextDue }, without drawing anything
    ZQ.select.resolve(ref, kind), ZQ.select.source(ref, kind), ZQ.select.pool({ course, topic }), ZQ.select.interval(skill)
 
    Every async call resolves to an array of items in the AUTHORING.md item format, each with ref, skills, uid and a
@@ -40,6 +45,7 @@
 
   /* A readable source for a ref: "Conditional Probability · Lesson 2 quiz" */
   const source = (ref = {}, kind) => {
+    if (ref.bank) return `Interview bank · ${ref.bank}`;
     if (ref.exam) return `Exam ${String(ref.exam).replace(/^topic-/, 'topic ').replace(/^stage-/, 'stage ')}`;
     const c = courseOf(ref.course), name = c ? c.name : ref.course || 'Unknown course';
     const id = String(ref.lesson || '');
@@ -161,9 +167,75 @@
     return chosen;
   };
 
+  /* ---------- Interview bank (ENGINE-BACKLOG 456) ---------- */
+  /* A bank item in the set-item shape: uid bank/<file>/<id>, family from its first tag (else the file id), group = family */
+  const bankItem = (it, file, D) => {
+    const out = Object.assign({}, it);
+    delete out.hints;
+    const family = (Array.isArray(it.tags) && it.tags[0]) || (D && D.family) || file;
+    out.ref = { bank: file, item: it.id };
+    out.uid = `bank/${file}/${it.id}`;
+    out.family = family;
+    out.group = family;
+    out.skills = it.skills || [];
+    out.bankSource = it.source || '';
+    out.source = `${family} · ${it.source || 'Interview bank'}`;
+    return out;
+  };
+  const lessonsDone = (refs) => (refs || []).every(r => { try { const l = S().lessons[r]; return !!(l && l.done); } catch { return false; } });
+  /* Every candidate for the deck: { items: the drawable ones, locked: the count whose prerequisite lessons are not finished } */
+  const bankPool = async () => {
+    const items = [];
+    let locked = 0;
+    for (const id of (C().bankIds ? C().bankIds() : [])) {
+      const D = await safe(C().bank(id));
+      if (!D || !Array.isArray(D.items)) continue;
+      D.items.forEach(it => { if (!it || !it.id) return; if (lessonsDone(it.requires)) items.push(bankItem(it, id, D)); else locked++; });
+    }
+    /* Tagged items of finished lessons (quizzes, level reviews, submitted homework) join the deck under their own uid */
+    try {
+      (await pool({})).forEach(it => {
+        if (!Array.isArray(it.tags) || !it.tags.length || typeof it.tags[0] !== 'string') return;
+        items.push(Object.assign({}, it, { family: it.tags[0], group: it.tags[0] }));
+      });
+    } catch (e) { console.warn(e); }
+    const seen = new Set();
+    return { items: items.filter(it => (seen.has(it.uid) ? false : (seen.add(it.uid), true))), locked };
+  };
+  const entryOf = (uid) => { try { return S().bank.entry(uid); } catch { return null; } };
+  const bankStatus = async () => {
+    const { items, locked } = await bankPool(), t = now();
+    const fam = {};
+    let due = 0, fresh = 0, later = 0, nextDue = null;
+    items.forEach(it => {
+      fam[it.family] = (fam[it.family] || 0) + 1;
+      const e = entryOf(it.uid);
+      if (!e) fresh++; else if (e.due <= t) due++; else { later++; nextDue = nextDue == null ? e.due : Math.min(nextDue, e.due); }
+    });
+    return { total: items.length, due, fresh, later, locked, families: fam, nextDue };
+  };
+  /* One pass of a round robin over families: each family offers its items in order, the families ordered by their best item */
+  const roundRobin = (list, n) => {
+    const by = new Map();
+    list.forEach(it => { const a = by.get(it.family) || []; a.push(it); by.set(it.family, a); });
+    const queues = [...by.values()], out = [];
+    while (out.length < n && queues.some(q => q.length)) queues.forEach(q => { if (out.length < n && q.length) out.push(q.shift()); });
+    return out;
+  };
+  const bankDeck = async ({ n = 8 } = {}) => {
+    const { items } = await bankPool(), t = now();
+    if (!items.length) return [];
+    const due = items.filter(it => { const e = entryOf(it.uid); return e && e.due <= t; }).sort((a, b) => entryOf(a.uid).due - entryOf(b.uid).due);
+    const fresh = items.filter(it => !entryOf(it.uid)).map(it => ({ it, k: Math.random() })).sort((a, b) => a.k - b.k).map(o => o.it);
+    const picked = roundRobin(due, n);
+    if (picked.length < n) picked.push(...roundRobin(fresh, n - picked.length));
+    return interleave(picked);
+  };
+
   /* ---------- Redo ---------- */
   const findIn = (list, id) => (list || []).find((x, i) => (x.id || 'q' + i) === id) || null;
   const resolve = async (ref = {}, kind = 'quiz') => {
+    if (ref.bank) { const D = await safe(C().bank(ref.bank)); const it = D && findIn(D.items, ref.item); return it ? bankItem(it, ref.bank, D) : null; }
     if (ref.exam) {
       const E = await safe(C().exam(ref.exam)); if (!E) return null;
       const all = (E.items || []).concat(...(E.parts || []).map(p => p.items || []));
@@ -244,5 +316,5 @@
     return picks.map((x, i) => Object.assign({}, x, { weekly: { week, index: i } }));
   };
 
-  Z.select = { practiceSet, redoSession, weeklyProbs, weeklyStatus, weeklyRecord, resolve, source, pool, interval, LEITNER };
+  Z.select = { practiceSet, redoSession, bankDeck, bankStatus, weeklyProbs, weeklyStatus, weeklyRecord, resolve, source, pool, interval, LEITNER };
 })();

@@ -94,7 +94,7 @@
     "wrong": [
      {
       "id": "nosell",
-      "value": 51.875,
+      "value": 51.7143,
       "tol": {
        "abs": 0.001
       }
@@ -127,7 +127,7 @@
     "cp-classes"
    ],
    "prose": "Extend your `Position`: `sell(qty, px)` now returns the P&L of that sale, $q \\times (p - \\bar p)$, and adds it to a running `realised()` total. Prices must be positive.",
-   "question": "Write `buy` and `sell` with every check: no short sales, no quantity of 0 or less, no price of 0 or less. A flat position has average price 0.",
+   "question": "Write `buy` and `sell` with every check: no short sales, and no quantity or price of 0 or less. A flat position has average price 0.",
    "widget": {
     "kind": "code",
     "language": "cpp",
@@ -197,9 +197,14 @@
       "setup": "Position p; p.buy(200, 50.0); p.buy(100, 53.0); p.sell(10, -1.0);",
       "call": "p.qty()",
       "compare": "raises"
+     },
+     {
+      "setup": "Position p; p.buy(0, 10.0);",
+      "call": "p.qty()",
+      "compare": "raises"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 10 hidden tests; P&L is accepted within a relative 1e-9, and three tests pass only if the program stops."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 11 hidden tests, with P&L accepted within a relative 1e-9. Four tests pass only if the program stops."
    },
    "feedback": {
     "correct": "Quantity, average and realised P&L stay consistent.",
@@ -216,7 +221,7 @@
     "cp-classes"
    ],
    "prose": "`Fixed<Places>` holds a value as a whole number of $10^{-\\text{Places}}$ units. `Fixed<2>` is pence and `Fixed<4>` an FX rate. A different `Places` is a different type.",
-   "question": "Write `str()` (1234 units of `Fixed<2>` is `\"12.34\"`; `Fixed<0>` has no dot; negatives start with `-`) and `operator+` for two values of the same `Fixed<Places>`.",
+   "question": "Write `str()` and `operator+` for two values of the same `Fixed<Places>`. In `str()`, 1234 units of `Fixed<2>` is `\"12.34\"`, `Fixed<0>` has no dot, and negatives start with `-`.",
    "widget": {
     "kind": "code",
     "language": "cpp",
@@ -271,7 +276,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests with `Fixed<0>`, `Fixed<2>` and `Fixed<4>`, comparing text exactly."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 8 hidden tests with `Fixed<0>`, `Fixed<2>` and `Fixed<4>`, comparing text exactly."
    },
    "feedback": {
     "correct": "Exact decimals, with the places fixed at compile time.",
@@ -333,7 +338,7 @@
     "cp-references"
    ],
    "prose": "An order book holds bid and ask **levels**, each a price in pence and a total size. Bids are kept highest first, asks lowest first. The invariant: whenever both sides have levels, the best bid is below the best ask. This quote book refuses any add that would cross, rather than matching it.",
-   "question": "Write `operator<` for `Level` (by price) and the `Book` functions: `add`, `best_bid`, `best_ask`, `spread`, `depth` (levels on a side) and `size_at` (0 when there is no such level). Refuse a size of 0 or less, a crossing add, and a best price on an empty side.",
+   "question": "Write `operator<` for `Level`, by price. Then write the `Book` functions `add`, `best_bid`, `best_ask` and `spread`. Add `depth`, the levels on a side, and `size_at`, 0 when there is no such level. Refuse a size of 0 or less, a crossing add, and a best price on an empty side.",
    "widget": {
     "kind": "code",
     "language": "cpp",
@@ -433,14 +438,14 @@
       "compare": "raises"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 15 hidden tests, each building a small book and then asking it one question. Five pass only if the program stops."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 15 hidden tests, each building a small book and then asking it one question. Five pass only if the program stops."
    },
    "feedback": {
     "correct": "The book stays sorted and never crosses.",
     "generic": "Not quite right. Read the first failing test under the editor."
    },
    "explain": {
-    "text": "`add` checks the size and the crossing rule before touching either side, then merges into an existing level or inserts and re-sorts. `std::sort` uses your `operator<`; reversing gives the bids highest first. Every reader is `const`, and the empty-side checks keep `spread` honest."
+    "text": "`add` checks size and the crossing rule before touching either side, then merges into a level or inserts and re-sorts. `std::sort` uses your `operator<`; reversing gives the bids highest first. Every reader is `const`, and the empty-side checks keep `spread` honest."
    }
   },
   {
@@ -453,12 +458,12 @@
    ],
    "kind": "longform",
    "title": "Designing a Position class",
-   "prompt": "A desk asks you to design the C++ `Position` class its risk system will use. One object tracks one instrument: the ticker, signed quantity (shorts allowed up to a limit), average entry price and realised P&L. It is stored in containers, copied into reports and printed in logs.\n\n(a) State the invariants the class must keep, and say where each one is checked. (b) Write the class declaration: members, constructor, the functions that change it and those that read it. (c) Say which special members you write and why. (d) Say which operators you would overload, and which you would refuse to, with reasons. (e) Say how money is stored and how a broken rule is reported.",
-   "model": "**(a) Invariants, and where they are checked.**\n\n1. The ticker is not empty. *Checked in the constructor; nothing changes it afterwards.*\n2. $|q| \\le$ the position limit, and the limit is positive. *Checked in the constructor and in `buy` and `sell` before anything changes.*\n3. A flat position ($q = 0$) has average price 0; otherwise the average is the weighted entry price of the open quantity. *Kept by `buy` and `sell`, the only functions that change $q$.*\n4. Realised P&L changes only when a trade reduces the position. *Kept by `sell` (and `buy` covering a short).*\n\n**(b) Declaration.**\n\n```cpp\nclass Position {\npublic:\n    Position(std::string ticker, long long limit);\n    void buy(long long qty, long long px_pence);\n    void sell(long long qty, long long px_pence);\n    const std::string& ticker() const;\n    long long qty() const;\n    double avg_price_pence() const;\n    long long realised_pence() const;\nprivate:\n    std::string ticker_;\n    long long limit_;\n    long long qty_ = 0;\n    double avg_ = 0.0;\n    long long realised_ = 0;\n};\n```\n\nThe data is private, so only `buy` and `sell` can change it. Readers are `const`, and `ticker()` returns a `const` reference, never a non-const one, so no caller can write through it. The constructor builds members in its initialiser list, in declaration order.\n\n**(c) Special members.** None: the rule of zero. Every member (`std::string`, integers, a `double`) copies, moves and destroys itself correctly, so the compiler's versions are right. Copies are wanted (reports take snapshots), and moves are cheap. A raw pointer or handle member would force the rule of five; there is none.\n\n**(d) Operators.** `operator<<(std::ostream&, const Position&)` for logs, returning the stream. `operator==` only if a test needs it, comparing every field. I would **not** define `operator+` on two positions: adding AZN to VOD is meaningless, and even for one ticker it hides which trades happened. Changes go through named functions, `buy` and `sell`. If P&L amounts are summed, they get their own `Money` or `Pnl` type, so a quantity can never be added to money.\n\n**(e) Money and errors.** Prices and P&L are whole pence in `long long`, so sums are exact; only the average, a ratio, is a `double`, and it is never compared with `==`. A broken rule throws (`std::invalid_argument` for bad input, `std::logic_error` for a breach such as exceeding the limit) before any member changes, so a refused call leaves the position exactly as it was.",
+   "prompt": "A desk asks you to design the C++ `Position` class its risk system will use. One object tracks one instrument: the ticker, signed quantity, average entry price and realised P&L. Shorts are allowed up to a limit. It is stored in containers, copied into reports and printed in logs.\n\n(a) State the invariants the class must keep, and say where each one is checked. (b) Write the class declaration: members, constructor, the functions that change it and those that read it. (c) Say which special members you write and why. (d) Say which operators you would overload, and which you would refuse to, with reasons. (e) Say how money is stored and how a broken rule is reported.",
+   "model": "**(a) Invariants, and where they are checked.**\n\n1. The ticker is not empty. *Checked in the constructor; nothing changes it afterwards.*\n2. $|q| \\le$ the position limit, and the limit is positive. *Checked in the constructor and in `buy` and `sell` before anything changes.*\n3. A flat position ($q = 0$) has average price 0; otherwise the average is the weighted entry price of the open quantity. *Kept by `buy` and `sell`, the only functions that change $q$.*\n4. Realised P&L changes only when a trade reduces the position. *Kept by `sell` (and `buy` covering a short).*\n\n**(b) Declaration.**\n\n```cpp\nclass Position {\npublic:\n    Position(std::string ticker, long long limit);\n    void buy(long long qty, long long px_pence);\n    void sell(long long qty, long long px_pence);\n    const std::string& ticker() const;\n    long long qty() const;\n    double avg_price_pence() const;\n    long long realised_pence() const;\nprivate:\n    std::string ticker_;\n    long long limit_;\n    long long qty_ = 0;\n    double avg_ = 0.0;\n    long long realised_ = 0;\n};\n```\n\nThe data is private, so only `buy` and `sell` can change it. Readers are `const`, and `ticker()` returns a `const` reference, never a non-const one, so no caller can write through it. The constructor builds members in its initialiser list, in declaration order.\n\n**(c) Special members.** None: the rule of zero. Every member (`std::string`, integers, a `double`) copies, moves and destroys itself correctly, so the compiler's versions are right. Copies are wanted (reports take snapshots), and moves are cheap. A raw pointer or handle member would force the rule of five; there is none.\n\n**(d) Operators.** `operator<<(std::ostream&, const Position&)` for logs, returning the stream. `operator==` only if a test needs it, comparing every field. I would **not** define `operator+` on two positions. Adding AZN to VOD is meaningless, and even for one ticker it hides which trades happened. Changes go through named functions, `buy` and `sell`. Summed P&L amounts get their own `Money` or `Pnl` type, so a quantity can never be added to money.\n\n**(e) Money and errors.** Prices and P&L are whole pence in `long long`, so sums are exact. Only the average, a ratio, is a `double`, and it is never compared with `==`. A broken rule throws before any member changes, so a refused call leaves the position exactly as it was. Bad input throws `std::invalid_argument`; a breach such as exceeding the limit throws `std::logic_error`.",
    "rubric": [
     {
      "points": 2,
-     "text": "States at least three invariants (non-empty ticker, limit on |qty|, flat means average 0, or the weighted-average rule) and where each is checked"
+     "text": "States at least three invariants and where each is checked. Examples: non-empty ticker, limit on |qty|, flat means average 0, the weighted-average rule"
     },
     {
      "points": 2,

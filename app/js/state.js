@@ -41,6 +41,7 @@
     xp: 0, mp: 0,
     lessons: {}, reviews: {}, homework: {}, exams: {}, skills: {},
     redo: [], notebook: [], drills: {},
+    bank: {}, timing: { families: {} },
     warmup: { history: [] },
     hours: [],
     streak: { current: 0, best: 0, lastDay: null, restDays: 0, restEarnedAt: 0, days: {}, count: { day: null, problems: 0 } },
@@ -60,6 +61,7 @@
     if (!isObj(d.streak.days)) d.streak.days = {};
     if (!isObj(d.streak.count)) d.streak.count = { day: null, problems: 0 };
     if (!Array.isArray(d.warmup.history)) d.warmup.history = [];
+    if (!isObj(d.timing.families)) d.timing.families = {};   // old saves have neither bank nor timing
     d.v = V;
     return d;
   };
@@ -303,13 +305,59 @@
       rate(x.skills || [], !!x.ok, x.difficulty || 2);
       if (countProblem()) qualified = true;
     });
+    logTiming(results);
     changed('skills');
     return { source, items: (results || []).length, qualified };
   };
 
+  /* Seconds per item (ENGINE-BACKLOG 457): a running total per family, kept from exams, practice and the bank deck so a
+     later view can show where the learner is slow. Rows are { seconds, family, pace }; rows without both are skipped.
+     Nothing here touches grading, XP or mastery. */
+  function logTiming(rows) {
+    if (!isObj(doc.timing)) doc.timing = { families: {} };
+    if (!isObj(doc.timing.families)) doc.timing.families = {};
+    (rows || []).forEach(x => {
+      if (!x || typeof x.seconds !== 'number' || !(x.seconds >= 0) || !x.family) return;
+      const f = doc.timing.families[x.family] || (doc.timing.families[x.family] = { n: 0, seconds: 0, over: 0 });
+      f.n++; f.seconds = Math.round((f.seconds + x.seconds) * 10) / 10;
+      if (x.pace > 0 && x.seconds > x.pace) f.over++;
+    });
+  }
+
+  /* ---------- Interview bank deck (ENGINE-BACKLOG 456): each item has its own Leitner schedule ----------
+     doc.bank[uid] = { box, due, seen, miss, last, secs, at, family }, uid like "bank/<file>/<item>" or, for a tagged
+     review or homework item, its own "course/lesson/item". box is the interval in days (1, 3, 7 or 30). A new item
+     starts in box 1; a right answer moves it up one box and it returns after that many days; a miss sends it back to
+     box 1, due in 1 day. Unseen items have no entry. */
+  const BANK_BOXES = [1, 3, 7, 30];
+  const bankEntry = (uid) => doc.bank[uid] || null;
+  const bankDue = (t) => { const at = t == null ? now() : t; return Object.entries(doc.bank).filter(([, r]) => r && r.due <= at).map(([uid]) => uid); };
+  /* results: [{ uid, ok, seconds, family, pace, difficulty, skills }]. Skill scores and the streak count move as in practice. */
+  const bankResult = ({ results = [] } = {}) => {
+    let qualified = false;
+    const boxes = { 1: 0, 3: 0, 7: 0, 30: 0 };
+    const rows = (results || []).filter(x => x && x.uid);
+    rows.forEach(x => {
+      const r = doc.bank[x.uid] || (doc.bank[x.uid] = { box: 1, due: 0, seen: 0, miss: 0, last: null, secs: null, at: null, family: x.family || '' });
+      const i = Math.max(0, BANK_BOXES.indexOf(r.box));
+      r.box = x.ok ? BANK_BOXES[Math.min(BANK_BOXES.length - 1, i + 1)] : BANK_BOXES[0];
+      r.due = now() + r.box * DAY;
+      r.seen++; if (!x.ok) r.miss++;
+      r.last = !!x.ok; r.at = now(); if (typeof x.seconds === 'number') r.secs = x.seconds;
+      if (x.family) r.family = x.family;
+      boxes[r.box]++;
+      rate(x.skills || [], !!x.ok, x.difficulty || 3);
+      if (countProblem()) qualified = true;
+    });
+    logTiming(rows);
+    changed('bank');
+    return { items: rows.length, boxes, qualified };
+  };
+
   /* bySkill: { skill: [correct, total] }. results (optional): per-item { id, ok, difficulty, skills } for exact Elo updates.
      Each missed result with an id joins the redo queue as kind 'exam' with ref { exam, item } (ZQ.select.resolve reads it).
-     extra (optional): more fields kept on the attempt. A mock exam (mock-*) earns no XP and keeps every attempt. */
+     results may carry seconds, family and pace per item; they feed ZQ.state.timing and never affect marks.
+     extra (optional): more fields kept on the attempt (itemSeconds, a mock's net). A mock exam (mock-*) earns no XP and keeps every attempt. */
   const examFinished = ({ id, score = 0, passed = false, bySkill = {}, items = 0, results, seconds = 0, extra } = {}) => {
     const rec = doc.exams[id] || (doc.exams[id] = { attempts: [] });
     const passedBefore = rec.attempts.some(a => a.passed);
@@ -327,6 +375,7 @@
     rec.attempts.push({ at: now(), score, items, passed: !!passed, bySkill, ...(extra && typeof extra === 'object' ? extra : {}) }); // extra: a mock's net, wrong, blank, seed, seconds
     const redo = (Array.isArray(results) ? results : []).filter(x => x && !x.ok && (x.id != null || (x.ref && x.ref.item != null)))
       .map(x => redoAdd({ kind: 'exam', ref: x.ref && x.ref.exam ? x.ref : { exam: id, item: x.id }, skills: x.skills || [], difficulty: x.difficulty || 3 }));
+    logTiming(results);
     logSeconds('main', seconds, 'exam');
     changed('exams');
     return { xp, mp, redo };
@@ -492,12 +541,14 @@
     streak: ns('streak', { touch, rollover: () => { const r = rollover(); if (r) changed('streak'); return r; }, get: () => doc.streak }),
     redo: ns('redo', { add: redoAdd, due: redoDue, result: redoResult, list: () => doc.redo.slice() }),
     notebook: ns('notebook', { add: notebookAdd, list: () => doc.notebook.slice() }),
+    bank: ns('bank', { entry: bankEntry, due: bankDue, result: bankResult, list: () => ({ ...doc.bank }) }),
+    get timing() { return doc.timing; },
     drills: ns('drills', { verified: drillVerified, draft: drillDraft, get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
     warmup: ns('warmup', { record: warmupRecord, list: () => doc.warmup.history.slice() }),
     hours: ns('hours', { log: logHours, list: () => doc.hours.slice() }),
     lessonPosition: { set: positionSet, get: positionGet },
     lesson: (course, lesson) => doc.lessons[lessonId(course, lesson)] || null,
-    screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult,
+    screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult,
     summary, weeklySplit,
     export: exportDoc, import: importDoc, reset, flush,
     dates, rules: { XP, MASTERY, REDO_FIRST, REDO_SECOND, REST_EVERY, REST_MAX, QUALIFY_PROBLEMS, K, ELO_START, BLOCKS, TRACKS, GOALS, itemRating, mpFor },

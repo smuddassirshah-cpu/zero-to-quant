@@ -422,7 +422,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. The last passes `nullptr` and checks that nothing was written: this browser build does not crash on a null write, so the test looks at address 0 itself."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests. The last passes `nullptr` and checks that nothing was written. This browser build does not crash on a null write, so the test reads address 0 itself."
    },
    "hints": [
     {
@@ -539,7 +539,7 @@
       "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests, including all-negative prices, an empty range and a range in the middle of an array that must not read outside `begin` to `end`."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 6 hidden tests, including all-negative prices and an empty range. One range sits mid-array, and nothing outside `begin` to `end` may be read."
    },
    "hints": [
     {
@@ -682,7 +682,7 @@
    "type": "problem",
    "difficulty": 2,
    "title": "What a desk build says",
-   "prose": "The same code saved as `scope.cpp` and built on Linux with g++ and AddressSanitizer, a checker that watches every memory access. The report is trimmed. Line 8 of `scope.cpp` is the `std::cout`.",
+   "prose": "The same code saved as `scope.cpp` and built on Linux with g++ and AddressSanitizer, which watches every memory access. The report is trimmed. Line 8 of `scope.cpp` is the `std::cout`.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -692,10 +692,10 @@
       "ERROR: AddressSanitizer: stack-use-after-scope",
       "READ of size 8 at 0x7fa34dd00020 thread T0",
       "    #0 0x5601e14ba363 in main scope.cpp:8",
-      "Address 0x7fa34dd00020 is in the stack of T0",
+      "Address 0x7fa34dd00020 is located in stack of thread T0 at offset 32 in frame",
       "  This frame has 1 object(s):",
-      "    [32, 40) 'bid' (line 5) <== access is inside it",
-      "SUMMARY: stack-use-after-scope scope.cpp:8 in main"
+      "    [32, 40) 'bid' (line 5) <== Memory access at offset 32 is inside this variable",
+      "SUMMARY: AddressSanitizer: stack-use-after-scope scope.cpp:8 in main"
      ],
      "title": "Terminal"
     },
@@ -843,7 +843,7 @@
     "generic": "Not quite right. You need an address before you can move it, and you move it before you read."
    },
    "explain": {
-    "text": "`p` starts at 0x1008. Moving 2 elements adds 16 bytes, giving 0x1018, which is `px[3]`'s address. Only then does `*` read the value, 102.00. So `*(p + 2)` is `p[2]`."
+    "text": "`p` starts at 0x1008. Moving 2 elements adds 16 bytes, giving 0x1018, which is `px[3]`'s address. Only then does `*` read the value, 102.00, so `*(p + 2)` is `p[2]`."
    }
   },
   {
@@ -909,7 +909,7 @@
   "ideas": [
    "`&x` is `x`'s address; a pointer `T* p` holds one, and `*p` reaches the object there. `p + k` moves `k` whole elements, `k * sizeof(T)` bytes.",
    "`nullptr` points at nothing. Reading through it, or through a pointer to an object that has ended, is undefined behaviour.",
-   "This browser build is forgiving: null reads and dangling reads often print stale numbers. A desk build crashes, and `-fsanitize=address` names the line."
+   "This browser build is forgiving: null reads and dangling reads often print stale numbers. A desk build crashes on a null read. A dangling read may print a stale number there too; `-fsanitize=address` names the line."
   ],
   "formula": {
    "name": "Pointer arithmetic",

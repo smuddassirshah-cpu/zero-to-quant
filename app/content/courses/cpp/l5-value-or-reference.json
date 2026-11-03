@@ -183,7 +183,7 @@
     "byKey": {
      "mine": "`mine` is the box the vector was built in, and the `push_back` through `alias` grew it.",
      "alias": "`alias` was declared with `&`, so it names the box `mine` already names. No new vector is made.",
-     "copy": "`copy` has no `&`, so it is a new box, filled with a copy of `mine`'s two prices before the push."
+     "copy": "`copy` has no `&`, so it is a new box, filled with `mine`'s two prices before the push."
     }
    },
    "explain": {
@@ -678,7 +678,7 @@
       "compare": "isclose"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests, including an empty book, a short position and a million-stock book. A hidden check after your code also tests the signature itself."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 5 hidden tests, including an empty book, a short position and a million-stock book. A hidden check after your code also tests the signature itself."
    },
    "hints": [
     {
@@ -904,7 +904,7 @@
       "compare": "equal"
      }
     ],
-    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Each builds a vector `w`, calls `normalise(w)`, then looks at `w` in the caller."
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs 6 hidden tests. Each builds a vector `w`, calls `normalise(w)`, then looks at `w` in the caller."
    },
    "hints": [
     {
@@ -932,7 +932,7 @@
    "type": "generalise",
    "difficulty": 2,
    "title": "Three ways to pass",
-   "prose": "Each parameter type says what the function will do with your object.\n\n```cpp\nvoid f(std::vector<double> v);         // its own copy\nvoid f(const std::vector<double>& v);  // shared, read only\nvoid f(std::vector<double>& v);        // shared, may change it\nstd::vector<double> g();               // returned, not copied\n```\n\nReturning a local by value is cheap: the compiler builds it straight into the caller's variable. This is **copy elision**.",
+   "prose": "Each parameter type says what the function will do with your object.\n\n```cpp\nvoid f(std::vector<double> v);         // its own copy\nvoid f(const std::vector<double>& v);  // shared, read only\nvoid f(std::vector<double>& v);        // shared, may change it\nstd::vector<double> g();               // returned, not copied\n```\n\nReturning a local by value is cheap. The compiler usually builds it in the caller's variable, and otherwise moves it. Either way no element is copied. Building it in place is **copy elision**.",
    "question": "A function reads 1,000,000 prices and returns their mean. Which parameter fits?",
    "widget": {
     "kind": "choice",
@@ -1040,7 +1040,7 @@
      {
       "id": "copies",
       "text": "`void revalue(OrderBook book, std::vector<Position> pos)`",
-      "why": "That copies the whole book 1,000 times a second, and every P&L update lands in a copy the caller never sees."
+      "why": "That copies the whole book 1,000 times a second. Every P&L update lands in a copy the caller never sees."
      },
      {
       "id": "swapped",
@@ -1091,7 +1091,7 @@
   "formula": {
    "name": "Choosing a parameter",
    "tex": "\\texttt{T} \\to \\text{copy}, \\qquad \\texttt{const T\\&} \\to \\text{read}, \\qquad \\texttt{T\\&} \\to \\text{change}",
-   "note": "Small types such as `int` and `double` go by value; vectors and strings go by `const&` unless the function must change them."
+   "note": "Small types such as `int` and `double` go by value. Vectors and strings go by `const&` unless the function must change them."
   },
   "trap": "Forgetting `&` compiles cleanly: the function changes its own copy and the caller sees nothing."
  },
@@ -1176,18 +1176,18 @@
     "options": [
      {
       "id": "none",
-      "text": "None: the vector is built in `px` itself",
+      "text": "None: the vector is built in `px` itself, or moved there",
       "correct": true
      },
      {
       "id": "once",
       "text": "Once, from `v` into `px`",
-      "why": "That was the worry before copy elision. The compiler builds `v` directly in `px`, so returning by value is free."
+      "why": "That was the worry before copy elision. The compiler builds `v` in `px`, or else moves it, so no price is copied."
      },
      {
       "id": "twice",
       "text": "Twice, into a temporary and then into `px`",
-      "why": "The compiler removes both copies. Returning a local vector by value does not copy its elements."
+      "why": "The compiler removes both copies. A returned local vector is built in place or moved, never copied element by element."
      }
     ]
    },
@@ -1196,7 +1196,7 @@
     "generic": "Not quite right. What does copy elision do with a returned local?"
    },
    "explain": {
-    "text": "The compiler builds `v` in the caller's `px` from the start, so nothing is copied. That is why functions return vectors by value rather than through a reference parameter."
+    "text": "The compiler usually builds `v` in the caller's `px` from the start; when it does not, it moves `v`. Either way no price is copied. That is why functions return vectors by value rather than through a reference parameter."
    }
   },
   {
