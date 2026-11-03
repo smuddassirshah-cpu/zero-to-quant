@@ -148,7 +148,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests, including an empty string and an empty word list. Test 8 has 40 letters that can be split in billions of ways before a final `b` that cannot: without memoisation it runs out of time."
+        "how": "Check runs 9 hidden tests, including an empty string and an empty word list. Test 8 has 40 letters that can be split in billions of ways before a final `b` that cannot. Without memoisation it runs out of time."
       },
       "feedback": {
         "correct": "Each start position is decided once.",
@@ -267,7 +267,7 @@
         "gd-backtrack",
         "gd-dp"
       ],
-      "prose": "Subset sum on 20 positive whole numbers with target 100 can be memoised: whether the rest can finish depends only on `(i, total)`, where `i` runs from 0 to 20 and the running total stays between 0 and 100 after pruning.",
+      "prose": "Subset sum on 20 positive whole numbers with target 100 can be memoised. Whether the rest can finish depends only on `(i, total)`. Here `i` runs from 0 to 20, and the running total stays between 0 and 100 after pruning.",
       "question": "At most how many distinct `(i, total)` states are there?",
       "widget": {
         "kind": "numeric",
@@ -321,7 +321,7 @@
       "skills": [
         "gd-dp"
       ],
-      "prose": "A binomial tree moves a price up or down by the same factor each day, so the order of moves does not matter for the final price.",
+      "prose": "A binomial tree moves a price up or down by the same factor each day. So the order of moves does not matter for the final price.",
       "question": "After 10 days, how many paths end back at the starting price?",
       "widget": {
         "kind": "numeric",
@@ -420,7 +420,7 @@
       ],
       "title": "Speeding up a netting search",
       "kind": "longform",
-      "prompt": "A colleague's script looks for a basket of **at most 6** trades, out of 25 candidates, whose exposures net to **exactly zero**. Each exposure is a whole number of £m between −10 and +10, and some are negative. The script builds every subset with `itertools.combinations` for every size from 0 to 25, then filters. It never finishes.\n\n(a) How many subsets does the script build? How many have at most 6 trades?\n(b) Propose a backtracking search. Say which prunes are safe here and which are not, and why.\n(c) Show how to memoise it: what is the state, how many states are there at most, and what must be true of the function for the cache to be correct?\n(d) Say what you would test, including edge cases.",
+      "prompt": "A colleague's script looks for a basket of **at most 6** trades, out of 25 candidates, whose exposures net to **exactly zero**. Each exposure is a whole number of £m between −10 and +10, and some are negative. The script builds every subset with `itertools.combinations` for every size from 0 to 25, then filters. It never finishes.\n\n(a) How many subsets does the script build? How many have at most 6 trades?\n(b) Propose a backtracking search. Say which prunes are safe here and which are not, and why.\n(c) Show how to memoise it. What is the state, and how many states are there at most? What must be true of the function for the cache to be correct?\n(d) Say what you would test, including edge cases.",
       "model": "**(a) The size of the brute force.** All subsets of 25 trades: $2^{25} = 33{,}554{,}432$. Those of size at most 6: $\\sum_{k=0}^{6} \\binom{25}{k} = 1 + 25 + 300 + 2{,}300 + 12{,}650 + 53{,}130 + 177{,}100 = 245{,}506$. So most of the script's work is on baskets that break the size rule before it even checks the net.\n\n**(b) Backtracking with safe prunes.** Walk the trades in order with take or skip, carrying `(i, count, net)`:\n\n```python\ndef walk(i, count, net):\n    if count > 0 and net == 0:\n        return True\n    if i == len(xs) or count == 6:\n        return False\n    return walk(i + 1, count + 1, net + xs[i]) or walk(i + 1, count, net)\n```\n\n- *Safe:* stop taking once `count == 6`. The count only grows along a branch, so a basket with too many trades never recovers.\n- *Unsafe:* stop once `net` passes 0 (or any bound). Exposures can be negative, so a later short can bring the net back: $+5$, then $+2$, then $-3$ and $-4$ nets to 0.\n- *Safe bound instead:* with $k = 6 - \\text{count}$ trades left, the net can move by at most $10k$. If $|\\text{net}| > 10k$, prune: no choice of the remaining trades can bring it back to 0.\n- Undo nothing by hand: passing `count` and `net` as arguments means each branch has its own copies, so state is restored automatically.\n\n**(c) Memoisation.** Whether the rest of the walk can succeed depends only on `(i, count, net)`: which trades remain, how many may still be taken, and the net so far. `i` takes 26 values (0 to 25), `count` 7 (0 to 6), and `net` lies in $[-60, 60]$, 121 values. So at most $26 \\times 7 \\times 121 = 22{,}022$ states, each $O(1)$ work, against 245,506 baskets. Wrap `walk` in `@lru_cache` with the exposures held fixed (a tuple, or a closure over a list that never changes). For the cache to be correct the function must be pure: its answer must depend only on its arguments. If the exposures list were edited between calls, or a limit read from a global, the cache would serve stale answers. The arguments must be hashable: integers here.\n\n**(d) Tests.** A basket that only exists with a negative trade (to catch the unsafe prune); no basket at all (every exposure positive); the empty candidate list (False, since an empty basket does not count); a single zero-exposure trade (True); a basket of exactly 6 that works and one of 7 that would (the size rule); and a 25-trade case that must finish within a second, to show the memo works.",
       "rubric": [
         {
