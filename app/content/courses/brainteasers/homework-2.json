@@ -1,0 +1,498 @@
+{
+ "id": "homework-2",
+ "course": "brainteasers",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "hw1-hundred-coins-proof",
+   "difficulty": 4,
+   "skills": [
+    "bz-strategy"
+   ],
+   "tags": [
+    "pirates"
+   ],
+   "pace": 180,
+   "prose": "Four pirates, A to D from the most senior, share 100 coins under the starting rules of this level. Build the split from the smallest crew up.",
+   "question": "Order the argument; two lines do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "With 2 aboard, C keeps all 100, since his own vote is half; D gets 0."
+     },
+     {
+      "id": "s2",
+      "text": "With 3 aboard, B needs one more vote. D gets 0 if B fails, so 1 coin buys D: (99, 0, 1)."
+     },
+     {
+      "id": "s3",
+      "text": "With 4 aboard, A needs one more vote. C gets 0 under B, so 1 coin buys C."
+     },
+     {
+      "id": "s4",
+      "text": "So A proposes (99, 0, 1, 0), which passes with the votes of A and C."
+     },
+     {
+      "id": "d1",
+      "text": "With 3 aboard, B must pay C, since C proposes next.",
+      "why": "C keeps 100 if B fails, so his vote would cost 101. B buys D for 1."
+     },
+     {
+      "id": "d2",
+      "text": "With 4 aboard, A buys D for 1 coin, since D got 1 under B.",
+      "why": "D gets 1 under B, so 1 coin does not beat it. His price is 2; C's is 1."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "2 aboard, 3 aboard, 4 aboard, then the split.",
+    "generic": "Not quite right. Each case needs the one before it.",
+    "byKey": {
+     "d1": "C would keep 100 under his own proposal, so he is the dearest vote.",
+     "d2": "D's price is 2, since he gets 1 under B.",
+     "left-out": "Every case from 2 aboard up belongs."
+    }
+   },
+   "explain": {
+    "text": "Each line uses the one before: C keeps 100 with 2 aboard, so B buys D, so A buys C. The split is (99, 0, 1, 0). Principle: the smallest case decides every larger one."
+   }
+  },
+  {
+   "id": "hw2-min-drops",
+   "difficulty": 5,
+   "skills": [
+    "bz-search"
+   ],
+   "tags": [
+    "egg-drop-dp"
+   ],
+   "pace": 180,
+   "prose": "Write `min_drops(eggs, floors)`: the fewest drops that always find the highest safe floor, possibly none, possibly the top. Use $f(d, e) = \\sum_{i=1}^{e} \\binom{d}{i}$, the most floors $d$ drops and $e$ eggs settle. The 1,000-floor tests need this, not a search over every first floor.",
+   "question": "Write `min_drops(eggs, floors)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def min_drops(eggs, floors):\n    # Halve the floors each time.\n    d = 0\n    while floors > 0:\n        floors //= 2\n        d += 1\n    return d\n",
+    "solution": "from math import comb\n\ndef min_drops(eggs, floors):\n    d = 0\n    # floors that d drops and `eggs` eggs can settle\n    while sum(comb(d, i) for i in range(1, eggs + 1)) < floors:\n        d += 1\n    return d\n",
+    "examples": [
+     {
+      "call": "min_drops(2, 10)",
+      "expect": "4",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(1, 10)",
+      "expect": "10",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "min_drops(1, 10)",
+      "expect": "10",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(2, 0)",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(2, 1)",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(2, 36)",
+      "expect": "8",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(2, 100)",
+      "expect": "14",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(3, 100)",
+      "expect": "9",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(2, 1000)",
+      "expect": "45",
+      "compare": "equal"
+     },
+     {
+      "call": "min_drops(3, 1000)",
+      "expect": "19",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 8 hidden tests. They cover one egg, no floors, one floor, and 36, 100 and 1,000 floors."
+   },
+   "feedback": {
+    "correct": "Count floors from drops, and stop at the first $d$ that reaches the building.",
+    "generic": "Not quite right. Check the first failing test; binary search fails as soon as one egg is left."
+   },
+   "explain": {
+    "text": "Grow $d$ until $f(d, e) = \\sum_{i=1}^{e} \\binom{d}{i}$ reaches the floors. This turns a minimax search into a count. A full search agrees on every test up to 100 floors."
+   }
+  },
+  {
+   "id": "hw3-five-hats",
+   "difficulty": 4,
+   "skills": [
+    "bz-strategy",
+    "bz-invariant"
+   ],
+   "tags": [
+    "hats-simultaneous"
+   ],
+   "pace": 180,
+   "prose": "Five people wear hats numbered 0 to 4, each seeing the other four, and all guess at once. Person $i$ assumes the total is $i$ modulo 5 and guesses to match. Person 3 sees 1, 4, 0 and 2.",
+   "question": "What does person 3 guess?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "label": "Guess",
+    "accept": "1",
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "seven",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1.",
+    "generic": "Not quite right. He needs $7 + g \\equiv 3 \\pmod 5$.",
+    "byKey": {
+     "three": "He guesses from the code, not his own number.",
+     "seven": "7 is what he sees.",
+     "four": "$7 + 4 = 11$ leaves 1 modulo 5, not 3."
+    }
+   },
+   "explain": {
+    "text": "He sees $1 + 4 + 0 + 2 = 7$ and wants a total of 3 modulo 5. So $g \\equiv 3 - 7 = -4 \\equiv 1$. He guesses 1, and he is right only if the true total leaves 3."
+   }
+  },
+  {
+   "id": "hw4-one-over-k",
+   "difficulty": 4,
+   "skills": [
+    "bz-strategy"
+   ],
+   "tags": [
+    "cycle-following"
+   ],
+   "pace": 180,
+   "prose": "Prisoners and boxes, $n$ of each, each prisoner opening $n/2$ boxes by following the numbers. Prove the chance of success.",
+   "question": "Order the proof; two lines do not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "The team fails exactly when some cycle is longer than $n/2$."
+     },
+     {
+      "id": "s2",
+      "text": "Two such cycles would need more than $n$ boxes, so at most one exists."
+     },
+     {
+      "id": "s3",
+      "text": "For $k > n/2$, the orders with a $k$-cycle number $\\binom{n}{k}(k-1)!\\,(n-k)! = n!/k$."
+     },
+     {
+      "id": "s4",
+      "text": "So a $k$-cycle has chance $1/k$, and the events for different $k$ are disjoint."
+     },
+     {
+      "id": "s5",
+      "text": "Hence $P(\\text{win}) = 1 - \\sum_{k > n/2} 1/k$."
+     },
+     {
+      "id": "d1",
+      "text": "Each prisoner succeeds with chance $1/2$ on his own, so the team wins with chance $2^{-n}$.",
+      "why": "Under cycle-following the prisoners' successes are linked, not independent."
+     },
+     {
+      "id": "d2",
+      "text": "The orders with a $k$-cycle number $\\binom{n}{k}\\,k!\\,(n-k)!$.",
+      "why": "A cycle has no first box: its $k$ rotations are the same cycle, so $(k - 1)!$."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Fail event, uniqueness, count, chance, sum.",
+    "generic": "Not quite right. Name the failure event before counting it.",
+    "byKey": {
+     "d1": "Independence fails: one long cycle sinks everyone in it at once.",
+     "d2": "Rotations of a cycle are one cycle, so join $k$ boxes in $(k - 1)!$ ways.",
+     "left-out": "Every line except the two flawed ones belongs."
+    }
+   },
+   "explain": {
+    "text": "Failure is one long cycle, and it is unique, so the chances for each length add. Counting gives $n!/k$ orders, chance $1/k$. So success is $1 - \\sum_{k > n/2} 1/k$."
+   }
+  },
+  {
+   "id": "hw5-three-hundred",
+   "difficulty": 3,
+   "skills": [
+    "bz-search"
+   ],
+   "tags": [
+    "egg-drop"
+   ],
+   "pace": 180,
+   "prose": "Two eggs and 300 floors, under this level's rules.",
+   "question": "What is the fewest drops that always works?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 24,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "label": "Drops",
+    "accept": "24",
+    "wrong": [
+     {
+      "id": "twentythree",
+      "value": 23,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "nine",
+      "value": 9,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "seventeen",
+      "value": 17,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "24.",
+    "generic": "Not quite right. Find the smallest $d$ with $d(d+1)/2 \\ge 300$.",
+    "byKey": {
+     "twentythree": "$23 \\cdot 24/2 = 276$, short of 300.",
+     "nine": "That is binary search.",
+     "seventeen": "$\\sqrt{300} \\approx 17$ is the every-$k$-floors idea, which wastes drops."
+    }
+   },
+   "explain": {
+    "text": "$24 \\cdot 25/2 = 300$ exactly, and $23 \\cdot 24/2 = 276$ falls short. So 24 drops, with no slack: the first must be from floor 24. A full search agrees."
+   }
+  },
+  {
+   "id": "hw6-merciful-five",
+   "difficulty": 3,
+   "skills": [
+    "bz-strategy"
+   ],
+   "tags": [
+    "pirates"
+   ],
+   "pace": 180,
+   "prose": "Five merciful pirates share 60 coins: offered what he would get anyway, a pirate votes yes. Otherwise the starting rules hold.",
+   "question": "What does the proposer offer?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "all",
+      "text": "(60, 0, 0, 0, 0)",
+      "correct": true
+     },
+     {
+      "id": "blood",
+      "text": "(58, 0, 1, 0, 1)",
+      "why": "That is the bloodthirsty split, where a vote costs one coin more than the next game."
+     },
+     {
+      "id": "two",
+      "text": "(58, 1, 1, 0, 0)",
+      "why": "Pirates who get 0 next accept 0 when merciful, so no coin is needed."
+     },
+     {
+      "id": "eq",
+      "text": "(12, 12, 12, 12, 12)",
+      "why": "An equal split ignores what each pirate gets next."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "(60, 0, 0, 0, 0).",
+    "generic": "Not quite right. With mercy, a vote costs exactly what its owner gets next.",
+    "byKey": {
+     "blood": "Mercy removes the extra coin. Two pirates who get 0 next accept 0.",
+     "two": "Buy the pirates who get 0 next, at 0 each.",
+     "eq": "Fairness is not the rule; the next game is."
+    }
+   },
+   "explain": {
+    "text": "With mercy, a pirate who gets 0 next accepts 0. In every crew someone gets 0 next, enough for the votes needed, so the proposer keeps all 60. The split is (60, 0, 0, 0, 0)."
+   }
+  },
+  {
+   "id": "hw7-five-walkers",
+   "difficulty": 4,
+   "skills": [
+    "bz-search"
+   ],
+   "tags": [
+    "bridge-crossing"
+   ],
+   "pace": 180,
+   "prose": "Five people cross a bridge for two with one torch. They take 1, 2, 5, 8 and 10 minutes.",
+   "question": "What is the fewest minutes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 23,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "label": "Minutes",
+    "accept": "23",
+    "wrong": [
+     {
+      "id": "escort",
+      "value": 28,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "twentyfour",
+      "value": 24,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "seventeen",
+      "value": 17,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "23.",
+    "generic": "Not quite right. Move 8 and 10 by the cheaper pattern, then solve 1, 2 and 5.",
+    "byKey": {
+     "escort": "Escorting all four costs $2 + 5 + 8 + 10 + 3 = 28$.",
+     "twentyfour": "Close. Shuttling 8 and 10 costs 15, then 1, 2 and 5 cost 8.",
+     "seventeen": "That is the four-person answer for 1, 2, 5 and 10."
+    }
+   },
+   "explain": {
+    "text": "Shuttle 8 and 10: $2 + 1 + 10 + 2 = 15$, leaving 1, 2 and 5 at the start. They take $2 + 1 + 5 = 8$. A search over every plan confirms $15 + 8 = 23$."
+   }
+  },
+  {
+   "id": "hw8-say-seventeen",
+   "difficulty": 5,
+   "skills": [
+    "bz-search"
+   ],
+   "tags": [
+    "bridge-crossing"
+   ],
+   "pace": 180,
+   "question": "Say the answer aloud, timing yourself, then open the model and tick the rubric.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Four people take 1, 3, 6 and 8 minutes to cross a bridge for two, at night, with one torch. Say aloud why they cannot all cross in 17 minutes, in under three minutes. Then write the key lines: the trip count, the two cases and the matching plan.",
+    "model": "**Count the trips.** Four people, a bridge for two, and the torch must come back. Each return brings one person back, so we need at least three trips over and two back. With exactly that many, each trip over carries two people. A search confirms that longer plans are slower.\n\n**Case 1: 6 and 8 cross apart.** Their two trips over cost at least $8 + 6 = 14$. The third trip over costs at least 3, since 1 and 3 must cross too. Each return costs at least 1. Total at least $14 + 3 + 1 + 1 = 19$.\n\n**Case 2: 6 and 8 cross together.** That trip costs 8. It cannot be first, or a slow walker returns the torch. It cannot be last, or someone crosses alone. So it is the middle trip over. The other two trips over are both 1 and 3, costing 3 each. The returns are made by 1 and by 3, costing $1 + 3 = 4$. Total at least $8 + 3 + 3 + 4 = 18$.\n\n**Both cases exceed 17.** So 17 is impossible.\n\n**The matching plan.** 1 and 3 cross (3) and 1 returns (1). Then 6 and 8 cross (8), 3 returns (3), and 1 and 3 cross (3): 18.\n\n**Said aloud.** \"Three trips over, two back, each over carries two. If 6 and 8 go apart, that is 14 plus 3 plus two returns: 19. If together, 8 plus two trips of 1 and 3 at 3 each, plus returns of 1 and 3: 18. So 17 cannot happen, and 18 is achieved.\"",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Counts three trips over and two back, so each trip over carries two"
+     },
+     {
+      "points": 3,
+      "text": "Case 6 and 8 apart: at least $8 + 6 + 3 + 1 + 1 = 19$"
+     },
+     {
+      "points": 3,
+      "text": "Case 6 and 8 together: the other trips over cost 3 each and the returns $1 + 3$, so at least 18"
+     },
+     {
+      "points": 1,
+      "text": "Gives the 18-minute plan that meets the bound"
+     },
+     {
+      "points": 1,
+      "text": "Says it clearly in order: trips, the two cases, the plan"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and tick the rubric.",
+    "generic": "Open the model answer and mark each rubric line."
+   },
+   "explain": {
+    "text": "The interviewer wants the trip count first, then a case split on the two slowest. Ending with the 18-minute plan shows the bound is tight."
+   }
+  }
+ ]
+}
