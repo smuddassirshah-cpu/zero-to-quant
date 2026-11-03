@@ -1,4 +1,4 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored").
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored")
 
 Task: PLAN.md 2a order item 4 (topic 3.3), first part, plus fix pass 1.9 left from task 5.
 
