@@ -1,0 +1,124 @@
+# Topic 1.8 (Data structures and algorithms): second-reader findings
+
+Scope: every lesson, review and homework file in `app/content/courses/algo-think/` (l1 to l14, review-1 to review-3, homework-1 to homework-3), `app/content/courses/ds/` (l1 to l18, review-1 to review-4, homework-1 to homework-4) and `app/content/courses/graphs-dp/` (l1 to l17, review-1 to review-4, homework-1 to homework-4), and `app/content/exams/topic-1.8.json`.
+
+Method. Every keyed number and choice was recomputed by hand or in Python: loop and pair counts, copy totals for doubling, tripling and fixed growth, recurrences (tree method and closed forms, including $T(4096)/T(1024) = 9.06$ for $3T(n/2) + n$), fast-power multiplication counts (12 for 252, 16 for 2,520, 41 for $10^9$), Black-Scholes bisection (0.2411), every BFS, DFS, Kahn, Dijkstra, Bellman-Ford and union-find trace, every heap sift, every knapsack, LCS, edit-distance and grid table, the dice and dealer stopping values (4.25, 4.6667, 4.9444, 99.6375, 99.7630), the secretary value 0.3987, the arbitrage loops (1.004824, $-264.03$, £1,195.55), FIFO and LIFO lot costs, and every exam item. Distractor values were re-derived from their `why`.
+Code: each of the 133 Python code widgets (129 in the courses, 4 in the exam) was extracted and run in CPython against its hidden tests with a harness that mirrors `app/js/engine/widgets/code.js` (setup, prelude, postlude, `isclose`/`equal`/`raises`, the 5 s per-case limit plus `budget`). Every solution passes and every starter fails at least one test. Where a screen claims a complexity or space bound, a naive version was written and run (39 of them: pair loops, list scans, re-slicing windows, unmemoised recursion, unpruned search, `sorted()` shortcuts, sets of seen nodes, sweep relaxation). 28 are caught by a test. Ten are not, listed below; the eleventh, a `bisect.insort` running median for ds homework-4 items[2], is a fair answer there. Harness and naive files: the scratchpad folder `/tmp/claude-0/-home-user-zero-to-quant/f2cb57c1-0333-5a7c-8b45-5ff551a039e9/scratchpad/read-1.8` (`tools/runcode.py`, `naive/`, results in `code-results.txt`). Every proposed extra test below was run there too: the solution passes it and the naive version fails.
+Playthrough with `--local-cdn`: all 49 lessons, all 22 reviews and homework sets and the exam pass. Desktop screenshots of every lesson screen were checked as contact sheets; `--mobile` (390 px) on algo-think l2, ds l7 and l18, graphs-dp l9, l14 and l16.
+Style: a script scanned every string for exclamation marks, dashes, American spellings, money symbols, sentences over 20 words (a code or maths span counts as one word) and explanations over three sentences (`style.py` and `style.txt` in the same scratchpad folder).
+Format: `path | screen/item | severity | what is wrong | fix`. Severity: error = wrong number, false claim or wrong grading; warning = weak explanation, overstated claim, grading that accepts a wrong method or rejects a defensible answer, or a binding-rule breach; note = style. Screen, item and quiz numbers are zero-based.
+
+All other stated numbers check. No exclamation marks (the one hit is $n!$ in a formula), no em-dashes, no American spellings outside the engine's `align: "center"` parameter, £ throughout (dollars appear only as currency names in FX screens). The exam has 28 items at 6/14/5/3 by difficulty 2/3/4/5 (the 8.4 ramp) and covers all 16 skills.
+
+## Grading and keyed answers
+
+- app/content/courses/ds/homework-3.json | items[2] (FIFO cost basis) | error | The plain average of the three lot prices times 350, $(50 + 52 + 49.5)/3 \times 350$, is exactly £17,675, the key. A learner who averages the prices, the method the `avg` byKey calls wrong, is marked right. The two wrong values do not match their byKeys either: true LIFO (300 at £49.50 plus 50 at £52) is £17,450, not 17,325, and the weighted average cost is £17,529.17, not 17,558.33. | Change the third lot to £49.00: prose "then 300 at £49.00"; `answer` 17650; `accept` "£17,650: $200 \times 50 + 100 \times 52 + 50 \times 49$"; `wrong` lifo 17300, avg 17441.67 (tol abs 1); explain "£10,000 for the first lot, £5,200 for the second, and $50 \times 49 = $ £2,450 from the third: £17,650. The queue keeps 250 shares at £49.00." The plain average is then £17,616.67, which no longer matches. Recomputed: FIFO 17,650, LIFO 17,300, weighted 17,441.67.
+- app/content/courses/ds/homework-1.json | items[6] (10,000 cancels by `list.remove`) | warning | The key 250,000,000 assumes the list stays at 50,000 ids, but nothing says so: with no new orders it shrinks to 40,000 and the expected comparisons are 225,007,500, which `tol: { rel: 0.05 }` rejects. | Prose: add "New orders arrive as fast as old ones are cancelled, so the list stays at about 50,000 ids." Keep the key.
+- app/content/courses/algo-think/homework-3.json | items[1] option `b` why | warning | "each coin is at least double the one below" reads as a rule that makes greedy safe. It is not: 1, 4, 9 has each coin at least double the one below, and greedy pays 12 as 9 + 1 + 1 + 1 against 4 + 4 + 4. | "Greedy is optimal for this system, as it is for UK coins. Try 6, 8 or 9: it is never beaten."
+- app/content/courses/ds/l15-search-trees.json | quiz[3] option `c` why | note | "A dict ... keeps no order" is false in Python 3.7 on: dicts keep insertion order. | "A dict finds an exact price in $O(1)$ but does not keep keys sorted, so it cannot answer a range."
+
+## Tests that do not catch the solution the screen rules out
+
+Each line: a naive version that passes every hidden test, and an added test that the solution passes and the naive version fails (checked in CPython).
+
+- app/content/courses/algo-think/review-3.json | items[6] `count_between` | warning | Asks for $O(\log n)$ per call, but `sum(1 for c in closes if low <= c <= high)` passes all 8 tests: the largest list has 8 closes. | Add the `Looks` class from `l9-halving.json` screens[3] to the prelude and a test `{ "setup": "big = Looks(range(0, 2000000, 2)); r = count_between(big, 1000, 2000)", "call": "(r, big.looks <= 100)", "expect": "(501, True)", "compare": "equal" }`; add it to `how` ("and a million closes with your reads counted").
+- app/content/courses/ds/homework-3.json | items[0] `MinStack` | warning | Asks for $O(1)$ `get_min` "not by scanning", but `return min(self.xs)` passes: test 6 calls `get_min` once. | Add `{ "setup": "s6 = MinStack()\nfor v in range(200000, -1, -1): s6.push(v)", "call": "sum(s6.get_min() for _ in range(20000))", "expect": "0", "compare": "equal" }`; `how`: "Test 7 calls `get_min` 20,000 times on that stack."
+- app/content/courses/ds/homework-3.json | items[4] `LRUCache` | warning | Asks for $O(1)$ operations, but a list of keys with `remove` and `pop(0)` passes in 0.06 s: test 7's cache holds only 1,000 keys. | Add `{ "call": "run(50000, [['put', i, i] for i in range(100000)] + [['get', i] for i in range(99999, 49999, -1)]) == list(range(99999, 49999, -1))", "expect": "True", "compare": "equal" }`.
+- app/content/courses/ds/homework-3.json | items[5] `cycle_start` | warning | Asks for $O(1)$ extra space, but a set of seen node ids passes. | Add `peak_bytes` from `algo-think/l3-memory.json` screens[3] to the prelude and `{ "setup": "h = make_cycle(list(range(100000)), 77777)", "call": "peak_bytes(lambda: cycle_start(h)) < 50_000", "expect": "True", "compare": "equal" }`; `how`: "Test 10 checks your peak memory on 100,000 nodes."
+- app/content/courses/ds/l13-fast-and-slow.json | screens[9] `has_loop` | warning | The question says "using $O(1)$ extra space" and the prose "without storing it", yet a set of seen rules passes. | Same `peak_bytes` prelude; `{ "setup": "fb = {**{i: i + 1 for i in range(100000)}, 100000: 50000}", "call": "peak_bytes(lambda: has_loop(fb, 0)) < 50_000", "expect": "True", "compare": "equal" }`.
+- app/content/courses/ds/l13-fast-and-slow.json | screens[7] `has_cycle`, `middle` | note | The prose says honestly that a set would pass, which undercuts the screen's point. | Optional: the same `peak_bytes` test on `has_cycle(make_cycle(list(range(100000)), 50000))`, and drop "A set of seen nodes would pass the tests" from the prose.
+- app/content/courses/ds/homework-4.json | items[1] `merge_k` | warning | The question says "using `heapq`" and the how "re-sorting everything ignores that each list is already sorted", but `sorted(x for l in lists for x in l)` passes all 8 tests in 0.02 s. | Add a postlude flag and test as `algo-think/homework-3.json` items[5] does: `{ "call": "'sorted(' not in __learner_source__ and '.sort(' not in __learner_source__", "expect": "True", "compare": "equal" }` (the solution uses neither); `how`: "and a check that you did not call `sorted` or `.sort`".
+- app/content/courses/ds/l17-always-the-smallest.json | screens[9] `top_k` | warning | Asks for a heap of at most $k$ items, but `sorted(xs, reverse=True)[:k]` passes, iterator test included. | Add `peak_bytes` to the prelude and `{ "call": "peak_bytes(lambda: top_k(iter(range(200000)), 3)) < 50_000", "expect": "True", "compare": "equal" }`; `how`: "and a 200,000-value stream whose peak memory must stay small".
+- app/content/courses/algo-think/l13-quicksort.json | screens[8] `quickselect` | note | A hand-written merge sort followed by `[k]` passes (0.3 s), since only `sorted` and `.sort` are banned. The lesson's point, $O(n)$ against $O(n \log n)$, is untested. | Either accept it and say in `how` "a hand-written full sort also passes, but costs $O(n \log n)$", or count comparisons with an `int` subclass in the prelude and require fewer than $10^6$ on the 100,001-value test (check the solution's count first).
+- app/content/courses/algo-think/homework-3.json | items[6] `kth_largest` | note | Removing the maximum $k - 1$ times, $O(nk)$, passes in 1.8 s in CPython (likely 3 to 5 s in Pyodide), against the claimed $O(n)$ average. | Make test 9 ask for the 20,000th largest (`kth_largest(sizes, 20000)`; recompute the expected value from `sorted(sizes)[-20000]`), which pushes $O(nk)$ far past the limit.
+
+All other complexity claims are enforced: pair loops time out (algo-think hw1, hw2, l12; ds l3, l5, l8, hw1, hw2, review-1), list scans time out (ds l2, l4), window re-slicing times out (ds l6, l11), quadratic next-greater and span scans time out (ds l10, hw3), unmemoised and unpruned searches time out or hit the recursion limit (graphs-dp l11, l12, l13, hw3, hw4), and in the exam a right-and-down DP fails `cheapest_route` tests 5 to 8 while a sweep-until-stable version times out on the snake grid.
+
+## Explanations
+
+- app/content/courses/algo-think/l13-quicksort.json | screens[0] explain | warning | "The two sides need not be sorted yet: only on the right side of 5." does not parse as a sentence and does not say what it means. | "Three values belong left, so the pivot ends at index 3. Neither side needs to be sorted yet; each value only has to be on the right side of 5."
+- app/content/courses/ds/l7-prefix-sums.json | screens[8] explain | note | "each prefix value appears 10,000 times" is not quite right for `[1, -1] * 10000`: the prefix 0 appears 10,001 times (with `pre[0]`) and 1 appears 10,000 times, giving $\binom{10001}{2} + \binom{10000}{2} = 10^8$. | "The answer in test 13 is $10{,}000^2$: the prefix 0 appears 10,001 times and the prefix 1 appears 10,000 times."
+- app/content/courses/algo-think/l3-memory.json | screens[4] explain | note | "here `getsizeof` reports roughly half": in a 32-bit build a pointer is 4 bytes and a float 16, so a list of floats is about 20 bytes a value, about 60% of 32. | "The Python in this page is a 32-bit build: about 20 bytes a float, not 32."
+
+## Explanations over three sentences (binding limit)
+
+- app/content/courses/algo-think/l1-counting-work.json | screens[2] explain | note | Four sentences. | "With one price, the inner loop is `range(1, 1)`, which is empty; with none, the outer loop never starts." Keep the other two.
+- app/content/courses/algo-think/review-3.json | items[1] explain | note | Five sentences. | "Keys 3, 2 and 1 take one, two and three tests, each then reaching the left end. Key 5 takes one test against 4, which stops it. Total $1 + 2 + 3 + 1 = 7$."
+- app/content/courses/ds/homework-1.json | items[5] explain | note | Four sentences. | Merge the last two: "Sorting first also works, in $O(n \log n)$, but walking from every number costs $O(n^2)$ on one long run."
+- app/content/courses/ds/l10-next-greater.json | quiz[1] explain | note | Four sentences. | "6 and 4 are pushed; 5 pops 4, stops at 6, and is pushed. Then 2 is pushed. The stack falls from bottom to top: 6, 5, 2."
+- app/content/courses/ds/l13-fast-and-slow.json | screens[3] explain | note | Four sentences. | Last two become "So once `slow` is in a cycle of length $L$, they meet within $L$ moves: $O(n)$ in all."
+- app/content/courses/ds/l15-search-trees.json | screens[1] explain | note | Four sentences. | "65 > 50, 65 < 70 and 65 > 60 send it right, left, then right onto a `None`. So 65 becomes 60's right child: an insert always adds a leaf."
+- app/content/courses/ds/l16-tree-recursion.json | screens[8] explain | note | Four sentences. | "Bottom up, −5 reports 3, so 3 reports 6, and −1 reports 3. The root takes 2 + max(3, 6) = 8. Choosing the best child step by step finds only 6."
+- app/content/courses/ds/l16-tree-recursion.json | screens[9] explain | note | Four sentences. | "Base case: a leaf; recurse only into children that exist; combine the node with the better child. It runs in $O(n)$, and the same shape prices a binomial lattice backwards."
+- app/content/courses/ds/review-4.json | items[3] explain | note | Four sentences. | "1 starts at index 5, and its parent at index 2 holds 4: swap. Its new parent, index 0, holds 3: swap, and 1 is the root."
+- app/content/courses/graphs-dp/l1-nodes-and-edges.json | screens[8] explain | note | Four sentences. | "`[[0] * n] * n` repeats a reference to one row, so setting `m[0][1]` sets column 1 in every row." Keep the other two.
+- app/content/courses/graphs-dp/l3-going-deep.json | screens[2] explain | note | Four sentences. | Last two become "So DFS is $O(V + E)$, like BFS; only the order differs."
+- app/content/courses/graphs-dp/review-1.json | items[3] explain | note | Five sentences. | "Top left: r1c1, r1c2, r2c2; top right: r1c5, r2c4, r2c5. Bottom left: r3c1, r4c1, r4c2, and r4c4 alone. Corner contacts do not join."
+- app/content/exams/topic-1.8.json | items[27] explain | note | Four sentences. | "Each job gets its own structure: dicts find, linked lists keep time order, and a heap or array keeps price order." Keep the other two.
+
+## Sentences over 20 words
+
+The script finds 250 sentences over 20 words (76 in algo-think, 75 in ds, 99 in graphs-dp, none in the exam); 185 are 21 to 24 words and are listed in `style.txt` in the scratchpad folder above. Most of the long ones are `how` lines that list the hidden tests after a colon.
+
+- app/content/courses/algo-think (all files) | see list | note | 24 sentences of 25 words or more. | Split each `how` test list into two sentences ("Check runs 8 hidden tests. They include ..."), and split the others at the semicolon or colon.
+- app/content/courses/ds (all files) | see list | note | 14 sentences of 25 words or more. | As above.
+- app/content/courses/graphs-dp (all files) | see list | note | 27 sentences of 25 words or more. | As above.
+
+Sentences of 25 words or more (word count in brackets):
+- algo-think/homework-1: items[5] how (26)
+- algo-think/homework-3: items[4] how (32), items[5] how (34), items[6] how (46), items[7] prompt (35)
+- algo-think/l3-memory: screens[3] prose (25)
+- algo-think/l4-cheap-on-average: screens[6] how (25)
+- algo-think/l9-halving: screens[3] how (31), screens[5] how (35), screens[9] how (29)
+- algo-think/l10-search-the-answer: screens[3] how (39), screens[5] how (28)
+- algo-think/l11-sorting-by-hand: screens[3] how (30), screens[8] how (31)
+- algo-think/l12-merge-sort: screens[7] how (33), screens[8] how (26), summary.trap (25)
+- algo-think/l13-quicksort: screens[3] how (32), screens[4] how (27), screens[8] how (35)
+- algo-think/l14-best-step-now: screens[3] how (37), screens[3] explain (26), screens[5] how (35)
+- algo-think/review-3: items[4] how (31), items[6] how (33), items[7] how (33)
+- ds/l2-constant-time-lookup: summary.ideas[0] (26)
+- ds/l6-sliding-window: screens[8] prose (25), summary.ideas[1] (25)
+- ds/l9-last-in-first-out: screens[10] question (26)
+- ds/l11-first-in-first-out: screens[4] explain (27)
+- ds/l13-fast-and-slow: screens[7] how (25)
+- ds/l16-tree-recursion: screens[6] how (32)
+- ds/l18-order-book-heaps: summary.ideas[1] (28)
+- ds/review-2: items[8] prose (27)
+- ds/homework-2: items[7].rubric[2] (26), items[7].rubric[5] (30)
+- ds/homework-3: items[6] explain (25), items[7] prompt (26)
+- ds/homework-4: items[2] prose (26), items[6] prompt (29)
+- graphs-dp/l2-level-by-level: screens[4] how (25)
+- graphs-dp/l4-islands: screens[4] how (33), summary.ideas[0] (26)
+- graphs-dp/l5-tasks-in-order: screens[8] how (25)
+- graphs-dp/l9-arbitrage-cycle: screens[9] prose (25)
+- graphs-dp/l10-every-subset: screens[9] how (38)
+- graphs-dp/l11-dead-ends: screens[8] how (25), quiz[1] prose (26)
+- graphs-dp/l12-remembering: screens[2].hints[2] (27)
+- graphs-dp/l13-climbing-stairs: summary.ideas[2] (26)
+- graphs-dp/l14-knapsack: screens[6] how (38)
+- graphs-dp/l15-common-subsequence: screens[9] prose (31)
+- graphs-dp/l16-grid-paths: screens[5] prose (25), screens[6] how (36)
+- graphs-dp/l17-dice-stopping: quiz[3] prose (25)
+- graphs-dp/review-2: items[6] prose (26)
+- graphs-dp/homework-1: items[0] how (26), items[1] how (32)
+- graphs-dp/homework-2: items[4] prose (32)
+- graphs-dp/homework-3: items[1] how (26), items[4] prose (40), items[5] prose (27), items[7] prompt (31)
+- graphs-dp/homework-4: items[2] explain (26)
+
+## Exam (topic-1.8)
+
+Every keyed answer checks, including 625, 66, 7 (losses at 1, 3, 4, 7, 10), 9 (exact ratio 9.06), 16 for two round trips, 4 intervals, the heap index 1, the Dijkstra order and the BST deletion. The four code items pass with their solutions and fail with their starters; quadratic versions of `longest_flat` and `max_profit` time out.
+
+- app/content/exams/topic-1.8.json | skills | note | Sorting (`at-sort`, items[11] only) and backtracking (`gd-backtrack`, items[18] only) have one item each; linked lists appear only as a design choice (items[16], [27]), with nothing on pointer manipulation or fast and slow pointers. | Consider replacing one of the five `at-complexity` items with a short reversal or cycle-detection trace (ds l12 and l13), so each course's core skills are tested twice.
+
+## Layout (playthrough screenshots)
+
+- app/content/courses/algo-think/l3-memory.json | screens[9] canvas | warning | The bars chart labels the unknown `numpy 200` bar "0.0", so it reads as an answer of 0 GB. The `numpy 100` bar (3.9) also lets the learner double it, without the computation the screen asks for. | Add `"showZero": false` to `params`, so the empty bar has no label until the explain patch fills it. Optionally drop the `n50` and `n100` bars.
+- app/content/courses/algo-think/l1-counting-work.json | screens[3] canvas | warning | The four bars the table asks for (scan 16, pairs 16, scan 32, pairs 32) are drawn labelled "0". | Add `"showZero": false` to `params`.
+- app/content/courses/graphs-dp/l17-dice-stopping.json | screens[5] canvas | warning | The bar for $V_4$, the value the table asks for, is labelled "0.00", and the bar for $V_3$ shows 4.67, the other cell the table asks for. | Add `"showZero": false` to `params`; as $V_3$ was worked out on screens[4], either make its row a given cell or drop the `3` bar until the explain.
+- app/content/courses/ds/l18-order-book-heaps.json | screens[7] prose | note | At 390 px the display formula "add: $O(\log n)$, cancel: $O(1)$, best: $O(1)$ amortised, ..." is cut off at "best: O(1) an" with no visible scroll cue. | Write it as an `aligned` block, one operation per line.
+- app/content/courses/ds/l18-order-book-heaps.json screens[0] to [4]; app/content/courses/graphs-dp/l14-knapsack.json screens[1] to [5] | canvas | note | At 390 px the order-book sizes and the knapsack table cells draw at about 8 px. They are legible but small. | `canvas.maxHeight` does not help here; raise an engine bullet for a minimum label size on `orderbook` and `table` canvases at narrow widths.
+
+## Counts
+
+1 error, 13 warnings, 25 notes.
