@@ -93,10 +93,10 @@ Worked authored items (use these four as written; the script draws the other twe
 
 | Q | Item | Key | Distractors and `why` | Computed twice |
 | --- | --- | --- | --- | --- |
-| Q10 (A) | $0.4 \times 35$ | 14 | 1.4 and 140 (moved the point); 87.5 (divided: $35 \div 0.4$) | $35 \times 4 = 140$, over ten is 14; $0.4 \times 35 = 0.4 \times 30 + 0.4 \times 5 = 12 + 2$ |
+| Q10 (A) | $0.4 \times 35$ | 14 | 15 (slipped the units digit); 140 (moved the point); 87.5 (divided: $35 \div 0.4$) | $35 \times 4 = 140$, over ten is 14; $0.4 \times 35 = 0.4 \times 30 + 0.4 \times 5 = 12 + 2$ |
 | Q65 (D) | $\tfrac56 + \tfrac38$ | $\tfrac{29}{24}$ | $\tfrac47$ (added tops and bottoms); $\tfrac{11}{24}$ (subtracted); 1 (scaled $\tfrac56$ by 3, not 4, to $\tfrac{15}{24}$) | $\tfrac{20}{24} + \tfrac{9}{24}$; and $\tfrac{5 \cdot 8 + 3 \cdot 6}{48} = \tfrac{58}{48} = \tfrac{29}{24}$ |
 | Q70 (D) | $35\%$ of 260 | 91 | 169 (the 65% left over); 78 (dropped the 5%); 9.1 (moved the point) | $26 \times 3 + 13 = 91$; $0.35 \times 260 = 91$ |
-| Q75 (D) | $3.6 \div 0.12$ | 30 | 3 and 300 (moved the point); 0.432 (multiplied) | $0.12 \times 30 = 3.6$; $360 \div 12 = 30$ |
+| Q75 (D) | $3.6 \div 0.12$ | 30 | 31 (slipped the units digit); 300 (moved the point); 0.432 (multiplied) | $0.12 \times 30 = 3.6$; $360 \div 12 = 30$ |
 
 The authored script is `fixed_arith.py`, `random.Random(80)` (the seed `l12-mock-test` used). Reuse `make()` from `docs/reports/mental-pressure-3-scripts/mockgen.py` for the `dec`, `frac` and `pct` kinds, but record each distractor's kind as it is made, so each `why` names the right slip. Ranges by block: A one-place decimals times a digit, unlike denominators where one divides the other, 10%, 20%, 25% or 50%; D division by a two-place decimal, denominators with a common multiple up to 24, 35%, 45%, 12.5% or 75%. Assert every distractor rule above.
 
