@@ -185,3 +185,12 @@ From `app/`, with `--local-cdn`:
 - `--exam topic-1.8`: 28 of 28, passed.
 
 Graded answers changed: ds homework-3 items[2] (key 17,650 and both wrong values). Nine code widgets gained hidden tests: algo-think review-3 items[6]; ds homework-3 items[0], [4] and [5]; ds l13 screens[7] (two) and [9]; ds homework-4 items[1]; ds l17 screens[9]. Test 9 of algo-think homework-3 items[6] is now the 20,000th largest. Every other key, option, cell and tolerance is unchanged. Not changed: `course.json`, any id, engine files.
+
+### Finding 34, completed
+
+Two items were replaced in place, so the count (28) and the ramp (6 at 2, 14 at 3, 5 at 4, 3 at 5) are unchanged.
+
+- items[0] `e-tick-lookup` (d2, `at-complexity`, `ds-hashing`) became `e-insertion-count` (d2, `at-sort`). Insertion sort on 105, 102, 108, 106, 103, counted as algo-think l11 counts. The key is 8 comparisons. Checked by hand ($1 + 1 + 2 + 4$) and by an instrumented sort. Each wrong value names one slip: shifts only 5, the left end counted 9, the reversed worst case 10, sorted input 4.
+- items[6] `e-loop-halving` (d3, `at-complexity`) became `e-floyd-meet` (d3, `ds-lists`). Eight nodes, 8 points back at 6; `slow` and `fast` as in ds l13. The key is 6 moves, meeting on node 7. Checked by a move-by-move trace and by a simulation. Wrong values: the cycle length 3, the moves to the cycle's start 5, the node count 8. The graph is drawn on two rows so it reads at 390 px.
+
+Skills now: `at-sort` 2, `ds-lists` 3, `at-complexity` 3, `ds-hashing` 3; every skill appears at least twice except `gd-backtrack` (1), as the brief allowed one second item. The sentence scan finds none over 20 words in the exam, and no explanation over three sentences, so no other text changed. Validator 0 errors; `--exam topic-1.8` with `--local-cdn` passes 28 of 28 (also checked with `--mobile` screenshots).

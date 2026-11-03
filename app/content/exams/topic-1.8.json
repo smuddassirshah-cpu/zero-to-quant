@@ -24,47 +24,95 @@
   },
   "items": [
     {
-      "id": "e-tick-lookup",
+      "id": "e-insertion-count",
       "difficulty": 2,
       "skills": [
-        "at-complexity",
-        "ds-hashing"
+        "at-sort"
       ],
-      "title": "Updating last prices",
-      "prose": "A feed sends 1,000,000 ticks a day across 5,000 tickers. Each tick updates that ticker's last price. Version A keeps a list of `(ticker, price)` pairs and scans it for the ticker. Version B keeps a dict keyed by ticker.",
-      "question": "Roughly how much work does each version do in a day?",
+      "title": "Sorting five quotes by hand",
+      "prose": "Insertion sort puts five quotes in order, lowest first. They arrive in pence as 105, 102, 108, 106 and 103. Count one comparison each time a value is tested against the key. Reaching the left end is not a comparison.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            105,
+            102,
+            108,
+            106,
+            103
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many comparisons does the sort make?",
       "widget": {
-        "kind": "choice",
-        "layout": "stack",
-        "options": [
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "comparisons",
+        "label": "Comparisons",
+        "accept": "8 = 1 + 1 + 2 + 4",
+        "wrong": [
           {
-            "id": "a",
-            "text": "A: about $2.5 \\times 10^9$ comparisons. B: about $10^6$ hash lookups.",
-            "correct": true
+            "id": "shifts",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "b",
-            "text": "A: about $2.5 \\times 10^9$ comparisons. B: about the same, since a dict also searches its keys.",
-            "why": "You treated the dict as a scan. It hashes the ticker straight to a bucket, so a lookup costs $O(1)$ on average."
+            "id": "left-end",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "c",
-            "text": "A: about $10^6$ comparisons. B: about $10^6$ hash lookups.",
-            "why": "You counted one step per tick for the list. A scan reads about half of the 5,000 pairs on each tick."
+            "id": "worst",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "d",
-            "text": "A: about $2.5 \\times 10^9$ comparisons. B: about $10^6 \\times \\log_2 5{,}000$ steps.",
-            "why": "You costed a sorted list or a tree. A hash map does no halving: one bucket per lookup on average."
+            "id": "sorted",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
           }
         ]
       },
       "feedback": {
-        "correct": "The scan costs about 2,500 comparisons a tick; the dict about one lookup.",
-        "generic": "Count the work per tick for each version, then multiply by 1,000,000 ticks."
+        "correct": "$1 + 1 + 2 + 4 = 8$ comparisons.",
+        "generic": "Take each key in turn. Count the values it is tested against before it stops.",
+        "byKey": {
+          "shifts": "You counted the shifts. The test that stops a key counts too, such as 105 against 106.",
+          "left-end": "You counted one for 102 reaching the left end. There is no value there to test.",
+          "worst": "$5 \\times 4 / 2 = 10$ is the worst case, for reversed input. Here 108 stops after one test.",
+          "sorted": "$n - 1 = 4$ is the cost on sorted input. 106 and 103 each pass bigger values first."
+        }
       },
       "explain": {
-        "text": "A scan finds a random ticker after about $5{,}000/2 = 2{,}500$ comparisons. Over $10^6$ ticks that is $2.5 \\times 10^9$. The dict hashes each ticker once, so the day costs about $10^6$ lookups."
+        "text": "102 passes 105 and reaches the left end: one comparison. 108 stops at its first test, against 105. 106 costs 2 and 103 costs 4, so the total is $1 + 1 + 2 + 4 = 8$.",
+        "canvas": {
+          "cells": [
+            102,
+            103,
+            105,
+            106,
+            108
+          ],
+          "done": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
       }
     },
     {
@@ -532,46 +580,180 @@
       }
     },
     {
-      "id": "e-loop-halving",
+      "id": "e-floyd-meet",
       "difficulty": 3,
       "skills": [
-        "at-complexity"
+        "ds-lists"
       ],
-      "title": "A loop that doubles its step",
-      "prose": "This function sums some prices for every day of a list of $n$ prices.\n\n```python\ndef scan(prices):\n    n = len(prices)\n    total = 0\n    for i in range(n):\n        step = 1\n        while step < n:\n            total += prices[(i + step) % n]\n            step *= 2\n    return total\n```",
-      "question": "What is its running time in big O?",
+      "title": "Where the pointers meet",
+      "prose": "A bad update to an order queue points its last node, 8, back at node 6. `slow` and `fast` both start at the head. Each move, `slow` steps one node and `fast` steps two.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "1",
+              "x": 0.1,
+              "y": 0.36
+            },
+            {
+              "id": "n2",
+              "label": "2",
+              "x": 0.35,
+              "y": 0.36
+            },
+            {
+              "id": "n3",
+              "label": "3",
+              "x": 0.6,
+              "y": 0.36
+            },
+            {
+              "id": "n4",
+              "label": "4",
+              "x": 0.85,
+              "y": 0.36
+            },
+            {
+              "id": "n5",
+              "label": "5",
+              "x": 0.85,
+              "y": 0.64
+            },
+            {
+              "id": "n6",
+              "label": "6",
+              "x": 0.6,
+              "y": 0.64
+            },
+            {
+              "id": "n7",
+              "label": "7",
+              "x": 0.35,
+              "y": 0.9
+            },
+            {
+              "id": "n8",
+              "label": "8",
+              "x": 0.6,
+              "y": 0.9
+            },
+            {
+              "id": "head",
+              "label": "head",
+              "x": 0.1,
+              "y": 0.1,
+              "shape": "pill",
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "n1",
+              "to": "n2",
+              "directed": true
+            },
+            {
+              "from": "n2",
+              "to": "n3",
+              "directed": true
+            },
+            {
+              "from": "n3",
+              "to": "n4",
+              "directed": true
+            },
+            {
+              "from": "n4",
+              "to": "n5",
+              "directed": true
+            },
+            {
+              "from": "n5",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "n6",
+              "to": "n7",
+              "directed": true
+            },
+            {
+              "from": "n7",
+              "to": "n8",
+              "directed": true
+            },
+            {
+              "from": "n8",
+              "to": "n6",
+              "directed": true
+            },
+            {
+              "from": "head",
+              "to": "n1",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "height": 340,
+          "aria": "A linked list of eight nodes whose tail points back at node 6"
+        },
+        "state": {
+          "caption": "8 points back at 6"
+        }
+      },
+      "question": "After how many moves do `slow` and `fast` first land on the same node?",
       "widget": {
-        "kind": "choice",
-        "layout": "grid",
-        "options": [
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "moves",
+        "label": "Moves",
+        "accept": "6: they meet on node 7",
+        "wrong": [
           {
-            "id": "nlogn",
-            "text": "$O(n \\log n)$",
-            "correct": true
+            "id": "length",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "n2",
-            "text": "$O(n^2)$",
-            "why": "You saw two nested loops. The inner one doubles `step`, so it runs about $\\log_2 n$ times, not $n$."
+            "id": "entry",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "logn",
-            "text": "$O(\\log n)$",
-            "why": "You counted only the inner loop. The outer loop still runs it once for each of the $n$ days."
-          },
-          {
-            "id": "n",
-            "text": "$O(n)$",
-            "why": "The inner loop's count grows with $n$: about $\\log_2 n$ passes for each day."
+            "id": "nodes",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
           }
         ]
       },
       "feedback": {
-        "correct": "$n$ outer passes, each with about $\\log_2 n$ inner steps.",
-        "generic": "Count how many values `step` takes before it reaches $n$, then multiply by the outer loop."
+        "correct": "After 6 moves both pointers are on node 7.",
+        "generic": "Write down both positions after each move until they match.",
+        "byKey": {
+          "length": "3 is the cycle's length. `slow` needs 5 moves just to reach node 6, where the cycle starts.",
+          "entry": "After 5 moves `slow` is on 6, but `fast` is on 8. One more move brings them together.",
+          "nodes": "You counted every node. They meet as soon as `fast` catches `slow` inside the cycle."
+        }
       },
       "explain": {
-        "text": "`step` runs through 1, 2, 4, and so on below $n$: about $\\log_2 n$ values. The outer loop repeats that $n$ times. For $n = 1{,}000$ that is 10,000 additions, not 1,000,000."
+        "text": "`slow` reaches node 6, the cycle's start, after 5 moves, and `fast` is then on 8. Round the cycle, `fast` is one node behind and gains one per move. So they meet on node 7 after 6 moves.",
+        "canvas": {
+          "highlight": [
+            "n7"
+          ],
+          "caption": "Both pointers on 7 after 6 moves"
+        }
       }
     },
     {

@@ -80,3 +80,6 @@ Every answer was recomputed by a second method in Python: brute force against th
 - The tree canvas has a fixed 540 px frame, so an eight-leaf decision tree (item 19) and a five-level BST (item 25) scale down on a 390 px phone; labels are small but legible. The graph canvas narrows its frame on phones; the tree does not.
 - During the first desktop run the tree canvas threw `ReferenceError: Cannot access 'rootNv' before initialization` (tree.js line 104) while another agent was editing `js/engine/canvas/tree.js`. It cleared on the next run once the edit landed; every later run passed.
 - The worker grader in Node does not enforce the 5 s limit, so the quadratic versions' time-outs were measured separately (`slowcheck.mjs`), not through `codecheck.mjs`.
+
+## Update, 3 Nov 2026
+Items `e-tick-lookup` and `e-loop-halving` were replaced by `e-insertion-count` (at-sort, key 8) and `e-floyd-meet` (ds-lists, key 6) after the topic 1.8 second read (finding 34, `docs/reviews/review-1.8.md`).
