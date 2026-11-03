@@ -194,7 +194,7 @@
           {
             "id": "k1",
             "text": "$k = 1$: its training MSE is 0",
-            "why": "You chose by training error. With $k = 1$ each loan is its own nearest neighbour, so training MSE is 0 while the CV MSE is the worst on the chart, 0.461."
+            "why": "You chose by training error. With $k = 1$ each loan is its own nearest neighbour, so training MSE is 0. The CV MSE is the worst on the chart, 0.461."
           },
           {
             "id": "k60",
@@ -1184,7 +1184,7 @@
         }
       },
       "explain": {
-        "text": "Every mean below the line is indistinguishable from the best given the fold noise, so we prefer the most shrunk of them, $\\alpha = 30$. Textbooks often use $\\text{sd}/\\sqrt{k}$ as the error bar. Lesson 2 showed that understates the noise, so we use the plain fold sd.",
+        "text": "Every mean below the line is within fold noise of the best, so we prefer the most shrunk, $\\alpha = 30$. Textbooks often use $\\text{sd}/\\sqrt{k}$ as the error bar. Lesson 2 showed that understates the noise, so we use the plain fold sd.",
         "canvas": {
           "highlight": [
             "a7"
@@ -2159,7 +2159,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 5 hidden tests, including a grid of one value, comparing the returned $\\alpha$ exactly with values from scikit-learn 1.6.1 in Pyodide. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "how": "Check runs 5 hidden tests, including a grid of one value. Each compares the returned $\\alpha$ exactly with values from scikit-learn 1.6.1 in Pyodide. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
         "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n\ndef make_noise(n, p, seed):\n    \"\"\"Loans whose p signals are all pure noise: spread = 2.5 + noise sd 0.45, unrelated to X.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    y = (2.5 + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n"
       },
       "hints": [
@@ -2258,7 +2258,7 @@
         "generic": "Not quite right. The test rows must be locked before the search and used once after it."
       },
       "explain": {
-        "text": "Locking the test rows first means the search cannot see them. Building the pipeline uses no data, so it may come first too. After the refit, the test rows give one score, and the report names the grid so readers know how much was searched."
+        "text": "Locking the test rows first means the search cannot see them. Building the pipeline uses no data, so it may come first too. After the refit the test rows give one score; the report names the grid, showing how much was searched."
       }
     },
     {
@@ -2273,7 +2273,7 @@
         "options": [
           {
             "id": "heldout",
-            "text": "The lookback is chosen on rows it is then not judged on, so its score is not inflated by the choice",
+            "text": "The lookback is chosen on rows it is not judged on, so its score is not inflated by the choice",
             "correct": true
           },
           {
@@ -2319,7 +2319,7 @@
       "type": "transfer",
       "difficulty": 3,
       "title": "Reading a research note",
-      "prose": "A research note on a spread model says: “$\\alpha$ chosen by 5-fold CV on 2015 to 2021; 2022 to 2023 held out. Test MSE 0.23.”",
+      "prose": "A spread model's research note says: “$\\alpha$ chosen by 5-fold CV on 2015 to 2021; 2022 to 2023 held out. Test MSE 0.23.”",
       "question": "Select all that apply.",
       "widget": {
         "kind": "multi",
@@ -2379,7 +2379,7 @@
     "ideas": [
       "Choose a hyperparameter by its cross-validated score on the training rows, never by training error or the test set.",
       "Widen a grid whose best value sits on its edge; within the fold noise, prefer the simpler model.",
-      "The best CV score was selected, so it is optimistic: refit the winner and score it once on the locked test set."
+      "The best CV score was selected, so it is optimistic. Refit the winner and score it once on the locked test set."
     ],
     "formula": {
       "name": "One-standard-error rule",
@@ -2460,7 +2460,7 @@
     {
       "id": "q3",
       "difficulty": 3,
-      "prose": "An analyst tries ten values of $k$ for $k$-nearest neighbours, scores each on the test set, keeps the best, and reports its test MSE.",
+      "prose": "An analyst tries ten values of $k$ for $k$-nearest neighbours and scores each on the test set. The analyst keeps the best and reports its test MSE.",
       "question": "What has gone wrong?",
       "widget": {
         "kind": "choice",
@@ -2474,7 +2474,7 @@
           {
             "id": "fine",
             "text": "Nothing, as long as the test set is large",
-            "why": "A large test set reduces noise in each score, but the best of ten still flatters the winner, and no clean set is left."
+            "why": "A large test set reduces noise in each score. But the best of ten still flatters the winner, and no clean set is left."
           },
           {
             "id": "knn",

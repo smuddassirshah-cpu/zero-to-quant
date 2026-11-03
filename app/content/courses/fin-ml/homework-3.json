@@ -133,7 +133,7 @@
         }
       },
       "explain": {
-        "text": "Changes: 0, 0.5, 0.5, 0 and 1.5, so 2.5 units. Each unit is £2m at 0.08%: £1,600. In total £4,000. Turnover is $2.5/4 = 0.625$ a day."
+        "text": "Changes: 0, 0.5, 0.5, 0 and 1.5, so 2.5 units. Each unit costs £2m × 0.08% = £1,600, so £4,000 in total. Turnover is $2.5/4 = 0.625$ a day."
       }
     },
     {
@@ -259,7 +259,7 @@
         "fm-sizing",
         "fm-eval"
       ],
-      "prose": "Write a sizing-and-costs simulator. `probs[t]` is the model's chance that day `t` is up, and the position is set from it for day `t`. Rules: `'threshold'` is +1 above 0.5, −1 below and 0 at 0.5; `'afml'` is $2\\Phi(z) - 1$; `'afml_step'` rounds it to steps of 0.1; `'half_kelly'` is $0.5(2p - 1)$. Costs as in l10, from a flat start; Sharpe annualised with $\\sqrt{252}$ and sample sd, 0.0 with no spread.",
+      "prose": "Write a sizing-and-costs simulator. `probs[t]` is the model's chance that day `t` is up, and the position is set from it for day `t`. Rules: `'threshold'` is +1 above 0.5, −1 below and 0 at 0.5. `'afml'` is $2\\Phi(z) - 1$, and `'afml_step'` rounds it to steps of 0.1. `'half_kelly'` is $0.5(2p - 1)$. Costs as in l10, from a flat start; Sharpe annualised with $\\sqrt{252}$ and sample sd, 0.0 with no spread.",
       "question": "Complete `simulate(probs, returns, rule, cost_bp)`.",
       "widget": {
         "kind": "code",
@@ -331,7 +331,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 11 hidden tests: three short lists, all four rules on l10's seeded market (seed 160) with `probs` a logistic squash of its forecast, at 0, 5 and 10 bp, and a book that never trades. Tuples are compared element by element with math.isclose. `rets`, `forecast` and `probs` are already defined. Pure Python: nothing to load."
+        "how": "Check runs 11 hidden tests: three short lists and a book that never trades. The rest run all four rules on l10's seeded market (seed 160) at 0, 5 and 10 bp. There `probs` is a logistic squash of the market's forecast. Tuples are compared element by element with math.isclose. `rets`, `forecast` and `probs` are already defined. Pure Python: nothing to load."
       },
       "feedback": {
         "correct": "The simulator reproduces every case.",
@@ -350,7 +350,7 @@
         "fm-features",
         "fm-sizing"
       ],
-      "prose": "Write the whole study of l12 as one function, with the cost as an argument and two more outputs: the effective number of observations (level 1, Overlapping labels) and the trial count. The helpers `make_prices`, `tb_label`, `features`, `bet_size`, `sharpe` and `dsr` from l12 are defined. The comments in the starter fix every choice.",
+      "prose": "Write the whole study of l12 as one function, with the cost as an argument. Add two more outputs: the effective number of observations (level 1, Overlapping labels) and the trial count. The helpers `make_prices`, `tb_label`, `features`, `bet_size`, `sharpe` and `dsr` from l12 are defined. The comments in the starter fix every choice.",
       "question": "Complete `full_study(seed, cost_bp)`.",
       "widget": {
         "kind": "code",
@@ -429,14 +429,14 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 12 hidden tests on four runs (seed 7 at 5 bp, seed 11 at 5 and 10 bp, seed 12 at zero cost), each run once, about 2 s a run. Expected values come from running the solution in Pyodide, rounded as the starter says. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds."
+        "how": "Check runs 12 hidden tests on four runs, each run once, at about 2 s a run. The runs are seed 7 at 5 bp, seed 11 at 5 and 10 bp, and seed 12 at zero cost. Expected values come from running the solution in Pyodide, rounded as the starter says. The first run loads scikit-learn, NumPy and SciPy, which takes 10 to 30 seconds."
       },
       "feedback": {
         "correct": "The full study reproduces all four runs.",
         "generic": "Not quite right. Check the purge (train on rows before `start - h`), the averaging of the last `h` sizes and the effective $n$."
       },
       "explain": {
-        "text": "Seed 11 at 5 bp: hit rate 0.568 against a base rate of 0.528, net Sharpe 0.76, DSR 0.61 with 2 trials, and an effective $n$ of only 28 independent labels in 271 test days. A weak result, honestly measured."
+        "text": "Seed 11 at 5 bp: hit rate 0.568 against a base rate of 0.528, net Sharpe 0.76, DSR 0.61 with 2 trials. Its effective $n$ is only 28 independent labels in 271 test days. A weak result, honestly measured."
       }
     },
     {
@@ -449,8 +449,8 @@
       "question": "Write the one-page study report.",
       "widget": {
         "kind": "longform",
-        "prompt": "Write up the seed-11 run of `full_study` at 5 bp in the l12 template: question, data, method, a results table gross and net at 5, 10 and 20 bp (net Sharpes 0.76, 0.71 and 0.59; gross 0.82), the trial count and the DSR with the calculation shown, what failed, next steps and a verdict. Run facts: hit rate 0.5683, base rate 0.5277, 271 test days, effective $n$ 28, daily net P&L skew −0.17 and kurtosis 8.56, two configurations tried.",
-        "model": "**Question.** Does a 10-day triple-barrier label (±3%) on one synthetic share become predictable from three price features: the 5-day return, the 20-day return and the ratio of 5-day to 20-day volatility? Would trading it pay after costs?\n\n**Data.** 600 days of seeded synthetic prices (seed 11): a slow AR(1) drift plus daily noise of 1%. The data are synthetic, so nothing here is evidence about a real market.\n\n**Method.** Labels: 1 if the upper barrier is touched first, or the price is higher at day 10. Features use only data up to each close. Walk-forward: test blocks of 90 days from row 300 (271 test days), training on all rows before each block minus a 10-day purge. Two configurations, logged before the first run: scaled logistic regression ($C = 1$) and gradient boosting (25 trees, depth 2). Positions: the AFML size $2\\Phi(z) - 1$, averaged over the 10 open bets and rounded to 0.1. Costs charged on every change in position.\n\n**Results.**\n\n| | Value |\n|---|---|\n| Model kept | logistic |\n| Hit rate / base rate | 0.568 / 0.528 (majority guess 0.528) |\n| Sharpe gross | 0.82 |\n| Net at 5 / 10 / 20 bp | 0.76 / 0.71 / 0.59 |\n| Trials | 2 |\n| DSR at 5 bp | 0.61 |\n| Effective $n$ | 28 of 271 days |\n\n**DSR.** Daily Sharpe $0.7631/\\sqrt{252} = 0.0481$. With $N = 2$ and $V = 1/270$: $E[\\max] = 0.0609 \\times 0.5772 \\times \\Phi^{-1}(1 - \\tfrac{1}{2e}) = 0.0609 \\times 0.5772 \\times 0.900 = 0.0316$. Skew −0.17, kurtosis 8.56, so $\\hat\\sigma_{SR} = \\sqrt{(1 + 0.17 \\times 0.0481 + 1.89 \\times 0.0481^2)/270} = 0.0612$. $z = (0.0481 - 0.0316)/0.0612 = 0.27$, DSR $= \\Phi(0.27) = 0.61$. Even against zero, the PSR is only 0.78.\n\n**What failed.** Boosting was tried and dropped: its net Sharpe was below logistic's on the same folds. The hit rate beat the majority-class guess by 4.1 points, on only 28 independent labels, so that edge has a standard error of about 9 points. The DSR of 0.61 means a net Sharpe of 0.76 is not evidence of skill. Daily P&L is autocorrelated because positions average 10 days of bets, so the daily $n$ of 271 flatters even this DSR.\n\n**Next.** Fix the rule now and test it, unchanged, on a new seed or a later period, counted as trial 3. Lengthen the test period until the effective $n$ exceeds 100. Do not tune on these 271 days again.\n\n**Verdict.** No reliable edge found. Do not trade.",
+        "prompt": "Write up the seed-11 run of `full_study` at 5 bp in the l12 template. Give the question, data and method, and a results table gross and net at 5, 10 and 20 bp. The net Sharpes are 0.76, 0.71 and 0.59; gross is 0.82. Then give the trial count, the DSR with the calculation shown, what failed, next steps and a verdict. Run facts: hit rate 0.5683, base rate 0.5277, 271 test days and effective $n$ 28. Daily net P&L has skew −0.17 and kurtosis 8.56, and two configurations were tried.",
+        "model": "**Question.** Can three price features predict a 10-day triple-barrier label (±3%) on one synthetic share? They are the 5-day return, the 20-day return and the ratio of 5-day to 20-day volatility. Would trading it pay after costs?\n\n**Data.** 600 days of seeded synthetic prices (seed 11): a slow AR(1) drift plus daily noise of 1%. The data are synthetic, so nothing here is evidence about a real market.\n\n**Method.** Labels: 1 if the upper barrier is touched first, or the price is higher at day 10. Features use only data up to each close. Walk-forward: test blocks of 90 days from row 300 (271 test days). Each block trains on all earlier rows minus a 10-day purge. Two configurations, logged before the first run: scaled logistic regression ($C = 1$) and gradient boosting (25 trees, depth 2). Positions: the AFML size $2\\Phi(z) - 1$, averaged over the 10 open bets and rounded to 0.1. Costs charged on every change in position.\n\n**Results.**\n\n| | Value |\n|---|---|\n| Model kept | logistic |\n| Hit rate / base rate | 0.568 / 0.528 (majority guess 0.528) |\n| Sharpe gross | 0.82 |\n| Net at 5 / 10 / 20 bp | 0.76 / 0.71 / 0.59 |\n| Trials | 2 |\n| DSR at 5 bp | 0.61 |\n| Effective $n$ | 28 of 271 days |\n\n**DSR.** Daily Sharpe $0.7631/\\sqrt{252} = 0.0481$. With $N = 2$ and $V = 1/270$: $E[\\max] = 0.0609 \\times 0.5772 \\times \\Phi^{-1}(1 - \\tfrac{1}{2e}) = 0.0609 \\times 0.5772 \\times 0.900 = 0.0316$. Skew −0.17, kurtosis 8.56, so $\\hat\\sigma_{SR} = \\sqrt{(1 + 0.17 \\times 0.0481 + 1.89 \\times 0.0481^2)/270} = 0.0612$. $z = (0.0481 - 0.0316)/0.0612 = 0.27$, DSR $= \\Phi(0.27) = 0.61$. Even against zero, the PSR is only 0.78.\n\n**What failed.** Boosting was tried and dropped: its net Sharpe was below logistic's on the same folds. The hit rate beat the majority-class guess by 4.1 points, on only 28 independent labels. That edge has a standard error of about 9 points. The DSR of 0.61 means a net Sharpe of 0.76 is not evidence of skill. Daily P&L is autocorrelated because positions average 10 days of bets. So the daily $n$ of 271 flatters even this DSR.\n\n**Next.** Fix the rule now and test it, unchanged, on a new seed or a later period, counted as trial 3. Lengthen the test period until the effective $n$ exceeds 100. Do not tune on these 271 days again.\n\n**Verdict.** No reliable edge found. Do not trade.",
         "rubric": [
           {
             "points": 1,
@@ -462,7 +462,7 @@
           },
           {
             "points": 2,
-            "text": "Results table with gross and net at three cost levels, and the hit rate against the base rate or majority guess"
+            "text": "Results table with gross and net at three costs, and the hit rate against the base rate or majority guess"
           },
           {
             "points": 2,

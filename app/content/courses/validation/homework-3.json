@@ -434,18 +434,18 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests on planted cases: a clean backtest, one with every leak, ties on the prediction day, and logs with looks and drops. Each compares your dict with ==: `target` sorted, `transform` in pipeline order, and `survivorship` in the order of the docstring's keys. Pure Python is enough."
+        "how": "Check runs 8 hidden tests on planted cases. They include a clean backtest, one with every leak, ties on the prediction day, and logs with looks and drops. Each compares your dict with ==: `target` sorted, `transform` in pipeline order, and `survivorship` in the order of the docstring's keys. Pure Python is enough."
       },
       "feedback": {
         "correct": "Each category is one rule from the level.",
         "generic": "Some tests failed. Target: known day after `label_start`. Transform: `fit_on == \"all\"`. Survivorship: one reason per bad setting. Trials: distinct fit or look configs.",
         "byKey": {
           "test-3": "A feature known on the prediction day is not a leak: use `>` for target leaks.",
-          "test-2": "Check every category on the all-leaks case: two target leaks, two transforms fitted on all rows, three survivorship reasons, two trials."
+          "test-2": "Check every category on the all-leaks case. It has two target leaks, two transforms fitted on all rows, three survivorship reasons and two trials."
         }
       },
       "explain": {
-        "text": "Each line of the audit is a rule from one lesson, from the known-at check of Lesson 9 to the log count of Lesson 12. An audit that returns empty lists and a small, honest $N$ is a backtest worth reading."
+        "text": "Each line of the audit is a rule from one lesson. They run from the known-at check of Lesson 9 to the log count of Lesson 12. An audit that returns empty lists and a small, honest $N$ is a backtest worth reading."
       }
     },
     {
@@ -458,32 +458,32 @@
       "question": "Write the review.",
       "widget": {
         "kind": "longform",
-        "prompt": "A colleague's backtest note is below. Review it as you would for the desk's research meeting.\n\n**Backtest note: UK quality-momentum, 2016 to 2023.** Universe: today's FTSE 350 members. Monthly rebalance into the top decile. Features: 12-1 momentum; earnings revisions; `analyst_mentions`, the count of analyst notes on each share in the month after rebalancing; and sector, target-encoded by each sector's mean next-month return over 2016 to 2023. All features are z-scored over the full 2016 to 2023 panel before the walk-forward split. We tested 30 combinations of decile cut-off, lookback and weighting and report the best: Sharpe 1.4 over 8 years.\n\nName each leak and its category; for each, say which way it moves the Sharpe and roughly how much, with a number where you can. Estimate what selection among 30 alone could give, and say exactly what to rerun and how to report it.",
-        "model": "**1. Target leak: `analyst_mentions`.** It counts notes in the month after rebalancing, the label's own month. Analysts write more about shares that move, so it encodes the size and often the direction of the label. Direction: inflates. Size: large; in Lesson 9 ten days of overlap took a noise hit rate from 50% to 67%. Fix: use mentions in the month *before* rebalancing, stamped with the day each note was published.\n\n**2. Target encoding of sector over 2016 to 2023.** Each sector's mean next-month return includes every test month's label. Direction: inflates. Size: can be large, since it reads $y$; with few shares per sector the encoding nearly copies the label. Lesson 10's target-encoding leak added 0.45 to CV $R^2$ on noise. Fix: encode inside each walk-forward fold, from training months only.\n\n**3. Full-panel z-scores.** A mean and spread from 2016 to 2023 reach back into every earlier month. Direction: unclear. Size: small, as Lesson 10 found for scaling; but it is the same habit that made items 1 and 2 large. Fix: z-score cross-sectionally each month, or with expanding windows, inside the pipeline.\n\n**4. Survivorship and look-ahead in the universe.** Today's FTSE 350 holds firms that grew into it after 2016 and none that fell out or failed. Direction: inflates. Size: a few points a year is plausible; Lesson 11's panel showed 5.8 points, and fund databases show 1 to 2. Fix: membership as of each rebalance date, delisted firms kept with their real delisting returns.\n\n**5. Best of 30.** Over $T = 8$ years the mean best of 30 noise Sharpes is $2.04/\\sqrt 8 = 0.72$; the rule of thumb gives $\\sqrt{2\\ln 30}/\\sqrt 8 = 0.92$. Even if items 1 to 4 were clean, 1.4 would haircut to about 0.7, and the 30 combinations are likely correlated, so the effective $N$ is lower. Fix: log every trial, including any looks before the 30.\n\n**What to rerun.** Rebuild the universe point in time with delisting returns; lag `analyst_mentions`; move the encoder and the scaler inside a walk-forward pipeline; rerun the 30 combinations on 2016 to 2021 only; score the chosen one once on 2022 to 2023; report that score with $N = 30$ and the haircut. Expect the Sharpe to fall a long way; most of the 1.4 is likely leakage and selection.",
+        "prompt": "A colleague's backtest note is below. Review it as you would for the desk's research meeting.\n\n**Backtest note: UK quality-momentum, 2016 to 2023.** Universe: today's FTSE 350 members. Monthly rebalance into the top decile. Features: 12-1 momentum, earnings revisions, `analyst_mentions` and sector. `analyst_mentions` counts analyst notes on each share in the month after rebalancing. Sector is target-encoded by each sector's mean next-month return over 2016 to 2023. All features are z-scored over the full 2016 to 2023 panel before the walk-forward split. We tested 30 combinations of decile cut-off, lookback and weighting and report the best: Sharpe 1.4 over 8 years.\n\nName each leak and its category. For each, say which way it moves the Sharpe and roughly how much, with a number where you can. Estimate what selection among 30 alone could give, and say exactly what to rerun and how to report it.",
+        "model": "**1. Target leak: `analyst_mentions`.** It counts notes in the month after rebalancing, the label's own month. Analysts write more about shares that move, so it encodes the size and often the direction of the label. Direction: inflates. Size: large; in Lesson 9 ten days of overlap took a noise hit rate from 50% to 67%. Fix: use mentions in the month *before* rebalancing, stamped with the day each note was published.\n\n**2. Target encoding of sector over 2016 to 2023.** Each sector's mean next-month return includes every test month's label. Direction: inflates. Size: can be large, since it reads $y$; with few shares per sector the encoding nearly copies the label. Lesson 10's target-encoding leak added 0.45 to CV $R^2$ on noise. Fix: encode inside each walk-forward fold, from training months only.\n\n**3. Full-panel z-scores.** A mean and spread from 2016 to 2023 reach back into every earlier month. Direction: unclear. Size: small, as Lesson 10 found for scaling. But it is the same habit that made items 1 and 2 large. Fix: z-score cross-sectionally each month, or with expanding windows, inside the pipeline.\n\n**4. Survivorship and look-ahead in the universe.** Today's FTSE 350 holds firms that grew into it after 2016 and none that fell out or failed. Direction: inflates. Size: a few points a year is plausible. Lesson 11's panel showed 5.8 points, and fund databases show 1 to 2. Fix: membership as of each rebalance date, delisted firms kept with their real delisting returns.\n\n**5. Best of 30.** Over $T = 8$ years the mean best of 30 noise Sharpes is $2.04/\\sqrt 8 = 0.72$; the rule of thumb gives $\\sqrt{2\\ln 30}/\\sqrt 8 = 0.92$. Even if items 1 to 4 were clean, 1.4 would haircut to about 0.7. The 30 combinations are likely correlated, so the effective $N$ is lower. Fix: log every trial, including any looks before the 30.\n\n**What to rerun.** Rebuild the universe point in time with delisting returns, and lag `analyst_mentions`. Move the encoder and the scaler inside a walk-forward pipeline. Rerun the 30 combinations on 2016 to 2021 only, and score the chosen one once on 2022 to 2023. Report that score with $N = 30$ and the haircut. Expect the Sharpe to fall a long way; most of the 1.4 is likely leakage and selection.",
         "rubric": [
           {
             "points": 2,
-            "text": "Identifies `analyst_mentions` as a target leak (built from the label's month), says it inflates, likely by a lot, and gives the fix (lag it, timestamp notes)"
+            "text": "Identifies `analyst_mentions` as a target leak built from the label's month. Says it inflates, likely by a lot, and gives the fix (lag it, timestamp notes)"
           },
           {
             "points": 2,
-            "text": "Identifies the sector target encoding over the full period as a leak that reads $y$, says it can be large, and moves it inside the fold"
+            "text": "Identifies the sector target encoding over the full period as a leak that reads $y$. Says it can be large, and moves it inside the fold"
           },
           {
             "points": 1,
-            "text": "Identifies full-panel z-scoring as a future-fitted transform, says it is usually small, and fixes it with cross-sectional or expanding scaling in the pipeline"
+            "text": "Identifies full-panel z-scoring as a future-fitted transform and says it is usually small. Fixes it with cross-sectional or expanding scaling in the pipeline"
           },
           {
             "points": 2,
-            "text": "Identifies today's FTSE 350 as survivorship and look-ahead, says it inflates by roughly points a year, and asks for point-in-time membership with delisting returns"
+            "text": "Identifies today's FTSE 350 as survivorship and look-ahead, and says it inflates by a few points a year. Asks for point-in-time membership with delisting returns"
           },
           {
             "points": 2,
-            "text": "Quantifies the best-of-30 selection: about 0.7 (simulated) to 0.9 (rule of thumb) from noise over 8 years, and notes correlated trials or an incomplete count"
+            "text": "Quantifies the best-of-30 selection: about 0.7 (simulated) to 0.9 (rule of thumb) from noise over 8 years. Notes correlated trials or an incomplete count"
           },
           {
             "points": 1,
-            "text": "Gives a rerun plan: fixes, search on earlier years only, one score on a locked period, reported with $N$ and the haircut"
+            "text": "Gives a rerun plan: fixes, a search on earlier years only, and one score on a locked period. The score is reported with $N$ and the haircut"
           }
         ]
       },
@@ -492,7 +492,7 @@
         "generic": "Compare your review with the model answer and tick the rubric."
       },
       "explain": {
-        "text": "The note has one of each leak. A feature reads the label's month, two transforms see the whole panel, the universe is today's index, and the Sharpe is the best of 30. Selection alone can give about 0.7 to 0.9 over 8 years. Most of the 1.4 is likely not skill."
+        "text": "A feature reads the label's month, two transforms see the whole panel, and the universe is today's index. The Sharpe is the best of 30, and selection alone can give about 0.7 to 0.9 over 8 years. Most of the 1.4 is likely not skill."
       }
     }
   ]

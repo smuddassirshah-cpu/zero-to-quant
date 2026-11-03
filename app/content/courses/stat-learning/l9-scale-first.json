@@ -15,7 +15,7 @@
       "type": "problem",
       "difficulty": 1,
       "title": "Measured in millions",
-      "prose": "Five raw features for four share-months: mom and vol in %, size in £ millions, turnover as the fraction of shares traded a day, value as book-to-price. A lasso fit gives size a coefficient of 0.0000137 per £1m.",
+      "prose": "Five raw features for four share-months: mom and vol in %, size in £ millions. Turnover is the fraction of shares traded a day, and value is book-to-price. A lasso fit gives size a coefficient of 0.0000137 per £1m.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -249,7 +249,7 @@
         }
       },
       "explain": {
-        "text": "Raw turnover is tiny (about 0.006), so it needs a huge coefficient, and the lasso cut it. Raw size is huge, so its coefficient is nearly free, and the lasso kept it though size has no effect at all. After scaling the lasso keeps turnover and value and drops size.",
+        "text": "Raw turnover is tiny (about 0.006), so it needs a huge coefficient, and the lasso cut it. Raw size is huge, so its coefficient is nearly free, and the lasso kept it though size has no effect. After scaling the lasso keeps turnover and value and drops size.",
         "canvas": {
           "right": {
             "highlight": [
@@ -485,7 +485,7 @@
             "expect": "True"
           }
         ],
-        "how": "Check runs 5 hidden tests, four comparing the scaled arrays with math.isclose entry by entry and one checking the training columns end with mean 0 and sd 1. `make_raw(seed)` is already defined. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 5 hidden tests. Four compare the scaled arrays with math.isclose entry by entry. One checks the training columns end with mean 0 and sd 1. `make_raw(seed)` is already defined. The first run loads NumPy, which takes a few seconds."
       },
       "hints": [
         {
@@ -509,14 +509,14 @@
         "generic": "Some tests failed. Compute `mu` and `sd` from `X_train` only, and apply them to both arrays."
       },
       "explain": {
-        "text": "In the third test the second column is constant, 7, so its sd is 0; dividing by 1 leaves it at 0 and a test value of 9 becomes 2. `StandardScaler` does the same. The test rows' means drift from 0, which is honest: the future differs from the past."
+        "text": "In the third test the second column is constant, 7, so its sd is 0. Dividing by 1 leaves it at 0 and a test value of 9 becomes 2, as `StandardScaler` does. The test rows' means drift from 0, which is honest: the future differs from the past."
       }
     },
     {
       "type": "ladder",
       "difficulty": 2,
       "title": "A pipeline",
-      "prose": "scikit-learn bundles the two steps: `Pipeline([('scale', StandardScaler()), ('model', Lasso(alpha=a, max_iter=10000))])`. Its `.fit` learns the scaler and the lasso on the rows it is given; its `.predict` scales new rows with the stored statistics.",
+      "prose": "scikit-learn bundles the two steps: `Pipeline([('scale', StandardScaler()), ('model', Lasso(alpha=a, max_iter=10000))])`. Its `.fit` learns the scaler and the lasso on the rows it is given. Its `.predict` scales new rows with the stored statistics.",
       "canvas": {
         "kind": "pair",
         "active": "right",
@@ -676,7 +676,7 @@
         "generic": "Some tests failed. Put `StandardScaler()` then `Lasso(alpha=alpha, max_iter=10000)` in the pipeline."
       },
       "explain": {
-        "text": "Index 2, size, is gone: once every feature is in standard deviations, its tiny noise effect is not worth the charge. A pipeline is also a guard: whatever rows you fit it on are the only rows its scaler learns from."
+        "text": "Index 2, size, is gone. Once every feature is in standard deviations, its tiny noise effect is not worth the charge. A pipeline is also a guard: whatever rows you fit it on are the only rows its scaler learns from."
       }
     },
     {
@@ -762,7 +762,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Who needs it?",
-      "prose": "Scaling matters wherever the method compares sizes across features: a penalty on coefficients, or a distance between rows as in level 1's nearest neighbours.",
+      "prose": "Scaling matters wherever the method compares sizes across features. Examples are a penalty on coefficients, or a distance between rows, as in level 1's nearest neighbours.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -840,7 +840,7 @@
       "type": "ladder",
       "difficulty": 3,
       "title": "Constants and dummies",
-      "prose": "Two awkward columns: one is the same for every training row, and one is a sector dummy, 1 for the 30 banks among 300 share-months and 0 otherwise. Both go through `StandardScaler`.",
+      "prose": "Two awkward columns: one is the same for every training row, and one is a sector dummy. The dummy is 1 for the 30 banks among 300 share-months and 0 otherwise. Both go through `StandardScaler`.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -905,7 +905,7 @@
         "generic": "Not quite right. Apply $(x - \\bar x)/s$ with each column's own mean and sd."
       },
       "explain": {
-        "text": "A constant carries no information, and scaling turns it into a column of zeros the model ignores. For dummies we keep it simple and scale them too; leaving them at 0/1 is also defensible, but then rare sectors are penalised more per unit of effect."
+        "text": "A constant carries no information, and scaling turns it into a column of zeros the model ignores. For dummies we keep it simple and scale them too. Leaving them at 0/1 is also defensible, but then rare sectors are penalised more per unit of effect."
       }
     },
     {
@@ -1063,7 +1063,7 @@
       "type": "transfer",
       "difficulty": 3,
       "title": "The feature store",
-      "prose": "A signal desk's feature store z-scores every feature across shares each day: on each date, subtract that day's mean over all shares and divide by that day's sd. A researcher's backtest instead scaled each feature with its mean and sd over 2015 to 2024, and beat live trading.",
+      "prose": "A signal desk's feature store z-scores every feature across shares each day. On each date it subtracts that day's mean over all shares and divides by that day's sd. A researcher's backtest instead scaled each feature with its mean and sd over 2015 to 2024, and beat live trading.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -1094,7 +1094,7 @@
         "options": [
           {
             "id": "right",
-            "text": "The full-history scaling used future data; the daily cross-sectional z-score uses only that day's shares, and also removes what moves all shares together",
+            "text": "The full-history scaling used future data. The daily cross-sectional z-score uses only that day's shares, and also removes what moves all shares together",
             "correct": true
           },
           {
@@ -1137,7 +1137,7 @@
         "generic": "Not quite right. Check when each method's statistics become known."
       },
       "explain": {
-        "text": "Subtracting each day's average across shares also strips out the market's move that day, so the model ranks shares rather than timing the market. The full-history version knew 2024's levels in 2015. Live trading cannot, so the edge vanished."
+        "text": "Subtracting each day's average across shares also strips out the market's move that day. So the model ranks shares rather than timing the market. The full-history version knew 2024's levels in 2015, which live trading cannot, so the edge vanished."
       }
     }
   ],
@@ -1152,7 +1152,7 @@
       "tex": "z_{ij} = \\dfrac{x_{ij} - \\bar x_{j,\\text{train}}}{s_{j,\\text{train}}}",
       "note": "OLS and trees do not need it; penalties and distances do."
     },
-    "trap": "Fitting the scaler on all rows, test rows included, leaks the future into the inputs; split first, then fit the scaler inside a pipeline."
+    "trap": "Fitting the scaler on all rows, test rows included, leaks the future into the inputs. Split first, then fit the scaler inside a pipeline."
   },
   "quiz": [
     {
@@ -1205,7 +1205,7 @@
         "options": [
           {
             "id": "r",
-            "text": "No: the features carry the units problem; scaling $y$ only changes what a given $\\alpha$ means, and forecasts must be scaled back",
+            "text": "No: the features carry the units problem. Scaling $y$ only changes what a given $\\alpha$ means, and forecasts must be scaled back",
             "correct": true
           },
           {
@@ -1221,7 +1221,7 @@
           {
             "id": "same",
             "text": "It changes nothing at all, even $\\alpha$",
-            "why": "Scaling $y$ by $c$ scales the squared errors by $c^2$ and the coefficients by $c$, so the same $\\alpha$ now means a different penalty."
+            "why": "Scaling $y$ by $c$ scales the squared errors by $c^2$ and the coefficients by $c$. So the same $\\alpha$ now means a different penalty."
           }
         ]
       },
@@ -1272,7 +1272,7 @@
         }
       },
       "explain": {
-        "text": "$(0.016 - 0.006)/0.004 = 2.5$. On this scale a turnover coefficient is the effect of a 2.5-sd jump divided by 2.5, comparable with every other feature."
+        "text": "$(0.016 - 0.006)/0.004 = 2.5$. On this scale a turnover coefficient is the effect of a 2.5-sd jump divided by 2.5. That makes it comparable with every other feature."
       }
     }
   ]

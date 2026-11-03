@@ -126,7 +126,7 @@
       ],
       "title": "End to end",
       "prose": "Rows are in month order. Use the first 60% to train, the next 20% to validate and the last 20% to test (`a = int(0.6 * n)`, `b = int(0.8 * n)`). For each alpha, fit a scaler and lasso pipeline on the training block and score it on the validation block. Refit the best alpha on training and validation together, then score once on the test block.",
-      "question": "Complete `end_to_end(X, y, alphas)`, returning `(best_alpha, support, test_mse)`: the chosen alpha, the sorted indices the refitted lasso keeps, and its test MSE rounded to 4 places.",
+      "question": "Complete `end_to_end(X, y, alphas)`, returning `(best_alpha, support, test_mse)`. These are the chosen alpha, the sorted indices the refitted lasso keeps, and its test MSE rounded to 4 places.",
       "widget": {
         "kind": "code",
         "language": "python",
@@ -176,10 +176,10 @@
       },
       "feedback": {
         "correct": "Time split, scaler inside the pipeline, alpha from validation, one look at the test block.",
-        "generic": "Some tests failed. Check the block boundaries, that each validation fit sees only the first block, and that the final refit uses the first two."
+        "generic": "Some tests failed. Check the block boundaries and that each validation fit sees only the first block. Check that the final refit uses the first two."
       },
       "explain": {
-        "text": "On seed 2 the validation block picks $\\alpha = 0.3$ and the lasso keeps mom, turnover and value. On seed 1 it picks 0.1 and keeps five noise signals as well: selection is noisy, which is why the test score, not the support, is the honest summary. On seed 4 it keeps nothing, and the model is the training mean."
+        "text": "On seed 2 the validation block picks $\\alpha = 0.3$ and the lasso keeps mom, turnover and value. Seed 1 picks 0.1 and adds five noise signals, while seed 4 keeps nothing and forecasts the training mean. Selection is noisy, so the test score, not the support, is the honest summary."
       }
     },
     {
@@ -352,7 +352,7 @@
           {
             "id": "lasso",
             "text": "The lasso alone",
-            "why": "The lasso tends to keep one member of each correlated family and zero the rest, which is the arbitrary choice the desk wants to avoid."
+            "why": "The lasso tends to keep one member of each correlated family and zero the rest. That is the arbitrary choice the desk wants to avoid."
           },
           {
             "id": "ridge",
@@ -385,7 +385,7 @@
       "title": "Reviewing a colleague's model",
       "kind": "longform",
       "prompt": "A colleague sends you a return model for next-month stock returns. It uses 60 features on 240 months of a 50-share universe. Their notes:\n\n1. Standardised every feature with `StandardScaler().fit_transform(X)` on all rows.\n2. Fitted OLS; coefficients looked wild, so switched to ridge.\n3. Split the rows at random, 80% train, 20% test.\n4. Tried ten values of $\\lambda$ and kept the one with the lowest test MSE.\n5. Reported that test MSE and a test $R^2$ of 6%, computed against the test rows' own mean.\n6. Included the share's trading volume over the forecast month, because it raised $R^2$ most.\n\nWrite a review: say what is wrong with each step, why it matters, and what to do instead. End with what you expect the honest $R^2$ to look like.",
-      "model": "**1. Scaling on all rows.** The means and sds were learned partly from the test rows, so the test period shaped the inputs: leakage. Split first, then fit `StandardScaler` inside a `Pipeline` on the training rows only, so test rows are scaled with training statistics.\n\n**2. OLS to ridge.** The switch is right: 60 correlated features on noisy returns give OLS large offsetting coefficients and high variance. Ridge (or the lasso, if a sparse model is wanted) trades a little bias for much less variance. Scaling before the penalty is also right; it is only the rows used that are wrong.\n\n**3. Random split.** Returns are ordered in time and shares in the same month move together. A random split puts later months in training and earlier ones in test, and lets the model learn each month's common move from its neighbours. Split by time: train on early months, validate on later ones, test on the last block.\n\n**4. $\\lambda$ chosen on the test set.** Picking the best of ten on the test rows makes their score optimistic: the luckiest $\\lambda$ wins and its luck is baked in. Choose $\\lambda$ on a validation block (or with time-ordered cross-validation), refit on training plus validation, then score the test block once.\n\n**5. Reporting.** The reported number is biased by steps 1, 3, 4 and 6. Also, $R^2$ against the test rows' own mean uses a baseline nobody could have known in advance; use the training mean as the baseline forecast.\n\n**6. Volume over the forecast month.** This is not known when the forecast is made; it is part of what is being predicted. It leaks the target and explains most of the 6%. Every feature must be point-in-time: computable from data available at the month-end before the forecast.\n\n**Expected honest result.** With leakage removed, a time split and $\\lambda$ chosen on validation data, a monthly stock-return model should expect a test $R^2$ around 0% to 2%, possibly negative. That is normal for returns; the model should be judged by whether that small edge is stable across later blocks.",
+      "model": "**1. Scaling on all rows.** The means and sds were learned partly from the test rows, so the test period shaped the inputs: leakage. Split first, then fit `StandardScaler` inside a `Pipeline` on the training rows only. Test rows are then scaled with training statistics.\n\n**2. OLS to ridge.** The switch is right: 60 correlated features on noisy returns give OLS large offsetting coefficients and high variance. Ridge (or the lasso, if a sparse model is wanted) trades a little bias for much less variance. Scaling before the penalty is also right; it is only the rows used that are wrong.\n\n**3. Random split.** Returns are ordered in time and shares in the same month move together. A random split puts later months in training and earlier ones in test. It also lets the model learn each month's common move from its neighbours. Split by time: train on early months, validate on later ones, test on the last block.\n\n**4. $\\lambda$ chosen on the test set.** Picking the best of ten on the test rows makes their score optimistic. The luckiest $\\lambda$ wins and its luck is baked in. Choose $\\lambda$ on a validation block or by time-ordered cross-validation. Then refit on training plus validation and score the test block once.\n\n**5. Reporting.** The reported number is biased by steps 1, 3, 4 and 6. Also, $R^2$ against the test rows' own mean uses a baseline nobody could have known in advance. Use the training mean as the baseline forecast.\n\n**6. Volume over the forecast month.** This is not known when the forecast is made; it is part of what is being predicted. It leaks the target and explains most of the 6%. Every feature must be point-in-time: computable from data available at the month-end before the forecast.\n\n**Expected honest result.** Remove the leakage, split by time and choose $\\lambda$ on validation data. Then a monthly stock-return model should expect a test $R^2$ around 0% to 2%, possibly negative. That is normal for returns; the model should be judged by whether that small edge is stable across later blocks.",
       "rubric": [
         {
           "points": 2,
@@ -397,7 +397,7 @@
         },
         {
           "points": 2,
-          "text": "Identifies choosing $\\lambda$ on the test set as optimistic and replaces it with a validation block or time-ordered cross-validation, testing once"
+          "text": "Identifies choosing $\\lambda$ on the test set as optimistic and uses a validation block or time-ordered cross-validation, testing once"
         },
         {
           "points": 1,

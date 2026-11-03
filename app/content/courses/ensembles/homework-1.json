@@ -162,7 +162,7 @@
         "options": [
           {
             "id": "same",
-            "text": "The same rows fall in every leaf; each leverage threshold becomes the log of a value between the same two loans",
+            "text": "The same rows fall in every leaf. Each leverage threshold becomes the log of a value between the same two loans",
             "correct": true
           },
           {
@@ -182,7 +182,7 @@
         "generic": "Not quite right. Does the log change which loans sit above or below a threshold?"
       },
       "explain": {
-        "text": "The log is increasing, so it keeps the order of the loans and the same partitions are available with the same gains. Thresholds move to the midpoint of the logged values, but every prediction is unchanged."
+        "text": "The log is increasing, so it keeps the loans' order. The same partitions are available with the same gains. Thresholds move to the midpoint of the logged values, but every prediction is unchanged."
       }
     },
     {
@@ -191,7 +191,7 @@
       "skills": [
         "en-trees"
       ],
-      "prose": "Build a depth-2 classification tree from scratch: Gini gain, thresholds at exact midpoints, the first best split kept on a tie, a leaf when a node is pure or nothing gains. Return the nested rules and the predictions for `X_query`. The hidden tests compare your rules and predictions with scikit-learn's `DecisionTreeClassifier(max_depth=2, random_state=0)` on the same rows.",
+      "prose": "Build a depth-2 classification tree from scratch with Gini gain and thresholds at exact midpoints. Keep the first best split on a tie, and make a leaf when a node is pure or nothing gains. Return the nested rules and the predictions for `X_query`. The hidden tests compare your rules and predictions with scikit-learn's `DecisionTreeClassifier(max_depth=2, random_state=0)` on the same rows.",
       "question": "Complete `best_split`, `grow` and `predict_one`.",
       "widget": {
         "kind": "code",
@@ -245,7 +245,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests: the rules and predictions on the 12 loans and on 40 seeded loans, predictions on two more books from `make_loans`, and a pure node. Every expected value was produced by scikit-learn's own tree. Answers must match exactly; loading NumPy for `make_loans` takes a few seconds."
+        "how": "Check runs 7 hidden tests: the rules and predictions on the 12 loans and on 40 seeded loans. Others cover predictions on two more books from `make_loans`, and a pure node. Every expected value was produced by scikit-learn's own tree. Answers must match exactly; loading NumPy for `make_loans` takes a few seconds."
       },
       "feedback": {
         "correct": "Your tree matches scikit-learn's on every book.",
@@ -264,7 +264,7 @@
       "skills": [
         "en-trees"
       ],
-      "prose": "Write the whole honest procedure for a time-ordered data set. Train on the first `n_train` rows, test on the rest. Choose the depth by walk-forward cross-validation on the training rows only (`TimeSeriesSplit`, from the validation course), refit there, and score the test rows once.",
+      "prose": "Write the whole honest procedure for a time-ordered data set. Train on the first `n_train` rows, test on the rest. Choose the depth by walk-forward cross-validation on the training rows only (`TimeSeriesSplit`, from the validation course). Refit there, and score the test rows once.",
       "question": "Complete `honest_tree_accuracy`.",
       "widget": {
         "kind": "code",
@@ -307,7 +307,7 @@
         "generic": "Some tests failed. Slice by time, cross-validate on the training rows only, and refit before scoring the test rows."
       },
       "explain": {
-        "text": "On `make_updays(3)` walk-forward CV picks depth 1 and the test accuracy is 57%; on 100 test days that is within noise of 52%, the always-down rate. On the loan book CV picks depth 2 and scores 81.5%. The procedure never lets the test rows influence a choice."
+        "text": "On `make_updays(3)` walk-forward CV picks depth 1 and scores 57% on 100 days, within noise of the 52% always-down rate. On the loan book CV picks depth 2 and scores 81.5%. The procedure never lets the test rows influence a choice."
       }
     },
     {
@@ -318,16 +318,16 @@
         "en-interpret"
       ],
       "kind": "longform",
-      "prompt": "A risk committee reviews a new credit model: a depth-3 decision tree on leverage, interest cover and sector, fitted on 4,000 past loans. A member asks why it is a tree and not the logistic regression the bank used before. Write the answer you would give the committee. Explain what each model can and cannot do, the trade-offs for this decision, and what you would check before the tree is approved.",
-      "model": "**Recommendation.** Keep the depth-3 tree as the decision screen, but only after it passes the same out-of-time tests as the logistic model, and use the logistic model as its challenger.\n\n**What each model is.**\n- The tree is at most 8 rules, each a short chain of thresholds: *leverage above 3.5 and cover below 3 → decline*. It predicts each leaf's default rate.\n- Logistic regression is a weighted sum of the features passed through the logistic curve. It gives every borrower a smooth probability, and each coefficient is a change in log-odds per unit of the feature.\n\n**Why the tree.**\n- A committee can read every rule aloud and check it against credit policy; a decline can be explained by the rule that fired.\n- It finds thresholds and interactions on its own (high leverage matters only when cover is low), which logistic regression needs hand-made features to capture.\n- It needs no scaling and is unaffected by any order-keeping transform, so outliers in leverage do not drag it.\n\n**What the tree cannot do.**\n- Its probabilities are coarse: at most 8 values, so ranking within a leaf is lost, and borrowers either side of a threshold get very different answers for a tiny change.\n- It is unstable: refit on a slightly different sample and the questions can change, so the policy can flip between reviews.\n- It cannot extrapolate: a borrower beyond the training range gets the edge leaf's rate, which understates risk in a downturn.\n- It was grown greedily, so it is not the best depth-3 tree, only a good one.\n\n**What logistic regression gives and lacks.** Smooth, monotone, stable probabilities that are often well calibrated and degrade gracefully outside the data. It misses thresholds and interactions unless we add them, and its coefficients are harder to turn into a written policy.\n\n**What I would check before signing off.**\n1. Out-of-time performance of both models on later vintages (walk-forward), on AUC and on precision and recall at the approval cut-off.\n2. Calibration: in each leaf, and in each logistic score band, does the predicted default rate match the observed one?\n3. Stability: refit the tree on bootstrap samples and on rolling windows; do the splits and leaf rates stay put?\n4. Leaf sizes: every leaf should hold enough defaults (say 30 or more) for its rate to mean something.\n5. Behaviour in a stressed period and at the edges of the data, where the tree is flat.\n6. Sense of each rule: higher leverage or lower cover should never lower the predicted risk.",
+      "prompt": "A risk committee reviews a new credit model, fitted on 4,000 past loans. It is a depth-3 decision tree on leverage, interest cover and sector. A member asks why it is a tree and not the logistic regression the bank used before. Write the answer you would give the committee. Explain what each model can and cannot do, and the trade-offs for this decision. Then say what you would check before the tree is approved.",
+      "model": "**Recommendation.** Adopt the depth-3 tree as the decision screen only after it passes the same out-of-time tests as the logistic model. Keep the logistic model as its challenger.\n\n**What each model is.**\n- The tree is at most 8 rules, each a short chain of thresholds. One might read *leverage above 3.5 and cover below 3 → decline*. It predicts each leaf's default rate.\n- Logistic regression is a weighted sum of the features passed through the logistic curve. It gives every borrower a smooth probability, and each coefficient is a change in log-odds per unit of the feature.\n\n**Why the tree.**\n- A committee can read every rule aloud and check it against credit policy. A decline can be explained by the rule that fired.\n- It finds thresholds and interactions on its own (high leverage matters only when cover is low). Logistic regression needs hand-made features to capture them.\n- It needs no scaling and is unaffected by any order-keeping transform, so outliers in leverage do not drag it.\n\n**What the tree cannot do.**\n- Its probabilities are coarse: at most 8 values, so ranking within a leaf is lost. Borrowers either side of a threshold get very different answers for a tiny change.\n- It is unstable: refit on a slightly different sample and the questions can change. The policy can then flip between reviews.\n- It cannot extrapolate: a borrower beyond the training range gets the edge leaf's rate, which understates risk in a downturn.\n- It was grown greedily, so it is not the best depth-3 tree, only a good one.\n\n**What logistic regression gives and lacks.** Smooth, monotone, stable probabilities that are often well calibrated and degrade gracefully outside the data. It misses thresholds and interactions unless we add them, and its coefficients are harder to turn into a written policy.\n\n**What I would check before signing off.**\n1. Out-of-time performance of both models on later vintages (walk-forward), on AUC and on precision and recall at the approval cut-off.\n2. Calibration: in each leaf, and in each logistic score band, does the predicted default rate match the observed one?\n3. Stability: refit the tree on bootstrap samples and on rolling windows; do the splits and leaf rates stay put?\n4. Leaf sizes: every leaf should hold enough defaults (say 30 or more) for its rate to mean something.\n5. Behaviour in a stressed period and at the edges of the data, where the tree is flat.\n6. Sense of each rule: higher leverage or lower cover should never lower the predicted risk.",
       "rubric": [
         {
           "points": 2,
-          "text": "Describes both models correctly: a tree as a few threshold rules predicting leaf rates; logistic regression as a weighted sum through the logistic curve giving smooth probabilities."
+          "text": "Describes both models correctly: a tree as a few threshold rules predicting leaf rates. Logistic regression is described as a weighted sum through the logistic curve, giving smooth probabilities."
         },
         {
           "points": 2,
-          "text": "Gives the tree's real strengths: readable rules a committee can check, thresholds and interactions found without hand-made features, no scaling needed."
+          "text": "Gives the tree's real strengths: readable rules a committee can check, and no scaling needed. It also finds thresholds and interactions without hand-made features."
         },
         {
           "points": 2,
@@ -339,7 +339,7 @@
         },
         {
           "points": 2,
-          "text": "Names concrete checks: out-of-time validation of both models, calibration by leaf or band, stability across resamples or windows, leaf sizes, behaviour in stress."
+          "text": "Names concrete checks: out-of-time validation of both models, calibration by leaf or band, and stability across resamples or windows. Leaf sizes and behaviour in stress also appear."
         }
       ]
     }

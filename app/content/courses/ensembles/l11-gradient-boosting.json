@@ -407,14 +407,14 @@
     }
    },
    "explain": {
-    "text": "For squared error the gradient is the residual and the best leaf value is the leaf's mean residual, so the line search is free. For log loss scikit-learn uses one Newton step per leaf. Shrinkage ν then scales the whole tree."
+    "text": "For squared error the gradient is the residual. The best leaf value is the leaf's mean residual, so the line search is free. For log loss scikit-learn takes one Newton step per leaf, and in both cases shrinkage ν scales the whole tree."
    }
   },
   {
    "type": "ladder",
    "difficulty": 2,
    "title": "Let validation stop it",
-   "prose": "`HistGradientBoostingClassifier` holds back a fraction of the rows, scores each new tree on them, and stops once 10 trees in a row bring no gain. `model.n_iter_` is how many trees it built. `model.validation_score_` lists the scores, as minus the log loss, starting before the first tree.",
+   "prose": "`HistGradientBoostingClassifier` holds back a fraction of the rows and scores each new tree on them. It stops once 10 trees in a row bring no gain. `model.n_iter_` is how many trees it built. `model.validation_score_` lists the scores, as minus the log loss, starting before the first tree.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -488,7 +488,7 @@
     "generic": "Some tests failed. Fit, read `n_iter_`, and flip the sign of the last validation score."
    },
    "explain": {
-    "text": "The best validation loss, 0.3582, came after 14 trees; the 10 that followed never beat it, so the fit stopped at 24. scikit-learn keeps those 10 trees. Before any tree the loss was 0.4341, the base rate's.",
+    "text": "Validation loss bottomed at 0.3582 after 14 trees; the next 10 never beat it, so the fit stopped at 24. scikit-learn keeps those 10 trees. Before any tree the loss was 0.4341, the base rate's.",
     "canvas": {
      "lines": [
       ">>> X, y = make_credit(1)",
@@ -581,7 +581,7 @@
     }
    },
    "explain": {
-    "text": "Binning also lets each node build its histogram of gradients in one pass, and the sibling's histogram is the parent's minus its own. With 255 quantile bins little is lost, because a split between two close values rarely matters. That speed is why histogram boosting is the default for large tabular data.",
+    "text": "Binning also lets each node build its gradient histogram in one pass; a sibling's is the parent's minus its own. With 255 quantile bins little is lost, because a split between two close values rarely matters. That speed is why histogram boosting is the default for large tabular data.",
     "canvas": {
      "values": {
       "hist": 254
@@ -681,7 +681,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "Stop on a later block",
-   "prose": "Do it in time order. Fit on the first `n_train` days, score every stage on the next `n_val` days, and pick the stage with the lowest log loss. `staged_predict_proba` gives each stage's probabilities from one fit.",
+   "prose": "Do it in time order. Fit on the first `n_train` days and score every stage on the next `n_val` days. Pick the stage with the lowest log loss. `staged_predict_proba` gives each stage's probabilities from one fit.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -750,7 +750,7 @@
       "expect": "True"
      }
     ],
-    "how": "Check runs 4 hidden tests on days from `make_daily(seed, n)`, which is already defined, and one toy series with a perfect signal. Each fit of 100 small trees takes about a second. Answers must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+    "how": "Check runs 4 hidden tests on days from the predefined `make_daily(seed, n)`, and one toy series with a perfect signal. Each fit of 100 small trees takes about a second. Answers must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
     "budget": 10000
    },
    "hints": [
@@ -782,7 +782,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "A rule the trees must keep",
-   "prose": "A risk committee wants one rule: more leverage never lowers the default probability. `monotonic_cst` takes one entry per column: 1 forces the prediction to rise with it, −1 to fall, 0 leaves it free. Leverage is column 0 of `make_credit`.",
+   "prose": "A risk committee wants one rule: more leverage never lowers the default probability. `monotonic_cst` takes one entry per column. An entry of 1 forces the prediction to rise with that column, −1 to fall, and 0 leaves it free. Leverage is column 0 of `make_credit`.",
    "canvas": {
     "kind": "table",
     "params": {
@@ -842,7 +842,7 @@
       "expect": "(0.3004, 0.3054)"
      }
     ],
-    "how": "Check runs 3 hidden tests; each fits two models of 100 depth-2 trees on 1,000 firms, under a second in all. Tuples must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+    "how": "Check runs 3 hidden tests. Each fits two models of 100 depth-2 trees on 1,000 firms, under a second in all. Tuples must match exactly. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
    },
    "hints": [
     {
@@ -914,7 +914,7 @@
     "options": [
      {
       "id": "honest",
-      "text": "Boosting wins after tuning, by 1% over an untuned forest; the gain must hold on a second later year, and probabilities need a calibration check",
+      "text": "Boosting wins after tuning, by 1% over an untuned forest. The gain must hold on a second later year, and probabilities need a calibration check",
       "correct": true
      },
      {
@@ -952,26 +952,26 @@
     }
    ],
    "feedback": {
-    "correct": "Boosting is the usual winner on tabular data, but only once tuned, and only if the gain holds out of sample.",
+    "correct": "Boosting usually wins on tabular data, but only once tuned, and only if the gain holds out of sample.",
     "generic": "Not quite right. Ask how fair the comparison was and what it was measured on."
    },
    "explain": {
-    "text": "Tuned boosting usually edges out a forest on tables like this, and the monotone rule lets the committee sign it off. But the forest got no tuning, and one later year is one draw. The note should state the tuning, the margin, the test period, and the calibration check still to do."
+    "text": "Tuned boosting usually edges out a forest on tables like this, and the monotone rule lets the committee sign off. But the forest got no tuning, and one later year is one draw. The note should state the tuning, the margin, the test period, and the calibration check still to do."
    }
   }
  ],
  "summary": {
   "ideas": [
-   "Gradient boosting fits each tree to the negative gradient of the loss: the residual $y - F$ for squared error, $y - p$ for log loss.",
-   "Early stopping chooses the number of trees on held-out rows; on time-ordered data those rows must be a later block, not a random fraction.",
-   "Monotone constraints build a rule such as 'more leverage never lowers risk' into the trees; they cost little when the data agree and a lot when they do not."
+   "Gradient boosting fits each tree to the negative gradient of the loss. That is the residual $y - F$ for squared error, $y - p$ for log loss.",
+   "Early stopping chooses the number of trees on held-out rows. On time-ordered data those rows must be a later block, not a random fraction.",
+   "Monotone constraints build a rule such as 'more leverage never lowers risk' into the trees. They cost little when the data agree and a lot when they do not."
   ],
   "formula": {
    "name": "Gradient boosting step",
    "tex": "r_i = -\\dfrac{\\partial L(y_i, F)}{\\partial F}\\bigg|_{F = F_{b-1}(x_i)}, \\qquad F_b = F_{b-1} + \\nu\\, \\hat f_b",
    "note": "For log loss, $r_i = y_i - p_i$."
   },
-  "trap": "A random validation fraction on daily data puts near-copies of training days in the validation set, so early stopping stops late and the score flatters."
+  "trap": "A random validation fraction on daily data puts near-copies of training days in the validation set. So early stopping stops late and the score flatters."
  },
  "quiz": [
   {
@@ -1010,7 +1010,7 @@
     "generic": "Not quite right. Compare `n_iter_` with `max_iter`."
    },
    "explain": {
-    "text": "At learning rate 0.01 each tree moves the fit a little, so 100 trees are not enough to reach the minimum. Raise `max_iter` until `n_iter_` falls below it."
+    "text": "At learning rate 0.01 each tree moves the fit a little, so 100 trees cannot reach the minimum. Raise `max_iter` until `n_iter_` falls below it."
    }
   },
   {

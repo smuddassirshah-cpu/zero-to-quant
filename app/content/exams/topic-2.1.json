@@ -1598,7 +1598,7 @@
     "correct": "The product is built from raw columns, scaled with training statistics, and scored on later months.",
     "generic": "Some tests failed. Split by position, build the product of the raw columns, then scale with training mean and sd only.",
     "byKey": {
-     "test-1": "Test 1 checks the whole recipe. Each of these changes the answer: a shuffled split, no product, a product of z-scores, a scaler fitted on all rows.",
+     "test-1": "Test 1 checks the whole recipe. These each change the answer: a shuffled split, no product, a product of z-scores, a scaler fitted on all rows.",
      "test-4": "Test 4 passes plain lists. Convert them with `np.asarray` before slicing columns.",
      "test-5": "Test 5 has a constant column. Its sd is 0, so keep a divisor of 1 there.",
      "error": "If the starter stopped, fill in the function body first. Python reports the line."
@@ -1708,7 +1708,7 @@
     "fm-labels"
    ],
    "title": "Labels for a long-and-short desk",
-   "prose": "A desk trades a moving-average crossover, long or short. A meta-label model decides whether to take each call, so it needs a label per call: 1 if the profit target was touched before the stop. This desk sets the target at $2\\sigma$ and the stop at $1\\sigma$.",
+   "prose": "A desk trades a moving-average crossover, long or short. A meta-label model decides whether to take each call, so it needs a label per call. The label is 1 if the profit target was touched before the stop. This desk sets the target at $2\\sigma$ and the stop at $1\\sigma$.",
    "question": "Complete `meta_labels_trade(prices, vol, sides, pt, sl, h)`.",
    "widget": {
     "kind": "code",
@@ -2126,7 +2126,7 @@
     "correct": "Tuning sees only early rows, the scaler lives in the pipeline, and the test block is scored once.",
     "generic": "Some tests failed. Split by position, tune `C` with `TimeSeriesSplit` inside a `Pipeline`, and score the last 30% once.",
     "byKey": {
-     "test-1": "Test 1 checks the chosen `C`, the hit rate and the base rate. Each of these fails one: a shuffled split, a scaler fitted on all rows, `C` chosen on the test block, shuffled folds.",
+     "test-1": "Test 1 checks the chosen `C`, the hit rate and the base rate. Each fails one: a shuffled split, a scaler fitted on all rows, `C` chosen on the test block, shuffled folds.",
      "test-6": "Test 6 lists the values of `C` in reverse. Equal scores keep the earlier `C` in the list, so use a strict `>`.",
      "test-7": "Test 7 has tied scores. Equal scores keep the earlier `C` in the list.",
      "error": "If the starter stopped, fill in the function body first. Python reports the line."
@@ -2234,12 +2234,12 @@
    ],
    "title": "Explaining a model note",
    "kind": "longform",
-   "prompt": "A new analyst sends this note. The model predicts next-month returns for 500 shares from 60 features, on 2010 to 2024 data.\n\n*I standardised every feature on the full sample, then split the rows at random: 70% to train and 30% to test. A boosted model of 2,000 deep trees scored an R-squared of 0.45 on the training rows. On the test rows it scored 0.02. I tried 40 settings of the learning rate and the depth. The best test R-squared was 0.09, so the model works. Next I will add more features.*\n\nWrite a short reply that covers four things.\n\n(a) Explain the gap between 0.45 and 0.02 using bias and variance. Say what regularisation would do about it.\n\n(b) Name two leaks in the pipeline and say how each flatters the score.\n\n(c) Say what the 0.09 is worth.\n\n(d) Describe the validation you would use instead, in order.",
-   "model": "**(a) Bias and variance.** Deep trees on 60 features have low bias and high variance. They fit noise as well as signal. So the training R-squared of 0.45 measures how well they memorised the rows. The test R-squared of 0.02 shows what carries over to new months, and that is almost nothing. Adding features adds flexibility and so adds variance.\n\nRegularisation accepts a little more bias for much less variance. For trees that means shallower trees, a smaller learning rate, bigger leaves or early stopping. For a linear model it would be a ridge or lasso penalty. The strength is chosen on validation data, never on the test rows.\n\n**(b) Two leaks.**\n\n- *Scaling on the full sample.* The means and sds include the test months, so the test period shapes the inputs. Fit the scaler inside each training fold, for example in a pipeline.\n- *A random split of time-ordered data.* Neighbouring months overlap, so training rows next to a test month carry its answer. The model also trains on months after the ones it is tested on. Both flatter the score.\n\nThe test rows were also used to choose among 40 settings, which is a third leak: the test set was no longer unseen.\n\n**(c) What 0.09 is worth.** It is the best of 40 tries on the same rows, so selection inflates it. Even noise would give the best of 40 a positive score. The 0.09 is an upper bound, not an estimate, and the honest figure is probably near the 0.02.\n\n**(d) Validation in order.**\n\n1. Hold out the last block of months as the test period. Purge the labels that reach into it.\n2. Build the scaler and the model inside a pipeline.\n3. Tune depth and learning rate with walk-forward folds on the earlier block. Use a gap for the label horizon, and stop the trees early.\n4. Refit the chosen model on the whole earlier block.\n5. Score the test block once. Report it against a simple baseline, net of costs, with the number of settings tried.",
+   "prompt": "A new analyst sends this note. The model predicts next-month returns for 500 shares from 60 features, on 2010 to 2024 data.\n\n*I standardised every feature on the full sample. Then I split the rows at random: 70% to train and 30% to test. A boosted model of 2,000 deep trees scored an R-squared of 0.45 on the training rows. On the test rows it scored 0.02. I tried 40 settings of the learning rate and the depth. The best test R-squared was 0.09, so the model works. Next I will add more features.*\n\nWrite a short reply that covers four things.\n\n(a) Explain the gap between 0.45 and 0.02 using bias and variance. Say what regularisation would do about it.\n\n(b) Name two leaks in the pipeline and say how each flatters the score.\n\n(c) Say what the 0.09 is worth.\n\n(d) Describe the validation you would use instead, in order.",
+   "model": "**(a) Bias and variance.** Deep trees on 60 features have low bias and high variance. They fit noise as well as signal. So the training R-squared of 0.45 measures how well they memorised the rows. The test R-squared of 0.02 shows what carries over to new months, and that is almost nothing. Adding features adds flexibility and so adds variance.\n\nRegularisation accepts a little more bias for much less variance. For trees that means shallower trees, a smaller learning rate, bigger leaves or early stopping. For a linear model it would be a ridge or lasso penalty. The strength is chosen on validation data, never on the test rows.\n\n**(b) Two leaks.**\n\n- *Scaling on the full sample.* The means and sds include the test months, so the test period shapes the inputs. Fit the scaler inside each training fold, for example in a pipeline.\n- *A random split of time-ordered data.* Neighbouring months overlap, so training rows next to a test month carry its answer. The model also trains on months after the ones it is tested on. Both flatter the score.\n\nThe test rows were also used to choose among 40 settings. That is a third leak: the test set was no longer unseen.\n\n**(c) What 0.09 is worth.** It is the best of 40 tries on the same rows, so selection inflates it. Even noise would give the best of 40 a positive score. The 0.09 is an upper bound, not an estimate, and the honest figure is probably near the 0.02.\n\n**(d) Validation in order.**\n\n1. Hold out the last block of months as the test period. Purge the labels that reach into it.\n2. Build the scaler and the model inside a pipeline.\n3. Tune depth and learning rate with walk-forward folds on the earlier block. Use a gap for the label horizon, and stop the trees early.\n4. Refit the chosen model on the whole earlier block.\n5. Score the test block once. Report it against a simple baseline, net of costs, with the number of settings tried.",
    "rubric": [
     {
      "points": 2,
-     "text": "Reads the gap as overfitting: low bias and high variance from deep trees and many features, so training R-squared measures memorised noise."
+     "text": "Reads the gap as overfitting: low bias and high variance from deep trees and many features. Training R-squared then measures memorised noise."
     },
     {
      "points": 2,
@@ -2255,7 +2255,7 @@
     },
     {
      "points": 2,
-     "text": "Gives a time-ordered plan: test block last, purge or gap, scaler inside the pipeline, walk-forward tuning on the earlier block, one test score."
+     "text": "Gives a time-ordered plan: test block last, purge or gap, scaler inside the pipeline. Tunes walk-forward on the earlier block, then scores the test block once."
     },
     {
      "points": 1,

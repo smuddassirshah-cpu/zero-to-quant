@@ -66,7 +66,7 @@
         "generic": "Not quite right. Check the split (first `n_train` rows), the scaling (training `lo` and `hi`) and the rounding before choosing."
       },
       "explain": {
-        "text": "The pipeline keeps the test rows out of every decision except the final choice of degree. Its training MSE at the chosen degree is always below the test MSE that chose it: the gap is the cost of fitting noise."
+        "text": "The pipeline keeps the test rows out of every decision except the final choice of degree. Its training MSE at the chosen degree is always below the test MSE that chose it. The gap is the cost of fitting noise."
       }
     },
     {
@@ -76,7 +76,7 @@
         "sl-tradeoff"
       ],
       "title": "Hit rate of a direction call",
-      "prose": "Now $k$-NN as a classifier. Label a day 1 if its next-day return is above 0, else 0. Fit `KNeighborsClassifier` on the training labels and report the **hit rate**: the share of test days whose predicted label matches the actual one. The prelude defines `make_knn(n, seed)`; the tests use odd $k$, so votes never tie.",
+      "prose": "Now $k$-NN as a classifier. Label a day 1 if its next-day return is above 0, else 0. Fit `KNeighborsClassifier` on the training labels and report the **hit rate**. That is the share of test days whose predicted label matches the actual one. The prelude defines `make_knn(n, seed)`; the tests use odd $k$, so votes never tie.",
       "question": "Complete `knn_hit_rate`, rounded to 4 places.",
       "widget": {
         "kind": "code",
@@ -295,7 +295,7 @@
         }
       },
       "explain": {
-        "text": "Area $\\pi r^2 = 0.1$ gives $r \\approx 0.178$. In 10 dimensions the same 10% needs a ball of radius about 0.72, wider than the cube's half-width 0.5: the neighbours stop being local."
+        "text": "Area $\\pi r^2 = 0.1$ gives $r \\approx 0.178$. In 10 dimensions the same 10% needs a ball of radius about 0.72. That is wider than the cube's half-width 0.5, so the neighbours stop being local."
       }
     },
     {
@@ -349,8 +349,8 @@
       ],
       "title": "An R² of 0.9",
       "kind": "longform",
-      "prompt": "A colleague shows you a strategy \"model\": a regression of the next day's return of an index future on 25 technical indicators, fitted on 120 trading days. In sample it has $R^2 = 0.9$, and they want £5m of risk to trade it.\n\n(a) What do you ask about how the model was built and scored?\n\n(b) What do you run, step by step, to judge it honestly?\n\n(c) What do you expect to find, and why? Use bias, variance and degrees of freedom.\n\n(d) What would convince you it is worth trading?",
-      "model": "**(a) Questions.** Was $R^2 = 0.9$ measured on the same 120 days used to fit? Almost certainly: so it is a training score. How were the 25 indicators chosen, and how many others were tried and dropped? Each one tried is a hidden degree of freedom. Are any indicators computed with data from the day being predicted (look-ahead), or standardised over the whole sample? Either leaks the future. What is the target exactly, next-day return measured close to close, and when could the position actually be taken?\n\n**(b) What to run.** Sort by date. Hold out the latest block of days that played no part in choosing the indicators or fitting, ideally a year, or use time-ordered folds. Refit on the training block only and compute the test MSE. Compare it with the simplest benchmark: always forecasting the training mean return, whose test MSE is about the variance of daily returns. Also report the hit rate against the share of up days, and a P&L after costs.\n\n**(c) What to expect.** With 26 coefficients on 120 rows, the fit has about one free parameter per 4.6 days, so it can fit much of the noise: daily index returns are mostly noise, with a true predictable share well under 5%. Training $R^2$ rises with every indicator added, whatever it is, because the models are nested. The model's variance is high: refitting on another 120 days would give very different coefficients. Expect test MSE at or above the mean forecast's, an out-of-sample $R^2$ near zero or negative, and a hit rate near the base rate. An in-sample $R^2$ of 0.9 for next-day returns is itself the warning sign.\n\n**(d) What would convince me.** A positive out-of-sample $R^2$, or a hit rate clearly above the base rate, on a long held-out period, stable across sub-periods, from a model with few, pre-specified features, and surviving transaction costs. A smaller model, for example two or three indicators with a stated economic reason, that does as well out of sample is far more credible than 25.",
+      "prompt": "A colleague shows you a strategy \"model\". It regresses an index future's next-day return on 25 technical indicators, fitted on 120 trading days. In sample it has $R^2 = 0.9$, and they want £5m of risk to trade it.\n\n(a) What do you ask about how the model was built and scored?\n\n(b) What do you run, step by step, to judge it honestly?\n\n(c) What do you expect to find, and why? Use bias, variance and degrees of freedom.\n\n(d) What would convince you it is worth trading?",
+      "model": "**(a) Questions.** Was $R^2 = 0.9$ measured on the same 120 days used to fit? Almost certainly: so it is a training score. How were the 25 indicators chosen, and how many others were tried and dropped? Each one tried is a hidden degree of freedom. Are any indicators computed with data from the day being predicted (look-ahead), or standardised over the whole sample? Either leaks the future. What is the target exactly, next-day return measured close to close, and when could the position actually be taken?\n\n**(b) What to run.** Sort by date. Hold out the latest block, ideally a year, that played no part in choosing indicators or fitting. Or use time-ordered folds. Refit on the training block only and compute the test MSE. Compare it with the simplest benchmark, always forecasting the training mean return. Its test MSE is about the variance of daily returns. Also report the hit rate against the share of up days, and a P&L after costs.\n\n**(c) What to expect.** With 26 coefficients on 120 rows, the fit has about one free parameter per 4.6 days. So it can fit much of the noise. Daily index returns are mostly noise, with a true predictable share well under 5%. Training $R^2$ rises with every indicator added, whatever it is, because the models are nested. The model's variance is high: refitting on another 120 days would give very different coefficients. Expect test MSE at or above the mean forecast's and an out-of-sample $R^2$ near zero or negative. Expect a hit rate near the base rate too. An in-sample $R^2$ of 0.9 for next-day returns is itself the warning sign.\n\n**(d) What would convince me.** A positive out-of-sample $R^2$, or a hit rate clearly above the base rate, on a long held-out period. It must be stable across sub-periods and survive transaction costs. It must come from a model with few, pre-specified features. A smaller model that does as well out of sample is far more credible than 25. Take two or three indicators with a stated economic reason.",
       "rubric": [
         {
           "points": 2,
@@ -366,11 +366,11 @@
         },
         {
           "points": 1,
-          "text": "Compares test MSE with the mean forecast (about the variance of daily returns), and the hit rate with the base rate"
+          "text": "Compares test MSE with the mean forecast (about the variance of daily returns), and hit rate with the base rate"
         },
         {
           "points": 2,
-          "text": "Explains with degrees of freedom and variance why 26 coefficients on 120 noisy rows overfit, and that training $R^2$ only rises as indicators are added"
+          "text": "Explains with degrees of freedom and variance why 26 coefficients on 120 noisy rows overfit. Notes that training $R^2$ only rises as indicators are added"
         },
         {
           "points": 1,

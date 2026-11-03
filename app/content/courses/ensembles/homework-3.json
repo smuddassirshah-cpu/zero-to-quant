@@ -11,7 +11,7 @@
     "en-boosting"
    ],
    "prose": "Build gradient boosting for squared error yourself, with a learning rate and a stopping rule chosen on validation data. `make_trades(seed, n)` from lesson 9 is already defined: trade size against price impact, noise sd 3 bp.",
-   "question": "Complete `boost_with_stopping` so it returns the best number of rounds, from 0 to `max_rounds`, and its validation MSE rounded to 4 places.",
+   "question": "Complete `boost_with_stopping` so it returns the best number of rounds, from 0 to `max_rounds`, and its validation MSE. Round the MSE to 4 places.",
    "widget": {
     "kind": "code",
     "language": "python",
@@ -75,7 +75,7 @@
     "en-boosting"
    ],
    "prose": "Package lesson 12's study as one function a reviewer can rerun. `make_study(seed, kind)` and `boost_fit(X, y)` are already defined, as in the lesson.",
-   "question": "Complete `full_study(seed, kind)` so it returns the three hit rates, the base rate and the $t$ statistic of the best model, each rounded to 4 places.",
+   "question": "Complete `full_study(seed, kind)` so it returns the three hit rates, the base rate and the $t$ statistic of the best model. Round each to 4 places.",
    "widget": {
     "kind": "code",
     "language": "python",
@@ -111,10 +111,10 @@
    },
    "feedback": {
     "correct": "On `make_study(4)` the best model, the forest, has $t = 1.65$; on the linear data logistic is best.",
-    "generic": "Some tests failed. Pool the five test blocks, take the base rate from the pooled labels, and use the best of the three hit rates for $t$."
+    "generic": "Some tests failed. Pool the five test blocks and take the base rate from the pooled labels. Use the best of the three hit rates for $t$."
    },
    "explain": {
-    "text": "One function makes the study repeatable and its choices visible: the splits, the gap, the models and the base rate. The $t$ of the best model is still the best of three, so a reviewer should discount it for the selection."
+    "text": "One function makes the study repeatable and its choices visible: the splits, the gap, the models and the base rate. The $t$ of the best model is still the best of three. A reviewer should discount it for the selection."
    }
   },
   {
@@ -223,7 +223,7 @@
    "skills": [
     "en-boosting"
    ],
-   "prose": "A boosted default model starts from a constant log-odds $F_0$, the one that minimises log loss on a book where 20% of firms defaulted.",
+   "prose": "A boosted default model starts from a constant log-odds $F_0$. It is the one that minimises log loss on a book where 20% of firms defaulted.",
    "question": "What is $F_0$, to 4 places?",
    "widget": {
     "kind": "numeric",
@@ -269,7 +269,7 @@
     "en-boosting",
     "en-interpret"
    ],
-   "prose": "On the lesson 11 credit data, forcing default risk to rise with leverage gave a test log loss of 0.3259 against 0.3267 unconstrained. Forcing it to fall with leverage gave 0.4570; the base rate scores 0.4400.",
+   "prose": "On the lesson 11 credit data, forcing default risk to rise with leverage gave a test log loss of 0.3259. Unconstrained, the model scored 0.3267. Forcing it to fall with leverage gave 0.4570; the base rate scores 0.4400.",
    "question": "What do the three numbers show?",
    "widget": {
     "kind": "choice",
@@ -277,7 +277,7 @@
     "options": [
      {
       "id": "ok",
-      "text": "The data agree with 'risk rises with leverage', so that constraint is free; the reversed constraint fights the data and loses even to the base rate",
+      "text": "The data agree with 'risk rises with leverage', so that constraint is free. The reversed constraint fights the data and loses even to the base rate",
       "correct": true
      },
      {
@@ -311,7 +311,7 @@
    "skills": [
     "en-boosting"
    ],
-   "prose": "A grid of learning rate by depth, each cell stopped at its best number of trees on one validation set, gave a best validation MSE of 11.54 out of 16 cells.",
+   "prose": "A grid of learning rate by depth had 16 cells. Each was stopped at its best number of trees on one validation set. The best validation MSE among them was 11.54.",
    "question": "What should you quote as the model's expected error on new data?",
    "widget": {
     "kind": "choice",
@@ -344,7 +344,7 @@
     "generic": "Not quite right. Ask which data the choice was made on."
    },
    "explain": {
-    "text": "Picking the best of many configurations on one validation set favours the one that fits its noise, as in *Trying too many models*. A test set used once gives the honest number."
+    "text": "Picking the best of many configurations on one validation set favours the one that fits its noise. We saw this in *Trying too many models*. A test set used once gives the honest number."
    }
   },
   {
@@ -355,8 +355,8 @@
     "en-interpret"
    ],
    "kind": "longform",
-   "prompt": "A colleague's note: \"I boosted a direction model for the index: 3,000 trees of depth 6, learning rate 0.3, on 1,500 days of 40 features. I stopped it with `HistGradientBoostingClassifier(early_stopping=True)` and its default validation split. On the last 120 days it scores a 58% hit rate. It was the best of the five models I tried, so I propose to trade it.\" Name every problem, estimate how much of the 58% survives, and write the three sentences the desk would accept. Write at most 350 words.",
-   "model": "**The settings.** Learning rate 0.3 with depth-6 trees is large steps with deep trees: the model fits noise within a few dozen rounds. 3,000 trees is only a cap if early stopping works, and here it does not work honestly. Use small trees (depth 2 or 3), a smaller rate (0.05), and choose the number of trees on a validation curve.\n\n**The validation split.** `early_stopping=True` holds out a *random* fraction of the 1,500 days. Neighbouring days share most of their rolling-window features, so validation days have near-copies in training: stopping comes late and the validation score flatters. Stop on a later block instead, with a purge gap.\n\n**The test.** 120 days is short. Against a base rate of 50%, the standard error is $\\sqrt{0.25/120} = 4.6$ points, so 58% is $t = 1.75$. The base rate should be the better of always-up and always-down on those days, which may be above 50% and shrink the edge further.\n\n**The selection.** It was the best of five models on the same 120 days. The best of five with no skill often reaches $t \\approx 1.2$ to $1.5$; picking it was a sixth fit to the test set. With a Bonferroni view, $t = 1.75$ across five tries is not significant.\n\n**What survives.** Probably little: discount the selection and the leaky stopping, and a fair guess is 50% to 53%, within one standard error of the base rate. Costs are not yet in the number at all.\n\n**What I would ask for.** Walk-forward over the full 1,500 days with purging, all five models reported on the same pooled out-of-sample days, per-fold results, and P&L after costs.\n\n**The three sentences.** \"Over 120 test days the best of five models scored 58%, 1.75 standard errors above a 50% base rate, before any adjustment for trying five models. Its stopping used a random validation split, which flatters on daily data, so the true edge is likely smaller. We will rerun all five on a purged walk-forward over the full history, with costs, before proposing a trade.\"",
+   "prompt": "A colleague's note: \"I boosted a direction model for the index on 1,500 days of 40 features. I used 3,000 trees of depth 6 with learning rate 0.3. I stopped it with `HistGradientBoostingClassifier(early_stopping=True)` and its default validation split. On the last 120 days it scores a 58% hit rate. It was the best of the five models I tried, so I propose to trade it.\" Name every problem, estimate how much of the 58% survives, and write the three sentences the desk would accept. Write at most 350 words.",
+   "model": "**The settings.** Learning rate 0.3 with depth-6 trees means large steps with deep trees. The model fits noise within a few dozen rounds. 3,000 trees is only a cap if early stopping works, and here it does not work honestly. Use small trees (depth 2 or 3), a smaller rate (0.05). Choose the number of trees on a validation curve.\n\n**The validation split.** `early_stopping=True` holds out a *random* fraction of the 1,500 days. Neighbouring days share most of their rolling-window features, so validation days have near-copies in training. Stopping comes late and the validation score flatters. Stop on a later block instead, with a purge gap.\n\n**The test.** 120 days is short. Against a base rate of 50%, the standard error is $\\sqrt{0.25/120} = 4.6$ points, so 58% is $t = 1.75$. The base rate should be the better of always-up and always-down on those days. That may be above 50% and shrink the edge further.\n\n**The selection.** It was the best of five models on the same 120 days. The best of five with no skill often reaches $t \\approx 1.2$ to $1.5$. Picking it was a sixth fit to the test set. With a Bonferroni view, $t = 1.75$ across five tries is not significant.\n\n**What survives.** Probably little. Discount the selection and the leaky stopping. A fair guess is then 50% to 53%, within one standard error of the base rate. Costs are not yet in the number at all.\n\n**What I would ask for.** Walk-forward over the full 1,500 days with purging. All five models reported on the same pooled out-of-sample days. Per-fold results and P&L after costs.\n\n**The three sentences.** \"The best of five models hit 58% on 120 test days, 1.75 standard errors above a 50% base rate. Choosing among five and stopping on a random daily split both flatter it, so the true edge is likely smaller. We will rerun all five on a purged walk-forward over the full history, with costs, before proposing a trade.\"",
    "rubric": [
     {
      "points": 1,

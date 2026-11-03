@@ -150,7 +150,7 @@
         "en-bagging",
         "en-interpret"
       ],
-      "prose": "Build a bagged ensemble from scratch: your own bootstrap sampler, depth-2 trees, OOB scoring, and a permutation importance for every feature on a test set. Use one generator for everything, in the order the starter's comments give.",
+      "prose": "Build a bagged ensemble from scratch: your own bootstrap sampler, depth-2 trees and OOB scoring. Add a permutation importance for every feature on a test set. Use one generator for everything, in the order the starter's comments give.",
       "question": "Complete `scratch_forest(X, y, X_test, y_test, B, seed)`. Return `(oob_acc, top_feature)`: the OOB accuracy rounded to 4 places, and the index of the feature with the largest permutation importance.",
       "widget": {
         "kind": "code",
@@ -205,14 +205,14 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 6 hidden tests on `make_loans` and `make_book`, which are already defined; two reorder the columns, so the top feature moves. Each pair is compared with math.isclose, so use one generator in the order the comments give. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+        "how": "Check runs 6 hidden tests on the predefined `make_loans` and `make_book`. Two reorder the columns, so the top feature moves. Each pair is compared with math.isclose, so use one generator in the order the comments give. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
       },
       "feedback": {
         "correct": "Leverage comes out on top wherever its column sits.",
         "generic": "Some tests failed. Check the order of the random draws: all the resamples first, then one permutation per feature."
       },
       "explain": {
-        "text": "Thirty depth-2 trees reach an OOB accuracy of 0.7725 on book 1, close to a full forest. Moving the leverage column moves the answer with it, which is how you know the importance follows the data, not the position."
+        "text": "Thirty depth-2 trees reach an OOB accuracy of 0.7725 on book 1, close to a full forest. Moving the leverage column moves the answer with it. So the importance follows the data, not the position."
       }
     },
     {
@@ -221,7 +221,7 @@
       "skills": [
         "en-bagging"
       ],
-      "prose": "The loans are in issue order. Build the honest procedure: train on the first `n_train`, choose $m$ and depth by OOB accuracy on those rows only, then score once on the later loans, beside a logistic regression.",
+      "prose": "The loans are in issue order. Build the honest procedure: train on the first `n_train`, choose $m$ and depth by OOB accuracy on those rows only. Then score once on the later loans, beside a logistic regression.",
       "question": "Complete `honest_forest(X, y, n_train, ms, depths)`. Return `(m, depth, forest_test_acc, logit_test_acc)`, accuracies rounded to 4 places.",
       "widget": {
         "kind": "code",
@@ -262,10 +262,10 @@
       },
       "feedback": {
         "correct": "Here the logistic baseline wins: the true risk is linear in the log-odds.",
-        "generic": "Some tests failed. Choose by `oob_score_` on the training rows only, keep the first best, and fit the logistic regression on the same rows."
+        "generic": "Some tests failed. Choose by `oob_score_` on the training rows only and keep the first best. Fit the logistic regression on the same rows."
       },
       "explain": {
-        "text": "On book 7 the forest scores 0.79 and the logistic regression 0.80; on book 4, 0.795 against 0.83. We built these books with a linear log-odds, so the simple model is right. Always report a baseline. With returns data, replace OOB with a walk-forward inside the training period."
+        "text": "On book 7 the forest scores 0.79 and the logistic regression 0.80; on book 4, 0.795 against 0.83. We built these books with a linear log-odds, so the simple model is right: always report a baseline. With returns data, replace OOB with a walk-forward inside the training period."
       }
     },
     {
@@ -361,8 +361,8 @@
         "en-interpret"
       ],
       "kind": "longform",
-      "prompt": "A colleague sends you this summary of a daily equity signal. \"I fitted a random forest with 2,000 trees and `max_features=None` on 2,500 days of 12 features, predicting whether the next 5-day return is positive. The OOB accuracy is 0.71, so the model is strong. The impurity importances show that 20-day momentum causes the returns, followed by the day-of-year feature.\" Explain what each choice costs and what you would change. Write at most 300 words.",
-      "model": "**2,000 trees.** Not harmful: more trees cannot overfit, and the vote converges. But past a few hundred trees nothing changes, so 2,000 only costs time. Use enough trees that the OOB curve is flat, perhaps 300.\n\n**`max_features=None`.** With $m = p$ every split sees all 12 features, so this is bagging, not a random forest. If one feature dominates, every tree starts with it, the trees are correlated, and the variance floor $\\rho\\sigma^2$ stays high. Use $m \\approx \\sqrt{12} = 3$, or choose $m$ on validation data.\n\n**OOB accuracy on daily data.** The labels are 5-day forward returns, so neighbouring days share 4 of 5 return days. Each day's OOB trees drew its neighbours, which are near copies of it, so 0.71 is inflated; on pure noise this setup can score above 0.75. Report an expanding walk-forward test, with a gap of at least 5 days between training and test (purging), and compare it with a coin flip and a simple baseline such as logistic regression.\n\n**Impurity importance as causation.** Impurity importance credits every split, so continuous and high-cardinality columns gain credit even when they are noise; day-of-year, with 365 values, is a likely case of memorisation. Importance also says what the model uses, never what causes returns. Compute permutation importance on the walk-forward test blocks, run an ablation that drops correlated groups together, and describe momentum as a useful predictor, not a cause.\n\n**What I would change.** Fewer trees with $m = 3$; walk-forward with purging; permutation importance and ablation on test blocks; a baseline; and no causal language.",
+      "prompt": "A colleague sends you this summary of a daily equity signal. \"I fitted a random forest with 2,000 trees and `max_features=None` on 2,500 days of 12 features. It predicts whether the next 5-day return is positive. The OOB accuracy is 0.71, so the model is strong. The impurity importances show that 20-day momentum causes the returns, followed by the day-of-year feature.\" Explain what each choice costs and what you would change. Write at most 300 words.",
+      "model": "**2,000 trees.** Not harmful: more trees cannot overfit, and the vote converges. But past a few hundred trees nothing changes, so 2,000 only costs time. Use enough trees that the OOB curve is flat, perhaps 300.\n\n**`max_features=None`.** With $m = p$ every split sees all 12 features, so this is bagging, not a random forest. If one feature dominates, every tree starts with it, the trees are correlated, and the variance floor $\\rho\\sigma^2$ stays high. Use $m \\approx \\sqrt{12} = 3$, or choose $m$ on validation data.\n\n**OOB accuracy on daily data.** The labels are 5-day forward returns, so neighbouring days share 4 of 5 return days. Each day's OOB trees drew its neighbours, which are near copies of it, so 0.71 is inflated. On pure noise this setup can score above 0.75. Report an expanding walk-forward test, with a gap of at least 5 days between training and test (purging). Compare it with a coin flip and a simple baseline such as logistic regression.\n\n**Impurity importance as causation.** Impurity importance credits every split, so continuous and high-cardinality columns gain credit even when they are noise. Day-of-year, with 365 values, is a likely case of memorisation. Importance also says what the model uses, never what causes returns. Compute permutation importance on the walk-forward test blocks, and run an ablation that drops correlated groups together. Describe momentum as a useful predictor, not a cause.\n\n**What I would change.** Fewer trees with $m = 3$; walk-forward with purging; permutation importance and ablation on test blocks; a baseline; and no causal language.",
       "rubric": [
         {
           "points": 1,
@@ -382,7 +382,7 @@
         },
         {
           "points": 2,
-          "text": "Explains the impurity-importance bias towards continuous or high-cardinality columns, naming day-of-year as likely memorisation, and recommends held-out permutation importance or ablation"
+          "text": "Explains the impurity-importance bias towards continuous or high-cardinality columns, naming day-of-year as likely memorisation. Recommends held-out permutation importance or ablation"
         },
         {
           "points": 2,

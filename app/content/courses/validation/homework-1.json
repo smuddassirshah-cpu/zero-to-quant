@@ -53,7 +53,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 4 hidden tests on loans from `make_loans` and `make_noise`, comparing all three values with math.isclose; each takes up to a few seconds. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
+        "how": "Check runs 4 hidden tests on loans from `make_loans` and `make_noise`. Each compares all three values with math.isclose and takes up to a few seconds. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick.",
         "prelude": "import numpy as np\n\ndef make_loans(n, p, seed):\n    \"\"\"Loans: spread over base rate (percentage points). x0 leverage +0.6, x1 interest cover -0.4,\n    x2 sector risk +0.3, the rest pure noise; noise sd 0.45.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    beta = np.zeros(p)\n    beta[:3] = [0.6, -0.4, 0.3][:p]\n    y = (2.5 + X @ beta + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n\ndef make_noise(n, p, seed):\n    \"\"\"Loans whose p signals are all pure noise: spread = 2.5 + noise sd 0.45, unrelated to X.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.normal(0, 1, (n, p)).round(3)\n    y = (2.5 + rng.normal(0, 0.45, n)).round(3)\n    return X, y\n",
         "budget": 40000
       },
@@ -65,7 +65,7 @@
         }
       },
       "explain": {
-        "text": "The search sees only the training rows; the test rows give one score; nested CV on the training rows checks that score without touching the test rows. Here the two honest numbers, 0.2253 and 0.2165, agree within the noise of a 100-loan test set."
+        "text": "The search sees only the training rows, and the test rows give one score. Nested CV on the training rows checks that score without touching the test rows. Here the two honest numbers, 0.2253 and 0.2165, agree within the noise of a 100-loan test set."
       }
     },
     {
@@ -75,7 +75,7 @@
         "vl-cv"
       ],
       "title": "Same folds, paired",
-      "prose": "Compare two penalties fairly: on the same folds, fold by fold. For each fold of `KFold(n_splits=k, shuffle=True, random_state=seed)`, fit `Ridge(alpha=alpha_a)` and `Ridge(alpha=alpha_b)` on the training rows and record MSE(a) minus MSE(b) on the test rows. Return the mean and sd (`np.std`) of the differences, each rounded to 4 places.",
+      "prose": "Compare two penalties fairly: on the same folds, fold by fold. For each fold of `KFold(n_splits=k, shuffle=True, random_state=seed)`, fit `Ridge(alpha=alpha_a)` and `Ridge(alpha=alpha_b)` on the training rows. Record MSE(a) minus MSE(b) on the test rows. Return the mean and sd (`np.std`) of the differences, each rounded to 4 places.",
       "question": "Complete `paired_fold_diff(X, y, alpha_a, alpha_b, k, seed)`.",
       "widget": {
         "kind": "code",
@@ -124,7 +124,7 @@
         "generic": "Some tests failed. For `make_loans(200, 15, 52)`, $\\alpha$ 1 against 30, 5 folds, seed 0, the answer is (−0.0104, 0.027)."
       },
       "explain": {
-        "text": "Pairing on identical folds cancels the fold-to-fold noise both models share, so the differences vary far less than the raw scores. A model compared with itself gives exactly (0, 0), a useful sanity check."
+        "text": "Pairing on identical folds cancels the fold-to-fold noise both models share. The differences therefore vary far less than the raw scores. A model compared with itself gives exactly (0, 0), a useful sanity check."
       }
     },
     {
@@ -196,8 +196,8 @@
       ],
       "title": "A colleague’s note",
       "kind": "longform",
-      "prompt": "A colleague sends this note about a loan-spread model built on 350 loans:\n\n“Tried 40 settings (8 values of α × 5 feature sets). Best 5-fold CV MSE 0.18. Used all the data for CV, so no held-out set was needed. Expected MSE in production: 0.18.”\n\nWrite a reply: what is wrong with the note, roughly what the real error is likely to be, and what you would run instead.",
-      "model": "**What is wrong.** The 0.18 is the lowest of 40 cross-validated scores. Each score is noisy, and the minimum of 40 noisy numbers sits below the truth, so the winner’s score is biased low. The same folds both chose the setting and scored it, so the CV rows did the job of a validation set, and nothing is left to act as a test set. “Expected MSE 0.18” is therefore an optimistic number, not an estimate.\n\n**What the real number is likely to be.** Higher than 0.18. With 40 settings that include different feature sets on only 350 loans, the search has a lot of freedom, and our level 1 experiments found gaps of 4% to 10% for searches of 15 to 105 feature choices on 200 rows. A reasonable guess is somewhere around 0.19 to 0.20, but the point is that we cannot know without measuring.\n\n**What to run.**\n1. Nested CV on all 350 loans: `cross_val_score(GridSearchCV(pipe, grid, cv=inner), X, y, cv=outer)` with shuffled 5-fold `KFold`s and a `Pipeline` so scaling happens inside each fold. Its mean is the honest score of the recipe “search 40 settings, refit the winner”. Cost: $5 \\times (5 \\times 40 + 1) = 1005$ fits, affordable for ridge.\n2. Report the nested mean with the fold spread, and the grid that was searched.\n3. If more loans arrive, lock them as a test set and score the frozen model once.\n4. Deploy the search refitted on all 350 loans; its score is the nested one.\n5. If these loans are in time order (they often are), the folds should move forward in time rather than be shuffled: level 2.\n\nThe desk’s rule applies: the number you tuned on is not the number you report.",
+      "prompt": "A colleague sends this note about a loan-spread model built on 350 loans:\n\n“Tried 40 settings (8 values of α × 5 feature sets). Best 5-fold CV MSE 0.18. Used all the data for CV, so no held-out set was needed. Expected MSE in production: 0.18.”\n\nWrite a reply. Say what is wrong with the note, and roughly what the real error is likely to be. Then say what you would run instead.",
+      "model": "**What is wrong.** The 0.18 is the lowest of 40 cross-validated scores. Each score is noisy, and the minimum of 40 noisy numbers sits below the truth. The winner’s score is therefore biased low. The same folds both chose the setting and scored it. The CV rows did the job of a validation set, so nothing is left to act as a test set. “Expected MSE 0.18” is therefore an optimistic number, not an estimate.\n\n**What the real number is likely to be.** Higher than 0.18. With 40 settings, including different feature sets, on only 350 loans, the search has a lot of freedom. Our level 1 runs found gaps of 4% to 10% for 15 to 105 feature choices on 200 rows. A reasonable guess is somewhere around 0.19 to 0.20, but the point is that we cannot know without measuring.\n\n**What to run.**\n1. Nested CV on all 350 loans: `cross_val_score(GridSearchCV(pipe, grid, cv=inner), X, y, cv=outer)` with shuffled 5-fold `KFold`s and a `Pipeline` so scaling happens inside each fold. Its mean is the honest score of the recipe “search 40 settings, refit the winner”. Cost: $5 \\times (5 \\times 40 + 1) = 1005$ fits, affordable for ridge.\n2. Report the nested mean with the fold spread, and the grid that was searched.\n3. If more loans arrive, lock them as a test set and score the frozen model once.\n4. Deploy the search refitted on all 350 loans; its score is the nested one.\n5. Loans are often in time order. If these are, the folds should move forward in time, not be shuffled: level 2.\n\nThe desk’s rule applies: the number you tuned on is not the number you report.",
       "rubric": [
         {
           "points": 2,
@@ -209,7 +209,7 @@
         },
         {
           "points": 2,
-          "text": "Says the real error is likely higher than 0.18, and gives a sensible reason the gap may be sizeable (40 settings with feature-set choices on 350 loans)"
+          "text": "Says the real error is likely higher than 0.18. Gives a sensible reason the gap may be sizeable (40 settings with feature-set choices on 350 loans)"
         },
         {
           "points": 2,
@@ -225,7 +225,7 @@
         },
         {
           "points": 1,
-          "text": "Says what to deploy (the search refitted on all rows) and what to report (the nested score, with the grid searched)"
+          "text": "Says what to deploy (the search refitted on all rows) and what to report (nested score, grid searched)"
         }
       ]
     },
@@ -310,7 +310,7 @@
         "vl-cv",
         "vl-overfit"
       ],
-      "prose": "On 200 loans, ridge with $\\alpha = 1$ and $\\alpha = 30$ score 0.2021 and 0.2125 by 5-fold CV, but on the same folds their fold-by-fold difference has mean −0.0104 and sd 0.027.",
+      "prose": "On 200 loans, ridge with $\\alpha = 1$ and $\\alpha = 30$ score 0.2021 and 0.2125 by 5-fold CV. On the same folds, their fold-by-fold difference has mean −0.0104 and sd 0.027.",
       "question": "What should you conclude?",
       "widget": {
         "kind": "choice",
@@ -385,7 +385,7 @@
       "skills": [
         "vl-cv"
       ],
-      "prose": "A colleague proposes nested CV with 5 outer folds, 3 inner folds and a grid of 8 settings, with one refit per outer fold.",
+      "prose": "A colleague proposes nested CV with 5 outer folds, 3 inner folds and a grid of 8 settings. There is one refit per outer fold.",
       "question": "How many fits will it make?",
       "widget": {
         "kind": "numeric",

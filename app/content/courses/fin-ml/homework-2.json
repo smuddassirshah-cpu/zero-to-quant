@@ -12,7 +12,7 @@
         "fm-eval"
       ],
       "title": "A leak-free feature builder",
-      "prose": "`make_universe()` gives a long panel of 20 seeded stocks over 120 business days, with a planted column `smooth`, and a fundamentals table with publication dates. Build the features with no look-ahead:\n- `ret_1`, `vol_20`: daily log return and its trailing 20-day sd, per stock\n- `fd`: log close differenced at $d = 0.4$, threshold $10^{-2}$, per stock\n- `mom_rank`: percentile rank of the 20-day log return across stocks each date\n- `fund`: latest value published on or before each date",
+      "prose": "`make_universe()` gives a long panel of 20 seeded stocks over 120 business days, with a planted column `smooth`. It also gives a fundamentals table with publication dates. Build the features with no look-ahead:\n- `ret_1`, `vol_20`: daily log return and its trailing 20-day sd, per stock\n- `fd`: log close differenced at $d = 0.4$, threshold $10^{-2}$, per stock\n- `mom_rank`: percentile rank of the 20-day log return across stocks each date\n- `fund`: latest value published on or before each date",
       "question": "Complete `build_features` and `count_planted_leaks`. `summary` returns the frame's shape, the mean of `fund`, and the leak count.",
       "widget": {
         "kind": "code",
@@ -79,16 +79,16 @@
             "expect": "280"
           }
         ],
-        "how": "Check runs 9 hidden tests on `make_universe(seed, n_stocks, n_days)`, already defined with `ffd_weights`: the summary tuple, the column order, NaN counts per stock, the fundamental on and before its publication day, three single cells rounded to 6 places, and the leak count on a panel where one stock's `smooth` is made honest. The first run loads NumPy and pandas, which takes a few seconds.",
+        "how": "Check runs 9 hidden tests on `make_universe(seed, n_stocks, n_days)`, already defined with `ffd_weights`. They cover the summary tuple, column order, NaN counts per stock, and the fundamental on and before its publication day. They also check three single cells, rounded to 6 places. The last is the leak count on a panel where one stock's `smooth` is made honest. The first run loads NumPy and pandas, which takes a few seconds.",
         "prelude": "import numpy as np\nimport pandas as pd\n\ndef make_universe(seed=2, n_stocks=20, n_days=120):\n    \"\"\"Seeded long-format closes for 20 stocks on 120 business days from 2 January 2024,\n    with a planted column `smooth`: a centred 5-day mean of each stock's close.\n    Also a fundamentals table: one value per stock and quarter end, with its publication date.\"\"\"\n    rng = np.random.default_rng(seed)\n    dates = pd.bdate_range('2024-01-02', periods=n_days)\n    rows, fund = [], []\n    for i in range(n_stocks):\n        s = f'S{i:02d}'\n        close = 50 * np.exp(np.cumsum(0.0003 + 0.015 * rng.standard_normal(n_days)))\n        rows.append(pd.DataFrame({'date': dates, 'stock': s, 'close': close}))\n        for qe, base in (('2023-12-31', '2024-01-20'), ('2024-03-31', '2024-04-20')):\n            pub = pd.Timestamp(base) + pd.Timedelta(days=int(rng.integers(0, 30)))\n            fund.append((s, pd.Timestamp(qe), round(float(rng.normal(1.0, 0.3)), 3), pub))\n    prices = pd.concat(rows, ignore_index=True)\n    prices['smooth'] = prices.groupby('stock')['close'].transform(lambda c: c.rolling(5, center=True).mean())\n    fundamentals = pd.DataFrame(fund, columns=['stock', 'quarter_end', 'value', 'published'])\n    return prices, fundamentals\n\ndef ffd_weights(d, threshold):\n    w, k = [1.0], 1\n    while k < 100000:\n        nxt = -w[-1] * (d - k + 1) / k\n        if abs(nxt) < threshold:\n            break\n        w.append(nxt)\n        k += 1\n    return np.array(w)\n",
         "budget": 20000
       },
       "feedback": {
         "correct": "Correct. The frame is 2,400 by 7, `fund` averages 0.9806, and 2,320 planted values look ahead.",
-        "generic": "Some tests failed. Check each column's window is trailing and per stock, the rank is per date, and the join is backward on `published`."
+        "generic": "Some tests failed. Check each column's window is trailing and per stock. Check the rank is per date and the join is backward on `published`."
       },
       "explain": {
-        "text": "Every column is trailing and grouped by stock, the rank is grouped by date, and the fundamental arrives on its publication date. The planted centred mean equals the trailing mean moved back 2 days on every row where it exists: 2,320 rows, 116 per stock. A detector that compares with a shifted trailing version finds such leaks without reading the code."
+        "text": "Every column is trailing and grouped by stock, the rank by date, and the fundamental arrives on its publication date. The centred mean is the trailing mean moved back 2 days, on 2,320 rows where it exists, 116 per stock. A detector that compares with a shifted trailing version finds such leaks without reading the code."
       }
     },
     {
@@ -99,7 +99,7 @@
         "fm-eval"
       ],
       "title": "As of a date",
-      "prose": "A point-in-time table `acme` keeps every version of each figure with its `as_of` date, including a restatement of ACME's March quarter on 2 August.",
+      "prose": "A point-in-time table `acme` keeps every version of each figure with its `as_of` date. One is a restatement of ACME's March quarter on 2 August.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -144,7 +144,7 @@
         },
         "state": {}
       },
-      "question": "Complete `point_in_time(table, as_of_date)`: the EPS a backtest may use on that date, one per ticker and quarter, sorted by ticker then quarter.",
+      "question": "Complete `point_in_time(table, as_of_date)`: the EPS a backtest may use on that date. Return one per ticker and quarter, sorted by ticker then quarter.",
       "widget": {
         "kind": "code",
         "language": "python",
@@ -242,7 +242,7 @@
         ]
       },
       "feedback": {
-        "correct": "Correct. Order the rows, build trailing values, join by knowledge time, rank by date, align with the label, then fit on training only.",
+        "correct": "Correct. Order the rows, build trailing values, join by knowledge time and rank by date. Then align with the label and fit on training only.",
         "generic": "Not quite. Nothing that uses `shift` or `rolling` can come before the sort; nothing fitted can come before the split."
       },
       "explain": {
@@ -342,8 +342,8 @@
       ],
       "title": "Reviewing a feature list",
       "kind": "longform",
-      "prompt": "A colleague proposes twelve features for a daily stock-selection model trained on 2012 to 2019 and tested on 2020 to 2023. For each, say whether it drifts, leaks, or is a level in disguise (or is fine), and give a replacement where needed.\n\n1. Closing price in £\n2. 5-day log return\n3. 200-day moving average of the close\n4. Close over its 50-day mean, minus 1\n5. 20-day volatility from `rolling(20, center=True).std()`\n6. Market cap in £bn\n7. Volume over its 20-day mean\n8. Cumulative volume since listing\n9. Quarterly EPS joined on quarter end\n10. Momentum ranked with `groupby('stock').rank(pct=True)`\n11. Price z-scored with the 2012 to 2023 mean and sd\n12. 12-month return ranked across stocks each date",
-      "model": "**Fine as they are:** 2 (a return), 4 (a ratio to a trailing mean), 7 (relative volume) and 12 (a cross-sectional rank of a trailing return).\n\n**Levels that drift:** 1, the price: replace with a return or feature 4. 6, market cap in £bn: rank it across stocks each date, or take its log change. These are visible levels.\n\n**Levels in disguise:** 3, the 200-day average, is a smoothed price in pounds: use close over the 200-day mean, minus 1. 8, cumulative volume, only grows: use feature 7.\n\n**Leaks:** 5 uses a centred window, so each value includes 9 future days: use `rolling(20).std()`. 9 dates EPS at quarter end, five or more weeks before publication: join backward on the publication date. 10 ranks each stock against its own whole history, future included: rank across stocks with `groupby('date')`, or use a trailing time-series rank.\n\n**Both:** 11 is a rescaled level, so it still drifts, and its mean and sd include 2020 to 2023, so it leaks: use a trailing rolling z-score.\n\n**The test behind every verdict:** what is the feature's unit, does a value mean the same in 2012 and 2023, and was it known on the date it carries?",
+      "prompt": "A colleague proposes twelve features for a daily stock-selection model. It is trained on 2012 to 2019 and tested on 2020 to 2023. For each, say whether it drifts, leaks, is a level in disguise or is fine. Give a replacement where needed.\n\n1. Closing price in £\n2. 5-day log return\n3. 200-day moving average of the close\n4. Close over its 50-day mean, minus 1\n5. 20-day volatility from `rolling(20, center=True).std()`\n6. Market cap in £bn\n7. Volume over its 20-day mean\n8. Cumulative volume since listing\n9. Quarterly EPS joined on quarter end\n10. Momentum ranked with `groupby('stock').rank(pct=True)`\n11. Price z-scored with the 2012 to 2023 mean and sd\n12. 12-month return ranked across stocks each date",
+      "model": "**Fine as they are:** 2 (a return), 4 (a ratio to a trailing mean) and 7 (relative volume). So is 12, a cross-sectional rank of a trailing return.\n\n**Levels that drift:** 1, the price: replace with a return or feature 4. 6, market cap in £bn: rank it across stocks each date, or take its log change. These are visible levels.\n\n**Levels in disguise:** 3, the 200-day average, is a smoothed price in pounds. Use close over the 200-day mean, minus 1. 8, cumulative volume, only grows: use feature 7.\n\n**Leaks:** 5 uses a centred window, so each value includes 9 future days: use `rolling(20).std()`. 9 dates EPS at quarter end, five or more weeks before publication: join backward on the publication date. 10 ranks each stock against its own whole history, future included. Rank across stocks with `groupby('date')`, or use a trailing time-series rank.\n\n**Both:** 11 is a rescaled level, so it still drifts. Its mean and sd include 2020 to 2023, so it also leaks: use a trailing rolling z-score.\n\n**The test behind every verdict:** what is the feature's unit? Does a value mean the same in 2012 and 2023? Was it known on the date it carries?",
       "rubric": [
         {
           "points": 2,
@@ -378,7 +378,7 @@
         "fm-features",
         "fm-eval"
       ],
-      "prose": "On the seeded walk of lesson 6, three rules give the smallest passing $d$ as 0.3 (ADF, one lag), 0.4 (VR below 0.2) and 0.45 (ADF, lags by AIC).",
+      "prose": "On the seeded walk of lesson 6, three rules give different smallest passing values of $d$. They are 0.3 (ADF, one lag), 0.4 (VR below 0.2) and 0.45 (ADF, lags by AIC).",
       "question": "What should a research note report?",
       "widget": {
         "kind": "choice",
