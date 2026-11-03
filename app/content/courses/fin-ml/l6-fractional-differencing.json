@@ -2550,7 +2550,7 @@
         ]
       },
       "feedback": {
-        "correct": "Correct. The correlation with the level falls from 1 at $d = 0$ to 0.036 at $d = 1$, and the trend fades on the way.",
+        "correct": "Correct. The correlation with the level falls from 1 at $d = 0$ to 0.036 at $d = 1$. The trend fades on the way.",
         "generic": "Not quite. Watch the caption and the shape as $d$ passes 0.3, 0.5 and 0.8."
       },
       "explain": {
@@ -2566,7 +2566,7 @@
       "type": "problem",
       "difficulty": 1,
       "title": "Half a difference",
-      "prose": "A return is weights on past values: $1$ on $x_t$, $-1$ on $x_{t-1}$. **Fractional differencing** (López de Prado, *Advances in Financial Machine Learning*, chapter 5) lets $d$ be any number, with weights from $$w_0 = 1, \\qquad w_k = -w_{k-1}\\,\\frac{d - k + 1}{k}.$$",
+      "prose": "A return is weights on past values: $1$ on $x_t$, $-1$ on $x_{t-1}$. **Fractional differencing** (López de Prado, *Advances in Financial Machine Learning*, chapter 5) lets $d$ be any number. Its weights come from $$w_0 = 1, \\qquad w_k = -w_{k-1}\\,\\frac{d - k + 1}{k}.$$",
       "canvas": {
         "kind": "bars",
         "params": {
@@ -2917,7 +2917,7 @@
             "expect": "1"
           }
         ],
-        "how": "Check runs 7 hidden tests against the hand values: $d = 0.5$, $1$, $0$, $2$, $0.3$ and $0.4$, rounded to 6 places and compared with math.isclose, and one length. The first run loads NumPy, which takes a few seconds."
+        "how": "Check runs 7 hidden tests: the hand values for $d = 0.5$, $1$, $0$, $2$, $0.3$ and $0.4$, and one length. The values are rounded to 6 places and compared with math.isclose. The first run loads NumPy, which takes a few seconds."
       },
       "hints": [
         {
@@ -3044,7 +3044,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 9 hidden tests: $d = 1$ must equal `np.diff` after the first NaN, $d = 0$ must return `x` itself, a short series with threshold 0.1, NaN counts, and the seeded log price. Values compare with math.isclose. The first run loads NumPy, which takes a few seconds.",
+        "how": "Check runs 9 hidden tests. With $d = 1$ the output must equal `np.diff` after the first NaN, and $d = 0$ must return `x` itself. Others use a short series with threshold 0.1, NaN counts and the seeded log price. Values compare with math.isclose. The first run loads NumPy, which takes a few seconds.",
         "prelude": "import numpy as np\n\ndef make_logprice(seed, n=1500):\n    \"\"\"Seeded log price: a random walk with drift, 0.04% a day on average, 1.2% daily sd.\"\"\"\n    rng = np.random.default_rng(seed)\n    return np.log(100) + np.cumsum(0.0004 + 0.012 * rng.standard_normal(n))\n\ndef ffd_weights(d, threshold):\n    \"\"\"Weights w_0, w_1, ... kept while |w_k| >= threshold.\"\"\"\n    w, k = [1.0], 1\n    while k < 100000:\n        nxt = -w[-1] * (d - k + 1) / k\n        if abs(nxt) < threshold:\n            break\n        w.append(nxt)\n        k += 1\n    return np.array(w)\n"
       },
       "hints": [
@@ -3674,7 +3674,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 8 hidden tests on `make_logprice(5)` and `make_logprice(11)`: correlations rounded to 3 places, the first passing $d$ at cutoffs 0.2 and 0.25, and `None` when nothing passes. The first run loads NumPy, which takes a few seconds.",
+        "how": "Check runs 8 hidden tests on `make_logprice(5)` and `make_logprice(11)`. They check correlations rounded to 3 places and the first passing $d$ at cutoffs 0.2 and 0.25. They also expect `None` when nothing passes. The first run loads NumPy, which takes a few seconds.",
         "prelude": "import numpy as np\n\ndef make_logprice(seed, n=1500):\n    \"\"\"Seeded log price: a random walk with drift, 0.04% a day on average, 1.2% daily sd.\"\"\"\n    rng = np.random.default_rng(seed)\n    return np.log(100) + np.cumsum(0.0004 + 0.012 * rng.standard_normal(n))\n\ndef ffd_weights(d, threshold):\n    \"\"\"Weights w_0, w_1, ... kept while |w_k| >= threshold.\"\"\"\n    w, k = [1.0], 1\n    while k < 100000:\n        nxt = -w[-1] * (d - k + 1) / k\n        if abs(nxt) < threshold:\n            break\n        w.append(nxt)\n        k += 1\n    return np.array(w)\n\ndef frac_diff(x, d, threshold=1e-4):\n    x = np.asarray(x, dtype=float)\n    w = ffd_weights(d, threshold)\n    out = np.full(len(x), np.nan)\n    if len(w) <= len(x):\n        out[len(w) - 1:] = np.convolve(x, w, mode='valid')\n    return out\n\ndef vr(y, k=20):\n    \"\"\"Variance ratio: var of k-day changes over k times var of 1-day changes.\"\"\"\n    y = np.asarray(y, dtype=float)\n    y = y[~np.isnan(y)]\n    return float(np.var(y[k:] - y[:-k]) / (k * np.var(y[1:] - y[:-1])))\n\ngrid = [round(0.05 * i, 2) for i in range(21)]\n"
       },
       "hints": [
@@ -4214,7 +4214,7 @@
         }
       },
       "explain": {
-        "text": "A smaller threshold keeps more weights, so the window grows: 282 days at $10^{-4}$, 1,458 at $10^{-5}$, 7,550 at $10^{-6}$, longer than the series. Then no day has a value at all. Pick the threshold for the history you have.",
+        "text": "A smaller threshold keeps more weights: 282 days at $10^{-4}$, 1,458 at $10^{-5}$, 7,550 at $10^{-6}$, longer than the series. Then no day has a value at all. Pick the threshold for the history you have.",
         "canvas": {
           "highlight": [
             "warm"
@@ -4327,7 +4327,7 @@
         "options": [
           {
             "id": "practical",
-            "text": "A ratio to a long moving average carries similar 'high or low' memory, is simpler, and needs no choice of $d$ or threshold",
+            "text": "A ratio to a long moving average is simpler and carries similar memory, with no $d$ or threshold to choose",
             "correct": true
           },
           {
@@ -4515,7 +4515,7 @@
         "generic": "Not quite. Ask which years the choice of $d$ looked at."
       },
       "explain": {
-        "text": "Choosing $d$ is fitting a parameter. Fitted on the full sample, it has seen the test period, a small leak of the kind Validation and Leakage warns about."
+        "text": "Choosing $d$ is fitting a parameter. Fitted on the full sample, it has seen the test period. That is a small leak of the kind Validation and Leakage warns about."
       }
     },
     {
