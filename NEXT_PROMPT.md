@@ -1,14 +1,15 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Prep tags and topic 0.7 are merged; work only on `claude/amazing-wright-d4mx7i`.
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored").
 
-Task: PLAN.md 2a order item 3 (second reads and fixes for topics 0.5, 1.8, 2.1), plus mental-pressure L3 and puzzles L3.
+Task: PLAN.md 2a order item 4 (topic 3.3), first part, plus fix pass 1.9 left from task 5.
 
 Steps (own scratchpad subfolder per agent; checkpoint-commit as items turn green):
 1. In parallel:
-   - Three readers write `docs/reviews/review-0.5.md` (`mental`, exam topic-0.5), `review-1.8.md` (algo-think, ds, graphs-dp, topic-1.8) and `review-2.1.md` (stat-learning, validation, fin-ml, ensembles, topic-2.1), pattern `review-0.7.md`: answers, grading of alternative correct forms and wrong answers, layout, voice; code solutions pass hidden tests, starters fail them.
-   - Two `content-author`s write mental-pressure L3 and puzzles L3 from `## Level 3` of their briefs. Where a brief says E1 or E4 is unbuilt, follow AUTHORING (built for mocks only).
-2. A `test-fixer` per review appends `## Fix pass`.
-3. An answer-check agent recomputes every keyed answer in this session's new files (pattern `docs/reviews/answers-2026-11-02.md`); a fix agent fixes mismatches.
+   - `engine-dev`: engine pass B, E7 (question bank with item spacing) and E9 (per-item timing), from their bullets in `docs/BACKLOG-INBOX.md`; number them from 456 in `docs/ENGINE-BACKLOG.md`, document in AUTHORING, report to `docs/reports/engine-pass-b.md`.
+   - Four `content-author`s: mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2, each from its brief's `## Level n`.
+   - A `test-fixer`: fix pass 1.9 from `docs/reviews/review-1.9.md` (append `## Fix pass`), then a voice pass on cpp and cpp-pricing with `docs/reviews/voice-scan.py` (0 and 0).
+2. After pass B is green: `engine-dev` engine pass D, E12 (trading-game widget); then revise the `## Level 3` and `## Level 4` sections of `docs/briefs/mm-games.md` to use the widget instead of scripts.
+3. An answer-check agent recomputes every keyed answer in this session's new files (pattern `docs/reviews/answers-2026-11-03.md`); a fixer fixes mismatches.
 
-Context: follow-up screens, a pace, `tags` on drill and homework items; firms only in recruiting l4, mocks and `prep.json`; `longform` in homework and exams only; `derive` takes expression, order or choice; `expression` samples six points; 4-column tables scroll at 390 px; `place` allows one slot per chip; `shuffle: true` on choices. Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
+Context: follow-up screens, a pace, `tags` on drill and homework items; firms only in recruiting l4, mocks and `prep.json`; `longform` in homework and exams only; `derive` takes expression, order or choice; `expression` samples six points; 4-column tables scroll at 390 px; `place` allows one slot per chip; `shuffle: true` on choices. Every new file passes `voice-scan.py`; re-run a validator error once during engine work. Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
 
-Acceptance, from `app/`: validate 0 errors; after the fixes, playthrough green for every course in 0.5, 1.8, 2.1 and their exams (split runs, `--local-cdn`); new lessons green with and without `--mobile`, new sets green with `--set`; `--routes-only` green; three reviews with fix passes and two reports; PLAN ticks order item 3, mental-pressure L3 and puzzles L3. NEXT_PROMPT names engine passes B (E7, E9) and D (E12) with the next 3.3 levels: mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2.
+Acceptance, from `app/`: validate 0 errors; new lessons green with and without `--mobile`, new sets with `--set`; topic 1.9 courses and exam green after the fixes; `--routes-only` and the full `--all` run green after both engine passes; reports exist; PLAN ticks each item. NEXT_PROMPT names mental-pressure's close (mock-oa-arith), puzzles L5 and the next 3.3 levels.

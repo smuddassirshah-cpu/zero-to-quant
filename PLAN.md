@@ -47,7 +47,7 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
 
 1. [done 2 Nov] Prep tags: engine pass 455, then the mapping (general and stage paths first, foundations to superday; firm paths last).
 2. [done 2 Nov] Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
-3. Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning).
+3. [done 3 Nov] Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning); plus voice passes bringing every sentence in 1.8 and 2.1 under 20 words. Still open from task 5: fix pass 1.9 (its reader exists), next session.
 4. Topic 3.3:
    - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built.
    - Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
@@ -64,7 +64,7 @@ Phase 0, fast track
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
 - [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
-- [ ] mental-pressure L3
+- [x] mental-pressure L3 (`docs/reports/mental-pressure-3.md`; 4 lessons, review-3, homework-3; generator scripts in `docs/reports/mental-pressure-3-scripts/`; 6 inbox bullets)
 - [ ] mental-pressure L4: Assessment batteries
 - [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
 - [x] recruiting L1: The landscape (`docs/reports/recruiting-1.md`; 5 lessons, review-1, homework-1 with a dated target list; 5 inbox bullets)
@@ -74,7 +74,7 @@ Phase 0, fast track
 - [x] Prep tags, mapping (`docs/reports/prep-mapping.md`; 23 paths, 346 steps): general, stage-by-track and ten firm paths in `content/prep.json`
 
 Phase 1, trader core
-- [ ] puzzles L3
+- [x] puzzles L3 (`docs/reports/puzzles-3.md`; 6 lessons, review-3, homework-3; 7 inbox bullets)
 - [ ] puzzles L4
 - [ ] puzzles L5: Puzzles firms keep asking
 - [ ] brainteasers L1: Invariants and counting arguments
@@ -196,14 +196,14 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] ito L3
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
-- [ ] puzzles L3
+- [x] puzzles L3 (`docs/reports/puzzles-3.md`)
 - [ ] puzzles L4
 - [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
 - [ ] mm-games L2
 - [ ] mm-games L3
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
 - [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
-- [ ] mental-pressure L3
+- [x] mental-pressure L3 (`docs/reports/mental-pressure-3.md`)
 
 ### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
 - [x] topic-0.1 to topic-0.5 (Stage 0 topic exams; never written, the Learn screen shows them as unwritten; pattern topic-1.1.json, items from the Stage 0 courses of each topic)
@@ -219,9 +219,10 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`)
 
 ### 5. Second readers and fix passes (reader pattern: `docs/reviews/review-1.5.md`; fix pattern: its `## Fix pass` section)
-- [ ] Second reader 1.8 (was in flight; no file yet) then fix pass 1.8
+- [x] Second reader 1.8 then fix pass 1.8 (`docs/reviews/review-1.8.md`; 37 of 39 fixed, finding 34 completed; voice pass)
 - [ ] Fix pass 1.9 (second reader 1.9 is complete in `docs/reviews/review-1.9.md`)
-- [ ] Second reader 2.1 then fix pass
+- [x] Second reader 2.1 then fix pass (`docs/reviews/review-2.1.md`; 38 of 42 fixed, 3 engine bullets; voice passes)
+- [x] Second reader 0.5 then fix pass (`docs/reviews/review-0.5.md`; 21 of 23 fixed, 2 engine bullets)
 - [ ] Second reader 2.2 then fix pass
 - [ ] Second reader 2.3 and 2.4 then fix pass
 - [ ] Second reader 3.1 to 3.3 then fix pass

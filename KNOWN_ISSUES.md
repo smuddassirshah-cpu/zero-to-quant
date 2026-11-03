@@ -53,3 +53,8 @@ Interview pass (2 Nov 2026)
 - The mental-pressure L3 brief (l12) says net scoring (E1) is not built; engine pass A built it for mock exams (`exams/mock-*.json`, AUTHORING sections 5 and 7). Lessons still cannot net-score a learner's own answers, so l12's sample-candidate review stands; follow AUTHORING where the brief is out of date.
 - Topic 0.7 (2 Nov): the exam's `--why` results screenshot goes blank after item 21, so the two longform model answers were never seen rendered; the l11 coverage table still scrolls about 20 px sideways at 390 px; the rail handle covering a question line is deferred to the inbox.
 - Session branches: this session worked on `claude/recruiting-l3-game-theory-nvxp1s`, rebased on `claude/amazing-wright-d4mx7i` before each push; it is a fast-forward of that branch until the prep-tags session pushes more.
+
+Second-read pass (3 Nov 2026)
+- Raw-source checks that ban a name (for example a sort or a library call) also trip on that name inside a comment or string. Fixed for the sort bans in ds and algo-think; still present in ds l17, eigen l17 and homework-4, contests l5, l6 and l11, and exams topic-1.4 and topic-2.4. Fix in those topics' second reads.
+- Exam items were replaced in topic-0.5 (four items) and topic-1.8 (two items); attempts sat before 3 Nov no longer line up item by item with the new papers. Lesson ids and progress are unaffected.
+- Topics not yet second-read probably carry the same voice debt as 2.1; run `docs/reviews/voice-scan.py` on each before closing it.
