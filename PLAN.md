@@ -47,8 +47,8 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
 
 1. [done 2 Nov] Prep tags: engine pass 455, then the mapping (general and stage paths first, foundations to superday; firm paths last).
 2. [done 2 Nov] Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
-3. [done 3 Nov] Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning); plus voice passes bringing every sentence in 1.8 and 2.1 under 20 words. Still open from task 5: fix pass 1.9 (its reader exists), next session.
-4. Topic 3.3:
+3. [done 3 Nov] Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning); plus voice passes bringing every sentence in 1.8 and 2.1 under 20 words. Fix pass 1.9 done 3 Nov.
+4. Topic 3.3 (part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2):
    - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built.
    - Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
    - mental-pressure L3, L4, then mock-oa-arith; puzzles L3 to L5, then mock-oa-sig and mock-oa-trader; brainteasers L1 to L3; mm-games L2, then L3 and L4 on the E12 widget; game-theory L1 to L3.
@@ -65,7 +65,7 @@ Phase 0, fast track
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
 - [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
 - [x] mental-pressure L3 (`docs/reports/mental-pressure-3.md`; 4 lessons, review-3, homework-3; generator scripts in `docs/reports/mental-pressure-3-scripts/`; 6 inbox bullets)
-- [ ] mental-pressure L4: Assessment batteries
+- [x] mental-pressure L4: Assessment batteries (`docs/reports/mental-pressure-4.md`; 5 lessons, review-4, homework-4; seed-17 battery script in the report; 5 inbox bullets)
 - [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
 - [x] recruiting L1: The landscape (`docs/reports/recruiting-1.md`; 5 lessons, review-1, homework-1 with a dated target list; 5 inbox bullets)
 - [x] recruiting L2: The application (`docs/reports/recruiting-2.md`; 5 lessons, review-2, homework-2; 5 inbox bullets)
@@ -75,18 +75,18 @@ Phase 0, fast track
 
 Phase 1, trader core
 - [x] puzzles L3 (`docs/reports/puzzles-3.md`; 6 lessons, review-3, homework-3; 7 inbox bullets)
-- [ ] puzzles L4
+- [x] puzzles L4 (`docs/reports/puzzles-4.md`; 6 lessons, review-4 9 items, homework-4 9 items; 5 inbox bullets)
 - [ ] puzzles L5: Puzzles firms keep asking
-- [ ] brainteasers L1: Invariants and counting arguments
+- [x] brainteasers L1: Invariants and counting arguments (`docs/reports/brainteasers-1.md`; 5 lessons, review-1 9 items, homework-1 8 items; 8 inbox bullets)
 - [ ] brainteasers L2: Strategy and logic
 - [ ] brainteasers L3: Quick reasoning
 - [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
-- [ ] mm-games L2
+- [x] mm-games L2 (`docs/reports/mm-games-2.md`; 5 lessons, review-2, homework-2; 4 inbox bullets)
 - [ ] mm-games L3
 - [ ] mm-games L4: Trading games firms run
 - [x] recruiting L3: Interviews and after (`docs/reports/recruiting-3.md`; 5 lessons, review-3 9 items, homework-3 9 items; 4 inbox bullets)
 - [x] Topic 0.7 closed: exam topic-0.7 (30 items, `docs/reports/exam-0.7.md`), second read and fix (`docs/reviews/review-0.7.md`: 3 errors, 17 warnings, 29 notes; 48 fixed, 1 deferred to the inbox), level 1 firm names moved to firm types, all lessons, sets and exam green
-- [ ] Engine pass B: E7 question bank with item spacing, E9 per-item timing
+- [x] Engine pass B: E7 question bank with item spacing, E9 per-item timing (items 456 to 458, `tags` checked; `docs/reports/engine-pass-b.md`; sample `bank/sample.json`; full run green)
 - [ ] Bank part 1 (200 items: probability, brainteasers, mental, market making, behavioural), in four sessions
 - [ ] Exam: mock-superday-trader
 - [ ] Second readers and fix passes: puzzles, mental-pressure
@@ -105,7 +105,7 @@ Phase 2, researcher core
 - [ ] Engine pass C: E3 exam item banks, E8 drill library (C++, timed), E11 follow-up parts, E14 data files
 - [ ] Drill packs 1 to 4 (60 drills)
 - [ ] Exams: mock-oa-code, mock-superday-research, mock-oa-quant-data
-- [ ] Second readers and fix passes for interview-critical topics: fix pass 1.9, reader and fix 1.8, then 2.1
+- [x] Second readers and fix passes for interview-critical topics: fix pass 1.9, reader and fix 1.8, then 2.1
 
 Phase 3, trader and researcher depth
 - [ ] game-theory L1: Games in a table
@@ -197,9 +197,9 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
 - [x] puzzles L3 (`docs/reports/puzzles-3.md`)
-- [ ] puzzles L4
+- [x] puzzles L4 (`docs/reports/puzzles-4.md`)
 - [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
-- [ ] mm-games L2
+- [x] mm-games L2 (`docs/reports/mm-games-2.md`)
 - [ ] mm-games L3
 - [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
 - [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
@@ -220,7 +220,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 
 ### 5. Second readers and fix passes (reader pattern: `docs/reviews/review-1.5.md`; fix pattern: its `## Fix pass` section)
 - [x] Second reader 1.8 then fix pass 1.8 (`docs/reviews/review-1.8.md`; 37 of 39 fixed, finding 34 completed; voice pass)
-- [ ] Fix pass 1.9 (second reader 1.9 is complete in `docs/reviews/review-1.9.md`)
+- [x] Fix pass 1.9 (`docs/reviews/review-1.9.md`; 64 of 68 fixed, 2 disputed after recompiling, 2 deferred to a cpp level 3 lesson; voice pass cpp and cpp-pricing 0 and 0)
 - [x] Second reader 2.1 then fix pass (`docs/reviews/review-2.1.md`; 38 of 42 fixed, 3 engine bullets; voice passes)
 - [x] Second reader 0.5 then fix pass (`docs/reviews/review-0.5.md`; 21 of 23 fixed, 2 engine bullets)
 - [ ] Second reader 2.2 then fix pass
