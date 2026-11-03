@@ -9,7 +9,7 @@ MAX = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 20
 SKIP = {'id', 'kind', 'type', 'course', 'skills', 'answer', 'accept_ids', 'starter', 'solution',
         'prelude', 'postlude', 'setup', 'call', 'expect', 'compare', 'tex', 'language', 'highlight',
         'ids', 'from', 'to', 'layout', 'shape', 'set', 'only', 'dim', 'outline', 'shade', 'flash',
-        'tone', 'orient', 'mode', 'itemKind', 'bind', 'start', 'target', 'unit', 'align', 'files'}
+        'tone', 'orient', 'mode', 'itemKind', 'bind', 'start', 'target', 'unit', 'align', 'files', 'outcome'}
 def strings(o, path=''):
     if isinstance(o, str):
         yield path, o
