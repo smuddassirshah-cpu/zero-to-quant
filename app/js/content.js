@@ -85,6 +85,15 @@
     try { const r = window.ZQ.state.exams['topic-' + tid]; return !!(r && Array.isArray(r.attempts) && r.attempts.some(a => a && a.passed)); } catch { return false; }
   };
   const courseTestedOut = (cid) => { const w = topicOfCourse(cid); return !!w && topicPassed(w.t.id); };
+  /* A saved lesson position in a tested-out course pins "where you are" only if it was set after the passing attempt
+     (the learner chose to revisit). The resume record is state.summary().resume: { course, lesson, at }. */
+  const resumeStands = (r) => {
+    if (!r || !courseTestedOut(r.course)) return !!r;
+    try {
+      const w = topicOfCourse(r.course), at = window.ZQ.state.exams['topic-' + w.t.id].attempts.filter(a => a && a.passed).reduce((m, a) => Math.max(m, Number(a.at) || 0), 0);
+      return (Number(r.at) || 0) > at;
+    } catch { return false; }
+  };
   const course = (id) => {
     if (!curriculum || !curriculum.courses[id]) return null;
     const meta = curriculum.courses[id], doc = courseDocs[id] || {};
@@ -219,7 +228,7 @@
     ready,
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
-    stages, allStages, stage, topic, topicPassed, courseTestedOut, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
+    stages, allStages, stage, topic, topicPassed, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
     lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills,
     prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */

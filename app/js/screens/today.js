@@ -79,11 +79,11 @@
     const h = S.homework[keyOf(cid, x.id)]; return !!(h && h.submitted);
   };
   const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !itemDone(Z.state, cid, x)) || null;
-  /* The resume course if a lesson is open; else the first course in curriculum order, from the learner's starting stage,
+  /* The resume course if a lesson is open (not one in a tested-out course left since the pass, ENGINE-BACKLOG 461); else the first course in curriculum order, from the learner's starting stage,
      that is not finished and has a written lesson still to do. null when no written lesson is left anywhere. */
   const currentCourse = (Z, sum) => {
     const C = Z.content;
-    if (sum.resume && C.course(sum.resume.course)) return sum.resume.course;
+    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;
     const start = Number(Z.state.profile.startStage) || 0;
     const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
     /* A course in a passed topic is skipped; it is chosen only when nothing else has a lesson left */
@@ -195,7 +195,7 @@
     const co = cid ? C.course(cid) : null;
     const list = cid ? C.courseLessons(cid) : [];
     const lessonNo = {}; list.filter(x => x.kind === 'lesson').forEach((x, i) => { lessonNo[x.id] = i + 1; });
-    const resume = sum.resume && sum.resume.course === cid ? sum.resume : null;
+    const resume = sum.resume && sum.resume.course === cid && C.resumeStands(sum.resume) ? sum.resume : null;
     const curItem = resume ? list.find(x => x.id === resume.lesson) || null : (curId ? nextLesson(Z, cid) : null);
     const levels = co ? co.levels : [];
     const curLevel = Math.max(0, curItem ? levels.findIndex(lv => lv.n === curItem.level) : 0);

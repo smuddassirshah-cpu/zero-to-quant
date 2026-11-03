@@ -33,7 +33,7 @@
   const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !((Z.state.lessons[keyOf(cid, x.id)] || {}).done)) || null;
   const currentCourse = (Z, sum) => {
     const C = Z.content;
-    if (sum.resume && C.course(sum.resume.course)) return sum.resume.course;
+    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;
     const start = Number(Z.state.profile.startStage) || 0;
     const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
     /* A course in a passed topic is skipped; it is chosen only when nothing else has a lesson left */

@@ -1273,3 +1273,7 @@ Raised later (interview plan, engine pass D; inbox bullet E12 and the "running l
 - 459 (E12, `trade` widget): done.
 - 460 (running ledger, `carry`): done.
 - Inbox bullets integrated: E12 and the running ledger bullet. The game-theory `play` bullet (rounds against a seeded opponent) names E12 as a relative but is not answered by it and stays in the inbox; the mm-games level 1 and 2 bullets (`table` wrong ids, `sliders` boolean checks, number-line interval drag, log tick separators) are unrelated to E12 and stay.
+
+Raised later (user bug report: Today still showed 0.1 after its topic exam was passed; report `docs/reports/engine-today-tested-out.md`):
+
+461. Done: a part-open lesson in a tested-out course no longer pins Today, Learn or the course map. `currentCourse` returned the saved resume course before the tested-out filter, so any unfinished lesson in a passed topic kept it as the main lesson (and its exam card). New `ZQ.content.resumeStands(resume)`: a resume in a tested-out course counts only if its position was saved after the passing attempt (a deliberate revisit); otherwise the first not-tested-out course from the start stage is chosen, and the exam card follows it. No lesson progress is changed and the lesson stays on Learn. Not author-facing, so no AUTHORING note.
