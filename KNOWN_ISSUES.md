@@ -66,7 +66,7 @@ Session B (4 Nov 2026)
 - Raw `git stash -u` while agents write untracked files hides their files for a moment; use `git pull --rebase --autostash` and stage the manifest entry by entry.
 
 Session A (3 Nov 2026)
-- `voice-scan.py` with a relative `VOICE_BASE` scanned 0 files and reported a pass until 3 Nov (fixed: it resolves the path and exits on an empty folder). Voice debt found in earlier levels of topic 3.3: mental-pressure L1 to L3 46 hits, puzzles L1 to L3 12, mm-games L1 6; clear them in the second reads.
+- `voice-scan.py` with a relative `VOICE_BASE` scanned 0 files and reported a pass until 3 Nov (fixed: it resolves the path and exits on an empty folder). The topic 3.3 voice debt (mental-pressure, puzzles, mm-games) was cleared on 6 Nov: all five courses scan 0 and 0.
 - Second read pending for limits L5, multivar L5 and eigen L4 (written after their topics' reads); markov L5 has no topic-1.5 exam items; 25 levels are covered by the exam only through skills shared with earlier levels (list in `docs/reports/stage-status-2026-11-03.md`).
 - `carry` values are lost if a lesson is reopened part-way; the `trade` widget cannot quote one side at a limit, run limit 0, hedge or take liquidity, or open with a carried position (engine pass D follow-ups 2 to 5).
 - Engine samples `exams/mock-sample.json`, `exams/mock-trade-sample.json` and `bank/sample.json` are probably visible to the learner (not checked); remove or hide them when the real mocks and bank land.
@@ -74,5 +74,14 @@ Session A (3 Nov 2026)
 
 Session C (5 Nov 2026)
 - Multi-paper mock results show "Pass mark NaN%" on every mock-oa-trader paper under +1, 0, 0 scoring with `passNet` (engine, inbox bullet). Scores and pass verdicts are correct; only the line is wrong.
-- Voice debt outside this session's files: mm-games l4-fermi, exams topic-1.2 and mock-trade-sample still flag long sentences; clear in the mm-games second read.
+- Voice debt outside this session's files: exams topic-1.2 and mock-trade-sample still flag long sentences (mm-games l4-fermi cleared 6 Nov).
 - The validator does not flag overlapping numeric `wrong` ranges (inbox bullet from mock-oa-sig).
+
+Session D (6 Nov 2026)
+- `bank/sample.json` is still live and its items duplicate course reviews, so the Interview practice deck can deal them twice; remove it (and update AUTHORING and the routes check) once bank part 1 is complete.
+- Bank: no playthrough flag plays one bank file (authors use a scratch Playwright loop over the deck), the validator does not catch a misspelt family tag, and every bank `pace` stays at 180 s or less because `--routes-only` expects exactly one item over pace after a 200 s answer.
+- `content/prep.json` lists no topic exams, so topic-3.3 is reachable from Exams only (`docs/reports/exam-3.3.md` says where it would go). Puzzles L5, mental-pressure L3 and L4 and mm-games L3 and L4 are covered in topic-3.3 only through skills shared with earlier levels.
+- game-theory poker cards draw their labels at about 8.6 px at 390 px because `.cv-svg text { font-size: 13px }` overrides the size `boxes.js` sets (engine, inbox); captions list the cards on six screens in l11 and l12.
+- mental-pressure l12's paper is seed 80 plus 31 hand-swapped distractors (fix pass, 6 Nov); re-running the L3 generator script would undo them.
+- Table cells' own `wrong[]` ids still cannot be `byKey` keys; mm-games l8 and mental-pressure l2 to l4 key on `r{i}c{j}` (inbox, several votes).
+- Dates: the container clock read 3 Nov while the state files run 3, 4, 5 and 6 Nov as session labels; `answers-2026-11-06.md` follows the labels.

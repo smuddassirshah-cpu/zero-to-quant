@@ -48,12 +48,12 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
 1. [done 2 Nov] Prep tags: engine pass 455, then the mapping (general and stage paths first, foundations to superday; firm paths last).
 2. [done 2 Nov] Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
 3. [done 3 Nov] Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning); plus voice passes bringing every sentence in 1.8 and 2.1 under 20 words. Fix pass 1.9 done 3 Nov.
-4. Topic 3.3 (part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2; part two done 4 Nov: mocks brief `docs/briefs/mocks.md`, mock-oa-arith, puzzles L5, brainteasers L2 and L3, game-theory L1):
+4. Topic 3.3 (part four done 6 Nov: bank brief and session 1, exam topic-3.3, mock-superday-trader, second reads and fix passes for all five courses, topic playthrough green; only bank sessions 2 to 4 remain; part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2; part two done 4 Nov: mocks brief `docs/briefs/mocks.md`, mock-oa-arith, puzzles L5, brainteasers L2 and L3, game-theory L1):
    - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built (done 3 Nov: 11 games specified, 63 runs checked in engine and Python).
    - [done 3 Nov] Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
    - mental-pressure L3, L4, then mock-oa-arith; puzzles L3 to L5, then mock-oa-sig and mock-oa-trader; brainteasers L1 to L3; mm-games L2, then L3 and L4 on the E12 widget; game-theory L1 to L3.
-   - Bank part 1 (200 items) on E7.
-   - Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
+   - Bank part 1 (200 items) on E7 (brief `docs/briefs/bank.md` done 6 Nov; session 1 of 4 done 6 Nov).
+   - [done 6 Nov] Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
 5. Topic 3.5: briefs for research-int, coding-int, systems (all levels); engine pass C where levels need it; the levels; mock-oa-code, mock-superday-research, mock-oa-quant-data and the developer and strats mocks; exam topic-3.5; second reads and fixes.
 6. Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
 7. Appended levels: trees L4 (extend exam topic-1.7), cpp L5 (extend exam topic-1.9); second read of each new level.
@@ -88,9 +88,9 @@ Phase 1, trader core
 - [x] recruiting L3: Interviews and after (`docs/reports/recruiting-3.md`; 5 lessons, review-3 9 items, homework-3 9 items; 4 inbox bullets)
 - [x] Topic 0.7 closed: exam topic-0.7 (30 items, `docs/reports/exam-0.7.md`), second read and fix (`docs/reviews/review-0.7.md`: 3 errors, 17 warnings, 29 notes; 48 fixed, 1 deferred to the inbox), level 1 firm names moved to firm types, all lessons, sets and exam green
 - [x] Engine pass B: E7 question bank with item spacing, E9 per-item timing (items 456 to 458, `tags` checked; `docs/reports/engine-pass-b.md`; sample `bank/sample.json`; full run green)
-- [ ] Bank part 1 (200 items: probability, brainteasers, mental, market making, behavioural), in four sessions
-- [ ] Exam: mock-superday-trader
-- [ ] Second readers and fix passes: puzzles, mental-pressure
+- [ ] Bank part 1 (200 items: probability, brainteasers, mental, market making, behavioural), in four sessions (brief `docs/briefs/bank.md`; session 1 done 6 Nov: 50 items in `bank/*-1.json`, `docs/reports/bank-1-1.md`)
+- [x] Exam: mock-superday-trader (`docs/reports/exam-mock-superday-trader.md`; 4 papers, 24 items, 3 `trade` games; 5 inbox bullets)
+- [x] Second readers and fix passes: puzzles, mental-pressure (6 Nov, with mm-games, brainteasers and game-theory: `docs/reviews/review-<course>.md`; 221 findings, 213 fixed; voice 0 and 0 on all five)
 
 Phase 2, researcher core
 - [ ] Briefs: research-int, coding-int, game-theory (done 2 Nov, `docs/briefs/game-theory.md`), systems, trees L4, cpp L5 (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
@@ -117,7 +117,7 @@ Phase 3, trader and researcher depth
 - [ ] ito L3
 - [x] Engine pass D: E12 trading-game widget (items 459 `trade`, 460 `carry`; `docs/reports/engine-pass-d.md`; sample `exams/mock-trade-sample.json`; full run green, 903 lessons, all sets, 24 exams)
 - [ ] Bank part 2 (200 items)
-- [ ] Exams: topic-3.3, topic-3.2 (ito part)
+- [ ] Exams: topic-3.3 (done 6 Nov, `docs/reports/exam-3.3.md`), topic-3.2 (ito part)
 
 Phase 4, developer and strats depth
 - [ ] ito L4: Stochastic calculus at interview
@@ -215,7 +215,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] topic-2.4 (contests)
 - [ ] topic-3.1 (momentum-rep, pairs-rep)
 - [ ] topic-3.2 (ito)
-- [ ] topic-3.3 (puzzles, mm-games, mental-pressure)
+- [x] topic-3.3 (6 Nov: 30 items over all five courses, one `trade` game; `docs/reports/exam-3.3.md`)
 - [ ] Breadth exams: topic-0.6, topic-1.10, topic-1.11, topic-2.5, topic-2.6, topic-3.4; topic-3.2 covers ito, measure-prob and pdes; topic-1.5 is at the 30-item cap, so the markov gap level packs into multi-part items
 - [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`)
 
@@ -226,7 +226,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] Second reader 0.5 then fix pass (`docs/reviews/review-0.5.md`; 21 of 23 fixed, 2 engine bullets)
 - [ ] Second reader 2.2 then fix pass
 - [ ] Second reader 2.3 and 2.4 then fix pass
-- [ ] Second reader 3.1 to 3.3 then fix pass
+- [ ] Second reader 3.1 to 3.3 then fix pass (3.3 done 6 Nov: `docs/reviews/review-<course>.md` for its five courses)
 - [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.2 additions, 3.4
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
