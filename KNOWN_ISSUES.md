@@ -61,7 +61,7 @@ Second-read pass (3 Nov 2026)
 
 Session B (4 Nov 2026)
 - mock-oa-arith's 16 decimal, fraction and percentage items are fixed, so resits repeat them (inbox bullet asks E4 for those operations). Its start card's parts list squeezes at 390 px (engine, inbox).
-- mock-oa-sig and mock-oa-trader are briefed but unwritten; E3 (fresh draws) and E15 (calculator) are not built.
+- mock-oa-sig and mock-oa-trader ship three fixed versions each (5 Nov); resits repeat items until E3 (fresh draws); E15 (calculator) is not built. `prep.json` names version 1 only, so versions 2 and 3 are reachable from the exams list, not from prep.
 - The 12-screen lesson cap pushed several brief drills into quizzes in brainteasers L2 and L3 (listed in their reports).
 - Raw `git stash -u` while agents write untracked files hides their files for a moment; use `git pull --rebase --autostash` and stage the manifest entry by entry.
 
@@ -71,3 +71,8 @@ Session A (3 Nov 2026)
 - `carry` values are lost if a lesson is reopened part-way; the `trade` widget cannot quote one side at a limit, run limit 0, hedge or take liquidity, or open with a carried position (engine pass D follow-ups 2 to 5).
 - Engine samples `exams/mock-sample.json`, `exams/mock-trade-sample.json` and `bank/sample.json` are probably visible to the learner (not checked); remove or hide them when the real mocks and bank land.
 - The `file-finder` agent may not write `.md` reports; the main session saved the stage status report from its scratchpad output.
+
+Session C (5 Nov 2026)
+- Multi-paper mock results show "Pass mark NaN%" on every mock-oa-trader paper under +1, 0, 0 scoring with `passNet` (engine, inbox bullet). Scores and pass verdicts are correct; only the line is wrong.
+- Voice debt outside this session's files: mm-games l4-fermi, exams topic-1.2 and mock-trade-sample still flag long sentences; clear in the mm-games second read.
+- The validator does not flag overlapping numeric `wrong` ranges (inbox bullet from mock-oa-sig).

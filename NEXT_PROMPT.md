@@ -1,16 +1,13 @@
 Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored").
 
-Task: PLAN.md 2a order item 4 (topic 3.3), part three. Done already: engine passes B (bank, timing) and D (`trade`, `carry`); mental-pressure L1 to L4 and mock-oa-arith (that course's close); puzzles L1 to L5; brainteasers L1 to L3; mm-games L1, L2; game-theory L1.
+Task: PLAN.md 2a order item 4 (topic 3.3), part four, to close the topic. All topic 3.3 levels are now done: puzzles L1 to L5, mental-pressure L1 to L4, brainteasers L1 to L3, mm-games L1 to L4, game-theory L1 to L3; mocks arith, sig and trader (sig and trader in three fixed versions).
 
 Steps (own scratchpad subfolder each; build `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` first; checkpoint-commit as items turn green):
-1. In parallel, `content-author`s, each from its brief section:
-   - mm-games L3 (`docs/briefs/mm-games.md` `## Level 3`, rewritten for the `trade` widget; read `docs/reports/engine-pass-d.md` and AUTHORING section 3), then mm-games L4 once L3 is green.
-   - game-theory L2, then L3 once L2 is green (`docs/briefs/game-theory.md`).
-   - mock-oa-sig and mock-oa-trader, three fixed versions each (`docs/briefs/mocks.md`; files `-2`, `-3`; `prep.json` names version 1 only).
-2. An answer-check agent recomputes every keyed answer in this session's new files (`docs/reviews/answers-2026-11-05.md`, pattern `answers-2026-11-03-b.md`); every `trade` game is replayed in Python from its seed; a fixer fixes mismatches.
+1. Briefs first, if missing: `docs/briefs/bank.md` (part 1: 200 items on engine E7, `content/bank/`, families from the `tags` already on drill and homework items; split into four sessions of 50) and a `## mock-superday-trader` section in `docs/briefs/mocks.md`. Sources: `docs/briefs/interview-plan.md`, `docs/reports/engine-pass-b.md`, `bank/sample.json`.
+2. In parallel, `content-author`s: bank part 1 session 1 (50 items); exam `topic-3.3` (30 items at most, pattern `exams/topic-2.1.json`); `mock-superday-trader` (may use `trade` games; see AUTHORING section 3).
+3. Second readers for puzzles, mental-pressure, mm-games, brainteasers, game-theory (`docs/reviews/review-<course>.md`, pattern `review-1.5.md`), each running `voice-scan.py` with an absolute `VOICE_BASE` ending in a slash; clear the voice debt in KNOWN_ISSUES (mental-pressure L1 to L3, puzzles L1 to L3, mm-games l4-fermi and L1). Fix agents append `## Fix pass`.
+4. Answer check on the session's new files (`docs/reviews/answers-<date>.md`, pattern `answers-2026-11-05.md`), replaying every `trade` game from its seed; a fixer fixes mismatches.
 
-Context: `tags` and `pace` on drill, quiz, review and homework items; firms only in recruiting l4, mocks and `prep.json`; `longform` in homework and exams only; `shuffle: true` on choices; 4-column tables scroll at 390 px; lessons hold at most 12 screens. Run `voice-scan.py` with an absolute `VOICE_BASE` ending in a slash; new files 0 and 0. Re-run a validator error once if it is in another agent's file.
+Context: `tags` and `pace` on drill, quiz, review, homework and bank items; firms only in recruiting l4, mocks and `prep.json`; `longform` in homework and exams only; `shuffle: true` on choices; numeric `wrong` values may sit either side of the key (DECISIONS 5 Nov). Known engine bug: multi-paper mocks show "Pass mark NaN%".
 
-Acceptance, from `app/`: validate 0 errors; new lessons green with and without `--mobile`, sets with `--set`, each mock with `--exam`; `--routes-only` green; reports exist; PLAN ticks each item.
-
-NEXT_PROMPT then names bank part 1 (200 items on E7, four sessions), exam topic-3.3, mock-superday-trader, and the second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers and game-theory (including the voice debt in KNOWN_ISSUES).
+Acceptance, from `app/`: validate 0 errors; the new files green (`--set`, `--exam`, with and without `--mobile`); `--routes-only` green; voice scan 0 and 0 on all five courses; reports and reviews exist; PLAN ticks each item. Bank sessions 2 to 4 follow in later sessions.
