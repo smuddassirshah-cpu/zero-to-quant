@@ -72,7 +72,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests. Tests 8 and 9 count the nodes you read in a 1,023-node tree: stop the in-order walk at the $k$-th node."
+        "how": "Check runs 9 hidden tests. Tests 8 and 9 count the nodes you read in a 1,023-node tree. Stop the in-order walk at the $k$-th node."
       },
       "feedback": {
         "correct": "An in-order walk that stops early.",
@@ -165,7 +165,7 @@
         }
       },
       "explain": {
-        "text": "The heap holds `(value, list index, position)`: the index breaks ties, so values from two lists never need more than a number comparison. Each pop is replaced by the next item from the same list, so the heap never holds more than $k$ entries."
+        "text": "The heap holds `(value, list index, position)`: the index breaks ties, so values from two lists never need more than a number comparison. Each pop is replaced by the next item from the same list. So the heap never holds more than $k$ entries."
       }
     },
     {
@@ -413,8 +413,8 @@
       "question": "Compare a sorted list with `bisect`, a balanced BST, two heaps with lazy deletion, and an array indexed by tick. Recommend one, with costs.",
       "widget": {
         "kind": "longform",
-        "prompt": "You are choosing the core structure of an order book for one instrument. It must report the best bid and ask after every message, add orders, and cancel orders (most orders are cancelled). It must also answer \"all levels between two prices\" for a dashboard.\n\nFor each structure give the cost of: best quote, add, cancel, and a range query. Say what each costs in memory or complexity, then recommend one for this book and justify it in two or three sentences.",
-        "model": "**Sorted list with `bisect`.** Best quote $O(1)$ (an end of the list). Add: $O(\\log n)$ to find the place but $O(n)$ to shift items. Cancel: $O(\\log n)$ to find, $O(n)$ to remove. Range query: two bisections and a slice, $O(\\log n + k)$. Simple, and fast for a few thousand levels, but the shifting hurts on a busy book.\n\n**Balanced BST (AVL, red-black).** Best quote $O(\\log n)$, or $O(1)$ with a pointer kept to the extreme node. Add and cancel $O(\\log n)$. Range query: in-order walk with pruning, $O(\\log n + k)$. Correct for everything, but Python has no built-in one, and the code is long.\n\n**Two heaps with lazy deletion.** Best quote $O(1)$ amortised; add $O(\\log n)$; cancel $O(1)$ (mark the id dead). But a heap is not sorted beyond its top, so a range query must scan everything, $O(n)$, and dead entries use memory until they reach the top.\n\n**Array indexed by tick.** Prices sit on a grid, for example £0.01 ticks in a £90 to £110 band: 2,001 slots. The level for a price is found by index, $O(1)$; each level holds a first-in, first-out queue of orders, so time priority is kept. Add $O(1)$; cancel $O(1)$ with a dict from id to order; range query $O(\\text{ticks in range})$. The best quote needs a pointer that moves when its level empties, which is cheap because nearby levels are usually busy. It costs memory for empty levels and needs a known price band.\n\n**Recommendation.** The array by tick, with a FIFO queue per level and an id dict: every message is $O(1)$, range queries are direct, and this is what many real matching engines use. Two heaps are the right choice when prices have no fixed grid and range queries are rare.",
+        "prompt": "You are choosing the core structure of an order book for one instrument. It must report the best bid and ask after every message, add orders, and cancel orders (most orders are cancelled). It must also answer \"all levels between two prices\" for a dashboard.\n\nFor each structure give the cost of: best quote, add, cancel, and a range query. Say what each costs in memory or complexity. Then recommend one for this book and justify it in two or three sentences.",
+        "model": "**Sorted list with `bisect`.** Best quote $O(1)$ (an end of the list). Add: $O(\\log n)$ to find the place but $O(n)$ to shift items. Cancel: $O(\\log n)$ to find, $O(n)$ to remove. Range query: two bisections and a slice, $O(\\log n + k)$. Simple, and fast for a few thousand levels, but the shifting hurts on a busy book.\n\n**Balanced BST (AVL, red-black).** Best quote $O(\\log n)$, or $O(1)$ with a pointer kept to the extreme node. Add and cancel $O(\\log n)$. Range query: in-order walk with pruning, $O(\\log n + k)$. Correct for everything, but Python has no built-in one, and the code is long.\n\n**Two heaps with lazy deletion.** Best quote $O(1)$ amortised; add $O(\\log n)$; cancel $O(1)$ (mark the id dead). But a heap is not sorted beyond its top, so a range query must scan everything, $O(n)$. Dead entries also use memory until they reach the top.\n\n**Array indexed by tick.** Prices sit on a grid, for example £0.01 ticks in a £90 to £110 band: 2,001 slots. The level for a price is found by index, $O(1)$. Each level holds a first-in, first-out queue of orders, so time priority is kept. Add $O(1)$; cancel $O(1)$ with a dict from id to order; range query $O(\\text{ticks in range})$. The best quote needs a pointer that moves when its level empties. That is cheap, because nearby levels are usually busy. It costs memory for empty levels and needs a known price band.\n\n**Recommendation.** The array by tick, with a FIFO queue per level and an id dict. Every message is $O(1)$ and range queries are direct. This is what many real matching engines use. Two heaps are the right choice when prices have no fixed grid and range queries are rare.",
         "rubric": [
           {
             "points": 2,
@@ -430,7 +430,7 @@
           },
           {
             "points": 2,
-            "text": "Explains the tick array: $O(1)$ by index, a FIFO queue per level for time priority, and the memory or price-band cost"
+            "text": "Explains the tick array: $O(1)$ lookup, a FIFO queue per level for time priority, and the memory or price-band cost"
           },
           {
             "points": 2,

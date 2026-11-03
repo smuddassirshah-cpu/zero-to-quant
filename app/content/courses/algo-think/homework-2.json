@@ -265,7 +265,7 @@
         "at-recursion",
         "at-complexity"
       ],
-      "prose": "Counting inversions pair by pair is $O(n^2)$: about 200 million comparisons for 20,000 trades. Divide and conquer does it in $O(n \\log n)$. Sort and count each half, then merge them. Whenever you take an item from the right half, every item still waiting in the left half is bigger: add how many remain.",
+      "prose": "Counting inversions pair by pair is $O(n^2)$: about 200 million comparisons for 20,000 trades. Divide and conquer does it in $O(n \\log n)$. Sort and count each half, then merge them. Whenever you take an item from the right half, every item still waiting in the left half is bigger. Add how many remain.",
       "question": "Write `sort_count(xs)`: return `(sorted_list, inversions)`, where equal items are not inversions.",
       "widget": {
         "kind": "code",
@@ -394,7 +394,7 @@
         }
       },
       "explain": {
-        "text": "The loop pops a node, adds its value and pushes its children, until the list is empty. The list grows to at most the number of waiting nodes, held in ordinary memory, so 5,000 levels are no problem."
+        "text": "The loop pops a node, adds its value and pushes its children, until the list is empty. The list grows to at most the number of waiting nodes. It lives in ordinary memory, so 5,000 levels are no problem."
       }
     },
     {
@@ -451,7 +451,7 @@
       ],
       "title": "Reviewing a recursive pricer",
       "kind": "longform",
-      "prompt": "A colleague prices a European call on a binomial tree with this function. Each step the stock moves by `u` or `d`, `p` is the up probability, and `disc` discounts one step.\n\n```python\ndef price(S, step, n, u, d, p, disc, K):\n    if step == n:\n        return max(S - K, 0)\n    up = price(S * u, step + 1, n, u, d, p, disc, K)\n    down = price(S * d, step + 1, n, u, d, p, disc, K)\n    return disc * (p * up + (1 - p) * down)\n```\n\n(a) Write the recurrence for the number of calls with $n$ steps, solve it, and give the count for $n = 20$ and the big O. (b) Explain why most of these calls repeat work, and how many distinct nodes there are. (c) How deep does the call stack go, and what happens for $n = 2{,}000$? (d) Write a version that is $O(n^2)$ in time and needs no recursion.",
+      "prompt": "A colleague prices a European call on a binomial tree with this function. Each step the stock moves by `u` or `d`, `p` is the up probability, and `disc` discounts one step.\n\n```python\ndef price(S, step, n, u, d, p, disc, K):\n    if step == n:\n        return max(S - K, 0)\n    up = price(S * u, step + 1, n, u, d, p, disc, K)\n    down = price(S * d, step + 1, n, u, d, p, disc, K)\n    return disc * (p * up + (1 - p) * down)\n```\n\n(a) Write the recurrence for the number of calls with $n$ steps and solve it. Give the count for $n = 20$ and the big O. (b) Explain why most of these calls repeat work, and how many distinct nodes there are. (c) How deep does the call stack go, and what happens for $n = 2{,}000$? (d) Write a version that is $O(n^2)$ in time and needs no recursion.",
       "model": "**(a) Counting calls.** Let $C(m)$ be the calls made with $m$ steps still to go. A call at the last step is a base case, so $C(0) = 1$. Every other call makes two calls with one fewer step: $C(m) = 2C(m-1) + 1$. The tree has $2^k$ calls on level $k$, for $k = 0$ to $n$, so\n\n$$C(n) = 1 + 2 + \\cdots + 2^n = 2^{n+1} - 1.$$\n\nFor $n = 20$ that is $2^{21} - 1 = 2{,}097{,}151$ calls, and the cost is $O(2^n)$. At $n = 252$ it is about $1.4 \\times 10^{76}$: it would never finish.\n\n**(b) Repeated work.** The price after an up then a down move is $S u d$, the same as after a down then an up. So a node depends only on the step and the number of ups $j$, not on the order of moves. Step $k$ has only $k + 1$ distinct nodes, $j = 0, \\ldots, k$, and the whole tree has\n\n$$1 + 2 + \\cdots + (n + 1) = \\frac{(n+1)(n+2)}{2}$$\n\ndistinct nodes: 231 for $n = 20$, against 2,097,151 calls. The function prices the same node many times, just as naive `fib` recomputes `fib(2)`. Memoising on `(step, j)` would cut the work to $O(n^2)$.\n\n**(c) Stack depth.** The calls go one step deeper each time, so the stack holds $n + 1$ frames at its tallest. With Python's limit of about 1,000 frames, $n = 2{,}000$ raises `RecursionError` before any arithmetic matters. A memo does not fix this; the depth is still $n + 1$.\n\n**(d) A loop over the recombining tree.** Work backwards from the last step, keeping one list of $k + 1$ values:\n\n```python\ndef price(S, n, u, d, p, disc, K):\n    # values at the last step, j = number of ups\n    v = [max(S * u**j * d**(n - j) - K, 0) for j in range(n + 1)]\n    for step in range(n - 1, -1, -1):\n        v = [disc * (p * v[j + 1] + (1 - p) * v[j]) for j in range(step + 1)]\n    return v[0]\n```\n\nStep `step` does `step + 1` updates, so the total is $\\frac{n(n+1)}{2}$ updates: $O(n^2)$ time, $O(n)$ memory and one frame. For $n = 2{,}000$ that is about 2 million updates, well under a second.",
       "rubric": [
         {
@@ -468,7 +468,7 @@
         },
         {
           "points": 2,
-          "text": "States the stack depth is $n + 1$ frames and that $n = 2{,}000$ raises `RecursionError` under the limit of about 1,000, even with a memo."
+          "text": "States the stack depth is $n + 1$ frames. Notes that $n = 2{,}000$ raises `RecursionError` under the limit of about 1,000, even with a memo."
         },
         {
           "points": 2,

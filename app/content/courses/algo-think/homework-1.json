@@ -418,7 +418,7 @@
       "title": "Reviewing a pair screener",
       "kind": "longform",
       "prompt": "A colleague's screener finds the most correlated pairs in a universe of $n = 3{,}000$ stocks, each with $d = 250$ daily returns. `corr(x, y)` loops once over the $d$ days.\n\n```python\ndef top_pairs(returns, k=10):\n    names = list(returns)\n    scores = []\n    for a in range(len(names)):\n        for b in range(len(names)):\n            if a != b:\n                r = corr(returns[names[a]],\n                         returns[names[b]])\n                scores.append((r, names[a], names[b]))\n    scores.sort(reverse=True)\n    return scores[:k]\n```\n\n(a) How many times is `corr` called, and how many day-steps is that? Give the running time in big O in terms of $n$ and $d$.\n(b) What extra space does it use? Estimate it roughly.\n(c) Propose two changes. Give the new time and extra space, and say which costs changed class and which only changed constant.\n(d) After your changes the job takes 20 minutes. The universe doubles to 6,000 stocks. Estimate the new run time.",
-      "model": "**(a) Time.** The two loops visit every ordered pair with $a \\ne b$: $n(n-1) = 3{,}000 \\times 2{,}999 = 8{,}997{,}000$ calls. Each call loops over $d = 250$ days, so about $2.25 \\times 10^9$ day-steps. The running time is $O(n^2 d)$, plus the sort in (b).\n\nEach pair is computed twice: $\\mathrm{corr}(A, B) = \\mathrm{corr}(B, A)$, so half the calls are wasted.\n\n**(b) Space.** `scores` holds one tuple per ordered pair: about 9 million tuples, so $O(n^2)$ extra space. On a 64-bit machine a 3-tuple is 64 bytes and its float 24 more, plus an 8-byte list pointer: roughly 90 to 100 bytes each, close to 1 GB. Sorting it costs $O(n^2 \\log n)$ time on top.\n\n**(c) Changes.**\n\n1. Start the inner loop at `a + 1`. This halves the calls to $\\tfrac{n(n-1)}{2} = 4{,}498{,}500$. The time is still $O(n^2 d)$: a constant factor of 2, not a new class.\n2. Keep only the best $k$ while looping, with a heap of size $k$ (`heapq.heappush` then `heapq.heappop` when it grows past $k$, or `heapq.nlargest(k, generator)`). Extra space drops from $O(n^2)$ to $O(k)$, a change of class, and the full sort of $O(n^2 \\log n)$ becomes $O(n^2 \\log k)$.\n\nThe new totals: time $O(n^2 d)$, extra space $O(k)$ beyond the input. The pair count itself cannot be avoided by this method: every pair must be scored once.\n\n**(d) Doubling.** The time is dominated by $\\tfrac{n^2}{2} \\times d$. Doubling $n$ multiplies $n^2$ by 4, so about $4 \\times 20 = 80$ minutes.",
+      "model": "**(a) Time.** The two loops visit every ordered pair with $a \\ne b$: $n(n-1) = 3{,}000 \\times 2{,}999 = 8{,}997{,}000$ calls. Each call loops over $d = 250$ days, so about $2.25 \\times 10^9$ day-steps. The running time is $O(n^2 d)$, plus the sort in (b).\n\nEach pair is computed twice: $\\mathrm{corr}(A, B) = \\mathrm{corr}(B, A)$, so half the calls are wasted.\n\n**(b) Space.** `scores` holds one tuple per ordered pair: about 9 million tuples, so $O(n^2)$ extra space. On a 64-bit machine a 3-tuple is 64 bytes and its float 24 more, plus an 8-byte list pointer. That is roughly 90 to 100 bytes each, close to 1 GB. Sorting it costs $O(n^2 \\log n)$ time on top.\n\n**(c) Changes.**\n\n1. Start the inner loop at `a + 1`. This halves the calls to $\\tfrac{n(n-1)}{2} = 4{,}498{,}500$. The time is still $O(n^2 d)$: a constant factor of 2, not a new class.\n2. Keep only the best $k$ while looping, with a heap of size $k$. Use `heapq.heappush` then `heapq.heappop` when it grows past $k$, or `heapq.nlargest(k, generator)`. Extra space drops from $O(n^2)$ to $O(k)$, a change of class, and the full sort of $O(n^2 \\log n)$ becomes $O(n^2 \\log k)$.\n\nThe new totals: time $O(n^2 d)$, extra space $O(k)$ beyond the input. The pair count itself cannot be avoided by this method: every pair must be scored once.\n\n**(d) Doubling.** The time is dominated by $\\tfrac{n^2}{2} \\times d$. Doubling $n$ multiplies $n^2$ by 4, so about $4 \\times 20 = 80$ minutes.",
       "rubric": [
         {
           "points": 2,
@@ -430,7 +430,7 @@
         },
         {
           "points": 2,
-          "text": "Identifies `scores` as $O(n^2)$ extra space and gives a sensible estimate (millions of tuples, hundreds of MB to about 1 GB)."
+          "text": "Identifies `scores` as $O(n^2)$ extra space and estimates it sensibly (millions of tuples, hundreds of MB to about 1 GB)."
         },
         {
           "points": 1,
@@ -438,7 +438,7 @@
         },
         {
           "points": 2,
-          "text": "Proposes starting the inner loop at `a + 1` and keeping only the top $k$ (a heap or `nlargest`), with new space $O(k)$."
+          "text": "Proposes starting the inner loop at `a + 1` and keeping only the top $k$ (a heap or `nlargest`) in $O(k)$ space."
         },
         {
           "points": 1,
