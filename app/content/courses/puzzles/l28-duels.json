@@ -1,0 +1,1155 @@
+{
+  "id": "l28-duels",
+  "course": "puzzles",
+  "title": "Duels and truels",
+  "minutes": 14,
+  "objectives": [
+    "Find each player's chance of winning a turn-based shooting game, and the best first move."
+  ],
+  "skills": [
+    "pz-recursion",
+    "pz-games"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A duel",
+      "prose": "Two players take turns to shoot, A first, until one is hit. A hits with chance $\\tfrac13$ and B with $\\tfrac12$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "A fires",
+          "nodes": [
+            {
+              "id": "h",
+              "label": "A hits",
+              "p": "1/3"
+            },
+            {
+              "id": "m",
+              "label": "A misses",
+              "p": "2/3",
+              "children": [
+                {
+                  "id": "h",
+                  "label": "B hits",
+                  "p": "1/2"
+                },
+                {
+                  "id": "m",
+                  "label": "B misses",
+                  "p": "1/2"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "h": "A wins",
+            "m-h": "B wins",
+            "m-m": "start again"
+          }
+        },
+        "state": {
+          "caption": "One round. If both miss, the duel starts again from A."
+        }
+      },
+      "question": "What is A's chance of winning the duel? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "1/2 = 0.5",
+        "wrong": [
+          {
+            "id": "first-shot",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "b",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Let $x = P(\\text{A wins})$ from A's turn."
+        },
+        {
+          "rung": "point",
+          "text": "A wins at once with $\\tfrac13$. Both miss with $\\tfrac23 \\times \\tfrac12 = \\tfrac13$, and the duel restarts.",
+          "highlight": [
+            "m-m"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$x = \\tfrac13 + \\tfrac13 x$, so $x = \\tfrac12$."
+        }
+      ],
+      "feedback": {
+        "correct": "$x = \\tfrac12$: firing first cancels the gap in skill.",
+        "generic": "Not quite right. Write one equation for a round: A hits, or both miss and it restarts.",
+        "byKey": {
+          "first-shot": "That is A's first shot only. If both miss, A fires again.",
+          "ratio": "You split it as $\\tfrac{p}{p + q}$. That ignores who fires first.",
+          "b": "You worked out a chance of $\\tfrac23$ for A. Check the restart: both miss with $\\tfrac13$, not $\\tfrac23$."
+        }
+      },
+      "explain": {
+        "text": "A wins now with $\\tfrac13$, or both miss with $\\tfrac13$ and we are back at the start. So $x = \\tfrac13 + \\tfrac13 x$ and $x = \\tfrac12$. This is **first-step analysis**, as in markov l7: condition on the first round.",
+        "canvas": {
+          "highlight": [
+            "h",
+            "m-m"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How good must B be?",
+      "prose": "Now A hits with $\\tfrac14$ and still fires first. Slide B's accuracy $q$ and watch A's chance on the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xLabel": "B's accuracy $q$",
+          "yLabel": "A's chance",
+          "height": 300,
+          "xAxis": "bottom",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "0.25/(1 - 0.75*(1 - x))",
+              "domain": [
+                0,
+                1
+              ],
+              "label": "A wins"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "half",
+              "y": 0.5,
+              "label": "even"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p1",
+              "x": 0.8,
+              "y": 0.2941,
+              "on": "f",
+              "label": ""
+            }
+          ]
+        },
+        "derive": {
+          "caption": "At $q$ = {{fixed(p1.x, 2)}}, A wins with chance {{fixed(0.25 / (1 - 0.75 * (1 - p1.x)), 3)}}."
+        }
+      },
+      "question": "Find the accuracy $q$ at which the duel is exactly even.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "start": 0.8,
+        "bind": "points.p1.x",
+        "label": "B's accuracy",
+        "answer": 0.3333,
+        "tol": 0.01,
+        "wrong": [
+          {
+            "id": "quarter",
+            "from": 0.24,
+            "to": 0.26
+          },
+          {
+            "id": "half",
+            "from": 0.49,
+            "to": 0.51
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $\\tfrac{p}{1 - (1 - p)(1 - q)} = \\tfrac12$ with $p = \\tfrac14$."
+        },
+        {
+          "rung": "point",
+          "text": "That gives $2p = p + q - pq$, so $q = \\tfrac{p}{1 - p}$.",
+          "highlight": [
+            "half"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$q = \\tfrac{1/4}{3/4} = \\tfrac13$."
+        }
+      ],
+      "feedback": {
+        "correct": "$q = \\tfrac13$: B must be a third better than A to break even.",
+        "generic": "Not quite right. Move $q$ until the caption reads 0.500.",
+        "byKey": {
+          "quarter": "Equal skill favours the shooter who fires first: at $q = \\tfrac14$, A wins with $\\tfrac47$.",
+          "half": "At $q = \\tfrac12$ B is the favourite. The even point is lower."
+        }
+      },
+      "explain": {
+        "text": "The duel is even when $q = \\tfrac{p}{1 - p}$, here $\\tfrac13$. Below that, A's first shot is worth more than B's extra skill. The first move is an asset in any alternating duel.",
+        "canvas": {
+          "points": {
+            "p1": {
+              "x": 0.3333,
+              "y": 0.5
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A truel",
+      "prose": "A third player joins. A hits with $\\tfrac13$, B with $\\tfrac23$, and C never misses. They fire in turn A, B, C. B and C each aim at the other, the stronger rival. Suppose A's first shot misses.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 320,
+          "nodes": [
+            {
+              "id": "B",
+              "label": "B fires at C",
+              "x": 0.5,
+              "y": 0.1,
+              "shape": "rect"
+            },
+            {
+              "id": "AB",
+              "label": "A v B, A first",
+              "x": 0.18,
+              "y": 0.55,
+              "shape": "rect"
+            },
+            {
+              "id": "C",
+              "label": "C kills B",
+              "x": 0.82,
+              "y": 0.55,
+              "shape": "rect"
+            },
+            {
+              "id": "AC",
+              "label": "A gets one shot",
+              "x": 0.82,
+              "y": 0.92,
+              "shape": "rect"
+            }
+          ],
+          "edges": [
+            {
+              "from": "B",
+              "to": "AB",
+              "label": "$\\tfrac23$"
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "label": "$\\tfrac13$"
+            },
+            {
+              "from": "C",
+              "to": "AC",
+              "label": "1"
+            }
+          ]
+        },
+        "state": {
+          "caption": "What happens after A misses."
+        }
+      },
+      "question": "What is A's chance of winning from here? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3968,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "25/63, about 0.3968",
+        "wrong": [
+          {
+            "id": "one-shot",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "duel-only",
+            "value": 0.4286,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "half-tree",
+            "value": 0.2857,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Value each end state for A first."
+        },
+        {
+          "rung": "point",
+          "text": "A wins the duel against B, firing first, with $\\tfrac{1/3}{1 - \\frac23 \\cdot \\frac13} = \\tfrac37$. A wins a single shot at C with $\\tfrac13$.",
+          "highlight": [
+            "AB",
+            "AC"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac23 \\times \\tfrac37 + \\tfrac13 \\times \\tfrac13$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac27 + \\tfrac19 = \\tfrac{25}{63} \\approx 0.3968$.",
+        "generic": "Not quite right. Weight the two end states by their chances.",
+        "byKey": {
+          "one-shot": "That is only the branch where C survives B. B hits C two times in three.",
+          "duel-only": "That is the duel against B alone. B misses C a third of the time.",
+          "half-tree": "You dropped the branch where B misses, C kills B and A gets one shot."
+        }
+      },
+      "explain": {
+        "text": "B kills C with $\\tfrac23$, leaving A to fire first against B: $\\tfrac37$. Otherwise C kills B, and A has one shot at C: $\\tfrac13$. So A's chance is $\\tfrac23 \\cdot \\tfrac37 + \\tfrac13 \\cdot \\tfrac13 = \\tfrac{25}{63}$.",
+        "canvas": {
+          "values": {
+            "AB": "3/7",
+            "AC": "1/3",
+            "B": "25/63"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A aims at C",
+      "prose": "Same truel. Now A's first shot aims at C. If it hits, A faces B, and B fires first. If it misses, we are in the position you just valued.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "A fires at C",
+          "nodes": [
+            {
+              "id": "h",
+              "label": "hits C",
+              "p": "1/3"
+            },
+            {
+              "id": "m",
+              "label": "misses",
+              "p": "2/3"
+            }
+          ],
+          "leaves": {
+            "h": "B v A, B first",
+            "m": "worth 25/63 to A"
+          }
+        },
+        "state": {
+          "caption": "What follows each outcome of the shot."
+        }
+      },
+      "question": "What is A's chance if A aims at C? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3122,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "59/189, about 0.3122",
+        "wrong": [
+          {
+            "id": "a-first",
+            "value": 0.4074,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "hit-only",
+            "value": 0.0476,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "air",
+            "value": 0.3968,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Value the duel where B fires first."
+        },
+        {
+          "rung": "point",
+          "text": "B hits first with $\\tfrac23$. Otherwise A fires first against B, worth $\\tfrac37$: $\\tfrac13 \\times \\tfrac37 = \\tfrac17$.",
+          "highlight": [
+            "h"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac13 \\times \\tfrac17 + \\tfrac23 \\times \\tfrac{25}{63}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{1}{21} + \\tfrac{50}{189} = \\tfrac{59}{189} \\approx 0.3122$.",
+        "generic": "Not quite right. Value the hit branch, then weight both branches.",
+        "byKey": {
+          "a-first": "You let A fire first after killing C. The turn passes to B.",
+          "hit-only": "That is only the hit branch. Add the miss branch, worth $\\tfrac{25}{63}$.",
+          "air": "That is the miss branch alone. Hitting C changes it."
+        }
+      },
+      "explain": {
+        "text": "Hitting C hands B the first shot in a duel A wins only $\\tfrac17$ of the time. So aiming at C gives $\\tfrac13 \\cdot \\tfrac17 + \\tfrac23 \\cdot \\tfrac{25}{63} = \\tfrac{59}{189} \\approx 0.31$. A miss is worth more to A than a hit.",
+        "canvas": {
+          "leaves": {
+            "h": "B v A: 1/7",
+            "m": "25/63"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A's best first move",
+      "prose": "Trading firms ask this one, and most candidates answer at once: shoot the best shooter. A has three first moves: aim at C, aim at B, or fire into the air.",
+      "question": "Which first move gives A the best chance?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Fire into the air",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Aim at C, the best shooter",
+            "why": "Hitting C leaves A facing B with B firing first. That branch is worth only $\\tfrac17$, so aiming at C gives $\\tfrac{59}{189}$."
+          },
+          {
+            "id": "c",
+            "text": "Aim at B",
+            "why": "If A hits B, C fires next and never misses. A dies."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Value each move with the numbers you have."
+        },
+        {
+          "rung": "point",
+          "text": "Into the air is the miss branch, $\\tfrac{25}{63}$."
+        },
+        {
+          "rung": "step",
+          "text": "Aim at C: $\\tfrac{59}{189}$. Aim at B: $\\tfrac23 \\times \\tfrac{25}{63} = \\tfrac{50}{189}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Into the air: $\\tfrac{25}{63} = \\tfrac{75}{189}$ beats $\\tfrac{59}{189}$ and $\\tfrac{50}{189}$.",
+        "generic": "Not quite right. Compare the three values.",
+        "byKey": {
+          "b": "You shot the best shooter. A hit hands B the first shot at you, so a miss is better for A."
+        }
+      },
+      "explain": {
+        "text": "Firing into the air is worth $\\tfrac{75}{189}$, aiming at C $\\tfrac{59}{189}$ and aiming at B $\\tfrac{50}{189}$. A does best by letting B and C fight. Then A fires first against whoever is left."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The method",
+      "prose": "Each answer conditioned on one round and valued the positions it leads to. In a duel where A hits with $p$, B with $q$, and A fires first,\n\n$$x = p + (1 - p)(1 - q)\\,x \\;\\Rightarrow\\; x = \\frac{p}{1 - (1 - p)(1 - q)}.$$\n\nIn a truel, value every position, then pick the move that is best for the shooter.",
+      "question": "A never misses and fires first in a duel. What is its chance?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$\\tfrac{1}{2 - q}$",
+            "why": "You used the alternating formula for equal shooters. Here $p = 1$: the first shot ends it."
+          },
+          {
+            "id": "c",
+            "text": "$1 - q$",
+            "why": "B never gets to fire. A hits at once."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $p = 1$ into the formula."
+        },
+        {
+          "rung": "point",
+          "text": "The denominator is $1 - 0 = 1$."
+        },
+        {
+          "rung": "step",
+          "text": "$x = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "1: a perfect shooter who fires first wins at once.",
+        "generic": "Not quite right. Substitute $p = 1$."
+      },
+      "explain": {
+        "text": "With $p = 1$ the formula gives $\\tfrac11 = 1$. This is the edge case: the first shot settles the duel, so skill after it does not matter."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Derive the duel",
+      "prose": "Derive A's chance $x$ in a duel, A first, one justified line at a time.",
+      "question": "Put the lines in order. Leave out the line that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Look at one round, from A's turn."
+          },
+          {
+            "id": "s2",
+            "text": "A hits at once with chance $p$."
+          },
+          {
+            "id": "s3",
+            "text": "Both miss with chance $(1 - p)(1 - q)$, and the duel starts again."
+          },
+          {
+            "id": "s4",
+            "text": "So $x = p + (1 - p)(1 - q)\\,x$."
+          },
+          {
+            "id": "s5",
+            "text": "So $x = \\dfrac{p}{1 - (1 - p)(1 - q)}$, which is $\\tfrac12$ at $p = \\tfrac13$, $q = \\tfrac12$."
+          },
+          {
+            "id": "d1",
+            "text": "Each round, A wins with $p$ and B with $q$, so $x = \\tfrac{p}{p + q}$.",
+            "why": "B only fires if A misses, so B wins a round with $(1 - p)q$, not $q$."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "same": [
+          [
+            "s2",
+            "s3"
+          ]
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from one round."
+        },
+        {
+          "rung": "point",
+          "text": "A round ends with A hitting, or it restarts."
+        },
+        {
+          "rung": "step",
+          "text": "Round, two cases, equation, answer."
+        }
+      ],
+      "feedback": {
+        "correct": "One round, one equation, one answer.",
+        "generic": "Not quite right. Begin with the round and its cases.",
+        "byKey": {
+          "d1": "You gave B a chance $q$ each round. B fires only after A misses.",
+          "left-out": "Every line except the ratio belongs."
+        }
+      },
+      "explain": {
+        "text": "A round either ends with A's hit, ends with B's hit, or restarts. Only the restart feeds back into $x$, giving one linear equation. Its solution is $\\tfrac{p}{1 - (1 - p)(1 - q)}$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write it",
+      "prose": "Write `duel(p, q)`, A's exact chance with A first. Then write `truel_air(pa, pb, pc)`: A always fires into the air while B and C fire at each other, B first. If both miss, the round repeats. Return the three chances.",
+      "question": "Write both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\n\n\ndef duel(p, q):\n    \"\"\"A's chance in a duel, A first, as a Fraction.\"\"\"\n    ...\n\n\ndef truel_air(pa, pb, pc):\n    \"\"\"(A, B, C) chances when A fires into the air\n    while B and C fire at each other.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\n\n\ndef duel(p, q):\n    \"\"\"A's chance in a duel, A first, as a Fraction.\"\"\"\n    p, q = Fraction(p), Fraction(q)\n    return p / (1 - (1 - p) * (1 - q))\n\n\ndef truel_air(pa, pb, pc):\n    \"\"\"(A, B, C) chances when A fires into the air\n    while B and C fire at each other.\"\"\"\n    pa, pb, pc = Fraction(pa), Fraction(pb), Fraction(pc)\n    b_hits = pb                  # A then fires first against B\n    c_hits = (1 - pb) * pc       # A then fires first against C\n    ends = 1 - (1 - pb) * (1 - pc)\n    a = (b_hits * duel(pa, pb) + c_hits * duel(pa, pc)) / ends\n    b = b_hits * (1 - duel(pa, pb)) / ends\n    c = c_hits * (1 - duel(pa, pc)) / ends\n    return a, b, c\n",
+        "examples": [
+          {
+            "call": "duel(Fraction(1, 3), Fraction(1, 2))",
+            "expect": "Fraction(1, 2)",
+            "compare": "fraction"
+          }
+        ],
+        "tests": [
+          {
+            "call": "duel(Fraction(1, 3), Fraction(1, 2))",
+            "expect": "Fraction(1, 2)",
+            "compare": "fraction"
+          },
+          {
+            "call": "duel(Fraction(1, 4), Fraction(1, 4))",
+            "expect": "Fraction(4, 7)",
+            "compare": "fraction"
+          },
+          {
+            "call": "duel(Fraction(1, 3), Fraction(2, 3))",
+            "expect": "Fraction(3, 7)",
+            "compare": "fraction"
+          },
+          {
+            "call": "duel(1, Fraction(1, 2))",
+            "expect": "Fraction(1)",
+            "compare": "fraction"
+          },
+          {
+            "call": "tuple(truel_air(Fraction(1, 3), Fraction(2, 3), 1))",
+            "expect": "(Fraction(25, 63), Fraction(8, 21), Fraction(2, 9))",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(truel_air(Fraction(1, 2), Fraction(2, 3), 1))",
+            "expect": "(Fraction(17, 30), Fraction(4, 15), Fraction(1, 6))",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(truel_air(Fraction(1, 3), Fraction(2, 3), Fraction(9, 10)))",
+            "expect": "(Fraction(165, 406), Fraction(80, 203), Fraction(81, 406))",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(truel_air(Fraction(1, 4), Fraction(1, 2), Fraction(3, 4)))",
+            "expect": "Fraction(1)",
+            "compare": "fraction"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, all exact `Fraction`s. Four are duels. Three compare the three truel chances, one with $p_C = 0.9$ so that B and C can both miss. The last checks that the three chances add to 1."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Once B or C falls, A fires first in a duel: use `duel`."
+        },
+        {
+          "rung": "point",
+          "text": "A round ends with B hitting ($p_B$) or with B missing and C hitting ($(1 - p_B)p_C$)."
+        },
+        {
+          "rung": "step",
+          "text": "Divide each branch by $1 - (1 - p_B)(1 - p_C)$, the chance the round ends."
+        }
+      ],
+      "feedback": {
+        "correct": "The duel formula, and the truel built from it.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Return `p / (1 - (1 - p) * (1 - q))` with `Fraction` inputs.",
+          "test-7": "When C can miss, the round may repeat. Divide by the chance that it ends."
+        }
+      },
+      "explain": {
+        "text": "After B or C falls, A fires first, so each branch is a call to `duel`. With C perfect the round always ends, giving $\\tfrac{25}{63}$, $\\tfrac{8}{21}$ and $\\tfrac29$. With $p_C = 0.9$, A's chance rises to $\\tfrac{165}{406} \\approx 0.41$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: three duels",
+      "tags": [
+        "duels"
+      ],
+      "pace": 540,
+      "prose": "Drill: about 3 minutes a puzzle, as interviews allow. Keep your own time and say each argument aloud. A fires first in each duel. Give four decimal places.",
+      "question": "Fill in A's chance in each duel.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Duel",
+          "A's chance"
+        ],
+        "rows": [
+          [
+            "Both hit with chance $\\tfrac14$",
+            {
+              "edit": true,
+              "answer": 0.5714,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "Both hit with chance $\\tfrac12$",
+            {
+              "edit": true,
+              "answer": 0.6667,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "A hits with $\\tfrac13$, B with $\\tfrac23$",
+            {
+              "edit": true,
+              "answer": 0.4286,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $x = \\tfrac{p}{1 - (1 - p)(1 - q)}$."
+        },
+        {
+          "rung": "point",
+          "text": "The restart chances are $\\tfrac{9}{16}$, $\\tfrac14$ and $\\tfrac29$."
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac{1/4}{7/16}$, $\\tfrac{1/2}{3/4}$ and $\\tfrac{1/3}{7/9}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac47$, $\\tfrac23$ and $\\tfrac37$.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Check the first: both miss with $\\tfrac{9}{16}$.",
+          "r1c1": "Check the second: both miss with $\\tfrac14$.",
+          "r2c1": "Check the third: both miss with $\\tfrac23 \\times \\tfrac13 = \\tfrac29$."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac{1/4}{7/16} = \\tfrac47$ and $\\tfrac{1/2}{3/4} = \\tfrac23$. With A at $\\tfrac13$ against $\\tfrac23$, $\\tfrac{1/3}{7/9} = \\tfrac37$. Firing first lifts A above an even split only when the gap in skill is small."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: who survives?",
+      "tags": [
+        "duels"
+      ],
+      "pace": 180,
+      "prose": "One more at the same pace. The truel again: A hits with $\\tfrac13$, B with $\\tfrac23$, C never misses, and everyone plays their best move.",
+      "question": "Who is most likely to survive?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A, the weakest shot",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "C, who never misses",
+            "why": "You picked the best shooter. C is the target of B, so C survives only $\\tfrac29$ of the time."
+          },
+          {
+            "id": "c",
+            "text": "B, the middle shot",
+            "why": "B's chance is $\\tfrac{8}{21} = \\tfrac{24}{63}$, just below A's $\\tfrac{25}{63}$."
+          },
+          {
+            "id": "d",
+            "text": "All three are equally likely",
+            "why": "The chances are $\\tfrac{25}{63}$, $\\tfrac{24}{63}$ and $\\tfrac{14}{63}$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A fires into the air, so use the values from that branch."
+        },
+        {
+          "rung": "point",
+          "text": "A has $\\tfrac{25}{63}$. B survives only by hitting C and then winning the duel: $\\tfrac23 \\times \\tfrac47$."
+        },
+        {
+          "rung": "step",
+          "text": "C survives only if B misses and A then misses: $\\tfrac13 \\times \\tfrac23$."
+        }
+      ],
+      "feedback": {
+        "correct": "A, with $\\tfrac{25}{63}$.",
+        "generic": "Not quite right. Work out B and C from the air branch.",
+        "byKey": {
+          "b": "You chose the perfect shot. Being the strongest makes C the first target."
+        }
+      },
+      "explain": {
+        "text": "A survives with $\\tfrac{25}{63}$, B with $\\tfrac{8}{21} = \\tfrac{24}{63}$ and C with $\\tfrac29 = \\tfrac{14}{63}$. The three add to 1. The best shooter does worst because both rivals aim at it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Follow-up: a better A",
+      "tags": [
+        "duels"
+      ],
+      "pace": 240,
+      "prose": "The interviewer extends it: A's accuracy rises to $\\tfrac12$. B is still $\\tfrac23$ and C never misses. Does firing into the air still win?",
+      "question": "Fill in A's chance for each first move. Give four decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "A's first move",
+          "A's chance"
+        ],
+        "rows": [
+          [
+            "Fire into the air",
+            {
+              "edit": true,
+              "answer": 0.5667,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "Aim at C",
+            {
+              "edit": true,
+              "answer": 0.3833,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Redo both branches with $p_A = \\tfrac12$."
+        },
+        {
+          "rung": "point",
+          "text": "A first against B: $\\tfrac{1/2}{1 - \\frac12 \\cdot \\frac13} = \\tfrac35$. B first against A: $\\tfrac13 \\times \\tfrac35 = \\tfrac15$."
+        },
+        {
+          "rung": "step",
+          "text": "Air: $\\tfrac23 \\cdot \\tfrac35 + \\tfrac13 \\cdot \\tfrac12$. At C: $\\tfrac12 \\cdot \\tfrac15 + \\tfrac12 \\times \\text{air}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Air $\\tfrac{17}{30} \\approx 0.5667$ beats aiming at C, $\\tfrac{23}{60} \\approx 0.3833$.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Check the air branch: B kills C with $\\tfrac23$, then A fires first and wins with $\\tfrac35$.",
+          "r1c1": "Check the hit branch: B fires first and A wins only $\\tfrac15$."
+        }
+      },
+      "explain": {
+        "text": "Firing into the air gives $\\tfrac25 + \\tfrac16 = \\tfrac{17}{30}$. Aiming at C gives $\\tfrac{1}{10} + \\tfrac{17}{60} = \\tfrac{23}{60}$. A better A still passes, and now A is the clear favourite."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A price war",
+      "prose": "Three firms sell the same product. B and C, the two largest, are cutting prices to knock each other out. A, the smallest, can join the war against C, the leader, or stay out.",
+      "question": "What should A do, on the truel logic?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Stay out and keep its margin while B and C fight",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Cut prices against C, the leader",
+            "why": "That is aiming at C. If it works, A faces B alone, and B moves first."
+          },
+          {
+            "id": "c",
+            "text": "Cut prices against B",
+            "why": "That is aiming at B. If B falls, A faces the leader alone."
+          },
+          {
+            "id": "d",
+            "text": "Match every cut by both rivals",
+            "why": "Fighting both makes A the target, and the weakest loses a straight fight."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Map each move to the truel."
+        },
+        {
+          "rung": "point",
+          "text": "Staying out is firing into the air."
+        },
+        {
+          "rung": "step",
+          "text": "In the truel, the air was worth $\\tfrac{25}{63}$ against $\\tfrac{59}{189}$ for aiming at C."
+        }
+      ],
+      "feedback": {
+        "correct": "Stay out: the weakest gains while the two strongest fight.",
+        "generic": "Not quite right. Ask which move is firing into the air.",
+        "byKey": {
+          "b": "You attacked the leader. A win hands B the first move against a weakened A."
+        }
+      },
+      "explain": {
+        "text": "Staying out is firing into the air: B and C weaken each other, then A meets the survivor. In the model that is $\\tfrac{25}{63}$ against $\\tfrac{59}{189}$ for attacking C. Real markets are messier, but the ordering of threats carries over."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Condition on one round: a duel restarts only when both miss, which gives one linear equation.",
+      "Firing first is an asset: A at $\\tfrac13$ breaks even against B at $\\tfrac12$.",
+      "In a truel the weakest player may do best by firing into the air while the two strongest fight."
+    ],
+    "formula": {
+      "name": "Duel, A first",
+      "tex": "P(\\text{A wins}) = \\dfrac{p}{1 - (1 - p)(1 - q)}",
+      "note": "Even when $q = \\tfrac{p}{1 - p}$."
+    },
+    "trap": "Shooting the best shooter: a hit hands the next rival the first shot at you."
+  },
+  "quiz": [
+    {
+      "id": "q-duel",
+      "difficulty": 2,
+      "tags": [
+        "duels"
+      ],
+      "pace": 180,
+      "prose": "A duel: A hits with $\\tfrac25$, B with $\\tfrac35$, and A fires first.",
+      "question": "What is A's chance? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5263,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "10/19, about 0.5263",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{2/5}{1 - \\frac35 \\cdot \\frac25} = \\tfrac{10}{19} \\approx 0.5263$.",
+        "generic": "Not quite right. Both miss with $\\tfrac35 \\times \\tfrac25 = \\tfrac{6}{25}$.",
+        "byKey": {
+          "ratio": "You used $\\tfrac{p}{p + q}$ or the first shot alone. Firing first counts in every round."
+        }
+      },
+      "explain": {
+        "text": "A round restarts with chance $\\tfrac{6}{25}$, so $x = \\tfrac{2/5}{19/25} = \\tfrac{10}{19}$. A is the weaker shot but the favourite."
+      }
+    },
+    {
+      "id": "q-b-first",
+      "difficulty": 3,
+      "tags": [
+        "duels"
+      ],
+      "pace": 120,
+      "prose": "A hits with $\\tfrac12$ and B with $\\tfrac13$, but B fires first.",
+      "question": "What is A's chance?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "1/2 = 0.5",
+        "wrong": [
+          {
+            "id": "a-first",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "miss-only",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac23 \\times \\tfrac34 = \\tfrac12$.",
+        "generic": "Not quite right. B misses first, then A fires first in the duel.",
+        "byKey": {
+          "a-first": "That is the duel with A first. B shoots first here.",
+          "miss-only": "That is B's first miss alone. A must then win the duel."
+        }
+      },
+      "explain": {
+        "text": "B misses with $\\tfrac23$, and then A fires first and wins with $\\tfrac34$. So A's chance is $\\tfrac12$."
+      }
+    },
+    {
+      "id": "q-b-truel",
+      "difficulty": 3,
+      "tags": [
+        "duels"
+      ],
+      "pace": 180,
+      "prose": "The truel: A hits with $\\tfrac13$, B with $\\tfrac23$, C never misses. A fires into the air; B and C aim at each other.",
+      "question": "What is B's chance of surviving? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.381,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "8/21, about 0.3810",
+        "wrong": [
+          {
+            "id": "hit-only",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "duel",
+            "value": 0.5714,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac23 \\times \\tfrac47 = \\tfrac{8}{21} \\approx 0.3810$.",
+        "generic": "Not quite right. B must hit C first, then win the duel with A firing first.",
+        "byKey": {
+          "hit-only": "That is B hitting C. B must then survive A, who fires first.",
+          "duel": "That is B winning the duel. Multiply by B hitting C first."
+        }
+      },
+      "explain": {
+        "text": "B survives only by hitting C ($\\tfrac23$) and then beating A, who fires first ($\\tfrac47$). That gives $\\tfrac{8}{21}$. If B misses, C kills B."
+      }
+    }
+  ]
+}

@@ -1,0 +1,543 @@
+{
+  "id": "homework-5",
+  "course": "puzzles",
+  "level": 5,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw5-truel-code",
+      "difficulty": 5,
+      "skills": [
+        "pz-recursion",
+        "pz-games"
+      ],
+      "tags": [
+        "duels"
+      ],
+      "pace": 1500,
+      "prose": "Write `truel(pa, pb, pc)` for the truel with best play. They fire in turn A, B, C. C never misses ($p_C = 1$ in every test), so only the first round has three players. A and B may fire into the air or at either rival; C fires at a rival. Each picks the move best for itself. A helper `duel(p, q)` is provided.",
+      "question": "Return A's, B's and C's chances as `Fraction`s, then A's best first move: `'air'`, `'B'` or `'C'`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from fractions import Fraction as _Fr\n\ndef duel(p, q):\n    p, q = _Fr(p), _Fr(q)\n    return p / (1 - (1 - p) * (1 - q))\n",
+        "starter": "from fractions import Fraction\n\n# duel(p, q) is provided: the first shooter's chance in a duel.\n\n\ndef truel(pa, pb, pc):\n    \"\"\"(A, B, C chances, A's best first move) with best play.\n    Order A, B, C; pc = 1, so C always hits.\n    A and B choose 'air' or a rival; C chooses a rival.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\n\n# duel(p, q) is provided: the first shooter's chance in a duel.\n\n\ndef truel(pa, pb, pc):\n    \"\"\"(A, B, C chances, A's best first move) with best play.\n    Order A, B, C; pc = 1, so C always hits.\n    A and B choose 'air' or a rival; C chooses a rival.\"\"\"\n    pa, pb, pc = Fraction(pa), Fraction(pb), Fraction(pc)\n    mix = lambda p, hit, miss: tuple(p * h + (1 - p) * m for h, m in zip(hit, miss))\n    # C's turn, all alive: C kills one rival; the next shooter fires first\n    c_opts = {'B': (duel(pa, pc), 0, 1 - duel(pa, pc)),\n              'A': (0, duel(pb, pc), 1 - duel(pb, pc))}\n    v_c = max(c_opts.values(), key=lambda v: v[2])\n    # B's turn, all alive\n    b_opts = {'air': v_c,\n              'C': mix(pb, (duel(pa, pb), 1 - duel(pa, pb), 0), v_c),\n              'A': mix(pb, (0, 1 - duel(pc, pb), duel(pc, pb)), v_c)}\n    v_b = max(b_opts.values(), key=lambda v: v[1])\n    # A's turn, all alive\n    a_opts = {'air': v_b,\n              'C': mix(pa, (1 - duel(pb, pa), duel(pb, pa), 0), v_b),\n              'B': mix(pa, (1 - duel(pc, pa), 0, duel(pc, pa)), v_b)}\n    move = max(a_opts, key=lambda k: a_opts[k][0])\n    a, b, c = (Fraction(x) for x in a_opts[move])\n    return a, b, c, move\n",
+        "examples": [
+          {
+            "call": "tuple(truel(Fraction(1, 3), Fraction(2, 3), 1))",
+            "expect": "(Fraction(25, 63), Fraction(8, 21), Fraction(2, 9), 'air')",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "tuple(truel(Fraction(1, 3), Fraction(2, 3), 1))",
+            "expect": "(Fraction(25, 63), Fraction(8, 21), Fraction(2, 9), 'air')",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(truel(Fraction(1, 2), Fraction(2, 3), 1))",
+            "expect": "(Fraction(17, 30), Fraction(4, 15), Fraction(1, 6), 'air')",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(truel(Fraction(1, 2), Fraction(3, 4), 1))",
+            "expect": "(Fraction(31, 56), Fraction(9, 28), Fraction(1, 8), 'air')",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(truel(Fraction(1, 3), Fraction(1, 2), 1))",
+            "expect": "(Fraction(5, 12), Fraction(1, 4), Fraction(1, 3), 'air')",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(truel(Fraction(1, 5), Fraction(1, 4), 1))",
+            "expect": "(Fraction(59, 200), Fraction(9, 40), Fraction(12, 25), 'C')",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(truel(Fraction(1, 6), Fraction(1, 4), 1))",
+            "expect": "(Fraction(109, 432), Fraction(49, 216), Fraction(25, 48), 'C')",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(truel(Fraction(1, 4), Fraction(2, 5), 1)[:3])",
+            "expect": "Fraction(1)",
+            "compare": "fraction"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Six compare the whole tuple exactly, including A's move. In two of them A should aim at C. The last checks the three chances add to 1. No test has a tie between moves."
+      },
+      "feedback": {
+        "correct": "Backward induction through the three turns, with every player choosing.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Work backwards: value C's turn first, then B's, then A's. Each value is a triple of chances.",
+          "test-5": "When B is weak, A may do better by aiming at C. Compare all three of A's moves."
+        }
+      },
+      "explain": {
+        "text": "Work backwards: C kills the stronger rival, then B and A each pick their best move. At $(\\tfrac15, \\tfrac14, 1)$ A aims at C. B is so weak that the air branch mostly leaves A one shot at C."
+      }
+    },
+    {
+      "id": "hw5-tank-code",
+      "difficulty": 4,
+      "skills": [
+        "pz-conditioning",
+        "pz-expectation"
+      ],
+      "tags": [
+        "estimating-n"
+      ],
+      "pace": 900,
+      "prose": "Write `tank_estimates(serials)`, returning two unbiased estimates of $N$ as `Fraction`s. The first, $m + \\tfrac{m}{k} - 1$, is for numbers from 1. The second, $R\\,\\tfrac{k + 1}{k - 1} - 1$, is for an unknown start, where $R$ is the range. Raise `ValueError` when fewer than two serials are given.",
+      "question": "Write the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from fractions import Fraction as _Fr\nfrom itertools import combinations as _comb\n\ndef _avg(N, k):\n    rows = [tank_estimates(list(s)) for s in _comb(range(1, N + 1), k)]\n    return (sum(_Fr(r[0]) for r in rows) / len(rows), sum(_Fr(r[1]) for r in rows) / len(rows))\n",
+        "starter": "from fractions import Fraction\n\n\ndef tank_estimates(serials):\n    \"\"\"(max-based, range-based) unbiased estimates of N, as Fractions.\n    Raise ValueError for fewer than two serials.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\n\n\ndef tank_estimates(serials):\n    \"\"\"(max-based, range-based) unbiased estimates of N, as Fractions.\n    Raise ValueError for fewer than two serials.\"\"\"\n    k = len(serials)\n    if k < 2:\n        raise ValueError('need at least two serial numbers')\n    m = max(serials)\n    r = m - min(serials)\n    by_max = m + Fraction(m, k) - 1\n    by_range = Fraction(r * (k + 1), k - 1) - 1\n    return by_max, by_range\n",
+        "examples": [
+          {
+            "call": "tuple(tank_estimates([23, 41, 57, 64]))",
+            "expect": "(Fraction(79), Fraction(202, 3))",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "tuple(tank_estimates([23, 41, 57, 64]))",
+            "expect": "(Fraction(79), Fraction(202, 3))",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(tank_estimates([19, 40, 42, 60]))",
+            "expect": "(Fraction(74), Fraction(202, 3))",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(tank_estimates([10, 20]))",
+            "expect": "(Fraction(29), Fraction(29))",
+            "compare": "equal"
+          },
+          {
+            "call": "tuple(tank_estimates([5, 17, 30]))",
+            "expect": "(Fraction(39), Fraction(49))",
+            "compare": "equal"
+          },
+          {
+            "call": "tank_estimates([123, 141, 157, 164])[1]",
+            "expect": "Fraction(202, 3)",
+            "compare": "fraction"
+          },
+          {
+            "call": "tuple(_avg(12, 4))",
+            "expect": "(Fraction(12), Fraction(12))",
+            "compare": "equal"
+          },
+          {
+            "call": "tank_estimates([7])",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Five compare exact `Fraction`s, one on serials shifted by 100. One averages both estimates over all 495 sets of four from 1 to 12 and needs exactly 12 for each. The last expects `ValueError` for one serial."
+      },
+      "feedback": {
+        "correct": "Both estimates, exact and unbiased.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Check both formulas: $64 + 16 - 1 = 79$ and $41 \\times \\tfrac53 - 1 = \\tfrac{202}{3}$.",
+          "test-7": "The range needs two serials: raise `ValueError` when `len(serials) < 2`."
+        }
+      },
+      "explain": {
+        "text": "The max-based estimate adds one average gap above the largest; the range-based one adds two, one at each end. Averaged over every set of four from 1 to 12, both give exactly 12. Shifting the serials leaves the range estimate unchanged, which is why it suits an unknown start."
+      }
+    },
+    {
+      "id": "hw5-range-order",
+      "difficulty": 4,
+      "skills": [
+        "pz-conditioning",
+        "pz-expectation"
+      ],
+      "tags": [
+        "estimating-n"
+      ],
+      "pace": 420,
+      "prose": "The numbers run from $a + 1$ to $a + N$, and you see $k$ of them. Derive the mean of the range $R$, one justified line at a time.",
+      "question": "Put the lines in order. Leave out the line that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "The $k$ numbers seen leave $N - k$ unseen numbers, in $k + 1$ gaps."
+          },
+          {
+            "id": "s2",
+            "text": "By symmetry each gap has mean $\\tfrac{N - k}{k + 1}$."
+          },
+          {
+            "id": "s3",
+            "text": "The range is the full span less the two end gaps: $R = (N - 1) - G_{\\text{low}} - G_{\\text{high}}$."
+          },
+          {
+            "id": "s4",
+            "text": "So $E[R] = N - 1 - \\tfrac{2(N - k)}{k + 1} = \\tfrac{(k - 1)(N + 1)}{k + 1}$."
+          },
+          {
+            "id": "s5",
+            "text": "Solving, $\\hat N = R\\,\\tfrac{k + 1}{k - 1} - 1$ has mean $N$, whatever $a$ is."
+          },
+          {
+            "id": "d1",
+            "text": "The start $a$ cancels in $R$, so $R$ itself is unbiased for $N$.",
+            "why": "The start cancels, but $R$ still misses the two end gaps, so it is too small on average."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Gaps, equal means, two end gaps off, then solve.",
+        "generic": "Not quite right. Begin with the unseen numbers and their gaps.",
+        "byKey": {
+          "d1": "You took $R$ as unbiased. It loses an average gap at each end.",
+          "left-out": "Every line except the \"R is unbiased\" claim belongs."
+        }
+      },
+      "explain": {
+        "text": "$R$ is the span from $a + 1$ to $a + N$ less the gap below the smallest and the gap above the largest. Each has mean $\\tfrac{N - k}{k + 1}$, which gives $E[R]$. Check at $k = 4$, $N = 50$: $E[R] = \\tfrac{3 \\times 51}{5} = 30.6$, as counting every set of four confirms."
+      }
+    },
+    {
+      "id": "hw5-spoken",
+      "difficulty": 4,
+      "skills": [
+        "pz-expectation",
+        "pz-symmetry"
+      ],
+      "tags": [
+        "fair-from-biased",
+        "spoken"
+      ],
+      "pace": 300,
+      "kind": "longform",
+      "prompt": "Spoken answer, about 5 minutes on your own watch. An interviewer asks: \"You have a coin that may be biased. Make a fair decision with it.\" When you finish, they follow up: \"Now make a fair choice among three people.\" Say your answer aloud first. Then write what you said and mark it against the rubric.",
+      "model": "**The pairing.** Flip the coin twice. If it shows HT, call it heads; if TH, call it tails. On HH or TT, throw the pair away and flip twice again.\n\n**Why it is fair.** Write $p$ for the chance of heads and $q = 1 - p$. The flips are independent, so $P(HT) = pq$ and $P(TH) = qp$. These are equal, so a kept pair is heads or tails with chance $\\tfrac12$ each. I never need to know $p$.\n\n**The cost.** A pair is kept with chance $2pq$, so I wait $\\tfrac{1}{2pq}$ pairs, which is $\\tfrac{1}{pq}$ flips. A fair coin takes 4 flips; at $p = 0.6$ it is $\\tfrac{25}{6} \\approx 4.2$. It needs $0 < p < 1$: a two-headed coin never gives a bit.\n\n**Three people.** Flip three times and keep only HTT, THT and TTH, one person each. Each has chance $pq^2$, so the choice is fair; start again otherwise. A round succeeds with $3pq^2$, so the flips are $\\tfrac{1}{pq^2}$: $\\tfrac{125}{12} \\approx 10.4$ at $p = 0.6$, and 8 for a fair coin. Another route: make two fair bits, use three of the four pairs of bits and start again on the fourth. At $p = 0.6$ that takes $2 \\times \\tfrac{25}{6} \\times \\tfrac43 \\approx 11.1$ flips, a little slower.\n\n**Summary.** Keep only outcomes whose chances are equal for every $p$, by symmetry of the product. Pay for fairness with thrown-away rounds.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "States the pairing: HT is heads, TH is tails, HH and TT start again"
+        },
+        {
+          "points": 2,
+          "text": "Explains fairness by independence: both kept outcomes have chance $pq$, whatever $p$ is"
+        },
+        {
+          "points": 2,
+          "text": "Gives the expected flips, $\\tfrac{1}{pq}$ (4 for a fair coin), and the edge case $p = 0$ or 1"
+        },
+        {
+          "points": 2,
+          "text": "Extends to three people with three equally likely strings (or bits), and states the cost, such as $\\tfrac{1}{pq^2}$"
+        },
+        {
+          "points": 2,
+          "text": "Speaks clearly: the method first, then why, then the cost, in under 5 minutes"
+        }
+      ]
+    },
+    {
+      "id": "hw5-weak-b",
+      "difficulty": 5,
+      "skills": [
+        "pz-recursion",
+        "pz-games"
+      ],
+      "tags": [
+        "duels"
+      ],
+      "pace": 600,
+      "prose": "The truel again: they fire in turn A, B, C, and C never misses. Now A hits with $\\tfrac15$ and B with $\\tfrac14$. B and C aim at each other while all three stand.",
+      "question": "What is A's best first move?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Aim at C",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Fire into the air",
+            "why": "You carried over the last answer. With B this weak, C usually kills B, and A gets one shot at C. The air is worth only $\\tfrac{11}{40}$."
+          },
+          {
+            "id": "c",
+            "text": "Aim at B",
+            "why": "If A hits B, C fires next and never misses."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Aim at C: $\\tfrac{59}{200}$ beats the air's $\\tfrac{55}{200}$.",
+        "generic": "Not quite right. Value all three moves with these accuracies.",
+        "byKey": {
+          "b": "You reused the answer for $(\\tfrac13, \\tfrac23)$. Recompute: here a hit on C leaves an even duel against a weak B."
+        }
+      },
+      "explain": {
+        "text": "Into the air: $\\tfrac14 \\cdot \\tfrac{1/5}{2/5} + \\tfrac34 \\cdot \\tfrac15 = \\tfrac{11}{40}$. Aiming at C adds a hit branch worth $\\tfrac34 \\cdot \\tfrac12 = \\tfrac38$ to A, giving $\\tfrac15 \\cdot \\tfrac38 + \\tfrac45 \\cdot \\tfrac{11}{40} = \\tfrac{59}{200}$. The best move depends on the numbers, so recompute rather than recall."
+      }
+    },
+    {
+      "id": "hw5-two-bits",
+      "difficulty": 4,
+      "skills": [
+        "pz-expectation",
+        "pz-symmetry"
+      ],
+      "tags": [
+        "fair-from-biased"
+      ],
+      "pace": 300,
+      "prose": "A coin lands heads with chance 0.6. To choose fairly among three people, you make two fair bits with the pairing trick. Bits 00, 01 and 10 name a person; 11 starts again.",
+      "question": "How many flips do you expect to use? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11.1111,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Flips",
+        "accept": "100/9, about 11.1111",
+        "wrong": [
+          {
+            "id": "direct",
+            "value": 10.4167,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-restart",
+            "value": 8.3333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 \\times \\tfrac{25}{6} \\times \\tfrac43 = \\tfrac{100}{9} \\approx 11.1111$.",
+        "generic": "Not quite right. Find the flips per bit, the bits per round, and the rounds.",
+        "byKey": {
+          "direct": "That is the three-flip method with exactly one head, $\\tfrac{1}{pq^2}$. This method is slower.",
+          "no-restart": "That is two bits once. A quarter of the rounds land on 11 and start again."
+        }
+      },
+      "explain": {
+        "text": "Each fair bit costs $\\tfrac{1}{0.24} = \\tfrac{25}{6}$ flips, and a round uses two bits. Rounds succeed with $\\tfrac34$, so the total is $\\tfrac{50}{6} \\times \\tfrac43 = \\tfrac{100}{9}$. The direct method needs only $\\tfrac{125}{12}$."
+      }
+    },
+    {
+      "id": "hw5-sum-max6",
+      "difficulty": 3,
+      "skills": [
+        "pz-conditioning"
+      ],
+      "tags": [
+        "given-the-total"
+      ],
+      "pace": 240,
+      "prose": "The larger of two dice is 6.",
+      "question": "What is the expected total? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9.2727,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Mean",
+        "accept": "102/11, about 9.2727",
+        "wrong": [
+          {
+            "id": "uniform",
+            "value": 9.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{102}{11} \\approx 9.2727$.",
+        "generic": "Not quite right. List the eleven rolls with larger die 6.",
+        "byKey": {
+          "uniform": "You took the other die as uniform on 1 to 6. (6, 6) is one roll; (6, 2) and (2, 6) are two."
+        }
+      },
+      "explain": {
+        "text": "Row 6 has totals 7 to 12, adding to 57. Column 6 above it has totals 7 to 11, adding to 45. Over eleven rolls the mean is $\\tfrac{102}{11}$."
+      }
+    },
+    {
+      "id": "hw5-three-dice",
+      "difficulty": 4,
+      "skills": [
+        "pz-conditioning"
+      ],
+      "tags": [
+        "given-the-total"
+      ],
+      "pace": 300,
+      "prose": "Three dice total 10.",
+      "question": "What is the chance that at least one shows a six? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "label": "Chance",
+        "accept": "1/3, about 0.3333",
+        "wrong": [
+          {
+            "id": "unconditional",
+            "value": 0.4213,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{9}{27} = \\tfrac13$.",
+        "generic": "Not quite right. Count the ordered rolls with total 10, then those with a six.",
+        "byKey": {
+          "unconditional": "That is the chance of a six with no condition, $1 - (\\tfrac56)^3$."
+        }
+      },
+      "explain": {
+        "text": "Total 10 comes up in 27 ordered rolls. Those with a six are the orders of (6, 1, 3) and (6, 2, 2): $6 + 3 = 9$. So the chance is $\\tfrac13$."
+      }
+    },
+    {
+      "id": "hw5-switch-rule",
+      "difficulty": 4,
+      "skills": [
+        "pz-geometry",
+        "pz-symmetry"
+      ],
+      "tags": [
+        "random-chords"
+      ],
+      "pace": 300,
+      "prose": "The envelope pairs are (£10, £20), (£20, £40) and (£40, £80), equally likely. You open one at random. Your rule: switch unless you see £80.",
+      "question": "What is the rule worth on average? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 41.6667,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "an amount",
+        "label": "Value",
+        "unit": "£",
+        "accept": "125/3, about £41.6667",
+        "wrong": [
+          {
+            "id": "keep",
+            "value": 35,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{250}{6} = \\tfrac{125}{3} \\approx \\text{£}41.67$.",
+        "generic": "Not quite right. Go through all six equally likely cases.",
+        "byKey": {
+          "keep": "That is always keeping (or always switching). The rule gains by keeping only at £80."
+        }
+      },
+      "explain": {
+        "text": "The six cases pay 20, 10, 40, 20, 80 and 80 under the rule. That averages $\\tfrac{250}{6} \\approx \\text{£}41.67$, against £35 for always keeping. Using the prior beats both fixed rules."
+      }
+    },
+    {
+      "id": "hw5-d20",
+      "difficulty": 4,
+      "skills": [
+        "pz-expectation",
+        "pz-recursion"
+      ],
+      "tags": [
+        "follow-ups",
+        "dice-games"
+      ],
+      "pace": 300,
+      "prose": "The reroll game with a 20-sided die: keep the face in £, or pay £1 to roll again. You may reroll as often as you like.",
+      "question": "What is the game worth? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15.1667,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "an amount",
+        "label": "Value",
+        "unit": "£",
+        "accept": "91/6, about 15.1667",
+        "wrong": [
+          {
+            "id": "no-reroll",
+            "value": 10.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "free",
+            "value": 20,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{91}{6} \\approx \\text{£}15.17$: keep 15 or more.",
+        "generic": "Not quite right. Find the threshold $t$ with the largest value.",
+        "byKey": {
+          "no-reroll": "That is never rerolling. A £1 reroll pays on low faces.",
+          "free": "That is a free reroll. At £1 you stop well below 20."
+        }
+      },
+      "explain": {
+        "text": "Keeping 15 or more gives $\\tfrac{105 - 14}{6} = \\tfrac{91}{6}$. Then $V - c \\approx 14.17$, so 15 is kept and 14 rerolled, which confirms the rule."
+      }
+    }
+  ]
+}
