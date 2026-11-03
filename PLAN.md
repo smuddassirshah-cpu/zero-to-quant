@@ -49,8 +49,8 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
 2. [done 2 Nov] Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
 3. [done 3 Nov] Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning); plus voice passes bringing every sentence in 1.8 and 2.1 under 20 words. Fix pass 1.9 done 3 Nov.
 4. Topic 3.3 (part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2; part two done 4 Nov: mocks brief `docs/briefs/mocks.md`, mock-oa-arith, puzzles L5, brainteasers L2 and L3, game-theory L1):
-   - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built.
-   - Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
+   - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built (done 3 Nov: 11 games specified, 63 runs checked in engine and Python).
+   - [done 3 Nov] Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
    - mental-pressure L3, L4, then mock-oa-arith; puzzles L3 to L5, then mock-oa-sig and mock-oa-trader; brainteasers L1 to L3; mm-games L2, then L3 and L4 on the E12 widget; game-theory L1 to L3.
    - Bank part 1 (200 items) on E7.
    - Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
@@ -115,7 +115,7 @@ Phase 3, trader and researcher depth
 - [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
 - [ ] ito L2
 - [ ] ito L3
-- [ ] Engine pass D: E12 trading-game widget
+- [x] Engine pass D: E12 trading-game widget (items 459 `trade`, 460 `carry`; `docs/reports/engine-pass-d.md`; sample `exams/mock-trade-sample.json`; full run green, 903 lessons, all sets, 24 exams)
 - [ ] Bank part 2 (200 items)
 - [ ] Exams: topic-3.3, topic-3.2 (ito part)
 

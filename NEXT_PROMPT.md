@@ -1,15 +1,16 @@
 Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored").
 
-Task: PLAN.md 2a order item 4 (topic 3.3), part one, plus fix pass 1.9 left from task 5.
+Task: PLAN.md 2a order item 4 (topic 3.3), part three. Done already: engine passes B (bank, timing) and D (`trade`, `carry`); mental-pressure L1 to L4 and mock-oa-arith (that course's close); puzzles L1 to L5; brainteasers L1 to L3; mm-games L1, L2; game-theory L1.
 
-Steps (own scratchpad subfolder each; checkpoint-commit as items turn green):
-1. In parallel:
-   - `engine-dev`: engine pass B, E7 (question bank with item spacing) and E9 (per-item timing), from their bullets in `docs/BACKLOG-INBOX.md`; number them from 456 in `docs/ENGINE-BACKLOG.md`, document in AUTHORING, report to `docs/reports/engine-pass-b.md`.
-   - Four `content-author`s: mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2, each from its brief's `## Level n`.
-   - A `test-fixer`: fix pass 1.9 from `docs/reviews/review-1.9.md` (append `## Fix pass`), then a voice pass on cpp and cpp-pricing with `docs/reviews/voice-scan.py` (0 and 0).
-2. After pass B is green: `engine-dev` engine pass D, E12 (trading-game widget); then revise the `## Level 3` and `## Level 4` sections of `docs/briefs/mm-games.md` to use the widget instead of scripts.
-3. An answer-check agent recomputes every keyed answer in this session's new files (pattern `docs/reviews/answers-2026-11-03.md`); a fixer fixes mismatches.
+Steps (own scratchpad subfolder each; build `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` first; checkpoint-commit as items turn green):
+1. In parallel, `content-author`s, each from its brief section:
+   - mm-games L3 (`docs/briefs/mm-games.md` `## Level 3`, rewritten for the `trade` widget; read `docs/reports/engine-pass-d.md` and AUTHORING section 3), then mm-games L4 once L3 is green.
+   - game-theory L2, then L3 once L2 is green (`docs/briefs/game-theory.md`).
+   - mock-oa-sig and mock-oa-trader, three fixed versions each (`docs/briefs/mocks.md`; files `-2`, `-3`; `prep.json` names version 1 only).
+2. An answer-check agent recomputes every keyed answer in this session's new files (`docs/reviews/answers-2026-11-05.md`, pattern `answers-2026-11-03-b.md`); every `trade` game is replayed in Python from its seed; a fixer fixes mismatches.
 
-Context: follow-up screens, a pace, `tags` on drill and homework items; firms only in recruiting l4, mocks and `prep.json`; `longform` in homework and exams only; `derive` takes expression, order or choice; `expression` samples six points; 4-column tables scroll at 390 px; `place` allows one slot per chip; `shuffle: true` on choices. Every new file passes `voice-scan.py`; re-run a validator error once during engine work. Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
+Context: `tags` and `pace` on drill, quiz, review and homework items; firms only in recruiting l4, mocks and `prep.json`; `longform` in homework and exams only; `shuffle: true` on choices; 4-column tables scroll at 390 px; lessons hold at most 12 screens. Run `voice-scan.py` with an absolute `VOICE_BASE` ending in a slash; new files 0 and 0. Re-run a validator error once if it is in another agent's file.
 
-Acceptance, from `app/`: validate 0 errors; new lessons green with and without `--mobile`, new sets with `--set`; topic 1.9 courses and exam green after the fixes; `--routes-only` and the full `--all` run green after both engine passes; reports exist; PLAN ticks each item. NEXT_PROMPT names mental-pressure's close (mock-oa-arith), puzzles L5 and the next 3.3 levels.
+Acceptance, from `app/`: validate 0 errors; new lessons green with and without `--mobile`, sets with `--set`, each mock with `--exam`; `--routes-only` green; reports exist; PLAN ticks each item.
+
+NEXT_PROMPT then names bank part 1 (200 items on E7, four sessions), exam topic-3.3, mock-superday-trader, and the second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers and game-theory (including the voice debt in KNOWN_ISSUES).

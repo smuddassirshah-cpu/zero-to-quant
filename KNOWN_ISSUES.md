@@ -64,3 +64,10 @@ Session B (4 Nov 2026)
 - mock-oa-sig and mock-oa-trader are briefed but unwritten; E3 (fresh draws) and E15 (calculator) are not built.
 - The 12-screen lesson cap pushed several brief drills into quizzes in brainteasers L2 and L3 (listed in their reports).
 - Raw `git stash -u` while agents write untracked files hides their files for a moment; use `git pull --rebase --autostash` and stage the manifest entry by entry.
+
+Session A (3 Nov 2026)
+- `voice-scan.py` with a relative `VOICE_BASE` scanned 0 files and reported a pass until 3 Nov (fixed: it resolves the path and exits on an empty folder). Voice debt found in earlier levels of topic 3.3: mental-pressure L1 to L3 46 hits, puzzles L1 to L3 12, mm-games L1 6; clear them in the second reads.
+- Second read pending for limits L5, multivar L5 and eigen L4 (written after their topics' reads); markov L5 has no topic-1.5 exam items; 25 levels are covered by the exam only through skills shared with earlier levels (list in `docs/reports/stage-status-2026-11-03.md`).
+- `carry` values are lost if a lesson is reopened part-way; the `trade` widget cannot quote one side at a limit, run limit 0, hedge or take liquidity, or open with a carried position (engine pass D follow-ups 2 to 5).
+- Engine samples `exams/mock-sample.json`, `exams/mock-trade-sample.json` and `bank/sample.json` are probably visible to the learner (not checked); remove or hide them when the real mocks and bank land.
+- The `file-finder` agent may not write `.md` reports; the main session saved the stage status report from its scratchpad output.
