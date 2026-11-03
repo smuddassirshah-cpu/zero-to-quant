@@ -752,3 +752,7 @@ choice items seen with more than one option order: 14 of 14
 no console errors
 ALL OK
 ```
+
+## Changed after the answer check (6 Nov)
+`docs/reviews/answers-2026-11-06.md` (Fix pass) changed some items after this report was written; the exam and bank files are authoritative where figures here differ.
+- mental-1: percent-chain-up-40-down-30 stores -0.02 with `unit: "%"`; negative-marking-five-options has six options and a -1/5 penalty (id kept). probability-1: hats no-derange wrong value is 0.5.

@@ -1012,3 +1012,7 @@ process.stdin.on('end', () => {
   process.stdout.write(JSON.stringify(out));
 });
 ```
+
+## Changed after the answer check (6 Nov)
+`docs/reviews/answers-2026-11-06.md` (Fix pass) changed some items after this report was written; the exam and bank files are authoritative where figures here differ.
+- mock-superday-trader: b2 is 68 × 72 = 4,896, b7 asks the last digit of 8^2027 (2), b5 is 1.04^18 ≈ 2.03, a1 asks for four different faces (5.7), a4 uses a 0.25 coin (16/3); b12 option a is 150 to 160.
