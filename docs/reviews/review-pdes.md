@@ -69,3 +69,41 @@ Every keyed answer in all 18 files, with each `wrong` value, including: the resi
 Continuity: the course option ($S = K = 100$, $r = 5\%$, $\sigma = 20\%$, $T = 1$, call £10.4506, put £5.5735, digital £0.5323, forward £4.8771) agrees with `ito` l9 and l11 and with `trees` l10; the 100,000-draw average £10.4534 with standard error £0.0465 is the same figure in `ito` l11. The £6.8887 at $t = 0.5$ in l1 and in the h-colleague item agree. Prerequisites: `odes`, `numerics`, `complex` and `trig` are cited by lesson id only, each time with a stated or on-screen result, so pdes stands alone; the one asserted step is item 19. The parabolic, one-time-condition and ill-posed claims of l1, l3, l4 and l9 agree. All 12 lessons keep the shape (10 or 11 screens, 4 quiz items, one trap and one edge case each); the 14 `order` items with `same` or `distractors` accept the independent orders (l2 a2/a3, l7 p1 to p3, l8 m1/m2, l10 t3 to t5, h-drift s2/s3, h-chain c1/c2) and no other valid order exists.
 
 ## Fix pass
+
+Each finding was checked against the current files (`git diff 0453b1c -- app/content/courses/pdes/`) and each corrected number recomputed from the review's own figures. No finding was disputed on numbers. Branch note: this worktree began behind `claude/amazing-wright-d4mx7i`; it was fast-forwarded to `d4f2452` before work.
+
+1. Fixed: `homework-2` `h-corridor-wide` `d-sigma-sq` now says £22.95.
+2. Fixed: `homework-3` `h-colleague` para 3 reads "Each half step has $\lambda/2 = 50$, so its factor is $1/(1 + 2\lambda s^2)$, about 0.005 for the top mode".
+3. Fixed: l4 s3 `d1` `why` now separates energy from heat.
+4. Fixed by item 514 (no content change; the key stays `-\frac{1}{2t}+\frac{x^2}{4Dt^2}`). Real grader, Compute Engine 0.30.2 with the worktree `grade.js`, script `fix-read-pdes-2/t.cjs`: true for `\frac{x^2}{4Dt^2}-\frac{1}{2t}`, `\frac{x^2-2Dt}{4Dt^2}`, `\frac{x^2}{4tDt}-\frac{1}{2t}`, `\frac{x^2}{4t^2D}-\frac{1}{2t}`, `-1/(2t)+x^2/(4Dt^2)` and the key itself; false for `\frac{x^2}{2Dt^2}-\frac{1}{2t}`, `\frac{x^2}{4Dt^2}+\frac{1}{2t}` and `\frac{x^2}{4Dt^2}`. The brief's example `\frac{x^2}{4tD^2}-\frac{1}{2t}` is not a rearrangement of the key ($D^2$ and $t$ in place of $D$ and $t^2$), so false is correct for it.
+5. Fixed: l8 `q-blow` prose says 10 intervals; explain says "On 10 intervals ... Finer grids tend to $1 - 4\lambda = -1.4$" (three sentences).
+6. Fixed: l12 s7 explain says "With 201 intervals and the same 20 steps the error is still £0.0031".
+7. Fixed: `homework-3` para 1 says gamma, "$-0.277$ near $S = 99.5$, where the true gamma is 0.027"; para 3 says "its gamma near the strike is positive".
+8. Fixed: l12 s6 `kink` 69 characters, `unstable` lengthened to 72 characters ("... so errors grow without bound").
+9. Fixed: l11 s5 key (54), l11 `q-drift` key (52), l9 s0 key (47), each shuffled.
+10. Fixed: `"shuffle": true` on all 27 listed items. A scan of all 42 choice widgets in `pdes` finds 42 of 42 shuffled, none missing.
+11. Fixed: homework-1 `h-unstable` explain says the spike entry itself goes negative ($-0.2$).
+12. Fixed: l3 s9 split into two `$$` blocks; l4 and l6 summaries use `gathered`; l10 summary shortened to `\Phi(d)` with $d$ in the note. Seen at 440 (l3 s9, l10 done): not clipped.
+13. Fixed (content part): `space` height 400 to 280 on l1 s0 and s1; l9 s0 plane 260 to 190; canvas removed from l12 s8, s9 and l10 s8 (with their `highlight` hints). The engine part is the first bullet under "Raised later (topic 3.2 second reads, 4 Nov), pdes" in `docs/BACKLOG-INBOX.md`. The l11 `walk` is unchanged.
+14. Fixed: `"label": ""` on function `g` on every l10 canvas.
+15. Fixed: `y` maximum 30000 and `labelAt: 250` on the `guide` in l12 s3, s4, s5, s7 and s10. In the 1376 shot of s7 the axis title is clear; "slope -2" still sits on the line but no longer meets the corner or the limit label. The engine part is the second inbox bullet.
+16. Fixed: l8 s6 hint, s9 explain and the `h-colleague-terms` model now say "four terms fall short by 0.0042", and the homework model says it is a different quantity.
+17. Fixed: l3 s10 explain: lesson 9 first removes the drift and the discount.
+18. Fixed: l4 `q-max` prose and question no longer name the principle; explain does.
+19. Fixed: l8 s4 prose adds the eigenvalue clause that gives the factor.
+20. Fixed: l11 s7 prose adds the martingale sentence for a random rate.
+21. Disputed: l2, l5 and l7 each have 11 screens, within the 8 to 12 range in LEVEL-BRIEF, and reading them shows no repeated rung or padding screen; merging would drop a distinct step. No change.
+22. Fixed: l2 `how` says "a second or two".
+23. Fixed: l12 s0 `vlines` 100 and 90 have `labelSide: below`.
+
+Counts: 22 fixed (including 1 by item 514), 1 disputed (21), 0 deferred. Shuffle: 27 added, 42 of 42 choice widgets now shuffled. Keys rebalanced (shortened or lengthened to match the distractors): 7 (l11 s5, l11 `q-drift`, l9 s0, l12 `kink` and `unstable`, l5 `q-const`, review-1 `ends`).
+
+Changed keys (graded answers): none. Option text changed only, same correct id and meaning:
+- `l11-feynman-kac.json` s5 key: "The rate $r$, because the hedge removes the real drift and the equation holds $rS$" to "The rate $r$, because the hedge removes the real drift".
+- `l11-feynman-kac.json` `q-drift` key: "Not the Black-Scholes price: it is too high, about £15.53 for our option" to "Not the Black-Scholes price: too high, about £15.53".
+- `l9-black-scholes-to-heat.json` s0 key: "Backwards from expiry, because the known data sit at $t = T$" to "Backwards from expiry, where the known data sit".
+- `l12-four-decimal-pricer.json` s6 `kink`: "... so the kink's high modes flip sign and barely damp" to "$-0.9950$: the kink's high modes barely damp"; `unstable`: "... so errors grow" to "... so errors grow without bound".
+- `l5-separation-of-variables.json` `q-const`: "The constant $X = 1$, with $\lambda = 0$" to "The constant $X = 1$ ($\lambda = 0$)".
+- `review-1.json` `ends`: "such as fixed temperatures" to "such as fixed values".
+
+Checks (from `app/`, `--local-cdn` with the scratchpad `pkgs`): `node tools/validate.mjs`: 0 errors, 540 warnings. Voice scan (`VOICE_BASE` the worktree `pdes` folder): 0 explanations over three sentences, 5,774 sentences scanned, 0 over 20 words. Playthrough of all 12 lessons, 3 reviews and 3 homeworks: All passed at 1280 without flags, and All passed again with `--mobile --tablet --shots` (440, 1032, 1376 wide). Screenshots looked at: l1 s1 (1376), l3 s9 (440), l9 s0 (1032), l10 done (440), l12 s7 (1376).
