@@ -1,0 +1,1287 @@
+{
+ "id": "l3-heat-kernel",
+ "course": "pdes",
+ "title": "The heat kernel",
+ "minutes": 14,
+ "objectives": [
+  "Solve the heat equation on the line as a weighted average with the heat kernel",
+  "Read the kernel's width and see why heat cannot run backwards"
+ ],
+ "skills": [
+  "pe-heat"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Heat starts as a spike at $x = 0$ and spreads. The curve is $\\Phi_t(x) = \\dfrac{1}{\\sqrt{4\\pi Dt}}e^{-x^2/(4Dt)}$ with $D = 1$. At $t = 1$ its peak is 0.282. Slide $t$ until the peak falls to the dashed line, 0.141.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -6,
+      6
+     ],
+     "y": [
+      0,
+      0.45
+     ],
+     "height": 280,
+     "xLabel": "$x$",
+     "yLabel": "$\\Phi_t(x)$",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "exp(-x^2/(4*D*t))/sqrt(4*pi*D*t)",
+       "label": "$\\Phi_t$"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "target",
+       "y": 0.141047,
+       "label": "0.141"
+      }
+     ],
+     "params": {
+      "D": 1,
+      "t": 1
+     }
+    },
+    "state": {}
+   },
+   "question": "At what $t$ does the peak reach the dashed line?",
+   "widget": {
+    "kind": "slider",
+    "min": 0.5,
+    "max": 8,
+    "step": 0.1,
+    "start": 1,
+    "bind": "t",
+    "answer": 4,
+    "tol": 0.15,
+    "unitLabel": "",
+    "wrong": [
+     {
+      "id": "half-t",
+      "from": 1.7,
+      "to": 2.4
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The peak is the curve's height at $x = 0$: $1/\\sqrt{4\\pi Dt}$."
+    },
+    {
+     "rung": "point",
+     "text": "Halving the peak needs $\\sqrt{t}$ to double.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "If $\\sqrt{t}$ doubles from 1, then $t = 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "At $t = 4$ the peak is $1/\\sqrt{16\\pi} = 0.141$.",
+    "generic": "Not quite right. The peak falls like $1/\\sqrt{t}$, so work out what $t$ halves it.",
+    "byKey": {
+     "half-t": "You halved $t$ to get half the height. The peak depends on $1/\\sqrt{t}$, so $t$ must quadruple."
+    }
+   },
+   "explain": {
+    "text": "The peak is $1/\\sqrt{4\\pi Dt}$, so halving it needs $\\sqrt{t}$ to double, which means $t = 4$. The curve is also wider by a factor of 2. Peak and width trade off exactly, because the area stays 1.",
+    "canvas": {
+     "params": {
+      "t": 4
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Start with heat only on the right: $u_0 = 1$ for $x > 0$ and 0 for $x < 0$. The value $u(x_0, t)$ is the shaded area of the kernel centred at $x_0$, from 0 to the right. Move $x_0$ and $t$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -5,
+      5
+     ],
+     "y": [
+      0,
+      0.7
+     ],
+     "height": 260,
+     "xLabel": "$y$",
+     "yLabel": "$\\Phi_t(x_0 - y)$",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(2*D*t))",
+       "label": ""
+      }
+     ],
+     "vlines": [
+      {
+       "id": "jump",
+       "x": 0,
+       "label": "$u_0$ jumps"
+      }
+     ],
+     "params": {
+      "D": 1,
+      "xc": 1,
+      "t": 0.5
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "k",
+      "from": 0,
+      "to": 8
+     }
+    },
+    "derive": {
+     "caption": "$u(x_0, t)$ = {{fixed(values.A, 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "xc",
+      "min": -3,
+      "max": 3,
+      "step": 0.1,
+      "label": "Position $x_0$",
+      "start": 1
+     },
+     {
+      "bind": "t",
+      "min": 0.1,
+      "max": 2,
+      "step": 0.1,
+      "label": "Time $t$",
+      "start": 0.5
+     }
+    ]
+   },
+   "question": "Set $x_0 = 0$. What is $u(0, t)$ for any $t$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0.5: half the kernel lies to the right of its centre.",
+    "label": "$u(0, t)$",
+    "placeholder": "for example 0.25",
+    "wrong": [
+     {
+      "id": "whole",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $x_0 = 0$ and read the caption at several $t$."
+    },
+    {
+     "rung": "point",
+     "text": "The kernel is symmetric about its centre.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The shaded half is exactly half of the area 1."
+    }
+   ],
+   "feedback": {
+    "correct": "Half of the kernel's area: 0.5, at every $t$.",
+    "generic": "Not quite right. Centre the kernel on 0 and see how much of it lies right of 0.",
+    "byKey": {
+     "whole": "1 is the area of the whole kernel. Only the part right of 0 is shaded.",
+     "zero": "0 is the start value at $x = 0$ on its left side. At $t > 0$ the kernel reaches across the jump."
+    }
+   },
+   "explain": {
+    "text": "With $x_0 = 0$ the kernel is centred on the jump, so half its area lies on the heated side. That gives $u(0, t) = 0.5$ for every $t > 0$. The jump is smoothed at once.",
+    "canvas": {
+     "params": {
+      "xc": 0
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "The curve is the **heat kernel**: the density of $\\sqrt{2Dt}\\,Z$ with $Z \\sim N(0, 1)$. Its area is 1 and its width is $\\sqrt{2Dt}$. The walk shows the same spread: 80 steps of $N(0, 2D\\,\\Delta t)$ with $\\Delta t = 0.1$.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0,
+     "sigma": 0.447214,
+     "steps": 80,
+     "paths": 200,
+     "drawn": 25,
+     "sim": {
+      "seed": 9
+     },
+     "y": [
+      -12,
+      12
+     ],
+     "height": 260,
+     "yLabel": "$x$",
+     "xLabel": "Step (80 steps make $t = 8$)"
+    },
+    "state": {
+     "showSpread": 1
+    }
+   },
+   "question": "With $D = 1$ and $t = 8$, what is the width $\\sqrt{2Dt}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "4: $\\sqrt{2 \\times 1 \\times 8} = \\sqrt{16}$.",
+    "label": "Width",
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "no-two",
+      "value": 2.8284,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "variance",
+      "value": 16,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "t",
+      "value": 8,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The variance of the kernel is $2Dt$."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed band at the end of the walk is the width.",
+     "highlight": [
+      "spread"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2Dt = 16$, so the width is 4."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{16} = 4$, the band at the right of the walk.",
+    "generic": "Not quite right. Find $2Dt$ first, then take the square root.",
+    "byKey": {
+     "no-two": "You used $\\sqrt{Dt}$. The variance is $2Dt$, with the 2 from the lesson 2 Taylor term.",
+     "variance": "16 is the variance $2Dt$. The width is its square root.",
+     "t": "8 is $t$ itself. Width grows like $\\sqrt{t}$, so it is far smaller."
+    }
+   },
+   "explain": {
+    "text": "The kernel's variance is $2Dt = 16$, so its width is 4. The dashed band on the walk ends at $\\pm 4$. The solution on the line is $u(x, t) = \\int \\Phi_t(x - y)\\,u_0(y)\\,dy$, a weighted average of the start.",
+    "canvas": {
+     "highlight": [
+      "spread"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Same step start, now $D = 1$ and $t = 0.5$, so the width is $\\sqrt{2Dt} = 1$. The solution at $x_0$ is the area of the kernel to the right of 0.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -5,
+      5
+     ],
+     "y": [
+      0,
+      0.7
+     ],
+     "height": 240,
+     "xLabel": "$y$",
+     "yLabel": "$\\Phi_t(x_0 - y)$",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, 1, 1)",
+       "label": ""
+      }
+     ],
+     "vlines": [
+      {
+       "id": "jump",
+       "x": 0,
+       "label": "$u_0$ jumps"
+      }
+     ]
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "k",
+      "from": 0,
+      "to": 8,
+      "label": "auto"
+     }
+    }
+   },
+   "question": "What is $u(1, 0.5)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8413,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.8413: $\\Phi(1)$, since $x_0$ is one width from the jump.",
+    "label": "$u(1, 0.5)$",
+    "placeholder": "for example 0.25",
+    "wrong": [
+     {
+      "id": "jump",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "two-sided",
+      "value": 0.6827,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The shaded area is a normal probability: the kernel is $N(1, 1)$ and you want $P(Y > 0)$."
+    },
+    {
+     "rung": "point",
+     "text": "$0$ is one standard deviation below the centre 1.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$P(Y > 0) = \\Phi(1)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$u(1, 0.5) = \\Phi(1) = 0.8413$.",
+    "generic": "Not quite right. Standardise: how many widths is $x_0 = 1$ from the jump?",
+    "byKey": {
+     "jump": "0.5 is the value at the jump, $x_0 = 0$. Here $x_0 = 1$ is one width into the heated side.",
+     "two-sided": "0.6827 is $\\Phi(1) - \\Phi(-1)$, the area within one width. The area right of 0 is $\\Phi(1)$."
+    }
+   },
+   "explain": {
+    "text": "In general $u(x, t) = \\Phi\\!\\left(x/\\sqrt{2Dt}\\right)$ for this start, so $u(1, 0.5) = \\Phi(1) = 0.8413$. The kink in the start is smooth for every $t > 0$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now start from a bump, $u_0 = e^{-x^2}$. Normal densities combine by adding variances, which gives $u(x, t) = \\dfrac{1}{\\sqrt{1 + 4t}}e^{-x^2/(1 + 4t)}$ for $D = 1$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -5,
+      5
+     ],
+     "y": [
+      0,
+      1.1
+     ],
+     "height": 260,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u0",
+       "expr": "exp(-x^2)",
+       "label": "$u_0$",
+       "dashed": true
+      },
+      {
+       "id": "u",
+       "expr": "exp(-x^2/(1+4*t))/sqrt(1+4*t)",
+       "label": "$u(x, t)$",
+       "colour": 2
+      }
+     ],
+     "params": {
+      "t": 0
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "label": "Time $t$",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What is $u(0, 1)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4472,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.4472: $1/\\sqrt{5}$.",
+    "label": "$u(0, 1)$",
+    "placeholder": "for example 0.5",
+    "wrong": [
+     {
+      "id": "unchanged",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-root",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $x = 0$ and $t = 1$ into the formula."
+    },
+    {
+     "rung": "point",
+     "text": "$1 + 4t = 5$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e^0 = 1$, so $u(0, 1) = 1/\\sqrt{5}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/\\sqrt{5} = 0.4472$.",
+    "generic": "Not quite right. Substitute $t = 1$ and $x = 0$ into the formula.",
+    "byKey": {
+     "unchanged": "1 is the start value at 0. By $t = 1$ the bump has spread and fallen.",
+     "no-root": "0.2 is $1/(1 + 4t)$. The prefactor has a square root."
+    }
+   },
+   "explain": {
+    "text": "At $x = 0$ and $t = 1$ the exponent is 0 and $1 + 4t = 5$, so $u = 1/\\sqrt{5} = 0.4472$. The bump fell from 1 to 0.4472 and widened. The curve you drag shows both."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "The bump has total heat $\\int e^{-x^2}dx = \\sqrt{\\pi}$ at $t = 0$. The curve is $u(x, 2) = \\dfrac{1}{3}e^{-x^2/9}$, wider and lower.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -9,
+      9
+     ],
+     "y": [
+      0,
+      1.1
+     ],
+     "height": 240,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u0",
+       "expr": "exp(-x^2)",
+       "label": "$t = 0$",
+       "dashed": true
+      },
+      {
+       "id": "u2",
+       "expr": "exp(-x^2/9)/3",
+       "label": "$t = 2$",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the total heat $\\int u(x, 2)\\,dx$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.7725,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1.7725: $\\sqrt{\\pi}$, unchanged.",
+    "label": "Total heat",
+    "placeholder": "for example 1.5",
+    "wrong": [
+     {
+      "id": "peak",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "kernel-area",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each point of the start spreads out by a kernel of area 1."
+    },
+    {
+     "rung": "point",
+     "text": "Averaging with weights that sum to 1 cannot create or destroy heat.",
+     "highlight": [
+      "u2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So the total stays $\\sqrt{\\pi}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Total heat is conserved: $\\sqrt{\\pi} = 1.7725$.",
+    "generic": "Not quite right. Ask what the kernel's area of 1 does to the total.",
+    "byKey": {
+     "peak": "0.3333 is the height at 0, $u(0, 2) = 1/3$. The question is the area under the whole curve.",
+     "kernel-area": "1 is the area of one kernel. The total heat is the area under $u$, which starts at $\\sqrt{\\pi}$."
+    }
+   },
+   "explain": {
+    "text": "$\\int u\\,dx = \\int\\!\\int \\Phi_t(x - y)u_0(y)\\,dy\\,dx = \\int u_0(y)\\,dy$, because each kernel has area 1. The curve is lower and 3 times wider, so the area stays $\\sqrt{\\pi}$.",
+    "canvas": {
+     "area": {
+      "id": "A",
+      "f": "u2",
+      "from": -12,
+      "to": 12,
+      "label": "auto"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "A colleague says the kernel's width grows like $t$. The plot shows the kernel at $t = 1$ and at $t = 2$ with $D = 1$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -6,
+      6
+     ],
+     "y": [
+      0,
+      0.45
+     ],
+     "height": 240,
+     "xLabel": "$x$",
+     "yLabel": "$\\Phi_t$",
+     "functions": [
+      {
+       "id": "a",
+       "expr": "normpdf(x, 0, sqrt(2*D*1))",
+       "label": "$t = 1$"
+      },
+      {
+       "id": "b",
+       "expr": "normpdf(x, 0, sqrt(2*D*2))",
+       "label": "$t = 2$",
+       "colour": 2
+      }
+     ],
+     "params": {
+      "D": 1
+     }
+    },
+    "state": {}
+   },
+   "question": "When $t$ doubles from 1 to 2, by what factor does the width $\\sqrt{2Dt}$ grow?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sqrt2",
+      "text": "$\\sqrt{2} \\approx 1.414$",
+      "correct": true
+     },
+     {
+      "id": "two",
+      "text": "2",
+      "why": "You grew the width with $t$. The width is $\\sqrt{2Dt}$, so doubling $t$ multiplies it by $\\sqrt{2}$.",
+      "canvas": {
+       "functions": [
+        {
+         "id": "b",
+         "expr": "normpdf(x, 0, 2*sqrt(2*D))"
+        }
+       ]
+      }
+     },
+     {
+      "id": "four",
+      "text": "4",
+      "why": "4 is the factor on the variance if $t$ quadruples. Doubling $t$ doubles the variance, not the width.",
+      "canvas": {
+       "functions": [
+        {
+         "id": "b",
+         "expr": "normpdf(x, 0, 4*sqrt(2*D))"
+        }
+       ]
+      }
+     },
+     {
+      "id": "half",
+      "text": "$\\tfrac12$",
+      "why": "You inverted it. The kernel spreads as time passes, so the width grows.",
+      "canvas": {
+       "functions": [
+        {
+         "id": "b",
+         "expr": "normpdf(x, 0, 0.5*sqrt(2*D))"
+        }
+       ]
+      }
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare $\\sqrt{2D \\times 1}$ with $\\sqrt{2D \\times 2}$."
+    },
+    {
+     "rung": "point",
+     "text": "The ratio of the two widths is $\\sqrt{2}$.",
+     "highlight": [
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The variance doubles, so the width multiplies by $\\sqrt{2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Doubling $t$ multiplies the width by $\\sqrt{2} = 1.414$.",
+    "generic": "Not quite right. Width is the square root of the variance $2Dt$.",
+    "byKey": {
+     "two": "You scaled the width with $t$. Width is $\\sqrt{2Dt}$, so the factor is $\\sqrt{2}$.",
+     "four": "4 is the factor on the variance if $t$ quadruples."
+    }
+   },
+   "explain": {
+    "text": "The variance $2Dt$ doubles when $t$ doubles, so the width $\\sqrt{2Dt}$ is multiplied by $\\sqrt{2} \\approx 1.414214$. To double the width you need four times the time. That is the same square-root law as the walk.",
+    "canvas": {
+     "functions": [
+      {
+       "id": "b",
+       "expr": "normpdf(x, 0, sqrt(2*D*2))"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Heat cannot run backwards. A mode $\\sin 10x$ is multiplied by $e^{-100Dt}$ going forwards. With $D = 1$, going backwards for $t = 0.1$ multiplies it by $e^{+100Dt}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.6,
+      1.6
+     ],
+     "y": [
+      -0.12,
+      0.12
+     ],
+     "height": 240,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "s0",
+       "expr": "0.1*sin(10*x)",
+       "label": "$t = 0$",
+       "dashed": true
+      },
+      {
+       "id": "sf",
+       "expr": "0.1*exp(-100*D*t)*sin(10*x)",
+       "label": "forwards",
+       "colour": 2
+      }
+     ],
+     "params": {
+      "D": 1,
+      "t": 0.01
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 0.1,
+      "step": 0.005,
+      "label": "Time $t$",
+      "start": 0.01
+     }
+    ]
+   },
+   "question": "By what factor does a small error in $\\sin 10x$ grow? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 22026.47,
+    "tol": {
+     "rel": 0.001
+    },
+    "accept": "22,026.47: $e^{10}$.",
+    "label": "Factor",
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "forwards",
+      "value": 4.54e-05,
+      "tol": {
+       "rel": 1e-07
+      }
+     },
+     {
+      "id": "exponent",
+      "value": 10,
+      "tol": {
+       "rel": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $D = 1$ and $t = 0.1$ into $100Dt$."
+    },
+    {
+     "rung": "point",
+     "text": "$100Dt = 10$.",
+     "highlight": [
+      "sf"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Going backwards multiplies by $e^{10}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^{10} = 22{,}026.47$.",
+    "generic": "Not quite right. Compute $100Dt$, then exponentiate with a positive sign.",
+    "byKey": {
+     "forwards": "$4.54 \\times 10^{-5}$ is $e^{-10}$, the forward factor. Backwards the sign flips.",
+     "exponent": "10 is the exponent $100Dt$. The factor is $e^{10}$."
+    }
+   },
+   "explain": {
+    "text": "Forwards the mode shrinks by $e^{-10} = 4.54 \\times 10^{-5}$ and vanishes. Backwards it grows by $e^{10} = 22{,}026.47$, so a tiny error destroys the answer. Lesson 4 calls this ill-posed."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Solve the heat equation numerically: integrate the kernel against $u_0$ by the trapezium rule over $x \\pm 10\\sqrt{2Dt}$. `u0` takes a NumPy array.",
+   "question": "Complete `kernel` and `heat_line`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef kernel(x, t, D=1):\n    ...\n\ndef heat_line(u0, x, t, D=1, n=4001):\n    \"\"\"u(x, t): trapezium rule on n points.\"\"\"\n    w = np.sqrt(2 * D * t)\n    y = np.linspace(x - 10 * w, x + 10 * w, n)\n    f = ...\n    ...\n",
+    "solution": "import numpy as np\n\ndef kernel(x, t, D=1):\n    return np.exp(-x ** 2 / (4 * D * t)) / np.sqrt(4 * np.pi * D * t)\n\ndef heat_line(u0, x, t, D=1, n=4001):\n    \"\"\"u(x, t): trapezium rule on n points.\"\"\"\n    w = np.sqrt(2 * D * t)\n    y = np.linspace(x - 10 * w, x + 10 * w, n)\n    f = kernel(x - y, t, D) * u0(y)\n    h = y[1] - y[0]\n    return float(h * (f.sum() - 0.5 * f[0] - 0.5 * f[-1]))\n",
+    "prelude": "STEP = lambda y: np.where(y > 0, 1.0, np.where(y == 0, 0.5, 0.0))\nBUMP = lambda y: np.exp(-y ** 2)\nONE = lambda y: np.ones_like(y)\n",
+    "examples": [
+     {
+      "call": "round(float(kernel(0, 1, 1)), 6)",
+      "expect": "0.282095",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(kernel(0, 1, 1)), 6)",
+      "expect": "0.282095",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(kernel(1, 0.5, 0.5)), 6)",
+      "expect": "0.207554",
+      "compare": "isclose"
+     },
+     {
+      "call": "heat_line(STEP, 1, 0.5)",
+      "expect": "0.841345",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "heat_line(BUMP, 0, 1)",
+      "expect": "0.447214",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "heat_line(BUMP, 1, 1)",
+      "expect": "0.366148",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "heat_line(ONE, 0.7, 0.3)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "heat_line(STEP, 0, 2)",
+      "expect": "0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. NumPy loads on the first run, which takes a second or two, and that time is not counted against the tests. `STEP`, `BUMP` and `ONE` are provided."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The kernel is $\\Phi_t(x) = e^{-x^2/(4Dt)}/\\sqrt{4\\pi Dt}$. The integrand is $\\Phi_t(x - y)u_0(y)$."
+    },
+    {
+     "rung": "point",
+     "text": "The trapezium rule is `h * (f.sum() - 0.5 * f[0] - 0.5 * f[-1])`."
+    },
+    {
+     "rung": "step",
+     "text": "Build `f = kernel(x - y, t, D) * u0(y)`, then apply the rule with `h = y[1] - y[0]`."
+    }
+   ],
+   "feedback": {
+    "correct": "The step, the bump and the constant start all match.",
+    "generic": "Not quite right. Check the kernel's $4Dt$ and the half weights at the two ends."
+   },
+   "explain": {
+    "text": "A constant start returns 1, because the kernel has area 1. The step start at 0 returns 0.5, the symmetry you saw. The bump at $(0, 1)$ matches $1/\\sqrt{5}$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "You have solved the heat equation on the line with the **heat kernel**: $$u(x, t) = \\int_{-\\infty}^{\\infty}\\Phi_t(x - y)\\,u_0(y)\\,dy, \\qquad \\Phi_t(y) = \\frac{1}{\\sqrt{4\\pi Dt}}e^{-y^2/(4Dt)}.$$",
+   "question": "What is $u(x_0, t)$ in words?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "avg",
+      "text": "The average of $u_0$, weighted by a normal density centred at $x_0$ with sd $\\sqrt{2Dt}$",
+      "correct": true
+     },
+     {
+      "id": "shift",
+      "text": "The start $u_0$ shifted along by a distance $\\sqrt{2Dt}$",
+      "why": "You thought of it as transport. That moves a shape unchanged; the kernel spreads it."
+     },
+     {
+      "id": "max",
+      "text": "The largest value of $u_0$ within $\\sqrt{2Dt}$ of $x_0$",
+      "why": "A maximum would keep peaks at full height. The weighted average lowers them."
+     },
+     {
+      "id": "total",
+      "text": "The total heat of $u_0$",
+      "why": "The total is one number for all $x$. The kernel weights make $u$ depend on $x_0$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A weighted average of the start, with normal weights.",
+    "generic": "Not quite right. Look at what multiplies $u_0(y)$ inside the integral."
+   },
+   "explain": {
+    "text": "The kernel is a density of area 1, so the integral is an average of $u_0$. The weights are centred at $x_0$ and have sd $\\sqrt{2Dt}$. At small $t$ it averages over a short range, and at large $t$ over a wide one."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A driftless log price has $\\sigma = 20\\%$ a year, so its density is a heat kernel with $D = \\sigma^2/2 = 0.02$. After $t = 1$ year the width is $\\sqrt{2Dt} = 0.2$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      0.8
+     ],
+     "y": [
+      0,
+      2.3
+     ],
+     "height": 240,
+     "xLabel": "$\\ln(S_T/S_0)$",
+     "yLabel": "Density",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, 0, 0.2)",
+       "label": ""
+      }
+     ]
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "k",
+      "from": -0.2,
+      "to": 0.2,
+      "label": "auto"
+     }
+    }
+   },
+   "question": "What is $P\\left(|\\ln(S_T/S_0)| < 0.2\\right)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6827,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.6827: $\\Phi(1) - \\Phi(-1)$.",
+    "label": "Probability",
+    "placeholder": "for example 0.5",
+    "wrong": [
+     {
+      "id": "two-sd",
+      "value": 0.9545,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one-side",
+      "value": 0.3413,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cdf",
+      "value": 0.8413,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The limits $\\pm 0.2$ are one width from the centre."
+    },
+    {
+     "rung": "point",
+     "text": "The shaded area is the probability.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\Phi(1) - \\Phi(-1) = 0.8413 - 0.1587$."
+    }
+   ],
+   "feedback": {
+    "correct": "$0.8413 - 0.1587 = 0.6827$.",
+    "generic": "Not quite right. Count how many widths $\\pm 0.2$ is, and use the normal.",
+    "byKey": {
+     "two-sd": "0.9545 is the area within two widths. Here $\\pm 0.2$ is one width.",
+     "one-side": "0.3413 is half of the answer: the area from 0 to 0.2 only.",
+     "cdf": "0.8413 is $\\Phi(1)$, the area below $+0.2$. The question wants the area between the limits."
+    }
+   },
+   "explain": {
+    "text": "The limits are one width from the centre, so the probability is $\\Phi(1) - \\Phi(-1) = 0.6827$. In `pdes` lesson 10 the call is priced with exactly this kernel, with a drift added."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The solution on the line is $u(x, t) = \\int \\Phi_t(x - y)u_0(y)\\,dy$, with the heat kernel $\\Phi_t$, a normal density.",
+   "The kernel has area 1 and width $\\sqrt{2Dt}$, so the solution is a weighted average and total heat is conserved.",
+   "Heat cannot run backwards: a mode $\\sin kx$ shrinks by $e^{-k^2Dt}$ forwards and grows by $e^{k^2Dt}$ backwards."
+  ],
+  "formula": {
+   "name": "The heat kernel",
+   "tex": "\\Phi_t(x) = \\dfrac{1}{\\sqrt{4\\pi Dt}}\\,e^{-x^2/(4Dt)}",
+   "note": "The density of $\\sqrt{2Dt}\\,Z$ with $Z \\sim N(0, 1)$."
+  },
+  "trap": "The width grows like $\\sqrt{t}$, not $t$: doubling $t$ multiplies it by $\\sqrt{2}$."
+ },
+ "quiz": [
+  {
+   "id": "q-peak",
+   "difficulty": 2,
+   "prose": "With $D = \\tfrac12$ the kernel is $\\dfrac{1}{\\sqrt{2\\pi t}}e^{-x^2/(2t)}$.",
+   "question": "What is its peak height at $t = 2$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2821,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.2821: $1/\\sqrt{4\\pi}$.",
+    "label": "Peak",
+    "placeholder": "for example 0.3",
+    "wrong": [
+     {
+      "id": "t1",
+      "value": 0.3989,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-root",
+      "value": 0.1592,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/\\sqrt{2\\pi \\times 2} = 0.2821$.",
+    "generic": "Not quite right. The peak is the kernel at $x = 0$.",
+    "byKey": {
+     "t1": "0.3989 is the peak at $t = 1$. At $t = 2$ it has fallen.",
+     "no-root": "0.1592 is $1/(2\\pi)$. The prefactor has a square root: $1/\\sqrt{2\\pi t}$."
+    }
+   },
+   "explain": {
+    "text": "At $x = 0$ the kernel is $1/\\sqrt{2\\pi t}$, which is $1/\\sqrt{4\\pi} = 0.2821$ at $t = 2$. The peak falls like $1/\\sqrt{t}$."
+   }
+  },
+  {
+   "id": "q-width",
+   "difficulty": 2,
+   "prose": "A kernel has $D = 0.125$ and $t = 2$.",
+   "question": "What is its width $\\sqrt{2Dt}$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7071,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.7071: $\\sqrt{0.5}$.",
+    "label": "Width",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "variance",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "dt",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{2 \\times 0.125 \\times 2} = \\sqrt{0.5} = 0.7071$.",
+    "generic": "Not quite right. Find $2Dt$, then take its square root.",
+    "byKey": {
+     "variance": "0.5 is the variance $2Dt$. The width is its square root.",
+     "dt": "0.25 is $Dt$. The variance has a factor 2: $2Dt$."
+    }
+   },
+   "explain": {
+    "text": "The variance is $2Dt = 0.5$, so the width is $\\sqrt{0.5} = 0.7071$."
+   }
+  },
+  {
+   "id": "q-back",
+   "difficulty": 3,
+   "prose": "A mode $\\sin 3x$ is run backwards in the heat equation for $t = 1$, with $D = 1$.",
+   "question": "By what factor does it grow? Give the value to the nearest whole number.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8103,
+    "tol": {
+     "rel": 0.001
+    },
+    "accept": "8,103: $e^{9}$.",
+    "label": "Factor",
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "forwards",
+      "value": 0.000123,
+      "tol": {
+       "rel": 1e-05
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "rel": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{9} = 8{,}103$.",
+    "generic": "Not quite right. The factor is $e^{k^2Dt}$ with $k = 3$.",
+    "byKey": {
+     "forwards": "0.000123 is $e^{-9}$, the forward factor. Backwards it is $e^{+9}$.",
+     "three": "You used $k$ instead of $k^2Dt$. The exponent is $9 \\times 1 \\times 1$."
+    }
+   },
+   "explain": {
+    "text": "$k^2Dt = 9$, so backwards the mode grows by $e^9 = 8{,}103$. Even a gentle mode explodes, so the backward problem is ill-posed."
+   }
+  },
+  {
+   "id": "q-step-d",
+   "difficulty": 3,
+   "prose": "The step start $u_0 = 1$ for $x > 0$ gives $u(x, t) = \\Phi\\!\\left(x/\\sqrt{2Dt}\\right)$.",
+   "question": "What is $u(2, 2)$ with $D = \\tfrac12$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9214,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.9214: $\\Phi(2/\\sqrt{2}) = \\Phi(1.4142)$.",
+    "label": "$u(2, 2)$",
+    "placeholder": "for example 0.8",
+    "wrong": [
+     {
+      "id": "no-scale",
+      "value": 0.9772,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\Phi(1.4142) = 0.9214$.",
+    "generic": "Not quite right. Divide $x$ by the width $\\sqrt{2Dt}$, then use $\\Phi$.",
+    "byKey": {
+     "no-scale": "0.9772 is $\\Phi(2)$. You forgot to divide by the width $\\sqrt{2} = 1.4142$.",
+     "half": "0.5 is the value at the jump, $x = 0$. Here $x = 2$."
+    }
+   },
+   "explain": {
+    "text": "The width is $\\sqrt{2 \\times 0.5 \\times 2} = \\sqrt{2}$, so $u(2, 2) = \\Phi(2/\\sqrt{2}) = \\Phi(1.4142) = 0.9214$."
+   }
+  }
+ ]
+}
