@@ -156,3 +156,26 @@ Targeted edits to the six level 2 files only. Scripts in the scratchpad folder `
 - `homework-2.json` `h-which-mart`: correct option `expo` text $e^{2W_t - 2t}$ to $e^{3W_t - 4.5t}$.
 
 Results: `node tools/validate.mjs` 0 errors; playthrough of all six files with `--local-cdn`, with and without `--mobile`, all passed; changed code items (l5 `screens[2]` and `screens[9]`, `h-ito-vs-strat`, `h-apply-ito`) solution passes all tests and starter fails all in Pyodide. Voice scan: 0 explanations over three sentences; 2 sentences over 20 words, both in level 1 files (`homework-1.json` `items.8.model`, `l2-normal-increments.json` `screens.8.prose`), none in level 2 and not touched here.
+
+## Recheck
+
+Independent recomputation: closed forms with `math.erf` plus a numerical integral of the normal density, exact fractions, and seeded NumPy runs checked against a second route (identity left = (W_n^2 - sum of squared steps)/2, mid = W_n^2/2, and a pure-Python loop). Scripts in `scratchpad/rc-ito2/` (`check.py`, `run.py`).
+
+- l5 `screens[5]` (`gap`): option text only; still the sole correct option, `steps`, `noise` and `wrong` remain false. OK.
+- l5 `screens[9]` (code): isometry values 0.4788, 0.4851, 0.4835, 0.4404 against exact 0.495, 0.49, 0.4975, 0.45 (all within 0.04; two routes agree to 1e-16). Solution passes 5 of 5, starter fails 5 of 5, a midpoint solution gives 0.728 and fails. OK.
+- l6 `screens[2]` (order): prompt wording now matches `same` `[e2, e3]`; answer unchanged. OK.
+- l7 `screens[3]`: key 1.0118 (1.011821), `plain` (drift 0.08) 0.9118 (0.911821), `price` 1.5, `var` 5.0591 (5.059107). OK.
+- l7 `screens[4]`: key 0.1558 (0.155812), `plain` 0.1809 (0.180931, tol 0.0005 clear of 0.1558), `cdf` 0.8442, `price` 0.0668 (0.066807). OK.
+- l7 `screens[6]` (`qv`): option text only; other three options remain false. OK.
+- l8 `screens[2]` (table): `r3c1` e^2/2 = 3.694528; tol 0.005 accepts 3.69 (diff 0.0045), rejects 3.7 (diff 0.0055), as the prose says. OK.
+- l8 `screens[8]` (`avg`): option text only; the three distractors remain false. OK.
+- l8 `quiz[3]` (`quarter`): p = 1/5, 0.25 is the near over far (1 over 4) slip. OK.
+- review-2 `r-prob-low`: z = (ln 0.8 - 0.02875)/0.25 = -1.007574, P = 0.156829 (erf and integral to 1e-12), so key 0.1568 OK. `plain` (log drift 0.06, z = -1.132574) 0.128697 = 0.1287 OK. `price` Phi(-0.8) = 0.211855 = 0.2119 OK. Fresh: no 6% and 25% pair, 0.1568, 0.1287, 0.2119 or 0.02875 anywhere else in level 1 or 2 lessons (lesson 7 uses mu 8%, sigma 20%).
+- homework-2 `h-ito-vs-strat`: all rows of seeds 11 and 12 match both routes to 6 places; the identity test (seed 4) gives 0, 0, 0; `ito_vs_strat(11, [512])[0][0]` = -0.235422 and the example 0.039673. Solution passes 6 of 6 (5 tests and the example), starter fails or errors on all. Fresh: no lesson uses these seeds or grids (homework-1 uses seed 11 for a different function, a bridge, so no answer repeats). OK.
+- homework-2 `h-apply-ito`: S^2 at (0, 50) and (1, 40) gives [[475, 1500], [304, 960]]; ln S gives [0.005, 0.3] at 100 and 20. Solution passes 6 of 6, starter fails all. Fresh: mu 0.05, sigma 0.3 and these points appear in no lesson. OK.
+- homework-2 `h-which-mart`: e^{3W - 4.5t} has correction 0.5 x 9 = 4.5, so it is a martingale; the three wrong options are unchanged and still wrong. OK.
+- Also confirmed unchanged-but-touched figures: l6 `screens[4]` 12,214.03 (and 11,735.11, 10,408.11), 0.27986 - 0.25992 = 0.0199 (0.01993).
+
+Verdict on #18: agree with the dispute. The sample tests use fixed seeds, so they cannot flake, and my CPython NumPy reproduced every stated seeded value (0.4788, 0.4851, 0.4835, 0.4404, and the seed 11 and 12 rows) exactly, which also shows the stream is stable across NumPy builds. The margins are wide (0.0162 to 0.0346 of 0.04, with a midpoint solution at 0.728 failing), so widening tolerances would only weaken the discrimination.
+
+New mismatches: none that affect a key. One nit, no fix required: `homework-2` `h-why-not-chain` rubric point 3 and l6 `screens[7]` `explain` give ln(S_T/S_0) = 0.25992, while ln(1.296833) = 0.259925 rounds to 0.25993 from the quoted S_T = 129.6833; the unrounded S_T (not in the files) decides it, and 0.0199 or "about 0.02" is correct either way. If the unrounded path end cannot be checked, change both to "about 0.2599" and keep the gap 0.0199.
