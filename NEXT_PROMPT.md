@@ -1,14 +1,19 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Work on `claude/amazing-wright-d4mx7i` only (DECISIONS "Branches (4 Nov)").
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only. User (4 Nov): this session is long, so do the whole of engine pass C plus first levels, not one task.
 
-Task: PLAN.md 2a order item 5, engine pass C part 1: E11 follow-up parts with `C-parts-credit`, `C-parts-mixed` and `C-parts-code`; then E14 data files with `C-data-cap`.
+Task: PLAN 2a item 5, engine pass C parts 1 and 2, then topic 3.5 levels that need nothing else.
 
-Steps:
-1. One engine-dev agent (Sonnet) numbers the bullets into `docs/ENGINE-BACKLOG.md` from 467. Sources: `docs/briefs/interview-plan.md` section (f) (E11, E14), the `docs/BACKLOG-INBOX.md` sections "Raised later (brief research-int / coding-int / systems, 4 Nov)", "(fix pass ... brief, 4 Nov)" and "(topic 3.5 briefs, engine requirements, 4 Nov)". The field shapes the levels use are in `docs/briefs/research-int.md` (engine table), `coding-int.md` and `systems.md` (engine sections).
-2. Build `parts` on items in lessons' review and homework, sets, bank and exam papers (not quiz items). Parts may mix `numeric`, `choice`, `multi`, `table` and `code`; per-part credit, reveal after each check. Then `data` on `code` widgets, drills and exam items, with the size cap. Add validator checks, a sample under `content/` touched by no course, and playthrough support. Document both in `docs/AUTHORING.md`.
-3. An answer-check or second-reader agent tests the sample against the brief uses: research-int R1.2, systems homework-1 item 2, coding-int homework-4 items 1 and 2 (`parts`); research-int l10 (`data`).
+Requirements: interview-plan section (f) (E3, E8, E11, E13, E14); `docs/BACKLOG-INBOX.md` "Raised later (brief ... / fix pass ... / topic 3.5 briefs, engine requirements, 4 Nov)"; field shapes in the three briefs' engine sections. Number into `docs/ENGINE-BACKLOG.md` from 467 first.
 
-Context: no level files exist yet. Build the local CDN (`bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); split runs per KNOWN_ISSUES.
+Wave 1, parallel (engine-dev agents, Sonnet, `isolation: "worktree"`, distinct files; merge each, re-validate):
+- A: E11 `parts` with C-parts-credit, C-parts-mixed, C-parts-code; then E3 `draw` with C-draw-code.
+- B: E14 `data` with C-data-cap; then C-alloc-check (C++ harness).
+- C: E13 `interleave` canvas with E13-blocked-lanes and the systems brief requirements.
+- D: E8 drill library (C++, stopwatch, filters, sessions) with C-drill-patterns.
+- E (content-author): coding-int L1 (uses no pass C item).
+Each engine agent: validator checks, a sample under `content/` used by no course, playthrough support, `docs/AUTHORING.md` and canvas README sections, report `docs/reports/engine-pass-c-<letter>.md`.
 
-Files likely touched: `app/js/engine/` (item and widget code, code runner), `app/js/screens/` (review, exam, bank deck), `app/tools/validate.mjs`, `app/tools/playthrough.mjs`, `docs/AUTHORING.md`, `docs/ENGINE-BACKLOG.md`, `docs/reports/engine-pass-c-1.md`, state files.
+Wave 2, after A and B merge: content-authors for research-int L1, systems L1, coding-int L2. Then research-int L2 (writes the six CSVs from `docs/briefs/research-int-scripts/gen_data.py`), systems L2 (needs C), as limits allow.
 
-Acceptance: from `app/`, `node tools/validate.mjs 2>&1 | tail -5` gives 0 errors; the sample plays green with and without `--mobile`. `--sets`, `--exams`, `--bank all` and `--routes-only` stay green. AUTHORING documents `parts` and `data`. PLAN marks part 1 done. Next: engine pass C part 2 (E8, E3, `C-alloc-check`, E13), with coding-int L1 able to start in parallel.
+Close: answer check of every new key; a second reader on the engine reports; local CDN built (`bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); split playthrough runs (KNOWN_ISSUES) green with and without `--mobile`; PLAN ticks per part and level.
+
+Acceptance: validate 0 errors; samples and new levels green; `--sets`, `--exams`, `--bank all`, `--routes-only` green; AUTHORING documents `parts`, `data`, `draw`, C++ drills, `allocCheck`, `interleave`. Next: remaining topic 3.5 levels, mock-oa-code brief.
