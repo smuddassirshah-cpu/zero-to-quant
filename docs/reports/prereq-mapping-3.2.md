@@ -43,3 +43,5 @@ Edited: `app/content/courses/measure-prob/course.json` (two `requires` lists), `
 
 - `node tools/validate.mjs`: 0 errors, 606 warnings, no cycles; none new from these edits.
 - `node tools/playthrough.mjs --routes-only --local-cdn <pkgs>`: All passed (gating check included).
+
+Orchestrator note: the ito `strand`/`strandNote` change was reverted. ito is a core-path course (untagged per DECISIONS strand badges); `strand` marks breadth courses and would add a Quant badge. The card line has no field, so it is not applied.
