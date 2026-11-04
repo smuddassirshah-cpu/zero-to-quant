@@ -1,0 +1,1515 @@
+{
+  "id": "l2-prefix-trees",
+  "course": "coding-int",
+  "title": "Prefix trees",
+  "minutes": 14,
+  "objectives": [
+    "Build a trie and use it for prefix search and word lookups."
+  ],
+  "skills": [
+    "ci-patterns"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Shared beginnings",
+      "prose": "Four words, `tea`, `ten`, `to` and `inn`, are stored letter by letter. Words that begin alike share their first letters. A node marked *word* is where a word ends.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a"
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word"
+          }
+        }
+      },
+      "question": "How many nodes are there, not counting the root?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "8: t, te, tea, ten, to, i, in and inn.",
+        "label": "Nodes",
+        "wrong": [
+          {
+            "id": "letters",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "words",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "root",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the pills below the root."
+        },
+        {
+          "rung": "point",
+          "text": "`tea` and `ten` share the nodes t and te.",
+          "highlight": [
+            "t-e"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "t, te, tea, ten, to on one side and i, in, inn on the other: 8."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight nodes: one per distinct prefix.",
+        "generic": "Not quite right. Count each node once, however many words pass through it.",
+        "byKey": {
+          "letters": "You counted every letter of every word: 3 + 3 + 2 + 3. Shared beginnings such as t and te are stored once.",
+          "words": "You counted words. Each word needs a node per letter, though shared letters are stored once.",
+          "root": "You counted the root as well. Leave it out: it holds no letter."
+        }
+      },
+      "explain": {
+        "text": "Each node stands for one prefix: t, te, tea, ten, to, i, in, inn. `tea` and `ten` share t and te, and `to` shares t. So there are 8 nodes, against 11 letters in the four words.",
+        "canvas": {
+          "highlight": [
+            "t",
+            "t-e"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Insert one at a time",
+      "prose": "Slide through the inserts and watch which nodes each word adds. Greyed nodes do not exist yet.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a"
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word"
+          }
+        },
+        "controls": [
+          {
+            "bind": "insert",
+            "label": "Words inserted",
+            "frames": [
+              {
+                "dim": [
+                  "t",
+                  "i"
+                ],
+                "values": {
+                  "t-e-a": "",
+                  "t-e-n": "",
+                  "t-o": "",
+                  "i-n-n": ""
+                },
+                "caption": "Empty: only the root"
+              },
+              {
+                "dim": [
+                  "t-e-n",
+                  "t-o",
+                  "i"
+                ],
+                "values": {
+                  "t-e-a": "word",
+                  "t-e-n": "",
+                  "t-o": "",
+                  "i-n-n": ""
+                },
+                "caption": "After tea"
+              },
+              {
+                "dim": [
+                  "t-o",
+                  "i"
+                ],
+                "values": {
+                  "t-e-a": "word",
+                  "t-e-n": "word",
+                  "t-o": "",
+                  "i-n-n": ""
+                },
+                "caption": "After tea, ten"
+              },
+              {
+                "dim": [
+                  "i"
+                ],
+                "values": {
+                  "t-e-a": "word",
+                  "t-e-n": "word",
+                  "t-o": "word",
+                  "i-n-n": ""
+                },
+                "caption": "After tea, ten, to"
+              },
+              {
+                "dim": [],
+                "values": {
+                  "t-e-a": "word",
+                  "t-e-n": "word",
+                  "t-o": "word",
+                  "i-n-n": "word"
+                },
+                "caption": "After tea, ten, to, inn"
+              }
+            ],
+            "frameLabels": [
+              "none",
+              "tea",
+              "ten",
+              "to",
+              "inn"
+            ],
+            "start": 0
+          }
+        ]
+      },
+      "question": "Tap the nodes that exist after inserting only `tea` and `ten`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "t",
+          "t-e",
+          "t-e-a",
+          "t-e-n"
+        ],
+        "countWord": "nodes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move the slider to the second word and look at what is not grey."
+        }
+      ],
+      "feedback": {
+        "correct": "`ten` reused t and te and added only n.",
+        "generic": "Not quite right. Count the nodes that `tea` makes, then what `ten` adds.",
+        "byKey": {
+          "t-o": "`to` has not been inserted yet, so its o does not exist.",
+          "i": "`inn` comes last. Its nodes do not exist after two inserts.",
+          "t-e-n": "`ten` adds its n under te. Include it.",
+          "t": "Every word starting with t passes through this node. Include it."
+        }
+      },
+      "explain": {
+        "text": "`tea` made t, te and tea. `ten` walked t and te, found them, and created only its n. Inserting creates a node only where the walk finds nothing.",
+        "canvas": {
+          "dim": [
+            "t-o",
+            "i"
+          ],
+          "highlight": [
+            "t-e-n"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Ends matter",
+      "prose": "`search(word)` walks the letters and then checks the *word* mark. `starts_with(prefix)` walks the letters and checks only that it arrived. The four words are inserted.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a"
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word"
+          }
+        }
+      },
+      "question": "What do `search('te')` and `starts_with('te')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`False` and `True`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`True` and `True`",
+            "why": "You found the node te and stopped. `search` also checks that a word ends there, and none does."
+          },
+          {
+            "id": "c",
+            "text": "`False` and `False`",
+            "why": "`starts_with` only asks that the walk arrives. The node te exists."
+          },
+          {
+            "id": "d",
+            "text": "`True` and `False`",
+            "why": "These are swapped. The walk reaches te, but no word ends there."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is there a node for te?"
+        },
+        {
+          "rung": "point",
+          "text": "The node te has no *word* mark.",
+          "highlight": [
+            "t-e"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The walk arrives, so `starts_with` is `True`. No word ends at te, so `search` is `False`."
+        }
+      ],
+      "feedback": {
+        "correct": "te is a prefix of two words but not a word itself.",
+        "generic": "Not quite right. Separate arriving at a node from a word ending there.",
+        "byKey": {
+          "b": "You treated arriving as finding a word. Only tea, ten, to and inn carry the *word* mark."
+        }
+      },
+      "explain": {
+        "text": "Both calls walk t then e and arrive. `starts_with` stops there and says `True`. `search` also reads the end mark, which te does not have, so it says `False`.",
+        "canvas": {
+          "highlight": [
+            "t-e"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "How big can it get",
+      "prose": "A trie stores 1,000 words, each 10 letters long. Each insert adds at most one node per letter. Shared prefixes only make it smaller.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a"
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word"
+          },
+          "caption": "Each word adds at most one node per letter"
+        }
+      },
+      "question": "What is the most nodes the trie can need, not counting the root?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "10,000: 1,000 words times at most 10 new nodes each.",
+        "label": "Nodes at most",
+        "wrong": [
+          {
+            "id": "alpha",
+            "value": 26,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "words",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "alpha2",
+            "value": 260,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many nodes can one 10-letter word add?"
+        },
+        {
+          "rung": "point",
+          "text": "With no shared prefix, every letter needs a new node, as tea needed three.",
+          "highlight": [
+            "t-e-a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}000 \\times 10 = 10{,}000$."
+        }
+      ],
+      "feedback": {
+        "correct": "At most $1{,}000 \\times 10 = 10{,}000$ nodes.",
+        "generic": "Not quite right. Multiply the words by the most nodes each can add.",
+        "byKey": {
+          "alpha": "26 is the most children one node can have. The question asks for all the nodes.",
+          "words": "You gave one node per word. A word needs a node per letter.",
+          "alpha2": "That is 26 letters times 10 levels. Different words can use the same letter at the same depth in different branches."
+        }
+      },
+      "explain": {
+        "text": "Each insert walks 10 letters and creates at most 10 nodes, so 10,000 is the ceiling. A search then costs 10 steps, whatever the number of words. A plain list would compare the word against up to 1,000 others."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write the trie",
+      "tags": [
+        "trie",
+        "prefix-count"
+      ],
+      "pace": 720,
+      "prose": "Write a `Trie` with `insert`, `search`, `starts_with` and `count_prefix`. `count_prefix` returns how many distinct inserted words start with the prefix. Inserting a word twice counts once. The empty prefix counts every word, and `starts_with('')` is `True` even for an empty trie.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a"
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word"
+          },
+          "caption": "A node is a dict: a letter maps to a child"
+        },
+        "maxHeight": 240
+      },
+      "question": "Write the `Trie` class. Each node can be a dict from a letter to its child.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class Trie:\n    def __init__(self):\n        self.words = []\n\n    def insert(self, word):\n        pass\n\n    def search(self, word):\n        return False\n\n    def starts_with(self, prefix):\n        return False\n\n    def count_prefix(self, prefix):\n        return 0\n",
+        "solution": "class Trie:\n    def __init__(self):\n        self.root = {'#n': 0}            # '#n': words through here\n\n    def insert(self, word):\n        node = self.root\n        for ch in word:\n            node = node.setdefault(ch, {'#n': 0})\n        if not node.get('#end'):         # a new word\n            node['#end'] = True\n            node = self.root\n            node['#n'] += 1\n            for ch in word:\n                node = node[ch]\n                node['#n'] += 1\n\n    def _walk(self, s):\n        node = self.root\n        for ch in s:\n            if ch not in node:\n                return None\n            node = node[ch]\n        return node\n\n    def search(self, word):\n        node = self._walk(word)\n        return bool(node and node.get('#end'))\n\n    def starts_with(self, prefix):\n        return self._walk(prefix) is not None\n\n    def count_prefix(self, prefix):\n        node = self._walk(prefix)\n        return node['#n'] if node else 0\n",
+        "postlude": "def run_trie(ops):\n    t = Trie()\n    out = []\n    for op, arg in ops:\n        if op == 'insert': t.insert(arg)\n        elif op == 'search': out.append(t.search(arg))\n        elif op == 'starts_with': out.append(t.starts_with(arg))\n        else: out.append(t.count_prefix(arg))\n    return out\n",
+        "examples": [
+          {
+            "call": "run_trie([('insert', 'tea'), ('insert', 'ten'), ('insert', 'to'), ('search', 'te'), ('starts_with', 'te'), ('search', 'tea'), ('count_prefix', 'te'), ('count_prefix', 't')])",
+            "expect": "[False, True, True, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_trie([('insert', 'apple'), ('search', 'apple'), ('search', 'app'), ('starts_with', 'app'), ('insert', 'app'), ('search', 'app'), ('count_prefix', 'app')])",
+            "expect": "[True, False, True, True, 2]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_trie([('insert', 'tea'), ('insert', 'ten'), ('insert', 'to'), ('search', 'te'), ('starts_with', 'te'), ('search', 'tea'), ('count_prefix', 'te'), ('count_prefix', 't')])",
+            "expect": "[False, True, True, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_trie([('insert', 'apple'), ('search', 'apple'), ('search', 'app'), ('starts_with', 'app'), ('insert', 'app'), ('search', 'app'), ('count_prefix', 'app')])",
+            "expect": "[True, False, True, True, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_trie([('search', 'a'), ('starts_with', 'a'), ('count_prefix', 'a')])",
+            "expect": "[False, False, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_trie([('insert', 'inn'), ('insert', 'inn'), ('count_prefix', 'in'), ('count_prefix', 'inn'), ('count_prefix', 'innn')])",
+            "expect": "[1, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_trie([('insert', 'a'), ('insert', 'ab'), ('insert', 'abc'), ('count_prefix', ''), ('starts_with', ''), ('search', '')])",
+            "expect": "[3, True, False]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_trie([('insert', 'cat'), ('insert', 'car'), ('insert', 'cart'), ('insert', 'dog'), ('count_prefix', 'car'), ('count_prefix', 'ca'), ('starts_with', 'cow'), ('search', 'cart')])",
+            "expect": "[2, 3, False, True]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests through `run_trie(ops)`. It builds one `Trie`, replays the operations and lists every result but those of `insert`. They cover an empty trie, a repeated insert and the empty prefix."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does each node need besides its children?"
+        },
+        {
+          "rung": "point",
+          "text": "A flag for a word ending here, and a count of words passing through.",
+          "highlight": [
+            "t-e-a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Store children as `node[ch]`, the end flag as `node['#end']` and the count as `node['#n']`. Add to the counts only when the word was not already marked."
+        }
+      ],
+      "feedback": {
+        "correct": "Each operation walks one node per letter: $O(L)$ for a word of length $L$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 inserts three words and asks about te. Make `insert` build the nodes first.",
+          "test-2": "Test 2 searches app after only apple. The walk arrives, but no word ends there yet.",
+          "test-4": "Test 4 inserts inn twice. Count only when the end mark was not already set.",
+          "test-5": "Test 5 uses the empty prefix. The walk then stays at the root, which counts every word."
+        }
+      },
+      "explain": {
+        "text": "`insert` walks and creates, then marks the end and bumps the counts only for a new word. `search`, `starts_with` and `count_prefix` share one walk that returns the node or `None`. Every call costs one step per letter."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Counting prefixes",
+      "prose": "Each node keeps a count of the words that pass through it. `count_prefix` walks to the prefix and reads that count. Now `inn` is inserted a second time.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a"
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word",
+            "i": "n = 1",
+            "i-n": "n = 1"
+          }
+        }
+      },
+      "question": "What should `count_prefix('in')` return now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "2",
+            "why": "You added to the counts on the second insert too. `inn` was already a word, so nothing changes."
+          },
+          {
+            "id": "c",
+            "text": "3",
+            "why": "You counted the nodes i, in and inn. The count is of words, not nodes."
+          },
+          {
+            "id": "d",
+            "text": "0",
+            "why": "in is not a word, but `inn` passes through it, so the count is not 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is `inn` a new word the second time?"
+        },
+        {
+          "rung": "point",
+          "text": "The end mark on inn is already set.",
+          "highlight": [
+            "i-n-n"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A repeat insert finds the mark set and changes no count, so the answer stays 1."
+        }
+      ],
+      "feedback": {
+        "correct": "One distinct word starts with in.",
+        "generic": "Not quite right. Count distinct words that start with in.",
+        "byKey": {
+          "b": "You counted the repeat. Check the end mark first, and add to the counts only for a new word."
+        }
+      },
+      "explain": {
+        "text": "The second insert walks i, in, inn and finds the end mark already set. So it skips the counting step. `count_prefix('in')` reads 1.",
+        "canvas": {
+          "highlight": [
+            "i-n"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A prefix is not a word",
+      "prose": "Only `apple` has been inserted. A learner's `search` walks the letters and returns `True` if the walk arrives.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "children": [
+                {
+                  "id": "p",
+                  "label": "p",
+                  "children": [
+                    {
+                      "id": "p",
+                      "label": "p",
+                      "children": [
+                        {
+                          "id": "l",
+                          "label": "l",
+                          "children": [
+                            {
+                              "id": "e",
+                              "label": "e"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "lr",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "a-p-p-l-e": "word"
+          }
+        }
+      },
+      "question": "What should `search('app')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`False`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`True`",
+            "why": "You walked a, p, p and found a node. No word ends there: only apple was inserted.",
+            "canvas": {
+              "highlight": [
+                "a-p-p"
+              ]
+            }
+          },
+          {
+            "id": "c",
+            "text": "It raises `KeyError`",
+            "why": "Every letter of app exists in the trie, so the walk never reads a missing child."
+          },
+          {
+            "id": "d",
+            "text": "It depends on the order of inserts",
+            "why": "Only one word was inserted. The end marks, not the order, decide."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which node carries the *word* mark?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the last e of apple is marked.",
+          "highlight": [
+            "a-p-p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The walk reaches the second p, but that node has no end mark. So `search` is `False`."
+        }
+      ],
+      "feedback": {
+        "correct": "app is a prefix of apple, not a word in the trie.",
+        "generic": "Not quite right. Look for the end mark on the node you reach.",
+        "byKey": {
+          "b": "You returned `True` because the walk arrived. That answers `starts_with('app')`, not `search('app')`."
+        }
+      },
+      "explain": {
+        "text": "The walk a, p, p arrives at a node with no end mark, so `search` must return `False`. The learner's version answers `starts_with` instead. After `insert('app')` the same node is marked and `search('app')` turns `True`.",
+        "canvas": {
+          "highlight": [
+            "a-p-p"
+          ],
+          "caption": "Arrived, but no word ends here"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "What you wrote, as a pattern:\n\n```python\nnode = root\nfor ch in word:\n    node = node.setdefault(ch, {})   # create\nnode['#end'] = True\n# search: walk, then check '#end'\n# prefix: walk, and only check arrival\n```",
+      "question": "Put the steps of `insert` with prefix counts in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Start at the root"
+          },
+          {
+            "id": "s2",
+            "text": "For each letter, step to its child, creating it if missing"
+          },
+          {
+            "id": "s3",
+            "text": "If the last node is not already a word end, mark it"
+          },
+          {
+            "id": "s4",
+            "text": "Only then add one to the count of every node on the path"
+          },
+          {
+            "id": "d1",
+            "text": "Add one to each node's count as you walk, before checking the mark",
+            "why": "A repeated insert would then count twice. Check the end mark first, and count only a new word."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Walk, create, mark, and count only a new word.",
+        "generic": "Not quite right. The counting depends on whether the word is new.",
+        "byKey": {
+          "d1": "You counted during the walk. That counts `inn` twice when it is inserted twice.",
+          "left-out": "Every step but one belongs. Only counting during the walk is wrong."
+        }
+      },
+      "explain": {
+        "text": "The walk creates what is missing, so inserting costs one step per letter. The end mark separates words from prefixes. Counting after the mark check keeps repeats out of `count_prefix`."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Suggest symbols",
+      "tags": [
+        "autocomplete"
+      ],
+      "pace": 720,
+      "prose": "An order-entry box suggests what a trader may mean as they type. It shows the first `k` matches in alphabetical order. The tests use short words in place of symbols. Repeats in the list count once.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a",
+                      "children": [
+                        {
+                          "id": "m",
+                          "label": "m"
+                        },
+                        {
+                          "id": "r",
+                          "label": "r"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-a-m": "word",
+            "t-e-a-r": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word"
+          },
+          "highlight": [
+            "t-e"
+          ],
+          "caption": "Below te, in alphabetical order: tea, team, tear, ten"
+        },
+        "maxHeight": 260
+      },
+      "question": "Write `top_completions(words, prefix, k)`. Return the `k` alphabetically smallest distinct words starting with `prefix`, or fewer. Return `[]` for no match or `k = 0`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def top_completions(words, prefix, k):\n    return [w for w in words if w.startswith(prefix)][:k]\n",
+        "solution": "def top_completions(words, prefix, k):\n    root = {}\n    for w in set(words):                 # build the trie\n        node = root\n        for ch in w:\n            node = node.setdefault(ch, {})\n        node['$'] = True\n    node = root\n    for ch in prefix:                    # walk to the prefix\n        if ch not in node:\n            return []\n        node = node[ch]\n    out = []\n    def dfs(node, path):\n        if len(out) >= k:\n            return\n        if '$' in node:\n            out.append(prefix + path)\n        for ch in sorted(c for c in node if c != '$'):\n            dfs(node[ch], path + ch)\n    dfs(node, '')\n    return out[:k]\n",
+        "examples": [
+          {
+            "call": "top_completions(['tea', 'ten', 'to', 'team', 'tear', 'inn', 'tea'], 'te', 3)",
+            "expect": "['tea', 'team', 'tear']",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions(['tea', 'ten', 'to', 'team', 'tear', 'inn'], 'te', 10)",
+            "expect": "['tea', 'team', 'tear', 'ten']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "top_completions(['tea', 'ten', 'to', 'team', 'tear', 'inn', 'tea'], 'te', 3)",
+            "expect": "['tea', 'team', 'tear']",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions(['tea', 'ten', 'to', 'team', 'tear', 'inn'], 'te', 10)",
+            "expect": "['tea', 'team', 'tear', 'ten']",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions(['tea', 'ten', 'to'], '', 2)",
+            "expect": "['tea', 'ten']",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions(['tea', 'ten', 'to'], 'x', 2)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions(['car', 'card', 'care', 'cat', 'dog'], 'car', 2)",
+            "expect": "['car', 'card']",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions(['b', 'a', 'ab', 'abc'], 'a', 0)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions([], 'a', 3)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "top_completions(['ab', 'a', 'abc'], 'ab', 5)",
+            "expect": "['ab', 'abc']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: repeats, `k` larger than the matches, the empty prefix and no match. Others have `k = 0`, an empty list, and a prefix that is a word."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After walking to the prefix, in what order should you visit the children?"
+        },
+        {
+          "rung": "point",
+          "text": "Visit the children in sorted letter order, and record a word before its children.",
+          "highlight": [
+            "t-e"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Depth-first from the prefix node: if the node ends a word, append it; then recurse into `sorted` children. Stop once you hold `k`."
+        }
+      ],
+      "feedback": {
+        "correct": "Walk to the prefix, then a sorted depth-first search that stops at `k`.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 has tea twice and the words out of order. Use a set, then visit children alphabetically.",
+          "test-8": "Test 8 asks for ab, which is a word and a prefix. Record a node's own word before its children."
+        }
+      },
+      "explain": {
+        "text": "A word comes before every longer word that starts with it, so we record a node before its children. Visiting children in sorted order then yields alphabetical order. The search stops after `k` words, so a short list costs little."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 2,
+      "title": "When a sorted list wins",
+      "prose": "A desk has 4,000 symbols, changed once a day. It only asks prefix queries, and memory is tight. In Python a trie node is a dict, which costs far more memory than a short string.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "t",
+              "label": "t",
+              "children": [
+                {
+                  "id": "e",
+                  "label": "e",
+                  "children": [
+                    {
+                      "id": "a",
+                      "label": "a",
+                      "children": [
+                        {
+                          "id": "m",
+                          "label": "m"
+                        },
+                        {
+                          "id": "r",
+                          "label": "r"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                },
+                {
+                  "id": "o",
+                  "label": "o"
+                }
+              ]
+            },
+            {
+              "id": "i",
+              "label": "i",
+              "children": [
+                {
+                  "id": "n",
+                  "label": "n",
+                  "children": [
+                    {
+                      "id": "n",
+                      "label": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "root"
+        },
+        "state": {
+          "values": {
+            "t-e-a": "word",
+            "t-e-a-m": "word",
+            "t-e-a-r": "word",
+            "t-e-n": "word",
+            "t-o": "word",
+            "i-n-n": "word"
+          }
+        },
+        "maxHeight": 260
+      },
+      "question": "Which structure fits best?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A sorted list and `bisect`: two binary searches find the range of matches",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "A trie, because it is always faster",
+            "why": "For 4,000 symbols both are fast, about 12 steps each. The trie's dicts cost far more memory."
+          },
+          {
+            "id": "c",
+            "text": "A set of symbols",
+            "why": "A set answers whole-word lookups. It cannot list the symbols that start with a prefix."
+          },
+          {
+            "id": "d",
+            "text": "An unsorted list scanned with `startswith`",
+            "why": "That reads all 4,000 symbols on every keystroke. A sorted list needs about 12 comparisons."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a sorted list already give you for a prefix?"
+        },
+        {
+          "rung": "point",
+          "text": "All the words with one prefix sit next to each other in a sorted list.",
+          "highlight": [
+            "t-e"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`bisect_left` finds where the prefix would go; the matches follow it. That is $O(\\log n)$ with no extra memory."
+        }
+      ],
+      "feedback": {
+        "correct": "A sorted list is small, and `bisect` makes about $\\log_2 4000 \\approx 12$ comparisons.",
+        "generic": "Not quite right. Weigh memory as well as speed.",
+        "byKey": {
+          "b": "You chose speed alone. At this size the speeds are close, and the trie costs more memory."
+        }
+      },
+      "explain": {
+        "text": "In a sorted list, words sharing a prefix sit side by side. `bisect_left` finds the first one in about 12 comparisons. A trie pays off with many words, frequent inserts or many words per prefix."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A trie stores words letter by letter; words that begin alike share nodes. Each node is a dict from a letter to a child.",
+      "`search` walks and checks the end mark; `starts_with` walks and checks only that it arrived.",
+      "A count on each node, raised once per new word, answers `count_prefix` in one walk."
+    ],
+    "formula": {
+      "name": "Cost of an operation",
+      "tex": "O(L) \\text{ for a word or prefix of length } L",
+      "note": "Independent of how many words are stored. Memory is at most one node per letter inserted."
+    },
+    "trap": "Returning `True` because the walk arrived answers `starts_with` instead: `app` is not a word just because `apple` is."
+  },
+  "quiz": [
+    {
+      "id": "q-nodes",
+      "difficulty": 2,
+      "tags": [
+        "trie"
+      ],
+      "prose": "We insert `buy`, `bus` and `bid` into an empty trie.",
+      "question": "How many nodes does it have, not counting the root?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "6: b, bu, buy, bus, bi, bid.",
+        "label": "Nodes",
+        "wrong": [
+          {
+            "id": "letters",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "words",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "root",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "b, bu, buy, bus, bi and bid.",
+        "generic": "Not quite right. Count one node per distinct prefix.",
+        "byKey": {
+          "letters": "You counted all nine letters. b is shared by all three words, and bu by two.",
+          "words": "You counted words. A word needs a node per letter.",
+          "root": "Leave out the root."
+        }
+      },
+      "explain": {
+        "text": "The distinct prefixes are b, bu, buy, bus, bi and bid. Each prefix is one node. So there are 6."
+      }
+    },
+    {
+      "id": "q-search",
+      "difficulty": 2,
+      "tags": [
+        "trie"
+      ],
+      "prose": "We insert `sell` and `seller`.",
+      "question": "What do `search('sel')` and `starts_with('sel')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`False` and `True`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`True` and `True`",
+            "why": "You treated arriving at sel as finding a word. Only sell and seller are marked."
+          },
+          {
+            "id": "c",
+            "text": "`False` and `False`",
+            "why": "The walk s, e, l arrives, so `starts_with` is `True`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "sel is a prefix, not a word.",
+        "generic": "Not quite right. `search` needs the end mark; `starts_with` only needs the walk to arrive."
+      },
+      "explain": {
+        "text": "The walk s, e, l reaches a node. That node has no end mark, so `search` is `False` and `starts_with` is `True`."
+      }
+    },
+    {
+      "id": "q-count",
+      "difficulty": 3,
+      "tags": [
+        "prefix-count"
+      ],
+      "prose": "We insert `bid`, `bid` and `bids`, with counts kept as in the lesson.",
+      "question": "What does `count_prefix('bid')` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2: bid and bids; the repeat counts once.",
+        "label": "Count",
+        "wrong": [
+          {
+            "id": "repeat",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two distinct words start with bid.",
+        "generic": "Not quite right. Count distinct inserted words.",
+        "byKey": {
+          "repeat": "You counted the second bid. It found the end mark set, so it changed no count.",
+          "one": "bids starts with bid too."
+        }
+      },
+      "explain": {
+        "text": "The first bid and then bids each add one to the node bid. The repeat finds bid already marked and adds nothing. So the count is 2."
+      }
+    },
+    {
+      "id": "q-bisect",
+      "difficulty": 3,
+      "tags": [
+        "trie",
+        "autocomplete"
+      ],
+      "prose": "4,000 symbols are kept in a sorted list. `bisect_left` finds where a prefix would go by halving the range each step.",
+      "question": "About how many comparisons does one `bisect_left` make?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "About 12",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "About 2,000",
+            "why": "That is the average cost of a scan. `bisect` halves the range at every step."
+          },
+          {
+            "id": "c",
+            "text": "About 4,000",
+            "why": "That is a scan of every symbol."
+          },
+          {
+            "id": "d",
+            "text": "About 63",
+            "why": "That is $\\sqrt{4000}$. Halving gives a logarithm, not a square root."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\log_2 4000 \\approx 11.97$, so about 12.",
+        "generic": "Not quite right. Count how many halvings take 4,000 down to 1."
+      },
+      "explain": {
+        "text": "Each comparison halves the range, so it takes $\\log_2 4000 \\approx 12$ steps. $2^{12} = 4096$ is just above 4,000. A trie walk for a three-letter prefix takes 3 steps, but costs more memory."
+      }
+    }
+  ]
+}

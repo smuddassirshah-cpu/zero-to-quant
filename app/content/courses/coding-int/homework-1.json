@@ -1,0 +1,586 @@
+{
+  "id": "homework-1",
+  "course": "coding-int",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h1-free-gaps",
+      "difficulty": 3,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "intervals-merge"
+      ],
+      "pace": 900,
+      "prose": "A trading room is booked in half-open slots `[s, e)`, in whole minutes, in any order, and bookings may overlap. Return the free gaps inside `[start, end)` as `[a, b]` lists, sorted.",
+      "question": "Write `free_gaps(busy, start, end)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def free_gaps(busy, start, end):\n    return [[start, end]]\n",
+        "solution": "def free_gaps(busy, start, end):\n    gaps = []\n    cursor = start                      # first minute not yet known busy\n    for s, e in sorted(busy):\n        if s > cursor:\n            gaps.append([cursor, min(s, end)])\n        cursor = max(cursor, e)\n        if cursor >= end:\n            break\n    if cursor < end:\n        gaps.append([cursor, end])\n    return [g for g in gaps if g[0] < g[1]]\n",
+        "examples": [
+          {
+            "call": "free_gaps([[9, 12], [10, 11], [14, 15]], 9, 17)",
+            "expect": "[[12, 14], [15, 17]]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([[0, 5]], 0, 5)",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "free_gaps([[9, 12], [10, 11], [14, 15]], 9, 17)",
+            "expect": "[[12, 14], [15, 17]]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([[0, 5]], 0, 5)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([], 8, 16)",
+            "expect": "[[8, 16]]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([[8, 10], [10, 12]], 8, 12)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([[2, 4], [3, 7], [9, 10]], 0, 12)",
+            "expect": "[[0, 2], [7, 9], [10, 12]]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([[0, 20]], 5, 10)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([[3, 4]], 5, 10)",
+            "expect": "[[5, 10]]",
+            "compare": "equal"
+          },
+          {
+            "call": "free_gaps([[7, 9], [1, 2]], 3, 8)",
+            "expect": "[[3, 7]]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: overlapping and touching bookings, and no bookings. Others cover the whole range or lie outside it."
+      },
+      "feedback": {
+        "correct": "One sort and one sweep with a cursor.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 has bookings that touch at 10. Half-open slots that touch leave no gap.",
+          "test-7": "Test 7 has a booking before `start`. Only gaps inside `[start, end)` count."
+        }
+      },
+      "explain": {
+        "text": "Sort the bookings and keep a cursor at the first minute not known to be busy. A booking that starts after the cursor leaves a gap up to its start. The cursor then jumps to the larger end, as in the merge."
+      }
+    },
+    {
+      "id": "h1-two-singles",
+      "difficulty": 4,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "bit-xor",
+        "bit-lowest"
+      ],
+      "pace": 900,
+      "prose": "Every number appears twice except two different numbers that appear once each. Return those two, smaller first. Use $O(1)$ extra memory.",
+      "question": "Write `two_singles(nums)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def two_singles(nums):\n    return [0, 0]\n",
+        "solution": "def two_singles(nums):\n    x = 0\n    for v in nums:\n        x ^= v                 # a ^ b: the two singles\n    low = x & -x               # a bit where they differ\n    a = 0\n    for v in nums:\n        if v & low:\n            a ^= v\n    b = x ^ a\n    return sorted([a, b])\n",
+        "examples": [
+          {
+            "call": "two_singles([8, 3, 5, 3, 7, 5])",
+            "expect": "[7, 8]",
+            "compare": "equal"
+          },
+          {
+            "call": "two_singles([-1, 0])",
+            "expect": "[-1, 0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "two_singles([8, 3, 5, 3, 7, 5])",
+            "expect": "[7, 8]",
+            "compare": "equal"
+          },
+          {
+            "call": "two_singles([-1, 0])",
+            "expect": "[-1, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "two_singles([4, 4, 6, 9])",
+            "expect": "[6, 9]",
+            "compare": "equal"
+          },
+          {
+            "call": "two_singles([0, 7, 0, 3, 7, 3, -8, 12])",
+            "expect": "[-8, 12]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests, with zero and negative numbers. Each result must equal the expected list."
+      },
+      "feedback": {
+        "correct": "XOR gives `a ^ b`; one set bit of it splits the list in two.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has -1 and 0. `x & -x` works on negative numbers in Python.",
+          "test-4": "Test 4 has -8. Sort the two results before returning them."
+        }
+      },
+      "explain": {
+        "text": "XOR of everything is `a ^ b`, which is not 0 because the two differ. Its lowest set bit, `x & -x`, is set in one of them only. XOR of the numbers with that bit set gives one single, since pairs fall on the same side."
+      }
+    },
+    {
+      "id": "h1-shortest-at-least",
+      "difficulty": 5,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "monotonic-deque",
+        "window-range"
+      ],
+      "pace": 900,
+      "prose": "`nums` may hold negative values. Return the length of the shortest non-empty contiguous run whose sum is at least `k`, where `k >= 1`. Return -1 if there is none. With negatives a plain sliding window fails, so think about prefix sums.",
+      "question": "Write `shortest_at_least(nums, k)` in $O(n)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\ndef shortest_at_least(nums, k):\n    return -1\n",
+        "solution": "from collections import deque\n\ndef shortest_at_least(nums, k):\n    pre = [0]\n    for x in nums:\n        pre.append(pre[-1] + x)\n    dq = deque()                 # indices with rising prefix sums\n    best = len(nums) + 1\n    for j, p in enumerate(pre):\n        while dq and p - pre[dq[0]] >= k:\n            best = min(best, j - dq.popleft())\n        while dq and pre[dq[-1]] >= p:\n            dq.pop()\n        dq.append(j)\n    return best if best <= len(nums) else -1\n",
+        "examples": [
+          {
+            "call": "shortest_at_least([2, -1, 2], 3)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_at_least([57, -21, 30, 45, 88], 150)",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "shortest_at_least([1], 1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_at_least([1, 2], 4)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_at_least([2, -1, 2], 3)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_at_least([57, -21, 30, 45, 88], 150)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_at_least([1, 2, 3], 6)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_at_least([-1, -2], 1)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_at_least([5, -3, 4], 5)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [1] * 100000",
+            "call": "shortest_at_least(xs, 100000)",
+            "expect": "100000",
+            "compare": "equal"
+          },
+          {
+            "setup": "ys = [3, -2] * 50000",
+            "call": "shortest_at_least(ys, 7)",
+            "expect": "9",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: negatives, no answer, and two lists of 100,000 values in tests 8 and 9. A double loop over runs stops at test 8."
+      },
+      "feedback": {
+        "correct": "A deque of prefix-sum indices: each index enters and leaves once.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is `[2, -1, 2]` with `k = 3`: only the whole list reaches 3.",
+          "test-8": "Test 8 timed out. Keep the deque of rising prefix sums so each index is handled once."
+        }
+      },
+      "explain": {
+        "text": "A run from `i` to `j - 1` sums to `pre[j] - pre[i]`. The deque keeps start indices with rising prefix sums, since a later, smaller prefix is a better start. A front that already reaches `k` is used and dropped, because no later end can make it shorter."
+      }
+    },
+    {
+      "id": "h1-window-median",
+      "difficulty": 5,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "heap-top-k",
+        "stream-kth"
+      ],
+      "pace": 900,
+      "prose": "Return the median of every window of `w` consecutive values, as floats. For an even `w` the median is the mean of the middle two. Assume `1 <= w <= len(nums)`.",
+      "question": "Write `window_median(nums, w)` with two heaps and lazy deletion.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import heapq\nfrom collections import defaultdict\n\ndef window_median(nums, w):\n    return [float(nums[i]) for i in range(len(nums) - w + 1)]\n",
+        "solution": "import heapq\nfrom collections import defaultdict\n\ndef window_median(nums, w):\n    lo, hi = [], []            # lo: max-heap by negation, hi: min-heap\n    late = defaultdict(int)    # values waiting to be deleted lazily\n    lo_n = hi_n = 0            # live sizes\n    def prune(heap, sign):\n        while heap and late[sign * heap[0]] > 0:\n            late[sign * heap[0]] -= 1\n            heapq.heappop(heap)\n    def rebalance():\n        nonlocal lo_n, hi_n\n        if lo_n > hi_n + 1:\n            heapq.heappush(hi, -heapq.heappop(lo))\n            lo_n -= 1; hi_n += 1; prune(lo, -1)\n        elif lo_n < hi_n:\n            heapq.heappush(lo, -heapq.heappop(hi))\n            hi_n -= 1; lo_n += 1; prune(hi, 1)\n    def add(x):\n        nonlocal lo_n, hi_n\n        if not lo or x <= -lo[0]:\n            heapq.heappush(lo, -x); lo_n += 1\n        else:\n            heapq.heappush(hi, x); hi_n += 1\n        rebalance()\n    def remove(x):\n        nonlocal lo_n, hi_n\n        late[x] += 1\n        if lo and x <= -lo[0]:\n            lo_n -= 1\n            if x == -lo[0]: prune(lo, -1)\n        else:\n            hi_n -= 1\n            if hi and x == hi[0]: prune(hi, 1)\n        rebalance()\n    out = []\n    for i, x in enumerate(nums):\n        add(x)\n        if i >= w:\n            remove(nums[i - w])\n        if i >= w - 1:\n            out.append(float(-lo[0]) if w % 2 else (-lo[0] + hi[0]) / 2)\n    return out\n",
+        "examples": [
+          {
+            "call": "window_median([2, 5, -1, -4, 6, 4, 7, 9], 3)",
+            "expect": "[2.0, -1.0, -1.0, 4.0, 6.0, 7.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "window_median([1, 2, 3, 4, 2, 3, 1, 4, 2], 3)",
+            "expect": "[2.0, 3.0, 3.0, 3.0, 2.0, 3.0, 2.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "window_median([2, 5, -1, -4, 6, 4, 7, 9], 3)",
+            "expect": "[2.0, -1.0, -1.0, 4.0, 6.0, 7.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "window_median([1, 2, 3, 4, 2, 3, 1, 4, 2], 3)",
+            "expect": "[2.0, 3.0, 3.0, 3.0, 2.0, 3.0, 2.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "window_median([5], 1)",
+            "expect": "[5.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "window_median([1, 4, 2, 3], 4)",
+            "expect": "[2.5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "window_median([7, 7, 7, 7], 2)",
+            "expect": "[7.0, 7.0, 7.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "window_median([2, 2, 2, 2, 2], 5)",
+            "expect": "[2.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "import random; random.seed(9); xs = [random.randint(0, 10**6) for _ in range(40000)]",
+            "call": "sum(window_median(xs, 500))",
+            "expect": "19786861586.5",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, with repeats, $w = 1$ and an even $w$. Test 7 has 40,000 values with $w = 500$ and checks the sum of the medians."
+      },
+      "feedback": {
+        "correct": "Two heaps with lazy deletion: $O(n \\log w)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 has an even window: average the two tops.",
+          "test-5": "Test 5 repeats one value. Lazy deletion must count copies, not just mark a value.",
+          "test-7": "Test 7 timed out or drifted. Re-sorting each window is too slow; check the live sizes after each removal."
+        }
+      },
+      "explain": {
+        "text": "The two heaps hold the window's lower and upper halves, as for the running median. A leaving value is counted in `late` and popped only when it reaches a top. The live sizes, not the heap lengths, decide the rebalancing."
+      }
+    },
+    {
+      "id": "h1-say-deque",
+      "difficulty": 4,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "monotonic-deque"
+      ],
+      "question": "Explain how a monotonic deque gives every window maximum in linear time. Give the counts for $n = 100{,}000$.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Say your answer aloud, timing yourself, before you open the model answer. Speak for about three minutes. Cover the invariant, why the front is the maximum and one step of the method. Then give the count for $n = 100{,}000$ and compare with the double loop.",
+        "model": "**Say it in about three minutes.** A model answer:\n\n- **The invariant.** The deque holds indices whose values fall from front to back. So the front is the window's maximum.\n- **Why the front is right.** A value behind a larger, newer one can never win while that one stays. So it was popped when the newer one arrived.\n- **Each step.** Drop the front if its index has left the window, that is if it is at most $i - k$. Pop smaller or equal values off the back, then push $i$.\n- **The count.** Each index is pushed once and popped at most once. For $n = 100{,}000$ that is at most $100{,}000 + 100{,}000 = 200{,}000$ deque operations: $O(n)$.\n- **Against the double loop.** Taking `max` of every window reads about $n \\cdot k$ values: $O(nk)$. With $k = 50{,}000$ that is about 2.5 billion reads.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "States the invariant: values fall from front to back"
+          },
+          {
+            "points": 2,
+            "text": "Says each index is pushed once and popped at most once"
+          },
+          {
+            "points": 2,
+            "text": "Gives the count: at most 200,000 operations for one deque"
+          },
+          {
+            "points": 2,
+            "text": "Says the front leaves when its index leaves the window"
+          },
+          {
+            "points": 2,
+            "text": "Compares with the double loop, about $n \\cdot k$ reads"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Mark yourself against the rubric.",
+        "generic": "Mark yourself against the rubric."
+      },
+      "explain": {
+        "text": "Pushes and pops are both bounded by $n$, so the work is linear. The front leaves by age and the back by value. The double loop rereads every window."
+      }
+    },
+    {
+      "id": "h1-sort-cost",
+      "difficulty": 3,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "intervals-merge"
+      ],
+      "prose": "Before merging, we sort one million intervals. A comparison sort makes about $n \\log_2 n$ comparisons.",
+      "question": "How many comparisons is that, in millions, to one decimal place?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19.9,
+        "tol": {
+          "abs": 0.1
+        },
+        "accept": "19.9 million: $10^6 \\times \\log_2 10^6 = 19{,}931{,}569$. Anything from 19.8 to 20.0 is accepted.",
+        "label": "Comparisons",
+        "unit": "million",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 6,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "n",
+            "value": 1,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10^6 \\times 19.93 \\approx 19.9$ million.",
+        "generic": "Not quite right. Multiply $n$ by $\\log_2 n$.",
+        "byKey": {
+          "ten": "You used $\\log_{10}$. Sorting halves, so the log is base 2.",
+          "n": "That is one comparison per interval. Multiply by $\\log_2 n \\approx 20$."
+        }
+      },
+      "explain": {
+        "text": "$\\log_2 10^6 = 6 \\times \\log_2 10 \\approx 6 \\times 3.3219 = 19.93$. So the sort makes about 19.9 million comparisons. The merge pass then adds one million steps."
+      }
+    },
+    {
+      "id": "h1-bits-to-100000",
+      "difficulty": 4,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "bit-count"
+      ],
+      "prose": "Count the set bits of every whole number from 0 to 100,000, and add them up.",
+      "question": "What is the total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 815030,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "815,030, by summing `bin(i).count('1')` and by counting each bit column.",
+        "label": "Set bits",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 850000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "count",
+            "value": 100001,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "815,030 set bits.",
+        "generic": "Not quite right. Count by column: bit $b$ repeats with period $2^{b+1}$.",
+        "byKey": {
+          "half": "That treats 17 columns as half full. The top columns are far from half full below 100,000.",
+          "count": "That is the count of numbers, not of set bits."
+        }
+      },
+      "explain": {
+        "text": "Bit $b$ cycles with period $2^{b+1}$: $2^b$ zeros, then $2^b$ ones. For each of 17 columns, count its full periods in 100,001 numbers plus the ones left over. The columns add up to 815,030, as a direct sum confirms."
+      }
+    },
+    {
+      "id": "h1-trie-memory",
+      "difficulty": 3,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "trie"
+      ],
+      "prose": "A trie stores 1,000 words of length 10. Each node holds an array of 26 child pointers of 8 bytes each. Ignore the root and everything but the pointers.",
+      "question": "What is the most memory the nodes can need, in bytes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2080000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2,080,000: at most 10,000 nodes times $26 \\times 8 = 208$ bytes.",
+        "label": "Bytes",
+        "wrong": [
+          {
+            "id": "nodes",
+            "value": 10000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "node",
+            "value": 208,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "noeight",
+            "value": 260000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10{,}000 \\times 208 = 2{,}080{,}000$ bytes.",
+        "generic": "Not quite right. Find the most nodes, then the bytes per node.",
+        "byKey": {
+          "nodes": "That is the node count. Each node holds 26 pointers of 8 bytes.",
+          "node": "That is one node. There can be 10,000.",
+          "noeight": "You counted pointers, not bytes. Each pointer is 8 bytes."
+        }
+      },
+      "explain": {
+        "text": "With no shared prefixes the trie has $1{,}000 \\times 10 = 10{,}000$ nodes. Each holds $26 \\times 8 = 208$ bytes of pointers. So the bound is 2,080,000 bytes, about 2 MB, against 10,000 bytes for the letters."
+      }
+    },
+    {
+      "id": "h1-median-order",
+      "difficulty": 4,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "heap-top-k"
+      ],
+      "prose": "Two heaps keep a running median: a lower max-heap and an upper min-heap.",
+      "question": "Put the steps of inserting one value in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Push to the lower max-heap if the value is at most its top, else to the upper min-heap"
+          },
+          {
+            "id": "s2",
+            "text": "Rebalance so the sizes differ by at most one, the lower heap holding the extra"
+          },
+          {
+            "id": "s3",
+            "text": "Read the median: the lower top, or the mean of both tops when the sizes are equal"
+          },
+          {
+            "id": "d1",
+            "text": "Push to whichever heap is larger",
+            "why": "The value then lands in the wrong half, and the lower heap no longer holds the smaller values."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Push by value, rebalance by size, read the tops.",
+        "generic": "Not quite right. Which half a value joins depends on its value.",
+        "byKey": {
+          "d1": "You chose the heap by size. That breaks the rule that every lower value is at most every upper one.",
+          "left-out": "Every step but one belongs. Only pushing by size is wrong."
+        }
+      },
+      "explain": {
+        "text": "Pushing by value keeps every lower value at most every upper one. Rebalancing then fixes the sizes by moving one top across. The median sits at the tops, so reading it is $O(1)$."
+      }
+    }
+  ]
+}
